@@ -6,4 +6,5 @@ VERILATOR_OPTS += -I../src
 FILELIST = filelist.f
 
 all:
-	verilator $(VERILATOR_OPTS) -f $(FILELIST)
+	verilator --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv32_pkg.sv -f $(FILELIST)
+	verilator --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv64_pkg.sv -f $(FILELIST)
