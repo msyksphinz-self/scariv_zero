@@ -3,20 +3,31 @@
 package mrh_pkg;
   import riscv_pkg::*;
 
+  localparam PC_INIT_VAL = 'h8000_0000;
+
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;
   localparam ICACHE_DATA_W  = 256;
   localparam ICACHE_WAY_W   = 4;
+  localparam ICACHE_DATA_B_W = ICACHE_DATA_W / 8;
+
+
+  localparam DCACHE_TAG_HIGH = riscv_pkg::XLEN_W;
+  localparam DCACHE_TAG_LOW = 12;
+  localparam DCACHE_DATA_W  = 256;
+  localparam DCACHE_WAY_W   = 4;
+
+  localparam L2_CMD_TAG_W = 4;
 
   typedef struct packed {
     logic valid;
     logic [riscv_pkg::XLEN_W-1:0] vaddr;
-  } ic_req;
+  } ic_req_t;
 
   typedef struct packed {
     logic valid;
     logic [mrh_pkg::ICACHE_DATA_W-1:0] data;
-  } ic_resp;
+  } ic_resp_t;
 
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
@@ -64,12 +75,27 @@ package mrh_pkg;
   typedef struct packed {
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
     mem_cmd_t                      cmd;
-  } tlb_req;
+  } tlb_req_t;
 
   typedef struct packed {
     logic miss;
     logic [riscv_pkg::PADDR_W-1:0] paddr;
-  } tlb_resp;
+  } tlb_resp_t;
+
+  typedef struct packed {
+    logic valid;
+    mem_cmd_t cmd;
+    logic [riscv_pkg::PADDR_W-1:0] addr;
+    logic [L2_CMD_TAG_W-1:0] tag;
+    logic [ICACHE_DATA_W-1:0] data;
+    logic [ICACHE_DATA_W/8-1:0] byte_en;
+  } l2_req_t;
+
+  typedef struct packed {
+    logic valid;
+    logic [L2_CMD_TAG_W-1:0] tag;
+    logic [ICACHE_DATA_W-1:0] data;
+  } l2_resp_t;
 
 endpackage
 
