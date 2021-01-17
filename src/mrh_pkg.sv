@@ -70,7 +70,14 @@ package mrh_pkg;
     logic eff;
     logic c;
     logic fragmented_superpage;
-  } tlb_entry;
+  } tlb_entry_data_t;
+
+  typedef struct packed {
+    logic                           valid;
+    logic [1:0]                     level;
+    logic [riscv_pkg::VADDR_W-1: riscv_pkg::PG_IDX_BITS] tag;
+    tlb_entry_data_t [3:0]          entry_data;
+  } tlb_entry_t;
 
   typedef struct packed {
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
