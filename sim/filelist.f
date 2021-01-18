@@ -7,3 +7,4 @@
 ../src/tag_array.sv
 ../src/frontend.sv
 ../src/tlb.sv
+../src/mrh_tile.sv
