@@ -4,7 +4,7 @@ module icache(
   input logic i_clk,
   input logic i_reset_n,
 
-  input mrh_pkg::ic_req_t i_s0_req,
+  input mrh_pkg::ic_req_t              i_s0_req,
   input logic [riscv_pkg::PADDR_W-1:0] i_s1_paddr,
   input logic                          i_s1_tlb_miss,
 

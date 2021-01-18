@@ -18,7 +18,8 @@ module tlb
   mrh_pkg::tlb_entry_t entries[8];
 
   // for VM=0 implementation
-  assign o_tlb_resp.paddr = i_tlb_req.vaddr[mrh_pkg::PADDR_W-1:0];
+  /* verilator lint_off WIDTH */
+  assign o_tlb_resp.paddr = i_tlb_req.vaddr; 
   assign o_tlb_resp.miss  = 1'b0;
 
   // always_comb begin
@@ -44,8 +45,8 @@ module tlb
     //     return valid(idx) && sectorw_tag_match(vpn);
     //   end
     // endfunction
-
-    assign w_hit_vector[idx] = w_vm_enabled & entries[idx];
+    // 
+    // assign w_hit_vector[idx] = w_vm_enabled & entries[idx];
 
   end
   endgenerate
