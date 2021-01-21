@@ -90,7 +90,6 @@ package mrh_pkg;
   } tlb_resp_t;
 
   typedef struct packed {
-    logic valid;
     mem_cmd_t cmd;
     logic [riscv_pkg::PADDR_W-1:0] addr;
     logic [L2_CMD_TAG_W-1:0] tag;
@@ -99,7 +98,6 @@ package mrh_pkg;
   } l2_req_t;
 
   typedef struct packed {
-    logic valid;
     logic [L2_CMD_TAG_W-1:0] tag;
     logic [ICACHE_DATA_W-1:0] data;
   } l2_resp_t;
