@@ -1,7 +1,7 @@
 module mrh_tile
 (
     input logic i_clk,
-    input logic i_reset_n
+    input logic i_reset_n,
 
     // L2 request from ICache
     output logic             ic_req_vaild,
@@ -10,7 +10,7 @@ module mrh_tile
 
     input logic              ic_resp_valid,
     input mrh_pkg::l2_resp_t ic_resp_payload,
-    output logic             ic_resq_ready
+    output logic             ic_resp_ready
 );
 
 l2_req_if  l2_req  ();
@@ -26,4 +26,3 @@ frontend u_frontend
 );
 
 endmodule
-
