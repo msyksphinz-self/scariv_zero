@@ -5,7 +5,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
         "category":"ALU", "func_suffix":"",
         "impl":[""],
-        "inst_ctrl":["RD_R3", "OP_SIGN_ADD", "IMM_U"]
+        "inst_ctrl":["rd_r3", "op_sign_add", "imm_u"]
     },
     {
         "name":"auipc      r[11:7],h[31:12]",
@@ -14,7 +14,7 @@
         "category":"ALU",
         "func_suffix":"",
         "impl":[""],
-        "inst_ctrl":["R1_PC", "RD_R3", "OP_SIGN_ADD", "IMM_U"]
+        "inst_ctrl":["r1_pc", "rd_r3", "op_sign_add", "imm_u"]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
@@ -23,7 +23,7 @@
         "category":"ALU",
         "func_suffix":"",
         "impl":["XS", "XS", "XS", "return m_pe_thread->SExtXlen(op1 +  op2)"],
-        "inst_ctrl":["RD_R3", "R1_R1", "R2_R2", "OP_SIGN_ADD" ]
+        "inst_ctrl":["rd_r3", "r1_r1", "r2_r2", "op_sign_add" ]
     },
     {
         "name":"ld         r[11:7],h[31:20](r[19:15])",
@@ -32,7 +32,7 @@
         "category":"ALU",
         "func_suffix":"",
         "impl":[""],
-        "inst_ctrl":["RD_R3", "R1_R1", "R2_R2", "SIZE_DW", "SIGN_S", "MEM_L", "IMM_I"]
+        "inst_ctrl":["rd_r3", "r1_r1", "r2_r2", "size_dw", "sign_s", "mem_l", "imm_i"]
     },
     {
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
@@ -41,6 +41,6 @@
         "category":"ALU",
         "func_suffix":"",
         "impl":[""],
-        "inst_ctrl":[         "R1_R1", "R2_R2", "SIZE_DW", "SIGN_S", "MEM_S", "IMM_S"]
+        "inst_ctrl":[         "r1_r1", "r2_r2", "size_dw", "sign_s", "mem_s", "imm_s"]
     }
 ]
