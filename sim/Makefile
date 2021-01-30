@@ -3,7 +3,7 @@ VERILATOR_OPTS += --exe
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 
-TOP      = mrh_tile
+TOP      = mrh_tile_wrapper
 FILELIST = filelist.f
 
 all:

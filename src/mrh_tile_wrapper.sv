@@ -1,4 +1,4 @@
-module MSRHCoreBlackbox
+module mrh_tile_wrapper
 (
     input logic i_clk,
     input logic i_reset_n,

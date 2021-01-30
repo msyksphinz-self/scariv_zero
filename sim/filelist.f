@@ -8,3 +8,4 @@
 ../src/frontend.sv
 ../src/tlb.sv
 ../src/mrh_tile.sv
+../src/mrh_tile_wrapper.sv
