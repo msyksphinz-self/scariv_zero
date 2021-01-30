@@ -16,6 +16,7 @@ package mrh_pkg;
   localparam DCACHE_TAG_LOW = 12;
   localparam DCACHE_DATA_W  = 256;
   localparam DCACHE_WAY_W   = 4;
+  localparam DCACHE_DATA_B_W = DCACHE_DATA_W / 8;
 
   localparam L2_CMD_TAG_W = 4;
 

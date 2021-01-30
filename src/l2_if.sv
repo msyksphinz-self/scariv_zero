@@ -4,10 +4,13 @@ interface l2_req_if;
   logic ready;
   modport master(
     output valid,
-    output payload
+    output payload,
+    input ready
   );
   modport slave(
-    input ready
+    input valid,
+    input payload,
+    output ready
   );
 endinterface
 
@@ -16,11 +19,13 @@ interface l2_resp_if;
   logic valid;
   logic ready;
   modport master(
-    output ready
+    input ready,
+    output valid,
+    output payload
   );
   modport slave(
+    output ready,
     input valid,
     input payload
   );
 endinterface
-
