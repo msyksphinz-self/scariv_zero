@@ -1,0 +1,46 @@
+[
+    {
+        "name":"lui        r[11:7],h[31:12]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
+        "category":"ALU", "func_suffix":"",
+        "impl":[""],
+        "inst_ctrl":["RD_R3", "OP_SIGN_ADD", "IMM_U"]
+    },
+    {
+        "name":"auipc      r[11:7],h[31:12]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
+        "category":"ALU",
+        "func_suffix":"",
+        "impl":[""],
+        "inst_ctrl":["R1_PC", "RD_R3", "OP_SIGN_ADD", "IMM_U"]
+    },
+    {
+        "name":"add        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
+        "category":"ALU",
+        "func_suffix":"",
+        "impl":["XS", "XS", "XS", "return m_pe_thread->SExtXlen(op1 +  op2)"],
+        "inst_ctrl":["RD_R3", "R1_R1", "R2_R2", "OP_SIGN_ADD" ]
+    },
+    {
+        "name":"ld         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
+        "category":"ALU",
+        "func_suffix":"",
+        "impl":[""],
+        "inst_ctrl":["RD_R3", "R1_R1", "R2_R2", "SIZE_DW", "SIGN_S", "MEM_L", "IMM_I"]
+    },
+    {
+        "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
+        "category":"ALU",
+        "func_suffix":"",
+        "impl":[""],
+        "inst_ctrl":[         "R1_R1", "R2_R2", "SIZE_DW", "SIGN_S", "MEM_S", "IMM_S"]
+    }
+]
