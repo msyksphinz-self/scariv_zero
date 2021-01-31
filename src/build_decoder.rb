@@ -100,8 +100,8 @@ tmp_file.puts '.e'
 
 tmp_file.close
 
-# filename = tmp_file.path
-# system("cat " + filename)
+filename = tmp_file.path
+system("cat " + filename)
 
 cmd = "./espresso " + tmp_file.path
 result_line = ""

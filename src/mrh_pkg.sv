@@ -103,6 +103,12 @@ package mrh_pkg;
     logic [ICACHE_DATA_W-1:0] data;
   } l2_resp_t;
 
+  typedef struct packed {
+    logic          valid;
+    logic [31: 0]  inst;
+  } inst_buf_t;
+
+
 endpackage
 
 `default_nettype wire

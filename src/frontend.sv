@@ -7,6 +7,8 @@ module frontend
     l2_resp_if.slave ic_l2_resp
 );
 
+
+
     // ==============
     // s0 stage
     // ==============
@@ -87,6 +89,26 @@ module frontend
          .ic_l2_req  (ic_l2_req ),
          .ic_l2_resp (ic_l2_resp)
          );
+
+inst_buffer
+  #(
+    .DISPATCH_SIZE(5)
+    )
+u_inst_buffer
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_inst_vld (w_s2_ic_resp.valid),
+
+   .o_inst_rdy(),
+   .i_inst_in (w_s2_ic_resp.data),
+   .i_inst_byte_en(),
+
+   .o_inst_buf_valid(),
+   .o_inst_buf(),
+   .i_inst_buf_ready()
+   );
 
 
 endmodule
