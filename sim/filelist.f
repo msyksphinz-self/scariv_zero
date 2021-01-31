@@ -9,3 +9,6 @@
 ../src/tlb.sv
 ../src/mrh_tile.sv
 ../src/mrh_tile_wrapper.sv
+
+../tb/mrh_tb.sv
+../tb/tb_l2_behavior_ram.sv
