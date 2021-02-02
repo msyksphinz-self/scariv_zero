@@ -11,6 +11,7 @@ extern std::unique_ptr<FunctionTable> m_func_table;
 extern std::unique_ptr<VariableTable> m_gvar_table;
 extern std::unique_ptr<Memory> m_memory;
 extern int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dump);
+extern bool elf_load_finish;
 
 int time_counter = 0;
 
@@ -67,11 +68,15 @@ int main(int argc, char** argv) {
   tfp->open("simx.fst");
 
   // Format
-  dut->i_reset_n = 0;
+  dut->i_elf_loader_reset_n = 0;
+  dut->i_mrh_reset_n = 0;
+  dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
 
   // Format
-  dut->i_reset_n = 1;
+  dut->i_elf_loader_reset_n = 1;
+  dut->i_mrh_reset_n = 1;
+  dut->i_ram_reset_n = 1;
   dut->i_clk = 0;
   // Reset Time
   while (time_counter < 10) {
@@ -81,7 +86,9 @@ int main(int argc, char** argv) {
   }
 
   // Format
-  dut->i_reset_n = 0;
+  dut->i_elf_loader_reset_n = 0;
+  dut->i_mrh_reset_n = 0;
+  dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
   while (time_counter < 100) {
     dut->eval();
@@ -89,7 +96,9 @@ int main(int argc, char** argv) {
     time_counter++;
   }
   // Release reset
-  dut->i_reset_n = 1;
+  dut->i_elf_loader_reset_n = 1;
+  dut->i_mrh_reset_n = 0;
+  dut->i_ram_reset_n = 1;
 
   int cycle = 0;
   while (time_counter < 50000) {
@@ -104,6 +113,11 @@ int main(int argc, char** argv) {
     // Evaluate DUT
     dut->eval();
     tfp->dump(time_counter);
+
+    if (elf_load_finish) {
+      dut->i_elf_loader_reset_n = 0;
+      dut->i_mrh_reset_n = 1;
+    }
 
     time_counter++;
   }

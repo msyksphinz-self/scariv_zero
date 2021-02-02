@@ -27,6 +27,8 @@ std::unique_ptr<FunctionTable> m_func_table;
 std::unique_ptr<VariableTable> m_gvar_table;
 std::unique_ptr<Memory> m_memory;
 
+bool elf_load_finish = false;
+
 Addr_t  m_tohost_addr, m_fromhost_addr;
 bool    m_tohost_en = false, m_fromhost_en = false;
 
@@ -70,6 +72,7 @@ extern "C" int debug_tick(
           }
         } else if (m_it == m_memory_ptr->GetIterEnd()) {
           state = 1;
+          elf_load_finish = true;
         } else {
           m_it ++;
         }
@@ -371,7 +374,7 @@ static void load_bitfile (bfd *b, asection *section, PTR data)
 
 static void load_hex (bfd *b, asection *section, Memory *p_memory)
 {
-  int size = bfd_section_size (section);
+  int size = bfd_section_size (b, section);
   std::unique_ptr<Byte_t[]> buf (new Byte_t[size]);
   // fprintf (stderr, "<Allocate %d>\n", size);
 
