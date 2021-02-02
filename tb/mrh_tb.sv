@@ -81,19 +81,33 @@ u_tb_l2_behavior_ram
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   // L2 request from ICache
-   .i_req_valid   (w_l2_req_valid ),
-   .i_req_cmd     (w_l2_req_cmd   ),
-   .i_req_addr    (w_l2_req_addr  ),
-   .i_req_tag     (w_l2_req_tag   ),
-   .i_req_data    (w_l2_req_data  ),
-   .i_req_byte_en (w_l2_req_byte_en),
-   .o_req_ready   (w_l2_req_ready ),
+   // // L2 request from ICache
+   // .i_req_valid   (w_l2_req_valid ),
+   // .i_req_cmd     (w_l2_req_cmd   ),
+   // .i_req_addr    (w_l2_req_addr  ),
+   // .i_req_tag     (w_l2_req_tag   ),
+   // .i_req_data    (w_l2_req_data  ),
+   // .i_req_byte_en (w_l2_req_byte_en),
+   // .o_req_ready   (w_l2_req_ready ),
+   //
+   // .o_resp_valid  (w_l2_resp_valid),
+   // .o_resp_tag    (w_l2_resp_tag  ),
+   // .o_resp_data   (w_l2_resp_data ),
+   // .i_resp_ready  (w_l2_resp_ready)
 
-   .o_resp_valid  (w_l2_resp_valid),
-   .o_resp_tag    (w_l2_resp_tag  ),
-   .o_resp_data   (w_l2_resp_data ),
-   .i_resp_ready  (w_l2_resp_ready)
+   .i_req_valid   (w_elf_req_valid  ),
+   .i_req_cmd     (w_elf_req_cmd    ),
+   .i_req_addr    (w_elf_req_addr   ),
+   .i_req_tag     (w_elf_req_tag    ),
+   .i_req_data    (w_elf_req_data   ),
+   .i_req_byte_en (w_elf_req_byte_en),
+   .o_req_ready   (w_elf_req_ready  ),
+
+   .o_resp_valid  (  ),
+   .o_resp_tag    (  ),
+   .o_resp_data   (  ),
+   .i_resp_ready  (1'b1)
+
    );
 
 
@@ -103,10 +117,14 @@ u_tb_elf_loader
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .o_req_vld       (w_elf_req_valid),
-   .o_req_bits_addr (w_elf_req_addr ),
-   .o_req_bits_data (w_elf_req_data ),
-   .i_req_rdy       (w_elf_req_ready)
+   // L2 request from ELF Loader
+   .o_req_valid   (w_elf_req_valid ),
+   .o_req_cmd     (w_elf_req_cmd   ),
+   .o_req_addr    (w_elf_req_addr  ),
+   .o_req_tag     (w_elf_req_tag   ),
+   .o_req_data    (w_elf_req_data  ),
+   .o_req_byte_en (w_elf_req_byte_en),
+   .i_req_ready   (w_elf_req_ready )
    );
 
 

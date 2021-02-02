@@ -8,42 +8,53 @@ import "DPI-C" function int debug_tick
 
 module tb_elf_loader
 (
- input logic         i_clk,
- input logic         i_reset_n,
+ input logic                               i_clk,
+ input logic                               i_reset_n,
 
- output logic        o_req_vld,
- output logic [31:0] o_req_bits_addr,
- output logic [31:0] o_req_bits_data,
- input logic         i_req_rdy
+ output logic                                o_req_valid,
+ output mrh_pkg::mem_cmd_t                   o_req_cmd,
+ output logic [riscv_pkg::PADDR_W-1:0]       o_req_addr,
+ output logic [mrh_pkg::L2_CMD_TAG_W-1:0]    o_req_tag,
+ output logic [mrh_pkg::ICACHE_DATA_W-1:0]   o_req_data,
+ output logic [mrh_pkg::ICACHE_DATA_W/8-1:0] o_req_byte_en,
+ input logic                                 i_req_ready
 );
 
-logic                __debug_req_vld;
-logic [31: 0]        __debug_req_bits_addr;
-logic [31: 0]        __debug_req_bits_data;
+logic                __debug_req_valid;
+logic [riscv_pkg::PADDR_W-1: 0] __debug_req_bits_addr;
+logic [31: 0]                   __debug_req_bits_data;
 
-logic                req_vld_reg;
-logic [31:0]         req_bits_addr_reg;
-logic [31:0]         req_bits_data_reg;
+logic                req_valid_reg;
+logic [riscv_pkg::PADDR_W-1:0] req_bits_addr_reg;
+logic [31:0]                   req_bits_data_reg;
 
-always_ff @(posedge clock) begin
-  req_vld_reg     <= __debug_req_vld;
+always_ff @(posedge i_clk) begin
+  req_valid_reg     <= __debug_req_valid;
   req_bits_addr_reg <= __debug_req_bits_addr;
   req_bits_data_reg <= __debug_req_bits_data;
 end
 
-assign req_vld       = req_vld_reg;
-assign req_bits_addr = req_bits_addr_reg;
-assign req_bits_data = req_bits_data_reg;
+assign o_req_valid = req_valid_reg;
+assign o_req_cmd   = mrh_pkg::M_XWR;
+assign o_req_addr  = req_bits_addr_reg;
+assign o_req_tag   = 'h0;
+generate for(genvar i = 0; i < mrh_pkg::ICACHE_DATA_W / 32; i++) begin: data_loop
+  assign o_req_data[i*32+:32] = req_bits_data_reg;
+  assign o_req_byte_en[i*4+:4] = {4{(o_req_addr[$clog2(mrh_pkg::ICACHE_DATA_W / 8)-1:2] == i)}};
+end
+endgenerate
+
 
 int debug_tick_val;
 
-always_ff @(negedge clock, negedge i_reset_n) begin
+always_ff @(negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
+    /* verilator lint_off WIDTH */
     debug_tick_val = debug_tick(
-      __debug_req_vld,
-      req_rdy,
-      __debug_req_bits_addr,
+      __debug_req_valid,
+      i_req_ready,
+      __debug_req_bits_addr[31:0],
       __debug_req_bits_data
       );
   end

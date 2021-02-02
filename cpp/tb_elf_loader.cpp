@@ -1,12 +1,12 @@
 #include "memory_block.hpp"
 #include "mem_body.hpp"
 
+#include <cstring>
 #include <bfd.h>
 #include <dis-asm.h>
 #include <elf.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <cstring>
 #include <string>
 #include <sys/stat.h>
 #include <fcntl.h>

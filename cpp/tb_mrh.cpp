@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   dut->i_reset_n = 1;
 
   int cycle = 0;
-  while (time_counter < 500) {
+  while (time_counter < 5000) {
     if ((time_counter % 5) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
     }

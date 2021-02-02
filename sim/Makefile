@@ -1,6 +1,10 @@
 VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 VERILATOR_OPTS += ../cpp/tb_mrh.cpp
+VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
+VERILATOR_OPTS += ../cpp/memory_block.cpp
+VERILATOR_OPTS += ../cpp/mem_body.cpp
+VERILATOR_OPTS += -LDFLAGS "-lbfd"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += --trace-fst
