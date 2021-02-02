@@ -16,24 +16,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
-#include <map>
 #include <memory>
 #include <vpi_user.h>
 #include <iostream>
 #include <iomanip>
 #include <svdpi.h>
 
-using FunctionInfo = std::map<Addr_t, std::string>;
-
-using FunctionTable = FunctionInfo;
-using VariableTable = FunctionInfo;
-
 // BFD debug information
 std::unique_ptr<FunctionTable> m_func_table;
 std::unique_ptr<VariableTable> m_gvar_table;
 std::unique_ptr<Memory> m_memory;
 
-bool elf_loaded = false;
 Addr_t  m_tohost_addr, m_fromhost_addr;
 bool    m_tohost_en = false, m_fromhost_en = false;
 
@@ -45,19 +38,6 @@ extern "C" int debug_tick(
     int *debug_req_bits_addr,
     int *debug_req_bits_data)
 {
-  if (!elf_loaded) {
-    m_memory   = std::unique_ptr<Memory> (new Memory ());
-
-    m_func_table = std::unique_ptr<FunctionTable> (new FunctionTable ());
-    m_gvar_table = std::unique_ptr<VariableTable> (new VariableTable ());
-
-    LoadBinary("",
-               "/home/msyksphinz/riscv64/riscv64-unknown-elf/share/riscv-tests/isa/rv64ui-p-simple",
-               true);
-
-    elf_loaded = true;
-  }
-
   auto m_memory_ptr = m_memory.get();
   static auto m_it = m_memory_ptr->GetIterBegin();
   static Addr_t addr = 0;
@@ -68,7 +48,8 @@ extern "C" int debug_tick(
     switch (state) {
       case 0 : {
         if (m_it != m_memory_ptr->GetIterEnd() &&
-            addr < m_it->second->GetBlockSize()) {
+                   m_it->second->GetBaseAddr() >= 0x80000000 &&
+                   addr < m_it->second->GetBlockSize()) {
           uint32_t data = 0;
           for (int i = 0; i < 4; i++) {
             uint8_t byte = m_it->second->ReadByte (static_cast<Addr_t>(addr + i));
@@ -89,25 +70,9 @@ extern "C" int debug_tick(
           }
         } else if (m_it == m_memory_ptr->GetIterEnd()) {
           state = 1;
+        } else {
+          m_it ++;
         }
-        break;
-      }
-      case 1 : {
-        *debug_req_valid     = 1;
-        *debug_req_bits_addr = 0x20000000;
-        *debug_req_bits_data = 1;
-
-        state = 2;
-
-        break;
-      }
-      case 2 : {
-        *debug_req_valid     = 1;
-        *debug_req_bits_addr = 0x20000004;
-        *debug_req_bits_data = 1;
-
-        state = 3;
-
         break;
       }
       default: {
@@ -406,7 +371,7 @@ static void load_bitfile (bfd *b, asection *section, PTR data)
 
 static void load_hex (bfd *b, asection *section, Memory *p_memory)
 {
-  int size = bfd_section_size (b, section);
+  int size = bfd_section_size (section);
   std::unique_ptr<Byte_t[]> buf (new Byte_t[size]);
   // fprintf (stderr, "<Allocate %d>\n", size);
 

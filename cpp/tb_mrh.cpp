@@ -1,9 +1,25 @@
+#include "memory_block.hpp"
+#include "mem_body.hpp"
+
+#include <getopt.h>
 #include <iostream>
 #include <verilated.h>
 #include <verilated_fst_c.h>
 #include "Vmrh_tb.h"
 
+extern std::unique_ptr<FunctionTable> m_func_table;
+extern std::unique_ptr<VariableTable> m_gvar_table;
+extern std::unique_ptr<Memory> m_memory;
+extern int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dump);
+
 int time_counter = 0;
+
+static void usage(const char * program_name)
+{
+  printf("Usage: %s [EMULATOR OPTION]... [VERILOG PLUSARG]... [HOST OPTION]... BINARY [TARGET OPTION]...\n",
+         program_name);
+}
+
 
 double sc_time_stamp()
 {
@@ -13,6 +29,32 @@ double sc_time_stamp()
 int main(int argc, char** argv) {
 
   Verilated::commandArgs(argc, argv);
+
+  while (1) {
+    static struct option long_options[] = {
+      {"elf",  no_argument, 0, 'e' },
+      {"help", no_argument, 0, 'h' }
+    };
+
+    int option_index = 0;
+    int c = getopt_long(argc, argv, "-e:h", long_options, &option_index);
+
+    if (c == -1) break;
+ retry:
+    switch (c) {
+      // Process long and short EMULATOR options
+      case 'h': usage(argv[0]);             return 1;
+      case 'e': {
+        m_memory   = std::unique_ptr<Memory> (new Memory ());
+
+        m_func_table = std::unique_ptr<FunctionTable> (new FunctionTable ());
+        m_gvar_table = std::unique_ptr<VariableTable> (new VariableTable ());
+
+        LoadBinary("", optarg, true);
+        break;
+      }
+    }
+  }
 
   // Instantiate DUT
   Vmrh_tb *dut = new Vmrh_tb();
@@ -50,7 +92,7 @@ int main(int argc, char** argv) {
   dut->i_reset_n = 1;
 
   int cycle = 0;
-  while (time_counter < 5000) {
+  while (time_counter < 50000) {
     if ((time_counter % 5) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
     }

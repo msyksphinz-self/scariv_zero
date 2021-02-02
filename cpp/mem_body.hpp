@@ -30,8 +30,14 @@
 #include <unordered_map>
 #include <iostream>
 #include <memory>
+#include <map>
 
 #include "memory_block.hpp"
+
+using FunctionInfo = std::map<Addr_t, std::string>;
+
+using FunctionTable = FunctionInfo;
+using VariableTable = FunctionInfo;
 
 enum class MemResult {
   MemNoExcept   = 0,
