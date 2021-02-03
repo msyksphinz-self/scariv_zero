@@ -67,7 +67,27 @@ generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
 end
 endgenerate
 
-bit_extract_msb #(.WIDTH(ic_word_num)) u_bit_arith_msb (.in(w_inst_is_arith), .out(w_inst_arith_msb));
-bit_extract_msb #(.WIDTH(ic_word_num)) u_bit_mem_msb   (.in(w_inst_is_mem  ), .out(w_inst_mem_msb  ));
+logic [DISPATCH_SIZE-1:0] w_inst_arith_pick_up;
+logic [DISPATCH_SIZE-1:0] w_inst_mem_pick_up;
+logic [DISPATCH_SIZE-1:0] w_inst_pick_up_or;
+logic [DISPATCH_SIZE-1:0] w_inst_dispatch_mask;
+
+logic [DISPATCH_SIZE-1:0] w_inst_arith_disp;
+logic [DISPATCH_SIZE-1:0] w_inst_mem_disp;
+
+assign w_inst_arith_pick_up = w_inst_is_arith[DISPATCH_SIZE-1:0];
+assign w_inst_mem_pick_up   = w_inst_is_mem  [DISPATCH_SIZE-1:0];
+assign w_inst_pick_up_or    = w_inst_arith_pick_up | w_inst_mem_pick_up;
+
+logic [$clog2(DISPATCH_SIZE)-1:0] w_inst_arith_cnt;
+logic [$clog2(DISPATCH_SIZE)-1:0] w_inst_mem_cnt;
+
+bit_cnt #(.WIDTH(DISPATCH_SIZE)) u_arith_bit_cnt (.in(w_inst_arith_pick_up), .out(w_inst_arith_cnt));
+bit_cnt #(.WIDTH(DISPATCH_SIZE)) u_mem_bit_cnt   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_cnt));
+
+bit_pick_up #(.WIDTH(DISPATCH_SIZE), .NUM(mrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
+bit_pick_up #(.WIDTH(DISPATCH_SIZE), .NUM(mrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
+
+bit_tree_msb #(.WIDTH(DISPATCH_SIZE)) u_inst_msb (.in(w_inst_pick_up_or), .out(w_inst_dispatch_mask));
 
 endmodule // inst_buffer

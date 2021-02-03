@@ -5,6 +5,9 @@ package mrh_pkg;
 
   localparam PC_INIT_VAL = 'h8000_0000;
 
+  localparam ARITH_DISP_SIZE = 4;
+  localparam MEM_DISP_SIZE   = 4;
+
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;
   localparam ICACHE_DATA_W  = 256;
