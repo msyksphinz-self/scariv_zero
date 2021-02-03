@@ -3,36 +3,42 @@
         "name":"lui        r[11:7],h[31:12]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
-        "inst_ctrl":[["cat", "arith"], ["rd","r3"], ["op", "sign_lui"], ["imm", "u"]]
+        "cat": [["cat", "arith"]],
+        "inst_ctrl":[["rd","r3"], ["op", "sign_lui"], ["imm", "u"]]
     },
     {
         "name":"auipc      r[11:7],h[31:12]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
-        "inst_ctrl":[["cat", "arith"], ["r1", "pc"], ["rd","r3"], ["op", "sign_auipc"], ["imm", "u"]]
+        "cat": [["cat", "arith"]],
+        "inst_ctrl":[["r1", "pc"], ["rd","r3"], ["op", "sign_auipc"], ["imm", "u"]]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
         "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "inst_ctrl":[["cat", "arith"], ["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["op", "sign_add"] ]
+        "cat": [["cat", "arith"]],
+        "inst_ctrl":[["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["op", "sign_add"] ]
     },
     {
         "name":"sub        r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
         "field": ["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "inst_ctrl":[["cat", "arith"], ["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["op", "sign_sub"] ]
+        "cat": [["cat", "arith"]],
+        "inst_ctrl":[["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["op", "sign_sub"] ]
     },
     {
         "name":"ld         r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
-        "inst_ctrl":[["cat", "mem"], ["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["size", "dw"], ["sign", "s"]]
+        "cat": [["cat", "mem"]],
+        "inst_ctrl":[["rd","r3"], ["r1", "r1"], ["r2", "r2"], ["size", "dw"], ["sign", "s"]]
     },
     {
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
-        "inst_ctrl":[["cat", "mem"], ["r1", "r1"], ["r2", "r2"], ["size", "dw"], ["sign", "s"]]
+        "cat": [["cat", "mem"]],
+        "inst_ctrl":[["r1", "r1"], ["r2", "r2"], ["size", "dw"], ["sign", "s"]]
     }
 ]

@@ -44,6 +44,30 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_inst_rdy = !(&inst_buffer_vld_q);
 
-bit_ff_lsb #(.WIDTH(mrh_pkg::ICACHE_DATA_B_W)) u_byte_en_ff (.in(inst_buffer_byte_en_q[0]), .valid(), .out(inst_buffer_en_ff_idx));
+localparam ic_word_num = mrh_pkg::ICACHE_DATA_B_W / 4;
+mrh_pkg::inst_cat_t [ic_word_num-1: 0] w_inst_cat;
+logic [ic_word_num-1:0] w_inst_is_arith;
+logic [ic_word_num-1:0] w_inst_is_mem;
+
+logic [ic_word_num-1:0] w_inst_arith_msb;
+logic [ic_word_num-1:0] w_inst_mem_msb;
+
+generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
+  logic raw_cat;
+  decoder_cat
+  u_decoder_cat (
+                .inst(inst_buffer_q[0][w_idx*32+:32]),
+                .cat(raw_cat)
+                );
+  assign w_inst_cat[w_idx] = mrh_pkg::inst_cat_t'(raw_cat);
+
+  assign w_inst_is_arith[w_idx] = w_inst_cat[w_idx] == mrh_pkg::CAT_ARITH;
+  assign w_inst_is_mem  [w_idx] = w_inst_cat[w_idx] == mrh_pkg::CAT_MEM;
+
+end
+endgenerate
+
+bit_extract_msb #(.WIDTH(ic_word_num)) u_bit_arith_msb (.in(w_inst_is_arith), .out(w_inst_arith_msb));
+bit_extract_msb #(.WIDTH(ic_word_num)) u_bit_mem_msb   (.in(w_inst_is_mem  ), .out(w_inst_mem_msb  ));
 
 endmodule // inst_buffer

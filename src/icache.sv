@@ -120,6 +120,7 @@ module icache(
     assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready;
     assign o_s2_resp.valid = r_s2_hit | ic_l2_resp_fire;
     assign o_s2_resp.data  = ic_l2_resp_fire ? ic_l2_resp.payload.data : w_s2_selected_data;
+    assign o_s2_resp.be    = {mrh_pkg::ICACHE_DATA_B_W{1'b1}};
 
     // ======================
     // IC Miss State Machine

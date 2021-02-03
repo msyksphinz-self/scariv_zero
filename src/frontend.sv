@@ -103,7 +103,7 @@ u_inst_buffer
 
    .o_inst_rdy(),
    .i_inst_in (w_s2_ic_resp.data),
-   .i_inst_byte_en(),
+   .i_inst_byte_en(w_s2_ic_resp.be),
 
    .o_inst_buf_valid(),
    .o_inst_buf(),

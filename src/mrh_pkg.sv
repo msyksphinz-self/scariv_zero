@@ -28,6 +28,7 @@ package mrh_pkg;
   typedef struct packed {
     logic valid;
     logic [mrh_pkg::ICACHE_DATA_W-1:0] data;
+    logic [mrh_pkg::ICACHE_DATA_B_W-1:0] be;
   } ic_resp_t;
 
   typedef enum logic [4:0] {
@@ -107,6 +108,9 @@ package mrh_pkg;
     logic          valid;
     logic [31: 0]  inst;
   } inst_buf_t;
+
+  typedef enum { CAT_ARITH, CAT_MEM } inst_cat_t;
+
 
 
 endpackage

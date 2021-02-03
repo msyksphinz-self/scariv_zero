@@ -26,6 +26,12 @@ File.open("riscv_decoder.json") do |file|
   $arch_table = JSON.load(file)
 end
 
+ctrl_idx = ARGV[0]
+if ARGV.size != 1 then
+  STDERR.print "Please specify signal fields in JSON file\n"
+end
+
+
 ctrl_fields = []
 
 $arch_table.each{ |arch|
@@ -34,7 +40,7 @@ $arch_table.each{ |arch|
     exit
   end
 
-  arch["inst_ctrl"].each {|ctrl|
+  arch[ctrl_idx].each {|ctrl|
     search_hit = false
     ctrl_fields.each{|ctrl_field|
       if ctrl_field.name == ctrl[0] then
@@ -84,9 +90,9 @@ $arch_table.each{ |arch|
   tmp_file.print arch["field"].join.gsub('X', '-')
   tmp_file.print ' '
   ctrl_fields.each {|ctrl|
-    if arch["inst_ctrl"].map{|n| n[0]}.include?(ctrl.name) then
-      sig_index = arch["inst_ctrl"].map{|n| n[0]}.index(ctrl.name)
-      sig_val   = arch["inst_ctrl"].map{|n| n[1]}[sig_index]
+    if arch[ctrl_idx].map{|n| n[0]}.include?(ctrl.name) then
+      sig_index = arch[ctrl_idx].map{|n| n[0]}.index(ctrl.name)
+      sig_val   = arch[ctrl_idx].map{|n| n[1]}[sig_index]
       puts "ctrl name " + ctrl.name + " sig_index = " + sig_index.to_s + ", sig_val = " + sig_val + ", final index = " + ctrl.op_list.index(sig_val).to_s
       tmp_file.printf("%0*b", Math.log2(ctrl.op_list.length), ctrl.op_list.index(sig_val))
     else
@@ -117,9 +123,9 @@ result_line.pop
 
 puts result_line
 
-sv_file = open("decoder.sv", "w")
+sv_file = open("decoder_" + ctrl_idx + ".sv", "w")
 
-sv_file.puts "module decoder ("
+sv_file.puts "module decoder_" + ctrl_idx + " ("
 sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
 ctrl_fields.each_with_index{|ct, i|
   sv_file.print "  output logic "
