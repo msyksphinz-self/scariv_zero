@@ -10,7 +10,9 @@ package mrh_pkg;
   localparam ARITH_DISP_SIZE = 4;
   localparam MEM_DISP_SIZE   = 4;
 
-  localparam RN_SIZE = 5;
+  localparam FLIST_SIZE = 32;
+  localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE;
+  localparam RNID_W = $clog2(RNID_SIZE);
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;
@@ -121,11 +123,11 @@ package mrh_pkg;
   typedef enum   { GPR, FPR } reg_t;
 
   typedef struct packed {
-    logic          valid;
-    logic [31: 0]  inst;
-    logic            rd_valid;
-    reg_t            rd_type;
-    logic [RN_SIZE-1: 0] rd_id;
+    logic                        valid;
+    logic [31: 0]                inst;
+    logic                        rd_valid;
+    reg_t                        rd_type;
+    logic [mrh_pkg::RNID_W-1: 0] rd_id;
   } disp_t;
 
 endpackage

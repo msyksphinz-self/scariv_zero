@@ -1,5 +1,5 @@
 interface disp_if;
-  mrh_pkg::disp_t inst;
+  mrh_pkg::disp_t[mrh_pkg::DISP_SIZE-1:0] inst;
   logic valid;
   logic ready;
   modport master(

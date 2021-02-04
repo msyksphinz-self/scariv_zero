@@ -17,7 +17,12 @@
 ../src/mrh_tile.sv
 ../src/mrh_tile_wrapper.sv
 ../src/inst_buffer.sv
+
+../src/mrh_rename.sv
+../src/freelist.sv
+
 ../src/decoder_cat.sv
+../src/decoder_reg.sv
 ../src/decoder_inst_ctrl.sv
 
 ../tb/mrh_tb.sv
