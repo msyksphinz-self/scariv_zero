@@ -17,6 +17,9 @@ TOP      = mrh_tb
 FILELIST = filelist.f
 
 all:
+	cd ../src && ./build_decoder.rb inst_ctrl
+	cd ../src && ./build_decoder.rb reg
+	cd ../src && ./build_decoder.rb cat
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk

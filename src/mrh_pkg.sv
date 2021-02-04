@@ -116,7 +116,7 @@ package mrh_pkg;
     logic [31: 0]  inst;
   } inst_buf_t;
 
-  typedef enum { CAT_ARITH, CAT_MEM } inst_cat_t;
+  typedef enum { NONE, CAT_ARITH, CAT_MEM } inst_cat_t;
 
   typedef enum   { GPR, FPR } reg_t;
 

@@ -54,7 +54,7 @@ logic [ 1: 0]           rs1_type[ic_word_num-1:0];
 logic [ic_word_num-1:0] rs2_type;
 
 generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
-  logic raw_cat;
+  logic [ 1: 0] raw_cat;
   decoder_cat
   u_decoder_cat (
                 .inst(inst_buffer_q[0][w_idx*32+:32]),

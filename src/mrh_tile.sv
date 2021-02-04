@@ -25,13 +25,13 @@ frontend u_frontend
 );
 
 
-mrh_rename u_rename
-  (
-   .i_clk (i_clk),
-   .i_reset_n (i_reset_n),
-
-   .disp (disp)
-   );
+// mrh_rename u_rename
+//   (
+//    .i_clk (i_clk),
+//    .i_reset_n (i_reset_n),
+//
+//    .disp (disp)
+//    );
 
 
 endmodule
