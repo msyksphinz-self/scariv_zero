@@ -1,10 +1,12 @@
 module frontend
 (
-    input logic i_clk,
-    input logic i_reset_n,
+ input logic i_clk,
+ input logic i_reset_n,
 
-    l2_req_if.master ic_l2_req,
-    l2_resp_if.slave ic_l2_resp
+ l2_req_if.master ic_l2_req,
+ l2_resp_if.slave ic_l2_resp,
+
+ disp_if.master disp
 );
 
 
@@ -91,9 +93,6 @@ module frontend
          );
 
 inst_buffer
-  #(
-    .DISPATCH_SIZE(5)
-    )
 u_inst_buffer
   (
    .i_clk     (i_clk    ),
@@ -105,10 +104,9 @@ u_inst_buffer
    .i_inst_in (w_s2_ic_resp.data),
    .i_inst_byte_en(w_s2_ic_resp.be),
 
-   .o_inst_buf_valid(),
-   .o_inst_buf(),
-   .i_inst_buf_ready()
+   .o_inst_buf_valid ( disp.valid ),
+   .o_inst_buf       ( disp.inst  ),
+   .i_inst_buf_ready ( disp.ready )
    );
-
 
 endmodule

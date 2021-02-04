@@ -52,7 +52,9 @@ $arch_table.each{ |arch|
       end
     }
     if not search_hit then
-      ctrl_fields.push(CtrlSig_t::new(ctrl[0], ctrl[1]))
+      ctrl_field = CtrlSig_t::new(ctrl[0], "_")
+      ctrl_field.push(ctrl[1])
+      ctrl_fields.push(ctrl_field)
     end
   }
 }
@@ -94,9 +96,9 @@ $arch_table.each{ |arch|
       sig_index = arch[ctrl_idx].map{|n| n[0]}.index(ctrl.name)
       sig_val   = arch[ctrl_idx].map{|n| n[1]}[sig_index]
       puts "ctrl name " + ctrl.name + " sig_index = " + sig_index.to_s + ", sig_val = " + sig_val + ", final index = " + ctrl.op_list.index(sig_val).to_s
-      tmp_file.printf("%0*b", Math.log2(ctrl.op_list.length), ctrl.op_list.index(sig_val))
+      tmp_file.printf("%0*b", Math.log2(ctrl.op_list.length+1), ctrl.op_list.index(sig_val))
     else
-      tmp_file.printf("%0*b", Math.log2(ctrl.op_list.length), 0)
+      tmp_file.printf("%0*b", Math.log2(ctrl.op_list.length+1), 0)
     end
   }
   tmp_file.puts ''

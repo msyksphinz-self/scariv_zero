@@ -1,6 +1,7 @@
 ../src/mrh_pkg.sv
 
 ../src/l2_if.sv
+../src/disp_if.sv
 
 ../src/bit_oh_or.sv
 ../src/bit_ff_lsb.sv

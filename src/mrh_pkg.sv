@@ -5,8 +5,12 @@ package mrh_pkg;
 
   localparam PC_INIT_VAL = 'h8000_0000;
 
+  localparam DISP_SIZE = 5;
+
   localparam ARITH_DISP_SIZE = 4;
   localparam MEM_DISP_SIZE   = 4;
+
+  localparam RN_SIZE = 5;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;
@@ -114,7 +118,15 @@ package mrh_pkg;
 
   typedef enum { CAT_ARITH, CAT_MEM } inst_cat_t;
 
+  typedef enum   { GPR, FPR } reg_t;
 
+  typedef struct packed {
+    logic          valid;
+    logic [31: 0]  inst;
+    logic            rd_valid;
+    reg_t            rd_type;
+    logic [RN_SIZE-1: 0] rd_id;
+  } disp_t;
 
 endpackage
 

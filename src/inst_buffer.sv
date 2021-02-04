@@ -1,8 +1,5 @@
 module inst_buffer
-  #(
-    parameter DISPATCH_SIZE = 5
-    )
-(
+  (
  input logic                                i_clk,
  input logic                                i_reset_n,
 
@@ -13,7 +10,7 @@ module inst_buffer
  input logic [mrh_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
  output logic                               o_inst_buf_valid,
- output mrh_pkg::inst_buf_t                 o_inst_buf[DISPATCH_SIZE],
+ output mrh_pkg::disp_t [mrh_pkg::DISP_SIZE-1:0] o_inst_buf,
  input logic                                i_inst_buf_ready
  );
 
@@ -52,6 +49,10 @@ logic [ic_word_num-1:0] w_inst_is_mem;
 logic [ic_word_num-1:0] w_inst_arith_msb;
 logic [ic_word_num-1:0] w_inst_mem_msb;
 
+logic [ic_word_num-1:0] rd_valid;
+logic [ 1: 0]           rs1_type[ic_word_num-1:0];
+logic [ic_word_num-1:0] rs2_type;
+
 generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
   logic raw_cat;
   decoder_cat
@@ -61,33 +62,48 @@ generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
                 );
   assign w_inst_cat[w_idx] = mrh_pkg::inst_cat_t'(raw_cat);
 
-  assign w_inst_is_arith[w_idx] = w_inst_cat[w_idx] == mrh_pkg::CAT_ARITH;
-  assign w_inst_is_mem  [w_idx] = w_inst_cat[w_idx] == mrh_pkg::CAT_MEM;
+  decoder_reg
+    u_decoder_reg (
+                   .inst(inst_buffer_q[0][w_idx*32+:32]),
+                   .rd(rd_valid[w_idx]),
+                   .r1(rs1_type[w_idx]),
+                   .r2(rs2_type[w_idx])
+                   );
+
+  assign w_inst_is_arith[w_idx] = inst_buffer_vld_q[0] & (w_inst_cat[w_idx] == mrh_pkg::CAT_ARITH);
+  assign w_inst_is_mem  [w_idx] = inst_buffer_vld_q[0] & (w_inst_cat[w_idx] == mrh_pkg::CAT_MEM  );
 
 end
 endgenerate
 
-logic [DISPATCH_SIZE-1:0] w_inst_arith_pick_up;
-logic [DISPATCH_SIZE-1:0] w_inst_mem_pick_up;
-logic [DISPATCH_SIZE-1:0] w_inst_pick_up_or;
-logic [DISPATCH_SIZE-1:0] w_inst_dispatch_mask;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_arith_pick_up;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
 
-logic [DISPATCH_SIZE-1:0] w_inst_arith_disp;
-logic [DISPATCH_SIZE-1:0] w_inst_mem_disp;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_disp_or;
+logic [mrh_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 
-assign w_inst_arith_pick_up = w_inst_is_arith[DISPATCH_SIZE-1:0];
-assign w_inst_mem_pick_up   = w_inst_is_mem  [DISPATCH_SIZE-1:0];
-assign w_inst_pick_up_or    = w_inst_arith_pick_up | w_inst_mem_pick_up;
+assign w_inst_arith_pick_up = w_inst_is_arith[mrh_pkg::DISP_SIZE-1:0];
+assign w_inst_mem_pick_up   = w_inst_is_mem  [mrh_pkg::DISP_SIZE-1:0];
 
-logic [$clog2(DISPATCH_SIZE)-1:0] w_inst_arith_cnt;
-logic [$clog2(DISPATCH_SIZE)-1:0] w_inst_mem_cnt;
+bit_pick_up #(.WIDTH(mrh_pkg::DISP_SIZE), .NUM(mrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
+bit_pick_up #(.WIDTH(mrh_pkg::DISP_SIZE), .NUM(mrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
 
-bit_cnt #(.WIDTH(DISPATCH_SIZE)) u_arith_bit_cnt (.in(w_inst_arith_pick_up), .out(w_inst_arith_cnt));
-bit_cnt #(.WIDTH(DISPATCH_SIZE)) u_mem_bit_cnt   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_cnt));
+assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp;
 
-bit_pick_up #(.WIDTH(DISPATCH_SIZE), .NUM(mrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
-bit_pick_up #(.WIDTH(DISPATCH_SIZE), .NUM(mrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
+bit_tree_msb #(.WIDTH(mrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out(w_inst_disp_mask));
 
-bit_tree_msb #(.WIDTH(DISPATCH_SIZE)) u_inst_msb (.in(w_inst_pick_up_or), .out(w_inst_dispatch_mask));
+assign o_inst_buf_valid = |w_inst_disp_mask;
+generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
+  assign o_inst_buf[d_idx].inst  = inst_buffer_q[0][d_idx*32+:32];
+
+  assign o_inst_buf[d_idx].rd_valid = rd_valid[d_idx];
+  assign o_inst_buf[d_idx].rd_type  = mrh_pkg::GPR;
+  assign o_inst_buf[d_idx].rd_id    = 'h0;
+end
+endgenerate
+
 
 endmodule // inst_buffer
