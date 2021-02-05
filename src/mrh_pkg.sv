@@ -125,9 +125,19 @@ package mrh_pkg;
   typedef struct packed {
     logic                        valid;
     logic [31: 0]                inst;
+
     logic                        rd_valid;
     reg_t                        rd_type;
     logic [mrh_pkg::RNID_W-1: 0] rd_id;
+
+    logic                        rs1_valid;
+    reg_t                        rs1_type;
+    logic [mrh_pkg::RNID_W-1: 0] rs1_id;
+
+    logic                        rs2_valid;
+    reg_t                        rs2_type;
+    logic [mrh_pkg::RNID_W-1: 0] rs2_id;
+
   } disp_t;
 
 endpackage

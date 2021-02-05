@@ -1,0 +1,66 @@
+module mrh_rename_map
+  (
+   input logic                              i_clk,
+   input logic                              i_reset_n,
+
+   input logic [mrh_pkg::DISP_SIZE * 2-1:0] i_arch_valid,
+   input logic [ 4: 0]                      i_arch_id[mrh_pkg::DISP_SIZE * 2],
+   output logic [mrh_pkg::RNID_W-1: 0]      o_rnid[mrh_pkg::DISP_SIZE * 2],
+
+
+   input logic [mrh_pkg::DISP_SIZE-1:0]     i_update,
+   input logic [ 4: 0]                      i_update_arch_id [mrh_pkg::DISP_SIZE],
+   input logic [mrh_pkg::RNID_W-1: 0]       i_update_rnid [mrh_pkg::DISP_SIZE]
+   );
+
+logic [mrh_pkg::RNID_W-1: 0]                map[31: 0];
+
+function logic [mrh_pkg::RNID_W: 0] select_latest_rnid (input logic [mrh_pkg::DISP_SIZE-1:0] i_update,
+                                                        input logic [ 4: 0]                tgt_arch_id,
+                                                        input logic [ 4: 0]                i_update_arch_id [mrh_pkg::DISP_SIZE],
+                                                        input logic [mrh_pkg::RNID_W-1: 0] i_update_rnid [mrh_pkg::DISP_SIZE]);
+logic [mrh_pkg::RNID_W-1: 0]                                                               rnid_tmp[mrh_pkg::DISP_SIZE];
+logic [mrh_pkg::DISP_SIZE-1: 0]                                                            valid_tmp;
+logic [mrh_pkg::RNID_W: 0]                                                                 ret;
+
+  for (int i = 0; i < mrh_pkg::DISP_SIZE; i++) begin
+    if (i_update[i] && i_update_arch_id[i] == tgt_arch_id) begin
+      rnid_tmp [i] = i_update_rnid[i];
+      valid_tmp[i] = 1'b1;
+    end else begin
+      if (i == 0) begin
+        rnid_tmp [i] = 'h0;
+        valid_tmp[i] = 1'b0;
+      end else begin
+        rnid_tmp [i] = rnid_tmp[i-1];
+        valid_tmp[i] = valid_tmp[i-1];
+      end
+    end
+  end
+
+  ret = {valid_tmp[mrh_pkg::DISP_SIZE-1], rnid_tmp[mrh_pkg::DISP_SIZE-1]};
+  return ret;
+
+endfunction // select_latest_rnid
+
+
+generate for (genvar i = 0; i < 32; i++) begin : map_loop
+logic w_update;
+logic [mrh_pkg::RNID_W-1: 0] w_update_rnid;
+  assign {w_update, w_update_rnid} = select_latest_rnid (i_update,
+                                                         i,
+                                                         i_update_arch_id,
+                                                         i_update_rnid);
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      map[i] <= i;
+    end else begin
+      if (w_update) begin
+        map[i] <= w_update_rnid;
+      end
+    end
+  end
+end
+endgenerate
+
+endmodule // mrh_rename_map

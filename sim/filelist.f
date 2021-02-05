@@ -20,6 +20,7 @@
 
 ../src/mrh_rename.sv
 ../src/freelist.sv
+../src/mrh_rename_map.sv
 
 ../src/decoder_cat.sv
 ../src/decoder_reg.sv
