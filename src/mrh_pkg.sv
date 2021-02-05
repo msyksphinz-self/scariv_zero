@@ -128,13 +128,16 @@ package mrh_pkg;
 
     logic                        rd_valid;
     reg_t                        rd_type;
+    logic [ 4: 0]                rd_regidx;
     logic [mrh_pkg::RNID_W-1: 0] rd_id;
 
     logic                        rs1_valid;
     reg_t                        rs1_type;
+    logic [ 4: 0]                rs1_regidx;
     logic [mrh_pkg::RNID_W-1: 0] rs1_id;
 
     logic                        rs2_valid;
+    logic [ 4: 0]                rs2_regidx;
     reg_t                        rs2_type;
     logic [mrh_pkg::RNID_W-1: 0] rs2_id;
 

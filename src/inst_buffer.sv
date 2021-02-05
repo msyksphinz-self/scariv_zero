@@ -96,12 +96,24 @@ bit_tree_msb #(.WIDTH(mrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out
 
 assign o_inst_buf_valid = |w_inst_disp_mask;
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
-  assign o_inst_buf[d_idx].inst  = inst_buffer_q[0][d_idx*32+:32];
+  logic [31: 0] w_inst;
+  assign w_inst = inst_buffer_q[0][d_idx*32+:32];
 
-  assign o_inst_buf[d_idx].rd_valid = rd_valid[d_idx];
-  assign o_inst_buf[d_idx].rd_type  = mrh_pkg::GPR;
-  assign o_inst_buf[d_idx].rd_id    = 'h0;
+  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
+  assign o_inst_buf[d_idx].inst  = w_inst;
+
+  assign o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx];
+  assign o_inst_buf[d_idx].rd_type    = mrh_pkg::GPR;
+  assign o_inst_buf[d_idx].rd_regidx  = w_inst[11: 7];
+
+  assign o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] == 'h0;
+  assign o_inst_buf[d_idx].rs1_type   = mrh_pkg::GPR;
+  assign o_inst_buf[d_idx].rs1_regidx = w_inst[19:15];
+
+  assign o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] == 'h0;
+  assign o_inst_buf[d_idx].rs2_type   = mrh_pkg::GPR;
+  assign o_inst_buf[d_idx].rs2_regidx = w_inst[24:20];
+
 end
 endgenerate
 

@@ -60,7 +60,15 @@ logic [mrh_pkg::RNID_W-1: 0] w_update_rnid;
       end
     end
   end
+
 end
 endgenerate
+
+generate for (genvar i = 0; i < RNID_W; i++) begin : rnid_loop
+  assign o_rnid[i * 2 + 0] = map[i_arch_id[i * 2 + 0];
+  assign o_rnid[i * 2 + 1] = map[i_arch_id[i * 2 + 1];
+end
+endgenerate
+
 
 endmodule // mrh_rename_map

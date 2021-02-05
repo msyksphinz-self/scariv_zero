@@ -41,8 +41,8 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src
   assign w_archreg_valid [d_idx*2 + 0] = disp.inst[d_idx].rs1_valid;
   assign w_archreg_valid [d_idx*2 + 1] = disp.inst[d_idx].rs2_valid;
 
-  assign w_archreg [d_idx*2 + 0] = 'h0;
-  assign w_archreg [d_idx*2 + 1] = 'h0;
+  assign w_archreg [d_idx*2 + 0] = disp.inst[d_idx].rs1_regidx;
+  assign w_archreg [d_idx*2 + 1] = disp.inst[d_idx].rs2_regidx;
 
   assign w_update_arch_id[d_idx] = 'h0;
   assign w_update_rnid   [d_idx] = 'h0;
