@@ -16,13 +16,25 @@ VERILATOR_OPTS += --trace-underscore
 TOP      = mrh_tb
 FILELIST = filelist.f
 
-all:
+.PHONY: rv32 rv64
+
+all: rv32 rv64
+
+common:
 	cd ../src && ./build_decoder.rb inst_ctrl
 	cd ../src && ./build_decoder.rb reg
 	cd ../src && ./build_decoder.rb cat
+
+rv32: common
+	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
+	xml2stems obj_dir_riscv32/Vmrh_tb.xml obj_dir_riscv32/Vmrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
-	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk
+
+rv64: common
+	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
+	xml2stems obj_dir_riscv64/Vmrh_tb.xml obj_dir_riscv64/Vmrh_tb.stems
+	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv64 -f V$(TOP).mk
 
 clean:

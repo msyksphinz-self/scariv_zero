@@ -11,7 +11,8 @@ module mrh_tile
 l2_req_if  l2_req  ();
 l2_resp_if l2_resp ();
 
-disp_if    disp ();
+disp_if    disp_from_frontend ();
+disp_if    disp_to_scheduler ();
 
 frontend u_frontend
 (
@@ -21,7 +22,7 @@ frontend u_frontend
     .ic_l2_req  (ic_l2_req ),
     .ic_l2_resp (ic_l2_resp),
 
-    .disp (disp)
+    .disp (disp_from_frontend)
 );
 
 
@@ -30,7 +31,8 @@ mrh_rename u_rename
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
-   .disp (disp)
+   .disp_from_frontend (disp_from_frontend),
+   .disp_to_scheduler (disp_to_scheduler)
    );
 
 

@@ -120,7 +120,7 @@ package mrh_pkg;
 
   typedef enum { NONE, CAT_ARITH, CAT_MEM } inst_cat_t;
 
-  typedef enum   { GPR, FPR } reg_t;
+  typedef enum  { GPR, FPR } reg_t;
 
   typedef struct packed {
     logic                        valid;
@@ -129,19 +129,34 @@ package mrh_pkg;
     logic                        rd_valid;
     reg_t                        rd_type;
     logic [ 4: 0]                rd_regidx;
-    logic [mrh_pkg::RNID_W-1: 0] rd_id;
+    logic [mrh_pkg::RNID_W-1: 0] rd_rnid;
 
     logic                        rs1_valid;
     reg_t                        rs1_type;
     logic [ 4: 0]                rs1_regidx;
-    logic [mrh_pkg::RNID_W-1: 0] rs1_id;
+    logic [mrh_pkg::RNID_W-1: 0] rs1_rnid;
 
     logic                        rs2_valid;
     logic [ 4: 0]                rs2_regidx;
     reg_t                        rs2_type;
-    logic [mrh_pkg::RNID_W-1: 0] rs2_id;
+    logic [mrh_pkg::RNID_W-1: 0] rs2_rnid;
 
   } disp_t;
+
+function disp_t assign_disp_rename (disp_t disp,
+                                    logic [RNID_W-1: 0] rd_rnid,
+                                    logic [RNID_W-1: 0] rs1_rnid,
+                                    logic [RNID_W-1: 0] rs2_rnid);
+  disp_t ret;
+  ret = disp;
+
+  ret.rd_rnid  = rd_rnid;
+  ret.rs1_rnid = rs1_rnid;
+  ret.rs2_rnid = rs2_rnid;
+
+  return ret;
+
+endfunction // assign_disp_rename
 
 endpackage
 

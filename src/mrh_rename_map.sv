@@ -64,9 +64,9 @@ logic [mrh_pkg::RNID_W-1: 0] w_update_rnid;
 end
 endgenerate
 
-generate for (genvar i = 0; i < RNID_W; i++) begin : rnid_loop
-  assign o_rnid[i * 2 + 0] = map[i_arch_id[i * 2 + 0];
-  assign o_rnid[i * 2 + 1] = map[i_arch_id[i * 2 + 1];
+generate for (genvar i = 0; i < mrh_pkg::DISP_SIZE; i++) begin : rnid_loop
+  assign o_rnid[i * 2 + 0] = map[i_arch_id[i * 2 + 0]];
+  assign o_rnid[i * 2 + 1] = map[i_arch_id[i * 2 + 1]];
 end
 endgenerate
 
