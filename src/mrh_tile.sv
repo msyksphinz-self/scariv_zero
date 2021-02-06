@@ -12,6 +12,7 @@ l2_req_if  l2_req  ();
 l2_resp_if l2_resp ();
 
 disp_if    disp_from_frontend ();
+disp_if    disp_from_decoder ();
 disp_if    disp_to_scheduler ();
 
 frontend u_frontend
@@ -25,13 +26,22 @@ frontend u_frontend
     .disp (disp_from_frontend)
 );
 
+mrh_decoder u_decoder
+  (
+   .i_clk (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .disp_from_frontend (disp_from_frontend),
+   .disp_to_renamer  (disp_from_decoder)
+   );
+
 
 mrh_rename u_rename
   (
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
-   .disp_from_frontend (disp_from_frontend),
+   .disp_from_frontend (disp_from_decoder),
    .disp_to_scheduler (disp_to_scheduler)
    );
 

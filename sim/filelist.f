@@ -18,6 +18,7 @@
 ../src/mrh_tile_wrapper.sv
 ../src/inst_buffer.sv
 
+../src/mrh_decoder.sv
 ../src/mrh_rename.sv
 ../src/freelist.sv
 ../src/mrh_rename_map.sv

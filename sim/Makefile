@@ -20,22 +20,30 @@ FILELIST = filelist.f
 
 all: rv32 rv64
 
-common:
-	cd ../src && ./build_decoder.rb inst_ctrl
-	cd ../src && ./build_decoder.rb reg
-	cd ../src && ./build_decoder.rb cat
+DECODE_FILES  =
+DECODE_FILES += ../src/decoder_cat.sv
+DECODE_FILES += ../src/decoder_inst_ctrl.sv
+DECODE_FILES += ../src/decoder_reg.sv
 
-rv32: common
+../src/decoder_cat.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb cat
+../src/decoder_inst_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb inst_ctrl
+../src/decoder_reg.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb reg
+
+
+rv32: $(DECODE_FILES)
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv32/Vmrh_tb.xml obj_dir_riscv32/Vmrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk
 
-rv64: common
+rv64: $(DECODE_FILES)
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv64/Vmrh_tb.xml obj_dir_riscv64/Vmrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv64 -f V$(TOP).mk
 
 clean:
-	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64
+	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64 $(DECODE_FILES)

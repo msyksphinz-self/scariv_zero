@@ -126,6 +126,11 @@ package mrh_pkg;
     logic                        valid;
     logic [31: 0]                inst;
 
+    logic [ 2: 0]                  op;
+    logic                          imm;
+    logic                          size;
+    logic                          sign;
+
     logic                        rd_valid;
     reg_t                        rd_type;
     logic [ 4: 0]                rd_regidx;
