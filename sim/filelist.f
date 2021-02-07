@@ -22,6 +22,7 @@
 ../src/mrh_rename.sv
 ../src/freelist.sv
 ../src/mrh_rename_map.sv
+../src/mrh_inflight_list.sv
 
 ../src/decoder_cat.sv
 ../src/decoder_reg.sv

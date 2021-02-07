@@ -21,6 +21,10 @@ disp_if disp_to_scheduler_d();
 logic [mrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[mrh_pkg::DISP_SIZE];
 logic [mrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[mrh_pkg::DISP_SIZE];
 
+logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_inflights;
+
+logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
+logic [ 4: 0]                           w_rd_regidx[mrh_pkg::DISP_SIZE];
 
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
   freelist
@@ -69,6 +73,31 @@ mrh_rename_map u_mrh_rename_map
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   )
    );
+
+
+generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : rd_loop
+  assign w_rd_valids[d_idx] = disp_from_frontend.inst[d_idx].rd_valid;
+  assign w_rd_regidx[d_idx] = disp_from_frontend.inst[d_idx].rd_regidx;
+end
+endgenerate
+
+mrh_inflight_list u_inflight_map
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_addr   (w_archreg),
+   .o_valids (w_inflights),
+
+   .i_update_fetch_vld (w_rd_valids),
+   .i_update_fetch_addr(w_rd_regidx),
+   .i_update_fetch_data(),
+
+   .i_update_cmt_vld (),
+   .i_update_cmt_addr(),
+   .i_update_cmt_data()
+
+);
 
 
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop

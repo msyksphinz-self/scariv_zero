@@ -12,6 +12,7 @@ VERILATOR_OPTS += --trace-fst
 VERILATOR_OPTS += --trace-params
 VERILATOR_OPTS += --trace-structs
 VERILATOR_OPTS += --trace-underscore
+VERILATOR_OPTS += --unroll-count 1024
 
 TOP      = mrh_tb
 FILELIST = filelist.f

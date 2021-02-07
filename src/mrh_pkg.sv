@@ -140,11 +140,13 @@ package mrh_pkg;
     reg_t                        rs1_type;
     logic [ 4: 0]                rs1_regidx;
     logic [mrh_pkg::RNID_W-1: 0] rs1_rnid;
+    logic                        rs1_ready;
 
     logic                        rs2_valid;
     logic [ 4: 0]                rs2_regidx;
     reg_t                        rs2_type;
     logic [mrh_pkg::RNID_W-1: 0] rs2_rnid;
+    logic                        rs2_ready;
 
   } disp_t;
 
