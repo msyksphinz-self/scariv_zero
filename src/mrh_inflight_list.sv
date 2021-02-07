@@ -57,30 +57,46 @@ endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  logic w_update_vld_tmp[mrh_pkg::DISP_SIZE];
-  always_comb begin
-    if (i_update_fetch_vld[0] &&
-        i_addr[d_idx * 2 + 0] == i_update_fetch_addr[0]) begin
-      w_update_vld_tmp [0] = 1'b1;
-      w_update_data_tmp[0] = i_update_fetch_data[0];
-    end
-  end
+logic w_update_fetch_vld_0;
+logic w_update_fetch_vld_1;
+logic w_update_fetch_data_0;
+logic w_update_fetch_data_1;
 
-  for (int u_idx = 1; u_idx < mrh_pkg::DIPS_SIZE; u_idx++) begin
-    always_comb begin
-      if (i_update_fetch_vld[u_idx] &&
-          i_addr[d_idx * 2 + 0] == i_update_fetch_addr[u_idx]) begin
-        w_update_vld_tmp [u_idx] = 1'b1;
-        w_update_data_tmp[u_idx] = i_update_fetch_data[u_idx];
-      end else begin
-        w_update_vld_tmp [u_idx] = w_update_vld_tmp [u_idx-1];
-        w_update_data_tmp[u_idx] = w_update_data_tmp[u_idx-1];
-      end
-    end
-  end // for (int u_idx = 0; u_idx < mrh_pkg::DIPS_SIZE; u_idx++)
+  select_latest_1bit
+    #(
+      .SEL_WIDTH(mrh_pkg::DISP_SIZE),
+      .KEY_WIDTH(5)
+      )
+  u_select_latest_update_0
+    (
+     .i_cmp_key (i_addr[d_idx * 2 + 0]),
+     .i_valid (i_update_fetch_vld),
+     .i_keys  (i_update_fetch_addr),
+     .i_data  (i_update_fetch_data),
 
-  assign o_valids[d_idx * 2 + 0] = r_inflight_list[i_addr[d_idx * 2 + 0]];
-  assign o_valids[d_idx * 2 + 1] = r_inflight_list[i_addr[d_idx * 2 + 1]];
+     .o_valid (w_update_fetch_vld_0),
+     .o_data  (w_update_fetch_data_0)
+     );
+
+  select_latest_1bit
+    #(
+      .SEL_WIDTH(mrh_pkg::DISP_SIZE),
+      .KEY_WIDTH(5)
+      )
+  u_select_latest_update_1
+    (
+     .i_cmp_key (i_addr[d_idx * 2 + 1]),
+     .i_valid (i_update_fetch_vld),
+     .i_keys  (i_update_fetch_addr),
+     .i_data  (i_update_fetch_data),
+
+     .o_valid (w_update_fetch_vld_1),
+     .o_data  (w_update_fetch_data_1)
+     );
+
+
+  assign o_valids[d_idx * 2 + 0] = w_update_fetch_vld_0 ? w_update_fetch_data_0 : r_inflight_list[i_addr[d_idx * 2 + 0]];
+  assign o_valids[d_idx * 2 + 1] = w_update_fetch_vld_1 ? w_update_fetch_data_1 : r_inflight_list[i_addr[d_idx * 2 + 1]];
 end
 endgenerate
 

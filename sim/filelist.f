@@ -9,6 +9,9 @@
 ../src/bit_tree_msb.sv
 ../src/bit_pick_up.sv
 
+../src/select_latest.sv
+../src/select_latest_1bit.sv
+
 ../src/data_array.sv
 ../src/icache.sv
 ../src/tag_array.sv
