@@ -21,7 +21,7 @@ disp_if disp_to_scheduler_d();
 logic [mrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[mrh_pkg::DISP_SIZE];
 logic [mrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[mrh_pkg::DISP_SIZE];
 
-logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_inflights;
+logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
 logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
 logic [ 4: 0]                           w_rd_regidx[mrh_pkg::DISP_SIZE];
@@ -89,7 +89,7 @@ mrh_inflight_list u_inflight_map
    .i_reset_n (i_reset_n),
 
    .i_addr   (w_archreg),
-   .o_valids (w_inflights),
+   .o_valids (w_active),
 
    .i_update_fetch_vld (w_rd_valids),
    .i_update_fetch_addr(w_rd_regidx),
@@ -176,7 +176,9 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src
   assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
   assign disp_to_scheduler_d.inst[d_idx] = mrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
                                                                         rd_rnid     [d_idx],
+                                                                        w_active [d_idx*2+0],
                                                                         rs1_rnid_fwd[d_idx],
+                                                                        w_active [d_idx*2+1],
                                                                         rs2_rnid_fwd[d_idx]);
 
 end // block: src_rn_loop

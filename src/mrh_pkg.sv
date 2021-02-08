@@ -154,14 +154,18 @@ package mrh_pkg;
 
 function disp_t assign_disp_rename (disp_t disp,
                                     logic [RNID_W-1: 0] rd_rnid,
+                                    logic               rs1_active,
                                     logic [RNID_W-1: 0] rs1_rnid,
+                                    logic               rs2_active,
                                     logic [RNID_W-1: 0] rs2_rnid);
   disp_t ret;
   ret = disp;
 
-  ret.rd_rnid  = rd_rnid;
-  ret.rs1_rnid = rs1_rnid;
-  ret.rs2_rnid = rs2_rnid;
+  ret.rd_rnid   = rd_rnid;
+  ret.rs1_ready = rs1_active;
+  ret.rs1_rnid  = rs1_rnid;
+  ret.rs2_ready = rs2_active;
+  ret.rs2_rnid  = rs2_rnid;
 
   return ret;
 
