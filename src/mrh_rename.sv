@@ -25,6 +25,7 @@ logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_inflights;
 
 logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
 logic [ 4: 0]                           w_rd_regidx[mrh_pkg::DISP_SIZE];
+logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_data;
 
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
   freelist
@@ -78,6 +79,7 @@ mrh_rename_map u_mrh_rename_map
 generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : rd_loop
   assign w_rd_valids[d_idx] = disp_from_frontend.inst[d_idx].rd_valid;
   assign w_rd_regidx[d_idx] = disp_from_frontend.inst[d_idx].rd_regidx;
+  assign w_rd_data  [d_idx] = !disp_from_frontend.inst[d_idx].rd_valid;
 end
 endgenerate
 
@@ -91,7 +93,7 @@ mrh_inflight_list u_inflight_map
 
    .i_update_fetch_vld (w_rd_valids),
    .i_update_fetch_addr(w_rd_regidx),
-   .i_update_fetch_data(),
+   .i_update_fetch_data(w_rd_data  ),
 
    .i_update_cmt_vld (),
    .i_update_cmt_addr(),

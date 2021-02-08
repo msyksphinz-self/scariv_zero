@@ -7,6 +7,8 @@ package mrh_pkg;
 
   localparam DISP_SIZE = 5;
 
+  localparam ALU_INST_NUM = 2;
+
   localparam ARITH_DISP_SIZE = 4;
   localparam MEM_DISP_SIZE   = 4;
 
@@ -164,6 +166,33 @@ function disp_t assign_disp_rename (disp_t disp,
   return ret;
 
 endfunction // assign_disp_rename
+
+typedef struct packed {
+  logic                        valid;
+  logic [31: 0]                inst;
+
+  logic [ 2: 0]                  op;
+  logic                          imm;
+  logic                          size;
+  logic                          sign;
+
+  logic                        rd_valid;
+  reg_t                        rd_type;
+  logic [ 4: 0]                rd_regidx;
+  logic [mrh_pkg::RNID_W-1: 0] rd_rnid;
+
+  logic                        rs1_valid;
+  reg_t                        rs1_type;
+  logic [ 4: 0]                rs1_regidx;
+  logic [mrh_pkg::RNID_W-1: 0] rs1_rnid;
+  logic                        rs1_ready;
+
+  logic                        rs2_valid;
+  logic [ 4: 0]                rs2_regidx;
+  reg_t                        rs2_type;
+  logic [mrh_pkg::RNID_W-1: 0] rs2_rnid;
+  logic                        rs2_ready;
+} sched_t;
 
 endpackage
 

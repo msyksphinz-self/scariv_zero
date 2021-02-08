@@ -3,8 +3,8 @@ module bit_cnt
     parameter WIDTH=32
     )
 (
- input logic [WIDTH-1:0]             in,
- output logic [$clog2(WIDTH+1)-1: 0] out
+ input logic [WIDTH-1:0]           in,
+ output logic [$clog2(WIDTH): 0] out
  );
 
 if (WIDTH == 1) begin

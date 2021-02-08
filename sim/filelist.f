@@ -8,6 +8,7 @@
 ../src/bit_extract_msb.sv
 ../src/bit_tree_msb.sv
 ../src/bit_pick_up.sv
+../src/bit_pick_1_index.sv
 
 ../src/select_latest.sv
 ../src/select_latest_1bit.sv
@@ -30,6 +31,11 @@
 ../src/decoder_cat.sv
 ../src/decoder_reg.sv
 ../src/decoder_inst_ctrl.sv
+
+../src/mrh_scheduler.sv
+../src/mrh_sched_entry.sv
+
+../src/mrh_alu.sv
 
 ../tb/mrh_tb.sv
 ../tb/tb_l2_behavior_ram.sv

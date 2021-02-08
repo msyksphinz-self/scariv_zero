@@ -1,0 +1,54 @@
+module mrh_scheduler
+  #(
+    parameter ENTRY_SIZE = 32,
+    parameter IN_PORT_SIZE = 2
+    )
+(
+ input logic                     i_clk,
+ input logic                     i_reset_n,
+
+ input logic [IN_PORT_SIZE-1: 0] i_disp_valid,
+ mrh_pkg::disp_t                 i_disp_info[IN_PORT_SIZE]
+ );
+
+logic [$clog2(IN_PORT_SIZE)-1: 0] w_input_vld_cnt;
+logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_in_ptr;
+
+/* verilator lint_off WIDTH */
+bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_entry_in_ptr <= 'h0;
+  end else begin
+    if (|i_disp_valid) begin
+      r_entry_in_ptr <= r_entry_in_ptr + w_input_vld_cnt; /* verilator lint_off WIDTH */
+    end
+  end
+end
+
+
+generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
+  logic [IN_PORT_SIZE-1: 0] w_input_valid;
+  mrh_pkg::disp_t           w_disp_entry;
+
+  for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (r_entry_in_ptr + i_idx == s_idx);
+  end
+
+  bit_oh_or #(.WIDTH($size(mrh_pkg::disp_t)), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
+
+  mrh_sched_entry
+    u_sched_entry(
+                  .i_clk    (i_clk    ),
+                  .i_reset_n(i_reset_n),
+
+                  .i_put      (|w_input_valid),
+                  .i_put_data (w_disp_entry  ),
+
+                  .o_entry()
+                  );
+
+end
+endgenerate
+
+endmodule // mrh_scheduler

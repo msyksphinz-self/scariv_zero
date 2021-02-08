@@ -62,6 +62,8 @@ logic w_update_fetch_vld_1;
 logic w_update_fetch_data_0;
 logic w_update_fetch_data_1;
 
+  // RS1 register file
+  // Forwarding information from update_fetch path
   select_latest_1bit
     #(
       .SEL_WIDTH(mrh_pkg::DISP_SIZE),
@@ -78,6 +80,8 @@ logic w_update_fetch_data_1;
      .o_data  (w_update_fetch_data_0)
      );
 
+  // RS2 register file
+  // Forwarding information from update_fetch path
   select_latest_1bit
     #(
       .SEL_WIDTH(mrh_pkg::DISP_SIZE),
