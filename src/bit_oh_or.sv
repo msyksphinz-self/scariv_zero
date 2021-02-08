@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 module bit_oh_or
   #(
@@ -21,4 +21,4 @@ module bit_oh_or
 
 endmodule
 
-`default_nettype wire
+// `default_nettype wire

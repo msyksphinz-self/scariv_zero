@@ -1,5 +1,7 @@
 `default_nettype none
 
+`include "riscv_common_pkg.sv"
+
 package riscv_pkg;
 
   import riscv_common_pkg::*;

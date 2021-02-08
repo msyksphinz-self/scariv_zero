@@ -1,0 +1,148 @@
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+ERROR: [VRFC 10-2989] 'mrh_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:2]
+ERROR: [VRFC 10-2865] interface 'l2_req_if' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:1]
+ERROR: [VRFC 10-2989] 'mrh_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:18]
+ERROR: [VRFC 10-2865] interface 'l2_resp_if' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:17]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:4]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:19]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:26]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:36]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:71]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:91]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:96]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:102]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:107]
+ERROR: [VRFC 10-2865] package 'mrh_pkg' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:3]
+ERROR: [VRFC 10-2989] 'mrh_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:4]
+ERROR: [VRFC 10-2865] interface 'l2_req_if' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:3]
+ERROR: [VRFC 10-2989] 'mrh_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:20]
+ERROR: [VRFC 10-2865] interface 'l2_resp_if' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv:19]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:4]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:19]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:26]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:36]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:71]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:91]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:96]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:102]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:107]
+ERROR: [VRFC 10-2865] package 'mrh_pkg' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:3]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+ERROR: [VRFC 10-2989] 'riscv_common_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:5]
+ERROR: [VRFC 10-2865] package 'riscv_pkg' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:3]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:6]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:21]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:28]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:38]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:73]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:93]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:98]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:104]
+ERROR: [VRFC 10-2989] 'riscv_pkg' is not declared [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:109]
+ERROR: [VRFC 10-2865] package 'mrh_pkg' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:5]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+WARNING: [VRFC 10-3264] design element 'riscv_common_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv_common_pkg.sv:1]
+WARNING: [VRFC 10-3264] design element 'riscv_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:5]
+WARNING: [VRFC 10-3264] design element 'mrh_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:5]
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/disp_if.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_oh_or
+ERROR: [VRFC 10-1103] net type must be explicitly specified for 'i_oh' when default_nettype is none [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv:9]
+ERROR: [VRFC 10-1103] net type must be explicitly specified for 'i_data' when default_nettype is none [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv:10]
+ERROR: [VRFC 10-2865] module 'bit_oh_or' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv:3]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+WARNING: [VRFC 10-3264] design element 'riscv_common_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv_common_pkg.sv:1]
+WARNING: [VRFC 10-3264] design element 'riscv_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:5]
+WARNING: [VRFC 10-3264] design element 'mrh_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:5]
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/disp_if.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_oh_or
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_ff_lsb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_ff_lsb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_extract_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_extract_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_tree_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_tree_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_pick_up
+ERROR: [VRFC 10-1280] procedural assignment to a non-register out is not permitted, left-hand side should be reg/integer/time/genvar [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv:25]
+ERROR: [VRFC 10-1280] procedural assignment to a non-register out is not permitted, left-hand side should be reg/integer/time/genvar [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv:28]
+ERROR: [VRFC 10-2865] module 'bit_pick_up' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv:1]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+WARNING: [VRFC 10-3264] design element 'riscv_common_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv_common_pkg.sv:1]
+WARNING: [VRFC 10-3264] design element 'riscv_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:5]
+WARNING: [VRFC 10-3264] design element 'mrh_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:5]
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/disp_if.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_oh_or
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_ff_lsb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_ff_lsb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_extract_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_extract_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_tree_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_tree_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_pick_up
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_1_index.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_pick_1_index
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv" into library work
+INFO: [VRFC 10-311] analyzing module select_latest
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'data_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:28]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'valid_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:29]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'data_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:31]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'valid_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:32]
+ERROR: [VRFC 10-2865] module 'select_latest' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:1]
+Vivado Simulator 2018.3
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: /opt/Xilinx/Vivado/2018.3/bin/unwrapped/lnx64.o/xelab --timescale 1ns/1ps --mt off -debug all tb test 
+Turned off multi-threading.
+ERROR: [XSIM 43-3225] Cannot find design unit work.tb in library work located at xsim.dir/work.
+ERROR: Simulation snapshot name missing from the command line.

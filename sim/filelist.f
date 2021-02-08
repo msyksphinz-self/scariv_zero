@@ -1,3 +1,5 @@
+../src/riscv64_pkg.sv
+
 ../src/mrh_pkg.sv
 
 ../src/l2_if.sv

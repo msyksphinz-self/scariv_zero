@@ -4,8 +4,8 @@ module bit_pick_up
     parameter WIDTH = 32
     )
 (
- input [WIDTH-1:0]  in,
- output [WIDTH-1:0] out
+ input logic [WIDTH-1:0]  in,
+ output logic [WIDTH-1:0] out
  );
 
 /* verilator lint_off UNOPTFLAT */

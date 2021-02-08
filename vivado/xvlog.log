@@ -1,0 +1,26 @@
+WARNING: [XSIM 43-3479] Unable to increase the current process stack size.
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/l2_if.sv" into library work
+WARNING: [VRFC 10-3264] design element 'riscv_common_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv_common_pkg.sv:1]
+WARNING: [VRFC 10-3264] design element 'riscv_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/riscv64_pkg.sv:5]
+WARNING: [VRFC 10-3264] design element 'mrh_pkg' is previously defined, ignoring this definition [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/mrh_pkg.sv:5]
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/disp_if.sv" into library work
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_oh_or.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_oh_or
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_ff_lsb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_ff_lsb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_extract_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_extract_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_tree_msb.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_tree_msb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_up.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_pick_up
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/bit_pick_1_index.sv" into library work
+INFO: [VRFC 10-311] analyzing module bit_pick_1_index
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv" into library work
+INFO: [VRFC 10-311] analyzing module select_latest
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'data_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:28]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'valid_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:29]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'data_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:31]
+ERROR: [VRFC 10-3149] bit-select or part-select is not allowed in a assign statement for non-net 'valid_tmp' [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:32]
+ERROR: [VRFC 10-2865] module 'select_latest' ignored due to previous errors [/home/msyksphinz/work/riscv/chipyard/chipyard_msh/generators/msrh/src/main/resources/vsrc/msrh/src/select_latest.sv:1]
