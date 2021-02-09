@@ -1,5 +1,3 @@
-`include "mrh_pkg.sv"
-
 interface l2_req_if;
   mrh_pkg::l2_req_t payload;
   logic valid;

@@ -1,7 +1,5 @@
 `default_nettype none
 
-`include "riscv64_pkg.sv"
-
 package mrh_pkg;
   import riscv_pkg::*;
 

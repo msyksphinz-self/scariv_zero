@@ -1,5 +1,6 @@
+PATH_INC += ../src
+
 XVLOG_ARGS += --sv
-XVLOG_ARGS += -i $(PATH_ROOT)
 XVLOG_ARGS += $(addprefix -i , $(PATH_INC))
 XVLOG_ARGS += $(addprefix -d , $(DEFINE))
 
