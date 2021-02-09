@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 module icache(
   input logic i_clk,
@@ -164,4 +164,4 @@ module icache(
 
 endmodule
 
-`default_nettype wire
+// `default_nettype wire

@@ -42,7 +42,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign o_inst_rdy = !(&inst_buffer_vld_q);
 
 localparam ic_word_num = mrh_pkg::ICACHE_DATA_B_W / 4;
-mrh_pkg::inst_cat_t [ic_word_num-1: 0] w_inst_cat;
+mrh_pkg::inst_cat_t w_inst_cat[ic_word_num];
 logic [ic_word_num-1:0] w_inst_is_arith;
 logic [ic_word_num-1:0] w_inst_is_mem;
 

@@ -16,7 +16,7 @@ module select_latest
 
 
 /* verilator lint_off UNOPTFLAT */
-logic [DATA_WIDTH-1: 0]        data_tmp[mrh_pkg::DISP_SIZE];
+logic [DATA_WIDTH-1: 0]        data_tmp[SEL_WIDTH];
 logic [SEL_WIDTH-1: 0]         valid_tmp;
 
 assign data_tmp [0] = i_valid[0] && (i_keys[0] == i_cmp_key) ? i_data[0] : 'h0;
@@ -25,11 +25,11 @@ assign valid_tmp[0] = i_valid[0] && (i_keys[0] == i_cmp_key);
 generate for (genvar i = 1; i < SEL_WIDTH; i++) begin
   always_comb begin
     if (i_valid[i] && i_keys[i] == i_cmp_key) begin
-      assign data_tmp [i] = i_data[i];
-      assign valid_tmp[i] = 1'b1;
+      data_tmp [i] = i_data[i];
+      valid_tmp[i] = 1'b1;
     end else begin
-      assign data_tmp [i] = data_tmp[i-1];
-      assign valid_tmp[i] = valid_tmp[i-1];
+      data_tmp [i] = data_tmp[i-1];
+      valid_tmp[i] = valid_tmp[i-1];
     end // else: !if(i_valid[i] && i_keys[i] == i_cmp_key)
   end // always_comb
 end

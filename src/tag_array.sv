@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 module tag_array
   #(parameter TAG_W = 24,
@@ -26,4 +26,4 @@ module tag_array
 
 endmodule
 
-`default_nettype wire
+// `default_nettype wire

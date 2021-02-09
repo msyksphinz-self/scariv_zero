@@ -16,7 +16,7 @@ module frontend
     // ==============
 
     logic       s0_vaddr_valid;
-    logic [mrh_pkg::VADDR_W-1:0] r_s0_vaddr;
+    logic [riscv_pkg::VADDR_W-1:0] r_s0_vaddr;
     mrh_pkg::tlb_req_t           w_s0_tlb_req;
     mrh_pkg::tlb_resp_t          w_s0_tlb_resp;
     mrh_pkg::ic_req_t            w_s0_ic_req;
@@ -27,7 +27,7 @@ module frontend
     // s1 stage
     // ==============
 
-    logic [mrh_pkg::PADDR_W-1:0] r_s1_paddr;
+    logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
     logic                        r_s1_tlb_miss;
 
     // ==============

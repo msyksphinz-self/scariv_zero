@@ -6,10 +6,10 @@ module data_array
     parameter ADDR_W = 12
   )
 (
-  input logic i_clk,
-  input logic i_reset_n,
+  input var i_clk,
+  input var i_reset_n,
 
-  input logic [ADDR_W-1:0] i_addr,
+  input var [ADDR_W-1:0] i_addr,
   output logic [WIDTH-1:0] o_data
 );
 
