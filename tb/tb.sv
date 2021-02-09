@@ -3,6 +3,11 @@ module tb;
 logic w_clk;
 logic w_reset_n;
 
+logic w_timeout;
+
+logic w_terminate;
+assign w_terminate = w_timeout;
+
 mrh_tile_wrapper u_mrh_tile_wrapper
   (
     .i_clk     (w_clk),
@@ -23,8 +28,19 @@ mrh_tile_wrapper u_mrh_tile_wrapper
     .o_ic_resp_ready ()
    );
 
+localparam STEP = 1;
+localparam TIMEOUT = 100000;
+
 initial begin
   w_clk = 1'b0;
   w_reset_n = 1'b0;
+  #(STEP * TIMEOUT);
+  w_timeout = 1'b1;
+  $finish;
 end
+
+always #STEP begin
+  w_clk = ~w_clk;
+end
+
 endmodule // tb
