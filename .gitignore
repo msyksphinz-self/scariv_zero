@@ -1,0 +1,9 @@
+verilator_sim/mrh_tb_rv32
+verilator_sim/mrh_tb_rv64
+verilator_sim/simx.fst
+
+vivado_sim/*.jou
+vivado_sim/*.log
+vivado_sim/*.wdb
+vivado_sim/*.pb
+vivado_sim/xsim.dir
