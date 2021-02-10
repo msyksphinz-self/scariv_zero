@@ -1,7 +1,4 @@
 module mrh_sched_entry
-  #(
-    parameter REL_BUS_SIZE = 10
-    )
 (
    input logic i_clk,
    input logic i_reset_n,
@@ -11,18 +8,15 @@ module mrh_sched_entry
 
    output logic            o_entry_valid,
    output logic            o_entry_ready,
-   output mrh_pkg::issue_t o_entry
-   );
+   output mrh_pkg::issue_t o_entry,
+
    /* Forwarding path */
-   input mrh_pkg::release_t release_in[REL_BUS_SIZE]
+   input mrh_pkg::release_t release_in[mrh_pkg::REL_BUS_SIZE]
    );
 
-mrh_pkg::disp_t r_entry;
-mrh_pkg::disp_t r_entry_d;
 
 logic     r_entry_valid;
 mrh_pkg::issue_t r_entry;
-
 
 function logic all_operand_ready(mrh_pkg::issue_t entry);
   return (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready) &

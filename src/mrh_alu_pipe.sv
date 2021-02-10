@@ -5,7 +5,10 @@ module mrh_alu_pipe
 
    input mrh_pkg::issue_t rv0_issue,
 
-   input mrh_pkg::target_t         target_in [TGT_BUS_SIZE]
+   input mrh_pkg::target_t         target_in [mrh_pkg::TGT_BUS_SIZE],
+
+   output mrh_pkg::release_t       ex1_release_out,
+   output mrh_pkg::target_t        ex3_target_out
    );
 
 typedef struct packed {
@@ -30,9 +33,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-decode_inst_ctrl u_pipe_ctrl
+decoder_inst_ctrl u_pipe_ctrl
   (
-   .inst(ex0_issue.inst)
+   .inst (r_ex0_issue.inst),
    .op   (w_ex0_pipe_ctrl.op  ),
    .imm  (w_ex0_pipe_ctrl.imm ),
    .size (w_ex0_pipe_ctrl.size),
@@ -41,16 +44,16 @@ decode_inst_ctrl u_pipe_ctrl
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex1_issue <= 'h0;
+    r_ex1_issue     <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
   end else begin
-    r_ex1_issue <= w_ex0_issue;
+    r_ex1_issue     <= r_ex0_issue;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
   end
 end
 
 
-generate for (genvar rs_idx = 0; rs_idx < REL_BUS_SIZE; rs_idx++) begin : rs_rel_loop
+generate for (genvar rs_idx = 0; rs_idx < mrh_pkg::REL_BUS_SIZE; rs_idx++) begin : rs_rel_loop
   // assign w_rs1_rel_fwd_valid[i] = r_entry.rs1_valid & release_in[rs_idx].rd_valid &
   //                                 (r_entry.rs1_type == release_in[rs_idx].rd_type) &
   //                                 (r_entry.rs1_rnid == release_in[rs_idx].rd_rnid));

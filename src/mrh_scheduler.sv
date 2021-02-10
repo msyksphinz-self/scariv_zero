@@ -1,8 +1,7 @@
 module mrh_scheduler
   #(
     parameter ENTRY_SIZE = 32,
-    parameter IN_PORT_SIZE = 2,
-    parameter REL_BUS_SIZE = 4
+    parameter IN_PORT_SIZE = 2
     )
 (
  input logic                     i_clk,
@@ -12,8 +11,13 @@ module mrh_scheduler
  mrh_pkg::disp_t                 i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
- input mrh_pkg::release_t        release_in[REL_BUS_SIZE]
+ input mrh_pkg::release_t        release_in[mrh_pkg::REL_BUS_SIZE],
+
+ output mrh_pkg::issue_t o_issue
  );
+
+logic [ENTRY_SIZE-1:0] w_entry_ready;
+mrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE)-1: 0] w_input_vld_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_in_ptr;
@@ -49,13 +53,16 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .i_put      (|w_input_valid),
                   .i_put_data (w_disp_entry  ),
 
-                  .o_entry_valid(),
+                  .o_entry_valid(w_entry_ready[s_idx]),
                   .o_entry_ready(),
-                  .o_entry(),
+                  .o_entry(w_entry[s_idx]),
                   .release_in(release_in)
                   );
 
 end
 endgenerate
+
+// temporary
+assign o_issue = w_entry[0];
 
 endmodule // mrh_scheduler

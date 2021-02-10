@@ -39,6 +39,7 @@
 ../src/mrh_sched_entry.sv
 
 ../src/mrh_alu.sv
+../src/mrh_alu_pipe.sv
 
 ../tb/tb.sv
 ../tb/mrh_tb.sv

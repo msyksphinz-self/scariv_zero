@@ -36,3 +36,6 @@ lib_vivado: pre_vivado
 	-mv $(PATH_VIVADO_LIB) $(PATH_VIVADO_LIB)_$(TIME_CURRENT)
 	mkdir   $(PATH_VIVADO_LIB)
 	$(XVLOG) -work libcell=$(PATH_VIVADO_LIB) $(XVLOG_ARGS) -f filelist.f
+
+clean:
+	rm -rf *.vcd *.wdb *.log *.pb *.jou xsim.dir *.str

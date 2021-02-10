@@ -12,6 +12,9 @@ package mrh_pkg;
   localparam ARITH_DISP_SIZE = 4;
   localparam MEM_DISP_SIZE   = 4;
 
+  localparam REL_BUS_SIZE = ALU_INST_NUM;
+  localparam TGT_BUS_SIZE = REL_BUS_SIZE;
+
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE;
   localparam RNID_W = $clog2(RNID_SIZE);
@@ -260,7 +263,7 @@ typedef struct packed {
   logic                       valid;
   logic [mrh_pkg::RNID_W-1:0] rd_rnid;
   reg_t                       rd_type;
-  logic [riscv_pkg::XLEN-1: 0] rd_data;
+  logic [riscv_pkg::XLEN_W-1: 0] rd_data;
 } target_t;
 
 endpackage

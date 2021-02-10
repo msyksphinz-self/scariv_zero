@@ -17,6 +17,9 @@ disp_if    disp_to_scheduler ();
 
 logic [mrh_pkg::DISP_SIZE-1: 0] w_disp_valids;
 
+mrh_pkg::release_t  w_ex1_release[mrh_pkg::REL_BUS_SIZE];
+mrh_pkg::target_t   w_ex3_target [mrh_pkg::TGT_BUS_SIZE];
+
 frontend u_frontend
 (
     .i_clk (i_clk),
@@ -64,7 +67,13 @@ generate for (genvar alu_idx = 0; alu_idx < mrh_pkg::ALU_INST_NUM; alu_idx++) be
                                 .i_reset_n(i_reset_n),
 
                                 .disp_valid(w_disp_valids),
-                                .disp(disp_to_scheduler)
+                                .disp(disp_to_scheduler),
+
+                                .release_in(w_ex1_release),
+                                .target_in (w_ex3_target ),
+
+                                .ex1_release_out(w_ex1_release[alu_idx]),
+                                .ex3_target_out (w_ex3_target [alu_idx])
                                 );
 end
 endgenerate
