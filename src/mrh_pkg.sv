@@ -198,6 +198,19 @@ typedef struct packed {
   logic                        rs2_ready;
 } sched_t;
 
+typedef struct packed {
+logic          valid;
+logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+  reg_t rd_type;
+} release_t;
+
+typedef struct packed {
+  logic                       valid;
+  logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+  reg_t                       rd_type;
+  logic [riscv_pkg::XLEN-1: 0] rd_data;
+} target_t;
+
 endpackage
 
 `default_nettype wire

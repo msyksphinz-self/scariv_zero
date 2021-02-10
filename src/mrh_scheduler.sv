@@ -1,14 +1,18 @@
 module mrh_scheduler
   #(
     parameter ENTRY_SIZE = 32,
-    parameter IN_PORT_SIZE = 2
+    parameter IN_PORT_SIZE = 2,
+    parameter REL_BUS_SIZE = 4
     )
 (
  input logic                     i_clk,
  input logic                     i_reset_n,
 
  input logic [IN_PORT_SIZE-1: 0] i_disp_valid,
- mrh_pkg::disp_t                 i_disp_info[IN_PORT_SIZE]
+ mrh_pkg::disp_t                 i_disp_info[IN_PORT_SIZE],
+
+ /* Forwarding path */
+ input mrh_pkg::release_t        release_in[REL_BUS_SIZE]
  );
 
 logic [$clog2(IN_PORT_SIZE)-1: 0] w_input_vld_cnt;
@@ -45,7 +49,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .i_put      (|w_input_valid),
                   .i_put_data (w_disp_entry  ),
 
-                  .o_entry()
+                  .o_entry(),
+
+                  .release_in(release_in)
                   );
 
 end

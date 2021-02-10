@@ -36,6 +36,7 @@
 ../src/mrh_sched_entry.sv
 
 ../src/mrh_alu.sv
+../src/mrh_alu_pipe.sv
 
 ../tb/mrh_tb.sv
 ../tb/tb_l2_behavior_ram.sv

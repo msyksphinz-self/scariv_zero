@@ -7,7 +7,11 @@ module mrh_alu
  input logic                           i_reset_n,
 
  input logic [mrh_pkg::DISP_SIZE-1: 0] disp_valid,
- disp_if.slave                         disp
+ disp_if.slave                         disp,
+
+ /* Forwarding path */
+ input mrh_pkg::release_t        release_in[REL_BUS_SIZE],
+ input mrh_pkg::target_t         target_in [TGT_BUS_SIZE]
 );
 
 mrh_pkg::disp_t w_disp_inst[mrh_pkg::DISP_SIZE];
@@ -49,6 +53,9 @@ u_mrh_scheduler
    .i_disp_valid (disp_picked_inst_valid),
    .i_disp_info  (disp_picked_inst)
    );
+
+
+
 
 
 endmodule // mrh_alu
