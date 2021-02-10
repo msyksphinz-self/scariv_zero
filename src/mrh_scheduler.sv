@@ -49,8 +49,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .i_put      (|w_input_valid),
                   .i_put_data (w_disp_entry  ),
 
+                  .o_entry_valid(),
+                  .o_entry_ready(),
                   .o_entry(),
-
                   .release_in(release_in)
                   );
 

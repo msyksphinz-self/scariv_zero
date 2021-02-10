@@ -198,8 +198,60 @@ typedef struct packed {
   logic                        rs2_ready;
 } sched_t;
 
+
 typedef struct packed {
-logic          valid;
+  logic                        valid;
+  logic [31: 0]                inst;
+
+  logic                        rd_valid;
+  reg_t                        rd_type;
+  logic [ 4: 0]                rd_regidx;
+  logic [mrh_pkg::RNID_W-1: 0] rd_rnid;
+
+  logic                        rs1_valid;
+  reg_t                        rs1_type;
+  logic [ 4: 0]                rs1_regidx;
+  logic [mrh_pkg::RNID_W-1: 0] rs1_rnid;
+  logic                        rs1_ready;
+
+  logic                        rs2_valid;
+  logic [ 4: 0]                rs2_regidx;
+  reg_t                        rs2_type;
+  logic [mrh_pkg::RNID_W-1: 0] rs2_rnid;
+  logic                        rs2_ready;
+} issue_t;
+
+
+function issue_t assign_issue_t (sched_t in);
+  issue_t ret;
+
+  ret.valid      = in.valid     ;
+  ret.inst       = in.inst      ;
+
+  ret.rd_valid   = in.rd_valid  ;
+  ret.rd_type    = in.rd_type   ;
+  ret.rd_regidx  = in.rd_regidx ;
+  ret.rd_rnid    = in.rd_rnid   ;
+
+  ret.rs1_valid  = in.rs1_valid ;
+  ret.rs1_type   = in.rs1_type  ;
+  ret.rs1_regidx = in.rs1_regidx;
+  ret.rs1_rnid   = in.rs1_rnid  ;
+  ret.rs1_ready  = in.rs1_ready ;
+
+  ret.rs2_valid  = in.rs2_valid ;
+  ret.rs2_regidx = in.rs2_regidx;
+  ret.rs2_type   = in.rs2_type  ;
+  ret.rs2_rnid   = in.rs2_rnid  ;
+  ret.rs2_ready  = in.rs2_ready ;
+
+  return ret;
+
+endfunction // assign_issue_t
+
+
+  typedef struct packed {
+  logic          valid;
 logic [mrh_pkg::RNID_W-1:0] rd_rnid;
   reg_t rd_type;
 } release_t;

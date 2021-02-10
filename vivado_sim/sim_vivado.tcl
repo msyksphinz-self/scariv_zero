@@ -2,7 +2,7 @@
 # Proc
 #----------------------------------------------------------
 
-set dump "wdb"
+set dump "vcd"
 
 proc dump_vcd {start length hier} {
   run $start ns
