@@ -162,7 +162,6 @@ always #STEP begin
 end
 
 initial begin
-  $display("load_binary is called");
   load_binary("", "../tests/simple_chain_add/test.elf", 1'b1);
 end
 

@@ -42,7 +42,7 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : fre
                               .i_push(disp_from_frontend.inst[d_idx].rd_valid),
                               .i_push_id(),
 
-                              .i_pop(disp_from_frontend.inst[d_idx].rd_valid),
+                              .i_pop(disp_from_frontend.inst[d_idx].valid & disp_from_frontend.inst[d_idx].rd_valid),
                               .o_pop_id(rd_rnid[d_idx])
                               );
 end

@@ -1,6 +1,6 @@
 ../src/riscv64_pkg.sv
 
-../src/mrh_pkg.sv
+../src/msrh_pkg.sv
 
 ../src/l2_if.sv
 ../src/disp_if.sv
@@ -23,29 +23,29 @@
 ../src/tag_array.sv
 ../src/frontend.sv
 ../src/tlb.sv
-../src/mrh_tile.sv
-../src/mrh_tile_wrapper.sv
+../src/msrh_tile.sv
+../src/msrh_tile_wrapper.sv
 ../src/inst_buffer.sv
 
-../src/mrh_decoder.sv
-../src/mrh_rename.sv
+../src/msrh_decoder.sv
+../src/msrh_rename.sv
 ../src/freelist.sv
-../src/mrh_rename_map.sv
-../src/mrh_inflight_list.sv
+../src/msrh_rename_map.sv
+../src/msrh_inflight_list.sv
 
 ../src/decoder_cat.sv
 ../src/decoder_reg.sv
 ../src/decoder_inst_ctrl.sv
 
-../src/mrh_scheduler.sv
-../src/mrh_sched_entry.sv
+../src/msrh_scheduler.sv
+../src/msrh_sched_entry.sv
 
 ../src/phy_registers.sv
 
-../src/mrh_alu.sv
-../src/mrh_alu_pipe.sv
+../src/msrh_alu.sv
+../src/msrh_alu_pipe.sv
 
 ../tb/tb.sv
-../tb/mrh_tb.sv
+../tb/msrh_tb.sv
 ../tb/tb_l2_behavior_ram.sv
 ../tb/tb_elf_loader.sv
