@@ -8,7 +8,7 @@
 #include "Vmrh_tb.h"
 
 extern std::unique_ptr<Memory> m_memory;
-extern int32_t load_binary(std::string path_exec, std::string filename, bool is_load_dump);
+// extern int32_t load_binary(char const* path_exec, char const* filename, bool is_load_dump);
 extern bool elf_load_finish;
 
 int time_counter = 0;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
       case 'e': {
         m_memory   = std::unique_ptr<Memory> (new Memory ());
 
-        load_binary("", optarg, true);
+        int ret = load_binary("", optarg, true);
         break;
       }
     }

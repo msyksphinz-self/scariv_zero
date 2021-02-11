@@ -7,3 +7,7 @@ vivado_sim/*.log
 vivado_sim/*.wdb
 vivado_sim/*.pb
 vivado_sim/xsim.dir
+vivado_sim/.Xil
+vivado_sim/dpi.so
+vivado_sim/*.vcd
+vivado_sim/*.str

@@ -32,6 +32,8 @@ bool elf_load_finish = false;
 Addr_t  m_tohost_addr, m_fromhost_addr;
 bool    m_tohost_en = false, m_fromhost_en = false;
 
+extern "C" int load_binary(char const* path_exec, char const* filename, bool is_load_dump);
+
 extern "C" int debug_tick(
     unsigned char *debug_req_valid,
     unsigned char debug_req_ready,
@@ -96,8 +98,8 @@ static void load_bitfile (bfd *b, asection *section, PTR data);
 static void load_hex (bfd *b, asection *section, Memory *p_memory);
 
 
-extern "C" int32_t
-load_binary(const char* path_exec, const char* filename, bool is_load_dump)
+extern "C" int
+load_binary(char const* path_exec, char const* filename, bool is_load_dump)
 {
   g_dump_hex = is_load_dump;
   m_memory = std::unique_ptr<Memory> (new Memory ());
