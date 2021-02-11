@@ -5,7 +5,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"]],
-        "inst_ctrl":[["op", "sign_lui"], ["imm", "u"]]
+        "inst_ctrl":[["op", "sign_lui"], ["imm", "s"]]
     },
     {
         "name":"auipc      r[11:7],h[31:12]",
@@ -13,7 +13,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "pc"]],
-        "inst_ctrl":[["op", "sign_auipc"], ["imm", "u"]]
+        "inst_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
@@ -37,7 +37,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "inst_ctrl":[["op", "sign_add"]]
+        "inst_ctrl":[["op", "sign_add"], ["imm", "s"]]
     },
     {
         "name":"ld         r[11:7],h[31:20](r[19:15])",

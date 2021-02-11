@@ -14,7 +14,7 @@ wire tmp_5 = !inst[6] & inst[5] & inst[4] & !inst[3] & inst[2] & inst[1] & inst[
 assign op[2] = tmp_0 | 1'b0;
 assign op[1] = tmp_1 | tmp_3 | tmp_4 | 1'b0;
 assign op[0] = tmp_1 | tmp_3 | tmp_5 | 1'b0;
-assign imm = tmp_4 | tmp_5 | 1'b0;
+assign imm = tmp_3 | tmp_4 | tmp_5 | 1'b0;
 assign size = tmp_2 | 1'b0;
 assign sign = tmp_2 | 1'b0;
 endmodule

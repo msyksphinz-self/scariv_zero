@@ -106,11 +106,11 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : dis
   assign o_inst_buf[d_idx].rd_type    = mrh_pkg::GPR;
   assign o_inst_buf[d_idx].rd_regidx  = w_inst[11: 7];
 
-  assign o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] == 'h0;
+  assign o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
   assign o_inst_buf[d_idx].rs1_type   = mrh_pkg::GPR;
   assign o_inst_buf[d_idx].rs1_regidx = w_inst[19:15];
 
-  assign o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] == 'h0;
+  assign o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
   assign o_inst_buf[d_idx].rs2_type   = mrh_pkg::GPR;
   assign o_inst_buf[d_idx].rs2_regidx = w_inst[24:20];
 

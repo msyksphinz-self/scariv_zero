@@ -116,7 +116,7 @@ module mrh_alu_pipe (
       r_ex2_pipe_ctrl <= 'h0;
     end else begin
       r_ex2_rs1_data <= |w_ex1_rs1_fwd_valid ? w_ex1_rs1_selected_data : ex0_regread_rs1.data;
-      r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm ? {{(mrh_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
+      r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
                               |w_ex1_rs2_fwd_valid ? w_ex1_rs2_selected_data : ex0_regread_rs2.data;
 
       r_ex2_issue <= r_ex1_issue;
@@ -132,7 +132,7 @@ module mrh_alu_pipe (
       r_ex3_issue <= r_ex2_issue;
 
       case (r_ex2_pipe_ctrl.op)
-        3'b001 : r_ex3_result <= {{(mrh_pkg::XLEN_W-20){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12]};
+        3'b001 : r_ex3_result <= {{(riscv_pkg::XLEN_W-20){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12]};
         3'b010: r_ex3_result <= 'h0;
         3'b011: r_ex3_result <= r_ex2_rs1_data + r_ex2_rs2_data;
         3'b100: r_ex3_result <= r_ex2_rs1_data - r_ex2_rs2_data;

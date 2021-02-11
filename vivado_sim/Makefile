@@ -1,3 +1,5 @@
+all: sim_vivado
+
 PATH_INC += ../src
 
 XVLOG_ARGS += --sv
@@ -32,7 +34,7 @@ ifeq ($(strip $(PRE_COMPILE)), on)
   XELAB_ARGS += -L libcell=$(PATH_VIVADO_LIB)
 endif
 
-XELAB_ARGS += -sv_lib dpi -R
+XELAB_ARGS += -sv_lib dpi
 XELAB_ARGS += --lib bfd
 
 PATH_VIVADO_LIB := /storage/eda/libs/$(ID)/pezy/vivado
@@ -42,7 +44,19 @@ XVLOG := xvlog
 XELAB := xelab
 XSIM  := xsim
 
-sim_vivado:
+DECODE_FILES  =
+DECODE_FILES += ../src/decoder_cat.sv
+DECODE_FILES += ../src/decoder_inst_ctrl.sv
+DECODE_FILES += ../src/decoder_reg.sv
+
+../src/decoder_cat.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb cat
+../src/decoder_inst_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb inst_ctrl
+../src/decoder_reg.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb reg
+
+sim_vivado: $(DECODE_FILES)
 	$(XSC) $(XSC_ARGS) | tee sim.log
 	$(XVLOG) $(XVLOG_ARGS) -f filelist.f $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
 	$(XELAB) $(XELAB_ARGS) tb | tee -a sim.log
