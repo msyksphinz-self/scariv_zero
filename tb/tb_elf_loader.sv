@@ -28,10 +28,14 @@ logic                req_valid_reg;
 logic [riscv_pkg::PADDR_W-1:0] req_bits_addr_reg;
 logic [31:0]                   req_bits_data_reg;
 
-always_ff @(posedge i_clk) begin
-  req_valid_reg     <= __debug_req_valid;
-  req_bits_addr_reg <= __debug_req_bits_addr;
-  req_bits_data_reg <= __debug_req_bits_data;
+always_ff @(posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    req_valid_reg <= 1'b0;
+  end else begin
+    req_valid_reg     <= __debug_req_valid;
+    req_bits_addr_reg <= __debug_req_bits_addr;
+    req_bits_data_reg <= __debug_req_bits_data;
+  end
 end
 
 assign o_req_valid = req_valid_reg;
@@ -59,5 +63,7 @@ always_ff @(negedge i_clk, negedge i_reset_n) begin
       );
   end
 end
+
+assign __debug_req_bits_addr[riscv_pkg::PADDR_W-1:32] = 'h0;
 
 endmodule // tb_elf_loader

@@ -18,6 +18,8 @@ module tag_array
     if (!i_reset_n) begin
       o_tag <= {TAG_W{1'b0}};
       o_tag_valid <= 1'b0;
+
+      tag_valids <= {(2**WORDS){1'b0}};
     end else begin
       o_tag <= tag_array[i_addr[WORDS-1:0]];
       o_tag_valid <= tag_valids[i_addr[WORDS-1:0]];

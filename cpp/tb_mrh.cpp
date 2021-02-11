@@ -7,10 +7,8 @@
 #include <verilated_fst_c.h>
 #include "Vmrh_tb.h"
 
-extern std::unique_ptr<FunctionTable> m_func_table;
-extern std::unique_ptr<VariableTable> m_gvar_table;
 extern std::unique_ptr<Memory> m_memory;
-extern int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dump);
+extern int32_t load_binary(std::string path_exec, std::string filename, bool is_load_dump);
 extern bool elf_load_finish;
 
 int time_counter = 0;
@@ -48,10 +46,7 @@ int main(int argc, char** argv) {
       case 'e': {
         m_memory   = std::unique_ptr<Memory> (new Memory ());
 
-        m_func_table = std::unique_ptr<FunctionTable> (new FunctionTable ());
-        m_gvar_table = std::unique_ptr<VariableTable> (new VariableTable ());
-
-        LoadBinary("", optarg, true);
+        load_binary("", optarg, true);
         break;
       }
     }

@@ -1,39 +1,157 @@
 module tb;
 
 logic w_clk;
-logic w_reset_n;
+logic w_elf_loader_reset_n;
+logic w_mrh_reset_n;
+logic w_ram_reset_n;
 
 logic w_timeout;
 
 logic w_terminate;
 assign w_terminate = w_timeout;
 
+/* from Frontend IC */
+logic                                w_ic_req_valid;
+mrh_pkg::mem_cmd_t                   w_ic_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]       w_ic_req_addr;
+logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_req_tag;
+logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
+logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
+logic                                w_ic_req_ready;
+
+logic                                w_ic_resp_valid;
+logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
+logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
+logic                                w_ic_resp_ready  ;
+
+/* from ELF Loader */
+logic                                w_elf_req_valid;
+mrh_pkg::mem_cmd_t                   w_elf_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]       w_elf_req_addr;
+logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
+logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
+logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
+logic                                w_elf_req_ready;
+
+/* L2 Interface */
+logic                                w_l2_req_valid;
+mrh_pkg::mem_cmd_t                   w_l2_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]       w_l2_req_addr;
+logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
+logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
+logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
+logic                                w_l2_req_ready;
+
+logic                                w_l2_resp_valid;
+logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
+logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
+logic                                w_l2_resp_ready;
+
+/* Connection */
+assign w_l2_req_valid   = w_mrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
+assign w_l2_req_cmd     = w_mrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
+assign w_l2_req_addr    = w_mrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
+assign w_l2_req_tag     = w_mrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
+assign w_l2_req_data    = w_mrh_reset_n ? w_ic_req_data    : w_elf_req_data;
+assign w_l2_req_byte_en = w_mrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
+
+assign w_ic_req_ready  = w_l2_req_ready ;
+assign w_elf_req_ready = w_l2_req_ready ;
+
+assign w_ic_resp_valid = w_l2_resp_valid;
+assign w_ic_resp_tag   = w_l2_resp_tag  ;
+assign w_ic_resp_data  = w_l2_resp_data ;
+assign w_l2_resp_ready = w_ic_resp_ready;
+
 mrh_tile_wrapper u_mrh_tile_wrapper
   (
     .i_clk     (w_clk),
-    .i_reset_n (w_reset_n),
+    .i_reset_n (w_mrh_reset_n),
 
     // L2 request from ICache
-    .o_ic_req_valid  (),
-    .o_ic_req_cmd    (),
-    .o_ic_req_addr   (),
-    .o_ic_req_tag    (),
-    .o_ic_req_data   (),
-    .o_ic_req_byte_en(),
-    .i_ic_req_ready  (),
+    .o_ic_req_valid  (w_ic_req_valid  ),
+    .o_ic_req_cmd    (w_ic_req_cmd    ),
+    .o_ic_req_addr   (w_ic_req_addr   ),
+    .o_ic_req_tag    (w_ic_req_tag    ),
+    .o_ic_req_data   (w_ic_req_data   ),
+    .o_ic_req_byte_en(w_ic_req_byte_en),
+    .i_ic_req_ready  (w_ic_req_ready  ),
 
-    .i_ic_resp_valid (),
-    .i_ic_resp_tag   (),
-    .i_ic_resp_data  (),
-    .o_ic_resp_ready ()
+    .i_ic_resp_valid (w_ic_resp_valid ),
+    .i_ic_resp_tag   (w_ic_resp_tag   ),
+    .i_ic_resp_data  (w_ic_resp_data  ),
+    .o_ic_resp_ready (w_ic_resp_ready )
    );
+
+
+tb_l2_behavior_ram
+  #(
+    .DATA_W    (mrh_pkg::ICACHE_DATA_W),
+    .TAG_W     (mrh_pkg::L2_CMD_TAG_W),
+    .ADDR_W    (riscv_pkg::PADDR_W),
+    .BASE_ADDR ('h8000_0000),
+    .SIZE      (4096),
+    .RD_LAT    (10)
+    )
+u_tb_l2_behavior_ram
+  (
+   .i_clk     (w_clk        ),
+   .i_reset_n (w_ram_reset_n),
+
+   // L2 request from ICache
+   .i_req_valid   (w_l2_req_valid  ),
+   .i_req_cmd     (w_l2_req_cmd    ),
+   .i_req_addr    (w_l2_req_addr   ),
+   .i_req_tag     (w_l2_req_tag    ),
+   .i_req_data    (w_l2_req_data   ),
+   .i_req_byte_en (w_l2_req_byte_en),
+   .o_req_ready   (w_l2_req_ready  ),
+
+   .o_resp_valid  (w_l2_resp_valid),
+   .o_resp_tag    (w_l2_resp_tag  ),
+   .o_resp_data   (w_l2_resp_data ),
+   .i_resp_ready  (w_l2_resp_ready)
+   );
+
+
+tb_elf_loader
+u_tb_elf_loader
+  (
+   .i_clk     (w_clk               ),
+   .i_reset_n (w_elf_loader_reset_n),
+
+   // L2 request from ELF Loader
+   .o_req_valid   (w_elf_req_valid ),
+   .o_req_cmd     (w_elf_req_cmd   ),
+   .o_req_addr    (w_elf_req_addr  ),
+   .o_req_tag     (w_elf_req_tag   ),
+   .o_req_data    (w_elf_req_data  ),
+   .o_req_byte_en (w_elf_req_byte_en),
+   .i_req_ready   (w_elf_req_ready )
+   );
+
 
 localparam STEP = 1;
 localparam TIMEOUT = 100000;
 
 initial begin
   w_clk = 1'b0;
-  w_reset_n = 1'b0;
+  w_elf_loader_reset_n = 1'b0;
+  w_mrh_reset_n        = 1'b0;
+  w_ram_reset_n        = 1'b0;
+
+  #(STEP * 10);
+
+  w_elf_loader_reset_n = 1'b1;
+  w_mrh_reset_n        = 1'b0;
+  w_ram_reset_n        = 1'b1;
+
+  #(STEP * 100);
+
+  w_elf_loader_reset_n = 1'b0;
+  w_mrh_reset_n        = 1'b1;
+  w_ram_reset_n        = 1'b1;
+
   #(STEP * TIMEOUT);
   w_timeout = 1'b1;
   $finish;
@@ -42,5 +160,11 @@ end
 always #STEP begin
   w_clk = ~w_clk;
 end
+
+initial begin
+  $display("load_binary is called");
+  load_binary("", "../tests/simple_chain_add/test.elf", 1'b1);
+end
+
 
 endmodule // tb

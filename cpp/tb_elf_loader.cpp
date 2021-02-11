@@ -17,10 +17,10 @@
 #include <stdio.h>
 #include <vector>
 #include <memory>
-#include <vpi_user.h>
+// #include <vpi_user.h>
 #include <iostream>
 #include <iomanip>
-#include <svdpi.h>
+// #include <svdpi.h>
 
 // BFD debug information
 std::unique_ptr<FunctionTable> m_func_table;
@@ -31,8 +31,6 @@ bool elf_load_finish = false;
 
 Addr_t  m_tohost_addr, m_fromhost_addr;
 bool    m_tohost_en = false, m_fromhost_en = false;
-
-int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dump);
 
 extern "C" int debug_tick(
     unsigned char *debug_req_valid,
@@ -94,21 +92,20 @@ extern "C" int debug_tick(
 }
 
 bool g_dump_hex = false;
-int32_t LoadBinaryTable (std::string filename, bool is_load_dump);
-void LoadFunctionTable (bfd *abfd);
-void LoadGVariableTable (bfd *abfd);
 static void load_bitfile (bfd *b, asection *section, PTR data);
 static void load_hex (bfd *b, asection *section, Memory *p_memory);
 
 
-int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dump)
+extern "C" int32_t
+load_binary(const char* path_exec, const char* filename, bool is_load_dump)
 {
   g_dump_hex = is_load_dump;
+  m_memory = std::unique_ptr<Memory> (new Memory ());
 
   // open binary
-  bfd *abfd = bfd_openr (filename.c_str(), NULL);
+  bfd *abfd = bfd_openr (filename, NULL);
   if (abfd == NULL) {
-    perror (filename.c_str());
+    perror (filename);
     return -1;
   }
 
@@ -116,11 +113,11 @@ int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dum
 
   bfd_map_over_sections (abfd, load_bitfile, static_cast<void *>(m_memory.get()));
 
-  LoadFunctionTable (abfd);
-  LoadGVariableTable (abfd);
+  // LoadFunctionTable (abfd);
+  // LoadGVariableTable (abfd);
 
   /* Read Entry Point */
-  int fd = open(filename.c_str(), O_RDONLY);
+  int fd = open(filename, O_RDONLY);
   struct stat s;
   assert(fd != -1);
   if (fstat(fd, &s) < 0)
@@ -142,7 +139,7 @@ int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dum
 
   const int reset_vec_size = 8;
 
-  if (path_exec != "") {
+  if (!strcmp(path_exec, "")) {
     char szTmp[32];
     char dtb_path_buf[PATH_MAX];
     sprintf(szTmp, "/proc/%d/exe", getpid());
@@ -170,179 +167,6 @@ int32_t LoadBinary(std::string path_exec, std::string filename, bool is_load_dum
   }
 
   return 0;
-}
-
-
-int32_t LoadBinaryTable (std::string filename, bool is_load_dump)
-{
-  g_dump_hex = is_load_dump;
-
-  // open binary
-  bfd *abfd = bfd_openr (filename.c_str(), NULL);
-  if (abfd == NULL) {
-    perror (filename.c_str());
-    return -1;
-  }
-
-  bfd_check_format (abfd, bfd_object);
-  LoadFunctionTable (abfd);
-  LoadGVariableTable (abfd);
-
-  return 0;
-}
-
-
-void LoadFunctionTable (bfd *abfd)
-{
-  long    storage_needed;
-  asymbol **symbol_table;
-  long    number_of_symbols;
-
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
-  if (storage_needed < 0) {
-    std::cerr << "Error storage_needed < 0\n";
-    exit (EXIT_FAILURE);
-  }
-  if (storage_needed == 0) {
-    std::cerr << "Error storage_needed == 0\n";
-    exit (EXIT_FAILURE);
-  }
-
-  symbol_table = (asymbol **) malloc (storage_needed);
-
-  number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
-
-  if (number_of_symbols < 0) {
-    std::cerr << "Error: number_of_symbols < 0\n";
-    exit (EXIT_FAILURE);
-  }
-  for (int i = 0; i < number_of_symbols; i++) {
-
-    if (g_dump_hex) {
-      fprintf (stderr, "<Info: SymbolName= %s, FLAG=%x, Addr=%016lx>\n",
-                  bfd_asymbol_name (symbol_table[i]), symbol_table[i]->flags, bfd_asymbol_value(symbol_table[i]));
-    }
-    if ((symbol_table[i]->flags & BSF_FUNCTION ) != 0x00 ||
-        (symbol_table[i]->flags & BSF_DEBUGGING) != 0x00 ||
-        (symbol_table[i]->flags & BSF_GLOBAL)    != 0x00) {
-      Addr_t addr = bfd_asymbol_value(symbol_table[i]);
-
-      // FunctionInfo *p_func_info = new FunctionInfo ();
-      // p_func_info->symbol = bfd_asymbol_name(symbol_table[i]);
-      // p_func_info->addr   = addr;
-      // Insert new function table
-      // m_func_table->push_back (p_func_info);
-      m_func_table->insert(std::make_pair(addr, bfd_asymbol_name(symbol_table[i])));
-
-      if (g_dump_hex) {
-        std::stringstream str;
-        str << "<BSF_Function: 0x" << std::hex << std::setw(16) << std::setfill('0')
-            << addr << " " << bfd_asymbol_name(symbol_table[i]) << ">\n";
-        fprintf (stderr, "%s", str.str().c_str());
-      }
-    } else if ((symbol_table[i]->flags & BSF_LOCAL) != 0x00) {
-      // fprintf (stdout, "BSF_Local ");
-    } else {
-      // fprintf (stdout, "BSF_others ");
-    }
-  }
-
-  free (symbol_table);
-
-  if (g_dump_hex) {
-    fprintf (stderr, "<Finish loading function symbol table>\n");
-  }
-}
-
-
-void LoadGVariableTable (bfd *abfd)
-{
-  long    storage_needed;
-  asymbol **symbol_table;
-  long    number_of_symbols;
-
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
-  if (storage_needed < 0) {
-    std::cerr << "Error storage_needed < 0\n";
-    exit (EXIT_FAILURE);
-  }
-  if (storage_needed == 0) {
-    std::cerr << "Error storage_needed == 0\n";
-    exit (EXIT_FAILURE);
-  }
-
-  symbol_table = (asymbol **) malloc (storage_needed);
-
-  number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
-
-  if (number_of_symbols < 0) {
-    std::cerr << "Error: number_of_symbols < 0\n";
-    exit (EXIT_FAILURE);
-  }
-  for (int i = 0; i < number_of_symbols; i++) {
-
-    //  fprintf (stdout, "SymbolName=%s : ", bfd_asymbol_name (symbol_table[i]));
-    if ((symbol_table[i]->flags & BSF_FUNCTION) != 0x00) {
-      // fprintf (stdout, "BSF_Function ");
-
-    } else if ((symbol_table[i]->flags & BSF_LOCAL) != 0x00) {
-      // fprintf (stdout, "BSF_Local %s %08x\n",
-
-    } else if ((symbol_table[i]->flags & BSF_GLOBAL) != 0x00) {
-      // FunctionInfo *p_gvar_info = new FunctionInfo ();
-      // p_gvar_info->symbol = bfd_asymbol_name(symbol_table[i]);
-      // p_gvar_info->addr   = bfd_asymbol_value (symbol_table[i]);
-      // Insert new function table
-      // m_gvar_table->push_back (p_gvar_info);
-      m_gvar_table->insert(std::make_pair(bfd_asymbol_value (symbol_table[i]),
-                                          bfd_asymbol_name(symbol_table[i])));
-
-      if (g_dump_hex) {
-        std::stringstream str;
-        str << "<BSF_Global: 0x" << std::hex << std::setw(Addr_bitwidth / 4) << std::setfill('0')
-            << bfd_asymbol_value(symbol_table[i]) << " " << bfd_asymbol_name(symbol_table[i]) << ">\n";
-        fprintf (stderr, "%s", str.str().c_str());
-      }
-      if (!strcmp(bfd_asymbol_name(symbol_table[i]), "tohost")) {
-        if (g_dump_hex) {
-          std::stringstream str;
-          str << "<Info: set tohost address " << std::hex << std::setw(Addr_bitwidth / 4) << std::setfill('0')
-              << bfd_asymbol_value(symbol_table[i]) << ">\n";
-          fprintf (stderr, "%s", str.str().c_str());
-        }
-        m_tohost_addr = bfd_asymbol_value(symbol_table[i]);
-        m_tohost_en = true;
-      }
-      if (!strcmp(bfd_asymbol_name(symbol_table[i]), "fromhost")) {
-        if (g_dump_hex) {
-          std::stringstream str;
-          str << "<Info: set fromhost address " << std::hex << std::setw(Addr_bitwidth / 4) << std::setfill('0')
-              << bfd_asymbol_value(symbol_table[i]) << ">\n";
-          fprintf (stderr, "%s", str.str().c_str());
-        }
-        m_fromhost_addr = bfd_asymbol_value(symbol_table[i]);
-        m_fromhost_en = true;
-      }
-
-      // if (IsGenSignature() &&
-      //     !strcmp(bfd_asymbol_name(symbol_table[i]), "begin_signature")) {
-      //   m_sig_addr_start = bfd_asymbol_value(symbol_table[i]);
-      // } else {
-      //   m_sig_addr_start = 0x100;
-      // }
-      // if (IsGenSignature() &&
-      //     !strcmp(bfd_asymbol_name(symbol_table[i]), "end_signature")) {
-      //   m_sig_addr_end = bfd_asymbol_value(symbol_table[i]);
-      // } else {
-      //   m_sig_addr_end = 0x400;
-      // }
-    } else {
-      // fprintf (stdout, "BSF_others ");
-    }
-  }
-  if (g_dump_hex) {
-    fprintf (stderr, "<Finish loading global variable table>\n");
-  }
 }
 
 
@@ -376,7 +200,6 @@ static void load_hex (bfd *b, asection *section, Memory *p_memory)
 {
   int size = bfd_section_size (b, section);
   std::unique_ptr<Byte_t[]> buf (new Byte_t[size]);
-  // fprintf (stderr, "<Allocate %d>\n", size);
 
   if (!bfd_get_section_contents (b, section, buf.get(), 0, size))
     return;

@@ -9,6 +9,17 @@ XELAB_ARGS += --mt off
 
 XSIM_ARGS  += -t sim_vivado.tcl
 
+CPP_FILELIST += ../cpp/tb_elf_loader.cpp
+CPP_FILELIST += ../cpp/mem_body.cpp
+CPP_FILELIST += ../cpp/memory_block.cpp
+
+XSC_ARGS += --cppversion 14
+XSC_ARGS += $(CPP_FILELIST)
+XSC_ARGS += --gcc_link_options "-L/usr/lib64 -lbfd -I/usr/include/x86_64-linux-gnu/"
+
+DUMP=off
+
+
 ifneq ($(strip $(DUMP)), off)
   XELAB_ARGS += -debug all
 endif
@@ -21,16 +32,24 @@ ifeq ($(strip $(PRE_COMPILE)), on)
   XELAB_ARGS += -L libcell=$(PATH_VIVADO_LIB)
 endif
 
+XELAB_ARGS += -sv_lib dpi -R
+XELAB_ARGS += --lib bfd
+
 PATH_VIVADO_LIB := /storage/eda/libs/$(ID)/pezy/vivado
 
+XSC   := xsc
 XVLOG := xvlog
 XELAB := xelab
 XSIM  := xsim
 
 sim_vivado:
+	$(XSC) $(XSC_ARGS) | tee sim.log
 	$(XVLOG) $(XVLOG_ARGS) -f filelist.f $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
 	$(XELAB) $(XELAB_ARGS) tb | tee -a sim.log
-	$(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
+	DUMP_TYPE=$(DUMP) $(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
+
+gui_vivado:
+	$(XSIM) -g work.tb --wdb out.wdb
 
 lib_vivado: pre_vivado
 	-mv $(PATH_VIVADO_LIB) $(PATH_VIVADO_LIB)_$(TIME_CURRENT)
@@ -38,4 +57,4 @@ lib_vivado: pre_vivado
 	$(XVLOG) -work libcell=$(PATH_VIVADO_LIB) $(XVLOG_ARGS) -f filelist.f
 
 clean:
-	rm -rf *.vcd *.wdb *.log *.pb *.jou xsim.dir *.str
+	rm -rf *.vcd *.wdb *.log *.pb *.jou xsim.dir *.str .Xil dpi.so

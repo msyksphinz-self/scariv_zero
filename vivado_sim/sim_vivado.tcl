@@ -2,7 +2,7 @@
 # Proc
 #----------------------------------------------------------
 
-set dump "vcd"
+set dump $env(DUMP_TYPE)
 
 proc dump_vcd {start length hier} {
   run $start ns

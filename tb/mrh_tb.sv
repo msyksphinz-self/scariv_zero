@@ -1,3 +1,10 @@
+import "DPI-C" function load_binary
+(
+ input string path_exec,
+ input string filename,
+ input logic is_load_dump
+);
+
 module mrh_tb
   (
    input logic i_clk,
@@ -133,6 +140,5 @@ u_tb_elf_loader
    .o_req_byte_en (w_elf_req_byte_en),
    .i_req_ready   (w_elf_req_ready )
    );
-
 
 endmodule // mrh_tb
