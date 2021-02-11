@@ -21,6 +21,7 @@ mrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE)-1: 0] w_input_vld_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_in_ptr;
+logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_out_ptr;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -63,6 +64,17 @@ end
 endgenerate
 
 // temporary
-assign o_issue = w_entry[0];
+assign o_issue = w_entry[r_entry_out_ptr];
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_entry_in_ptr <= 'h0;
+  end else begin
+    if (|w_entry_ready) begin
+      r_entry_out_ptr <= r_entry_out_ptr + 1'b1;
+    end
+  end
+end
+
 
 endmodule // mrh_scheduler
