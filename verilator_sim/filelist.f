@@ -12,6 +12,7 @@
 
 ../src/select_latest.sv
 ../src/select_latest_1bit.sv
+../src/select_oh.sv
 
 ../src/data_array.sv
 ../src/icache.sv
@@ -34,6 +35,8 @@
 
 ../src/mrh_scheduler.sv
 ../src/mrh_sched_entry.sv
+
+../src/phy_registers.sv
 
 ../src/mrh_alu.sv
 ../src/mrh_alu_pipe.sv

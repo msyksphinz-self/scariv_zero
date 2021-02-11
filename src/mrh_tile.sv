@@ -1,5 +1,4 @@
-module mrh_tile
-(
+module mrh_tile (
     input logic i_clk,
     input logic i_reset_n,
 
@@ -8,74 +7,84 @@ module mrh_tile
     l2_resp_if.slave ic_l2_resp
 );
 
-l2_req_if  l2_req  ();
-l2_resp_if l2_resp ();
+  l2_req_if l2_req ();
+  l2_resp_if l2_resp ();
 
-disp_if    disp_from_frontend ();
-disp_if    disp_from_decoder ();
-disp_if    disp_to_scheduler ();
+  disp_if disp_from_frontend ();
+  disp_if disp_from_decoder ();
+  disp_if disp_to_scheduler ();
 
-logic [mrh_pkg::DISP_SIZE-1: 0] w_disp_valids;
+  logic [mrh_pkg::DISP_SIZE-1:0] w_disp_valids;
 
-mrh_pkg::release_t  w_ex1_release[mrh_pkg::REL_BUS_SIZE];
-mrh_pkg::target_t   w_ex3_target [mrh_pkg::TGT_BUS_SIZE];
+  mrh_pkg::release_t w_ex1_release[mrh_pkg::REL_BUS_SIZE];
+  mrh_pkg::target_t w_ex3_target[mrh_pkg::TGT_BUS_SIZE];
 
-frontend u_frontend
-(
-    .i_clk (i_clk),
-    .i_reset_n (i_reset_n),
+  regread_if regread[4] ();
 
-    .ic_l2_req  (ic_l2_req ),
-    .ic_l2_resp (ic_l2_resp),
+  frontend u_frontend (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
 
-    .disp (disp_from_frontend)
-);
+      .ic_l2_req(ic_l2_req),
+      .ic_l2_resp(ic_l2_resp),
 
-mrh_decoder u_decoder
-  (
-   .i_clk (i_clk),
-   .i_reset_n (i_reset_n),
+      .disp(disp_from_frontend)
+  );
 
-   .disp_from_frontend (disp_from_frontend),
-   .disp_to_renamer  (disp_from_decoder)
-   );
+  mrh_decoder u_decoder (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
 
-
-mrh_rename u_rename
-  (
-   .i_clk (i_clk),
-   .i_reset_n (i_reset_n),
-
-   .disp_from_frontend (disp_from_decoder),
-   .disp_to_scheduler (disp_to_scheduler)
-   );
+      .disp_from_frontend(disp_from_frontend),
+      .disp_to_renamer(disp_from_decoder)
+  );
 
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
+  mrh_rename u_rename (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
+
+      .disp_from_frontend(disp_from_decoder),
+      .disp_to_scheduler(disp_to_scheduler)
+  );
+
+
+  generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
   assign w_disp_valids[d_idx] = disp_to_scheduler.inst[d_idx].valid;
 end
 endgenerate
 
-generate for (genvar alu_idx = 0; alu_idx < mrh_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
-  mrh_alu
-                               #(
-                                 .PORT_BASE (alu_idx * 2)
-                                 )
-  u_mrh_alu
-                               (
-                                .i_clk(i_clk),
-                                .i_reset_n(i_reset_n),
+  generate
+    for (genvar alu_idx = 0; alu_idx < mrh_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
+      mrh_alu #(
+          .PORT_BASE(alu_idx * 2)
+      ) u_mrh_alu (
+          .i_clk(i_clk),
+          .i_reset_n(i_reset_n),
 
-                                .disp_valid(w_disp_valids),
-                                .disp(disp_to_scheduler),
+          .disp_valid(w_disp_valids),
+          .disp(disp_to_scheduler),
 
-                                .release_in(w_ex1_release),
-                                .target_in (w_ex3_target ),
+          .ex0_regread_rs1(regread[alu_idx * 2 + 0]),
+          .ex0_regread_rs2(regread[alu_idx * 2 + 1]),
 
-                                .ex1_release_out(w_ex1_release[alu_idx]),
-                                .ex3_target_out (w_ex3_target [alu_idx])
-                                );
-end
-endgenerate
+          .release_in(w_ex1_release),
+          .target_in(w_ex3_target),
 
-endmodule // mrh_tile
+          .ex1_release_out(w_ex1_release[alu_idx]),
+          .ex3_target_out(w_ex3_target[alu_idx])
+      );
+    end
+  endgenerate
+
+  mrh_phy_registers #(
+      .RD_PORT_SIZE(4)
+  ) u_int_phy_registers (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
+
+      .target_in(w_ex3_target),
+      .regread(regread)
+  );
+
+endmodule  // mrh_tile

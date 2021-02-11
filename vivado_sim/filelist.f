@@ -38,6 +38,8 @@
 ../src/mrh_scheduler.sv
 ../src/mrh_sched_entry.sv
 
+../src/phy_registers.sv
+
 ../src/mrh_alu.sv
 ../src/mrh_alu_pipe.sv
 
