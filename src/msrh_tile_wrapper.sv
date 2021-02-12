@@ -1,20 +1,20 @@
-module mrh_tile_wrapper
+module msrh_tile_wrapper
 (
     input logic i_clk,
     input logic i_reset_n,
 
     // L2 request from ICache
     output logic                                o_ic_req_valid,
-    output mrh_pkg::mem_cmd_t                   o_ic_req_cmd,
+    output msrh_pkg::mem_cmd_t                   o_ic_req_cmd,
     output logic [riscv_pkg::PADDR_W-1:0]       o_ic_req_addr,
-    output logic [mrh_pkg::L2_CMD_TAG_W-1:0]    o_ic_req_tag,
-    output logic [mrh_pkg::ICACHE_DATA_W-1:0]   o_ic_req_data,
-    output logic [mrh_pkg::ICACHE_DATA_W/8-1:0] o_ic_req_byte_en,
+    output logic [msrh_pkg::L2_CMD_TAG_W-1:0]    o_ic_req_tag,
+    output logic [msrh_pkg::ICACHE_DATA_W-1:0]   o_ic_req_data,
+    output logic [msrh_pkg::ICACHE_DATA_W/8-1:0] o_ic_req_byte_en,
     input logic                                 i_ic_req_ready,
 
     input logic                              i_ic_resp_valid,
-    input logic [mrh_pkg::L2_CMD_TAG_W-1:0]  i_ic_resp_tag,
-    input logic [mrh_pkg::ICACHE_DATA_W-1:0] i_ic_resp_data,
+    input logic [msrh_pkg::L2_CMD_TAG_W-1:0]  i_ic_resp_tag,
+    input logic [msrh_pkg::ICACHE_DATA_W-1:0] i_ic_resp_data,
     output logic                             o_ic_resp_ready
 );
 
@@ -34,7 +34,7 @@ module mrh_tile_wrapper
     assign ic_l2_resp.payload.data = i_ic_resp_data     ;
     assign o_ic_resp_ready         = ic_l2_resp.ready   ;
 
-    mrh_tile u_mrh_tile (
+    msrh_tile u_msrh_tile (
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
 

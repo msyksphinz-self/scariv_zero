@@ -1,21 +1,21 @@
-module mrh_phy_registers #(
+module msrh_phy_registers #(
     parameter RD_PORT_SIZE = 10
 ) (
     input logic i_clk,
     input logic i_reset_n,
 
           regread_if.slave  regread  [         RD_PORT_SIZE],
-    input mrh_pkg::target_t target_in[mrh_pkg::TGT_BUS_SIZE]
+    input msrh_pkg::target_t target_in[msrh_pkg::TGT_BUS_SIZE]
 );
 
-  logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[mrh_pkg::RNID_SIZE];
+  logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE];
 
-  logic [mrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
-  logic [mrh_pkg::RNID_W-1:0] wr_rnid[mrh_pkg::TGT_BUS_SIZE];
-  logic [riscv_pkg::XLEN_W-1:0] wr_data[mrh_pkg::TGT_BUS_SIZE];
+  logic [msrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
+  logic [msrh_pkg::RNID_W-1:0] wr_rnid[msrh_pkg::TGT_BUS_SIZE];
+  logic [riscv_pkg::XLEN_W-1:0] wr_data[msrh_pkg::TGT_BUS_SIZE];
 
   generate
-    for (genvar w_idx = 0; w_idx < mrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
+    for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
       assign wr_valid[w_idx] = target_in[w_idx].valid;
       assign wr_rnid [w_idx] = target_in[w_idx].rd_rnid;
       assign wr_data [w_idx] = target_in[w_idx].rd_data;
@@ -23,12 +23,12 @@ module mrh_phy_registers #(
   endgenerate
 
   generate
-    for (genvar r_idx = 0; r_idx < mrh_pkg::RNID_SIZE; r_idx++) begin : reg_loop
+    for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : reg_loop
       logic w_wr_valid;
       logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
       select_oh #(
-          .SEL_WIDTH (mrh_pkg::TGT_BUS_SIZE),
-          .KEY_WIDTH (mrh_pkg::RNID_W),
+          .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
+          .KEY_WIDTH (msrh_pkg::RNID_W),
           .DATA_WIDTH(riscv_pkg::XLEN_W)
       ) wr_data_select (
           .i_cmp_key(r_idx),

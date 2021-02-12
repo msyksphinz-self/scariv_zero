@@ -4,12 +4,12 @@ module icache(
   input logic i_clk,
   input logic i_reset_n,
 
-  input mrh_pkg::ic_req_t              i_s0_req,
+  input msrh_pkg::ic_req_t              i_s0_req,
   output logic                         o_s0_ready,
   input logic [riscv_pkg::PADDR_W-1:0] i_s1_paddr,
   input logic                          i_s1_tlb_miss,
 
-  output mrh_pkg::ic_resp_t            o_s2_resp,
+  output msrh_pkg::ic_resp_t            o_s2_resp,
 
   l2_req_if.master ic_l2_req,
   l2_resp_if.slave ic_l2_resp
@@ -17,47 +17,47 @@ module icache(
 
     /* S1 stage */
     logic r_s1_valid;
-    logic [mrh_pkg::ICACHE_WAY_W-1 : 0] w_s1_tag_hit;
-    logic [mrh_pkg::ICACHE_TAG_LOW-1:0] r_s1_addr_low_bit;
+    logic [msrh_pkg::ICACHE_WAY_W-1 : 0] w_s1_tag_hit;
+    logic [msrh_pkg::ICACHE_TAG_LOW-1:0] r_s1_addr_low_bit;
     logic                               w_s1_hit;
 
     /* S2 stage */
     logic                               r_s2_valid;
     logic                               r_s2_hit;
-    logic [mrh_pkg::ICACHE_WAY_W-1 : 0] r_s2_tag_hit;
-    logic [mrh_pkg::ICACHE_DATA_W-1: 0] w_s2_data[mrh_pkg::ICACHE_WAY_W];
-    logic [mrh_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
+    logic [msrh_pkg::ICACHE_WAY_W-1 : 0] r_s2_tag_hit;
+    logic [msrh_pkg::ICACHE_DATA_W-1: 0] w_s2_data[msrh_pkg::ICACHE_WAY_W];
+    logic [msrh_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
 
-    logic [mrh_pkg::L2_CMD_TAG_W-1: 0]  r_ic_req_tag;
+    logic [msrh_pkg::L2_CMD_TAG_W-1: 0]  r_ic_req_tag;
 
     typedef enum                        { ICInit, ICResp } ic_state_t;
     ic_state_t r_ic_state;
     logic                               ic_l2_resp_fire;
 
 
-    generate for(genvar way = 0; way < mrh_pkg::ICACHE_WAY_W; way++) begin : icache_way_loop
+    generate for(genvar way = 0; way < msrh_pkg::ICACHE_WAY_W; way++) begin : icache_way_loop
         logic    w_s1_tag_valid;
-        logic [riscv_pkg::PADDR_W-1:mrh_pkg::ICACHE_TAG_LOW] w_s1_tag;
+        logic [riscv_pkg::PADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] w_s1_tag;
 
         tag_array
             #(
-              .TAG_W(riscv_pkg::PADDR_W-mrh_pkg::ICACHE_TAG_LOW),
-              .WORDS(mrh_pkg::ICACHE_TAG_LOW)
+              .TAG_W(riscv_pkg::PADDR_W-msrh_pkg::ICACHE_TAG_LOW),
+              .WORDS(msrh_pkg::ICACHE_TAG_LOW)
               )
         tag (
              .i_clk(i_clk),
              .i_reset_n(i_reset_n),
-             .i_addr(i_s0_req.vaddr[mrh_pkg::ICACHE_TAG_LOW-1:0]),
+             .i_addr(i_s0_req.vaddr[msrh_pkg::ICACHE_TAG_LOW-1:0]),
              .o_tag(w_s1_tag),
              .o_tag_valid(w_s1_tag_valid)
              );
 
-        assign w_s1_tag_hit[way] = (i_s1_paddr[riscv_pkg::PADDR_W-1:mrh_pkg::ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
+        assign w_s1_tag_hit[way] = (i_s1_paddr[riscv_pkg::PADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
 
         data_array
             #(
-              .WIDTH(mrh_pkg::ICACHE_DATA_W),
-              .ADDR_W(mrh_pkg::ICACHE_TAG_LOW)
+              .WIDTH(msrh_pkg::ICACHE_DATA_W),
+              .ADDR_W(msrh_pkg::ICACHE_TAG_LOW)
               )
         data (
               .i_clk(i_clk),
@@ -85,10 +85,10 @@ module icache(
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (!i_reset_n) begin
             r_s1_valid <= 1'b0;
-            r_s1_addr_low_bit <= {mrh_pkg::ICACHE_TAG_LOW{1'b0}};
+            r_s1_addr_low_bit <= {msrh_pkg::ICACHE_TAG_LOW{1'b0}};
         end else begin
             r_s1_valid <= i_s0_req.valid;
-            r_s1_addr_low_bit <= i_s0_req.vaddr[mrh_pkg::ICACHE_TAG_LOW-1:0];
+            r_s1_addr_low_bit <= i_s0_req.vaddr[msrh_pkg::ICACHE_TAG_LOW-1:0];
         end
     end
 
@@ -108,8 +108,8 @@ module icache(
 
     bit_oh_or
         #(
-          .WIDTH(mrh_pkg::ICACHE_DATA_W),
-          .WORDS(mrh_pkg::ICACHE_WAY_W)
+          .WIDTH(msrh_pkg::ICACHE_DATA_W),
+          .WORDS(msrh_pkg::ICACHE_WAY_W)
           )
     cache_data_sel (
                     .i_oh      (r_s2_tag_hit      ),
@@ -120,7 +120,7 @@ module icache(
     assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready;
     assign o_s2_resp.valid = r_s2_hit | ic_l2_resp_fire;
     assign o_s2_resp.data  = ic_l2_resp_fire ? ic_l2_resp.payload.data : w_s2_selected_data;
-    assign o_s2_resp.be    = {mrh_pkg::ICACHE_DATA_B_W{1'b1}};
+    assign o_s2_resp.be    = {msrh_pkg::ICACHE_DATA_B_W{1'b1}};
 
     // ======================
     // IC Miss State Machine
@@ -137,7 +137,7 @@ module icache(
                 ICInit : begin
                     if (r_s1_valid & !w_s1_hit) begin
                         ic_l2_req.valid   <= 1'b1;
-                        ic_l2_req.payload.cmd  <= mrh_pkg::M_XRD;
+                        ic_l2_req.payload.cmd  <= msrh_pkg::M_XRD;
                         ic_l2_req.payload.addr <= i_s1_paddr;
                         ic_l2_req.payload.tag  <= 'h0;
                         ic_l2_req.payload.data <= 'h0;

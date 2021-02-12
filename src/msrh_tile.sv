@@ -1,4 +1,4 @@
-module mrh_tile (
+module msrh_tile (
     input logic i_clk,
     input logic i_reset_n,
 
@@ -14,10 +14,10 @@ module mrh_tile (
   disp_if disp_from_decoder ();
   disp_if disp_to_scheduler ();
 
-  logic [mrh_pkg::DISP_SIZE-1:0] w_disp_valids;
+  logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
 
-  mrh_pkg::release_t w_ex1_release[mrh_pkg::REL_BUS_SIZE];
-  mrh_pkg::target_t w_ex3_target[mrh_pkg::TGT_BUS_SIZE];
+  msrh_pkg::release_t w_ex1_release[msrh_pkg::REL_BUS_SIZE];
+  msrh_pkg::target_t w_ex3_target[msrh_pkg::TGT_BUS_SIZE];
 
   regread_if regread[4] ();
 
@@ -31,7 +31,7 @@ module mrh_tile (
       .disp(disp_from_frontend)
   );
 
-  mrh_decoder u_decoder (
+  msrh_decoder u_decoder (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
@@ -40,7 +40,7 @@ module mrh_tile (
   );
 
 
-  mrh_rename u_rename (
+  msrh_rename u_rename (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
@@ -49,16 +49,16 @@ module mrh_tile (
   );
 
 
-  generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
+  generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
   assign w_disp_valids[d_idx] = disp_to_scheduler.inst[d_idx].valid;
 end
 endgenerate
 
   generate
-    for (genvar alu_idx = 0; alu_idx < mrh_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
-      mrh_alu #(
+    for (genvar alu_idx = 0; alu_idx < msrh_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
+      msrh_alu #(
           .PORT_BASE(alu_idx * 2)
-      ) u_mrh_alu (
+      ) u_msrh_alu (
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),
 
@@ -77,7 +77,7 @@ endgenerate
     end
   endgenerate
 
-  mrh_phy_registers #(
+  msrh_phy_registers #(
       .RD_PORT_SIZE(4)
   ) u_int_phy_registers (
       .i_clk(i_clk),
@@ -87,4 +87,4 @@ endgenerate
       .regread(regread)
   );
 
-endmodule  // mrh_tile
+endmodule  // msrh_tile

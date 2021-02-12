@@ -1,6 +1,6 @@
 `default_nettype none
 
-package mrh_pkg;
+package msrh_pkg;
   import riscv_pkg::*;
 
   localparam PC_INIT_VAL = 'h8000_0000;
@@ -41,8 +41,8 @@ package mrh_pkg;
 
   typedef struct packed {
     logic valid;
-    logic [mrh_pkg::ICACHE_DATA_W-1:0] data;
-    logic [mrh_pkg::ICACHE_DATA_B_W-1:0] be;
+    logic [msrh_pkg::ICACHE_DATA_W-1:0] data;
+    logic [msrh_pkg::ICACHE_DATA_B_W-1:0] be;
   } ic_resp_t;
 
   typedef enum logic [4:0] {
@@ -146,18 +146,18 @@ package mrh_pkg;
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
 
     logic rs1_valid;
     reg_t rs1_type;
     logic [4:0] rs1_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rs1_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
-    logic [mrh_pkg::RNID_W-1:0] rs2_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
 
   } disp_t;
@@ -193,18 +193,18 @@ package mrh_pkg;
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
 
     logic rs1_valid;
     reg_t rs1_type;
     logic [4:0] rs1_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rs1_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
-    logic [mrh_pkg::RNID_W-1:0] rs2_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
   } sched_t;
 
@@ -216,18 +216,18 @@ package mrh_pkg;
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
 
     logic rs1_valid;
     reg_t rs1_type;
     logic [4:0] rs1_regidx;
-    logic [mrh_pkg::RNID_W-1:0] rs1_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
-    logic [mrh_pkg::RNID_W-1:0] rs2_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
   } issue_t;
 
@@ -262,13 +262,13 @@ package mrh_pkg;
 
   typedef struct packed {
     logic valid;
-    logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
     reg_t rd_type;
   } release_t;
 
   typedef struct packed {
     logic valid;
-    logic [mrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
     reg_t rd_type;
     logic [riscv_pkg::XLEN_W-1:0] rd_data;
   } target_t;

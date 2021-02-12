@@ -1,38 +1,38 @@
-module mrh_inflight_list
+module msrh_inflight_list
   (
    input logic                              i_clk,
    input logic                              i_reset_n,
 
-   input logic [ 4: 0]                      i_addr[mrh_pkg::DISP_SIZE*2],
-   output logic [mrh_pkg::DISP_SIZE*2-1: 0] o_valids,
+   input logic [ 4: 0]                      i_addr[msrh_pkg::DISP_SIZE*2],
+   output logic [msrh_pkg::DISP_SIZE*2-1: 0] o_valids,
 
-   input logic [mrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
-   input logic [ 4: 0]                      i_update_fetch_addr[mrh_pkg::DISP_SIZE],
-   input logic [mrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
+   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
+   input logic [ 4: 0]                      i_update_fetch_addr[msrh_pkg::DISP_SIZE],
+   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
 
-   input logic [mrh_pkg::DISP_SIZE-1: 0]    i_update_cmt_vld,
-   input logic [ 4: 0]                      i_update_cmt_addr[mrh_pkg::DISP_SIZE],
-   input logic [mrh_pkg::DISP_SIZE-1: 0]    i_update_cmt_data
+   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_cmt_vld,
+   input logic [ 4: 0]                      i_update_cmt_addr[msrh_pkg::DISP_SIZE],
+   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_cmt_data
    );
 
 logic                                       r_inflight_list[31: 0];
 generate for (genvar i = 0; i < 32; i++) begin : list_loop
-  logic [mrh_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
-  logic [mrh_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
+  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
+  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
   logic w_update_fetch_vld;
   logic w_update_fetch_data;
-  for (genvar d_fetch_idx = 0; d_fetch_idx < mrh_pkg::DISP_SIZE; d_fetch_idx++) begin
+  for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_pkg::DISP_SIZE; d_fetch_idx++) begin
     assign w_update_fetch_vld_tmp [d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_addr[d_fetch_idx] == i;
     assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_data[d_fetch_idx];
   end
   assign w_update_fetch_vld   = |w_update_fetch_vld_tmp;
   assign w_update_fetch_data  = |w_update_fetch_data_tmp;
 
-  logic [mrh_pkg::DISP_SIZE-1: 0] w_update_cmt_vld_tmp;
-  logic [mrh_pkg::DISP_SIZE-1: 0] w_update_cmt_data_tmp;
+  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_cmt_vld_tmp;
+  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_cmt_data_tmp;
   logic w_update_cmt_vld;
   logic w_update_cmt_data;
-  for (genvar d_cmt_idx = 0; d_cmt_idx < mrh_pkg::DISP_SIZE; d_cmt_idx++) begin
+  for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::DISP_SIZE; d_cmt_idx++) begin
     assign w_update_cmt_vld_tmp [d_cmt_idx] = i_update_cmt_vld[d_cmt_idx] & i_update_cmt_addr[d_cmt_idx] == i;
     assign w_update_cmt_data_tmp[d_cmt_idx] = i_update_cmt_vld[d_cmt_idx] & i_update_cmt_data[d_cmt_idx];
   end
@@ -56,7 +56,7 @@ end // block: list_loop
 endgenerate
 
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
 logic w_update_fetch_vld_0;
 logic w_update_fetch_vld_1;
 logic w_update_fetch_data_0;
@@ -66,7 +66,7 @@ logic w_update_fetch_data_1;
   // Forwarding information from update_fetch path
   select_latest_1bit
     #(
-      .SEL_WIDTH(mrh_pkg::DISP_SIZE),
+      .SEL_WIDTH(msrh_pkg::DISP_SIZE),
       .KEY_WIDTH(5)
       )
   u_select_latest_update_0
@@ -84,7 +84,7 @@ logic w_update_fetch_data_1;
   // Forwarding information from update_fetch path
   select_latest_1bit
     #(
-      .SEL_WIDTH(mrh_pkg::DISP_SIZE),
+      .SEL_WIDTH(msrh_pkg::DISP_SIZE),
       .KEY_WIDTH(5)
       )
   u_select_latest_update_1
@@ -104,4 +104,4 @@ logic w_update_fetch_data_1;
 end
 endgenerate
 
-endmodule // mrh_inflight_list
+endmodule // msrh_inflight_list

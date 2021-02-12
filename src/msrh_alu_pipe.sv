@@ -1,16 +1,16 @@
-module mrh_alu_pipe (
+module msrh_alu_pipe (
     input logic i_clk,
     input logic i_reset_n,
 
-    input mrh_pkg::issue_t rv0_issue,
+    input msrh_pkg::issue_t rv0_issue,
 
-    input mrh_pkg::target_t ex1_target_in[mrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::target_t ex1_target_in[msrh_pkg::TGT_BUS_SIZE],
 
     regread_if.master ex0_regread_rs1,
     regread_if.master ex0_regread_rs2,
 
-    output mrh_pkg::release_t ex1_release_out,
-    output mrh_pkg::target_t  ex3_target_out
+    output msrh_pkg::release_t ex1_release_out,
+    output msrh_pkg::target_t  ex3_target_out
 );
 
   typedef struct packed {
@@ -20,24 +20,24 @@ module mrh_alu_pipe (
     logic sign;
   } pipe_ctrl_t;
 
-  mrh_pkg::issue_t                         r_ex0_issue;
+  msrh_pkg::issue_t                         r_ex0_issue;
   pipe_ctrl_t                              w_ex0_pipe_ctrl;
 
   pipe_ctrl_t                              r_ex1_pipe_ctrl;
-  mrh_pkg::issue_t                         r_ex1_issue;
+  msrh_pkg::issue_t                         r_ex1_issue;
 
-  logic [mrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
-  logic [mrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs2_fwd_valid;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex1_tgt_data          [mrh_pkg::TGT_BUS_SIZE];
+  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
+  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs2_fwd_valid;
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex1_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
   logic            [riscv_pkg::XLEN_W-1:0] w_ex1_rs1_selected_data;
   logic            [riscv_pkg::XLEN_W-1:0] w_ex1_rs2_selected_data;
 
   pipe_ctrl_t                              r_ex2_pipe_ctrl;
-  mrh_pkg::issue_t                         r_ex2_issue;
+  msrh_pkg::issue_t                         r_ex2_issue;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
 
-  mrh_pkg::issue_t                         r_ex3_issue;
+  msrh_pkg::issue_t                         r_ex3_issue;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
 
   always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -74,10 +74,10 @@ module mrh_alu_pipe (
 
   assign ex1_release_out.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
   assign ex1_release_out.rd_rnid = r_ex1_issue.rd_rnid;
-  assign ex1_release_out.rd_type = mrh_pkg::GPR;
+  assign ex1_release_out.rd_type = msrh_pkg::GPR;
 
   generate
-    for (genvar tgt_idx = 0; tgt_idx < mrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+    for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
       assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rs1_valid & ex1_target_in[tgt_idx].valid &
                                            (r_ex1_issue.rs1_type == ex1_target_in[tgt_idx].rd_type) &
                                            (r_ex1_issue.rs1_rnid == ex1_target_in[tgt_idx].rd_rnid);
@@ -91,7 +91,7 @@ module mrh_alu_pipe (
 
   bit_oh_or #(
       .WIDTH(riscv_pkg::XLEN_W),
-      .WORDS(mrh_pkg::TGT_BUS_SIZE)
+      .WORDS(msrh_pkg::TGT_BUS_SIZE)
   ) u_rs1_data_select (
       .i_oh(w_ex1_rs1_fwd_valid),
       .i_data(w_ex1_tgt_data),
@@ -100,7 +100,7 @@ module mrh_alu_pipe (
 
   bit_oh_or #(
       .WIDTH(riscv_pkg::XLEN_W),
-      .WORDS(mrh_pkg::TGT_BUS_SIZE)
+      .WORDS(msrh_pkg::TGT_BUS_SIZE)
   ) u_rs2_data_select (
       .i_oh(w_ex1_rs2_fwd_valid),
       .i_data(w_ex1_tgt_data),
@@ -146,4 +146,4 @@ module mrh_alu_pipe (
   assign ex3_target_out.rd_type = r_ex3_issue.rd_type;
   assign ex3_target_out.rd_data = r_ex3_result;
 
-endmodule // mrh_alu_pipe
+endmodule // msrh_alu_pipe

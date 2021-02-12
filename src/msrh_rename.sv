@@ -1,4 +1,4 @@
-module mrh_rename
+module msrh_rename
   (
    input logic i_clk,
    input logic i_reset_n,
@@ -7,32 +7,32 @@ module mrh_rename
    disp_if.master disp_to_scheduler
    );
 
-logic [$clog2(mrh_pkg::RNID_SIZE)-1: 0] rd_rnid[mrh_pkg::DISP_SIZE];
+logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] rd_rnid[msrh_pkg::DISP_SIZE];
 
-logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_archreg_valid;
-logic [ 4: 0]                           w_archreg[mrh_pkg::DISP_SIZE * 2];
-logic [mrh_pkg::RNID_W-1: 0]            w_rnid[mrh_pkg::DISP_SIZE * 2];
+logic [msrh_pkg::DISP_SIZE * 2-1: 0]     w_archreg_valid;
+logic [ 4: 0]                           w_archreg[msrh_pkg::DISP_SIZE * 2];
+logic [msrh_pkg::RNID_W-1: 0]            w_rnid[msrh_pkg::DISP_SIZE * 2];
 
-logic [ 4: 0]                           w_update_arch_id [mrh_pkg::DISP_SIZE];
-logic [mrh_pkg::RNID_W-1: 0]            w_update_rnid    [mrh_pkg::DISP_SIZE];
+logic [ 4: 0]                           w_update_arch_id [msrh_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]            w_update_rnid    [msrh_pkg::DISP_SIZE];
 
 disp_if disp_to_scheduler_d();
 
-logic [mrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[mrh_pkg::DISP_SIZE];
-logic [mrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[mrh_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[msrh_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_pkg::DISP_SIZE];
 
-logic [mrh_pkg::DISP_SIZE * 2-1: 0]     w_active;
+logic [msrh_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
-logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
-logic [ 4: 0]                           w_rd_regidx[mrh_pkg::DISP_SIZE];
-logic [mrh_pkg::DISP_SIZE-1: 0]         w_rd_data;
+logic [msrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
+logic [ 4: 0]                           w_rd_regidx[msrh_pkg::DISP_SIZE];
+logic [msrh_pkg::DISP_SIZE-1: 0]         w_rd_data;
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
   freelist
                              #(
-                               .SIZE (mrh_pkg::FLIST_SIZE),
-                               .WIDTH ($clog2(mrh_pkg::RNID_SIZE)),
-                               .INIT (mrh_pkg::FLIST_SIZE * d_idx + 32)
+                               .SIZE (msrh_pkg::FLIST_SIZE),
+                               .WIDTH ($clog2(msrh_pkg::RNID_SIZE)),
+                               .INIT (msrh_pkg::FLIST_SIZE * d_idx + 32)
                                )
   u_freelist
                              (
@@ -48,7 +48,7 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : fre
 end
 endgenerate
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
   assign w_archreg_valid [d_idx*2 + 0] = disp_from_frontend.inst[d_idx].rs1_valid;
   assign w_archreg_valid [d_idx*2 + 1] = disp_from_frontend.inst[d_idx].rs2_valid;
 
@@ -61,7 +61,7 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src
 end
 endgenerate
 
-mrh_rename_map u_mrh_rename_map
+msrh_rename_map u_msrh_rename_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
@@ -70,20 +70,20 @@ mrh_rename_map u_mrh_rename_map
    .i_arch_id    (w_archreg),
    .o_rnid       (w_rnid),
 
-   .i_update         ({mrh_pkg::DISP_SIZE{1'b0}}),
+   .i_update         ({msrh_pkg::DISP_SIZE{1'b0}}),
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   )
    );
 
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : rd_loop
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : rd_loop
   assign w_rd_valids[d_idx] = disp_from_frontend.inst[d_idx].rd_valid;
   assign w_rd_regidx[d_idx] = disp_from_frontend.inst[d_idx].rd_regidx;
   assign w_rd_data  [d_idx] = !disp_from_frontend.inst[d_idx].rd_valid;
 end
 endgenerate
 
-mrh_inflight_list u_inflight_map
+msrh_inflight_list u_inflight_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
@@ -102,7 +102,7 @@ mrh_inflight_list u_inflight_map
 );
 
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       disp_to_scheduler.valid <= 'h0;
@@ -114,11 +114,11 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src
   end
 
   /* verilator lint_off UNOPTFLAT */
-  logic [mrh_pkg::RNID_W-1: 0] rs1_rnid_tmp[mrh_pkg::DISP_SIZE];
-  logic [mrh_pkg::DISP_SIZE-1: 0] rs1_rnid_tmp_valid;
+  logic [msrh_pkg::RNID_W-1: 0] rs1_rnid_tmp[msrh_pkg::DISP_SIZE];
+  logic [msrh_pkg::DISP_SIZE-1: 0] rs1_rnid_tmp_valid;
 
-  logic [mrh_pkg::RNID_W-1: 0] rs2_rnid_tmp[mrh_pkg::DISP_SIZE];
-  logic [mrh_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
+  logic [msrh_pkg::RNID_W-1: 0] rs2_rnid_tmp[msrh_pkg::DISP_SIZE];
+  logic [msrh_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
 
   always_comb begin
     disp_to_scheduler_d.valid = disp_from_frontend.valid;
@@ -174,7 +174,7 @@ generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : src
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
 
   assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
-  assign disp_to_scheduler_d.inst[d_idx] = mrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
+  assign disp_to_scheduler_d.inst[d_idx] = msrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
                                                                         rd_rnid     [d_idx],
                                                                         w_active [d_idx*2+0],
                                                                         rs1_rnid_fwd[d_idx],
@@ -185,4 +185,4 @@ end // block: src_rn_loop
 endgenerate
 
 
-endmodule // mrh_rename
+endmodule // msrh_rename

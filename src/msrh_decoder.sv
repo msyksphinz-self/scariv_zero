@@ -1,4 +1,4 @@
-module mrh_decoder
+module msrh_decoder
   (
    input logic i_clk,
    input logic i_reset_n,
@@ -7,8 +7,8 @@ module mrh_decoder
    disp_if.master disp_to_renamer
    );
 
-generate for (genvar d_idx = 0; d_idx < mrh_pkg::DISP_SIZE; d_idx++) begin : decode_loop
-  mrh_pkg::disp_t disp_to_rename_d;
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : decode_loop
+  msrh_pkg::disp_t disp_to_rename_d;
 
 logic [ 2: 0] w_op;
 logic         w_imm;
@@ -48,4 +48,4 @@ end
 endgenerate
 
 
-endmodule // mrh_decoder
+endmodule // msrh_decoder

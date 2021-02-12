@@ -1,5 +1,5 @@
 interface l2_req_if;
-  mrh_pkg::l2_req_t payload;
+  msrh_pkg::l2_req_t payload;
   logic valid;
   logic ready;
   modport master(
@@ -15,7 +15,7 @@ interface l2_req_if;
 endinterface
 
 interface l2_resp_if;
-  mrh_pkg::l2_resp_t payload;
+  msrh_pkg::l2_resp_t payload;
   logic valid;
   logic ready;
   modport master(
