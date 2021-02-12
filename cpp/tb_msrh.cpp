@@ -5,7 +5,7 @@
 #include <iostream>
 #include <verilated.h>
 #include <verilated_fst_c.h>
-#include "Vmrh_tb.h"
+#include "Vmsrh_tb.h"
 
 extern std::unique_ptr<Memory> g_memory;
 // extern int32_t load_binary(char const* path_exec, char const* filename, bool is_load_dump);
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
   }
 
   // Instantiate DUT
-  Vmrh_tb *dut = new Vmrh_tb();
+  Vmsrh_tb *dut = new Vmsrh_tb();
 
   // Trace DUMP ON
   Verilated::traceEverOn(true);
@@ -64,13 +64,13 @@ int main(int argc, char** argv) {
 
   // Format
   dut->i_elf_loader_reset_n = 0;
-  dut->i_mrh_reset_n = 0;
+  dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
 
   // Format
   dut->i_elf_loader_reset_n = 1;
-  dut->i_mrh_reset_n = 1;
+  dut->i_msrh_reset_n = 1;
   dut->i_ram_reset_n = 1;
   dut->i_clk = 0;
   // Reset Time
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 
   // Format
   dut->i_elf_loader_reset_n = 0;
-  dut->i_mrh_reset_n = 0;
+  dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
   while (time_counter < 100) {
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
   }
   // Release reset
   dut->i_elf_loader_reset_n = 1;
-  dut->i_mrh_reset_n = 0;
+  dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
   int cycle = 0;
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 
     if (elf_load_finish) {
       dut->i_elf_loader_reset_n = 0;
-      dut->i_mrh_reset_n = 1;
+      dut->i_msrh_reset_n = 1;
     }
 
     time_counter++;

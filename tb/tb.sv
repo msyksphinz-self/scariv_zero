@@ -2,7 +2,7 @@ module tb;
 
 logic w_clk;
 logic w_elf_loader_reset_n;
-logic w_mrh_reset_n;
+logic w_msrh_reset_n;
 logic w_ram_reset_n;
 
 logic w_timeout;
@@ -12,48 +12,48 @@ assign w_terminate = w_timeout;
 
 /* from Frontend IC */
 logic                                w_ic_req_valid;
-mrh_pkg::mem_cmd_t                   w_ic_req_cmd;
+msrh_pkg::mem_cmd_t                   w_ic_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]       w_ic_req_addr;
-logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_req_tag;
-logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
-logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
+logic [msrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_req_tag;
+logic [msrh_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
+logic [msrh_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
 logic                                w_ic_req_ready;
 
 logic                                w_ic_resp_valid;
-logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
-logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
+logic [msrh_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
+logic [msrh_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
 logic                                w_ic_resp_ready  ;
 
 /* from ELF Loader */
 logic                                w_elf_req_valid;
-mrh_pkg::mem_cmd_t                   w_elf_req_cmd;
+msrh_pkg::mem_cmd_t                   w_elf_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]       w_elf_req_addr;
-logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
-logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
-logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
+logic [msrh_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
+logic [msrh_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
+logic [msrh_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
 logic                                w_elf_req_ready;
 
 /* L2 Interface */
 logic                                w_l2_req_valid;
-mrh_pkg::mem_cmd_t                   w_l2_req_cmd;
+msrh_pkg::mem_cmd_t                   w_l2_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]       w_l2_req_addr;
-logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
-logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
-logic [mrh_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
+logic [msrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
+logic [msrh_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
+logic [msrh_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
 logic                                w_l2_req_ready;
 
 logic                                w_l2_resp_valid;
-logic [mrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
-logic [mrh_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
+logic [msrh_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
+logic [msrh_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
 logic                                w_l2_resp_ready;
 
 /* Connection */
-assign w_l2_req_valid   = w_mrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
-assign w_l2_req_cmd     = w_mrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
-assign w_l2_req_addr    = w_mrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
-assign w_l2_req_tag     = w_mrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
-assign w_l2_req_data    = w_mrh_reset_n ? w_ic_req_data    : w_elf_req_data;
-assign w_l2_req_byte_en = w_mrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
+assign w_l2_req_valid   = w_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
+assign w_l2_req_cmd     = w_msrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
+assign w_l2_req_addr    = w_msrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
+assign w_l2_req_tag     = w_msrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
+assign w_l2_req_data    = w_msrh_reset_n ? w_ic_req_data    : w_elf_req_data;
+assign w_l2_req_byte_en = w_msrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
 
 assign w_ic_req_ready  = w_l2_req_ready ;
 assign w_elf_req_ready = w_l2_req_ready ;
@@ -63,10 +63,10 @@ assign w_ic_resp_tag   = w_l2_resp_tag  ;
 assign w_ic_resp_data  = w_l2_resp_data ;
 assign w_l2_resp_ready = w_ic_resp_ready;
 
-mrh_tile_wrapper u_mrh_tile_wrapper
+msrh_tile_wrapper u_msrh_tile_wrapper
   (
     .i_clk     (w_clk),
-    .i_reset_n (w_mrh_reset_n),
+    .i_reset_n (w_msrh_reset_n),
 
     // L2 request from ICache
     .o_ic_req_valid  (w_ic_req_valid  ),
@@ -86,8 +86,8 @@ mrh_tile_wrapper u_mrh_tile_wrapper
 
 tb_l2_behavior_ram
   #(
-    .DATA_W    (mrh_pkg::ICACHE_DATA_W),
-    .TAG_W     (mrh_pkg::L2_CMD_TAG_W),
+    .DATA_W    (msrh_pkg::ICACHE_DATA_W),
+    .TAG_W     (msrh_pkg::L2_CMD_TAG_W),
     .ADDR_W    (riscv_pkg::PADDR_W),
     .BASE_ADDR ('h8000_0000),
     .SIZE      (4096),
@@ -137,19 +137,19 @@ localparam TIMEOUT = 100000;
 initial begin
   w_clk = 1'b0;
   w_elf_loader_reset_n = 1'b0;
-  w_mrh_reset_n        = 1'b0;
+  w_msrh_reset_n        = 1'b0;
   w_ram_reset_n        = 1'b0;
 
   #(STEP * 10);
 
   w_elf_loader_reset_n = 1'b1;
-  w_mrh_reset_n        = 1'b0;
+  w_msrh_reset_n        = 1'b0;
   w_ram_reset_n        = 1'b1;
 
   #(STEP * 100);
 
   w_elf_loader_reset_n = 1'b0;
-  w_mrh_reset_n        = 1'b1;
+  w_msrh_reset_n        = 1'b1;
   w_ram_reset_n        = 1'b1;
 
   #(STEP * TIMEOUT);

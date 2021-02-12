@@ -13,7 +13,7 @@ module tb_l2_behavior_ram
 
   // L2 request from ICache
    input logic                i_req_valid,
-   input mrh_pkg::mem_cmd_t   i_req_cmd,
+   input msrh_pkg::mem_cmd_t   i_req_cmd,
    input logic [ADDR_W-1:0]   i_req_addr,
    input logic [TAG_W-1:0]    i_req_tag,
    input logic [DATA_W-1:0]   i_req_data,
@@ -45,7 +45,7 @@ assign actual_line_pos = actual_addr >> $clog2(DATA_W/8);
 
 
 always_ff @ (posedge i_clk) begin
-  if (req_fire && i_req_cmd == mrh_pkg::M_XWR) begin
+  if (req_fire && i_req_cmd == msrh_pkg::M_XWR) begin
     for (int byte_idx = 0; byte_idx < DATA_W/8; byte_idx++) begin
       if (i_req_byte_en[byte_idx]) begin
         ram[actual_line_pos[SIZE_W-1:0]][byte_idx*8+:8] <= i_req_data[byte_idx*8+:8];
@@ -61,7 +61,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       rd_valid[i] <= 1'b0;
     end
   end else begin
-    if (req_fire && i_req_cmd == mrh_pkg::M_XRD) begin
+    if (req_fire && i_req_cmd == msrh_pkg::M_XRD) begin
       rd_data[0] <= ram[actual_line_pos[SIZE_W-1:0]];
       rd_tag[0]   <= i_req_tag;
       rd_valid[0] <= 1'b1;
