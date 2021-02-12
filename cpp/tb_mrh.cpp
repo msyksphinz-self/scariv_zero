@@ -7,7 +7,7 @@
 #include <verilated_fst_c.h>
 #include "Vmrh_tb.h"
 
-extern std::unique_ptr<Memory> m_memory;
+extern std::unique_ptr<Memory> g_memory;
 // extern int32_t load_binary(char const* path_exec, char const* filename, bool is_load_dump);
 extern bool elf_load_finish;
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
       // Process long and short EMULATOR options
       case 'h': usage(argv[0]);             return 1;
       case 'e': {
-        m_memory   = std::unique_ptr<Memory> (new Memory ());
+        g_memory   = std::unique_ptr<Memory> (new Memory ());
 
         int ret = load_binary("", optarg, true);
         break;

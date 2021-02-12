@@ -1,11 +1,12 @@
 VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 VERILATOR_OPTS += ../cpp/tb_mrh.cpp
-VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
+VERILATOR_OPTS += ../cpp/tb_new_elf_loader.cpp
+VERILATOR_OPTS += ../cpp/tb_debug_tick.cpp
 VERILATOR_OPTS += ../cpp/memory_block.cpp
 VERILATOR_OPTS += ../cpp/mem_body.cpp
 VERILATOR_OPTS += -CFLAGS "-g"
-VERILATOR_OPTS += -LDFLAGS "-lbfd"
+VERILATOR_OPTS += -LDFLAGS "-lelf"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += --trace-fst
@@ -13,6 +14,7 @@ VERILATOR_OPTS += --trace-params
 VERILATOR_OPTS += --trace-structs
 VERILATOR_OPTS += --trace-underscore
 VERILATOR_OPTS += --unroll-count 1024
+VERILATOR_OPTS += -j $(shell nproc)
 
 TOP      = mrh_tb
 FILELIST = filelist.f

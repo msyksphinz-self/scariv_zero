@@ -11,13 +11,14 @@ XELAB_ARGS += --mt off
 
 XSIM_ARGS  += -t sim_vivado.tcl
 
-CPP_FILELIST += ../cpp/tb_elf_loader.cpp
+CPP_FILELIST += ../cpp/tb_new_elf_loader.cpp
+CPP_FILELIST += ../cpp/tb_debug_tick.cpp
 CPP_FILELIST += ../cpp/mem_body.cpp
 CPP_FILELIST += ../cpp/memory_block.cpp
 
 XSC_ARGS += --cppversion 14
 XSC_ARGS += $(CPP_FILELIST)
-XSC_ARGS += --gcc_link_options "-L/usr/lib64 -lbfd -I/usr/include/x86_64-linux-gnu/"
+XSC_ARGS += --gcc_link_options "-L/usr/lib64 -lelf -I/usr/include/x86_64-linux-gnu/"
 
 DUMP=off
 
@@ -35,7 +36,7 @@ ifeq ($(strip $(PRE_COMPILE)), on)
 endif
 
 XELAB_ARGS += -sv_lib dpi
-XELAB_ARGS += --lib bfd
+XELAB_ARGS += --lib elf
 
 PATH_VIVADO_LIB := /storage/eda/libs/$(ID)/pezy/vivado
 
