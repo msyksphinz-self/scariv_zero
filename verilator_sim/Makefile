@@ -17,7 +17,6 @@ VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(shell nproc)
 
 TOP      = msrh_tb
-FILELIST = filelist.f
 
 .PHONY: rv32 rv64
 
@@ -35,18 +34,22 @@ DECODE_FILES += ../src/decoder_reg.sv
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg
 
+FILELIST = sim_filelist.f
 
-rv32: $(DECODE_FILES)
+rv32: $(DECODE_FILES) $(FILELIST)
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv32/Vmsrh_tb.xml obj_dir_riscv32/Vmsrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk
 
-rv64: $(DECODE_FILES)
+rv64: $(DECODE_FILES) $(FILELIST)
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv64/Vmsrh_tb.xml obj_dir_riscv64/Vmsrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv64 -f V$(TOP).mk
+
+$(FILELIST): ../src/filelist.f filelist.f
+	cat $^ > $@
 
 clean:
 	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64 $(DECODE_FILES)

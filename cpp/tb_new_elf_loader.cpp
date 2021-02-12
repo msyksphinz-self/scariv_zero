@@ -62,7 +62,6 @@ load_binary(char const* path_exec,
   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
     failure();
 
-  /* Obtain the .shstrtab data buffer */
   if (((ehdr = elf64_getehdr(elf)) == NULL) ||
       ((scn  = elf_getscn(elf, ehdr->e_shstrndx)) == NULL) ||
       ((data = elf_getdata(scn, NULL)) == NULL) ||

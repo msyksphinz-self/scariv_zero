@@ -57,11 +57,16 @@ DECODE_FILES += ../src/decoder_reg.sv
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg
 
-sim_vivado: $(DECODE_FILES)
+FILELIST = sim_filelist.f
+
+sim_vivado: $(DECODE_FILES) $(FILELIST)
 	$(XSC) $(XSC_ARGS) | tee sim.log
-	$(XVLOG) $(XVLOG_ARGS) -f filelist.f $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
+	$(XVLOG) $(XVLOG_ARGS) -f $(FILELIST) $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
 	$(XELAB) $(XELAB_ARGS) tb | tee -a sim.log
 	DUMP_TYPE=$(DUMP) $(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
+
+$(FILELIST): ../src/filelist.f filelist.f
+	cat $^ > $@
 
 gui_vivado:
 	$(XSIM) -g work.tb --wdb out.wdb

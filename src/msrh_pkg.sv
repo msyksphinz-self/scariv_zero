@@ -32,6 +32,9 @@ package msrh_pkg;
   localparam DCACHE_WAY_W = 4;
   localparam DCACHE_DATA_B_W = DCACHE_DATA_W / 8;
 
+  localparam CMT_BLK_SIZE = 64;
+  localparam CMT_BLK_W = $clog2(CMT_BLK_SIZE);
+
   localparam L2_CMD_TAG_W = 4;
 
   typedef struct packed {
@@ -272,6 +275,13 @@ package msrh_pkg;
     reg_t rd_type;
     logic [riscv_pkg::XLEN_W-1:0] rd_data;
   } target_t;
+
+  typedef struct packed {
+    logic                 vld;
+    logic [CMT_BLK_W-1:0] ctag;
+    logic [DISP_SIZE-1:0] ii;
+    logic                 exc_vld;
+  } cmt_rpt_t;
 
 endpackage
 
