@@ -11,3 +11,6 @@ vivado_sim/.Xil
 vivado_sim/dpi.so
 vivado_sim/*.vcd
 vivado_sim/*.str
+vivado_sim/out.wcfg
+
+*/sim_filelist.f
