@@ -31,7 +31,7 @@ module msrh_phy_registers #(
           .KEY_WIDTH (msrh_pkg::RNID_W),
           .DATA_WIDTH(riscv_pkg::XLEN_W)
       ) wr_data_select (
-          .i_cmp_key(r_idx),
+          .i_cmp_key(r_idx[msrh_pkg::RNID_W-1:0]),
           .i_valid(wr_valid),
           .i_keys(wr_rnid),
           .i_data(wr_data),

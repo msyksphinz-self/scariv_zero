@@ -4,6 +4,7 @@
 ../src/disp_if.sv
 ../src/regread_if.sv
 
+../src/bit_cnt.sv
 ../src/bit_oh_or.sv
 ../src/bit_ff_lsb.sv
 ../src/bit_extract_msb.sv
@@ -14,6 +15,7 @@
 ../src/select_latest.sv
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv
+../src/select_release_bus.sv
 
 ../src/data_array.sv
 ../src/icache.sv

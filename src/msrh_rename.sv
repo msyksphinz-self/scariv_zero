@@ -27,6 +27,8 @@ logic [msrh_pkg::DISP_SIZE-1: 0]         w_rd_valids;
 logic [ 4: 0]                           w_rd_regidx[msrh_pkg::DISP_SIZE];
 logic [msrh_pkg::DISP_SIZE-1: 0]         w_rd_data;
 
+assign disp_from_frontend.ready = 1'b1;
+
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
   freelist
                              #(
@@ -101,6 +103,7 @@ msrh_inflight_list u_inflight_map
 
 );
 
+assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -121,7 +124,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
   logic [msrh_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
 
   always_comb begin
-    disp_to_scheduler_d.valid = disp_from_frontend.valid;
 
     /* initial index of loop */
     if (disp_from_frontend.inst[0].rd_valid &&
@@ -173,7 +175,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
   assign rs1_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[0] : rs1_rnid_tmp[d_idx-1];
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
 
-  assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
   assign disp_to_scheduler_d.inst[d_idx] = msrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
                                                                         rd_rnid     [d_idx],
                                                                         w_active [d_idx*2+0],

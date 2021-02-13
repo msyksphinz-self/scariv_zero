@@ -1,50 +1,41 @@
-MTI_HOME = /cygdrive/c/questasim64_10.4e/
+MTI_HOME = /cygdrive/c/intelFPGA/20.1/modelsim_ase/
+PLATFORM = win32aloem
 
-VLOG = $(MTI_HOME)/win64/vlog.exe
-VLIB = $(MTI_HOME)/win64/vlib.exe
-VSIM = $(MTI_HOME)/win64/vsim.exe
+# MTI_HOME = /cygdrive/c/questasim64_10.4e/
+# PLATFORM = win64
+
+VLOG = $(MTI_HOME)/$(PLATFORM)/vlog.exe
+VLIB = $(MTI_HOME)/$(PLATFORM)/vlib.exe
+VSIM = $(MTI_HOME)/$(PLATFORM)/vsim.exe
 
 VLOG_OPTS += -work work
 VLOG_OPTS += -incr
 VLOG_OPTS += -lint
-VOLG_OPTS += +acc
-VOLG_OPTS += -sv
-VOLG_OPTS += -dpiheader dpiheader.h
-VOLG_OPTS += -g
-VOLG_OPTS += -O0
+VLOG_OPTS += +acc
+VLOG_OPTS += -sv
+VLOG_OPTS += -O0
+VLOG_OPTS += +define+DIRECT_LOAD_HEX
 
-
-CSRC += ../cpp/mem_body.cpp
-CSRC += ../cpp/memory_block.cpp
-CSRC += ../cpp/tb_new_elf_loader.cpp
-CSRC += ../cpp/tb_debug_tick.cpp
+FILELIST = sim_filelist.f
 
 C_OBJS = $(subst .cpp,.o,$(CSRC))
 
 all:
 	$(MAKE) vlib
 	$(MAKE) vlog
-	$(MAKE) dpi
 	$(MAKE) vsim
-
-dpi: cimports.dll
-cimports.dll: cexports.obj
-	g++ -g -shared -I../cpp -fPIC $(CSRC) $(wildcard cexports.obj) -o $@ -L$(MTI_HOME)/win64 -lmtipli -lelf
-
-.cpp.o:
-	g++ -c -g $< -o $@ -fPIC -lbfd
-
-cexports.obj:
-	$(VSIM) -c $(VSIM_LIBS) -lib work $(TOP_MODULE) -dpiexportobj cexports
 
 vlib:
 	$(VLIB) work
 
-vlog:
-	$(VLOG) $(VLOG_OPTS) $(shell cat  ../vivado_sim/filelist.f)
+$(FILELIST): ../src/filelist.f filelist.f
+	cat $^ > $@
+
+vlog: $(FILELIST)
+	$(VLOG) $(VLOG_OPTS) ../src/riscv64_pkg.sv $(shell cat $^)
 
 vsim:
-	vsim.exe -c work.tb -sv_lib cimports -do "run"
+	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log
 
 clean:
 	rm -rf $(C_OBJS)

@@ -235,7 +235,7 @@ package msrh_pkg;
   } issue_t;
 
 
-  function issue_t assign_issue_t(sched_t in);
+function issue_t assign_issue_t(sched_t in, logic rs1_hit, logic rs2_hit);
     issue_t ret;
 
     ret.valid = in.valid;
@@ -250,13 +250,13 @@ package msrh_pkg;
     ret.rs1_type = in.rs1_type;
     ret.rs1_regidx = in.rs1_regidx;
     ret.rs1_rnid = in.rs1_rnid;
-    ret.rs1_ready = in.rs1_ready;
+    ret.rs1_ready = in.rs1_ready | rs1_hit;
 
     ret.rs2_valid = in.rs2_valid;
     ret.rs2_regidx = in.rs2_regidx;
     ret.rs2_type = in.rs2_type;
     ret.rs2_rnid = in.rs2_rnid;
-    ret.rs2_ready = in.rs2_ready;
+    ret.rs2_ready = in.rs2_ready | rs1_hit;
 
     return ret;
 

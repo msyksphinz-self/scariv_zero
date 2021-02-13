@@ -16,12 +16,13 @@ module msrh_scheduler
  output msrh_pkg::issue_t o_issue
  );
 
+logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
 msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
-logic [$clog2(IN_PORT_SIZE)-1: 0] w_input_vld_cnt;
-logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_in_ptr;
-logic [$clog2(ENTRY_SIZE)-1: 0]   r_entry_out_ptr;
+logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
+logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
+logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -54,8 +55,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .i_put      (|w_input_valid),
                   .i_put_data (w_disp_entry  ),
 
-                  .o_entry_valid(w_entry_ready[s_idx]),
-                  .o_entry_ready(),
+                  .o_entry_valid(w_entry_valid[s_idx]),
+                  .o_entry_ready(w_entry_ready[s_idx]),
                   .o_entry(w_entry[s_idx]),
                   .release_in(release_in)
                   );
@@ -63,14 +64,13 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 end
 endgenerate
 
-// temporary
-assign o_issue = w_entry[r_entry_out_ptr];
+assign o_issue = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_entry_in_ptr <= 'h0;
+    r_entry_out_ptr <= 'h0;
   end else begin
-    if (|w_entry_ready) begin
+    if (w_entry_ready[r_entry_out_ptr]) begin
       r_entry_out_ptr <= r_entry_out_ptr + 1'b1;
     end
   end

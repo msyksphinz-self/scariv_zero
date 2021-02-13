@@ -114,6 +114,7 @@ u_tb_l2_behavior_ram
    );
 
 
+`ifndef DIRECT_LOAD_HEX
 tb_elf_loader
 u_tb_elf_loader
   (
@@ -129,7 +130,7 @@ u_tb_elf_loader
    .o_req_byte_en (w_elf_req_byte_en),
    .i_req_ready   (w_elf_req_ready )
    );
-
+`endif // DIRECT_LOAD_HEX
 
 localparam STEP = 1;
 localparam TIMEOUT = 100000;
@@ -162,8 +163,13 @@ always #STEP begin
 end
 
 initial begin
-  load_binary("", "../tests/simple_chain_add/test.elf", 1'b1);
-end
 
+`ifdef DIRECT_LOAD_HEX
+  $readmemh ("../tests/simple_chain_add/test.hex", u_tb_l2_behavior_ram.ram);
+`else // DIRECT_LOAD_HEX
+  load_binary("", "../tests/simple_chain_add/test.elf", 1'b1);
+`endif // DIRECT_LOAD_HEX
+
+end
 
 endmodule // tb

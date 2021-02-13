@@ -90,11 +90,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       /* verilator lint_off WIDTH */
       if (actual_line_pos >= SIZE || i_req_addr < BASE_ADDR) begin
         $display("ERROR: address %10x is out of region of L2 RAM", i_req_addr);
-        $fatal;
+        $stop;
       end
     end
   end
 end
-
 
 endmodule // tb_l2_behavior_ram

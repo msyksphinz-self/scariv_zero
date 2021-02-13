@@ -26,11 +26,14 @@ module msrh_alu_pipe (
   pipe_ctrl_t                              r_ex1_pipe_ctrl;
   msrh_pkg::issue_t                         r_ex1_issue;
 
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs2_fwd_valid;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex1_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex1_rs1_selected_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex1_rs2_selected_data;
+  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_fwd_data;
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_fwd_data;
+
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
+  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
 
   pipe_ctrl_t                              r_ex2_pipe_ctrl;
   msrh_pkg::issue_t                         r_ex2_issue;
@@ -40,13 +43,17 @@ module msrh_alu_pipe (
   msrh_pkg::issue_t                         r_ex3_issue;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
 
-  always_ff @(posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_ex0_issue <= 'h0;
-    end else begin
-      r_ex0_issue <= rv0_issue;
-    end
-  end
+  // always_ff @(posedge i_clk, negedge i_reset_n) begin
+  //   if (!i_reset_n) begin
+  //     r_ex0_issue <= 'h0;
+  //   end else begin
+  //     r_ex0_issue <= rv0_issue;
+  //   end
+  // end
+
+always_comb begin
+  r_ex0_issue = rv0_issue;
+end
 
   decoder_inst_ctrl u_pipe_ctrl (
       .inst(r_ex0_issue.inst),
@@ -78,14 +85,14 @@ module msrh_alu_pipe (
 
   generate
     for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-      assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rs1_valid & ex1_target_in[tgt_idx].valid &
-                                           (r_ex1_issue.rs1_type == ex1_target_in[tgt_idx].rd_type) &
-                                           (r_ex1_issue.rs1_rnid == ex1_target_in[tgt_idx].rd_rnid);
+      assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_target_in[tgt_idx].valid &
+                                           (r_ex2_issue.rs1_type == ex1_target_in[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rs1_rnid == ex1_target_in[tgt_idx].rd_rnid);
 
-      assign w_ex1_rs2_fwd_valid[tgt_idx] = r_ex1_issue.rs2_valid & ex1_target_in[tgt_idx].valid &
-                                           (r_ex1_issue.rs2_type == ex1_target_in[tgt_idx].rd_type) &
-                                           (r_ex1_issue.rs2_rnid == ex1_target_in[tgt_idx].rd_rnid);
-      assign w_ex1_tgt_data[tgt_idx] = ex1_target_in[tgt_idx].rd_data;
+      assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rs2_valid & ex1_target_in[tgt_idx].valid &
+                                           (r_ex2_issue.rs2_type == ex1_target_in[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rs2_rnid == ex1_target_in[tgt_idx].rd_rnid);
+      assign w_ex2_tgt_data[tgt_idx] = ex1_target_in[tgt_idx].rd_data;
     end
   endgenerate
 
@@ -93,18 +100,18 @@ module msrh_alu_pipe (
       .WIDTH(riscv_pkg::XLEN_W),
       .WORDS(msrh_pkg::TGT_BUS_SIZE)
   ) u_rs1_data_select (
-      .i_oh(w_ex1_rs1_fwd_valid),
-      .i_data(w_ex1_tgt_data),
-      .o_selected(w_ex1_rs1_selected_data)
+      .i_oh(w_ex2_rs1_fwd_valid),
+      .i_data(w_ex2_tgt_data),
+      .o_selected(w_ex2_rs1_fwd_data)
   );
 
   bit_oh_or #(
       .WIDTH(riscv_pkg::XLEN_W),
       .WORDS(msrh_pkg::TGT_BUS_SIZE)
   ) u_rs2_data_select (
-      .i_oh(w_ex1_rs2_fwd_valid),
-      .i_data(w_ex1_tgt_data),
-      .o_selected(w_ex1_rs2_selected_data)
+      .i_oh(w_ex2_rs2_fwd_valid),
+      .i_data(w_ex2_tgt_data),
+      .o_selected(w_ex2_rs2_fwd_data)
   );
 
   always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -115,14 +122,18 @@ module msrh_alu_pipe (
       r_ex2_issue <= 'h0;
       r_ex2_pipe_ctrl <= 'h0;
     end else begin
-      r_ex2_rs1_data <= |w_ex1_rs1_fwd_valid ? w_ex1_rs1_selected_data : ex0_regread_rs1.data;
+      r_ex2_rs1_data <= ex0_regread_rs1.data;
       r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
-                              |w_ex1_rs2_fwd_valid ? w_ex1_rs2_selected_data : ex0_regread_rs2.data;
+                        ex0_regread_rs2.data;
 
       r_ex2_issue <= r_ex1_issue;
       r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
     end
   end
+
+assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
+assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
+
 
   always_ff @(posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -134,8 +145,8 @@ module msrh_alu_pipe (
       case (r_ex2_pipe_ctrl.op)
         3'b001 : r_ex3_result <= {{(riscv_pkg::XLEN_W-20){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12]};
         3'b010: r_ex3_result <= 'h0;
-        3'b011: r_ex3_result <= r_ex2_rs1_data + r_ex2_rs2_data;
-        3'b100: r_ex3_result <= r_ex2_rs1_data - r_ex2_rs2_data;
+        3'b011: r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
+        3'b100: r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
         default : r_ex3_result <= {riscv_pkg::XLEN_W{1'bx}};
       endcase
     end
