@@ -50,9 +50,9 @@ module msrh_tile (
 
 
   generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
-  assign w_disp_valids[d_idx] = disp_to_scheduler.inst[d_idx].valid;
-end
-endgenerate
+    assign w_disp_valids[d_idx] = disp_to_scheduler.inst[d_idx].valid;
+  end
+  endgenerate
 
   generate
     for (genvar alu_idx = 0; alu_idx < msrh_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
@@ -86,5 +86,17 @@ endgenerate
       .target_in(w_ex3_target),
       .regread(regread)
   );
+
+  msrh_rob u_rob
+    (
+     .i_clk    (i_clk),
+     .i_reset_n(i_reset_n),
+
+     .i_disp_valid   (disp_from_frontend.valid),
+     .i_old_rd_valid (),
+     .i_old_rd_rnid  (),
+
+     .o_new_ctag ()
+     );
 
 endmodule  // msrh_tile

@@ -74,8 +74,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry <= 'h0;
   end else begin
     if (i_put) begin
-      r_entry_valid = 1'b1;
-      r_entry = msrh_pkg::assign_issue_t(i_put_data, w_rs1_entry_hit, w_rs2_entry_hit);
+      r_entry_valid <= 1'b1;
+      r_entry <= msrh_pkg::assign_issue_t(i_put_data, w_rs1_entry_hit, w_rs2_entry_hit);
     end else if (o_entry_valid & o_entry_ready) begin
       r_entry_valid <= 1'b0;
       r_entry <= 'h0;
