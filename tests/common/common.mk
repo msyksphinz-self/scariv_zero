@@ -20,7 +20,9 @@ CFLAGS += -T ./../common/test.ld
 
 all: compile dump
 
-compile: test.elf
+compile: test.hex
+test.hex: test.elf
+	../elf2hex/elf2hex --bit-width 256 --input $^ --output $@
 test.elf: test.S
 	riscv64-unknown-elf-gcc $(CFLAGS) -o $@ $^
 
