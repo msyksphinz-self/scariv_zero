@@ -93,10 +93,13 @@ module msrh_tile (
      .i_reset_n(i_reset_n),
 
      .i_disp_valid   (disp_from_frontend.valid),
+     .i_disp         (disp_from_frontend.inst),
      .i_old_rd_valid (),
      .i_old_rd_rnid  (),
 
-     .o_new_ctag ()
+     .o_new_ctag (),
+
+     .i_done_rpt ()
      );
 
 endmodule  // msrh_tile

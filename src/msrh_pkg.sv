@@ -14,6 +14,7 @@ package msrh_pkg;
 
   localparam REL_BUS_SIZE = ALU_INST_NUM;
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
+  localparam CMT_BUS_SIZE = REL_BUS_SIZE;
 
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE;
@@ -277,11 +278,11 @@ function issue_t assign_issue_t(sched_t in, logic rs1_hit, logic rs2_hit);
   } target_t;
 
   typedef struct packed {
-    logic                 vld;
+    logic                 valid;
     logic [CMT_BLK_W-1:0] ctag;
     logic [DISP_SIZE-1:0] ii;
     logic                 exc_vld;
-  } cmt_rpt_t;
+  } done_rpt_t;
 
 endpackage
 
