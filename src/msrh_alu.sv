@@ -21,9 +21,11 @@ module msrh_alu #(
     output msrh_pkg::done_rpt_t o_done_report
 );
 
-  msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
-  msrh_pkg::disp_t disp_picked_inst[2];
-  logic [1:0] disp_picked_inst_valid;
+msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
+msrh_pkg::disp_t disp_picked_inst[2];
+logic [1:0] disp_picked_inst_valid;
+logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
+
   msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
 
@@ -45,7 +47,8 @@ endgenerate
           .i_valids(disp_valid),
           .i_data  (w_disp_inst),
           .o_valid (disp_picked_inst_valid[p_idx]),
-          .o_data  (disp_picked_inst[p_idx])
+          .o_data  (disp_picked_inst[p_idx]),
+          .o_picked_pos (disp_picked_grp_id[p_idx])
       );
     end  // block: d_loop
   endgenerate
@@ -59,6 +62,8 @@ endgenerate
      .i_reset_n(i_reset_n),
 
      .i_disp_valid(disp_picked_inst_valid),
+     .i_cmt_id    (/* disp.cmt_id*/ 'h0),
+     .i_grp_id    (disp_picked_grp_id),
      .i_disp_info (disp_picked_inst),
 
      .release_in(release_in),

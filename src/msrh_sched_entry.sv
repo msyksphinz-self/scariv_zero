@@ -4,11 +4,13 @@ module msrh_sched_entry
    input logic  i_reset_n,
 
    input logic  i_put,
+   input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
+   input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id,
    input        msrh_pkg::disp_t i_put_data,
 
    output logic o_entry_valid,
    output logic o_entry_ready,
-   output       msrh_pkg::issue_t o_entry,
+   output msrh_pkg::issue_t o_entry,
 
    /* Forwarding path */
    input        msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
@@ -21,6 +23,8 @@ typedef enum { INIT, WAIT, ISSUED, DONE } state_t;
 
 logic    r_entry_valid;
 logic    w_entry_valid;
+logic [msrh_pkg::CMT_BLK_W-1:0] r_cmt_id;
+logic [msrh_pkg::DISP_SIZE-1:0] r_grp_id;
 logic    r_issued;
 msrh_pkg::issue_t r_entry;
 msrh_pkg::issue_t w_entry;
@@ -92,6 +96,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (i_put) begin
           r_entry_valid <= 1'b1;
           r_entry <= w_init_entry;
+          r_cmt_id <= i_cmt_id;
+          r_grp_id <= i_grp_id;
           r_state <= WAIT;
         end
       end

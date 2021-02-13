@@ -5,11 +5,12 @@ module bit_pick_1_index
     parameter DATA_WIDTH = 32
     )
 (
- input [SEL_WIDTH-1:0]   i_valids,
- input [DATA_WIDTH-1: 0] i_data[SEL_WIDTH],
+ input logic [SEL_WIDTH-1:0]   i_valids,
+ input logic [DATA_WIDTH-1: 0] i_data[SEL_WIDTH],
 
- output                  o_valid,
- output [DATA_WIDTH-1:0] o_data
+ output logic                  o_valid,
+ output logic [DATA_WIDTH-1:0] o_data,
+ output logic [SEL_WIDTH-1:0]  o_picked_pos
  );
 
 /* verilator lint_off UNOPTFLAT */
@@ -39,5 +40,6 @@ endgenerate
 
 bit_oh_or #(.WORDS(SEL_WIDTH), .WIDTH(DATA_WIDTH)) u_select (.i_oh(w_index_hit), .i_data(i_data), .o_selected(o_data));
 assign o_valid = |w_index_hit;
+assign o_picked_pos = w_index_hit;
 
 endmodule // bit_pick_1_index
