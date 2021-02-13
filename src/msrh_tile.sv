@@ -21,6 +21,8 @@ module msrh_tile (
 
   regread_if regread[4] ();
 
+msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
+
   frontend u_frontend (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
@@ -72,7 +74,9 @@ module msrh_tile (
           .target_in(w_ex3_target),
 
           .ex1_release_out(w_ex1_release[alu_idx]),
-          .ex3_target_out(w_ex3_target[alu_idx])
+          .ex3_target_out(w_ex3_target[alu_idx]),
+
+                    .o_done_report (w_done_rpt[alu_idx])
       );
     end
   endgenerate
@@ -99,7 +103,7 @@ module msrh_tile (
 
      .o_new_ctag (),
 
-     .i_done_rpt ()
+     .i_done_rpt (w_done_rpt)
      );
 
 endmodule  // msrh_tile

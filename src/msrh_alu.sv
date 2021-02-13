@@ -5,7 +5,7 @@ module msrh_alu #(
     input logic i_reset_n,
 
     input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
-          disp_if.slave                          disp,
+    disp_if.slave                          disp,
 
     regread_if.master ex0_regread_rs1,
     regread_if.master ex0_regread_rs2,
@@ -16,14 +16,19 @@ module msrh_alu #(
 
     /* write output */
     output msrh_pkg::release_t ex1_release_out,
-    output msrh_pkg::target_t  ex3_target_out
+    output msrh_pkg::target_t  ex3_target_out,
+
+    output msrh_pkg::done_rpt_t o_done_report
 );
 
   msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
   msrh_pkg::disp_t disp_picked_inst[2];
   logic [1:0] disp_picked_inst_valid;
   msrh_pkg::issue_t w_rv0_issue;
+logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
 
+logic         w_ex3_done;
+logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_ex3_index;
 
   generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
@@ -46,33 +51,49 @@ endgenerate
   endgenerate
 
   msrh_scheduler #(
-      .ENTRY_SIZE  (32),
+      .ENTRY_SIZE  (msrh_pkg::RV_ALU_ENTRY_SIZE),
       .IN_PORT_SIZE(2)
-  ) u_msrh_scheduler (
-      .i_clk    (i_clk),
-      .i_reset_n(i_reset_n),
+  ) u_msrh_scheduler
+    (
+     .i_clk    (i_clk),
+     .i_reset_n(i_reset_n),
 
-      .i_disp_valid(disp_picked_inst_valid),
-      .i_disp_info (disp_picked_inst),
+     .i_disp_valid(disp_picked_inst_valid),
+     .i_disp_info (disp_picked_inst),
 
-      .release_in(release_in),
+     .release_in(release_in),
 
-      .o_issue(w_rv0_issue)
+     .o_issue(w_rv0_issue),
+     .o_iss_index(w_rv0_index),
+
+     .i_pipe_done(w_ex3_done),
+     .i_done_index(w_ex3_index),
+
+     .o_done_report (o_done_report)
   );
 
 
-  msrh_alu_pipe u_alu (
-      .i_clk    (i_clk),
-      .i_reset_n(i_reset_n),
+  msrh_alu_pipe
+    #(
+      .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
+      )
+  u_alu
+    (
+     .i_clk    (i_clk),
+     .i_reset_n(i_reset_n),
 
-      .rv0_issue(w_rv0_issue),
-      .ex1_target_in(target_in),
+     .rv0_issue(w_rv0_issue),
+     .rv0_index(w_rv0_index),
+     .ex1_target_in(target_in),
 
-      .ex0_regread_rs1(ex0_regread_rs1),
-      .ex0_regread_rs2(ex0_regread_rs2),
+     .ex0_regread_rs1(ex0_regread_rs1),
+     .ex0_regread_rs2(ex0_regread_rs2),
 
-      .ex1_release_out(ex1_release_out),
-      .ex3_target_out (ex3_target_out)
+     .ex1_release_out(ex1_release_out),
+     .ex3_target_out (ex3_target_out),
+
+     .o_ex3_done (w_ex3_done),
+     .o_ex3_index (w_ex3_index)
   );
 
 
