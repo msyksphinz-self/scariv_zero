@@ -8,12 +8,20 @@ module msrh_scheduler
  input logic                     i_reset_n,
 
  input logic [IN_PORT_SIZE-1: 0] i_disp_valid,
- msrh_pkg::disp_t                 i_disp_info[IN_PORT_SIZE],
+ input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
+ input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
+ msrh_pkg::disp_t                i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
  input msrh_pkg::release_t        release_in[msrh_pkg::REL_BUS_SIZE],
 
- output msrh_pkg::issue_t o_issue
+ output msrh_pkg::issue_t o_issue,
+ output [ENTRY_SIZE-1:0] o_iss_index,
+
+ input logic                  i_pipe_done,
+ input logic [ENTRY_SIZE-1:0] i_done_index,
+
+ output msrh_pkg::done_rpt_t o_done_report
  );
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
@@ -23,6 +31,8 @@ msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
+
+logic [ENTRY_SIZE-1:0]          w_entry_done;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -40,12 +50,13 @@ end
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
-
+  logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (r_entry_in_ptr + i_idx == s_idx);
   end
 
   bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
+  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   msrh_sched_entry
     u_sched_entry(
@@ -53,18 +64,25 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .i_reset_n(i_reset_n),
 
                   .i_put      (|w_input_valid),
+
+                  .i_cmt_id   (i_cmt_id  ),
+                  .i_grp_id   (w_disp_grp_id  ),
                   .i_put_data (w_disp_entry  ),
 
                   .o_entry_valid(w_entry_valid[s_idx]),
                   .o_entry_ready(w_entry_ready[s_idx]),
                   .o_entry(w_entry[s_idx]),
-                  .release_in(release_in)
+                  .release_in(release_in),
+
+                  .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
+                  .o_entry_done (w_entry_done[s_idx])
                   );
 
 end
 endgenerate
 
-assign o_issue = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
+assign o_issue     = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
+assign o_iss_index = 1 << r_entry_out_ptr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -76,5 +94,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+
+assign o_done_report.valid = |w_entry_done;
+assign o_done_report.ctag  = 1'b0;
+assign o_done_report.ii    = 'h1;
+assign o_done_report.exc_vld = 1'b0;
 
 endmodule // msrh_scheduler
