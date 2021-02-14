@@ -20,7 +20,7 @@
 ../src/data_array.sv
 ../src/icache.sv
 ../src/tag_array.sv
-../src/frontend.sv
+../src/msrh_frontend.sv
 ../src/tlb.sv
 ../src/msrh_tile.sv
 ../src/msrh_tile_wrapper.sv
@@ -28,7 +28,7 @@
 
 ../src/msrh_decoder.sv
 ../src/msrh_rename.sv
-../src/freelist.sv
+../src/msrh_freelist.sv
 ../src/msrh_rename_map.sv
 ../src/msrh_inflight_list.sv
 
@@ -39,7 +39,7 @@
 ../src/msrh_scheduler.sv
 ../src/msrh_sched_entry.sv
 
-../src/phy_registers.sv
+../src/msrh_phy_registers.sv
 
 ../src/msrh_rob.sv
 ../src/msrh_rob_entry.sv

@@ -24,7 +24,7 @@ module msrh_tile (
 
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
-  frontend u_frontend (
+  msrh_frontend u_frontend (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 

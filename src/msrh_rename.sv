@@ -31,7 +31,7 @@ logic [msrh_pkg::DISP_SIZE-1: 0]         w_rd_data;
 assign disp_from_frontend.ready = 1'b1;
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : free_loop
-  freelist
+  msrh_freelist
                              #(
                                .SIZE (msrh_pkg::FLIST_SIZE),
                                .WIDTH ($clog2(msrh_pkg::RNID_SIZE)),

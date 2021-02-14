@@ -1,4 +1,4 @@
-module freelist
+module msrh_freelist
   #(
     parameter SIZE = 32,
     parameter WIDTH = 5,
@@ -41,4 +41,4 @@ end
 
 assign o_pop_id = r_freelist[r_head_ptr];
 
-endmodule // freelist
+endmodule // msrh_freelist

@@ -1,4 +1,4 @@
-module frontend
+module msrh_frontend
 (
  input logic i_clk,
  input logic i_reset_n,
@@ -109,4 +109,4 @@ u_inst_buffer
    .i_inst_buf_ready ( disp.ready )
    );
 
-endmodule
+endmodule // msrh_frontend
