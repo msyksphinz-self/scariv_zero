@@ -139,9 +139,9 @@ void dump_segment (const char* segname, int fd)
         switch (identity[EI_DATA]) {
 
           case 1:	/* Little endian */
-            for (count2=3;count2>-1;count2--) {
+            for (count2 = 3;count2 >= 0;count2--) {
               fprintf (stderr,"%.2x",static_cast<UByte_t>(buffer[count+count2]));
-              g_memory->StoreMemory<Byte_t> (base - 4 + count + count2, static_cast<Byte_t *>(&buffer[count+count2]));
+              g_memory->StoreMemory<Byte_t> (base - 4 + count2, static_cast<Byte_t *>(&buffer[count+count2]));
             }
             fprintf (stderr,"\n");
             break;
