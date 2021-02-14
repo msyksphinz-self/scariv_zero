@@ -4,6 +4,7 @@ module msrh_rename
    input logic i_reset_n,
 
    disp_if.slave disp_from_frontend,
+   input logic [msrh_pkg::CMT_BLK_W-1:0] i_new_cmt_id,
    disp_if.master disp_to_scheduler
    );
 
@@ -104,6 +105,7 @@ msrh_inflight_list u_inflight_map
 );
 
 assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
+assign disp_to_scheduler_d.cmt_id = i_new_cmt_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   always_ff @ (posedge i_clk, negedge i_reset_n) begin

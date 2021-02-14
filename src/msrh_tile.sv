@@ -15,6 +15,7 @@ module msrh_tile (
   disp_if disp_to_scheduler ();
 
   logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
+  logic [msrh_pkg::CMT_BLK_W-1:0] w_new_cmt_id;
 
   msrh_pkg::release_t w_ex1_release[msrh_pkg::REL_BUS_SIZE];
   msrh_pkg::target_t w_ex3_target[msrh_pkg::TGT_BUS_SIZE];
@@ -47,6 +48,8 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
       .i_reset_n(i_reset_n),
 
       .disp_from_frontend(disp_from_decoder),
+      .i_new_cmt_id (w_new_cmt_id),
+
       .disp_to_scheduler(disp_to_scheduler)
   );
 
@@ -101,7 +104,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
      .i_old_rd_valid (),
      .i_old_rd_rnid  (),
 
-     .o_new_ctag (),
+     .o_new_cmt_id (w_new_cmt_id),
 
      .i_done_rpt (w_done_rpt)
      );

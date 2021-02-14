@@ -8,21 +8,21 @@ module msrh_rob
    input logic [msrh_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
    input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[msrh_pkg::DISP_SIZE],
 
-   output logic [msrh_pkg::CMT_BLK_W-1: 0] o_new_ctag,
+   output logic [msrh_pkg::CMT_BLK_W-1: 0] o_new_cmt_id,
 
    input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE]
    );
 
-logic [msrh_pkg::CMT_BLK_W-1:0]            r_ctag;
+logic [msrh_pkg::CMT_BLK_W-1:0]            r_cmt_id;
 logic [msrh_pkg::DISP_SIZE-1:0]            w_disp_ii;
 logic [msrh_pkg::CMT_BLK_SIZE-1:0]         w_entry_all_done;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ctag <= 'h0;
+    r_cmt_id <= 'h0;
   end else begin
-    r_ctag <= i_disp_valid ? r_ctag + 'h1 : r_ctag;
+    r_cmt_id <= i_disp_valid ? r_cmt_id + 'h1 : r_cmt_id;
   end
 end
 
@@ -34,7 +34,7 @@ endgenerate
 
 generate for (genvar c_idx = 0; c_idx < msrh_pkg::CMT_BLK_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
-  assign w_load_valid = i_disp_valid & (r_ctag == c_idx);
+  assign w_load_valid = i_disp_valid & (r_cmt_id == c_idx);
 
   msrh_rob_entry u_entry
     (
@@ -56,5 +56,6 @@ logic w_load_valid;
 end
 endgenerate
 
+assign o_new_cmt_id = r_cmt_id;
 
 endmodule // msrh_rob

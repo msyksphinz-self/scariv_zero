@@ -62,7 +62,7 @@ endgenerate
      .i_reset_n(i_reset_n),
 
      .i_disp_valid(disp_picked_inst_valid),
-     .i_cmt_id    (/* disp.cmt_id*/ 'h0),
+     .i_cmt_id    (disp.cmt_id),
      .i_grp_id    (disp_picked_grp_id),
      .i_disp_info (disp_picked_inst),
 
