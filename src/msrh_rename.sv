@@ -107,17 +107,19 @@ msrh_inflight_list u_inflight_map
 assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
 assign disp_to_scheduler_d.cmt_id = i_new_cmt_id;
 
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      disp_to_scheduler.valid <= 'h0;
-      disp_to_scheduler.inst <= 'h0;
-    end else begin
-      disp_to_scheduler.valid <= disp_to_scheduler_d.valid;
-      disp_to_scheduler.inst  <= disp_to_scheduler_d.inst;
-    end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    disp_to_scheduler.valid <= 'h0;
+    disp_to_scheduler.cmt_id <= 'h0;
+    disp_to_scheduler.inst <= 'h0;
+  end else begin
+    disp_to_scheduler.valid  <= disp_to_scheduler_d.valid;
+    disp_to_scheduler.cmt_id <= i_new_cmt_id;
+    disp_to_scheduler.inst   <= disp_to_scheduler_d.inst;
   end
+end
 
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
   logic [msrh_pkg::RNID_W-1: 0] rs1_rnid_tmp[msrh_pkg::DISP_SIZE];
   logic [msrh_pkg::DISP_SIZE-1: 0] rs1_rnid_tmp_valid;
