@@ -9,9 +9,11 @@ module msrh_decoder
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    disp_to_renamer.valid <= 1'b0;
+    disp_to_renamer.valid   <= 1'b0;
+    disp_to_renamer.pc_addr <= 'h0;
   end else begin
     disp_to_renamer.valid <= disp_from_frontend.valid;
+    disp_to_renamer.pc_addr <= disp_from_frontend.pc_addr;
   end
 end
 assign disp_from_frontend.ready = disp_to_renamer.ready;

@@ -5,16 +5,19 @@ module inst_buffer
 
  input logic                                i_inst_vld,
 
- output logic                               o_inst_rdy,
+ output logic                                o_inst_rdy,
+ input logic [riscv_pkg::VADDR_W-1: 1]       i_inst_pc,
  input logic [msrh_pkg::ICACHE_DATA_W-1: 0]  i_inst_in,
  input logic [msrh_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
  output logic                               o_inst_buf_valid,
+ output logic [riscv_pkg::VADDR_W-1: 1]       o_inst_pc,
  output msrh_pkg::disp_t [msrh_pkg::DISP_SIZE-1:0] o_inst_buf,
  input logic                                i_inst_buf_ready
  );
 
 logic [ 1: 0]                               inst_buffer_vld_q;
+logic [riscv_pkg::VADDR_W-1: 1]             inst_pc[2];
 logic [msrh_pkg::ICACHE_DATA_W-1: 0]         inst_buffer_q[2];
 logic [msrh_pkg::ICACHE_DATA_B_W-1: 0]       inst_buffer_byte_en_q[2];
 logic [msrh_pkg::ICACHE_DATA_B_W-1: 0]       inst_buffer_en_pick_up;
@@ -28,10 +31,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (i_inst_vld & o_inst_rdy) begin
       if (!inst_buffer_vld_q[0]) begin
         inst_buffer_q[0]         <= i_inst_in;
+        inst_pc[0]               <= i_inst_pc;
         inst_buffer_vld_q[0]     <= 1'b1;
         inst_buffer_byte_en_q[0] <= i_inst_byte_en;
       end else begin
         inst_buffer_q[1]         <= i_inst_in;
+        inst_pc[1]               <= i_inst_pc;
         inst_buffer_vld_q[1]     <= 1'b1;
         inst_buffer_byte_en_q[1] <= i_inst_byte_en;
       end
@@ -95,6 +100,7 @@ assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp;
 bit_tree_msb #(.WIDTH(msrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out(w_inst_disp_mask));
 
 assign o_inst_buf_valid = |w_inst_disp_mask;
+assign o_inst_pc = inst_pc[0];
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   logic [31: 0] w_inst;
   assign w_inst = inst_buffer_q[0][d_idx*32+:32];

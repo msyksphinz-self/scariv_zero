@@ -101,12 +101,14 @@ u_inst_buffer
    .i_inst_vld (w_s2_ic_resp.valid),
 
    .o_inst_rdy(),
-   .i_inst_in (w_s2_ic_resp.data),
-   .i_inst_byte_en(w_s2_ic_resp.be),
+   .i_inst_pc      (w_s2_ic_resp.addr),
+   .i_inst_in      (w_s2_ic_resp.data),
+   .i_inst_byte_en (w_s2_ic_resp.be),
 
-   .o_inst_buf_valid ( disp.valid ),
-   .o_inst_buf       ( disp.inst  ),
-   .i_inst_buf_ready ( disp.ready )
+   .o_inst_buf_valid ( disp.valid   ),
+   .o_inst_pc        ( disp.pc_addr ),
+   .o_inst_buf       ( disp.inst    ),
+   .i_inst_buf_ready ( disp.ready   )
    );
 
 endmodule // msrh_frontend

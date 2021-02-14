@@ -42,11 +42,12 @@ package msrh_pkg;
 
   typedef struct packed {
     logic valid;
-    logic [riscv_pkg::XLEN_W-1:0] vaddr;
+    logic [riscv_pkg::VADDR_W-1:0] vaddr;
   } ic_req_t;
 
   typedef struct packed {
     logic valid;
+    logic [riscv_pkg::VADDR_W-1:1]      addr;
     logic [msrh_pkg::ICACHE_DATA_W-1:0] data;
     logic [msrh_pkg::ICACHE_DATA_B_W-1:0] be;
   } ic_resp_t;
@@ -281,8 +282,8 @@ function issue_t assign_issue_t(sched_t in, logic rs1_hit, logic rs2_hit);
 
   typedef struct packed {
     logic                 valid;
-    logic [CMT_BLK_W-1:0] ctag;
-    logic [DISP_SIZE-1:0] ii;
+    logic [CMT_BLK_W-1:0] cmt_id;
+    logic [DISP_SIZE-1:0] grp_id;
     logic                 exc_vld;
   } done_rpt_t;
 

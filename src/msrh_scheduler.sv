@@ -99,8 +99,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-bit_oh_or #(.WIDTH(msrh_pkg::CMT_BLK_W), .WORDS(ENTRY_SIZE)) bit_oh_entry  (.i_oh(w_entry_done), .i_data(w_entry_cmt_id), .o_selected(o_done_report.ctag));
-bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.ii  ));
+bit_oh_or #(.WIDTH(msrh_pkg::CMT_BLK_W), .WORDS(ENTRY_SIZE)) bit_oh_entry  (.i_oh(w_entry_done), .i_data(w_entry_cmt_id), .o_selected(o_done_report.cmt_id));
+bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.grp_id));
 
 assign o_done_report.valid = |w_entry_done;
 assign o_done_report.exc_vld = 1'b0;

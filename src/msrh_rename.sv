@@ -107,10 +107,12 @@ msrh_inflight_list u_inflight_map
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     disp_to_scheduler.valid <= 'h0;
+    disp_to_scheduler.pc_addr <= 'h0;
     disp_to_scheduler.cmt_id <= 'h0;
     disp_to_scheduler.inst <= 'h0;
   end else begin
     disp_to_scheduler.valid  <= disp_from_frontend.valid;
+    disp_to_scheduler.pc_addr <= disp_from_frontend.pc_addr;
     disp_to_scheduler.cmt_id <= i_new_cmt_id;
     disp_to_scheduler.inst   <= w_disp_inst;
   end
