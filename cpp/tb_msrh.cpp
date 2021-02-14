@@ -1,6 +1,8 @@
 #include "memory_block.hpp"
 #include "mem_body.hpp"
 
+#include "spike_dpi.h"
+
 #include <getopt.h>
 #include <iostream>
 #include <verilated.h>
@@ -8,7 +10,6 @@
 #include "Vmsrh_tb.h"
 
 extern std::unique_ptr<Memory> g_memory;
-// extern int32_t load_binary(char const* path_exec, char const* filename, bool is_load_dump);
 extern bool elf_load_finish;
 
 int time_counter = 0;
@@ -26,6 +27,8 @@ double sc_time_stamp()
 }
 
 int main(int argc, char** argv) {
+
+  char *filename;
 
   Verilated::commandArgs(argc, argv);
 
@@ -46,7 +49,10 @@ int main(int argc, char** argv) {
       case 'e': {
         g_memory   = std::unique_ptr<Memory> (new Memory ());
 
-        int ret = load_binary("", optarg, true);
+        filename = (char*)malloc(strlen(optarg) + 1);
+        strcpy(filename, optarg);
+        load_binary("", optarg, true);
+
         break;
       }
     }
@@ -61,6 +67,9 @@ int main(int argc, char** argv) {
 
   dut->trace(tfp, 100);  // Trace 100 levels of hierarchy
   tfp->open("simx.fst");
+
+  fprintf(stderr, "initial_spike opening %s ...\n", filename);
+  initial_spike(filename);
 
   // Format
   dut->i_elf_loader_reset_n = 0;

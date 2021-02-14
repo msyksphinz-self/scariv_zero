@@ -5,6 +5,17 @@ import "DPI-C" function load_binary
  input logic is_load_dump
 );
 
+
+import "DPI-C" function void step_spike
+  (
+   input longint rtl_time,
+   input longint rtl_pc,
+   input int     rtl_wr_valid,
+   input int     rtl_wr_gpr,
+   input longint rtl_wr_val
+   );
+
+
 module msrh_tb
   (
    input logic i_clk,
@@ -140,5 +151,14 @@ u_tb_elf_loader
    .o_req_byte_en (w_elf_req_byte_en),
    .i_req_ready   (w_elf_req_ready )
    );
+
+always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
+  if (!i_msrh_reset_n) begin
+  end else begin
+    if (|(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done)) begin
+      step_spike ($time, 'h0, 'h1, 'h0, 'h0);
+    end
+  end
+end
 
 endmodule // msrh_tb

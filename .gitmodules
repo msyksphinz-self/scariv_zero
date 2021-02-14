@@ -1,3 +1,6 @@
 [submodule "tests/elf2hex"]
 	path = tests/elf2hex
 	url = https://github.com/sifive/elf2hex.git
+[submodule "spike_dpi/riscv-isa-sim"]
+	path = spike_dpi/riscv-isa-sim
+	url = https://github.com/riscv/riscv-isa-sim.git

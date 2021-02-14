@@ -7,6 +7,17 @@ VERILATOR_OPTS += ../cpp/memory_block.cpp
 VERILATOR_OPTS += ../cpp/mem_body.cpp
 VERILATOR_OPTS += -CFLAGS "-g"
 VERILATOR_OPTS += -LDFLAGS "-lelf"
+VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi)
+VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi/riscv-isa-sim/)
+VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi)
+VERILATOR_OPTS += -LDFLAGS "-lspike_dpi"
+VERILATOR_OPTS += -LDFLAGS "-lriscv"
+VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
+VERILATOR_OPTS += -LDFLAGS "-ldisasm"
+VERILATOR_OPTS += -LDFLAGS "-lfesvr"
+VERILATOR_OPTS += -LDFLAGS "-lfdt"
+VERILATOR_OPTS += -LDFLAGS "-ldl"
+VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += --trace-fst
@@ -14,7 +25,6 @@ VERILATOR_OPTS += --trace-params
 VERILATOR_OPTS += --trace-structs
 VERILATOR_OPTS += --trace-underscore
 VERILATOR_OPTS += --unroll-count 1024
-VERILATOR_OPTS += -j $(shell nproc)
 
 TOP      = msrh_tb
 
@@ -36,20 +46,24 @@ DECODE_FILES += ../src/decoder_reg.sv
 
 FILELIST = sim_filelist.f
 
-rv32: $(DECODE_FILES) $(FILELIST)
+rv32: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv32/Vmsrh_tb.xml obj_dir_riscv32/Vmsrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk
 
-rv64: $(DECODE_FILES) $(FILELIST)
+rv64: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
 	xml2stems obj_dir_riscv64/Vmsrh_tb.xml obj_dir_riscv64/Vmsrh_tb.stems
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
 	$(MAKE) -C obj_dir_riscv64 -f V$(TOP).mk
 
+libspike_dpi.so:
+	$(MAKE) -C ../spike_dpi
+	ln -s ../spike_dpi/$@ .
+
 $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@
 
 clean:
-	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64 $(DECODE_FILES)
+	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64 $(DECODE_FILES) libspike_dpi.so

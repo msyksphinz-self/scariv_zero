@@ -49,7 +49,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_old_rd_rnid [i] <= i_old_rd_rnid [i];
       end
     end else if (r_valid) begin
-      r_done_ii <= r_done_ii | w_done_rpt_vld;
+      if (o_block_all_done) begin
+        r_valid <= 1'b0;
+      end else begin
+        r_done_ii <= r_done_ii | w_done_rpt_vld;
+      end
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
