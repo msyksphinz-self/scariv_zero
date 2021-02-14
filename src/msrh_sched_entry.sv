@@ -16,7 +16,9 @@ module msrh_sched_entry
    input        msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
 
    input logic  i_pipe_done,
-   output logic o_entry_done
+   output logic o_entry_done,
+   output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
+   output logic [msrh_pkg::DISP_SIZE-1:0] o_grp_id
    );
 
 typedef enum { INIT, WAIT, ISSUED, DONE } state_t;
@@ -127,5 +129,7 @@ assign o_entry_ready = r_entry_valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done = r_state == DONE;
+assign o_cmt_id = r_cmt_id;
+assign o_grp_id = r_grp_id;
 
 endmodule // msrh_sched_entry

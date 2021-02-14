@@ -14,10 +14,10 @@ logic [msrh_pkg::DISP_SIZE * 2-1: 0]     w_archreg_valid;
 logic [ 4: 0]                           w_archreg[msrh_pkg::DISP_SIZE * 2];
 logic [msrh_pkg::RNID_W-1: 0]            w_rnid[msrh_pkg::DISP_SIZE * 2];
 
-logic [ 4: 0]                           w_update_arch_id [msrh_pkg::DISP_SIZE];
+logic [ 4: 0]                            w_update_arch_id [msrh_pkg::DISP_SIZE];
 logic [msrh_pkg::RNID_W-1: 0]            w_update_rnid    [msrh_pkg::DISP_SIZE];
 
-disp_if disp_to_scheduler_d();
+msrh_pkg::disp_t [msrh_pkg::DISP_SIZE-1:0] w_disp_inst;
 
 logic [msrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[msrh_pkg::DISP_SIZE];
 logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_pkg::DISP_SIZE];
@@ -104,18 +104,15 @@ msrh_inflight_list u_inflight_map
 
 );
 
-assign disp_to_scheduler_d.valid = disp_from_frontend.valid;
-assign disp_to_scheduler_d.cmt_id = i_new_cmt_id;
-
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     disp_to_scheduler.valid <= 'h0;
     disp_to_scheduler.cmt_id <= 'h0;
     disp_to_scheduler.inst <= 'h0;
   end else begin
-    disp_to_scheduler.valid  <= disp_to_scheduler_d.valid;
+    disp_to_scheduler.valid  <= disp_from_frontend.valid;
     disp_to_scheduler.cmt_id <= i_new_cmt_id;
-    disp_to_scheduler.inst   <= disp_to_scheduler_d.inst;
+    disp_to_scheduler.inst   <= w_disp_inst;
   end
 end
 
@@ -179,12 +176,12 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
   assign rs1_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[0] : rs1_rnid_tmp[d_idx-1];
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
 
-  assign disp_to_scheduler_d.inst[d_idx] = msrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
-                                                                        rd_rnid     [d_idx],
-                                                                        w_active [d_idx*2+0],
-                                                                        rs1_rnid_fwd[d_idx],
-                                                                        w_active [d_idx*2+1],
-                                                                        rs2_rnid_fwd[d_idx]);
+  assign w_disp_inst[d_idx] = msrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
+                                                            rd_rnid     [d_idx],
+                                                            w_active [d_idx*2+0],
+                                                            rs1_rnid_fwd[d_idx],
+                                                            w_active [d_idx*2+1],
+                                                            rs2_rnid_fwd[d_idx]);
 
 end // block: src_rn_loop
 endgenerate

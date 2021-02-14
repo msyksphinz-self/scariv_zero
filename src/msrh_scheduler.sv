@@ -33,6 +33,8 @@ logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
 
 logic [ENTRY_SIZE-1:0]          w_entry_done;
+logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
+logic [msrh_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -75,7 +77,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .release_in(release_in),
 
                   .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
-                  .o_entry_done (w_entry_done[s_idx])
+
+                  .o_entry_done (w_entry_done[s_idx]),
+                  .o_cmt_id (w_entry_cmt_id[s_idx]),
+                  .o_grp_id (w_entry_grp_id[s_idx])
                   );
 
 end
@@ -94,10 +99,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+bit_oh_or #(.WIDTH(msrh_pkg::CMT_BLK_W), .WORDS(ENTRY_SIZE)) bit_oh_entry  (.i_oh(w_entry_done), .i_data(w_entry_cmt_id), .o_selected(o_done_report.ctag));
+bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.ii  ));
 
 assign o_done_report.valid = |w_entry_done;
-assign o_done_report.ctag  = 1'b0;
-assign o_done_report.ii    = 'h1;
 assign o_done_report.exc_vld = 1'b0;
 
 endmodule // msrh_scheduler

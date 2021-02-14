@@ -6,12 +6,14 @@ interface disp_if;
   logic ready;
   modport master(
     output valid,
+    output cmt_id,
     output inst,
-    input ready
+    input  ready
   );
   modport slave(
-    input valid,
-    input inst,
+    input  valid,
+    input  cmt_id,
+    input  inst,
     output ready
   );
 endinterface

@@ -30,7 +30,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : ii
                                        i_done_rpt[c_idx].ctag == i_ctag &&
                                        i_done_rpt[c_idx].ii == (1 << d_idx);
   end
-  assign w_done_rpt_vld[d_idx] = w_done_rpt_tmp_vld;
+  assign w_done_rpt_vld[d_idx] = |w_done_rpt_tmp_vld;
 end
 endgenerate
 
