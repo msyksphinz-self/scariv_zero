@@ -1,6 +1,7 @@
 #include "spike_dpi.h"
 #include "sim.h"
 #include "mmu.h"
+#include "disasm.h"
 
 #include <fesvr/option_parser.h>
 #include "remote_bitbang.h"
@@ -9,6 +10,7 @@
 #include "../VERSION"
 
 sim_t *spike_core;
+disassembler_t *disasm;
 
 std::vector<const char *> argv;
 
@@ -82,6 +84,9 @@ void initial_spike (const char *filename)
 {
   argv.push_back("./spike_dpi");
   argv.push_back("--isa=rv64gc");
+  argv.push_back("--log spike.log");
+  argv.push_back("-l");
+  argv.push_back("--log-commits");
   argv.push_back(filename);
 
   bool debug = false;
@@ -223,7 +228,12 @@ void initial_spike (const char *filename)
   spike_core->configure_log(log, log_commits);
   spike_core->set_histogram(histogram);
 
+  processor_t *p = spike_core->get_core(0);
+  p->step(10);
+
   fprintf(stderr, "spike iss done\n");
+
+  disasm = new disassembler_t (64);
 
   return;
 }
@@ -319,6 +329,8 @@ static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*
 
 
 void step_spike(long long time, long long rtl_pc,
+                int rtl_cmt_id, int rtl_grp_id,
+                int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
                 long long rtl_wr_val)
 {
@@ -327,8 +339,8 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
   p->step(1);
 
-  fprintf(stderr, "%ld : PC=[%016lx] : ", time, rtl_pc);
-  // spike_cosim.disassembler->disassemble(insn).c_str());
+  fprintf(stderr, "%ld : PC=[%016lx] %s\n", time, rtl_pc,
+          disasm->disassemble(rtl_insn).c_str());
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (iss_wr_val != rtl_wr_val) {

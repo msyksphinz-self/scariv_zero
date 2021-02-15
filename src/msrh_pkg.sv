@@ -189,6 +189,17 @@ package msrh_pkg;
   endfunction  // assign_disp_rename
 
   typedef struct packed {
+    logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
+    logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+
+    msrh_pkg::disp_t[msrh_pkg::DISP_SIZE-1:0] inst;
+
+    logic [msrh_pkg::DISP_SIZE-1:0] done_grp_id;
+    logic [msrh_pkg::DISP_SIZE-1:0] old_rd_valid;
+    logic [msrh_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
+  } rob_entry_t;
+
+  typedef struct packed {
     logic valid;
     logic [31:0] inst;
 

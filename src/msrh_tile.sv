@@ -99,9 +99,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
      .i_clk    (i_clk),
      .i_reset_n(i_reset_n),
 
-     .i_disp_valid   (disp_from_decoder.valid),
-     .i_disp_pc_addr (disp_from_decoder.pc_addr),
-     .i_disp         (disp_from_decoder.inst),
+     .disp_from_decoder (disp_from_decoder),
      .i_old_rd_valid (),
      .i_old_rd_rnid  (),
 

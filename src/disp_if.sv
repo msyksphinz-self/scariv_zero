@@ -19,4 +19,12 @@ interface disp_if;
     input  inst,
     output ready
   );
+  modport watch(
+    input  valid,
+    input  pc_addr,
+    input  cmt_id,
+    input  inst,
+    input  ready
+  );
+
 endinterface

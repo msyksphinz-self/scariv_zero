@@ -17,4 +17,4 @@ riscv_isa_sim: riscv-isa-sim/Makefile
 	make -C riscv-isa-sim -j$(shell nproc)
 
 riscv-isa-sim/Makefile:
-	cd riscv-isa-sim && ./configure &&
+	cd riscv-isa-sim && ./configure --enable-commitlog=yes

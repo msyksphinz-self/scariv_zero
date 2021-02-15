@@ -7,6 +7,7 @@ module msrh_rob_entry
 
    input logic                           i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1] i_load_pc_addr,
+   input msrh_pkg::disp_t[msrh_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_pkg::DISP_SIZE-1:0] i_load_grp_id,
    input logic [msrh_pkg::DISP_SIZE-1:0] i_old_rd_valid,
    input logic [msrh_pkg::RNID_W-1:0]    i_old_rd_rnid[msrh_pkg::DISP_SIZE],
@@ -16,16 +17,8 @@ module msrh_rob_entry
    output                                o_block_all_done
    );
 
-typedef struct packed {
-  logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
-  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
-  logic [msrh_pkg::DISP_SIZE-1:0] done_grp_id;
-  logic [msrh_pkg::DISP_SIZE-1:0] old_rd_valid;
-  logic [msrh_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
-} rob_entry_t;
-
 logic                             r_valid;
-rob_entry_t                       r_entry;
+msrh_pkg::rob_entry_t             r_entry;
 
 logic [msrh_pkg::DISP_SIZE-1:0]   w_done_rpt_vld;
 
@@ -51,6 +44,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_valid <= 1'b1;
       r_entry.grp_id <= i_load_grp_id;
       r_entry.pc_addr <= i_load_pc_addr;
+      r_entry.inst    <= i_load_inst;
+
       r_entry.done_grp_id <= {msrh_pkg::DISP_SIZE{1'b0}};
       for (int i = 0; i < msrh_pkg::DISP_SIZE; i++) begin
         r_entry.old_rd_valid[i] <= i_old_rd_valid[i];
