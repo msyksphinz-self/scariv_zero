@@ -3,6 +3,7 @@
 #include "mmu.h"
 #include "disasm.h"
 
+#include <dlfcn.h>
 #include <fesvr/option_parser.h>
 #include "remote_bitbang.h"
 #include "cachesim.h"
@@ -12,7 +13,8 @@
 sim_t *spike_core;
 disassembler_t *disasm;
 
-std::vector<const char *> argv;
+int argc;
+const char *argv[20];
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
@@ -80,14 +82,35 @@ static void suggest_help()
 }
 
 
+static unsigned long atoul_safe(const char* s)
+{
+  char* e;
+  auto res = strtoul(s, &e, 10);
+  if (*e)
+    help();
+  return res;
+}
+
+static unsigned long atoul_nonzero_safe(const char* s)
+{
+  auto res = atoul_safe(s);
+  if (!res)
+    help();
+  return res;
+}
+
+
 void initial_spike (const char *filename)
 {
-  argv.push_back("./spike_dpi");
-  argv.push_back("--isa=rv64gc");
-  argv.push_back("--log spike.log");
-  argv.push_back("-l");
-  argv.push_back("--log-commits");
-  argv.push_back(filename);
+  argv[0] = "spike_dpi";
+  argv[1] = "--isa=rv64gc";
+  argv[2] = "--log";
+  argv[3] = "spike.log";
+  argv[4] = "-l";
+  // argv.push_back("--log-commits");
+  argv[5] = filename;
+  argc = 6;
+  for (int i = 6; i < 20; i++) { argv[i] = NULL; }
 
   bool debug = false;
   bool halted = false;
@@ -132,6 +155,61 @@ void initial_spike (const char *filename)
   };
   std::vector<int> hartids;
 
+  auto const hartids_parser = [&](const char *s) {
+    std::string const str(s);
+    std::stringstream stream(str);
+
+    int n;
+    while (stream >> n)
+    {
+      hartids.push_back(n);
+      if (stream.peek() == ',') stream.ignore();
+    }
+  };
+
+  auto const device_parser = [&plugin_devices](const char *s) {
+    const std::string str(s);
+    std::istringstream stream(str);
+
+    // We are parsing a string like name,base,args.
+
+    // Parse the name, which is simply all of the characters leading up to the
+    // first comma. The validity of the plugin name will be checked later.
+    std::string name;
+    std::getline(stream, name, ',');
+    if (name.empty()) {
+      throw std::runtime_error("Plugin name is empty.");
+    }
+
+    // Parse the base address. First, get all of the characters up to the next
+    // comma (or up to the end of the string if there is no comma). Then try to
+    // parse that string as an integer according to the rules of strtoull. It
+    // could be in decimal, hex, or octal. Fail if we were able to parse a
+    // number but there were garbage characters after the valid number. We must
+    // consume the entire string between the commas.
+    std::string base_str;
+    std::getline(stream, base_str, ',');
+    if (base_str.empty()) {
+      throw std::runtime_error("Device base address is empty.");
+    }
+    char* end;
+    reg_t base = static_cast<reg_t>(strtoull(base_str.c_str(), &end, 0));
+    if (end != &*base_str.cend()) {
+      throw std::runtime_error("Error parsing device base address.");
+    }
+
+    // The remainder of the string is the arguments. We could use getline, but
+    // that could ignore newline characters in the arguments. That should be
+    // rare and discouraged, but handle it here anyway with this weird in_avail
+    // technique. The arguments are optional, so if there were no arguments
+    // specified we could end up with an empty string here. That's okay.
+    auto avail = stream.rdbuf()->in_avail();
+    std::string args(avail, '\0');
+    stream.readsome(&args[0], avail);
+
+    plugin_devices.emplace_back(base, new mmio_plugin_device_t(name, args));
+  };
+
   option_parser_t parser;
 
   parser.help(&suggest_help);
@@ -139,13 +217,13 @@ void initial_spike (const char *filename)
   parser.option('d', 0, 0, [&](const char* s){debug = true;});
   parser.option('g', 0, 0, [&](const char* s){histogram = true;});
   parser.option('l', 0, 0, [&](const char* s){log = true;});
-  // parser.option('p', 0, 1, [&](const char* s){nprocs = atoul_nonzero_safe(s);});
+  parser.option('p', 0, 1, [&](const char* s){nprocs = atoul_nonzero_safe(s);});
   parser.option('m', 0, 1, [&](const char* s){mems = make_mems(s);});
   // I wanted to use --halted, but for some reason that doesn't work.
   parser.option('H', 0, 0, [&](const char* s){halted = true;});
-  // parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
+  parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
   parser.option(0, "pc", 1, [&](const char* s){start_pc = strtoull(s, 0, 0);});
-  // parser.option(0, "hartids", 1, hartids_parser);
+  parser.option(0, "hartids", 1, hartids_parser);
   parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
   parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
   parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
@@ -162,25 +240,25 @@ void initial_spike (const char *filename)
   parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
   parser.option(0, "bootargs", 1, [&](const char* s){bootargs = s;});
   parser.option(0, "real-time-clint", 0, [&](const char *s){real_time_clint = true;});
-  // parser.option(0, "extlib", 1, [&](const char *s){
-  //   void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
-  //   if (lib == NULL) {
-  //     fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
-  //     exit(-1);
-  //   }
-  // });
-  // parser.option(0, "dm-progsize", 1,
-  //     [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
+  parser.option(0, "extlib", 1, [&](const char *s){
+    void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
+    if (lib == NULL) {
+      fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
+      exit(-1);
+    }
+  });
+  parser.option(0, "dm-progsize", 1,
+      [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
   parser.option(0, "dm-no-impebreak", 0,
       [&](const char* s){dm_config.support_impebreak = false;});
-  // parser.option(0, "dm-sba", 1,
-  //     [&](const char* s){dm_config.max_bus_master_bits = atoul_safe(s);});
+  parser.option(0, "dm-sba", 1,
+      [&](const char* s){dm_config.max_bus_master_bits = atoul_safe(s);});
   parser.option(0, "dm-auth", 0,
       [&](const char* s){dm_config.require_authentication = true;});
-  // parser.option(0, "dmi-rti", 1,
-  //     [&](const char* s){dmi_rti = atoul_safe(s);});
-  // parser.option(0, "dm-abstract-rti", 1,
-  //     [&](const char* s){dm_config.abstract_rti = atoul_safe(s);});
+  parser.option(0, "dmi-rti", 1,
+      [&](const char* s){dmi_rti = atoul_safe(s);});
+  parser.option(0, "dm-abstract-rti", 1,
+      [&](const char* s){dm_config.abstract_rti = atoul_safe(s);});
   parser.option(0, "dm-no-hasel", 0,
       [&](const char* s){dm_config.support_hasel = false;});
   parser.option(0, "dm-no-abstract-csr", 0,
@@ -192,9 +270,13 @@ void initial_spike (const char *filename)
   parser.option(0, "log", 1,
                 [&](const char* s){log_path = s;});
 
-  auto argv1 = parser.parse(static_cast<const char* const*>(argv.data()));
+  fprintf(stderr, "argv = %s\n", argv[0]);
+  auto argv1 = parser.parse(static_cast<const char* const*>(argv));
 
-  std::vector<std::string> htif_args(argv1, (const char* const*)argv.data() + argv.size());
+  std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
+
+  if (mems.empty())
+    mems = make_mems("2048");
 
   spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_time_clint,
                          initrd_start, initrd_end, bootargs, start_pc, mems, plugin_devices, htif_args,
@@ -228,10 +310,11 @@ void initial_spike (const char *filename)
   spike_core->configure_log(log, log_commits);
   spike_core->set_histogram(histogram);
 
+  // spike_core->run();
   processor_t *p = spike_core->get_core(0);
   p->step(10);
 
-  fprintf(stderr, "spike iss done\n");
+  fprintf(stderr, "spike iss done %d\n", spike_core->nprocs());
 
   disasm = new disassembler_t (64);
 
@@ -334,10 +417,9 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
                 long long rtl_wr_val)
 {
-  fprintf(stderr, "step_iss called()\n");
-
   processor_t *p = spike_core->get_core(0);
   p->step(1);
+  // spike_core->step(1);
 
   fprintf(stderr, "%ld : PC=[%016lx] %s\n", time, rtl_pc,
           disasm->disassemble(rtl_insn).c_str());
@@ -353,4 +435,14 @@ void step_spike(long long time, long long rtl_pc,
     }
   }
   fprintf (stderr, "\n");
+}
+
+
+int main()
+{
+  initial_spike ("../tests/simple_chain_add/test.elf");
+  processor_t *p = spike_core->get_core(0);
+  p->step(10);
+
+  return 0;
 }

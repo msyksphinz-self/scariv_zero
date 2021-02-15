@@ -188,7 +188,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx]) begin
           /* verilator lint_off WIDTH */
-          step_spike ($time, longint'(committed_rob_entry.pc_addr + 4 * grp_idx) << 1,
+          step_spike ($time, longint'(committed_rob_entry.pc_addr << 1 + 4 * grp_idx),
                       $clog2(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
                       1 << grp_idx,
                       committed_rob_entry.inst[grp_idx].inst,
