@@ -107,8 +107,8 @@ void initial_spike (const char *filename)
   argv[2] = "--log";
   argv[3] = "spike.log";
   argv[4] = "-l";
-  argv[5] = "-d";
-  // argv.push_back("--log-commits");
+  // argv[5] = "-d";
+  argv[5] = "--log-commits";
   argv[6] = filename;
   argc = 7;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -311,12 +311,12 @@ void initial_spike (const char *filename)
   spike_core->configure_log(log, log_commits);
   spike_core->set_histogram(histogram);
 
-  spike_core->get_core(0)->reset();
   spike_core->spike_dpi_init();
+  spike_core->get_core(0)->reset();
   // spike_core->get_core(0)->get_state()->pc = 0x80000000;
   spike_core->get_core(0)->step(5);
 
-  fprintf(stderr, "spike iss done %d\n", spike_core->nprocs());
+  fprintf(stderr, "spike iss done\n");
 
   disasm = new disassembler_t (64);
 
@@ -449,6 +449,10 @@ void step_spike(long long time, long long rtl_pc,
 int main()
 {
   initial_spike ("../tests/simple_chain_add/test.elf");
+  processor_t *p = spike_core->get_core(0);
+  p->step(5);
+  auto iss_pc = p->get_state()->prev_pc;
+  fprintf(stderr, "result = %08lx\n", iss_pc);
 
   return 0;
 }

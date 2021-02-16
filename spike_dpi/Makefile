@@ -5,8 +5,13 @@ CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)
 CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
 CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
-CFLAGS += -L$(abspath riscv-isa-sim)
-CFLAGS += -lriscv
+CFLAGS += $(abspath riscv-isa-sim)/libspike_main.a
+CFLAGS += $(abspath riscv-isa-sim)/libriscv.a
+CFLAGS += $(abspath riscv-isa-sim)/libdisasm.a
+CFLAGS += $(abspath riscv-isa-sim)/libsoftfloat.a
+CFLAGS += $(abspath riscv-isa-sim)/libfesvr.a
+CFLAGS += $(abspath riscv-isa-sim)/libfdt.a
+# CFLAGS += -lriscv
 
 EXE_CFLAGS += -g
 EXE_CFLAGS += -Wl,--export-dynamic
