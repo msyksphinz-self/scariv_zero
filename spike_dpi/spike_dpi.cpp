@@ -107,10 +107,11 @@ void initial_spike (const char *filename)
   argv[2] = "--log";
   argv[3] = "spike.log";
   argv[4] = "-l";
+  argv[5] = "-d";
   // argv.push_back("--log-commits");
-  argv[5] = filename;
-  argc = 6;
-  for (int i = 6; i < 20; i++) { argv[i] = NULL; }
+  argv[6] = filename;
+  argc = 7;
+  for (int i = argc; i < 20; i++) { argv[i] = NULL; }
 
   bool debug = false;
   bool halted = false;
@@ -290,10 +291,10 @@ void initial_spike (const char *filename)
     spike_core->set_remote_bitbang(&(*remote_bitbang));
   }
 
-  // if (dump_dts) {
-  //   printf("%s", spike_core->get_dts());
-  //   return 0;
-  // }
+  if (dump_dts) {
+    printf("%s", spike_core->get_dts());
+    return;
+  }
 
   if (ic && l2) ic->set_miss_handler(&*l2);
   if (dc && l2) dc->set_miss_handler(&*l2);
@@ -310,9 +311,10 @@ void initial_spike (const char *filename)
   spike_core->configure_log(log, log_commits);
   spike_core->set_histogram(histogram);
 
-  // spike_core->run();
-  processor_t *p = spike_core->get_core(0);
-  p->step(10);
+  spike_core->get_core(0)->reset();
+  spike_core->spike_dpi_init();
+  // spike_core->get_core(0)->get_state()->pc = 0x80000000;
+  spike_core->get_core(0)->step(5);
 
   fprintf(stderr, "spike iss done %d\n", spike_core->nprocs());
 
@@ -419,19 +421,25 @@ void step_spike(long long time, long long rtl_pc,
 {
   processor_t *p = spike_core->get_core(0);
   p->step(1);
-  // spike_core->step(1);
 
-  fprintf(stderr, "%ld : PC=[%016lx] %s\n", time, rtl_pc,
+  fprintf(stderr, "%lld : PC=[%016llx] %s\n", time, rtl_pc,
           disasm->disassemble(rtl_insn).c_str());
+  auto iss_pc = p->get_state()->prev_pc;
+  if (iss_pc != rtl_pc) {
+      fprintf(stderr, "==========================================\n");
+      fprintf(stderr, "Wrong PC: RTL = %016llx, ISS = %016lx\n",
+              rtl_pc, iss_pc);
+      fprintf(stderr, "==========================================\n");
+  }
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (iss_wr_val != rtl_wr_val) {
       fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong GPR[%02d]: RTL = %016lx, ISS = %016lx\n",
+      fprintf(stderr, "Wrong GPR[%02d]: RTL = %016llx, ISS = %016lx\n",
               rtl_wr_gpr_addr, rtl_wr_val, iss_wr_val);
       fprintf(stderr, "==========================================\n");
     } else {
-      fprintf(stderr, "GPR[%02d] <= %016lx", rtl_wr_gpr_addr, rtl_wr_val);
+      fprintf(stderr, "GPR[%02d] <= %016llx", rtl_wr_gpr_addr, rtl_wr_val);
     }
   }
   fprintf (stderr, "\n");
@@ -441,8 +449,6 @@ void step_spike(long long time, long long rtl_pc,
 int main()
 {
   initial_spike ("../tests/simple_chain_add/test.elf");
-  processor_t *p = spike_core->get_core(0);
-  p->step(10);
 
   return 0;
 }

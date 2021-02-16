@@ -177,7 +177,7 @@ commite_entry
 
 logic [riscv_pkg::XLEN_W-1: 0] w_physical_gpr_data [msrh_pkg::RNID_SIZE];
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin: reg_loop
-  assign w_physical_gpr_data[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_int_phy_registers.reg_loop[r_idx].w_wr_data;
+  assign w_physical_gpr_data[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_int_phy_registers.r_phy_regs[r_idx];
 end
 endgenerate
 
@@ -188,7 +188,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx]) begin
           /* verilator lint_off WIDTH */
-          step_spike ($time, longint'(committed_rob_entry.pc_addr << 1 + 4 * grp_idx),
+          step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
                       $clog2(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
                       1 << grp_idx,
                       committed_rob_entry.inst[grp_idx].inst,
