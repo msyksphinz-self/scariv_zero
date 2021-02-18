@@ -1,6 +1,7 @@
 // `default_nettype none
 
-module icache(
+module icache
+  (
   input logic i_clk,
   input logic i_reset_n,
 
@@ -11,6 +12,9 @@ module icache(
 
   output msrh_pkg::ic_resp_t            o_s2_resp,
 
+  output logic                          o_s2_miss,
+  output logic [riscv_pkg::VADDR_W-1:0] o_s2_miss_vaddr,
+
   l2_req_if.master ic_l2_req,
   l2_resp_if.slave ic_l2_resp
 );
@@ -20,7 +24,7 @@ module icache(
     logic [msrh_pkg::ICACHE_WAY_W-1 : 0] w_s1_tag_hit;
     // logic [msrh_pkg::ICACHE_TAG_LOW-1:0] r_s1_addr_low_bit;
     logic [riscv_pkg::VADDR_W-1:0]       r_s1_vaddr;
-    logic                               w_s1_hit;
+    logic                                w_s1_hit;
 
     /* S2 stage */
     logic                               r_s2_valid;
@@ -39,22 +43,28 @@ module icache(
 
     generate for(genvar way = 0; way < msrh_pkg::ICACHE_WAY_W; way++) begin : icache_way_loop
         logic    w_s1_tag_valid;
-        logic [riscv_pkg::PADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] w_s1_tag;
+        logic [riscv_pkg::VADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] w_s1_tag;
 
         tag_array
             #(
-              .TAG_W(riscv_pkg::PADDR_W-msrh_pkg::ICACHE_TAG_LOW),
+              .TAG_W(riscv_pkg::VADDR_W-msrh_pkg::ICACHE_TAG_LOW),
               .WORDS(msrh_pkg::ICACHE_TAG_LOW)
               )
         tag (
              .i_clk(i_clk),
              .i_reset_n(i_reset_n),
-             .i_addr(i_s0_req.vaddr[msrh_pkg::ICACHE_TAG_LOW-1:0]),
+
+             .i_wr  (ic_l2_resp_fire),
+             .i_addr(ic_l2_resp_fire ?
+                     r_req_vaddr   [$clog2(msrh_pkg::ICACHE_DATA_B_W) +: msrh_pkg::ICACHE_TAG_LOW] :
+                     i_s0_req.vaddr[$clog2(msrh_pkg::ICACHE_DATA_B_W) +: msrh_pkg::ICACHE_TAG_LOW]),
+             .i_tag_valid  (1'b1),
+             .i_tag (i_s0_req.vaddr[riscv_pkg::VADDR_W-1:msrh_pkg::ICACHE_TAG_LOW]),
              .o_tag(w_s1_tag),
              .o_tag_valid(w_s1_tag_valid)
              );
 
-        assign w_s1_tag_hit[way] = (i_s1_paddr[riscv_pkg::PADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
+        assign w_s1_tag_hit[way] = (i_s1_paddr[riscv_pkg::VADDR_W-1:msrh_pkg::ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
 
         data_array
             #(
@@ -64,7 +74,11 @@ module icache(
         data (
               .i_clk(i_clk),
               .i_reset_n(i_reset_n),
-              .i_addr(r_s1_vaddr[msrh_pkg::ICACHE_TAG_LOW-1:0]),
+              .i_wr  (ic_l2_resp_fire),
+              .i_addr(ic_l2_resp_fire ?
+                      r_req_vaddr[$clog2(msrh_pkg::ICACHE_DATA_B_W) +: msrh_pkg::ICACHE_TAG_LOW] :
+                      r_s1_vaddr [$clog2(msrh_pkg::ICACHE_DATA_B_W) +: msrh_pkg::ICACHE_TAG_LOW]),
+              .i_data(ic_l2_resp.payload.data),
               .o_data(w_s2_data[way])
               );
 
@@ -89,7 +103,7 @@ module icache(
             r_s1_valid <= 1'b0;
             r_s1_vaddr <= {riscv_pkg::VADDR_W{1'b0}};
         end else begin
-            r_s1_valid <= i_s0_req.valid;
+            r_s1_valid <= i_s0_req.valid & o_s0_ready;
             r_s1_vaddr <= i_s0_req.vaddr;
         end
     end
@@ -120,9 +134,9 @@ module icache(
                     );
 
     assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready;
-    assign o_s2_resp.valid = r_s2_hit | ic_l2_resp_fire;
+    assign o_s2_resp.valid = r_s2_hit;
     assign o_s2_resp.addr  = r_req_vaddr [msrh_pkg::VADDR_W-1: 1];
-    assign o_s2_resp.data  = ic_l2_resp_fire ? ic_l2_resp.payload.data : w_s2_selected_data;
+    assign o_s2_resp.data  = w_s2_selected_data;
     assign o_s2_resp.be    = {msrh_pkg::ICACHE_DATA_B_W{1'b1}};
 
     // ======================
@@ -166,6 +180,19 @@ module icache(
     assign ic_l2_resp.ready = 1'b1;
 
     assign o_s0_ready = (r_ic_state == ICInit);
+
+
+// Missed Signal at s2
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_s2_miss <= 1'b0;
+    o_s2_miss_vaddr <= 'h0;
+  end else begin
+    o_s2_miss       <= (r_ic_state == ICInit) & r_s1_valid & !w_s1_hit;
+    o_s2_miss_vaddr <= r_s1_vaddr;
+  end
+end
+
 
 endmodule
 

@@ -35,17 +35,23 @@ module msrh_frontend
     // ==============
 
     msrh_pkg::ic_resp_t w_s2_ic_resp;
+logic                            w_s2_ic_miss;
+logic [riscv_pkg::VADDR_W-1: 0]  w_s2_ic_miss_vaddr;
 
-    always_ff @ (posedge i_clk, negedge i_reset_n) begin
-        if (!i_reset_n) begin
-            /* verilator lint_off WIDTH */
-            r_s0_vaddr <= msrh_pkg::PC_INIT_VAL;
-        end else begin
-            if (w_s0_ic_ready) begin
-                r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_pkg::ICACHE_DATA_B_W));
-            end
-        end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    /* verilator lint_off WIDTH */
+    r_s0_vaddr <= msrh_pkg::PC_INIT_VAL;
+  end else begin
+    if (w_s2_ic_miss) begin
+      r_s0_vaddr <= w_s2_ic_miss_vaddr;
+    end else if (w_s0_ic_ready) begin
+      r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_pkg::ICACHE_DATA_B_W));
     end
+  end
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
     assign s0_vaddr_valid     = i_reset_n;
     assign w_s0_tlb_req.vaddr = r_s0_vaddr;
@@ -89,7 +95,10 @@ module msrh_frontend
          .o_s2_resp (w_s2_ic_resp),
 
          .ic_l2_req  (ic_l2_req ),
-         .ic_l2_resp (ic_l2_resp)
+         .ic_l2_resp (ic_l2_resp),
+
+         .o_s2_miss       (w_s2_ic_miss      ),
+         .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
          );
 
 inst_buffer

@@ -5,6 +5,8 @@ package msrh_pkg;
 
   localparam PC_INIT_VAL = 'h8000_0000;
 
+  localparam INST_BUF_SIZE = 4;
+
   localparam DISP_SIZE = 5;
 
   localparam ALU_INST_NUM = 2;
