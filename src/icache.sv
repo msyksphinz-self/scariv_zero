@@ -134,8 +134,8 @@ module icache
                     );
 
     assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready;
-    assign o_s2_resp.valid = r_s2_hit;
-    assign o_s2_resp.addr  = r_req_vaddr [msrh_pkg::VADDR_W-1: 1];
+    assign o_s2_resp.valid = r_s2_valid & r_s2_hit;
+    assign o_s2_resp.addr  = r_req_vaddr [riscv_pkg::VADDR_W-1: 1];
     assign o_s2_resp.data  = w_s2_selected_data;
     assign o_s2_resp.be    = {msrh_pkg::ICACHE_DATA_B_W{1'b1}};
 

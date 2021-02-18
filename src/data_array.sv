@@ -1,5 +1,3 @@
-`default_nettype none
-
 module data_array
   #(
     parameter WIDTH = 32,
@@ -30,5 +28,3 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 endmodule
-
-`default_nettype wire
