@@ -422,8 +422,8 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
   p->step(1);
 
-  fprintf(stderr, "%lld : PC=[%016llx] %s\n", time, rtl_pc,
-          disasm->disassemble(rtl_insn).c_str());
+  fprintf(stderr, "%lld : PC=[%016llx] (%02d,%02x) %08x %s\n", time, rtl_pc,
+          rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc = p->get_state()->prev_pc;
   if (iss_pc != rtl_pc) {
       fprintf(stderr, "==========================================\n");
