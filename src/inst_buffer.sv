@@ -175,7 +175,7 @@ bit_tree_msb #(.WIDTH(msrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .ou
 
 
 assign o_inst_buf_valid = |w_inst_disp_mask;
-assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc;
+assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   logic [31: 0] w_inst;
   assign w_inst = r_inst_queue[r_inst_buffer_outptr].data[(d_idx+r_head_start_pos)*32+:32];
