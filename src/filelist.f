@@ -12,6 +12,10 @@
 ../src/bit_pick_up.sv
 ../src/bit_pick_1_index.sv
 
+../src/encoder.sv
+../src/inoutptr.sv
+../src/inoutptr_oh.sv
+
 ../src/select_latest.sv
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv

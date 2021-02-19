@@ -109,7 +109,7 @@ u_inst_buffer
 
    .i_inst_vld (w_s2_ic_resp.valid),
 
-   .o_inst_rdy(),
+   .o_inst_rdy     (),
    .i_inst_pc      (w_s2_ic_resp.addr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
