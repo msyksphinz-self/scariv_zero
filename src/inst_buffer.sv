@@ -180,7 +180,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : di
   logic [31: 0] w_inst;
   assign w_inst = r_inst_queue[r_inst_buffer_outptr].data[(d_idx+r_head_start_pos)*32+:32];
 
-  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx+r_head_start_pos];
+  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
   assign o_inst_buf[d_idx].inst  = w_inst;
 
   assign o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx+r_head_start_pos];

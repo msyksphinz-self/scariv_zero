@@ -8,7 +8,7 @@ module msrh_rename
    disp_if.master disp_to_scheduler
    );
 
-logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] rd_rnid[msrh_pkg::DISP_SIZE];
+logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid[msrh_pkg::DISP_SIZE];
 
 logic [msrh_pkg::DISP_SIZE * 2-1: 0]     w_archreg_valid;
 logic [ 4: 0]                           w_archreg[msrh_pkg::DISP_SIZE * 2];
@@ -46,7 +46,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : fr
                               .i_push_id(),
 
                               .i_pop(disp_from_frontend.inst[d_idx].valid & disp_from_frontend.inst[d_idx].rd_valid),
-                              .o_pop_id(rd_rnid[d_idx])
+                              .o_pop_id(w_rd_rnid[d_idx])
                               );
 end
 endgenerate
@@ -58,8 +58,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
   assign w_archreg [d_idx*2 + 0] = disp_from_frontend.inst[d_idx].rs1_regidx;
   assign w_archreg [d_idx*2 + 1] = disp_from_frontend.inst[d_idx].rs2_regidx;
 
-  assign w_update_arch_id[d_idx] = 'h0;
-  assign w_update_rnid   [d_idx] = 'h0;
+  assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
+  assign w_update_rnid   [d_idx] = w_rd_rnid[d_idx];
 
 end
 endgenerate
@@ -73,7 +73,7 @@ msrh_rename_map u_msrh_rename_map
    .i_arch_id    (w_archreg),
    .o_rnid       (w_rnid),
 
-   .i_update         ({msrh_pkg::DISP_SIZE{1'b0}}),
+   .i_update         (w_rd_valids),
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   )
    );
@@ -133,7 +133,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
         disp_from_frontend.inst[0].rd_type   == disp_from_frontend.inst[d_idx].rs1_type &&
         disp_from_frontend.inst[0].rd_regidx == disp_from_frontend.inst[d_idx].rs1_regidx) begin
       rs1_rnid_tmp_valid[0] = 1'b1;
-      rs1_rnid_tmp      [0] = rd_rnid[0];
+      rs1_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs1_rnid_tmp_valid[0] = 1'b0;
       rs1_rnid_tmp      [0] = w_rnid[d_idx * 2 + 0];
@@ -143,7 +143,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
         disp_from_frontend.inst[0].rd_type   == disp_from_frontend.inst[d_idx].rs2_type &&
         disp_from_frontend.inst[0].rd_regidx == disp_from_frontend.inst[d_idx].rs2_regidx) begin
       rs2_rnid_tmp_valid[0] = 1'b1;
-      rs2_rnid_tmp      [0] = rd_rnid[0];
+      rs2_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs2_rnid_tmp_valid[0] = 1'b0;
       rs2_rnid_tmp      [0] = w_rnid[d_idx * 2 + 1];
@@ -155,7 +155,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
           disp_from_frontend.inst[p_idx].rd_type   == disp_from_frontend.inst[d_idx].rs1_type &&
           disp_from_frontend.inst[p_idx].rd_regidx == disp_from_frontend.inst[d_idx].rs1_regidx) begin
         rs1_rnid_tmp_valid[p_idx] = 1'b1;
-        rs1_rnid_tmp[p_idx] = rd_rnid[p_idx];
+        rs1_rnid_tmp[p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs1_rnid_tmp_valid[p_idx] = rs1_rnid_tmp_valid[p_idx-1];
         rs1_rnid_tmp      [p_idx] = rs1_rnid_tmp      [p_idx-1];
@@ -165,7 +165,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
           disp_from_frontend.inst[p_idx].rd_type   == disp_from_frontend.inst[d_idx].rs2_type &&
           disp_from_frontend.inst[p_idx].rd_regidx == disp_from_frontend.inst[d_idx].rs2_regidx) begin
         rs2_rnid_tmp_valid[p_idx] = 1'b1;
-        rs2_rnid_tmp[p_idx] = rd_rnid[p_idx];
+        rs2_rnid_tmp[p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs2_rnid_tmp_valid[p_idx] = rs2_rnid_tmp_valid[p_idx-1];
         rs2_rnid_tmp      [p_idx] = rs2_rnid_tmp      [p_idx-1];
@@ -179,7 +179,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
 
   assign w_disp_inst[d_idx] = msrh_pkg::assign_disp_rename (disp_from_frontend.inst[d_idx],
-                                                            rd_rnid     [d_idx],
+                                                            w_rd_rnid[d_idx],
                                                             w_active [d_idx*2+0],
                                                             rs1_rnid_fwd[d_idx],
                                                             w_active [d_idx*2+1],
