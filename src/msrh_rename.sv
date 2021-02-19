@@ -108,15 +108,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     disp_to_scheduler.valid <= 'h0;
     disp_to_scheduler.pc_addr <= 'h0;
-    disp_to_scheduler.cmt_id <= 'h0;
+    // disp_to_scheduler.cmt_id <= 'h0;
     disp_to_scheduler.inst <= 'h0;
   end else begin
     disp_to_scheduler.valid  <= disp_from_frontend.valid;
     disp_to_scheduler.pc_addr <= disp_from_frontend.pc_addr;
-    disp_to_scheduler.cmt_id <= i_new_cmt_id;
+    // disp_to_scheduler.cmt_id <= i_new_cmt_id;
     disp_to_scheduler.inst   <= w_disp_inst;
   end
-end
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign disp_to_scheduler.cmt_id = i_new_cmt_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
