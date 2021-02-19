@@ -15,6 +15,7 @@ module msrh_sched_entry
    /* Forwarding path */
    input        msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
 
+   input logic  i_entry_picked,
    input logic  i_pipe_done,
    output logic o_entry_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
@@ -105,7 +106,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end
       WAIT : begin
         r_entry <= w_entry;
-        if (o_entry_valid & o_entry_ready) begin
+        if (o_entry_valid & o_entry_ready & i_entry_picked) begin
           r_issued <= 1'b1;
           r_state <= ISSUED;
         end

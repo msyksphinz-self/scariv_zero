@@ -10,6 +10,6 @@ module bit_extract_msb
 logic [WIDTH-1:0]         tree;
 bit_tree_msb #(.WIDTH(WIDTH)) u_bit_tree (.in(in), .out(tree));
 
-assign out = tree ^ {1'b0, tree[WIDTH-2:0]};
+assign out = tree ^ {1'b0, tree[WIDTH-1:1]};
 
 endmodule // bit_ff_lsb

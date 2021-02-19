@@ -178,20 +178,20 @@ assign o_inst_buf_valid = |w_inst_disp_mask;
 assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc;
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   logic [31: 0] w_inst;
-  assign w_inst = r_inst_queue[r_inst_buffer_outptr].data[d_idx*32+:32];
+  assign w_inst = r_inst_queue[r_inst_buffer_outptr].data[(d_idx+r_head_start_pos)*32+:32];
 
-  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
+  assign o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx+r_head_start_pos];
   assign o_inst_buf[d_idx].inst  = w_inst;
 
-  assign o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx];
+  assign o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx+r_head_start_pos];
   assign o_inst_buf[d_idx].rd_type    = msrh_pkg::GPR;
   assign o_inst_buf[d_idx].rd_regidx  = w_inst[11: 7];
 
-  assign o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
+  assign o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx+r_head_start_pos] != 'h0;
   assign o_inst_buf[d_idx].rs1_type   = msrh_pkg::GPR;
   assign o_inst_buf[d_idx].rs1_regidx = w_inst[19:15];
 
-  assign o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
+  assign o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx+r_head_start_pos] != 'h0;
   assign o_inst_buf[d_idx].rs2_type   = msrh_pkg::GPR;
   assign o_inst_buf[d_idx].rs2_regidx = w_inst[24:20];
 

@@ -26,6 +26,8 @@ module msrh_scheduler
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
+logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
+
 msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
@@ -78,6 +80,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
                   .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
 
+                  .i_entry_picked (w_picked_inst_oh[s_idx]),
                   .o_entry_done (w_entry_done[s_idx]),
                   .o_cmt_id (w_entry_cmt_id[s_idx]),
                   .o_grp_id (w_entry_grp_id[s_idx])
@@ -86,7 +89,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 end
 endgenerate
 
-assign o_issue     = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
+bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
+bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+// assign o_issue     = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
 assign o_iss_index = 1 << r_entry_out_ptr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
