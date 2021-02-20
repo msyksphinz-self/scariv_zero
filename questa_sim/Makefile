@@ -23,7 +23,7 @@ C_OBJS = $(subst .cpp,.o,$(CSRC))
 ISA=rv64
 RV_PKG = ../src/riscv64_pkg.sv
 
-ifeq($(strip $(ISA)), rv32)
+ifeq ($(strip $(ISA)), rv32)
 	RV_PKG = ../src/riscv32_pkg.sv
 endif
 
