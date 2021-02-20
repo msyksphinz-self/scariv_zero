@@ -130,7 +130,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_head_start_pos   <= 'h0;
       end else begin
         r_head_inst_issued <= w_head_inst_issued_next;
-        r_head_start_pos   <= w_head_start_pos_next;
+        r_head_start_pos   <= r_head_start_pos + w_head_start_pos_next;
       end
     end
   end

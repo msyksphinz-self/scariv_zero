@@ -172,4 +172,67 @@ initial begin
 
 end
 
+
+int log_fp;
+initial begin
+  log_fp = $fopen("simulate.log");
+end
+
+
+msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_BLK_SIZE];
+msrh_pkg::rob_entry_t committed_rob_entry;
+generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_BLK_SIZE; r_idx++) begin : rob_loop
+  assign rob_entries[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
+end
+endgenerate
+
+bit_oh_or
+  #(
+    .WIDTH($size(msrh_pkg::rob_entry_t)),
+    .WORDS(msrh_pkg::CMT_BLK_SIZE)
+    )
+commite_entry
+  (
+   .i_oh(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
+   .i_data(rob_entries),
+   .o_selected(committed_rob_entry)
+);
+
+logic [riscv_pkg::XLEN_W-1: 0] w_physical_gpr_data [msrh_pkg::RNID_SIZE];
+generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin: reg_loop
+  assign w_physical_gpr_data[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_int_phy_registers.r_phy_regs[r_idx];
+end
+endgenerate
+
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+  end else begin
+    for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx]) begin
+        for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+          if (rob_entries[cmt_idx].grp_id[grp_idx]) begin
+            $fwrite (log_fp, "%t PC=%010x (%02d,%02d) %08x ", $time, (rob_entries[cmt_idx].pc_addr << 1) + (4 * grp_idx),
+                     cmt_idx, 1 << grp_idx,
+                     rob_entries[cmt_idx].inst[grp_idx].inst);
+            if (rob_entries[cmt_idx].inst[grp_idx].rd_valid) begin
+              $fwrite (log_fp, "GPR[%02d](%03d)=%016x : ",
+                       rob_entries[cmt_idx].inst[grp_idx].rd_regidx,
+                       rob_entries[cmt_idx].inst[grp_idx].rd_rnid,
+                       w_physical_gpr_data[rob_entries[cmt_idx].inst[grp_idx].rd_rnid]);
+            end else begin
+              $fwrite (log_fp, " : ");
+            end
+            $fwrite(log_fp, "DASM(%08x)\n", rob_entries[cmt_idx].inst[grp_idx].inst);
+          end // if (rob_entries[cmt_idx].grp_id[grp_idx])
+        end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+      end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx])
+    end // for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++)
+  end
+end
+
+final begin
+  $fclose(log_fp);
+end
+
 endmodule // tb
