@@ -26,9 +26,9 @@ generate for (genvar rn_idx = 0; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin :
   assign w_update_fetch_vld   = |w_update_fetch_vld_tmp;
   assign w_update_fetch_data  = |w_update_fetch_data_tmp;
 
-  logic [msrh_pkg::DISP_SIZE-1: 0] w_target_vld_tmp;
+  logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_vld_tmp;
   logic w_target_vld;
-  for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::DISP_SIZE; d_cmt_idx++) begin
+  for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
     assign w_target_vld_tmp [d_cmt_idx] = target_in[d_cmt_idx].valid & target_in[d_cmt_idx].rd_rnid == rn_idx;
   end
   assign w_target_vld   = |w_target_vld_tmp;

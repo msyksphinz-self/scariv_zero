@@ -163,18 +163,6 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_BLK_SIZE; r_idx++) begin :
 end
 endgenerate
 
-bit_oh_or
-  #(
-    .WIDTH($size(msrh_pkg::rob_entry_t)),
-    .WORDS(msrh_pkg::CMT_BLK_SIZE)
-    )
-commite_entry
-  (
-   .i_oh(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
-   .i_data(rob_entries),
-   .o_selected(committed_rob_entry)
-);
-
 logic [riscv_pkg::XLEN_W-1: 0] w_physical_gpr_data [msrh_pkg::RNID_SIZE];
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin: reg_loop
   assign w_physical_gpr_data[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_int_phy_registers.r_phy_regs[r_idx];
@@ -184,18 +172,20 @@ endgenerate
 always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
   if (!i_msrh_reset_n) begin
   end else begin
-    if (|(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done)) begin
-      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-        if (committed_rob_entry.grp_id[grp_idx]) begin
-          /* verilator lint_off WIDTH */
-          step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
-                      $clog2(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
-                      1 << grp_idx,
-                      committed_rob_entry.inst[grp_idx].inst,
-                      committed_rob_entry.inst[grp_idx].rd_valid,
-                      committed_rob_entry.inst[grp_idx].rd_regidx,
-                      w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
-        end
+    for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx]) begin
+        for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+          if (rob_entries[cmt_idx].grp_id[grp_idx]) begin
+            /* verilator lint_off WIDTH */
+            step_spike ($time, longint'((rob_entries[cmt_idx].pc_addr << 1) + (4 * grp_idx)),
+                        cmt_idx,
+                        1 << grp_idx,
+                        rob_entries[cmt_idx].inst[grp_idx].inst,
+                        rob_entries[cmt_idx].inst[grp_idx].rd_valid,
+                        rob_entries[cmt_idx].inst[grp_idx].rd_regidx,
+                        w_physical_gpr_data[rob_entries[cmt_idx].inst[grp_idx].rd_rnid]);
+          end
+        end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
       end
     end
   end
