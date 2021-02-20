@@ -1,3 +1,12 @@
+`ifndef DIRECT_LOAD_HEX
+import "DPI-C" function load_binary
+(
+ input string path_exec,
+ input string filename,
+ input logic is_load_dump
+);
+`endif // DIRECT_LOAD_HEX
+
 module tb;
 
 logic w_clk;
@@ -165,6 +174,7 @@ end
 string filename;
 
 initial begin
+`ifdef DIRECT_LOAD_HEX
   if ($value$plusargs("HEX=%s", filename)) begin
     $display("Loading HEX file = %s", filename);
   end else begin
@@ -172,9 +182,15 @@ initial begin
     $finish(1);
   end
 
-`ifdef DIRECT_LOAD_HEX
   $readmemh (filename, u_tb_l2_behavior_ram.ram);
 `else // DIRECT_LOAD_HEX
+  if ($value$plusargs("ELF=%s", filename)) begin
+    $display("Loading ELF file = %s", filename);
+  end else begin
+    $display("+ELF= is not specified");
+    $finish(1);
+  end
+
   load_binary("", filename, 1'b1);
 `endif // DIRECT_LOAD_HEX
 

@@ -30,6 +30,7 @@ endif
 ifeq ($(strip $(DUMP)), wdb)
   XSIM_ARGS += -wdb out.wdb
 endif
+XSIM_ARGS  += --testplusarg "ELF=${ELF}"
 
 ifeq ($(strip $(PRE_COMPILE)), on)
   XELAB_ARGS += -L libcell=$(PATH_VIVADO_LIB)
