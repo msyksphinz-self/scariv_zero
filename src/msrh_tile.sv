@@ -50,6 +50,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
       .disp_from_frontend(disp_from_decoder),
       .i_new_cmt_id (w_new_cmt_id),
 
+      .i_target (w_ex3_target),
       .disp_to_scheduler(disp_to_scheduler)
   );
 

@@ -5,6 +5,8 @@ module msrh_rename
 
    disp_if.slave disp_from_frontend,
    input logic [msrh_pkg::CMT_BLK_W-1:0] i_new_cmt_id,
+
+   input msrh_pkg::target_t i_target[msrh_pkg::TGT_BUS_SIZE],
    disp_if.master disp_to_scheduler
    );
 
@@ -85,24 +87,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : rd
   assign w_rd_data  [d_idx] = !disp_from_frontend.inst[d_idx].rd_valid;
 end
 endgenerate
-
-msrh_inflight_list u_inflight_map
-  (
-   .i_clk     (i_clk),
-   .i_reset_n (i_reset_n),
-
-   .i_addr   (w_archreg),
-   .o_valids (w_active),
-
-   .i_update_fetch_vld (w_rd_valids),
-   .i_update_fetch_addr(w_rd_regidx),
-   .i_update_fetch_data(w_rd_data  ),
-
-   .i_update_cmt_vld (),
-   .i_update_cmt_addr(),
-   .i_update_cmt_data()
-
-);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -189,6 +173,30 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : sr
 
 end // block: src_rn_loop
 endgenerate
+
+
+logic [msrh_pkg::RNID_W-1: 0] w_rs1_rs2_rnid[msrh_pkg::DISP_SIZE*2];
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : op_loop
+  assign w_rs1_rs2_rnid[d_idx*2+0] = rs1_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx*2+1] = rs2_rnid_fwd[d_idx];
+end
+endgenerate
+
+msrh_inflight_list u_inflight_map
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_rnid   (w_rs1_rs2_rnid),
+   .o_valids (w_active),
+
+   .i_update_fetch_vld (w_rd_valids),
+   .i_update_fetch_addr(w_rd_rnid  ),
+   .i_update_fetch_data(w_rd_data  ),
+
+   .target_in (i_target)
+);
+
 
 
 endmodule // msrh_rename
