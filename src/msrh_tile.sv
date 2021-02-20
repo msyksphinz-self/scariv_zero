@@ -10,12 +10,12 @@ module msrh_tile (
   l2_req_if l2_req ();
   l2_resp_if l2_resp ();
 
-  disp_if disp_from_frontend ();
-  disp_if disp_from_decoder ();
-  disp_if disp_to_scheduler ();
+  disp_if w_iq_disp ();
+  disp_if w_id_disp ();
+  disp_if w_sc_disp ();
 
   logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
-  logic [msrh_pkg::CMT_BLK_W-1:0] w_new_cmt_id;
+  logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
 
   msrh_pkg::release_t w_ex1_release[msrh_pkg::REL_BUS_SIZE];
   msrh_pkg::target_t w_ex3_target[msrh_pkg::TGT_BUS_SIZE];
@@ -31,32 +31,32 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
       .ic_l2_req(ic_l2_req),
       .ic_l2_resp(ic_l2_resp),
 
-      .disp(disp_from_frontend)
+      .s3_disp(w_iq_disp)
   );
 
-  msrh_decoder u_decoder (
-      .i_clk(i_clk),
-      .i_reset_n(i_reset_n),
-
-      .disp_from_frontend(disp_from_frontend),
-      .disp_to_renamer(disp_from_decoder)
-  );
+  // msrh_decoder u_decoder (
+  //     .i_clk(i_clk),
+  //     .i_reset_n(i_reset_n),
+  //
+  //     .iq_disp(w_iq_disp),
+  //     .id_disp(w_id_disp)
+  // );
 
 
   msrh_rename u_rename (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
-      .disp_from_frontend(disp_from_decoder),
-      .i_new_cmt_id (w_new_cmt_id),
+      .iq_disp(w_iq_disp),
+      .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
       .i_target (w_ex3_target),
-      .disp_to_scheduler(disp_to_scheduler)
+      .sc_disp  (w_sc_disp)
   );
 
 
   generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
-    assign w_disp_valids[d_idx] = disp_to_scheduler.inst[d_idx].valid;
+    assign w_disp_valids[d_idx] = w_sc_disp.inst[d_idx].valid;
   end
   endgenerate
 
@@ -69,7 +69,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
           .i_reset_n(i_reset_n),
 
           .disp_valid(w_disp_valids),
-          .disp(disp_to_scheduler),
+          .disp(w_sc_disp),
 
           .ex0_regread_rs1(regread[alu_idx * 2 + 0]),
           .ex0_regread_rs2(regread[alu_idx * 2 + 1]),
@@ -100,11 +100,11 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
      .i_clk    (i_clk),
      .i_reset_n(i_reset_n),
 
-     .disp_from_decoder (disp_to_scheduler),
+     .sc_disp (w_sc_disp),
      .i_old_rd_valid (),
      .i_old_rd_rnid  (),
 
-     .o_new_cmt_id (w_new_cmt_id),
+     .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
      .i_done_rpt (w_done_rpt)
      );
