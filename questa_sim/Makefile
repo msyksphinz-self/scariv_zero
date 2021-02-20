@@ -20,6 +20,14 @@ FILELIST = sim_filelist.f
 
 C_OBJS = $(subst .cpp,.o,$(CSRC))
 
+ISA=rv64
+RV_PKG = ../src/riscv64_pkg.sv
+
+ifeq($(strip $(ISA)), rv32)
+	RV_PKG = ../src/riscv32_pkg.sv
+endif
+
+
 all:
 	$(MAKE) vlib
 	$(MAKE) vlog
@@ -32,7 +40,7 @@ $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@
 
 vlog: $(FILELIST)
-	$(VLOG) $(VLOG_OPTS) ../src/riscv64_pkg.sv $(shell cat $^)
+	$(VLOG) $(VLOG_OPTS) $(RV_PKG) $(shell cat $^)
 
 vsim:
 	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}
