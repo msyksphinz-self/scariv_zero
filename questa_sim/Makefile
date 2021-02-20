@@ -35,7 +35,7 @@ vlog: $(FILELIST)
 	$(VLOG) $(VLOG_OPTS) ../src/riscv64_pkg.sv $(shell cat $^)
 
 vsim:
-	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log
+	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}
 
 clean:
 	rm -rf $(C_OBJS)

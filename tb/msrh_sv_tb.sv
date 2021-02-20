@@ -162,12 +162,20 @@ always #STEP begin
   w_clk = ~w_clk;
 end
 
+string filename;
+
 initial begin
+  if ($value$plusargs("HEX=%s", filename)) begin
+    $display("Loading HEX file = %s", filename);
+  end else begin
+    $display("+HEX= is not specified");
+    $finish(1);
+  end
 
 `ifdef DIRECT_LOAD_HEX
-  $readmemh ("../tests/simple_chain_add/test.hex", u_tb_l2_behavior_ram.ram);
+  $readmemh (filename, u_tb_l2_behavior_ram.ram);
 `else // DIRECT_LOAD_HEX
-  load_binary("", "../tests/simple_chain_add/test.elf", 1'b1);
+  load_binary("", filename, 1'b1);
 `endif // DIRECT_LOAD_HEX
 
 end
