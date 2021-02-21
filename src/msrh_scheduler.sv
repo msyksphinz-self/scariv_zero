@@ -91,8 +91,7 @@ endgenerate
 
 bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
 bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
-// assign o_issue     = w_entry_valid[r_entry_out_ptr] & w_entry_ready[r_entry_out_ptr] ? w_entry[r_entry_out_ptr] : 'h0;
-assign o_iss_index = 1 << r_entry_out_ptr;
+assign o_iss_index = w_picked_inst_oh;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

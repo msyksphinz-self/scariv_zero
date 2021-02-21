@@ -1,7 +1,7 @@
 #define ADD(rd,rs1,rs2,val1,val2) \
-    addi  rs1, x0, val1               ; \
-    addi  rs2, x0, val2               ; \
-    add rd, rs1, rs2            ; \
+    addi    rs1, x0, val1               ; \
+    addi    rs2, x0, val2               ; \
+    add     rd, rs1, rs2            ; \
 
     .section    .text
 _start:
