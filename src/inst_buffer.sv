@@ -184,6 +184,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : di
     if (w_inst_disp_mask[d_idx]) begin
       o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
       o_inst_buf[d_idx].inst  = w_inst;
+      o_inst_buf[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + {r_head_start_pos, 1'b0} + (d_idx << 2);
 
       o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx+r_head_start_pos];
       o_inst_buf[d_idx].rd_type    = msrh_pkg::GPR;

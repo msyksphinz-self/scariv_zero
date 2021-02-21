@@ -146,6 +146,7 @@ package msrh_pkg;
   typedef struct packed {
     logic valid;
     logic [31:0] inst;
+    logic [riscv_pkg::VADDR_W-1:0] pc_addr;
 
     logic [2:0] op;
     logic imm;
@@ -203,34 +204,7 @@ package msrh_pkg;
 
   typedef struct packed {
     logic valid;
-    logic [31:0] inst;
-
-    logic [2:0] op;
-    logic imm;
-    logic size;
-    logic sign;
-
-    logic rd_valid;
-    reg_t rd_type;
-    logic [4:0] rd_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
-
-    logic rs1_valid;
-    reg_t rs1_type;
-    logic [4:0] rs1_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
-    logic rs1_ready;
-
-    logic rs2_valid;
-    logic [4:0] rs2_regidx;
-    reg_t rs2_type;
-    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
-    logic rs2_ready;
-  } sched_t;
-
-
-  typedef struct packed {
-    logic valid;
+    logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     logic [31:0] inst;
 
     logic rd_valid;
@@ -252,32 +226,33 @@ package msrh_pkg;
   } issue_t;
 
 
-function issue_t assign_issue_t(sched_t in, logic rs1_hit, logic rs2_hit);
-    issue_t ret;
+function issue_t assign_issue_t(disp_t in, logic rs1_hit, logic rs2_hit);
+  issue_t ret;
 
-    ret.valid = in.valid;
-    ret.inst = in.inst;
+  ret.valid = in.valid;
+  ret.inst = in.inst;
+  ret.pc_addr = in.pc_addr;
 
-    ret.rd_valid = in.rd_valid;
-    ret.rd_type = in.rd_type;
-    ret.rd_regidx = in.rd_regidx;
-    ret.rd_rnid = in.rd_rnid;
+  ret.rd_valid = in.rd_valid;
+  ret.rd_type = in.rd_type;
+  ret.rd_regidx = in.rd_regidx;
+  ret.rd_rnid = in.rd_rnid;
 
-    ret.rs1_valid = in.rs1_valid;
-    ret.rs1_type = in.rs1_type;
-    ret.rs1_regidx = in.rs1_regidx;
-    ret.rs1_rnid = in.rs1_rnid;
-    ret.rs1_ready = in.rs1_ready | rs1_hit;
+  ret.rs1_valid = in.rs1_valid;
+  ret.rs1_type = in.rs1_type;
+  ret.rs1_regidx = in.rs1_regidx;
+  ret.rs1_rnid = in.rs1_rnid;
+  ret.rs1_ready = in.rs1_ready | rs1_hit;
 
-    ret.rs2_valid = in.rs2_valid;
-    ret.rs2_regidx = in.rs2_regidx;
-    ret.rs2_type = in.rs2_type;
-    ret.rs2_rnid = in.rs2_rnid;
-    ret.rs2_ready = in.rs2_ready | rs1_hit;
+  ret.rs2_valid = in.rs2_valid;
+  ret.rs2_regidx = in.rs2_regidx;
+  ret.rs2_type = in.rs2_type;
+  ret.rs2_rnid = in.rs2_rnid;
+  ret.rs2_ready = in.rs2_ready | rs1_hit;
 
-    return ret;
+  return ret;
 
-  endfunction  // assign_issue_t
+endfunction  // assign_issue_t
 
 
   typedef struct packed {
