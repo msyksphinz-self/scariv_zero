@@ -52,3 +52,5 @@
 
 ../src/msrh_alu.sv
 ../src/msrh_alu_pipe.sv
+
+../src/msrh_lsu.sv

@@ -20,7 +20,8 @@ module msrh_tile (
   msrh_pkg::release_t w_ex1_release[msrh_pkg::REL_BUS_SIZE];
   msrh_pkg::target_t w_ex3_target[msrh_pkg::TGT_BUS_SIZE];
 
-  regread_if regread[4] ();
+  regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
+                     msrh_pkg::ALU_INST_NUM * 2] ();
 
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
@@ -85,8 +86,40 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
     end
   endgenerate
 
+
+generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
+
+msrh_lsu
+  #(
+    .PORT_BASE(lsu_idx * 2)
+    )
+u_msrh_lsu
+  (
+    .i_clk    (i_clk    ),
+    .i_reset_n(i_reset_n),
+
+    .disp_valid (w_disp_valids),
+    .disp (w_sc_disp),
+
+    .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 0]),
+    .ex1_regread_rs2 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 1]),
+
+    .i_release(w_ex1_release),
+    .i_target (w_ex3_target),
+
+    .o_ex1_release(w_ex1_release[msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .o_ex3_target (w_ex3_target [msrh_pkg::ALU_INST_NUM + lsu_idx]),
+
+    .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
+   );
+
+end // block: alu_loop
+endgenerate
+
+
   msrh_phy_registers #(
-      .RD_PORT_SIZE(4)
+      .RD_PORT_SIZE(msrh_pkg::LSU_INST_NUM * 2 +
+                    msrh_pkg::ALU_INST_NUM * 2)
   ) u_int_phy_registers (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),

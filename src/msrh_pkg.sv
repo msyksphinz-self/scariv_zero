@@ -10,13 +10,14 @@ package msrh_pkg;
   localparam DISP_SIZE = 5;
 
   localparam ALU_INST_NUM = 2;
+  localparam LSU_INST_NUM = 2;
 
   localparam ARITH_DISP_SIZE = 4;
   localparam MEM_DISP_SIZE = 4;
 
   localparam RV_ALU_ENTRY_SIZE = 32;
 
-  localparam REL_BUS_SIZE = ALU_INST_NUM;
+  localparam REL_BUS_SIZE = ALU_INST_NUM + LSU_INST_NUM;
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
   localparam CMT_BUS_SIZE = REL_BUS_SIZE;
 

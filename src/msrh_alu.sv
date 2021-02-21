@@ -32,7 +32,7 @@ logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
 logic         w_ex3_done;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_ex3_index;
 
-  generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
+generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
 end
 endgenerate
