@@ -198,8 +198,10 @@ end
 
 
 int log_fp;
+int pipe_fp;
 initial begin
   log_fp = $fopen("simulate.log");
+  pipe_fp = $fopen("pipetrace.log");
 end
 
 
@@ -255,8 +257,58 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   end
 end
 
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+  end else begin
+    $fwrite(pipe_fp, "%t PC=%010x | ", $time, u_msrh_tile_wrapper.u_msrh_tile.w_iq_disp.pc_addr);
+    // Schedule Pipe
+    for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+      $fwrite(pipe_fp, "(");
+      if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rd_valid)
+        $fwrite(pipe_fp, "%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rd_rnid);
+      else
+        $fwrite(pipe_fp, "   ,");
+      if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_valid)
+        $fwrite(pipe_fp, "%01d,%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_ready,
+                u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_rnid);
+      else
+        $fwrite(pipe_fp, "     ,");
+      if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_valid)
+        $fwrite(pipe_fp, "%01d,%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_ready,
+                u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_rnid);
+      else
+        $fwrite(pipe_fp, "     ,");
+      $fwrite(pipe_fp, ")");
+    end
+    $fwrite(pipe_fp, " | ");
+    for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx]) begin
+        for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+          if (rob_entries[cmt_idx].grp_id[grp_idx]) begin
+            $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
+                     cmt_idx, 1 << grp_idx,
+                     (rob_entries[cmt_idx].pc_addr << 1) + (4 * grp_idx));
+            if (rob_entries[cmt_idx].inst[grp_idx].rd_valid) begin
+              $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
+                       rob_entries[cmt_idx].inst[grp_idx].rd_regidx,
+                       rob_entries[cmt_idx].inst[grp_idx].rd_rnid,
+                       w_physical_gpr_data[rob_entries[cmt_idx].inst[grp_idx].rd_rnid]);
+            end else begin
+              $fwrite (pipe_fp, "                                        : ");
+            end
+            $fwrite (pipe_fp, "DASM(%08x)", rob_entries[cmt_idx].inst[grp_idx].inst);
+          end // if (rob_entries[cmt_idx].grp_id[grp_idx])
+        end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+      end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx])
+    end // for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++)
+    $fwrite(pipe_fp, "\n");
+  end // else: !if(!w_msrh_reset_n)
+end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+
 final begin
   $fclose(log_fp);
+  $fclose(pipe_fp);
 end
 
 endmodule // tb
