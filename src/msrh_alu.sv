@@ -7,8 +7,8 @@ module msrh_alu #(
     input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
-    regread_if.master ex0_regread_rs1,
-    regread_if.master ex0_regread_rs2,
+    regread_if.master ex1_regread_rs1,
+    regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
     input msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
@@ -91,8 +91,8 @@ endgenerate
      .rv0_index(w_rv0_index),
      .ex1_target_in(target_in),
 
-     .ex0_regread_rs1(ex0_regread_rs1),
-     .ex0_regread_rs2(ex0_regread_rs2),
+     .ex1_regread_rs1(ex1_regread_rs1),
+     .ex1_regread_rs2(ex1_regread_rs2),
 
      .ex1_release_out(ex1_release_out),
      .ex3_target_out (ex3_target_out),

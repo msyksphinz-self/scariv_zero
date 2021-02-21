@@ -10,8 +10,8 @@ module msrh_alu_pipe
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
     input msrh_pkg::target_t ex1_target_in[msrh_pkg::TGT_BUS_SIZE],
 
-    regread_if.master ex0_regread_rs1,
-    regread_if.master ex0_regread_rs2,
+    regread_if.master ex1_regread_rs1,
+    regread_if.master ex1_regread_rs2,
 
     output msrh_pkg::release_t ex1_release_out,
     output msrh_pkg::target_t  ex3_target_out,
@@ -76,11 +76,11 @@ end
       .sign(w_ex0_pipe_ctrl.sign)
   );
 
-  assign ex0_regread_rs1.valid = r_ex0_issue.valid & r_ex0_issue.rs1_valid;
-  assign ex0_regread_rs1.rnid = r_ex0_issue.rs1_rnid;
+  assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
+  assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 
-  assign ex0_regread_rs2.valid = r_ex0_issue.valid & r_ex0_issue.rs2_valid;
-  assign ex0_regread_rs2.rnid = r_ex0_issue.rs2_rnid;
+  assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
+  assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
   always_ff @(posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -138,9 +138,9 @@ end
       r_ex2_index <= 'h0;
       r_ex2_pipe_ctrl <= 'h0;
     end else begin
-      r_ex2_rs1_data <= ex0_regread_rs1.data;
+      r_ex2_rs1_data <= ex1_regread_rs1.data;
       r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
-                        ex0_regread_rs2.data;
+                        ex1_regread_rs2.data;
 
       r_ex2_issue <= r_ex1_issue;
       r_ex2_index <= r_ex1_index;

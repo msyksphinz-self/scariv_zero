@@ -71,8 +71,8 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
           .disp_valid(w_disp_valids),
           .disp(w_sc_disp),
 
-          .ex0_regread_rs1(regread[alu_idx * 2 + 0]),
-          .ex0_regread_rs2(regread[alu_idx * 2 + 1]),
+          .ex1_regread_rs1(regread[alu_idx * 2 + 0]),
+          .ex1_regread_rs2(regread[alu_idx * 2 + 1]),
 
           .release_in(w_ex1_release),
           .target_in(w_ex3_target),

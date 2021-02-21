@@ -53,13 +53,25 @@ module msrh_phy_registers #(
   generate
     for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
 
-      always_ff @(posedge i_clk, negedge i_reset_n) begin
-        if (!i_reset_n) begin
-          regread[p_idx].resp <= 1'b0;
-        end else begin
-          regread[p_idx].resp <= regread[p_idx].valid;
-          regread[p_idx].data <= r_phy_regs[regread[p_idx].rnid];
-        end
+      logic w_wr_valid;
+      logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
+
+      select_oh #(
+          .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
+          .KEY_WIDTH (msrh_pkg::RNID_W),
+          .DATA_WIDTH(riscv_pkg::XLEN_W)
+      ) wr_data_fwd (
+          .i_cmp_key(regread[p_idx].rnid),
+          .i_valid(wr_valid),
+          .i_keys(wr_rnid),
+          .i_data(wr_data),
+          .o_valid(w_wr_valid),
+          .o_data(w_wr_data)
+      );
+
+      always_comb begin
+        regread[p_idx].resp = regread[p_idx].valid;
+        regread[p_idx].data = w_wr_valid ? w_wr_data : r_phy_regs[regread[p_idx].rnid];
       end
     end
   endgenerate
