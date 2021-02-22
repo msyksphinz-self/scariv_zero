@@ -113,7 +113,7 @@ u_msrh_lsu
     .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
    );
 
-end // block: alu_loop
+end // block: lsu_loop
 endgenerate
 
 
