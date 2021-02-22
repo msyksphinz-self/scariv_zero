@@ -1,0 +1,52 @@
+
+test.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000080000000 <_start>:
+    80000000:	00000097          	auipc	ra,0x0
+    80000004:	02c08093          	addi	ra,ra,44 # 8000002c <data>
+    80000008:	0000b803          	ld	a6,0(ra)
+    8000000c:	0080b883          	ld	a7,8(ra)
+    80000010:	0100b903          	ld	s2,16(ra)
+    80000014:	00100513          	li	a0,1
+    80000018:	000805b7          	lui	a1,0x80
+    8000001c:	0015859b          	addiw	a1,a1,1
+    80000020:	00c59593          	slli	a1,a1,0xc
+
+0000000080000024 <_finish_loop>:
+    80000024:	00a5a023          	sw	a0,0(a1) # 80000 <_start-0x7ff80000>
+    80000028:	ffdff06f          	j	80000024 <_finish_loop>
+
+Disassembly of section .data:
+
+000000008000002c <data>:
+    8000002c:	89abcdef          	jal	s11,7ffbc0c6 <_start-0x43f3a>
+    80000030:	01234567          	0x1234567
+    80000034:	44556677          	0x44556677
+    80000038:	00112233          	slt	tp,sp,ra
+    8000003c:	eeff                	0xeeff
+    8000003e:	ccdd                	beqz	s1,800000fc <_end+0xb8>
+    80000040:	8899aabb          	0x8899aabb
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	2d41                	addiw	s10,s10,16
+   2:	0000                	unimp
+   4:	7200                	ld	s0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <_start-0x7fffffec>
+   c:	00000023          	sb	zero,0(zero) # 0 <_start-0x80000000>
+  10:	7205                	lui	tp,0xfffe1
+  12:	3676                	fld	fa2,376(sp)
+  14:	6934                	ld	a3,80(a0)
+  16:	7032                	0x7032
+  18:	5f30                	lw	a2,120(a4)
+  1a:	326d                	addiw	tp,tp,-5
+  1c:	3070                	fld	fa2,224(s0)
+  1e:	615f 7032 5f30      	0x5f307032615f
+  24:	3266                	fld	ft4,120(sp)
+  26:	3070                	fld	fa2,224(s0)
+  28:	645f 7032 0030      	0x307032645f
