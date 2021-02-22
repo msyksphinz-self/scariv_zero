@@ -13,7 +13,7 @@ module msrh_sched_entry
    output msrh_pkg::issue_t o_entry,
 
    /* Forwarding path */
-   input        msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
+   input        msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
    input logic  i_entry_picked,
    input logic  i_pipe_done,
@@ -56,21 +56,21 @@ assign w_rs2_rnid = i_put ? i_put_data.rs2_rnid : r_entry.rs2_rnid;
 assign w_rs1_type = i_put ? i_put_data.rs1_type : r_entry.rs1_type;
 assign w_rs2_type = i_put ? i_put_data.rs2_type : r_entry.rs2_type;
 
-select_release_bus rs1_rel_select
+select_early_wr_bus rs1_rel_select
 (
  .i_entry_rnid (w_rs1_rnid),
  .i_entry_type (w_rs1_type),
- .release_in   (release_in),
+ .i_early_wr   (i_early_wr),
 
  .o_valid      (w_rs1_entry_hit)
  );
 
 
-select_release_bus rs2_rel_select
+select_early_wr_bus rs2_rel_select
 (
  .i_entry_rnid (w_rs2_rnid),
  .i_entry_type (w_rs2_type),
- .release_in   (release_in),
+ .i_early_wr   (i_early_wr),
 
  .o_valid      (w_rs2_entry_hit)
  );
