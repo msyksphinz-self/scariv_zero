@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /home/msyksphinz/.pyenv/shims/python -u '/mnt/c/usr/work/msrh/tests/elf2hex/freedom-bin2hex.py' ${1+"$@"}
