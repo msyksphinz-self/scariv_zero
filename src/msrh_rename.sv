@@ -6,7 +6,7 @@ module msrh_rename
    disp_if.slave iq_disp,
    input logic [msrh_pkg::CMT_BLK_W-1:0] i_sc_new_cmt_id,
 
-   input msrh_pkg::target_t i_target[msrh_pkg::TGT_BUS_SIZE],
+   input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
    disp_if.master sc_disp
    );
 
@@ -194,7 +194,7 @@ msrh_inflight_list u_inflight_map
    .i_update_fetch_addr(w_rd_rnid  ),
    .i_update_fetch_data(w_rd_data  ),
 
-   .target_in (i_target)
+   .i_phy_wr (i_phy_wr)
 );
 
 

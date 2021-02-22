@@ -10,7 +10,7 @@ module msrh_inflight_list
    input logic [msrh_pkg::RNID_W-1:0]        i_update_fetch_addr[msrh_pkg::DISP_SIZE],
    input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
 
-   input msrh_pkg::target_t target_in[msrh_pkg::TGT_BUS_SIZE]
+   input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
    );
 
 logic [msrh_pkg::RNID_SIZE-1: 0]             r_inflight_list;
@@ -29,7 +29,7 @@ generate for (genvar rn_idx = 0; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin :
   logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_vld_tmp;
   logic w_target_vld;
   for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
-    assign w_target_vld_tmp [d_cmt_idx] = target_in[d_cmt_idx].valid & target_in[d_cmt_idx].rd_rnid == rn_idx;
+    assign w_target_vld_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid & i_phy_wr[d_cmt_idx].rd_rnid == rn_idx;
   end
   assign w_target_vld   = |w_target_vld_tmp;
 

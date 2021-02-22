@@ -11,12 +11,12 @@ module msrh_alu #(
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
-    input msrh_pkg::release_t release_in[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::target_t  target_in [msrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+    input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output msrh_pkg::release_t ex1_release_out,
-    output msrh_pkg::target_t  ex3_target_out,
+    output msrh_pkg::early_wr_t o_ex1_early_wr,
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
     output msrh_pkg::done_rpt_t o_done_report
 );
@@ -66,7 +66,7 @@ endgenerate
      .i_grp_id    (disp_picked_grp_id),
      .i_disp_info (disp_picked_inst),
 
-     .release_in(release_in),
+     .i_early_wr(i_early_wr),
 
      .o_issue(w_rv0_issue),
      .o_iss_index(w_rv0_index),
@@ -89,13 +89,13 @@ endgenerate
 
      .rv0_issue(w_rv0_issue),
      .rv0_index(w_rv0_index),
-     .ex1_target_in(target_in),
+     .ex1_i_phy_wr(i_phy_wr),
 
      .ex1_regread_rs1(ex1_regread_rs1),
      .ex1_regread_rs2(ex1_regread_rs2),
 
-     .ex1_release_out(ex1_release_out),
-     .ex3_target_out (ex3_target_out),
+     .o_ex1_early_wr(o_ex1_early_wr),
+     .o_ex3_phy_wr (o_ex3_phy_wr),
 
      .o_ex3_done (w_ex3_done),
      .o_ex3_index (w_ex3_index)

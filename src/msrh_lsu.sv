@@ -13,12 +13,12 @@ module msrh_lsu
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
-    input msrh_pkg::release_t i_release[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::target_t  i_target [msrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::early_wr_t i_release[msrh_pkg::REL_BUS_SIZE],
+    input msrh_pkg::phy_wr_t  i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output msrh_pkg::release_t o_ex1_release,
-    output msrh_pkg::target_t  o_ex3_target ,
+    output msrh_pkg::early_wr_t o_ex1_release,
+    output msrh_pkg::phy_wr_t  o_ex3_target ,
 
     output msrh_pkg::done_rpt_t o_done_report
    );
@@ -68,7 +68,7 @@ msrh_scheduler #(
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
 
-   .release_in(i_release),
+   .i_early_wr(i_release),
 
    .o_issue(w_rv0_issue),
    .o_iss_index(w_rv0_index),
@@ -91,13 +91,13 @@ msrh_scheduler #(
 //
 //    .rv0_issue(w_rv0_issue),
 //    .rv0_index(w_rv0_index),
-//    .ex1_target_in(target_in),
+//    .ex1_i_phy_wr(i_phy_wr),
 //
 //    .ex1_regread_rs1(ex1_regread_rs1),
 //    .ex1_regread_rs2(ex1_regread_rs2),
 //
-//    .ex1_release_out(ex1_release_out),
-//    .ex3_target_out (ex3_target_out),
+//    .ex1_o_early_wr(ex1_o_early_wr),
+//    .ex3_o_phy_wr (ex3_o_phy_wr),
 //
 //    .o_ex3_done (w_ex3_done),
 //    .o_ex3_index (w_ex3_index)

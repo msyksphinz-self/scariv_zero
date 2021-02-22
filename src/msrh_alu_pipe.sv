@@ -8,13 +8,13 @@ module msrh_alu_pipe
 
     input msrh_pkg::issue_t rv0_issue,
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
-    input msrh_pkg::target_t ex1_target_in[msrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
-    output msrh_pkg::release_t ex1_release_out,
-    output msrh_pkg::target_t  ex3_target_out,
+    output msrh_pkg::early_wr_t o_ex1_early_wr,
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
  output logic o_ex3_done,
  output logic [RV_ENTRY_SIZE-1: 0] o_ex3_index
@@ -94,20 +94,20 @@ end
     end
   end
 
-  assign ex1_release_out.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
-  assign ex1_release_out.rd_rnid = r_ex1_issue.rd_rnid;
-  assign ex1_release_out.rd_type = msrh_pkg::GPR;
+  assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+  assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
+  assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
 
   generate
     for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-      assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_target_in[tgt_idx].valid &
-                                           (r_ex2_issue.rs1_type == ex1_target_in[tgt_idx].rd_type) &
-                                           (r_ex2_issue.rs1_rnid == ex1_target_in[tgt_idx].rd_rnid);
+      assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_i_phy_wr[tgt_idx].valid &
+                                           (r_ex2_issue.rs1_type == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rs1_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
-      assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rs2_valid & ex1_target_in[tgt_idx].valid &
-                                           (r_ex2_issue.rs2_type == ex1_target_in[tgt_idx].rd_type) &
-                                           (r_ex2_issue.rs2_rnid == ex1_target_in[tgt_idx].rd_rnid);
-      assign w_ex2_tgt_data[tgt_idx] = ex1_target_in[tgt_idx].rd_data;
+      assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rs2_valid & ex1_i_phy_wr[tgt_idx].valid &
+                                           (r_ex2_issue.rs2_type == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rs2_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+      assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
     end
   endgenerate
 
@@ -173,10 +173,10 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
     end
   end
 
-  assign ex3_target_out.valid = r_ex3_issue.valid & r_ex3_issue.rd_valid;
-  assign ex3_target_out.rd_rnid = r_ex3_issue.rd_rnid;
-  assign ex3_target_out.rd_type = r_ex3_issue.rd_type;
-  assign ex3_target_out.rd_data = r_ex3_result;
+  assign o_ex3_phy_wr.valid = r_ex3_issue.valid & r_ex3_issue.rd_valid;
+  assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
+  assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
+  assign o_ex3_phy_wr.rd_data = r_ex3_result;
 
 assign o_ex3_done = r_ex3_issue.valid;
 assign o_ex3_index = r_ex3_index;

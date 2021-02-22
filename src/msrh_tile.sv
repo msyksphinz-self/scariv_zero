@@ -17,8 +17,8 @@ module msrh_tile (
   logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
   logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
 
-  msrh_pkg::release_t w_ex1_release[msrh_pkg::REL_BUS_SIZE];
-  msrh_pkg::target_t w_ex3_target[msrh_pkg::TGT_BUS_SIZE];
+  msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
+  msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
 
   regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
                      msrh_pkg::ALU_INST_NUM * 2] ();
@@ -51,7 +51,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
       .iq_disp(w_iq_disp),
       .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
-      .i_target (w_ex3_target),
+      .i_phy_wr (w_ex3_phy_wr),
       .sc_disp  (w_sc_disp)
   );
 
@@ -75,13 +75,13 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
           .ex1_regread_rs1(regread[alu_idx * 2 + 0]),
           .ex1_regread_rs2(regread[alu_idx * 2 + 1]),
 
-          .release_in(w_ex1_release),
-          .target_in(w_ex3_target),
+          .i_early_wr(w_ex1_early_wr),
+          .i_phy_wr  (w_ex3_phy_wr),
 
-          .ex1_release_out(w_ex1_release[alu_idx]),
-          .ex3_target_out(w_ex3_target[alu_idx]),
+          .o_ex1_early_wr(w_ex1_early_wr[alu_idx]),
+          .o_ex3_phy_wr  (w_ex3_phy_wr  [alu_idx]),
 
-                    .o_done_report (w_done_rpt[alu_idx])
+          .o_done_report (w_done_rpt[alu_idx])
       );
     end
   endgenerate
@@ -104,11 +104,11 @@ u_msrh_lsu
     .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 0]),
     .ex1_regread_rs2 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 1]),
 
-    .i_release(w_ex1_release),
-    .i_target (w_ex3_target),
+    .i_release(w_ex1_early_wr),
+    .i_phy_wr (w_ex3_phy_wr),
 
-    .o_ex1_release(w_ex1_release[msrh_pkg::ALU_INST_NUM + lsu_idx]),
-    .o_ex3_target (w_ex3_target [msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .o_ex1_release(w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .o_ex3_target (w_ex3_phy_wr [msrh_pkg::ALU_INST_NUM + lsu_idx]),
 
     .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
    );
@@ -124,7 +124,7 @@ endgenerate
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
-      .target_in(w_ex3_target),
+      .i_phy_wr(w_ex3_phy_wr),
       .regread(regread)
   );
 

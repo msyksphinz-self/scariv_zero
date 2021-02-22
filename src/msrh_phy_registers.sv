@@ -4,8 +4,8 @@ module msrh_phy_registers #(
     input logic i_clk,
     input logic i_reset_n,
 
-          regread_if.slave  regread  [         RD_PORT_SIZE],
-    input msrh_pkg::target_t target_in[msrh_pkg::TGT_BUS_SIZE]
+    regread_if.slave  regread         [          RD_PORT_SIZE],
+    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
   logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE];
@@ -16,9 +16,9 @@ module msrh_phy_registers #(
 
   generate
     for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
-      assign wr_valid[w_idx] = target_in[w_idx].valid;
-      assign wr_rnid [w_idx] = target_in[w_idx].rd_rnid;
-      assign wr_data [w_idx] = target_in[w_idx].rd_data;
+      assign wr_valid[w_idx] = i_phy_wr[w_idx].valid;
+      assign wr_rnid [w_idx] = i_phy_wr[w_idx].rd_rnid;
+      assign wr_data [w_idx] = i_phy_wr[w_idx].rd_data;
     end
   endgenerate
 
