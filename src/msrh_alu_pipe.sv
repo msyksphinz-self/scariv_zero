@@ -55,14 +55,6 @@ module msrh_alu_pipe
   logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
 
-  // always_ff @(posedge i_clk, negedge i_reset_n) begin
-  //   if (!i_reset_n) begin
-  //     r_ex0_issue <= 'h0;
-  //   end else begin
-  //     r_ex0_issue <= rv0_issue;
-  //   end
-  // end
-
 always_comb begin
   r_ex0_issue = rv0_issue;
   w_ex0_index = rv0_index;
