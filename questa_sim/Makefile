@@ -19,8 +19,6 @@ VLOG_OPTS += -O0
 
 FILELIST = sim_filelist.f
 
-C_OBJS = $(subst .cpp,.o,$(CSRC))
-
 ISA=rv64
 RV_PKG = ../src/riscv64_pkg.sv
 
@@ -47,12 +45,12 @@ vsim:
 	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}
 
 clean:
-	rm -rf $(C_OBJS)
+	rm -rf C@
 	rm -rf _info
 	rm -rf cimports.dll
 	rm -rf cimports.exe
 	rm -rf ld.exe.stackdump
 	rm -rf msrh.cr.mti
 	rm -rf transcript
-	rm -rf vsim_stacktrace.vstf
+	rm -rf vsim_stacktrace.vstf vish_stacktrace.vstf
 	rm -rf work

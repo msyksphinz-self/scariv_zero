@@ -17,7 +17,8 @@ module msrh_tile (
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
 
-logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
+logic [msrh_pkg::DISP_SIZE-1:0] w_disp_alu_valids;
+logic [msrh_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
 logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
 
 msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
@@ -60,7 +61,10 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 
   generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
-    assign w_disp_valids[d_idx] = w_sc_disp.inst[d_idx].valid;
+    assign w_disp_alu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
+                                      w_sc_disp.cat[d_idx] == msrh_pkg::CAT_ARITH;
+    assign w_disp_lsu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
+                                      w_sc_disp.cat[d_idx] == msrh_pkg::CAT_MEM;
   end
   endgenerate
 
@@ -72,7 +76,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),
 
-          .disp_valid(w_disp_valids),
+          .disp_valid(w_disp_alu_valids),
           .disp(w_sc_disp),
 
           .ex1_regread_rs1(regread[alu_idx * 2 + 0]),
@@ -101,7 +105,7 @@ u_msrh_lsu
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
-    .disp_valid (w_disp_valids),
+    .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
 
     .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 0]),

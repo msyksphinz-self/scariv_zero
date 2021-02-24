@@ -116,6 +116,7 @@ u_inst_buffer
 
    .o_inst_buf_valid ( s3_disp.valid   ),
    .o_inst_pc        ( s3_disp.pc_addr ),
+   .o_inst_cat       ( s3_disp.cat     ),
    .o_inst_buf       ( s3_disp.inst    ),
    .i_inst_buf_ready ( s3_disp.ready   )
    );

@@ -11,7 +11,8 @@ module inst_buffer
  input logic [msrh_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
  output logic                                o_inst_buf_valid,
- output logic [riscv_pkg::VADDR_W-1: 1]       o_inst_pc,
+ output logic [riscv_pkg::VADDR_W-1: 1]      o_inst_pc,
+ output msrh_pkg::inst_cat_t                 o_inst_cat[msrh_pkg::DISP_SIZE-1:0] ,
  output msrh_pkg::disp_t [msrh_pkg::DISP_SIZE-1:0] o_inst_buf,
  input logic                                i_inst_buf_ready
  );
@@ -197,8 +198,11 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : di
       o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx+r_head_start_pos] != 'h0;
       o_inst_buf[d_idx].rs2_type   = msrh_pkg::GPR;
       o_inst_buf[d_idx].rs2_regidx = w_inst[24:20];
+
+      o_inst_cat[d_idx]   = w_inst_cat[d_idx+r_head_start_pos];
     end else begin // if (w_inst_disp_mask[d_idx])
       o_inst_buf[d_idx] = 'h0;
+      o_inst_cat[d_idx] = msrh_pkg::NONE;
     end // else: !if(w_inst_disp_mask[d_idx])
   end // always_comb
 end
