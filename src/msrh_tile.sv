@@ -62,9 +62,9 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
   generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
     assign w_disp_alu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
-                                      w_sc_disp.cat[d_idx] == msrh_pkg::CAT_ARITH;
+                                      (w_sc_disp.cat[d_idx] == msrh_pkg::CAT_ARITH);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
-                                      w_sc_disp.cat[d_idx] == msrh_pkg::CAT_MEM;
+                                      (w_sc_disp.cat[d_idx] == msrh_pkg::CAT_MEM);
   end
   endgenerate
 
