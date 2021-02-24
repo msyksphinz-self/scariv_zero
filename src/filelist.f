@@ -4,6 +4,7 @@
 ../src/l1d_if.sv
 ../src/disp_if.sv
 ../src/regread_if.sv
+../src/l1d_lrq_if.sv
 
 ../src/bit_cnt.sv
 ../src/bit_oh_or.sv

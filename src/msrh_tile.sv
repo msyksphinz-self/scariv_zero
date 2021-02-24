@@ -113,10 +113,17 @@ u_msrh_lsu
     .l1d_if (w_l1d_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 
+`ifdef QUESTA_SIM
+    .o_ex1_early_wr(w_ex1_early_wr[2 + lsu_idx]),
+    .o_ex3_phy_wr  (w_ex3_phy_wr  [2 + lsu_idx]),
+
+    .o_done_report(w_done_rpt[2 + lsu_idx])
+`else // QUESTA_SIM
     .o_ex1_early_wr(w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + lsu_idx]),
-    .o_ex3_phy_wr  (w_ex3_phy_wr [msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .o_ex3_phy_wr  (w_ex3_phy_wr  [msrh_pkg::ALU_INST_NUM + lsu_idx]),
 
     .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
+`endif // QUESTA_SIM
    );
 
 end // block: lsu_loop

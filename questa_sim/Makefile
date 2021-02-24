@@ -12,9 +12,10 @@ VLOG_OPTS += -work work
 VLOG_OPTS += -incr
 VLOG_OPTS += -lint
 VLOG_OPTS += +acc
+VLOG_OPTS += +define+QUESTA_SIM=1
+VLOG_OPTS += +define+DIRECT_LOAD_HEX=1
 VLOG_OPTS += -sv
 VLOG_OPTS += -O0
-VLOG_OPTS += +define+DIRECT_LOAD_HEX
 
 FILELIST = sim_filelist.f
 
