@@ -12,18 +12,21 @@ module msrh_rob
    input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE]
    );
 
-logic [msrh_pkg::CMT_BLK_W-1:0]            r_cmt_id;
+logic [msrh_pkg::CMT_BLK_W-1:0]            w_in_cmt_id, w_out_cmt_id;
 logic [msrh_pkg::DISP_SIZE-1:0]            w_disp_grp_id;
 logic [msrh_pkg::CMT_BLK_SIZE-1:0]         w_entry_all_done;
 
+//
+// LRQ Pointer
+//
+logic                                      w_in_vld, w_out_vld;
+assign w_in_vld  = sc_disp.valid;
+assign w_out_vld = w_entry_all_done[w_out_cmt_id];
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_cmt_id <= 'h0;
-  end else begin
-    r_cmt_id <= sc_disp.valid ? r_cmt_id + 'h1 : r_cmt_id;
-  end
-end
+inoutptr #(.SIZE(msrh_pkg::CMT_BLK_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                    .i_in_vld (w_in_vld ), .o_in_ptr (w_in_cmt_id  ),
+                                                    .i_out_vld(w_out_vld), .o_out_ptr(w_out_cmt_id));
+
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   assign w_disp_grp_id[d_idx] = sc_disp.inst[d_idx].valid;
@@ -33,7 +36,7 @@ endgenerate
 
 generate for (genvar c_idx = 0; c_idx < msrh_pkg::CMT_BLK_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
-  assign w_load_valid = sc_disp.valid & (r_cmt_id == c_idx);
+  assign w_load_valid = sc_disp.valid & (w_in_cmt_id == c_idx);
 
   msrh_rob_entry u_entry
     (
@@ -57,6 +60,6 @@ logic w_load_valid;
 end
 endgenerate
 
-assign o_sc_new_cmt_id = r_cmt_id;
+assign o_sc_new_cmt_id = w_in_cmt_id;
 
 endmodule // msrh_rob

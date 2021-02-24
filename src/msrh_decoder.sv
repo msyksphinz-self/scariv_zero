@@ -13,6 +13,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     id_disp.pc_addr <= 'h0;
   end else begin
     id_disp.valid <= iq_disp.valid;
+    id_disp.cat   <= iq_disp.cat;
     id_disp.pc_addr <= iq_disp.pc_addr;
   end
 end

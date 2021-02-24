@@ -19,6 +19,9 @@ VLOG_OPTS += -O0
 
 FILELIST = sim_filelist.f
 
+VLOG_OPTS += -f $(FILELIST)
+# VLOG_OPTS += -R -c -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}
+
 ISA=rv64
 RV_PKG = ../src/riscv64_pkg.sv
 
@@ -36,10 +39,11 @@ vlib:
 	$(VLIB) work
 
 $(FILELIST): ../src/filelist.f filelist.f
-	cat $^ > $@
+	echo $(RV_PKG) > $@
+	cat	$^ >> $@
 
 vlog: $(FILELIST)
-	$(VLOG) $(VLOG_OPTS) $(RV_PKG) $(shell cat $^)
+	$(VLOG) $(VLOG_OPTS)
 
 vsim:
 	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}

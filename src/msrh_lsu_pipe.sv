@@ -30,7 +30,7 @@ module msrh_lsu_pipe
 //
 // EX0 stage
 //
-msrh_pkg::issue_t                  w_ex0_issue;
+msrh_pkg::issue_t                  w_ex0_issue, w_ex0_issue_next;
 
 //
 // EX1 stage
@@ -58,6 +58,7 @@ msrh_pkg::issue_t                  r_ex3_issue, w_ex3_issue_next;
 // Pipeline Logic
 //
 always_comb begin
+  w_ex0_issue            = rv0_issue;
   w_ex1_issue_next       = w_ex0_issue;
 
   w_ex2_issue_next       = r_ex1_issue;

@@ -35,7 +35,6 @@
 ../src/msrh_tile_wrapper.sv
 ../src/inst_buffer.sv
 
-../src/msrh_decoder.sv
 ../src/msrh_rename.sv
 ../src/msrh_freelist.sv
 ../src/msrh_rename_map.sv

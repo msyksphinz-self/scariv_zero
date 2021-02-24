@@ -135,7 +135,7 @@ package msrh_pkg;
     logic [31:0] inst;
   } inst_buf_t;
 
-  typedef enum {
+  typedef enum logic [1:0] {
     NONE,
     CAT_ARITH,
     CAT_MEM

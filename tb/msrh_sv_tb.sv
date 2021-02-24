@@ -219,7 +219,7 @@ bit_oh_or
     )
 commite_entry
   (
-   .i_oh(u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done),
+   .i_oh(1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld),
    .i_data(rob_entries),
    .o_selected(committed_rob_entry)
 );
@@ -234,26 +234,24 @@ endgenerate
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
-    for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++) begin
-      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx]) begin
-        for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-          if (rob_entries[cmt_idx].grp_id[grp_idx]) begin
-            $fwrite (log_fp, "%t PC=%010x (%02d,%02d) %08x ", $time, (rob_entries[cmt_idx].pc_addr << 1) + (4 * grp_idx),
-                     cmt_idx, 1 << grp_idx,
-                     rob_entries[cmt_idx].inst[grp_idx].inst);
-            if (rob_entries[cmt_idx].inst[grp_idx].rd_valid) begin
-              $fwrite (log_fp, "GPR[%02d](%03d)=%016x : ",
-                       rob_entries[cmt_idx].inst[grp_idx].rd_regidx,
-                       rob_entries[cmt_idx].inst[grp_idx].rd_rnid,
-                       w_physical_gpr_data[rob_entries[cmt_idx].inst[grp_idx].rd_rnid]);
-            end else begin
-              $fwrite (log_fp, " : ");
-            end
-            $fwrite(log_fp, "DASM(%08x)\n", rob_entries[cmt_idx].inst[grp_idx].inst);
-          end // if (rob_entries[cmt_idx].grp_id[grp_idx])
-        end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
-      end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx])
-    end // for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++)
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
+      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+        if (committed_rob_entry.grp_id[grp_idx]) begin
+          $fwrite (log_fp, "%t PC=%010x (%02d,%02d) %08x ", $time, (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
+                   u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
+                   committed_rob_entry.inst[grp_idx].inst);
+          if (committed_rob_entry.inst[grp_idx].rd_valid) begin
+            $fwrite (log_fp, "GPR[%02d](%03d)=%016x : ",
+                     committed_rob_entry.inst[grp_idx].rd_regidx,
+                     committed_rob_entry.inst[grp_idx].rd_rnid,
+                     w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+          end else begin
+            $fwrite (log_fp, " : ");
+          end
+          $fwrite(log_fp, "DASM(%08x)\n", committed_rob_entry.inst[grp_idx].inst);
+        end // if (committed_rob_entry.grp_id[grp_idx])
+      end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+    end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmd_id])
   end
 end
 
@@ -282,26 +280,24 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
       $fwrite(pipe_fp, ")");
     end
     $fwrite(pipe_fp, " | ");
-    for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++) begin
-      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx]) begin
-        for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-          if (rob_entries[cmt_idx].grp_id[grp_idx]) begin
-            $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
-                     cmt_idx, 1 << grp_idx,
-                     (rob_entries[cmt_idx].pc_addr << 1) + (4 * grp_idx));
-            if (rob_entries[cmt_idx].inst[grp_idx].rd_valid) begin
-              $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
-                       rob_entries[cmt_idx].inst[grp_idx].rd_regidx,
-                       rob_entries[cmt_idx].inst[grp_idx].rd_rnid,
-                       w_physical_gpr_data[rob_entries[cmt_idx].inst[grp_idx].rd_rnid]);
-            end else begin
-              $fwrite (pipe_fp, "                                        : ");
-            end
-            $fwrite (pipe_fp, "DASM(%08x)", rob_entries[cmt_idx].inst[grp_idx].inst);
-          end // if (rob_entries[cmt_idx].grp_id[grp_idx])
-        end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
-      end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[cmt_idx])
-    end // for (int cmt_idx = 0; cmt_idx < msrh_pkg::CMT_BLK_SIZE; cmt_idx++)
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
+      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+        if (committed_rob_entry.grp_id[grp_idx]) begin
+          $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
+                   u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
+                   (committed_rob_entry.pc_addr << 1) + (4 * grp_idx));
+          if (committed_rob_entry.inst[grp_idx].rd_valid) begin
+            $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
+                     committed_rob_entry.inst[grp_idx].rd_regidx,
+                     committed_rob_entry.inst[grp_idx].rd_rnid,
+                     w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+          end else begin
+            $fwrite (pipe_fp, "                                        : ");
+          end
+          $fwrite (pipe_fp, "DASM(%08x)", committed_rob_entry.inst[grp_idx].inst);
+        end // if (committed_rob_entry.grp_id[grp_idx])
+      end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+    end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmd_id])
     $fwrite(pipe_fp, "\n");
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)

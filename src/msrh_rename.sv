@@ -92,13 +92,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     sc_disp.valid <= 'h0;
     sc_disp.pc_addr <= 'h0;
-    // sc_disp.cmt_id <= 'h0;
+    // sc_disp.cat <= 'h0;
     sc_disp.inst <= 'h0;
   end else begin
-    sc_disp.valid  <= iq_disp.valid;
+    sc_disp.valid   <= iq_disp.valid;
     sc_disp.pc_addr <= iq_disp.pc_addr;
-    // sc_disp.cmt_id <= i_sc_new_cmt_id;
-    sc_disp.inst   <= w_disp_inst;
+    sc_disp.cat     <= iq_disp.cat;
+    sc_disp.inst    <= w_disp_inst;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
