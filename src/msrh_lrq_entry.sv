@@ -1,0 +1,28 @@
+module msrh_lrq_entry
+  (
+   input logic i_clk,
+   input logic i_reset_n,
+
+   input logic i_load,
+   input       msrh_pkg::lrq_entry_t i_load_entry,
+
+   input logic i_sent,
+   output      msrh_pkg::lrq_entry_t o_entry
+   );
+
+msrh_pkg::lrq_entry_t r_entry;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_entry <= 'h0;
+  end else begin
+    if (i_load) begin
+      r_entry <= i_load_entry;
+    end else if (i_sent) begin
+      r_entry.sent <= 1'b1;
+    end
+  end
+end
+
+
+endmodule // msrh_lrq_entry

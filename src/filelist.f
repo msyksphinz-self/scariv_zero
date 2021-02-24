@@ -1,6 +1,7 @@
 ../src/msrh_pkg.sv
 
 ../src/l2_if.sv
+../src/l1d_if.sv
 ../src/disp_if.sv
 ../src/regread_if.sv
 
@@ -25,6 +26,7 @@
 
 ../src/data_array.sv
 ../src/icache.sv
+../src/msrh_dcache.sv
 ../src/tag_array.sv
 ../src/msrh_frontend.sv
 ../src/tlb.sv
@@ -54,3 +56,6 @@
 ../src/msrh_alu_pipe.sv
 
 ../src/msrh_lsu.sv
+../src/msrh_lsu_pipe.sv
+../src/msrh_l1d_load_requester.sv
+../src/msrh_lrq_entry.sv

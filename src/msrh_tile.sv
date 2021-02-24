@@ -14,14 +14,17 @@ module msrh_tile (
   disp_if w_id_disp ();
   disp_if w_sc_disp ();
 
-  logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
-  logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
+l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
+l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
 
-  msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
-  msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
+logic [msrh_pkg::DISP_SIZE-1:0] w_disp_valids;
+logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
 
-  regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
-                     msrh_pkg::ALU_INST_NUM * 2] ();
+msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
+msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
+
+regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
+                   msrh_pkg::ALU_INST_NUM * 2] ();
 
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
@@ -107,8 +110,11 @@ u_msrh_lsu
     .i_release(w_ex1_early_wr),
     .i_phy_wr (w_ex3_phy_wr),
 
-    .o_ex1_release(w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + lsu_idx]),
-    .o_ex3_target (w_ex3_phy_wr [msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .l1d_if (w_l1d_if[lsu_idx]),
+    .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
+
+    .o_ex1_early_wr(w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + lsu_idx]),
+    .o_ex3_phy_wr  (w_ex3_phy_wr [msrh_pkg::ALU_INST_NUM + lsu_idx]),
 
     .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
    );
@@ -116,6 +122,24 @@ u_msrh_lsu
 end // block: lsu_loop
 endgenerate
 
+msrh_l1d_load_requester
+  u_msrh_l1d_load_requester
+(
+ .i_clk    (i_clk    ),
+ .i_reset_n(i_reset_n),
+ .l1d_lrq  (w_l1d_lrq_if),
+
+ .o_l1d_ext_req ()
+ );
+
+
+msrh_dcache
+u_msrh_dcache
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+   .l1d_if (w_l1d_if)
+   );
 
   msrh_phy_registers #(
       .RD_PORT_SIZE(msrh_pkg::LSU_INST_NUM * 2 +

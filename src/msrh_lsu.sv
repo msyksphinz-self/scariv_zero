@@ -14,11 +14,17 @@ module msrh_lsu
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_release[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::phy_wr_t  i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+
+    /* L1D Interface */
+    l1d_if.master              l1d_if,
+
+    /* Load Requester Interface */
+    l1d_lrq_if.master          l1d_lrq_if,
 
     /* write output */
-    output msrh_pkg::early_wr_t o_ex1_release,
-    output msrh_pkg::phy_wr_t  o_ex3_target ,
+    output msrh_pkg::early_wr_t o_ex1_early_wr,
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr ,
 
     output msrh_pkg::done_rpt_t o_done_report
    );
@@ -80,27 +86,33 @@ msrh_scheduler #(
 );
 
 
-// msrh_lsu_pipe
-//   #(
-//     .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
-//     )
-// u_lsu_pipe
-//   (
-//    .i_clk    (i_clk),
-//    .i_reset_n(i_reset_n),
-//
-//    .rv0_issue(w_rv0_issue),
-//    .rv0_index(w_rv0_index),
-//    .ex1_i_phy_wr(i_phy_wr),
-//
-//    .ex1_regread_rs1(ex1_regread_rs1),
-//    .ex1_regread_rs2(ex1_regread_rs2),
-//
-//    .ex1_o_early_wr(ex1_o_early_wr),
-//    .ex3_o_phy_wr (ex3_o_phy_wr),
-//
-//    .o_ex3_done (w_ex3_done),
-//    .o_ex3_index (w_ex3_index)
-// );
+msrh_lsu_pipe
+  #(
+    .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
+    )
+u_lsu_pipe
+  (
+   .i_clk    (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .rv0_issue(w_rv0_issue),
+   .rv0_is_store(1'b0),
+   .i_rv0_index(w_rv0_index),
+   .ex1_i_phy_wr(i_phy_wr),
+
+   .ex1_regread_rs1(ex1_regread_rs1),
+   .ex1_regread_rs2(ex1_regread_rs2),
+
+   .o_ex1_early_wr(o_ex1_early_wr),
+   .o_ex3_phy_wr (o_ex3_phy_wr),
+
+   .ex1_l1d_if (l1d_if),
+   .o_ex2_l1d_mispredicted (),
+
+   .l1d_lrq_if (l1d_lrq_if),
+
+   .o_ex3_done (w_ex3_done),
+   .o_ex3_index (w_ex3_index)
+);
 
 endmodule // msrh_lsu

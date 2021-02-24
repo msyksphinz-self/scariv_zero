@@ -41,6 +41,8 @@ package msrh_pkg;
   localparam CMT_BLK_SIZE = 64;
   localparam CMT_BLK_W = $clog2(CMT_BLK_SIZE);
 
+  localparam LRQ_ENTRY_SIZE = 8;
+
   localparam L2_CMD_TAG_W = 4;
 
   typedef struct packed {
@@ -275,6 +277,19 @@ endfunction  // assign_issue_t
     logic [DISP_SIZE-1:0] grp_id;
     logic                 exc_vld;
   } done_rpt_t;
+
+typedef struct packed {
+logic          valid;
+logic [riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] paddr;
+logic                                                sent;
+} lrq_entry_t;
+
+
+typedef struct packed {
+logic          valid;
+logic [riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] paddr;
+} l1d_ext_req_t;
+
 
 endpackage
 
