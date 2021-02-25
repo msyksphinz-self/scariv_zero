@@ -7,27 +7,58 @@ module msrh_tile (
     l2_resp_if.slave ic_l2_resp
 );
 
-  l2_req_if l2_req ();
-  l2_resp_if l2_resp ();
+// ----------------------------------
+// Global Components
+// ----------------------------------
+l2_req_if  l2_req ();
+l2_resp_if l2_resp ();
 
-  disp_if w_iq_disp ();
-  disp_if w_id_disp ();
-  disp_if w_sc_disp ();
-
-l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
-l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
-
-logic [msrh_pkg::DISP_SIZE-1:0] w_disp_alu_valids;
-logic [msrh_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
-logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
+disp_if w_iq_disp ();
+disp_if w_id_disp ();
+disp_if w_sc_disp ();
 
 msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
 msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
+logic [msrh_pkg::CMT_BLK_W-1:0] w_sc_new_cmt_id;
 
 regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
                    msrh_pkg::ALU_INST_NUM * 2] ();
 
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
+
+// ----------------------------------
+// ALU Components
+// ----------------------------------
+logic [msrh_pkg::DISP_SIZE-1:0] w_disp_alu_valids;
+msrh_pkg::early_wr_t w_ex1_alu_early_wr[msrh_pkg::ALU_INST_NUM];
+msrh_pkg::phy_wr_t   w_ex3_alu_phy_wr  [msrh_pkg::ALU_INST_NUM];
+msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_pkg::ALU_INST_NUM];
+
+// ----------------------------------
+// LSU Components
+// ----------------------------------
+logic [msrh_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
+msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_pkg::LSU_INST_NUM];
+msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_pkg::LSU_INST_NUM];
+msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_pkg::LSU_INST_NUM];
+
+
+// ----------------------------------
+// Merging Forwarding / Done signals
+// ----------------------------------
+generate for (genvar a_idx = 0; a_idx < msrh_pkg::ALU_INST_NUM; a_idx++) begin : alu_loop
+  assign w_ex1_early_wr[a_idx] = w_ex1_alu_early_wr[a_idx];
+  assign w_ex3_phy_wr  [a_idx] = w_ex3_alu_phy_wr  [a_idx];
+  assign w_done_rpt    [a_idx] = w_alu_done_rpt    [a_idx];
+end
+endgenerate
+
+generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+  assign w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + l_idx] = w_ex1_lsu_early_wr[l_idx];
+  assign w_ex3_phy_wr  [msrh_pkg::ALU_INST_NUM + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
+  assign w_done_rpt    [msrh_pkg::ALU_INST_NUM + l_idx] = w_lsu_done_rpt    [l_idx];
+end
+endgenerate
 
   msrh_frontend u_frontend (
       .i_clk(i_clk),
@@ -85,22 +116,17 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
           .i_early_wr(w_ex1_early_wr),
           .i_phy_wr  (w_ex3_phy_wr),
 
-          .o_ex1_early_wr(w_ex1_early_wr[alu_idx]),
-          .o_ex3_phy_wr  (w_ex3_phy_wr  [alu_idx]),
+          .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
+          .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
-          .o_done_report (w_done_rpt[alu_idx])
+          .o_done_report (w_alu_done_rpt[alu_idx])
       );
     end
   endgenerate
 
 
-generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
-
-msrh_lsu
-  #(
-    .PORT_BASE(lsu_idx * 2)
-    )
-u_msrh_lsu
+msrh_lsu_top
+u_msrh_lsu_top
   (
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
@@ -108,49 +134,18 @@ u_msrh_lsu
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
 
-    .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 0]),
-    .ex1_regread_rs2 (regread[msrh_pkg::ALU_INST_NUM * 2 + lsu_idx * 2 + 1]),
+    .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM +: msrh_pkg::LSU_INST_NUM]),
+    .ex1_regread_rs2 (regread[(msrh_pkg::ALU_INST_NUM + msrh_pkg::LSU_INST_NUM) +: msrh_pkg::LSU_INST_NUM]),
 
-    .i_release(w_ex1_early_wr),
-    .i_phy_wr (w_ex3_phy_wr),
+    .i_early_wr(w_ex1_early_wr),
+    .i_phy_wr  (w_ex3_phy_wr),
 
-    .l1d_if (w_l1d_if[lsu_idx]),
-    .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
+    .o_ex1_early_wr(w_ex1_lsu_early_wr),
+    .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
-`ifdef QUESTA_SIM
-    .o_ex1_early_wr(w_ex1_early_wr[2 + lsu_idx]),
-    .o_ex3_phy_wr  (w_ex3_phy_wr  [2 + lsu_idx]),
-
-    .o_done_report(w_done_rpt[2 + lsu_idx])
-`else // QUESTA_SIM
-    .o_ex1_early_wr(w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + lsu_idx]),
-    .o_ex3_phy_wr  (w_ex3_phy_wr  [msrh_pkg::ALU_INST_NUM + lsu_idx]),
-
-    .o_done_report(w_done_rpt[msrh_pkg::ALU_INST_NUM + lsu_idx])
-`endif // QUESTA_SIM
+    .o_done_report(w_lsu_done_rpt)
    );
 
-end // block: lsu_loop
-endgenerate
-
-msrh_l1d_load_requester
-  u_msrh_l1d_load_requester
-(
- .i_clk    (i_clk    ),
- .i_reset_n(i_reset_n),
- .l1d_lrq  (w_l1d_lrq_if),
-
- .o_l1d_ext_req ()
- );
-
-
-msrh_dcache
-u_msrh_dcache
-  (
-   .i_clk(i_clk),
-   .i_reset_n(i_reset_n),
-   .l1d_if (w_l1d_if)
-   );
 
   msrh_phy_registers #(
       .RD_PORT_SIZE(msrh_pkg::LSU_INST_NUM * 2 +

@@ -13,7 +13,7 @@ module msrh_lsu
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
-    input msrh_pkg::early_wr_t i_release[msrh_pkg::REL_BUS_SIZE],
+    input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
     input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* L1D Interface */
@@ -34,7 +34,7 @@ msrh_pkg::disp_t disp_picked_inst[2];
 logic [1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 
-  msrh_pkg::issue_t w_rv0_issue;
+msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
 
 logic         w_ex3_done;
@@ -74,7 +74,7 @@ msrh_scheduler #(
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
 
-   .i_early_wr(i_release),
+   .i_early_wr(i_early_wr),
 
    .o_issue(w_rv0_issue),
    .o_iss_index(w_rv0_index),
@@ -99,6 +99,9 @@ u_lsu_pipe
    .rv0_is_store(1'b0),
    .i_rv0_index(w_rv0_index),
    .ex1_i_phy_wr(i_phy_wr),
+
+   .o_ex1_tlb_miss_hazard(),
+   .o_ex2_l1d_miss_hazard(),
 
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),
