@@ -38,8 +38,8 @@ msrh_pkg::issue_t                  w_ex0_issue, w_ex0_issue_next;
 msrh_pkg::issue_t                  r_ex1_issue, w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex1_index;
 logic [riscv_pkg::VADDR_W-1: 0]    w_ex1_vaddr;
-msrh_pkg::tlb_req_t                w_ex1_tlb_req;
-msrh_pkg::tlb_resp_t               w_ex1_tlb_resp;
+msrh_lsu_pkg::tlb_req_t                w_ex1_tlb_req;
+msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
 
 //
 // EX2 stage
@@ -122,7 +122,7 @@ assign ex1_regread_rs2.valid = rv0_is_store ? r_ex1_issue.valid & r_ex1_issue.rs
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]};
-assign w_ex1_tlb_req.cmd   = msrh_pkg::M_XRD;
+assign w_ex1_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
 assign w_ex1_tlb_req.vaddr = w_ex1_vaddr;
 
 assign o_ex1_early_wr.valid   = r_ex1_issue.valid & r_ex1_issue.rd_valid;
@@ -133,8 +133,8 @@ assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
 
 // Interface to L1D cache
 assign ex1_l1d_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
-assign ex1_l1d_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_pkg::DCACHE_DATA_B_W)],
-                           {$clog2(msrh_pkg::DCACHE_DATA_B_W){1'b0}}};
+assign ex1_l1d_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 //
 // EX2 stage pipeline

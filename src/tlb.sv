@@ -6,8 +6,8 @@ module tlb
     input logic i_clk,
     input logic i_reset_n,
 
-    input  msrh_pkg::tlb_req_t  i_tlb_req,
-    output msrh_pkg::tlb_resp_t o_tlb_resp
+    input  msrh_lsu_pkg::tlb_req_t  i_tlb_req,
+    output msrh_lsu_pkg::tlb_resp_t o_tlb_resp
 );
 
   logic w_priv_s;
@@ -15,7 +15,7 @@ module tlb
   logic w_vpn [riscv_pkg::VADDR_W-1: riscv_pkg::PG_IDX_BITS];
   logic w_vm_enabled;
   logic [7: 0] w_hit_vector;
-  msrh_pkg::tlb_entry_t entries[8];
+  msrh_lsu_pkg::tlb_entry_t entries[8];
 
   // for VM=0 implementation
   /* verilator lint_off WIDTH */
