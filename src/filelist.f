@@ -55,6 +55,7 @@
 ../src/msrh_alu.sv
 ../src/msrh_alu_pipe.sv
 
+../src/msrh_lsu_top.sv
 ../src/msrh_lsu.sv
 ../src/msrh_lsu_pipe.sv
 ../src/msrh_l1d_load_requester.sv

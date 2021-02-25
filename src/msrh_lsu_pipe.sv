@@ -11,6 +11,9 @@ module msrh_lsu_pipe
  input logic [RV_ENTRY_SIZE-1:0]   i_rv0_index,
  input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
+ output logic                      o_ex1_tlb_miss_hazard,
+ output logic                      o_ex2_l1d_miss_hazard,
+
                                    regread_if.master ex1_regread_rs1,
                                    regread_if.master ex1_regread_rs2,
 
@@ -20,7 +23,7 @@ module msrh_lsu_pipe
                                    l1d_if.master ex1_l1d_if,
  output logic                      o_ex2_l1d_mispredicted,
 
- l1d_lrq_if.master                 l1d_lrq_if,
+                                   l1d_lrq_if.master l1d_lrq_if,
 
  output logic                      o_ex3_done,
  output logic [RV_ENTRY_SIZE-1: 0] o_ex3_index
