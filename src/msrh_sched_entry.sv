@@ -26,8 +26,6 @@ typedef enum { INIT, WAIT, ISSUED, DONE } state_t;
 
 logic    r_entry_valid;
 logic    w_entry_valid;
-logic [msrh_pkg::CMT_BLK_W-1:0] r_cmt_id;
-logic [msrh_pkg::DISP_SIZE-1:0] r_grp_id;
 logic    r_issued;
 msrh_pkg::issue_t r_entry;
 msrh_pkg::issue_t w_entry;
@@ -84,7 +82,8 @@ always_comb begin
 end
 
 
-assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, w_rs1_entry_hit, w_rs2_entry_hit);
+assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
+                                               w_rs1_entry_hit, w_rs2_entry_hit);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -99,8 +98,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (i_put) begin
           r_entry_valid <= 1'b1;
           r_entry <= w_init_entry;
-          r_cmt_id <= i_cmt_id;
-          r_grp_id <= i_grp_id;
           r_state <= WAIT;
         end
       end
@@ -130,7 +127,7 @@ assign o_entry_ready = r_entry_valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done = r_state == DONE;
-assign o_cmt_id = r_cmt_id;
-assign o_grp_id = r_grp_id;
+assign o_cmt_id = r_entry.cmt_id;
+assign o_grp_id = r_entry.grp_id;
 
 endmodule // msrh_sched_entry

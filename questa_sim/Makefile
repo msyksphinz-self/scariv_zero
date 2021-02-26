@@ -47,7 +47,7 @@ vlog: $(FILELIST)
 	$(VLOG) $(VLOG_OPTS)
 
 vsim:
-	$(VSIM)  -c work.tb -do "add wave * -recursive; run -all; archive write vsim.dbar -wlf vsim.wlf ; quit;" -l sim.log +HEX=${HEX}
+	$(VSIM)  -c work.tb -do run.tcl -l sim.log +HEX=${HEX}
 
 clean:
 	rm -rf C@

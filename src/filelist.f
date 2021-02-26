@@ -19,6 +19,7 @@
 
 ../src/encoder.sv
 ../src/inoutptr.sv
+../src/inoutptr_var.sv
 ../src/inoutptr_oh.sv
 
 ../src/select_latest.sv

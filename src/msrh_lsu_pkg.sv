@@ -17,6 +17,14 @@ package msrh_lsu_pkg;
 
   localparam LDQ_SIZE = 16;
   localparam STQ_SIZE = 16;
+  localparam MEM_Q_SIZE = LDQ_SIZE > STQ_SIZE ? LDQ_SIZE : STQ_SIZE;
+
+  typedef enum logic [ 1: 0] {
+    NONE,
+    LRQ_ASSIGNED,
+    LRQ_CONFLICT,
+    LRQ_FULL
+  } lmq_haz_t;
 
   typedef struct packed {
     logic valid;
@@ -26,8 +34,8 @@ package msrh_lsu_pkg;
   typedef struct packed {
     logic valid;
     logic [riscv_pkg::VADDR_W-1:1]      addr;
-    logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0] data;
-    logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] be;
+    logic [ICACHE_DATA_W-1:0] data;
+    logic [ICACHE_DATA_B_W-1:0] be;
   } ic_resp_t;
 
   typedef enum logic [4:0] {
@@ -104,15 +112,30 @@ package msrh_lsu_pkg;
   } l2_resp_t;
 
 typedef struct packed {
-logic          valid;
-logic [riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] paddr;
-logic                                                sent;
+  logic          valid;
+  logic [riscv_pkg::PADDR_W-1:0] paddr;
+  logic                           sent;
 } lrq_entry_t;
-
 
 typedef struct packed {
 logic          valid;
-logic [riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] paddr;
-} l1d_ext_req_t;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index;
+} lrq_resolve_t;
+
+typedef struct packed {
+  logic                 update;
+  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+  logic                 hazard_vld;
+  logic [$clog2(MEM_Q_SIZE)-1:0] index;
+  logic [riscv_pkg::VADDR_W-1: 0]      vaddr;
+} ex1_q_update_t;
+
+typedef struct packed {
+  logic          update;
+  msrh_lsu_pkg::lmq_haz_t               hazard_typ;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+  logic [$clog2(MEM_Q_SIZE)-1:0] index;
+} ex2_q_update_t;
 
 endpackage // msrh_lsu_pkg

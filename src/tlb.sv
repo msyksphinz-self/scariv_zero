@@ -3,11 +3,13 @@ module tlb
     parameter USING_VM = 1'b1
  )
 (
-    input logic i_clk,
-    input logic i_reset_n,
+    input logic  i_clk,
+    input logic  i_reset_n,
 
-    input  msrh_lsu_pkg::tlb_req_t  i_tlb_req,
-    output msrh_lsu_pkg::tlb_resp_t o_tlb_resp
+    input        msrh_lsu_pkg::tlb_req_t i_tlb_req,
+    output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
+
+    output logic o_tlb_update
 );
 
   logic w_priv_s;
@@ -19,13 +21,13 @@ module tlb
 
   // for VM=0 implementation
   /* verilator lint_off WIDTH */
-  assign o_tlb_resp.paddr = i_tlb_req.vaddr; 
+  assign o_tlb_resp.paddr = i_tlb_req.vaddr;
   assign o_tlb_resp.miss  = 1'b0;
 
   // always_comb begin
   //   w_priv_s = priv[0];
   //   w_priv_uses_vm = priv <= riscv_pkg::PRIV_S;
-  // 
+  //
   //   w_vm_enabled = USING_VM && ptw.ptbr.mode[ptw.ptbr.mode.getWidth-1] && w_priv_uses_vm;
   // end
 
@@ -45,11 +47,12 @@ module tlb
     //     return valid(idx) && sectorw_tag_match(vpn);
     //   end
     // endfunction
-    // 
+    //
     // assign w_hit_vector[idx] = w_vm_enabled & entries[idx];
 
   end
   endgenerate
 
-endmodule
+assign o_tlb_update = 1'b0;
 
+endmodule

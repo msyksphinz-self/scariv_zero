@@ -24,5 +24,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+assign o_entry = r_entry;
 
 endmodule // msrh_lrq_entry

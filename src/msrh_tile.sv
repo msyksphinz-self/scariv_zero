@@ -4,7 +4,11 @@ module msrh_tile (
 
     // L2 request from ICache
     l2_req_if.master ic_l2_req,
-    l2_resp_if.slave ic_l2_resp
+    l2_resp_if.slave ic_l2_resp,
+
+    // L2 request from L1D
+    l2_req_if.master l1d_ext_req,
+    l2_resp_if.slave l1d_ext_resp
 );
 
 // ----------------------------------
@@ -135,6 +139,9 @@ u_msrh_lsu_top
     .disp (w_sc_disp),
 
     .ex1_regread (regread[(msrh_pkg::ALU_INST_NUM * 2) +: (msrh_pkg::LSU_INST_NUM * 2)]),
+
+    .l1d_ext_req  (l1d_ext_req ),
+    .l1d_ext_resp (l1d_ext_resp),
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),

@@ -8,6 +8,9 @@ module msrh_lsu_top
 
     regread_if.master   ex1_regread[msrh_pkg::LSU_INST_NUM * 2-1:0],
 
+    l2_req_if.master  l1d_ext_req,
+    l2_resp_if.slave  l1d_ext_resp,
+
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
     input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
@@ -21,6 +24,11 @@ module msrh_lsu_top
 
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
+
+// Feedbacks to LDQ / STQ
+msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
+msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -45,6 +53,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .l1d_if (w_l1d_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 
+    .o_ex1_q_updates (w_ex1_q_updates[lsu_idx]),
+    .o_tlb_resolve   (w_tlb_resolve  [lsu_idx]),
+    .o_ex2_q_updates (w_ex2_q_updates[lsu_idx]),
+
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx])
    );
@@ -63,6 +75,10 @@ msrh_ldq
 
  .i_disp_valid (disp_valid),
  .disp         (disp      ),
+
+ .i_tlb_resolve  (w_tlb_resolve  ),
+ .i_ex1_q_updates(w_ex1_q_updates),
+ .i_ex2_q_updates(w_ex2_q_updates),
 
  .o_done_report(o_done_report[0])
  );
@@ -91,7 +107,8 @@ msrh_l1d_load_requester
  .i_reset_n(i_reset_n),
  .l1d_lrq  (w_l1d_lrq_if),
 
- .o_l1d_ext_req ()
+ .l1d_ext_req  (l1d_ext_req ),
+ .l1d_ext_resp (l1d_ext_resp)
  );
 
 

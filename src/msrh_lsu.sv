@@ -22,6 +22,11 @@ module msrh_lsu
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
 
+    // Feedbacks to LDQ / STQ
+    output msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
+    output logic                      o_tlb_resolve,
+    output msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
+
     /* write output */
     output msrh_pkg::early_wr_t o_ex1_early_wr,
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr
@@ -95,7 +100,7 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_rv0_index(w_rv0_index),
+   .i_q_index(w_rv0_index),
    .ex1_i_phy_wr(i_phy_wr),
 
    .o_ex1_tlb_miss_hazard(),
@@ -111,6 +116,10 @@ u_lsu_pipe
    .o_ex2_l1d_mispredicted (),
 
    .l1d_lrq_if (l1d_lrq_if),
+
+   .o_ex1_q_updates (o_ex1_q_updates),
+   .o_tlb_resolve   (o_tlb_resolve  ),
+   .o_ex2_q_updates (o_ex2_q_updates),
 
    .o_ex3_done (w_ex3_done),
    .o_ex3_index (w_ex3_index)

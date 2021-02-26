@@ -111,6 +111,9 @@ package msrh_pkg;
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     logic [31:0] inst;
 
+    logic [CMT_BLK_W-1:0] cmt_id;
+    logic [DISP_SIZE-1:0] grp_id;
+
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
@@ -130,12 +133,18 @@ package msrh_pkg;
   } issue_t;
 
 
-function issue_t assign_issue_t(disp_t in, logic rs1_hit, logic rs2_hit);
+function issue_t assign_issue_t(disp_t in,
+                                logic [CMT_BLK_W-1:0] cmt_id,
+                                logic [DISP_SIZE-1:0] grp_id,
+                                logic rs1_hit, logic rs2_hit);
   issue_t ret;
 
   ret.valid = in.valid;
   ret.inst = in.inst;
   ret.pc_addr = in.pc_addr;
+
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
 
   ret.rd_valid = in.rd_valid;
   ret.rd_type = in.rd_type;

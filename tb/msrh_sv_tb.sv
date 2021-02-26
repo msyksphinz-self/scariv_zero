@@ -20,49 +20,64 @@ logic w_terminate;
 assign w_terminate = w_timeout;
 
 /* from Frontend IC */
-logic                                w_ic_req_valid;
+logic                                     w_ic_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_ic_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]       w_ic_req_addr;
+logic [riscv_pkg::PADDR_W-1:0]            w_ic_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ic_req_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
 logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
-logic                                w_ic_req_ready;
+logic                                     w_ic_req_ready;
 
-logic                                w_ic_resp_valid;
+logic                                     w_ic_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
-logic                                w_ic_resp_ready  ;
+logic                                     w_ic_resp_ready  ;
 
 /* from ELF Loader */
-logic                                w_elf_req_valid;
+logic                                     w_elf_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_elf_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]       w_elf_req_addr;
+logic [riscv_pkg::PADDR_W-1:0]            w_elf_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
 logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
-logic                                w_elf_req_ready;
+logic                                     w_elf_req_ready;
 
 /* L2 Interface */
-logic                                w_l2_req_valid;
+logic                                     w_l2_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_l2_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]       w_l2_req_addr;
+logic [riscv_pkg::PADDR_W-1:0]            w_l2_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
 logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
-logic                                w_l2_req_ready;
+logic                                     w_l2_req_ready;
 
-logic                                w_l2_resp_valid;
+logic                                     w_l2_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
-logic                                w_l2_resp_ready;
+logic                                     w_l2_resp_ready;
+
+
+/* L1D Interface */
+logic                                     w_l1d_req_valid;
+msrh_lsu_pkg::mem_cmd_t                   w_l1d_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]            w_l1d_req_addr;
+logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_req_tag;
+logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
+logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
+logic                                     w_l1d_req_ready;
+
+logic                                     w_l1d_resp_valid;
+logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
+logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
+logic                                     w_l1d_resp_ready;
 
 /* Connection */
-assign w_l2_req_valid   = w_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
-assign w_l2_req_cmd     = w_msrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
-assign w_l2_req_addr    = w_msrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
-assign w_l2_req_tag     = w_msrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
-assign w_l2_req_data    = w_msrh_reset_n ? w_ic_req_data    : w_elf_req_data;
-assign w_l2_req_byte_en = w_msrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
+assign w_l2_req_valid   = w_l1d_req_valid ? w_l1d_req_valid   : w_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
+assign w_l2_req_cmd     = w_l1d_req_valid ? w_l1d_req_cmd     : w_msrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
+assign w_l2_req_addr    = w_l1d_req_valid ? w_l1d_req_addr    : w_msrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
+assign w_l2_req_tag     = w_l1d_req_valid ? w_l1d_req_tag     : w_msrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
+assign w_l2_req_data    = w_l1d_req_valid ? w_l1d_req_data    : w_msrh_reset_n ? w_ic_req_data    : w_elf_req_data;
+assign w_l2_req_byte_en = w_l1d_req_valid ? w_l1d_req_byte_en : w_msrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
 
 assign w_ic_req_ready  = w_l2_req_ready ;
 assign w_elf_req_ready = w_l2_req_ready ;
@@ -70,7 +85,13 @@ assign w_elf_req_ready = w_l2_req_ready ;
 assign w_ic_resp_valid = w_l2_resp_valid;
 assign w_ic_resp_tag   = w_l2_resp_tag  ;
 assign w_ic_resp_data  = w_l2_resp_data ;
-assign w_l2_resp_ready = w_ic_resp_ready;
+
+assign w_l2_resp_ready = w_ic_resp_ready | w_l1d_resp_ready;
+
+assign w_l1d_resp_valid = w_l2_resp_valid;
+assign w_l1d_resp_tag   = w_l2_resp_tag  ;
+assign w_l1d_resp_data  = w_l2_resp_data ;
+
 
 msrh_tile_wrapper u_msrh_tile_wrapper
   (
@@ -89,7 +110,21 @@ msrh_tile_wrapper u_msrh_tile_wrapper
     .i_ic_resp_valid (w_ic_resp_valid ),
     .i_ic_resp_tag   (w_ic_resp_tag   ),
     .i_ic_resp_data  (w_ic_resp_data  ),
-    .o_ic_resp_ready (w_ic_resp_ready )
+    .o_ic_resp_ready (w_ic_resp_ready ),
+
+    // L2 request from L1D
+    .o_l1d_req_valid  (w_l1d_req_valid  ),
+    .o_l1d_req_cmd    (w_l1d_req_cmd    ),
+    .o_l1d_req_addr   (w_l1d_req_addr   ),
+    .o_l1d_req_tag    (w_l1d_req_tag    ),
+    .o_l1d_req_data   (w_l1d_req_data   ),
+    .o_l1d_req_byte_en(w_l1d_req_byte_en),
+    .i_l1d_req_ready  (w_l1d_req_ready  ),
+
+    .i_l1d_resp_valid (w_l1d_resp_valid ),
+    .i_l1d_resp_tag   (w_l1d_resp_tag   ),
+    .i_l1d_resp_data  (w_l1d_resp_data  ),
+    .o_l1d_resp_ready (w_l1d_resp_ready )
    );
 
 
@@ -219,7 +254,7 @@ bit_oh_or
     )
 commite_entry
   (
-   .i_oh(1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld),
+   .i_oh('h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld),
    .i_data(rob_entries),
    .o_selected(committed_rob_entry)
 );

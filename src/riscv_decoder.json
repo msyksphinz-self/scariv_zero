@@ -44,7 +44,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
         "cat": [["cat", "mem"]],
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
         "inst_ctrl":[["size", "dw"], ["sign", "s"]]
     },
     {
