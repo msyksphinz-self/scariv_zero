@@ -6,8 +6,7 @@ module msrh_lsu_top
     input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
-    regread_if.master ex1_regread_rs1[msrh_pkg::LSU_INST_NUM],
-    regread_if.master ex1_regread_rs2[msrh_pkg::LSU_INST_NUM],
+    regread_if.master   ex1_regread[msrh_pkg::LSU_INST_NUM * 2-1:0],
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
@@ -37,8 +36,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .disp_valid (disp_valid),
     .disp (disp),
 
-    .ex1_regread_rs1 (ex1_regread_rs1[lsu_idx * 2 + 0]),
-    .ex1_regread_rs2 (ex1_regread_rs2[lsu_idx * 2 + 1]),
+    .ex1_regread_rs1 (ex1_regread[lsu_idx * 2 + 0]),
+    .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
 
     .i_early_wr(i_early_wr),
     .i_phy_wr  (i_phy_wr),

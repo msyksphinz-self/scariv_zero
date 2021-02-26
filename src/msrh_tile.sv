@@ -134,8 +134,7 @@ u_msrh_lsu_top
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
 
-    .ex1_regread_rs1 (regread[msrh_pkg::ALU_INST_NUM +: msrh_pkg::LSU_INST_NUM]),
-    .ex1_regread_rs2 (regread[(msrh_pkg::ALU_INST_NUM + msrh_pkg::LSU_INST_NUM) +: msrh_pkg::LSU_INST_NUM]),
+    .ex1_regread (regread[(msrh_pkg::ALU_INST_NUM * 2) +: (msrh_pkg::LSU_INST_NUM * 2)]),
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),
