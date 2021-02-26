@@ -1,4 +1,5 @@
 ../src/msrh_pkg.sv
+../src/msrh_lsu_pkg.sv
 
 ../src/l2_if.sv
 ../src/l1d_if.sv
@@ -34,6 +35,7 @@
 ../src/msrh_tile.sv
 ../src/msrh_tile_wrapper.sv
 ../src/inst_buffer.sv
+../src/msrh_disp_pickup.sv
 
 ../src/msrh_rename.sv
 ../src/msrh_freelist.sv
@@ -60,3 +62,5 @@
 ../src/msrh_lsu_pipe.sv
 ../src/msrh_l1d_load_requester.sv
 ../src/msrh_lrq_entry.sv
+../src/msrh_ldq.sv
+../src/msrh_stq.sv

@@ -4,7 +4,7 @@ interface l1d_if;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic hit;
   logic miss;
-  logic [msrh_pkg::DCACHE_DATA_W-1:0] data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_W-1:0] data;
 
   modport master(
     output valid,

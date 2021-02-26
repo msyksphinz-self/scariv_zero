@@ -4,13 +4,13 @@ module msrh_lrq_entry
    input logic i_reset_n,
 
    input logic i_load,
-   input       msrh_pkg::lrq_entry_t i_load_entry,
+   input       msrh_lsu_pkg::lrq_entry_t i_load_entry,
 
    input logic i_sent,
-   output      msrh_pkg::lrq_entry_t o_entry
+   output      msrh_lsu_pkg::lrq_entry_t o_entry
    );
 
-msrh_pkg::lrq_entry_t r_entry;
+msrh_lsu_pkg::lrq_entry_t r_entry;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
