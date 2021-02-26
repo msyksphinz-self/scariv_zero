@@ -16,6 +16,7 @@ VLOG_OPTS += +define+QUESTA_SIM=1
 VLOG_OPTS += +define+DIRECT_LOAD_HEX=1
 VLOG_OPTS += -sv
 VLOG_OPTS += -O0
+VLOG_OPTS += -l vlog.log
 
 FILELIST = sim_filelist.f
 

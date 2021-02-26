@@ -46,14 +46,14 @@ msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_pkg::LSU_INST_NUM];
 // ----------------------------------
 // Merging Forwarding / Done signals
 // ----------------------------------
-generate for (genvar a_idx = 0; a_idx < msrh_pkg::ALU_INST_NUM; a_idx++) begin : alu_loop
+generate for (genvar a_idx = 0; a_idx < msrh_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_loop
   assign w_ex1_early_wr[a_idx] = w_ex1_alu_early_wr[a_idx];
   assign w_ex3_phy_wr  [a_idx] = w_ex3_alu_phy_wr  [a_idx];
   assign w_done_rpt    [a_idx] = w_alu_done_rpt    [a_idx];
 end
 endgenerate
 
-generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + l_idx] = w_ex1_lsu_early_wr[l_idx];
   assign w_ex3_phy_wr  [msrh_pkg::ALU_INST_NUM + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
   assign w_done_rpt    [msrh_pkg::ALU_INST_NUM + l_idx] = w_lsu_done_rpt    [l_idx];

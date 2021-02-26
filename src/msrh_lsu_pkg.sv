@@ -15,6 +15,9 @@ package msrh_lsu_pkg;
   localparam DCACHE_WAY_W = 4;
   localparam DCACHE_DATA_B_W = DCACHE_DATA_W / 8;
 
+  localparam LDQ_SIZE = 16;
+  localparam STQ_SIZE = 16;
+
   typedef struct packed {
     logic valid;
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
