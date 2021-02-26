@@ -24,9 +24,7 @@ module msrh_lsu
 
     /* write output */
     output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr ,
-
-    output msrh_pkg::done_rpt_t o_done_report
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr
    );
 
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
@@ -82,7 +80,7 @@ msrh_scheduler #(
    .i_pipe_done(w_ex3_done),
    .i_done_index(w_ex3_index),
 
-   .o_done_report (o_done_report)
+   .o_done_report ()
 );
 
 

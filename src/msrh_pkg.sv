@@ -75,6 +75,7 @@ package msrh_pkg;
 
   } disp_t;
 
+
   function disp_t assign_disp_rename (disp_t disp,
                                     logic [RNID_W-1: 0] rd_rnid,
                                     logic               rs1_active,

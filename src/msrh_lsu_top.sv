@@ -16,7 +16,7 @@ module msrh_lsu_top
     output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_pkg::LSU_INST_NUM],
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::done_rpt_t o_done_report[msrh_pkg::LSU_INST_NUM]
+    output msrh_pkg::done_rpt_t o_done_report[2]
    );
 
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
@@ -46,13 +46,43 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
-    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
-
-    .o_done_report(o_done_report[lsu_idx])
+    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx])
    );
 
 end // block: lsu_loop
 endgenerate
+
+// -----------------------------------
+// LDQ
+// -----------------------------------
+msrh_ldq
+  u_ldq
+(
+ .i_clk    (i_clk    ),
+ .i_reset_n(i_reset_n),
+
+ .i_disp_valid (disp_valid),
+ .disp         (disp      ),
+
+ .o_done_report(o_done_report[0])
+ );
+
+
+// -----------------------------------
+// STQ
+// -----------------------------------
+msrh_stq
+  u_stq
+(
+ .i_clk    (i_clk    ),
+ .i_reset_n(i_reset_n),
+
+ .i_disp_valid (disp_valid),
+ .disp         (disp      ),
+
+ .o_done_report(o_done_report[1])
+ );
+
 
 msrh_l1d_load_requester
   u_msrh_l1d_load_requester

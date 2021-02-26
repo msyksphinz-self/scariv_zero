@@ -4,7 +4,9 @@ module msrh_ldq
     input logic i_reset_n,
 
     input logic         [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
-    disp_if.slave                                 disp
+    disp_if.slave                                 disp,
+
+    output msrh_pkg::done_rpt_t                   o_done_report
    );
 
 typedef enum                                      logic[1:0] { INIT = 0, RUN = 1, LMQ_HAZ = 2, STQ_HAZ = 3 } state_t;
@@ -64,24 +66,27 @@ logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
 logic                                        w_in_vld;
 logic                                        w_out_vld;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_load_valid;
+logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_disp_picked_num;
 
-assign w_in_vld  = |w_load_valid;
-assign w_out_vld = o_l1d_ext_req.valid;
+assign w_in_vld  = |disp_picked_inst_valid;
+assign w_out_vld = o_done_report.valid;
 
-inoutptr #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                      .i_in_vld (w_in_vld ), .o_in_ptr (w_in_ptr ),
-                                                      .i_out_vld(w_out_vld), .o_out_ptr(w_out_ptr));
+/* verilator lint_off WIDTH */
+encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) in_enc(.i_in(disp_picked_inst_valid), .o_out(w_disp_picked_num));
+inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num), .o_in_ptr (w_in_ptr ),
+                                                          .i_out_vld(w_out_vld), .i_out_val('h0), .o_out_ptr(w_out_ptr));
 
 generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < msrh_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (w_out_ptr + i_idx == l_idx);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (w_in_ptr + i_idx == l_idx);
   end
 
-  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
+  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
