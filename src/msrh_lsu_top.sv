@@ -30,6 +30,8 @@ msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
+msrh_lsu_pkg::lrq_resolve_t         w_lrq_resolve;
+
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
   msrh_lsu
@@ -80,6 +82,8 @@ msrh_ldq
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
+ .i_lrq_resolve (w_lrq_resolve),
+
  .o_done_report(o_done_report[0])
  );
 
@@ -106,6 +110,8 @@ msrh_l1d_load_requester
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
  .l1d_lrq  (w_l1d_lrq_if),
+
+ .o_lrq_resolve (w_lrq_resolve),
 
  .l1d_ext_req  (l1d_ext_req ),
  .l1d_ext_resp (l1d_ext_resp)

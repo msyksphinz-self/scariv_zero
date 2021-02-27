@@ -139,6 +139,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
             r_ldq_entries[l_idx].state <= RUN;
           end
         end
+        STQ_HAZ : begin
+        end
+        default : begin
+          $fatal ("This state sholudn't be reached.\n");
+        end
       endcase // case (r_ldq_entries[l_idx].state)
     end
   end

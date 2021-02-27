@@ -1,37 +1,34 @@
 module msrh_lsu_pipe
-  #(
-    parameter RV_ENTRY_SIZE = 32
-    )
 (
- input logic                                i_clk,
- input logic                                i_reset_n,
+ input logic                                        i_clk,
+ input logic                                        i_reset_n,
 
- input logic                                rv0_is_store,
- input                                      msrh_pkg::issue_t rv0_issue,
- input logic [msrh_lsu_pkg::MEM_Q_SIZE-1:0] i_q_index,
- input                                      msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
+ input logic                                        rv0_is_store,
+ input                                              msrh_pkg::issue_t rv0_issue,
+ input logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1:0] i_q_index,
+ input                                              msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
- output logic                               o_ex1_tlb_miss_hazard,
- output logic                               o_ex2_l1d_miss_hazard,
+ output logic                                       o_ex1_tlb_miss_hazard,
+ output logic                                       o_ex2_l1d_miss_hazard,
 
-                                            regread_if.master ex1_regread_rs1,
-                                            regread_if.master ex1_regread_rs2,
+                                                    regread_if.master ex1_regread_rs1,
+                                                    regread_if.master ex1_regread_rs2,
 
- output                                     msrh_pkg::early_wr_t o_ex1_early_wr,
- output                                     msrh_pkg::phy_wr_t o_ex3_phy_wr,
+ output                                             msrh_pkg::early_wr_t o_ex1_early_wr,
+ output                                             msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
-                                            l1d_if.master ex1_l1d_if,
- output logic                               o_ex2_l1d_mispredicted,
+                                                    l1d_if.master ex1_l1d_if,
+ output logic                                       o_ex2_l1d_mispredicted,
 
-                                            l1d_lrq_if.master l1d_lrq_if,
+                                                    l1d_lrq_if.master l1d_lrq_if,
 
  // Feedbacks to LDQ / STQ
- output                                     msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
- output logic                               o_tlb_resolve,
- output                                     msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
+ output                                             msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
+ output logic                                       o_tlb_resolve,
+ output                                             msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
- output logic                               o_ex3_done,
- output logic [RV_ENTRY_SIZE-1: 0]          o_ex3_index
+ output logic                                       o_ex3_done,
+ output logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1: 0]       o_ex3_index
 
 );
 
@@ -39,14 +36,14 @@ module msrh_lsu_pipe
 // EX0 stage
 //
 msrh_pkg::issue_t                  r_ex0_issue, w_ex0_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]       r_ex0_index;
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1: 0]               r_ex0_index;
 
 //
 // EX1 stage
 //
 msrh_pkg::issue_t                  r_ex1_issue, w_ex1_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        r_ex1_index;
-logic [riscv_pkg::VADDR_W-1: 0]    w_ex1_vaddr;
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1: 0]        r_ex1_index;
+logic [riscv_pkg::VADDR_W-1: 0]                      w_ex1_vaddr;
 msrh_lsu_pkg::tlb_req_t                w_ex1_tlb_req;
 msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
 
@@ -54,7 +51,7 @@ msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
 // EX2 stage
 //
 msrh_pkg::issue_t                  r_ex2_issue, w_ex2_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] r_ex2_index;
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1: 0] r_ex2_index;
 logic [riscv_pkg::PADDR_W-1: 0]    r_ex2_paddr;
 
 //

@@ -38,10 +38,10 @@ logic [1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 
 msrh_pkg::issue_t w_rv0_issue;
-logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1:0] w_rv0_index;
 
 logic         w_ex3_done;
-logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_ex3_index;
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1:0] w_ex3_index;
 
 generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
@@ -65,7 +65,7 @@ generate
 endgenerate
 
 msrh_scheduler #(
-    .ENTRY_SIZE  (msrh_pkg::RV_ALU_ENTRY_SIZE),
+    .ENTRY_SIZE  (msrh_lsu_pkg::MEM_Q_SIZE),
     .IN_PORT_SIZE(2)
 ) u_msrh_scheduler
   (
@@ -80,19 +80,16 @@ msrh_scheduler #(
    .i_early_wr(i_early_wr),
 
    .o_issue(w_rv0_issue),
-   .o_iss_index(w_rv0_index),
+   .o_iss_index(),
 
    .i_pipe_done(w_ex3_done),
-   .i_done_index(w_ex3_index),
+   .i_done_index(),
 
    .o_done_report ()
 );
 
 
 msrh_lsu_pipe
-  #(
-    .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
-    )
 u_lsu_pipe
   (
    .i_clk    (i_clk),

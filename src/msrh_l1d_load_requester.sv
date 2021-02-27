@@ -44,7 +44,7 @@ generate for(genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin 
   assign w_load_valid[b_idx] = w_lrq_load_valid_oh[b_idx] & l1d_lrq[0].load;
 
   msrh_lsu_pkg::lrq_entry_t load_entry;
-  assign load_entry.valid = !w_hit_same_addr_vld[0];
+  assign load_entry.valid = !(|w_hit_same_addr_vld[0]);
   assign load_entry.paddr = {l1d_lrq[0].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
   assign load_entry.sent  = 1'b0;
   msrh_lrq_entry
@@ -79,7 +79,7 @@ endgenerate
 assign l1d_ext_req.valid = w_lrq_entries[w_out_ptr].valid & !w_lrq_entries[w_out_ptr].sent;
 assign l1d_ext_req.payload.cmd     = msrh_lsu_pkg::M_XRD;
 assign l1d_ext_req.payload.addr    = w_lrq_entries[w_out_ptr].paddr;
-assign l1d_ext_req.payload.tag     = w_out_ptr;
+assign l1d_ext_req.payload.tag     = {{(msrh_lsu_pkg::L2_CMD_TAG_W-$clog2(msrh_pkg::LRQ_ENTRY_SIZE)){1'b0}}, w_out_ptr};
 assign l1d_ext_req.payload.data    = 'h0;
 assign l1d_ext_req.payload.byte_en = 'h0;
 
