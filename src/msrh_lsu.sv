@@ -1,5 +1,6 @@
 module msrh_lsu
   #(
+    parameter LSU_PIPE_IDX = 0,
     parameter PORT_BASE = 0
     )
 (
@@ -9,12 +10,15 @@ module msrh_lsu
     input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
+    // Replay from LDQ
+    input logic             i_ldq_replay_valid,
+    input msrh_pkg::issue_t i_ldq_replay_issue,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* L1D Interface */
     l1d_if.master              l1d_if,
@@ -89,8 +93,13 @@ msrh_scheduler #(
 );
 
 
+// ===========================
+// LSU Pipeline
+// ===========================
+
 msrh_lsu_pipe
   #(
+    .LSU_PIPE_IDX(LSU_PIPE_IDX),
     .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
     )
 u_lsu_pipe
@@ -100,8 +109,10 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index('h00),  // temporary
-   .ex1_i_phy_wr(i_phy_wr),
+   .i_q_index({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),  // temporary
+
+   .i_ex1_replay_issue (i_ldq_replay_issue),
+   .i_ex1_replay_index ({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),

@@ -4,26 +4,30 @@ module msrh_ldq
    input logic                           i_reset_n,
 
    input logic [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
-                                         disp_if.slave disp,
+   disp_if.slave disp,
 
    // Updates from LSU Pipeline EX1 stage
    input msrh_lsu_pkg::ex1_q_update_t        i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
 
+   output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ldq_replay_valid,
+   output msrh_pkg::issue_t                   o_ldq_replay_issue [msrh_pkg::LSU_INST_NUM],
+
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
    output                                msrh_pkg::done_rpt_t o_done_report
    );
 
-typedef enum logic[2:0] { INIT = 0, RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4 } state_t;
+typedef enum logic[2:0] { INIT = 0, RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4, READY = 5 } state_t;
 
 typedef struct packed {
-logic          is_valid;
-logic          is_active;
-logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
-logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+  logic          is_valid;
+  logic [$clog2(msrh_pkg::LSU_INST_NUM)-1: 0]  pipe_sel_idx;
+  msrh_pkg::issue_t inst;
+  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   state_t state;
-logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
 
 } ldq_entry_t;
 
@@ -37,7 +41,6 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.grp_id    = grp_id;
   ret.state     = INIT;
   ret.vaddr     = 'h0;
-  ret.is_active = 1'b0;
 
   return ret;
 endfunction // assign_ldq_disp
@@ -48,6 +51,8 @@ ldq_entry_t r_ldq_entries[msrh_lsu_pkg::LDQ_SIZE];
 msrh_pkg::disp_t disp_picked_inst[msrh_pkg::MEM_DISP_SIZE];
 logic [msrh_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
+
+logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 
 msrh_disp_pickup
   #(
@@ -117,8 +122,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           if (w_in_vld) begin
             r_ldq_entries[l_idx] <= assign_ldq_disp(w_disp_entry, disp.cmt_id, w_disp_grp_id);
           end else if (w_ex1_q_valid) begin
-            r_ldq_entries[l_idx].state <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : RUN;
-            r_ldq_entries[l_idx].vaddr <= w_ex1_q_updates.vaddr;
+            r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : RUN;
+            r_ldq_entries[l_idx].vaddr        <= w_ex1_q_updates.vaddr;
+            r_ldq_entries[l_idx].pipe_sel_idx <= w_ex1_q_updates.pipe_sel_idx;
+            r_ldq_entries[l_idx].inst         <= w_ex1_q_updates.inst;
           end
         TLB_HAZ : begin
           if (|i_tlb_resolve) begin
@@ -131,11 +138,16 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
                                           INIT;
-            r_lrq_hazard_index_oh <= w_ex2_q_updates.lrq_index_oh;
+            r_lrq_hazard_index_oh      <= w_ex2_q_updates.lrq_index_oh;
           end
         end
         LRQ_HAZ : begin
           if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_lrq_hazard_index_oh) begin
+            r_ldq_entries[l_idx].state <= READY;
+          end
+        end
+        READY : begin
+          if (w_rerun_request[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
             r_ldq_entries[l_idx].state <= RUN;
           end
         end
@@ -143,6 +155,23 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
     end
   end
 
+  for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+    assign w_rerun_request[p_idx][l_idx] = r_ldq_entries[l_idx].state == READY &&
+                                           r_ldq_entries[l_idx].pipe_sel_idx == p_idx;
+  end
+end
+endgenerate
+
+// replay logic
+generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+  assign o_ldq_replay_valid[p_idx] = |w_rerun_request[p_idx];
+  logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh;
+  ldq_entry_t w_ldq_replay_entry;
+
+  bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh));
+  bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh), .i_data(r_ldq_entries), .o_selected(w_ldq_replay_entry));
+
+  assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
 end
 endgenerate
 

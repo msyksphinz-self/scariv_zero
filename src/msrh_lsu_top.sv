@@ -33,10 +33,14 @@ msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_valid;
+msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
+
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
   msrh_lsu
   #(
+    .LSU_PIPE_IDX(lsu_idx),
     .PORT_BASE(lsu_idx * 2)
     )
   u_msrh_lsu
@@ -51,10 +55,12 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
 
     .i_early_wr(i_early_wr),
-    .i_phy_wr  (i_phy_wr),
 
     .l1d_if (w_l1d_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
+
+    .i_ldq_replay_valid (w_ldq_replay_valid[lsu_idx]),
+    .i_ldq_replay_issue (w_ldq_replay_issue[lsu_idx]),
 
     .o_ex1_q_updates (w_ex1_q_updates[lsu_idx]),
     .o_tlb_resolve   (w_tlb_resolve  [lsu_idx]),
@@ -82,6 +88,9 @@ msrh_ldq
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
+
+ .o_ldq_replay_valid (w_ldq_replay_valid),
+ .o_ldq_replay_issue (w_ldq_replay_issue),
 
  .i_lrq_resolve (w_lrq_resolve),
  .o_done_report(o_done_report[0])
