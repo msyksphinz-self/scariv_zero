@@ -157,7 +157,7 @@ module icache
                         ic_l2_req.valid   <= 1'b1;
                         ic_l2_req.payload.cmd  <= msrh_lsu_pkg::M_XRD;
                         ic_l2_req.payload.addr <= i_s1_paddr;
-                        ic_l2_req.payload.tag  <= 'h0;
+                        ic_l2_req.payload.tag  <= {msrh_lsu_pkg::L2_UPPER_TAG_IC, {(msrh_lsu_pkg::L2_CMD_TAG_W-1){1'b0}}};
                         ic_l2_req.payload.data <= 'h0;
                         ic_l2_req.payload.byte_en <= 'h0;
                         r_req_vaddr  <= r_s1_vaddr;
