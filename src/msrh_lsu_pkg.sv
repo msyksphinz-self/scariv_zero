@@ -122,7 +122,7 @@ typedef struct packed {
 
 typedef struct packed {
 logic          valid;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 } lrq_resolve_t;
 
 typedef struct packed {
@@ -140,5 +140,14 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
   logic [$clog2(MEM_Q_SIZE)-1:0] index;
 } ex2_q_update_t;
+
+// L1D interface
+typedef struct packed {
+  logic          valid;
+  logic [riscv_pkg::PADDR_W-1: 0] addr;
+  logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
+} dc_update_t;
+
+
 
 endpackage // msrh_lsu_pkg

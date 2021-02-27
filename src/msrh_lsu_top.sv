@@ -25,6 +25,9 @@ module msrh_lsu_top
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
 
+lrq_search_if w_lrq_search_if ();
+msrh_lsu_pkg::lrq_resolve_t w_lrq_resolve;
+
 // Feedbacks to LDQ / STQ
 msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
@@ -80,6 +83,7 @@ msrh_ldq
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
+ .i_lrq_resolve (w_lrq_resolve),
  .o_done_report(o_done_report[0])
  );
 
@@ -108,7 +112,10 @@ msrh_l1d_load_requester
  .l1d_lrq  (w_l1d_lrq_if),
 
  .l1d_ext_req  (l1d_ext_req ),
- .l1d_ext_resp (l1d_ext_resp)
+ .l1d_ext_resp (l1d_ext_resp),
+
+ .lrq_search_if (w_lrq_search_if),
+ .o_lrq_resolve (w_lrq_resolve)
  );
 
 
@@ -117,7 +124,11 @@ u_msrh_dcache
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
-   .l1d_if (w_l1d_if)
+   .l1d_if (w_l1d_if),
+
+   .l1d_ext_resp (l1d_ext_resp),
+
+   .lrq_search_if (w_lrq_search_if)
    );
 
 endmodule // mrsh_lsu_top

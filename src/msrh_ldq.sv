@@ -105,12 +105,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   logic w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates), .ldq_index(l_idx[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0]), .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_lrq_hazard_index;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_lrq_hazard_index_oh;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ldq_entries[l_idx].state <= INIT;
-      r_lrq_hazard_index <= 'h0;
+      r_lrq_hazard_index_oh <= 'h0;
     end else begin
       case (r_ldq_entries[l_idx].state)
         INIT :
@@ -131,11 +131,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
                                           INIT;
-            r_lrq_hazard_index <= w_ex2_q_updates.lrq_index_oh;
+            r_lrq_hazard_index_oh <= w_ex2_q_updates.lrq_index_oh;
           end
         end
         LRQ_HAZ : begin
-          if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index == r_lrq_hazard_index) begin
+          if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_lrq_hazard_index_oh) begin
             r_ldq_entries[l_idx].state <= RUN;
           end
         end

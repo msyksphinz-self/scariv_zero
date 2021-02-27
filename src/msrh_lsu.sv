@@ -100,7 +100,7 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index(w_rv0_index),
+   .i_q_index('h00),  // temporary
    .ex1_i_phy_wr(i_phy_wr),
 
    .o_ex1_tlb_miss_hazard(),
