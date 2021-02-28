@@ -6,6 +6,7 @@
 ../src/disp_if.sv
 ../src/regread_if.sv
 ../src/l1d_lrq_if.sv
+../src/lsu_if.sv
 
 ../src/bit_cnt.sv
 ../src/bit_oh_or.sv
@@ -29,7 +30,6 @@
 
 ../src/data_array.sv
 ../src/icache.sv
-../src/msrh_dcache.sv
 ../src/tag_array.sv
 ../src/msrh_frontend.sv
 ../src/tlb.sv
@@ -65,3 +65,5 @@
 ../src/msrh_lrq_entry.sv
 ../src/msrh_ldq.sv
 ../src/msrh_stq.sv
+../src/msrh_dcache.sv
+../src/msrh_dcache_array.sv

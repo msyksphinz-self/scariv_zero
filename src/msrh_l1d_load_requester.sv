@@ -8,8 +8,10 @@ module msrh_l1d_load_requester
    output msrh_lsu_pkg::lrq_resolve_t o_lrq_resolve,
 
    l2_req_if.master  l1d_ext_req,
-   l2_resp_if.slave  l1d_ext_resp
+   l2_resp_if.slave  l1d_ext_resp,
 
+   // LRQ search interface
+   lrq_search_if.master lrq_search_if
    );
 
 
@@ -76,14 +78,25 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
 end
 endgenerate
 
+localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 1 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
+
 assign l1d_ext_req.valid = w_lrq_entries[w_out_ptr].valid & !w_lrq_entries[w_out_ptr].sent;
 assign l1d_ext_req.payload.cmd     = msrh_lsu_pkg::M_XRD;
 assign l1d_ext_req.payload.addr    = w_lrq_entries[w_out_ptr].paddr;
-assign l1d_ext_req.payload.tag     = {{(msrh_lsu_pkg::L2_CMD_TAG_W-$clog2(msrh_pkg::LRQ_ENTRY_SIZE)){1'b0}}, w_out_ptr};
+assign l1d_ext_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_L1D, {TAG_FILLER_W{1'b0}}, w_out_ptr};
 assign l1d_ext_req.payload.data    = 'h0;
 assign l1d_ext_req.payload.byte_en = 'h0;
 
-assign o_lrq_resolve.valid = 1'b0;
-assign o_lrq_resolve.resolve_index = 'h0;
+// Searching LRQ Interface from DCache
+assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
+
+// Notification to LRQ resolve to LDQ
+// Note: Now searching from LRQ means L1D will be written and resolve confliction
+assign o_lrq_resolve.valid = lrq_search_if.valid;
+assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
+
+initial begin
+  assert (msrh_lsu_pkg::L2_CMD_TAG_W >= $clog2(msrh_pkg::LRQ_ENTRY_SIZE) + 1);
+end
 
 endmodule // msrh_l1d_load_requester

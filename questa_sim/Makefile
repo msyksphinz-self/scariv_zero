@@ -1,8 +1,8 @@
-MTI_HOME = /cygdrive/c/intelFPGA/20.1/modelsim_ase/
-PLATFORM = win32aloem
+# MTI_HOME = /cygdrive/c/intelFPGA/20.1/modelsim_ase/
+# PLATFORM = win32aloem
 
-# MTI_HOME = /cygdrive/c/questasim64_10.4e/
-# PLATFORM = win64
+MTI_HOME = /cygdrive/c/questasim64_10.4e/
+PLATFORM = win64
 
 VLOG = $(MTI_HOME)/$(PLATFORM)/vlog.exe
 VLIB = $(MTI_HOME)/$(PLATFORM)/vlib.exe
@@ -40,8 +40,8 @@ vlib:
 	$(VLIB) work
 
 $(FILELIST): ../src/filelist.f filelist.f
-	echo $(RV_PKG) > $@
-	cat	$^ >> $@
+	$(shell cygpath -w -a $(RV_PKG) > $@)
+	../scripts/gen_filelist.sh $^ >> $@
 
 vlog: $(FILELIST)
 	$(VLOG) $(VLOG_OPTS)
@@ -58,4 +58,4 @@ clean:
 	rm -rf msrh.cr.mti
 	rm -rf transcript
 	rm -rf vsim_stacktrace.vstf vish_stacktrace.vstf
-	rm -rf work
+#	rm -rf work

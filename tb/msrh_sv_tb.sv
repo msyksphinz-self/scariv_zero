@@ -247,6 +247,9 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_BLK_SIZE; r_idx++) begin :
 end
 endgenerate
 
+logic [msrh_pkg::CMT_BLK_SIZE-1: 0] w_commited_oh;
+assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id;
+
 bit_oh_or
   #(
     .WIDTH($size(msrh_pkg::rob_entry_t)),
@@ -254,7 +257,7 @@ bit_oh_or
     )
 commite_entry
   (
-   .i_oh('h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld),
+   .i_oh(w_commited_oh),
    .i_data(rob_entries),
    .o_selected(committed_rob_entry)
 );

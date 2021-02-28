@@ -29,6 +29,7 @@ package msrh_pkg;
   localparam CMT_BLK_W = $clog2(CMT_BLK_SIZE);
 
   localparam LRQ_ENTRY_SIZE = 8;
+  localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
 
   typedef struct packed {
     logic valid;

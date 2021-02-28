@@ -1,5 +1,6 @@
 module msrh_lsu
   #(
+    parameter LSU_PIPE_IDX = 0,
     parameter PORT_BASE = 0
     )
 (
@@ -9,12 +10,16 @@ module msrh_lsu
     input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
+    // Replay from LDQ
+    input logic             i_ldq_replay_valid,
+    input msrh_pkg::issue_t i_ldq_replay_issue,
+    input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ldq_replay_index_oh,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* L1D Interface */
     l1d_if.master              l1d_if,
@@ -29,7 +34,10 @@ module msrh_lsu
 
     /* write output */
     output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
+
+    output logic                                 o_ex3_done,
+    output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index
    );
 
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
@@ -82,14 +90,22 @@ msrh_scheduler #(
    .o_issue(w_rv0_issue),
    .o_iss_index(),
 
-   .i_pipe_done(w_ex3_done),
+   .i_pipe_done (),
    .i_done_index(),
 
    .o_done_report ()
 );
 
 
+// ===========================
+// LSU Pipeline
+// ===========================
+
 msrh_lsu_pipe
+  #(
+    .LSU_PIPE_IDX(LSU_PIPE_IDX),
+    .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
+    )
 u_lsu_pipe
   (
    .i_clk    (i_clk),
@@ -97,8 +113,10 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index(w_rv0_index),
-   .ex1_i_phy_wr(i_phy_wr),
+   .i_q_index_oh({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),  // temporary
+
+   .i_ex0_replay_issue (i_ldq_replay_issue),
+   .i_ex0_replay_index_oh (i_ldq_replay_index_oh),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),
@@ -118,8 +136,8 @@ u_lsu_pipe
    .o_tlb_resolve   (o_tlb_resolve  ),
    .o_ex2_q_updates (o_ex2_q_updates),
 
-   .o_ex3_done (w_ex3_done),
-   .o_ex3_index (w_ex3_index)
+   .o_ex3_done  (o_ex3_done),
+   .o_ex3_index (o_ex3_index)
 );
 
 endmodule // msrh_lsu

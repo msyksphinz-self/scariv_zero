@@ -9,4 +9,9 @@ module msrh_stq
     output msrh_pkg::done_rpt_t                   o_done_report
    );
 
+assign o_done_report.valid   = 1'b0;  // Temporary
+assign o_done_report.cmt_id  = 'h0;   // Temporary
+assign o_done_report.grp_id  = 'h0;   // Temporary
+assign o_done_report.exc_vld = 'h0;   // Temporary
+
 endmodule // msrh_stq
