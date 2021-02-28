@@ -15,10 +15,14 @@ module msrh_ldq
    output msrh_pkg::issue_t                   o_ldq_replay_issue [msrh_pkg::LSU_INST_NUM],
 
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
+
+   input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
+   input logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  i_ex3_done_index_oh[msrh_pkg::LSU_INST_NUM],
+
    output                                msrh_pkg::done_rpt_t o_done_report
    );
 
-typedef enum logic[2:0] { INIT = 0, RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4, READY = 5 } state_t;
+typedef enum logic[2:0] { INIT = 0, RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4, READY = 5, DONE = 6 } state_t;
 
 typedef struct packed {
   logic          is_valid;
@@ -54,6 +58,13 @@ logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
 
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 
+//
+// Done Selection
+//
+ldq_entry_t w_ldq_done_entry;
+logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  w_ldq_done;
+logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  w_ldq_done_oh;
+
 msrh_disp_pickup
   #(
     .PORT_BASE(0),
@@ -77,7 +88,7 @@ logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
 logic                                        w_in_vld;
 logic                                        w_out_vld;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_load_valid;
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_disp_picked_num;
+logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE):0]   w_disp_picked_num;
 
 assign w_in_vld  = |disp_picked_inst_valid;
 assign w_out_vld = o_done_report.valid;
@@ -85,8 +96,19 @@ assign w_out_vld = o_done_report.valid;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) cnt_disp_vld(.in({{(msrh_pkg::LRQ_ENTRY_SIZE-msrh_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num), .o_in_ptr (w_in_ptr ),
+                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                                           .i_out_vld(w_out_vld), .i_out_val('h0), .o_out_ptr(w_out_ptr));
+
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (w_disp_picked_num[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)]) begin
+      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
+    end
+  end
+end
+`endif // SIMULATION
 
 generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -137,8 +159,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
             r_ldq_entries[l_idx].state <= (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
-                                          INIT;
+                                          r_ldq_entries[l_idx].state;
             r_lrq_hazard_index_oh      <= w_ex2_q_updates.lrq_index_oh;
+          end
+          if (i_ex3_done & i_ex3_done_index_oh[l_idx]) begin
+            r_ldq_entries[l_idx].state <= DONE;
           end
         end
         LRQ_HAZ : begin
@@ -149,6 +174,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         READY : begin
           if (w_rerun_request[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
             r_ldq_entries[l_idx].state <= RUN;
+          end
+        end
+        DONE : begin
+          if (w_ldq_done_oh[l_idx]) begin
+            r_ldq_entries[l_idx].state <= INIT;
           end
         end
       endcase // case (r_ldq_entries[l_idx].state)
@@ -174,6 +204,21 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
 end
 endgenerate
+
+// ===============
+// done logic
+// ===============
+generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : done_loop
+  assign w_ldq_done[l_idx] = r_ldq_entries[l_idx].state == DONE;
+end
+endgenerate
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_ldq_done), .out(w_ldq_done_oh));
+bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(r_ldq_entries), .o_selected(w_ldq_done_entry));
+
+assign o_done_report.valid   = |w_ldq_done;
+assign o_done_report.cmt_id  = w_ldq_done_entry.cmt_id;
+assign o_done_report.grp_id  = w_ldq_done_entry.grp_id;
+assign o_done_report.exc_vld = 'h0;   // Temporary
 
 endmodule // msrh_ldq
 

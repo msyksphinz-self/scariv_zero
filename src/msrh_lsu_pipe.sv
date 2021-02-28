@@ -34,7 +34,7 @@ module msrh_lsu_pipe
  output                                     msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
  output logic                               o_ex3_done,
- output logic [RV_ENTRY_SIZE-1: 0]          o_ex3_index
+ output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index
 
 );
 

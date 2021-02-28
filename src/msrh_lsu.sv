@@ -33,7 +33,10 @@ module msrh_lsu
 
     /* write output */
     output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
+
+    output logic                                 o_ex3_done,
+    output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index
    );
 
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
@@ -86,8 +89,8 @@ msrh_scheduler #(
    .o_issue(w_rv0_issue),
    .o_iss_index(w_rv0_index),
 
-   .i_pipe_done(w_ex3_done),
-   .i_done_index(w_ex3_index),
+   .i_pipe_done (),
+   .i_done_index(),
 
    .o_done_report ()
 );
@@ -109,10 +112,10 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),  // temporary
+   .i_q_index({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),  // temporary
 
    .i_ex0_replay_issue (i_ldq_replay_issue),
-   .i_ex0_replay_index ({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),
+   .i_ex0_replay_index ({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),
@@ -132,8 +135,8 @@ u_lsu_pipe
    .o_tlb_resolve   (o_tlb_resolve  ),
    .o_ex2_q_updates (o_ex2_q_updates),
 
-   .o_ex3_done (w_ex3_done),
-   .o_ex3_index (w_ex3_index)
+   .o_ex3_done  (o_ex3_done),
+   .o_ex3_index (o_ex3_index)
 );
 
 endmodule // msrh_lsu

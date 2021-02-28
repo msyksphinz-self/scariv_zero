@@ -63,7 +63,9 @@ tlb u_tlb
    .i_reset_n  (i_reset_n),
 
    .i_tlb_req  (w_s0_tlb_req ),
-   .o_tlb_resp (w_s0_tlb_resp)
+   .o_tlb_resp (w_s0_tlb_resp),
+
+   .o_tlb_update ()
    );
 
 // s0 --> s1

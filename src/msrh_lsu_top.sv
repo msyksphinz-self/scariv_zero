@@ -19,7 +19,7 @@ module msrh_lsu_top
     output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_pkg::LSU_INST_NUM],
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::done_rpt_t o_done_report[2]
+    output msrh_pkg::done_rpt_t o_done_report[2]  // LDQ done report, STQ done report
    );
 
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
@@ -35,6 +35,9 @@ msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_valid;
 msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
+
+logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex3_index[msrh_pkg::LSU_INST_NUM];
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -67,7 +70,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .o_ex2_q_updates (w_ex2_q_updates[lsu_idx]),
 
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
-    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx])
+    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
+
+    .o_ex3_done  (w_ex3_done [lsu_idx]),
+    .o_ex3_index (w_ex3_index[lsu_idx])
    );
 
 end // block: lsu_loop
@@ -93,6 +99,10 @@ msrh_ldq
  .o_ldq_replay_issue (w_ldq_replay_issue),
 
  .i_lrq_resolve (w_lrq_resolve),
+
+ .i_ex3_done          (w_ex3_done ),
+ .i_ex3_done_index_oh (w_ex3_index),
+
  .o_done_report(o_done_report[0])
  );
 
