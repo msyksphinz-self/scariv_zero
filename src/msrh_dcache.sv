@@ -32,9 +32,10 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign w_dc_read_req [p_idx].valid = l1d_if[p_idx].valid;
   assign w_dc_read_req [p_idx].paddr = l1d_if[p_idx].paddr;
 
-  assign l1d_if[p_idx].hit  = w_dc_read_resp[p_idx].hit ;
-  assign l1d_if[p_idx].miss = w_dc_read_resp[p_idx].miss;
-  assign l1d_if[p_idx].data = w_dc_read_resp[p_idx].data;
+  assign l1d_if[p_idx].hit      = w_dc_read_resp[p_idx].hit ;
+  assign l1d_if[p_idx].miss     = w_dc_read_resp[p_idx].miss;
+  assign l1d_if[p_idx].conflict = w_dc_read_resp[p_idx].conflict;
+  assign l1d_if[p_idx].data     = w_dc_read_resp[p_idx].data;
 
 end
 endgenerate

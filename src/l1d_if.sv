@@ -4,6 +4,7 @@ interface l1d_if;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic hit;
   logic miss;
+  logic conflict;
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1:0] data;
 
   modport master(
@@ -11,6 +12,7 @@ interface l1d_if;
     output paddr,
     input hit,
     input miss,
+    input conflict,
     input data
   );
 
@@ -19,6 +21,7 @@ interface l1d_if;
     input paddr,
     output hit,
     output miss,
+    output conflict,
     output data
   );
 

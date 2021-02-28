@@ -9,10 +9,10 @@ module msrh_lsu_pipe
 
  input msrh_pkg::issue_t                    rv0_issue,
  input logic                                rv0_is_store,
- input logic [msrh_lsu_pkg::MEM_Q_SIZE-1:0] i_q_index,
+ input logic [msrh_lsu_pkg::MEM_Q_SIZE-1:0] i_q_index_oh,
 
- input logic [msrh_lsu_pkg::MEM_Q_SIZE-1:0] i_ex0_replay_index,
  input msrh_pkg:: issue_t                   i_ex0_replay_issue,
+ input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]      i_ex0_replay_index_oh,
 
  output logic                               o_ex1_tlb_miss_hazard,
  output logic                               o_ex2_l1d_miss_hazard,
@@ -97,7 +97,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index     <= 'h0;
   end else begin
     r_ex0_rs_issue  <= rv0_issue;
-    r_ex0_rs_index  <= i_q_index;
+    r_ex0_rs_index  <= i_q_index_oh;
 
     r_ex1_issue  <= w_ex1_issue_next;
     r_ex1_index  <= w_ex0_index;
@@ -132,8 +132,8 @@ u_tlb
 // EX0 stage pipeline
 //
 // Pipe selection
-assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue : r_ex0_rs_issue;
-assign w_ex0_index = i_ex0_replay_issue.valid ? i_ex0_replay_index : r_ex0_rs_index;
+assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs_issue;
+assign w_ex0_index = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : r_ex0_rs_index;
 
 //
 // EX1 stage pipeline
@@ -181,15 +181,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & ex1_l1d_if.miss;
+assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_if.miss | ex1_l1d_if.conflict);
 assign l1d_lrq_if.load  = o_ex2_l1d_mispredicted;
 assign l1d_lrq_if.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
-                                    (l1d_lrq_if.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
-                                     msrh_lsu_pkg::NONE;
+                                    (ex1_l1d_if.conflict ? msrh_lsu_pkg::L1D_CONFLICT :
+                                     l1d_lrq_if.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
+                                    msrh_lsu_pkg::NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.lrq_index_oh;
 assign o_ex2_q_updates.index      = r_ex2_index;
 

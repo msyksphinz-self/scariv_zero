@@ -13,6 +13,7 @@ module msrh_lsu
     // Replay from LDQ
     input logic             i_ldq_replay_valid,
     input msrh_pkg::issue_t i_ldq_replay_issue,
+    input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ldq_replay_index_oh,
 
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
@@ -112,10 +113,10 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),  // temporary
+   .i_q_index_oh({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),  // temporary
 
    .i_ex0_replay_issue (i_ldq_replay_issue),
-   .i_ex0_replay_index ({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),
+   .i_ex0_replay_index_oh (i_ldq_replay_index_oh),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),

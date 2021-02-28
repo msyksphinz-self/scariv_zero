@@ -22,8 +22,9 @@ package msrh_lsu_pkg;
   localparam STQ_SIZE = 16;
   localparam MEM_Q_SIZE = LDQ_SIZE > STQ_SIZE ? LDQ_SIZE : STQ_SIZE;
 
-  typedef enum logic [ 1: 0] {
+  typedef enum logic [ 2: 0] {
     NONE,
+    L1D_CONFLICT,
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL
@@ -156,8 +157,9 @@ typedef struct packed {
 } dc_read_req_t;
 
 typedef struct packed {
-  logic          hit;
+  logic            hit;
   logic            miss;
+  logic            conflict;
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
 } dc_read_resp_t;
 

@@ -13,6 +13,7 @@ module msrh_ldq
 
    output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ldq_replay_valid,
    output msrh_pkg::issue_t                   o_ldq_replay_issue [msrh_pkg::LSU_INST_NUM],
+   output logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] o_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM],
 
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
 
@@ -156,7 +157,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         end
         RUN : begin
           if (w_ex2_q_valid) begin
-            r_ldq_entries[l_idx].state <= (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
+            r_ldq_entries[l_idx].state <=  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
+                                          (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
                                           r_ldq_entries[l_idx].state;
@@ -202,6 +204,8 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh), .i_data(r_ldq_entries), .o_selected(w_ldq_replay_entry));
 
   assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
+
+  assign o_ldq_replay_index_oh[p_idx] = w_rerun_request_oh;
 end
 endgenerate
 
