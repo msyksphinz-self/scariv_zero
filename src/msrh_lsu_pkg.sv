@@ -150,6 +150,15 @@ typedef struct packed {
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
 } dc_update_t;
 
+typedef struct packed {
+  logic          valid;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+} dc_read_req_t;
 
+typedef struct packed {
+  logic          hit;
+  logic            miss;
+  logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
+} dc_read_resp_t;
 
 endpackage // msrh_lsu_pkg

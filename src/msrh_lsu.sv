@@ -111,8 +111,8 @@ u_lsu_pipe
    .rv0_is_store(1'b0),
    .i_q_index({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),  // temporary
 
-   .i_ex1_replay_issue (i_ldq_replay_issue),
-   .i_ex1_replay_index ({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),
+   .i_ex0_replay_issue (i_ldq_replay_issue),
+   .i_ex0_replay_index ({{msrh_lsu_pkg::MEM_Q_SIZE}{1'b0}}),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),
