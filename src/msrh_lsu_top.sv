@@ -33,8 +33,6 @@ msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
-msrh_lsu_pkg::lrq_resolve_t         w_lrq_resolve;
-
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_valid;
 msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
@@ -101,10 +99,9 @@ msrh_ldq
 
  .i_lrq_resolve (w_lrq_resolve),
 
- .o_ldq_replay_valid (w_ldq_replay_valid),
- .o_ldq_replay_issue (w_ldq_replay_issue),
-
- .i_lrq_resolve (w_lrq_resolve),
+ .o_ldq_replay_valid    (w_ldq_replay_valid   ),
+ .o_ldq_replay_issue    (w_ldq_replay_issue   ),
+ .o_ldq_replay_index_oh (w_ldq_replay_index_oh),
 
  .i_ex3_done          (w_ex3_done ),
  .i_ex3_done_index_oh (w_ex3_index),
@@ -135,8 +132,6 @@ msrh_l1d_load_requester
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
  .l1d_lrq  (w_l1d_lrq_if),
-
- .o_lrq_resolve (w_lrq_resolve),
 
  .l1d_ext_req  (l1d_ext_req ),
  .l1d_ext_resp (l1d_ext_resp),

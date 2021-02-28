@@ -11,7 +11,7 @@ module msrh_l1d_load_requester
    l2_resp_if.slave  l1d_ext_resp,
 
    // LRQ search interface
-   lrq_search_if.master lrq_search_if
+   lrq_search_if.slave lrq_search_if
    );
 
 

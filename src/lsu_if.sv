@@ -10,7 +10,7 @@ modport master (
   input  lrq_entry
 );
 
-modport slav (
+modport slave (
   input  valid,
   input  index,
   output lrq_entry
