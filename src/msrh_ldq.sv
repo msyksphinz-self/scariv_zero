@@ -6,8 +6,11 @@ module msrh_ldq
    input logic [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
    disp_if.slave disp,
 
+   // Updates from LSU Pipeline RS
+   input msrh_lsu_pkg::ex1_rs_update_t       i_ex1_rs_updates[msrh_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX1 stage
    input msrh_lsu_pkg::ex1_q_update_t        i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
+   // Updates from LSU Pipeline EX2 stage
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
 

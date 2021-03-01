@@ -113,7 +113,6 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index_oh('h1),  // temporary
 
    .i_ex0_replay_issue (i_ldq_replay_issue),
    .i_ex0_replay_index_oh (i_ldq_replay_index_oh),
