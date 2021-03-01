@@ -33,8 +33,8 @@ module msrh_lsu_pipe
  output logic                                       o_tlb_resolve,
  output                                             msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
- output logic                               o_ex3_done,
- output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index
+ output logic                                 o_ex3_done,
+ output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index_oh
 
 );
 
@@ -42,17 +42,17 @@ module msrh_lsu_pipe
 // EX0 stage
 //
 msrh_pkg::issue_t                      r_ex0_rs_issue, w_ex0_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex0_rs_index;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex0_rs_index_oh;
 
 // Selected signal
 msrh_pkg::issue_t                      w_ex0_issue;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  w_ex0_index;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  w_ex0_index_oh;
 
 //
 // EX1 stage
 //
 msrh_pkg::issue_t                      r_ex1_issue, w_ex1_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex1_index;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
 logic [riscv_pkg::VADDR_W-1: 0]        w_ex1_vaddr;
 msrh_lsu_pkg::tlb_req_t                w_ex1_tlb_req;
@@ -61,9 +61,9 @@ msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
 //
 // EX2 stage
 //
-msrh_pkg::issue_t                  r_ex2_issue, w_ex2_issue_next;
-logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1: 0] r_ex2_index;
-logic [riscv_pkg::PADDR_W-1: 0]    r_ex2_paddr;
+msrh_pkg::issue_t                     r_ex2_issue, w_ex2_issue_next;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] r_ex2_index_oh;
+logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
 
 //
 // EX3 stage
@@ -88,25 +88,25 @@ end
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex0_rs_issue   <= 'h0;
-    r_ex0_rs_index   <= 'h0;
+    r_ex0_rs_index_oh   <= 'h0;
 
     r_ex1_issue   <= 'h0;
-    r_ex1_index   <= 'h0;
+    r_ex1_index_oh   <= 'h0;
 
     r_ex2_issue     <= 'h0;
-    r_ex2_index     <= 'h0;
+    r_ex2_index_oh     <= 'h0;
   end else begin
     r_ex0_rs_issue  <= rv0_issue;
-    r_ex0_rs_index  <= i_q_index_oh;
+    r_ex0_rs_index_oh  <= i_q_index_oh;
 
-    r_ex1_issue  <= w_ex1_issue_next;
-    r_ex1_index  <= w_ex0_index;
+    r_ex1_issue     <= w_ex1_issue_next;
+    r_ex1_index_oh  <= w_ex0_index_oh;
 
     r_ex2_issue     <= w_ex2_issue_next;
-    r_ex2_index     <= r_ex1_index;
+    r_ex2_index_oh  <= r_ex1_index_oh;
 
     r_ex3_issue     <= w_ex3_issue_next;
-    o_ex3_index     <= r_ex2_index;
+    o_ex3_index_oh     <= r_ex2_index_oh;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -133,7 +133,7 @@ u_tlb
 //
 // Pipe selection
 assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs_issue;
-assign w_ex0_index = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : r_ex0_rs_index;
+assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : r_ex0_rs_index_oh;
 
 //
 // EX1 stage pipeline
@@ -162,7 +162,7 @@ assign o_ex1_q_updates.pipe_sel_idx = LSU_PIPE_IDX[$clog2(msrh_pkg::LSU_INST_NUM
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;
-assign o_ex1_q_updates.index      = r_ex1_index;
+assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 
 // Interface to L1D cache
@@ -192,7 +192,7 @@ assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
                                      l1d_lrq_if.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
                                     msrh_lsu_pkg::NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.lrq_index_oh;
-assign o_ex2_q_updates.index      = r_ex2_index;
+assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 
 //

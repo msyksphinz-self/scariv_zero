@@ -133,7 +133,7 @@ typedef struct packed {
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   logic                           hazard_vld;
-  logic [$clog2(MEM_Q_SIZE)-1:0]  index;
+  logic [MEM_Q_SIZE-1:0]          index_oh;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
 } ex1_q_update_t;
 
@@ -141,7 +141,7 @@ typedef struct packed {
   logic          update;
   msrh_lsu_pkg::lmq_haz_t               hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
-  logic [$clog2(MEM_Q_SIZE)-1:0] index;
+  logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
 
 // L1D interface

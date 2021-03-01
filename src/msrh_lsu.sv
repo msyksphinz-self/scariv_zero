@@ -37,7 +37,7 @@ module msrh_lsu
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
     output logic                                 o_ex3_done,
-    output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index
+    output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index_oh
    );
 
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
@@ -113,7 +113,7 @@ u_lsu_pipe
 
    .rv0_issue(w_rv0_issue),
    .rv0_is_store(1'b0),
-   .i_q_index_oh({{{(msrh_lsu_pkg::MEM_Q_SIZE-1)}{1'b0}}, 1'b1}),  // temporary
+   .i_q_index_oh('h1),  // temporary
 
    .i_ex0_replay_issue (i_ldq_replay_issue),
    .i_ex0_replay_index_oh (i_ldq_replay_index_oh),
@@ -136,8 +136,8 @@ u_lsu_pipe
    .o_tlb_resolve   (o_tlb_resolve  ),
    .o_ex2_q_updates (o_ex2_q_updates),
 
-   .o_ex3_done  (o_ex3_done),
-   .o_ex3_index (o_ex3_index)
+   .o_ex3_done     (o_ex3_done    ),
+   .o_ex3_index_oh (o_ex3_index_oh)
 );
 
 endmodule // msrh_lsu

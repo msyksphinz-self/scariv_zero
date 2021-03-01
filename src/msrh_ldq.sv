@@ -271,7 +271,7 @@ logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
 
 for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
   assign w_ex2_update_match[p_idx] = i_ex2_q_updates[p_idx].update &&
-                                     i_ex2_q_updates[p_idx].index == ldq_index;
+                                     i_ex2_q_updates[p_idx].index_oh[ldq_index];
 end
 
 assign o_ex2_q_valid = |w_ex2_update_match;
