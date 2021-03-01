@@ -10,6 +10,7 @@ _start:
     TEST_FINISH
 
     .section    .data
+    .align      6
 data:
     .dword  0x0123456789abcdef
     .dword  0x0011223344556677

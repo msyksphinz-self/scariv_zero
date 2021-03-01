@@ -198,7 +198,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
-    r_ex3_aligned_data <= ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:2], 2'b00, 3'b000} +: riscv_pkg::XLEN_W];
+    r_ex3_aligned_data <= ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
+    // ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:2], 2'b00, 3'b000} +: riscv_pkg::XLEN_W]; if size = 4B
   end
 end
 

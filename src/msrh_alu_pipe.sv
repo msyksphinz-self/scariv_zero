@@ -160,7 +160,7 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
                                 {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
         3'b011: r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
         3'b100: r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
-        default : r_ex3_result <= {riscv_pkg::XLEN_W{1'bx}};
+        default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
       endcase
     end
   end

@@ -59,6 +59,7 @@ logic [msrh_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
 
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
+logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
 
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ex3_done_index_or;
 
@@ -132,7 +133,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
 
   // Selection of EX1 Update signal
   msrh_lsu_pkg::ex1_q_update_t w_ex1_q_updates;
-  logic w_ex1_q_valid;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
   ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(r_ldq_entries[l_idx].cmt_id), .grp_id(r_ldq_entries[l_idx].grp_id),
                                          .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
@@ -155,14 +156,14 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         INIT :
           if (w_in_vld) begin
             r_ldq_entries[l_idx] <= assign_ldq_disp(w_disp_entry, disp.cmt_id, w_disp_grp_id);
-          end else if (w_ex1_q_valid) begin
+          end else if (|w_ex1_q_valid) begin
             r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : RUN;
             r_ldq_entries[l_idx].vaddr        <= w_ex1_q_updates.vaddr;
             r_ldq_entries[l_idx].pipe_sel_idx <= w_ex1_q_updates.pipe_sel_idx;
             r_ldq_entries[l_idx].inst         <= w_ex1_q_updates.inst;
 
             for (int p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-              r_ex2_ldq_entries_recv[p_idx] <= !i_ex1_q_updates[p_idx].hazard_vld;
+              r_ex2_ldq_entries_recv[p_idx] <= w_ex1_q_valid[p_idx] & !i_ex1_q_updates[p_idx].hazard_vld;
             end
           end
         TLB_HAZ : begin
@@ -190,7 +191,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         end
         READY : begin
-          if (w_rerun_request[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
+          if (w_rerun_request_oh[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
             r_ldq_entries[l_idx].state <= RUN;
           end
         end
@@ -218,15 +219,14 @@ endgenerate
 // replay logic
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
   assign o_ldq_replay_valid[p_idx] = |w_rerun_request[p_idx];
-  logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh;
   ldq_entry_t w_ldq_replay_entry;
 
-  bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh));
-  bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh), .i_data(r_ldq_entries), .o_selected(w_ldq_replay_entry));
+  bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
+  bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(r_ldq_entries), .o_selected(w_ldq_replay_entry));
 
   assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
 
-  assign o_ldq_replay_index_oh[p_idx] = w_rerun_request_oh;
+  assign o_ldq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
 end
 endgenerate
 
@@ -252,20 +252,19 @@ module ex1_update_select
    input                                  msrh_lsu_pkg::ex1_q_update_t i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
    input logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
    input logic [msrh_pkg::DISP_SIZE-1: 0] grp_id,
-   output                                 o_ex1_q_valid,
+   output [msrh_pkg::LSU_INST_NUM-1: 0]   o_ex1_q_valid,
    output                                 msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates
    );
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex1_update_match;
 
 for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : ex1_update_loop
-  assign w_ex1_update_match[p_idx] = i_ex1_q_updates[p_idx].update &&
-                                     i_ex1_q_updates[p_idx].cmt_id == cmt_id &&
-                                     i_ex1_q_updates[p_idx].grp_id == grp_id;
+  assign o_ex1_q_valid[p_idx] = i_ex1_q_updates[p_idx].update &&
+                                i_ex1_q_updates[p_idx].cmt_id == cmt_id &&
+                                i_ex1_q_updates[p_idx].grp_id == grp_id;
 end
 
-assign o_ex1_q_valid = |w_ex1_update_match;
-bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::ex1_q_update_t)), .WORDS(msrh_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex1_update_match), .i_data(i_ex1_q_updates), .o_selected(o_ex1_q_updates));
+bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::ex1_q_update_t)), .WORDS(msrh_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(o_ex1_q_valid), .i_data(i_ex1_q_updates), .o_selected(o_ex1_q_updates));
 
 endmodule // ex1_update_select
 

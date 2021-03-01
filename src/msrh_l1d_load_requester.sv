@@ -19,6 +19,7 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_vlds;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_load_valid_oh;
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_same_addr_vld[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_hit_port_same_addr_vld[msrh_pkg::LSU_INST_NUM];
 
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_in_ptr;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
@@ -43,7 +44,7 @@ inoutptr #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
 generate for(genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
   assign w_lrq_vlds[b_idx] = w_lrq_entries[b_idx].valid;
 
-  assign w_load_valid[b_idx] = w_lrq_load_valid_oh[b_idx] & l1d_lrq[0].load;
+  assign w_load_valid[b_idx] = l1d_lrq[0].load & w_lrq_load_valid_oh[b_idx] & !(|w_hit_same_addr_vld[0]);
 
   msrh_lsu_pkg::lrq_entry_t load_entry;
   assign load_entry.valid = !(|w_hit_same_addr_vld[0]);
@@ -66,6 +67,18 @@ end // block: buffer_loop
 endgenerate
 
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : port_loop
+  // check the address with different pipeline
+  for (genvar p2_idx = 0; p2_idx < msrh_pkg::LSU_INST_NUM; p2_idx++) begin : adj_port_loop
+    if (p_idx <= p2_idx) begin
+      assign w_hit_port_same_addr_vld[p_idx][p2_idx] = 1'b0;
+    end else begin
+      assign w_hit_port_same_addr_vld[p_idx][p2_idx] = l1d_lrq[p_idx].load & l1d_lrq[p2_idx].load &
+                                                       (l1d_lrq[p_idx ].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                        l1d_lrq[p2_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+    end
+  end
+
+  // check the address with exist lrq
   for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
     assign w_hit_same_addr_vld[p_idx][b_idx] = l1d_lrq[p_idx].load &
                                                (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
@@ -73,7 +86,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   end
 
   assign l1d_lrq[p_idx].full         = &(w_lrq_vlds | w_lrq_load_valid_oh);
-  assign l1d_lrq[p_idx].conflict     = |w_hit_same_addr_vld[p_idx];
+  assign l1d_lrq[p_idx].conflict     = (|w_hit_same_addr_vld[p_idx]) | (|w_hit_port_same_addr_vld[p_idx]);
   assign l1d_lrq[p_idx].lrq_index_oh = l1d_lrq[p_idx].conflict ? w_hit_same_addr_vld[p_idx] : w_load_valid;
 end
 endgenerate
