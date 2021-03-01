@@ -9,7 +9,6 @@ module msrh_lsu_pipe
 
  input msrh_pkg::issue_t                    rv0_issue,
  input logic                                rv0_is_store,
- input logic [msrh_lsu_pkg::MEM_Q_SIZE-1:0] i_q_index_oh,
 
  input msrh_pkg:: issue_t                   i_ex0_replay_issue,
  input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]      i_ex0_replay_index_oh,
@@ -42,7 +41,6 @@ module msrh_lsu_pipe
 // EX0 stage
 //
 msrh_pkg::issue_t                      r_ex0_rs_issue, w_ex0_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex0_rs_index_oh;
 
 // Selected signal
 msrh_pkg::issue_t                      w_ex0_issue;
@@ -88,7 +86,6 @@ end
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex0_rs_issue   <= 'h0;
-    r_ex0_rs_index_oh   <= 'h0;
 
     r_ex1_issue   <= 'h0;
     r_ex1_index_oh   <= 'h0;
@@ -97,7 +94,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index_oh     <= 'h0;
   end else begin
     r_ex0_rs_issue  <= rv0_issue;
-    r_ex0_rs_index_oh  <= i_q_index_oh;
 
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
@@ -133,7 +129,7 @@ u_tlb
 //
 // Pipe selection
 assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs_issue;
-assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : r_ex0_rs_index_oh;
+assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
 
 //
 // EX1 stage pipeline

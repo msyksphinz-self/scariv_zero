@@ -9,6 +9,7 @@
 ../src/lsu_if.sv
 
 ../src/bit_cnt.sv
+../src/bit_or.sv
 ../src/bit_oh_or.sv
 ../src/bit_ff_lsb.sv
 ../src/bit_extract_msb.sv

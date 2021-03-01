@@ -6,8 +6,6 @@ module msrh_ldq
    input logic [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
    disp_if.slave disp,
 
-   // Updates from LSU Pipeline RS
-   input msrh_lsu_pkg::ex1_rs_update_t       i_ex1_rs_updates[msrh_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX1 stage
    input msrh_lsu_pkg::ex1_q_update_t        i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
@@ -123,6 +121,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   logic [msrh_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_ldq_entries_recv;
+
   for (genvar i_idx = 0; i_idx < msrh_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == l_idx);
   end
@@ -139,7 +139,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   // Selection of EX1 Update signal
   msrh_lsu_pkg::ex2_q_update_t w_ex2_q_updates;
   logic w_ex2_q_valid;
-  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates), .ldq_index(l_idx[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0]), .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
+  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
+                                         .ldq_index(l_idx[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0]),
+                                         .i_ex2_recv(r_ex2_ldq_entries_recv),
+                                         .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_lrq_hazard_index_oh;
 
@@ -157,6 +160,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
             r_ldq_entries[l_idx].vaddr        <= w_ex1_q_updates.vaddr;
             r_ldq_entries[l_idx].pipe_sel_idx <= w_ex1_q_updates.pipe_sel_idx;
             r_ldq_entries[l_idx].inst         <= w_ex1_q_updates.inst;
+
+            for (int p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+              r_ex2_ldq_entries_recv[p_idx] <= !i_ex1_q_updates[p_idx].hazard_vld;
+            end
           end
         TLB_HAZ : begin
           if (|i_tlb_resolve) begin
@@ -166,11 +173,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         RUN : begin
           if (w_ex2_q_valid) begin
             r_ldq_entries[l_idx].state <=  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
-                                          (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
-                                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
-                                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
-                                          r_ldq_entries[l_idx].state;
+                                           (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
+                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
+                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
+                                           r_ldq_entries[l_idx].state;
             r_lrq_hazard_index_oh      <= w_ex2_q_updates.lrq_index_oh;
+            r_ex2_ldq_entries_recv     <= 'h0;
           end
           if (|i_ex3_done & w_ex3_done_index_or[l_idx]) begin
             r_ldq_entries[l_idx].state <= DONE;
@@ -266,6 +274,7 @@ module ex2_update_select
   (
    input                                             msrh_lsu_pkg::ex2_q_update_t i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
    input logic [$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0] ldq_index,
+   input logic [msrh_pkg::LSU_INST_NUM-1: 0]         i_ex2_recv,
    output                                            o_ex2_q_valid,
    output                                            msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates
    );
@@ -273,8 +282,9 @@ module ex2_update_select
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
 
 for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
-  assign w_ex2_update_match[p_idx] = i_ex2_q_updates[p_idx].update &&
-                                     i_ex2_q_updates[p_idx].index_oh[ldq_index];
+  assign w_ex2_update_match[p_idx] = (i_ex2_q_updates[p_idx].update &&
+                                      i_ex2_q_updates[p_idx].index_oh[ldq_index]) |
+                                     i_ex2_recv[p_idx];
 end
 
 assign o_ex2_q_valid = |w_ex2_update_match;

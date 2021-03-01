@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PATHCMD=realpath
-if [ `uname -o` == "Cygwin" ];
+if [ `uname -o` == "Cygwin" ]; then
    PATHCMD="cygpath -w -a"
 fi
 

@@ -42,6 +42,7 @@ vlib:
 $(FILELIST): ../src/filelist.f filelist.f
 	$(shell cygpath -w -a $(RV_PKG) > $@)
 	../scripts/gen_filelist.sh $^ >> $@
+	sed -i 's|\\|/|g' $@
 
 vlog: $(FILELIST)
 	$(VLOG) $(VLOG_OPTS)
