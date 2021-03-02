@@ -26,3 +26,22 @@ interface l1d_if;
   );
 
 endinterface // l1d_if
+
+interface l1d_lrq_if;
+  logic load;
+  msrh_lsu_pkg::lrq_req_t  req_payload;
+  msrh_lsu_pkg::lrq_resp_t resp_payload;
+
+modport master (
+  output load,
+  output req_payload,
+  input  resp_payload
+);
+
+modport slave (
+  input  load,
+  input  req_payload,
+  output resp_payload
+);
+
+endinterface // l1d_lrq_if

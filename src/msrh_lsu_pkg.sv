@@ -116,6 +116,16 @@ package msrh_lsu_pkg;
   } l2_resp_t;
 
 typedef struct packed {
+  logic [riscv_pkg::PADDR_W-1:0] paddr;
+} lrq_req_t;
+
+typedef struct packed {
+  logic                          full;
+  logic                          conflict;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+} lrq_resp_t;
+
+typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic                           sent;

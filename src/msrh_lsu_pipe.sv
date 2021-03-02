@@ -178,16 +178,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_if.miss | ex1_l1d_if.conflict);
-assign l1d_lrq_if.load  = o_ex2_l1d_mispredicted;
-assign l1d_lrq_if.paddr = r_ex2_paddr;
+assign l1d_lrq_if.load              = o_ex2_l1d_mispredicted;
+assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
                                     (ex1_l1d_if.conflict ? msrh_lsu_pkg::L1D_CONFLICT :
-                                     l1d_lrq_if.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
+                                     l1d_lrq_if.resp_payload.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
                                     msrh_lsu_pkg::NONE;
-assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.lrq_index_oh;
+assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 

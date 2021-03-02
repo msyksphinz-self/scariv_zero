@@ -1,3 +1,9 @@
+// =======================================
+// bit_pick_1_index
+//
+// extract the valid NUMth elemnet from i_data
+// =======================================
+
 module bit_pick_1_index
   #(
     parameter NUM = 5,
