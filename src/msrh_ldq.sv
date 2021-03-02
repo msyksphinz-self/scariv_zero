@@ -152,6 +152,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
       r_ldq_entries[l_idx].is_valid <= 1'b0;
       r_ldq_entries[l_idx].state <= INIT;
       r_lrq_hazard_index_oh <= 'h0;
+      r_ex2_ldq_entries_recv <= 'h0;
     end else begin
       case (r_ldq_entries[l_idx].state)
         INIT :
