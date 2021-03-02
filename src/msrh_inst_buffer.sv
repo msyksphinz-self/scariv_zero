@@ -28,16 +28,16 @@ logic [msrh_pkg::DISP_SIZE-1:0] w_inst_disp_or;
 logic [msrh_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
-msrh_pkg::inst_cat_t w_inst_cat[ic_word_num];
-logic [ic_word_num-1:0] w_inst_is_arith;
-logic [ic_word_num-1:0] w_inst_is_mem;
+msrh_pkg::inst_cat_t w_inst_cat[msrh_pkg::DISP_SIZE];
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_arith;
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_mem;
 
-logic [ic_word_num-1:0] w_inst_arith_msb;
-logic [ic_word_num-1:0] w_inst_mem_msb;
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_arith_msb;
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_mem_msb;
 
-logic [ic_word_num-1:0] rd_valid;
-logic [ 1: 0]           rs1_type[ic_word_num-1:0];
-logic [ic_word_num-1:0] rs2_type;
+logic [msrh_pkg::DISP_SIZE-1:0] rd_valid;
+logic [ 1: 0]           rs1_type[msrh_pkg::DISP_SIZE-1:0];
+logic [msrh_pkg::DISP_SIZE-1:0] rs2_type;
 
 logic [ic_word_num-1:0] r_head_inst_issued;
 logic [ic_word_num-1:0] w_head_inst_issued_next;
@@ -57,6 +57,7 @@ logic [msrh_pkg::INST_BUF_SIZE-1:0]      w_inst_buffer_vld;
 
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_inptr;
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_outptr;
+logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_inst_buffer_outptr_p1;
 logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
@@ -80,6 +81,8 @@ inst_buf_ptr
    .i_out_vld (w_ptr_out_fire),
    .o_out_ptr (r_inst_buffer_outptr)
    );
+
+assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr + 'h1;
 
 assign w_inst_buffer_fire = o_inst_buf_valid & i_inst_buf_ready;
 
@@ -138,12 +141,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
+generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : word_loop
+  logic [31: 0] w_inst;
+  logic [$clog2(ic_word_num)-1: 0] w_buf_id;
+  logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
+
+  assign w_buf_id = r_head_start_pos + w_idx;
+  assign w_inst_buf_ptr = (r_head_start_pos + w_idx < ic_word_num) ? r_inst_buffer_outptr :
+                          w_inst_buffer_outptr_p1;
+  assign w_inst = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
+
   logic [ 1: 0] raw_cat;
   decoder_cat
   u_decoder_cat
     (
-     .inst(r_inst_queue[r_inst_buffer_outptr].data[w_idx*32+:32]),
+     .inst(w_inst),
      .cat(raw_cat)
      );
   assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(raw_cat);
@@ -151,21 +163,21 @@ generate for (genvar w_idx = 0; w_idx < ic_word_num; w_idx++) begin : word_loop
   decoder_reg
   u_decoder_reg
     (
-     .inst(r_inst_queue[r_inst_buffer_outptr].data[w_idx*32+:32]),
+     .inst(w_inst),
      .rd(rd_valid[w_idx]),
      .r1(rs1_type[w_idx]),
      .r2(rs2_type[w_idx])
      );
 
 
-  assign w_inst_is_arith[w_idx] = r_inst_queue[r_inst_buffer_outptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ARITH);
-  assign w_inst_is_mem  [w_idx] = r_inst_queue[r_inst_buffer_outptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_MEM  );
+  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ARITH);
+  assign w_inst_is_mem  [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_MEM  );
 
 end
 endgenerate
 
-assign w_inst_arith_pick_up = w_inst_is_arith[r_head_start_pos +: msrh_pkg::DISP_SIZE];
-assign w_inst_mem_pick_up   = w_inst_is_mem  [r_head_start_pos +: msrh_pkg::DISP_SIZE];
+assign w_inst_arith_pick_up = w_inst_is_arith;
+assign w_inst_mem_pick_up   = w_inst_is_mem  ;
 
 bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
 bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
