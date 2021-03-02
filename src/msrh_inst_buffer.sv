@@ -140,22 +140,22 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [31: 0] w_inst[msrh_pkg::DISP_SIZE];
 
 generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : word_loop
-  logic [31: 0] w_inst;
   logic [$clog2(ic_word_num)-1: 0] w_buf_id;
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
   assign w_buf_id = r_head_start_pos + w_idx;
   assign w_inst_buf_ptr = (r_head_start_pos + w_idx < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
-  assign w_inst = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
+  assign w_inst[w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
 
   logic [ 1: 0] raw_cat;
   decoder_cat
   u_decoder_cat
     (
-     .inst(w_inst),
+     .inst(w_inst[w_idx]),
      .cat(raw_cat)
      );
   assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(raw_cat);
@@ -163,7 +163,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : wo
   decoder_reg
   u_decoder_reg
     (
-     .inst(w_inst),
+     .inst(w_inst[w_idx]),
      .rd(rd_valid[w_idx]),
      .r1(rs1_type[w_idx]),
      .r2(rs2_type[w_idx])
@@ -190,28 +190,25 @@ bit_tree_msb #(.WIDTH(msrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .ou
 assign o_inst_buf_valid = |w_inst_disp_mask;
 assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  logic [31: 0] w_inst;
-  assign w_inst = r_inst_queue[r_inst_buffer_outptr].data[(d_idx+r_head_start_pos)*32+:32];
-
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
       o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
-      o_inst_buf[d_idx].inst  = w_inst;
+      o_inst_buf[d_idx].inst  = w_inst[d_idx];
       o_inst_buf[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
 
-      o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx+r_head_start_pos];
+      o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx];
       o_inst_buf[d_idx].rd_type    = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rd_regidx  = w_inst[11: 7];
+      o_inst_buf[d_idx].rd_regidx  = w_inst[d_idx][11: 7];
 
-      o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx+r_head_start_pos] != 'h0;
+      o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
       o_inst_buf[d_idx].rs1_type   = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rs1_regidx = w_inst[19:15];
+      o_inst_buf[d_idx].rs1_regidx = w_inst[d_idx][19:15];
 
-      o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx+r_head_start_pos] != 'h0;
+      o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
       o_inst_buf[d_idx].rs2_type   = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rs2_regidx = w_inst[24:20];
+      o_inst_buf[d_idx].rs2_regidx = w_inst[d_idx][24:20];
 
-      o_inst_cat[d_idx]   = w_inst_cat[d_idx+r_head_start_pos];
+      o_inst_cat[d_idx]   = w_inst_cat[d_idx];
     end else begin // if (w_inst_disp_mask[d_idx])
       o_inst_buf[d_idx] = 'h0;
       o_inst_cat[d_idx] = msrh_pkg::NONE;

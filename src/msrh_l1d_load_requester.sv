@@ -32,6 +32,7 @@ msrh_lsu_pkg::lrq_entry_t w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE];
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_loads;
 logic [msrh_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_picked_valids;
+logic [msrh_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_loads_no_conflicts;
 logic [$clog2(msrh_pkg::LSU_INST_NUM): 0]    w_l1d_lrq_loads_cnt;
 msrh_lsu_pkg::lrq_req_t w_l1d_req_payloads        [msrh_pkg::LSU_INST_NUM];
 msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [msrh_pkg::LSU_INST_NUM];
@@ -39,17 +40,17 @@ msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_valid [msrh_pkg::LSU_INST_NUM] ;
 
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_load_vld (.in(~w_lrq_vlds), .out(w_lrq_load_valid_oh));
-bit_cnt #(.WIDTH(msrh_pkg::LSU_INST_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads), .out(w_l1d_lrq_loads_cnt));
+bit_cnt #(.WIDTH(msrh_pkg::LSU_INST_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
 //
 // LRQ Pointer
 //
-assign w_in_vld  = |w_l1d_lrq_loads;
+assign w_in_vld  = |w_l1d_lrq_loads_no_conflicts;
 assign w_out_vld = l1d_ext_req.valid;
 
 inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                           .i_in_vld (w_in_vld ),
                                                           /* verilator lint_off WIDTH */
-                                                          .i_in_val(w_l1d_lrq_loads_cnt),
+                                                          .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_pkg::LSU_INST_NUM)){1'b0}}, w_l1d_lrq_loads_cnt}),
                                                           .o_in_ptr (w_in_ptr ),
 
                                                           .i_out_vld(w_out_vld),
@@ -59,7 +60,8 @@ inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_res
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : lsu_req_loop
   assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
   assign w_l1d_req_payloads[p_idx] = l1d_lrq[p_idx].req_payload;
-
+  assign w_l1d_lrq_loads_no_conflicts[p_idx] = w_l1d_lrq_loads[p_idx] &
+                                               !w_resp_confilct[p_idx];
   bit_pick_1_index
                              #(.NUM(p_idx),
                                .SEL_WIDTH(msrh_pkg::LSU_INST_NUM),
@@ -67,7 +69,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
                                )
   u_l1d_req_pick
                              (
-                              .i_valids(w_l1d_lrq_loads),
+                              .i_valids(w_l1d_lrq_loads_no_conflicts),
                               .i_data  (w_l1d_req_payloads),
 
                               .o_valid (w_l1d_lrq_picked_valids  [p_idx]),
@@ -83,8 +85,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
   for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : lrq_port_loop
     assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] &
-                                        (w_in_ptr + p_idx == b_idx) &
-                                        !w_resp_confilct[p_idx];
+                                        (w_in_ptr + p_idx == b_idx);
   end
 
   logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rev_load_valid;
