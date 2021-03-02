@@ -1,6 +1,6 @@
 // `default_nettype none
 
-module icache
+module msrh_icache
   (
   input logic i_clk,
   input logic i_reset_n,

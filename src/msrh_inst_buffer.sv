@@ -1,4 +1,4 @@
-module inst_buffer
+module msrh_inst_buffer
   (
  input logic                                i_clk,
  input logic                                i_reset_n,

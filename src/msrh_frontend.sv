@@ -82,7 +82,7 @@ end
 assign w_s0_ic_req.valid = s0_vaddr_valid;
 assign w_s0_ic_req.vaddr = r_s0_vaddr;
 
-icache u_icache
+msrh_icache u_msrh_icache
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
@@ -103,8 +103,8 @@ icache u_icache
    .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
    );
 
-inst_buffer
-u_inst_buffer
+msrh_inst_buffer
+u_msrh_inst_buffer
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
