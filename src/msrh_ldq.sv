@@ -149,12 +149,13 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
+      r_ldq_entries[l_idx].is_valid <= 1'b0;
       r_ldq_entries[l_idx].state <= INIT;
       r_lrq_hazard_index_oh <= 'h0;
     end else begin
       case (r_ldq_entries[l_idx].state)
         INIT :
-          if (w_in_vld) begin
+          if (|w_input_valid) begin
             r_ldq_entries[l_idx] <= assign_ldq_disp(w_disp_entry, disp.cmt_id, w_disp_grp_id);
           end else if (|w_ex1_q_valid) begin
             r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : RUN;

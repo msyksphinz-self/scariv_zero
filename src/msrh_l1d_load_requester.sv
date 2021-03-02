@@ -18,8 +18,9 @@ module msrh_l1d_load_requester
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_vlds;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_load_valid_oh;
 
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_same_addr_vld[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_addr_vld[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_hit_port_same_addr_vld[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_resp_confilct;
 
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_in_ptr;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
@@ -83,7 +84,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
   for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : lrq_port_loop
     assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] &
                                         (w_in_ptr + p_idx == b_idx) &
-                                        !(|w_hit_same_addr_vld[p_idx]);
+                                        !w_resp_confilct[p_idx];
   end
 
   logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rev_load_valid;
@@ -128,15 +129,15 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
 
   // check the address with exist lrq
   for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
-    assign w_hit_same_addr_vld[p_idx][b_idx] = l1d_lrq[p_idx].load &
+    assign w_hit_lrq_same_addr_vld[p_idx][b_idx] = l1d_lrq[p_idx].load &
                                                (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                                                 l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
-  wire resp_confilct = (|w_hit_same_addr_vld[p_idx]) | (|w_hit_port_same_addr_vld[p_idx]);
+  assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_vld[p_idx]) | (|w_hit_port_same_addr_vld[p_idx]);
   assign l1d_lrq[p_idx].resp_payload.full         = &(w_lrq_vlds | w_lrq_load_valid_oh);
-  assign l1d_lrq[p_idx].resp_payload.conflict     = resp_confilct;
-  assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = resp_confilct ? w_hit_same_addr_vld[p_idx] : w_load_valid;
+  assign l1d_lrq[p_idx].resp_payload.conflict     = w_resp_confilct[p_idx];
+  assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = w_resp_confilct[p_idx] ? w_hit_lrq_same_addr_vld[p_idx] : w_load_valid[p_idx];
 end
 endgenerate
 
