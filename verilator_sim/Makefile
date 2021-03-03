@@ -1,7 +1,8 @@
 NPROCS = $(shell nproc)
 
-oVERILATOR_OPTS =
+VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
+VERILATOR_OPTS += --build
 VERILATOR_OPTS += ../cpp/tb_msrh.cpp
 VERILATOR_OPTS += ../cpp/tb_new_elf_loader.cpp
 VERILATOR_OPTS += ../cpp/tb_debug_tick.cpp
@@ -28,6 +29,7 @@ VERILATOR_OPTS += --trace-structs
 VERILATOR_OPTS += --trace-underscore
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
+VERILATOR_OPTS += --compiler clang
 
 TOP      = msrh_tb
 
@@ -49,17 +51,22 @@ DECODE_FILES += ../src/decoder_reg.sv
 
 FILELIST = sim_filelist.f
 
+CXX=clang++
+LD=lld
+
 rv32: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
-	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
-	xml2stems obj_dir_riscv32/Vmsrh_tb.xml obj_dir_riscv32/Vmsrh_tb.stems
-	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
-	$(MAKE) -C obj_dir_riscv32 -f V$(TOP).mk -j$(NPROCS)
+	CXX=${CXX} LD=${LD} verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
+
+#	verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST) -xml-only
+#	xml2stems obj_dir_riscv32/Vmsrh_tb.xml obj_dir_riscv32/Vmsrh_tb.stems
+# $(MAKE) CXX=clang++ -C obj_dir_riscv32 -f V$(TOP).mk -j$(NPROCS)
 
 rv64: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
-	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
-	xml2stems obj_dir_riscv64/Vmsrh_tb.xml obj_dir_riscv64/Vmsrh_tb.stems
-	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
-	$(MAKE) -C obj_dir_riscv64 -f V$(TOP).mk -j$(NPROCS)
+	CXX=${CXX} LD=${LD} verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
+
+#	verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST) -xml-only
+#	xml2stems obj_dir_riscv64/Vmsrh_tb.xml obj_dir_riscv64/Vmsrh_tb.stems
+#	$(MAKE) CXX=clang++ LD=ldd -C obj_dir_riscv64 -f V$(TOP).mk -j$(NPROCS)
 
 libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
