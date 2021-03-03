@@ -1,23 +1,25 @@
 module msrh_sched_entry
 (
-   input logic  i_clk,
-   input logic  i_reset_n,
+   input logic                            i_clk,
+   input logic                            i_reset_n,
 
-   input logic  i_put,
-   input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
-   input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id,
-   input        msrh_pkg::disp_t i_put_data,
+   input logic                            i_put,
+   input logic [msrh_pkg::CMT_BLK_W-1:0]  i_cmt_id,
+   input logic [msrh_pkg::DISP_SIZE-1:0]  i_grp_id,
+   input                                  msrh_pkg::disp_t i_put_data,
 
-   output logic o_entry_valid,
-   output logic o_entry_ready,
-   output msrh_pkg::issue_t o_entry,
+   output logic                           o_entry_valid,
+   output logic                           o_entry_ready,
+   output                                 msrh_pkg::issue_t o_entry,
+
+   input logic                            i_ex0_rs_conflicted,
 
    /* Forwarding path */
-   input        msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input                                  msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
-   input logic  i_entry_picked,
-   input logic  i_pipe_done,
-   output logic o_entry_done,
+   input logic                            i_entry_picked,
+   input logic                            i_pipe_done,
+   output logic                           o_entry_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
    output logic [msrh_pkg::DISP_SIZE-1:0] o_grp_id
    );
@@ -111,6 +113,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       ISSUED : begin
         if (i_pipe_done) begin
           r_state <= DONE;
+        end
+        if (i_ex0_rs_conflicted) begin
+          r_state <= WAIT;
+          r_issued <= 1'b0;
         end
       end
       DONE : begin

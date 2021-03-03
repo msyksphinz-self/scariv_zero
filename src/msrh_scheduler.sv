@@ -16,7 +16,10 @@ module msrh_scheduler
  input msrh_pkg::early_wr_t      i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
  output msrh_pkg::issue_t o_issue,
- output [ENTRY_SIZE-1:0] o_iss_index,
+ output [ENTRY_SIZE-1:0]  o_iss_index_oh,
+
+ input logic                                 i_ex0_rs_conflicted,
+ input logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ex0_rs_conf_index_oh,
 
  input logic                  i_pipe_done,
  input logic [ENTRY_SIZE-1:0] i_done_index,
@@ -76,6 +79,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                   .o_entry_valid(w_entry_valid[s_idx]),
                   .o_entry_ready(w_entry_ready[s_idx]),
                   .o_entry(w_entry[s_idx]),
+
+                  .i_ex0_rs_conflicted    (i_ex0_rs_conflicted &
+                                           i_ex0_rs_conf_index_oh[s_idx]),
+
                   .i_early_wr(i_early_wr),
 
                   .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
@@ -91,7 +98,7 @@ endgenerate
 
 bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
 bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
-assign o_iss_index = w_picked_inst_oh;
+assign o_iss_index_oh = w_picked_inst_oh;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

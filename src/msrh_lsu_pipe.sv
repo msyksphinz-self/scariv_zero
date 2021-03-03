@@ -4,33 +4,37 @@ module msrh_lsu_pipe
     parameter RV_ENTRY_SIZE = 32
     )
 (
- input logic                                        i_clk,
- input logic                                        i_reset_n,
+ input logic                                  i_clk,
+ input logic                                  i_reset_n,
 
- input msrh_pkg::issue_t                    rv0_issue,
- input logic                                rv0_is_store,
+ input                                        msrh_pkg::issue_t i_rv0_issue,
+ input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        i_rv0_index_oh,
+ input logic                                  i_rv0_is_store,
 
- input msrh_pkg:: issue_t                   i_ex0_replay_issue,
- input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]      i_ex0_replay_index_oh,
+ output logic                                 o_ex0_rs_conflicted,
+ output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex0_rs_conf_index_oh,
 
- output logic                                       o_ex1_tlb_miss_hazard,
- output logic                                       o_ex2_l1d_miss_hazard,
+ input                                        msrh_pkg:: issue_t i_ex0_replay_issue,
+ input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        i_ex0_replay_index_oh,
 
- regread_if.master ex1_regread_rs1,
- regread_if.master ex1_regread_rs2,
+ output logic                                 o_ex1_tlb_miss_hazard,
+ output logic                                 o_ex2_l1d_miss_hazard,
 
- output                                             msrh_pkg::early_wr_t o_ex1_early_wr,
- output                                             msrh_pkg::phy_wr_t o_ex3_phy_wr,
+                                              regread_if.master ex1_regread_rs1,
+                                              regread_if.master ex1_regread_rs2,
 
-                                                    l1d_if.master ex1_l1d_if,
- output logic                                       o_ex2_l1d_mispredicted,
+ output                                       msrh_pkg::early_wr_t o_ex1_early_wr,
+ output                                       msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
-                                                    l1d_lrq_if.master l1d_lrq_if,
+                                              l1d_if.master ex1_l1d_if,
+ output logic                                 o_ex2_l1d_mispredicted,
+
+                                              l1d_lrq_if.master l1d_lrq_if,
 
  // Feedbacks to LDQ / STQ
- output                                             msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
- output logic                                       o_tlb_resolve,
- output                                             msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
+ output                                       msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
+ output logic                                 o_tlb_resolve,
+ output                                       msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
  output logic                                 o_ex3_done,
  output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index_oh
@@ -41,6 +45,7 @@ module msrh_lsu_pipe
 // EX0 stage
 //
 msrh_pkg::issue_t                      r_ex0_rs_issue, w_ex0_issue_next;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]         r_ex0_rs_index_oh;
 
 // Selected signal
 msrh_pkg::issue_t                      w_ex0_issue;
@@ -86,6 +91,7 @@ end
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex0_rs_issue   <= 'h0;
+    r_ex0_rs_index_oh <= 'h0;
 
     r_ex1_issue   <= 'h0;
     r_ex1_index_oh   <= 'h0;
@@ -93,7 +99,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue     <= 'h0;
     r_ex2_index_oh     <= 'h0;
   end else begin
-    r_ex0_rs_issue  <= rv0_issue;
+    r_ex0_rs_issue  <= i_rv0_issue;
+    r_ex0_rs_index_oh <= i_rv0_index_oh;
 
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
@@ -130,6 +137,8 @@ u_tlb
 // Pipe selection
 assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs_issue;
 assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
+assign o_ex0_rs_conflicted    = i_ex0_replay_issue.valid & r_ex0_rs_issue.valid;
+assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 
 //
 // EX1 stage pipeline
@@ -138,7 +147,7 @@ assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 
-assign ex1_regread_rs2.valid = rv0_is_store ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
+assign ex1_regread_rs2.valid = i_rv0_is_store ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]};

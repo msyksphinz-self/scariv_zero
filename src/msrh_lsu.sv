@@ -46,10 +46,10 @@ logic [1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 
 msrh_pkg::issue_t w_rv0_issue;
-logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1:0] w_rv0_index;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_rv0_index_oh;
 
-logic         w_ex3_done;
-logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE)-1:0] w_ex3_index;
+logic                                 w_ex0_rs_conflicted;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex0_rs_conf_index_oh;
 
 generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
@@ -87,8 +87,11 @@ msrh_scheduler #(
 
    .i_early_wr(i_early_wr),
 
-   .o_issue(w_rv0_issue),
-   .o_iss_index(),
+   .o_issue       (w_rv0_issue),
+   .o_iss_index_oh(w_rv0_index_oh),
+
+   .i_ex0_rs_conflicted   (w_ex0_rs_conflicted),
+   .i_ex0_rs_conf_index_oh(w_ex0_rs_conf_index_oh),
 
    .i_pipe_done (),
    .i_done_index(),
@@ -111,8 +114,12 @@ u_lsu_pipe
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .rv0_issue(w_rv0_issue),
-   .rv0_is_store(1'b0),
+   .i_rv0_issue(w_rv0_issue),
+   .i_rv0_index_oh(w_rv0_index_oh),
+   .i_rv0_is_store(1'b0),
+
+   .o_ex0_rs_conflicted    (w_ex0_rs_conflicted),
+   .o_ex0_rs_conf_index_oh (w_ex0_rs_conf_index_oh),
 
    .i_ex0_replay_issue (i_ldq_replay_issue),
    .i_ex0_replay_index_oh (i_ldq_replay_index_oh),

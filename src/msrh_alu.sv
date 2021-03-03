@@ -29,7 +29,7 @@ logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
 
 msrh_pkg::issue_t w_rv0_issue;
-logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index;
+logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic         w_ex3_done;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_ex3_index;
@@ -67,7 +67,10 @@ u_msrh_scheduler
    .i_early_wr(i_early_wr),
 
    .o_issue(w_rv0_issue),
-   .o_iss_index(w_rv0_index),
+   .o_iss_index_oh(w_rv0_index_oh),
+
+   .i_ex0_rs_conflicted    ('h0),
+   .i_ex0_rs_conf_index_oh ('h0),
 
    .i_pipe_done(w_ex3_done),
    .i_done_index(w_ex3_index),
@@ -86,7 +89,7 @@ u_alu
    .i_reset_n(i_reset_n),
 
    .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index),
+   .rv0_index(w_rv0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
 
    .ex1_regread_rs1(ex1_regread_rs1),

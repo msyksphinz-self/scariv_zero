@@ -88,27 +88,27 @@ u_msrh_disp_pickup
 //
 // LDQ Pointer
 //
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_in_ptr;
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
+logic [$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0] w_in_ptr;
+logic [$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0] w_out_ptr;
 logic                                        w_in_vld;
 logic                                        w_out_vld;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_load_valid;
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE):0]   w_disp_picked_num;
+logic [msrh_lsu_pkg::LDQ_SIZE-1:0]         w_load_valid;
+logic [$clog2(msrh_lsu_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_vld  = |disp_picked_inst_valid;
 assign w_out_vld = o_done_report.valid;
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) cnt_disp_vld(.in({{(msrh_pkg::LRQ_ENTRY_SIZE-msrh_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
-inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+bit_cnt #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) cnt_disp_vld(.in({{(msrh_lsu_pkg::LDQ_SIZE-msrh_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
+inoutptr_var #(.SIZE(msrh_lsu_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                                           .i_out_vld(w_out_vld), .i_out_val('h0), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (w_disp_picked_num[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)]) begin
+    if (w_disp_picked_num[$clog2(msrh_lsu_pkg::LDQ_SIZE)]) begin
       $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
     end
   end
@@ -123,6 +123,14 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_ldq_entries_recv;
+  logic                               w_lrq_is_hazard;
+  logic                               w_lrq_resolve_match;
+  assign w_lrq_is_hazard = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
+                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
+                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED;
+  assign w_lrq_resolve_match = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT &
+                               i_lrq_resolve.valid &
+                               (i_lrq_resolve.resolve_index_oh == w_ex2_q_updates.lrq_index_oh);
 
   for (genvar i_idx = 0; i_idx < msrh_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == l_idx);
@@ -174,9 +182,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         RUN : begin
           if (w_ex2_q_valid) begin
             r_ldq_entries[l_idx].state <=  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
-                                           (w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
-                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
-                                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
+                                           w_lrq_resolve_match ? READY :
+                                           w_lrq_is_hazard ? LRQ_HAZ :
                                            r_ldq_entries[l_idx].state;
             r_ldq_entries[l_idx].lrq_haz_index_oh <= w_ex2_q_updates.lrq_index_oh;
             r_ex2_ldq_entries_recv     <= 'h0;

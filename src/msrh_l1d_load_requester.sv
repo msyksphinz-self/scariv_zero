@@ -156,8 +156,14 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
-assign o_lrq_resolve.valid = lrq_search_if.valid;
-assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_lrq_resolve <= 'h0;
+  end else begin
+    o_lrq_resolve.valid            <= lrq_search_if.valid;
+    o_lrq_resolve.resolve_index_oh <= 1 << lrq_search_if.index;
+  end
+end
 
 initial begin
   assert (msrh_lsu_pkg::L2_CMD_TAG_W >= $clog2(msrh_pkg::LRQ_ENTRY_SIZE) + 1);
