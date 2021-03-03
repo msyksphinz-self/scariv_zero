@@ -34,7 +34,7 @@ typedef struct packed {
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   state_t state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
-
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
 } ldq_entry_t;
 
 function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
@@ -145,13 +145,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                          .i_ex2_recv(r_ex2_ldq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_lrq_hazard_index_oh;
-
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ldq_entries[l_idx].is_valid <= 1'b0;
       r_ldq_entries[l_idx].state <= INIT;
-      r_lrq_hazard_index_oh <= 'h0;
+      r_ldq_entries[l_idx].lrq_haz_index_oh <= 'h0;
       r_ex2_ldq_entries_recv <= 'h0;
     end else begin
       case (r_ldq_entries[l_idx].state)
@@ -180,7 +178,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                             w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
                                             w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) ? LRQ_HAZ :
                                            r_ldq_entries[l_idx].state;
-            r_lrq_hazard_index_oh      <= w_ex2_q_updates.lrq_index_oh;
+            r_ldq_entries[l_idx].lrq_haz_index_oh <= w_ex2_q_updates.lrq_index_oh;
             r_ex2_ldq_entries_recv     <= 'h0;
           end
           if (|i_ex3_done & w_ex3_done_index_or[l_idx]) begin
@@ -188,7 +186,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         end
         LRQ_HAZ : begin
-          if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_lrq_hazard_index_oh) begin
+          if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_ldq_entries[l_idx].lrq_haz_index_oh) begin
             r_ldq_entries[l_idx].state <= READY;
           end
         end
