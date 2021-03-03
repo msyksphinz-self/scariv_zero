@@ -107,7 +107,7 @@ msrh_scheduler #(
 msrh_lsu_pipe
   #(
     .LSU_PIPE_IDX(LSU_PIPE_IDX),
-    .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
+    .RV_ENTRY_SIZE(msrh_lsu_pkg::MEM_Q_SIZE)
     )
 u_lsu_pipe
   (

@@ -8,11 +8,11 @@ module msrh_lsu_pipe
  input logic                                  i_reset_n,
 
  input                                        msrh_pkg::issue_t i_rv0_issue,
- input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        i_rv0_index_oh,
+ input [RV_ENTRY_SIZE-1: 0]                   i_rv0_index_oh,
  input logic                                  i_rv0_is_store,
 
  output logic                                 o_ex0_rs_conflicted,
- output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex0_rs_conf_index_oh,
+ output logic [RV_ENTRY_SIZE-1: 0]            o_ex0_rs_conf_index_oh,
 
  input                                        msrh_pkg:: issue_t i_ex0_replay_issue,
  input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        i_ex0_replay_index_oh,

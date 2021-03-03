@@ -4,27 +4,27 @@ module msrh_scheduler
     parameter IN_PORT_SIZE = 2
     )
 (
- input logic                     i_clk,
- input logic                     i_reset_n,
+ input logic                           i_clk,
+ input logic                           i_reset_n,
 
- input logic [IN_PORT_SIZE-1: 0] i_disp_valid,
+ input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
  input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
- msrh_pkg::disp_t                i_disp_info[IN_PORT_SIZE],
+                                       msrh_pkg::disp_t i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
- input msrh_pkg::early_wr_t      i_early_wr[msrh_pkg::REL_BUS_SIZE],
+ input                                 msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
- output msrh_pkg::issue_t o_issue,
- output [ENTRY_SIZE-1:0]  o_iss_index_oh,
+ output                                msrh_pkg::issue_t o_issue,
+ output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
- input logic                                 i_ex0_rs_conflicted,
- input logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ex0_rs_conf_index_oh,
+ input logic                           i_ex0_rs_conflicted,
+ input logic [ENTRY_SIZE-1: 0]         i_ex0_rs_conf_index_oh,
 
- input logic                  i_pipe_done,
- input logic [ENTRY_SIZE-1:0] i_done_index,
+ input logic                           i_pipe_done,
+ input logic [ENTRY_SIZE-1:0]          i_done_index,
 
- output msrh_pkg::done_rpt_t o_done_report
+ output                                msrh_pkg::done_rpt_t o_done_report
  );
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
