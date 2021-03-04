@@ -116,4 +116,44 @@ bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_o
 assign o_done_report.valid = |w_entry_done;
 assign o_done_report.exc_vld = 1'b0;
 
+`ifdef SIMULATION
+typedef struct packed {
+  msrh_pkg::issue_t entry;
+  msrh_pkg::sched_state_t state;
+} entry_ptr_t;
+
+function void dump_entry_json(int fp, entry_ptr_t entry, int index);
+
+  $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
+  $fwrite(fp, "       valid : \"%d\, ", entry.entry.valid);
+  $fwrite(fp, "       pc_addr : \"%d\, ", entry.entry.pc_addr);
+  $fwrite(fp, "       inst : \"%d\, ", entry.entry.inst);
+
+  $fwrite(fp, "       cmt_id : \"%d\, ", entry.entry.cmt_id);
+  $fwrite(fp, "       grp_id : \"%d\, ", entry.entry.grp_id);
+
+  $fwrite(fp, "       state : \"%s\, ", entry.state == msrh_pkg::INIT ? "INIT" :
+                                        entry.state == msrh_pkg::WAIT ? "WAIT" :
+                                        entry.state == msrh_pkg::ISSUED ? "ISSUED" :
+                                        entry.state == msrh_pkg::DONE ? "DONE" : "x");
+  $fwrite(fp, "    }\n");
+
+endfunction // dump_json
+
+entry_ptr_t w_entry_ptr[ENTRY_SIZE];
+generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop_ptr
+  assign w_entry_ptr[s_idx].entry = entry_loop[s_idx].u_sched_entry.r_entry;
+  assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_sched_entry.r_state;
+end
+endgenerate
+
+function void dump_json(int fp, int index);
+  $fwrite(fp, "  \"msrh_scheduler[%d]\" : {\n", index);
+  for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
+    dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
+  end
+  $fwrite(fp, "  }\n");
+endfunction // dump_json
+`endif // SIMULATION
+
 endmodule // msrh_scheduler
