@@ -83,7 +83,7 @@ endgenerate
   // );
 
 
-  msrh_rename u_rename (
+  msrh_rename u_msrh_rename (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 

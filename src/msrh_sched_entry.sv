@@ -24,8 +24,6 @@ module msrh_sched_entry
    output logic [msrh_pkg::DISP_SIZE-1:0] o_grp_id
    );
 
-typedef enum { INIT, WAIT, ISSUED, DONE } state_t;
-
 logic    r_entry_valid;
 logic    w_entry_valid;
 logic    r_issued;
@@ -41,7 +39,7 @@ msrh_pkg::reg_t w_rs2_type;
 logic     w_rs1_entry_hit;
 logic     w_rs2_entry_hit;
 
-state_t r_state;
+msrh_pkg::sched_state_t r_state;
 
 
 function logic all_operand_ready(msrh_pkg::issue_t entry);
@@ -92,37 +90,37 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry_valid <= 1'b0;
     r_entry <= 'h0;
 
-    r_state <= INIT;
+    r_state <= msrh_pkg::INIT;
     r_issued <= 1'b0;
   end else begin
     case (r_state)
-      INIT : begin
+      msrh_pkg::INIT : begin
         if (i_put) begin
           r_entry_valid <= 1'b1;
           r_entry <= w_init_entry;
-          r_state <= WAIT;
+          r_state <= msrh_pkg::WAIT;
         end
       end
-      WAIT : begin
+      msrh_pkg::WAIT : begin
         r_entry <= w_entry;
         if (o_entry_valid & o_entry_ready & i_entry_picked) begin
           r_issued <= 1'b1;
-          r_state <= ISSUED;
+          r_state <= msrh_pkg::ISSUED;
         end
       end
-      ISSUED : begin
+      msrh_pkg::ISSUED : begin
         if (i_pipe_done) begin
-          r_state <= DONE;
+          r_state <= msrh_pkg::DONE;
         end
         if (i_ex0_rs_conflicted) begin
-          r_state <= WAIT;
+          r_state <= msrh_pkg::WAIT;
           r_issued <= 1'b0;
         end
       end
-      DONE : begin
+      msrh_pkg::DONE : begin
         r_entry_valid <= 1'b0;
         r_issued <= 1'b0;
-        r_state <= INIT;
+        r_state <= msrh_pkg::INIT;
       end
     endcase // case (r_state)
   end // else: !if(!i_reset_n)
@@ -132,7 +130,7 @@ assign o_entry_valid = r_entry_valid;
 assign o_entry_ready = r_entry_valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
-assign o_entry_done = r_state == DONE;
+assign o_entry_done = r_state == msrh_pkg::DONE;
 assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
 

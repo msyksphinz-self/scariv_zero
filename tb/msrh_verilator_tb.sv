@@ -235,4 +235,6 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
   end // else: !if(!i_msrh_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 
+`include "tb_json_dumper.sv"
+
 endmodule // msrh_tb
