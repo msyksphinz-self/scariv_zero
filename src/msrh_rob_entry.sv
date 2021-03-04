@@ -7,14 +7,15 @@ module msrh_rob_entry
 
    input logic                           i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1] i_load_pc_addr,
-   input msrh_pkg::disp_t[msrh_pkg::DISP_SIZE-1:0] i_load_inst,
+   input                                 msrh_pkg::disp_t[msrh_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_pkg::DISP_SIZE-1:0] i_load_grp_id,
    input logic [msrh_pkg::DISP_SIZE-1:0] i_old_rd_valid,
    input logic [msrh_pkg::RNID_W-1:0]    i_old_rd_rnid[msrh_pkg::DISP_SIZE],
 
-   input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
+   input                                 msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
 
-   output                                o_block_all_done
+   output logic                          o_block_all_done,
+   input logic                           i_commit_finish
    );
 
 logic                             r_valid;
@@ -52,7 +53,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_entry.old_rd_rnid [i] <= i_old_rd_rnid [i];
       end
     end else if (r_valid) begin
-      if (o_block_all_done) begin
+      if (o_block_all_done & i_commit_finish) begin
         r_valid <= 1'b0;
       end else begin
         r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_vld;

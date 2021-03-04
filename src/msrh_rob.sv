@@ -54,7 +54,8 @@ logic w_load_valid;
 
      .i_done_rpt (i_done_rpt),
 
-     .o_block_all_done (w_entry_all_done[c_idx])
+     .o_block_all_done (w_entry_all_done[c_idx]),
+     .i_commit_finish (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx))
      );
 
 end

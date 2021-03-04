@@ -153,6 +153,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                          .i_ex2_recv(r_ex2_ldq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
+  state_t ex2_state_next;
+  assign ex2_state_next =  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
+                           w_lrq_resolve_match ? READY :
+                           w_lrq_is_hazard ? LRQ_HAZ :
+                           DONE;
+
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ldq_entries[l_idx].is_valid <= 1'b0;
@@ -181,15 +187,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         end
         RUN : begin
           if (w_ex2_q_valid) begin
-            r_ldq_entries[l_idx].state <=  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
-                                           w_lrq_resolve_match ? READY :
-                                           w_lrq_is_hazard ? LRQ_HAZ :
-                                           r_ldq_entries[l_idx].state;
+            r_ldq_entries[l_idx].state <= ex2_state_next;
             r_ldq_entries[l_idx].lrq_haz_index_oh <= w_ex2_q_updates.lrq_index_oh;
             r_ex2_ldq_entries_recv     <= 'h0;
-          end
-          if (|i_ex3_done & w_ex3_done_index_or[l_idx]) begin
-            r_ldq_entries[l_idx].state <= DONE;
           end
         end
         LRQ_HAZ : begin
@@ -205,9 +205,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         STQ_HAZ : begin
         end
         DONE : begin
+          // if (|i_ex3_done & (w_ex3_done_index_or[l_idx])) begin
           if (w_ldq_done_oh[l_idx]) begin
             r_ldq_entries[l_idx].state <= INIT;
           end
+          // end
         end
         default : begin
           $fatal ("This state sholudn't be reached.\n");

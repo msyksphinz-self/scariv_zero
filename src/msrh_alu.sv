@@ -69,7 +69,7 @@ u_msrh_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .i_ex0_rs_conflicted    ('h0),
+   .i_ex0_rs_conflicted    (1'b0),
    .i_ex0_rs_conf_index_oh ('h0),
 
    .i_pipe_done(w_ex3_done),

@@ -1,8 +1,8 @@
-# MTI_HOME = /cygdrive/c/intelFPGA/20.1/modelsim_ase/
-# PLATFORM = win32aloem
+MTI_HOME = /cygdrive/c/intelFPGA/20.1/modelsim_ase/
+PLATFORM = win32aloem
 
-MTI_HOME = /cygdrive/c/questasim64_10.4e/
-PLATFORM = win64
+# MTI_HOME = /cygdrive/c/questasim64_10.4e/
+# PLATFORM = win64
 
 VLOG = $(MTI_HOME)/$(PLATFORM)/vlog.exe
 VLIB = $(MTI_HOME)/$(PLATFORM)/vlib.exe

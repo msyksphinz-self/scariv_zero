@@ -45,6 +45,7 @@ msrh_pkg::disp_t disp_picked_inst[2];
 logic [1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 
+
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_rv0_index_oh;
 
