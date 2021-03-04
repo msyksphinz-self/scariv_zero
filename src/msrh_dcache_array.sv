@@ -33,9 +33,23 @@ logic                                    r_s1_dc_update_vld;
 generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
   assign w_s0_dc_read_req_valid[l_idx] = i_dc_read_req[l_idx].valid;
 
-  assign o_dc_read_resp[l_idx].hit      = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & r_s1_dc_read_req_valid_oh[l_idx] & (|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].miss     = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & r_s1_dc_read_req_valid_oh[l_idx] & ~(|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_vld | r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx];
+  logic w_s0_dc_read_tag_same;
+  logic r_s1_dc_read_tag_same;
+  assign w_s0_dc_read_tag_same = w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW] ==
+                                 i_dc_read_req[l_idx].paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW];
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_s1_dc_read_tag_same <= 1'b0;
+    end else begin
+      r_s1_dc_read_tag_same <= w_s0_dc_read_tag_same;
+    end
+  end
+
+  assign o_dc_read_resp[l_idx].hit      = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & (|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].miss     = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & ~(|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_vld |
+                                           r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
+
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
 end
 endgenerate
