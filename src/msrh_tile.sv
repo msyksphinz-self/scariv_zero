@@ -31,6 +31,11 @@ regread_if regread[msrh_pkg::LSU_INST_NUM * 2 +
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 // ----------------------------------
+// Committer Components
+// ----------------------------------
+msrh_pkg::commit_blk_t w_commit;
+
+// ----------------------------------
 // ALU Components
 // ----------------------------------
 logic [msrh_pkg::DISP_SIZE-1:0] w_disp_alu_valids;
@@ -99,7 +104,8 @@ endgenerate
     assign w_disp_alu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.cat[d_idx] == msrh_pkg::CAT_ARITH);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
-                                      (w_sc_disp.cat[d_idx] == msrh_pkg::CAT_MEM);
+                                      (w_sc_disp.cat[d_idx] == msrh_pkg::CAT_LD ||
+                                       w_sc_disp.cat[d_idx] == msrh_pkg::CAT_ST);
   end
   endgenerate
 
@@ -149,7 +155,9 @@ u_msrh_lsu_top
     .o_ex1_early_wr(w_ex1_lsu_early_wr),
     .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
-    .o_done_report(w_lsu_done_rpt)
+    .o_done_report(w_lsu_done_rpt),
+
+    .i_commit (w_commit)
    );
 
 
@@ -175,7 +183,9 @@ u_msrh_lsu_top
 
      .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
-     .i_done_rpt (w_done_rpt)
+     .i_done_rpt (w_done_rpt),
+
+     .o_commit (w_commit)
      );
 
 endmodule  // msrh_tile

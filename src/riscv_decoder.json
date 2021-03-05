@@ -43,7 +43,7 @@
         "name":"ld         r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
-        "cat": [["cat", "mem"]],
+        "cat": [["cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "inst_ctrl":[["size", "dw"], ["sign", "s"]]
     },
@@ -51,7 +51,7 @@
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
-        "cat": [["cat", "mem"]],
+        "cat": [["cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "inst_ctrl":[["size", "dw"], ["sign", "s"]]
     }

@@ -39,7 +39,8 @@ package msrh_pkg;
   typedef enum logic [1:0] {
     NONE,
     CAT_ARITH,
-    CAT_MEM
+    CAT_LD,
+    CAT_ST
   } inst_cat_t;
 
   typedef enum {
@@ -189,6 +190,15 @@ endfunction  // assign_issue_t
     logic [DISP_SIZE-1:0] grp_id;
     logic                 exc_vld;
   } done_rpt_t;
+
+// -----------------
+// Commit Signals
+// -----------------
+typedef struct packed {
+  logic                 commit;
+  logic [CMT_BLK_W-1:0] cmt_id;
+  logic [DISP_SIZE-1:0] grp_id;
+} commit_blk_t;
 
 endpackage
 

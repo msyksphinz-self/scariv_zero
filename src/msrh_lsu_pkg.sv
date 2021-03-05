@@ -179,9 +179,9 @@ typedef struct packed {
 // ---------
 typedef enum logic[2:0] {
   INIT = 0,
-  EX2_RUN = 1,
-  TLB_HAZ = 2,
-  READY = 3,
+  TLB_HAZ = 1,
+  READY = 2,
+  DONE = 3,
   COMMIT = 4
 } stq_state_t;
 
@@ -195,5 +195,10 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
 } stq_entry_t;
 
+typedef struct packed {
+  logic          done;
+  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+} store_op_t;
 
 endpackage // msrh_lsu_pkg

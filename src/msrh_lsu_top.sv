@@ -19,7 +19,10 @@ module msrh_lsu_top
     output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_pkg::LSU_INST_NUM],
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::done_rpt_t o_done_report[2]  // LDQ done report, STQ done report
+    output msrh_pkg::done_rpt_t o_done_report[2],  // LDQ done report, STQ done report
+
+    // Commit notification
+    input msrh_pkg::commit_blk_t i_commit
    );
 
 l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
@@ -38,6 +41,9 @@ msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
+
+logic [msrh_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
+logic [msrh_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -79,8 +85,14 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
 end // block: lsu_loop
 endgenerate
 
+generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_LD;
+  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_ST;
+end
+endgenerate
+
 // -----------------------------------
-// LDQ
+// Ldq
 // -----------------------------------
 msrh_ldq
   u_ldq
@@ -128,6 +140,8 @@ msrh_stq
  .o_stq_replay_index_oh (w_ldq_replay_index_oh),
 
  .i_ex3_done (w_ex3_done),
+
+ .i_commit (i_commit),
 
  .o_done_report(o_done_report[1])
  );

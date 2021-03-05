@@ -169,7 +169,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         TLB_HAZ : begin
           if (|i_tlb_resolve) begin
-            r_ldq_entries[l_idx].state <= EX2_RUN;
+            r_ldq_entries[l_idx].state <= READY;
           end
         end
         EX2_RUN : begin
@@ -189,13 +189,14 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         end
         READY : begin
           if (w_rerun_request_oh[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
-            r_ldq_entries[l_idx].state <= EX2_RUN;
+            r_ldq_entries[l_idx].state <= INIT;
           end
         end
         STQ_HAZ : begin
         end
         EX3_DONE : begin
           if (w_ldq_done_oh[l_idx]) begin
+            r_ldq_entries[l_idx].is_valid <= 1'b0;
             r_ldq_entries[l_idx].state <= INIT;
           end
         end

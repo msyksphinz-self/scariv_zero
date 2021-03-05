@@ -30,7 +30,8 @@ logic [msrh_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
 msrh_pkg::inst_cat_t w_inst_cat[msrh_pkg::DISP_SIZE];
 logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_arith;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_mem;
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_ld;
+logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_st;
 
 logic [msrh_pkg::DISP_SIZE-1:0] w_inst_arith_msb;
 logic [msrh_pkg::DISP_SIZE-1:0] w_inst_mem_msb;
@@ -171,13 +172,13 @@ generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : wo
 
 
   assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ARITH);
-  assign w_inst_is_mem  [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_MEM  );
-
+  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_LD  );
+  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ST  );
 end
 endgenerate
 
 assign w_inst_arith_pick_up = w_inst_is_arith;
-assign w_inst_mem_pick_up   = w_inst_is_mem  ;
+assign w_inst_mem_pick_up   = w_inst_is_ld | w_inst_is_st;
 
 bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
 bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));

@@ -9,12 +9,15 @@ module msrh_rob
 
    output logic [msrh_pkg::CMT_BLK_W-1: 0] o_sc_new_cmt_id,
 
-   input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE]
+   input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
+
+   output msrh_pkg::commit_blk_t o_commit
    );
 
 logic [msrh_pkg::CMT_BLK_W-1:0]            w_in_cmt_id, w_out_cmt_id;
 logic [msrh_pkg::DISP_SIZE-1:0]            w_disp_grp_id;
 logic [msrh_pkg::CMT_BLK_SIZE-1:0]         w_entry_all_done;
+logic [msrh_pkg::DISP_SIZE-1:0]            w_entry_grp_id[msrh_pkg::CMT_BLK_SIZE];
 
 //
 // LRQ Pointer
@@ -55,6 +58,7 @@ logic w_load_valid;
      .i_done_rpt (i_done_rpt),
 
      .o_block_all_done (w_entry_all_done[c_idx]),
+     .o_block_grp_id   (w_entry_grp_id[c_idx]),
      .i_commit_finish (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx))
      );
 
@@ -62,5 +66,9 @@ end
 endgenerate
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
+
+assign o_commit.commit = w_entry_all_done[w_out_cmt_id];
+assign o_commit.cmt_id = w_out_cmt_id;
+assign o_commit.grp_id = w_entry_grp_id[w_out_cmt_id];
 
 endmodule // msrh_rob

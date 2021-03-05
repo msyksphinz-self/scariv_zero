@@ -18,6 +18,9 @@ module msrh_stq
 
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
+   // Commit notification
+   input msrh_pkg::commit_blk_t               i_commit,
+
    output                                msrh_pkg::done_rpt_t o_done_report
    );
 
@@ -27,8 +30,9 @@ logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
 
 msrh_lsu_pkg::stq_entry_t w_stq_entries[msrh_lsu_pkg::MEM_Q_SIZE];
 
-logic [msrh_lsu_pkg::STQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
-logic [msrh_lsu_pkg::STQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
+logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
+logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_lsu_pkg::STQ_SIZE] ;
 
 //
 // Done Selection
@@ -128,11 +132,13 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
 
-     .o_stq_replay_valid (w_rerun_request[s_idx]),
      .o_entry (w_stq_entries[s_idx]),
 
-     .i_rerun_accept (w_rerun_request_oh[s_idx]),
+     .i_rerun_accept (|w_rerun_request_rev_oh[s_idx]),
 
+     .i_commit (i_commit),
+
+     .i_store_op ('h0),
      .i_ex3_done (i_ex3_done)
      );
 
@@ -152,8 +158,11 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
 
   assign o_stq_replay_issue[p_idx] = w_stq_replay_entry.inst;
-
   assign o_stq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
+
+  for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+    assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx];
+  end
 end
 endgenerate
 
