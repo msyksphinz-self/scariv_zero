@@ -4,41 +4,39 @@ module msrh_lsu_pipe
     parameter RV_ENTRY_SIZE = 32
     )
 (
- input logic                                  i_clk,
- input logic                                  i_reset_n,
+ input logic                           i_clk,
+ input logic                           i_reset_n,
 
- input                                        msrh_pkg::issue_t i_rv0_issue,
- input [RV_ENTRY_SIZE-1: 0]                   i_rv0_index_oh,
- input logic                                  i_rv0_is_store,
+ input                                 msrh_pkg::issue_t i_rv0_issue,
+ input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
+ input logic                           i_rv0_is_store,
 
- output logic                                 o_ex0_rs_conflicted,
- output logic [RV_ENTRY_SIZE-1: 0]            o_ex0_rs_conf_index_oh,
+ output logic                          o_ex0_rs_conflicted,
+ output logic [RV_ENTRY_SIZE-1: 0]     o_ex0_rs_conf_index_oh,
 
- input                                        msrh_pkg:: issue_t i_ex0_replay_issue,
- input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]        i_ex0_replay_index_oh,
+ input                                 msrh_pkg:: issue_t i_ex0_replay_issue,
+ input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ex0_replay_index_oh,
 
- output logic                                 o_ex1_tlb_miss_hazard,
- output logic                                 o_ex2_l1d_miss_hazard,
+ output logic                          o_ex1_tlb_miss_hazard,
+ output logic                          o_ex2_l1d_miss_hazard,
 
-                                              regread_if.master ex1_regread_rs1,
-                                              regread_if.master ex1_regread_rs2,
+                                       regread_if.master ex1_regread_rs1,
+                                       regread_if.master ex1_regread_rs2,
 
- output                                       msrh_pkg::early_wr_t o_ex1_early_wr,
- output                                       msrh_pkg::phy_wr_t o_ex3_phy_wr,
+ output                                msrh_pkg::early_wr_t o_ex1_early_wr,
+ output                                msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
-                                              l1d_if.master ex1_l1d_if,
- output logic                                 o_ex2_l1d_mispredicted,
+                                       l1d_if.master ex1_l1d_if,
+ output logic                          o_ex2_l1d_mispredicted,
 
-                                              l1d_lrq_if.master l1d_lrq_if,
+                                       l1d_lrq_if.master l1d_lrq_if,
 
  // Feedbacks to LDQ / STQ
- output                                       msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
- output logic                                 o_tlb_resolve,
- output                                       msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
+ output                                msrh_lsu_pkg::ex1_q_update_t o_ex1_q_updates,
+ output logic                          o_tlb_resolve,
+ output                                msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
- output logic                                 o_ex3_done,
- output logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] o_ex3_index_oh
-
+ output logic                          o_ex3_done
 );
 
 //
@@ -109,7 +107,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index_oh  <= r_ex1_index_oh;
 
     r_ex3_issue     <= w_ex3_issue_next;
-    o_ex3_index_oh     <= r_ex2_index_oh;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -208,11 +205,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
     r_ex3_aligned_data <= ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
-    // ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:2], 2'b00, 3'b000} +: riscv_pkg::XLEN_W]; if size = 4B
   end
 end
 
 assign o_ex3_done = r_ex3_issue.valid;
+
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;

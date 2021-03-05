@@ -19,7 +19,6 @@ module msrh_ldq
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
 
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
-   input logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  i_ex3_done_index_oh[msrh_pkg::LSU_INST_NUM],
 
    output                                msrh_pkg::done_rpt_t o_done_report
    );
@@ -60,8 +59,6 @@ logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
 
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
-
-logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ex3_done_index_or;
 
 //
 // Done Selection
@@ -113,9 +110,6 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end
 end
 `endif // SIMULATION
-
-bit_or #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE), .WORDS(msrh_pkg::LSU_INST_NUM)) select_done_oh  (.i_data(i_ex3_done_index_oh), .o_selected(w_ex3_done_index_or));
-
 
 generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -201,11 +195,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         STQ_HAZ : begin
         end
         EX3_DONE : begin
-          // if (|i_ex3_done & (w_ex3_done_index_or[l_idx])) begin
           if (w_ldq_done_oh[l_idx]) begin
             r_ldq_entries[l_idx].state <= INIT;
           end
-          // end
         end
         default : begin
           $fatal ("This state sholudn't be reached.\n");

@@ -168,7 +168,6 @@ function issue_t assign_issue_t(disp_t in,
 
 endfunction  // assign_issue_t
 
-
   typedef enum { INIT, WAIT, ISSUED, DONE } sched_state_t;
 
   typedef struct packed {
