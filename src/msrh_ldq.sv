@@ -142,7 +142,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   msrh_lsu_pkg::ex2_q_update_t w_ex2_q_updates;
   logic w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .ldq_index(l_idx[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0]),
+                                         .q_index(l_idx[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1:0]),
                                          .i_ex2_recv(r_ex2_ldq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
@@ -268,7 +268,7 @@ endmodule // ex1_update_select
 module ex2_update_select
   (
    input                                             msrh_lsu_pkg::ex2_q_update_t i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
-   input logic [$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0] ldq_index,
+   input logic [$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0] q_index,
    input logic [msrh_pkg::LSU_INST_NUM-1: 0]         i_ex2_recv,
    output                                            o_ex2_q_valid,
    output                                            msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates
@@ -278,7 +278,7 @@ logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
 
 for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
   assign w_ex2_update_match[p_idx] = (i_ex2_q_updates[p_idx].update &&
-                                      i_ex2_q_updates[p_idx].index_oh[ldq_index]) |
+                                      i_ex2_q_updates[p_idx].index_oh[q_index]) |
                                      i_ex2_recv[p_idx];
 end
 

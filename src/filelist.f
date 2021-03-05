@@ -66,5 +66,6 @@
 ../src/msrh_lrq_entry.sv
 ../src/msrh_ldq.sv
 ../src/msrh_stq.sv
+../src/msrh_stq_entry.sv
 ../src/msrh_dcache.sv
 ../src/msrh_dcache_array.sv

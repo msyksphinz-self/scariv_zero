@@ -173,4 +173,27 @@ typedef struct packed {
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
 } dc_read_resp_t;
 
+
+// ---------
+// STQ
+// ---------
+typedef enum logic[2:0] {
+  INIT = 0,
+  EX2_RUN = 1,
+  TLB_HAZ = 2,
+  READY = 3,
+  COMMIT = 4
+} stq_state_t;
+
+typedef struct packed {
+  logic          is_valid;
+  logic [$clog2(msrh_pkg::LSU_INST_NUM)-1: 0]  pipe_sel_idx;
+  msrh_pkg::issue_t inst;
+  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+  msrh_lsu_pkg::stq_state_t state;
+  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+} stq_entry_t;
+
+
 endpackage // msrh_lsu_pkg

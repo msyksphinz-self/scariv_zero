@@ -119,6 +119,16 @@ msrh_stq
  .i_disp_valid (disp_valid),
  .disp         (disp      ),
 
+ .i_tlb_resolve  (w_tlb_resolve  ),
+ .i_ex1_q_updates(w_ex1_q_updates),
+ .i_ex2_q_updates(w_ex2_q_updates),
+
+ .o_stq_replay_valid    (w_ldq_replay_valid   ),
+ .o_stq_replay_issue    (w_ldq_replay_issue   ),
+ .o_stq_replay_index_oh (w_ldq_replay_index_oh),
+
+ .i_ex3_done (w_ex3_done),
+
  .o_done_report(o_done_report[1])
  );
 
