@@ -78,6 +78,7 @@ load_binary(char const* path_exec,
   fprintf(stderr, "elf_v_addr = %012lx\n", elf_v_addr);
 
   dump_segment (".text", fd);
+  dump_segment (".data", fd);
 
   return 0;
 }
@@ -110,7 +111,8 @@ void dump_segment (const char* segname, int fd)
       buffer = (Byte_t *) malloc ((shdr->sh_size)*sizeof(unsigned char));
       valsRead=read(fd,buffer, shdr->sh_size);
 
-      base = phdr->p_paddr;
+      // base = phdr->p_paddr;
+      base = shdr->sh_addr;
 
       ptr = (size_t *)malloc(EI_NIDENT);
       identity = elf_getident(elf, ptr);
@@ -133,7 +135,7 @@ void dump_segment (const char* segname, int fd)
       }
 
       for(count=0; count < valsRead; count=count+4) {
-        fprintf (stderr,"%08x: ", base);
+        fprintf (stderr,"%08lx: ", base);
 
         base = base + 4;
         switch (identity[EI_DATA]) {
