@@ -40,6 +40,10 @@ logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_valid;
 msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
 
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_stq_replay_valid;
+msrh_pkg::issue_t                   w_stq_replay_issue[msrh_pkg::LSU_INST_NUM];
+logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_stq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
+
 logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
 
 logic [msrh_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
@@ -87,7 +91,7 @@ endgenerate
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_LD;
-  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_ST;
+  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_ST;
 end
 endgenerate
 
@@ -135,9 +139,9 @@ msrh_stq
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
- .o_stq_replay_valid    (w_ldq_replay_valid   ),
- .o_stq_replay_issue    (w_ldq_replay_issue   ),
- .o_stq_replay_index_oh (w_ldq_replay_index_oh),
+ .o_stq_replay_valid    (w_stq_replay_valid   ),
+ .o_stq_replay_issue    (w_stq_replay_issue   ),
+ .o_stq_replay_index_oh (w_stq_replay_index_oh),
 
  .i_ex3_done (w_ex3_done),
 

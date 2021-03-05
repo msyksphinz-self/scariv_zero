@@ -26,9 +26,20 @@ VLOG_OPTS += -f $(FILELIST)
 
 ISA=rv64
 RV_PKG = ../src/riscv64_pkg.sv
+CONFIG = standard
 
 ifeq ($(strip $(ISA)), rv32)
 	RV_PKG = ../src/riscv32_pkg.sv
+endif
+
+ifeq ($(strip $(CONFIG)), standard)
+	CONFIG_PKG = ../src/msrh_standard_conf_pkg.sv
+endif
+ifeq ($(strip $(CONFIG)), big)
+	CONFIG_PKG = ../src/msrh_big_conf_pkg.sv
+endif
+ifeq ($(strip $(CONFIG)), small)
+	CONFIG_PKG = ../src/msrh_small_conf_pkg.sv
 endif
 
 
@@ -42,6 +53,7 @@ vlib:
 
 $(FILELIST): ../src/filelist.f filelist.f
 	$(shell cygpath -w -a $(RV_PKG) > $@)
+	$(shell cygpath -w -a $(CONFIG_PKG) >> $@)
 	../scripts/gen_filelist.sh $^ >> $@
 	sed -i 's|\\|/|g' $@
 

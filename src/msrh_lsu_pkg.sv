@@ -139,7 +139,7 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 typedef struct packed {
   logic                           update;
   msrh_pkg::issue_t               inst;
-  logic [$clog2(msrh_pkg::LSU_INST_NUM)-1: 0] pipe_sel_idx;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   logic                           hazard_vld;
@@ -187,7 +187,7 @@ typedef enum logic[2:0] {
 
 typedef struct packed {
   logic          is_valid;
-  logic [$clog2(msrh_pkg::LSU_INST_NUM)-1: 0]  pipe_sel_idx;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t inst;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;

@@ -21,7 +21,7 @@ module msrh_alu #(
     output msrh_pkg::done_rpt_t o_done_report
 );
 
-localparam ALU_PORT_SIZE = msrh_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM;
+localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM;
 
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[ALU_PORT_SIZE];

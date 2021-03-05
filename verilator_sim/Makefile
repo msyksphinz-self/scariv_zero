@@ -36,9 +36,9 @@ VERILATOR_OPTS += +define+SIMULATION
 
 TOP      = msrh_tb
 
-.PHONY: rv32 rv64
+.PHONY: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small
 
-all: rv32 rv64
+all: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small
 
 DECODE_FILES  =
 DECODE_FILES += ../src/decoder_cat.sv
@@ -57,11 +57,23 @@ FILELIST = sim_filelist.f
 CXX=clang++
 LD=lld
 
-rv32: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
-	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_riscv32 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv -f $(FILELIST)
+rv32_standard: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_rv32_standard $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_standard_conf_pkg.sv -f $(FILELIST)
 
-rv64: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
-	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_riscv64 $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv -f $(FILELIST)
+rv64_standard: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_rv64_standard $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_standard_conf_pkg.sv  -f $(FILELIST)
+
+rv32_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_rv32_big $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_big_conf_pkg.sv -f $(FILELIST)
+
+rv64_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_rv64_big $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_big_conf_pkg.sv  -f $(FILELIST)
+
+rv32_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32 --Mdir obj_dir_rv32_small $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_small_conf_pkg.sv -f $(FILELIST)
+
+rv64_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64 --Mdir obj_dir_rv64_small $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_small_conf_pkg.sv  -f $(FILELIST)
 
 libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi

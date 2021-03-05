@@ -160,7 +160,7 @@ assign o_ex1_tlb_miss_hazard = 1'b0;
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
 assign o_ex1_q_updates.inst       = r_ex1_issue;
-assign o_ex1_q_updates.pipe_sel_idx = LSU_PIPE_IDX[$clog2(msrh_pkg::LSU_INST_NUM)-1: 0];
+assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;

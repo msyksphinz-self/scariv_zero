@@ -2,27 +2,20 @@
 
 package msrh_pkg;
   import riscv_pkg::*;
+  import msrh_conf_pkg::*;
 
   localparam PC_INIT_VAL = 'h8000_0000;
 
   localparam INST_BUF_SIZE = 4;
 
-  localparam DISP_SIZE = 5;
-
-  localparam ALU_INST_NUM = 2;
-  localparam LSU_INST_NUM = 2;
-
-  localparam ARITH_DISP_SIZE = 4;
-  localparam MEM_DISP_SIZE = 4;
-
   localparam RV_ALU_ENTRY_SIZE = 32;
 
   localparam REL_BUS_SIZE = ALU_INST_NUM + LSU_INST_NUM;
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
-  localparam CMT_BUS_SIZE = REL_BUS_SIZE;
+  localparam CMT_BUS_SIZE = ALU_INST_NUM + 2;
 
   localparam FLIST_SIZE = 32;
-  localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE;
+  localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
   localparam RNID_W = $clog2(RNID_SIZE);
 
   localparam CMT_BLK_SIZE = 64;

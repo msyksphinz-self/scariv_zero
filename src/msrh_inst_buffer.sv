@@ -43,7 +43,7 @@ logic [msrh_pkg::DISP_SIZE-1:0] rs2_type;
 logic [ic_word_num-1:0] r_head_inst_issued;
 logic [ic_word_num-1:0] w_head_inst_issued_next;
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
-logic [$clog2(ic_word_num)-1:0] w_head_start_pos_next;
+logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 
 typedef struct packed {
@@ -113,10 +113,10 @@ endgenerate
 assign o_inst_rdy = !(&w_inst_buffer_vld);
 
 encoder
-  #(.SIZE(ic_word_num))
+  #(.SIZE(ic_word_num + 1))
 u_start_pos_enc
   (
-   .i_in({{(ic_word_num - msrh_pkg::DISP_SIZE - 1){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
+   .i_in({{(ic_word_num - msrh_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
    .o_out(w_head_start_pos_next)
    );
 
@@ -135,7 +135,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_head_start_pos   <= 'h0;
       end else begin
         r_head_inst_issued <= w_head_inst_issued_next;
-        r_head_start_pos   <= r_head_start_pos + w_head_start_pos_next;
+        r_head_start_pos   <= r_head_start_pos + w_head_start_pos_next[$clog2(ic_word_num)-1:0];
       end
     end
   end
@@ -173,15 +173,15 @@ generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : wo
 
   assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ARITH);
   assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_LD  );
-  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ST  );
+  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ST  );
 end
 endgenerate
 
 assign w_inst_arith_pick_up = w_inst_is_arith;
 assign w_inst_mem_pick_up   = w_inst_is_ld | w_inst_is_st;
 
-bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
-bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
+bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
+bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
 
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp;
 

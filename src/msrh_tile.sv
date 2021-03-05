@@ -49,7 +49,7 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_pkg::ALU_INST_NUM];
 logic [msrh_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
 msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_pkg::LSU_INST_NUM];
-msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_pkg::LSU_INST_NUM];
+msrh_pkg::done_rpt_t w_lsu_done_rpt    [2];
 
 
 // ----------------------------------
@@ -65,9 +65,11 @@ endgenerate
 generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[msrh_pkg::ALU_INST_NUM + l_idx] = w_ex1_lsu_early_wr[l_idx];
   assign w_ex3_phy_wr  [msrh_pkg::ALU_INST_NUM + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
-  assign w_done_rpt    [msrh_pkg::ALU_INST_NUM + l_idx] = w_lsu_done_rpt    [l_idx];
 end
 endgenerate
+assign w_done_rpt    [msrh_pkg::ALU_INST_NUM + 0] = w_lsu_done_rpt[0];
+assign w_done_rpt    [msrh_pkg::ALU_INST_NUM + 1] = w_lsu_done_rpt[1];
+
 
   msrh_frontend u_frontend (
       .i_clk(i_clk),

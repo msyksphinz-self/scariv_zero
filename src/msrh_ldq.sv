@@ -27,7 +27,7 @@ typedef enum logic[2:0] { INIT = 0, EX2_RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_H
 
 typedef struct packed {
   logic          is_valid;
-  logic [$clog2(msrh_pkg::LSU_INST_NUM)-1: 0]  pipe_sel_idx;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t inst;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
@@ -53,12 +53,13 @@ endfunction // assign_ldq_disp
 
 ldq_entry_t r_ldq_entries[msrh_lsu_pkg::LDQ_SIZE];
 
-msrh_pkg::disp_t disp_picked_inst[msrh_pkg::MEM_DISP_SIZE];
-logic [msrh_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_pkg::MEM_DISP_SIZE];
+msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
+logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
+logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_lsu_pkg::LDQ_SIZE] ;
 
 //
 // Done Selection
@@ -69,7 +70,7 @@ logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  w_ldq_done_oh;
 msrh_disp_pickup
   #(
     .PORT_BASE(0),
-    .PORT_SIZE(msrh_pkg::MEM_DISP_SIZE)
+    .PORT_SIZE(msrh_conf_pkg::MEM_DISP_SIZE)
     )
 u_msrh_disp_pickup
   (
@@ -95,7 +96,7 @@ assign w_in_vld  = |disp_picked_inst_valid;
 assign w_out_vld = o_done_report.valid;
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) cnt_disp_vld(.in({{(msrh_lsu_pkg::LDQ_SIZE-msrh_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
+bit_cnt #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) cnt_disp_vld(.in({{(msrh_lsu_pkg::LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(msrh_lsu_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                         .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                                         .i_out_vld(w_out_vld), .i_out_val(1'b1), .o_out_ptr(w_out_ptr));
@@ -112,7 +113,7 @@ end
 `endif // SIMULATION
 
 generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
-  logic [msrh_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
+  logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_ldq_entries_recv;
@@ -125,12 +126,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                i_lrq_resolve.valid &
                                (i_lrq_resolve.resolve_index_oh == w_ex2_q_updates.lrq_index_oh);
 
-  for (genvar i_idx = 0; i_idx < msrh_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
+  for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == l_idx);
   end
 
-  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
+  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
 
   // Selection of EX1 Update signal
   msrh_lsu_pkg::ex1_q_update_t w_ex1_q_updates;
@@ -158,10 +159,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           if (|w_input_valid) begin
             r_ldq_entries[l_idx] <= assign_ldq_disp(w_disp_entry, disp.cmt_id, w_disp_grp_id);
           end else if (|w_ex1_q_valid) begin
-            r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : EX2_RUN;
-            r_ldq_entries[l_idx].vaddr        <= w_ex1_q_updates.vaddr;
-            r_ldq_entries[l_idx].pipe_sel_idx <= w_ex1_q_updates.pipe_sel_idx;
-            r_ldq_entries[l_idx].inst         <= w_ex1_q_updates.inst;
+            r_ldq_entries[l_idx].state           <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : EX2_RUN;
+            r_ldq_entries[l_idx].vaddr           <= w_ex1_q_updates.vaddr;
+            r_ldq_entries[l_idx].pipe_sel_idx_oh <= w_ex1_q_updates.pipe_sel_idx_oh;
+            r_ldq_entries[l_idx].inst            <= w_ex1_q_updates.inst;
 
             for (int p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
               r_ex2_ldq_entries_recv[p_idx] <= w_ex1_q_valid[p_idx] & !i_ex1_q_updates[p_idx].hazard_vld;
@@ -188,7 +189,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         end
         READY : begin
-          if (w_rerun_request_oh[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
+          if (|w_rerun_request_rev_oh[l_idx]) begin
             r_ldq_entries[l_idx].state <= INIT;
           end
         end
@@ -209,7 +210,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
 
   for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
     assign w_rerun_request[p_idx][l_idx] = r_ldq_entries[l_idx].state == READY &&
-                                           r_ldq_entries[l_idx].pipe_sel_idx == p_idx;
+                                           r_ldq_entries[l_idx].pipe_sel_idx_oh[p_idx];
   end
 end
 endgenerate
@@ -225,6 +226,10 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
 
   assign o_ldq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
+
+  for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
+    assign w_rerun_request_rev_oh[l_idx][p_idx] = w_rerun_request_oh[p_idx];
+  end
 end
 endgenerate
 

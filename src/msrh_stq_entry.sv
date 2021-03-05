@@ -41,10 +41,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (i_disp_load) begin
           r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
         end else if (i_ex1_q_valid) begin
-          r_entry.state        <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::TLB_HAZ : msrh_lsu_pkg::DONE;
-          r_entry.vaddr        <= i_ex1_q_updates.vaddr;
-          r_entry.pipe_sel_idx <= i_ex1_q_updates.pipe_sel_idx;
-          r_entry.inst         <= i_ex1_q_updates.inst;
+          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::TLB_HAZ : msrh_lsu_pkg::DONE;
+          r_entry.vaddr           <= i_ex1_q_updates.vaddr;
+          r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
+          r_entry.inst            <= i_ex1_q_updates.inst;
         end
       msrh_lsu_pkg::TLB_HAZ : begin
         if (|i_tlb_resolve) begin
