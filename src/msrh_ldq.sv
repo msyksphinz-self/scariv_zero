@@ -24,7 +24,7 @@ module msrh_ldq
    output                                msrh_pkg::done_rpt_t o_done_report
    );
 
-typedef enum logic[2:0] { INIT = 0, RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4, READY = 5, DONE = 6 } state_t;
+typedef enum logic[2:0] { INIT = 0, EX2_RUN = 1, LRQ_HAZ = 2, STQ_HAZ = 3, TLB_HAZ = 4, READY = 5, EX3_DONE = 6 } state_t;
 
 typedef struct packed {
   logic          is_valid;
@@ -67,7 +67,6 @@ logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ex3_done_index_or;
 // Done Selection
 //
 ldq_entry_t w_ldq_done_entry;
-logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  w_ldq_done;
 logic [msrh_lsu_pkg::LDQ_SIZE-1:0]  w_ldq_done_oh;
 
 msrh_disp_pickup
@@ -101,8 +100,8 @@ assign w_out_vld = o_done_report.valid;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) cnt_disp_vld(.in({{(msrh_lsu_pkg::LDQ_SIZE-msrh_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(msrh_lsu_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                                          .i_out_vld(w_out_vld), .i_out_val('h0), .o_out_ptr(w_out_ptr));
+                                                        .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_lsu_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+                                                        .i_out_vld(w_out_vld), .i_out_val(1'b1), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -153,12 +152,6 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
                                          .i_ex2_recv(r_ex2_ldq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
-  state_t ex2_state_next;
-  assign ex2_state_next =  w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
-                           w_lrq_resolve_match ? READY :
-                           w_lrq_is_hazard ? LRQ_HAZ :
-                           DONE;
-
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ldq_entries[l_idx].is_valid <= 1'b0;
@@ -171,7 +164,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           if (|w_input_valid) begin
             r_ldq_entries[l_idx] <= assign_ldq_disp(w_disp_entry, disp.cmt_id, w_disp_grp_id);
           end else if (|w_ex1_q_valid) begin
-            r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : RUN;
+            r_ldq_entries[l_idx].state        <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : EX2_RUN;
             r_ldq_entries[l_idx].vaddr        <= w_ex1_q_updates.vaddr;
             r_ldq_entries[l_idx].pipe_sel_idx <= w_ex1_q_updates.pipe_sel_idx;
             r_ldq_entries[l_idx].inst         <= w_ex1_q_updates.inst;
@@ -182,12 +175,15 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         TLB_HAZ : begin
           if (|i_tlb_resolve) begin
-            r_ldq_entries[l_idx].state <= RUN;
+            r_ldq_entries[l_idx].state <= EX2_RUN;
           end
         end
-        RUN : begin
+        EX2_RUN : begin
           if (w_ex2_q_valid) begin
-            r_ldq_entries[l_idx].state <= ex2_state_next;
+            r_ldq_entries[l_idx].state <= w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
+                                          w_lrq_resolve_match ? READY :
+                                          w_lrq_is_hazard ? LRQ_HAZ :
+                                          EX3_DONE;
             r_ldq_entries[l_idx].lrq_haz_index_oh <= w_ex2_q_updates.lrq_index_oh;
             r_ex2_ldq_entries_recv     <= 'h0;
           end
@@ -199,12 +195,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
         end
         READY : begin
           if (w_rerun_request_oh[r_ldq_entries[l_idx].pipe_sel_idx][l_idx]) begin
-            r_ldq_entries[l_idx].state <= RUN;
+            r_ldq_entries[l_idx].state <= EX2_RUN;
           end
         end
         STQ_HAZ : begin
         end
-        DONE : begin
+        EX3_DONE : begin
           // if (|i_ex3_done & (w_ex3_done_index_or[l_idx])) begin
           if (w_ldq_done_oh[l_idx]) begin
             r_ldq_entries[l_idx].state <= INIT;
@@ -243,13 +239,12 @@ endgenerate
 // done logic
 // ===============
 generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : done_loop
-  assign w_ldq_done[l_idx] = r_ldq_entries[l_idx].state == DONE;
+  assign w_ldq_done_oh[l_idx] = r_ldq_entries[l_idx].state == EX3_DONE && (w_out_ptr == l_idx);
 end
 endgenerate
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_ldq_done), .out(w_ldq_done_oh));
 bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(r_ldq_entries), .o_selected(w_ldq_done_entry));
 
-assign o_done_report.valid   = |w_ldq_done;
+assign o_done_report.valid   = |w_ldq_done_oh;
 assign o_done_report.cmt_id  = w_ldq_done_entry.cmt_id;
 assign o_done_report.grp_id  = w_ldq_done_entry.grp_id;
 assign o_done_report.exc_vld = 'h0;   // Temporary
