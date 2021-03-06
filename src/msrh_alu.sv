@@ -23,6 +23,12 @@ module msrh_alu #(
 
 localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM;
 
+initial begin
+  if (msrh_conf_pkg::ARITH_DISP_SIZE != (msrh_conf_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM) * msrh_pkg::ALU_INST_NUM ) begin
+    $fatal("ARITH_DISP_SIZE must be multiple of ALU_INST_NUM");
+  end
+end
+
 msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[ALU_PORT_SIZE];
 logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;

@@ -140,9 +140,21 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
 
   assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_vld[p_idx]) | (|w_hit_port_same_addr_vld[p_idx]);
   assign l1d_lrq[p_idx].resp_payload.full         = &(w_lrq_vlds | w_lrq_load_valid_oh);
-  assign l1d_lrq[p_idx].resp_payload.conflict     = w_resp_confilct[p_idx];
+  assign l1d_lrq[p_idx].resp_payload.conflict     = |w_hit_lrq_same_addr_vld[p_idx];
   assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = (|w_hit_lrq_same_addr_vld[p_idx])  ? w_hit_lrq_same_addr_vld[p_idx] :
-                                                    w_load_entry_vld;
+                                                    'h0; // when LRQ port, same addr, anyway zero and try to rerun.
+                                                    // w_load_entry_vld;
+
+`ifdef SIMULATION
+  always @(negedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+    end else begin
+      if (!$onehot0(l1d_lrq[p_idx].resp_payload.lrq_index_oh)) begin
+        $fatal ("l1d_lrq[%d].resp_payload.lrq_index_oh must be one hot but actually %x\n", p_idx, l1d_lrq[p_idx].resp_payload.lrq_index_oh);
+      end
+    end
+  end
+`endif // SIMULATION
 end
 endgenerate
 

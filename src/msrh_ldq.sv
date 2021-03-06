@@ -118,10 +118,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_ldq_entries_recv;
   logic                               w_lrq_is_hazard;
+  logic                               w_lrq_assigned;
   logic                               w_lrq_resolve_match;
   assign w_lrq_is_hazard = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
-                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL     ||
-                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED;
+                           w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL;
+  assign w_lrq_is_assigned = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED;
   assign w_lrq_resolve_match = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT &
                                i_lrq_resolve.valid &
                                (i_lrq_resolve.resolve_index_oh == w_ex2_q_updates.lrq_index_oh);
@@ -178,8 +179,20 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
             r_ldq_entries[l_idx].state <= w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? READY :
                                           w_lrq_resolve_match ? READY :
                                           w_lrq_is_hazard ? LRQ_HAZ :
+                                          w_lrq_is_assigned ? READY : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                                           EX3_DONE;
             r_ldq_entries[l_idx].lrq_haz_index_oh <= w_ex2_q_updates.lrq_index_oh;
+`ifdef SIMULATION
+            if (!i_reset_n) begin
+            end else begin
+              if (w_lrq_is_assigned & w_ex2_q_updates.lrq_index_oh != 0) begin
+                $fatal ("When LRQ is assigned, LRQ index ID must be zero\n");
+              end
+              if (w_lrq_is_hazard & !$onehot0(w_ex2_q_updates.lrq_index_oh)) begin
+                $fatal ("lrq_index_oh must be one hot but actually %x\n", w_ex2_q_updates.lrq_index_oh);
+              end
+            end
+`endif // SIMULATION
             r_ex2_ldq_entries_recv     <= 'h0;
           end
         end
