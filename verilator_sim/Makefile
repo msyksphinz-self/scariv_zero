@@ -83,4 +83,4 @@ $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@
 
 clean:
-	rm -rf obj_dir_riscv32 obj_dir_riscv64 $(TOP)_rv32 $(TOP)_rv64 $(DECODE_FILES) libspike_dpi.so
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) libspike_dpi.so

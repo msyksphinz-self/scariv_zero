@@ -175,7 +175,12 @@ end
 endgenerate
 bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
-assign o_done_report.valid   = |w_stq_done_oh;
+// assign o_done_report.valid   = |w_stq_done_oh;
+// assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
+// assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
+// assign o_done_report.exc_vld = 'h0;   // Temporary
+
+assign o_done_report.valid   = 1'b0;
 assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
 assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
 assign o_done_report.exc_vld = 'h0;   // Temporary

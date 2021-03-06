@@ -57,7 +57,8 @@ $(FILELIST): ../src/filelist.f filelist.f
 	../scripts/gen_filelist.sh $^ >> $@
 	sed -i 's|\\|/|g' $@
 
-vlog: $(FILELIST)
+vlog:
+	make -B $(FILELIST)
 	$(VLOG) $(VLOG_OPTS)
 
 vsim:
