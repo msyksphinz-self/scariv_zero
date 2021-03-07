@@ -60,7 +60,7 @@ always_comb begin
   w_ex0_index = rv0_index;
 end
 
-  decoder_inst_ctrl u_pipe_ctrl (
+  decoder_alu_ctrl u_pipe_ctrl (
       .inst(r_ex0_issue.inst),
       .op  (w_ex0_pipe_ctrl.op),
       .imm (w_ex0_pipe_ctrl.imm),

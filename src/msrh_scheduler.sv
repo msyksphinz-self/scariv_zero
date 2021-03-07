@@ -1,5 +1,6 @@
 module msrh_scheduler
   #(
+    parameter type_t = msrh_pkg::issue_t,
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2
     )
@@ -31,7 +32,7 @@ logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-msrh_pkg::issue_t w_entry[ENTRY_SIZE];
+type_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
@@ -97,7 +98,7 @@ end
 endgenerate
 
 bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
-bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.WIDTH($size(type_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -118,7 +119,7 @@ assign o_done_report.exc_vld = 1'b0;
 
 `ifdef SIMULATION
 typedef struct packed {
-  msrh_pkg::issue_t entry;
+  type_t entry;
   msrh_pkg::sched_state_t state;
 } entry_ptr_t;
 

@@ -118,7 +118,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_ldq_entries_recv;
   logic                               w_lrq_is_hazard;
-  logic                               w_lrq_assigned;
+  logic                               w_lrq_is_assigned;
   logic                               w_lrq_resolve_match;
   assign w_lrq_is_hazard = w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
                            w_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL;

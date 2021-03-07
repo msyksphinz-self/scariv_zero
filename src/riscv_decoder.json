@@ -5,7 +5,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"]],
-        "inst_ctrl":[["op", "sign_lui"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_lui"], ["imm", "s"]]
     },
     {
         "name":"auipc      r[11:7],h[31:12]",
@@ -13,7 +13,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "pc"]],
-        "inst_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
@@ -21,7 +21,7 @@
         "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "inst_ctrl":[["op", "sign_add"] ]
+        "alu_ctrl":[["op", "sign_add"] ]
     },
     {
         "name":"sub        r[11:7],r[19:15],r[24:20]",
@@ -29,7 +29,7 @@
         "field": ["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "inst_ctrl":[["op", "sign_sub"] ]
+        "alu_ctrl":[["op", "sign_sub"] ]
     },
     {
         "name":"addi       r[11:7],r[19:15],h[31:20]",
@@ -37,7 +37,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
         "cat": [["cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "inst_ctrl":[["op", "sign_add"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_add"], ["imm", "s"]]
     },
     {
         "name":"ld         r[11:7],h[31:20](r[19:15])",
@@ -45,7 +45,7 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
         "cat": [["cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "inst_ctrl":[["size", "dw"], ["sign", "s"]]
+        "lsu_ctrl":[["size", "dw"], ["is_load", "1"]]
     },
     {
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
@@ -53,6 +53,6 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
         "cat": [["cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
-        "inst_ctrl":[["size", "dw"], ["sign", "s"]]
+        "lsu_ctrl":[["size", "dw"], ["is_store", "1"]]
     }
 ]

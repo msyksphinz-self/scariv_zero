@@ -40,6 +40,9 @@ $arch_table.each{ |arch|
     exit
   end
 
+  if not arch.key?(ctrl_idx) then
+    next
+  end
   arch[ctrl_idx].each {|ctrl|
     search_hit = false
     ctrl_fields.each{|ctrl_field|
@@ -89,6 +92,9 @@ tmp_file.puts '.ob ' + ctrl_fields.map{|ct|
 
 
 $arch_table.each{ |arch|
+  if not arch.key?(ctrl_idx) then
+    next
+  end
   tmp_file.print arch["field"].join.gsub('X', '-')
   tmp_file.print ' '
   ctrl_fields.each {|ctrl|

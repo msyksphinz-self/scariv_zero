@@ -46,7 +46,8 @@
 
 ../src/decoder_cat.sv
 ../src/decoder_reg.sv
-../src/decoder_inst_ctrl.sv
+../src/decoder_alu_ctrl.sv
+../src/decoder_lsu_ctrl.sv
 
 ../src/msrh_scheduler.sv
 ../src/msrh_sched_entry.sv
