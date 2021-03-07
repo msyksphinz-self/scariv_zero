@@ -12,7 +12,6 @@ module msrh_inst_buffer
 
  output logic                                o_inst_buf_valid,
  output logic [riscv_pkg::VADDR_W-1: 1]      o_inst_pc,
- output msrh_pkg::inst_cat_t                 o_inst_cat[msrh_pkg::DISP_SIZE-1:0] ,
  output msrh_pkg::disp_t [msrh_pkg::DISP_SIZE-1:0] o_inst_buf,
  input logic                                i_inst_buf_ready
  );
@@ -209,10 +208,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : di
       o_inst_buf[d_idx].rs2_type   = msrh_pkg::GPR;
       o_inst_buf[d_idx].rs2_regidx = w_inst[d_idx][24:20];
 
-      o_inst_cat[d_idx]   = w_inst_cat[d_idx];
+      o_inst_buf[d_idx].cat        = w_inst_cat[d_idx];
     end else begin // if (w_inst_disp_mask[d_idx])
       o_inst_buf[d_idx] = 'h0;
-      o_inst_cat[d_idx] = msrh_pkg::NONE;
     end // else: !if(w_inst_disp_mask[d_idx])
   end // always_comb
 end
@@ -249,7 +247,7 @@ function void dump_json(int fp);
     $fwrite(fp, "      rs2_type   : \"%d\",", o_inst_buf[d_idx].rs2_type);
     $fwrite(fp, "      rs2_regidx : \"%d\",", o_inst_buf[d_idx].rs2_regidx);
 
-    $fwrite(fp, "      cat[d_idx] : \"%d\",", o_inst_cat[d_idx]);
+    $fwrite(fp, "      cat[d_idx] : \"%d\",", o_inst_buf[d_idx].cat);
     $fwrite(fp, "    }\n");
   end
 

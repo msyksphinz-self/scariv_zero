@@ -45,6 +45,7 @@ package msrh_pkg;
     logic valid;
     logic [31:0] inst;
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
+    inst_cat_t   cat;
 
     logic [2:0] op;
     logic imm;
@@ -72,11 +73,11 @@ package msrh_pkg;
 
 
   function disp_t assign_disp_rename (disp_t disp,
-                                    logic [RNID_W-1: 0] rd_rnid,
-                                    logic               rs1_active,
-                                    logic [RNID_W-1: 0] rs1_rnid,
-                                    logic               rs2_active,
-                                    logic [RNID_W-1: 0] rs2_rnid);
+                                      logic [RNID_W-1: 0] rd_rnid,
+                                      logic               rs1_active,
+                                      logic [RNID_W-1: 0] rs1_rnid,
+                                      logic               rs2_active,
+                                      logic [RNID_W-1: 0] rs2_rnid);
     disp_t ret;
     ret = disp;
 
@@ -105,6 +106,7 @@ package msrh_pkg;
     logic valid;
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     logic [31:0] inst;
+    inst_cat_t   cat;
 
     logic [CMT_BLK_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;

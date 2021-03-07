@@ -97,7 +97,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     sc_disp.valid   <= iq_disp.valid;
     sc_disp.pc_addr <= iq_disp.pc_addr;
-    sc_disp.cat     <= iq_disp.cat;
     sc_disp.inst    <= w_disp_inst;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -230,7 +229,7 @@ function void dump_json(int fp);
     $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rs2_rnid);
     $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rs2_ready);
 
-    $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.cat[d_idx]);
+    $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
     $fwrite(fp, "      }\n");
   end
 

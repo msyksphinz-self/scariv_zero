@@ -1,6 +1,6 @@
 module msrh_scheduler
   #(
-    parameter type_t = msrh_pkg::issue_t,
+    parameter IS_STORE = 0,
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2
     )
@@ -11,7 +11,7 @@ module msrh_scheduler
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
  input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
-                                       msrh_pkg::disp_t i_disp_info[IN_PORT_SIZE],
+ msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
  input                                 msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
@@ -32,7 +32,7 @@ logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-type_t w_entry[ENTRY_SIZE];
+msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
@@ -67,38 +67,39 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   msrh_sched_entry
-    u_sched_entry(
-                  .i_clk    (i_clk    ),
-                  .i_reset_n(i_reset_n),
+    #(.IS_STORE(IS_STORE))
+  u_sched_entry(
+    .i_clk    (i_clk    ),
+    .i_reset_n(i_reset_n),
 
-                  .i_put      (|w_input_valid),
+    .i_put      (|w_input_valid),
 
-                  .i_cmt_id   (i_cmt_id  ),
-                  .i_grp_id   (w_disp_grp_id  ),
-                  .i_put_data (w_disp_entry  ),
+    .i_cmt_id   (i_cmt_id  ),
+    .i_grp_id   (w_disp_grp_id  ),
+    .i_put_data (w_disp_entry  ),
 
-                  .o_entry_valid(w_entry_valid[s_idx]),
-                  .o_entry_ready(w_entry_ready[s_idx]),
-                  .o_entry(w_entry[s_idx]),
+    .o_entry_valid(w_entry_valid[s_idx]),
+    .o_entry_ready(w_entry_ready[s_idx]),
+    .o_entry(w_entry[s_idx]),
 
-                  .i_ex0_rs_conflicted    (i_ex0_rs_conflicted &
-                                           i_ex0_rs_conf_index_oh[s_idx]),
+    .i_ex0_rs_conflicted    (i_ex0_rs_conflicted &
+                             i_ex0_rs_conf_index_oh[s_idx]),
 
-                  .i_early_wr(i_early_wr),
+    .i_early_wr(i_early_wr),
 
-                  .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
+    .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
 
-                  .i_entry_picked (w_picked_inst_oh[s_idx]),
-                  .o_entry_done (w_entry_done[s_idx]),
-                  .o_cmt_id (w_entry_cmt_id[s_idx]),
-                  .o_grp_id (w_entry_grp_id[s_idx])
-                  );
+    .i_entry_picked (w_picked_inst_oh[s_idx]),
+    .o_entry_done (w_entry_done[s_idx]),
+    .o_cmt_id (w_entry_cmt_id[s_idx]),
+    .o_grp_id (w_entry_grp_id[s_idx])
+  );
 
 end
 endgenerate
 
 bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
-bit_oh_or #(.WIDTH($size(type_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -119,7 +120,7 @@ assign o_done_report.exc_vld = 1'b0;
 
 `ifdef SIMULATION
 typedef struct packed {
-  type_t entry;
+  msrh_pkg::issue_t entry;
   msrh_pkg::sched_state_t state;
 } entry_ptr_t;
 

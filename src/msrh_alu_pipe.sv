@@ -24,8 +24,6 @@ module msrh_alu_pipe
   typedef struct packed {
     logic [2:0] op;
     logic imm;
-    logic size;
-    logic sign;
   } pipe_ctrl_t;
 
   msrh_pkg::issue_t                         r_ex0_issue;
@@ -63,9 +61,7 @@ end
   decoder_alu_ctrl u_pipe_ctrl (
       .inst(r_ex0_issue.inst),
       .op  (w_ex0_pipe_ctrl.op),
-      .imm (w_ex0_pipe_ctrl.imm),
-      .size(w_ex0_pipe_ctrl.size),
-      .sign(w_ex0_pipe_ctrl.sign)
+      .imm (w_ex0_pipe_ctrl.imm)
   );
 
   assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;

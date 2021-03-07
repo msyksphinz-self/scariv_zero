@@ -9,7 +9,6 @@ module msrh_lsu_pipe
 
  input                                 msrh_pkg::issue_t i_rv0_issue,
  input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
- input logic                           i_rv0_is_store,
 
  output logic                          o_ex0_rs_conflicted,
  output logic [RV_ENTRY_SIZE-1: 0]     o_ex0_rs_conf_index_oh,
@@ -144,7 +143,7 @@ assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 
-assign ex1_regread_rs2.valid = i_rv0_is_store ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
+assign ex1_regread_rs2.valid = r_ex1_issue.cat != msrh_pkg::CAT_ST ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]};

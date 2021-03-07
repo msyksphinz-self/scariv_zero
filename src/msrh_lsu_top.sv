@@ -90,8 +90,8 @@ end // block: lsu_loop
 endgenerate
 
 generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_LD;
-  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.cat[d_idx] == msrh_pkg::CAT_ST;
+  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == msrh_pkg::CAT_LD;
+  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == msrh_pkg::CAT_ST;
 end
 endgenerate
 

@@ -1,4 +1,7 @@
 module msrh_sched_entry
+  #(
+    parameter IS_STORE = 1'b0
+    )
 (
    input logic                            i_clk,
    input logic                            i_reset_n,
@@ -41,12 +44,16 @@ logic     w_rs2_entry_hit;
 
 msrh_pkg::sched_state_t r_state;
 
-
 function logic all_operand_ready(msrh_pkg::issue_t entry);
-  return (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready) &
-    (!entry.rs2_valid | entry.rs2_valid  & entry.rs2_ready);
+  logic     ret;
+  if (IS_STORE) begin
+    ret = (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready);
+  end else begin
+    ret = (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready) &
+          (!entry.rs2_valid | entry.rs2_valid  & entry.rs2_ready);
+  end
+  return ret;
 endfunction // all_operand_ready
-
 
 assign w_rs1_rnid = i_put ? i_put_data.rs1_rnid : r_entry.rs1_rnid;
 assign w_rs2_rnid = i_put ? i_put_data.rs2_rnid : r_entry.rs2_rnid;
