@@ -3,7 +3,9 @@ module msrh_dcache
    input logic i_clk,
    input logic i_reset_n,
 
-   l1d_if.slave l1d_if[msrh_pkg::LSU_INST_NUM],
+   // LSU_INST_NUM ports from pipe, and STQ read and update port
+   l1d_rd_if.slave l1d_rd_if[msrh_pkg::LSU_INST_NUM + 1],
+   l1d_wr_if.slave l1d_wr_if,
 
    // L2 cache response
    l2_resp_if.slave  l1d_ext_resp,
@@ -29,13 +31,13 @@ msrh_dcache_array
      );
 
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : port_loop
-  assign w_dc_read_req [p_idx].valid = l1d_if[p_idx].valid;
-  assign w_dc_read_req [p_idx].paddr = l1d_if[p_idx].paddr;
+  assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].valid;
+  assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].paddr;
 
-  assign l1d_if[p_idx].hit      = w_dc_read_resp[p_idx].hit ;
-  assign l1d_if[p_idx].miss     = w_dc_read_resp[p_idx].miss;
-  assign l1d_if[p_idx].conflict = w_dc_read_resp[p_idx].conflict;
-  assign l1d_if[p_idx].data     = w_dc_read_resp[p_idx].data;
+  assign l1d_rd_if[p_idx].hit      = w_dc_read_resp[p_idx].hit ;
+  assign l1d_rd_if[p_idx].miss     = w_dc_read_resp[p_idx].miss;
+  assign l1d_rd_if[p_idx].conflict = w_dc_read_resp[p_idx].conflict;
+  assign l1d_rd_if[p_idx].data     = w_dc_read_resp[p_idx].data;
 
 end
 endgenerate

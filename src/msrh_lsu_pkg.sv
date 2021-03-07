@@ -25,6 +25,13 @@ package msrh_lsu_pkg;
   localparam MEM_Q_SIZE = LDQ_SIZE > STQ_SIZE ? LDQ_SIZE : STQ_SIZE;
 
 
+  typedef struct logic [ 1: 0] {
+    LEN1B,
+    LEN2B,
+    LEN4B,
+    LEN8B
+  } size_t;
+
   typedef enum logic [ 2: 0] {
     NONE,
     L1D_CONFLICT,
@@ -203,5 +210,18 @@ typedef struct packed {
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
 } store_op_t;
+
+typedef struct packed {
+  logic [riscv_pkg::PADDR_W-1:0] paddr;
+  size_t                         acc_size;
+  logic [riscv_pkg::XLEN_W-1: 0] data;
+} srq_req_t;
+
+typedef struct packed {
+  logic                          full;
+  logic                          conflict;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+} srq_resp_t;
+
 
 endpackage // msrh_lsu_pkg

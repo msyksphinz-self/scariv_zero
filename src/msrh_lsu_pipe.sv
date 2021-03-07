@@ -25,7 +25,7 @@ module msrh_lsu_pipe
  output                                msrh_pkg::early_wr_t o_ex1_early_wr,
  output                                msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
-                                       l1d_if.master ex1_l1d_if,
+                                       l1d_rd_if.master ex1_l1d_rd_if,
  output logic                          o_ex2_l1d_mispredicted,
 
                                        l1d_lrq_if.master l1d_lrq_if,
@@ -81,7 +81,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & ex1_l1d_if.hit;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & ex1_l1d_rd_if.hit;
 end
 
 
@@ -146,7 +146,9 @@ assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 assign ex1_regread_rs2.valid = r_ex1_issue.cat != msrh_pkg::CAT_ST ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
-assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]};
+assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == msrh_pkg::CAT_ST ?
+                                                                     {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
+                                                                     {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
 assign w_ex1_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
 assign w_ex1_tlb_req.vaddr = w_ex1_vaddr;
 
@@ -167,8 +169,8 @@ assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 
 // Interface to L1D cache
-assign ex1_l1d_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
-assign ex1_l1d_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
+assign ex1_l1d_rd_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                            {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 //
@@ -182,14 +184,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_if.miss | ex1_l1d_if.conflict);
+assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict);
 assign l1d_lrq_if.load              = o_ex2_l1d_mispredicted;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
-                                    (ex1_l1d_if.conflict ? msrh_lsu_pkg::L1D_CONFLICT :
+                                    (ex1_l1d_rd_if.conflict ? msrh_lsu_pkg::L1D_CONFLICT :
                                      l1d_lrq_if.resp_payload.conflict ? msrh_lsu_pkg::LRQ_CONFLICT : msrh_lsu_pkg::LRQ_ASSIGNED) :
                                     msrh_lsu_pkg::NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
@@ -203,7 +205,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
-    r_ex3_aligned_data <= ex1_l1d_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
+    r_ex3_aligned_data <= ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
   end
 end
 

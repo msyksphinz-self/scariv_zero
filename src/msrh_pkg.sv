@@ -140,6 +140,8 @@ function issue_t assign_issue_t(disp_t in,
   ret.inst = in.inst;
   ret.pc_addr = in.pc_addr;
 
+  ret.cat = in.cat;
+
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 

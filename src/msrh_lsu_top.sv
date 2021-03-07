@@ -25,7 +25,7 @@ module msrh_lsu_top
     input msrh_pkg::commit_blk_t i_commit
    );
 
-l1d_if     w_l1d_if    [msrh_pkg::LSU_INST_NUM] ();
+l1d_rd_if  w_l1d_rd_if [msrh_pkg::LSU_INST_NUM + 1] ();
 l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
 
 lrq_search_if w_lrq_search_if ();
@@ -69,7 +69,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
 
     .i_early_wr(i_early_wr),
 
-    .l1d_if (w_l1d_if[lsu_idx]),
+    .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 
     .i_ldq_replay_valid (w_ldq_replay_valid[lsu_idx]),
@@ -146,6 +146,7 @@ msrh_stq
  .i_ex3_done (w_ex3_done),
 
  .i_commit (i_commit),
+ .w_l1d_rd_if (w_l1d_rd_if[msrh_pkg::LSU_INST_NUM]),
 
  .o_done_report(o_done_report[1])
  );
@@ -171,7 +172,7 @@ u_msrh_dcache
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
-   .l1d_if (w_l1d_if),
+   .l1d_rd_if (w_l1d_rd_if),
 
    .l1d_ext_resp (l1d_ext_resp),
 

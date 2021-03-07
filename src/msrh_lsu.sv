@@ -22,7 +22,7 @@ module msrh_lsu
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
     /* L1D Interface */
-    l1d_if.master              l1d_if,
+    l1d_rd_if.master              l1d_rd_if,
 
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
@@ -133,7 +133,7 @@ u_lsu_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex1_l1d_if (l1d_if),
+   .ex1_l1d_rd_if (l1d_rd_if),
    .o_ex2_l1d_mispredicted (),
 
    .l1d_lrq_if (l1d_lrq_if),
