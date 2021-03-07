@@ -42,13 +42,16 @@ all: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small
 
 DECODE_FILES  =
 DECODE_FILES += ../src/decoder_cat.sv
-DECODE_FILES += ../src/decoder_inst_ctrl.sv
+DECODE_FILES += ../src/decoder_alu_ctrl.sv
+DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 
 ../src/decoder_cat.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb cat
-../src/decoder_inst_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb inst_ctrl
+../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb alu_ctrl
+../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb lsu_ctrl
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg
 
