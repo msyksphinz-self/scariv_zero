@@ -25,7 +25,7 @@ package msrh_lsu_pkg;
   localparam MEM_Q_SIZE = LDQ_SIZE > STQ_SIZE ? LDQ_SIZE : STQ_SIZE;
 
 
-  typedef struct logic [ 1: 0] {
+  typedef enum logic [ 1: 0] {
     LEN1B,
     LEN2B,
     LEN4B,
@@ -203,6 +203,8 @@ typedef struct packed {
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   msrh_lsu_pkg::stq_state_t state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  logic [riscv_pkg::XLEN_W-1: 0]  data;
 } stq_entry_t;
 
 typedef struct packed {

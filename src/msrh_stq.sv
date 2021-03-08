@@ -22,7 +22,10 @@ module msrh_stq
    input msrh_pkg::commit_blk_t               i_commit,
 
    l1d_rd_if.master                      l1d_rd_if,
-   l1d_lrq_if.master                     l1d_lrq_if,
+   l1d_lrq_if.master                     l1d_lrq_stq_miss_if,  // Interface of Missed Data for Store
+
+   // Write Data to DCache
+   l1d_wr_if.master                      l1d_wr_if,
 
    output                                msrh_pkg::done_rpt_t o_done_report
    );
@@ -36,6 +39,14 @@ msrh_lsu_pkg::stq_entry_t w_stq_entries[msrh_lsu_pkg::MEM_Q_SIZE];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_lsu_pkg::STQ_SIZE] ;
+
+logic                               r_l1d_rd_if_resp;
+
+function logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] dcache_in,
+                                                        logic [riscv_pkg::XLEN_W-1: 0] st_data);
+  /* verilator lint_off WIDTH */
+  return dcache_in | st_data;
+endfunction // merge
 
 //
 // Done Selection
@@ -188,14 +199,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     w_cmt_head_idx <= 'h0;
     r_committed_sq <= 'h0;
   end else begin
-    if (w_stq_entries[w_cmt_head_idx] == msrh_pkg::COMMIT) begin
+    if (w_stq_entries[w_cmt_head_idx] == msrh_lsu_pkg::COMMIT) begin
       w_cmt_head_idx <= w_cmt_head_idx + 'h1;
       r_committed_sq <= w_stq_entries[w_cmt_head_idx];
     end
   end
 end
 
-assign l1d_rd_if.valid = w_stq_entries[w_cmt_head_idx] == msrh_pkg::COMMIT;
+assign l1d_rd_if.valid = w_stq_entries[w_cmt_head_idx] == msrh_lsu_pkg::COMMIT;
 assign l1d_rd_if.paddr = {w_stq_entries[w_cmt_head_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
@@ -208,9 +219,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (l1d_rd_if.hit) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_committed_sq.paddr;
-        l1d_wr_if.data  <= merge (r_committed_sq.data, l1d_rd_if.data);
+        l1d_wr_if.data  <= merge (l1d_rd_if.data, r_committed_sq.data);
       end else if (l1d_rd_if.miss) begin
-        if (l1d_lrq_if.resp_payload.full || l1d_lrq_if.resp_payload.conflict) begin
+        if (l1d_lrq_stq_miss_if.resp_payload.full ||
+            l1d_lrq_stq_miss_if.resp_payload.conflict) begin
         end
       end
     end
@@ -218,8 +230,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-assign l1d_lrq_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
-assign l1d_lrq_if.req_payload.paddr = r_committed_sq.paddr;
+assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
+assign l1d_lrq_stq_miss_if.req_payload.paddr = r_committed_sq.paddr;
 
 
 // assign o_done_report.valid   = |w_stq_done_oh;

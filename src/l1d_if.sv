@@ -43,7 +43,7 @@ interface l1d_wr_if;
     input hit,
     input miss,
     input conflict,
-    input data
+    output data
   );
 
   modport slave(
@@ -52,10 +52,10 @@ interface l1d_wr_if;
     output hit,
     output miss,
     output conflict,
-    output data
+    input data
   );
 
-endinterface // l1d_rd_if
+endinterface // l1d_wr_if
 
 
 interface l1d_lrq_if;

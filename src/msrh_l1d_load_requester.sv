@@ -3,7 +3,10 @@ module msrh_l1d_load_requester
    input logic  i_clk,
    input logic  i_reset_n,
 
+   // from Pipeline for Load
    l1d_lrq_if.slave l1d_lrq[msrh_pkg::LSU_INST_NUM],
+   // from STQ request
+   l1d_lrq_if.slave l1d_lrq_stq_miss_if,
 
    output msrh_lsu_pkg::lrq_resolve_t o_lrq_resolve,
 
@@ -39,6 +42,12 @@ msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [msrh_pkg::LSU_INST_NUM];
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_valid [msrh_pkg::LSU_INST_NUM] ;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_entry_vld;
+
+// LRQ Miss Load from STQ
+logic                                        w_stq_miss_lrq_load;
+logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_stq_miss_lrq_idx;
+msrh_lsu_pkg::lrq_entry_t                    w_stq_load_entry;
+
 
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_load_vld (.in(~w_lrq_vlds), .out(w_lrq_load_valid_oh));
 bit_cnt #(.WIDTH(msrh_pkg::LSU_INST_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
@@ -109,8 +118,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
-     .i_load       (w_load_entry_vld[b_idx]),
-     .i_load_entry (load_entry         ),
+     .i_load       (w_load_entry_vld[b_idx] | (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx)),
+     .i_load_entry (w_load_entry_vld[b_idx] ? load_entry : w_stq_load_entry),
 
      .i_sent (l1d_ext_req.valid & (w_out_ptr == b_idx)),
      .o_entry (w_lrq_entries[b_idx])
@@ -141,9 +150,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_vld[p_idx]) | (|w_hit_port_same_addr_vld[p_idx]);
   assign l1d_lrq[p_idx].resp_payload.full         = &(w_lrq_vlds | w_lrq_load_valid_oh);
   assign l1d_lrq[p_idx].resp_payload.conflict     = |w_hit_lrq_same_addr_vld[p_idx];
-  assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = (|w_hit_lrq_same_addr_vld[p_idx])  ? w_hit_lrq_same_addr_vld[p_idx] :
-                                                    'h0; // when LRQ port, same addr, anyway zero and try to rerun.
-                                                    // w_load_entry_vld;
+  assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = w_hit_lrq_same_addr_vld[p_idx];
 
 `ifdef SIMULATION
   always @(negedge i_clk, negedge i_reset_n) begin
@@ -157,6 +164,28 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
 `endif // SIMULATION
 end
 endgenerate
+
+// ---------------------------------------
+// Interface of Filling L1D for STQ
+// ---------------------------------------
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_addr_vld;
+assign l1d_lrq_stq_miss_if.resp_payload.full         = l1d_lrq_stq_miss_if.load &
+                                                       w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid &
+                                                       w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-1].valid;
+for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_buffer_loop
+  assign w_hit_stq_lrq_same_addr_vld[b_idx] = l1d_lrq_stq_miss_if.load &
+                                              (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                               l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+end
+
+assign l1d_lrq_stq_miss_if.resp_payload.conflict     = |w_hit_stq_lrq_same_addr_vld;
+assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh = w_hit_stq_lrq_same_addr_vld;
+assign w_stq_miss_lrq_load = !l1d_lrq_stq_miss_if.resp_payload.full & !(|w_hit_stq_lrq_same_addr_vld);
+assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-2 : msrh_pkg::LRQ_ENTRY_SIZE-1;
+assign w_stq_load_entry.valid = 1'b1;
+assign w_stq_load_entry.paddr = l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)];
+assign w_stq_load_entry.sent  = 1'b0;
+
 
 localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 1 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
 
