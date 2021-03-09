@@ -155,6 +155,7 @@ typedef struct packed {
   logic                           hazard_vld;
   logic [MEM_Q_SIZE-1:0]          index_oh;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
 } ex1_q_update_t;
 
 typedef struct packed {

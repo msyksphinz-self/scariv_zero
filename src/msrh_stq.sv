@@ -106,6 +106,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
+  logic                               w_sq_op_accept;
+
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == s_idx);
   end
@@ -152,6 +154,11 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
 
      .i_commit (i_commit),
 
+     .i_sq_op_accept(w_sq_op_accept),
+     .i_sq_l1d_if_miss(l1d_rd_if.miss),
+     .i_sq_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
+     .i_sq_lrq_conflict(l1d_lrq_stq_miss_if.resp_payload.conflict),
+
      .i_store_op ('h0),
      .i_ex3_done (i_ex3_done)
      );
@@ -160,6 +167,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
     assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::READY &&
                                            w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
   end
+  assign w_sq_op_accept = (w_stq_entries[s_idx].state == msrh_lsu_pkg::COMMIT) & (r_cmt_head_idx == s_idx);
+
 end
 endgenerate
 
@@ -193,21 +202,21 @@ bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_S
 // After commit, store operation
 // ==============================
 msrh_lsu_pkg::stq_entry_t r_committed_sq;
-logic [$clog2(msrh_lsu_pkg::STQ_SIZE)-1: 0] w_cmt_head_idx;
+logic [$clog2(msrh_lsu_pkg::STQ_SIZE)-1: 0] r_cmt_head_idx;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    w_cmt_head_idx <= 'h0;
+    r_cmt_head_idx <= 'h0;
     r_committed_sq <= 'h0;
   end else begin
-    if (w_stq_entries[w_cmt_head_idx] == msrh_lsu_pkg::COMMIT) begin
-      w_cmt_head_idx <= w_cmt_head_idx + 'h1;
-      r_committed_sq <= w_stq_entries[w_cmt_head_idx];
+    if (w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::COMMIT) begin
+      r_cmt_head_idx <= r_cmt_head_idx + 'h1;
+      r_committed_sq <= w_stq_entries[r_cmt_head_idx];
     end
   end
 end
 
-assign l1d_rd_if.valid = w_stq_entries[w_cmt_head_idx] == msrh_lsu_pkg::COMMIT;
-assign l1d_rd_if.paddr = {w_stq_entries[w_cmt_head_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+assign l1d_rd_if.valid = w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::COMMIT;
+assign l1d_rd_if.paddr = {w_stq_entries[r_cmt_head_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

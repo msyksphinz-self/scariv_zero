@@ -33,6 +33,7 @@ typedef struct packed {
   logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
   state_t state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
 } ldq_entry_t;
 
@@ -162,6 +163,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end else if (|w_ex1_q_valid) begin
             r_ldq_entries[l_idx].state           <= w_ex1_q_updates.hazard_vld ? TLB_HAZ : EX2_RUN;
             r_ldq_entries[l_idx].vaddr           <= w_ex1_q_updates.vaddr;
+            r_ldq_entries[l_idx].vaddr           <= w_ex1_q_updates.paddr;
             r_ldq_entries[l_idx].pipe_sel_idx_oh <= w_ex1_q_updates.pipe_sel_idx_oh;
             r_ldq_entries[l_idx].inst            <= w_ex1_q_updates.inst;
 

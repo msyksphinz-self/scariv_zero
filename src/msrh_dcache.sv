@@ -16,8 +16,8 @@ module msrh_dcache
 
 msrh_lsu_pkg::dc_update_t r_rp2_dc_update;
 
-msrh_lsu_pkg::dc_read_req_t  w_dc_read_req [msrh_pkg::LSU_INST_NUM];
-msrh_lsu_pkg::dc_read_resp_t w_dc_read_resp[msrh_pkg::LSU_INST_NUM];
+msrh_lsu_pkg::dc_read_req_t  w_dc_read_req [msrh_pkg::LSU_INST_NUM + 1];
+msrh_lsu_pkg::dc_read_resp_t w_dc_read_resp[msrh_pkg::LSU_INST_NUM + 1];
 
 msrh_dcache_array
   u_dcache_array
@@ -30,7 +30,7 @@ msrh_dcache_array
      .o_dc_read_resp(w_dc_read_resp)
      );
 
-generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : port_loop
+generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM + 1; p_idx++) begin : port_loop
   assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].valid;
   assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].paddr;
 

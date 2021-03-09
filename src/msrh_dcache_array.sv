@@ -4,14 +4,14 @@ module msrh_dcache_array
    input logic i_reset_n,
 
    input msrh_lsu_pkg::dc_update_t     i_dc_update,
-   input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [msrh_pkg::LSU_INST_NUM],
-   output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[msrh_pkg::LSU_INST_NUM]
+   input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [msrh_pkg::LSU_INST_NUM + 1],
+   output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[msrh_pkg::LSU_INST_NUM + 1]
    );
 
 localparam TAG_SIZE = riscv_pkg::PADDR_W - msrh_lsu_pkg::DCACHE_TAG_LOW;
 
-logic [msrh_pkg::LSU_INST_NUM-1:0] w_s0_dc_read_req_valid;
-logic [msrh_pkg::LSU_INST_NUM-1:0] w_s0_dc_read_req_valid_oh;
+logic [msrh_pkg::LSU_INST_NUM:0] w_s0_dc_read_req_valid;
+logic [msrh_pkg::LSU_INST_NUM:0] w_s0_dc_read_req_valid_oh;
 msrh_lsu_pkg::dc_read_req_t w_s0_dc_selected_read_req;
 
 logic                              w_s0_dc_tag_valid;
@@ -19,8 +19,8 @@ logic                              w_s0_dc_tag_wr;
 logic [riscv_pkg::PADDR_W-1: 0]    w_s0_dc_tag_addr;
 
 
-logic [msrh_pkg::LSU_INST_NUM-1:0]       r_s1_dc_read_req_valid;
-logic [msrh_pkg::LSU_INST_NUM-1:0]       r_s1_dc_read_req_valid_oh;
+logic [msrh_pkg::LSU_INST_NUM:0]       r_s1_dc_read_req_valid;
+logic [msrh_pkg::LSU_INST_NUM:0]       r_s1_dc_read_req_valid_oh;
 logic [msrh_lsu_pkg::DCACHE_WAY_W-1 : 0] w_s1_tag_hit;
 logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] w_s1_data[msrh_lsu_pkg::DCACHE_WAY_W];
 logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] w_s1_selected_data;
@@ -30,7 +30,7 @@ logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 logic                                    r_s1_dc_update_vld;
 
 // Selection of Request from LSU ports
-generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM + 1; l_idx++) begin : lsu_loop
   assign w_s0_dc_read_req_valid[l_idx] = i_dc_read_req[l_idx].valid;
 
   logic w_s0_dc_read_tag_same;
@@ -53,8 +53,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_pkg::LSU_INST_NUM; l_idx++) begin :
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
 end
 endgenerate
-bit_extract_lsb #(.WIDTH(msrh_pkg::LSU_INST_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_valid_oh));
-bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::dc_read_req_t)), .WORDS(msrh_pkg::LSU_INST_NUM)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
+bit_extract_lsb #(.WIDTH(msrh_pkg::LSU_INST_NUM + 1)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_valid_oh));
+bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::dc_read_req_t)), .WORDS(msrh_pkg::LSU_INST_NUM + 1)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 
 assign w_s0_dc_tag_valid = i_dc_update.valid | (|w_s0_dc_read_req_valid);
 assign w_s0_dc_tag_wr    = i_dc_update.valid;

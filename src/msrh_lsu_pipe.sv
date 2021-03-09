@@ -167,6 +167,7 @@ assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
+assign o_ex1_q_updates.paddr      = ex1_l1d_rd_if.paddr;
 
 // Interface to L1D cache
 assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;

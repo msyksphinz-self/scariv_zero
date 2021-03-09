@@ -22,6 +22,10 @@ module msrh_stq_entry
 
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
+   input logic                                i_sq_op_accept,
+   input logic                                i_sq_lrq_full,
+   input logic                                i_sq_lrq_conflict,
+   input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_sq_lrq_index_oh,
    // Actual Store Operation Done
    input msrh_lsu_pkg::store_op_t             i_store_op,
 
@@ -43,6 +47,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end else if (i_ex1_q_valid) begin
           r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::TLB_HAZ : msrh_lsu_pkg::DONE;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
+          r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
           r_entry.inst            <= i_ex1_q_updates.inst;
         end
@@ -63,6 +68,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       msrh_lsu_pkg::COMMIT : begin
+        if (i_sq_op_accept) begin
+          r_entry.state <= msrh_lsu_pkg::COMMIT_L1D_CHECK;
+        end
+      end
+      msrh_lsu_pkg::COMMIT_L1D_CHECK : begin
+        if (
         if (i_store_op.done &&
             i_store_op.cmt_id == r_entry.cmt_id &&
             i_store_op.grp_id == r_entry.grp_id) begin
