@@ -23,9 +23,15 @@ module msrh_stq_entry
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
    input logic                                i_sq_op_accept,
+   input logic                                i_sq_l1d_rd_miss,
+   input logic                                i_sq_l1d_rd_conflict,
    input logic                                i_sq_lrq_full,
    input logic                                i_sq_lrq_conflict,
    input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_sq_lrq_index_oh,
+
+   input msrh_lsu_pkg::lrq_resolve_t          i_lrq_resolve,
+
+   input logic                                i_sq_l1d_wr_conflict,
    // Actual Store Operation Done
    input msrh_lsu_pkg::store_op_t             i_store_op,
 
@@ -38,47 +44,61 @@ assign o_entry = r_entry;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry.is_valid <= 1'b0;
-    r_entry.state <= msrh_lsu_pkg::INIT;
+    r_entry.state <= msrh_lsu_pkg::STQ_INIT;
   end else begin
     case (r_entry.state)
-      msrh_lsu_pkg::INIT :
+      msrh_lsu_pkg::STQ_INIT :
         if (i_disp_load) begin
           r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
         end else if (i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::TLB_HAZ : msrh_lsu_pkg::DONE;
+          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ : msrh_lsu_pkg::STQ_DONE;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
           r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
           r_entry.inst            <= i_ex1_q_updates.inst;
         end
-      msrh_lsu_pkg::TLB_HAZ : begin
+      msrh_lsu_pkg::STQ_TLB_HAZ : begin
         if (|i_tlb_resolve) begin
-          r_entry.state <= msrh_lsu_pkg::READY;
+          r_entry.state <= msrh_lsu_pkg::STQ_READY;
         end
       end
-      msrh_lsu_pkg::DONE : begin
+      msrh_lsu_pkg::STQ_DONE : begin
         if (i_commit.cmt_id == r_entry.cmt_id &&
             ((i_commit.grp_id & r_entry.grp_id) != 'h0)) begin
-            r_entry.state <= msrh_lsu_pkg::COMMIT;
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT;
         end
       end
-      msrh_lsu_pkg::READY : begin
+      msrh_lsu_pkg::STQ_READY : begin
         if (i_rerun_accept) begin
-          r_entry.state <= msrh_lsu_pkg::INIT;
+          r_entry.state <= msrh_lsu_pkg::STQ_INIT;
         end
       end
-      msrh_lsu_pkg::COMMIT : begin
+      msrh_lsu_pkg::STQ_COMMIT : begin
         if (i_sq_op_accept) begin
-          r_entry.state <= msrh_lsu_pkg::COMMIT_L1D_CHECK;
+          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK;
         end
       end
-      msrh_lsu_pkg::COMMIT_L1D_CHECK : begin
-        if (
-        if (i_store_op.done &&
-            i_store_op.cmt_id == r_entry.cmt_id &&
-            i_store_op.grp_id == r_entry.grp_id) begin
-          r_entry.state <= msrh_lsu_pkg::INIT;
-          r_entry.is_valid <= 1'b0;
+      msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK : begin
+        if (i_sq_l1d_rd_miss) begin
+          r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
+          r_entry.state <= msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL;
+        end else if (i_sq_l1d_rd_conflict) begin
+          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+        end else begin
+          r_entry.state <= msrh_lsu_pkg::STQ_L1D_UPDATE;
+        end
+      end
+      msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL : begin
+        if (i_lrq_resolve.valid &&
+            i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+        end
+      end
+      msrh_lsu_pkg::STQ_L1D_UPDATE : begin
+        if (i_sq_l1d_wr_conflict) begin
+          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+        end else begin
+          r_entry.state <= msrh_lsu_pkg::STQ_INIT;
         end
       end
       default : begin
@@ -96,7 +116,7 @@ function msrh_lsu_pkg::stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.is_valid  = 1'b1;
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
-  ret.state     = msrh_lsu_pkg::INIT;
+  ret.state     = msrh_lsu_pkg::STQ_INIT;
   ret.vaddr     = 'h0;
 
   return ret;

@@ -189,11 +189,14 @@ typedef struct packed {
 // STQ
 // ---------
 typedef enum logic[2:0] {
-  INIT = 0,
-  TLB_HAZ = 1,
-  READY = 2,
-  DONE = 3,
-  COMMIT = 4
+  STQ_INIT = 0,
+  STQ_TLB_HAZ = 1,
+  STQ_READY = 2,
+  STQ_DONE = 3,
+  STQ_COMMIT = 4,
+  STQ_WAIT_LRQ_REFILL = 5,
+  STQ_COMMIT_L1D_CHECK = 6,
+  STQ_L1D_UPDATE = 7
 } stq_state_t;
 
 typedef struct packed {
@@ -206,6 +209,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [riscv_pkg::XLEN_W-1: 0]  data;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } stq_entry_t;
 
 typedef struct packed {

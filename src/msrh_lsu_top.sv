@@ -151,6 +151,8 @@ msrh_stq
  .l1d_rd_if (w_l1d_rd_if[msrh_pkg::LSU_INST_NUM]),
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 
+ .i_lrq_resolve (w_lrq_resolve),
+
  .l1d_wr_if (w_l1d_wr_if),
 
  .o_done_report(o_done_report[1])

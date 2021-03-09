@@ -24,6 +24,8 @@ module msrh_stq
    l1d_rd_if.master                      l1d_rd_if,
    l1d_lrq_if.master                     l1d_lrq_stq_miss_if,  // Interface of Missed Data for Store
 
+   input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
+
    // Write Data to DCache
    l1d_wr_if.master                      l1d_wr_if,
 
@@ -155,19 +157,24 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
      .i_commit (i_commit),
 
      .i_sq_op_accept(w_sq_op_accept),
-     .i_sq_l1d_if_miss(l1d_rd_if.miss),
+     .i_sq_l1d_rd_miss     (l1d_rd_if.miss),
+     .i_sq_l1d_rd_conflict (l1d_rd_if.conflict),
      .i_sq_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
      .i_sq_lrq_conflict(l1d_lrq_stq_miss_if.resp_payload.conflict),
+     .i_sq_lrq_index_oh(l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh),
+
+     .i_lrq_resolve (i_lrq_resolve),
+     .i_sq_l1d_wr_conflict (l1d_wr_if.conflict),
 
      .i_store_op ('h0),
      .i_ex3_done (i_ex3_done)
      );
 
   for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-    assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::READY &&
+    assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_READY &&
                                            w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
   end
-  assign w_sq_op_accept = (w_stq_entries[s_idx].state == msrh_lsu_pkg::COMMIT) & (r_cmt_head_idx == s_idx);
+  assign w_sq_op_accept = (w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT) & (r_cmt_head_idx == s_idx);
 
 end
 endgenerate
@@ -193,7 +200,7 @@ endgenerate
 // done logic
 // ===============
 generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : done_loop
-  assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::COMMIT && (w_out_ptr == s_idx);
+  assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT && (w_out_ptr == s_idx);
 end
 endgenerate
 bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
@@ -208,14 +215,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_cmt_head_idx <= 'h0;
     r_committed_sq <= 'h0;
   end else begin
-    if (w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::COMMIT) begin
+    if (w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::STQ_COMMIT) begin
       r_cmt_head_idx <= r_cmt_head_idx + 'h1;
       r_committed_sq <= w_stq_entries[r_cmt_head_idx];
     end
   end
 end
 
-assign l1d_rd_if.valid = w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::COMMIT;
+assign l1d_rd_if.valid = w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::STQ_COMMIT;
 assign l1d_rd_if.paddr = {w_stq_entries[r_cmt_head_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
@@ -229,10 +236,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_committed_sq.paddr;
         l1d_wr_if.data  <= merge (l1d_rd_if.data, r_committed_sq.data);
-      end else if (l1d_rd_if.miss) begin
-        if (l1d_lrq_stq_miss_if.resp_payload.full ||
-            l1d_lrq_stq_miss_if.resp_payload.conflict) begin
-        end
       end
     end
   end
