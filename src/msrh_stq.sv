@@ -6,6 +6,9 @@ module msrh_stq
     input logic         [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
     disp_if.slave                                 disp,
 
+   /* Forwarding path */
+   input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
+
    // Updates from LSU Pipeline EX1 stage
    input msrh_lsu_pkg::ex1_q_update_t        i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
@@ -15,6 +18,7 @@ module msrh_stq
    output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_stq_replay_valid,
    output msrh_pkg::issue_t                   o_stq_replay_issue [msrh_pkg::LSU_INST_NUM],
    output logic [msrh_lsu_pkg::STQ_SIZE-1: 0] o_stq_replay_index_oh[msrh_pkg::LSU_INST_NUM],
+   input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_stq_replay_conflict,
 
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
@@ -56,6 +60,12 @@ endfunction // merge
 msrh_lsu_pkg::stq_entry_t w_stq_done_entry;
 logic [msrh_lsu_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
 
+logic [msrh_lsu_pkg::STQ_SIZE-1:0]  w_sq_commit_req;
+logic [msrh_lsu_pkg::STQ_SIZE-1:0]  w_sq_commit_req_oh;
+msrh_lsu_pkg::stq_entry_t w_stq_cmt_entry;
+msrh_lsu_pkg::stq_entry_t r_st1_committed_entry;
+logic [$clog2(msrh_lsu_pkg::STQ_SIZE)-1: 0] r_cmt_head_idx;
+
 // Instruction Pick up from Dispatch
 msrh_disp_pickup
   #(
@@ -89,7 +99,7 @@ assign w_out_vld = o_done_report.valid;
 bit_cnt #(.WIDTH(msrh_lsu_pkg::STQ_SIZE)) cnt_disp_vld(.in({{(msrh_lsu_pkg::STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(msrh_lsu_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                         .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(msrh_lsu_pkg::STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                                        .i_out_vld(w_out_vld), .i_out_val(1'b1), .o_out_ptr(w_out_ptr));
+                                                        .i_out_vld(w_out_vld), .i_out_val('h1), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -107,8 +117,6 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
-
-  logic                               w_sq_op_accept;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == s_idx);
@@ -142,6 +150,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
      .i_disp_grp_id (w_disp_grp_id),
      .i_disp        (w_disp_entry),
 
+     .i_early_wr (i_early_wr),
+
      .i_ex1_q_valid   (|w_ex1_q_valid),
      .i_ex1_q_updates (w_ex1_q_updates),
 
@@ -152,11 +162,11 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
 
      .o_entry (w_stq_entries[s_idx]),
 
-     .i_rerun_accept (|w_rerun_request_rev_oh[s_idx]),
+     .i_rerun_accept (|w_rerun_request_rev_oh[s_idx] & !i_stq_replay_conflict),
 
      .i_commit (i_commit),
 
-     .i_sq_op_accept(w_sq_op_accept),
+     .i_sq_op_accept(w_sq_commit_req_oh[s_idx]),
      .i_sq_l1d_rd_miss     (l1d_rd_if.miss),
      .i_sq_l1d_rd_conflict (l1d_rd_if.conflict),
      .i_sq_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
@@ -174,7 +184,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
     assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_READY &&
                                            w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
   end
-  assign w_sq_op_accept = (w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT) & (r_cmt_head_idx == s_idx);
+  assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT);
 
 end
 endgenerate
@@ -191,7 +201,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign o_stq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
 
   for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : stq_loop
-    assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx];
+    assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
   end
 end
 endgenerate
@@ -200,7 +210,7 @@ endgenerate
 // done logic
 // ===============
 generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : done_loop
-  assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT && (w_out_ptr == s_idx);
+  assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_DONE && (w_out_ptr == s_idx);
 end
 endgenerate
 bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
@@ -208,50 +218,52 @@ bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_S
 // ==============================
 // After commit, store operation
 // ==============================
-msrh_lsu_pkg::stq_entry_t r_committed_sq;
-logic [$clog2(msrh_lsu_pkg::STQ_SIZE)-1: 0] r_cmt_head_idx;
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .out(w_sq_commit_req_oh));
+bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_cmt_head_idx <= 'h0;
-    r_committed_sq <= 'h0;
+    // r_cmt_head_idx <= 'h0;
+    r_st1_committed_entry <= 'h0;
   end else begin
-    if (w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::STQ_COMMIT) begin
-      r_cmt_head_idx <= r_cmt_head_idx + 'h1;
-      r_committed_sq <= w_stq_entries[r_cmt_head_idx];
-    end
+    // if (w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::STQ_COMMIT) begin
+    //   r_cmt_head_idx <= r_cmt_head_idx + 'h1;
+    //   r_committed_sq <= w_stq_entries[r_cmt_head_idx];
+    // end
+    r_st1_committed_entry <= w_stq_cmt_entry;
   end
 end
 
-assign l1d_rd_if.valid = w_stq_entries[r_cmt_head_idx].state == msrh_lsu_pkg::STQ_COMMIT;
-assign l1d_rd_if.paddr = {w_stq_entries[r_cmt_head_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+assign l1d_rd_if.valid = w_stq_cmt_entry.state == msrh_lsu_pkg::STQ_COMMIT;
+assign l1d_rd_if.paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_l1d_rd_if_resp <= 'b0;
+    l1d_wr_if.valid <= 1'b0;
   end else begin
     r_l1d_rd_if_resp <= l1d_rd_if.valid;
     if (r_l1d_rd_if_resp) begin
       if (l1d_rd_if.hit) begin
         l1d_wr_if.valid <= 1'b1;
-        l1d_wr_if.paddr <= r_committed_sq.paddr;
-        l1d_wr_if.data  <= merge (l1d_rd_if.data, r_committed_sq.data);
+        l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
+        l1d_wr_if.data  <= merge (l1d_rd_if.data, r_st1_committed_entry.rs2_data);
+      end else begin
+        l1d_wr_if.valid <= 1'b0;
       end
-    end
+    end else begin
+      l1d_wr_if.valid <= 1'b0;
+    end // else: !if(r_l1d_rd_if_resp)
   end
 end
 
 
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
-assign l1d_lrq_stq_miss_if.req_payload.paddr = r_committed_sq.paddr;
+assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
 
 
-// assign o_done_report.valid   = |w_stq_done_oh;
-// assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
-// assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
-// assign o_done_report.exc_vld = 'h0;   // Temporary
-
-assign o_done_report.valid   = 1'b0;
+assign o_done_report.valid   = |w_stq_done_oh;
 assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
 assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
 assign o_done_report.exc_vld = 'h0;   // Temporary

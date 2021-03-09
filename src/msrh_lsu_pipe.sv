@@ -143,7 +143,7 @@ assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.cat != msrh_pkg::CAT_ST ? r_ex1_issue.valid & r_ex1_issue.rs2_valid : 0;
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == msrh_pkg::CAT_ST ?
@@ -168,6 +168,8 @@ assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = ex1_l1d_rd_if.paddr;
+assign o_ex1_q_updates.st_data_vld = r_ex1_issue.rs2_ready;
+assign o_ex1_q_updates.st_data    = ex1_regread_rs2.data;
 
 // Interface to L1D cache
 assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;

@@ -11,10 +11,16 @@ module msrh_lsu
     disp_if.slave                          disp,
 
     // Replay from LDQ
-    input logic             i_ldq_replay_valid,
-    input msrh_pkg::issue_t i_ldq_replay_issue,
+    input logic                           i_ldq_replay_valid,
+    input msrh_pkg::issue_t               i_ldq_replay_issue,
     input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ldq_replay_index_oh,
+    output logic                          o_ldq_replay_conflict,
 
+    // Replay from STQ
+    input logic             i_stq_replay_valid,
+    input msrh_pkg::issue_t i_stq_replay_issue,
+    input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_stq_replay_index_oh,
+    output logic                          o_stq_replay_conflict,
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
@@ -101,6 +107,15 @@ msrh_scheduler #(
 );
 
 
+msrh_pkg::issue_t                     w_ex0_replay_issue;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex0_replay_index_oh;
+assign w_ex0_replay_issue    = i_stq_replay_issue.valid ? i_stq_replay_issue    : i_ldq_replay_issue;
+assign w_ex0_replay_index_oh = i_stq_replay_issue.valid ? i_stq_replay_index_oh : i_ldq_replay_index_oh;
+
+assign o_ldq_replay_conflict = i_stq_replay_issue.valid & i_ldq_replay_issue.valid;
+assign o_stq_replay_conflict = 1'b0;
+
+
 // ===========================
 // LSU Pipeline
 // ===========================
@@ -121,8 +136,8 @@ u_lsu_pipe
    .o_ex0_rs_conflicted    (w_ex0_rs_conflicted),
    .o_ex0_rs_conf_index_oh (w_ex0_rs_conf_index_oh),
 
-   .i_ex0_replay_issue (i_ldq_replay_issue),
-   .i_ex0_replay_index_oh (i_ldq_replay_index_oh),
+   .i_ex0_replay_issue    (w_ex0_replay_issue   ),
+   .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
    .o_ex1_tlb_miss_hazard(),
    .o_ex2_l1d_miss_hazard(),

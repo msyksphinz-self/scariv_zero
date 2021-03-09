@@ -15,7 +15,7 @@ module msrh_rob_entry
    input                                   msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
 
    output logic                            o_block_all_done,
-   output logic [msrh_pkg::DISP_SIZE-1: 0] o_block_grp_id,
+   output logic [msrh_pkg::DISP_SIZE-1: 0] o_block_done_grp_id,
    input logic                             i_commit_finish
    );
 
@@ -64,6 +64,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_block_all_done = r_valid & (r_entry.grp_id == r_entry.done_grp_id);
-assign o_block_grp_id   = r_entry.grp_id;
+assign o_block_done_grp_id   = r_entry.done_grp_id;
 
 endmodule // msrh_rob_entry

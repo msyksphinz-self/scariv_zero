@@ -15,6 +15,7 @@ module msrh_ldq
    output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ldq_replay_valid,
    output msrh_pkg::issue_t                   o_ldq_replay_issue [msrh_pkg::LSU_INST_NUM],
    output logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] o_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM],
+   input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_ldq_replay_conflict,
 
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
 
@@ -204,7 +205,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         end
         READY : begin
-          if (|w_rerun_request_rev_oh[l_idx]) begin
+          if (|w_rerun_request_rev_oh[l_idx] & !i_ldq_replay_conflict) begin
             r_ldq_entries[l_idx].state <= INIT;
           end
         end

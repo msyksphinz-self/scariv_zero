@@ -8,6 +8,9 @@ module msrh_stq_entry
    input logic [msrh_pkg::DISP_SIZE-1:0]      i_disp_grp_id,
    input msrh_pkg::disp_t                     i_disp,
 
+   /* Forwarding path */
+   input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
+
    // Updates from LSU Pipeline EX1 stage
    input logic                                i_ex1_q_valid,
    input msrh_lsu_pkg::ex1_q_update_t         i_ex1_q_updates,
@@ -41,21 +44,44 @@ module msrh_stq_entry
 msrh_lsu_pkg::stq_entry_t r_entry;
 assign o_entry = r_entry;
 
+logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
+msrh_pkg::reg_t w_rs2_type;
+logic     w_rs2_entry_hit;
+
+assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
+assign w_rs2_type = msrh_pkg::GPR;
+
+select_early_wr_bus rs2_rel_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_early_wr   (i_early_wr),
+
+ .o_valid      (w_rs2_entry_hit)
+ );
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry.is_valid <= 1'b0;
     r_entry.state <= msrh_lsu_pkg::STQ_INIT;
   end else begin
+    r_entry.inst.rs2_ready <= r_entry.inst.rs2_ready | w_rs2_entry_hit;
     case (r_entry.state)
       msrh_lsu_pkg::STQ_INIT :
         if (i_disp_load) begin
           r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
         end else if (i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ : msrh_lsu_pkg::STQ_DONE;
+          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ :
+                                     !i_ex1_q_updates.st_data_vld ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
+                                     msrh_lsu_pkg::STQ_DONE;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
           r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
           r_entry.inst            <= i_ex1_q_updates.inst;
+          r_entry.inst.rs2_ready  <= r_entry.inst.rs2_ready | i_ex1_q_updates.inst.rs2_ready;
+
+          r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;
+          r_entry.rs2_data        <= i_ex1_q_updates.st_data;
         end
       msrh_lsu_pkg::STQ_TLB_HAZ : begin
         if (|i_tlb_resolve) begin
@@ -65,7 +91,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       msrh_lsu_pkg::STQ_DONE : begin
         if (i_commit.cmt_id == r_entry.cmt_id &&
             ((i_commit.grp_id & r_entry.grp_id) != 'h0)) begin
-            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT;
+          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT;
+        end
+      end
+      msrh_lsu_pkg::STQ_WAIT_ST_DATA : begin
+        if (r_entry.inst.rs2_ready) begin
+          r_entry.state <= msrh_lsu_pkg::STQ_READY;
         end
       end
       msrh_lsu_pkg::STQ_READY : begin
@@ -114,6 +145,13 @@ function msrh_lsu_pkg::stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   msrh_lsu_pkg::stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
+
+  ret.inst.rs2_valid = in.rs2_valid;
+  ret.inst.rs2_rnid  = in.rs2_rnid;
+  ret.inst.rs2_ready = in.rs2_ready;
+
+  ret.rs2_got_data = in.rs2_ready;
+
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
   ret.state     = msrh_lsu_pkg::STQ_INIT;

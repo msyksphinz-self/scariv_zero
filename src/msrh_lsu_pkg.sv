@@ -156,6 +156,8 @@ typedef struct packed {
   logic [MEM_Q_SIZE-1:0]          index_oh;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  logic                           st_data_vld;
+  logic [riscv_pkg::XLEN_W-1: 0]  st_data;
 } ex1_q_update_t;
 
 typedef struct packed {
@@ -188,15 +190,16 @@ typedef struct packed {
 // ---------
 // STQ
 // ---------
-typedef enum logic[2:0] {
+typedef enum logic[3:0] {
   STQ_INIT = 0,
   STQ_TLB_HAZ = 1,
   STQ_READY = 2,
   STQ_DONE = 3,
   STQ_COMMIT = 4,
-  STQ_WAIT_LRQ_REFILL = 5,
-  STQ_COMMIT_L1D_CHECK = 6,
-  STQ_L1D_UPDATE = 7
+  STQ_WAIT_ST_DATA = 5,
+  STQ_WAIT_LRQ_REFILL = 6,
+  STQ_COMMIT_L1D_CHECK = 7,
+  STQ_L1D_UPDATE = 8
 } stq_state_t;
 
 typedef struct packed {
@@ -208,7 +211,8 @@ typedef struct packed {
   msrh_lsu_pkg::stq_state_t state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
-  logic [riscv_pkg::XLEN_W-1: 0]  data;
+  logic                           rs2_got_data;
+  logic [riscv_pkg::XLEN_W-1: 0]  rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } stq_entry_t;
 
