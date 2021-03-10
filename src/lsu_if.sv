@@ -17,3 +17,27 @@ modport slave (
 );
 
 endinterface // lrq_search_if
+
+
+interface lsu_replay_if;
+
+logic    valid;
+msrh_pkg::issue_t issue;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
+logic                                 conflict;
+
+modport master (
+  output valid,
+  output issue,
+  output index_oh,
+  input  conflict
+);
+
+modport slave (
+  input  valid,
+  input  issue,
+  input  index_oh,
+  output conflict
+);
+
+endinterface // lsu_replay_if

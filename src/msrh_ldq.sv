@@ -12,10 +12,7 @@ module msrh_ldq
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
 
-   output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ldq_replay_valid,
-   output msrh_pkg::issue_t                   o_ldq_replay_issue [msrh_pkg::LSU_INST_NUM],
-   output logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] o_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM],
-   input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_ldq_replay_conflict,
+   lsu_replay_if.master ldq_replay_if[msrh_pkg::LSU_INST_NUM],
 
    input msrh_lsu_pkg::lrq_resolve_t     i_lrq_resolve,
 
@@ -62,6 +59,7 @@ logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE]
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
 logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_lsu_pkg::LDQ_SIZE] ;
+logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_lsu_pkg::STQ_SIZE] ;
 
 //
 // Done Selection
@@ -205,7 +203,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin :
           end
         end
         READY : begin
-          if (|w_rerun_request_rev_oh[l_idx] & !i_ldq_replay_conflict) begin
+          if (|w_rerun_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])) begin
             r_ldq_entries[l_idx].state <= INIT;
           end
         end
@@ -233,18 +231,20 @@ endgenerate
 
 // replay logic
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-  assign o_ldq_replay_valid[p_idx] = |w_rerun_request[p_idx];
+  assign ldq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
   ldq_entry_t w_ldq_replay_entry;
 
   bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
   bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(msrh_lsu_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(r_ldq_entries), .o_selected(w_ldq_replay_entry));
 
-  assign o_ldq_replay_issue[p_idx] = w_ldq_replay_entry.inst;
+  assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
 
-  assign o_ldq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
+  assign ldq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
 
   for (genvar l_idx = 0; l_idx < msrh_lsu_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
     assign w_rerun_request_rev_oh[l_idx][p_idx] = w_rerun_request_oh[p_idx][l_idx];
+
+    assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_rerun_request[p_idx][l_idx];
   end
 end
 endgenerate

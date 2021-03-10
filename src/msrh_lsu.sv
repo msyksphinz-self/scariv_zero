@@ -11,16 +11,10 @@ module msrh_lsu
     disp_if.slave                          disp,
 
     // Replay from LDQ
-    input logic                           i_ldq_replay_valid,
-    input msrh_pkg::issue_t               i_ldq_replay_issue,
-    input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_ldq_replay_index_oh,
-    output logic                          o_ldq_replay_conflict,
-
+    lsu_replay_if.slave ldq_replay_if,
     // Replay from STQ
-    input logic             i_stq_replay_valid,
-    input msrh_pkg::issue_t i_stq_replay_issue,
-    input [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] i_stq_replay_index_oh,
-    output logic                          o_stq_replay_conflict,
+    lsu_replay_if.slave stq_replay_if,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
@@ -109,11 +103,11 @@ msrh_scheduler #(
 
 msrh_pkg::issue_t                     w_ex0_replay_issue;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex0_replay_index_oh;
-assign w_ex0_replay_issue    = i_stq_replay_issue.valid ? i_stq_replay_issue    : i_ldq_replay_issue;
-assign w_ex0_replay_index_oh = i_stq_replay_issue.valid ? i_stq_replay_index_oh : i_ldq_replay_index_oh;
+assign w_ex0_replay_issue    = stq_replay_if.valid ? stq_replay_if.issue    : ldq_replay_if.issue;
+assign w_ex0_replay_index_oh = stq_replay_if.valid ? stq_replay_if.index_oh : ldq_replay_if.index_oh;
 
-assign o_ldq_replay_conflict = i_stq_replay_issue.valid & i_ldq_replay_issue.valid;
-assign o_stq_replay_conflict = 1'b0;
+assign ldq_replay_if.conflict = stq_replay_if.valid & ldq_replay_if.valid;
+assign stq_replay_if.conflict = 1'b0;
 
 
 // ===========================

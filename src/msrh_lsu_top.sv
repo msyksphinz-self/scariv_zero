@@ -38,15 +38,8 @@ msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
 
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_valid;
-msrh_pkg::issue_t                   w_ldq_replay_issue[msrh_pkg::LSU_INST_NUM];
-logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_ldq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict;
-
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_stq_replay_valid;
-msrh_pkg::issue_t                   w_stq_replay_issue[msrh_pkg::LSU_INST_NUM];
-logic [msrh_lsu_pkg::LDQ_SIZE-1: 0] w_stq_replay_index_oh[msrh_pkg::LSU_INST_NUM];
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict;
+lsu_replay_if w_ldq_replay[msrh_pkg::LSU_INST_NUM]();
+lsu_replay_if w_stq_replay[msrh_pkg::LSU_INST_NUM]();
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
 
@@ -76,15 +69,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 
-    .i_ldq_replay_valid    (w_ldq_replay_valid[lsu_idx]),
-    .i_ldq_replay_issue    (w_ldq_replay_issue[lsu_idx]),
-    .i_ldq_replay_index_oh (w_ldq_replay_index_oh[lsu_idx]),
-    .o_ldq_replay_conflict (w_ldq_replay_conflict[lsu_idx]),
-
-    .i_stq_replay_valid    (w_stq_replay_valid[lsu_idx]),
-    .i_stq_replay_issue    (w_stq_replay_issue[lsu_idx]),
-    .i_stq_replay_index_oh (w_stq_replay_index_oh[lsu_idx]),
-    .o_stq_replay_conflict (w_stq_replay_conflict[lsu_idx]),
+    .ldq_replay_if (w_ldq_replay[lsu_idx]),
+    .stq_replay_if (w_stq_replay[lsu_idx]),
 
     .o_ex1_q_updates (w_ex1_q_updates[lsu_idx]),
     .o_tlb_resolve   (w_tlb_resolve  [lsu_idx]),
@@ -123,10 +109,7 @@ msrh_ldq
 
  .i_lrq_resolve (w_lrq_resolve),
 
- .o_ldq_replay_valid    (w_ldq_replay_valid   ),
- .o_ldq_replay_issue    (w_ldq_replay_issue   ),
- .o_ldq_replay_index_oh (w_ldq_replay_index_oh),
- .i_ldq_replay_conflict (w_ldq_replay_conflict),
+ .ldq_replay_if (w_ldq_replay),
 
  .i_ex3_done (w_ex3_done),
 
@@ -152,10 +135,7 @@ msrh_stq
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
- .o_stq_replay_valid    (w_stq_replay_valid   ),
- .o_stq_replay_issue    (w_stq_replay_issue   ),
- .o_stq_replay_index_oh (w_stq_replay_index_oh),
- .i_stq_replay_conflict (w_stq_replay_conflict),
+ .stq_replay_if (w_stq_replay),
 
  .i_ex3_done (w_ex3_done),
 
