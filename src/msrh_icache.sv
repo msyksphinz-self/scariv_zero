@@ -134,7 +134,8 @@ module msrh_icache
                     .o_selected(w_s2_selected_data)
                     );
 
-    assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready;
+    assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
+                             (ic_l2_resp.payload.tag == {msrh_lsu_pkg::L2_UPPER_TAG_IC, {(msrh_lsu_pkg::L2_CMD_TAG_W-1){1'b0}}});
     assign o_s2_resp.valid = r_s2_valid & r_s2_hit;
     assign o_s2_resp.addr  = r_req_vaddr [riscv_pkg::VADDR_W-1: 1];
     assign o_s2_resp.data  = w_s2_selected_data;
@@ -169,7 +170,7 @@ module msrh_icache
                 end
                 ICResp : begin
                     ic_l2_req.valid   <= 1'b0;
-                    if (ic_l2_resp.valid) begin
+                    if (ic_l2_resp_fire) begin
                         r_ic_state <= ICInit;
                         r_ic_req_tag <= r_ic_req_tag + 'h1;
                     end
