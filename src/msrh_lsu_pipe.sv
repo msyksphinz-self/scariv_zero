@@ -167,7 +167,7 @@ assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
-assign o_ex1_q_updates.paddr      = ex1_l1d_rd_if.paddr;
+assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
 assign o_ex1_q_updates.st_data_vld = r_ex1_issue.rs2_ready;
 assign o_ex1_q_updates.st_data    = ex1_regread_rs2.data;
 
