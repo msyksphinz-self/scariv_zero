@@ -8,7 +8,7 @@ module msrh_phy_registers #(
     input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
-  logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE + 32];
+  logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE];
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
   logic [msrh_pkg::RNID_W-1:0] wr_rnid[msrh_pkg::TGT_BUS_SIZE];
@@ -23,7 +23,7 @@ module msrh_phy_registers #(
   endgenerate
 
   generate
-    for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE + 32; r_idx++) begin : reg_loop
+    for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : reg_loop
       logic w_wr_valid;
       logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
       select_oh #(
