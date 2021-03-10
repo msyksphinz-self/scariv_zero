@@ -172,6 +172,7 @@ typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1: 0] addr;
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
 } dc_update_t;
 
 typedef struct packed {

@@ -78,15 +78,18 @@ assign lrq_search_if.index = r_rp1_lrq_resp_tag;
 logic r_rp2_valid;
 msrh_lsu_pkg::lrq_entry_t r_rp2_searched_lrq_entry;
 logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
+logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_rp2_be;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_rp2_valid <= 1'b0;
     r_rp2_searched_lrq_entry <= 'h0;
     r_rp2_resp_data <= 'h0;
+    r_rp2_be <= 'h0;
   end else begin
     r_rp2_valid <= r_rp1_l1d_exp_resp_valid;
     r_rp2_searched_lrq_entry <= lrq_search_if.lrq_entry;
     r_rp2_resp_data <= r_rp1_lrq_resp_data;
+    r_rp2_be        <= {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
   end
 end
 
@@ -94,8 +97,14 @@ end
 // -------------
 // Update of DC
 // -------------
-assign r_rp2_dc_update.valid = r_rp2_valid;
-assign r_rp2_dc_update.addr  = r_rp2_searched_lrq_entry.paddr;
-assign r_rp2_dc_update.data  = r_rp2_resp_data;
+assign r_rp2_dc_update.valid = r_rp2_valid  | l1d_wr_if.valid;
+assign r_rp2_dc_update.addr  = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
+                               l1d_wr_if.paddr;
+assign r_rp2_dc_update.data  = r_rp2_valid ? r_rp2_resp_data :
+                               l1d_wr_if.data;
+assign r_rp2_dc_update.be    = r_rp2_valid ? r_rp2_be :
+                               l1d_wr_if.be;
+
+assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 
 endmodule // msrh_dcache

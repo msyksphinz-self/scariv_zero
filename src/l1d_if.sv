@@ -36,6 +36,7 @@ interface l1d_wr_if;
   logic miss;
   logic conflict;
   logic [msrh_lsu_pkg::DCACHE_DATA_W-1:0] data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] be;
 
   modport master(
     output valid,
@@ -43,7 +44,8 @@ interface l1d_wr_if;
     input hit,
     input miss,
     input conflict,
-    output data
+    output data,
+    output be
   );
 
   modport slave(
@@ -52,7 +54,8 @@ interface l1d_wr_if;
     output hit,
     output miss,
     output conflict,
-    input data
+    input data,
+    input be
   );
 
 endinterface // l1d_wr_if

@@ -110,17 +110,17 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end
   end
 end
-`endif // SIMULATION
+`endif
 
-generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin : stq_loop
+  generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
-  for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
+    for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == s_idx);
-  end
+    end
 
   bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
   bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
@@ -180,17 +180,17 @@ generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::MEM_Q_SIZE; s_idx++) begin
      .i_ex3_done (i_ex3_done)
      );
 
-  for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+    for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
     assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_READY &&
                                            w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
-  end
+    end
   assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_COMMIT);
 
-end
+  end // block: stq_loop
 endgenerate
 
 // replay logic
-generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+  generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
   assign o_stq_replay_valid[p_idx] = |w_rerun_request[p_idx];
   msrh_lsu_pkg::stq_entry_t w_stq_replay_entry;
 
@@ -200,18 +200,18 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
   assign o_stq_replay_issue[p_idx] = w_stq_replay_entry.inst;
   assign o_stq_replay_index_oh[p_idx] = w_rerun_request_oh[p_idx];
 
-  for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+    for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : stq_loop
     assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
-  end
-end
+    end
+  end // block: pipe_loop
 endgenerate
 
 // ===============
 // done logic
 // ===============
-generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : done_loop
+  generate for (genvar s_idx = 0; s_idx < msrh_lsu_pkg::STQ_SIZE; s_idx++) begin : done_loop
   assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == msrh_lsu_pkg::STQ_DONE && (w_out_ptr == s_idx);
-end
+  end
 endgenerate
 bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::stq_entry_t)), .WORDS(msrh_lsu_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
@@ -232,7 +232,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     // end
     r_st1_committed_entry <= w_stq_cmt_entry;
   end
-end
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_rd_if.valid = w_stq_cmt_entry.state == msrh_lsu_pkg::STQ_COMMIT;
 assign l1d_rd_if.paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
@@ -248,15 +248,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (l1d_rd_if.hit) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
-        l1d_wr_if.data  <= merge (l1d_rd_if.data, r_st1_committed_entry.rs2_data);
+        l1d_wr_if.data  <= {(msrh_lsu_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W){r_st1_committed_entry.rs2_data}};
+        l1d_wr_if.be    <= {(msrh_lsu_pkg::DCACHE_DATA_B_W-8){8'hff}} << r_st1_committed_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
       end else begin
         l1d_wr_if.valid <= 1'b0;
       end
     end else begin
       l1d_wr_if.valid <= 1'b0;
     end // else: !if(r_l1d_rd_if_resp)
-  end
-end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;

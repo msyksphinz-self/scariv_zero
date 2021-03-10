@@ -78,6 +78,7 @@ module msrh_icache
               .i_addr(ic_l2_resp_fire ?
                       r_req_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW] :
                       r_s1_vaddr [$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW]),
+              .i_be  ({msrh_lsu_pkg::ICACHE_DATA_B_W{1'b1}}),
               .i_data(ic_l2_resp.payload.data),
               .o_data(w_s2_data[way])
               );

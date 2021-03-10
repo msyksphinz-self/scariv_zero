@@ -110,6 +110,7 @@ logic [TAG_SIZE-1:0] w_s1_tag;
         .i_reset_n(i_reset_n),
         .i_wr  (i_dc_update.valid),
         .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
+        .i_be  (i_dc_update.be),
         .i_data(i_dc_update.data),
         .o_data(w_s1_data[way])
         );
