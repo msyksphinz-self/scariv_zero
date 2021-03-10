@@ -60,11 +60,11 @@ assign w_out_vld = l1d_ext_req.valid;
 inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                           .i_in_vld (w_in_vld ),
                                                           /* verilator lint_off WIDTH */
-                                                          .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_pkg::LSU_INST_NUM)){1'b0}}, w_l1d_lrq_loads_cnt}),
+                                                          .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_loads_cnt}),
                                                           .o_in_ptr (w_in_ptr ),
 
                                                           .i_out_vld(w_out_vld),
-                                                          .i_out_val('h1),
+                                                          .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
                                                           .o_out_ptr(w_out_ptr));
 
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : lsu_req_loop

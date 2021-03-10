@@ -35,8 +35,6 @@ module msrh_stq_entry
    input msrh_lsu_pkg::lrq_resolve_t          i_lrq_resolve,
 
    input logic                                i_sq_l1d_wr_conflict,
-   // Actual Store Operation Done
-   input msrh_lsu_pkg::store_op_t             i_store_op,
 
    input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_ex3_done
    );
