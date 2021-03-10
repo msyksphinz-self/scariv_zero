@@ -249,7 +249,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
         l1d_wr_if.data  <= {(msrh_lsu_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W){r_st1_committed_entry.rs2_data}};
-        l1d_wr_if.be    <= {(msrh_lsu_pkg::DCACHE_DATA_B_W-8){8'hff}} << r_st1_committed_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
+        l1d_wr_if.be    <= {{(msrh_lsu_pkg::DCACHE_DATA_B_W-8){8'h00}}, 8'hff} << r_st1_committed_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
       end else begin
         l1d_wr_if.valid <= 1'b0;
       end
