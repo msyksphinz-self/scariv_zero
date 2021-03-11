@@ -199,8 +199,10 @@ end
 function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_icache\" : {\n");
 
-  $fwrite(fp, "    i_s0_req.valid : \"%d\",\n", i_s0_req.valid);
-  $fwrite(fp, "    i_s0_req.vaddr : \"0x%x\",\n", i_s0_req.vaddr);
+  if (i_s0_req.valid) begin
+    $fwrite(fp, "    i_s0_req.valid : \"%d\",\n", i_s0_req.valid);
+    $fwrite(fp, "    i_s0_req.vaddr : \"0x%x\",\n", i_s0_req.vaddr);
+  end
   $fwrite(fp, "    state : \"%d\",\n", r_ic_state);
   for(int way = 0; way < msrh_lsu_pkg::ICACHE_WAY_W; way++) begin
     $fwrite(fp, "    w_s1_tag_hit[%d]: \"%d\",\n", way, w_s1_tag_hit[way]);
@@ -208,12 +210,14 @@ function void dump_json(int fp);
   $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_miss);
   $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
 
-  $fwrite(fp, "    \"ic_l2_req\" : {\n");
-  $fwrite(fp, "      valid : \"%d\",\n", ic_l2_req.valid);
-  $fwrite(fp, "      cmd : \"%d\",\n", ic_l2_req.payload.cmd);
-  $fwrite(fp, "      addr : \"0x%x\",\n", ic_l2_req.payload.addr);
-  $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.payload.tag);
-  $fwrite(fp, "    }\n");
+  if (ic_l2_req.valid) begin
+    $fwrite(fp, "    \"ic_l2_req\" : {\n");
+    $fwrite(fp, "      valid : \"%d\",\n", ic_l2_req.valid);
+    $fwrite(fp, "      cmd : \"%d\",\n", ic_l2_req.payload.cmd);
+    $fwrite(fp, "      addr : \"0x%x\",\n", ic_l2_req.payload.addr);
+    $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.payload.tag);
+    $fwrite(fp, "    }\n");
+  end
 
   $fwrite(fp, "  }\n");
 endfunction // dump

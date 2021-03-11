@@ -345,4 +345,6 @@ final begin
   $fclose(pipe_fp);
 end
 
+`include "tb_json_dumper.sv"
+
 endmodule // tb

@@ -126,19 +126,21 @@ typedef struct packed {
 
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
-  $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
-  $fwrite(fp, "       valid : \"%d\, ", entry.entry.valid);
-  $fwrite(fp, "       pc_addr : \"%d\, ", entry.entry.pc_addr);
-  $fwrite(fp, "       inst : \"%d\, ", entry.entry.inst);
+  if (entry.entry.valid) begin
+    $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
+    $fwrite(fp, "       valid : \"%d\, ", entry.entry.valid);
+    $fwrite(fp, "       pc_addr : \"%d\, ", entry.entry.pc_addr);
+    $fwrite(fp, "       inst : \"%d\, ", entry.entry.inst);
 
-  $fwrite(fp, "       cmt_id : \"%d\, ", entry.entry.cmt_id);
-  $fwrite(fp, "       grp_id : \"%d\, ", entry.entry.grp_id);
+    $fwrite(fp, "       cmt_id : \"%d\, ", entry.entry.cmt_id);
+    $fwrite(fp, "       grp_id : \"%d\, ", entry.entry.grp_id);
 
-  $fwrite(fp, "       state : \"%s\, ", entry.state == msrh_pkg::INIT ? "INIT" :
-                                        entry.state == msrh_pkg::WAIT ? "WAIT" :
-                                        entry.state == msrh_pkg::ISSUED ? "ISSUED" :
-                                        entry.state == msrh_pkg::DONE ? "DONE" : "x");
-  $fwrite(fp, "    }\n");
+    $fwrite(fp, "       state : \"%s\, ", entry.state == msrh_pkg::INIT ? "INIT" :
+            entry.state == msrh_pkg::WAIT ? "WAIT" :
+            entry.state == msrh_pkg::ISSUED ? "ISSUED" :
+            entry.state == msrh_pkg::DONE ? "DONE" : "x");
+    $fwrite(fp, "    }\n");
+  end // if (entry.entry.valid)
 
 endfunction // dump_json
 

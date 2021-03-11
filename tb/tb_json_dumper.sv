@@ -10,7 +10,7 @@ final begin
   $fclose(json_fp);
 end
 
-always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   // Initial and Time
   $fwrite(json_fp, "\"%t\" : {\n", $time);
 

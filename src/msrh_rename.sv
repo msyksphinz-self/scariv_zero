@@ -200,40 +200,42 @@ msrh_inflight_list u_inflight_map
 function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_rename\" : {\n");
 
-  $fwrite(fp, "    \"sc_disp\" : {\n");
-  $fwrite(fp, "      valid  : \"%d\",\n", sc_disp.valid);
-  $fwrite(fp, "      ready  : \"%d\",\n", sc_disp.ready);
-  $fwrite(fp, "      cmt_id  : \"%d\",\n", sc_disp.cmt_id);
-  $fwrite(fp, "      pc_addr : \"0x%x\",\n", sc_disp.pc_addr);
+  if (sc_disp.valid & sc_disp.ready) begin
+    $fwrite(fp, "    \"sc_disp\" : {\n");
+    $fwrite(fp, "      valid  : \"%d\",\n", sc_disp.valid);
+    $fwrite(fp, "      ready  : \"%d\",\n", sc_disp.ready);
+    $fwrite(fp, "      cmt_id  : \"%d\",\n", sc_disp.cmt_id);
+    $fwrite(fp, "      pc_addr : \"0x%x\",\n", sc_disp.pc_addr);
 
-  for (int d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    $fwrite(fp, "      \"inst[%d]\" : {", d_idx);
-    $fwrite(fp, "        valid : \"%d\",",      sc_disp.inst[d_idx].valid);
-    $fwrite(fp, "        inst  : \"%0x\",",     sc_disp.inst[d_idx].inst);
-    $fwrite(fp, "        pc_addr : \"%0x\",",   sc_disp.inst[d_idx].pc_addr);
+    for (int d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+      $fwrite(fp, "      \"inst[%d]\" : {", d_idx);
+      $fwrite(fp, "        valid : \"%d\",",      sc_disp.inst[d_idx].valid);
+      $fwrite(fp, "        inst  : \"%0x\",",     sc_disp.inst[d_idx].inst);
+      $fwrite(fp, "        pc_addr : \"%0x\",",   sc_disp.inst[d_idx].pc_addr);
 
-    $fwrite(fp, "        rd_valid   : \"%d\",", sc_disp.inst[d_idx].rd_valid);
-    $fwrite(fp, "        rd_type    : \"%d\",", sc_disp.inst[d_idx].rd_type);
-    $fwrite(fp, "        rd_regidx  : \"%d\",", sc_disp.inst[d_idx].rd_regidx);
-    $fwrite(fp, "        rd_rnid    : \"%d\",", sc_disp.inst[d_idx].rd_rnid);
+      $fwrite(fp, "        rd_valid   : \"%d\",", sc_disp.inst[d_idx].rd_valid);
+      $fwrite(fp, "        rd_type    : \"%d\",", sc_disp.inst[d_idx].rd_type);
+      $fwrite(fp, "        rd_regidx  : \"%d\",", sc_disp.inst[d_idx].rd_regidx);
+      $fwrite(fp, "        rd_rnid    : \"%d\",", sc_disp.inst[d_idx].rd_rnid);
 
-    $fwrite(fp, "        rs1_valid  : \"%d\",", sc_disp.inst[d_idx].rs1_valid);
-    $fwrite(fp, "        rs1_type   : \"%d\",", sc_disp.inst[d_idx].rs1_type);
-    $fwrite(fp, "        rs1_regidx : \"%d\",", sc_disp.inst[d_idx].rs1_regidx);
-    $fwrite(fp, "        rs1_rnid   : \"%d\",", sc_disp.inst[d_idx].rs1_rnid);
-    $fwrite(fp, "        rs1_ready  : \"%d\",", sc_disp.inst[d_idx].rs1_ready);
+      $fwrite(fp, "        rs1_valid  : \"%d\",", sc_disp.inst[d_idx].rs1_valid);
+      $fwrite(fp, "        rs1_type   : \"%d\",", sc_disp.inst[d_idx].rs1_type);
+      $fwrite(fp, "        rs1_regidx : \"%d\",", sc_disp.inst[d_idx].rs1_regidx);
+      $fwrite(fp, "        rs1_rnid   : \"%d\",", sc_disp.inst[d_idx].rs1_rnid);
+      $fwrite(fp, "        rs1_ready  : \"%d\",", sc_disp.inst[d_idx].rs1_ready);
 
-    $fwrite(fp, "        rs2_valid  : \"%d\",", sc_disp.inst[d_idx].rs2_valid);
-    $fwrite(fp, "        rs2_type   : \"%d\",", sc_disp.inst[d_idx].rs2_type);
-    $fwrite(fp, "        rs2_regidx : \"%d\",", sc_disp.inst[d_idx].rs2_regidx);
-    $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rs2_rnid);
-    $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rs2_ready);
+      $fwrite(fp, "        rs2_valid  : \"%d\",", sc_disp.inst[d_idx].rs2_valid);
+      $fwrite(fp, "        rs2_type   : \"%d\",", sc_disp.inst[d_idx].rs2_type);
+      $fwrite(fp, "        rs2_regidx : \"%d\",", sc_disp.inst[d_idx].rs2_regidx);
+      $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rs2_rnid);
+      $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rs2_ready);
 
-    $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
-    $fwrite(fp, "      }\n");
-  end
-
+      $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
+      $fwrite(fp, "      }\n");
+    end
   $fwrite(fp, "  }\n");
+  end // if (sc_disp.valid & sc_disp.ready)
+
 endfunction // dump
 `endif // SIMULATION
 
