@@ -41,3 +41,27 @@ modport slave (
 );
 
 endinterface // lsu_replay_if
+
+
+interface fwd_check_if;
+
+logic                           valid;
+logic [riscv_pkg::PADDR_W-1: 0] paddr;
+logic                           fwd_vld;
+logic [riscv_pkg::XLEN_W-1: 0]  fwd_data;
+
+modport master (
+  output valid,
+  output paddr,
+  input  fwd_vld,
+  input  fwd_data
+);
+
+modport slave (
+  input  valid,
+  input  paddr,
+  output fwd_vld,
+  output fwd_data
+);
+
+endinterface // fwd_check_if

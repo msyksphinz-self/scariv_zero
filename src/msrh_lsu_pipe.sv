@@ -28,6 +28,9 @@ module msrh_lsu_pipe
                                        l1d_rd_if.master ex1_l1d_rd_if,
  output logic                          o_ex2_l1d_mispredicted,
 
+ // Forwarding checker
+ fwd_check_if.master                   ex2_fwd_check_if,
+
                                        l1d_lrq_if.master l1d_lrq_if,
 
  // Feedbacks to LDQ / STQ
@@ -81,7 +84,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & ex1_l1d_rd_if.hit;
+  w_ex3_issue_next.valid = (r_ex2_issue.cat == msrh_pkg::CAT_LD) & !o_ex2_l1d_mispredicted;
 end
 
 
@@ -187,7 +190,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict);
+assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict) & !ex2_fwd_check_if.fwd_vld;
 assign l1d_lrq_if.load              = o_ex2_l1d_mispredicted;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
@@ -200,6 +203,9 @@ assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
+// Forwarding check
+assign ex2_fwd_check_if.valid = r_ex2_issue.valid & r_ex2_issue.cat == msrh_pkg::CAT_LD;
+assign ex2_fwd_check_if.paddr = r_ex2_paddr;
 
 //
 // EX3 stage pipeline
@@ -208,7 +214,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
-    r_ex3_aligned_data <= ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
+    r_ex3_aligned_data <= ex2_fwd_check_if.fwd_vld ? ex2_fwd_check_if.fwd_data :
+                          ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
   end
 end
 

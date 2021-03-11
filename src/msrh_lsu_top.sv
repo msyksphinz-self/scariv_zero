@@ -29,6 +29,7 @@ l1d_rd_if  w_l1d_rd_if [msrh_pkg::LSU_INST_NUM + 1] ();
 l1d_wr_if  w_l1d_wr_if();
 l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
+fwd_check_if w_ex2_fwd_check[msrh_pkg::LSU_INST_NUM] ();
 
 lrq_search_if w_lrq_search_if ();
 msrh_lsu_pkg::lrq_resolve_t w_lrq_resolve;
@@ -65,6 +66,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
     .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
 
     .i_early_wr(i_early_wr),
+
+    .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
 
     .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
@@ -134,6 +137,8 @@ msrh_stq
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
+
+ .ex2_fwd_check_if(w_ex2_fwd_check),
 
  .stq_replay_if (w_stq_replay),
 

@@ -21,6 +21,9 @@ module msrh_lsu
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
+    // STQ Forwarding checker
+    fwd_check_if.master           ex2_fwd_check_if,
+
     /* L1D Interface */
     l1d_rd_if.master              l1d_rd_if,
 
@@ -146,6 +149,8 @@ u_lsu_pipe
    .o_ex2_l1d_mispredicted (),
 
    .l1d_lrq_if (l1d_lrq_if),
+
+   .ex2_fwd_check_if (ex2_fwd_check_if),
 
    .o_ex1_q_updates (o_ex1_q_updates),
    .o_tlb_resolve   (o_tlb_resolve  ),

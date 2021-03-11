@@ -16,6 +16,10 @@ module msrh_stq
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input ex2_q_update_t        i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
 
+   // Forwarding checker
+   fwd_check_if.slave                        ex2_fwd_check_if[msrh_pkg::LSU_INST_NUM],
+
+
    lsu_replay_if.master stq_replay_if[msrh_pkg::LSU_INST_NUM],
 
    input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
@@ -34,6 +38,9 @@ module msrh_stq
    output                                msrh_pkg::done_rpt_t o_done_report
    );
 
+// =========================
+// Declarations
+// =========================
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
@@ -46,6 +53,10 @@ logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[STQ_SIZE] ;
 logic [msrh_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[STQ_SIZE] ;
 
 logic                               r_l1d_rd_if_resp;
+
+// Forwarding Logic
+logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_pkg::LSU_INST_NUM];
+
 
 function logic [DCACHE_DATA_W-1: 0] merge(logic [DCACHE_DATA_W-1: 0] dcache_in,
                                                         logic [riscv_pkg::XLEN_W-1: 0] st_data);
@@ -179,15 +190,23 @@ end
      );
 
     for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-    assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == STQ_READY &&
-                                           w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
+      assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == STQ_READY &&
+                                             w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
-  assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT);
+    assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT);
 
+    // Forwarding check
+    for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+      assign w_ex2_fwd_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                           w_stq_entries[s_idx].rs2_got_data &
+                                           (w_stq_entries[s_idx].paddr == ex2_fwd_check_if[p_idx].paddr);
+    end
   end // block: stq_loop
 endgenerate
 
+// ===============
 // replay logic
+// ===============
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
   stq_entry_t w_stq_replay_entry;
@@ -207,12 +226,27 @@ generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin :
 end // block: pipe_loop
 endgenerate
 
+// =========================
+// STQ Forwarding Logic
+// =========================
+generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+  logic [STQ_SIZE-1: 0] w_ex2_fwd_vld_oh;
+  stq_entry_t w_stq_fwd_entry;
+
+  bit_extract_msb #(.WIDTH(STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_vld[p_idx]), .out(w_ex2_fwd_vld_oh));
+  bit_oh_or #(.WIDTH($size(stq_entry_t)), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_vld_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+
+  assign ex2_fwd_check_if[p_idx].fwd_vld  = |w_ex2_fwd_vld[p_idx];
+  assign ex2_fwd_check_if[p_idx].fwd_data = w_stq_fwd_entry.rs2_data;
+end
+endgenerate
+
 // ===============
-// done logic
+// Done Logic
 // ===============
-  generate for (genvar s_idx = 0; s_idx < STQ_SIZE; s_idx++) begin : done_loop
+generate for (genvar s_idx = 0; s_idx < STQ_SIZE; s_idx++) begin : done_loop
   assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == STQ_DONE && (w_out_ptr == s_idx);
-  end
+end
 endgenerate
 bit_oh_or #(.WIDTH($size(stq_entry_t)), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 

@@ -7,31 +7,9 @@ _start:
     sd  	x10,  0(x1)
     sd  	x11,  8(x1)
     sd  	x12, 16(x1)
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
     ld  	x16,  0(x1)
     ld  	x17,  8(x1)
     ld  	x18, 16(x1)
-    nop
-    nop
-    nop
-    nop
     nop
     nop
     nop
