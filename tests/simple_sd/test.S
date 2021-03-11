@@ -28,6 +28,13 @@ _start:
     ld  	x16,  0(x1)
     ld  	x17,  8(x1)
     ld  	x18, 16(x1)
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
 #include "common_pkg.S"
 
