@@ -231,10 +231,10 @@ function void dump_json(int fp);
       $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rs2_ready);
 
       $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
-      $fwrite(fp, "      }\n");
+      $fwrite(fp, "      },\n");
     end
-  $fwrite(fp, "  }\n");
   end // if (sc_disp.valid & sc_disp.ready)
+  $fwrite(fp, "  },\n");
 
 endfunction // dump
 `endif // SIMULATION

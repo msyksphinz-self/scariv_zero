@@ -199,27 +199,39 @@ end
 function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_icache\" : {\n");
 
-  if (i_s0_req.valid) begin
+  if (i_s0_req.valid & o_s0_ready) begin
     $fwrite(fp, "    i_s0_req.valid : \"%d\",\n", i_s0_req.valid);
     $fwrite(fp, "    i_s0_req.vaddr : \"0x%x\",\n", i_s0_req.vaddr);
   end
-  $fwrite(fp, "    state : \"%d\",\n", r_ic_state);
-  for(int way = 0; way < msrh_lsu_pkg::ICACHE_WAY_W; way++) begin
-    $fwrite(fp, "    w_s1_tag_hit[%d]: \"%d\",\n", way, w_s1_tag_hit[way]);
+  // $fwrite(fp, "    state : \"%d\",\n", r_ic_state);
+  if (r_s1_valid) begin
+    for(int way = 0; way < msrh_lsu_pkg::ICACHE_WAY_W; way++) begin
+      $fwrite(fp, "    w_s1_tag_hit[%d]: \"%d\",\n", way, w_s1_tag_hit[way]);
+    end
   end
-  $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_miss);
-  $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
-
+  if (r_s2_valid) begin
+    $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_miss);
+    $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
+  end
   if (ic_l2_req.valid) begin
     $fwrite(fp, "    \"ic_l2_req\" : {\n");
     $fwrite(fp, "      valid : \"%d\",\n", ic_l2_req.valid);
     $fwrite(fp, "      cmd : \"%d\",\n", ic_l2_req.payload.cmd);
     $fwrite(fp, "      addr : \"0x%x\",\n", ic_l2_req.payload.addr);
     $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.payload.tag);
-    $fwrite(fp, "    }\n");
+    $fwrite(fp, "    },\n");
   end
 
-  $fwrite(fp, "  }\n");
+  if (o_s2_resp.valid) begin
+    $fwrite(fp, "    \"o_s2_resp\" : {\n");
+    $fwrite(fp, "      valid : \"%d\",\n", o_s2_resp.valid);
+    $fwrite(fp, "      data : \"%x\",\n",  o_s2_resp.data);
+    $fwrite(fp, "      miss : \"%d\",\n",  o_s2_miss);
+    $fwrite(fp, "      vaddr : \"%d\",\n", o_s2_miss_vaddr);
+    $fwrite(fp, "    },\n");
+  end
+
+  $fwrite(fp, "  },\n");
 endfunction // dump
 `endif // SIMULATION
 

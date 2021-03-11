@@ -227,7 +227,7 @@ function void dump_json(int fp);
       $fwrite(fp, "      data    : \"0x%x\",\n", r_inst_queue[idx].data);
       $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc);
       $fwrite(fp, "      byte_en : \"0x%x\",\n", r_inst_queue[idx].byte_en);
-      $fwrite(fp, "    }\n");
+      $fwrite(fp, "    },\n");
     end
   end
 
@@ -251,11 +251,11 @@ function void dump_json(int fp);
       $fwrite(fp, "      rs2_regidx : \"%d\",", o_inst_buf[d_idx].rs2_regidx);
 
       $fwrite(fp, "      cat[d_idx] : \"%d\",", o_inst_buf[d_idx].cat);
-      $fwrite(fp, "    }\n");
+      $fwrite(fp, "    },\n");
     end
   end
 
-  $fwrite(fp, "  }\n");
+  $fwrite(fp, "  },\n");
 endfunction // dump
 `endif // SIMULATION
 

@@ -139,7 +139,7 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
             entry.state == msrh_pkg::WAIT ? "WAIT" :
             entry.state == msrh_pkg::ISSUED ? "ISSUED" :
             entry.state == msrh_pkg::DONE ? "DONE" : "x");
-    $fwrite(fp, "    }\n");
+    $fwrite(fp, "    },\n");
   end // if (entry.entry.valid)
 
 endfunction // dump_json
@@ -156,7 +156,7 @@ function void dump_json(int fp, int index);
   for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
     dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
   end
-  $fwrite(fp, "  }\n");
+  $fwrite(fp, "  },\n");
 endfunction // dump_json
 `endif // SIMULATION
 
