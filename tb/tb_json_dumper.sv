@@ -22,12 +22,12 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   u_msrh_tile_wrapper.u_msrh_tile.u_msrh_rename.dump_json(json_fp);
 
   // ALU Scheduler
-  u_msrh_tile_wrapper.u_msrh_tile.alu_loop[0].u_msrh_alu.u_msrh_scheduler.dump_json(json_fp, 0);
-  u_msrh_tile_wrapper.u_msrh_tile.alu_loop[1].u_msrh_alu.u_msrh_scheduler.dump_json(json_fp, 1);
+  u_msrh_tile_wrapper.u_msrh_tile.alu_loop[0].u_msrh_alu.u_msrh_scheduler.dump_json("alu0", json_fp, 0);
+  u_msrh_tile_wrapper.u_msrh_tile.alu_loop[1].u_msrh_alu.u_msrh_scheduler.dump_json("alu1", json_fp, 1);
 
   // LSU Scheduler
-  u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[0].u_msrh_lsu.u_msrh_scheduler.dump_json(json_fp, 0);
-  u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[1].u_msrh_lsu.u_msrh_scheduler.dump_json(json_fp, 1);
+  u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[0].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu0", json_fp, 0);
+  u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[1].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu1", json_fp, 1);
 
   // JSON End
   $fwrite(json_fp, "},\n");

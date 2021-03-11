@@ -225,7 +225,7 @@ function void dump_json(int fp);
       $fwrite(fp, "    \"r_inst_queue[%d]\" : {\n", idx);
       $fwrite(fp, "      vld     : \"%d\",\n", r_inst_queue[idx].vld);
       $fwrite(fp, "      data    : \"0x%x\",\n", r_inst_queue[idx].data);
-      $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc);
+      $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc << 1);
       $fwrite(fp, "      byte_en : \"0x%x\",\n", r_inst_queue[idx].byte_en);
       $fwrite(fp, "    },\n");
     end
@@ -234,21 +234,21 @@ function void dump_json(int fp);
   for (int d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     if (o_inst_buf[d_idx].valid) begin
       $fwrite(fp, "    \"o_inst_buf[%d]\" : {", d_idx);
-      $fwrite(fp, "      valid : \"%d\",",      o_inst_buf[d_idx].valid);
-      $fwrite(fp, "      inst  : \"%0x\",",      o_inst_buf[d_idx].inst);
-      $fwrite(fp, "      pc_addr : \"%0x\",",    o_inst_buf[d_idx].pc_addr);
+      $fwrite(fp, "      valid : %d,",      o_inst_buf[d_idx].valid);
+      $fwrite(fp, "      inst  : \"0x%08x\",",      o_inst_buf[d_idx].inst);
+      $fwrite(fp, "      pc_addr : \"0x%0x\",",    o_inst_buf[d_idx].pc_addr);
 
-      $fwrite(fp, "      rd_valid   : \"%d\",", o_inst_buf[d_idx].rd_valid);
+      $fwrite(fp, "      rd_valid   : %d,", o_inst_buf[d_idx].rd_valid);
       $fwrite(fp, "      rd_type    : \"%d\",", o_inst_buf[d_idx].rd_type);
-      $fwrite(fp, "      rd_regidx  : \"%d\",", o_inst_buf[d_idx].rd_regidx);
+      $fwrite(fp, "      rd_regidx  : %d,", o_inst_buf[d_idx].rd_regidx);
 
-      $fwrite(fp, "      rs1_valid  : \"%d\",", o_inst_buf[d_idx].rs1_valid);
+      $fwrite(fp, "      rs1_valid  : %d,", o_inst_buf[d_idx].rs1_valid);
       $fwrite(fp, "      rs1_type   : \"%d\",", o_inst_buf[d_idx].rs1_type);
-      $fwrite(fp, "      rs1_regidx : \"%d\",", o_inst_buf[d_idx].rs1_regidx);
+      $fwrite(fp, "      rs1_regidx : %d,", o_inst_buf[d_idx].rs1_regidx);
 
-      $fwrite(fp, "      rs2_valid  : \"%d\",", o_inst_buf[d_idx].rs2_valid);
+      $fwrite(fp, "      rs2_valid  : %d\",", o_inst_buf[d_idx].rs2_valid);
       $fwrite(fp, "      rs2_type   : \"%d\",", o_inst_buf[d_idx].rs2_type);
-      $fwrite(fp, "      rs2_regidx : \"%d\",", o_inst_buf[d_idx].rs2_regidx);
+      $fwrite(fp, "      rs2_regidx : %d,", o_inst_buf[d_idx].rs2_regidx);
 
       $fwrite(fp, "      cat[d_idx] : \"%d\",", o_inst_buf[d_idx].cat);
       $fwrite(fp, "    },\n");

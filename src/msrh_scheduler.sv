@@ -128,12 +128,12 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
     $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
-    $fwrite(fp, "       valid : \"%d\, ", entry.entry.valid);
-    $fwrite(fp, "       pc_addr : \"%d\, ", entry.entry.pc_addr);
-    $fwrite(fp, "       inst : \"%d\, ", entry.entry.inst);
+    $fwrite(fp, "       valid : %d, ", entry.entry.valid);
+    $fwrite(fp, "       pc_addr : \"0x%0x\", ", entry.entry.pc_addr);
+    $fwrite(fp, "       inst : \"%08x\", ", entry.entry.inst);
 
-    $fwrite(fp, "       cmt_id : \"%d\, ", entry.entry.cmt_id);
-    $fwrite(fp, "       grp_id : \"%d\, ", entry.entry.grp_id);
+    $fwrite(fp, "       cmt_id : %d, ", entry.entry.cmt_id);
+    $fwrite(fp, "       grp_id : %d, ", entry.entry.grp_id);
 
     $fwrite(fp, "       state : \"%s\, ", entry.state == msrh_pkg::INIT ? "INIT" :
             entry.state == msrh_pkg::WAIT ? "WAIT" :
@@ -151,8 +151,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop_
 end
 endgenerate
 
-function void dump_json(int fp, int index);
-  $fwrite(fp, "  \"msrh_scheduler[%d]\" : {\n", index);
+function void dump_json(string name, int fp, int index);
+  $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index);
   for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
     dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
   end
