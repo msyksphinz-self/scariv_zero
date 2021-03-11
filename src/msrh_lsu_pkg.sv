@@ -217,6 +217,7 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } stq_entry_t;
 
+
 typedef struct packed {
   logic          done;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
@@ -234,6 +235,33 @@ typedef struct packed {
   logic                          conflict;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } srq_resp_t;
+
+
+// ---------
+// LDQ
+// ---------
+
+typedef enum logic[2:0] {
+  LDQ_INIT = 0,
+  LDQ_EX2_RUN = 1,
+  LDQ_LRQ_HAZ = 2,
+  LDQ_STQ_HAZ = 3,
+  LDQ_TLB_HAZ = 4,
+  LDQ_READY = 5,
+  LDQ_EX3_DONE = 6
+} ldq_state_t;
+
+typedef struct packed {
+  logic          is_valid;
+  logic [msrh_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
+  msrh_pkg::issue_t               inst;
+  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+  ldq_state_t                     state;
+  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
+} ldq_entry_t;
 
 
 endpackage // msrh_lsu_pkg
