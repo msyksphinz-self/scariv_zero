@@ -49,7 +49,7 @@ endgenerate
 // ==========================
 logic r_rp1_l1d_exp_resp_valid;
 logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
-logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_rp1_l1d_exp_resp_valid <= 1'b0;
@@ -77,7 +77,7 @@ assign lrq_search_if.index = r_rp1_lrq_resp_tag;
 
 logic r_rp2_valid;
 msrh_lsu_pkg::lrq_entry_t r_rp2_searched_lrq_entry;
-logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
 logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_rp2_be;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

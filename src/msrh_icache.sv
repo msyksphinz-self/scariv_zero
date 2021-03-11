@@ -30,8 +30,8 @@ module msrh_icache
     logic                               r_s2_valid;
     logic                               r_s2_hit;
     logic [msrh_lsu_pkg::ICACHE_WAY_W-1 : 0] r_s2_tag_hit;
-    logic [msrh_lsu_pkg::ICACHE_DATA_W-1: 0] w_s2_data[msrh_lsu_pkg::ICACHE_WAY_W];
-    logic [msrh_lsu_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
+    logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_data[msrh_lsu_pkg::ICACHE_WAY_W];
+    logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
 
     logic [msrh_lsu_pkg::L2_CMD_TAG_W-1: 0]  r_ic_req_tag;
 
@@ -68,7 +68,7 @@ module msrh_icache
 
         data_array
             #(
-              .WIDTH(msrh_lsu_pkg::ICACHE_DATA_W),
+              .WIDTH(msrh_conf_pkg::ICACHE_DATA_W),
               .ADDR_W(msrh_lsu_pkg::ICACHE_TAG_LOW)
               )
         data (
@@ -125,7 +125,7 @@ module msrh_icache
 
     bit_oh_or
         #(
-          .WIDTH(msrh_lsu_pkg::ICACHE_DATA_W),
+          .WIDTH(msrh_conf_pkg::ICACHE_DATA_W),
           .WORDS(msrh_lsu_pkg::ICACHE_WAY_W)
           )
     cache_data_sel (

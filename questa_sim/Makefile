@@ -38,6 +38,9 @@ endif
 ifeq ($(strip $(CONFIG)), big)
 	CONFIG_PKG = ../src/msrh_big_conf_pkg.sv
 endif
+ifeq ($(strip $(CONFIG)), giant)
+	CONFIG_PKG = ../src/msrh_giant_conf_pkg.sv
+endif
 ifeq ($(strip $(CONFIG)), small)
 	CONFIG_PKG = ../src/msrh_small_conf_pkg.sv
 endif

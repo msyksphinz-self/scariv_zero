@@ -9,16 +9,14 @@ package msrh_lsu_pkg;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;
-  localparam ICACHE_DATA_W = 256;
   localparam ICACHE_WAY_W = 4;
-  localparam ICACHE_DATA_B_W = ICACHE_DATA_W / 8;
+  localparam ICACHE_DATA_B_W = msrh_conf_pkg::ICACHE_DATA_W / 8;
 
 
   localparam DCACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam DCACHE_TAG_LOW = 12;
-  localparam DCACHE_DATA_W = 256;
   localparam DCACHE_WAY_W = 4;
-  localparam DCACHE_DATA_B_W = DCACHE_DATA_W / 8;
+  localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
   localparam LDQ_SIZE = 16;
   localparam STQ_SIZE = 16;
@@ -48,7 +46,7 @@ package msrh_lsu_pkg;
   typedef struct packed {
     logic valid;
     logic [riscv_pkg::VADDR_W-1:1]      addr;
-    logic [ICACHE_DATA_W-1:0] data;
+    logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
     logic [ICACHE_DATA_B_W-1:0] be;
   } ic_resp_t;
 
@@ -116,13 +114,13 @@ package msrh_lsu_pkg;
     mem_cmd_t cmd;
     logic [riscv_pkg::PADDR_W-1:0] addr;
     logic [L2_CMD_TAG_W-1:0] tag;
-    logic [ICACHE_DATA_W-1:0] data;
-    logic [ICACHE_DATA_W/8-1:0] byte_en;
+    logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
+    logic [ICACHE_DATA_B_W-1:0] byte_en;
   } l2_req_t;
 
   typedef struct packed {
     logic [L2_CMD_TAG_W-1:0] tag;
-    logic [ICACHE_DATA_W-1:0] data;
+    logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
   } l2_resp_t;
 
 typedef struct packed {
@@ -171,7 +169,7 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1: 0] addr;
-  logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
 } dc_update_t;
 
@@ -184,7 +182,7 @@ typedef struct packed {
   logic            hit;
   logic            miss;
   logic            conflict;
-  logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] data;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
 } dc_read_resp_t;
 
 

@@ -1,5 +1,8 @@
 package msrh_conf_pkg;
 
+  localparam ICACHE_DATA_W = 256;
+  localparam DCACHE_DATA_W = 256;
+
   localparam DISP_SIZE = 3;
 
   localparam ALU_INST_NUM = 1;

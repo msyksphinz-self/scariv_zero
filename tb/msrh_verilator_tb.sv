@@ -34,13 +34,13 @@ logic                                     w_ic_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_ic_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]            w_ic_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ic_req_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
-logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_ic_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_ic_req_byte_en;
 logic                                     w_ic_req_ready;
 
 logic                                     w_ic_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
 logic                                     w_ic_resp_ready  ;
 
 /* from ELF Loader */
@@ -48,8 +48,8 @@ logic                                     w_elf_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_elf_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]            w_elf_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
-logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
 logic                                     w_elf_req_ready;
 
 /* L2 Interface */
@@ -57,13 +57,13 @@ logic                                     w_l2_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_l2_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]            w_l2_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
-logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
 logic                                     w_l2_req_ready;
 
 logic                                     w_l2_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
 logic                                     w_l2_resp_ready;
 
 
@@ -72,13 +72,13 @@ logic                                     w_l1d_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_l1d_req_cmd;
 logic [riscv_pkg::PADDR_W-1:0]            w_l1d_req_addr;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_req_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
-logic [msrh_lsu_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
 logic                                     w_l1d_req_ready;
 
 logic                                     w_l1d_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
-logic [msrh_lsu_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
 logic                                     w_l1d_resp_ready;
 
 /* Connection */
@@ -141,7 +141,7 @@ msrh_tile_wrapper
 
 tb_l2_behavior_ram
   #(
-    .DATA_W    (msrh_lsu_pkg::ICACHE_DATA_W),
+    .DATA_W    (msrh_conf_pkg::ICACHE_DATA_W),
     .TAG_W     (msrh_lsu_pkg::L2_CMD_TAG_W),
     .ADDR_W    (riscv_pkg::PADDR_W),
     .BASE_ADDR ('h8000_0000),

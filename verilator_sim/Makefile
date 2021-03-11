@@ -36,9 +36,9 @@ VERILATOR_OPTS += +define+SIMULATION
 
 TOP      = msrh_tb
 
-.PHONY: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small
+.PHONY: rv32_standard rv64_standard rv32_big rv32_giant rv64_big rv32_small rv64_small
 
-all: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small
+all: rv32_standard rv64_standard rv32_big rv32_giant rv64_big rv32_small rv64_small
 
 DECODE_FILES  =
 DECODE_FILES += ../src/decoder_cat.sv
@@ -69,6 +69,9 @@ rv64_standard: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 rv32_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32_big --Mdir obj_dir_rv32_big $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_big_conf_pkg.sv -f $(FILELIST)
 
+rv32_giant: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv32_giant --Mdir obj_dir_rv32_giant $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
+
 rv64_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64_big --Mdir obj_dir_rv64_big $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_big_conf_pkg.sv  -f $(FILELIST)
 
@@ -77,6 +80,9 @@ rv32_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 
 rv64_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64_small --Mdir obj_dir_rv64_small $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_small_conf_pkg.sv  -f $(FILELIST)
+
+rv64_giant: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+	OBJCACHE=ccache verilator --top-module $(TOP) -o ../$(TOP)_rv64_giant --Mdir obj_dir_rv64_giant $(VERILATOR_OPTS) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
 libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi

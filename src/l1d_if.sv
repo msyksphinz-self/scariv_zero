@@ -5,7 +5,7 @@ interface l1d_rd_if;
   logic hit;
   logic miss;
   logic conflict;
-  logic [msrh_lsu_pkg::DCACHE_DATA_W-1:0] data;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
 
   modport master(
     output valid,
@@ -35,7 +35,7 @@ interface l1d_wr_if;
   logic hit;
   logic miss;
   logic conflict;
-  logic [msrh_lsu_pkg::DCACHE_DATA_W-1:0] data;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] be;
 
   modport master(

@@ -7,7 +7,7 @@ module msrh_inst_buffer
 
  output logic                                o_inst_rdy,
  input logic [riscv_pkg::VADDR_W-1: 1]       i_inst_pc,
- input logic [msrh_lsu_pkg::ICACHE_DATA_W-1: 0]  i_inst_in,
+ input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
  output logic                                o_inst_buf_valid,
@@ -48,7 +48,7 @@ logic                           w_head_all_inst_issued;
 typedef struct packed {
   logic                                  vld;
   logic [riscv_pkg::VADDR_W-1: 1]        pc;
-  logic [msrh_lsu_pkg::ICACHE_DATA_W-1: 0]   data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
 } inst_buf_t;
 

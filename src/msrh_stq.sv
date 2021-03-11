@@ -58,8 +58,8 @@ logic                               r_l1d_rd_if_resp;
 logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_pkg::LSU_INST_NUM];
 
 
-function logic [DCACHE_DATA_W-1: 0] merge(logic [DCACHE_DATA_W-1: 0] dcache_in,
-                                                        logic [riscv_pkg::XLEN_W-1: 0] st_data);
+function logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] dcache_in,
+                                                    logic [riscv_pkg::XLEN_W-1: 0] st_data);
   /* verilator lint_off WIDTH */
   return dcache_in | st_data;
 endfunction // merge
@@ -283,7 +283,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (l1d_rd_if.hit) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
-        l1d_wr_if.data  <= {(DCACHE_DATA_W / riscv_pkg::XLEN_W){r_st1_committed_entry.rs2_data}};
+        l1d_wr_if.data  <= {(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W){r_st1_committed_entry.rs2_data}};
         l1d_wr_if.be    <= {{(DCACHE_DATA_B_W-8){8'h00}}, 8'hff} << r_st1_committed_entry.paddr[$clog2(DCACHE_DATA_B_W)-1: 0];
       end else begin
         l1d_wr_if.valid <= 1'b0;

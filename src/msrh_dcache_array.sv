@@ -22,8 +22,8 @@ logic [riscv_pkg::PADDR_W-1: 0]    w_s0_dc_tag_addr;
 logic [msrh_pkg::LSU_INST_NUM:0]       r_s1_dc_read_req_valid;
 logic [msrh_pkg::LSU_INST_NUM:0]       r_s1_dc_read_req_valid_oh;
 logic [msrh_lsu_pkg::DCACHE_WAY_W-1 : 0] w_s1_tag_hit;
-logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] w_s1_data[msrh_lsu_pkg::DCACHE_WAY_W];
-logic [msrh_lsu_pkg::DCACHE_DATA_W-1: 0] w_s1_selected_data;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_data[msrh_lsu_pkg::DCACHE_WAY_W];
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_selected_data;
 
 logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 
@@ -102,7 +102,7 @@ logic [TAG_SIZE-1:0] w_s1_tag;
 
   data_array
     #(
-      .WIDTH(msrh_lsu_pkg::DCACHE_DATA_W),
+      .WIDTH(msrh_conf_pkg::DCACHE_DATA_W),
       .ADDR_W(msrh_lsu_pkg::DCACHE_TAG_LOW)
       )
   data (
@@ -126,7 +126,7 @@ logic [TAG_SIZE-1:0] w_s1_tag;
 end
 endgenerate
 
-bit_oh_or #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_W), .WORDS(msrh_lsu_pkg::ICACHE_WAY_W))
+bit_oh_or #(.WIDTH(msrh_conf_pkg::ICACHE_DATA_W), .WORDS(msrh_lsu_pkg::ICACHE_WAY_W))
 cache_data_sel (.i_oh (w_s1_tag_hit), .i_data(w_s1_data), .o_selected(w_s1_selected_data));
 
 
