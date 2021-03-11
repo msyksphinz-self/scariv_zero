@@ -18,6 +18,7 @@ module msrh_ldq_entry
  input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates,
 
  output                                    msrh_lsu_pkg::ldq_entry_t o_entry,
+ output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ex2_ldq_entries_recv,
 
  input logic                               i_rerun_accept,
 
@@ -28,13 +29,15 @@ module msrh_ldq_entry
  );
 
 msrh_lsu_pkg::ldq_entry_t r_entry;
-assign o_entry = r_entry;
 
 logic                                          w_lrq_is_hazard;
 logic                                          w_lrq_is_assigned;
 logic                                          w_lrq_resolve_match;
 
 logic [msrh_pkg::LSU_INST_NUM-1: 0]            r_ex2_ldq_entries_recv;
+
+assign o_entry = r_entry;
+assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
 assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
                          i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL;

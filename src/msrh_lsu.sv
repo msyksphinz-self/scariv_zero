@@ -94,7 +94,7 @@ msrh_scheduler #(
    .i_ex0_rs_conflicted   (w_ex0_rs_conflicted),
    .i_ex0_rs_conf_index_oh(w_ex0_rs_conf_index_oh),
 
-   .i_pipe_done (),
+   .i_pipe_done (o_ex3_done),
    .i_done_index(),
 
    .o_done_report ()

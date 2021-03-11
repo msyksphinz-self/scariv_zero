@@ -127,6 +127,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (i_sq_l1d_wr_conflict) begin
           r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
         end else begin
+          r_entry.is_valid <= 1'b0;
           r_entry.state <= msrh_lsu_pkg::STQ_INIT;
         end
       end

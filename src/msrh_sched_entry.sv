@@ -27,8 +27,6 @@ module msrh_sched_entry
    output logic [msrh_pkg::DISP_SIZE-1:0] o_grp_id
    );
 
-logic    r_entry_valid;
-logic    w_entry_valid;
 logic    r_issued;
 msrh_pkg::issue_t r_entry;
 msrh_pkg::issue_t w_entry;
@@ -82,7 +80,6 @@ select_early_wr_bus rs2_rel_select
 
 
 always_comb begin
-  w_entry_valid = r_entry_valid;
   w_entry = r_entry;
   w_entry.rs1_ready = r_entry.rs1_ready | w_rs1_entry_hit;
   w_entry.rs2_ready = r_entry.rs2_ready | w_rs2_entry_hit;
@@ -94,7 +91,6 @@ assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_entry_valid <= 1'b0;
     r_entry <= 'h0;
 
     r_state <= msrh_pkg::INIT;
@@ -103,7 +99,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case (r_state)
       msrh_pkg::INIT : begin
         if (i_put) begin
-          r_entry_valid <= 1'b1;
           r_entry <= w_init_entry;
           r_state <= msrh_pkg::WAIT;
         end
@@ -125,7 +120,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       msrh_pkg::DONE : begin
-        r_entry_valid <= 1'b0;
+        r_entry.valid <= 1'b0;
         r_issued <= 1'b0;
         r_state <= msrh_pkg::INIT;
       end
@@ -133,8 +128,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign o_entry_valid = r_entry_valid;
-assign o_entry_ready = r_entry_valid & !r_issued & all_operand_ready(w_entry);
+assign o_entry_valid = r_entry.valid;
+assign o_entry_ready = r_entry.valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done = r_state == msrh_pkg::DONE;
