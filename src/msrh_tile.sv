@@ -51,10 +51,18 @@ msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_lsu_done_rpt    [2];
 
+// ----------------------------------
+// BRU Components
+// ----------------------------------
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_bru_valids;
+msrh_pkg::early_wr_t w_ex1_bru_early_wr;
+msrh_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
+msrh_pkg::done_rpt_t w_bru_done_rpt;
 
 // ----------------------------------
 // Merging Forwarding / Done signals
 // ----------------------------------
+// ALU
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_loop
   assign w_ex1_early_wr[a_idx] = w_ex1_alu_early_wr[a_idx];
   assign w_ex3_phy_wr  [a_idx] = w_ex3_alu_phy_wr  [a_idx];
@@ -62,6 +70,7 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
 end
 endgenerate
 
+// LSU
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[msrh_conf_pkg::ALU_INST_NUM + l_idx] = w_ex1_lsu_early_wr[l_idx];
   assign w_ex3_phy_wr  [msrh_conf_pkg::ALU_INST_NUM + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
@@ -69,6 +78,11 @@ end
 endgenerate
 assign w_done_rpt    [msrh_conf_pkg::ALU_INST_NUM + 0] = w_lsu_done_rpt[0];
 assign w_done_rpt    [msrh_conf_pkg::ALU_INST_NUM + 1] = w_lsu_done_rpt[1];
+
+// BRU
+assign w_ex1_early_wr[msrh_conf_pkg::ALU_INST_NUM + msrh_conf_pkg::LSU_INST_NUM] = w_ex1_bru_early_wr;
+assign w_ex3_phy_wr  [msrh_conf_pkg::ALU_INST_NUM + msrh_conf_pkg::LSU_INST_NUM] = w_ex3_bru_phy_wr  ;
+assign w_done_rpt    [msrh_conf_pkg::ALU_INST_NUM + msrh_conf_pkg::LSU_INST_NUM] = w_bru_done_rpt;
 
 
   msrh_frontend u_frontend (
@@ -173,16 +187,18 @@ u_msrh_bru (
     .disp_valid(w_disp_alu_valids),
     .disp(w_sc_disp),
 
-    .ex1_regread_rs1(regread[bru_reg_port_base+0]),
-    .ex1_regread_rs2(regread[bru_reg_port_base+1]),
+    .ex1_regread_rs1(regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
+                             msrh_conf_pkg::LSU_INST_NUM * 2]),
+    .ex1_regread_rs2(regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
+                             msrh_conf_pkg::LSU_INST_NUM * 2]),
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),
 
-    .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
-    .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
+    .o_ex1_early_wr(w_ex1_bru_early_wr),
+    .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
 
-    .o_done_report (w_alu_done_rpt[alu_idx])
+    .o_done_report (w_bru_done_rpt)
 );
 
 

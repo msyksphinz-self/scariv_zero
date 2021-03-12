@@ -21,7 +21,7 @@ module msrh_bru
 );
 
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
-msrh_pkg::disp_t disp_picked_inst[BRU_PORT_SIZE];
+msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::BRU_DISP_SIZE];
 logic [msrh_conf_pkg::BRU_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::BRU_DISP_SIZE];
 
