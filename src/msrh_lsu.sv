@@ -7,7 +7,7 @@ module msrh_lsu
     input logic i_clk,
     input logic i_reset_n,
 
-    input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
+    input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
     // Replay from LDQ
@@ -42,10 +42,10 @@ module msrh_lsu
     output logic  o_ex3_done
    );
 
-msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
+msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[2];
 logic [1:0] disp_picked_inst_valid;
-logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 
 
 msrh_pkg::issue_t w_rv0_issue;
@@ -54,7 +54,7 @@ logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_rv0_index_oh;
 logic                                 w_ex0_rs_conflicted;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex0_rs_conf_index_oh;
 
-generate for(genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : d_loop
+generate for(genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
 end
 endgenerate
@@ -63,7 +63,7 @@ generate
   for (genvar p_idx = 0; p_idx < 2; p_idx++) begin : pick_loop
     bit_pick_1_index #(
         .NUM(PORT_BASE + p_idx),
-        .SEL_WIDTH(msrh_pkg::DISP_SIZE),
+        .SEL_WIDTH(msrh_conf_pkg::DISP_SIZE),
         .DATA_WIDTH($size(msrh_pkg::disp_t))
     ) u_bit_pick_1_index (
         .i_valids(disp_valid),

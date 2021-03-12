@@ -93,13 +93,13 @@ package msrh_pkg;
 
   typedef struct packed {
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
-    logic [msrh_pkg::DISP_SIZE-1:0] grp_id;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 
-    msrh_pkg::disp_t[msrh_pkg::DISP_SIZE-1:0] inst;
+    msrh_pkg::disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
 
-    logic [msrh_pkg::DISP_SIZE-1:0] done_grp_id;
-    logic [msrh_pkg::DISP_SIZE-1:0] old_rd_valid;
-    logic [msrh_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0] old_rd_valid;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
   } rob_entry_t;
 
   typedef struct packed {

@@ -19,7 +19,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 assign iq_disp.ready = id_disp.ready;
 
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : decode_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : decode_loop
   msrh_pkg::disp_t w_id_disp_next;
 
 logic [ 2: 0] w_op;

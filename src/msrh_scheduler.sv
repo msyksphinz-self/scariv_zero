@@ -10,7 +10,7 @@ module msrh_scheduler
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
- input logic [msrh_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
+ input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
@@ -40,7 +40,7 @@ logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
 
 logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
-logic [msrh_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -58,13 +58,13 @@ end
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
-  logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (r_entry_in_ptr + i_idx == s_idx);
   end
 
   bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   msrh_sched_entry
     #(.IS_STORE(IS_STORE))
@@ -113,7 +113,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 bit_oh_or #(.WIDTH(msrh_pkg::CMT_BLK_W), .WORDS(ENTRY_SIZE)) bit_oh_entry  (.i_oh(w_entry_done), .i_data(w_entry_cmt_id), .o_selected(o_done_report.cmt_id));
-bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.grp_id));
+bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.grp_id));
 
 assign o_done_report.valid = |w_entry_done;
 assign o_done_report.exc_vld = 1'b0;

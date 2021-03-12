@@ -5,7 +5,7 @@ module msrh_stq_entry
 
    input logic                                i_disp_load,
    input logic [msrh_pkg::CMT_BLK_W-1:0]      i_disp_cmt_id,
-   input logic [msrh_pkg::DISP_SIZE-1:0]      i_disp_grp_id,
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0]      i_disp_grp_id,
    input msrh_pkg::disp_t                     i_disp,
 
    /* Forwarding path */
@@ -15,7 +15,7 @@ module msrh_stq_entry
    input logic                                i_ex1_q_valid,
    input msrh_lsu_pkg::ex1_q_update_t         i_ex1_q_updates,
    // Updates from LSU Pipeline EX2 stage
-   input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_tlb_resolve,
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_tlb_resolve,
    input logic                                i_ex2_q_valid,
    input msrh_lsu_pkg::ex2_q_update_t         i_ex2_q_updates,
 
@@ -36,7 +36,7 @@ module msrh_stq_entry
 
    input logic                                i_sq_l1d_wr_conflict,
 
-   input logic [msrh_pkg::LSU_INST_NUM-1: 0]  i_ex3_done
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done
    );
 
 msrh_lsu_pkg::stq_entry_t r_entry;
@@ -140,7 +140,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 function msrh_lsu_pkg::stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
                                       logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
-                                      logic [msrh_pkg::DISP_SIZE-1: 0] grp_id);
+                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
   msrh_lsu_pkg::stq_entry_t ret;
 
   ret.is_valid  = 1'b1;

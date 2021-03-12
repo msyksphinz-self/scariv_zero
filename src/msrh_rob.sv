@@ -4,8 +4,8 @@ module msrh_rob
    input logic                             i_reset_n,
 
    disp_if.watch                           sc_disp,
-   input logic [msrh_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
-   input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[msrh_pkg::DISP_SIZE],
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
+   input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[msrh_conf_pkg::DISP_SIZE],
 
    output logic [msrh_pkg::CMT_BLK_W-1: 0] o_sc_new_cmt_id,
 
@@ -15,9 +15,9 @@ module msrh_rob
    );
 
 logic [msrh_pkg::CMT_BLK_W-1:0]            w_in_cmt_id, w_out_cmt_id;
-logic [msrh_pkg::DISP_SIZE-1:0]            w_disp_grp_id;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]            w_disp_grp_id;
 logic [msrh_pkg::CMT_BLK_SIZE-1:0]         w_entry_all_done;
-logic [msrh_pkg::DISP_SIZE-1:0]            w_entry_done_grp_id[msrh_pkg::CMT_BLK_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0]            w_entry_done_grp_id[msrh_pkg::CMT_BLK_SIZE];
 
 //
 // LRQ Pointer
@@ -31,7 +31,7 @@ inoutptr #(.SIZE(msrh_pkg::CMT_BLK_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i
                                                     .i_out_vld(w_out_vld), .o_out_ptr(w_out_cmt_id));
 
 
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   assign w_disp_grp_id[d_idx] = sc_disp.inst[d_idx].valid;
 end
 endgenerate

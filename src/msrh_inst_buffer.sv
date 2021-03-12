@@ -12,32 +12,32 @@ module msrh_inst_buffer
 
  output logic                                o_inst_buf_valid,
  output logic [riscv_pkg::VADDR_W-1: 1]      o_inst_pc,
- output msrh_pkg::disp_t [msrh_pkg::DISP_SIZE-1:0] o_inst_buf,
+ output msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] o_inst_buf,
  input logic                                i_inst_buf_ready
  );
 
 logic                                       w_inst_buffer_fire;
 
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_arith_pick_up;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_pick_up;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
 
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_disp_or;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_or;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
-msrh_pkg::inst_cat_t w_inst_cat[msrh_pkg::DISP_SIZE];
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_arith;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_ld;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_is_st;
+msrh_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
 
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_arith_msb;
-logic [msrh_pkg::DISP_SIZE-1:0] w_inst_mem_msb;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_msb;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_msb;
 
-logic [msrh_pkg::DISP_SIZE-1:0] rd_valid;
-logic [ 1: 0]           rs1_type[msrh_pkg::DISP_SIZE-1:0];
-logic [msrh_pkg::DISP_SIZE-1:0] rs2_type;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] rd_valid;
+logic [ 1: 0]           rs1_type[msrh_conf_pkg::DISP_SIZE-1:0];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] rs2_type;
 
 logic [ic_word_num-1:0] r_head_inst_issued;
 logic [ic_word_num-1:0] w_head_inst_issued_next;
@@ -115,7 +115,7 @@ encoder
   #(.SIZE(ic_word_num + 1))
 u_start_pos_enc
   (
-   .i_in({{(ic_word_num - msrh_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
+   .i_in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
    .o_out(w_head_start_pos_next)
    );
 
@@ -140,9 +140,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-logic [31: 0] w_inst[msrh_pkg::DISP_SIZE];
+logic [31: 0] w_inst[msrh_conf_pkg::DISP_SIZE];
 
-generate for (genvar w_idx = 0; w_idx < msrh_pkg::DISP_SIZE; w_idx++) begin : word_loop
+generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic [$clog2(ic_word_num)-1: 0] w_buf_id;
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
@@ -179,17 +179,17 @@ endgenerate
 assign w_inst_arith_pick_up = w_inst_is_arith;
 assign w_inst_mem_pick_up   = w_inst_is_ld | w_inst_is_st;
 
-bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
-bit_pick_up #(.WIDTH(msrh_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
 
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp;
 
-bit_tree_msb #(.WIDTH(msrh_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out(w_inst_disp_mask));
+bit_tree_msb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out(w_inst_disp_mask));
 
 
 assign o_inst_buf_valid = |w_inst_disp_mask;
 assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
       o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
@@ -231,7 +231,7 @@ function void dump_json(int fp);
     end
   end
 
-  for (int d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     if (o_inst_buf[d_idx].valid) begin
       $fwrite(fp, "    \"o_inst_buf[%d]\" : {", d_idx);
       $fwrite(fp, "      valid : %d,",      o_inst_buf[d_idx].valid);

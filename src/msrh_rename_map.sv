@@ -3,27 +3,27 @@ module msrh_rename_map
    input logic                              i_clk,
    input logic                              i_reset_n,
 
-   input logic [msrh_pkg::DISP_SIZE * 2-1:0] i_arch_valid,
-   input logic [ 4: 0]                      i_arch_id[msrh_pkg::DISP_SIZE * 2],
-   output logic [msrh_pkg::RNID_W-1: 0]      o_rnid[msrh_pkg::DISP_SIZE * 2],
+   input logic [msrh_conf_pkg::DISP_SIZE * 2-1:0] i_arch_valid,
+   input logic [ 4: 0]                      i_arch_id[msrh_conf_pkg::DISP_SIZE * 2],
+   output logic [msrh_pkg::RNID_W-1: 0]      o_rnid[msrh_conf_pkg::DISP_SIZE * 2],
 
 
-   input logic [msrh_pkg::DISP_SIZE-1:0]     i_update,
-   input logic [ 4: 0]                      i_update_arch_id [msrh_pkg::DISP_SIZE],
-   input logic [msrh_pkg::RNID_W-1: 0]       i_update_rnid [msrh_pkg::DISP_SIZE]
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0]     i_update,
+   input logic [ 4: 0]                      i_update_arch_id [msrh_conf_pkg::DISP_SIZE],
+   input logic [msrh_pkg::RNID_W-1: 0]       i_update_rnid [msrh_conf_pkg::DISP_SIZE]
    );
 
 logic [msrh_pkg::RNID_W-1: 0]                map[31: 0];
 
-function logic [msrh_pkg::RNID_W: 0] select_latest_rnid (input logic [msrh_pkg::DISP_SIZE-1:0] i_update,
+function logic [msrh_pkg::RNID_W: 0] select_latest_rnid (input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_update,
                                                         input logic [ 4: 0]                tgt_arch_id,
-                                                        input logic [ 4: 0]                i_update_arch_id [msrh_pkg::DISP_SIZE],
-                                                        input logic [msrh_pkg::RNID_W-1: 0] i_update_rnid [msrh_pkg::DISP_SIZE]);
-logic [msrh_pkg::RNID_W-1: 0]                                                               rnid_tmp[msrh_pkg::DISP_SIZE];
-logic [msrh_pkg::DISP_SIZE-1: 0]                                                            valid_tmp;
+                                                        input logic [ 4: 0]                i_update_arch_id [msrh_conf_pkg::DISP_SIZE],
+                                                        input logic [msrh_pkg::RNID_W-1: 0] i_update_rnid [msrh_conf_pkg::DISP_SIZE]);
+logic [msrh_pkg::RNID_W-1: 0]                                                               rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]                                                            valid_tmp;
 logic [msrh_pkg::RNID_W: 0]                                                                 ret;
 
-  for (int i = 0; i < msrh_pkg::DISP_SIZE; i++) begin
+  for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
     if (i_update[i] && i_update_arch_id[i] == tgt_arch_id) begin
       rnid_tmp [i] = i_update_rnid[i];
       valid_tmp[i] = 1'b1;
@@ -38,7 +38,7 @@ logic [msrh_pkg::RNID_W: 0]                                                     
     end
   end
 
-  ret = {valid_tmp[msrh_pkg::DISP_SIZE-1], rnid_tmp[msrh_pkg::DISP_SIZE-1]};
+  ret = {valid_tmp[msrh_conf_pkg::DISP_SIZE-1], rnid_tmp[msrh_conf_pkg::DISP_SIZE-1]};
   return ret;
 
 endfunction // select_latest_rnid
@@ -64,7 +64,7 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_rnid;
 end
 endgenerate
 
-generate for (genvar i = 0; i < msrh_pkg::DISP_SIZE; i++) begin : rnid_loop
+generate for (genvar i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin : rnid_loop
   assign o_rnid[i * 2 + 0] = map[i_arch_id[i * 2 + 0]];
   assign o_rnid[i * 2 + 1] = map[i_arch_id[i * 2 + 1]];
 end

@@ -20,19 +20,24 @@ module tag_array
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      o_tag <= {TAG_W{1'b0}};
       o_tag_valid <= 1'b0;
 
       r_tag_valids <= {(2**WORDS){1'b0}};
     end else begin
       if (i_wr) begin
-        r_tag_array[i_addr[WORDS-1:0]] <= i_tag;
         r_tag_valids[i_addr[WORDS-1:0]] <= i_tag_valid;
       end else begin
-        o_tag <= r_tag_array[i_addr[WORDS-1:0]];
         o_tag_valid <= r_tag_valids[i_addr[WORDS-1:0]];
       end
     end
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+  always_ff @ (posedge i_clk) begin
+    if (i_wr) begin
+      r_tag_array[i_addr[WORDS-1:0]] <= i_tag;
+    end
+    o_tag <= r_tag_array[i_addr[WORDS-1:0]];
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 endmodule

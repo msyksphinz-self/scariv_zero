@@ -3,23 +3,23 @@ module msrh_inflight_list
    input logic                               i_clk,
    input logic                               i_reset_n,
 
-   input logic [msrh_pkg::RNID_W-1:0]        i_rnid[msrh_pkg::DISP_SIZE*2],
-   output logic [msrh_pkg::DISP_SIZE*2-1: 0] o_valids,
+   input logic [msrh_pkg::RNID_W-1:0]        i_rnid[msrh_conf_pkg::DISP_SIZE*2],
+   output logic [msrh_conf_pkg::DISP_SIZE*2-1: 0] o_valids,
 
-   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
-   input logic [msrh_pkg::RNID_W-1:0]        i_update_fetch_addr[msrh_pkg::DISP_SIZE],
-   input logic [msrh_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
+   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
+   input logic [msrh_pkg::RNID_W-1:0]        i_update_fetch_addr[msrh_conf_pkg::DISP_SIZE],
+   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
    );
 
 logic [msrh_pkg::RNID_SIZE-1: 0]             r_inflight_list;
 generate for (genvar rn_idx = 0; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
-  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
-  logic [msrh_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
   logic w_update_fetch_vld;
   logic w_update_fetch_data;
-  for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_pkg::DISP_SIZE; d_fetch_idx++) begin
+  for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
     assign w_update_fetch_vld_tmp [d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_addr[d_fetch_idx] == rn_idx;
     assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_data[d_fetch_idx];
   end
@@ -50,7 +50,7 @@ end // block: list_loop
 endgenerate
 
 
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
 logic w_update_fetch_vld_0;
 logic w_update_fetch_vld_1;
 logic w_update_fetch_data_0;
@@ -60,7 +60,7 @@ logic w_update_fetch_data_1;
   // Forwarding information from update_fetch path
   select_latest_1bit
     #(
-      .SEL_WIDTH(msrh_pkg::DISP_SIZE),
+      .SEL_WIDTH(msrh_conf_pkg::DISP_SIZE),
       .KEY_WIDTH(msrh_pkg::RNID_W)
       )
   u_select_latest_update_0
@@ -78,7 +78,7 @@ logic w_update_fetch_data_1;
   // Forwarding information from update_fetch path
   select_latest_1bit
     #(
-      .SEL_WIDTH(msrh_pkg::DISP_SIZE),
+      .SEL_WIDTH(msrh_conf_pkg::DISP_SIZE),
       .KEY_WIDTH(msrh_pkg::RNID_W)
       )
   u_select_latest_update_1

@@ -4,25 +4,25 @@ module msrh_stq
     input logic i_clk,
     input logic i_reset_n,
 
-    input logic         [msrh_pkg::DISP_SIZE-1:0] i_disp_valid,
+    input logic         [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
     disp_if.slave                                 disp,
 
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
    // Updates from LSU Pipeline EX1 stage
-   input ex1_q_update_t        i_ex1_q_updates[msrh_pkg::LSU_INST_NUM],
+   input ex1_q_update_t        i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
-   input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
-   input ex2_q_update_t        i_ex2_q_updates[msrh_pkg::LSU_INST_NUM],
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
+   input ex2_q_update_t        i_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM],
 
    // Forwarding checker
-   fwd_check_if.slave                        ex2_fwd_check_if[msrh_pkg::LSU_INST_NUM],
+   fwd_check_if.slave                        ex2_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
 
-   lsu_replay_if.master stq_replay_if[msrh_pkg::LSU_INST_NUM],
+   lsu_replay_if.master stq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
-   input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
@@ -43,19 +43,19 @@ module msrh_stq
 // =========================
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 
 stq_entry_t w_stq_entries[MEM_Q_SIZE];
 
-logic [LDQ_SIZE-1: 0] w_rerun_request[msrh_pkg::LSU_INST_NUM];
-logic [LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_pkg::LSU_INST_NUM];
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[STQ_SIZE] ;
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[STQ_SIZE] ;
+logic [LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
+logic [LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[STQ_SIZE] ;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[STQ_SIZE] ;
 
 logic                               r_l1d_rd_if_resp;
 
 // Forwarding Logic
-logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_pkg::LSU_INST_NUM];
+logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_conf_pkg::LSU_INST_NUM];
 
 
 function logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] dcache_in,
@@ -125,19 +125,19 @@ end
   generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
-  logic [msrh_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
-  logic [msrh_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
     for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == s_idx);
     end
 
   bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
 
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
-  logic [msrh_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
   ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_stq_entries[s_idx].cmt_id), .grp_id(w_stq_entries[s_idx].grp_id),
                                          .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
@@ -189,14 +189,14 @@ end
      .i_ex3_done (i_ex3_done)
      );
 
-    for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+    for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
       assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == STQ_READY &&
                                              w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
     assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT);
 
     // Forwarding check
-    for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+    for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
       assign w_ex2_fwd_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                            w_stq_entries[s_idx].rs2_got_data &
                                            (w_stq_entries[s_idx].paddr == ex2_fwd_check_if[p_idx].paddr);
@@ -207,7 +207,7 @@ endgenerate
 // ===============
 // replay logic
 // ===============
-generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
   stq_entry_t w_stq_replay_entry;
 
@@ -229,7 +229,7 @@ endgenerate
 // =========================
 // STQ Forwarding Logic
 // =========================
-generate for (genvar p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
   logic [STQ_SIZE-1: 0] w_ex2_fwd_vld_oh;
   stq_entry_t w_stq_fwd_entry;
 

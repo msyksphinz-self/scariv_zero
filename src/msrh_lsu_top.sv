@@ -3,10 +3,10 @@ module msrh_lsu_top
     input logic i_clk,
     input logic i_reset_n,
 
-    input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
+    input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
-    regread_if.master   ex1_regread[msrh_pkg::LSU_INST_NUM * 2-1:0],
+    regread_if.master   ex1_regread[msrh_conf_pkg::LSU_INST_NUM * 2-1:0],
 
     l2_req_if.master  l1d_ext_req,
     l2_resp_if.slave  l1d_ext_resp,
@@ -16,8 +16,8 @@ module msrh_lsu_top
     input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_pkg::LSU_INST_NUM],
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_pkg::LSU_INST_NUM],
+    output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_conf_pkg::LSU_INST_NUM],
+    output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_conf_pkg::LSU_INST_NUM],
 
     output msrh_pkg::done_rpt_t o_done_report[2],  // LDQ done report, STQ done report
 
@@ -25,29 +25,29 @@ module msrh_lsu_top
     input msrh_pkg::commit_blk_t i_commit
    );
 
-l1d_rd_if  w_l1d_rd_if [msrh_pkg::LSU_INST_NUM + 1] ();
+l1d_rd_if  w_l1d_rd_if [msrh_conf_pkg::LSU_INST_NUM + 1] ();
 l1d_wr_if  w_l1d_wr_if();
-l1d_lrq_if w_l1d_lrq_if[msrh_pkg::LSU_INST_NUM] ();
+l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
-fwd_check_if w_ex2_fwd_check[msrh_pkg::LSU_INST_NUM] ();
+fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
 lrq_search_if w_lrq_search_if ();
 msrh_lsu_pkg::lrq_resolve_t w_lrq_resolve;
 
 // Feedbacks to LDQ / STQ
-msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_pkg::LSU_INST_NUM];
-logic [msrh_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
-msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_pkg::LSU_INST_NUM];
+msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
+msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 
-lsu_replay_if w_ldq_replay[msrh_pkg::LSU_INST_NUM]();
-lsu_replay_if w_stq_replay[msrh_pkg::LSU_INST_NUM]();
+lsu_replay_if w_ldq_replay[msrh_conf_pkg::LSU_INST_NUM]();
+lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 
-logic [msrh_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
 
-logic [msrh_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
-logic [msrh_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
 
-generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
+generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
   msrh_lsu
   #(
@@ -88,7 +88,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_pkg::LSU_INST_NUM; lsu_idx++) b
 end // block: lsu_loop
 endgenerate
 
-generate for (genvar d_idx = 0; d_idx < msrh_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == msrh_pkg::CAT_LD;
   assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == msrh_pkg::CAT_ST;
 end
@@ -145,7 +145,7 @@ msrh_stq
  .i_ex3_done (w_ex3_done),
 
  .i_commit (i_commit),
- .l1d_rd_if (w_l1d_rd_if[msrh_pkg::LSU_INST_NUM]),
+ .l1d_rd_if (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 
  .i_lrq_resolve (w_lrq_resolve),

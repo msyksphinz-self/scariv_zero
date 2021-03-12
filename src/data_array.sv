@@ -17,18 +17,14 @@ module data_array
 
 logic [WIDTH-1:0] data_array[2**ADDR_W];
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    o_data <= {WIDTH{1'b0}};
-  end else begin
-    if (i_wr) begin
-      for(int byte_idx = 0; byte_idx < WIDTH/8; byte_idx++) begin
-        data_array[i_addr][byte_idx*8 +: 8] <= i_be[byte_idx] ? i_data[byte_idx*8 +: 8] :
-                                               data_array[i_addr][byte_idx*8 +: 8];
-      end
+always_ff @ (posedge i_clk) begin
+  if (i_wr) begin
+    for(int byte_idx = 0; byte_idx < WIDTH/8; byte_idx++) begin
+      data_array[i_addr][byte_idx*8 +: 8] <= i_be[byte_idx] ? i_data[byte_idx*8 +: 8] :
+                       data_array[i_addr][byte_idx*8 +: 8];
     end
-    o_data <= data_array[i_addr];
   end
+  o_data <= data_array[i_addr];
 end
 
 endmodule

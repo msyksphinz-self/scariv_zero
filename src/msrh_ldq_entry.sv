@@ -6,25 +6,25 @@ module msrh_ldq_entry
 
  input logic                               i_disp_load,
  input logic [msrh_pkg::CMT_BLK_W-1:0]     i_disp_cmt_id,
- input logic [msrh_pkg::DISP_SIZE-1:0]     i_disp_grp_id,
+ input logic [msrh_conf_pkg::DISP_SIZE-1:0]     i_disp_grp_id,
  input                                     msrh_pkg::disp_t i_disp,
 
  // Updates from LSU Pipeline EX1 stage
  input logic                               i_ex1_q_valid,
  input                                     msrh_lsu_pkg::ex1_q_update_t i_ex1_q_updates,
  // Updates from LSU Pipeline EX2 stage
- input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
+ input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
  input logic                               i_ex2_q_valid,
  input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates,
 
  output                                    msrh_lsu_pkg::ldq_entry_t o_entry,
- output logic [msrh_pkg::LSU_INST_NUM-1: 0] o_ex2_ldq_entries_recv,
+ output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_ex2_ldq_entries_recv,
 
  input logic                               i_rerun_accept,
 
  input                                     msrh_lsu_pkg::lrq_resolve_t i_lrq_resolve,
 
- input logic [msrh_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
+ input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
  input logic                               i_ldq_done
  );
 
@@ -34,7 +34,7 @@ logic                                          w_lrq_is_hazard;
 logic                                          w_lrq_is_assigned;
 logic                                          w_lrq_resolve_match;
 
-logic [msrh_pkg::LSU_INST_NUM-1: 0]            r_ex2_ldq_entries_recv;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            r_ex2_ldq_entries_recv;
 
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
@@ -63,7 +63,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
           r_entry.inst            <= i_ex1_q_updates.inst;
 
-          for (int p_idx = 0; p_idx < msrh_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+          for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
             r_ex2_ldq_entries_recv[p_idx] <= i_ex1_q_valid & !i_ex1_q_updates.hazard_vld;
           end
         end
@@ -122,7 +122,7 @@ end
 
 function msrh_lsu_pkg::ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
                                                     logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
-                                                    logic [msrh_pkg::DISP_SIZE-1: 0] grp_id);
+                                                    logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
   msrh_lsu_pkg::ldq_entry_t ret;
 
   ret.is_valid  = 1'b1;

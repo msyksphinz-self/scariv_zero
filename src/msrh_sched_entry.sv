@@ -8,7 +8,7 @@ module msrh_sched_entry
 
    input logic                            i_put,
    input logic [msrh_pkg::CMT_BLK_W-1:0]  i_cmt_id,
-   input logic [msrh_pkg::DISP_SIZE-1:0]  i_grp_id,
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_grp_id,
    input                                  msrh_pkg::disp_t i_put_data,
 
    output logic                           o_entry_valid,
@@ -24,7 +24,7 @@ module msrh_sched_entry
    input logic                            i_pipe_done,
    output logic                           o_entry_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
-   output logic [msrh_pkg::DISP_SIZE-1:0] o_grp_id
+   output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id
    );
 
 logic    r_issued;

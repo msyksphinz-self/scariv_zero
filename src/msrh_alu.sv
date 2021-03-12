@@ -4,7 +4,7 @@ module msrh_alu #(
     input logic i_clk,
     input logic i_reset_n,
 
-    input logic         [msrh_pkg::DISP_SIZE-1:0] disp_valid,
+    input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
 
     regread_if.master ex1_regread_rs1,
@@ -21,18 +21,18 @@ module msrh_alu #(
     output msrh_pkg::done_rpt_t o_done_report
 );
 
-localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM;
+localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
 
 initial begin
-  if (msrh_conf_pkg::ARITH_DISP_SIZE != (msrh_conf_pkg::ARITH_DISP_SIZE / msrh_pkg::ALU_INST_NUM) * msrh_pkg::ALU_INST_NUM ) begin
+  if (msrh_conf_pkg::ARITH_DISP_SIZE != (msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM) * msrh_conf_pkg::ALU_INST_NUM ) begin
     $fatal("ARITH_DISP_SIZE must be multiple of ALU_INST_NUM");
   end
 end
 
-msrh_pkg::disp_t w_disp_inst[msrh_pkg::DISP_SIZE];
+msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[ALU_PORT_SIZE];
 logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
 
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
