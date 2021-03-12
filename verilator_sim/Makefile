@@ -47,7 +47,7 @@ DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 
 ../src/decoder_cat.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb cat
+	cd ../src && ./build_decoder.rb inst_cat
 ../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb alu_ctrl
 ../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json

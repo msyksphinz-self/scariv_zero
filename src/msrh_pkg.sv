@@ -4,6 +4,8 @@ package msrh_pkg;
   import riscv_pkg::*;
   import msrh_conf_pkg::*;
 
+  import decoder_inst_cat_pkg::*;
+
   localparam PC_INIT_VAL = 'h8000_0000;
 
   localparam INST_BUF_SIZE = 4;
@@ -28,13 +30,6 @@ package msrh_pkg;
     logic valid;
     logic [31:0] inst;
   } inst_buf_t;
-
-  typedef enum logic [1:0] {
-    NONE,
-    CAT_ARITH,
-    CAT_LD,
-    CAT_ST
-  } inst_cat_t;
 
   typedef enum {
     GPR,

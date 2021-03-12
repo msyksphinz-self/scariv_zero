@@ -1,3 +1,18 @@
+package decoder_lsu_ctrl_pkg;
+  typedef enum logic [0: 0] {
+    SIZE__ = 0,
+    SIZE_DW = 1
+  } size_t;
+  typedef enum logic [0: 0] {
+    IS_LOAD__ = 0,
+    IS_LOAD_1 = 1
+  } is_load_t;
+  typedef enum logic [0: 0] {
+    IS_STORE__ = 0,
+    IS_STORE_1 = 1
+  } is_store_t;
+endpackage;
+
 module decoder_lsu_ctrl (
   input logic [31:0] inst,
   output logic size,
