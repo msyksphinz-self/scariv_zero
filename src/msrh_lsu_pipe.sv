@@ -84,7 +84,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = (r_ex2_issue.cat == msrh_pkg::CAT_LD) & !o_ex2_l1d_mispredicted;
+  w_ex3_issue_next.valid = (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD) & !o_ex2_l1d_mispredicted;
 end
 
 
@@ -149,7 +149,7 @@ assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
-assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == msrh_pkg::CAT_ST ?
+assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
 assign w_ex1_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
@@ -204,7 +204,7 @@ assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 // Forwarding check
-assign ex2_fwd_check_if.valid = r_ex2_issue.valid & r_ex2_issue.cat == msrh_pkg::CAT_LD;
+assign ex2_fwd_check_if.valid = r_ex2_issue.valid & r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD;
 assign ex2_fwd_check_if.paddr = r_ex2_paddr;
 
 //

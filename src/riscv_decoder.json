@@ -3,7 +3,7 @@
         "name":"lui        r[11:7],h[31:12]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
-        "cat": [["cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"]],
         "alu_ctrl":[["op", "sign_lui"], ["imm", "s"]]
     },
@@ -11,7 +11,7 @@
         "name":"auipc      r[11:7],h[31:12]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
-        "cat": [["cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "pc"]],
         "alu_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
     },
@@ -19,7 +19,7 @@
         "name":"add        r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
         "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "cat": [["cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_add"] ]
     },
@@ -27,7 +27,7 @@
         "name":"sub        r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
         "field": ["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "cat": [["cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_sub"] ]
     },
@@ -35,15 +35,23 @@
         "name":"addi       r[11:7],r[19:15],h[31:20]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
-        "cat": [["cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sign_add"], ["imm", "s"]]
+    },
+    {
+        "name":"addiw      r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sign_add_32"], ["imm", "s"]]
     },
     {
         "name":"ld         r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
-        "cat": [["cat", "ld"]],
+        "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "dw"], ["is_load", "1"]]
     },
@@ -51,7 +59,7 @@
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
-        "cat": [["cat", "st"]],
+        "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "dw"], ["is_store", "1"]]
     }

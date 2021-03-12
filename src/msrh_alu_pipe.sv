@@ -1,7 +1,8 @@
 module msrh_alu_pipe
-  #(
-    parameter RV_ENTRY_SIZE = 32
-    )
+  import decoder_alu_ctrl_pkg::*;
+#(
+  parameter RV_ENTRY_SIZE = 32
+  )
 (
     input logic i_clk,
     input logic i_reset_n,
@@ -150,12 +151,17 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
       r_ex3_index <= r_ex2_index;
 
       case (r_ex2_pipe_ctrl.op)
-        3'b001: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
+        OP_SIGN_LUI: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
         /* verilator lint_off WIDTH */
-        3'b010: r_ex3_result <= r_ex2_issue.pc_addr +
+        OP_SIGN_AUIPC: r_ex3_result <= r_ex2_issue.pc_addr +
                                 {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
-        3'b011: r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
-        3'b100: r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
+        OP_SIGN_ADD: r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
+        OP_SIGN_SUB: r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
+        OP_SIGN_ADD_32: begin
+          logic [31: 0] tmp_ex2_result_d;
+          assign tmp_ex2_result_d = w_ex2_rs1_selected_data[31:0] + w_ex2_rs2_selected_data[31:0];
+          r_ex3_result <= {{(riscv_pkg::XLEN_W-32){tmp_ex2_result_d[31]}}, tmp_ex2_result_d[31: 0]};
+        end
         default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
       endcase
     end

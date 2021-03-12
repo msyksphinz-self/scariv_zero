@@ -152,12 +152,12 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst[w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
 
   logic [ 1: 0] raw_cat;
-  decoder_cat
-  u_decoder_cat
-    (
-     .inst(w_inst[w_idx]),
-     .cat(raw_cat)
-     );
+  decoder_inst_cat
+  u_decoder_inst_cat
+  (
+    .inst(w_inst[w_idx]),
+    .inst_cat(raw_cat)
+  );
   assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(raw_cat);
 
   decoder_reg
@@ -170,9 +170,9 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
      );
 
 
-  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ARITH);
-  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_LD  );
-  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == msrh_pkg::CAT_ST  );
+  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
+  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD  );
+  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
 end
 endgenerate
 

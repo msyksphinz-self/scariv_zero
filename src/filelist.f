@@ -1,3 +1,8 @@
+../src/decoder_inst_cat.sv
+../src/decoder_reg.sv
+../src/decoder_alu_ctrl.sv
+../src/decoder_lsu_ctrl.sv
+
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
 
@@ -43,11 +48,6 @@
 ../src/msrh_freelist.sv
 ../src/msrh_rename_map.sv
 ../src/msrh_inflight_list.sv
-
-../src/decoder_cat.sv
-../src/decoder_reg.sv
-../src/decoder_alu_ctrl.sv
-../src/decoder_lsu_ctrl.sv
 
 ../src/msrh_scheduler.sv
 ../src/msrh_sched_entry.sv

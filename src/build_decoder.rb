@@ -133,6 +133,23 @@ puts result_line
 
 sv_file = open("decoder_" + ctrl_idx + ".sv", "w")
 
+sv_file.puts "package decoder_" + ctrl_idx + "_pkg;"
+ctrl_fields.each_with_index{|ct, i|
+  sv_file.puts "  typedef enum logic [" + (Math.log2(ct.op_list.length)-1).ceil.to_s + ": 0] {"
+  ct.op_list.each_with_index {|op, i|
+    sv_file.print "    " + ct.name.upcase + "_" + op.upcase + " = " + i.to_s
+    if i == ct.op_list.length - 1 then
+      sv_file.print "\n"
+    else
+      sv_file.print ",\n"
+    end
+  }
+  sv_file.puts "  } " + ct.name + "_t;"
+}
+
+sv_file.puts "endpackage;\n\n"
+
+
 sv_file.puts "module decoder_" + ctrl_idx + " ("
 sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
 ctrl_fields.each_with_index{|ct, i|

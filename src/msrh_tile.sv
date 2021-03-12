@@ -104,10 +104,10 @@ assign w_done_rpt    [msrh_conf_pkg::ALU_INST_NUM + 1] = w_lsu_done_rpt[1];
 
   generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
     assign w_disp_alu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
-                                      (w_sc_disp.inst[d_idx].cat == msrh_pkg::CAT_ARITH);
+                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
-                                      (w_sc_disp.inst[d_idx].cat == msrh_pkg::CAT_LD ||
-                                       w_sc_disp.inst[d_idx].cat == msrh_pkg::CAT_ST);
+                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
+                                       w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
   end
   endgenerate
 
