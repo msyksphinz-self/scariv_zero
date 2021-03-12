@@ -163,6 +163,29 @@ u_msrh_lsu_top
    );
 
 
+localparam bru_reg_port_base = msrh_conf_pkg::ALU_INST_NUM * 2 + msrh_conf_pkg::LSU_INST_NUM * 2;
+
+msrh_bru
+u_msrh_bru (
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+
+    .disp_valid(w_disp_alu_valids),
+    .disp(w_sc_disp),
+
+    .ex1_regread_rs1(regread[bru_reg_port_base+0]),
+    .ex1_regread_rs2(regread[bru_reg_port_base+1]),
+
+    .i_early_wr(w_ex1_early_wr),
+    .i_phy_wr  (w_ex3_phy_wr),
+
+    .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
+    .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
+
+    .o_done_report (w_alu_done_rpt[alu_idx])
+);
+
+
   msrh_phy_registers #(
       .RD_PORT_SIZE(msrh_conf_pkg::LSU_INST_NUM * 2 +
                     msrh_conf_pkg::ALU_INST_NUM * 2)

@@ -9,6 +9,7 @@ package msrh_conf_pkg;
   localparam LSU_INST_NUM = 2;
 
   localparam ARITH_DISP_SIZE = 4;
-  localparam MEM_DISP_SIZE = 4;
+  localparam MEM_DISP_SIZE   = 4;
+  localparam BRU_DISP_SIZE   = 1;
 
 endpackage // msrh_conf_pkg

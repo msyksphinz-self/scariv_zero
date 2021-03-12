@@ -71,3 +71,5 @@
 ../src/msrh_stq_entry.sv
 ../src/msrh_dcache.sv
 ../src/msrh_dcache_array.sv
+
+../src/msrh_bru.sv
