@@ -206,7 +206,7 @@ function void dump_json(int fp);
   // $fwrite(fp, "    state : \"%d\",\n", r_ic_state);
   if (r_s1_valid) begin
     for(int way = 0; way < msrh_lsu_pkg::ICACHE_WAY_W; way++) begin
-      $fwrite(fp, "    w_s1_tag_hit[%d]: \"%d\",\n", way, w_s1_tag_hit[way]);
+      $fwrite(fp, "    \"w_s1_tag_hit[%1d]\" : \"%d\",\n", way, w_s1_tag_hit[way]);
     end
   end
   if (r_s2_valid) begin

@@ -313,20 +313,20 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "    \"msrh_stq_entry[%d]\" : {", index);
     $fwrite(fp, "       valid : %d, ", entry.is_valid);
     $fwrite(fp, "       pc_addr : \"0x%0x\", ", entry.inst.pc_addr);
-    $fwrite(fp, "       inst : \"%08x\", ", entry.inst);
+    $fwrite(fp, "       inst : \"%08x\", ", entry.inst.inst);
 
     $fwrite(fp, "       cmt_id : %d, ", entry.cmt_id);
     $fwrite(fp, "       grp_id : %d, ", entry.grp_id);
 
-    $fwrite(fp, "       state : \"%s\, ", entry.state == STQ_INIT               ? "INIT" :
-                                          entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
-                                          entry.state == STQ_READY              ? "READY" :
-                                          entry.state == STQ_DONE               ? "DONE" :
-                                          entry.state == STQ_COMMIT             ? "COMMIT" :
-                                          entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
-                                          entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
-                                          entry.state == STQ_COMMIT_L1D_CHECK   ? "COMMIT_L1D_CHECK" :
-                                          entry.state == STQ_L1D_UPDATE         ? "L1D_UPDATE" : "x");
+    $fwrite(fp, "       state : \"%s\", ", entry.state == STQ_INIT               ? "INIT" :
+                                           entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
+                                           entry.state == STQ_READY              ? "READY" :
+                                           entry.state == STQ_DONE               ? "DONE" :
+                                           entry.state == STQ_COMMIT             ? "COMMIT" :
+                                           entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
+                                           entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
+                                           entry.state == STQ_COMMIT_L1D_CHECK   ? "COMMIT_L1D_CHECK" :
+                                           entry.state == STQ_L1D_UPDATE         ? "L1D_UPDATE" : "x");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 

@@ -135,7 +135,7 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "       cmt_id : %d, ", entry.entry.cmt_id);
     $fwrite(fp, "       grp_id : %d, ", entry.entry.grp_id);
 
-    $fwrite(fp, "       state : \"%s\, ", entry.state == msrh_pkg::INIT ? "INIT" :
+    $fwrite(fp, "       state : \"%s\", ", entry.state == msrh_pkg::INIT ? "INIT" :
             entry.state == msrh_pkg::WAIT ? "WAIT" :
             entry.state == msrh_pkg::ISSUED ? "ISSUED" :
             entry.state == msrh_pkg::DONE ? "DONE" : "x");

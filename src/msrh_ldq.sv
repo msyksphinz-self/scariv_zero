@@ -195,13 +195,13 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     $fwrite(fp, "       cmt_id : %d, ", entry.cmt_id);
     $fwrite(fp, "       grp_id : %d, ", entry.grp_id);
 
-    $fwrite(fp, "       state : \"%s\, ", entry.state == LDQ_INIT     ? "LDQ_INIT" :
-                                          entry.state == LDQ_EX2_RUN  ? "LDQ_EX2_RUN" :
-                                          entry.state == LDQ_LRQ_HAZ  ? "LDQ_LRQ_HAZ" :
-                                          entry.state == LDQ_STQ_HAZ  ? "LDQ_STQ_HAZ" :
-                                          entry.state == LDQ_TLB_HAZ  ? "LDQ_TLB_HAZ" :
-                                          entry.state == LDQ_READY    ? "LDQ_READY" :
-                                          entry.state == LDQ_EX3_DONE ? "LDQ_EX3_DONE" : "x");
+    $fwrite(fp, "       state : \"%s\", ", entry.state == LDQ_INIT     ? "LDQ_INIT" :
+                                           entry.state == LDQ_EX2_RUN  ? "LDQ_EX2_RUN" :
+                                           entry.state == LDQ_LRQ_HAZ  ? "LDQ_LRQ_HAZ" :
+                                           entry.state == LDQ_STQ_HAZ  ? "LDQ_STQ_HAZ" :
+                                           entry.state == LDQ_TLB_HAZ  ? "LDQ_TLB_HAZ" :
+                                           entry.state == LDQ_READY    ? "LDQ_READY" :
+                                           entry.state == LDQ_EX3_DONE ? "LDQ_EX3_DONE" : "x");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 

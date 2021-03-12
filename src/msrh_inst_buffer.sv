@@ -246,11 +246,11 @@ function void dump_json(int fp);
       $fwrite(fp, "      rs1_type   : \"%d\",", o_inst_buf[d_idx].rs1_type);
       $fwrite(fp, "      rs1_regidx : %d,", o_inst_buf[d_idx].rs1_regidx);
 
-      $fwrite(fp, "      rs2_valid  : %d\",", o_inst_buf[d_idx].rs2_valid);
+      $fwrite(fp, "      rs2_valid  : %d,", o_inst_buf[d_idx].rs2_valid);
       $fwrite(fp, "      rs2_type   : \"%d\",", o_inst_buf[d_idx].rs2_type);
       $fwrite(fp, "      rs2_regidx : %d,", o_inst_buf[d_idx].rs2_regidx);
 
-      $fwrite(fp, "      cat[d_idx] : \"%d\",", o_inst_buf[d_idx].cat);
+      $fwrite(fp, "      \"cat[d_idx]\" : \"%d\",", o_inst_buf[d_idx].cat);
       $fwrite(fp, "    },\n");
     end
   end
