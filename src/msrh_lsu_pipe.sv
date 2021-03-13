@@ -38,7 +38,7 @@ module msrh_lsu_pipe
  output logic                          o_tlb_resolve,
  output                                msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
- output logic                          o_ex3_done
+ done_if.master                        ex3_done_if
 );
 
 //
@@ -219,7 +219,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_done = r_ex3_issue.valid;
+assign ex3_done_if.done = r_ex3_issue.valid;
+assign ex3_done_if.index_oh = 'h0;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;

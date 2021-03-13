@@ -17,9 +17,7 @@ module msrh_alu_pipe
     output msrh_pkg::early_wr_t o_ex1_early_wr,
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
- output logic o_ex3_done,
- output logic [RV_ENTRY_SIZE-1: 0] o_ex3_index
-
+  done_if.master ex3_done_if
 );
 
   typedef struct packed {
@@ -172,7 +170,7 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
   assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
   assign o_ex3_phy_wr.rd_data = r_ex3_result;
 
-assign o_ex3_done = r_ex3_issue.valid;
-assign o_ex3_index = r_ex3_index;
+assign ex3_done_if.done     = r_ex3_issue.valid;
+assign ex3_done_if.index_oh = r_ex3_index;
 
 endmodule // msrh_alu_pipe

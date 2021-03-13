@@ -37,8 +37,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-logic         w_ex3_done;
-logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_ex3_index;
+done_if #(.RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if();
 
 msrh_disp_pickup
   #(
@@ -78,8 +77,7 @@ u_msrh_scheduler
    .i_ex0_rs_conflicted    (1'b0),
    .i_ex0_rs_conf_index_oh ('h0),
 
-   .i_pipe_done(w_ex3_done),
-   .i_done_index(w_ex3_index),
+   .pipe_done_if(w_ex3_done_if),
 
    .o_done_report (o_done_report)
    );
@@ -104,8 +102,7 @@ u_alu
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .o_ex3_done (w_ex3_done),
-   .o_ex3_index (w_ex3_index)
+   .ex3_done_if (w_ex3_done_if)
    );
 
 

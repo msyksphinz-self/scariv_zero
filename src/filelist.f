@@ -2,9 +2,11 @@
 ../src/decoder_reg.sv
 ../src/decoder_alu_ctrl.sv
 ../src/decoder_lsu_ctrl.sv
+../src/decoder_bru_ctrl.sv
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
+../src/msrh_bru_pkg.sv
 
 ../src/l2_if.sv
 ../src/l1d_if.sv

@@ -22,8 +22,7 @@ module msrh_scheduler
  input logic                           i_ex0_rs_conflicted,
  input logic [ENTRY_SIZE-1: 0]         i_ex0_rs_conf_index_oh,
 
- input logic                           i_pipe_done,
- input logic [ENTRY_SIZE-1:0]          i_done_index,
+ done_if.slave                         pipe_done_if,
 
  output                                msrh_pkg::done_rpt_t o_done_report
  );
@@ -87,7 +86,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_early_wr(i_early_wr),
 
-    .i_pipe_done (i_pipe_done & i_done_index[s_idx]),
+    .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
 
     .i_entry_picked (w_picked_inst_oh[s_idx]),
     .o_entry_done (w_entry_done[s_idx]),
