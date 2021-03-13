@@ -27,7 +27,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_or;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
-msrh_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
+decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
@@ -158,7 +158,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
     .inst(w_inst[w_idx]),
     .inst_cat(raw_cat)
   );
-  assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(raw_cat);
+  assign w_inst_cat[w_idx] = decoder_inst_cat_pkg::inst_cat_t'(raw_cat);
 
   decoder_reg
   u_decoder_reg

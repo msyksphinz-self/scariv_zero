@@ -11,7 +11,7 @@ package decoder_alu_ctrl_pkg;
     IMM__ = 0,
     IMM_S = 1
   } imm_t;
-endpackage;
+endpackage
 
 module decoder_alu_ctrl (
   input logic [31:0] inst,

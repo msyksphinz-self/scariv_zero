@@ -140,6 +140,9 @@ end
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
 
+logic [31: 0] w_tmp_ex2_rv32_result;
+assign w_tmp_ex2_rv32_result = w_ex2_rs1_selected_data[31:0] + w_ex2_rs2_selected_data[31:0];
+
 
   always_ff @(posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -157,11 +160,7 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
                                 {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
         OP_SIGN_ADD: r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
         OP_SIGN_SUB: r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
-        OP_SIGN_ADD_32: begin
-          logic [31: 0] tmp_ex2_result_d;
-          assign tmp_ex2_result_d = w_ex2_rs1_selected_data[31:0] + w_ex2_rs2_selected_data[31:0];
-          r_ex3_result <= {{(riscv_pkg::XLEN_W-32){tmp_ex2_result_d[31]}}, tmp_ex2_result_d[31: 0]};
-        end
+        OP_SIGN_ADD_32: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){w_tmp_ex2_rv32_result[31]}}, w_tmp_ex2_rv32_result[31: 0]};
         default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
       endcase
     end

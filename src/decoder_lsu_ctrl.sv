@@ -11,7 +11,7 @@ package decoder_lsu_ctrl_pkg;
     IS_STORE__ = 0,
     IS_STORE_1 = 1
   } is_store_t;
-endpackage;
+endpackage
 
 module decoder_lsu_ctrl (
   input logic [31:0] inst,

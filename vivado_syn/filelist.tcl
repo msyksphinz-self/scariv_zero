@@ -1,3 +1,7 @@
+add_files -norecurse ../src/decoder_inst_cat.sv
+add_files -norecurse ../src/decoder_reg.sv
+add_files -norecurse ../src/decoder_alu_ctrl.sv
+add_files -norecurse ../src/decoder_lsu_ctrl.sv
 add_files -norecurse ../src/msrh_pkg.sv
 add_files -norecurse ../src/msrh_lsu_pkg.sv
 add_files -norecurse ../src/l2_if.sv
@@ -37,10 +41,6 @@ add_files -norecurse ../src/msrh_rename.sv
 add_files -norecurse ../src/msrh_freelist.sv
 add_files -norecurse ../src/msrh_rename_map.sv
 add_files -norecurse ../src/msrh_inflight_list.sv
-add_files -norecurse ../src/decoder_cat.sv
-add_files -norecurse ../src/decoder_reg.sv
-add_files -norecurse ../src/decoder_alu_ctrl.sv
-add_files -norecurse ../src/decoder_lsu_ctrl.sv
 add_files -norecurse ../src/msrh_scheduler.sv
 add_files -norecurse ../src/msrh_sched_entry.sv
 add_files -norecurse ../src/msrh_phy_registers.sv
