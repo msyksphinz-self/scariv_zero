@@ -17,7 +17,8 @@ module msrh_bru_pipe
   output                            msrh_pkg::early_wr_t o_ex1_early_wr,
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
-  done_if.master ex3_done_if
+  done_if.master   ex3_done_if,
+  br_upd_if.master ex3_br_upd_if
 );
 
 typedef struct packed {
@@ -43,14 +44,16 @@ logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
 logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
-msrh_pkg::issue_t                         r_ex2_issue;
-logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
-logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
-logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
+msrh_pkg::issue_t                        r_ex2_issue;
+logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
+logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
+logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
+logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
 
-msrh_pkg::issue_t                         r_ex3_issue;
+msrh_pkg::issue_t                        r_ex3_issue;
 logic                                    r_ex3_result;
-logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
+logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
+logic [riscv_pkg::VADDR_W-1: 0]          r_ex3_br_vaddr;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -126,8 +129,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= 'h0;
   end else begin
     r_ex2_rs1_data <= ex1_regread_rs1.data;
-    r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
-                      ex1_regread_rs2.data;
+    r_ex2_rs2_data <= ex1_regread_rs2.data;
 
     r_ex2_issue <= r_ex1_issue;
     r_ex2_index <= r_ex1_index;
@@ -141,12 +143,14 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex3_result <= 'h0;
-    r_ex3_index <= 'h0;
-    r_ex3_issue <= 'h0;
+    r_ex3_result   <= 'h0;
+    r_ex3_index    <= 'h0;
+    r_ex3_issue    <= 'h0;
+    r_ex3_br_vaddr <= 'h0;
   end else begin
-    r_ex3_issue <= r_ex2_issue;
-    r_ex3_index <= r_ex2_index;
+    r_ex3_issue    <= r_ex2_issue;
+    r_ex3_index    <= r_ex2_index;
+    r_ex3_br_vaddr <= w_ex2_br_vaddr;
 
     case (r_ex2_pipe_ctrl.op)
       OP_EQ: r_ex3_result <= w_ex2_rs1_selected_data == w_ex2_rs2_selected_data;
@@ -163,5 +167,18 @@ assign o_ex3_phy_wr.rd_data = 'h0;  // r_ex3_result;
 
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
+
+assign w_ex2_br_vaddr = r_ex2_issue.pc_addr + {{(riscv_pkg::VADDR_W-13){r_ex2_issue.inst[31]}},
+                                               r_ex2_issue.inst[31],
+                                               r_ex2_issue.inst[ 7],
+                                               r_ex2_issue.inst[30:25],
+                                               r_ex2_issue.inst[11: 8],
+                                               1'b0};
+
+assign ex3_br_upd_if.update = r_ex3_issue.valid & r_ex3_result;
+assign ex3_br_upd_if.vaddr  = r_ex3_br_vaddr;
+assign ex3_br_upd_if.cmt_id = r_ex3_issue.cmt_id;
+assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;
+
 
 endmodule // msrh_bru_pipe

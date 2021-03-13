@@ -10,6 +10,7 @@ module msrh_rob
    output logic [msrh_pkg::CMT_BLK_W-1: 0] o_sc_new_cmt_id,
 
    input msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
+   br_upd_if.slave            ex3_br_upd_if,
 
    output msrh_pkg::commit_blk_t o_commit
    );
@@ -59,7 +60,9 @@ logic w_load_valid;
 
      .o_block_all_done (w_entry_all_done[c_idx]),
      .o_block_done_grp_id (w_entry_done_grp_id[c_idx]),
-     .i_commit_finish (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx))
+     .i_commit_finish (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx)),
+
+     .br_upd_if (ex3_br_upd_if)
      );
 
 end

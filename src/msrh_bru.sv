@@ -1,23 +1,24 @@
 module msrh_bru
 (
-    input logic i_clk,
-    input logic i_reset_n,
+  input logic i_clk,
+  input logic i_reset_n,
 
-    input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    disp_if.slave                              disp,
+  input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
+  disp_if.slave                              disp,
 
-    regread_if.master ex1_regread_rs1,
-    regread_if.master ex1_regread_rs2,
+  regread_if.master ex1_regread_rs1,
+  regread_if.master ex1_regread_rs2,
 
-    /* Forwarding path */
-    input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
-    input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+  /* Forwarding path */
+  input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+  input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
-    /* write output */
-    output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
+  /* write output */
+  output msrh_pkg::early_wr_t o_ex1_early_wr,
+  output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
-    output msrh_pkg::done_rpt_t o_done_report
+  output msrh_pkg::done_rpt_t o_done_report,
+  br_upd_if.master            ex3_br_upd_if
 );
 
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
@@ -81,7 +82,7 @@ msrh_bru_pipe
   #(
     .RV_ENTRY_SIZE(msrh_pkg::RV_BRU_ENTRY_SIZE)
     )
-u_bru
+u_bru_pipe
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -96,7 +97,8 @@ u_bru
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex3_done_if (w_ex3_done_if)
+   .ex3_done_if   (w_ex3_done_if),
+   .ex3_br_upd_if (ex3_br_upd_if)
    );
 
 

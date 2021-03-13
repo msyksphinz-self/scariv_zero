@@ -58,6 +58,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_bru_valids;
 msrh_pkg::early_wr_t w_ex1_bru_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 msrh_pkg::done_rpt_t w_bru_done_rpt;
+br_upd_if w_ex3_br_upd_if();
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -198,7 +199,8 @@ u_msrh_bru (
     .o_ex1_early_wr(w_ex1_bru_early_wr),
     .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
 
-    .o_done_report (w_bru_done_rpt)
+    .o_done_report (w_bru_done_rpt),
+    .ex3_br_upd_if (w_ex3_br_upd_if)
 );
 
 
@@ -226,7 +228,8 @@ u_msrh_bru (
 
      .i_done_rpt (w_done_rpt),
 
-     .o_commit (w_commit)
+     .o_commit (w_commit),
+     .ex3_br_upd_if (w_ex3_br_upd_if)
      );
 
 endmodule  // msrh_tile

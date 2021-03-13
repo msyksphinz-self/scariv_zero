@@ -88,6 +88,11 @@ package msrh_pkg;
   endfunction  // assign_disp_rename
 
   typedef struct packed {
+    logic                          upd_valid;
+    logic [riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+  } br_upd_info_t;
+
+  typedef struct packed {
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
     logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 
@@ -96,6 +101,9 @@ package msrh_pkg;
     logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
     logic [msrh_conf_pkg::DISP_SIZE-1:0] old_rd_valid;
     logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
+
+    // Branch update info
+    br_upd_info_t [msrh_conf_pkg::DISP_SIZE-1:0] br_upd_info;
   } rob_entry_t;
 
   typedef struct packed {
@@ -192,6 +200,15 @@ typedef struct packed {
   logic [CMT_BLK_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
 } commit_blk_t;
+
+function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
+  for (int i = 0; i < DISP_SIZE; i++) begin
+    /* verilator lint_off WIDTH */
+    if (in[i]) return i;
+  end
+  /* verilator lint_off WIDTH */
+  return 'hx;
+endfunction // encoder_grp_id
 
 endpackage
 

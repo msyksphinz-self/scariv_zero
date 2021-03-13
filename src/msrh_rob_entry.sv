@@ -16,7 +16,9 @@ module msrh_rob_entry
 
    output logic                            o_block_all_done,
    output logic [msrh_conf_pkg::DISP_SIZE-1: 0] o_block_done_grp_id,
-   input logic                             i_commit_finish
+   input logic                             i_commit_finish,
+
+   br_upd_if.slave                         br_upd_if
    );
 
 logic                             r_valid;
@@ -59,6 +61,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end else begin
         r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_vld;
       end
+
+      // Branch condition update
+      if (br_upd_if.update & (br_upd_if.cmt_id == i_cmt_id)) begin
+        r_entry.br_upd_info[msrh_pkg::encoder_grp_id(br_upd_if.grp_id)].upd_valid <= 1'b1;
+        r_entry.br_upd_info[msrh_pkg::encoder_grp_id(br_upd_if.grp_id)].upd_br_vaddr <= br_upd_if.vaddr;
+      end
+
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
