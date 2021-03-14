@@ -70,7 +70,7 @@ u_msrh_scheduler
    .o_iss_index_oh(w_rv0_index_oh),
 
    .i_ex0_rs_conflicted    (1'b0),
-   .i_ex0_rs_conf_index_oh ('h0),
+   .i_ex0_rs_conf_index_oh ({msrh_pkg::RV_BRU_ENTRY_SIZE{1'b0}}),
 
    .pipe_done_if(w_ex3_done_if),
 

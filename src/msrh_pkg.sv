@@ -13,9 +13,9 @@ package msrh_pkg;
   localparam RV_ALU_ENTRY_SIZE = 32;
   localparam RV_BRU_ENTRY_SIZE = 16;
 
-  localparam REL_BUS_SIZE = ALU_INST_NUM + LSU_INST_NUM;
+  localparam REL_BUS_SIZE = ALU_INST_NUM + LSU_INST_NUM + 1;
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
-  localparam CMT_BUS_SIZE = ALU_INST_NUM + 2;
+  localparam CMT_BUS_SIZE = ALU_INST_NUM + 2 + 1;
 
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
@@ -26,6 +26,10 @@ package msrh_pkg;
 
   localparam LRQ_ENTRY_SIZE = 8;
   localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
+
+  localparam REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
+                           msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
+                           2;                                   // BRU port
 
   typedef struct packed {
     logic valid;
@@ -88,8 +92,8 @@ package msrh_pkg;
   endfunction  // assign_disp_rename
 
   typedef struct packed {
-    logic                          upd_valid;
-    logic [riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0] upd_valid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
   } br_upd_info_t;
 
   typedef struct packed {
@@ -103,7 +107,7 @@ package msrh_pkg;
     logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
 
     // Branch update info
-    br_upd_info_t [msrh_conf_pkg::DISP_SIZE-1:0] br_upd_info;
+    br_upd_info_t br_upd_info;
   } rob_entry_t;
 
   typedef struct packed {
@@ -199,6 +203,8 @@ typedef struct packed {
   logic                 commit;
   logic [CMT_BLK_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
+  logic                           upd_pc_vld;
+  logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);

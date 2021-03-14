@@ -1,11 +1,13 @@
 module msrh_rob
-  (
+  import msrh_conf_pkg::*;
+  import msrh_pkg::*;
+(
    input logic                             i_clk,
    input logic                             i_reset_n,
 
    disp_if.watch                           sc_disp,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
-   input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[msrh_conf_pkg::DISP_SIZE],
+   input logic [DISP_SIZE-1:0]   i_old_rd_valid,
+   input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[DISP_SIZE],
 
    output logic [msrh_pkg::CMT_BLK_W-1: 0] o_sc_new_cmt_id,
 
@@ -15,10 +17,12 @@ module msrh_rob
    output msrh_pkg::commit_blk_t o_commit
    );
 
-logic [msrh_pkg::CMT_BLK_W-1:0]            w_in_cmt_id, w_out_cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]            w_disp_grp_id;
-logic [msrh_pkg::CMT_BLK_SIZE-1:0]         w_entry_all_done;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]            w_entry_done_grp_id[msrh_pkg::CMT_BLK_SIZE];
+msrh_pkg::rob_entry_t              w_entries[msrh_pkg::CMT_BLK_SIZE];
+logic [msrh_pkg::CMT_BLK_W-1:0]    w_in_cmt_id, w_out_cmt_id;
+logic [DISP_SIZE-1:0]              w_disp_grp_id;
+logic [msrh_pkg::CMT_BLK_SIZE-1:0] w_entry_all_done;
+logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
+logic [riscv_pkg::VADDR_W-1: 0]    w_upd_br_vaddr;
 
 //
 // LRQ Pointer
@@ -32,7 +36,7 @@ inoutptr #(.SIZE(msrh_pkg::CMT_BLK_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i
                                                     .i_out_vld(w_out_vld), .o_out_ptr(w_out_cmt_id));
 
 
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : disp_loop
   assign w_disp_grp_id[d_idx] = sc_disp.inst[d_idx].valid;
 end
 endgenerate
@@ -58,9 +62,9 @@ logic w_load_valid;
 
      .i_done_rpt (i_done_rpt),
 
+     .o_entry          (w_entries[c_idx]),
      .o_block_all_done (w_entry_all_done[c_idx]),
-     .o_block_done_grp_id (w_entry_done_grp_id[c_idx]),
-     .i_commit_finish (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx)),
+     .i_commit_finish  (w_entry_all_done[c_idx] & (w_out_cmt_id == c_idx)),
 
      .br_upd_if (ex3_br_upd_if)
      );
@@ -70,8 +74,17 @@ endgenerate
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
 
-assign o_commit.commit = w_entry_all_done[w_out_cmt_id];
-assign o_commit.cmt_id = w_out_cmt_id;
-assign o_commit.grp_id = w_entry_done_grp_id[w_out_cmt_id];
+assign o_commit.commit       = w_entry_all_done[w_out_cmt_id];
+assign o_commit.cmt_id       = w_out_cmt_id;
+assign o_commit.grp_id       = w_entries[w_out_cmt_id].done_grp_id;
+assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid;
+assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
+
+// Select Branch Target Address
+bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));
+bit_oh_or_packed #(.WIDTH(riscv_pkg::VADDR_W), .WORDS(DISP_SIZE))
+br_sel_addr (.i_oh(w_br_upd_valid_oh),
+             .i_data(w_entries[w_out_cmt_id].br_upd_info.upd_br_vaddr),
+             .o_selected(w_upd_br_vaddr));
 
 endmodule // msrh_rob

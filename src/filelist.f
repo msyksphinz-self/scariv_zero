@@ -18,6 +18,7 @@
 ../src/bit_cnt.sv
 ../src/bit_or.sv
 ../src/bit_oh_or.sv
+../src/bit_oh_or_packed.sv
 ../src/bit_ff_lsb.sv
 ../src/bit_extract_msb.sv
 ../src/bit_tree_msb.sv
@@ -75,3 +76,4 @@
 ../src/msrh_dcache_array.sv
 
 ../src/msrh_bru.sv
+../src/msrh_bru_pipe.sv

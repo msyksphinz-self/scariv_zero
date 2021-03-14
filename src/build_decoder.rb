@@ -150,7 +150,7 @@ ctrl_fields.each_with_index{|ct, i|
 sv_file.puts "endpackage;\n\n"
 
 
-sv_file.puts "module decoder_" + ctrl_idx + " ("
+sv_file.puts "module internal_decoder_" + ctrl_idx + " ("
 sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
 ctrl_fields.each_with_index{|ct, i|
   sv_file.print "  output logic "
@@ -208,6 +208,48 @@ ctrl_fields.each{|ct|
   }
 }
 
-sv_file.puts "endmodule"
+sv_file.puts "endmodule\n\n"
+
+
+sv_file.puts "module decoder_" + ctrl_idx + " ("
+sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
+ctrl_fields.each_with_index{|ct, i|
+  sv_file.print "  output decoder_" + ctrl_idx + "_pkg::" + ct.name + "_t " + ct.name
+
+  if i == ctrl_fields.length - 1 then
+    sv_file.print "\n"
+  else
+    sv_file.print ",\n"
+  end
+}
+sv_file.puts ");"
+
+ctrl_fields.each{|ct|
+  sv_file.print "logic "
+  if ct.op_list.length > 2 then
+    sv_file.print "[" + (Math.log2(ct.op_list.length)-1).ceil.to_s + ": 0] raw_" + ct.name + ";\n"
+  else
+    sv_file.print "raw_" + ct.name + ";\n"
+  end
+}
+
+sv_file.puts "internal_decoder_" + ctrl_idx + " u_inst ("
+sv_file.puts " .inst(inst),"
+ctrl_fields.each_with_index{|ct,i|
+  sv_file.print " ." + ct.name + "(raw_" + ct.name + ")"
+  if i == ctrl_fields.length - 1 then
+    sv_file.print "\n"
+  else
+    sv_file.print ",\n"
+  end
+}
+sv_file.puts ");"
+
+ctrl_fields.each{|ct|
+  sv_file.print "assign "
+  sv_file.print ct.name + " = decoder_" + ctrl_idx + "_pkg::" + ct.name + "_t'(raw_" + ct.name + ");\n"
+}
+
+sv_file.print "endmodule"
 
 sv_file.close

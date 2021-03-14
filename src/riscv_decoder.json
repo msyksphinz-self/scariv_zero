@@ -67,7 +67,7 @@
         "name":"beq        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11000", "11"],
-        "inst_cat" : [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["op", "eq"] , ["imm", "sb"]]
     },
@@ -75,8 +75,24 @@
         "name":"bne        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11000", "11"],
-        "inst_cat" : [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["op", "ne"], ["imm", "sb"]]
+    },
+    {
+        "name":"jal        r[11:7],uj[31:12]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg" : [["rd", "r3"]],
+        "bru_ctrl" : [["imm", "uj"]]
+    },
+    {
+        "name":"jalr       r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11001", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg" : [["rd", "r3"], ["r1", "r1"]],
+        "bru_ctrl" : [["imm", "i"]]
     }
 ]

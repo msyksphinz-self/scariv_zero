@@ -151,14 +151,14 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
                           w_inst_buffer_outptr_p1;
   assign w_inst[w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
 
-  logic [ 1: 0] raw_cat;
+  logic[ 2: 0] w_raw_cat;
   decoder_inst_cat
   u_decoder_inst_cat
   (
     .inst(w_inst[w_idx]),
-    .inst_cat(raw_cat)
+    .inst_cat(w_raw_cat)
   );
-  assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(raw_cat);
+  assign w_inst_cat[w_idx] = msrh_pkg::inst_cat_t'(w_raw_cat);
 
   decoder_reg
   u_decoder_reg

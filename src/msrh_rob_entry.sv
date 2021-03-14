@@ -1,34 +1,36 @@
 module msrh_rob_entry
+  import msrh_pkg::*;
   (
    input logic                             i_clk,
    input logic                             i_reset_n,
 
-   input logic [msrh_pkg::CMT_BLK_W-1:0]   i_cmt_id,
+   input logic [CMT_BLK_W-1:0]   i_cmt_id,
 
    input logic                             i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1]   i_load_pc_addr,
-   input                                   msrh_pkg::disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
+   input                                   disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_load_grp_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
-   input logic [msrh_pkg::RNID_W-1:0]      i_old_rd_rnid[msrh_conf_pkg::DISP_SIZE],
+   input logic [RNID_W-1:0]      i_old_rd_rnid[msrh_conf_pkg::DISP_SIZE],
 
-   input                                   msrh_pkg::done_rpt_t i_done_rpt [msrh_pkg::CMT_BUS_SIZE],
+   input                                   done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
+
+   output rob_entry_t                      o_entry,
    output logic                            o_block_all_done,
-   output logic [msrh_conf_pkg::DISP_SIZE-1: 0] o_block_done_grp_id,
    input logic                             i_commit_finish,
 
    br_upd_if.slave                         br_upd_if
    );
 
 logic                             r_valid;
-msrh_pkg::rob_entry_t             r_entry;
+rob_entry_t             r_entry;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_vld;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
-  logic [msrh_pkg::CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_vld;
-  for (genvar c_idx = 0; c_idx < msrh_pkg::CMT_BUS_SIZE; c_idx++) begin : cmt_loop
+  logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_vld;
+  for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
     assign w_done_rpt_tmp_vld[c_idx] = i_done_rpt[c_idx].valid &
                                        i_done_rpt[c_idx].cmt_id == i_cmt_id &&
                                        i_done_rpt[c_idx].grp_id == (1 << d_idx);
@@ -64,15 +66,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
       // Branch condition update
       if (br_upd_if.update & (br_upd_if.cmt_id == i_cmt_id)) begin
-        r_entry.br_upd_info[msrh_pkg::encoder_grp_id(br_upd_if.grp_id)].upd_valid <= 1'b1;
-        r_entry.br_upd_info[msrh_pkg::encoder_grp_id(br_upd_if.grp_id)].upd_br_vaddr <= br_upd_if.vaddr;
+        r_entry.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] <= 1'b1;
+        r_entry.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] <= br_upd_if.vaddr;
       end
 
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+assign o_entry = r_entry;
 assign o_block_all_done = r_valid & (r_entry.grp_id == r_entry.done_grp_id);
-assign o_block_done_grp_id   = r_entry.done_grp_id;
 
 endmodule // msrh_rob_entry

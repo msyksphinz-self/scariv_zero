@@ -13,7 +13,7 @@ package decoder_alu_ctrl_pkg;
   } imm_t;
 endpackage;
 
-module decoder_alu_ctrl (
+module internal_decoder_alu_ctrl (
   input logic [31:0] inst,
   output logic [2: 0]  op,
   output logic imm
@@ -28,4 +28,20 @@ assign op[2] = tmp_1 | tmp_3 | 1'b0;
 assign op[1] = tmp_0 | tmp_2 | tmp_5 | 1'b0;
 assign op[0] = tmp_0 | tmp_2 | tmp_3 | tmp_4 | 1'b0;
 assign imm = tmp_0 | tmp_3 | tmp_4 | tmp_5 | 1'b0;
+endmodule
+
+module decoder_alu_ctrl (
+  input logic [31:0] inst,
+  output decoder_alu_ctrl_pkg::op_t op,
+  output decoder_alu_ctrl_pkg::imm_t imm
+);
+logic [2: 0] raw_op;
+logic raw_imm;
+internal_decoder_alu_ctrl u_inst (
+ .inst(inst),
+ .op(raw_op),
+ .imm(raw_imm)
+);
+assign op = decoder_alu_ctrl_pkg::op_t'(raw_op);
+assign imm = decoder_alu_ctrl_pkg::imm_t'(raw_imm);
 endmodule

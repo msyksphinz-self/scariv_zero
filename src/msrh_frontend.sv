@@ -6,10 +6,12 @@ module msrh_frontend
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp,
 
+ // PC Update from Committer
+ input msrh_pkg::commit_blk_t i_commit,
+
+ // Dispatch Info
  disp_if.master s3_disp
 );
-
-
 
 // ==============
 // s0 stage
@@ -40,6 +42,13 @@ logic                          w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 
 
+// ==============
+// Commiter PC
+// ==============
+logic                           w_commit_upd_pc;
+logic                           r_new_commit_upd_pc_wait_vld;
+logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s0_valid <= 1'b0;
@@ -50,11 +59,33 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (w_s2_ic_miss) begin
       r_s0_vaddr <= w_s2_ic_miss_vaddr;
     end else if (w_s0_ic_ready & w_s0_ic_req.valid) begin
-      r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+      if (r_new_commit_upd_pc_wait_vld) begin
+        r_s0_vaddr <= r_new_commit_upd_pc;
+      end else if (w_commit_upd_pc) begin
+          r_s0_vaddr <= i_commit.upd_pc_vaddr;
+      end else begin
+        r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+      end
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld;
+
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_new_commit_upd_pc_wait_vld <= 1'b0;
+    r_new_commit_upd_pc          <= 'h0;
+  end else begin
+    if (w_commit_upd_pc & !w_s0_ic_ready) begin
+      r_new_commit_upd_pc_wait_vld <= 1'b1;
+      r_new_commit_upd_pc          <= i_commit.upd_pc_vaddr;
+    end else if (w_s0_ic_ready) begin
+      r_new_commit_upd_pc_wait_vld <= 1'b0;
+    end
+  end
+end
 
 assign w_s0_tlb_req.vaddr = r_s0_vaddr;
 assign w_s0_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
