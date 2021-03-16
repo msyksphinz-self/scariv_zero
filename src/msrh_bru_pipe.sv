@@ -169,25 +169,29 @@ assign o_ex3_phy_wr.rd_data = 'h0;  // r_ex3_result;
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
 
-logic [riscv_pkg::VADDR_W-1: 0] w_offset_uj;
-assign w_offset_uj = {{(riscv_pkg::VADDR_W-11){r_ex2_issue.inst[31]}},
-                      r_ex2_issue.inst[31],
-                      r_ex2_issue.inst[19:12],
-                      r_ex2_issue.inst[20],
-                      r_ex2_issue.inst[30:21],
-                      1'b0};
+logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_uj;
+logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_sb;
+
+assign w_ex2_offset_uj = {{(riscv_pkg::VADDR_W-21){r_ex2_issue.inst[31]}},
+                          r_ex2_issue.inst[31],
+                          r_ex2_issue.inst[19:12],
+                          r_ex2_issue.inst[20],
+                          r_ex2_issue.inst[30:21],
+                          1'b0};
+assign w_ex2_offset_sb = {{(riscv_pkg::VADDR_W-13){r_ex2_issue.inst[31]}},
+                          r_ex2_issue.inst[31],
+                          r_ex2_issue.inst[ 7],
+                          r_ex2_issue.inst[30:25],
+                          r_ex2_issue.inst[11: 8],
+                          1'b0};
 
 always_comb begin
   case (r_ex2_pipe_ctrl.imm)
-    IMM_SB : w_ex2_br_vaddr = r_ex2_issue.pc_addr + {{(riscv_pkg::VADDR_W-13){r_ex2_issue.inst[31]}},
-                                                     r_ex2_issue.inst[31],
-                                                     r_ex2_issue.inst[ 7],
-                                                     r_ex2_issue.inst[30:25],
-                                                     r_ex2_issue.inst[11: 8],
-                                                     1'b0};
-    IMM_UJ : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_offset_uj;
-    IMM_I : w_ex2_br_vaddr = w_ex2_rs1_selected_data + {{(riscv_pkg::VADDR_W-20){r_ex2_issue.inst[31]}},
+    IMM_SB : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_sb;
+    IMM_UJ : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_uj;
+    IMM_I  : w_ex2_br_vaddr = w_ex2_rs1_selected_data + {{(riscv_pkg::VADDR_W-12){r_ex2_issue.inst[31]}},
                                                         r_ex2_issue.inst[31:20]};
+    default : w_ex2_br_vaddr = 'hx;
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 

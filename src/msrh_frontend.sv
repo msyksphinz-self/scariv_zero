@@ -49,6 +49,8 @@ logic                           w_commit_upd_pc;
 logic                           r_new_commit_upd_pc_wait_vld;
 logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
 
+logic                           r_ic_resp_would_be_killed;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s0_valid <= 1'b0;
@@ -77,12 +79,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_new_commit_upd_pc_wait_vld <= 1'b0;
     r_new_commit_upd_pc          <= 'h0;
+
+    r_ic_resp_would_be_killed    <= 1'b0;
   end else begin
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
       r_new_commit_upd_pc_wait_vld <= 1'b1;
       r_new_commit_upd_pc          <= i_commit.upd_pc_vaddr;
     end else if (w_s0_ic_ready) begin
       r_new_commit_upd_pc_wait_vld <= 1'b0;
+    end
+
+    if (w_commit_upd_pc & !w_s0_ic_ready) begin
+      r_ic_resp_would_be_killed    <= 1'b1;
+    end else if (w_s2_ic_resp.valid) begin
+      r_ic_resp_would_be_killed    <= 1'b0;
     end
   end
 end
@@ -142,7 +152,7 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_inst_vld (w_s2_ic_resp.valid),
+   .i_inst_vld (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
 
    .o_inst_rdy     (),
    .i_inst_pc      (w_s2_ic_resp.addr),
