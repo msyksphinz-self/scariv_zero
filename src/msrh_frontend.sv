@@ -62,7 +62,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (r_new_commit_upd_pc_wait_vld) begin
         r_s0_vaddr <= r_new_commit_upd_pc;
       end else if (w_commit_upd_pc) begin
-          r_s0_vaddr <= i_commit.upd_pc_vaddr;
+        r_s0_vaddr <= i_commit.upd_pc_vaddr;
       end else begin
         r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end
