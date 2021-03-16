@@ -19,7 +19,7 @@ module msrh_frontend
 
 logic        r_s0_valid;
 logic [riscv_pkg::VADDR_W-1:0] r_s0_vaddr;
-
+logic [riscv_pkg::VADDR_W-1:0] w_s0_vaddr;
 msrh_lsu_pkg::tlb_req_t           w_s0_tlb_req;
 msrh_lsu_pkg::tlb_resp_t          w_s0_tlb_resp;
 msrh_lsu_pkg::ic_req_t            w_s0_ic_req;
@@ -64,7 +64,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (r_new_commit_upd_pc_wait_vld) begin
         r_s0_vaddr <= r_new_commit_upd_pc;
       end else if (w_commit_upd_pc) begin
-        r_s0_vaddr <= i_commit.upd_pc_vaddr;
+        r_s0_vaddr <= (i_commit.upd_pc_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                      (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
         r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end
@@ -72,6 +73,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+assign w_s0_vaddr = w_commit_upd_pc ? i_commit.upd_pc_vaddr : r_s0_vaddr;
 assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld;
 
 
@@ -97,7 +99,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_s0_tlb_req.vaddr = r_s0_vaddr;
+assign w_s0_tlb_req.vaddr = w_s0_vaddr;
 assign w_s0_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
 
 tlb u_tlb
@@ -123,7 +125,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign w_s0_ic_req.valid = r_s0_valid & w_s0_ic_ready;
-assign w_s0_ic_req.vaddr = r_s0_vaddr;
+assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
 msrh_icache u_msrh_icache
   (

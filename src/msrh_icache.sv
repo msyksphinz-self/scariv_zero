@@ -38,7 +38,7 @@ module msrh_icache
     typedef enum                        { ICInit, ICResp } ic_state_t;
     ic_state_t r_ic_state;
     logic                               ic_l2_resp_fire;
-    logic [riscv_pkg::VADDR_W-1: 0]     r_req_vaddr;
+    logic [riscv_pkg::VADDR_W-1: 0]     r_s2_vaddr;
 
 
     generate for(genvar way = 0; way < msrh_lsu_pkg::ICACHE_WAY_W; way++) begin : icache_way_loop //
@@ -56,7 +56,7 @@ module msrh_icache
 
              .i_wr  (ic_l2_resp_fire),
              .i_addr(ic_l2_resp_fire ?
-                     r_req_vaddr   [$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW] :
+                     r_s2_vaddr   [$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW] :
                      i_s0_req.vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW]),
              .i_tag_valid  (1'b1),
              .i_tag (i_s0_req.vaddr[riscv_pkg::VADDR_W-1:msrh_lsu_pkg::ICACHE_TAG_LOW]),
@@ -76,7 +76,7 @@ module msrh_icache
               .i_reset_n(i_reset_n),
               .i_wr  (ic_l2_resp_fire),
               .i_addr(ic_l2_resp_fire ?
-                      r_req_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW] :
+                      r_s2_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW] :
                       r_s1_vaddr [$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: msrh_lsu_pkg::ICACHE_TAG_LOW]),
               .i_be  ({msrh_lsu_pkg::ICACHE_DATA_B_W{1'b1}}),
               .i_data(ic_l2_resp.payload.data),
@@ -109,17 +109,19 @@ module msrh_icache
         end
     end
 
-    // ===============
-    // S2 stage
-    // ===============
-    always_ff @ (posedge i_clk, negedge i_reset_n) begin
-        if (!i_reset_n) begin
-            r_s2_valid <= 1'b0;
-        end else begin
-            r_s2_valid <= r_s1_valid;
-            r_s2_hit   <= r_s1_valid & w_s1_hit;
-        end
-    end
+// ===============
+// S2 stage
+// ===============
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_s2_valid      <= 1'b0;
+    r_s2_vaddr  <= 'h0;
+  end else begin
+    r_s2_valid  <= r_s1_valid;
+    r_s2_hit    <= r_s1_valid & w_s1_hit;
+    r_s2_vaddr <= r_s1_vaddr;
+  end
+end
 
 
 
@@ -137,7 +139,7 @@ module msrh_icache
     assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
                              (ic_l2_resp.payload.tag == {msrh_lsu_pkg::L2_UPPER_TAG_IC, {(msrh_lsu_pkg::L2_CMD_TAG_W-1){1'b0}}});
     assign o_s2_resp.valid = r_s2_valid & r_s2_hit;
-    assign o_s2_resp.addr  = r_req_vaddr [riscv_pkg::VADDR_W-1: 1];
+    assign o_s2_resp.addr  = r_s2_vaddr [riscv_pkg::VADDR_W-1: 1];
     assign o_s2_resp.data  = w_s2_selected_data;
     assign o_s2_resp.be    = {msrh_lsu_pkg::ICACHE_DATA_B_W{1'b1}};
 
@@ -145,38 +147,36 @@ module msrh_icache
     // IC Miss State Machine
     // ======================
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
-        if (!i_reset_n) begin
-            r_ic_state <= ICInit;
-            ic_l2_req.valid <= 1'b0;
-            ic_l2_req.payload <= 'h0;
+      if (!i_reset_n) begin
+        r_ic_state <= ICInit;
+        ic_l2_req.valid <= 1'b0;
+        ic_l2_req.payload <= 'h0;
 
-            r_ic_req_tag <= 'h0;
-          r_req_vaddr  <= 'h0;
-        end else begin
-            case (r_ic_state)
-                ICInit : begin
-                    if (r_s1_valid & !w_s1_hit) begin
-                        ic_l2_req.valid   <= 1'b1;
-                        ic_l2_req.payload.cmd  <= msrh_lsu_pkg::M_XRD;
-                        ic_l2_req.payload.addr <= i_s1_paddr;
-                        ic_l2_req.payload.tag  <= {msrh_lsu_pkg::L2_UPPER_TAG_IC, {(msrh_lsu_pkg::L2_CMD_TAG_W-1){1'b0}}};
-                        ic_l2_req.payload.data <= 'h0;
-                        ic_l2_req.payload.byte_en <= 'h0;
-                        r_req_vaddr  <= r_s1_vaddr;
-                        if (ic_l2_req.ready) begin
-                            r_ic_state <= ICResp;
-                        end
-                    end
-                end
-                ICResp : begin
-                    ic_l2_req.valid   <= 1'b0;
-                    if (ic_l2_resp_fire) begin
-                        r_ic_state <= ICInit;
-                        r_ic_req_tag <= r_ic_req_tag + 'h1;
-                    end
-                end
-            endcase // case (r_ic_state)
-        end
+        r_ic_req_tag <= 'h0;
+      end else begin
+        case (r_ic_state)
+          ICInit : begin
+            if (r_s1_valid & !w_s1_hit) begin
+              ic_l2_req.valid   <= 1'b1;
+              ic_l2_req.payload.cmd  <= msrh_lsu_pkg::M_XRD;
+              ic_l2_req.payload.addr <= i_s1_paddr;
+              ic_l2_req.payload.tag  <= {msrh_lsu_pkg::L2_UPPER_TAG_IC, {(msrh_lsu_pkg::L2_CMD_TAG_W-1){1'b0}}};
+              ic_l2_req.payload.data <= 'h0;
+              ic_l2_req.payload.byte_en <= 'h0;
+              if (ic_l2_req.ready) begin
+                r_ic_state <= ICResp;
+              end
+            end
+          end
+          ICResp : begin
+            ic_l2_req.valid   <= 1'b0;
+            if (ic_l2_resp_fire) begin
+              r_ic_state <= ICInit;
+              r_ic_req_tag <= r_ic_req_tag + 'h1;
+            end
+          end
+        endcase // case (r_ic_state)
+      end
     end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
     assign ic_l2_resp.ready = 1'b1;
