@@ -7,21 +7,27 @@ module msrh_inflight_list
    output logic [msrh_conf_pkg::DISP_SIZE*2-1: 0] o_valids,
 
    input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
-   input logic [msrh_pkg::RNID_W-1:0]        i_update_fetch_addr[msrh_conf_pkg::DISP_SIZE],
+   input logic [msrh_pkg::RNID_W-1:0]             i_update_fetch_rnid[msrh_conf_pkg::DISP_SIZE],
    input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
    );
 
 logic [msrh_pkg::RNID_SIZE-1: 0]             r_inflight_list;
-generate for (genvar rn_idx = 0; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_inflight_list[0] <= 1'b1;
+  end
+end
+
+generate for (genvar rn_idx = 1; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
   logic w_update_fetch_vld;
   logic w_update_fetch_data;
   for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
-    assign w_update_fetch_vld_tmp [d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_addr[d_fetch_idx] == rn_idx;
-    assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & i_update_fetch_data[d_fetch_idx];
+    assign w_update_fetch_vld_tmp [d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
+    assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
   end
   assign w_update_fetch_vld   = |w_update_fetch_vld_tmp;
   assign w_update_fetch_data  = |w_update_fetch_data_tmp;
@@ -67,7 +73,7 @@ logic w_update_fetch_data_1;
     (
      .i_cmp_key (i_rnid[d_idx * 2 + 0]),
      .i_valid (i_update_fetch_vld),
-     .i_keys  (i_update_fetch_addr),
+     .i_keys  (i_update_fetch_rnid),
      .i_data  (i_update_fetch_data),
 
      .o_valid (w_update_fetch_vld_0),
@@ -85,7 +91,7 @@ logic w_update_fetch_data_1;
     (
      .i_cmp_key (i_rnid[d_idx * 2 + 1]),
      .i_valid (i_update_fetch_vld),
-     .i_keys  (i_update_fetch_addr),
+     .i_keys  (i_update_fetch_rnid),
      .i_data  (i_update_fetch_data),
 
      .o_valid (w_update_fetch_vld_1),

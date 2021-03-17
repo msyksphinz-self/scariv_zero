@@ -91,12 +91,14 @@ assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
 generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_i_phy_wr[tgt_idx].valid &
-                                         (r_ex2_issue.rs1_type == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                         (r_ex2_issue.rs1_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                          (r_ex2_issue.rs1_type == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rs1_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                          (r_ex2_issue.rs1_rnid != 'h0);   // GPR[x0] always zero
 
     assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rs2_valid & ex1_i_phy_wr[tgt_idx].valid &
-                                         (r_ex2_issue.rs2_type == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                         (r_ex2_issue.rs2_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                          (r_ex2_issue.rs2_type == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rs2_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                          (r_ex2_issue.rs2_rnid != 'h0);   // GPR[x0] always zero
     assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
 endgenerate

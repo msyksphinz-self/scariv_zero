@@ -45,7 +45,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                               .i_clk     (i_clk ),
                               .i_reset_n (i_reset_n),
 
-                              .i_push(iq_disp.inst[d_idx].rd_valid),
+                              .i_push(1'b0/* iq_disp.inst[d_idx].rd_valid */),
                               .i_push_id(),
 
                               .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
@@ -63,7 +63,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rs2_regidx;
 
   assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
-  assign w_update_rnid   [d_idx] =  (iq_disp.inst[d_idx].rd_regidx != 'h0) ? w_rd_rnid[d_idx] : 'h0;
+  assign w_update_rnid   [d_idx] = w_rd_rnid[d_idx];
 
 end
 endgenerate
@@ -192,7 +192,7 @@ msrh_inflight_list u_inflight_map
    .o_valids (w_active),
 
    .i_update_fetch_vld (w_rd_valids),
-   .i_update_fetch_addr(w_rd_rnid  ),
+   .i_update_fetch_rnid(w_rd_rnid  ),
    .i_update_fetch_data(w_rd_data  ),
 
    .i_phy_wr (i_phy_wr)
