@@ -43,8 +43,8 @@ logic [msrh_pkg::RNID_W: 0]                                                     
 
 endfunction // select_latest_rnid
 
-
-generate for (genvar i = 0; i < 32; i++) begin : map_loop
+assign map[0] = 'h0;
+generate for (genvar i = 1; i < 32; i++) begin : map_loop
 logic w_update;
 logic [msrh_pkg::RNID_W-1: 0] w_update_rnid;
   assign {w_update, w_update_rnid} = select_latest_rnid (i_update,

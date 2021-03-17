@@ -33,6 +33,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_data;
 assign iq_disp.ready = 1'b1;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
+  logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid_tmp;
   msrh_freelist
                              #(
                                .SIZE (msrh_pkg::FLIST_SIZE),
@@ -47,9 +48,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                               .i_push(iq_disp.inst[d_idx].rd_valid),
                               .i_push_id(),
 
-                              .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid),
-                              .o_pop_id(w_rd_rnid[d_idx])
+                              .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
+                              .o_pop_id(w_rd_rnid_tmp)
                               );
+  assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
 
@@ -61,7 +63,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rs2_regidx;
 
   assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
-  assign w_update_rnid   [d_idx] = w_rd_rnid[d_idx];
+  assign w_update_rnid   [d_idx] =  (iq_disp.inst[d_idx].rd_regidx != 'h0) ? w_rd_rnid[d_idx] : 'h0;
 
 end
 endgenerate

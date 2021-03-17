@@ -22,8 +22,11 @@ module msrh_phy_registers #(
     end
   endgenerate
 
+// RNID = 0 is always for X0
+assign r_phy_regs[0] = {riscv_pkg::XLEN_W{1'b0}};
+
   generate
-    for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : reg_loop
+    for (genvar r_idx = 1; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : reg_loop
       logic w_wr_valid;
       logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
       select_oh #(
