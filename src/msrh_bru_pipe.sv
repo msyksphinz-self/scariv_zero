@@ -189,9 +189,9 @@ always_comb begin
   case (r_ex2_pipe_ctrl.imm)
     IMM_SB : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_sb;
     IMM_UJ : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_uj;
-    IMM_I  : w_ex2_br_vaddr = w_ex2_rs1_selected_data + {{(riscv_pkg::VADDR_W-12){r_ex2_issue.inst[31]}},
-                                                        r_ex2_issue.inst[31:20]};
-    default : w_ex2_br_vaddr = 'hx;
+    IMM_I  : w_ex2_br_vaddr = w_ex2_rs1_selected_data[riscv_pkg::VADDR_W-1: 0] + {{(riscv_pkg::VADDR_W-12){r_ex2_issue.inst[31]}},
+                                                                                  r_ex2_issue.inst[31:20]};
+    default : w_ex2_br_vaddr = {riscv_pkg::VADDR_W{1'bx}};
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 
