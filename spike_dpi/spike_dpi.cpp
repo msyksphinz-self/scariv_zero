@@ -417,7 +417,7 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
-                long long rtl_wr_val)
+                int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
   processor_t *p = spike_core->get_core(0);
   p->step(1);
@@ -435,11 +435,11 @@ void step_spike(long long time, long long rtl_pc,
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (iss_wr_val != rtl_wr_val) {
       fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong GPR[%02d]: RTL = %016llx, ISS = %016lx\n",
-              rtl_wr_gpr_addr, rtl_wr_val, iss_wr_val);
+      fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %016llx, ISS = %016lx\n",
+              rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val, iss_wr_val);
       fprintf(stderr, "==========================================\n");
     } else {
-      fprintf(stderr, "GPR[%02d] <= %016llx", rtl_wr_gpr_addr, rtl_wr_val);
+      fprintf(stderr, "GPR[%02d](%d) <= %016llx", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
     }
   }
   fprintf (stderr, "\n");

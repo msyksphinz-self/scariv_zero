@@ -6,5 +6,5 @@ extern "C" {
                   int rtl_cmt_id, int rtl_grp_id,
                   int rtl_insn,
                   int rtl_wr_valid, int rtl_wr_gpr_addr,
-                  long long rtl_wr_val);
+                  int rtl_wr_gpr_rnid, long long rtl_wr_val);
 }

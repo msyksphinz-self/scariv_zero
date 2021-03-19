@@ -15,6 +15,7 @@ import "DPI-C" function void step_spike
    input int     rtl_insn,
    input int     rtl_wr_valid,
    input int     rtl_wr_gpr,
+   input int     rtl_wr_rnid,
    input longint rtl_wr_val
    );
 
@@ -230,6 +231,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
                       committed_rob_entry.inst[grp_idx].inst,
                       committed_rob_entry.inst[grp_idx].rd_valid,
                       committed_rob_entry.inst[grp_idx].rd_regidx,
+                      committed_rob_entry.inst[grp_idx].rd_rnid,
                       w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
         end
       end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)

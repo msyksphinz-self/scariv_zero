@@ -40,7 +40,9 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 // ----------------------------------
 // Committer Components
 // ----------------------------------
+/* verilator lint_off UNOPTFLAT */
 msrh_pkg::commit_blk_t w_commit;
+msrh_pkg::cmt_rnid_upd_t w_commit_rnid_update;
 
 // ----------------------------------
 // ALU Components
@@ -101,6 +103,7 @@ msrh_frontend u_frontend (
   .ic_l2_resp(ic_l2_resp),
 
   .i_commit (w_commit),
+
   .s3_disp (w_iq_disp)
 );
 
@@ -119,6 +122,8 @@ msrh_frontend u_frontend (
 
       .iq_disp(w_iq_disp),
       .i_sc_new_cmt_id (w_sc_new_cmt_id),
+
+      .i_commit_rnid_update (w_commit_rnid_update),
 
       .i_phy_wr (w_ex3_phy_wr),
       .sc_disp  (w_sc_disp)
@@ -238,6 +243,8 @@ u_msrh_bru (
      .i_done_rpt (w_done_rpt),
 
      .o_commit (w_commit),
+     .o_commit_rnid_update (w_commit_rnid_update),
+
      .ex3_br_upd_if (w_ex3_br_upd_if)
      );
 

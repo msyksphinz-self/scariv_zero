@@ -7,7 +7,10 @@ module msrh_rename
    input logic [msrh_pkg::CMT_BLK_W-1:0] i_sc_new_cmt_id,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
-   disp_if.master sc_disp
+   disp_if.master sc_disp,
+
+   // Committer Rename ID update
+   input cmt_rnid_upd_t commit_rnid_update
    );
 
 logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
@@ -45,8 +48,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                               .i_clk     (i_clk ),
                               .i_reset_n (i_reset_n),
 
-                              .i_push(1'b0/* iq_disp.inst[d_idx].rd_valid */),
-                              .i_push_id(),
+                              .i_push(commit_rnid_update.commit & commit_rnid_update.rnid_valid[d_idx]),
+                              .i_push_id(commit_rnid_update.rnid[d_idx]),
 
                               .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
                               .o_pop_id(w_rd_rnid_tmp)
@@ -84,8 +87,8 @@ msrh_rename_map u_msrh_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] = iq_disp.inst[d_idx].rd_valid;
-  assign w_rd_regidx[d_idx] = iq_disp.inst[d_idx].rd_regidx;
+  assign w_rd_valids[d_idx] =  iq_disp.inst[d_idx].rd_valid;
+  assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].rd_regidx;
   assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].rd_valid;
 end
 endgenerate

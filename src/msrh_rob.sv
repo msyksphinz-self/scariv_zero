@@ -14,7 +14,8 @@ module msrh_rob
    input done_rpt_t i_done_rpt [CMT_BUS_SIZE],
    br_upd_if.slave  ex3_br_upd_if,
 
-   output commit_blk_t o_commit
+   output commit_blk_t o_commit,
+   output cmt_rnid_upd_t o_commit_rnid_update
    );
 
 rob_entry_t              w_entries[CMT_BLK_SIZE];
@@ -89,6 +90,10 @@ assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid;
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
 assign o_commit.dead_id      = w_dead_grp_id;
+
+assign o_commit_rnid_update.commit     = o_commit.commit | r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
+assign o_commit_rnid_update.rnid_valid = w_entries[w_out_cmt_id].old_rd_valid;
+assign o_commit_rnid_update.rnid       = w_entries[w_out_cmt_id].old_rd_rnid;
 
 // Select Branch Target Address
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));
