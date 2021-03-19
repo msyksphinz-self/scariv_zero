@@ -1,19 +1,22 @@
 module msrh_inst_buffer
   (
- input logic                                i_clk,
- input logic                                i_reset_n,
+ input logic                                     i_clk,
+ input logic                                     i_reset_n,
 
- input logic                                i_inst_vld,
+ input logic                                     i_inst_vld,
 
- output logic                                o_inst_rdy,
- input logic [riscv_pkg::VADDR_W-1: 1]       i_inst_pc,
- input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  i_inst_in,
+ // PC Update from Committer
+ input msrh_pkg::commit_blk_t                    i_commit,
+
+ output logic                                    o_inst_rdy,
+ input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
+ input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
- output logic                                o_inst_buf_valid,
- output logic [riscv_pkg::VADDR_W-1: 1]      o_inst_pc,
- output msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] o_inst_buf,
- input logic                                i_inst_buf_ready
+ output logic                                    o_inst_buf_valid,
+ output logic [riscv_pkg::VADDR_W-1: 1]          o_inst_pc,
+ output                                          msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] o_inst_buf,
+ input logic                                     i_inst_buf_ready
  );
 
 logic                                       w_inst_buffer_fire;
@@ -64,10 +67,14 @@ logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_inst_buffer_outptr_p1;
 logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
+logic                                       w_flush_pipeline;
+
 assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next);
 
 assign w_ptr_in_fire  = i_inst_vld & o_inst_rdy;
 assign w_ptr_out_fire = w_head_all_inst_issued;
+
+assign w_flush_pipeline = i_commit.commit & i_commit.upd_pc_vld;
 
 // Queue Control Pointer
 inoutptr
@@ -78,6 +85,8 @@ inst_buf_ptr
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
+
+   .i_clear   (w_flush_pipeline),
 
    .i_in_vld  (w_ptr_in_fire),
    .o_in_ptr  (r_inst_buffer_inptr),
@@ -95,9 +104,11 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      r_inst_queue[idx].vld <= 1'b0;
+      r_inst_queue[idx] <= 'h0;
     end else begin
-      if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
+      if (w_flush_pipeline) begin
+        r_inst_queue[idx] <= 'h0;
+      end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
         r_inst_queue[idx].vld  <= 1'b1;
         r_inst_queue[idx].data <= i_inst_in;
         r_inst_queue[idx].pc   <= i_inst_pc;
@@ -131,7 +142,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_head_inst_issued <= {ic_word_num{1'b0}};
     r_head_start_pos   <= 'h0;
   end else begin
-    if (w_inst_buffer_fire) begin
+    if (w_flush_pipeline) begin
+      r_head_inst_issued <= 'h0;
+      r_head_start_pos   <= 'h0;
+    end else if (w_inst_buffer_fire) begin
       if (&w_head_inst_issued_next) begin
         r_head_inst_issued <= 'h0;
         r_head_start_pos   <= 'h0;
@@ -144,15 +158,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 logic [31: 0] w_inst[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_vld;
 
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic [$clog2(ic_word_num)-1: 0] w_buf_id;
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
-  assign w_buf_id = r_head_start_pos + w_idx;
-  assign w_inst_buf_ptr = (r_head_start_pos + w_idx < ic_word_num) ? r_inst_buffer_outptr :
+  assign w_buf_id = r_head_start_pos + w_idx +
+                    r_inst_queue[r_inst_buffer_outptr].pc[2+:$clog2(msrh_conf_pkg::DISP_SIZE)];
+  assign w_inst_buf_ptr = (w_buf_id < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
-  assign w_inst[w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
+  assign w_inst       [w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
+  assign w_inst_be_vld[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id*4+:4]);
 
   logic[ 2: 0] w_raw_cat;
   decoder_inst_cat
@@ -173,10 +190,10 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
      );
 
 
-  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
-  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD  );
-  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
-  assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
+  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
+  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD  );
+  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
+  assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
 end
 endgenerate
 
@@ -190,8 +207,9 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZ
 
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp;
 
-bit_tree_msb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_inst_msb (.in(w_inst_disp_or), .out(w_inst_disp_mask));
-
+logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
+assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign o_inst_buf_valid = |w_inst_disp_mask;
 assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};

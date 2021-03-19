@@ -205,6 +205,8 @@ typedef struct packed {
   logic [DISP_SIZE-1:0] grp_id;
   logic                           upd_pc_vld;
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
+  logic                           flush_vld;
+  logic [DISP_SIZE-1:0]           dead_id;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);

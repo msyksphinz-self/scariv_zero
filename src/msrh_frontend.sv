@@ -58,17 +58,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s0_vaddr <= msrh_pkg::PC_INIT_VAL;
   end else begin
     r_s0_valid <= 1'b1;
-    if (w_s2_ic_miss) begin
-      r_s0_vaddr <= w_s2_ic_miss_vaddr;
-    end else if (w_s0_ic_ready & w_s0_ic_req.valid) begin
-      if (r_new_commit_upd_pc_wait_vld) begin
-        r_s0_vaddr <= r_new_commit_upd_pc;
-      end else if (w_commit_upd_pc) begin
+    if (w_commit_upd_pc) begin
+      if (w_s0_ic_ready) begin
         r_s0_vaddr <= (i_commit.upd_pc_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                       (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
-        r_s0_vaddr <= r_s0_vaddr + (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        r_s0_vaddr <= i_commit.upd_pc_vaddr;
       end
+    end else if (w_s2_ic_miss) begin
+      r_s0_vaddr <= w_s2_ic_miss_vaddr;
+    end else if (w_s0_ic_ready & w_s0_ic_req.valid) begin
+      r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                    (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -93,7 +94,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
       r_ic_resp_would_be_killed    <= 1'b1;
-    end else if (w_s2_ic_resp.valid) begin
+    end else if (w_s0_ic_ready) begin
       r_ic_resp_would_be_killed    <= 1'b0;
     end
   end
@@ -155,6 +156,8 @@ u_msrh_inst_buffer
    .i_reset_n (i_reset_n),
 
    .i_inst_vld (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
+
+   .i_commit (i_commit),
 
    .o_inst_rdy     (),
    .i_inst_pc      (w_s2_ic_resp.addr),

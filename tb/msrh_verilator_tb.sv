@@ -194,7 +194,9 @@ end
 endgenerate
 
 logic [msrh_pkg::CMT_BLK_SIZE-1: 0] w_commited_oh;
+logic [msrh_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
 assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id;
+assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
 
 bit_oh_or
   #(
@@ -220,7 +222,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
   end else begin
     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-        if (committed_rob_entry.grp_id[grp_idx]) begin
+        if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
           /* verilator lint_off WIDTH */
           step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,

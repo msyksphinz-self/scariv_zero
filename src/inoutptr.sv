@@ -6,6 +6,8 @@ module inoutptr
  input logic                     i_clk,
  input logic                     i_reset_n,
 
+ input logic                     i_clear,
+
  input logic                     i_in_vld,
  output logic [$clog2(SIZE)-1:0] o_in_ptr,
  input logic                     i_out_vld,
@@ -20,10 +22,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_inptr  <= 'h0;
     r_outptr <= 'h0;
   end else begin
-    r_inptr  <= i_in_vld  ? r_inptr + 'h1  : r_inptr;
-    r_outptr <= i_out_vld ? r_outptr + 'h1 : r_outptr;
-  end
-end
+    if (i_clear) begin
+      r_inptr  <= 'h0;
+      r_outptr <= 'h0;
+    end else begin
+      r_inptr  <= i_in_vld  ? r_inptr + 'h1  : r_inptr;
+      r_outptr <= i_out_vld ? r_outptr + 'h1 : r_outptr;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_in_ptr  = r_inptr;
 assign o_out_ptr = r_outptr;
