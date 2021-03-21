@@ -12,7 +12,7 @@ package decoder_reg_pkg;
     R2__ = 0,
     R2_R2 = 1
   } r2_t;
-endpackage;
+endpackage
 
 module internal_decoder_reg (
   input logic [31:0] inst,

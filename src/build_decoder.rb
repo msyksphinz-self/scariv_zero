@@ -147,7 +147,7 @@ ctrl_fields.each_with_index{|ct, i|
   sv_file.puts "  } " + ct.name + "_t;"
 }
 
-sv_file.puts "endpackage;\n\n"
+sv_file.puts "endpackage\n\n"
 
 
 sv_file.puts "module internal_decoder_" + ctrl_idx + " ("

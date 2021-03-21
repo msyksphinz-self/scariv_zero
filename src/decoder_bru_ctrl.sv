@@ -10,7 +10,7 @@ package decoder_bru_ctrl_pkg;
     IMM_UJ = 2,
     IMM_I = 3
   } imm_t;
-endpackage;
+endpackage
 
 module internal_decoder_bru_ctrl (
   input logic [31:0] inst,

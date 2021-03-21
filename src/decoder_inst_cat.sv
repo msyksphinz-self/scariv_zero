@@ -6,7 +6,7 @@ package decoder_inst_cat_pkg;
     INST_CAT_ST = 3,
     INST_CAT_BR = 4
   } inst_cat_t;
-endpackage;
+endpackage
 
 module internal_decoder_inst_cat (
   input logic [31:0] inst,
