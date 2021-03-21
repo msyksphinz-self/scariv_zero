@@ -65,6 +65,8 @@ logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_inst_buffer_outptr_p1;
 logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
+logic [$clog2(msrh_conf_pkg::DISP_SIZE)+2-1:2] w_out_inst_q_pc;
+
 logic                                       w_flush_pipeline;
 
 assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next);
@@ -131,9 +133,12 @@ u_start_pos_enc
    .o_out(w_head_start_pos_next)
    );
 
+assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[2+:$clog2(msrh_conf_pkg::DISP_SIZE)];
 
 /* verilator lint_off WIDTH */
-assign w_head_inst_issued_next = r_head_inst_issued | w_inst_disp_mask << r_head_start_pos;
+assign w_head_inst_issued_next = r_head_inst_issued |
+                                 w_inst_disp_mask << (r_head_start_pos + w_out_inst_q_pc) |
+                                 (1 << w_out_inst_q_pc)-1;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -163,7 +168,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
   assign w_buf_id = r_head_start_pos + w_idx +
-                    r_inst_queue[r_inst_buffer_outptr].pc[2+:$clog2(msrh_conf_pkg::DISP_SIZE)];
+                    w_out_inst_q_pc;
   assign w_inst_buf_ptr = (w_buf_id < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
   assign w_inst       [w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
