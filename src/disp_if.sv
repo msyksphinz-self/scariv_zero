@@ -3,6 +3,7 @@ interface disp_if;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [riscv_pkg::VADDR_W-1:1]  pc_addr;
   msrh_pkg::disp_t     [msrh_conf_pkg::DISP_SIZE-1:0] inst;
+  logic                             is_br_included; // When Branch Instruction is included
   logic valid;
   logic ready;
   modport master(
@@ -10,6 +11,7 @@ interface disp_if;
     output pc_addr,
     output cmt_id,
     output inst,
+    output is_br_included,
     input  ready
   );
   modport slave(
@@ -17,6 +19,7 @@ interface disp_if;
     input  pc_addr,
     input  cmt_id,
     input  inst,
+    input  is_br_included,
     output ready
   );
   modport watch(
@@ -24,6 +27,7 @@ interface disp_if;
     input  pc_addr,
     input  cmt_id,
     input  inst,
+    input  is_br_included,
     input  ready
   );
 

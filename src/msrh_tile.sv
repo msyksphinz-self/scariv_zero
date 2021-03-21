@@ -116,18 +116,18 @@ msrh_frontend u_frontend (
   // );
 
 
-  msrh_rename u_msrh_rename (
-      .i_clk(i_clk),
-      .i_reset_n(i_reset_n),
+msrh_rename u_msrh_rename (
+  .i_clk(i_clk),
+  .i_reset_n(i_reset_n),
 
-      .iq_disp(w_iq_disp),
-      .i_sc_new_cmt_id (w_sc_new_cmt_id),
+  .iq_disp(w_iq_disp),
+  .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
-      .i_commit_rnid_update (w_commit_rnid_update),
+  .i_commit_rnid_update (w_commit_rnid_update),
 
-      .i_phy_wr (w_ex3_phy_wr),
-      .sc_disp  (w_sc_disp)
-  );
+  .i_phy_wr (w_ex3_phy_wr),
+  .sc_disp  (w_sc_disp)
+);
 
 
   generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop

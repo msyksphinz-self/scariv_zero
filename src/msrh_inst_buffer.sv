@@ -13,10 +13,7 @@ module msrh_inst_buffer
  input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
 
- output logic                                    o_inst_buf_valid,
- output logic [riscv_pkg::VADDR_W-1: 1]          o_inst_pc,
- output                                          msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] o_inst_buf,
- input logic                                     i_inst_buf_ready
+ disp_if.master                                  s3_disp
  );
 
 logic                                       w_inst_buffer_fire;
@@ -96,7 +93,7 @@ inst_buf_ptr
 
 assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr + 'h1;
 
-assign w_inst_buffer_fire = o_inst_buf_valid & i_inst_buf_ready;
+assign w_inst_buffer_fire = s3_disp.valid & s3_disp.ready;
 
 generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst_buf_loop
 
@@ -211,30 +208,32 @@ logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
 assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
-assign o_inst_buf_valid = |w_inst_disp_mask;
-assign o_inst_pc = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
+assign s3_disp.valid          = |w_inst_disp_mask;
+assign s3_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
+assign s3_disp.is_br_included = |w_inst_is_br;
+
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
-      o_inst_buf[d_idx].valid = w_inst_disp_mask[d_idx];
-      o_inst_buf[d_idx].inst  = w_inst[d_idx];
-      o_inst_buf[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
+      s3_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
+      s3_disp.inst[d_idx].inst  = w_inst[d_idx];
+      s3_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
 
-      o_inst_buf[d_idx].rd_valid   = rd_valid[d_idx];
-      o_inst_buf[d_idx].rd_type    = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rd_regidx  = w_inst[d_idx][11: 7];
+      s3_disp.inst[d_idx].rd_valid   = rd_valid[d_idx];
+      s3_disp.inst[d_idx].rd_type    = msrh_pkg::GPR;
+      s3_disp.inst[d_idx].rd_regidx  = w_inst[d_idx][11: 7];
 
-      o_inst_buf[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
-      o_inst_buf[d_idx].rs1_type   = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rs1_regidx = w_inst[d_idx][19:15];
+      s3_disp.inst[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
+      s3_disp.inst[d_idx].rs1_type   = msrh_pkg::GPR;
+      s3_disp.inst[d_idx].rs1_regidx = w_inst[d_idx][19:15];
 
-      o_inst_buf[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
-      o_inst_buf[d_idx].rs2_type   = msrh_pkg::GPR;
-      o_inst_buf[d_idx].rs2_regidx = w_inst[d_idx][24:20];
+      s3_disp.inst[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
+      s3_disp.inst[d_idx].rs2_type   = msrh_pkg::GPR;
+      s3_disp.inst[d_idx].rs2_regidx = w_inst[d_idx][24:20];
 
-      o_inst_buf[d_idx].cat        = w_inst_cat[d_idx];
+      s3_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
     end else begin // if (w_inst_disp_mask[d_idx])
-      o_inst_buf[d_idx] = 'h0;
+      s3_disp.inst[d_idx] = 'h0;
     end // else: !if(w_inst_disp_mask[d_idx])
   end // always_comb
 end
@@ -256,25 +255,25 @@ function void dump_json(int fp);
   end
 
   for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    if (o_inst_buf[d_idx].valid) begin
-      $fwrite(fp, "    \"o_inst_buf[%d]\" : {", d_idx);
-      $fwrite(fp, "      valid : %d,",      o_inst_buf[d_idx].valid);
-      $fwrite(fp, "      inst  : \"0x%08x\",",      o_inst_buf[d_idx].inst);
-      $fwrite(fp, "      pc_addr : \"0x%0x\",",    o_inst_buf[d_idx].pc_addr);
+    if (s3_disp.inst[d_idx].valid) begin
+      $fwrite(fp, "    \"s3_disp.inst[%d]\" : {", d_idx);
+      $fwrite(fp, "      valid : %d,",      s3_disp.inst[d_idx].valid);
+      $fwrite(fp, "      inst  : \"0x%08x\",",      s3_disp.inst[d_idx].inst);
+      $fwrite(fp, "      pc_addr : \"0x%0x\",",    s3_disp.inst[d_idx].pc_addr);
 
-      $fwrite(fp, "      rd_valid   : %d,", o_inst_buf[d_idx].rd_valid);
-      $fwrite(fp, "      rd_type    : \"%d\",", o_inst_buf[d_idx].rd_type);
-      $fwrite(fp, "      rd_regidx  : %d,", o_inst_buf[d_idx].rd_regidx);
+      $fwrite(fp, "      rd_valid   : %d,", s3_disp.inst[d_idx].rd_valid);
+      $fwrite(fp, "      rd_type    : \"%d\",", s3_disp.inst[d_idx].rd_type);
+      $fwrite(fp, "      rd_regidx  : %d,", s3_disp.inst[d_idx].rd_regidx);
 
-      $fwrite(fp, "      rs1_valid  : %d,", o_inst_buf[d_idx].rs1_valid);
-      $fwrite(fp, "      rs1_type   : \"%d\",", o_inst_buf[d_idx].rs1_type);
-      $fwrite(fp, "      rs1_regidx : %d,", o_inst_buf[d_idx].rs1_regidx);
+      $fwrite(fp, "      rs1_valid  : %d,", s3_disp.inst[d_idx].rs1_valid);
+      $fwrite(fp, "      rs1_type   : \"%d\",", s3_disp.inst[d_idx].rs1_type);
+      $fwrite(fp, "      rs1_regidx : %d,", s3_disp.inst[d_idx].rs1_regidx);
 
-      $fwrite(fp, "      rs2_valid  : %d,", o_inst_buf[d_idx].rs2_valid);
-      $fwrite(fp, "      rs2_type   : \"%d\",", o_inst_buf[d_idx].rs2_type);
-      $fwrite(fp, "      rs2_regidx : %d,", o_inst_buf[d_idx].rs2_regidx);
+      $fwrite(fp, "      rs2_valid  : %d,", s3_disp.inst[d_idx].rs2_valid);
+      $fwrite(fp, "      rs2_type   : \"%d\",", s3_disp.inst[d_idx].rs2_type);
+      $fwrite(fp, "      rs2_regidx : %d,", s3_disp.inst[d_idx].rs2_regidx);
 
-      $fwrite(fp, "      \"cat[d_idx]\" : \"%d\",", o_inst_buf[d_idx].cat);
+      $fwrite(fp, "      \"cat[d_idx]\" : \"%d\",", s3_disp.inst[d_idx].cat);
       $fwrite(fp, "    },\n");
     end
   end

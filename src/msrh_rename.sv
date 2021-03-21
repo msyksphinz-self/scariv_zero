@@ -7,20 +7,20 @@ module msrh_rename
    input logic [msrh_pkg::CMT_BLK_W-1:0] i_sc_new_cmt_id,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
-   disp_if.master sc_disp,
+   disp_if.master           sc_disp,
 
    // Committer Rename ID update
-   input cmt_rnid_upd_t commit_rnid_update
+   input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
    );
 
-logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_archreg_valid;
-logic [ 4: 0]                           w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
-logic [msrh_pkg::RNID_W-1: 0]            w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
+logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]       w_archreg_valid;
+logic [ 4: 0]                                   w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
+logic [msrh_pkg::RNID_W-1: 0]                   w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
 
-logic [ 4: 0]                            w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
-logic [msrh_pkg::RNID_W-1: 0]            w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
+logic [ 4: 0]                                   w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]                   w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
 
 msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_inst;
 
@@ -30,8 +30,12 @@ logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_valids;
-logic [ 4: 0]                           w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
+logic [ 4: 0]                                 w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_data;
+
+// Current rename map information to stack
+logic [msrh_pkg::RNID_W-1: 0]                 w_rn_list[32];
+logic [msrh_pkg::RNID_W-1: 0]                 w_restore_rn_list[32];
 
 assign iq_disp.ready = 1'b1;
 
@@ -48,8 +52,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                               .i_clk     (i_clk ),
                               .i_reset_n (i_reset_n),
 
-                              .i_push(commit_rnid_update.commit & commit_rnid_update.rnid_valid[d_idx]),
-                              .i_push_id(commit_rnid_update.rnid[d_idx]),
+                              .i_push(i_commit_rnid_update.commit & i_commit_rnid_update.rnid_valid[d_idx]),
+                              .i_push_id(i_commit_rnid_update.rnid[d_idx]),
 
                               .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
                               .o_pop_id(w_rd_rnid_tmp)
@@ -82,7 +86,12 @@ msrh_rename_map u_msrh_rename_map
 
    .i_update         (w_rd_valids),
    .i_update_arch_id (w_update_arch_id),
-   .i_update_rnid    (w_update_rnid   )
+   .i_update_rnid    (w_update_rnid   ),
+
+   .i_restore_from_queue (i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld),
+   .i_restore_rn_list    (w_restore_rn_list),
+
+   .o_rn_list (w_rn_list)
    );
 
 
@@ -103,7 +112,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.valid   <= iq_disp.valid;
     sc_disp.pc_addr <= iq_disp.pc_addr;
     sc_disp.inst    <= w_disp_inst;
-  end
+  end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign sc_disp.cmt_id = i_sc_new_cmt_id;
@@ -200,6 +209,22 @@ msrh_inflight_list u_inflight_map
 
    .i_phy_wr (i_phy_wr)
 );
+
+// Map List Queue
+msrh_rn_map_queue
+  u_rn_map_queue
+    (
+     .i_clk (i_clk),
+     .i_reset_n(i_reset_n),
+
+     .i_load (iq_disp.valid & iq_disp.is_br_included),
+     .i_rn_list (w_rn_list),
+
+     .i_restore (i_commit_rnid_update.commit),
+     .o_rn_list (w_restore_rn_list),
+
+     .o_full (/*xxx*/)
+     );
 
 `ifdef SIMULATION
 function void dump_json(int fp);

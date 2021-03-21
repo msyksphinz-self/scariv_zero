@@ -223,6 +223,7 @@ typedef struct packed {
   logic                                                      commit;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       rnid_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] rnid;
+  logic                                                      upd_pc_vld;
 } cmt_rnid_upd_t;
 
 endpackage
