@@ -150,18 +150,23 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 endfunction // dump_json
 
 entry_ptr_t w_entry_ptr[ENTRY_SIZE];
+logic [ENTRY_SIZE-1: 0] w_entry_vld;
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop_ptr
   assign w_entry_ptr[s_idx].entry = entry_loop[s_idx].u_sched_entry.r_entry;
   assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_sched_entry.r_state;
+
+  assign w_entry_vld[s_idx] = entry_loop[s_idx].u_sched_entry.r_entry.valid;
 end
 endgenerate
 
 function void dump_json(string name, int fp, int index);
-  $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index);
-  for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
-    dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
+  if (|w_entry_vld) begin
+    $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index);
+    for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
+      dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
+    end
+    $fwrite(fp, "  },\n");
   end
-  $fwrite(fp, "  },\n");
 endfunction // dump_json
 `endif // SIMULATION
 

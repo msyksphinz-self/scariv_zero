@@ -250,14 +250,17 @@ endgenerate
 logic [msrh_pkg::CMT_BLK_SIZE-1: 0] w_commited_oh;
 logic [msrh_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
 assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id;
-assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
+assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.r_killing_uncmts &
+                       (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_in_cmt_id != u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id) ?
+                       committed_rob_entry.grp_id :
+                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
 
 bit_oh_or
   #(
     .WIDTH($size(msrh_pkg::rob_entry_t)),
     .WORDS(msrh_pkg::CMT_BLK_SIZE)
     )
-commite_entry
+committed_entry
   (
    .i_oh(w_commited_oh),
    .i_data(rob_entries),
@@ -276,7 +279,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   end else begin
     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-        if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
+        if (committed_rob_entry.grp_id[grp_idx] & (!w_dead_grp_id[grp_idx])) begin
           $fwrite (log_fp, "%t PC=%010x (%02d,%02d) %08x ", $time, (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
                    u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
                    committed_rob_entry.inst[grp_idx].inst);

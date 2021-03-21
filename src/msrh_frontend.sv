@@ -75,7 +75,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign w_s0_vaddr = w_commit_upd_pc ? i_commit.upd_pc_vaddr : r_s0_vaddr;
-assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld;
+assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld & !i_commit.all_dead;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -133,6 +133,8 @@ msrh_icache u_msrh_icache
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
+   .i_flush_vld (i_commit.commit & i_commit.flush_vld),
+
    .i_s0_req (w_s0_ic_req),
    .o_s0_ready(w_s0_ic_ready),
 
@@ -154,6 +156,7 @@ u_msrh_inst_buffer
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+   .i_flush_vld (i_commit.commit & i_commit.flush_vld),
 
    .i_inst_vld (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
 

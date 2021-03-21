@@ -90,6 +90,7 @@ assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid;
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
 assign o_commit.dead_id      = w_dead_grp_id;
+assign o_commit.all_dead     = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
 
 assign o_commit_rnid_update.commit     = o_commit.commit | r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
 assign o_commit_rnid_update.rnid_valid = w_entries[w_out_cmt_id].old_rd_valid;

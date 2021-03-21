@@ -17,6 +17,7 @@ localparam MAP_QUEUE_SIZE = 8;
 
 logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_in_ptr;
 logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_out_ptr;
+logic [RNID_W-1: 0]                 r_rnid_list[MAP_QUEUE_SIZE][32];
 
 logic [RNID_W * 32 -1 : 0]         w_in_rn_list;
 logic [RNID_W * 32 -1 : 0]         w_out_rn_list;
@@ -25,27 +26,18 @@ inoutptr #(.SIZE(MAP_QUEUE_SIZE)) u_inoutptr(.i_clk (i_clk), .i_reset_n (i_reset
                                              .i_in_vld  (i_load),    .o_in_ptr (w_in_ptr),
                                              .i_out_vld (i_restore), .o_out_ptr(w_out_ptr));
 
-data_array
-  #(
-    .WIDTH(RNID_W * 32),
-    .ADDR_W($clog2(MAP_QUEUE_SIZE))
-    )
-u_rn_map_array
-  (
-   .i_clk (i_clk),
-   .i_reset_n (i_reset_n),
 
-   .i_wr  (i_load),
-   .i_addr(i_load ? w_in_ptr : w_out_ptr),
-
-   .o_data(w_out_rn_list),
-   .i_be ({(RNID_W * 4){1'b1}}),
-   .i_data (w_in_rn_list)
-   );
+always_ff @ (posedge i_clk) begin
+  if (i_load) begin
+    for(int i =  0; i < 32; i++) begin
+      r_rnid_list[w_in_ptr][i] <= i_rn_list[i];
+    end
+  end
+end
 
 generate for (genvar i = 0; i < 32; i++) begin : extract_loop
   assign w_in_rn_list[i * RNID_W +: RNID_W] = i_rn_list[i];
-  assign o_rn_list[i] = w_out_rn_list[i * RNID_W +: RNID_W];
+  assign o_rn_list[i] = r_rnid_list[w_out_ptr][i];
 end
 endgenerate
 

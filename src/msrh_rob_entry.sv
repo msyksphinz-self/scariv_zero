@@ -69,7 +69,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_entry.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] <= 1'b1;
         r_entry.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] <= br_upd_if.vaddr;
       end
-
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)

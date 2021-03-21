@@ -106,12 +106,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     sc_disp.valid <= 'h0;
     sc_disp.pc_addr <= 'h0;
+    sc_disp.is_br_included <= 1'b0;
     // sc_disp.cat <= 'h0;
     sc_disp.inst <= 'h0;
   end else begin
-    sc_disp.valid   <= iq_disp.valid;
-    sc_disp.pc_addr <= iq_disp.pc_addr;
-    sc_disp.inst    <= w_disp_inst;
+    sc_disp.valid          <= iq_disp.valid;
+    sc_disp.pc_addr        <= iq_disp.pc_addr;
+    sc_disp.is_br_included <= iq_disp.is_br_included;
+    sc_disp.inst           <= w_disp_inst;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
