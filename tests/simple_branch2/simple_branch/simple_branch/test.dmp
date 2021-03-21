@@ -1,0 +1,29 @@
+
+test.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000080000000 <_start>:
+    80000000:	00a00513          	li	a0,10
+    80000004:	00100593          	li	a1,1
+
+0000000080000008 <loop>:
+    80000008:	00b50663          	beq	a0,a1,80000014 <finish>
+    8000000c:	00158593          	addi	a1,a1,1
+    80000010:	ff9ff06f          	j	80000008 <loop>
+
+0000000080000014 <finish>:
+    80000014:	00100513          	li	a0,1
+    80000018:	000805b7          	lui	a1,0x80
+    8000001c:	0015859b          	addiw	a1,a1,1
+    80000020:	00c59593          	slli	a1,a1,0xc
+
+0000000080000024 <_finish_loop>:
+    80000024:	00a5a023          	sw	a0,0(a1) # 80000 <_start-0x7ff80000>
+    80000028:	ffdff06f          	j	80000024 <_finish_loop>
+
+Disassembly of section .data:
+
+0000000080000040 <data>:
+	...
