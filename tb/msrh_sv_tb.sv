@@ -232,13 +232,6 @@ initial begin
 end
 
 
-int log_fp;
-int pipe_fp;
-initial begin
-  log_fp = $fopen("simulate.log");
-  pipe_fp = $fopen("pipetrace.log");
-end
-
 `include "tb_commit_mon_utils.sv"
 
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
@@ -311,11 +304,6 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     $fwrite(pipe_fp, "\n");
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-
-final begin
-  $fclose(log_fp);
-  $fclose(pipe_fp);
-end
 
 `include "tb_json_dumper.sv"
 

@@ -1,7 +1,16 @@
+int log_fp;
+int pipe_fp;
+initial begin
+  log_fp = $fopen("simulate.log");
+  pipe_fp = $fopen("pipetrace.log");
+end
+
+logic [msrh_pkg::CMT_BLK_SIZE-1: 0] rob_entries_valid;
 msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_BLK_SIZE];
 msrh_pkg::rob_entry_t committed_rob_entry;
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_BLK_SIZE; r_idx++) begin : rob_loop
   assign rob_entries[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
+  assign rob_entries_valid[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_valid;
 end
 endgenerate
 
@@ -31,3 +40,39 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin: reg
   assign w_physical_gpr_data[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_int_phy_registers.r_phy_regs[r_idx];
 end
 endgenerate
+
+logic [ 8 : 0] r_timeout_counter;
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+    r_timeout_counter <= 'h0;
+  end else begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
+      r_timeout_counter <= 'h0;
+    end else begin
+      r_timeout_counter <= r_timeout_counter + 'h1;
+    end
+    if (&r_timeout_counter) begin
+      $display("FATAL : COMMIT DEADLOCKED\n");
+      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+        if (rob_entries_valid[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id] &
+            rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].grp_id[grp_idx] /* &
+            !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].done_grp_id[grp_idx] */) begin
+          $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
+                  $time,
+                  (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
+                  u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
+                  1 << grp_idx,
+                  rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst,
+                  rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst);
+        end // if (rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].valid &...
+      end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+      $fatal;
+    end
+  end
+end
+
+final begin
+  $fclose(log_fp);
+  $fclose(pipe_fp);
+end
