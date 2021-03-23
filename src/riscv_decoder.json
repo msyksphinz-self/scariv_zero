@@ -94,5 +94,69 @@
         "inst_cat": [["inst_cat", "br"]],
         "reg" : [["rd", "r3"], ["r1", "r1"]],
         "bru_ctrl" : [["imm", "i"]]
+    },
+    {
+        "name":"slli       r[11:7],r[19:15],h[25:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sll"], ["imm", "sh"]]
+    },
+    {
+        "name":"srli       r[11:7],r[19:15],h[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "srl"], ["imm", "sh"]]
+    },
+    {
+        "name":"srai       r[11:7],r[19:15],h[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["01000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sra"], ["imm", "sh"]]
+    },
+    {
+        "name":"srl        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "srl"]]
+    },
+    {
+        "name":"sra        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sra"]]
+    },
+    {
+        "name":"slliw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "srl_32"], ["imm", "sh"]]
+    },
+    {
+        "name":"srliw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "srl_32"], ["imm", "sh"]]
+    },
+    {
+        "name":"sraiw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sra_32"], ["imm", "sh"]]
     }
 ]
