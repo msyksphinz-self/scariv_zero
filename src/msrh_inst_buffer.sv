@@ -181,7 +181,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
     .inst(w_inst[w_idx]),
     .inst_cat(w_raw_cat)
   );
-  assign w_inst_cat[w_idx] = decoder_inst_cat_pkg::inst_cat_t'(raw_cat);
+  assign w_inst_cat[w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
 
   decoder_reg
   u_decoder_reg
