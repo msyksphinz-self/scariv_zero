@@ -60,6 +60,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
             !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].done_grp_id[grp_idx] */) begin
           $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
                   $time,
+                  /* verilator lint_off WIDTH */
                   (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
                   u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
                   1 << grp_idx,
