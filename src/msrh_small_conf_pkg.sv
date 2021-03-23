@@ -10,5 +10,6 @@ package msrh_conf_pkg;
 
   localparam ARITH_DISP_SIZE = 2;
   localparam MEM_DISP_SIZE = 2;
+  localparam BRU_DISP_SIZE   = 1;
 
 endpackage // msrh_conf_pkg
