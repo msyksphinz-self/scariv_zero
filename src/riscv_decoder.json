@@ -128,6 +128,14 @@
         "alu_ctrl":[["op", "srl"]]
     },
     {
+        "name":"sll        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sll"]]
+    },
+    {
         "name":"sra        r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
         "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
@@ -141,7 +149,7 @@
         "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "alu_ctrl":[["op", "srl_32"], ["imm", "sh"]]
+        "alu_ctrl":[["op", "sll_32"], ["imm", "sh"]]
     },
     {
         "name":"srliw      r[11:7],r[19:15],r[24:20]",
@@ -158,5 +166,29 @@
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sra_32"], ["imm", "sh"]]
+    },
+    {
+        "name":"sllw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sll_32"]]
+    },
+    {
+        "name":"srlw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "srl_32"]]
+    },
+    {
+        "name":"sraw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sra_32"]]
     }
 ]
