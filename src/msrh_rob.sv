@@ -95,7 +95,7 @@ assign o_commit.all_dead     = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
 assign o_commit_rnid_update.commit     = o_commit.commit | r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
 assign o_commit_rnid_update.rnid_valid = w_entries[w_out_cmt_id].old_rd_valid;
 assign o_commit_rnid_update.rnid       = w_entries[w_out_cmt_id].old_rd_rnid;
-assign o_commit_rnid_update.upd_pc_vld = o_commit.upd_pc_vld;
+assign o_commit_rnid_update.upd_pc_vld = o_commit.upd_pc_vld & !o_commit.all_dead;
 
 // Select Branch Target Address
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));

@@ -29,10 +29,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   // BRU Scheduler
   u_msrh_tile_wrapper.u_msrh_tile.u_msrh_bru.u_msrh_scheduler.dump_json("bru", json_fp, 0);
 
-  // JSON End
-  $fwrite(json_fp, "},\n");
-end
-
+end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
 
   // ALU Scheduler
 generate if (msrh_conf_pkg::ALU_INST_NUM > 0)
@@ -41,7 +38,7 @@ generate if (msrh_conf_pkg::ALU_INST_NUM > 0)
 endgenerate
 generate if (msrh_conf_pkg::ALU_INST_NUM > 1)
   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-  u_msrh_tile_wrapper.u_msrh_tile.alu_loop[1].u_msrh_alu.u_msrh_scheduler.dump_json("alu1", json_fp, 1);
+    u_msrh_tile_wrapper.u_msrh_tile.alu_loop[1].u_msrh_alu.u_msrh_scheduler.dump_json("alu1", json_fp, 1);
 endgenerate
 generate if (msrh_conf_pkg::ALU_INST_NUM > 2)
   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
@@ -77,3 +74,8 @@ generate if (msrh_conf_pkg::LSU_INST_NUM > 3)
   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[3].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu3", json_fp, 3);
 endgenerate
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  // JSON End
+  $fwrite(json_fp, "},\n");
+end

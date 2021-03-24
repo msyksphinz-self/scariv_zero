@@ -56,8 +56,8 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
       $display("FATAL : COMMIT DEADLOCKED\n");
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (rob_entries_valid[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id] &
-            rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].grp_id[grp_idx] /* &
-            !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].done_grp_id[grp_idx] */) begin
+            rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].grp_id[grp_idx] &
+            !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].done_grp_id[grp_idx]) begin
           $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
                   $time,
                   /* verilator lint_off WIDTH */
