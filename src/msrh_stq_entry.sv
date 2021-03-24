@@ -117,11 +117,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK : begin
           if (i_sq_l1d_rd_miss) begin
             r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
-// `ifdef SIMULATION
-//             if (!$onehot(i_sq_lrq_index_oh)) begin
-//               $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
-//             end
-// `endif // SIMULATION
+`ifdef SIMULATION
+            if (i_sq_lrq_conflict) begin
+              if (!$onehot(i_sq_lrq_index_oh)) begin
+                $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
+              end
+            end else begin
+              if (i_sq_lrq_index_oh != 'h0) begin
+                $fatal(0, "LRQ request inserte First request index_oh should be zero.");
+              end
+            end
+`endif // SIMULATION
             r_entry.state <= msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL;
           end else if (i_sq_l1d_rd_conflict) begin
             r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay

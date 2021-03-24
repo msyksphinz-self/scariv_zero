@@ -35,4 +35,23 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign o_in_ptr  = r_inptr;
 assign o_out_ptr = r_outptr;
 
+`ifdef SIMULATION
+int num_counter;
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    num_counter <= 'h0;
+  end else begin
+    case ({i_in_vld, i_out_vld})
+      2'b10 : num_counter <= num_counter + 1;
+      2'b01 : num_counter <= num_counter - 1;
+      default : num_counter <= num_counter;
+    endcase // case ({i_in_vld, i_out_vld})
+    if (num_counter < 0) begin
+      $fatal(0, "inoutptr counter become minus. Invalid");
+    end
+  end
+end
+
+`endif // SIMULATION
+
 endmodule // inoutptr
