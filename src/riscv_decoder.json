@@ -48,20 +48,94 @@
         "alu_ctrl":[["op", "sign_add_32"], ["imm", "s"]]
     },
     {
+        "comment": "Load DoubleWord instruction",
         "name":"ld         r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl":[["size", "dw"], ["is_load", "1"]]
+        "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["is_load", "1"]]
     },
     {
+        "comment": "Load Word instruction",
+        "name":"lw         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "w"], ["sign", "s"], ["is_load", "1"]]
+    },
+    {
+        "comment": "Load HalfWord instruction",
+        "name":"lh         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "h"], ["sign", "s"], ["is_load", "1"]]
+    },
+    {
+        "comment": "Load Byte instruction",
+        "name":"lb         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "b"], ["sign", "s"], ["is_load", "1"]]
+    },
+    {
+        "comment": "Load Unsigned HalfWord instruction",
+        "name":"lh         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "h"], ["sign", "u"], ["is_load", "1"]]
+    },
+    {
+        "comment": "Load Unsigned Byte instruction",
+        "name":"lb         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "b"], ["sign", "u"], ["is_load", "1"]]
+    },
+    {
+        "comment": "Store DoubleWord instruction",
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "dw"], ["is_store", "1"]]
+    },
+    {
+        "comment": "Store Word instruction",
+        "name":"sw         r[24:20],h[31:25]|h[11:7](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01000", "11"],
+        "inst_cat": [["inst_cat", "st"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
+        "lsu_ctrl":[["size", "w"], ["is_store", "1"]]
+    },
+    {
+        "comment": "Store HalfWord instruction",
+        "name":"sh         r[24:20],h[31:25]|h[11:7](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "01000", "11"],
+        "inst_cat": [["inst_cat", "st"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
+        "lsu_ctrl":[["size", "h"], ["is_store", "1"]]
+    },
+    {
+        "comment": "Store Byte instruction",
+        "name":"sb         r[24:20],h[31:25]|h[11:7](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "01000", "11"],
+        "inst_cat": [["inst_cat", "st"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
+        "lsu_ctrl":[["size", "b"], ["is_store", "1"]]
     },
     {
         "name":"beq        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
