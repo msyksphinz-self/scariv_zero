@@ -58,6 +58,7 @@ assign w_in_vld  = |w_l1d_lrq_loads_no_conflicts;
 assign w_out_vld = l1d_ext_req.valid;
 
 inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                          .i_rollback(1'b0),
                                                           .i_in_vld (w_in_vld ),
                                                           /* verilator lint_off WIDTH */
                                                           .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_loads_cnt}),

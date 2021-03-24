@@ -59,7 +59,7 @@ logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_conf_pkg::LSU_INST_NUM];
 
 
 function logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] dcache_in,
-                                                    logic [riscv_pkg::XLEN_W-1: 0] st_data);
+                                                         logic [riscv_pkg::XLEN_W-1: 0] st_data);
   /* verilator lint_off WIDTH */
   return dcache_in | st_data;
 endfunction // merge
@@ -108,8 +108,9 @@ assign w_out_vld = o_done_report.valid;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(STQ_SIZE)) cnt_disp_vld(.in({{(STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                        .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                                        .i_out_vld(w_out_vld), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+                                          .i_rollback(i_commit.commit & i_commit.flush_vld),
+                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+                                          .i_out_vld(w_out_vld), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin

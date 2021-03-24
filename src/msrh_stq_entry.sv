@@ -64,77 +64,85 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.state <= msrh_lsu_pkg::STQ_INIT;
   end else begin
     r_entry.inst.rs2_ready <= r_entry.inst.rs2_ready | w_rs2_entry_hit;
-    case (r_entry.state)
-      msrh_lsu_pkg::STQ_INIT :
-        if (i_disp_load) begin
-          r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
-        end else if (i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ :
-                                     !i_ex1_q_updates.st_data_vld ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
-                                     msrh_lsu_pkg::STQ_DONE;
-          r_entry.vaddr           <= i_ex1_q_updates.vaddr;
-          r_entry.paddr           <= i_ex1_q_updates.paddr;
-          r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
-          r_entry.inst            <= i_ex1_q_updates.inst;
-          r_entry.inst.rs2_ready  <= r_entry.inst.rs2_ready | i_ex1_q_updates.inst.rs2_ready;
+    if (i_commit.commit &
+        i_commit.flush_vld &
+        (i_commit.cmt_id <  r_entry.cmt_id) |
+        (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id)) begin
+      r_entry.state <= msrh_lsu_pkg::STQ_INIT;
+      r_entry.is_valid <= 1'b0;
+    end else begin
+      case (r_entry.state)
+        msrh_lsu_pkg::STQ_INIT :
+          if (i_disp_load) begin
+            r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
+          end else if (i_ex1_q_valid) begin
+            r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ :
+                                       !i_ex1_q_updates.st_data_vld ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
+                                       msrh_lsu_pkg::STQ_DONE;
+            r_entry.vaddr           <= i_ex1_q_updates.vaddr;
+            r_entry.paddr           <= i_ex1_q_updates.paddr;
+            r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
+            r_entry.inst            <= i_ex1_q_updates.inst;
+            r_entry.inst.rs2_ready  <= r_entry.inst.rs2_ready | i_ex1_q_updates.inst.rs2_ready;
 
-          r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;
-          r_entry.rs2_data        <= i_ex1_q_updates.st_data;
+            r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;
+            r_entry.rs2_data        <= i_ex1_q_updates.st_data;
+          end
+        msrh_lsu_pkg::STQ_TLB_HAZ : begin
+          if (|i_tlb_resolve) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_READY;
+          end
         end
-      msrh_lsu_pkg::STQ_TLB_HAZ : begin
-        if (|i_tlb_resolve) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_READY;
+        msrh_lsu_pkg::STQ_DONE : begin
+          if (i_commit.cmt_id == r_entry.cmt_id &&
+              ((i_commit.grp_id & r_entry.grp_id) != 'h0)) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_DONE : begin
-        if (i_commit.cmt_id == r_entry.cmt_id &&
-            ((i_commit.grp_id & r_entry.grp_id) != 'h0)) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT;
+        msrh_lsu_pkg::STQ_WAIT_ST_DATA : begin
+          if (r_entry.inst.rs2_ready) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_READY;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_WAIT_ST_DATA : begin
-        if (r_entry.inst.rs2_ready) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_READY;
+        msrh_lsu_pkg::STQ_READY : begin
+          if (i_rerun_accept) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_INIT;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_READY : begin
-        if (i_rerun_accept) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_INIT;
+        msrh_lsu_pkg::STQ_COMMIT : begin
+          if (i_sq_op_accept) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_COMMIT : begin
-        if (i_sq_op_accept) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK;
+        msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK : begin
+          if (i_sq_l1d_rd_miss) begin
+            r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
+            r_entry.state <= msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL;
+          end else if (i_sq_l1d_rd_conflict) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+          end else begin
+            r_entry.state <= msrh_lsu_pkg::STQ_L1D_UPDATE;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK : begin
-        if (i_sq_l1d_rd_miss) begin
-          r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
-          r_entry.state <= msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL;
-        end else if (i_sq_l1d_rd_conflict) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
-        end else begin
-          r_entry.state <= msrh_lsu_pkg::STQ_L1D_UPDATE;
+        msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL : begin
+          if (i_lrq_resolve.valid &&
+              i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL : begin
-        if (i_lrq_resolve.valid &&
-            i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+        msrh_lsu_pkg::STQ_L1D_UPDATE : begin
+          if (i_sq_l1d_wr_conflict) begin
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+          end else begin
+            r_entry.is_valid <= 1'b0;
+            r_entry.state <= msrh_lsu_pkg::STQ_INIT;
+          end
         end
-      end
-      msrh_lsu_pkg::STQ_L1D_UPDATE : begin
-        if (i_sq_l1d_wr_conflict) begin
-          r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
-        end else begin
-          r_entry.is_valid <= 1'b0;
-          r_entry.state <= msrh_lsu_pkg::STQ_INIT;
+        default : begin
+          $fatal ("This state sholudn't be reached.\n");
         end
-      end
-      default : begin
-        $fatal ("This state sholudn't be reached.\n");
-      end
-    endcase // case (r_entry.state)
+      endcase // case (r_entry.state)
+    end // else: !if(i_commit.commit & (i_commit.cmt_id <= r_entry.cmt_id))
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
