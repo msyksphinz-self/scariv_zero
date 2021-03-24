@@ -66,8 +66,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.inst.rs2_ready <= r_entry.inst.rs2_ready | w_rs2_entry_hit;
     if (i_commit.commit &
         i_commit.flush_vld &
-        (i_commit.cmt_id <  r_entry.cmt_id) |
-        (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id)) begin
+        ((i_commit.cmt_id <  r_entry.cmt_id) |
+         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin
       r_entry.state <= msrh_lsu_pkg::STQ_INIT;
       r_entry.is_valid <= 1'b0;
     end else begin
@@ -117,6 +117,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         msrh_lsu_pkg::STQ_COMMIT_L1D_CHECK : begin
           if (i_sq_l1d_rd_miss) begin
             r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
+// `ifdef SIMULATION
+//             if (!$onehot(i_sq_lrq_index_oh)) begin
+//               $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
+//             end
+// `endif // SIMULATION
             r_entry.state <= msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL;
           end else if (i_sq_l1d_rd_conflict) begin
             r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
@@ -125,7 +130,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end
         msrh_lsu_pkg::STQ_WAIT_LRQ_REFILL : begin
-          if (i_lrq_resolve.valid &&
+          if (r_entry.lrq_index_oh == 'h0) begin
+            // if index_oh is zero, it means LRQ is correctly allocated,
+            // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
+            r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
+          end else if (i_lrq_resolve.valid &&
               i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
             r_entry.state <= msrh_lsu_pkg::STQ_COMMIT; // Replay
           end

@@ -207,7 +207,7 @@ typedef struct packed {
   msrh_pkg::issue_t inst;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
-  msrh_lsu_pkg::stq_state_t state;
+  stq_state_t                     state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic                           rs2_got_data;

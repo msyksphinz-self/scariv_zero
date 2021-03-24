@@ -222,7 +222,7 @@ msrh_rn_map_queue
      .i_load (iq_disp.valid & iq_disp.is_br_included),
      .i_rn_list (w_rn_list),
 
-     .i_restore (i_commit_rnid_update.commit),
+     .i_restore (i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld),
      .o_rn_list (w_restore_rn_list),
 
      .o_full (/*xxx*/)
