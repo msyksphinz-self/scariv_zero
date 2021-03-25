@@ -1,26 +1,25 @@
 module msrh_rob_entry
   import msrh_pkg::*;
   (
-   input logic                             i_clk,
-   input logic                             i_reset_n,
+   input logic                                i_clk,
+   input logic                                i_reset_n,
 
-   input logic [CMT_BLK_W-1:0]   i_cmt_id,
+   input logic [CMT_BLK_W-1:0]                i_cmt_id,
 
-   input logic                             i_load_valid,
-   input logic [riscv_pkg::VADDR_W-1: 1]   i_load_pc_addr,
-   input                                   disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_load_grp_id,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0]   i_old_rd_valid,
-   input logic [RNID_W-1:0]      i_old_rd_rnid[msrh_conf_pkg::DISP_SIZE],
+   input logic                                i_load_valid,
+   input logic [riscv_pkg::VADDR_W-1: 1]      i_load_pc_addr,
+   input                                      disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_grp_id,
+   input logic                                i_load_br_included,
 
-   input                                   done_rpt_t i_done_rpt [CMT_BUS_SIZE],
+   input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
 
-   output rob_entry_t                      o_entry,
-   output logic                            o_block_all_done,
-   input logic                             i_commit_finish,
+   output                                     rob_entry_t o_entry,
+   output logic                               o_block_all_done,
+   input logic                                i_commit_finish,
 
-   br_upd_if.slave                         br_upd_if
+                                              br_upd_if.slave br_upd_if
    );
 
 logic                             r_valid;
@@ -53,10 +52,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.inst    <= i_load_inst;
 
       r_entry.done_grp_id <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
-      for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
-        r_entry.old_rd_valid[i] <= i_old_rd_valid[i];
-        r_entry.old_rd_rnid [i] <= i_old_rd_rnid [i];
-      end
+
+      r_entry.is_br_included <= i_load_br_included;
     end else if (r_valid) begin
       if (o_block_all_done & i_commit_finish) begin
         r_valid <= 1'b0;

@@ -235,8 +235,6 @@ u_msrh_bru (
      .i_reset_n(i_reset_n),
 
      .sc_disp (w_sc_disp),
-     .i_old_rd_valid (),
-     .i_old_rd_rnid  (),
 
      .o_sc_new_cmt_id (w_sc_new_cmt_id),
 

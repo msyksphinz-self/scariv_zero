@@ -1,33 +1,40 @@
 module msrh_rename_map
   import msrh_pkg::*;
+import msrh_conf_pkg::*;
 (
-   input logic                                    i_clk,
-   input logic                                    i_reset_n,
+   input logic                     i_clk,
+   input logic                     i_reset_n,
 
-   input logic [msrh_conf_pkg::DISP_SIZE * 2-1:0] i_arch_valid,
-   input logic [ 4: 0]                            i_arch_id[msrh_conf_pkg::DISP_SIZE * 2],
-   output logic [RNID_W-1: 0]                     o_rnid[msrh_conf_pkg::DISP_SIZE * 2],
+   input logic [DISP_SIZE * 2-1:0] i_arch_valid,
+   input logic [ 4: 0]             i_arch_id[DISP_SIZE * 2],
+   output logic [RNID_W-1: 0]      o_rnid[DISP_SIZE * 2],
 
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0]     i_update,
-   input logic [ 4: 0]                            i_update_arch_id [msrh_conf_pkg::DISP_SIZE],
-   input logic [RNID_W-1: 0]                      i_update_rnid [msrh_conf_pkg::DISP_SIZE],
+   input logic [DISP_SIZE-1:0]     i_update,
+   input logic [ 4: 0]             i_update_arch_id [DISP_SIZE],
+   input logic [RNID_W-1: 0]       i_update_rnid [DISP_SIZE],
 
-   input logic                                    i_restore_from_queue,
-   input logic [RNID_W-1: 0]                      i_restore_rn_list[32],
-   output logic [RNID_W-1: 0]                     o_rn_list[32]
+   input logic                     i_restore_from_queue,
+   input logic [RNID_W-1: 0]       i_restore_rn_list[32],
+
+   input logic [DISP_SIZE-1: 0]    i_commit_rd_valid,
+   input logic [ 4: 0]             i_commit_rd_regidx[DISP_SIZE],
+   input logic [RNID_W-1: 0]       i_commit_rd_rnid[DISP_SIZE],
+
+   output logic [RNID_W-1: 0]      o_rn_list[32]
    );
 
 logic [RNID_W-1: 0]                r_map[32];
 
-function logic [RNID_W: 0] select_latest_rnid (input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_update,
-                                                        input logic [ 4: 0]                tgt_arch_id,
-                                                        input logic [ 4: 0]                i_update_arch_id [msrh_conf_pkg::DISP_SIZE],
-                                                        input logic [RNID_W-1: 0] i_update_rnid [msrh_conf_pkg::DISP_SIZE]);
-logic [RNID_W-1: 0]                                                               rnid_tmp[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]                                                            valid_tmp;
-logic [RNID_W: 0]                                                                 ret;
+function logic [RNID_W: 0] select_latest_rnid (input logic [DISP_SIZE-1:0] i_update,
+                                               input logic [ 4: 0]       tgt_arch_id,
+                                               input logic [ 4: 0]       i_update_arch_id [DISP_SIZE],
+                                               input logic [RNID_W-1: 0] i_update_rnid [DISP_SIZE]);
 
-  for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
+logic [RNID_W-1: 0]                                                      rnid_tmp[DISP_SIZE];
+logic [DISP_SIZE-1: 0]                                                   valid_tmp;
+logic [RNID_W: 0]                                                        ret;
+
+  for (int i = 0; i < DISP_SIZE; i++) begin
     if (i_update[i] && i_update_arch_id[i] == tgt_arch_id) begin
       rnid_tmp [i] = i_update_rnid[i];
       valid_tmp[i] = 1'b1;
@@ -42,7 +49,7 @@ logic [RNID_W: 0]                                                               
     end
   end
 
-  ret = {valid_tmp[msrh_conf_pkg::DISP_SIZE-1], rnid_tmp[msrh_conf_pkg::DISP_SIZE-1]};
+  ret = {valid_tmp[DISP_SIZE-1], rnid_tmp[DISP_SIZE-1]};
   return ret;
 
 endfunction // select_latest_rnid
@@ -51,7 +58,21 @@ assign r_map[0] = 'h0;
 generate for (genvar i = 1; i < 32; i++) begin : map_loop
 logic w_update;
 logic [RNID_W-1: 0] w_update_rnid;
-  assign {w_update, w_update_rnid} = i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
+
+  logic [DISP_SIZE-1: 0] w_rd_active_valid;
+  logic [DISP_SIZE-1: 0] w_rd_active_valid_oh;
+  logic [RNID_W-1: 0]    w_commit_rd_rnid;
+  for (genvar d = 0; d < DISP_SIZE; d++) begin
+    assign w_rd_active_valid[d] = i_commit_rd_valid[d] &
+                                  (i_commit_rd_regidx[d] == i[4:0]);
+  end
+  bit_extract_msb #(.WIDTH(DISP_SIZE)) extract_latest_rd_bit(.in(w_rd_active_valid), .out(w_rd_active_valid_oh));
+  bit_oh_or #(.WIDTH(RNID_W), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
+                                                                    .i_data(i_commit_rd_rnid),
+                                                                    .o_selected(w_commit_rd_rnid));
+
+  assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :
+                                     i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
                                      select_latest_rnid (i_update,
                                                          i,
                                                          i_update_arch_id,
@@ -69,7 +90,7 @@ logic [RNID_W-1: 0] w_update_rnid;
 end
 endgenerate
 
-generate for (genvar i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin : rnid_loop
+generate for (genvar i = 0; i < DISP_SIZE; i++) begin : rnid_loop
   assign o_rnid[i * 2 + 0] = r_map[i_arch_id[i * 2 + 0]];
   assign o_rnid[i * 2 + 1] = r_map[i_arch_id[i * 2 + 1]];
 end

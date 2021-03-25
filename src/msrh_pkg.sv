@@ -103,10 +103,9 @@ package msrh_pkg;
     msrh_pkg::disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
 
     logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0] old_rd_valid;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rd_rnid;
 
     // Branch update info
+    logic                               is_br_included;
     br_upd_info_t br_upd_info;
   } rob_entry_t;
 
@@ -223,8 +222,13 @@ endfunction // encoder_grp_id
 typedef struct packed {
   logic                                                      commit;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       rnid_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] rd_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
+  logic                                                      is_br_included;
   logic                                                      upd_pc_vld;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
+  logic                                                      all_dead;
 } cmt_rnid_upd_t;
 
 endpackage
