@@ -333,12 +333,20 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
 
 endfunction // dump_json
 
+logic [MEM_Q_SIZE-1: 0] w_stq_valid;
+generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
+  assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
+end
+endgenerate
+
 function void dump_json(int fp);
-  $fwrite(fp, "  \"msrh_stq\" : {\n");
-  for (int s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
-    dump_entry_json (fp, w_stq_entries[s_idx], s_idx);
+  if (|w_stq_valid) begin
+    $fwrite(fp, "  \"msrh_stq\" : {\n");
+    for (int s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
+      dump_entry_json (fp, w_stq_entries[s_idx], s_idx);
+    end
+    $fwrite(fp, "  },\n");
   end
-  $fwrite(fp, "  },\n");
 endfunction // dump_json
 `endif // SIMULATION
 

@@ -6,8 +6,6 @@ module msrh_rob
    input logic                   i_reset_n,
 
    disp_if.watch                 sc_disp,
-   input logic [DISP_SIZE-1:0]   i_old_rd_valid,
-   input logic [RNID_W-1:0]      i_old_rd_rnid[DISP_SIZE],
 
    output logic [CMT_BLK_W-1: 0] o_sc_new_cmt_id,
 
@@ -29,14 +27,15 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id;
 
 // When this signal is 1, committer is killing uncommitted instructions
 logic                              r_killing_uncmts;
+logic                              w_killing_uncmts;
 
 //
 // LRQ Pointer
 //
 logic                                      w_in_vld, w_out_vld;
 assign w_in_vld  = sc_disp.valid;
-assign w_out_vld = w_entry_all_done[w_out_cmt_id] |
-                   r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
+assign w_out_vld = w_entry_all_done[w_out_cmt_id] | w_killing_uncmts;
+
 
 inoutptr #(.SIZE(CMT_BLK_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                           .i_clear (1'b0),
@@ -65,8 +64,7 @@ logic w_load_valid;
      .i_load_pc_addr (sc_disp.pc_addr),
      .i_load_inst    (sc_disp.inst),
      .i_load_grp_id  (w_disp_grp_id),
-     .i_old_rd_valid (i_old_rd_valid),
-     .i_old_rd_rnid  (i_old_rd_rnid),
+     .i_load_br_included (sc_disp.is_br_included),
 
      .i_done_rpt (i_done_rpt),
 
@@ -83,6 +81,8 @@ endgenerate
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
 
+assign w_killing_uncmts = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
+
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_id].done_grp_id;
@@ -90,12 +90,19 @@ assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid;
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
 assign o_commit.dead_id      = w_dead_grp_id;
-assign o_commit.all_dead     = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
+assign o_commit.all_dead     = w_killing_uncmts;
 
-assign o_commit_rnid_update.commit     = o_commit.commit | r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
-assign o_commit_rnid_update.rnid_valid = w_entries[w_out_cmt_id].old_rd_valid;
-assign o_commit_rnid_update.rnid       = w_entries[w_out_cmt_id].old_rd_rnid;
-assign o_commit_rnid_update.upd_pc_vld = o_commit.upd_pc_vld & !o_commit.all_dead;
+assign o_commit_rnid_update.commit     = o_commit.commit | w_killing_uncmts;
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
+  assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_valid;
+  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_rnid;
+  assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_regidx;
+end
+endgenerate
+assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_id].is_br_included;
+assign o_commit_rnid_update.upd_pc_vld     = o_commit.upd_pc_vld & !o_commit.all_dead;
+assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
+assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 
 // Select Branch Target Address
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));

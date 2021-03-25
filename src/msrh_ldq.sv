@@ -208,12 +208,20 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
 
 endfunction // dump_json
 
+logic [MEM_Q_SIZE-1: 0] w_ldq_valid;
+generate for (genvar l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
+  assign w_ldq_valid[l_idx] = w_ldq_entries[l_idx].is_valid;
+end
+endgenerate
+
 function void dump_json(int fp);
-  $fwrite(fp, "  \"msrh_ldq\" : {\n");
-  for (int l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
-    dump_entry_json (fp, w_ldq_entries[l_idx], l_idx);
+  if (|w_ldq_valid) begin
+    $fwrite(fp, "  \"msrh_ldq\" : {\n");
+    for (int l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
+      dump_entry_json (fp, w_ldq_entries[l_idx], l_idx);
+    end
+    $fwrite(fp, "  },\n");
   end
-  $fwrite(fp, "  },\n");
 endfunction // dump_json
 `endif // SIMULATION
 

@@ -29,6 +29,11 @@ logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
+logic                                         w_commit_rnid_restore_vld;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_commit_rd_valid;
+logic [ 4: 0]                                 w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]                 w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_valids;
 logic [ 4: 0]                                 w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_data;
@@ -52,8 +57,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                               .i_clk     (i_clk ),
                               .i_reset_n (i_reset_n),
 
-                              .i_push(i_commit_rnid_update.commit & i_commit_rnid_update.rnid_valid[d_idx]),
-                              .i_push_id(i_commit_rnid_update.rnid[d_idx]),
+                              .i_push(i_commit_rnid_update.commit &
+                                      i_commit_rnid_update.rnid_valid[d_idx] &
+                                      (i_commit_rnid_update.rd_regidx[d_idx] != 'h0)),
+                              .i_push_id(i_commit_rnid_update.old_rnid[d_idx]),
 
                               .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
                               .o_pop_id(w_rd_rnid_tmp)
@@ -75,6 +82,17 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
+assign w_commit_rnid_restore_vld = i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld;
+
+assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_vld}} &
+                           i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop
+  assign w_commit_rd_regidx[d_idx] = i_commit_rnid_update.rd_regidx[d_idx];
+  assign w_commit_rd_rnid[d_idx]   = i_commit_rnid_update.rd_rnid[d_idx];
+end
+endgenerate
+
 msrh_rename_map u_msrh_rename_map
   (
    .i_clk     (i_clk),
@@ -88,8 +106,12 @@ msrh_rename_map u_msrh_rename_map
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   ),
 
-   .i_restore_from_queue (i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld),
+   .i_restore_from_queue (w_commit_rnid_restore_vld),
    .i_restore_rn_list    (w_restore_rn_list),
+
+   .i_commit_rd_valid (w_commit_rd_valid),
+   .i_commit_rd_regidx(w_commit_rd_regidx),
+   .i_commit_rd_rnid  (w_commit_rd_rnid),
 
    .o_rn_list (w_rn_list)
    );
@@ -222,7 +244,7 @@ msrh_rn_map_queue
      .i_load (iq_disp.valid & iq_disp.is_br_included),
      .i_rn_list (w_rn_list),
 
-     .i_restore (i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld),
+     .i_restore (i_commit_rnid_update.commit & i_commit_rnid_update.is_br_included),
      .o_rn_list (w_restore_rn_list),
 
      .o_full (/*xxx*/)
