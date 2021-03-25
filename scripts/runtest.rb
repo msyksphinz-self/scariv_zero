@@ -12,6 +12,9 @@ log_dir = 'log/'
 
 FileUtils.mkdir_p(log_dir)
 
+test_num = 0
+pass_num = 0
+
 $test_table.each{ |test|
   command_str = "./msrh_tb_rv64_standard " + "-e " + "../tests/" + test["elf"]
   stdout_txt = log_dir + "stdout_" + test["name"] + ".txt"
@@ -21,9 +24,15 @@ $test_table.each{ |test|
   result_stdout = `cat #{stdout_txt}`
   if result_stdout.include?("SIMULATION FINISH : PASS")
     print "PASS\n"
+    pass_num = pass_num + 1
   elsif result_stdout.include?("SIMULATION FINISH : ERROR")
     print "ERROR\n"
   else
     print "UNKNOWN\n"
   end
+  test_num = test_num +1
 }
+
+printf("============================\n")
+printf("PASS / TOTAL = %d / %d\n", pass_num, test_num)
+printf("============================\n")
