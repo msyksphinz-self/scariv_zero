@@ -13,6 +13,7 @@ extern std::unique_ptr<Memory> g_memory;
 extern bool elf_load_finish;
 
 int time_counter = 0;
+bool dump_fst_enable = false;
 
 static void usage(const char * program_name)
 {
@@ -35,17 +36,21 @@ int main(int argc, char** argv) {
   while (1) {
     static struct option long_options[] = {
       {"elf",  no_argument, 0, 'e' },
+      {"dump", no_argument, 0, 'd' },
       {"help", no_argument, 0, 'h' }
     };
 
     int option_index = 0;
-    int c = getopt_long(argc, argv, "-e:h", long_options, &option_index);
+    int c = getopt_long(argc, argv, "-e:h:d", long_options, &option_index);
 
     if (c == -1) break;
  retry:
     switch (c) {
       // Process long and short EMULATOR options
       case 'h': usage(argv[0]);             return 1;
+      case 'd':
+        dump_fst_enable = true;
+        break;
       case 'e': {
         g_memory   = std::unique_ptr<Memory> (new Memory ());
 
@@ -62,11 +67,14 @@ int main(int argc, char** argv) {
   Vmsrh_tb *dut = new Vmsrh_tb();
 
   // Trace DUMP ON
-  Verilated::traceEverOn(true);
-  VerilatedFstC* tfp = new VerilatedFstC;
+  VerilatedFstC* tfp = NULL;
+  if (dump_fst_enable) {
+    Verilated::traceEverOn(true);
+    tfp = new VerilatedFstC;
 
-  dut->trace(tfp, 100);  // Trace 100 levels of hierarchy
-  tfp->open("simx.fst");
+    dut->trace(tfp, 100);  // Trace 100 levels of hierarchy
+    tfp->open("simx.fst");
+  }
 
   fprintf(stderr, "initial_spike opening %s ...\n", filename);
   initial_spike(filename);
@@ -85,7 +93,7 @@ int main(int argc, char** argv) {
   // Reset Time
   while (time_counter < 10) {
     dut->eval();
-    tfp->dump(time_counter);
+    if (dump_fst_enable) tfp->dump(time_counter);
     time_counter++;
   }
 
@@ -96,7 +104,7 @@ int main(int argc, char** argv) {
   dut->i_clk = 0;
   while (time_counter < 100) {
     dut->eval();
-    tfp->dump(time_counter);
+    if (dump_fst_enable) tfp->dump(time_counter);
     time_counter++;
   }
   // Release reset
@@ -116,7 +124,7 @@ int main(int argc, char** argv) {
 
     // Evaluate DUT
     dut->eval();
-    tfp->dump(time_counter);
+    if (dump_fst_enable) tfp->dump(time_counter);
 
     if (elf_load_finish) {
       dut->i_elf_loader_reset_n = 0;
@@ -127,5 +135,5 @@ int main(int argc, char** argv) {
   }
 
   dut->final();
-  tfp->close();
+  if (dump_fst_enable) tfp->close();
 }
