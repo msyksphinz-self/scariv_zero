@@ -1,0 +1,16 @@
+[
+    { "name": "simple_add",        "elf": "simple_add/test.elf"        },
+	{ "name": "long_chain_addi",   "elf": "long_chain_addi/test.elf"   },
+	{ "name": "long_ld_sequence",  "elf": "long_ld_sequence/test.elf"  },
+	{ "name": "simple_addi",       "elf": "simple_addi/test.elf"       },
+	{ "name": "simple_addiw",      "elf": "simple_addiw/test.elf"      },
+	{ "name": "simple_auipc",      "elf": "simple_auipc/test.elf"      },
+	{ "name": "simple_branch",     "elf": "simple_branch/test.elf"     },
+	{ "name": "simple_branch2",    "elf": "simple_branch2/test.elf"    },
+	{ "name": "simple_chain_addi", "elf": "simple_chain_addi/test.elf" },
+	{ "name": "simple_ld",         "elf": "simple_ld/test.elf"         },
+	{ "name": "simple_lui",        "elf": "simple_lui/test.elf"        },
+	{ "name": "simple_sd",         "elf": "simple_sd/test.elf"         },
+	{ "name": "simple_sub",        "elf": "simple_sub/test.elf"        },
+	{ "name": "x0_rename",         "elf": "x0_rename/test.elf"         }
+]

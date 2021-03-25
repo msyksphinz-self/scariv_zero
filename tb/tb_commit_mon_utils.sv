@@ -27,7 +27,7 @@ bit_oh_or
     .WIDTH($size(msrh_pkg::rob_entry_t)),
     .WORDS(msrh_pkg::CMT_BLK_SIZE)
     )
-commite_entry
+committed_entry
   (
    .i_oh(w_commited_oh),
    .i_data(rob_entries),
