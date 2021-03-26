@@ -174,6 +174,24 @@ assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
 assign o_ex1_q_updates.st_data_vld = r_ex1_issue.rs2_ready;
 assign o_ex1_q_updates.st_data    = ex1_regread_rs2.data;
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (o_ex1_q_updates.update &
+        !$onehot(o_ex1_q_updates.pipe_sel_idx_oh)) begin
+      $fatal(0, "LSU Pipeline : o_ex1_q_updates.pipe_sel_idx_oh should be one-hot Value=%x\n",
+             o_ex1_q_updates.pipe_sel_idx_oh);
+    end
+    if (o_ex1_q_updates.update &
+        !$onehot0(o_ex1_q_updates.index_oh)) begin
+      $fatal(0, "LSU Pipeline : o_ex1_q_updates.index_oh should be one-hot. Value=%x\n",
+             o_ex1_q_updates.index_oh);
+    end
+  end
+end
+`endif // SIMULATION
+
+
 // Interface to L1D cache
 assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
@@ -202,6 +220,25 @@ assign o_ex2_q_updates.hazard_typ = o_ex2_l1d_mispredicted ?
                                     msrh_lsu_pkg::NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
+
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (o_ex2_q_updates.update &
+        (o_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT) &
+        !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
+      $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
+             o_ex2_q_updates.lrq_index_oh);
+    end
+    if (o_ex2_q_updates.update &
+        (o_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED) &
+        o_ex2_q_updates.lrq_index_oh != 'h0) begin
+      $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
+             o_ex2_q_updates.lrq_index_oh);
+    end
+  end // if (i_reset_n)
+end
+`endif // SIMULATION
 
 // Forwarding check
 assign ex2_fwd_check_if.valid = r_ex2_issue.valid & r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD;

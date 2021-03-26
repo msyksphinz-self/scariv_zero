@@ -86,10 +86,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           if (!i_reset_n) begin
           end else begin
             if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
-              $fatal ("When LRQ is assigned, LRQ index ID must be zero\n");
+              $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
             end
             if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
-              $fatal ("lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
+              $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
             end
           end
 `endif // SIMULATION
