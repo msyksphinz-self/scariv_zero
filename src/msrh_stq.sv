@@ -99,7 +99,6 @@ logic [$clog2(STQ_SIZE)-1:0] w_in_ptr;
 logic [$clog2(STQ_SIZE)-1:0] w_out_ptr;
 logic                                      w_in_vld;
 logic                                      w_out_vld;
-logic [STQ_SIZE-1:0]         w_load_valid;
 logic [$clog2(STQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_vld  = |disp_picked_inst_valid;
@@ -311,15 +310,15 @@ assign o_done_report.exc_vld = 'h0;   // Temporary
 function void dump_entry_json(int fp, stq_entry_t entry, int index);
 
   if (entry.is_valid) begin
-    $fwrite(fp, "    \"msrh_stq_entry[%d]\" : {", index);
-    $fwrite(fp, "       valid : %d, ", entry.is_valid);
-    $fwrite(fp, "       pc_addr : \"0x%0x\", ", entry.inst.pc_addr);
-    $fwrite(fp, "       inst : \"%08x\", ", entry.inst.inst);
+    $fwrite(fp, "    \"msrh_stq_entry[%d]\":{", index);
+    $fwrite(fp, "valid:%d, ", entry.is_valid);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
+    $fwrite(fp, "inst:\"%08x\", ", entry.inst.inst);
 
-    $fwrite(fp, "       cmt_id : %d, ", entry.cmt_id);
-    $fwrite(fp, "       grp_id : %d, ", entry.grp_id);
+    $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
+    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
-    $fwrite(fp, "       state : \"%s\", ", entry.state == STQ_INIT               ? "INIT" :
+    $fwrite(fp, "state:\"%s\", ", entry.state == STQ_INIT               ? "INIT" :
                                            entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
                                            entry.state == STQ_READY              ? "READY" :
                                            entry.state == STQ_DONE               ? "DONE" :
@@ -341,7 +340,7 @@ endgenerate
 
 function void dump_json(int fp);
   if (|w_stq_valid) begin
-    $fwrite(fp, "  \"msrh_stq\" : {\n");
+    $fwrite(fp, "  \"msrh_stq\":{\n");
     for (int s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
       dump_entry_json (fp, w_stq_entries[s_idx], s_idx);
     end

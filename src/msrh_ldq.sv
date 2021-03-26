@@ -188,15 +188,15 @@ assign o_done_report.exc_vld = 'h0;   // Temporary
 function void dump_entry_json(int fp, ldq_entry_t entry, int index);
 
   if (entry.is_valid) begin
-    $fwrite(fp, "    \"msrh_ldq_entry[%d]\" : {", index);
-    $fwrite(fp, "       valid : %d, ", entry.is_valid);
-    $fwrite(fp, "       pc_addr : \"0x%0x\", ", entry.inst.pc_addr);
-    $fwrite(fp, "       inst : \"%08x\", ", entry.inst);
+    $fwrite(fp, "    \"msrh_ldq_entry[%d]\":{", index);
+    $fwrite(fp, "valid:%d, ", entry.is_valid);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
+    $fwrite(fp, "inst:\"%08x\", ", entry.inst);
 
-    $fwrite(fp, "       cmt_id : %d, ", entry.cmt_id);
-    $fwrite(fp, "       grp_id : %d, ", entry.grp_id);
+    $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
+    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
-    $fwrite(fp, "       state : \"%s\", ", entry.state == LDQ_INIT     ? "LDQ_INIT" :
+    $fwrite(fp, "state:\"%s\", ", entry.state == LDQ_INIT     ? "LDQ_INIT" :
                                            entry.state == LDQ_EX2_RUN  ? "LDQ_EX2_RUN" :
                                            entry.state == LDQ_LRQ_HAZ  ? "LDQ_LRQ_HAZ" :
                                            entry.state == LDQ_STQ_HAZ  ? "LDQ_STQ_HAZ" :
@@ -216,7 +216,7 @@ endgenerate
 
 function void dump_json(int fp);
   if (|w_ldq_valid) begin
-    $fwrite(fp, "  \"msrh_ldq\" : {\n");
+    $fwrite(fp, "  \"msrh_ldq\":{\n");
     for (int l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
       dump_entry_json (fp, w_ldq_entries[l_idx], l_idx);
     end

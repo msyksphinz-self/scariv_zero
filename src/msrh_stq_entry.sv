@@ -70,7 +70,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
          (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin
       r_entry.state <= msrh_lsu_pkg::STQ_INIT;
       r_entry.is_valid <= 1'b0;
+      // prevent all updates from Pipeline
+      r_entry.cmt_id <= 'h0;
+      r_entry.grp_id <= 'h0;
     end else begin
+`ifdef SIMULATION
+      if (i_disp_load && r_entry.state != msrh_lsu_pkg::STQ_INIT) begin
+        $fatal(0, "When STQ is worked, it shouldn't come to i_disp_load");
+      end
+`endif // SIMULATION
       case (r_entry.state)
         msrh_lsu_pkg::STQ_INIT :
           if (i_disp_load) begin

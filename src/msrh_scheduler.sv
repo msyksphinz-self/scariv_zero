@@ -127,20 +127,20 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
     $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
-    $fwrite(fp, " valid:%d, ", entry.entry.valid);
-    $fwrite(fp, " pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
-    $fwrite(fp, " inst:\"%08x\", ", entry.entry.inst);
+    $fwrite(fp, "valid:%d, ", entry.entry.valid);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
+    $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
 
-    $fwrite(fp, " cmt_id:%d, ", entry.entry.cmt_id);
-    $fwrite(fp, " grp_id:%d, ", entry.entry.grp_id);
+    $fwrite(fp, "cmt_id:%d, ", entry.entry.cmt_id);
+    $fwrite(fp, "grp_id:%d, ", entry.entry.grp_id);
 
     // Destination Register
-    $fwrite(fp, " rd:{ vld:%1d, idx=%02d, rnid=%d },", entry.entry.rd_valid, entry.entry.rd_regidx, entry.entry.rd_rnid);
+    $fwrite(fp, "rd:{ vld:%1d, idx=%02d, rnid=%d },", entry.entry.rd_valid, entry.entry.rd_regidx, entry.entry.rd_rnid);
     // Source 1
-    $fwrite(fp, " rs1:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
+    $fwrite(fp, "rs1:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
     // Source 2
-    $fwrite(fp, " rs2:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
-    $fwrite(fp, " state:\"%s\", ", entry.state == msrh_pkg::INIT ? "INIT" :
+    $fwrite(fp, "rs2:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
+    $fwrite(fp, "state:\"%s\", ", entry.state == msrh_pkg::INIT ? "INIT" :
             entry.state == msrh_pkg::WAIT ? "WAIT" :
             entry.state == msrh_pkg::ISSUED ? "ISSUED" :
             entry.state == msrh_pkg::DONE ? "DONE" : "x");
