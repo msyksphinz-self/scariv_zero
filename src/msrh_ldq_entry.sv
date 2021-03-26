@@ -64,9 +64,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.inst            <= i_ex1_q_updates.inst;
 
           for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-            r_ex2_ldq_entries_recv[p_idx] <= i_ex1_q_valid & !i_ex1_q_updates.hazard_vld;
+            r_ex2_ldq_entries_recv[p_idx] <=  i_ex1_q_valid &
+                                             !i_ex1_q_updates.hazard_vld &
+                                              i_ex1_q_updates.pipe_sel_idx_oh[p_idx];
           end
-        end
+        end // if (i_ex1_q_valid)
       LDQ_TLB_HAZ : begin
         if (|i_tlb_resolve) begin
           r_entry.state <= LDQ_READY;
