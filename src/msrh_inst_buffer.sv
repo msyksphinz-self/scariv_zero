@@ -164,15 +164,15 @@ logic [31: 0] w_inst[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_vld;
 
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
-  logic [$clog2(ic_word_num)-1: 0] w_buf_id;
+  logic [$clog2(ic_word_num): 0] w_buf_id;
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
   assign w_buf_id = r_head_start_pos + w_idx +
                     w_out_inst_q_pc;
   assign w_inst_buf_ptr = (w_buf_id < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
-  assign w_inst       [w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id*32+:32];
-  assign w_inst_be_vld[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id*4+:4]);
+  assign w_inst       [w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id[$clog2(ic_word_num)-1:0]*32+:32];
+  assign w_inst_be_vld[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id[$clog2(ic_word_num)-1:0]*4+:4]);
 
   logic[ 2: 0] w_raw_cat;
   decoder_inst_cat
