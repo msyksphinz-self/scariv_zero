@@ -1,0 +1,88 @@
+
+test.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000080000000 <_start>:
+    80000000:	00000097          	auipc	ra,0x0
+    80000004:	08008093          	addi	ra,ra,128 # 80000080 <data>
+    80000008:	0000d103          	lhu	sp,0(ra)
+    8000000c:	0020d183          	lhu	gp,2(ra)
+    80000010:	0040d203          	lhu	tp,4(ra)
+    80000014:	0060d283          	lhu	t0,6(ra)
+    80000018:	0080d303          	lhu	t1,8(ra)
+    8000001c:	00a0d383          	lhu	t2,10(ra)
+    80000020:	00c0d403          	lhu	s0,12(ra)
+    80000024:	00e0d483          	lhu	s1,14(ra)
+    80000028:	0120d503          	lhu	a0,18(ra)
+    8000002c:	0140d583          	lhu	a1,20(ra)
+    80000030:	0160d603          	lhu	a2,22(ra)
+    80000034:	0180d683          	lhu	a3,24(ra)
+    80000038:	01c0d703          	lhu	a4,28(ra)
+    8000003c:	01e0d783          	lhu	a5,30(ra)
+    80000040:	0200d803          	lhu	a6,32(ra)
+    80000044:	0220d883          	lhu	a7,34(ra)
+    80000048:	0240d903          	lhu	s2,36(ra)
+    8000004c:	0260d983          	lhu	s3,38(ra)
+    80000050:	00100513          	li	a0,1
+    80000054:	000805b7          	lui	a1,0x80
+    80000058:	0015859b          	addiw	a1,a1,1
+    8000005c:	00c59593          	slli	a1,a1,0xc
+
+0000000080000060 <_finish_loop>:
+    80000060:	00a5a023          	sw	a0,0(a1) # 80000 <_start-0x7ff80000>
+    80000064:	ffdff06f          	j	80000060 <_finish_loop>
+
+Disassembly of section .data:
+
+0000000080000080 <data>:
+    80000080:	89abcdef          	jal	s11,7ffbc11a <_start-0x43ee6>
+    80000084:	01234567          	0x1234567
+    80000088:	44556677          	0x44556677
+    8000008c:	00112233          	slt	tp,sp,ra
+    80000090:	eeff                	0xeeff
+    80000092:	ccdd                	beqz	s1,80000150 <_end+0x58>
+    80000094:	8899aabb          	0x8899aabb
+    80000098:	22223333          	0x22223333
+    8000009c:	1111                	addi	sp,sp,-28
+    8000009e:	0000                	unimp
+    800000a0:	66667777          	0x66667777
+    800000a4:	5555                	li	a0,-11
+    800000a6:	4444                	lw	s1,12(s0)
+    800000a8:	aaaabbbb          	0xaaaabbbb
+    800000ac:	9999                	andi	a1,a1,-26
+    800000ae:	8888                	0x8888
+    800000b0:	ffff                	0xffff
+    800000b2:	eeee                	sd	s11,344(sp)
+    800000b4:	dddd                	beqz	a1,80000072 <_finish_loop+0x12>
+    800000b6:	cccc                	sw	a1,28(s1)
+    800000b8:	1111                	addi	sp,sp,-28
+    800000ba:	1111                	addi	sp,sp,-28
+    800000bc:	0000                	unimp
+    800000be:	0000                	unimp
+    800000c0:	33333333          	0x33333333
+    800000c4:	2222                	fld	ft4,8(sp)
+    800000c6:	2222                	fld	ft4,8(sp)
+    800000c8:	5555                	li	a0,-11
+    800000ca:	5555                	li	a0,-11
+    800000cc:	4444                	lw	s1,12(s0)
+    800000ce:	4444                	lw	s1,12(s0)
+    800000d0:	77777777          	0x77777777
+    800000d4:	6666                	ld	a2,88(sp)
+    800000d6:	6666                	ld	a2,88(sp)
+    800000d8:	9999                	andi	a1,a1,-26
+    800000da:	9999                	andi	a1,a1,-26
+    800000dc:	8888                	0x8888
+    800000de:	8888                	0x8888
+    800000e0:	bbbbbbbb          	0xbbbbbbbb
+    800000e4:	aaaa                	fsd	fa0,336(sp)
+    800000e6:	aaaa                	fsd	fa0,336(sp)
+    800000e8:	dddd                	beqz	a1,800000a6 <data+0x26>
+    800000ea:	dddd                	beqz	a1,800000a8 <data+0x28>
+    800000ec:	cccc                	sw	a1,28(s1)
+    800000ee:	cccc                	sw	a1,28(s1)
+    800000f0:	ffff                	0xffff
+    800000f2:	ffff                	0xffff
+    800000f4:	eeee                	sd	s11,344(sp)
+    800000f6:	eeee                	sd	s11,344(sp)
