@@ -191,7 +191,7 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     $fwrite(fp, "    \"msrh_ldq_entry[%d]\":{", index);
     $fwrite(fp, "valid:%d, ", entry.is_valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
-    $fwrite(fp, "inst:\"%08x\", ", entry.inst);
+    $fwrite(fp, "inst:\"%08x\", ", entry.inst.inst);
 
     $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.grp_id);
