@@ -81,20 +81,6 @@ logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
 logic                                     w_l1d_resp_ready;
 
-task stop_sim(input int code);
-  $write("===============================\n");
-  $write("SIMULATION FINISH : ");
-  if (code == 0) begin
-    $write("PASS\n");
-  end else begin
-    $write("FAIL (CODE=%d)\n", code);
-  end
-  $write("===============================\n");
-  $finish;
-endtask // stop_sim
-
-export "DPI-C" task stop_sim;
-
 /* Connection */
 assign w_l2_req_valid   = w_l1d_req_valid ? w_l1d_req_valid   : i_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
 assign w_l2_req_cmd     = w_l1d_req_valid ? w_l1d_req_cmd     : i_msrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;

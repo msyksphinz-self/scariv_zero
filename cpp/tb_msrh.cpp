@@ -22,6 +22,10 @@ static void usage(const char * program_name)
 }
 
 
+extern "C" {
+  void stop_sim(int code);
+}
+
 double sc_time_stamp()
 {
   return time_counter;
@@ -136,4 +140,18 @@ int main(int argc, char** argv) {
 
   dut->final();
   if (dump_fst_enable) tfp->close();
+}
+
+
+void stop_sim(int code)
+{
+  fprintf(stderr, "===============================\n");
+  fprintf(stderr, "SIMULATION FINISH : ");
+  if (code == 0) {
+    fprintf(stderr, "PASS\n");
+  } else {
+    fprintf(stderr, "FAIL (CODE=%d)\n", code);
+  }
+  fprintf(stderr, "===============================\n");
+  exit(code);
 }
