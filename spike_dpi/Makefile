@@ -29,7 +29,7 @@ EXE_CFLAGS += $(abspath riscv-isa-sim)/libfdt.a
 EXE_CFLAGS += -lpthread
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
-
+EXE_CFLAGS += -DSIM_MAIN
 
 all: libspike_dpi.so spike_main
 

@@ -20,6 +20,8 @@ static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
 // static void help(int exit_code = 1);
 
+extern void stop_sim(int code);
+
 static void help(int exit_code = 1)
 {
   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
@@ -430,6 +432,8 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong PC: RTL = %016llx, ISS = %016lx\n",
               rtl_pc, iss_pc);
       fprintf(stderr, "==========================================\n");
+      // stop_sim(1);
+      return;
   }
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
@@ -438,6 +442,8 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %016llx, ISS = %016lx\n",
               rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val, iss_wr_val);
       fprintf(stderr, "==========================================\n");
+      // stop_sim(1);
+      return;
     } else {
       fprintf(stderr, "GPR[%02d](%d) <= %016llx", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
     }
@@ -446,6 +452,7 @@ void step_spike(long long time, long long rtl_pc,
 }
 
 
+#ifdef SIM_MAIN
 int main()
 {
   initial_spike ("../tests/simple_chain_add/test.elf");
@@ -456,3 +463,9 @@ int main()
 
   return 0;
 }
+
+void stop_sim(int code)
+{
+  fprintf(stderr, "stop_ism %d\n", code);
+}
+#endif // SIM_MAIN
