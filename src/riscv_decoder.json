@@ -84,8 +84,17 @@
         "lsu_ctrl":[["size", "b"], ["sign", "s"], ["is_load", "1"]]
     },
     {
+        "comment": "Load Unsigned Word instruction",
+        "name":"lwu        r[11:7],h[31:20](r[19:15])",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "w"], ["sign", "u"], ["is_load", "1"]]
+    },
+    {
         "comment": "Load Unsigned HalfWord instruction",
-        "name":"lh         r[11:7],h[31:20](r[19:15])",
+        "name":"lhu        r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
@@ -94,7 +103,7 @@
     },
     {
         "comment": "Load Unsigned Byte instruction",
-        "name":"lb         r[11:7],h[31:20](r[19:15])",
+        "name":"lbu        r[11:7],h[31:20](r[19:15])",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],

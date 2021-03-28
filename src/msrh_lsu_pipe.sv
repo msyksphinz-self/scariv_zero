@@ -1,8 +1,9 @@
 module msrh_lsu_pipe
-  #(
-    parameter LSU_PIPE_IDX = 0,
-    parameter RV_ENTRY_SIZE = 32
-    )
+  import decoder_lsu_ctrl_pkg::*;
+#(
+  parameter LSU_PIPE_IDX = 0,
+  parameter RV_ENTRY_SIZE = 32
+  )
 (
  input logic                           i_clk,
  input logic                           i_reset_n,
@@ -41,15 +42,24 @@ module msrh_lsu_pipe
  done_if.master                        ex3_done_if
 );
 
+typedef struct packed {
+  size_t  size;
+  sign_t  sign;
+  logic   is_load;
+  logic   is_store;
+} lsu_pipe_ctrl_t;
+
+
 //
 // EX0 stage
 //
-msrh_pkg::issue_t                      r_ex0_rs_issue, w_ex0_issue_next;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]         r_ex0_rs_index_oh;
+msrh_pkg::issue_t                     r_ex0_rs_issue, w_ex0_issue_next;
+logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] r_ex0_rs_index_oh;
 
 // Selected signal
 msrh_pkg::issue_t                      w_ex0_issue;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  w_ex0_index_oh;
+lsu_pipe_ctrl_t                        w_ex0_pipe_ctrl;
 
 //
 // EX1 stage
@@ -60,6 +70,7 @@ logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 logic [riscv_pkg::VADDR_W-1: 0]        w_ex1_vaddr;
 msrh_lsu_pkg::tlb_req_t                w_ex1_tlb_req;
 msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
+lsu_pipe_ctrl_t                        r_ex1_pipe_ctrl;
 
 //
 // EX2 stage
@@ -67,7 +78,9 @@ msrh_lsu_pkg::tlb_resp_t               w_ex1_tlb_resp;
 msrh_pkg::issue_t                     r_ex2_issue, w_ex2_issue_next;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] r_ex2_index_oh;
 logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
-
+lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
+logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_tmp;
+logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_sign_ext;
 //
 // EX3 stage
 //
@@ -104,9 +117,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
+    r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
 
     r_ex2_issue     <= w_ex2_issue_next;
     r_ex2_index_oh  <= r_ex1_index_oh;
+    r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
     r_ex3_issue     <= w_ex3_issue_next;
   end // else: !if(!i_reset_n)
@@ -129,6 +144,16 @@ u_tlb
  .o_tlb_update(o_tlb_resolve)
  );
 
+
+decoder_lsu_ctrl
+u_decoder_ls_ctrl
+  (
+   .inst     (w_ex0_issue.inst        ),
+   .size     (w_ex0_pipe_ctrl.size    ),
+   .sign     (w_ex0_pipe_ctrl.sign    ),
+   .is_load  (w_ex0_pipe_ctrl.is_load ),
+   .is_store (w_ex0_pipe_ctrl.is_store)
+   );
 
 //
 // EX0 stage pipeline
@@ -195,7 +220,7 @@ end
 // Interface to L1D cache
 assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
-                           {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+                              {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 //
 // EX2 stage pipeline
@@ -241,8 +266,28 @@ end
 `endif // SIMULATION
 
 // Forwarding check
-assign ex2_fwd_check_if.valid = r_ex2_issue.valid & r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD;
+assign ex2_fwd_check_if.valid = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
 assign ex2_fwd_check_if.paddr = r_ex2_paddr;
+
+always_comb begin
+  case(r_ex2_pipe_ctrl.size)
+    SIZE_DW : w_ex2_data_tmp = ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: 64];
+    SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:2],  2'b00, 3'b000} +: 32]};
+    SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:1],   1'b0, 3'b000} +: 16]};
+    SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0],         3'b000} +:  8]};
+    default : w_ex2_data_tmp =  {(riscv_pkg::XLEN_W- 0){1'b0}};
+  endcase // case (r_ex2_pipe_ctrl.size)
+  if (r_ex2_pipe_ctrl.sign == SIGN_S) begin
+    case(r_ex2_pipe_ctrl.size)
+      SIZE_W  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){w_ex2_data_tmp[31]}}, w_ex2_data_tmp[31: 0]};
+      SIZE_H  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-16){w_ex2_data_tmp[15]}}, w_ex2_data_tmp[15: 0]};
+      SIZE_B  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W- 8){w_ex2_data_tmp[ 7]}}, w_ex2_data_tmp[ 7: 0]};
+      default : w_ex2_data_sign_ext = w_ex2_data_tmp;
+    endcase // case (r_ex2_pipe_ctrl.size)
+  end else begin
+    w_ex2_data_sign_ext = w_ex2_data_tmp;
+  end
+end // always_comb
 
 //
 // EX3 stage pipeline
@@ -251,8 +296,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
-    r_ex3_aligned_data <= ex2_fwd_check_if.fwd_vld ? ex2_fwd_check_if.fwd_data :
-                          ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: riscv_pkg::XLEN_W]; // if size = 8B
+    r_ex3_aligned_data <= ex2_fwd_check_if.fwd_vld ? ex2_fwd_check_if.fwd_data : w_ex2_data_sign_ext;
   end
 end
 
