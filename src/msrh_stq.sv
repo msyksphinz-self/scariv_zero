@@ -122,15 +122,17 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
 end
 `endif
 
-  generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
+generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
-    for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_ptr + i_idx == s_idx);
-    end
+  for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
+    logic [$clog2(LDQ_SIZE)-1: 0]  w_in_entry_ptr;
+    assign w_in_entry_ptr = w_in_ptr + i_idx;
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_entry_ptr == s_idx);
+  end
 
   bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
   bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
