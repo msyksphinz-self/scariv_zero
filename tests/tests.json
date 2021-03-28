@@ -17,6 +17,9 @@
 	{ "name": "simple_lbu",        "elf": "simple_lbu/test.elf"        },
 	{ "name": "simple_lui",        "elf": "simple_lui/test.elf"        },
 	{ "name": "simple_sd",         "elf": "simple_sd/test.elf"         },
+	{ "name": "simple_sw",         "elf": "simple_sw/test.elf"         },
+	{ "name": "simple_sh",         "elf": "simple_sh/test.elf"         },
+	{ "name": "simple_sb",         "elf": "simple_sb/test.elf"         },
 	{ "name": "simple_sub",        "elf": "simple_sub/test.elf"        },
 	{ "name": "x0_rename",         "elf": "x0_rename/test.elf"         }
 ]
