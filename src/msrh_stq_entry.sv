@@ -45,6 +45,7 @@ assign o_entry = r_entry;
 logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
 msrh_pkg::reg_t w_rs2_type;
 logic     w_rs2_entry_hit;
+logic     w_entry_rs2_ready_next;
 
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
 assign w_rs2_type = msrh_pkg::GPR;
@@ -58,12 +59,16 @@ select_early_wr_bus rs2_rel_select
  .o_valid      (w_rs2_entry_hit)
  );
 
+assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
+                                w_rs2_entry_hit |
+                                i_ex1_q_valid & i_ex1_q_updates.inst.rs2_ready;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry.is_valid <= 1'b0;
     r_entry.state <= msrh_lsu_pkg::STQ_INIT;
   end else begin
-    r_entry.inst.rs2_ready <= r_entry.inst.rs2_ready | w_rs2_entry_hit;
+    r_entry.inst.rs2_ready <= w_entry_rs2_ready_next;
     if (i_commit.commit &
         i_commit.flush_vld &
         ((i_commit.cmt_id <  r_entry.cmt_id) |
@@ -91,7 +96,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_entry.paddr           <= i_ex1_q_updates.paddr;
             r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
             r_entry.inst            <= i_ex1_q_updates.inst;
-            r_entry.inst.rs2_ready  <= r_entry.inst.rs2_ready | i_ex1_q_updates.inst.rs2_ready;
+            r_entry.inst.rs2_ready  <= w_entry_rs2_ready_next;
 
             r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;
             r_entry.rs2_data        <= i_ex1_q_updates.st_data;
@@ -170,8 +175,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 function msrh_lsu_pkg::stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
-                                      logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
-                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
+                                                    logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
+                                                    logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
   msrh_lsu_pkg::stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
