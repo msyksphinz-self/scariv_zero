@@ -54,7 +54,8 @@ logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_rv0_index_oh;
 logic                                 w_ex0_rs_conflicted;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] w_ex0_rs_conf_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(msrh_lsu_pkg::MEM_Q_SIZE)) w_ex3_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_lsu_pkg::MEM_Q_SIZE)) w_ex3_ldq_stq_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_lsu_pkg::MEM_Q_SIZE)) w_ex0_sched_done_if();
 
 generate for(genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
   assign w_disp_inst[d_idx] = disp.inst[d_idx];
@@ -99,7 +100,7 @@ msrh_scheduler #(
    .i_ex0_rs_conflicted   (w_ex0_rs_conflicted),
    .i_ex0_rs_conf_index_oh(w_ex0_rs_conf_index_oh),
 
-   .pipe_done_if (w_ex3_done_if),
+   .pipe_done_if (w_ex0_sched_done_if),
 
    .o_done_report ()
 );
@@ -157,9 +158,10 @@ u_lsu_pipe
    .o_tlb_resolve   (o_tlb_resolve  ),
    .o_ex2_q_updates (o_ex2_q_updates),
 
-   .ex3_done_if (w_ex3_done_if)
+   .ex0_sched_done_if   (w_ex0_sched_done_if),
+   .ex3_ldq_stq_done_if (w_ex3_ldq_stq_done_if)
 );
 
-assign o_ex3_done = w_ex3_done_if.done;
+assign o_ex3_done = w_ex3_ldq_stq_done_if.done;
 
 endmodule // msrh_lsu

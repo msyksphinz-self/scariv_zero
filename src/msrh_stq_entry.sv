@@ -96,6 +96,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_entry.paddr           <= i_ex1_q_updates.paddr;
             r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
             r_entry.inst            <= i_ex1_q_updates.inst;
+            r_entry.size            <= i_ex1_q_updates.size;
             r_entry.inst.rs2_ready  <= w_entry_rs2_ready_next;
 
             r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;

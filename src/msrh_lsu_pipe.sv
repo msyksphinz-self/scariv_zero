@@ -39,7 +39,8 @@ module msrh_lsu_pipe
  output logic                          o_tlb_resolve,
  output                                msrh_lsu_pkg::ex2_q_update_t o_ex2_q_updates,
 
- done_if.master                        ex3_done_if
+ done_if.master                        ex0_sched_done_if,
+ done_if.master                        ex3_ldq_stq_done_if
 );
 
 typedef struct packed {
@@ -164,6 +165,11 @@ assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
 assign o_ex0_rs_conflicted    = i_ex0_replay_issue.valid & r_ex0_rs_issue.valid;
 assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 
+// Interface to scheduler done signal
+assign ex0_sched_done_if.done = w_ex0_issue.valid & !o_ex0_rs_conflicted;
+assign ex0_sched_done_if.index_oh = r_ex0_rs_index_oh;
+
+
 //
 // EX1 stage pipeline
 //
@@ -197,7 +203,8 @@ assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
 assign o_ex1_q_updates.st_data_vld = r_ex1_issue.rs2_ready;
-assign o_ex1_q_updates.st_data    = ex1_regread_rs2.data;
+assign o_ex1_q_updates.st_data     = ex1_regread_rs2.data;
+assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -300,8 +307,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign ex3_done_if.done = r_ex3_issue.valid;
-assign ex3_done_if.index_oh = 'h0;
+assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
+assign ex3_ldq_stq_done_if.index_oh = 'h0;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;

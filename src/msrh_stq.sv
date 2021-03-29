@@ -1,5 +1,6 @@
 module msrh_stq
   import msrh_lsu_pkg::*;
+  import decoder_lsu_ctrl_pkg::*;
   (
     input logic i_clk,
     input logic i_reset_n,
@@ -75,6 +76,9 @@ logic [STQ_SIZE-1:0]  w_sq_commit_req_oh;
 stq_entry_t w_stq_cmt_entry;
 stq_entry_t r_st1_committed_entry;
 logic [$clog2(STQ_SIZE)-1: 0] r_cmt_head_idx;
+
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]   w_st1_rs2_data_tmp;
+logic [DCACHE_DATA_B_W-1: 0]                w_st1_rs2_byte_en_tmp;
 
 // Instruction Pick up from Dispatch
 msrh_disp_pickup
@@ -275,6 +279,24 @@ assign l1d_rd_if.valid = w_stq_cmt_entry.state == STQ_COMMIT;
 assign l1d_rd_if.paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                           {$clog2(DCACHE_DATA_B_W){1'b0}}};
 
+always_comb begin
+  case (r_st1_committed_entry.size)
+    SIZE_DW : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 64){r_st1_committed_entry.rs2_data[63: 0]}};
+    SIZE_W  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 32){r_st1_committed_entry.rs2_data[31: 0]}};
+    SIZE_H  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 16){r_st1_committed_entry.rs2_data[15: 0]}};
+    SIZE_B  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W /  8){r_st1_committed_entry.rs2_data[ 7: 0]}};
+    default : w_st1_rs2_data_tmp = 'hx;
+  endcase // case (r_st1_committed_entry.pipe.size)
+
+  case (r_st1_committed_entry.size)
+    SIZE_DW : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-8){8'h00}}, 8'hff};
+    SIZE_W  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-4){4'h0 }},  4'hf};
+    SIZE_H  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-2){2'b00}},  2'h3};
+    SIZE_B  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-1){1'b0 }},  2'h1};
+    default : w_st1_rs2_byte_en_tmp = 'hx;
+  endcase // case (r_st1_committed_entry.pipe.size)
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_l1d_rd_if_resp <= 'b0;
@@ -285,8 +307,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (l1d_rd_if.hit) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
-        l1d_wr_if.data  <= {(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W){r_st1_committed_entry.rs2_data}};
-        l1d_wr_if.be    <= {{(DCACHE_DATA_B_W-8){8'h00}}, 8'hff} << r_st1_committed_entry.paddr[$clog2(DCACHE_DATA_B_W)-1: 0];
+        l1d_wr_if.data  <= w_st1_rs2_data_tmp;
+        l1d_wr_if.be    <= w_st1_rs2_byte_en_tmp << r_st1_committed_entry.paddr[$clog2(DCACHE_DATA_B_W)-1: 0];
       end else begin
         l1d_wr_if.valid <= 1'b0;
       end
@@ -321,14 +343,14 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
     $fwrite(fp, "state:\"%s\", ", entry.state == STQ_INIT               ? "INIT" :
-                                           entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
-                                           entry.state == STQ_READY              ? "READY" :
-                                           entry.state == STQ_DONE               ? "DONE" :
-                                           entry.state == STQ_COMMIT             ? "COMMIT" :
-                                           entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
-                                           entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
-                                           entry.state == STQ_COMMIT_L1D_CHECK   ? "COMMIT_L1D_CHECK" :
-                                           entry.state == STQ_L1D_UPDATE         ? "L1D_UPDATE" : "x");
+                                  entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
+                                  entry.state == STQ_READY              ? "READY" :
+                                  entry.state == STQ_DONE               ? "DONE" :
+                                  entry.state == STQ_COMMIT             ? "COMMIT" :
+                                  entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
+                                  entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
+                                  entry.state == STQ_COMMIT_L1D_CHECK   ? "COMMIT_L1D_CHECK" :
+                                  entry.state == STQ_L1D_UPDATE         ? "L1D_UPDATE" : "x");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 
