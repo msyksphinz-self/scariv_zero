@@ -278,7 +278,9 @@ assign ex2_fwd_check_if.paddr = r_ex2_paddr;
 
 always_comb begin
   case(r_ex2_pipe_ctrl.size)
+`ifdef RV64
     SIZE_DW : w_ex2_data_tmp = ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: 64];
+`endif // RV64
     SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:2],  2'b00, 3'b000} +: 32]};
     SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:1],   1'b0, 3'b000} +: 16]};
     SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0],         3'b000} +:  8]};

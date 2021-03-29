@@ -281,7 +281,9 @@ assign l1d_rd_if.paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCAC
 
 always_comb begin
   case (r_st1_committed_entry.size)
+`ifdef RV64
     SIZE_DW : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 64){r_st1_committed_entry.rs2_data[63: 0]}};
+`endif // RV64
     SIZE_W  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 32){r_st1_committed_entry.rs2_data[31: 0]}};
     SIZE_H  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W / 16){r_st1_committed_entry.rs2_data[15: 0]}};
     SIZE_B  : w_st1_rs2_data_tmp = {(msrh_conf_pkg::DCACHE_DATA_W /  8){r_st1_committed_entry.rs2_data[ 7: 0]}};
@@ -289,7 +291,9 @@ always_comb begin
   endcase // case (r_st1_committed_entry.pipe.size)
 
   case (r_st1_committed_entry.size)
+`ifdef RV64
     SIZE_DW : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-8){8'h00}}, 8'hff};
+`endif // RV64
     SIZE_W  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-4){4'h0 }},  4'hf};
     SIZE_H  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-2){2'b00}},  2'h3};
     SIZE_B  : w_st1_rs2_byte_en_tmp = {{(DCACHE_DATA_B_W-1){1'b0 }},  2'h1};
