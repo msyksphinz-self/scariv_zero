@@ -14,10 +14,12 @@ module msrh_tile (
 localparam ALU_INST_PORT_BASE = 0;
 localparam LSU_INST_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
 localparam BRU_INST_PORT_BASE = LSU_INST_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
+localparam CSU_INST_PORT_BASE = BRU_INST_PORT_BASE + 1;
 
 localparam ALU_DONE_PORT_BASE = 0;
 localparam LSU_DONE_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
 localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + 2;
+localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 
 // ----------------------------------
 // Global Components
@@ -70,6 +72,14 @@ msrh_pkg::done_rpt_t w_bru_done_rpt;
 br_upd_if w_ex3_br_upd_if();
 
 // ----------------------------------
+// CSU Components
+// ----------------------------------
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_csu_valids;
+msrh_pkg::early_wr_t w_ex1_csu_early_wr;
+msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
+msrh_pkg::done_rpt_t w_csu_done_rpt;
+
+// ----------------------------------
 // Merging Forwarding / Done signals
 // ----------------------------------
 // ALU
@@ -93,6 +103,11 @@ assign w_done_rpt    [LSU_DONE_PORT_BASE + 1] = w_lsu_done_rpt[1];
 assign w_ex1_early_wr[BRU_INST_PORT_BASE] = w_ex1_bru_early_wr;
 assign w_ex3_phy_wr  [BRU_INST_PORT_BASE] = w_ex3_bru_phy_wr  ;
 assign w_done_rpt    [BRU_DONE_PORT_BASE] = w_bru_done_rpt;
+
+// CSU
+assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
+assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 
 
 msrh_frontend u_frontend (
@@ -138,6 +153,8 @@ msrh_rename u_msrh_rename (
                                        w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
     assign w_disp_bru_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+    assign w_disp_csu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
+                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
   end
   endgenerate
 
@@ -219,31 +236,53 @@ u_msrh_bru (
 );
 
 
-  msrh_phy_registers #(
-      .RD_PORT_SIZE(msrh_pkg::REGPORT_NUM)
-  ) u_int_phy_registers (
-      .i_clk(i_clk),
-      .i_reset_n(i_reset_n),
+msrh_csu
+u_msrh_csu (
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
 
-      .i_phy_wr(w_ex3_phy_wr),
-      .regread(regread)
-  );
+    .disp_valid(w_disp_csu_valids),
+    .disp(w_sc_disp),
 
-  msrh_rob u_rob
-    (
-     .i_clk    (i_clk),
-     .i_reset_n(i_reset_n),
+    .ex1_regread_rs1(regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
+                             msrh_conf_pkg::LSU_INST_NUM * 2 +
+                             + 2]),
 
-     .sc_disp (w_sc_disp),
+    .i_early_wr(w_ex1_early_wr),
+    .i_phy_wr  (w_ex3_phy_wr),
 
-     .o_sc_new_cmt_id (w_sc_new_cmt_id),
+    .o_ex1_early_wr(w_ex1_csu_early_wr),
+    .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
 
-     .i_done_rpt (w_done_rpt),
+    .o_done_report (w_csu_done_rpt)
+);
 
-     .o_commit (w_commit),
-     .o_commit_rnid_update (w_commit_rnid_update),
 
-     .ex3_br_upd_if (w_ex3_br_upd_if)
-     );
+msrh_phy_registers #(
+    .RD_PORT_SIZE(msrh_pkg::REGPORT_NUM)
+) u_int_phy_registers (
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+
+    .i_phy_wr(w_ex3_phy_wr),
+    .regread(regread)
+);
+
+msrh_rob u_rob
+  (
+   .i_clk    (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .sc_disp (w_sc_disp),
+
+   .o_sc_new_cmt_id (w_sc_new_cmt_id),
+
+   .i_done_rpt (w_done_rpt),
+
+   .o_commit (w_commit),
+   .o_commit_rnid_update (w_commit_rnid_update),
+
+   .ex3_br_upd_if (w_ex3_br_upd_if)
+   );
 
 endmodule  // msrh_tile

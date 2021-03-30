@@ -279,7 +279,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["op", "rw"]]
     },
     {
@@ -287,7 +287,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["op", "rs"]]
     },
     {
@@ -295,7 +295,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["op", "rc"]]
     },
     {
@@ -303,7 +303,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "reg":[["rd", "r3"]],
         "csu_ctrl":[["op", "rw"]]
     },
     {
@@ -311,7 +311,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "reg":[["rd", "r3"]],
         "csu_ctrl":[["op", "rs"]]
     },
     {
@@ -319,7 +319,7 @@
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"]],
-        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "reg":[["rd", "r3"]],
         "csu_ctrl":[["op", "rc"]]
     }
 ]

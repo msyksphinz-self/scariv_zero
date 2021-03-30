@@ -3,6 +3,7 @@
 ../src/decoder_alu_ctrl.sv
 ../src/decoder_lsu_ctrl.sv
 ../src/decoder_bru_ctrl.sv
+../src/decoder_csu_ctrl.sv
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
@@ -78,3 +79,6 @@
 
 ../src/msrh_bru.sv
 ../src/msrh_bru_pipe.sv
+
+../src/msrh_csu.sv
+../src/msrh_csu_pipe.sv

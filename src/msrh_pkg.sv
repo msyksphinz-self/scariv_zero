@@ -12,10 +12,17 @@ package msrh_pkg;
 
   localparam RV_ALU_ENTRY_SIZE = 32;
   localparam RV_BRU_ENTRY_SIZE = 16;
+  localparam RV_CSU_ENTRY_SIZE = 8;
 
-  localparam REL_BUS_SIZE = ALU_INST_NUM + LSU_INST_NUM + 1;
+  localparam REL_BUS_SIZE = ALU_INST_NUM +
+                            LSU_INST_NUM +
+                            1 +              // BRU
+                            1;               // CSU
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
-  localparam CMT_BUS_SIZE = ALU_INST_NUM + 2 + 1;
+  localparam CMT_BUS_SIZE = ALU_INST_NUM +   // ALU
+                            2 +              // LSU
+                            1 +              // BRU
+                            1;               // CSU
 
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
@@ -29,7 +36,8 @@ package msrh_pkg;
 
   localparam REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
                            msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
-                           2;                                   // BRU port
+                           2 +                                  // BRU port
+                           1;                                   // CSR port
 
   typedef struct packed {
     logic valid;

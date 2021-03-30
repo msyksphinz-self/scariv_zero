@@ -49,6 +49,7 @@ DECODE_FILES += ../src/decoder_inst_cat.sv
 DECODE_FILES += ../src/decoder_alu_ctrl.sv
 DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_bru_ctrl.sv
+DECODE_FILES += ../src/decoder_csu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 
 build_decode_v: $(DECODE_FILES)
@@ -61,6 +62,8 @@ build_decode_v: $(DECODE_FILES)
 	cd ../src && ./build_decoder.rb lsu_ctrl
 ../src/decoder_bru_ctrl.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb bru_ctrl
+../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb csu_ctrl
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg
 
