@@ -273,5 +273,53 @@
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sra_32"]]
+    },
+    {
+        "name":"csrrw      r[11:7],h[31:20],r[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "csu_ctrl":[["op", "rw"]]
+    },
+    {
+        "name":"csrrs      r[11:7],h[31:20],r[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "csu_ctrl":[["op", "rs"]]
+    },
+    {
+        "name":"csrrc      r[11:7],h[31:20],r[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "csu_ctrl":[["op", "rc"]]
+    },
+    {
+        "name":"csrrwi     r[11:7],h[31:20],h[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "csu_ctrl":[["op", "rw"]]
+    },
+    {
+        "name":"csrrsi     r[11:7],h[31:20],h[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "csu_ctrl":[["op", "rs"]]
+    },
+    {
+        "name":"csrrci     r[11:7],h[31:20],h[19:15]",
+        "length":"32", "dlength":"32",
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "csu_ctrl":[["op", "rc"]]
     }
 ]
