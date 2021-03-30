@@ -424,13 +424,14 @@ void step_spike(long long time, long long rtl_pc,
 
   fprintf(stderr, "%lld : PC=[%016llx] (%02d,%02x) %08x %s\n", time, rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
-  auto iss_pc = p->get_state()->prev_pc;
+  auto iss_pc   = p->get_state()->prev_pc;
+
   if (iss_pc != rtl_pc) {
       fprintf(stderr, "==========================================\n");
       fprintf(stderr, "Wrong PC: RTL = %016llx, ISS = %016lx\n",
               rtl_pc, iss_pc);
       fprintf(stderr, "==========================================\n");
-      stop_sim(1);
+      // stop_sim(1);
       return;
   }
   if (rtl_wr_valid) {
@@ -440,24 +441,25 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %016llx, ISS = %016lx\n",
               rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val, iss_wr_val);
       fprintf(stderr, "==========================================\n");
-      stop_sim(1);
+      // stop_sim(1);
       return;
     } else {
-      fprintf(stderr, "GPR[%02d](%d) <= %016llx", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
+      fprintf(stderr, "GPR[%02d](%d) <= %016llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
     }
   }
-  fprintf (stderr, "\n");
 }
 
 
 #ifdef SIM_MAIN
 int main()
 {
-  initial_spike ("../tests/simple_chain_add/test.elf");
+  initial_spike ("/home/kimura/riscv_tools/riscv64/riscv64-unknown-elf/share/riscv-tests/isa/rv64ui-p-simple");
   processor_t *p = spike_core->get_core(0);
-  p->step(5);
-  auto iss_pc = p->get_state()->prev_pc;
-  fprintf(stderr, "result = %08lx\n", iss_pc);
+  for (int i = 0; i < 10; i++) {
+    p->step(1);
+    auto iss_pc = p->get_state()->prev_pc;
+    fprintf(stderr, "iss_pc = %08lx\n", iss_pc);
+  }
 
   return 0;
 }
