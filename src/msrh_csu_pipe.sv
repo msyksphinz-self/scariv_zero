@@ -32,10 +32,10 @@ msrh_pkg::issue_t                        r_ex1_issue;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_fwd_data;
-
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
+logic [riscv_pkg::XLEN_W-1:0]      w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+logic [riscv_pkg::XLEN_W-1:0]      w_ex2_rs1_fwd_data;
+logic [riscv_pkg::XLEN_W-1:0]      w_ex2_csr_rd_data;
+logic [riscv_pkg::XLEN_W-1:0]      w_ex2_rs1_selected_data;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex2_issue;
@@ -45,6 +45,7 @@ logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
 msrh_pkg::issue_t                        r_ex3_issue;
 logic [riscv_pkg::XLEN_W-1: 0]           r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
+logic [riscv_pkg::XLEN_W-1: 0]           r_ex3_csr_rd_data;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -113,6 +114,23 @@ end
 
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 
+msrh_csr
+u_mcsr_csr
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_rd_vld  (r_ex2_issue.valid),
+   .i_rd_addr (r_ex2_issue.inst[31:20]),
+   .o_rd_data (w_ex2_csr_rd_data),
+
+   .i_wr_vld  (r_ex3_issue.valid),
+   .i_wr_addr (r_ex3_issue.inst[31:20]),
+   .i_wr_data (r_ex3_result),
+
+   .o_xcpt ()
+   );
+
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -125,36 +143,22 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
-      OP_RS: r_ex3_result <= w_ex2_rs1_selected_data;
-      OP_RC: r_ex3_result <= w_ex2_rs1_selected_data;
-      OP__ : r_ex3_result <= 'h0;   // Unconditional Jump
+      OP_RS: r_ex3_result <= w_ex2_csr_rd_data | w_ex2_rs1_selected_data;
+      OP_RC: r_ex3_result <= w_ex2_csr_rd_data & ~w_ex2_rs1_selected_data;
+      OP__ : r_ex3_result <= 'h0;
       default : r_ex3_result <= 'h0;
-    endcase
+    endcase // case (r_ex2_pipe_ctrl.op)
+
+    r_ex3_csr_rd_data <= w_ex2_csr_rd_data;
   end
 end
 
-assign o_ex3_phy_wr.valid   = 1'b0;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
-assign o_ex3_phy_wr.rd_data = 'h0;  // r_ex3_result;
+assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
-
-logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_uj;
-logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_sb;
-
-assign w_ex2_offset_uj = {{(riscv_pkg::VADDR_W-21){r_ex2_issue.inst[31]}},
-                          r_ex2_issue.inst[31],
-                          r_ex2_issue.inst[19:12],
-                          r_ex2_issue.inst[20],
-                          r_ex2_issue.inst[30:21],
-                          1'b0};
-assign w_ex2_offset_sb = {{(riscv_pkg::VADDR_W-13){r_ex2_issue.inst[31]}},
-                          r_ex2_issue.inst[31],
-                          r_ex2_issue.inst[ 7],
-                          r_ex2_issue.inst[30:25],
-                          r_ex2_issue.inst[11: 8],
-                          1'b0};
 
 endmodule // msrh_csu_pipe

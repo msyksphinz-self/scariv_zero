@@ -82,3 +82,4 @@
 
 ../src/msrh_csu.sv
 ../src/msrh_csu_pipe.sv
+../src/msrh_csr.sv
