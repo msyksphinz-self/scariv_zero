@@ -155,9 +155,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_br_vaddr <= w_ex2_br_vaddr;
 
     case (r_ex2_pipe_ctrl.op)
-      OP_EQ: r_ex3_result <= w_ex2_rs1_selected_data == w_ex2_rs2_selected_data;
-      OP_NE: r_ex3_result <= w_ex2_rs1_selected_data != w_ex2_rs2_selected_data;
-      OP__ : r_ex3_result <= 1'b1;   // Unconditional Jump
+      OP_EQ : r_ex3_result <= w_ex2_rs1_selected_data == w_ex2_rs2_selected_data;
+      OP_NE : r_ex3_result <= w_ex2_rs1_selected_data != w_ex2_rs2_selected_data;
+      OP_LT : r_ex3_result <= $signed(w_ex2_rs1_selected_data) <  $signed(w_ex2_rs2_selected_data);
+      OP_GE : r_ex3_result <= $signed(w_ex2_rs1_selected_data) >= $signed(w_ex2_rs2_selected_data);
+      OP_LTU: r_ex3_result <= w_ex2_rs1_selected_data <  w_ex2_rs2_selected_data;
+      OP_GEU: r_ex3_result <= w_ex2_rs1_selected_data >= w_ex2_rs2_selected_data;
+      OP__  : r_ex3_result <= 1'b1;   // Unconditional Jump
       default : r_ex3_result <= 1'bx;
     endcase
   end

@@ -163,6 +163,38 @@
         "bru_ctrl":[["op", "ne"], ["imm", "sb"]]
     },
     {
+        "name":"blt        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "11000", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg":[["r1", "r1"], ["r2", "r2"]],
+        "bru_ctrl":[["op", "lt"], ["imm", "sb"]]
+    },
+    {
+        "name":"bge        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11000", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg":[["r1", "r1"], ["r2", "r2"]],
+        "bru_ctrl":[["op", "ge"], ["imm", "sb"]]
+    },
+    {
+        "name":"bltu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11000", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg":[["r1", "r1"], ["r2", "r2"]],
+        "bru_ctrl":[["op", "ltu"], ["imm", "sb"]]
+    },
+    {
+        "name":"bgeu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11000", "11"],
+        "inst_cat": [["inst_cat", "br"]],
+        "reg":[["r1", "r1"], ["r2", "r2"]],
+        "bru_ctrl":[["op", "geu"], ["imm", "sb"]]
+    },
+    {
         "name":"jal        r[11:7],uj[31:12]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
