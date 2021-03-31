@@ -29,6 +29,9 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
 
     // BRU Scheduler
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_bru.u_msrh_scheduler.dump_json("bru", json_fp, 0);
+
+    // CSU Scheduler
+    u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_scheduler.dump_json("csu", json_fp, 0);
   end // if (!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
 
