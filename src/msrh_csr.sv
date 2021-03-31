@@ -427,7 +427,10 @@ always_comb begin
     `SYSREG_ADDR_PMPADDR14      : o_rd_data = r_pmpaddr14;
     `SYSREG_ADDR_PMPADDR15      : o_rd_data = r_pmpaddr15;
     `SYSREG_ADDR_STATS          : o_rd_data = r_stats;
-    default : o_xcpt = 1'b1;
+    default : begin
+      o_rd_data = {riscv_pkg::XLEN_W{1'bx}};
+      o_xcpt = 1'b1;
+    end
   endcase // case (i_rd_addr)
 end // always_comb
 
