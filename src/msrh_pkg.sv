@@ -239,6 +239,30 @@ typedef struct packed {
   logic                                                      all_dead;
 } cmt_rnid_upd_t;
 
+// ------------------------
+// Exception Control
+// ------------------------
+typedef enum logic [ 5: 0] {
+  INST_ADDR_MISALIGN = 0,
+  INST_ACC_FAULT     = 1,
+  ILLEGAL_INST       = 2,
+  BREAKPOINT         = 3,
+  LOAD_ADDR_MISALIGN = 4,
+  LOAD_ACC_FAULT     = 5,
+  STAMO_ADDR_MISALIGN = 6,
+  STAMO_ACC_FAULT     = 7,
+  ECALL_U             = 8,
+  ECALL_S             = 9,
+  ECALL_M             = 10,
+  INST_PAGE_FAULT     = 12,
+  LOAD_PAGE_FAULT     = 13,
+  STAMO_PAGE_FAULT    = 15,
+
+  MRET = 24,
+  SRET = 25,
+  URET = 26
+} excpt_t;
+
 endpackage
 
 `default_nettype wire

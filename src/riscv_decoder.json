@@ -321,5 +321,29 @@
         "inst_cat": [["inst_cat", "csu"]],
         "reg":[["rd", "r3"]],
         "csu_ctrl":[["op", "rc"]]
+    },
+    {
+        "name":"uret",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[],
+        "csu_ctrl":[["is_ret", "1"]]
+    },
+    {
+        "name":"sret",
+        "length":"32", "dlength":"32",
+        "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[],
+        "csu_ctrl":[["is_ret", "1"]]
+    },
+    {
+        "name":"mret",
+        "length":"32", "dlength":"32",
+        "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"]],
+        "reg":[],
+        "csu_ctrl":[["is_ret", "1"]]
     }
 ]

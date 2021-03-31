@@ -11,7 +11,7 @@ module msrh_csu_pipe
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
   input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
- regread_if.master                  ex1_regread_rs1,
+  regread_if.master                 ex1_regread_rs1,
 
   output                            msrh_pkg::early_wr_t o_ex1_early_wr,
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
@@ -21,6 +21,7 @@ module msrh_csu_pipe
 
 typedef struct packed {
   op_t  op;
+  logic is_ret;
 } pipe_ctrl_t;
 
 msrh_pkg::issue_t                        r_ex0_issue;
@@ -42,6 +43,7 @@ msrh_pkg::issue_t                        r_ex2_issue;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
 
+pipe_ctrl_t                              r_ex3_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex3_issue;
 logic [riscv_pkg::XLEN_W-1: 0]           r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
@@ -54,7 +56,8 @@ end
 
 decoder_csu_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
-  .op  (w_ex0_pipe_ctrl.op)
+  .op  (w_ex0_pipe_ctrl.op),
+  .is_ret (w_ex0_pipe_ctrl.is_ret)
 );
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
@@ -134,12 +137,14 @@ u_mcsr_csr
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex3_result   <= 'h0;
-    r_ex3_index    <= 'h0;
-    r_ex3_issue    <= 'h0;
+    r_ex3_result    <= 'h0;
+    r_ex3_index     <= 'h0;
+    r_ex3_issue     <= 'h0;
+    r_ex3_pipe_ctrl <= 'h0;
   end else begin
-    r_ex3_issue    <= r_ex2_issue;
-    r_ex3_index    <= r_ex2_index;
+    r_ex3_issue     <= r_ex2_issue;
+    r_ex3_index     <= r_ex2_index;
+    r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
@@ -158,7 +163,9 @@ assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
-assign ex3_done_if.done     = r_ex3_issue.valid;
-assign ex3_done_if.index_oh = r_ex3_index;
+assign ex3_done_if.done       = r_ex3_issue.valid;
+assign ex3_done_if.index_oh   = r_ex3_index;
+assign ex3_done_if.excpt_vld  = r_ex3_pipe_ctrl.is_ret;
+assign ex3_done_if.excpt_type = msrh_pkg::MRET;
 
 endmodule // msrh_csu_pipe
