@@ -16,6 +16,9 @@ module msrh_csu_pipe
   output                            msrh_pkg::early_wr_t o_ex1_early_wr,
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
+  csr_rd_if.master                  read_if,
+  csr_wr_if.master                  write_if,
+
   done_if.master   ex3_done_if
 );
 
@@ -117,23 +120,8 @@ end
 
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 
-msrh_csr
-u_mcsr_csr
-  (
-   .i_clk     (i_clk),
-   .i_reset_n (i_reset_n),
-
-   .i_rd_vld  (r_ex2_issue.valid),
-   .i_rd_addr (r_ex2_issue.inst[31:20]),
-   .o_rd_data (w_ex2_csr_rd_data),
-
-   .i_wr_vld  (r_ex3_issue.valid),
-   .i_wr_addr (r_ex3_issue.inst[31:20]),
-   .i_wr_data (r_ex3_result),
-
-   .o_xcpt ()
-   );
-
+assign read_if.valid = r_ex2_issue.valid;
+assign read_if.addr  = r_ex2_issue.inst[31:20];
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -148,13 +136,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
-      OP_RS: r_ex3_result <= w_ex2_csr_rd_data | w_ex2_rs1_selected_data;
-      OP_RC: r_ex3_result <= w_ex2_csr_rd_data & ~w_ex2_rs1_selected_data;
+      OP_RS: r_ex3_result <= read_if.data | w_ex2_rs1_selected_data;
+      OP_RC: r_ex3_result <= read_if.data & ~w_ex2_rs1_selected_data;
       OP__ : r_ex3_result <= 'h0;
       default : r_ex3_result <= 'h0;
     endcase // case (r_ex2_pipe_ctrl.op)
 
-    r_ex3_csr_rd_data <= w_ex2_csr_rd_data;
+    r_ex3_csr_rd_data <= read_if.data;
   end
 end
 
@@ -167,5 +155,9 @@ assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
 assign ex3_done_if.excpt_vld  = r_ex3_pipe_ctrl.is_ret;
 assign ex3_done_if.excpt_type = msrh_pkg::MRET;
+
+assign write_if.valid = r_ex3_issue.valid;
+assign write_if.addr  = r_ex3_issue.inst[31:20];
+assign write_if.data  = r_ex3_result;
 
 endmodule // msrh_csu_pipe

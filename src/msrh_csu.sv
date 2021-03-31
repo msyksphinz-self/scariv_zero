@@ -32,6 +32,11 @@ done_if #(.RV_ENTRY_SIZE(msrh_pkg::RV_CSU_ENTRY_SIZE)) w_ex3_done_if();
 logic         w_ex3_done;
 logic [msrh_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
 
+// CSR Read Write interface
+csr_rd_if w_csr_read ();
+csr_wr_if w_csr_write();
+
+
 msrh_disp_pickup
   #(
     .PORT_BASE(0),
@@ -94,7 +99,23 @@ u_csu_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
+   .read_if (w_csr_read),
+   .write_if (w_csr_write),
+
    .ex3_done_if   (w_ex3_done_if)
+   );
+
+
+msrh_csr
+u_mcsr_csr
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .read_if (w_csr_read),
+   .write_if (w_csr_write),
+
+   .o_xcpt ()
    );
 
 
