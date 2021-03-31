@@ -15,7 +15,7 @@ logic [$clog2(WIDTH)-1:0]   pick_up_cnt[WIDTH];
 
 assign pick_up_cnt[0] = in[0] ? 'h1 : 'h0;
 /* verilator lint_off WIDTH */
-assign pick_up_off[0] = pick_up_cnt[0] > NUM;
+assign pick_up_off[0] = pick_up_cnt[0] >= NUM;
 /* verilator lint_off WIDTH */
 assign out[0] = in[0] & pick_up_cnt[0] <= NUM;
 
