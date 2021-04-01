@@ -75,7 +75,7 @@ assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next);
 assign w_ptr_in_fire  = i_inst_vld & o_inst_rdy;
 assign w_ptr_out_fire = w_head_all_inst_issued;
 
-assign w_flush_pipeline = i_commit.commit & i_commit.upd_pc_vld | i_flush_vld;
+assign w_flush_pipeline = i_flush_vld;
 
 // Queue Control Pointer
 inoutptr

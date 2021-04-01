@@ -26,6 +26,9 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_excpt_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
 
+logic [DISP_SIZE-1: 0] w_cmt_excpt_valid_oh;
+excpt_t                excpt_type_selected;
+
 // When this signal is 1, committer is killing uncommitted instructions
 logic                              r_killing_uncmts;
 logic                              w_killing_uncmts;
@@ -91,9 +94,14 @@ assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid | 
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
 assign o_commit.excpt_valid  = |w_entries[w_out_cmt_id].excpt_valid;
-assign o_commit.excpt_type   = MRET;
+assign o_commit.excpt_type   = excpt_type_selected;
 assign o_commit.dead_id      = w_dead_grp_id;
 assign o_commit.all_dead     = w_killing_uncmts;
+
+// Select Exception Instruction
+bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_excpt_valid (.in(w_entries[w_out_cmt_id].excpt_valid), .out(w_cmt_excpt_valid_oh));
+bit_oh_or_packed #(.T(excpt_t), .WORDS(DISP_SIZE)) u_bit_excpt_select (.i_oh(w_cmt_excpt_valid_oh), .i_data(w_entries[w_out_cmt_id].excpt_type), .o_selected(excpt_type_selected));
+
 
 assign o_commit_rnid_update.commit     = o_commit.commit | w_killing_uncmts;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
@@ -109,7 +117,7 @@ assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 
 // Select Branch Target Address
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));
-bit_oh_or_packed #(.WIDTH(riscv_pkg::VADDR_W), .WORDS(DISP_SIZE))
+bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
 br_sel_addr (.i_oh(w_br_upd_valid_oh),
              .i_data(w_entries[w_out_cmt_id].br_upd_info.upd_br_vaddr),
              .o_selected(w_upd_br_vaddr));

@@ -451,11 +451,11 @@ void step_spike(long long time, long long rtl_pc,
 
 
 #ifdef SIM_MAIN
-int main()
+int main(int argc, char **argv)
 {
-  initial_spike ("/home/kimura/riscv_tools/riscv64/riscv64-unknown-elf/share/riscv-tests/isa/rv64ui-p-simple");
+  initial_spike (argv[1]);
   processor_t *p = spike_core->get_core(0);
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     fprintf(stderr, "iss_pc = %08lx\n", iss_pc);

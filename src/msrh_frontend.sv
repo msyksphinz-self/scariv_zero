@@ -56,7 +56,10 @@ logic                           r_ic_resp_would_be_killed;
 
 logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
 
-assign w_s0_vaddr_flush_next = (i_commit.excpt_valid && i_commit.excpt_type == msrh_pkg::MRET) ? csr_info.mepc[riscv_pkg::VADDR_W-1: 0] :
+assign w_s0_vaddr_flush_next = i_commit.excpt_valid ?
+                               (i_commit.excpt_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
+                                i_commit.excpt_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
+                                'h0) :
                                i_commit.upd_pc_vaddr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -141,7 +144,10 @@ msrh_icache u_msrh_icache
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
-   .i_flush_vld (i_commit.commit & i_commit.flush_vld),
+   // flushing is first entry is enough, other killing time, no need to flush
+   .i_flush_vld (i_commit.commit &
+                 i_commit.flush_vld &
+                 !i_commit.all_dead),
 
    .i_s0_req (w_s0_ic_req),
    .o_s0_ready(w_s0_ic_ready),
@@ -164,7 +170,10 @@ u_msrh_inst_buffer
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
-   .i_flush_vld (i_commit.commit & i_commit.flush_vld),
+   // flushing is first entry is enough, other killing time, no need to flush
+   .i_flush_vld (i_commit.commit &
+                 i_commit.flush_vld &
+                 !i_commit.all_dead),
 
    .i_inst_vld (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
 
