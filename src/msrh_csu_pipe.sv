@@ -25,6 +25,10 @@ module msrh_csu_pipe
 typedef struct packed {
   op_t  op;
   logic is_ret;
+  logic is_ecall;
+  logic is_ebreak;
+  logic is_fence;
+  logic is_fence_i;
 } pipe_ctrl_t;
 
 msrh_pkg::issue_t                        r_ex0_issue;
@@ -59,8 +63,12 @@ end
 
 decoder_csu_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
-  .op  (w_ex0_pipe_ctrl.op),
-  .is_ret (w_ex0_pipe_ctrl.is_ret)
+  .op         (w_ex0_pipe_ctrl.op        ),
+  .is_ret     (w_ex0_pipe_ctrl.is_ret    ),
+  .is_ecall   (w_ex0_pipe_ctrl.is_ecall  ),
+  .is_ebreak  (w_ex0_pipe_ctrl.is_ebreak ),
+  .is_fence   (w_ex0_pipe_ctrl.is_fence  ),
+  .is_fence_i (w_ex0_pipe_ctrl.is_fence_i)
 );
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
@@ -153,8 +161,9 @@ assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.excpt_vld  = r_ex3_pipe_ctrl.is_ret;
-assign ex3_done_if.excpt_type = msrh_pkg::MRET;
+assign ex3_done_if.excpt_vld  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_ecall;
+assign ex3_done_if.excpt_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
+                                msrh_pkg::ECALL_M;                         // r_ex3_pipe_ctrl.is_ecall
 
 assign write_if.valid = r_ex3_issue.valid;
 assign write_if.addr  = r_ex3_issue.inst[31:20];
