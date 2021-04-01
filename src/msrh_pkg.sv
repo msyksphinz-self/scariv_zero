@@ -169,6 +169,9 @@ typedef enum logic [ 5: 0] {
     reg_t rs2_type;
     logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
+
+    logic             excpt_valid;
+    msrh_pkg::excpt_t excpt_type;
   } issue_t;
 
 

@@ -44,7 +44,7 @@ generate for (genvar i = 1; i < SEL_WIDTH; i++) begin : bit_pick_loop
 end // block: bit_pick_loop
 endgenerate
 
-bit_oh_or #(.WORDS(SEL_WIDTH), .WIDTH(DATA_WIDTH)) u_select (.i_oh(w_index_hit), .i_data(i_data), .o_selected(o_data));
+bit_oh_or #(.WORDS(SEL_WIDTH), .T(logic[DATA_WIDTH-1:0])) u_select (.i_oh(w_index_hit), .i_data(i_data), .o_selected(o_data));
 assign o_valid = |w_index_hit;
 assign o_picked_pos = w_index_hit;
 

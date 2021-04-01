@@ -104,7 +104,7 @@ generate
 endgenerate
 
 bit_oh_or #(
-    .WIDTH(riscv_pkg::XLEN_W),
+    .T(logic[riscv_pkg::XLEN_W-1:0]),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
@@ -113,7 +113,7 @@ bit_oh_or #(
 );
 
 bit_oh_or #(
-    .WIDTH(riscv_pkg::XLEN_W),
+    .T(logic[riscv_pkg::XLEN_W-1:0]),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),
@@ -174,6 +174,8 @@ assign o_ex3_phy_wr.rd_data = 'h0;  // r_ex3_result;
 
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
+assign ex3_done_if.excpt_vld  = 1'b0;
+assign ex3_done_if.excpt_type = msrh_pkg::excpt_t'('h0);
 
 logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_uj;
 logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_sb;

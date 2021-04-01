@@ -94,7 +94,7 @@ generate
 endgenerate
 
 bit_oh_or #(
-    .WIDTH(riscv_pkg::XLEN_W),
+    .T(logic[riscv_pkg::XLEN_W-1:0]),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),

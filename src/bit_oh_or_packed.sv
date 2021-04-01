@@ -15,7 +15,7 @@ generate for (genvar i = 0; i < WORDS; i++) begin
 end
 endgenerate
 
-bit_oh_or #(.WIDTH(WIDTH), .WORDS(WORDS))
+bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WORDS))
 u_inst (.i_oh(i_oh), .i_data(w_data), .o_selected(o_selected));
 
 endmodule

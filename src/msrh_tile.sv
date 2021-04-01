@@ -39,6 +39,8 @@ regread_if regread[msrh_pkg::REGPORT_NUM] ();
 
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
+csr_info_if w_csr_info ();
+
 // ----------------------------------
 // Committer Components
 // ----------------------------------
@@ -118,6 +120,8 @@ msrh_frontend u_frontend (
   .ic_l2_resp(ic_l2_resp),
 
   .i_commit (w_commit),
+
+  .csr_info (w_csr_info),
 
   .s3_disp (w_iq_disp)
 );
@@ -253,6 +257,8 @@ u_msrh_csu (
 
     .o_ex1_early_wr(w_ex1_csu_early_wr),
     .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
+
+    .csr_info (w_csr_info),
 
     .o_done_report (w_csu_done_rpt)
 );

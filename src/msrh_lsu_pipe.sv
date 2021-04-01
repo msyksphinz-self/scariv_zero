@@ -311,6 +311,8 @@ end
 
 assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
 assign ex3_ldq_stq_done_if.index_oh = 'h0;
+assign ex3_ldq_stq_done_if.excpt_vld  = 1'b0;
+assign ex3_ldq_stq_done_if.excpt_type = msrh_pkg::excpt_t'('h0);
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;

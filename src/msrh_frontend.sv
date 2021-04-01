@@ -9,6 +9,9 @@ module msrh_frontend
  // PC Update from Committer
  input msrh_pkg::commit_blk_t i_commit,
 
+  /* CSR information */
+  csr_info_if.slave           csr_info,
+
  // Dispatch Info
  disp_if.master s3_disp
 );
@@ -51,6 +54,11 @@ logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
 
 logic                           r_ic_resp_would_be_killed;
 
+logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
+
+assign w_s0_vaddr_flush_next = (i_commit.excpt_valid && i_commit.excpt_type == msrh_pkg::MRET) ? csr_info.mepc[riscv_pkg::VADDR_W-1: 0] :
+                               i_commit.upd_pc_vaddr;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s0_valid <= 1'b0;
@@ -60,10 +68,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s0_valid <= 1'b1;
     if (w_commit_upd_pc) begin
       if (w_s0_ic_ready) begin
-        r_s0_vaddr <= (i_commit.upd_pc_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+        r_s0_vaddr <= (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                       (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
-        r_s0_vaddr <= i_commit.upd_pc_vaddr;
+        r_s0_vaddr <= w_s0_vaddr_flush_next;
       end
     end else if (w_s2_ic_miss) begin
       r_s0_vaddr <= w_s2_ic_miss_vaddr;
@@ -74,7 +82,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign w_s0_vaddr = w_commit_upd_pc ? i_commit.upd_pc_vaddr : r_s0_vaddr;
+assign w_s0_vaddr = w_commit_upd_pc ? w_s0_vaddr_flush_next : r_s0_vaddr;
 assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld & !i_commit.all_dead;
 
 
@@ -87,7 +95,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
       r_new_commit_upd_pc_wait_vld <= 1'b1;
-      r_new_commit_upd_pc          <= i_commit.upd_pc_vaddr;
+      r_new_commit_upd_pc          <= w_s0_vaddr_flush_next;
     end else if (w_s0_ic_ready) begin
       r_new_commit_upd_pc_wait_vld <= 1'b0;
     end

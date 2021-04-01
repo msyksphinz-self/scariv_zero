@@ -54,7 +54,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM + 1; l_idx++
 end
 endgenerate
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::LSU_INST_NUM + 1)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_valid_oh));
-bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::dc_read_req_t)), .WORDS(msrh_conf_pkg::LSU_INST_NUM + 1)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
+bit_oh_or #(.T(msrh_lsu_pkg::dc_read_req_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM + 1)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 
 assign w_s0_dc_tag_valid = i_dc_update.valid | (|w_s0_dc_read_req_valid);
 assign w_s0_dc_tag_wr    = i_dc_update.valid;
@@ -126,7 +126,7 @@ logic [TAG_SIZE-1:0] w_s1_tag;
 end
 endgenerate
 
-bit_oh_or #(.WIDTH(msrh_conf_pkg::ICACHE_DATA_W), .WORDS(msrh_lsu_pkg::ICACHE_WAY_W))
+bit_oh_or #(.T(logic[msrh_conf_pkg::ICACHE_DATA_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_WAY_W))
 cache_data_sel (.i_oh (w_s1_tag_hit), .i_data(w_s1_data), .o_selected(w_s1_selected_data));
 
 

@@ -67,7 +67,7 @@ logic [RNID_W-1: 0] w_update_rnid;
                                   (i_commit_rd_regidx[d] == i[4:0]);
   end
   bit_extract_msb #(.WIDTH(DISP_SIZE)) extract_latest_rd_bit(.in(w_rd_active_valid), .out(w_rd_active_valid_oh));
-  bit_oh_or #(.WIDTH(RNID_W), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
+  bit_oh_or #(.T(logic[RNID_W-1:0]), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
                                                                     .i_data(i_commit_rd_rnid),
                                                                     .o_selected(w_commit_rd_rnid));
 

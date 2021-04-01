@@ -24,7 +24,7 @@ assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.r_killing_uncmts &
 
 bit_oh_or
   #(
-    .WIDTH($size(msrh_pkg::rob_entry_t)),
+    .T(msrh_pkg::rob_entry_t),
     .WORDS(msrh_pkg::CMT_BLK_SIZE)
     )
 committed_entry

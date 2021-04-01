@@ -40,6 +40,8 @@ logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
 logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
+logic [ENTRY_SIZE-1:0]               w_entry_excpt_valid;
+msrh_pkg::excpt_t                    w_entry_excpt_type [ENTRY_SIZE];
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
@@ -62,8 +64,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (r_entry_in_ptr + i_idx == s_idx);
   end
 
-  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
+  bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   msrh_sched_entry
     #(.IS_STORE(IS_STORE))
@@ -87,18 +89,21 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_early_wr(i_early_wr),
 
     .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
+    .pipe_done_if (pipe_done_if),
 
     .i_entry_picked (w_picked_inst_oh[s_idx]),
-    .o_entry_done (w_entry_done[s_idx]),
-    .o_cmt_id (w_entry_cmt_id[s_idx]),
-    .o_grp_id (w_entry_grp_id[s_idx])
+    .o_entry_done  (w_entry_done[s_idx]),
+    .o_cmt_id      (w_entry_cmt_id[s_idx]),
+    .o_grp_id      (w_entry_grp_id[s_idx]),
+    .o_excpt_valid (w_entry_excpt_valid[s_idx]),
+    .o_excpt_type  (w_entry_excpt_type [s_idx])
   );
 
 end
 endgenerate
 
 bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
-bit_oh_or #(.WIDTH($size(msrh_pkg::issue_t)), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(msrh_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -111,11 +116,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-bit_oh_or #(.WIDTH(msrh_pkg::CMT_BLK_W), .WORDS(ENTRY_SIZE)) bit_oh_entry  (.i_oh(w_entry_done), .i_data(w_entry_cmt_id), .o_selected(o_done_report.cmt_id));
-bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(ENTRY_SIZE)) bit_oh_grp_id (.i_oh(w_entry_done), .i_data(w_entry_grp_id), .o_selected(o_done_report.grp_id));
+bit_oh_or #(.T(logic[msrh_pkg::CMT_BLK_W-1:0]),      .WORDS(ENTRY_SIZE)) bit_oh_entry      (.i_oh(w_entry_done), .i_data(w_entry_cmt_id    ), .o_selected(o_done_report.cmt_id  ));
+bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(ENTRY_SIZE)) bit_oh_grp_id     (.i_oh(w_entry_done), .i_data(w_entry_grp_id    ), .o_selected(o_done_report.grp_id  ));
+bit_oh_or #(.T(msrh_pkg::excpt_t), .WORDS(ENTRY_SIZE)) bit_oh_excpt_type (.i_oh(w_entry_done), .i_data(w_entry_excpt_type), .o_selected(o_done_report.exc_type));
 
 assign o_done_report.valid = |w_entry_done;
-assign o_done_report.exc_vld = 1'b0;
+assign o_done_report.exc_vld = |(w_entry_excpt_valid & w_entry_done);
 
 `ifdef SIMULATION
 typedef struct packed {

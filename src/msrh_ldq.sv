@@ -96,8 +96,8 @@ generate for (genvar l_idx = 0; l_idx < LDQ_SIZE; l_idx++) begin : ldq_loop
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_entry_ptr == l_idx);
   end
 
-  bit_oh_or #(.WIDTH($size(msrh_pkg::disp_t)), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
-  bit_oh_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE),     .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
+  bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
 
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
@@ -156,7 +156,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   ldq_entry_t w_ldq_replay_entry;
 
   bit_extract_lsb #(.WIDTH(LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
-  bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
+  bit_oh_or #(.T(ldq_entry_t), .WORDS(LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
 
   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
 
@@ -177,7 +177,7 @@ generate for (genvar l_idx = 0; l_idx < LDQ_SIZE; l_idx++) begin : done_loop
   assign w_ldq_done_oh[l_idx] = w_ldq_entries[l_idx].state == LDQ_EX3_DONE && (w_out_ptr == l_idx);
 end
 endgenerate
-bit_oh_or #(.WIDTH($size(ldq_entry_t)), .WORDS(LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
+bit_oh_or #(.T(ldq_entry_t), .WORDS(LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
 
 assign o_done_report.valid   = |w_ldq_done_oh;
 assign o_done_report.cmt_id  = w_ldq_done_entry.cmt_id;
@@ -246,7 +246,7 @@ for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex1
                                 i_ex1_q_updates[p_idx].grp_id == grp_id;
 end
 
-bit_oh_or #(.WIDTH($size(ex1_q_update_t)), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(o_ex1_q_valid), .i_data(i_ex1_q_updates), .o_selected(o_ex1_q_updates));
+bit_oh_or #(.T(ex1_q_update_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(o_ex1_q_valid), .i_data(i_ex1_q_updates), .o_selected(o_ex1_q_updates));
 
 endmodule // ex1_update_select
 
@@ -270,6 +270,6 @@ for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2
 end
 
 assign o_ex2_q_valid = |w_ex2_update_match;
-bit_oh_or #(.WIDTH($size(ex2_q_update_t)), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(i_ex2_q_updates), .o_selected(o_ex2_q_updates));
+bit_oh_or #(.T(ex2_q_update_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(i_ex2_q_updates), .o_selected(o_ex2_q_updates));
 
 endmodule // ex2_update_select

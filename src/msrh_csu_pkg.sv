@@ -38,3 +38,17 @@ interface csr_wr_if;
   );
 
 endinterface // csr_wr_if
+
+
+interface csr_info_if;
+logic [riscv_pkg::XLEN_W-1: 0] mepc;
+
+modport master (
+  output mepc
+);
+
+modport slave (
+  input mepc
+);
+
+endinterface // csr_info_if

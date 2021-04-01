@@ -91,7 +91,7 @@ assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid | 
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
 assign o_commit.excpt_valid  = |w_entries[w_out_cmt_id].excpt_valid;
-assign o_commit.excpt_type   = 'h0; // |w_entries[w_out_cmt_id].excpt_valid;
+assign o_commit.excpt_type   = MRET;
 assign o_commit.dead_id      = w_dead_grp_id;
 assign o_commit.all_dead     = w_killing_uncmts;
 

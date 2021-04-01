@@ -112,7 +112,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
   assign w_load_entry_vld[b_idx] = |w_rev_load_valid;
 
-  bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::lrq_req_t)), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
+  bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
 
   msrh_lsu_pkg::lrq_entry_t load_entry;
   assign load_entry.valid = w_load_entry_vld[b_idx];
@@ -205,7 +205,7 @@ end
 endgenerate
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .out(w_lrq_ready_to_send_oh));
 encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_req_tag));
-bit_oh_or #(.WIDTH($size(msrh_lsu_pkg::lrq_entry_t)), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
+bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
 
 assign l1d_ext_req.valid = w_lrq_ready_to_send_entry.valid & !w_lrq_ready_to_send_entry.sent;
 assign l1d_ext_req.payload.cmd     = msrh_lsu_pkg::M_XRD;

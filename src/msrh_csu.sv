@@ -16,6 +16,9 @@ module msrh_csu
   output msrh_pkg::early_wr_t o_ex1_early_wr,
   output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
+  /* CSR information */
+  csr_info_if.master          csr_info,
+
   output msrh_pkg::done_rpt_t o_done_report
 );
 
@@ -114,6 +117,8 @@ u_mcsr_csr
 
    .read_if (w_csr_read),
    .write_if (w_csr_write),
+
+   .csr_info (csr_info),
 
    .o_xcpt ()
    );

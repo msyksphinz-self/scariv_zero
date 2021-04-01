@@ -139,7 +139,7 @@ end
 
 bit_oh_or
     #(
-      .WIDTH(msrh_conf_pkg::ICACHE_DATA_W),
+      .T(logic[msrh_conf_pkg::ICACHE_DATA_W-1:0]),
       .WORDS(ICACHE_WAY_W)
       )
 cache_data_sel (

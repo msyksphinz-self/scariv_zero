@@ -38,7 +38,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                                        i_done_rpt[c_idx].grp_id == (1 << d_idx);
   end
   assign w_done_rpt_vld[d_idx] = |w_done_rpt_tmp_vld;
-  bit_oh_or #(.WIDTH($size(done_rpt_t)), .WORDS(CMT_BUS_SIZE))
+  bit_oh_or #(.T(done_rpt_t), .WORDS(CMT_BUS_SIZE))
   sel_done_rpt (.i_oh(w_done_rpt_tmp_vld),
                 .i_data(i_done_rpt),
                 .o_selected(w_done_rpt_selected));

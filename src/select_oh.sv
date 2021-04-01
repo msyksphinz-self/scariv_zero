@@ -29,7 +29,7 @@ module select_oh #(
   endgenerate
 
   bit_oh_or #(
-      .WIDTH(DATA_WIDTH),
+      .T(logic[DATA_WIDTH-1: 0]),
       .WORDS(SEL_WIDTH)
   ) u_select_oh (
       .i_oh(valid_tmp),

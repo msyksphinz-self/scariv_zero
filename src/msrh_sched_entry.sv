@@ -21,10 +21,16 @@ module msrh_sched_entry
    input                                  msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
 
    input logic                            i_entry_picked,
+
+   // Done Interface
    input logic                            i_pipe_done,
+   done_if.slave                          pipe_done_if,
+
    output logic                           o_entry_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
-   output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id
+   output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
+   output logic                                o_excpt_valid,
+   output msrh_pkg::excpt_t                    o_excpt_type
    );
 
 logic    r_issued;
@@ -113,6 +119,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       msrh_pkg::ISSUED : begin
         if (i_pipe_done) begin
           r_state <= msrh_pkg::DONE;
+          r_entry.excpt_valid <= pipe_done_if.excpt_vld;
+          r_entry.excpt_type  <= pipe_done_if.excpt_type;
         end
         if (i_ex0_rs_conflicted) begin
           r_state <= msrh_pkg::WAIT;
@@ -135,5 +143,7 @@ assign o_entry       = w_entry;
 assign o_entry_done = r_state == msrh_pkg::DONE;
 assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
+assign o_excpt_valid = r_entry.excpt_valid;
+assign o_excpt_type  = r_entry.excpt_type;
 
 endmodule // msrh_sched_entry
