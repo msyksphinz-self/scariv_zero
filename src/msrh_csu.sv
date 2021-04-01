@@ -19,7 +19,10 @@ module msrh_csu
   /* CSR information */
   csr_info_if.master          csr_info,
 
-  output msrh_pkg::done_rpt_t o_done_report
+  output msrh_pkg::done_rpt_t o_done_report,
+
+  // Commit notification
+  input msrh_pkg::commit_blk_t i_commit
 );
 
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
@@ -119,6 +122,8 @@ u_mcsr_csr
    .write_if (w_csr_write),
 
    .csr_info (csr_info),
+
+   .i_commit (i_commit),
 
    .o_xcpt ()
    );

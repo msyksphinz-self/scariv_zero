@@ -10,6 +10,9 @@ module msrh_csr
    /* CSR information */
    csr_info_if.master         csr_info,
 
+   // Commit notification
+   input msrh_pkg::commit_blk_t i_commit,
+
    output logic               o_xcpt
    );
 
@@ -544,8 +547,31 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mtvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MTVEC         ) begin r_mtvec         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCOUNTEREN    ) begin r_mcounteren    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSCRATCH      ) begin r_mscratch      <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEPC          ) begin r_mepc          <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCAUSE        ) begin r_mcause        <= write_if.data; end end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mcause        <= 'h0;
+  end else begin
+    if (i_commit.commit & i_commit.excpt_valid & i_commit.excpt_type == msrh_pkg::ECALL_M) begin
+      /* verilator lint_off WIDTH */
+      r_mcause        <= msrh_pkg::ECALL_U;
+    end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCAUSE        ) begin
+      r_mcause        <= write_if.data;
+    end
+  end
+end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mepc          <= 'h0;
+  end else begin
+    if (i_commit.commit & i_commit.excpt_valid & i_commit.excpt_type == msrh_pkg::ECALL_M) begin
+      r_mepc          <= 'h0; // temporary
+    end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEPC          ) begin
+      r_mepc          <= write_if.data;
+    end
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mtval         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MTVAL         ) begin r_mtval         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIP           ) begin r_mip           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbase         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBASE         ) begin r_mbase         <= write_if.data; end end

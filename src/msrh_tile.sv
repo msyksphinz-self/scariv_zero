@@ -260,7 +260,10 @@ u_msrh_csu (
 
     .csr_info (w_csr_info),
 
-    .o_done_report (w_csu_done_rpt)
+    .o_done_report (w_csu_done_rpt),
+
+    .i_commit (w_commit)
+
 );
 
 
