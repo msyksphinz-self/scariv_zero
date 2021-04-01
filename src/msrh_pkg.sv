@@ -49,6 +49,30 @@ package msrh_pkg;
     FPR
   } reg_t;
 
+// ------------------------
+// Exception Control
+// ------------------------
+typedef enum logic [ 5: 0] {
+  INST_ADDR_MISALIGN = 0,
+  INST_ACC_FAULT     = 1,
+  ILLEGAL_INST       = 2,
+  BREAKPOINT         = 3,
+  LOAD_ADDR_MISALIGN = 4,
+  LOAD_ACC_FAULT     = 5,
+  STAMO_ADDR_MISALIGN = 6,
+  STAMO_ACC_FAULT     = 7,
+  ECALL_U             = 8,
+  ECALL_S             = 9,
+  ECALL_M             = 10,
+  INST_PAGE_FAULT     = 12,
+  LOAD_PAGE_FAULT     = 13,
+  STAMO_PAGE_FAULT    = 15,
+
+  MRET = 24,
+  SRET = 25,
+  URET = 26
+} excpt_t;
+
   typedef struct packed {
     logic valid;
     logic [31:0] inst;
@@ -111,6 +135,9 @@ package msrh_pkg;
     msrh_pkg::disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
 
     logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
+
+    logic [msrh_conf_pkg::DISP_SIZE-1:0]   excpt_valid;
+    excpt_t [msrh_conf_pkg::DISP_SIZE-1:0] excpt_type;
 
     // Branch update info
     logic                               is_br_included;
@@ -201,6 +228,7 @@ endfunction  // assign_issue_t
     logic [CMT_BLK_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
     logic                 exc_vld;
+    excpt_t               exc_type;
   } done_rpt_t;
 
 // -----------------
@@ -213,6 +241,8 @@ typedef struct packed {
   logic                           upd_pc_vld;
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
   logic                           flush_vld;
+  logic                           excpt_valid;
+  excpt_t                         excpt_type;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
 } commit_blk_t;
@@ -238,30 +268,6 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
   logic                                                      all_dead;
 } cmt_rnid_upd_t;
-
-// ------------------------
-// Exception Control
-// ------------------------
-typedef enum logic [ 5: 0] {
-  INST_ADDR_MISALIGN = 0,
-  INST_ACC_FAULT     = 1,
-  ILLEGAL_INST       = 2,
-  BREAKPOINT         = 3,
-  LOAD_ADDR_MISALIGN = 4,
-  LOAD_ACC_FAULT     = 5,
-  STAMO_ADDR_MISALIGN = 6,
-  STAMO_ACC_FAULT     = 7,
-  ECALL_U             = 8,
-  ECALL_S             = 9,
-  ECALL_M             = 10,
-  INST_PAGE_FAULT     = 12,
-  LOAD_PAGE_FAULT     = 13,
-  STAMO_PAGE_FAULT    = 15,
-
-  MRET = 24,
-  SRET = 25,
-  URET = 26
-} excpt_t;
 
 endpackage
 

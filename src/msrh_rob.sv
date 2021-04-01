@@ -22,7 +22,8 @@ logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_BLK_SIZE-1:0] w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
 logic [riscv_pkg::VADDR_W-1: 0]    w_upd_br_vaddr;
-logic [DISP_SIZE-1:0]              w_dead_grp_id_tmp;
+logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
+logic [DISP_SIZE-1:0]              w_dead_grp_id_excpt_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
 
 // When this signal is 1, committer is killing uncommitted instructions
@@ -86,9 +87,11 @@ assign w_killing_uncmts = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_id].done_grp_id;
-assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid;
+assign o_commit.upd_pc_vld   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_id].excpt_valid);
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_vld    = o_commit.upd_pc_vld;
+assign o_commit.excpt_valid  = |w_entries[w_out_cmt_id].excpt_valid;
+assign o_commit.excpt_type   = 'h0; // |w_entries[w_out_cmt_id].excpt_valid;
 assign o_commit.dead_id      = w_dead_grp_id;
 assign o_commit.all_dead     = w_killing_uncmts;
 
@@ -112,8 +115,12 @@ br_sel_addr (.i_oh(w_br_upd_valid_oh),
              .o_selected(w_upd_br_vaddr));
 
 // Make dead Instruction, (after branch instruction)
-bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_grp_id (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_dead_grp_id_tmp));
-assign w_dead_grp_id = {w_dead_grp_id_tmp[DISP_SIZE-2: 0], 1'b0};   // 1-bit shift
+bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
+
+// Make dead Instruction, (after exception)
+bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_excpt_grp_id (.in(w_entries[w_out_cmt_id].excpt_valid), .out(w_dead_grp_id_excpt_tmp));
+assign w_dead_grp_id = {w_dead_grp_id_excpt_tmp[DISP_SIZE-2: 0], 1'b0} |   // 1-bit shift
+                       {w_dead_grp_id_br_tmp   [DISP_SIZE-2: 0], 1'b0} ;   // 1-bit shift
 
 // Killing all uncommitted instructions
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
