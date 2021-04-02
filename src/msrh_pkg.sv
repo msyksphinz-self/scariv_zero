@@ -129,6 +129,8 @@ typedef enum logic [ 5: 0] {
   } br_upd_info_t;
 
   typedef struct packed {
+    logic          valid;
+
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
     logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 

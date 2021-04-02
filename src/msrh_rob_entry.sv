@@ -22,7 +22,6 @@ module msrh_rob_entry
                                               br_upd_if.slave br_upd_if
    );
 
-logic                             r_valid;
 rob_entry_t             r_entry;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_vld;
@@ -51,11 +50,10 @@ endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_valid <= 1'b0;
     r_entry <= 'h0;
   end else begin
     if (i_load_valid) begin
-      r_valid <= 1'b1;
+      r_entry.valid <= 1'b1;
       r_entry.grp_id <= i_load_grp_id;
       r_entry.pc_addr <= i_load_pc_addr;
       r_entry.inst    <= i_load_inst;
@@ -63,9 +61,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.done_grp_id <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
 
       r_entry.is_br_included <= i_load_br_included;
-    end else if (r_valid) begin
+    end else if (r_entry.valid) begin
       if (o_block_all_done & i_commit_finish) begin
-        r_valid <= 1'b0;
+        r_entry.valid <= 1'b0;
       end else begin
         r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_vld;
         for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
@@ -84,6 +82,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_entry = r_entry;
-assign o_block_all_done = r_valid & (r_entry.grp_id == r_entry.done_grp_id);
+assign o_block_all_done = r_entry.valid & (r_entry.grp_id == r_entry.done_grp_id);
 
 endmodule // msrh_rob_entry

@@ -10,7 +10,7 @@ msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_BLK_SIZE];
 msrh_pkg::rob_entry_t committed_rob_entry;
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_BLK_SIZE; r_idx++) begin : rob_loop
   assign rob_entries[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
-  assign rob_entries_valid[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_valid;
+  assign rob_entries_valid[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry.valid;
 end
 endgenerate
 

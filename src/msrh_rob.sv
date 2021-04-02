@@ -143,4 +143,43 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+`ifdef SIMULATION
+logic [CMT_BLK_SIZE-1: 0] w_entry_valids;
+generate for (genvar c_idx = 0; c_idx < CMT_BLK_SIZE; c_idx++) begin : dbg_entry_loop
+  assign w_entry_valids[c_idx] = w_entries[c_idx].valid;
+end
+endgenerate
+
+function void dump_entry_json(int fp, rob_entry_t entry, int index);
+
+  if (entry.valid) begin
+    $fwrite(fp, "    \"msrh_rob_entry[%d]\" : {", index);
+    $fwrite(fp, "valid:%d, ", entry.valid);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
+
+    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
+    $fwrite(fp, "done_grp_id:%d, ", entry.done_grp_id);
+
+    $fwrite(fp, "excpt_valid:%d", entry.excpt_valid);
+
+    $fwrite(fp, " },\n");
+  end // if (entry.valid)
+
+endfunction // dump_json
+
+
+function void dump_json(int fp);
+  if (|w_entry_valids) begin
+    $fwrite(fp, "  \"msrh_rob\" : {\n");
+    $fwrite(fp, "    in_cmt_id: %d,\n", w_in_cmt_id);
+    $fwrite(fp, "    out_cmt_id: %d,\n", w_out_cmt_id);
+    $fwrite(fp, "    killing: %d,\n", w_killing_uncmts);
+    for (int c_idx = 0; c_idx < CMT_BLK_SIZE; c_idx++) begin
+      dump_entry_json (fp, w_entries[c_idx], c_idx);
+    end
+    $fwrite(fp, "  },\n");
+  end
+endfunction // dump_json
+`endif // SIMULATION
+
 endmodule // msrh_rob
