@@ -168,7 +168,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end
         default : begin
-          $fatal ("This state sholudn't be reached.\n");
+          $fatal (0, "This state sholudn't be reached.\n");
         end
       endcase // case (r_entry.state)
     end // else: !if(i_commit.commit & (i_commit.cmt_id <= r_entry.cmt_id))
