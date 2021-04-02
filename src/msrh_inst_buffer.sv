@@ -2,14 +2,14 @@ module msrh_inst_buffer
   (
  input logic                                     i_clk,
  input logic                                     i_reset_n,
- input logic                                     i_flush_vld,
+ input logic                                     i_flush_valid,
 
- input logic                                     i_inst_vld,
+ input logic                                     i_inst_valid,
 
  // PC Update from Committer
  input msrh_pkg::commit_blk_t                    i_commit,
 
- output logic                                    o_inst_rdy,
+ output logic                                    o_inst_ready,
  input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
  input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
@@ -51,14 +51,14 @@ logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 
 typedef struct packed {
-  logic                                  vld;
+  logic                                  valid;
   logic [riscv_pkg::VADDR_W-1: 1]        pc;
   logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
 } inst_buf_t;
 
 inst_buf_t r_inst_queue[msrh_pkg::INST_BUF_SIZE];
-logic [msrh_pkg::INST_BUF_SIZE-1:0]      w_inst_buffer_vld;
+logic [msrh_pkg::INST_BUF_SIZE-1:0]      w_inst_buffer_valid;
 
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_inptr;
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_outptr;
@@ -72,10 +72,10 @@ logic                                       w_flush_pipeline;
 
 assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next);
 
-assign w_ptr_in_fire  = i_inst_vld & o_inst_rdy;
+assign w_ptr_in_fire  = i_inst_valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued;
 
-assign w_flush_pipeline = i_flush_vld;
+assign w_flush_pipeline = i_flush_valid;
 
 // Queue Control Pointer
 inoutptr
@@ -89,9 +89,9 @@ inst_buf_ptr
 
    .i_clear   (w_flush_pipeline),
 
-   .i_in_vld  (w_ptr_in_fire),
+   .i_in_valid  (w_ptr_in_fire),
    .o_in_ptr  (r_inst_buffer_inptr),
-   .i_out_vld (w_ptr_out_fire),
+   .i_out_valid (w_ptr_out_fire),
    .o_out_ptr (r_inst_buffer_outptr)
    );
 
@@ -101,7 +101,7 @@ assign w_inst_buffer_fire = s3_disp.valid & s3_disp.ready;
 
 generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst_buf_loop
 
-  assign w_inst_buffer_vld[idx] = r_inst_queue[idx].vld;
+  assign w_inst_buffer_valid[idx] = r_inst_queue[idx].valid;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -110,13 +110,13 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
       if (w_flush_pipeline) begin
         r_inst_queue[idx] <= 'h0;
       end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
-        r_inst_queue[idx].vld  <= 1'b1;
+        r_inst_queue[idx].valid  <= 1'b1;
         r_inst_queue[idx].data <= i_inst_in;
         r_inst_queue[idx].pc   <= i_inst_pc;
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
       end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx)) begin
-        r_inst_queue[idx].vld  <= 1'b0;
-      end // if (i_inst_vld & o_inst_rdy)
+        r_inst_queue[idx].valid  <= 1'b0;
+      end // if (i_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -124,7 +124,7 @@ end // block: inst_buf_loop
 endgenerate
 
 
-assign o_inst_rdy = !(&w_inst_buffer_vld);
+assign o_inst_ready = !(&w_inst_buffer_valid);
 
 encoder
   #(.SIZE(ic_word_num + 1))
@@ -162,7 +162,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 logic [31: 0] w_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_vld;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_valid;
 
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic [$clog2(ic_word_num): 0] w_buf_id;
@@ -173,7 +173,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_buf_ptr = (w_buf_id < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
   assign w_inst       [w_idx] = r_inst_queue[w_inst_buf_ptr].data[w_buf_id[$clog2(ic_word_num)-1:0]*32+:32];
-  assign w_inst_be_vld[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id[$clog2(ic_word_num)-1:0]*4+:4]);
+  assign w_inst_be_valid[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id[$clog2(ic_word_num)-1:0]*4+:4]);
 
   logic[ 2: 0] w_raw_cat;
   decoder_inst_cat
@@ -194,11 +194,11 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
      );
 
 
-  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
-  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD  );
-  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
-  assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
-  assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].vld & w_inst_be_vld[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
+  assign w_inst_is_arith[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
+  assign w_inst_is_ld   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD  );
+  assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
+  assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
+  assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
 end
 endgenerate
 
@@ -254,9 +254,9 @@ function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_inst_buffer\" : {\n");
 
   for(int idx=0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin
-    if (r_inst_queue[idx].vld) begin
+    if (r_inst_queue[idx].valid) begin
       $fwrite(fp, "    \"r_inst_queue[%d]\" : {\n", idx);
-      $fwrite(fp, "      vld     : \"%d\",\n", r_inst_queue[idx].vld);
+      $fwrite(fp, "      valid     : \"%d\",\n", r_inst_queue[idx].valid);
       $fwrite(fp, "      data    : \"0x%x\",\n", r_inst_queue[idx].data);
       $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc << 1);
       $fwrite(fp, "      byte_en : \"0x%x\",\n", r_inst_queue[idx].byte_en);

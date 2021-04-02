@@ -7,7 +7,7 @@ module msrh_icache
   input logic                i_clk,
   input logic                i_reset_n,
 
-  input logic                i_flush_vld,
+  input logic                i_flush_valid,
 
   input                      ic_req_t i_s0_req,
   output logic               o_s0_ready,
@@ -107,7 +107,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_valid <= 1'b0;
     r_s1_vaddr <= {VADDR_W{1'b0}};
   end else begin
-    // if (i_flush_vld) begin
+    // if (i_flush_valid) begin
     //   r_s1_valid <= 1'b0;
     // end else begin
     r_s1_valid <= i_s0_req.valid & o_s0_ready;
@@ -124,7 +124,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_valid      <= 1'b0;
     r_s2_vaddr  <= 'h0;
   end else begin
-    if (i_flush_vld) begin
+    if (i_flush_valid) begin
       r_s2_valid <= 1'b0;
     end else begin
       r_s2_valid  <= r_s1_valid;
@@ -150,7 +150,7 @@ cache_data_sel (
 
 assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
                          (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-1){1'b0}}});
-assign o_s2_resp.valid = !i_flush_vld & r_s2_valid & r_s2_hit;
+assign o_s2_resp.valid = !i_flush_valid & r_s2_valid & r_s2_hit;
 assign o_s2_resp.addr  = r_s2_vaddr [VADDR_W-1: 1];
 assign o_s2_resp.data  = w_s2_selected_data;
 assign o_s2_resp.be    = {ICACHE_DATA_B_W{1'b1}} &

@@ -29,7 +29,7 @@ logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
-logic                                         w_commit_rnid_restore_vld;
+logic                                         w_commit_rnid_restore_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_commit_rd_valid;
 logic [ 4: 0]                                 w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_pkg::RNID_W-1: 0]                 w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
@@ -82,9 +82,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-assign w_commit_rnid_restore_vld = i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_vld;
+assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_valid;
 
-assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_vld}} &
+assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid}} &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop
@@ -106,7 +106,7 @@ msrh_rename_map u_msrh_rename_map
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   ),
 
-   .i_restore_from_queue (w_commit_rnid_restore_vld),
+   .i_restore_from_queue (w_commit_rnid_restore_valid),
    .i_restore_rn_list    (w_restore_rn_list),
 
    .i_commit_rd_valid (w_commit_rd_valid),
@@ -227,7 +227,7 @@ msrh_inflight_list u_inflight_map
    .i_rnid   (w_rs1_rs2_rnid),
    .o_valids (w_active),
 
-   .i_update_fetch_vld (w_rd_valids),
+   .i_update_fetch_valid (w_rd_valids),
    .i_update_fetch_rnid(w_rd_rnid  ),
    .i_update_fetch_data(w_rd_data  ),
 

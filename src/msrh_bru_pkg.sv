@@ -1,20 +1,20 @@
 interface done_if #(parameter RV_ENTRY_SIZE=32);
 logic          done;
 logic [RV_ENTRY_SIZE-1: 0] index_oh;
-logic                      excpt_vld;
-msrh_pkg::excpt_t          excpt_type;
+logic                      except_valid;
+msrh_pkg::except_t          except_type;
 modport master(
   output done,
   output index_oh,
-  output excpt_vld,
-  output excpt_type
+  output except_valid,
+  output except_type
 );
 
 modport slave(
   input done,
   input index_oh,
-  input excpt_vld,
-  input excpt_type
+  input except_valid,
+  input except_type
 );
 
 endinterface // done_if

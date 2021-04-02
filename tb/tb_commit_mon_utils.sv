@@ -47,7 +47,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
     r_timeout_counter <= 'h0;
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
       r_timeout_counter <= 'h0;
     end else begin
       r_timeout_counter <= r_timeout_counter + 'h1;

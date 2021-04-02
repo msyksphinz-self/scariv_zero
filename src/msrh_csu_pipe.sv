@@ -161,8 +161,8 @@ assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.excpt_vld  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_ecall;
-assign ex3_done_if.excpt_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
+assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_ecall;
+assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
                                 msrh_pkg::ECALL_M;                         // r_ex3_pipe_ctrl.is_ecall
 
 assign write_if.valid = r_ex3_issue.valid;

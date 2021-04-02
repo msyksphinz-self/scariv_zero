@@ -181,7 +181,7 @@ assign o_ex3_phy_wr.rd_data = r_ex3_result;
 
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
-assign ex3_done_if.excpt_vld  = 1'b0;
-assign ex3_done_if.excpt_type = msrh_pkg::excpt_t'('h0);
+assign ex3_done_if.except_valid  = 1'b0;
+assign ex3_done_if.except_type = msrh_pkg::except_t'('h0);
 
 endmodule // msrh_alu_pipe

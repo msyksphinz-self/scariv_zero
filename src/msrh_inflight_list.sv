@@ -6,7 +6,7 @@ module msrh_inflight_list
    input logic [msrh_pkg::RNID_W-1:0]        i_rnid[msrh_conf_pkg::DISP_SIZE*2],
    output logic [msrh_conf_pkg::DISP_SIZE*2-1: 0] o_valids,
 
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_vld,
+   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_valid,
    input logic [msrh_pkg::RNID_W-1:0]             i_update_fetch_rnid[msrh_conf_pkg::DISP_SIZE],
    input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
 
@@ -24,32 +24,32 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 generate for (genvar rn_idx = 1; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_vld_tmp;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_valid_tmp;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
-  logic w_update_fetch_vld;
+  logic w_update_fetch_valid;
   logic w_update_fetch_data;
   for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
-    assign w_update_fetch_vld_tmp [d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
-    assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_vld[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
+    assign w_update_fetch_valid_tmp [d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
+    assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
   end
-  assign w_update_fetch_vld   = |w_update_fetch_vld_tmp;
+  assign w_update_fetch_valid   = |w_update_fetch_valid_tmp;
   assign w_update_fetch_data  = |w_update_fetch_data_tmp;
 
-  logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_vld_tmp;
-  logic w_target_vld;
+  logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_valid_tmp;
+  logic w_target_valid;
   for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
-    assign w_target_vld_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid & i_phy_wr[d_cmt_idx].rd_rnid == rn_idx;
+    assign w_target_valid_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid & i_phy_wr[d_cmt_idx].rd_rnid == rn_idx;
   end
-  assign w_target_vld   = |w_target_vld_tmp;
+  assign w_target_valid   = |w_target_valid_tmp;
 
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_inflight_list[rn_idx] <= 1'b1;
     end else begin
-      if (w_update_fetch_vld) begin
+      if (w_update_fetch_valid) begin
         r_inflight_list[rn_idx] <= w_update_fetch_data;
-      end else if (w_target_vld) begin
+      end else if (w_target_valid) begin
         r_inflight_list[rn_idx] <= 'b1;
       end
     end
@@ -65,10 +65,10 @@ end
 endgenerate
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-logic [ 1: 0] w_update_fetch_vld;
+logic [ 1: 0] w_update_fetch_valid;
 logic [ 1: 0] w_update_fetch_data;
 
-logic [ 1: 0]                 w_update_phy_vlds;
+logic [ 1: 0]                 w_update_phy_valids;
 logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
 
   // RS1 register file
@@ -81,11 +81,11 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
   u_select_latest_update_0
     (
      .i_cmp_key (i_rnid[d_idx * 2 + 0]),
-     .i_valid (i_update_fetch_vld),
+     .i_valid (i_update_fetch_valid),
      .i_keys  (i_update_fetch_rnid),
      .i_data  (i_update_fetch_data),
 
-     .o_valid (w_update_fetch_vld [0]),
+     .o_valid (w_update_fetch_valid [0]),
      .o_data  (w_update_fetch_data[0])
      );
 
@@ -103,7 +103,7 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
      .i_keys  (w_phy_rnids),
      .i_data  (),
 
-     .o_valid (w_update_phy_vlds[0]),
+     .o_valid (w_update_phy_valids[0]),
      .o_data  ()
      );
 
@@ -118,11 +118,11 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
   u_select_latest_update_1
     (
      .i_cmp_key (i_rnid[d_idx * 2 + 1]),
-     .i_valid (i_update_fetch_vld),
+     .i_valid (i_update_fetch_valid),
      .i_keys  (i_update_fetch_rnid),
      .i_data  (i_update_fetch_data),
 
-     .o_valid (w_update_fetch_vld [1]),
+     .o_valid (w_update_fetch_valid [1]),
      .o_data  (w_update_fetch_data[1])
      );
 
@@ -140,15 +140,15 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
      .i_keys  (w_phy_rnids),
      .i_data  (),
 
-     .o_valid (w_update_phy_vlds[1]),
+     .o_valid (w_update_phy_valids[1]),
      .o_data  ()
      );
 
-  assign o_valids[d_idx * 2 + 0] = w_update_phy_vlds [0] ? 1'b1 :
-                                   w_update_fetch_vld[0] ? w_update_fetch_data[0] :
+  assign o_valids[d_idx * 2 + 0] = w_update_phy_valids [0] ? 1'b1 :
+                                   w_update_fetch_valid[0] ? w_update_fetch_data[0] :
                                    r_inflight_list[i_rnid[d_idx * 2 + 0]];
-  assign o_valids[d_idx * 2 + 1] = w_update_phy_vlds [0] ? 1'b1 :
-                                   w_update_fetch_vld[1] ? w_update_fetch_data[1] :
+  assign o_valids[d_idx * 2 + 1] = w_update_phy_valids [0] ? 1'b1 :
+                                   w_update_fetch_valid[1] ? w_update_fetch_data[1] :
                                    r_inflight_list[i_rnid[d_idx * 2 + 1]];
 end
 endgenerate

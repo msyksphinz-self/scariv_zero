@@ -151,11 +151,11 @@ typedef struct packed {
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
-  logic                           hazard_vld;
+  logic                           hazard_valid;
   logic [MEM_Q_SIZE-1:0]          index_oh;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
-  logic                           st_data_vld;
+  logic                           st_data_valid;
   logic [riscv_pkg::XLEN_W-1: 0]  st_data;
 } ex1_q_update_t;
 

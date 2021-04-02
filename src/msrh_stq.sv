@@ -56,7 +56,7 @@ logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[STQ_SIZE] ;
 logic                               r_l1d_rd_if_resp;
 
 // Forwarding Logic
-logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_vld[msrh_conf_pkg::LSU_INST_NUM];
+logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 
 
 function logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] dcache_in,
@@ -101,19 +101,19 @@ u_msrh_disp_pickup
 //
 logic [$clog2(STQ_SIZE)-1:0] w_in_ptr;
 logic [$clog2(STQ_SIZE)-1:0] w_out_ptr;
-logic                                      w_in_vld;
-logic                                      w_out_vld;
+logic                                      w_in_valid;
+logic                                      w_out_valid;
 logic [$clog2(STQ_SIZE):0]   w_disp_picked_num;
 
-assign w_in_vld  = |disp_picked_inst_valid;
-assign w_out_vld = o_done_report.valid;
+assign w_in_valid  = |disp_picked_inst_valid;
+assign w_out_valid = o_done_report.valid;
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(STQ_SIZE)) cnt_disp_vld(.in({{(STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
+bit_cnt #(.WIDTH(STQ_SIZE)) cnt_disp_valid(.in({{(STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                          .i_rollback(i_commit.commit & i_commit.flush_vld),
-                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                          .i_out_vld(w_out_vld), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+                                          .i_rollback(i_commit.commit & i_commit.flush_valid),
+                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -203,7 +203,7 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
 
     // Forwarding check
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-      assign w_ex2_fwd_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+      assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                            w_stq_entries[s_idx].rs2_got_data &
                                            (w_stq_entries[s_idx].paddr == ex2_fwd_check_if[p_idx].paddr);
     end
@@ -236,13 +236,13 @@ endgenerate
 // STQ Forwarding Logic
 // =========================
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-  logic [STQ_SIZE-1: 0] w_ex2_fwd_vld_oh;
+  logic [STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
   stq_entry_t w_stq_fwd_entry;
 
-  bit_extract_msb #(.WIDTH(STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_vld[p_idx]), .out(w_ex2_fwd_vld_oh));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_vld_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+  bit_extract_msb #(.WIDTH(STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .out(w_ex2_fwd_valid_oh));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
 
-  assign ex2_fwd_check_if[p_idx].fwd_vld  = |w_ex2_fwd_vld[p_idx];
+  assign ex2_fwd_check_if[p_idx].fwd_valid  = |w_ex2_fwd_valid[p_idx];
   assign ex2_fwd_check_if[p_idx].fwd_data = w_stq_fwd_entry.rs2_data;
 end
 endgenerate
@@ -330,7 +330,7 @@ assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
 assign o_done_report.valid   = |w_stq_done_oh;
 assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
 assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
-assign o_done_report.exc_vld = 'h0;   // Temporary
+assign o_done_report.exc_valid = 'h0;   // Temporary
 
 
 `ifdef SIMULATION

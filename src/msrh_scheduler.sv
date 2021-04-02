@@ -33,24 +33,24 @@ logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
 msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
-logic [$clog2(IN_PORT_SIZE): 0] w_input_vld_cnt;
+logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_in_ptr;
 logic [$clog2(ENTRY_SIZE)-1: 0] r_entry_out_ptr;
 
 logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
-logic [ENTRY_SIZE-1:0]               w_entry_excpt_valid;
-msrh_pkg::excpt_t                    w_entry_excpt_type [ENTRY_SIZE];
+logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
+msrh_pkg::except_t                    w_entry_except_type [ENTRY_SIZE];
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_vld_cnt (.in(i_disp_valid), .out(w_input_vld_cnt));
+bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry_in_ptr <= 'h0;
   end else begin
     if (|i_disp_valid) begin
-      r_entry_in_ptr <= r_entry_in_ptr + w_input_vld_cnt; /* verilator lint_off WIDTH */
+      r_entry_in_ptr <= r_entry_in_ptr + w_input_valid_cnt; /* verilator lint_off WIDTH */
     end
   end
 end
@@ -95,14 +95,14 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_done  (w_entry_done[s_idx]),
     .o_cmt_id      (w_entry_cmt_id[s_idx]),
     .o_grp_id      (w_entry_grp_id[s_idx]),
-    .o_excpt_valid (w_entry_excpt_valid[s_idx]),
-    .o_excpt_type  (w_entry_excpt_type [s_idx])
+    .o_except_valid (w_entry_except_valid[s_idx]),
+    .o_except_type  (w_entry_except_type [s_idx])
   );
 
 end
 endgenerate
 
-bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_rdy_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
+bit_extract_lsb #(.WIDTH(ENTRY_SIZE)) u_pick_ready_inst(.in(w_entry_valid & w_entry_ready), .out(w_picked_inst_oh));
 bit_oh_or #(.T(msrh_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
@@ -118,10 +118,10 @@ end
 
 bit_oh_or #(.T(logic[msrh_pkg::CMT_BLK_W-1:0]),      .WORDS(ENTRY_SIZE)) bit_oh_entry      (.i_oh(w_entry_done), .i_data(w_entry_cmt_id    ), .o_selected(o_done_report.cmt_id  ));
 bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(ENTRY_SIZE)) bit_oh_grp_id     (.i_oh(w_entry_done), .i_data(w_entry_grp_id    ), .o_selected(o_done_report.grp_id  ));
-bit_oh_or #(.T(msrh_pkg::excpt_t), .WORDS(ENTRY_SIZE)) bit_oh_excpt_type (.i_oh(w_entry_done), .i_data(w_entry_excpt_type), .o_selected(o_done_report.exc_type));
+bit_oh_or #(.T(msrh_pkg::except_t), .WORDS(ENTRY_SIZE)) bit_oh_except_type (.i_oh(w_entry_done), .i_data(w_entry_except_type), .o_selected(o_done_report.exc_type));
 
 assign o_done_report.valid = |w_entry_done;
-assign o_done_report.exc_vld = |(w_entry_excpt_valid & w_entry_done);
+assign o_done_report.exc_valid = |(w_entry_except_valid & w_entry_done);
 
 `ifdef SIMULATION
 typedef struct packed {
@@ -141,11 +141,11 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "grp_id:%d, ", entry.entry.grp_id);
 
     // Destination Register
-    $fwrite(fp, "rd:{ vld:%1d, idx=%02d, rnid=%d },", entry.entry.rd_valid, entry.entry.rd_regidx, entry.entry.rd_rnid);
+    $fwrite(fp, "rd:{ valid:%1d, idx=%02d, rnid=%d },", entry.entry.rd_valid, entry.entry.rd_regidx, entry.entry.rd_rnid);
     // Source 1
-    $fwrite(fp, "rs1:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
+    $fwrite(fp, "rs1:{ valid:%1d, idx=%02d, rnid=%d, ready=%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
     // Source 2
-    $fwrite(fp, "rs2:{ vld:%1d, idx=%02d, rnid=%d, rdy=%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
+    $fwrite(fp, "rs2:{ valid:%1d, idx=%02d, rnid=%d, ready=%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
     $fwrite(fp, "state:\"%s\", ", entry.state == msrh_pkg::INIT ? "INIT" :
             entry.state == msrh_pkg::WAIT ? "WAIT" :
             entry.state == msrh_pkg::ISSUED ? "ISSUED" :

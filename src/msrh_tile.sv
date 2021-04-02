@@ -149,7 +149,7 @@ msrh_rename u_msrh_rename (
 );
 
 
-  generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_vld_loop
+  generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
     assign w_disp_alu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.inst[d_idx].valid &&

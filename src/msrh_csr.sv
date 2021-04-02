@@ -552,7 +552,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mcause        <= 'h0;
   end else begin
-    if (i_commit.commit & i_commit.excpt_valid & i_commit.excpt_type == msrh_pkg::ECALL_M) begin
+    if (i_commit.commit & i_commit.except_valid & i_commit.except_type == msrh_pkg::ECALL_M) begin
       /* verilator lint_off WIDTH */
       r_mcause        <= msrh_pkg::ECALL_U;
     end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCAUSE        ) begin
@@ -564,7 +564,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mepc          <= 'h0;
   end else begin
-    if (i_commit.commit & i_commit.excpt_valid & i_commit.excpt_type == msrh_pkg::ECALL_M) begin
+    if (i_commit.commit & i_commit.except_valid & i_commit.except_type == msrh_pkg::ECALL_M) begin
       r_mepc          <= 'h0; // temporary
     end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEPC          ) begin
       r_mepc          <= write_if.data;

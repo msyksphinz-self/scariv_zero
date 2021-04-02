@@ -27,7 +27,7 @@ logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_selected_data;
 
 logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 
-logic                                    r_s1_dc_update_vld;
+logic                                    r_s1_dc_update_valid;
 
 // Selection of Request from LSU ports
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM + 1; l_idx++) begin : lsu_loop
@@ -45,9 +45,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM + 1; l_idx++
     end
   end
 
-  assign o_dc_read_resp[l_idx].hit      = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & (|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].miss     = !r_s1_dc_update_vld & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & ~(|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_vld |
+  assign o_dc_read_resp[l_idx].hit      = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & (|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].miss     = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & ~(|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_valid |
                                            r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
 
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
@@ -66,13 +66,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_dc_read_req_valid    <= 'h0;
     r_s1_dc_tag_addr          <= 'h0;
 
-    r_s1_dc_update_vld <= 1'b0;
+    r_s1_dc_update_valid <= 1'b0;
   end else begin
     r_s1_dc_read_req_valid_oh <= w_s0_dc_read_req_valid_oh;
     r_s1_dc_read_req_valid    <= w_s0_dc_read_req_valid;
     r_s1_dc_tag_addr          <= w_s0_dc_tag_addr;
 
-    r_s1_dc_update_vld <= i_dc_update.valid;
+    r_s1_dc_update_valid <= i_dc_update.valid;
   end
 end
 

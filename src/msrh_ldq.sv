@@ -59,19 +59,19 @@ u_msrh_disp_pickup
 //
 logic [$clog2(LDQ_SIZE)-1:0] w_in_ptr;
 logic [$clog2(LDQ_SIZE)-1:0] w_out_ptr;
-logic                        w_in_vld;
-logic                        w_out_vld;
+logic                        w_in_valid;
+logic                        w_out_valid;
 logic [$clog2(LDQ_SIZE):0]   w_disp_picked_num;
 
-assign w_in_vld  = |disp_picked_inst_valid;
-assign w_out_vld = o_done_report.valid;
+assign w_in_valid  = |disp_picked_inst_valid;
+assign w_out_valid = o_done_report.valid;
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(LDQ_SIZE)) cnt_disp_vld(.in({{(LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
+bit_cnt #(.WIDTH(LDQ_SIZE)) cnt_disp_valid(.in({{(LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                           .i_rollback(1'b0),
-                                          .i_in_vld (w_in_vld ), .i_in_val (w_disp_picked_num[$clog2(LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                          .i_out_vld(w_out_vld), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -182,7 +182,7 @@ bit_oh_or #(.T(ldq_entry_t), .WORDS(LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_don
 assign o_done_report.valid   = |w_ldq_done_oh;
 assign o_done_report.cmt_id  = w_ldq_done_entry.cmt_id;
 assign o_done_report.grp_id  = w_ldq_done_entry.grp_id;
-assign o_done_report.exc_vld = 'h0;   // Temporary
+assign o_done_report.exc_valid = 'h0;   // Temporary
 
 `ifdef SIMULATION
 

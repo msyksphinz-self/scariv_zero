@@ -190,7 +190,7 @@ u_tb_elf_loader
 always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
   if (!i_msrh_reset_n) begin
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
           /* verilator lint_off WIDTH */
@@ -204,7 +204,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
                       w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
         end
       end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
-    end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_vld)
+    end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)
   end // else: !if(!i_msrh_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 

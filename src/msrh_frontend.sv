@@ -49,16 +49,16 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 // Commiter PC
 // ==============
 logic                           w_commit_upd_pc;
-logic                           r_new_commit_upd_pc_wait_vld;
+logic                           r_new_commit_upd_pc_wait_valid;
 logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
 
 logic                           r_ic_resp_would_be_killed;
 
 logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
 
-assign w_s0_vaddr_flush_next = i_commit.excpt_valid ?
-                               (i_commit.excpt_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
-                                i_commit.excpt_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
+assign w_s0_vaddr_flush_next = i_commit.except_valid ?
+                               (i_commit.except_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
+                                i_commit.except_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
                                 'h0) :
                                i_commit.upd_pc_vaddr;
 
@@ -86,21 +86,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign w_s0_vaddr = w_commit_upd_pc ? w_s0_vaddr_flush_next : r_s0_vaddr;
-assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_vld & !i_commit.all_dead;
+assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_valid & !i_commit.all_dead;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_new_commit_upd_pc_wait_vld <= 1'b0;
+    r_new_commit_upd_pc_wait_valid <= 1'b0;
     r_new_commit_upd_pc          <= 'h0;
 
     r_ic_resp_would_be_killed    <= 1'b0;
   end else begin
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
-      r_new_commit_upd_pc_wait_vld <= 1'b1;
+      r_new_commit_upd_pc_wait_valid <= 1'b1;
       r_new_commit_upd_pc          <= w_s0_vaddr_flush_next;
     end else if (w_s0_ic_ready) begin
-      r_new_commit_upd_pc_wait_vld <= 1'b0;
+      r_new_commit_upd_pc_wait_valid <= 1'b0;
     end
 
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
@@ -145,8 +145,8 @@ msrh_icache u_msrh_icache
    .i_reset_n (i_reset_n),
 
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_vld (i_commit.commit &
-                 i_commit.flush_vld &
+   .i_flush_valid (i_commit.commit &
+                 i_commit.flush_valid &
                  !i_commit.all_dead),
 
    .i_s0_req (w_s0_ic_req),
@@ -171,15 +171,15 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_vld (i_commit.commit &
-                 i_commit.flush_vld &
+   .i_flush_valid (i_commit.commit &
+                 i_commit.flush_valid &
                  !i_commit.all_dead),
 
-   .i_inst_vld (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
+   .i_inst_valid (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
 
    .i_commit (i_commit),
 
-   .o_inst_rdy     (),
+   .o_inst_ready     (),
    .i_inst_pc      (w_s2_ic_resp.addr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),

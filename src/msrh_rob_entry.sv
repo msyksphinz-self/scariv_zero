@@ -24,25 +24,25 @@ module msrh_rob_entry
 
 rob_entry_t             r_entry;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_vld;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_excpt_valid;
-excpt_t                                w_done_rpt_excpt_type[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_except_valid;
+except_t                                w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
-  logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_vld;
+  logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_valid;
   done_rpt_t                w_done_rpt_selected;
   for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
-    assign w_done_rpt_tmp_vld[c_idx] = i_done_rpt[c_idx].valid &
+    assign w_done_rpt_tmp_valid[c_idx] = i_done_rpt[c_idx].valid &
                                        i_done_rpt[c_idx].cmt_id == i_cmt_id &&
                                        i_done_rpt[c_idx].grp_id == (1 << d_idx);
   end
-  assign w_done_rpt_vld[d_idx] = |w_done_rpt_tmp_vld;
+  assign w_done_rpt_valid[d_idx] = |w_done_rpt_tmp_valid;
   bit_oh_or #(.T(done_rpt_t), .WORDS(CMT_BUS_SIZE))
-  sel_done_rpt (.i_oh(w_done_rpt_tmp_vld),
+  sel_done_rpt (.i_oh(w_done_rpt_tmp_valid),
                 .i_data(i_done_rpt),
                 .o_selected(w_done_rpt_selected));
-  assign w_done_rpt_excpt_valid[d_idx] = w_done_rpt_selected.exc_vld;
-  assign w_done_rpt_excpt_type [d_idx] = w_done_rpt_selected.exc_type;
+  assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.exc_valid;
+  assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.exc_type;
 end
 endgenerate
 
@@ -65,10 +65,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (o_block_all_done & i_commit_finish) begin
         r_entry.valid <= 1'b0;
       end else begin
-        r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_vld;
+        r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_valid;
         for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
-          r_entry.excpt_valid[d] <= w_done_rpt_vld[d] ? w_done_rpt_excpt_valid[d] : r_entry.excpt_valid[d];
-          r_entry.excpt_type [d] <= w_done_rpt_vld[d] ? w_done_rpt_excpt_type [d] : r_entry.excpt_type [d];
+          r_entry.except_valid[d] <= w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
+          r_entry.except_type [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
         end
       end
 

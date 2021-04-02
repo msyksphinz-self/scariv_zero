@@ -198,11 +198,11 @@ assign o_ex1_q_updates.inst       = r_ex1_issue;
 assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.hazard_vld = w_ex1_tlb_resp.miss;
+assign o_ex1_q_updates.hazard_valid = w_ex1_tlb_resp.miss;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
-assign o_ex1_q_updates.st_data_vld = r_ex1_issue.rs2_ready;
+assign o_ex1_q_updates.st_data_valid = r_ex1_issue.rs2_ready;
 assign o_ex1_q_updates.st_data     = ex1_regread_rs2.data;
 assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
 
@@ -240,7 +240,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict) & !ex2_fwd_check_if.fwd_vld;
+assign o_ex2_l1d_mispredicted = r_ex2_issue.valid & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict) & !ex2_fwd_check_if.fwd_valid;
 assign l1d_lrq_if.load              = o_ex2_l1d_mispredicted;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
@@ -305,14 +305,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
   end else begin
-    r_ex3_aligned_data <= ex2_fwd_check_if.fwd_vld ? ex2_fwd_check_if.fwd_data : w_ex2_data_sign_ext;
+    r_ex3_aligned_data <= ex2_fwd_check_if.fwd_valid ? ex2_fwd_check_if.fwd_data : w_ex2_data_sign_ext;
   end
 end
 
 assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
 assign ex3_ldq_stq_done_if.index_oh = 'h0;
-assign ex3_ldq_stq_done_if.excpt_vld  = 1'b0;
-assign ex3_ldq_stq_done_if.excpt_type = msrh_pkg::excpt_t'('h0);
+assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
+assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;

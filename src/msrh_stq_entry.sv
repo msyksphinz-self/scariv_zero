@@ -70,7 +70,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_entry.inst.rs2_ready <= w_entry_rs2_ready_next;
     if (i_commit.commit &
-        i_commit.flush_vld &
+        i_commit.flush_valid &
         ((i_commit.cmt_id <  r_entry.cmt_id) |
          (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin
       r_entry.state <= msrh_lsu_pkg::STQ_INIT;
@@ -89,8 +89,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           if (i_disp_load) begin
             r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
           end else if (i_ex1_q_valid) begin
-            r_entry.state           <= i_ex1_q_updates.hazard_vld ? msrh_lsu_pkg::STQ_TLB_HAZ :
-                                       !i_ex1_q_updates.st_data_vld ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
+            r_entry.state           <= i_ex1_q_updates.hazard_valid ? msrh_lsu_pkg::STQ_TLB_HAZ :
+                                       !i_ex1_q_updates.st_data_valid ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
                                        msrh_lsu_pkg::STQ_DONE;
             r_entry.vaddr           <= i_ex1_q_updates.vaddr;
             r_entry.paddr           <= i_ex1_q_updates.paddr;
@@ -99,7 +99,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_entry.size            <= i_ex1_q_updates.size;
             r_entry.inst.rs2_ready  <= w_entry_rs2_ready_next;
 
-            r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_vld;
+            r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_valid;
             r_entry.rs2_data        <= i_ex1_q_updates.st_data;
           end
         msrh_lsu_pkg::STQ_TLB_HAZ : begin

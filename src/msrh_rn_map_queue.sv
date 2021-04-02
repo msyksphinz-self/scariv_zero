@@ -23,8 +23,8 @@ logic [RNID_W * 32 -1 : 0]         w_in_rn_list;
 logic [RNID_W * 32 -1 : 0]         w_out_rn_list;
 
 inoutptr #(.SIZE(MAP_QUEUE_SIZE)) u_inoutptr(.i_clk (i_clk), .i_reset_n (i_reset_n), .i_clear (1'b0),
-                                             .i_in_vld  (i_load),    .o_in_ptr (w_in_ptr),
-                                             .i_out_vld (i_restore), .o_out_ptr(w_out_ptr));
+                                             .i_in_valid  (i_load),    .o_in_ptr (w_in_ptr),
+                                             .i_out_valid (i_restore), .o_out_ptr(w_out_ptr));
 
 
 always_ff @ (posedge i_clk) begin

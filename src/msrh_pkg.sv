@@ -71,7 +71,7 @@ typedef enum logic [ 5: 0] {
   MRET = 24,
   SRET = 25,
   URET = 26
-} excpt_t;
+} except_t;
 
   typedef struct packed {
     logic valid;
@@ -138,8 +138,8 @@ typedef enum logic [ 5: 0] {
 
     logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
 
-    logic [msrh_conf_pkg::DISP_SIZE-1:0]   excpt_valid;
-    excpt_t [msrh_conf_pkg::DISP_SIZE-1:0] excpt_type;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0]   except_valid;
+    except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
 
     // Branch update info
     logic                               is_br_included;
@@ -172,8 +172,8 @@ typedef enum logic [ 5: 0] {
     logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
 
-    logic             excpt_valid;
-    msrh_pkg::excpt_t excpt_type;
+    logic             except_valid;
+    msrh_pkg::except_t except_type;
   } issue_t;
 
 
@@ -232,8 +232,8 @@ endfunction  // assign_issue_t
     logic                 valid;
     logic [CMT_BLK_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
-    logic                 exc_vld;
-    excpt_t               exc_type;
+    logic                 exc_valid;
+    except_t               exc_type;
   } done_rpt_t;
 
 // -----------------
@@ -243,11 +243,11 @@ typedef struct packed {
   logic                 commit;
   logic [CMT_BLK_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
-  logic                           upd_pc_vld;
+  logic                           upd_pc_valid;
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
-  logic                           flush_vld;
-  logic                           excpt_valid;
-  excpt_t                         excpt_type;
+  logic                           flush_valid;
+  logic                           except_valid;
+  except_t                         except_type;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
 } commit_blk_t;
@@ -269,7 +269,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] rd_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
   logic                                                      is_br_included;
-  logic                                                      upd_pc_vld;
+  logic                                                      upd_pc_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
   logic                                                      all_dead;
 } cmt_rnid_upd_t;
