@@ -141,6 +141,7 @@ typedef enum logic [ 5: 0] {
     logic [msrh_conf_pkg::DISP_SIZE-1:0]   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
 
+    logic                                   dead;
     // Branch update info
     logic                               is_br_included;
     br_upd_info_t br_upd_info;
@@ -247,7 +248,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
   logic                           flush_valid;
   logic                           except_valid;
-  except_t                         except_type;
+  except_t                        except_type;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
 } commit_blk_t;

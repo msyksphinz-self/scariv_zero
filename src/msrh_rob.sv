@@ -77,6 +77,8 @@ logic w_load_valid;
      .i_commit_finish  ((w_entry_all_done[c_idx] | r_killing_uncmts) &
                         (w_out_cmt_id == c_idx)),
 
+     .i_kill (o_commit.commit & o_commit.flush_valid & !o_commit.all_dead),
+
      .br_upd_if (ex3_br_upd_if)
      );
 
@@ -85,18 +87,20 @@ endgenerate
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
 
-assign w_killing_uncmts = r_killing_uncmts & (w_in_cmt_id != w_out_cmt_id);
+assign w_killing_uncmts = r_killing_uncmts &
+                          w_entries[w_out_cmt_id].valid &
+                          w_entries[w_out_cmt_id].dead;
 
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_id].done_grp_id;
 assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_id].except_valid);
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
-assign o_commit.flush_valid    = o_commit.upd_pc_valid;
+assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = |w_entries[w_out_cmt_id].except_valid;
 assign o_commit.except_type   = except_type_selected;
 assign o_commit.dead_id      = w_dead_grp_id;
-assign o_commit.all_dead     = w_killing_uncmts;
+assign o_commit.all_dead     = w_entries[w_out_cmt_id].dead;
 
 // Select Exception Instruction
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_except_valid (.in(w_entries[w_out_cmt_id].except_valid), .out(w_cmt_except_valid_oh));
@@ -137,7 +141,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (o_commit.commit & o_commit.flush_valid & (w_in_cmt_id != w_out_cmt_id)) begin
       r_killing_uncmts <= 1'b1;
-    end else if (r_killing_uncmts & (w_in_cmt_id == w_out_cmt_id)) begin
+    end else if (r_killing_uncmts & !w_entries[w_out_cmt_id].dead) begin
       r_killing_uncmts <= 1'b0;
     end
   end

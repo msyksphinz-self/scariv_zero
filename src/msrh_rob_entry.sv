@@ -19,7 +19,9 @@ module msrh_rob_entry
    output logic                               o_block_all_done,
    input logic                                i_commit_finish,
 
-                                              br_upd_if.slave br_upd_if
+   input logic                                i_kill,
+
+   br_upd_if.slave                            br_upd_if
    );
 
 rob_entry_t             r_entry;
@@ -54,6 +56,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (i_load_valid) begin
       r_entry.valid <= 1'b1;
+      r_entry.dead  <= i_kill;
       r_entry.grp_id <= i_load_grp_id;
       r_entry.pc_addr <= i_load_pc_addr;
       r_entry.inst    <= i_load_inst;
@@ -71,6 +74,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.except_type [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
         end
       end
+
+      r_entry.dead <= r_entry.dead | i_kill;
 
       // Branch condition update
       if (br_upd_if.update & (br_upd_if.cmt_id == i_cmt_id)) begin

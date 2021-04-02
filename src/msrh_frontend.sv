@@ -146,8 +146,8 @@ msrh_icache u_msrh_icache
 
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (i_commit.commit &
-                 i_commit.flush_valid &
-                 !i_commit.all_dead),
+                   i_commit.flush_valid &
+                   !i_commit.all_dead),
 
    .i_s0_req (w_s0_ic_req),
    .o_s0_ready(w_s0_ic_ready),

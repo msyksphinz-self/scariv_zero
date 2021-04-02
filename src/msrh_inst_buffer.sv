@@ -218,7 +218,7 @@ logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
 assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
-assign s3_disp.valid          = |w_inst_disp_mask;
+assign s3_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign s3_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 assign s3_disp.is_br_included = |w_inst_is_br;
 
