@@ -82,7 +82,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit & i_commit_rnid_update.upd_pc_valid;
+assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit &
+                                     i_commit_rnid_update.is_br_included;
 
 assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid}} &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
@@ -106,7 +107,7 @@ msrh_rename_map u_msrh_rename_map
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   ),
 
-   .i_restore_from_queue (w_commit_rnid_restore_valid),
+   .i_restore_from_queue (w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid),
    .i_restore_rn_list    (w_restore_rn_list),
 
    .i_commit_rd_valid (w_commit_rd_valid),
@@ -244,7 +245,7 @@ msrh_rn_map_queue
      .i_load (iq_disp.valid & iq_disp.is_br_included),
      .i_rn_list (w_rn_list),
 
-     .i_restore (i_commit_rnid_update.commit & i_commit_rnid_update.is_br_included),
+     .i_restore (w_commit_rnid_restore_valid),
      .o_rn_list (w_restore_rn_list),
 
      .o_full (/*xxx*/)
