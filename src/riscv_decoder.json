@@ -12,7 +12,7 @@
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
         "inst_cat": [["inst_cat", "arith"]],
-        "reg": [["rd", "r3"], ["r1", "pc"]],
+        "reg": [["rd", "r3"]],
         "alu_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
     },
     {
