@@ -16,6 +16,9 @@ test_num = 0
 pass_num = 0
 
 $test_table.each{ |test|
+  if test.key?("skip") and test["skip"] == 1 then
+    next
+  end
   command_str = "./msrh_tb_rv64_standard " + "-e " + "../tests/" + test["elf"]
   stdout_txt = log_dir + "stdout_" + test["name"] + ".txt"
   stderr_txt = log_dir + "stderr_" + test["name"] + ".txt"
