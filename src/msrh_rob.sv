@@ -99,7 +99,7 @@ assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = |w_entries[w_out_cmt_id].except_valid;
 assign o_commit.except_type   = except_type_selected;
-assign o_commit.dead_id      = w_dead_grp_id;
+assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
 assign o_commit.all_dead     = w_entries[w_out_cmt_id].dead;
 
 // Select Exception Instruction

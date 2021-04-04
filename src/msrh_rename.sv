@@ -62,7 +62,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_push(i_commit_rnid_update.commit &
             i_commit_rnid_update.rnid_valid[d_idx] &
             (i_commit_rnid_update.rd_regidx[d_idx] != 'h0)),
-    .i_push_id(i_commit_rnid_update.old_rnid[d_idx]),
+    .i_push_id(i_commit_rnid_update.commit & (i_commit_rnid_update.all_dead | i_commit_rnid_update.dead_id[d_idx]) ?
+               i_commit_rnid_update.rd_rnid[d_idx] : i_commit_rnid_update.old_rnid[d_idx]),
 
     .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
     .o_pop_id(w_rd_rnid_tmp)

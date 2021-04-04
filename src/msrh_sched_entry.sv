@@ -107,9 +107,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (i_commit.commit &
         i_commit.flush_valid &
-        !i_commit.all_dead &
+        !i_commit.all_dead) begin /* &
         ((i_commit.cmt_id <  r_entry.cmt_id) |
-         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin
+         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin */
       r_state <= msrh_pkg::INIT;
       r_entry.valid <= 1'b0;
       r_issued      <= 1'b0;
