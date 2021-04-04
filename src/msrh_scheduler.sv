@@ -24,7 +24,10 @@ module msrh_scheduler
 
  done_if.slave                         pipe_done_if,
 
- output                                msrh_pkg::done_rpt_t o_done_report
+ output                                msrh_pkg::done_rpt_t o_done_report,
+
+ // Commit notification
+ input msrh_pkg::commit_blk_t i_commit
  );
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
@@ -50,7 +53,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry_in_ptr <= 'h0;
   end else begin
     if (|i_disp_valid) begin
-      r_entry_in_ptr <= r_entry_in_ptr + w_input_valid_cnt; /* verilator lint_off WIDTH */
+      r_entry_in_ptr <= i_commit.commit & i_commit.flush_valid ? r_entry_out_ptr :
+                        r_entry_in_ptr + w_input_valid_cnt; /* verilator lint_off WIDTH */
     end
   end
 end
@@ -92,6 +96,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
     .pipe_done_if (pipe_done_if),
+
+    .i_commit (i_commit),
 
     .i_entry_picked (w_picked_inst_oh[s_idx]),
     .o_entry_done  (w_entry_done[s_idx]),

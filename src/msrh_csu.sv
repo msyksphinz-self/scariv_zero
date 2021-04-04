@@ -82,7 +82,7 @@ u_msrh_scheduler
    .i_ex0_rs_conf_index_oh ({msrh_pkg::RV_CSU_ENTRY_SIZE{1'b0}}),
 
    .pipe_done_if(w_ex3_done_if),
-
+   .i_commit      (i_commit),
    .o_done_report (o_done_report)
    );
 

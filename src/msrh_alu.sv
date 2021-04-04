@@ -18,7 +18,9 @@ module msrh_alu #(
     output msrh_pkg::early_wr_t o_ex1_early_wr,
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
-    output msrh_pkg::done_rpt_t o_done_report
+    output msrh_pkg::done_rpt_t o_done_report,
+    // Commit notification
+    input msrh_pkg::commit_blk_t i_commit
 );
 
 localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
@@ -78,7 +80,7 @@ u_msrh_scheduler
    .i_ex0_rs_conf_index_oh ('h0),
 
    .pipe_done_if(w_ex3_done_if),
-
+   .i_commit      (i_commit),
    .o_done_report (o_done_report)
    );
 

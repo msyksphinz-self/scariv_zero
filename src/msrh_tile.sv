@@ -182,6 +182,8 @@ msrh_rename u_msrh_rename (
           .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
           .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
+          .i_commit (w_commit),
+
           .o_done_report (w_alu_done_rpt[alu_idx])
       );
     end
@@ -236,6 +238,7 @@ u_msrh_bru (
     .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
 
     .o_done_report (w_bru_done_rpt),
+    .i_commit      (w_commit),
     .ex3_br_upd_if (w_ex3_br_upd_if)
 );
 

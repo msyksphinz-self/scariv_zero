@@ -26,6 +26,9 @@ module msrh_sched_entry
    input logic                            i_pipe_done,
    done_if.slave                          pipe_done_if,
 
+   // Commit notification
+   input msrh_pkg::commit_blk_t           i_commit,
+
    output logic                           o_entry_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
@@ -102,37 +105,50 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_state <= msrh_pkg::INIT;
     r_issued <= 1'b0;
   end else begin
-    case (r_state)
-      msrh_pkg::INIT : begin
-        if (i_put) begin
-          r_entry <= w_init_entry;
-          r_state <= msrh_pkg::WAIT;
+    if (i_commit.commit &
+        i_commit.flush_valid &
+        !i_commit.all_dead &
+        ((i_commit.cmt_id <  r_entry.cmt_id) |
+         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin
+      r_state <= msrh_pkg::INIT;
+      r_entry.valid <= 1'b0;
+      r_issued      <= 1'b0;
+      // prevent all updates from Pipeline
+      r_entry.cmt_id <= 'h0;
+      r_entry.grp_id <= 'h0;
+    end else begin
+      case (r_state)
+        msrh_pkg::INIT : begin
+          if (i_put) begin
+            r_entry <= w_init_entry;
+            r_state <= msrh_pkg::WAIT;
+          end
         end
-      end
-      msrh_pkg::WAIT : begin
-        r_entry <= w_entry;
-        if (o_entry_valid & o_entry_ready & i_entry_picked) begin
-          r_issued <= 1'b1;
-          r_state <= msrh_pkg::ISSUED;
+        msrh_pkg::WAIT : begin
+          r_entry <= w_entry;
+          if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+            r_issued <= 1'b1;
+            r_state <= msrh_pkg::ISSUED;
+          end
         end
-      end
-      msrh_pkg::ISSUED : begin
-        if (i_pipe_done) begin
-          r_state <= msrh_pkg::DONE;
-          r_entry.except_valid <= pipe_done_if.except_valid;
-          r_entry.except_type  <= pipe_done_if.except_type;
+        msrh_pkg::ISSUED : begin
+          if (i_pipe_done) begin
+            r_state <= msrh_pkg::DONE;
+            r_entry.except_valid <= pipe_done_if.except_valid;
+            r_entry.except_type  <= pipe_done_if.except_type;
+          end
+          if (i_ex0_rs_conflicted) begin
+            r_state <= msrh_pkg::WAIT;
+            r_issued <= 1'b0;
+          end
         end
-        if (i_ex0_rs_conflicted) begin
-          r_state <= msrh_pkg::WAIT;
+        msrh_pkg::DONE : begin
+          r_entry.valid <= 1'b0;
           r_issued <= 1'b0;
+          r_state <= msrh_pkg::INIT;
         end
-      end
-      msrh_pkg::DONE : begin
-        r_entry.valid <= 1'b0;
-        r_issued <= 1'b0;
-        r_state <= msrh_pkg::INIT;
-      end
-    endcase // case (r_state)
+      endcase // case (r_state)
+    end // else: !if(i_commit.commit &...
   end // else: !if(!i_reset_n)
 end
 

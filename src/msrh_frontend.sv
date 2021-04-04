@@ -41,7 +41,7 @@ logic                          r_s1_tlb_miss;
 // ==============
 
 msrh_lsu_pkg::ic_resp_t w_s2_ic_resp;
-logic                          w_s2_ic_miss;
+logic                           w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 
 

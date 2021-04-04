@@ -110,6 +110,7 @@ bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w
 assign o_commit_rnid_update.commit     = o_commit.commit | w_killing_uncmts;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
   assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_valid;
+  assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_old_rnid;
   assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_rnid;
   assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_regidx;
 end
@@ -118,6 +119,7 @@ assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_id].is_br_inclu
 assign o_commit_rnid_update.upd_pc_valid     = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
+
 
 // Select Branch Target Address
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));

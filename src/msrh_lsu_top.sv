@@ -82,6 +82,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 
+    .i_commit (i_commit),
+
     .o_ex3_done (w_ex3_done [lsu_idx])
    );
 

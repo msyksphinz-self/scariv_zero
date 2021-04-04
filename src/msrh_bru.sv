@@ -18,6 +18,10 @@ module msrh_bru
   output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
   output msrh_pkg::done_rpt_t o_done_report,
+
+  // Commit notification
+  input msrh_pkg::commit_blk_t i_commit,
+
   br_upd_if.master            ex3_br_upd_if
 );
 
@@ -73,6 +77,8 @@ u_msrh_scheduler
    .i_ex0_rs_conf_index_oh ({msrh_pkg::RV_BRU_ENTRY_SIZE{1'b0}}),
 
    .pipe_done_if(w_ex3_done_if),
+
+   .i_commit (i_commit),
 
    .o_done_report (o_done_report)
    );

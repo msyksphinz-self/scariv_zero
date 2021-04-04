@@ -9,6 +9,9 @@ import msrh_conf_pkg::*;
    input logic [ 4: 0]             i_arch_id[DISP_SIZE * 2],
    output logic [RNID_W-1: 0]      o_rnid[DISP_SIZE * 2],
 
+   input logic [ 4: 0]             i_rd_regidx[DISP_SIZE],
+   output logic [RNID_W-1: 0]      o_rd_old_rnid[DISP_SIZE],
+
    input logic [DISP_SIZE-1:0]     i_update,
    input logic [ 4: 0]             i_update_arch_id [DISP_SIZE],
    input logic [RNID_W-1: 0]       i_update_rnid [DISP_SIZE],
@@ -93,6 +96,8 @@ endgenerate
 generate for (genvar i = 0; i < DISP_SIZE; i++) begin : rnid_loop
   assign o_rnid[i * 2 + 0] = r_map[i_arch_id[i * 2 + 0]];
   assign o_rnid[i * 2 + 1] = r_map[i_arch_id[i * 2 + 1]];
+
+  assign o_rd_old_rnid[i] = r_map[i_rd_regidx[i]];
 end
 endgenerate
 

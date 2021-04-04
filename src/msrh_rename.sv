@@ -14,6 +14,7 @@ module msrh_rename
    );
 
 logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]       w_archreg_valid;
 logic [ 4: 0]                                   w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
@@ -26,6 +27,7 @@ msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_inst;
 
 logic [msrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_pkg::RNID_W-1: 0]            rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_active;
 
@@ -47,24 +49,24 @@ assign iq_disp.ready = 1'b1;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
   logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid_tmp;
   msrh_freelist
-                             #(
-                               .SIZE (msrh_pkg::FLIST_SIZE),
-                               .WIDTH ($clog2(msrh_pkg::RNID_SIZE)),
-                               .INIT (msrh_pkg::FLIST_SIZE * d_idx + 32)
-                               )
+    #(
+      .SIZE (msrh_pkg::FLIST_SIZE),
+      .WIDTH ($clog2(msrh_pkg::RNID_SIZE)),
+      .INIT (msrh_pkg::FLIST_SIZE * d_idx + 32)
+      )
   u_freelist
-                             (
-                              .i_clk     (i_clk ),
-                              .i_reset_n (i_reset_n),
+    (
+    .i_clk     (i_clk ),
+    .i_reset_n (i_reset_n),
 
-                              .i_push(i_commit_rnid_update.commit &
-                                      i_commit_rnid_update.rnid_valid[d_idx] &
-                                      (i_commit_rnid_update.rd_regidx[d_idx] != 'h0)),
-                              .i_push_id(i_commit_rnid_update.old_rnid[d_idx]),
+    .i_push(i_commit_rnid_update.commit &
+            i_commit_rnid_update.rnid_valid[d_idx] &
+            (i_commit_rnid_update.rd_regidx[d_idx] != 'h0)),
+    .i_push_id(i_commit_rnid_update.old_rnid[d_idx]),
 
-                              .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
-                              .o_pop_id(w_rd_rnid_tmp)
-                              );
+    .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
+    .o_pop_id(w_rd_rnid_tmp)
+  );
   assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
@@ -85,7 +87,7 @@ endgenerate
 assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit &
                                      i_commit_rnid_update.is_br_included;
 
-assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid}} &
+assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid}} &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop
@@ -102,6 +104,9 @@ msrh_rename_map u_msrh_rename_map
    .i_arch_valid (w_archreg_valid),
    .i_arch_id    (w_archreg),
    .o_rnid       (w_rnid),
+
+   .i_rd_regidx   (w_rd_regidx),
+   .o_rd_old_rnid (w_rd_old_rnid),
 
    .i_update         (w_rd_valids),
    .i_update_arch_id (w_update_arch_id),
@@ -150,6 +155,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   logic [msrh_pkg::RNID_W-1: 0] rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
 
+  logic [msrh_pkg::RNID_W-1: 0]         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] rd_old_rnid_tmp_valid;
+
   always_comb begin
 
     /* initial index of loop */
@@ -173,13 +181,23 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       rs2_rnid_tmp      [0] = w_rnid[d_idx * 2 + 1];
     end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
 
+    if (iq_disp.inst[0].rd_valid &&
+        iq_disp.inst[0].rd_type   == iq_disp.inst[d_idx].rd_type &&
+        iq_disp.inst[0].rd_regidx == iq_disp.inst[d_idx].rd_regidx) begin
+      rd_old_rnid_tmp_valid[0] = 1'b1;
+      rd_old_rnid_tmp      [0] = w_rd_rnid[0];
+    end else begin
+      rd_old_rnid_tmp_valid[0] = 1'b0;
+      rd_old_rnid_tmp      [0] = w_rd_old_rnid[d_idx];
+    end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+
     /* verilator lint_off UNSIGNED */
     for (int p_idx = 1; p_idx < d_idx; p_idx++) begin: prev_rd_loop
       if (iq_disp.inst[p_idx].rd_valid &&
           iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rs1_type &&
           iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rs1_regidx) begin
         rs1_rnid_tmp_valid[p_idx] = 1'b1;
-        rs1_rnid_tmp[p_idx] = w_rd_rnid[p_idx];
+        rs1_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs1_rnid_tmp_valid[p_idx] = rs1_rnid_tmp_valid[p_idx-1];
         rs1_rnid_tmp      [p_idx] = rs1_rnid_tmp      [p_idx-1];
@@ -189,10 +207,20 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
           iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rs2_type &&
           iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rs2_regidx) begin
         rs2_rnid_tmp_valid[p_idx] = 1'b1;
-        rs2_rnid_tmp[p_idx] = w_rd_rnid[p_idx];
+        rs2_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs2_rnid_tmp_valid[p_idx] = rs2_rnid_tmp_valid[p_idx-1];
         rs2_rnid_tmp      [p_idx] = rs2_rnid_tmp      [p_idx-1];
+      end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+
+      if (iq_disp.inst[p_idx].rd_valid &&
+          iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rd_type &&
+          iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rd_regidx) begin
+        rd_old_rnid_tmp_valid[p_idx] = 1'b1;
+        rd_old_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
+      end else begin
+        rd_old_rnid_tmp_valid[p_idx] = rd_old_rnid_tmp_valid[p_idx-1];
+        rd_old_rnid_tmp      [p_idx] = rd_old_rnid_tmp      [p_idx-1];
       end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
     end // block: prev_rd_loop
 
@@ -202,8 +230,11 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign rs1_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[0] : rs1_rnid_tmp[d_idx-1];
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
 
+  assign rd_old_rnid_fwd[d_idx] = (d_idx == 0) ? w_rd_old_rnid[0] : rd_old_rnid_tmp[d_idx-1];
+
   assign w_disp_inst[d_idx] = msrh_pkg::assign_disp_rename (iq_disp.inst[d_idx],
                                                             w_rd_rnid[d_idx],
+                                                            rd_old_rnid_fwd[d_idx],
                                                             w_active [d_idx*2+0],
                                                             rs1_rnid_fwd[d_idx],
                                                             w_active [d_idx*2+1],
@@ -255,7 +286,7 @@ msrh_rn_map_queue
 function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_rename\" : {\n");
 
-  if (sc_disp.valid & sc_disp.ready) begin
+  if (sc_disp.valid) begin
     $fwrite(fp, "    \"sc_disp\" : {\n");
     $fwrite(fp, "      valid  : \"%d\",\n", sc_disp.valid);
     $fwrite(fp, "      ready  : \"%d\",\n", sc_disp.ready);
@@ -288,6 +319,15 @@ function void dump_json(int fp);
       $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
       $fwrite(fp, "      },\n");
     end
+
+    // $fwrite(fp, "    \"freelist[]\": {", d_idx);
+    // $fwrite(fp, "      \"head_ptr\": %d", free_loop[d_idx].u_freelist.r_head_ptr);
+    // $fwrite(fp, "      \"tail_ptr\": %d", free_loop[d_idx].u_freelist.r_tail_ptr);
+    // $fwrite(fp, "      \"freelist\": {", );
+    // for (int f_idx = 0; f_idx < msrh_pkg::FLIST_SIZE; f_idx++) begin
+    //   $fwrite(fp, "%d,", free_loop[d_idx].u_freelist.r_freelist[f_idx]);
+    // end
+    // $fwrite(fp, "      }\n", );
   end // if (sc_disp.valid & sc_disp.ready)
   $fwrite(fp, "  },\n");
 

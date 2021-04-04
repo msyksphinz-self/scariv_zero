@@ -60,6 +60,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.grp_id <= i_load_grp_id;
       r_entry.pc_addr <= i_load_pc_addr;
       r_entry.inst    <= i_load_inst;
+      r_entry.br_upd_info <= 'h0;
 
       r_entry.done_grp_id <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
 

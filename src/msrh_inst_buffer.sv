@@ -45,7 +45,7 @@ logic [ 1: 0]           rs1_type[msrh_conf_pkg::DISP_SIZE-1:0];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] rs2_type;
 
 logic [ic_word_num-1:0] r_head_inst_issued;
-logic [ic_word_num-1:0] w_head_inst_issued_next;
+logic [ic_word_num*2-1:0] w_head_inst_issued_next;
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
 logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
@@ -70,7 +70,7 @@ logic [$clog2(msrh_conf_pkg::DISP_SIZE)+2-1:2] w_out_inst_q_pc;
 
 logic                                       w_flush_pipeline;
 
-assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next);
+assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next[ic_word_num-1:0]);
 
 assign w_ptr_in_fire  = i_inst_valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued;
@@ -134,6 +134,19 @@ u_start_pos_enc
    .o_out(w_head_start_pos_next)
    );
 
+logic [ic_word_num-1: 0] w_head_start_pos_upper_next;
+logic [$clog2(ic_word_num):0]   w_head_start_upper_next;
+
+assign w_head_start_pos_upper_next = w_head_inst_issued_next[ic_word_num +: ic_word_num];
+
+encoder
+  #(.SIZE(ic_word_num + 1))
+u_start_pos_next_uppper_enc
+  (
+   .i_in({w_head_start_pos_upper_next, w_head_start_pos_upper_next[0]} ^ {1'b0, w_head_start_pos_upper_next}),
+   .o_out(w_head_start_upper_next)
+   );
+
 assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[2+:$clog2(msrh_conf_pkg::DISP_SIZE)];
 
 /* verilator lint_off WIDTH */
@@ -150,9 +163,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_head_inst_issued <= 'h0;
       r_head_start_pos   <= 'h0;
     end else if (w_inst_buffer_fire) begin
-      if (&w_head_inst_issued_next) begin
-        r_head_inst_issued <= 'h0;
-        r_head_start_pos   <= 'h0;
+      if (&w_head_inst_issued_next[ic_word_num-1:0]) begin
+        r_head_inst_issued <= w_head_inst_issued_next[ic_word_num +: ic_word_num];
+        r_head_start_pos   <= w_head_start_upper_next;
       end else begin
         r_head_inst_issued <= w_head_inst_issued_next;
         r_head_start_pos   <= r_head_start_pos + w_head_start_pos_next[$clog2(ic_word_num)-1:0];
