@@ -91,7 +91,7 @@ assign w_killing_uncmts = r_killing_uncmts &
                           w_entries[w_out_cmt_id].valid &
                           w_entries[w_out_cmt_id].dead;
 
-assign o_commit.commit       = w_entry_all_done[w_out_cmt_id];
+assign o_commit.commit       = w_entry_all_done[w_out_cmt_id] | w_killing_uncmts;
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_id].done_grp_id;
 assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_id].except_valid);
@@ -107,7 +107,7 @@ bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_except_valid (.in(w_entries[w_out_cmt
 bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_cmt_except_valid_oh), .i_data(w_entries[w_out_cmt_id].except_type), .o_selected(except_type_selected));
 
 
-assign o_commit_rnid_update.commit     = o_commit.commit | w_killing_uncmts;
+assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
   assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_valid;
   assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_id].inst[d_idx].rd_old_rnid;

@@ -66,7 +66,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
       r_entry.is_br_included <= i_load_br_included;
     end else if (r_entry.valid) begin
-      if (o_block_all_done & i_commit_finish) begin
+      // Condition :
+      // all instruction done, or ROB entry dead,
+      // So, during killing, allocated new instruction should be killed.
+      if (i_commit_finish & (o_block_all_done | r_entry.dead)) begin
         r_entry.valid <= 1'b0;
       end else begin
         r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_valid;
