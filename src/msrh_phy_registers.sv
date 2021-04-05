@@ -74,7 +74,9 @@ assign r_phy_regs[0] = {riscv_pkg::XLEN_W{1'b0}};
 
       always_comb begin
         regread[p_idx].resp = regread[p_idx].valid;
-        regread[p_idx].data = w_wr_valid ? w_wr_data : r_phy_regs[regread[p_idx].rnid];
+        regread[p_idx].data = regread[p_idx].rnid == 'h0 ? 'h0       :
+                              w_wr_valid                 ? w_wr_data :
+                              r_phy_regs[regread[p_idx].rnid];
       end
     end
   endgenerate
