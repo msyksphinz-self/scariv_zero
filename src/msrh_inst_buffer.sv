@@ -1,4 +1,5 @@
 module msrh_inst_buffer
+  import decoder_reg_pkg::*;
   (
  input logic                                     i_clk,
  input logic                                     i_reset_n,
@@ -40,9 +41,9 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] rd_valid;
-logic [ 1: 0]           rs1_type[msrh_conf_pkg::DISP_SIZE-1:0];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] rs2_type;
+rd_t rd_field_type [msrh_conf_pkg::DISP_SIZE];
+r1_t rs1_field_type[msrh_conf_pkg::DISP_SIZE];
+r2_t rs2_field_type[msrh_conf_pkg::DISP_SIZE];
 
 logic [ic_word_num-1:0] r_head_inst_issued;
 logic [ic_word_num*2-1:0] w_head_inst_issued_next;
@@ -201,9 +202,9 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   u_decoder_reg
     (
      .inst(w_inst[w_idx]),
-     .rd(rd_valid[w_idx]),
-     .r1(rs1_type[w_idx]),
-     .r2(rs2_type[w_idx])
+     .rd(rd_field_type [w_idx]),
+     .r1(rs1_field_type[w_idx]),
+     .r2(rs2_field_type[w_idx])
      );
 
 
@@ -242,15 +243,15 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       s3_disp.inst[d_idx].inst  = w_inst[d_idx];
       s3_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
 
-      s3_disp.inst[d_idx].rd_valid   = rd_valid[d_idx];
+      s3_disp.inst[d_idx].rd_valid   = rd_field_type[d_idx] != RD__;
       s3_disp.inst[d_idx].rd_type    = msrh_pkg::GPR;
       s3_disp.inst[d_idx].rd_regidx  = w_inst[d_idx][11: 7];
 
-      s3_disp.inst[d_idx].rs1_valid  = rs1_type[d_idx] != 'h0;
+      s3_disp.inst[d_idx].rs1_valid  = rs1_field_type[d_idx] != R1__;
       s3_disp.inst[d_idx].rs1_type   = msrh_pkg::GPR;
       s3_disp.inst[d_idx].rs1_regidx = w_inst[d_idx][19:15];
 
-      s3_disp.inst[d_idx].rs2_valid  = rs2_type[d_idx] != 'h0;
+      s3_disp.inst[d_idx].rs2_valid  = rs2_field_type[d_idx] != R2__;
       s3_disp.inst[d_idx].rs2_type   = msrh_pkg::GPR;
       s3_disp.inst[d_idx].rs2_regidx = w_inst[d_idx][24:20];
 

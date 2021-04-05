@@ -1,4 +1,5 @@
 module msrh_rename
+  import msrh_pkg::*;
   (
    input logic i_clk,
    input logic i_reset_n,
@@ -13,46 +14,46 @@ module msrh_rename
    input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
    );
 
-logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
-logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]       w_archreg_valid;
-logic [ 4: 0]                                   w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
-logic [msrh_pkg::RNID_W-1: 0]                   w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
+logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_archreg_valid;
+logic [ 4: 0]                             w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
+logic [RNID_W-1: 0]                       w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
 
-logic [ 4: 0]                                   w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
-logic [msrh_pkg::RNID_W-1: 0]                   w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
+logic [ 4: 0]                             w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]                       w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
 
-msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_inst;
+disp_t [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_inst;
 
-logic [msrh_pkg::RNID_W-1: 0]            rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_pkg::RNID_W-1: 0]            rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_pkg::RNID_W-1: 0]            rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]                       rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]                       rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0]     w_active;
+logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 
-logic                                         w_commit_rnid_restore_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_commit_rd_valid;
-logic [ 4: 0]                                 w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_pkg::RNID_W-1: 0]                 w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+logic                                     w_commit_rnid_restore_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_rd_valid;
+logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
+logic [RNID_W-1: 0]                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_valids;
-logic [ 4: 0]                                 w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]         w_rd_data;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_valids;
+logic [ 4: 0]                             w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_data;
 
 // Current rename map information to stack
-logic [msrh_pkg::RNID_W-1: 0]                 w_rn_list[32];
-logic [msrh_pkg::RNID_W-1: 0]                 w_restore_rn_list[32];
+logic [RNID_W-1: 0]                       w_rn_list[32];
+logic [RNID_W-1: 0]                       w_restore_rn_list[32];
 
 assign iq_disp.ready = 1'b1;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
-  logic [$clog2(msrh_pkg::RNID_SIZE)-1: 0] w_rd_rnid_tmp;
+  logic [RNID_W-1: 0] w_rd_rnid_tmp;
   msrh_freelist
     #(
-      .SIZE (msrh_pkg::FLIST_SIZE),
-      .WIDTH ($clog2(msrh_pkg::RNID_SIZE)),
-      .INIT (msrh_pkg::FLIST_SIZE * d_idx + 32)
+      .SIZE (FLIST_SIZE),
+      .WIDTH (RNID_W),
+      .INIT (FLIST_SIZE * d_idx + 32)
       )
   u_freelist
     (
@@ -71,6 +72,74 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
+
+`ifdef SIMULATION
+// logic [RNID_W-1: 0]   freelist_model[msrh_conf_pkg::DISP_SIZE][$];
+//
+// initial begin
+//   for (int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+//     for (int i = 0; i < 32; i++) begin
+//       /* verilator lint_off WIDTH */
+//       freelist_model[d].push_back(32 + i * FLIST_SIZE);
+//     end
+//   end
+// end
+//
+// generate for (genvar d_idx = 0; d_idx < 1; d_idx++) begin : sim_free_loop
+//   always_ff @ (negedge i_clk, negedge i_reset_n) begin
+//     if (i_reset_n) begin
+//       if (free_loop[d_idx].u_freelist.i_push) begin
+//         freelist_model[d_idx].push_back(free_loop[d_idx].u_freelist.i_push_id);
+//       end
+//       if (free_loop[d_idx].u_freelist.i_pop) begin
+//         if (free_loop[d_idx].u_freelist.o_pop_id != freelist_model[d_idx].pop_back()) begin
+//           $fatal(0, "Pop back error\n");
+//         end
+//       end
+//     end
+//
+//     if (freelist_model[d_idx].size > 32) begin
+//       $fatal(0, "freelist_model shouldn't be over 32");
+//     end
+//   end
+// end
+// endgenerate
+
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
+
+logic [RNID_W-1: 0] freelist_model[$];
+logic [RNID_W-1: 0] pop_data;
+
+  initial begin
+    for (int i = 0; i < 32; i++) begin
+      /* verilator lint_off WIDTH */
+      freelist_model.push_back(32 + d_idx * FLIST_SIZE + i);
+    end
+  end
+
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (free_loop[d_idx].u_freelist.i_push) begin
+        freelist_model.push_back(free_loop[d_idx].u_freelist.i_push_id);
+      end
+      if (free_loop[d_idx].u_freelist.i_pop) begin
+        pop_data = freelist_model.pop_front();
+        if (free_loop[d_idx].u_freelist.o_pop_id != pop_data) begin
+          $fatal(0, "Pop back error. RTL=%d, MODEL=%d\n", free_loop[d_idx].u_freelist.o_pop_id, pop_data);
+        end
+      end
+    end
+
+    if (freelist_model.size > 32) begin
+      $fatal(0, "freelist_model shouldn't be over 32");
+    end
+  end
+end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++)
+endgenerate
+
+`endif // SIMULATION
+
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
   assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rs1_valid;
@@ -150,13 +219,13 @@ assign sc_disp.cmt_id = i_sc_new_cmt_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
-  logic [msrh_pkg::RNID_W-1: 0] rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  logic [RNID_W-1: 0] rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] rs1_rnid_tmp_valid;
 
-  logic [msrh_pkg::RNID_W-1: 0] rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  logic [RNID_W-1: 0] rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
 
-  logic [msrh_pkg::RNID_W-1: 0]         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  logic [RNID_W-1: 0]         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] rd_old_rnid_tmp_valid;
 
   always_comb begin
@@ -233,7 +302,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
   assign rd_old_rnid_fwd[d_idx] = (d_idx == 0) ? w_rd_old_rnid[0] : rd_old_rnid_tmp[d_idx-1];
 
-  assign w_disp_inst[d_idx] = msrh_pkg::assign_disp_rename (iq_disp.inst[d_idx],
+  assign w_disp_inst[d_idx] = assign_disp_rename (iq_disp.inst[d_idx],
                                                             w_rd_rnid[d_idx],
                                                             rd_old_rnid_fwd[d_idx],
                                                             w_active [d_idx*2+0],
@@ -245,7 +314,7 @@ end // block: src_rn_loop
 endgenerate
 
 
-logic [msrh_pkg::RNID_W-1: 0] w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE*2];
+logic [RNID_W-1: 0] w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE*2];
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
   assign w_rs1_rs2_rnid[d_idx*2+0] = rs1_rnid_fwd[d_idx];
   assign w_rs1_rs2_rnid[d_idx*2+1] = rs2_rnid_fwd[d_idx];
@@ -325,7 +394,7 @@ function void dump_json(int fp);
     // $fwrite(fp, "      \"head_ptr\": %d", free_loop[d_idx].u_freelist.r_head_ptr);
     // $fwrite(fp, "      \"tail_ptr\": %d", free_loop[d_idx].u_freelist.r_tail_ptr);
     // $fwrite(fp, "      \"freelist\": {", );
-    // for (int f_idx = 0; f_idx < msrh_pkg::FLIST_SIZE; f_idx++) begin
+    // for (int f_idx = 0; f_idx < FLIST_SIZE; f_idx++) begin
     //   $fwrite(fp, "%d,", free_loop[d_idx].u_freelist.r_freelist[f_idx]);
     // end
     // $fwrite(fp, "      }\n", );
