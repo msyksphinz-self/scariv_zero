@@ -144,7 +144,7 @@ typedef struct packed {
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
-    $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index);
+    $fwrite(fp, "    \"msrh_sched_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "valid:%d, ", entry.entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
@@ -176,7 +176,7 @@ endgenerate
 
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
-    $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index);
+    $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"in_ptr\"  : %d\n", r_entry_in_ptr);
     $fwrite(fp, "    \"out_ptr\" : %d\n", r_entry_out_ptr);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin

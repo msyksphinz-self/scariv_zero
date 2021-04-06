@@ -361,12 +361,12 @@ function void dump_json(int fp);
     $fwrite(fp, "      valid  : \"%d\",\n", sc_disp.valid);
     $fwrite(fp, "      ready  : \"%d\",\n", sc_disp.ready);
     $fwrite(fp, "      cmt_id  : \"%d\",\n", sc_disp.cmt_id);
-    $fwrite(fp, "      pc_addr : \"0x%x\",\n", sc_disp.pc_addr);
+    $fwrite(fp, "      pc_addr : \"0x%08x\",\n", sc_disp.pc_addr);
 
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       $fwrite(fp, "      \"inst[%d]\" : {", d_idx);
       $fwrite(fp, "        valid : \"%d\",",      sc_disp.inst[d_idx].valid);
-      $fwrite(fp, "        inst  : \"%0x\",",     sc_disp.inst[d_idx].inst);
+      $fwrite(fp, "        inst  : \"%08x\",",     sc_disp.inst[d_idx].inst);
       $fwrite(fp, "        pc_addr : \"%0x\",",   sc_disp.inst[d_idx].pc_addr);
 
       $fwrite(fp, "        rd_valid   : \"%d\",", sc_disp.inst[d_idx].rd_valid);

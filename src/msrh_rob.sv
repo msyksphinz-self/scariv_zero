@@ -159,7 +159,7 @@ endgenerate
 function void dump_entry_json(int fp, rob_entry_t entry, int index);
 
   if (entry.valid) begin
-    $fwrite(fp, "    \"msrh_rob_entry[%d]\" : {", index);
+    $fwrite(fp, "    \"msrh_rob_entry[%d]\" : {", index[$clog2(CMT_BLK_SIZE)-1:0]);
     $fwrite(fp, "valid:%d, ", entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
 
