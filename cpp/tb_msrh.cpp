@@ -12,6 +12,11 @@
 extern std::unique_ptr<Memory> g_memory;
 extern bool elf_load_finish;
 
+// Instantiate DUT
+Vmsrh_tb *dut;
+// Trace DUMP ON
+VerilatedFstC* tfp = NULL;
+
 int time_counter = 0;
 bool dump_fst_enable = false;
 
@@ -68,10 +73,8 @@ int main(int argc, char** argv) {
   }
 
   // Instantiate DUT
-  Vmsrh_tb *dut = new Vmsrh_tb();
+  dut = new Vmsrh_tb();
 
-  // Trace DUMP ON
-  VerilatedFstC* tfp = NULL;
   if (dump_fst_enable) {
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
@@ -153,5 +156,9 @@ void stop_sim(int code)
     fprintf(stderr, "FAIL (CODE=%d)\n", code);
   }
   fprintf(stderr, "===============================\n");
+
+  dut->final();
+  if (dump_fst_enable) tfp->close();
+
   exit(code);
 }
