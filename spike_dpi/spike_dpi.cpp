@@ -434,7 +434,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong PC: RTL = %016llx, ISS = %016lx\n",
               rtl_pc, iss_pc);
       fprintf(stderr, "==========================================\n");
-      // stop_sim(1);
+      stop_sim(1);
       return;
   }
   if (rtl_wr_valid) {
@@ -444,7 +444,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %016llx, ISS = %016lx\n",
               rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val, iss_wr_val);
       fprintf(stderr, "==========================================\n");
-      // stop_sim(1);
+      stop_sim(1);
       return;
     } else {
       fprintf(stderr, "GPR[%02d](%d) <= %016llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
