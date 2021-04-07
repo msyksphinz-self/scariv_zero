@@ -206,7 +206,7 @@ function issue_t assign_issue_t(disp_t in,
   ret.rs1_type = in.rs1_type;
   ret.rs1_regidx = in.rs1_regidx;
   ret.rs1_rnid = in.rs1_rnid;
-  ret.rs1_ready = in.rs1_ready | rs1_rel_hit | rs2_phy_hit;
+  ret.rs1_ready = in.rs1_ready | rs1_rel_hit | rs1_phy_hit;
 
   ret.rs2_valid = in.rs2_valid;
   ret.rs2_regidx = in.rs2_regidx;
