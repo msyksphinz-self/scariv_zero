@@ -32,9 +32,9 @@ extern "C" int debug_tick(
           *debug_req_valid     = 1;
           *debug_req_bits_addr = addr + m_it->second->GetBaseAddr();
           *debug_req_bits_data = data;
-          fprintf(stderr, "ELF Loading ... Addr = %08x, Data = %08x\n",
-                  *debug_req_bits_addr,
-                  *debug_req_bits_data);
+          // fprintf(stderr, "ELF Loading ... Addr = %08x, Data = %08x\n",
+          //         *debug_req_bits_addr,
+          //         *debug_req_bits_data);
 
           addr += 4;
           if (addr >= m_it->second->GetBlockSize() && m_it != g_memory_ptr->GetIterEnd()) {
