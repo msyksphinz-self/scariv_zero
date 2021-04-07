@@ -66,6 +66,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
 
     .i_early_wr(i_early_wr),
+    .i_phy_wr  (i_phy_wr),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
 

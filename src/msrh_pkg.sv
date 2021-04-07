@@ -184,7 +184,8 @@ typedef enum logic [ 5: 0] {
 function issue_t assign_issue_t(disp_t in,
                                 logic [CMT_BLK_W-1:0] cmt_id,
                                 logic [DISP_SIZE-1:0] grp_id,
-                                logic rs1_hit, logic rs2_hit);
+                                logic rs1_rel_hit, logic rs2_rel_hit,
+                                logic rs1_phy_hit, logic rs2_phy_hit);
   issue_t ret;
 
   ret.valid = in.valid;
@@ -205,13 +206,13 @@ function issue_t assign_issue_t(disp_t in,
   ret.rs1_type = in.rs1_type;
   ret.rs1_regidx = in.rs1_regidx;
   ret.rs1_rnid = in.rs1_rnid;
-  ret.rs1_ready = in.rs1_ready | rs1_hit;
+  ret.rs1_ready = in.rs1_ready | rs1_rel_hit | rs2_phy_hit;
 
   ret.rs2_valid = in.rs2_valid;
   ret.rs2_regidx = in.rs2_regidx;
   ret.rs2_type = in.rs2_type;
   ret.rs2_rnid = in.rs2_rnid;
-  ret.rs2_ready = in.rs2_ready | rs2_hit;
+  ret.rs2_ready = in.rs2_ready | rs2_rel_hit | rs2_phy_hit;
 
   return ret;
 

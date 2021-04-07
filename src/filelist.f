@@ -38,6 +38,7 @@
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv
 ../src/select_release_bus.sv
+../src/select_phy_wr_bus.sv
 
 ../src/data_array.sv
 ../src/msrh_icache.sv

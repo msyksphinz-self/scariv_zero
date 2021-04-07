@@ -18,7 +18,8 @@ module msrh_sched_entry
    input logic                            i_ex0_rs_conflicted,
 
    /* Forwarding path */
-   input                                  msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input msrh_pkg::early_wr_t             i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input msrh_pkg::phy_wr_t               i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
 
    input logic                            i_entry_picked,
 
@@ -46,8 +47,11 @@ logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
 msrh_pkg::reg_t w_rs1_type;
 msrh_pkg::reg_t w_rs2_type;
 
-logic     w_rs1_entry_hit;
-logic     w_rs2_entry_hit;
+logic     w_rs1_rel_hit;
+logic     w_rs2_rel_hit;
+
+logic     w_rs1_phy_hit;
+logic     w_rs2_phy_hit;
 
 msrh_pkg::sched_state_t r_state;
 
@@ -74,7 +78,7 @@ select_early_wr_bus rs1_rel_select
  .i_entry_type (w_rs1_type),
  .i_early_wr   (i_early_wr),
 
- .o_valid      (w_rs1_entry_hit)
+ .o_valid      (w_rs1_rel_hit)
  );
 
 
@@ -84,19 +88,39 @@ select_early_wr_bus rs2_rel_select
  .i_entry_type (w_rs2_type),
  .i_early_wr   (i_early_wr),
 
- .o_valid      (w_rs2_entry_hit)
+ .o_valid      (w_rs2_rel_hit)
+ );
+
+select_phy_wr_bus rs1_phy_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs1_phy_hit)
+ );
+
+
+select_phy_wr_bus rs2_phy_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs2_phy_hit)
  );
 
 
 always_comb begin
   w_entry = r_entry;
-  w_entry.rs1_ready = r_entry.rs1_ready | w_rs1_entry_hit;
-  w_entry.rs2_ready = r_entry.rs2_ready | w_rs2_entry_hit;
+  w_entry.rs1_ready = r_entry.rs1_ready | w_rs1_rel_hit | w_rs1_phy_hit;
+  w_entry.rs2_ready = r_entry.rs2_ready | w_rs2_rel_hit | w_rs2_phy_hit;
 end
 
 
 assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
-                                               w_rs1_entry_hit, w_rs2_entry_hit);
+                                               w_rs1_rel_hit, w_rs2_rel_hit,
+                                               w_rs1_phy_hit, w_rs2_phy_hit);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

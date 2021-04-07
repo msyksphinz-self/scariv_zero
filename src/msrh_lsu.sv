@@ -20,6 +20,7 @@ module msrh_lsu
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+    input msrh_pkg::phy_wr_t   i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
 
     // STQ Forwarding checker
     fwd_check_if.master           ex2_fwd_check_if,
@@ -96,6 +97,7 @@ msrh_scheduler #(
    .i_disp_info (disp_picked_inst),
 
    .i_early_wr(i_early_wr),
+   .i_phy_wr  (i_phy_wr),
 
    .o_issue       (w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),

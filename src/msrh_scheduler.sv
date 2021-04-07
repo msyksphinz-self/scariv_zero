@@ -14,7 +14,8 @@ module msrh_scheduler
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
  /* Forwarding path */
- input                                 msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+ input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+ input msrh_pkg::phy_wr_t   i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
 
  output                                msrh_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
@@ -97,6 +98,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
                              i_ex0_rs_conf_index_oh[s_idx]),
 
     .i_early_wr(i_early_wr),
+    .i_phy_wr(i_phy_wr),
 
     .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
     .pipe_done_if (pipe_done_if),
