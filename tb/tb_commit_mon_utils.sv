@@ -95,3 +95,67 @@ final begin
   $fclose(log_fp);
   $fclose(pipe_fp);
 end
+
+
+// ==========================
+// FreeList Checker
+// ==========================
+
+// logic [msrh_pkg::RNID_W-1: 0] rename_map_model[32];
+int rename_map_model[32];
+
+initial begin
+  for(int i = 0; i < 32; i++) begin
+    rename_map_model[i] = i;
+  end
+end
+
+
+logic [msrh_pkg::FLIST_SIZE-1:0][msrh_pkg::RNID_W-1: 0] freelist_model[5];
+
+initial begin
+  for (int d = 0; d < 5; d++) begin
+    for (int i = 0; i < 32; i++) begin
+      /* verilator lint_off WIDTH */
+      freelist_model[d][i] = 32 + d * msrh_pkg::FLIST_SIZE + i;
+    end
+  end
+end
+
+// always @ (negedge w_clk, negedge w_msrh_reset_n) begin
+//   if (w_msrh_reset_n) begin
+//     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
+//       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+//         if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
+//           if (committed_rob_entry.inst[grp_idx].rd_valid &&
+//               (committed_rob_entry.inst[grp_idx].rd_regidx != 0)) begin
+//           logic [msrh_pkg::RNID_W-1: 0] poped_rnid;
+//             poped_rnid = freelist_model[grp_idx][0];
+//             for(int i = 0; i < msrh_pkg::FLIST_SIZE-1; i++) begin
+//               freelist_model[grp_idx][i] = freelist_model[grp_idx][i+1];
+//             end
+//             freelist_model[grp_idx][msrh_pkg::FLIST_SIZE-1] = committed_rob_entry.inst[grp_idx].rd_old_rnid;
+//
+//             if (rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx] !=
+//                 committed_rob_entry.inst[grp_idx].rd_old_rnid) begin
+//               $fatal(0, "Error: Returned rnid different %d != %d",
+//                      rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx],
+//                      committed_rob_entry.inst[grp_idx].rd_old_rnid);
+//
+//             end
+//
+//             if (poped_rnid != committed_rob_entry.inst[grp_idx].rd_rnid) begin
+//               $fatal(0, "Error: (%02d, %02d) Destination rnid different %d != %d",
+//                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
+//                      1 << grp_idx,
+//                      poped_rnid,
+//                      committed_rob_entry.inst[grp_idx].rd_rnid);
+//             end
+//
+//             rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx] <= poped_rnid;
+//           end // if (committed_rob_entry.inst[grp_idx].rd_valid)
+//         end // if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx])
+//       end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+//     end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)
+//   end // if (i_reset_n)
+// end // always_ff @ (negedge i_clk, negedge i_reset_n)
