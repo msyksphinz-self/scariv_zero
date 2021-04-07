@@ -211,6 +211,55 @@
         "bru_ctrl" : [["imm", "i"]]
     },
     {
+        "name":"xor        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "xor"]]
+    },
+
+    {
+        "name":"or         r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "or"]]
+    },
+    {
+        "name":"and        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "and"]]
+    },
+    {
+        "name":"xori       r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "xor"], ["imm", "i"]]
+    },
+    {
+        "name":"ori        r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "or"], ["imm", "i"]]
+    },
+    {
+        "name":"andi       r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "and"], ["imm", "i"]]
+    },
+    {
         "name":"slli       r[11:7],r[19:15],h[25:20]",
         "length":"32", "dlength":"32",
         "field": ["00000", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],

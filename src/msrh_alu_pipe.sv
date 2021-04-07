@@ -166,6 +166,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       OP_SIGN_SUB:    r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
       OP_SIGN_ADD_32, OP_SRL_32, OP_SRA_32:
         r_ex3_result <= {{(riscv_pkg::XLEN_W-32){tmp_ex2_result_d[31]}}, tmp_ex2_result_d[31: 0]};
+      OP_XOR:         r_ex3_result <= w_ex2_rs1_selected_data ^   w_ex2_rs2_selected_data;
+      OP_OR :         r_ex3_result <= w_ex2_rs1_selected_data |   w_ex2_rs2_selected_data;
+      OP_AND:         r_ex3_result <= w_ex2_rs1_selected_data &   w_ex2_rs2_selected_data;
       OP_SLL:         r_ex3_result <= w_ex2_rs1_selected_data <<  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRL:         r_ex3_result <= w_ex2_rs1_selected_data >>  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRA:         r_ex3_result <= w_ex2_rs1_selected_data >>> w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
