@@ -35,11 +35,14 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
 decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
+
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
 
 rd_t rd_field_type [msrh_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[msrh_conf_pkg::DISP_SIZE];
@@ -190,12 +193,14 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_be_valid[w_idx] = |(r_inst_queue[w_inst_buf_ptr].byte_en[w_buf_id[$clog2(ic_word_num)-1:0]*4+:4]);
 
   logic[ 2: 0] w_raw_cat;
+  logic        w_raw_gen_except;
   decoder_inst_cat
   u_decoder_inst_cat
-  (
-    .inst(w_inst[w_idx]),
-    .inst_cat(w_raw_cat)
-  );
+    (
+     .inst(w_inst[w_idx]),
+     .inst_cat(w_raw_cat),
+     .gen_except(w_raw_gen_except)
+     );
   assign w_inst_cat[w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
 
   decoder_reg
@@ -213,6 +218,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_st   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST  );
   assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
   assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
+
+  assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & w_raw_gen_except;
 end
 endgenerate
 
@@ -234,7 +241,7 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign s3_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign s3_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
-assign s3_disp.is_br_included = |w_inst_is_br;
+assign s3_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   always_comb begin

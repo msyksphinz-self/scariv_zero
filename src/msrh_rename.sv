@@ -73,72 +73,40 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-`ifdef SIMULATION
-// logic [RNID_W-1: 0]   freelist_model[msrh_conf_pkg::DISP_SIZE][$];
+// `ifdef SIMULATION
+// generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 //
-// initial begin
-//   for (int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+//   logic [RNID_W-1: 0] freelist_model[$];
+//   logic [RNID_W-1: 0] pop_data;
+//
+//   initial begin
 //     for (int i = 0; i < 32; i++) begin
 //       /* verilator lint_off WIDTH */
-//       freelist_model[d].push_back(32 + i * FLIST_SIZE);
+//       freelist_model.push_back(32 + d_idx * FLIST_SIZE + i);
 //     end
 //   end
-// end
 //
-// generate for (genvar d_idx = 0; d_idx < 1; d_idx++) begin : sim_free_loop
 //   always_ff @ (negedge i_clk, negedge i_reset_n) begin
 //     if (i_reset_n) begin
 //       if (free_loop[d_idx].u_freelist.i_push) begin
-//         freelist_model[d_idx].push_back(free_loop[d_idx].u_freelist.i_push_id);
+//         freelist_model.push_back(free_loop[d_idx].u_freelist.i_push_id);
 //       end
 //       if (free_loop[d_idx].u_freelist.i_pop) begin
-//         if (free_loop[d_idx].u_freelist.o_pop_id != freelist_model[d_idx].pop_back()) begin
-//           $fatal(0, "Pop back error\n");
+//         pop_data = freelist_model.pop_front();
+//         if (free_loop[d_idx].u_freelist.o_pop_id != pop_data) begin
+//           $fatal(0, "Pop back error. RTL=%d, MODEL=%d\n", free_loop[d_idx].u_freelist.o_pop_id, pop_data);
 //         end
 //       end
 //     end
 //
-//     if (freelist_model[d_idx].size > 32) begin
+//     if (freelist_model.size > 32) begin
 //       $fatal(0, "freelist_model shouldn't be over 32");
 //     end
 //   end
-// end
+// end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++)
 // endgenerate
-
-
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
-
-logic [RNID_W-1: 0] freelist_model[$];
-logic [RNID_W-1: 0] pop_data;
-
-  initial begin
-    for (int i = 0; i < 32; i++) begin
-      /* verilator lint_off WIDTH */
-      freelist_model.push_back(32 + d_idx * FLIST_SIZE + i);
-    end
-  end
-
-  always_ff @ (negedge i_clk, negedge i_reset_n) begin
-    if (i_reset_n) begin
-      if (free_loop[d_idx].u_freelist.i_push) begin
-        freelist_model.push_back(free_loop[d_idx].u_freelist.i_push_id);
-      end
-      if (free_loop[d_idx].u_freelist.i_pop) begin
-        pop_data = freelist_model.pop_front();
-        if (free_loop[d_idx].u_freelist.o_pop_id != pop_data) begin
-          $fatal(0, "Pop back error. RTL=%d, MODEL=%d\n", free_loop[d_idx].u_freelist.o_pop_id, pop_data);
-        end
-      end
-    end
-
-    if (freelist_model.size > 32) begin
-      $fatal(0, "freelist_model shouldn't be over 32");
-    end
-  end
-end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++)
-endgenerate
-
-`endif // SIMULATION
+//
+// `endif // SIMULATION
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
