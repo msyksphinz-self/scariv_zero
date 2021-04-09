@@ -372,6 +372,38 @@
         "alu_ctrl":[["op", "sra_32"]]
     },
     {
+        "name":"slti       r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sign_slt"], ["imm", "i"]]
+    },
+    {
+        "name":"sltiu      r[11:7],r[19:15],h[31:20]",
+        "length":"32", "dlength":"32",
+        "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "unsign_slt"], ["imm", "i"]]
+    },
+    {
+        "name":"slt        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sign_slt"]]
+    },
+    {
+        "name":"sltu       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "00", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsign_slt"]]
+    },
+    {
         "name":"csrrw      r[11:7],h[31:20],r[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],

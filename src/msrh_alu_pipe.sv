@@ -179,6 +179,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       OP_SLL:         r_ex3_result <= w_ex2_rs1_selected_data <<  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRL:         r_ex3_result <= w_ex2_rs1_selected_data >>  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRA:         r_ex3_result <= $signed(w_ex2_rs1_selected_data) >>> w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
+      OP_SIGN_SLT:    r_ex3_result <= $signed(w_ex2_rs1_selected_data) < $signed(w_ex2_rs2_selected_data);
+      OP_UNSIGN_SLT:  r_ex3_result <= w_ex2_rs1_selected_data < w_ex2_rs2_selected_data;
       default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
     endcase // case (r_ex2_pipe_ctrl.op)
   end
