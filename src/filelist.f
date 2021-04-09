@@ -28,6 +28,9 @@
 ../src/bit_tree_lsb.sv
 ../src/bit_pick_up.sv
 ../src/bit_pick_1_index.sv
+../src/bit_brshift.sv
+../src/bit_blshift.sv
+../src/bit_reverse.sv
 
 ../src/encoder.sv
 ../src/inoutptr.sv
