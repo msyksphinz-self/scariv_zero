@@ -216,7 +216,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
         "inst_cat": [["inst_cat", "br"], ["gen_except", "0"]],
         "reg" : [["rd", "r3"]],
-        "bru_ctrl" : [["imm", "uj"]]
+        "bru_ctrl" : [["wr_rd", "1"], ["imm", "uj"]]
     },
     {
         "name":"jalr       r[11:7],r[19:15],h[31:20]",
@@ -224,7 +224,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11001", "11"],
         "inst_cat": [["inst_cat", "br"], ["gen_except", "0"]],
         "reg" : [["rd", "r3"], ["r1", "r1"]],
-        "bru_ctrl" : [["imm", "i"]]
+        "bru_ctrl" : [["wr_rd", "1"], ["imm", "i"]]
     },
     {
         "name":"xor        r[11:7],r[19:15],r[24:20]",

@@ -24,6 +24,7 @@ module msrh_bru_pipe
 typedef struct packed {
   op_t  op;
   imm_t imm;
+  logic wr_rd;
 } pipe_ctrl_t;
 
 msrh_pkg::issue_t                        r_ex0_issue;
@@ -51,6 +52,7 @@ logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
 logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
 
 msrh_pkg::issue_t                        r_ex3_issue;
+pipe_ctrl_t                              r_ex3_pipe_ctrl;
 logic                                    r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
 logic [riscv_pkg::VADDR_W-1: 0]          r_ex3_br_vaddr;
@@ -63,7 +65,8 @@ end
 decoder_bru_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
   .op  (w_ex0_pipe_ctrl.op),
-  .imm (w_ex0_pipe_ctrl.imm)
+  .imm (w_ex0_pipe_ctrl.imm),
+  .wr_rd (w_ex0_pipe_ctrl.wr_rd)
 );
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
@@ -149,10 +152,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_index    <= 'h0;
     r_ex3_issue    <= 'h0;
     r_ex3_br_vaddr <= 'h0;
+    r_ex3_pipe_ctrl <= 'h0;
   end else begin
     r_ex3_issue    <= r_ex2_issue;
     r_ex3_index    <= r_ex2_index;
     r_ex3_br_vaddr <= w_ex2_br_vaddr;
+    r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
     case (r_ex2_pipe_ctrl.op)
       OP_EQ : r_ex3_result <= w_ex2_rs1_selected_data == w_ex2_rs2_selected_data;
@@ -167,10 +172,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid   = 1'b0;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_pipe_ctrl.wr_rd;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
-assign o_ex3_phy_wr.rd_data = 'h0;  // r_ex3_result;
+/* verilator lint_off WIDTH */
+assign o_ex3_phy_wr.rd_data = r_ex3_issue.pc_addr + 'h4;
 
 assign ex3_done_if.done     = r_ex3_issue.valid;
 assign ex3_done_if.index_oh = r_ex3_index;
