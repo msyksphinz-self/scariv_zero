@@ -142,13 +142,18 @@ end
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
 
-logic [31: 0] tmp_ex2_result_d;
-assign tmp_ex2_result_d = r_ex2_pipe_ctrl.op == OP_SIGN_ADD_32 ? w_ex2_rs1_selected_data[31:0] +   w_ex2_rs2_selected_data[31:0] :
-                          r_ex2_pipe_ctrl.op == OP_SIGN_SUB_32 ? w_ex2_rs1_selected_data[31:0] -   w_ex2_rs2_selected_data[31:0] :
-                          r_ex2_pipe_ctrl.op == OP_SLL_32      ? w_ex2_rs1_selected_data[31:0] <<  w_ex2_rs2_selected_data[ 4:0] :
-                          r_ex2_pipe_ctrl.op == OP_SRL_32      ? w_ex2_rs1_selected_data[31:0] >>  w_ex2_rs2_selected_data[ 4:0] :
-                          r_ex2_pipe_ctrl.op == OP_SRA_32      ? w_ex2_rs1_selected_data[31:0] >>> w_ex2_rs2_selected_data[ 4:0] :
+logic signed [31: 0] tmp_ex2_result_d;
+logic signed [31: 0] w_ex2_rs1_selected_data_32;
+logic signed [31: 0] w_ex2_rs1_selected_data_sra;
+assign w_ex2_rs1_selected_data_32 = w_ex2_rs1_selected_data[31:0];
+assign tmp_ex2_result_d = r_ex2_pipe_ctrl.op == OP_SIGN_ADD_32 ? w_ex2_rs1_selected_data_32 +   w_ex2_rs2_selected_data[31:0] :
+                          r_ex2_pipe_ctrl.op == OP_SIGN_SUB_32 ? w_ex2_rs1_selected_data_32 -   w_ex2_rs2_selected_data[31:0] :
+                          r_ex2_pipe_ctrl.op == OP_SLL_32      ? w_ex2_rs1_selected_data_32 <<  w_ex2_rs2_selected_data[ 4:0] :
+                          r_ex2_pipe_ctrl.op == OP_SRL_32      ? w_ex2_rs1_selected_data_32 >>  w_ex2_rs2_selected_data[ 4:0] :
+                          r_ex2_pipe_ctrl.op == OP_SRA_32      ? w_ex2_rs1_selected_data_sra :
                           'h0;
+// Memo: I don't know why but if this sentence is integrated into above, test pattern fail.
+assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_ex2_rs2_selected_data[ 4:0];
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
