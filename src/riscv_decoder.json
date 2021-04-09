@@ -13,7 +13,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
         "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
         "reg": [["rd", "r3"]],
-        "alu_ctrl":[["op", "sign_auipc"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_auipc"], ["imm", "i"]]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
@@ -37,7 +37,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "alu_ctrl":[["op", "sign_add"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_add"], ["imm", "i"]]
     },
     {
         "name":"addiw      r[11:7],r[19:15],h[31:20]",
@@ -45,7 +45,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "alu_ctrl":[["op", "sign_add_32"], ["imm", "s"]]
+        "alu_ctrl":[["op", "sign_add_32"], ["imm", "i"]]
     },
     {
         "comment": "Load DoubleWord instruction",
