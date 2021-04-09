@@ -144,6 +144,7 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
 
 logic [31: 0] tmp_ex2_result_d;
 assign tmp_ex2_result_d = r_ex2_pipe_ctrl.op == OP_SIGN_ADD_32 ? w_ex2_rs1_selected_data[31:0] +   w_ex2_rs2_selected_data[31:0] :
+                          r_ex2_pipe_ctrl.op == OP_SIGN_SUB_32 ? w_ex2_rs1_selected_data[31:0] -   w_ex2_rs2_selected_data[31:0] :
                           r_ex2_pipe_ctrl.op == OP_SLL_32      ? w_ex2_rs1_selected_data[31:0] <<  w_ex2_rs2_selected_data[ 4:0] :
                           r_ex2_pipe_ctrl.op == OP_SRL_32      ? w_ex2_rs1_selected_data[31:0] >>  w_ex2_rs2_selected_data[ 4:0] :
                           r_ex2_pipe_ctrl.op == OP_SRA_32      ? w_ex2_rs1_selected_data[31:0] >>> w_ex2_rs2_selected_data[ 4:0] :
@@ -165,7 +166,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
                                       {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
       OP_SIGN_ADD:    r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
       OP_SIGN_SUB:    r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
-      OP_SIGN_ADD_32, OP_SRL_32, OP_SRA_32:
+      OP_SIGN_ADD_32, OP_SIGN_SUB_32, OP_SLL_32, OP_SRL_32, OP_SRA_32:
         r_ex3_result <= {{(riscv_pkg::XLEN_W-32){tmp_ex2_result_d[31]}}, tmp_ex2_result_d[31: 0]};
       OP_XOR:         r_ex3_result <= w_ex2_rs1_selected_data ^   w_ex2_rs2_selected_data;
       OP_OR :         r_ex3_result <= w_ex2_rs1_selected_data |   w_ex2_rs2_selected_data;

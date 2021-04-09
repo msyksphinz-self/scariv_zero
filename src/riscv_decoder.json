@@ -32,6 +32,22 @@
         "alu_ctrl":[["op", "sign_sub"] ]
     },
     {
+        "name":"addw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sign_add_32"] ]
+    },
+    {
+        "name":"subw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"], ["gen_except", "0"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sign_sub_32"] ]
+    },
+    {
         "name":"addi       r[11:7],r[19:15],h[31:20]",
         "length":"32", "dlength":"32",
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
