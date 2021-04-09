@@ -41,13 +41,20 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     num_counter <= 'h0;
   end else begin
-    case ({i_in_valid, i_out_valid})
-      2'b10 : num_counter <= num_counter + 1;
-      2'b01 : num_counter <= num_counter - 1;
-      default : num_counter <= num_counter;
-    endcase // case ({i_in_valid, i_out_valid})
+    if (i_clear) begin
+      num_counter <= 'h0;
+    end else begin
+      case ({i_in_valid, i_out_valid})
+        2'b10 : num_counter <= num_counter + 1;
+        2'b01 : num_counter <= num_counter - 1;
+        default : num_counter <= num_counter;
+      endcase // case ({i_in_valid, i_out_valid})
+    end
     if (num_counter < 0) begin
       $fatal(0, "inoutptr counter become minus. Invalid");
+    end
+    if (num_counter > SIZE) begin
+      $fatal(0, "inoutptr counter exceeded. Fatal");
     end
   end
 end
