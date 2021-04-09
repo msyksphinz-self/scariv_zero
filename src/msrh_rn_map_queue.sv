@@ -13,7 +13,7 @@ module msrh_rn_map_queue
    output logic               o_full
    );
 
-localparam MAP_QUEUE_SIZE = 8;
+localparam MAP_QUEUE_SIZE = 16;
 
 logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_in_ptr;
 logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_out_ptr;
