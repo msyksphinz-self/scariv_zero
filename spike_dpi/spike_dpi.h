@@ -1,7 +1,7 @@
 #pragma once
 
 extern "C" {
-  void initial_spike (const char *filename);
+  void initial_spike (const char *filename, int rv_xlen);
   void step_spike(long long time, long long rtl_pc,
                   int rtl_cmt_id, int rtl_grp_id,
                   int rtl_insn,

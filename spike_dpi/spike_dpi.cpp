@@ -15,6 +15,7 @@ disassembler_t *disasm;
 
 int argc;
 const char *argv[20];
+int g_rv_xlen = 0;
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
@@ -100,10 +101,18 @@ static unsigned long atoul_nonzero_safe(const char* s)
 }
 
 
-void initial_spike (const char *filename)
+void initial_spike (const char *filename, int rv_xlen)
 {
   argv[0] = "spike_dpi";
-  argv[1] = "--isa=rv64gc";
+  if (rv_xlen == 32) {
+    argv[1] = "--isa=rv32gc";
+  } else if (rv_xlen == 64) {
+    argv[1] = "--isa=rv64gc";
+  } else {
+    fprintf(stderr, "RV_XLEN should be 32 or 64.\n");
+    exit(-1);
+  }
+  g_rv_xlen = rv_xlen;
   argv[2] = "--log";
   argv[3] = "spike.log";
   argv[4] = "-l";
@@ -413,6 +422,19 @@ static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*
 }
 
 
+bool inline is_equal_xlen(int64_t val1, int64_t val2)
+{
+  if (g_rv_xlen == 32) {
+    return (val1 & 0xffffffffULL) == (val2 & 0xffffffffULL);
+  } else if (g_rv_xlen == 64) {
+    return val1 == val2;
+  } else {
+    fprintf(stderr, "rv_xlen should be 32 or 64\n");
+    exit(-1);
+  }
+}
+
+
 void step_spike(long long time, long long rtl_pc,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
@@ -429,25 +451,27 @@ void step_spike(long long time, long long rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
 
-  if (iss_pc != rtl_pc) {
+  if (!is_equal_xlen(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong PC: RTL = %016llx, ISS = %016lx\n",
-              rtl_pc, iss_pc);
+      fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
+              g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
       fprintf(stderr, "==========================================\n");
       stop_sim(1);
       return;
   }
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
-    if (iss_wr_val != rtl_wr_val) {
+    if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
       fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %016llx, ISS = %016lx\n",
-              rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val, iss_wr_val);
+      fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
+              rtl_wr_gpr_addr, rtl_wr_gpr_rnid,
+              g_rv_xlen / 4, rtl_wr_val,
+              g_rv_xlen / 4, iss_wr_val);
       fprintf(stderr, "==========================================\n");
       stop_sim(1);
       return;
     } else {
-      fprintf(stderr, "GPR[%02d](%d) <= %016llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, rtl_wr_val);
+      fprintf(stderr, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
     }
   }
 }
@@ -456,7 +480,7 @@ void step_spike(long long time, long long rtl_pc,
 #ifdef SIM_MAIN
 int main(int argc, char **argv)
 {
-  initial_spike (argv[1]);
+  initial_spike (argv[1], 64);
   processor_t *p = spike_core->get_core(0);
   for (int i = 0; i < 100; i++) {
     p->step(1);

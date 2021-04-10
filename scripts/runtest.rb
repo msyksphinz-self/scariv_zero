@@ -4,7 +4,18 @@
 require "json"
 require "fileutils"
 
-File.open("tests.json") do |file|
+veri_sim_binary = ARGV[0]
+if veri_sim_binary.include?("rv32") then
+  test_json_file = "rv32-tests.json"
+elsif veri_sim_binary.include?("rv64") then
+  test_json_file = "rv64-tests.json"
+else
+  puts "Invalid Verilator binary specified. Exit"
+  exit
+end
+
+
+File.open(test_json_file) do |file|
   $test_table = JSON.load(file)
 end
 

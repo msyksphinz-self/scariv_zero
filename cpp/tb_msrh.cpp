@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   }
 
   fprintf(stderr, "initial_spike opening %s ...\n", filename);
-  initial_spike(filename);
+  initial_spike(filename, RV_XLEN);
 
   // Format
   dut->i_elf_loader_reset_n = 0;

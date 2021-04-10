@@ -39,8 +39,8 @@ void dump_segment (const char* segname, int fd);
 
 Elf_Scn    *scn;
 Elf_Data   *data;
-Elf64_Ehdr *ehdr;
-Elf64_Phdr *phdr;
+Elf32_Ehdr *ehdr;
+Elf32_Phdr *phdr;
 
 extern "C" int
 load_binary(char const* path_exec,
@@ -62,10 +62,10 @@ load_binary(char const* path_exec,
   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
     failure();
 
-  if (((ehdr = elf64_getehdr(elf)) == NULL) ||
+  if (((ehdr = elf32_getehdr(elf)) == NULL) ||
       ((scn  = elf_getscn(elf, ehdr->e_shstrndx)) == NULL) ||
       ((data = elf_getdata(scn, NULL)) == NULL) ||
-      ((phdr = elf64_getphdr(elf)) == NULL))
+      ((phdr = elf32_getphdr(elf)) == NULL))
     failure();
 
   uint64_t elf_p_addr = 0;
@@ -89,7 +89,7 @@ void dump_segment (const char* segname, int fd)
 {
   unsigned int cnt;
   Elf * elf;
-  Elf64_Shdr * shdr;
+  Elf32_Shdr * shdr;
   Elf_Data * datapoint;
   int count, count2;
   Byte_t * buffer;
@@ -102,7 +102,7 @@ void dump_segment (const char* segname, int fd)
     failure();
   /* Traverse input filename, printing each section */
   for (cnt = 1, scn = NULL; (scn = elf_nextscn(elf, scn))!=NULL; cnt++) {
-    if ((shdr = elf64_getshdr(scn)) == NULL)
+    if ((shdr = elf32_getshdr(scn)) == NULL)
       failure();
     if (!strncmp ((char *)data->d_buf + shdr->sh_name,
 				   segname,strlen(segname)) &&
