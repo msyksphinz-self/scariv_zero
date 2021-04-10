@@ -36,12 +36,10 @@ VERILATOR_OPTS += +define+SIMULATION
 
 VERILATOR_OPTS_RV64 += ../cpp/tb_elf_loader.cpp
 VERILATOR_OPTS_RV64 += -CFLAGS "-DRV_XLEN=64"
+VERILATOR_OPTS_RV64 += +define+RV64
 
 VERILATOR_OPTS_RV32 += ../cpp/tb_elf32_loader.cpp
 VERILATOR_OPTS_RV32 += -CFLAGS "-DRV_XLEN=32"
-
-RV64_OPTS =
-RV64_OPTS += +define+RV64
 
 TOP      = msrh_tb
 
