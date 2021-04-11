@@ -122,6 +122,7 @@ msrh_ldq
 
  .i_ex3_done (w_ex3_done),
 
+ .i_commit (i_commit),
  .o_done_report(o_done_report[0])
  );
 

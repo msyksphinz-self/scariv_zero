@@ -58,6 +58,8 @@ logic                               r_l1d_rd_if_resp;
 // Forwarding Logic
 logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 
+logic                                w_flush_valid;
+assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
 
 function logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] merge(logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] dcache_in,
                                                          logic [riscv_pkg::XLEN_W-1: 0] st_data);
@@ -111,7 +113,7 @@ assign w_out_valid = o_done_report.valid;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(STQ_SIZE)) cnt_disp_valid(.in({{(STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                          .i_rollback(i_commit.commit & i_commit.flush_valid),
+                                          .i_rollback(w_flush_valid),
                                           .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                           .i_out_valid(w_out_valid), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
@@ -135,7 +137,7 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     logic [$clog2(LDQ_SIZE)-1: 0]  w_in_entry_ptr;
     assign w_in_entry_ptr = w_in_ptr + i_idx;
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_in_entry_ptr == s_idx);
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_in_entry_ptr == s_idx);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));

@@ -17,6 +17,9 @@ module msrh_ldq
 
    input lrq_resolve_t     i_lrq_resolve,
 
+   // Commit notification
+   input msrh_pkg::commit_blk_t i_commit,
+
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
    output                                msrh_pkg::done_rpt_t o_done_report
@@ -32,6 +35,9 @@ logic [LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
 logic [LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[LDQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[LDQ_SIZE] ;
+
+logic                                w_flush_valid;
+assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
 
 //
 // Done Selection
@@ -69,7 +75,7 @@ assign w_out_valid = o_done_report.valid;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(LDQ_SIZE)) cnt_disp_valid(.in({{(LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var #(.SIZE(LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                          .i_rollback(1'b0),
+                                          .i_rollback(w_flush_valid),
                                           .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                           .i_out_valid(w_out_valid), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
@@ -93,7 +99,7 @@ generate for (genvar l_idx = 0; l_idx < LDQ_SIZE; l_idx++) begin : ldq_loop
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     logic [$clog2(LDQ_SIZE)-1: 0]  w_entry_ptr;
     assign w_entry_ptr = w_in_ptr + i_idx;
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_entry_ptr == l_idx);
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr == l_idx);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
@@ -138,6 +144,8 @@ generate for (genvar l_idx = 0; l_idx < LDQ_SIZE; l_idx++) begin : ldq_loop
      .i_rerun_accept (|w_rerun_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
 
      .i_lrq_resolve (i_lrq_resolve),
+
+     .i_commit (i_commit),
 
      .i_ex3_done (i_ex3_done),
      .i_ldq_done (w_ldq_done_oh[l_idx])
