@@ -20,6 +20,7 @@ module msrh_lsu_top
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_conf_pkg::LSU_INST_NUM],
 
     output msrh_pkg::done_rpt_t o_done_report[2],  // LDQ done report, STQ done report
+    output msrh_pkg::mispred_t  o_ex3_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit
@@ -67,6 +68,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .i_early_wr(i_early_wr),
     .i_phy_wr  (i_phy_wr),
+    .i_mispred_lsu (o_ex3_mispred),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
 
@@ -85,6 +87,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .i_commit (i_commit),
 
+    .o_ex3_mispred (o_ex3_mispred[lsu_idx]),
     .o_ex3_done (w_ex3_done [lsu_idx])
    );
 

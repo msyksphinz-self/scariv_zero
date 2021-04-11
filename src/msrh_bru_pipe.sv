@@ -44,6 +44,9 @@ logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_fwd_data;
 logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
 logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
 
+logic                                    w_ex2_rs1_pred_hit;
+logic                                    w_ex2_rs2_pred_hit;
+
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex2_issue;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
@@ -56,6 +59,8 @@ pipe_ctrl_t                              r_ex3_pipe_ctrl;
 logic                                    r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
 logic [riscv_pkg::VADDR_W-1: 0]          r_ex3_br_vaddr;
+logic                                    r_ex3_rs1_pred_hit;
+logic                                    r_ex3_rs2_pred_hit;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -145,6 +150,9 @@ end
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
 
+assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_pred_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
+assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
+
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -153,11 +161,17 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue    <= 'h0;
     r_ex3_br_vaddr <= 'h0;
     r_ex3_pipe_ctrl <= 'h0;
+
+    r_ex3_rs1_pred_hit <= 1'b0;
+    r_ex3_rs2_pred_hit <= 1'b0;
   end else begin
     r_ex3_issue    <= r_ex2_issue;
     r_ex3_index    <= r_ex2_index;
     r_ex3_br_vaddr <= w_ex2_br_vaddr;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
+
+    r_ex3_rs1_pred_hit <= w_ex2_rs1_pred_hit;
+    r_ex3_rs2_pred_hit <= w_ex2_rs2_pred_hit;
 
     case (r_ex2_pipe_ctrl.op)
       OP_EQ : r_ex3_result <= w_ex2_rs1_selected_data == w_ex2_rs2_selected_data;
@@ -172,13 +186,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_pipe_ctrl.wr_rd;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_pipe_ctrl.wr_rd & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 /* verilator lint_off WIDTH */
 assign o_ex3_phy_wr.rd_data = r_ex3_issue.pc_addr + 'h4;
 
-assign ex3_done_if.done     = r_ex3_issue.valid;
+assign ex3_done_if.done     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_done_if.index_oh = r_ex3_index;
 assign ex3_done_if.except_valid  = 1'b0;
 assign ex3_done_if.except_type = msrh_pkg::except_t'('h0);
@@ -209,7 +223,7 @@ always_comb begin
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 
-assign ex3_br_upd_if.update = r_ex3_issue.valid & r_ex3_result;
+assign ex3_br_upd_if.update = r_ex3_issue.valid & r_ex3_result & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_br_upd_if.vaddr  = r_ex3_br_vaddr;
 assign ex3_br_upd_if.cmt_id = r_ex3_issue.cmt_id;
 assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;

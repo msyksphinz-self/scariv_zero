@@ -45,6 +45,7 @@ assign o_entry = r_entry;
 logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
 msrh_pkg::reg_t w_rs2_type;
 logic     w_rs2_entry_hit;
+logic     w_rs2_may_mispred;
 logic     w_entry_rs2_ready_next;
 
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
@@ -56,7 +57,8 @@ select_early_wr_bus rs2_rel_select
  .i_entry_type (w_rs2_type),
  .i_early_wr   (i_early_wr),
 
- .o_valid      (w_rs2_entry_hit)
+ .o_valid      (w_rs2_entry_hit),
+ .o_may_mispred(w_rs2_may_mispred)
  );
 
 assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |

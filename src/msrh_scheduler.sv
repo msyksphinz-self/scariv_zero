@@ -22,6 +22,7 @@ module msrh_scheduler
 
  input logic                           i_ex0_rs_conflicted,
  input logic [ENTRY_SIZE-1: 0]         i_ex0_rs_conf_index_oh,
+ input msrh_pkg::mispred_t             i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
  done_if.slave                         pipe_done_if,
 
@@ -132,6 +133,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_early_wr(i_early_wr),
     .i_phy_wr(i_phy_wr),
+    .i_mispred_lsu(i_mispred_lsu),
 
     .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
     .pipe_done_if (pipe_done_if),

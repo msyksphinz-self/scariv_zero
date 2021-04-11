@@ -21,6 +21,7 @@ module msrh_lsu
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
     input msrh_pkg::phy_wr_t   i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
+    input msrh_pkg::mispred_t  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
     // STQ Forwarding checker
     fwd_check_if.master           ex2_fwd_check_if,
@@ -43,6 +44,7 @@ module msrh_lsu
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit,
 
+    output msrh_pkg::mispred_t   o_ex3_mispred,
     output logic  o_ex3_done
    );
 
@@ -98,6 +100,7 @@ msrh_scheduler #(
 
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
+   .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue       (w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
@@ -155,7 +158,7 @@ u_lsu_pipe
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
    .ex1_l1d_rd_if (l1d_rd_if),
-   .o_ex2_l1d_mispredicted (),
+   .o_ex3_mispred (o_ex3_mispred),
 
    .l1d_lrq_if (l1d_lrq_if),
 

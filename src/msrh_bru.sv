@@ -12,6 +12,7 @@ module msrh_bru
   /* Forwarding path */
   input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
   input msrh_pkg::phy_wr_t   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+  input msrh_pkg::mispred_t  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
   /* write output */
   output msrh_pkg::early_wr_t o_ex1_early_wr,
@@ -70,6 +71,7 @@ u_msrh_scheduler
 
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
+   .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),

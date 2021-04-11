@@ -20,6 +20,7 @@ module msrh_sched_entry
    /* Forwarding path */
    input msrh_pkg::early_wr_t             i_early_wr[msrh_pkg::REL_BUS_SIZE],
    input msrh_pkg::phy_wr_t               i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
+   input msrh_pkg::mispred_t              i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
    input logic                            i_entry_picked,
 
@@ -34,7 +35,7 @@ module msrh_sched_entry
    output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
    output logic                                o_except_valid,
-   output msrh_pkg::except_t                    o_except_type
+   output msrh_pkg::except_t                   o_except_type
    );
 
 logic    r_issued;
@@ -50,18 +51,25 @@ msrh_pkg::reg_t w_rs2_type;
 logic     w_rs1_rel_hit;
 logic     w_rs2_rel_hit;
 
+logic     w_rs1_may_mispred;
+logic     w_rs2_may_mispred;
+
 logic     w_rs1_phy_hit;
 logic     w_rs2_phy_hit;
+
+logic     w_rs1_mispredicted;
+logic     w_rs2_mispredicted;
+
 
 msrh_pkg::sched_state_t r_state;
 
 function logic all_operand_ready(msrh_pkg::issue_t entry);
   logic     ret;
   if (IS_STORE) begin
-    ret = (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready);
+    ret = (!entry.rs1_valid | entry.rs1_valid  & (entry.rs1_ready | entry.rs1_pred_ready));
   end else begin
-    ret = (!entry.rs1_valid | entry.rs1_valid  & entry.rs1_ready) &
-          (!entry.rs2_valid | entry.rs2_valid  & entry.rs2_ready);
+    ret = (!entry.rs1_valid | entry.rs1_valid  & (entry.rs1_ready | entry.rs1_pred_ready)) &
+          (!entry.rs2_valid | entry.rs2_valid  & (entry.rs2_ready | entry.rs2_pred_ready));
   end
   return ret;
 endfunction // all_operand_ready
@@ -78,7 +86,8 @@ select_early_wr_bus rs1_rel_select
  .i_entry_type (w_rs1_type),
  .i_early_wr   (i_early_wr),
 
- .o_valid      (w_rs1_rel_hit)
+ .o_valid      (w_rs1_rel_hit),
+ .o_may_mispred(w_rs1_may_mispred)
  );
 
 
@@ -88,7 +97,8 @@ select_early_wr_bus rs2_rel_select
  .i_entry_type (w_rs2_type),
  .i_early_wr   (i_early_wr),
 
- .o_valid      (w_rs2_rel_hit)
+ .o_valid      (w_rs2_rel_hit),
+ .o_may_mispred(w_rs2_may_mispred)
  );
 
 select_phy_wr_bus rs1_phy_select
@@ -111,10 +121,33 @@ select_phy_wr_bus rs2_phy_select
  );
 
 
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs1_mispredicted)
+ );
+
+
+select_mispred_bus rs2_mispred_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs2_mispredicted)
+ );
+
+
 always_comb begin
   w_entry = r_entry;
-  w_entry.rs1_ready = r_entry.rs1_ready | w_rs1_rel_hit | w_rs1_phy_hit;
-  w_entry.rs2_ready = r_entry.rs2_ready | w_rs2_rel_hit | w_rs2_phy_hit;
+  w_entry.rs1_ready = r_entry.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry.rs2_ready = r_entry.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+
+  w_entry.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
 end
 
 
@@ -164,6 +197,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           if (i_ex0_rs_conflicted) begin
             r_state <= msrh_pkg::WAIT;
             r_issued <= 1'b0;
+          end
+          if (r_entry.rs1_pred_ready & w_rs1_mispredicted ||
+              r_entry.rs2_pred_ready & w_rs2_mispredicted) begin
+            r_state <= msrh_pkg::WAIT;
+            r_issued <= 1'b0;
+            r_entry.rs1_pred_ready <= 1'b0;
+            r_entry.rs2_pred_ready <= 1'b0;
           end
         end
         msrh_pkg::DONE : begin

@@ -169,12 +169,14 @@ typedef enum logic [ 5: 0] {
     logic [4:0] rs1_regidx;
     logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
+    logic rs1_pred_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
     logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
+    logic rs2_pred_ready;
 
     logic             except_valid;
     msrh_pkg::except_t except_type;
@@ -224,6 +226,8 @@ endfunction  // assign_issue_t
     logic valid;
     logic [msrh_pkg::RNID_W-1:0] rd_rnid;
     reg_t rd_type;
+
+    logic                        may_mispred;
   } early_wr_t;
 
   typedef struct packed {
@@ -232,6 +236,13 @@ endfunction  // assign_issue_t
     reg_t rd_type;
     logic [riscv_pkg::XLEN_W-1:0] rd_data;
   } phy_wr_t;
+
+  typedef struct packed {
+    logic               mis_valid;     // Mispredict
+    reg_t               rd_type;
+    logic [RNID_W-1: 0] rd_rnid;
+  } mispred_t;
+
 
   typedef struct packed {
     logic                 valid;
