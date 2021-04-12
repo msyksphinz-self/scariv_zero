@@ -72,6 +72,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end else if (i_ex1_q_valid) begin
             r_entry.state           <= i_ex1_q_updates.hazard_valid ? LDQ_TLB_HAZ : LDQ_EX2_RUN;
             r_entry.vaddr           <= i_ex1_q_updates.vaddr;
+            r_entry.paddr           <= i_ex1_q_updates.paddr;
             r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
             r_entry.inst            <= i_ex1_q_updates.inst;
 
@@ -92,7 +93,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                              w_lrq_resolve_match ? LDQ_READY :
                              w_lrq_is_hazard ? LDQ_LRQ_HAZ :
                              w_lrq_is_assigned ? LDQ_READY : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                             LDQ_EX3_DONE;
+                             LDQ_CHECK_ST_DEPEND;  // LDQ_EX3_DONE;
             r_entry.lrq_haz_index_oh <= i_ex2_q_updates.lrq_index_oh;
 `ifdef SIMULATION
             if (!i_reset_n) begin
@@ -123,7 +124,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         LDQ_EX3_DONE : begin
           if (i_ldq_done) begin
             r_entry.is_valid <= 1'b0;
+            // r_entry.state <= LDQ_INIT;
+            r_entry.state <= LDQ_WAIT_ST_DEPEND;
+          end
+        end
+        LDQ_CHECK_ST_DEPEND: begin
+          if (stq_addr_check.valid &
+              (stq_addr_check.paddr[PADDR_W-1:3] == r_entry.paddr[PADDR_W-1:3])) begin
             r_entry.state <= LDQ_INIT;
+          end
+          if (i_commit.cmt_id == r_entry.cmt_id &&
+              (i_commit.grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) begin
+            r_entry.state <= LDQ_EX3_DONE;
           end
         end
         default : begin
