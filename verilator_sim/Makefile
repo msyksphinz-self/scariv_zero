@@ -96,6 +96,42 @@ rv64_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 rv64_giant: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_giant --Mdir obj_dir_rv64_giant $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
+regression: rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
+	rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test
+
+rv32_small_test:
+	$(MAKE) rv32_small
+	../scripts/runtest.rb msrh_tb_rv32_small 2>&1 | tee rv32_small.log
+
+rv32_standard_test:
+	$(MAKE) rv32_standard
+	../scripts/runtest.rb msrh_tb_rv32_standard 2>&1 | tee rv32_standard.log
+
+rv32_big_test:
+	$(MAKE) rv32_big
+	../scripts/runtest.rb msrh_tb_rv32_big 2>&1 | tee rv32_big.log
+
+rv32_giant_test:
+	$(MAKE) rv32_giant
+	../scripts/runtest.rb msrh_tb_rv32_giant 2>&1 | tee rv32_giant.log
+
+rv64_small_test:
+	$(MAKE) rv64_small
+	../scripts/runtest.rb msrh_tb_rv64_small 2>&1 | tee rv64_small.log
+
+rv64_standard_test:
+	$(MAKE) rv64_standard
+	../scripts/runtest.rb msrh_tb_rv64_standard 2>&1 | tee rv64_standard.log
+
+rv64_big_test:
+	$(MAKE) rv64_big
+	../scripts/runtest.rb msrh_tb_rv64_big 2>&1 | tee rv64_big.log
+
+rv64_giant_test:
+	$(MAKE) rv64_giant
+	../scripts/runtest.rb msrh_tb_rv64_giant 2>&1 | tee rv64_giant.log
+
+
 libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
 	ln -s ../spike_dpi/$@ .
