@@ -13,4 +13,14 @@ package msrh_conf_pkg;
   localparam BRU_DISP_SIZE   = 1;
   localparam CSU_DISP_SIZE   = 1;
 
+  localparam RV_ALU_ENTRY_SIZE = 16;
+
+  localparam LDQ_SIZE = 8;
+  localparam STQ_SIZE = 8;
+
+  localparam RV_CSU_ENTRY_SIZE = 4;
+
+  localparam RV_BRU_ENTRY_SIZE = 8;
+
+
 endpackage // msrh_conf_pkg

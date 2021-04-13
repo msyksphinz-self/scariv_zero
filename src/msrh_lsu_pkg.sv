@@ -18,10 +18,9 @@ package msrh_lsu_pkg;
   localparam DCACHE_WAY_W = 4;
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
-  localparam LDQ_SIZE = 16;
-  localparam STQ_SIZE = 16;
-  localparam MEM_Q_SIZE = LDQ_SIZE > STQ_SIZE ? LDQ_SIZE : STQ_SIZE;
-
+  localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
+                          msrh_conf_pkg::LDQ_SIZE :
+                          msrh_conf_pkg::STQ_SIZE;
 
   typedef enum logic [ 1: 0] {
     LEN1B,

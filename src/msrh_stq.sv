@@ -48,10 +48,10 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_
 
 stq_entry_t w_stq_entries[MEM_Q_SIZE];
 
-logic [LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
-logic [LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[STQ_SIZE] ;
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[STQ_SIZE] ;
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::STQ_SIZE] ;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[msrh_conf_pkg::STQ_SIZE] ;
 
 logic                               r_l1d_rd_if_resp;
 
@@ -71,13 +71,13 @@ endfunction // merge
 // Done Selection
 //
 stq_entry_t w_stq_done_entry;
-logic [STQ_SIZE-1:0]  w_stq_done_oh;
+logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
 
-logic [STQ_SIZE-1:0]  w_sq_commit_req;
-logic [STQ_SIZE-1:0]  w_sq_commit_req_oh;
+logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req;
+logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req_oh;
 stq_entry_t w_stq_cmt_entry;
 stq_entry_t r_st1_committed_entry;
-logic [$clog2(STQ_SIZE)-1: 0] r_cmt_head_idx;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0] r_cmt_head_idx;
 
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]   w_st1_rs2_data_tmp;
 logic [DCACHE_DATA_B_W-1: 0]                w_st1_rs2_byte_en_tmp;
@@ -101,27 +101,27 @@ u_msrh_disp_pickup
 //
 // STQ Pointer
 //
-logic [$clog2(STQ_SIZE)-1:0] w_in_ptr;
-logic [$clog2(STQ_SIZE)-1:0] w_out_ptr;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_in_ptr;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_out_ptr;
 logic                                      w_in_valid;
 logic                                      w_out_valid;
-logic [$clog2(STQ_SIZE):0]   w_disp_picked_num;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_valid  = |disp_picked_inst_valid;
 assign w_out_valid = o_done_report.valid;
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(STQ_SIZE)) cnt_disp_valid(.in({{(STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
-inoutptr_var #(.SIZE(STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
+inoutptr_var #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                           .i_rollback(w_flush_valid),
-                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
+                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (w_disp_picked_num[$clog2(STQ_SIZE)]) begin
+    if (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)]) begin
       $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
     end
   end
@@ -135,7 +135,7 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    logic [$clog2(LDQ_SIZE)-1: 0]  w_in_entry_ptr;
+    logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]  w_in_entry_ptr;
     assign w_in_entry_ptr = w_in_ptr + i_idx;
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_in_entry_ptr == s_idx);
   end
@@ -153,7 +153,7 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
   ex2_q_update_t w_ex2_q_updates;
   logic w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .q_index(s_idx[$clog2(STQ_SIZE)-1:0]),
+                                         .q_index(s_idx[$clog2(msrh_conf_pkg::STQ_SIZE)-1:0]),
                                          .i_ex2_recv(r_ex2_stq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
@@ -219,13 +219,13 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
   stq_entry_t w_stq_replay_entry;
 
-  bit_extract_lsb #(.WIDTH(STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
+  bit_extract_lsb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
 
   assign stq_replay_if[p_idx].issue    = w_stq_replay_entry.inst;
   assign stq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
 
-  for (genvar s_idx = 0; s_idx < STQ_SIZE; s_idx++) begin : stq_loop
+  for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
     assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
 
     assign w_stq_replay_conflict[s_idx][p_idx] = stq_replay_if[p_idx].conflict & w_rerun_request[p_idx][s_idx];
@@ -238,11 +238,11 @@ endgenerate
 // STQ Forwarding Logic
 // =========================
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-  logic [STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
   stq_entry_t w_stq_fwd_entry;
 
-  bit_extract_msb #(.WIDTH(STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .out(w_ex2_fwd_valid_oh));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+  bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .out(w_ex2_fwd_valid_oh));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
 
   assign ex2_fwd_check_if[p_idx].fwd_valid  = |w_ex2_fwd_valid[p_idx];
   assign ex2_fwd_check_if[p_idx].fwd_data = w_stq_fwd_entry.rs2_data;
@@ -252,17 +252,17 @@ endgenerate
 // ===============
 // Done Logic
 // ===============
-generate for (genvar s_idx = 0; s_idx < STQ_SIZE; s_idx++) begin : done_loop
+generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : done_loop
   assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == STQ_DONE && (w_out_ptr == s_idx);
 end
 endgenerate
-bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
+bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
 // ==============================
 // After commit, store operation
 // ==============================
-bit_extract_lsb #(.WIDTH(STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .out(w_sq_commit_req_oh));
-bit_oh_or #(.T(stq_entry_t), .WORDS(STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .out(w_sq_commit_req_oh));
+bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
