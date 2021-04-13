@@ -166,6 +166,14 @@ typedef struct packed {
   logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
 
+typedef struct packed {
+  logic                                valid;
+  logic [msrh_pkg::CMT_BLK_W-1:0]      cmt_id;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+  logic [riscv_pkg::PADDR_W-1: 3]      paddr;
+  logic [ 7: 0]                        dw;
+} ex2_addr_check_t;
+
 // L1D interface
 typedef struct packed {
   logic          valid;
@@ -248,13 +256,15 @@ typedef enum logic[2:0] {
   LDQ_STQ_HAZ = 3,
   LDQ_TLB_HAZ = 4,
   LDQ_READY = 5,
-  LDQ_EX3_DONE = 6
+  LDQ_CHECK_ST_DEPEND = 6,
+  LDQ_EX3_DONE = 7
 } ldq_state_t;
 
 typedef struct packed {
   logic          is_valid;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t               inst;
+  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   ldq_state_t                     state;

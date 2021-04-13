@@ -143,8 +143,8 @@ select_mispred_bus rs2_mispred_select
 
 always_comb begin
   w_entry = r_entry;
-  w_entry.rs1_ready = r_entry.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry.rs2_ready = r_entry.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_entry.rs1_ready = r_entry.rs1_ready | r_entry.rs1_pred_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry.rs2_ready = r_entry.rs2_ready | r_entry.rs2_pred_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
 
   w_entry.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
   w_entry.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
@@ -153,7 +153,8 @@ end
 
 assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
                                                w_rs1_rel_hit, w_rs2_rel_hit,
-                                               w_rs1_phy_hit, w_rs2_phy_hit);
+                                               w_rs1_phy_hit, w_rs2_phy_hit,
+                                               w_rs1_may_mispred, w_rs2_may_mispred);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

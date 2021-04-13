@@ -12,6 +12,7 @@ module msrh_ldq
    // Updates from LSU Pipeline EX2 stage
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input ex2_q_update_t        i_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM],
+   input ex2_addr_check_t      i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],
 
    lsu_replay_if.master ldq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
@@ -137,6 +138,7 @@ generate for (genvar l_idx = 0; l_idx < LDQ_SIZE; l_idx++) begin : ldq_loop
 
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
+     .i_ex2_addr_check(i_ex2_addr_check),
 
      .o_entry (w_ldq_entries[l_idx]),
      .o_ex2_ldq_entries_recv(w_ex2_ldq_entries_recv),
@@ -205,13 +207,14 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
-    $fwrite(fp, "state:\"%s\", ", entry.state == LDQ_INIT     ? "LDQ_INIT" :
-                                           entry.state == LDQ_EX2_RUN  ? "LDQ_EX2_RUN" :
-                                           entry.state == LDQ_LRQ_HAZ  ? "LDQ_LRQ_HAZ" :
-                                           entry.state == LDQ_STQ_HAZ  ? "LDQ_STQ_HAZ" :
-                                           entry.state == LDQ_TLB_HAZ  ? "LDQ_TLB_HAZ" :
-                                           entry.state == LDQ_READY    ? "LDQ_READY" :
-                                           entry.state == LDQ_EX3_DONE ? "LDQ_EX3_DONE" : "x");
+    $fwrite(fp, "state:\"%s\", ", entry.state == LDQ_INIT            ? "LDQ_INIT" :
+                                  entry.state == LDQ_EX2_RUN         ? "LDQ_EX2_RUN" :
+                                  entry.state == LDQ_LRQ_HAZ         ? "LDQ_LRQ_HAZ" :
+                                  entry.state == LDQ_STQ_HAZ         ? "LDQ_STQ_HAZ" :
+                                  entry.state == LDQ_TLB_HAZ         ? "LDQ_TLB_HAZ" :
+                                  entry.state == LDQ_READY           ? "LDQ_READY" :
+                                  entry.state == LDQ_CHECK_ST_DEPEND ? "LDQ_CHECK_ST_DEPEND" :
+                                  entry.state == LDQ_EX3_DONE        ? "LDQ_EX3_DONE" : "x");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 

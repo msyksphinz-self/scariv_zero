@@ -11,18 +11,19 @@ module msrh_ldq_entry
 
  // Updates from LSU Pipeline EX1 stage
  input logic                               i_ex1_q_valid,
- input                                     msrh_lsu_pkg::ex1_q_update_t i_ex1_q_updates,
+ input                                     ex1_q_update_t i_ex1_q_updates,
  // Updates from LSU Pipeline EX2 stage
  input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
  input logic                               i_ex2_q_valid,
- input msrh_lsu_pkg::ex2_q_update_t        i_ex2_q_updates,
+ input ex2_q_update_t                      i_ex2_q_updates,
+ input ex2_addr_check_t                    i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],
 
- output                                    msrh_lsu_pkg::ldq_entry_t o_entry,
+ output                                    ldq_entry_t o_entry,
  output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_ex2_ldq_entries_recv,
 
  input logic                               i_rerun_accept,
 
- input                                     msrh_lsu_pkg::lrq_resolve_t i_lrq_resolve,
+ input                                     lrq_resolve_t i_lrq_resolve,
 
  // Commit notification
  input msrh_pkg::commit_blk_t                   i_commit,
@@ -31,23 +32,36 @@ module msrh_ldq_entry
  input logic                               i_ldq_done
  );
 
-msrh_lsu_pkg::ldq_entry_t r_entry;
+ldq_entry_t r_entry;
 
 logic                                          w_lrq_is_hazard;
 logic                                          w_lrq_is_assigned;
 logic                                          w_lrq_resolve_match;
 
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            r_ex2_ldq_entries_recv;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]       r_ex2_ldq_entries_recv;
+
+logic                                          w_addr_conflict;
 
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT ||
-                         i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_FULL;
-assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_ASSIGNED;
-assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::LRQ_CONFLICT &
+assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT ||
+                         i_ex2_q_updates.hazard_typ == LRQ_FULL;
+assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == LRQ_ASSIGNED;
+assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT &
                              i_lrq_resolve.valid &
                              (i_lrq_resolve.resolve_index_oh == i_ex2_q_updates.lrq_index_oh);
+
+msrh_addr_check
+u_addr_check
+  (
+   .i_entry_cmt_id   (r_entry.cmt_id  ),
+   .i_entry_grp_id   (r_entry.grp_id  ),
+   .i_entry_paddr    (r_entry.paddr   ),
+   .i_entry_size     (r_entry.size    ),
+   .i_ex2_addr_check (i_ex2_addr_check),
+   .o_addr_conflict  (w_addr_conflict )
+   );
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -75,6 +89,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_entry.paddr           <= i_ex1_q_updates.paddr;
             r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
             r_entry.inst            <= i_ex1_q_updates.inst;
+            r_entry.size            <= i_ex1_q_updates.size;
 
             for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
               r_ex2_ldq_entries_recv[p_idx] <=  i_ex1_q_valid &
@@ -89,7 +104,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
         LDQ_EX2_RUN : begin
           if (i_ex2_q_valid) begin
-            r_entry.state <= i_ex2_q_updates.hazard_typ == msrh_lsu_pkg::L1D_CONFLICT ? LDQ_READY :
+            r_entry.state <= i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_READY :
                              w_lrq_resolve_match ? LDQ_READY :
                              w_lrq_is_hazard ? LDQ_LRQ_HAZ :
                              w_lrq_is_assigned ? LDQ_READY : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
@@ -124,17 +139,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         LDQ_EX3_DONE : begin
           if (i_ldq_done) begin
             r_entry.is_valid <= 1'b0;
-            // r_entry.state <= LDQ_INIT;
-            r_entry.state <= LDQ_WAIT_ST_DEPEND;
+            r_entry.state <= LDQ_INIT;
           end
         end
         LDQ_CHECK_ST_DEPEND: begin
-          if (stq_addr_check.valid &
-              (stq_addr_check.paddr[PADDR_W-1:3] == r_entry.paddr[PADDR_W-1:3])) begin
-            r_entry.state <= LDQ_INIT;
+          // Younger Store Instruction, address conflict
+          if (w_addr_conflict) begin
+            r_entry.state <= LDQ_READY;
           end
+          // When entry become oldest uncommitted
           if (i_commit.cmt_id == r_entry.cmt_id &&
-              (i_commit.grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) begin
+              (i_commit.grp_id & (r_entry.grp_id-1)) == r_entry.grp_id-1) begin
             r_entry.state <= LDQ_EX3_DONE;
           end
         end
@@ -148,10 +163,10 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 
-function msrh_lsu_pkg::ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
-                                                    logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
-                                                    logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
-  msrh_lsu_pkg::ldq_entry_t ret;
+function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
+                                      logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
+                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
+  ldq_entry_t ret;
 
   ret.is_valid  = 1'b1;
   ret.cmt_id    = cmt_id;

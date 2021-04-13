@@ -1,5 +1,6 @@
 module msrh_lsu_top
-  (
+  import msrh_lsu_pkg::*;
+(
     input logic i_clk,
     input logic i_reset_n,
 
@@ -33,12 +34,13 @@ l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
 lrq_search_if w_lrq_search_if ();
-msrh_lsu_pkg::lrq_resolve_t w_lrq_resolve;
+lrq_resolve_t w_lrq_resolve;
 
 // Feedbacks to LDQ / STQ
-msrh_lsu_pkg::ex1_q_update_t        w_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM];
+ex1_q_update_t        w_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
-msrh_lsu_pkg::ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
+ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
+ex2_addr_check_t      w_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM];
 
 lsu_replay_if w_ldq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
@@ -78,9 +80,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .ldq_replay_if (w_ldq_replay[lsu_idx]),
     .stq_replay_if (w_stq_replay[lsu_idx]),
 
-    .o_ex1_q_updates (w_ex1_q_updates[lsu_idx]),
-    .o_tlb_resolve   (w_tlb_resolve  [lsu_idx]),
-    .o_ex2_q_updates (w_ex2_q_updates[lsu_idx]),
+    .o_ex1_q_updates (w_ex1_q_updates [lsu_idx]),
+    .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
+    .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
+    .o_ex2_addr_check(w_ex2_addr_check[lsu_idx]),
 
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
@@ -112,9 +115,10 @@ msrh_ldq
  .i_disp_valid (w_ldq_disp_valid),
  .disp         (disp      ),
 
- .i_tlb_resolve  (w_tlb_resolve  ),
- .i_ex1_q_updates(w_ex1_q_updates),
- .i_ex2_q_updates(w_ex2_q_updates),
+ .i_tlb_resolve   (w_tlb_resolve   ),
+ .i_ex1_q_updates (w_ex1_q_updates ),
+ .i_ex2_q_updates (w_ex2_q_updates ),
+ .i_ex2_addr_check(w_ex2_addr_check),
 
  .i_lrq_resolve (w_lrq_resolve),
 

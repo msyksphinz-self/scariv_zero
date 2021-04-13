@@ -163,8 +163,8 @@ function void dump_entry_json(int fp, rob_entry_t entry, int index);
     $fwrite(fp, "valid:%d, ", entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
 
-    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
-    $fwrite(fp, "done_grp_id:%d, ", entry.done_grp_id);
+    $fwrite(fp, "grp_id:\"0x%02x\", ", entry.grp_id);
+    $fwrite(fp, "done_grp_id:\"0x%02x\", ", entry.done_grp_id);
 
     $fwrite(fp, "except_valid:%d", entry.except_valid);
 
