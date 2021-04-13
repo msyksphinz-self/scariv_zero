@@ -38,9 +38,9 @@ logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
 
 msrh_pkg::issue_t w_rv0_issue;
-logic [msrh_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
+logic [msrh_conf_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if();
 
 msrh_disp_pickup
   #(
@@ -59,7 +59,7 @@ u_msrh_disp_pickup
 
 msrh_scheduler
   #(
-    .ENTRY_SIZE  (msrh_pkg::RV_ALU_ENTRY_SIZE),
+    .ENTRY_SIZE  (msrh_conf_pkg::RV_ALU_ENTRY_SIZE),
     .IN_PORT_SIZE(ALU_PORT_SIZE)
     )
 u_msrh_scheduler
@@ -90,7 +90,7 @@ u_msrh_scheduler
 
 msrh_alu_pipe
   #(
-    .RV_ENTRY_SIZE(msrh_pkg::RV_ALU_ENTRY_SIZE)
+    .RV_ENTRY_SIZE(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)
     )
 u_alu
   (

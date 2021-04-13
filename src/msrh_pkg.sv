@@ -10,10 +10,6 @@ package msrh_pkg;
 
   localparam INST_BUF_SIZE = 4;
 
-  localparam RV_ALU_ENTRY_SIZE = 32;
-  localparam RV_BRU_ENTRY_SIZE = 16;
-  localparam RV_CSU_ENTRY_SIZE = 8;
-
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
                             1 +              // BRU
