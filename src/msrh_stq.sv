@@ -206,8 +206,10 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
     // Forwarding check
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                           w_stq_entries[s_idx].rs2_got_data &
-                                           (w_stq_entries[s_idx].paddr == ex2_fwd_check_if[p_idx].paddr);
+                                             w_stq_entries[s_idx].rs2_got_data &
+                                             (w_stq_entries[s_idx].paddr[riscv_pkg::PADDR_W-1:3] == ex2_fwd_check_if[p_idx].paddr) &
+                                             is_dw_included(w_stq_entries[s_idx].paddr[2:0], w_stq_entries[s_idx].size,
+                                                            ex2_fwd_check_if[p_idx].paddr_dw);
     end
   end // block: stq_loop
 endgenerate

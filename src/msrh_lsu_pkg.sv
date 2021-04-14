@@ -193,6 +193,31 @@ typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
 } dc_read_resp_t;
 
+function logic [ 7: 0] gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [2:0] addr);
+  case(size)
+    decoder_lsu_ctrl_pkg::SIZE_DW : return 8'b1111_1111;
+    decoder_lsu_ctrl_pkg::SIZE_W : begin
+      if (addr[1:0] != 2'b00) $fatal(0, "gen_dw with SIZE_W, addr[1:0] should be zero");
+      return 8'b0000_1111 << addr;
+    end
+    decoder_lsu_ctrl_pkg::SIZE_H  : begin
+      if (addr[0] != 1'b0) $fatal(0, "gen_dw with SIZE_H, addr[0] should be zero");
+      return 8'b0000_0011 << addr;
+    end
+    decoder_lsu_ctrl_pkg::SIZE_B  : return 8'b0000_0001 << addr;
+    default : return 'h0;
+  endcase // case (size)
+endfunction // gen_dw
+
+
+// addr1/size1 includes addr2_dw ?
+function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [2:0] addr1,
+                              logic [7:0] addr2_dw);
+  logic [ 7: 0] addr1_dw;
+  addr1_dw = gen_dw(size1, addr1);
+
+  return (addr1_dw & addr2_dw) == addr2_dw;
+endfunction // is_dw_included
 
 // ---------
 // STQ
