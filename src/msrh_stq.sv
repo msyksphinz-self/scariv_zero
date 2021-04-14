@@ -238,7 +238,7 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
       assign w_ex2_stq_hazard[p_idx][s_idx] = ex2_fwd_check_if[p_idx].valid &
                                               w_entry_older_than_fwd &
                                               w_stq_entries[s_idx].is_valid &
-                                              (w_same_addr_region & w_same_dw & ~w_stq_entries[s_idx].rs2_got_data |  // Same region and rs2 not decided
+                                              (w_same_addr_region & ~w_stq_entries[s_idx].rs2_got_data |  // Same region and rs2 not decided
                                                ~w_stq_entries[s_idx].paddr_valid);                        // physical addr not decided
     end // block: fwd_loop
 
