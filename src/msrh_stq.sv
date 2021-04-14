@@ -60,6 +60,7 @@ logic                               r_l1d_rd_if_resp;
 // Forwarding Logic
 logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 logic [MEM_Q_SIZE-1: 0]             w_ex2_stq_hazard[msrh_conf_pkg::LSU_INST_NUM];
+logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
 
 logic [MEM_Q_SIZE-1: 0]             w_resolve_paddr_haz;
 logic [MEM_Q_SIZE-1: 0]             w_resolve_st_data_haz;
@@ -214,6 +215,8 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
       logic  w_entry_older_than_fwd;
       logic  w_same_addr_region;
       logic  w_same_dw;
+      logic [ 7: 0] w_entry_dw;
+      assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0]);
       assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0],
                                         ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_same_addr_region = w_stq_entries[s_idx].paddr[riscv_pkg::PADDR_W-1:3] == ex2_fwd_check_if[p_idx].paddr;
@@ -222,7 +225,8 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
                                              w_stq_entries[s_idx].paddr_valid &
                                              w_stq_entries[s_idx].rs2_got_data &
                                              w_same_addr_region &
-                                             w_same_dw;
+                                             |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
+      assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
 
       msrh_rough_older_check
       u_rough_older_check
@@ -279,12 +283,15 @@ endgenerate
 // =========================
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
   logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
-  stq_entry_t w_stq_fwd_entry;
+  stq_entry_t                          w_stq_fwd_entry;
+  logic [ 7: 0]                        w_ex2_fwd_dw_selected;
 
   bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .out(w_ex2_fwd_valid_oh));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+  bit_oh_or #(.T(logic[7:0]),  .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_dw     (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_ex2_fwd_dw[p_idx]), .o_selected(w_ex2_fwd_dw_selected));
 
   assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
+  assign ex2_fwd_check_if[p_idx].fwd_dw         =  w_ex2_fwd_dw_selected;
   assign ex2_fwd_check_if[p_idx].fwd_data       =  w_stq_fwd_entry.rs2_data;
   assign ex2_fwd_check_if[p_idx].stq_hazard_vld = |w_ex2_stq_hazard[p_idx];
   assign ex2_fwd_check_if[p_idx].stq_hazard_idx =  w_ex2_stq_hazard[p_idx];

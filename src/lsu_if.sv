@@ -51,6 +51,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 logic [riscv_pkg::PADDR_W-1: 3] paddr;
 logic [ 7: 0]                   paddr_dw;
 logic                           fwd_valid;
+logic [ 7: 0]                   fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]  fwd_data;
 logic                           stq_hazard_vld;
 logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] stq_hazard_idx;
@@ -62,6 +63,7 @@ modport master (
   output paddr,
   output paddr_dw,
   input  fwd_valid,
+  input  fwd_dw,
   input  fwd_data,
   input  stq_hazard_vld,
   input  stq_hazard_idx
@@ -74,6 +76,7 @@ modport slave (
   input  paddr,
   input  paddr_dw,
   output fwd_valid,
+  output fwd_dw,
   output fwd_data,
   output stq_hazard_vld,
   output stq_hazard_idx
