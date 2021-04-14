@@ -17,6 +17,8 @@ module msrh_ldq
    lsu_replay_if.master ldq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
    input lrq_resolve_t     i_lrq_resolve,
+   // From STQ to LDQ, resolve notification
+   input stq_resolve_t     i_stq_resolve,
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
@@ -146,6 +148,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_rerun_accept (|w_rerun_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
 
      .i_lrq_resolve (i_lrq_resolve),
+     .i_stq_resolve (i_stq_resolve),
 
      .i_commit (i_commit),
 

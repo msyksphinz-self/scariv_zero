@@ -97,6 +97,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                                        msrh_lsu_pkg::STQ_DONE;
             r_entry.vaddr           <= i_ex1_q_updates.vaddr;
             r_entry.paddr           <= i_ex1_q_updates.paddr;
+            r_entry.paddr_valid     <= ~i_ex1_q_updates.hazard_valid;
             r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
             r_entry.inst            <= i_ex1_q_updates.inst;
             r_entry.size            <= i_ex1_q_updates.size;
@@ -195,6 +196,7 @@ function msrh_lsu_pkg::stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.grp_id    = grp_id;
   ret.state     = msrh_lsu_pkg::STQ_INIT;
   ret.vaddr     = 'h0;
+  ret.paddr_valid = 1'b0;
 
   return ret;
 endfunction // assign_stq_disp

@@ -34,7 +34,8 @@ package msrh_lsu_pkg;
     L1D_CONFLICT,
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
-    LRQ_FULL
+    LRQ_FULL,
+    STQ_DEPEND
   } lmq_haz_t;
 
   typedef struct packed {
@@ -144,6 +145,11 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 } lrq_resolve_t;
 
 typedef struct packed {
+  logic          valid;
+  logic [msrh_pkg::STQ_SIZE-1: 0] resolve_index_oh;
+} stq_resolve_t;
+
+typedef struct packed {
   logic                           update;
   msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
@@ -162,6 +168,7 @@ typedef struct packed {
   logic          update;
   msrh_lsu_pkg::lmq_haz_t               hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+  logic [msrh_pkg::STQ_SIZE-1: 0] stq_haz_idx;
   logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
 
@@ -244,6 +251,7 @@ typedef struct packed {
   stq_state_t                     state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  logic                           paddr_valid;
   logic                           rs2_got_data;
   logic [riscv_pkg::XLEN_W-1: 0]  rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
@@ -295,6 +303,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
+  logic [msrh_pkg::STQ_SIZE-1: 0] stq_haz_idx;
 } ldq_entry_t;
 
 

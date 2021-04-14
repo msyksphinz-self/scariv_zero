@@ -143,8 +143,8 @@ select_mispred_bus rs2_mispred_select
 
 always_comb begin
   w_entry = r_entry;
-  w_entry.rs1_ready = r_entry.rs1_ready | r_entry.rs1_pred_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry.rs2_ready = r_entry.rs2_ready | r_entry.rs2_pred_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_entry.rs1_ready = r_entry.rs1_ready /* | r_entry.rs1_pred_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry.rs2_ready = r_entry.rs2_ready /* | r_entry.rs2_pred_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
 
   w_entry.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
   w_entry.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;

@@ -244,17 +244,24 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid & r_ex2_pipe_ctrl.is_load & (ex1_l1d_rd_if.miss | ex1_l1d_rd_if.conflict) & !ex2_fwd_check_if.fwd_valid;
+assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
+                                      r_ex2_pipe_ctrl.is_load &
+                                      (ex1_l1d_rd_if.miss |
+                                       ex1_l1d_rd_if.conflict |
+                                       ex2_fwd_check_if.stq_hazard_vld) &
+                                      !ex2_fwd_check_if.fwd_valid;
 assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = w_ex2_l1d_mispredicted ?
-                                    (ex1_l1d_rd_if.conflict ? L1D_CONFLICT :
+                                    (ex2_fwd_check_if.stq_hazard_vld  ? STQ_DEPEND   :
+                                     ex1_l1d_rd_if.conflict           ? L1D_CONFLICT :
                                      l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT : LRQ_ASSIGNED) :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
+assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 `ifdef SIMULATION
@@ -279,8 +286,10 @@ end
 `endif // SIMULATION
 
 // Forwarding check
-assign ex2_fwd_check_if.valid = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
-assign ex2_fwd_check_if.paddr = r_ex2_paddr[riscv_pkg::PADDR_W-1: 3];
+assign ex2_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign ex2_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
+assign ex2_fwd_check_if.grp_id = r_ex2_issue.grp_id;
+assign ex2_fwd_check_if.paddr  = r_ex2_paddr[riscv_pkg::PADDR_W-1: 3];
 assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
 always_comb begin
@@ -322,14 +331,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign o_ex2_addr_check.valid  = r_ex2_issue.valid & r_ex2_pipe_ctrl.is_store;
+assign o_ex2_addr_check.valid  = 1'b0; // r_ex2_issue.valid & r_ex2_pipe_ctrl.is_store;
 assign o_ex2_addr_check.cmt_id = r_ex2_issue.cmt_id;
 assign o_ex2_addr_check.grp_id = r_ex2_issue.grp_id;
 assign o_ex2_addr_check.paddr  = r_ex2_paddr[riscv_pkg::PADDR_W-1: 3];
-assign o_ex2_addr_check.dw     = (r_ex2_pipe_ctrl.size == SIZE_DW ? 8'hff :
-                                  r_ex2_pipe_ctrl.size == SIZE_W  ? 8'h0f :
-                                  r_ex2_pipe_ctrl.size == SIZE_H  ? 8'h03 :
-                                  r_ex2_pipe_ctrl.size == SIZE_B  ? 8'h01 : 8'h00) << r_ex2_paddr[2:0];
+assign o_ex2_addr_check.dw     = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
 assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
 assign ex3_ldq_stq_done_if.index_oh = 'h0;

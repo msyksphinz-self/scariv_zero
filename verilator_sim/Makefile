@@ -33,6 +33,7 @@ VERILATOR_OPTS += --trace-underscore
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION
+VERILATOR_OPTS += --compiler clang
 
 VERILATOR_OPTS_RV64 += ../cpp/tb_elf_loader.cpp
 VERILATOR_OPTS_RV64 += -CFLAGS "-DRV_XLEN=64"
