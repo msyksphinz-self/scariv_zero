@@ -103,8 +103,8 @@ rv64_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 rv64_giant: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_giant --Mdir obj_dir_rv64_giant $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
-regression: rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
-	rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test
+regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
+	rv64_tiny_test rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test
 
 rv32_tiny_test:
 	$(MAKE) rv32_tiny
