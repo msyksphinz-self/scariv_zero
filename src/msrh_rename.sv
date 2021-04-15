@@ -11,7 +11,15 @@ module msrh_rename
    disp_if.master           sc_disp,
 
    // Committer Rename ID update
-   input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
+   input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update,
+
+   // -------------------------------
+   // Credit Return Update interface
+   // -------------------------------
+   cre_ret_if.master alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM],
+   cre_ret_if.master lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
+   cre_ret_if.master csu_cre_ret_if,
+   cre_ret_if.master bru_cre_ret_if
    );
 
 logic [RNID_W-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
@@ -319,6 +327,80 @@ msrh_rn_map_queue
 
      .o_full (/*xxx*/)
      );
+
+
+// -----------------------------
+// Credits / Return Interface
+// -----------------------------
+generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
+  msrh_credit_return_master
+  u_alu_credit_return
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_get_credit(1'b0),
+   .i_credit_val('h0),
+
+   .o_credits(),
+   .o_no_credits(),
+
+   .cre_ret_if (alu_cre_ret_if[a_idx])
+   );
+end
+endgenerate
+
+generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
+  msrh_credit_return_master
+  u_lsu_credit_return
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_get_credit(1'b0),
+   .i_credit_val('h0),
+
+   .o_credits(),
+   .o_no_credits(),
+
+   .cre_ret_if (lsu_cre_ret_if[l_idx])
+   );
+end
+endgenerate
+
+msrh_credit_return_master
+u_csu_credit_return
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_credit(1'b0),
+ .i_credit_val('h0),
+
+ .o_credits(),
+ .o_no_credits(),
+
+ .cre_ret_if (csu_cre_ret_if)
+);
+
+
+msrh_credit_return_master
+u_bru_credit_return
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_credit(1'b0),
+ .i_credit_val('h0),
+
+ .o_credits(),
+ .o_no_credits(),
+
+ .cre_ret_if (bru_cre_ret_if)
+);
+
+
+
 
 `ifdef SIMULATION
 function void dump_json(int fp);

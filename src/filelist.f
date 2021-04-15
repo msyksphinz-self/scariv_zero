@@ -44,6 +44,8 @@
 ../src/select_phy_wr_bus.sv
 ../src/select_mispred_bus.sv
 
+../src/msrh_credit_return.sv
+
 ../src/data_array.sv
 ../src/msrh_icache.sv
 ../src/tag_array.sv

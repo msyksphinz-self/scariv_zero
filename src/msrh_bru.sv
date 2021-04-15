@@ -5,6 +5,7 @@ module msrh_bru
 
   input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
   disp_if.slave                              disp,
+  cre_ret_if.slave                       cre_ret_if,
 
   regread_if.master ex1_regread_rs1,
   regread_if.master ex1_regread_rs2,
@@ -68,6 +69,7 @@ u_msrh_scheduler
    .i_cmt_id    (disp.cmt_id),
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
+   .cre_ret_if  (cre_ret_if),
 
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),

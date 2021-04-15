@@ -13,6 +13,8 @@ module msrh_scheduler
  input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
+ cre_ret_if.slave                      cre_ret_if,
+
  /* Forwarding path */
  input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
  input msrh_pkg::phy_wr_t   i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
@@ -73,6 +75,16 @@ u_req_ptr
    .i_out_val  ({{($clog2(ENTRY_SIZE)-1){1'b0}}, 1'b1}),
    .o_out_ptr  (w_entry_out_ptr                       )
    );
+
+msrh_credit_return_slave
+u_msrh_credit_return_slave
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .cre_ret_if (cre_ret_if)
+ );
+
 
 logic [ENTRY_SIZE-1: 0]              w_entry_out_ptr_oh;
 /* verilator lint_off WIDTH */

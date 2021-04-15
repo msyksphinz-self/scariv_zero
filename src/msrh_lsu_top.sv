@@ -5,7 +5,8 @@ module msrh_lsu_top
     input logic i_reset_n,
 
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    disp_if.slave                          disp,
+    disp_if.slave                                      disp,
+    cre_ret_if.slave    cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
 
     regread_if.master   ex1_regread[msrh_conf_pkg::LSU_INST_NUM * 2-1:0],
 
@@ -66,6 +67,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .disp_valid (disp_valid),
     .disp (disp),
+    .cre_ret_if  (cre_ret_if[lsu_idx]),
 
     .ex1_regread_rs1 (ex1_regread[lsu_idx * 2 + 0]),
     .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),

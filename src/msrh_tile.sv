@@ -83,6 +83,15 @@ msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 msrh_pkg::done_rpt_t w_csu_done_rpt;
 
 // ----------------------------------
+// Credit/Return Management
+// ----------------------------------
+cre_ret_if alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM]();
+cre_ret_if lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
+cre_ret_if bru_cre_ret_if();
+cre_ret_if csu_cre_ret_if();
+
+
+// ----------------------------------
 // Merging Forwarding / Done signals
 // ----------------------------------
 // ALU
@@ -146,7 +155,12 @@ msrh_rename u_msrh_rename (
   .i_commit_rnid_update (w_commit_rnid_update),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .sc_disp  (w_sc_disp)
+  .sc_disp  (w_sc_disp),
+
+  .alu_cre_ret_if (alu_cre_ret_if),
+  .lsu_cre_ret_if (lsu_cre_ret_if),
+  .csu_cre_ret_if (bru_cre_ret_if),
+  .bru_cre_ret_if (csu_cre_ret_if)
 );
 
 
@@ -173,6 +187,7 @@ msrh_rename u_msrh_rename (
 
           .disp_valid(w_disp_alu_valids),
           .disp(w_sc_disp),
+          .cre_ret_if (alu_cre_ret_if[alu_idx]),
 
           .ex1_regread_rs1(regread[alu_idx * 2 + 0]),
           .ex1_regread_rs2(regread[alu_idx * 2 + 1]),
@@ -200,6 +215,7 @@ u_msrh_lsu_top
 
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
+    .cre_ret_if (lsu_cre_ret_if),
 
     .ex1_regread (regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
 
@@ -226,6 +242,7 @@ u_msrh_bru (
 
     .disp_valid(w_disp_bru_valids),
     .disp(w_sc_disp),
+    .cre_ret_if (bru_cre_ret_if),
 
     .ex1_regread_rs1(regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
                              msrh_conf_pkg::LSU_INST_NUM * 2 +
@@ -254,6 +271,7 @@ u_msrh_csu (
 
     .disp_valid(w_disp_csu_valids),
     .disp(w_sc_disp),
+    .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
                              msrh_conf_pkg::LSU_INST_NUM * 2 +
