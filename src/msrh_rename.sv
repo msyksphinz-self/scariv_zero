@@ -203,7 +203,7 @@ msrh_rename_map u_msrh_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] =  iq_disp.inst[d_idx].rd_valid;
+  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].rd_valid;
   assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].rd_regidx;
   assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].rd_valid;
 end

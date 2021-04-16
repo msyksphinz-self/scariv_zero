@@ -172,8 +172,8 @@ u_msrh_inst_buffer
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (i_commit.commit &
-                 i_commit.flush_valid &
-                 !i_commit.all_dead),
+                   i_commit.flush_valid &
+                   !i_commit.all_dead),
 
    .i_inst_valid (w_s2_ic_resp.valid & !r_ic_resp_would_be_killed),
 

@@ -77,6 +77,7 @@ u_req_ptr
    );
 
 msrh_credit_return_slave
+  #(.MAX_CREDITS(ENTRY_SIZE))
 u_msrh_credit_return_slave
 (
  .i_clk(i_clk),
