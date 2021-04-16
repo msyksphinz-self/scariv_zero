@@ -25,15 +25,15 @@ module msrh_credit_return_master
  cre_ret_if.master cre_ret_if,
 
  input i_get_credit,
- input [$clog2(MAX_CREDITS)-1: 0] i_credit_val,
+ input [$clog2(MAX_CREDITS): 0] i_credit_val,
 
- output [$clog2(MAX_CREDITS)-1: 0] o_credits,
+ output [$clog2(MAX_CREDITS): 0] o_credits,
  output                            o_no_credits
  );
 
-logic [$clog2(MAX_CREDITS)-1: 0] r_credits;
-logic [$clog2(MAX_CREDITS)-1: 0] w_credits_next;
-logic [$clog2(MAX_CREDITS)-1: 0] r_credit_inc;
+logic [$clog2(MAX_CREDITS): 0] r_credits;
+logic [$clog2(MAX_CREDITS): 0] w_credits_next;
+logic [$clog2(MAX_CREDITS): 0] r_credit_inc;
 
 assign w_credits_next = r_credits -
                         /* verilator lint_off WIDTH */
@@ -63,11 +63,15 @@ module msrh_credit_return_slave
  input logic i_clk,
  input logic i_reset_n,
 
+ input i_get_return,
+ input [$clog2(MAX_CREDITS): 0] i_return_val,
+
  cre_ret_if.slave cre_ret_if
  );
 
-logic [$clog2(MAX_CREDITS)-1: 0] r_credits;
-logic [$clog2(MAX_CREDITS)-1: 0] w_credits_next;
+logic [$clog2(MAX_CREDITS): 0] r_credits;
+logic [$clog2(MAX_CREDITS): 0] w_credits_next;
+logic [$clog2(MAX_CREDITS): 0] r_return_dec;
 
 assign w_credits_next = r_credits +
                         ((|cre_ret_if.credit_vals) ? cre_ret_if.credit_vals : 'h0) -
@@ -76,9 +80,13 @@ assign w_credits_next = r_credits +
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_credits <= 0;
+    r_return_dec <= 'h0;
   end else begin
     r_credits <= w_credits_next;
+    r_return_dec <= i_get_return ? i_return_val : 'h0;
   end
 end
+
+assign cre_ret_if.return_vals = r_return_dec;
 
 endmodule // msrh_credit_return_slave

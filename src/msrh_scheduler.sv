@@ -82,6 +82,9 @@ u_msrh_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
+ .i_get_return(o_done_report.valid),
+ .i_return_val('h1),
+
  .cre_ret_if (cre_ret_if)
  );
 

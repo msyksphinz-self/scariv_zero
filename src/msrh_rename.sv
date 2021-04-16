@@ -22,6 +22,8 @@ module msrh_rename
    cre_ret_if.master bru_cre_ret_if
    );
 
+logic    w_iq_fire;
+
 logic [RNID_W-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
@@ -53,7 +55,35 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_data;
 logic [RNID_W-1: 0]                       w_rn_list[32];
 logic [RNID_W-1: 0]                       w_restore_rn_list[32];
 
-assign iq_disp.ready = 1'b1;
+// -----------------------------
+// Credits / Return Interface
+// -----------------------------
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_arith;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_ld;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_st;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_br;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_csu;
+
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_arith;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_ld;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_st;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_br;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_csu;
+
+logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE): 0] w_alu_credits[msrh_conf_pkg::ALU_INST_NUM];
+logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE): 0]         w_lsu_credits[msrh_conf_pkg::LSU_INST_NUM];
+logic [$clog2(msrh_conf_pkg::RV_CSU_ENTRY_SIZE): 0] w_csu_credits;
+logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE): 0] w_br_credits;
+
+logic [msrh_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            w_lsu_no_credits_remained;
+logic                                               w_csu_no_credits_remained;
+logic                                               w_bru_no_credits_remained;
+
+assign iq_disp.ready = !((|w_alu_no_credits_remained) |
+                         (|w_lsu_no_credits_remained) |
+                           w_csu_no_credits_remained |
+                           w_bru_no_credits_remained);
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
   logic [RNID_W-1: 0] w_rd_rnid_tmp;
@@ -74,7 +104,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_push_id(i_commit_rnid_update.commit & (i_commit_rnid_update.all_dead | i_commit_rnid_update.dead_id[d_idx]) ?
                i_commit_rnid_update.rd_rnid[d_idx] : i_commit_rnid_update.old_rnid[d_idx]),
 
-    .i_pop(iq_disp.inst[d_idx].valid & iq_disp.inst[d_idx].rd_valid & (iq_disp.inst[d_idx].rd_regidx != 'h0)),
+    .i_pop(w_iq_fire &
+           iq_disp.inst[d_idx].valid &
+           iq_disp.inst[d_idx].rd_valid &
+           (iq_disp.inst[d_idx].rd_regidx != 'h0)),
     .o_pop_id(w_rd_rnid_tmp)
   );
   assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
@@ -176,6 +209,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
+assign w_iq_fire = iq_disp.valid & iq_disp.ready;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     sc_disp.valid <= 'h0;
@@ -184,7 +219,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     // sc_disp.cat <= 'h0;
     sc_disp.inst <= 'h0;
   end else begin
-    sc_disp.valid          <= iq_disp.valid;
+    sc_disp.valid          <= w_iq_fire;
     sc_disp.pc_addr        <= iq_disp.pc_addr;
     sc_disp.is_br_included <= iq_disp.is_br_included;
     sc_disp.inst           <= w_disp_inst;
@@ -319,7 +354,7 @@ msrh_rn_map_queue
      .i_clk (i_clk),
      .i_reset_n(i_reset_n),
 
-     .i_load (iq_disp.valid & iq_disp.is_br_included),
+     .i_load (w_iq_fire & iq_disp.is_br_included),
      .i_rn_list (w_rn_list),
 
      .i_restore (w_commit_rnid_restore_valid),
@@ -332,72 +367,97 @@ msrh_rn_map_queue
 // -----------------------------
 // Credits / Return Interface
 // -----------------------------
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  assign w_inst_is_arith[d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH);
+  assign w_inst_is_ld   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD  );
+  assign w_inst_is_st   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST  );
+  assign w_inst_is_br   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR  );
+  assign w_inst_is_csu  [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU );
+end
+endgenerate
+
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_arith_cnt (.in(w_inst_is_arith), .out(w_inst_cnt_arith));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_ld_cnt    (.in(w_inst_is_ld   ), .out(w_inst_cnt_ld   ));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_st_cnt    (.in(w_inst_is_st   ), .out(w_inst_cnt_st   ));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_bru_cnt   (.in(w_inst_is_br   ), .out(w_inst_cnt_br   ));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_cnt   (.in(w_inst_is_csu  ), .out(w_inst_cnt_csu  ));
+
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   msrh_credit_return_master
+    #(.MAX_CREDITS(msrh_conf_pkg::RV_ALU_ENTRY_SIZE))
   u_alu_credit_return
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(1'b0),
-   .i_credit_val('h0),
+   .i_get_credit(|w_inst_cnt_arith),
+   /* verilator lint_off WIDTH */
+   .i_credit_val(w_inst_cnt_arith),
 
-   .o_credits(),
+   .o_credits(w_alu_credits[a_idx]),
    .o_no_credits(),
 
    .cre_ret_if (alu_cre_ret_if[a_idx])
    );
-end
+  assign w_alu_no_credits_remained[a_idx] = w_alu_credits[a_idx] < w_inst_cnt_arith;
+
+end // block: alu_cre_ret_loop
 endgenerate
 
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
   msrh_credit_return_master
+    #(.MAX_CREDITS(msrh_lsu_pkg::MEM_Q_SIZE))
   u_lsu_credit_return
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(1'b0),
-   .i_credit_val('h0),
+   .i_get_credit((|w_inst_cnt_ld) | (|w_inst_cnt_st)),
+   .i_credit_val(w_inst_cnt_ld + w_inst_cnt_st),   /* verilator lint_off WIDTH */
 
-   .o_credits(),
+   .o_credits(w_lsu_credits[l_idx]),
    .o_no_credits(),
 
    .cre_ret_if (lsu_cre_ret_if[l_idx])
    );
+
+  assign w_lsu_no_credits_remained[l_idx] = w_alu_credits[l_idx] < (w_inst_cnt_ld + w_inst_cnt_st);
 end
 endgenerate
 
 msrh_credit_return_master
+  #(.MAX_CREDITS(msrh_conf_pkg::RV_CSU_ENTRY_SIZE))
 u_csu_credit_return
 (
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(1'b0),
- .i_credit_val('h0),
+ .i_get_credit(|w_inst_cnt_csu),
+ .i_credit_val(w_inst_cnt_csu),   /* verilator lint_off WIDTH */
 
- .o_credits(),
+ .o_credits(w_csu_credits),
  .o_no_credits(),
 
  .cre_ret_if (csu_cre_ret_if)
 );
-
+assign w_csu_no_credits_remained = w_csu_credits < w_inst_cnt_csu;
 
 msrh_credit_return_master
+  #(.MAX_CREDITS(msrh_conf_pkg::RV_BRU_ENTRY_SIZE))
 u_bru_credit_return
 (
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(1'b0),
- .i_credit_val('h0),
+ .i_get_credit(|w_inst_cnt_br),
+ .i_credit_val(w_inst_cnt_br),   /* verilator lint_off WIDTH */
 
- .o_credits(),
+ .o_credits(w_br_credits),
  .o_no_credits(),
 
  .cre_ret_if (bru_cre_ret_if)
 );
+assign w_bru_no_credits_remained = w_br_credits < w_inst_cnt_br;
 
 
 
