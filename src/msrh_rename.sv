@@ -395,11 +395,10 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .i_credit_val(w_inst_cnt_arith),
 
    .o_credits(w_alu_credits[a_idx]),
-   .o_no_credits(),
+   .o_no_credits(w_alu_no_credits_remained[a_idx]),
 
    .cre_ret_if (alu_cre_ret_if[a_idx])
    );
-  assign w_alu_no_credits_remained[a_idx] = w_alu_credits[a_idx] < w_inst_cnt_arith;
 
 end // block: alu_cre_ret_loop
 endgenerate
@@ -416,12 +415,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) be
    .i_credit_val(w_inst_cnt_ld + w_inst_cnt_st),   /* verilator lint_off WIDTH */
 
    .o_credits(w_lsu_credits[l_idx]),
-   .o_no_credits(),
+   .o_no_credits(w_lsu_no_credits_remained[l_idx]),
 
    .cre_ret_if (lsu_cre_ret_if[l_idx])
    );
 
-  assign w_lsu_no_credits_remained[l_idx] = w_alu_credits[l_idx] < (w_inst_cnt_ld + w_inst_cnt_st);
 end
 endgenerate
 
@@ -436,11 +434,10 @@ u_csu_credit_return
  .i_credit_val(w_inst_cnt_csu),   /* verilator lint_off WIDTH */
 
  .o_credits(w_csu_credits),
- .o_no_credits(),
+ .o_no_credits(w_csu_no_credits_remained),
 
  .cre_ret_if (csu_cre_ret_if)
 );
-assign w_csu_no_credits_remained = w_csu_credits < w_inst_cnt_csu;
 
 msrh_credit_return_master
   #(.MAX_CREDITS(msrh_conf_pkg::RV_BRU_ENTRY_SIZE))
@@ -453,13 +450,10 @@ u_bru_credit_return
  .i_credit_val(w_inst_cnt_br),   /* verilator lint_off WIDTH */
 
  .o_credits(w_br_credits),
- .o_no_credits(),
+ .o_no_credits(w_bru_no_credits_remained),
 
  .cre_ret_if (bru_cre_ret_if)
 );
-assign w_bru_no_credits_remained = w_br_credits < w_inst_cnt_br;
-
-
 
 
 `ifdef SIMULATION

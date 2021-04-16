@@ -85,10 +85,10 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 // Credit/Return Management
 // ----------------------------------
-cre_ret_if alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM]();
-cre_ret_if lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
-cre_ret_if bru_cre_ret_if();
-cre_ret_if csu_cre_ret_if();
+cre_ret_if #(.MAX_INC(msrh_conf_pkg::ARITH_DISP_SIZE)) alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM]();
+cre_ret_if #(.MAX_INC(msrh_conf_pkg::MEM_DISP_SIZE))   lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
+cre_ret_if #(.MAX_INC(msrh_conf_pkg::BRU_DISP_SIZE))   bru_cre_ret_if();
+cre_ret_if #(.MAX_INC(msrh_conf_pkg::CSU_DISP_SIZE))   csu_cre_ret_if();
 
 
 // ----------------------------------
@@ -159,8 +159,8 @@ msrh_rename u_msrh_rename (
 
   .alu_cre_ret_if (alu_cre_ret_if),
   .lsu_cre_ret_if (lsu_cre_ret_if),
-  .csu_cre_ret_if (bru_cre_ret_if),
-  .bru_cre_ret_if (csu_cre_ret_if)
+  .csu_cre_ret_if (csu_cre_ret_if),
+  .bru_cre_ret_if (bru_cre_ret_if)
 );
 
 

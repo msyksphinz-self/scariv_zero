@@ -1,7 +1,7 @@
 interface cre_ret_if #(MAX_INC = 2);
 
-logic [$clog2(MAX_INC)-1: 0] credit_vals;
-logic [$clog2(MAX_INC)-1: 0] return_vals;
+logic [$clog2(MAX_INC): 0] credit_vals;
+logic [$clog2(MAX_INC): 0] return_vals;
 
 modport master (
   output credit_vals,
@@ -28,17 +28,19 @@ module msrh_credit_return_master
  input [$clog2(MAX_CREDITS): 0] i_credit_val,
 
  output [$clog2(MAX_CREDITS): 0] o_credits,
- output                            o_no_credits
+ output                          o_no_credits
  );
 
 logic [$clog2(MAX_CREDITS): 0] r_credits;
 logic [$clog2(MAX_CREDITS): 0] w_credits_next;
 logic [$clog2(MAX_CREDITS): 0] r_credit_inc;
 
-assign w_credits_next = r_credits -
-                        /* verilator lint_off WIDTH */
-                        (i_get_credit ? i_credit_val : 'h0) +
-                        (|(cre_ret_if.return_vals) ? cre_ret_if.return_vals : 'h0);
+logic                          w_no_credits;
+
+/* verilator lint_off WIDTH */
+assign w_no_credits = r_credits + cre_ret_if.return_vals < (i_get_credit ? i_credit_val : 'h0);
+assign w_credits_next =  w_no_credits ? r_credits :
+                         r_credits - (i_get_credit ? i_credit_val : 'h0) + cre_ret_if.return_vals;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -50,10 +52,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+/* verilator lint_off WIDTH */
 assign cre_ret_if.credit_vals = r_credit_inc;
 
 assign o_credits    = r_credits;
-assign o_no_credits = r_credits == 'h0;
+assign o_no_credits = w_no_credits;
 
 endmodule // msrh_credit_return_master
 
@@ -73,9 +76,14 @@ logic [$clog2(MAX_CREDITS): 0] r_credits;
 logic [$clog2(MAX_CREDITS): 0] w_credits_next;
 logic [$clog2(MAX_CREDITS): 0] r_return_dec;
 
-assign w_credits_next = r_credits +
-                        ((|cre_ret_if.credit_vals) ? cre_ret_if.credit_vals : 'h0) -
+logic [$clog2(MAX_CREDITS): 0] w_credits_diff;
+
+/* verilator lint_off WIDTH */
+assign w_credits_diff = ((|cre_ret_if.credit_vals) ? cre_ret_if.credit_vals : 'h0) -
                         (i_get_return ? i_return_val : 'h0);
+
+assign w_credits_next = r_credits + w_credits_diff;
+
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
