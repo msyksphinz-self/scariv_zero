@@ -390,7 +390,7 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(|w_inst_cnt_arith),
+   .i_get_credit(|w_inst_cnt_arith & iq_disp.ready),
    /* verilator lint_off WIDTH */
    .i_credit_val(w_inst_cnt_arith),
 
@@ -411,7 +411,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) be
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit((|w_inst_cnt_ld) | (|w_inst_cnt_st)),
+   .i_get_credit(((|w_inst_cnt_ld) | (|w_inst_cnt_st)) & iq_disp.ready),
    .i_credit_val(w_inst_cnt_ld + w_inst_cnt_st),   /* verilator lint_off WIDTH */
 
    .o_credits(w_lsu_credits[l_idx]),
@@ -430,7 +430,7 @@ u_csu_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(|w_inst_cnt_csu),
+ .i_get_credit(|w_inst_cnt_csu & iq_disp.ready),
  .i_credit_val(w_inst_cnt_csu),   /* verilator lint_off WIDTH */
 
  .o_credits(w_csu_credits),
@@ -446,7 +446,7 @@ u_bru_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(|w_inst_cnt_br),
+ .i_get_credit(|w_inst_cnt_br & iq_disp.ready),
  .i_credit_val(w_inst_cnt_br),   /* verilator lint_off WIDTH */
 
  .o_credits(w_br_credits),

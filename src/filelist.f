@@ -46,6 +46,8 @@
 
 ../src/msrh_credit_return.sv
 
+../src/msrh_rough_older_check.sv
+
 ../src/data_array.sv
 ../src/msrh_icache.sv
 ../src/tag_array.sv

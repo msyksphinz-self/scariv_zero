@@ -47,6 +47,7 @@ logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_in_ptr;
 logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_out_ptr;
 
 logic [ENTRY_SIZE-1:0]          w_entry_done;
+logic [ENTRY_SIZE-1:0]          w_entry_dead_done;
 logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
 logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
@@ -83,7 +84,7 @@ u_msrh_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return(o_done_report.valid),
+ .i_get_return(o_done_report.valid | (|w_entry_dead_done)),
  .i_return_val('h1),
 
  .cre_ret_if (cre_ret_if)
@@ -156,12 +157,13 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_commit (i_commit),
 
-    .i_entry_picked (w_picked_inst_oh[s_idx]),
-    .o_entry_done  (w_entry_done[s_idx]),
-    .o_cmt_id      (w_entry_cmt_id[s_idx]),
-    .o_grp_id      (w_entry_grp_id[s_idx]),
-    .o_except_valid (w_entry_except_valid[s_idx]),
-    .o_except_type  (w_entry_except_type [s_idx])
+    .i_entry_picked    (w_picked_inst_oh[s_idx]),
+    .o_entry_done      (w_entry_done[s_idx]),
+    .o_entry_dead_done (w_entry_dead_done[s_idx]),
+    .o_cmt_id          (w_entry_cmt_id[s_idx]),
+    .o_grp_id          (w_entry_grp_id[s_idx]),
+    .o_except_valid    (w_entry_except_valid[s_idx]),
+    .o_except_type     (w_entry_except_type [s_idx])
   );
 
 end

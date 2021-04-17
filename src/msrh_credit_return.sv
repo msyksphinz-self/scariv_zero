@@ -38,7 +38,7 @@ logic [$clog2(MAX_CREDITS): 0] r_credit_inc;
 logic                          w_no_credits;
 
 /* verilator lint_off WIDTH */
-assign w_no_credits = r_credits + cre_ret_if.return_vals < (i_get_credit ? i_credit_val : 'h0);
+assign w_no_credits = r_credits + cre_ret_if.return_vals < i_credit_val;
 assign w_credits_next =  w_no_credits ? r_credits :
                          r_credits - (i_get_credit ? i_credit_val : 'h0) + cre_ret_if.return_vals;
 

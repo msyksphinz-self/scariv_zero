@@ -31,8 +31,9 @@ module msrh_sched_entry
    // Commit notification
    input msrh_pkg::commit_blk_t           i_commit,
 
-   output logic                           o_entry_done,
-   output logic [msrh_pkg::CMT_BLK_W-1:0] o_cmt_id,
+   output logic                                o_entry_done,
+   output logic                                o_entry_dead_done,
+   output logic [msrh_pkg::CMT_BLK_W-1:0]      o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
    output logic                                o_except_valid,
    output msrh_pkg::except_t                   o_except_type
@@ -60,6 +61,8 @@ logic     w_rs2_phy_hit;
 logic     w_rs1_mispredicted;
 logic     w_rs2_mispredicted;
 
+logic     w_entry_flush;
+logic     w_dead_state_clear;
 
 msrh_pkg::sched_state_t r_state;
 
@@ -156,6 +159,14 @@ assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
                                                w_rs1_phy_hit, w_rs2_phy_hit,
                                                w_rs1_may_mispred, w_rs2_may_mispred);
 
+assign w_entry_flush = i_commit.commit &
+                       i_commit.flush_valid &
+                       !i_commit.all_dead &
+                       r_entry.valid;
+assign w_dead_state_clear = i_commit.commit &
+                            i_commit.all_dead &
+                            (i_commit.cmt_id == r_entry.cmt_id);
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
@@ -163,17 +174,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_state <= msrh_pkg::INIT;
     r_issued <= 1'b0;
   end else begin
-    if (i_commit.commit &
-        i_commit.flush_valid &
-        !i_commit.all_dead) begin /* &
-        ((i_commit.cmt_id <  r_entry.cmt_id) |
-         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin */
-      r_state <= msrh_pkg::INIT;
-      r_entry.valid <= 1'b0;
-      r_issued      <= 1'b0;
-      // prevent all updates from Pipeline
-      r_entry.cmt_id <= 'h0;
-      r_entry.grp_id <= 'h0;
+    if (w_entry_flush) begin
+      r_state <= msrh_pkg::DEAD;
+      // r_entry.valid <= 1'b0;
+      // r_issued      <= 1'b0;
+      // // prevent all updates from Pipeline
+      // r_entry.cmt_id <= 'h0;
+      // r_entry.grp_id <= 'h0;
     end else begin
       case (r_state)
         msrh_pkg::INIT : begin
@@ -212,6 +219,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_issued <= 1'b0;
           r_state <= msrh_pkg::INIT;
         end
+        msrh_pkg::DEAD : begin
+          if (w_dead_state_clear) begin
+            r_state       <= msrh_pkg::INIT;
+            r_entry.valid <= 1'b0;
+            r_issued      <= 1'b0;
+            // prevent all updates from Pipeline
+            r_entry.cmt_id <= 'h0;
+            r_entry.grp_id <= 'h0;
+          end
+        end // case: msrh_pkg::DEAD
+        default : begin
+          r_state <= msrh_pkg::INIT;
+          $fatal(0, "Unknown state reached\n");
+        end
       endcase // case (r_state)
     end // else: !if(i_commit.commit &...
   end // else: !if(!i_reset_n)
@@ -221,10 +242,12 @@ assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
-assign o_entry_done = r_state == msrh_pkg::DONE;
+assign o_entry_done = (r_state == msrh_pkg::DONE) & !w_entry_flush;
 assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
 assign o_except_type  = r_entry.except_type;
+assign o_entry_dead_done = (r_state == msrh_pkg::DEAD) & w_dead_state_clear;
+
 
 endmodule // msrh_sched_entry

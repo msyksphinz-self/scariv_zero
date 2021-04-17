@@ -22,12 +22,12 @@ package msrh_lsu_pkg;
                           msrh_conf_pkg::LDQ_SIZE :
                           msrh_conf_pkg::STQ_SIZE;
 
-  typedef enum logic [ 1: 0] {
-    LEN1B,
-    LEN2B,
-    LEN4B,
-    LEN8B
-  } size_t;
+  // typedef enum logic [ 1: 0] {
+  //   LEN1B,
+  //   LEN2B,
+  //   LEN4B,
+  //   LEN8B
+  // } size_t;
 
   typedef enum logic [ 2: 0] {
     NONE,
@@ -146,7 +146,7 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 
 typedef struct packed {
   logic          valid;
-  logic [msrh_pkg::STQ_SIZE-1: 0] resolve_index_oh;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0] resolve_index_oh;
 } stq_resolve_t;
 
 typedef struct packed {
@@ -168,7 +168,7 @@ typedef struct packed {
   logic          update;
   msrh_lsu_pkg::lmq_haz_t               hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
-  logic [msrh_pkg::STQ_SIZE-1: 0] stq_haz_idx;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0] stq_haz_idx;
   logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
 
@@ -266,7 +266,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic [riscv_pkg::PADDR_W-1:0] paddr;
-  size_t                         acc_size;
+  decoder_lsu_ctrl_pkg::size_t   acc_size;
   logic [riscv_pkg::XLEN_W-1: 0] data;
 } srq_req_t;
 
@@ -303,7 +303,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
-  logic [msrh_pkg::STQ_SIZE-1: 0] stq_haz_idx;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0]  stq_haz_idx;
 } ldq_entry_t;
 
 
