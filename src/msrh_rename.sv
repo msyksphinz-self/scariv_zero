@@ -11,6 +11,7 @@ module msrh_rename
    disp_if.master           sc_disp,
 
    // Committer Rename ID update
+   input msrh_pkg::commit_blk_t   i_commit,
    input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update,
 
    // -------------------------------
@@ -54,6 +55,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_data;
 // Current rename map information to stack
 logic [RNID_W-1: 0]                       w_rn_list[32];
 logic [RNID_W-1: 0]                       w_restore_rn_list[32];
+
+logic                                     w_flush_valid;
 
 // -----------------------------
 // Credits / Return Interface
@@ -341,8 +344,8 @@ msrh_inflight_list u_inflight_map
    .o_valids (w_active),
 
    .i_update_fetch_valid (w_rd_valids),
-   .i_update_fetch_rnid(w_rd_rnid  ),
-   .i_update_fetch_data(w_rd_data  ),
+   .i_update_fetch_rnid  (w_rd_rnid  ),
+   .i_update_fetch_data  (w_rd_data  ),
 
    .i_phy_wr (i_phy_wr)
 );
@@ -382,6 +385,8 @@ bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_st_cnt    (.in(w_inst_is_st   ), .
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_bru_cnt   (.in(w_inst_is_br   ), .out(w_inst_cnt_br   ));
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_cnt   (.in(w_inst_is_csu  ), .out(w_inst_cnt_csu  ));
 
+assign w_flush_valid = i_commit.commit & i_commit.flush_valid;
+
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   msrh_credit_return_master
     #(.MAX_CREDITS(msrh_conf_pkg::RV_ALU_ENTRY_SIZE))
@@ -390,7 +395,7 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(|w_inst_cnt_arith & iq_disp.ready),
+   .i_get_credit(~w_flush_valid & (|w_inst_cnt_arith) & iq_disp.ready),
    /* verilator lint_off WIDTH */
    .i_credit_val(w_inst_cnt_arith),
 
@@ -411,7 +416,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) be
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(((|w_inst_cnt_ld) | (|w_inst_cnt_st)) & iq_disp.ready),
+   .i_get_credit(~w_flush_valid & ((|w_inst_cnt_ld) | (|w_inst_cnt_st)) & iq_disp.ready),
    .i_credit_val(w_inst_cnt_ld + w_inst_cnt_st),   /* verilator lint_off WIDTH */
 
    .o_credits(w_lsu_credits[l_idx]),
@@ -430,7 +435,7 @@ u_csu_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(|w_inst_cnt_csu & iq_disp.ready),
+ .i_get_credit(~w_flush_valid & (|w_inst_cnt_csu) & iq_disp.ready),
  .i_credit_val(w_inst_cnt_csu),   /* verilator lint_off WIDTH */
 
  .o_credits(w_csu_credits),
@@ -446,7 +451,7 @@ u_bru_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(|w_inst_cnt_br & iq_disp.ready),
+ .i_get_credit(~w_flush_valid & (|w_inst_cnt_br) & iq_disp.ready),
  .i_credit_val(w_inst_cnt_br),   /* verilator lint_off WIDTH */
 
  .o_credits(w_br_credits),

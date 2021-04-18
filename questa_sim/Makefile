@@ -44,7 +44,9 @@ endif
 ifeq ($(strip $(CONFIG)), small)
 	CONFIG_PKG = ../src/msrh_small_conf_pkg.sv
 endif
-
+ifeq ($(strip $(CONFIG)), tiny)
+	CONFIG_PKG = ../src/msrh_tiny_conf_pkg.sv
+endif
 
 all:
 	$(MAKE) vlib
