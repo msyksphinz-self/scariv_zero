@@ -24,7 +24,6 @@ package msrh_pkg;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
   localparam RNID_W = $clog2(RNID_SIZE);
 
-  localparam CMT_BLK_SIZE = 64;
   localparam CMT_BLK_W = $clog2(CMT_BLK_SIZE);
 
   localparam LRQ_ENTRY_SIZE = 8;

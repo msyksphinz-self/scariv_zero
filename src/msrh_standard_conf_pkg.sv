@@ -22,5 +22,6 @@ package msrh_conf_pkg;
 
   localparam RV_BRU_ENTRY_SIZE = 16;
 
+  localparam CMT_BLK_SIZE = 64;
 
 endpackage // msrh_conf_pkg
