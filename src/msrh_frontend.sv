@@ -58,6 +58,7 @@ logic                           r_new_commit_upd_pc_wait_valid;
 logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
 logic                           w_commit_flush_valid;
 logic                           r_ic_resp_would_be_killed;
+logic                           r_ic_resp_would_be_killed_by_full_q;
 
 logic                           w_inst_buffer_ready;
 
@@ -81,12 +82,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end else begin
         r_s0_vaddr <= w_s0_vaddr_flush_next;
       end
-    end else if (w_s2_ic_miss & ~r_s2_clear) begin
+    end else if (w_s2_ic_miss &
+                 ~r_ic_resp_would_be_killed &
+                 ~r_ic_resp_would_be_killed_by_full_q &
+                 ~r_s2_clear) begin
       r_s0_vaddr <= w_s2_ic_miss_vaddr;
     end else if (w_s0_ic_req.valid) begin
-      if (~w_inst_buffer_ready & ~r_s1_clear) begin
+      if (~w_inst_buffer_ready &
+          ~r_ic_resp_would_be_killed &
+          ~r_ic_resp_would_be_killed_by_full_q &
+          ~r_s1_clear) begin
+        // When instruction buffer is full, replay using ic_resp vaddr
         r_s0_vaddr <= {w_s2_ic_resp.addr, 1'b0};
-      end else if (w_s0_ic_ready) begin
+      end else if (w_s0_ic_ready & ~r_s1_clear) begin
+        // When instruction is ready, update PC-Addr sequence
         r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                       (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end
@@ -106,6 +115,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_new_commit_upd_pc          <= 'h0;
 
     r_ic_resp_would_be_killed    <= 1'b0;
+    r_ic_resp_would_be_killed_by_full_q <= 1'b0;
   end else begin
     if (w_commit_upd_pc & !w_s0_ic_ready) begin
       r_new_commit_upd_pc_wait_valid <= 1'b1;
@@ -118,6 +128,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_ic_resp_would_be_killed    <= 1'b1;
     end else if (w_s0_ic_ready) begin
       r_ic_resp_would_be_killed    <= 1'b0;
+    end
+
+    if (w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
+      r_ic_resp_would_be_killed_by_full_q <= 1'b1;
+    end else if (w_inst_buffer_ready) begin
+      r_ic_resp_would_be_killed_by_full_q <= 1'b0;
     end
   end
 end
@@ -165,7 +181,10 @@ end
 assign w_s0_ic_req.valid = r_s0_valid & w_s0_ic_ready;
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
-assign w_s2_inst_valid = w_s2_ic_resp.valid & !r_ic_resp_would_be_killed & !r_s2_clear;
+assign w_s2_inst_valid = w_s2_ic_resp.valid &
+                         !r_ic_resp_would_be_killed &
+                         !r_ic_resp_would_be_killed_by_full_q &
+                         !r_s2_clear;
 
 msrh_icache u_msrh_icache
   (
