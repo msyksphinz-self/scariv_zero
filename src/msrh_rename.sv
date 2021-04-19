@@ -405,6 +405,30 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .cre_ret_if (alu_cre_ret_if[a_idx])
    );
 
+// `ifdef SIMULATION
+//   logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] r_alu_credits_dly1;
+//   logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] r_alu_credits_dly2;
+//   logic [msrh_conf_pkg::RV_ALU_ENTRY_SIZE-1:0]       r_entry_valid_dly1;
+//   always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//     if (!i_reset_n) begin
+//       r_alu_credits_dly1 <= msrh_conf_pkg::RV_ALU_ENTRY_SIZE;
+//       r_alu_credits_dly2 <= msrh_conf_pkg::RV_ALU_ENTRY_SIZE;
+//
+//       r_entry_valid_dly1 <= 'h0;
+//     end else begin
+//       r_alu_credits_dly1 <= w_alu_credits[a_idx];
+//       r_alu_credits_dly2 <= r_alu_credits_dly1;
+//
+//       r_entry_valid_dly1 <= u_msrh_tile_wrapper.u_msrh_tile.alu_loop[a_idx].u_msrh_alu.u_msrh_scheduler.w_entry_valid;
+//       if ((1 << (msrh_conf_pkg::RV_ALU_ENTRY_SIZE - r_alu_credits_dly2)) -1 != r_entry_valid_dly1) begin
+//         $fatal(0, "ALU entry number and ticket number is different. alu entry bitmask = %x, ticket number %d\n",
+//                r_entry_valid_dly1,
+//                r_alu_credits_dly2);
+//       end
+//     end
+//   end
+// `endif // SIMULATION
+
 end // block: alu_cre_ret_loop
 endgenerate
 

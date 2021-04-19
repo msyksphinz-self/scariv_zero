@@ -73,9 +73,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.inst.rs2_ready <= w_entry_rs2_ready_next;
     if (i_commit.commit &
         i_commit.flush_valid &
-        !i_commit.all_dead) begin /*
-        ((i_commit.cmt_id <  r_entry.cmt_id) |
-         (i_commit.cmt_id == r_entry.cmt_id) & (i_commit.grp_id < r_entry.grp_id))) begin */
+        !i_commit.all_dead &
+        !((r_entry.state == msrh_lsu_pkg::STQ_DONE) &
+          (i_commit.cmt_id == r_entry.cmt_id) &
+          ((i_commit.grp_id & r_entry.grp_id) != 'h0))) begin
       r_entry.state <= msrh_lsu_pkg::STQ_INIT;
       r_entry.is_valid <= 1'b0;
       // prevent all updates from Pipeline

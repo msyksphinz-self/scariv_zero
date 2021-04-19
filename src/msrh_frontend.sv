@@ -56,7 +56,7 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 logic                           w_commit_upd_pc;
 logic                           r_new_commit_upd_pc_wait_valid;
 logic [riscv_pkg::VADDR_W-1: 0] r_new_commit_upd_pc;
-
+logic                           w_commit_flush_valid;
 logic                           r_ic_resp_would_be_killed;
 
 logic                           w_inst_buffer_ready;
@@ -96,7 +96,9 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign w_s0_vaddr = w_commit_upd_pc ? w_s0_vaddr_flush_next : r_s0_vaddr;
 assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_valid & !i_commit.all_dead;
-
+assign w_commit_flush_valid = i_commit.commit &
+                              i_commit.flush_valid &
+                              !i_commit.all_dead;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -142,7 +144,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
   end else begin
     r_s1_valid <= r_s0_valid;
-    r_s1_clear <= w_s0_ic_req.valid & ~w_inst_buffer_ready ? 1'b1 : 1'b0;
+    r_s1_clear <= w_s0_ic_req.valid & ~w_inst_buffer_ready & ~w_commit_flush_valid;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= w_s0_tlb_resp.miss;
   end
@@ -155,7 +157,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_clear <= 1'b0;
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear;
+    r_s2_clear <= r_s1_clear & ~w_commit_flush_valid;
   end
 end
 
@@ -171,9 +173,7 @@ msrh_icache u_msrh_icache
    .i_reset_n (i_reset_n),
 
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (i_commit.commit &
-                   i_commit.flush_valid &
-                   !i_commit.all_dead),
+   .i_flush_valid (w_commit_flush_valid),
 
    .i_s0_req (w_s0_ic_req),
    .o_s0_ready(w_s0_ic_ready),
@@ -197,9 +197,7 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (i_commit.commit &
-                   i_commit.flush_valid &
-                   !i_commit.all_dead),
+   .i_flush_valid (w_commit_flush_valid),
 
    .i_inst_valid (w_s2_inst_valid),
 

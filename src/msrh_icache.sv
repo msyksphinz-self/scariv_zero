@@ -170,7 +170,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_ic_state)
       ICInit : begin
-        if (r_s1_valid & !w_s1_hit) begin
+        if (~i_flush_valid & r_s1_valid & !w_s1_hit) begin
           ic_l2_req.valid   <= 1'b1;
           ic_l2_req.payload.cmd  <= M_XRD;
           ic_l2_req.payload.addr <= i_s1_paddr;

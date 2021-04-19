@@ -97,4 +97,15 @@ end
 
 assign cre_ret_if.return_vals = r_return_dec;
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (r_credits > MAX_CREDITS) begin
+      $fatal(0, "Credits is bigger than initial value. r_credits = %d, must not be excced than %d\n",
+             r_credits, MAX_CREDITS);
+    end
+  end
+end
+`endif // SIMULATION
+
 endmodule // msrh_credit_return_slave
