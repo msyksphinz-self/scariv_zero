@@ -79,9 +79,12 @@ u_req_ptr
 
 logic                                w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
+logic [$clog2(ENTRY_SIZE): 0]        w_entry_dead_cnt;
+
+bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_dead_cnt (.in(w_entry_dead_done), .out(w_entry_dead_cnt));
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = (o_done_report.valid | (|w_entry_dead_done) ? 'h1 : 'h0) +
+assign w_credit_return_val = (o_done_report.valid ? 1'b1 : (|w_entry_dead_done) ? w_entry_dead_cnt : 'h0) +
                              (w_ignore_disp ? w_input_valid_cnt : 'h0);
 
 
@@ -98,6 +101,21 @@ u_msrh_credit_return_slave
  .cre_ret_if (cre_ret_if)
  );
 
+`ifdef SIMULATION
+/* verilator lint_off WIDTH */
+logic [$clog2(ENTRY_SIZE): 0]      w_entry_valid_cnt;
+bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_valid_cnt (.in(w_entry_valid), .out(w_entry_valid_cnt));
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (u_msrh_credit_return_slave.r_credits != w_entry_valid_cnt) begin
+      $fatal(0, "credit and entry number different. r_credits = %d, entry_mask = %x\n",
+             u_msrh_credit_return_slave.r_credits,
+             w_entry_valid_cnt);
+    end
+  end
+end
+`endif // SIMULATION
 
 logic [ENTRY_SIZE-1: 0]              w_entry_out_ptr_oh;
 /* verilator lint_off WIDTH */
