@@ -3,40 +3,41 @@ module msrh_sched_entry
     parameter IS_STORE = 1'b0
     )
 (
-   input logic                            i_clk,
-   input logic                            i_reset_n,
+   input logic                                 i_clk,
+   input logic                                 i_reset_n,
 
-   input logic                            i_put,
-   input logic [msrh_pkg::CMT_BLK_W-1:0]  i_cmt_id,
+   input logic                                 i_put,
+   input logic [msrh_pkg::CMT_BLK_W-1:0]       i_cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_grp_id,
-   input                                  msrh_pkg::disp_t i_put_data,
+   input                                       msrh_pkg::disp_t i_put_data,
 
-   output logic                           o_entry_valid,
-   output logic                           o_entry_ready,
-   output                                 msrh_pkg::issue_t o_entry,
+   output logic                                o_entry_valid,
+   output logic                                o_entry_ready,
+   output                                      msrh_pkg::issue_t o_entry,
 
-   input logic                            i_ex0_rs_conflicted,
+   input logic                                 i_ex0_rs_conflicted,
 
    /* Forwarding path */
-   input msrh_pkg::early_wr_t             i_early_wr[msrh_pkg::REL_BUS_SIZE],
-   input msrh_pkg::phy_wr_t               i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
-   input msrh_pkg::mispred_t              i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
+   input                                       msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input                                       msrh_pkg::phy_wr_t i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+   input                                       msrh_pkg::mispred_t i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
-   input logic                            i_entry_picked,
+   input logic                                 i_entry_picked,
 
    // Done Interface
-   input logic                            i_pipe_done,
-   done_if.slave                          pipe_done_if,
+   input logic                                 i_pipe_done,
+                                               done_if.slave pipe_done_if,
 
    // Commit notification
-   input msrh_pkg::commit_blk_t           i_commit,
+   input                                       msrh_pkg::commit_blk_t i_commit,
 
    output logic                                o_entry_done,
+   input logic                                 i_done_accept,
    output logic                                o_entry_dead_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0]      o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
    output logic                                o_except_valid,
-   output msrh_pkg::except_t                   o_except_type
+   output                                      msrh_pkg::except_t o_except_type
    );
 
 logic    r_issued;
@@ -215,9 +216,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end
         msrh_pkg::DONE : begin
-          r_entry.valid <= 1'b0;
-          r_issued <= 1'b0;
-          r_state <= msrh_pkg::INIT;
+          if (i_done_accept) begin
+            r_entry.valid <= 1'b0;
+            r_issued <= 1'b0;
+            r_state <= msrh_pkg::INIT;
+          end
         end
         msrh_pkg::DEAD : begin
           if (w_dead_state_clear) begin
