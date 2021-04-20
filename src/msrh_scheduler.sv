@@ -77,6 +77,14 @@ u_req_ptr
    .o_out_ptr  (w_entry_out_ptr                       )
    );
 
+logic                                w_ignore_disp;
+logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
+
+assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
+assign w_credit_return_val = (o_done_report.valid | (|w_entry_dead_done) ? 'h1 : 'h0) +
+                             (w_ignore_disp ? w_input_valid_cnt : 'h0);
+
+
 msrh_credit_return_slave
   #(.MAX_CREDITS(ENTRY_SIZE))
 u_msrh_credit_return_slave
@@ -84,8 +92,8 @@ u_msrh_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return(o_done_report.valid | (|w_entry_dead_done)),
- .i_return_val('h1),
+ .i_get_return(o_done_report.valid | (|w_entry_dead_done) | w_ignore_disp),
+ .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
  );

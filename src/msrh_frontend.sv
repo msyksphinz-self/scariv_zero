@@ -28,6 +28,7 @@ typedef enum logic [ 1: 0] {
 } if_sm_t;
 
 if_sm_t  r_if_state;
+if_sm_t  w_if_state_next;
 
 logic  r_s0_valid;
 logic [riscv_pkg::VADDR_W-1:0]  r_s0_vaddr;
@@ -82,8 +83,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s0_vaddr <= msrh_pkg::PC_INIT_VAL;
   end else begin
     r_s0_valid <= 1'b1;
+    r_if_state <= w_if_state_next;
+
     if (w_commit_upd_pc) begin
-      if (w_s0_ic_ready & w_inst_buffer_ready) begin
+      if (w_if_state_next == ISSUED) begin
         r_s0_vaddr <= (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                       (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
@@ -91,15 +94,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end
     end else begin
       case (r_if_state)
-        INIT : begin
-          r_if_state <= ISSUED;
-        end
         ISSUED : begin
           if (w_s2_ic_miss) begin
-            r_if_state <= WAIT_RD;
             r_s0_vaddr <= w_s2_ic_miss_vaddr;
           end else if (!w_inst_buffer_ready) begin
-            r_if_state <= WAIT_FB_FREE;
             r_s0_vaddr <= {w_s2_ic_resp.addr, 1'b0};
           end else begin
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -108,22 +106,47 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
         WAIT_RD : begin
           if (w_s0_ic_ready) begin
-            r_if_state <= ISSUED;
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
         WAIT_FB_FREE : begin
           if (w_inst_buffer_ready) begin
-            r_if_state <= ISSUED;
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
+        default : begin end
       endcase // case (r_if_state)
     end // else: !if(w_commit_upd_pc)
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+always_comb begin
+  w_if_state_next = r_if_state;
+  case (r_if_state)
+    INIT : begin
+      w_if_state_next = ISSUED;
+    end
+    ISSUED : begin
+      if (w_s2_ic_miss) begin
+        w_if_state_next = WAIT_RD;
+      end else if (!w_inst_buffer_ready) begin
+        w_if_state_next = WAIT_FB_FREE;
+      end
+    end
+    WAIT_RD : begin
+      if (w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    WAIT_FB_FREE : begin
+      if (w_inst_buffer_ready & w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+  endcase // case (r_if_state)
+end
 
 
 assign w_s0_vaddr = w_commit_upd_pc ? w_s0_vaddr_flush_next : r_s0_vaddr;
