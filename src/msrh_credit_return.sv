@@ -39,7 +39,7 @@ logic                          w_no_credits;
 
 /* verilator lint_off WIDTH */
 assign w_no_credits = r_credits + cre_ret_if.return_vals < i_credit_val;
-assign w_credits_next =  w_no_credits ? r_credits :
+assign w_credits_next =  w_no_credits ? r_credits + cre_ret_if.return_vals :
                          r_credits - (i_get_credit ? i_credit_val : 'h0) + cre_ret_if.return_vals;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
