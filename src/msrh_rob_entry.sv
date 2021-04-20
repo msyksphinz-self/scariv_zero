@@ -65,6 +65,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.done_grp_id <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
 
       r_entry.is_br_included <= i_load_br_included;
+
+      r_entry.except_valid <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
     end else if (r_entry.valid) begin
       // Condition :
       // all instruction done, or ROB entry dead,

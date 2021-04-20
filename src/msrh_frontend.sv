@@ -109,11 +109,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         WAIT_RD : begin
           if (w_s0_ic_ready) begin
             r_if_state <= ISSUED;
+            r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
         WAIT_FB_FREE : begin
           if (w_inst_buffer_ready) begin
             r_if_state <= ISSUED;
+            r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
       endcase // case (r_if_state)
@@ -168,7 +172,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-assign w_s0_ic_req.valid = r_if_state == ISSUED;
+assign w_s0_ic_req.valid = (r_if_state == ISSUED) |
+                           ((r_if_state == WAIT_RD) & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready);
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
 assign w_s2_inst_valid = w_s2_ic_resp.valid;
