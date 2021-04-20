@@ -212,7 +212,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-assign w_iq_fire = iq_disp.valid & iq_disp.ready;
+assign w_iq_fire = ~w_flush_valid & iq_disp.valid & iq_disp.ready;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -385,7 +385,7 @@ bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_st_cnt    (.in(w_inst_is_st   ), .
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_bru_cnt   (.in(w_inst_is_br   ), .out(w_inst_cnt_br   ));
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_cnt   (.in(w_inst_is_csu  ), .out(w_inst_cnt_csu  ));
 
-assign w_flush_valid = i_commit.commit & i_commit.flush_valid;
+assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
 
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   msrh_credit_return_master

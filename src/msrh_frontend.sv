@@ -111,7 +111,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end
         WAIT_FB_FREE : begin
-          if (w_inst_buffer_ready) begin
+          if (w_inst_buffer_ready & w_s0_ic_ready) begin
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
