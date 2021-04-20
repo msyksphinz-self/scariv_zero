@@ -148,14 +148,14 @@ int main(int argc, char** argv) {
 
 void stop_sim(int code)
 {
-  fprintf(stderr, "===============================\n");
-  fprintf(stderr, "SIMULATION FINISH : ");
+  fprintf(stdout, "===============================\n");
+  fprintf(stdout, "SIMULATION FINISH : ");
   if (code == 0) {
-    fprintf(stderr, "PASS\n");
+    fprintf(stdout, "PASS\n");
   } else {
-    fprintf(stderr, "FAIL (CODE=%d)\n", code);
+    fprintf(stdout, "FAIL (CODE=%d)\n", code);
   }
-  fprintf(stderr, "===============================\n");
+  fprintf(stdout, "===============================\n");
 
   dut->final();
   if (dump_fst_enable) tfp->close();

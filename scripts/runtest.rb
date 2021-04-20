@@ -36,11 +36,11 @@ $test_table.each{ |test|
   system("#{command_str} 2> #{stderr_txt} 1> #{stdout_txt}")
   print test["name"] + "\t: "
   result_stdout = `cat #{stdout_txt}`
-  if result_stdout.include?("SIMULATION FINISH : PASS")
+  if result_stdout.include?("SIMULATION FINISH : FAIL")
+    print "ERROR\n"
+  elsif result_stdout.include?("SIMULATION FINISH : PASS")
     print "PASS\n"
     pass_num = pass_num + 1
-  elsif result_stdout.include?("SIMULATION FINISH : FAIL")
-    print "ERROR\n"
   else
     print "UNKNOWN\n"
   end
