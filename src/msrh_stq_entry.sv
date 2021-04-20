@@ -92,7 +92,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         msrh_lsu_pkg::STQ_INIT :
           if (i_disp_load) begin
             r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
-          end else if (i_ex1_q_valid) begin
+          end else if (r_entry.is_valid & i_ex1_q_valid) begin
             r_entry.state           <= i_ex1_q_updates.hazard_valid ? msrh_lsu_pkg::STQ_TLB_HAZ :
                                        !i_ex1_q_updates.st_data_valid ? msrh_lsu_pkg::STQ_WAIT_ST_DATA :
                                        msrh_lsu_pkg::STQ_DONE;

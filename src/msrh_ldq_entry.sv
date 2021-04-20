@@ -89,7 +89,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         LDQ_INIT :
           if (i_disp_load) begin
             r_entry <= assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
-          end else if (i_ex1_q_valid) begin
+          end else if (r_entry.is_valid & i_ex1_q_valid) begin
             r_entry.state           <= i_ex1_q_updates.hazard_valid ? LDQ_TLB_HAZ : LDQ_EX2_RUN;
             r_entry.vaddr           <= i_ex1_q_updates.vaddr;
             r_entry.paddr           <= i_ex1_q_updates.paddr;
