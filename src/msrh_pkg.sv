@@ -218,7 +218,7 @@ function issue_t assign_issue_t(disp_t in,
 
 endfunction  // assign_issue_t
 
-  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, DEAD } sched_state_t;
+  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
 
   typedef struct packed {
     logic valid;

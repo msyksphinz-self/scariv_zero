@@ -32,7 +32,8 @@ module msrh_sched_entry
    input                                       msrh_pkg::commit_blk_t i_commit,
 
    output logic                                o_entry_done,
-   input logic                                 i_done_accept,
+   output logic                                o_entry_wait_complete,
+   input logic                                 i_done_complete,
    output logic                                o_entry_dead_done,
    output logic [msrh_pkg::CMT_BLK_W-1:0]      o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
@@ -176,12 +177,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_issued <= 1'b0;
   end else begin
     if (w_entry_flush) begin
-      r_state <= msrh_pkg::DEAD;
-      // r_entry.valid <= 1'b0;
-      // r_issued      <= 1'b0;
-      // // prevent all updates from Pipeline
-      // r_entry.cmt_id <= 'h0;
-      // r_entry.grp_id <= 'h0;
+      if (r_state == msrh_pkg::WAIT_COMPLETE) begin
+        r_state <= msrh_pkg::INIT;
+        r_entry.valid <= 1'b0;
+        r_issued      <= 1'b0;
+        // prevent all updates from Pipeline
+        r_entry.cmt_id <= 'h0;
+        r_entry.grp_id <= 'h0;
+      end else begin
+        r_state <= msrh_pkg::DEAD;
+      end
     end else begin
       case (r_state)
         msrh_pkg::INIT : begin
@@ -216,10 +221,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end
         msrh_pkg::DONE : begin
-          if (i_done_accept) begin
+          r_state <= msrh_pkg::WAIT_COMPLETE;
+        end
+        msrh_pkg::WAIT_COMPLETE : begin
+          if (i_done_complete) begin
+            r_state <= msrh_pkg::INIT;
             r_entry.valid <= 1'b0;
             r_issued <= 1'b0;
-            r_state <= msrh_pkg::INIT;
           end
         end
         msrh_pkg::DEAD : begin
@@ -245,7 +253,8 @@ assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & !r_issued & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
-assign o_entry_done = (r_state == msrh_pkg::DONE) & !w_entry_flush;
+assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
+assign o_entry_wait_complete = (r_state == msrh_pkg::WAIT_COMPLETE);
 assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
