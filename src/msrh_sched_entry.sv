@@ -7,7 +7,7 @@ module msrh_sched_entry
    input logic                                 i_reset_n,
 
    input logic                                 i_put,
-   input logic [msrh_pkg::CMT_BLK_W-1:0]       i_cmt_id,
+   input logic [msrh_pkg::CMT_ID_W-1:0]       i_cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_grp_id,
    input                                       msrh_pkg::disp_t i_put_data,
 
@@ -35,7 +35,7 @@ module msrh_sched_entry
    output logic                                o_entry_wait_complete,
    input logic                                 i_done_complete,
    output logic                                o_entry_dead_done,
-   output logic [msrh_pkg::CMT_BLK_W-1:0]      o_cmt_id,
+   output logic [msrh_pkg::CMT_ID_W-1:0]      o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
    output logic                                o_except_valid,
    output                                      msrh_pkg::except_t o_except_type

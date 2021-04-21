@@ -5,16 +5,16 @@ initial begin
   pipe_fp = $fopen("pipetrace.log");
 end
 
-logic [msrh_pkg::CMT_ID_SIZE-1: 0] rob_entries_valid;
-msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_ID_SIZE];
+logic [msrh_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;
+msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_ENTRY_SIZE];
 msrh_pkg::rob_entry_t committed_rob_entry;
-generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_ID_SIZE; r_idx++) begin : rob_loop
+generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_ENTRY_SIZE; r_idx++) begin : rob_loop
   assign rob_entries[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
   assign rob_entries_valid[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry.valid;
 end
 endgenerate
 
-logic [msrh_pkg::CMT_ID_SIZE-1: 0] w_commited_oh;
+logic [msrh_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
 logic [msrh_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
 assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id;
 assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? committed_rob_entry.grp_id :
@@ -23,7 +23,7 @@ assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? 
 bit_oh_or
   #(
     .T(msrh_pkg::rob_entry_t),
-    .WORDS(msrh_pkg::CMT_ID_SIZE)
+    .WORDS(msrh_pkg::CMT_ENTRY_SIZE)
     )
 committed_entry
   (
@@ -53,9 +53,9 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     if (&r_timeout_counter) begin
       $display("FATAL : COMMIT DEADLOCKED\n");
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-        if (rob_entries_valid[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id] &
-            rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].grp_id[grp_idx] &
-            !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].done_grp_id[grp_idx]) begin
+        if (rob_entries_valid[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]] &
+            rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]].grp_id[grp_idx] &
+            !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]].done_grp_id[grp_idx]) begin
           $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
                   $time,
                   /* verilator lint_off WIDTH */

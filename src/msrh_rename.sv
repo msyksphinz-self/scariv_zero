@@ -5,7 +5,7 @@ module msrh_rename
    input logic i_reset_n,
 
    disp_if.slave iq_disp,
-   input logic [msrh_pkg::CMT_BLK_W-1:0] i_sc_new_cmt_id,
+   input logic [msrh_pkg::CMT_ID_W-1:0] i_sc_new_cmt_id,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
    disp_if.master           sc_disp,

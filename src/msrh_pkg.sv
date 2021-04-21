@@ -24,7 +24,10 @@ package msrh_pkg;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
   localparam RNID_W = $clog2(RNID_SIZE);
 
-  localparam CMT_BLK_W = $clog2(CMT_ID_SIZE);
+  localparam CMT_ENTRY_W = $clog2(CMT_ENTRY_SIZE);
+
+  localparam CMT_ID_SIZE = CMT_ENTRY_SIZE * 2;
+  localparam CMT_ID_W = $clog2(CMT_ID_SIZE);
 
   localparam LRQ_ENTRY_SIZE = 8;
   localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
@@ -151,7 +154,7 @@ typedef enum logic [ 5: 0] {
     logic [31:0] inst;
     inst_cat_t   cat;
 
-    logic [CMT_BLK_W-1:0] cmt_id;
+    logic [CMT_ID_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
 
     logic rd_valid;
@@ -179,7 +182,7 @@ typedef enum logic [ 5: 0] {
 
 
 function issue_t assign_issue_t(disp_t in,
-                                logic [CMT_BLK_W-1:0] cmt_id,
+                                logic [CMT_ID_W-1:0] cmt_id,
                                 logic [DISP_SIZE-1:0] grp_id,
                                 logic rs1_rel_hit, logic rs2_rel_hit,
                                 logic rs1_phy_hit, logic rs2_phy_hit,
@@ -244,10 +247,10 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic                 valid;
-    logic [CMT_BLK_W-1:0] cmt_id;
+    logic [CMT_ID_W-1:0]  cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
     logic                 exc_valid;
-    except_t               exc_type;
+    except_t              exc_type;
   } done_rpt_t;
 
 // -----------------
@@ -255,7 +258,7 @@ endfunction  // assign_issue_t
 // -----------------
 typedef struct packed {
   logic                 commit;
-  logic [CMT_BLK_W-1:0] cmt_id;
+  logic [CMT_ID_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
   logic                           upd_pc_valid;
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;

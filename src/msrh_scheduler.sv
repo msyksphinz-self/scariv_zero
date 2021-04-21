@@ -9,7 +9,7 @@ module msrh_scheduler
  input logic                           i_reset_n,
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input logic [msrh_pkg::CMT_BLK_W-1:0] i_cmt_id,
+ input logic [msrh_pkg::CMT_ID_W-1:0] i_cmt_id,
  input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
@@ -50,7 +50,7 @@ logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_dead_done;
-logic [msrh_pkg::CMT_BLK_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
+logic [msrh_pkg::CMT_ID_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
 logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
 msrh_pkg::except_t                    w_entry_except_type [ENTRY_SIZE];
@@ -207,7 +207,7 @@ assign o_iss_index_oh = w_picked_inst_oh;
 // --------------
 // Done signals
 // --------------
-bit_oh_or #(.T(logic[msrh_pkg::CMT_BLK_W-1:0]),      .WORDS(ENTRY_SIZE)) bit_oh_entry       (.i_oh(w_entry_done), .i_data(w_entry_cmt_id    ), .o_selected(o_done_report.cmt_id  ));
+bit_oh_or #(.T(logic[msrh_pkg::CMT_ID_W-1:0]),      .WORDS(ENTRY_SIZE)) bit_oh_entry       (.i_oh(w_entry_done), .i_data(w_entry_cmt_id    ), .o_selected(o_done_report.cmt_id  ));
 bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(ENTRY_SIZE)) bit_oh_grp_id      (.i_oh(w_entry_done), .i_data(w_entry_grp_id    ), .o_selected(o_done_report.grp_id  ));
 bit_oh_or #(.T(msrh_pkg::except_t), .WORDS(ENTRY_SIZE))                  bit_oh_except_type (.i_oh(w_entry_done), .i_data(w_entry_except_type), .o_selected(o_done_report.exc_type));
 

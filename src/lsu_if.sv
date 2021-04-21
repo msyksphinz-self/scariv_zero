@@ -46,7 +46,7 @@ endinterface // lsu_replay_if
 interface fwd_check_if;
 
 logic                           valid;
-logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 logic [riscv_pkg::PADDR_W-1: 3] paddr;
 logic [ 7: 0]                   paddr_dw;

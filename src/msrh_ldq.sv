@@ -246,7 +246,7 @@ module ex1_update_select
   import msrh_lsu_pkg::*;
   (
    input ex1_q_update_t i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
-   input logic [msrh_pkg::CMT_BLK_W-1: 0] cmt_id,
+   input logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id,
    output [msrh_conf_pkg::LSU_INST_NUM-1: 0]   o_ex1_q_valid,
    output                                 ex1_q_update_t o_ex1_q_updates

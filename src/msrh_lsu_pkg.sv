@@ -154,7 +154,7 @@ typedef struct packed {
   msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
-  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   logic                           hazard_valid;
   logic [MEM_Q_SIZE-1:0]          index_oh;
@@ -174,7 +174,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic                                valid;
-  logic [msrh_pkg::CMT_BLK_W-1:0]      cmt_id;
+  logic [msrh_pkg::CMT_ID_W-1:0]      cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   logic [riscv_pkg::PADDR_W-1: 3]      paddr;
   logic [ 7: 0]                        dw;
@@ -246,7 +246,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   stq_state_t                     state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
@@ -260,7 +260,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          done;
-  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 } store_op_t;
 
@@ -297,7 +297,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  logic [msrh_pkg::CMT_BLK_W-1:0] cmt_id;
+  logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   ldq_state_t                     state;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;

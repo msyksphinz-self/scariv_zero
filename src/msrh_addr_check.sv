@@ -2,7 +2,7 @@ module msrh_addr_check
   import decoder_lsu_ctrl_pkg::*;
   import msrh_lsu_pkg::*;
 (
- input logic [msrh_pkg::CMT_BLK_W-1:0]      i_entry_cmt_id,
+ input logic [msrh_pkg::CMT_ID_W-1:0]      i_entry_cmt_id,
  input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_entry_grp_id,
  input logic [riscv_pkg::PADDR_W-1: 0]      i_entry_paddr,
  input decoder_lsu_ctrl_pkg::size_t         i_entry_size,
@@ -17,7 +17,7 @@ generate for(genvar idx = 0; idx < msrh_conf_pkg::LSU_INST_NUM; idx++) begin : p
   logic w_entry_is_older;
   logic w_cmt_is_older;
 
-  assign w_cmt_is_older = i_entry_cmt_id[msrh_pkg::CMT_BLK_W-1] ^ i_ex2_addr_check[idx].cmt_id[msrh_pkg::CMT_BLK_W-1] ?
+  assign w_cmt_is_older = i_entry_cmt_id[msrh_pkg::CMT_ID_W-1] ^ i_ex2_addr_check[idx].cmt_id[msrh_pkg::CMT_ID_W-1] ?
                           i_entry_cmt_id < i_ex2_addr_check[idx].cmt_id :
                           i_entry_cmt_id > i_ex2_addr_check[idx].cmt_id;
   assign w_entry_is_older = w_cmt_is_older ||
