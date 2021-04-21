@@ -17,6 +17,7 @@ module msrh_rename
    // -------------------------------
    // Credit Return Update interface
    // -------------------------------
+   cre_ret_if.slave  rob_cre_ret_if,
    cre_ret_if.master alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM],
    cre_ret_if.master lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
    cre_ret_if.master csu_cre_ret_if,
@@ -78,15 +79,17 @@ logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE): 0]         w_lsu_credits[msrh_conf_pkg:
 logic [$clog2(msrh_conf_pkg::RV_CSU_ENTRY_SIZE): 0] w_csu_credits;
 logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE): 0] w_br_credits;
 
+logic                                               w_rob_no_credits_remained;
 logic [msrh_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            w_lsu_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
 
-assign iq_disp.ready = !((|w_alu_no_credits_remained) |
+assign iq_disp.ready = !(w_rob_no_credits_remained |
+                         (|w_alu_no_credits_remained) |
                          (|w_lsu_no_credits_remained) |
-                           w_csu_no_credits_remained |
-                           w_bru_no_credits_remained);
+                         w_csu_no_credits_remained |
+                         w_bru_no_credits_remained);
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
   logic [RNID_W-1: 0] w_rd_rnid_tmp;
@@ -387,6 +390,24 @@ bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_cnt   (.in(w_inst_is_csu  ), .
 
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
 
+
+msrh_credit_return_master
+  #(.MAX_CREDITS(msrh_conf_pkg::CMT_ENTRY_SIZE))
+u_rob_credit_return
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_credit(~w_flush_valid & w_iq_fire),
+ .i_credit_val('h1),
+
+ .o_credits(),
+ .o_no_credits(w_rob_no_credits_remained),
+
+ .cre_ret_if (rob_cre_ret_if)
+);
+
+
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   msrh_credit_return_master
     #(.MAX_CREDITS(msrh_conf_pkg::RV_ALU_ENTRY_SIZE))
@@ -404,31 +425,6 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
 
    .cre_ret_if (alu_cre_ret_if[a_idx])
    );
-
-// `ifdef SIMULATION
-//   logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] r_alu_credits_dly1;
-//   logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] r_alu_credits_dly2;
-//   logic [msrh_conf_pkg::RV_ALU_ENTRY_SIZE-1:0]       r_entry_valid_dly1;
-//   always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//     if (!i_reset_n) begin
-//       r_alu_credits_dly1 <= msrh_conf_pkg::RV_ALU_ENTRY_SIZE;
-//       r_alu_credits_dly2 <= msrh_conf_pkg::RV_ALU_ENTRY_SIZE;
-//
-//       r_entry_valid_dly1 <= 'h0;
-//     end else begin
-//       r_alu_credits_dly1 <= w_alu_credits[a_idx];
-//       r_alu_credits_dly2 <= r_alu_credits_dly1;
-//
-//       r_entry_valid_dly1 <= u_msrh_tile_wrapper.u_msrh_tile.alu_loop[a_idx].u_msrh_alu.u_msrh_scheduler.w_entry_valid;
-//       if ((1 << (msrh_conf_pkg::RV_ALU_ENTRY_SIZE - r_alu_credits_dly2)) -1 != r_entry_valid_dly1) begin
-//         $fatal(0, "ALU entry number and ticket number is different. alu entry bitmask = %x, ticket number %d\n",
-//                r_entry_valid_dly1,
-//                r_alu_credits_dly2);
-//       end
-//     end
-//   end
-// `endif // SIMULATION
-
 end // block: alu_cre_ret_loop
 endgenerate
 

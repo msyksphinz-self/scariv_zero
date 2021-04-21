@@ -7,6 +7,8 @@ module msrh_rob
 
    disp_if.watch                 sc_disp,
 
+   cre_ret_if.slave              cre_ret_if,
+
    output logic [CMT_ID_W-1: 0] o_sc_new_cmt_id,
 
    input done_rpt_t i_done_rpt [CMT_BUS_SIZE],
@@ -29,6 +31,9 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id;
 logic [DISP_SIZE-1: 0] w_cmt_except_valid_oh;
 except_t                except_type_selected;
 
+logic                                w_ignore_disp;
+logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
+
 // When this signal is 1, committer is killing uncommitted instructions
 logic                              r_killing_uncmts;
 logic                              w_killing_uncmts;
@@ -44,12 +49,30 @@ assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
 assign w_in_valid  = sc_disp.valid;
 assign w_out_valid = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
 
+logic                                      w_flush_valid;
+assign w_flush_valid = o_commit.commit & o_commit.flush_valid & !o_commit.all_dead;
 
 inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_clear (1'b0),
                                          .i_in_valid (w_in_valid ), .o_in_ptr (w_in_cmt_id  ),
                                          .i_out_valid(w_out_valid), .o_out_ptr(w_out_cmt_id));
 
+assign w_ignore_disp = w_flush_valid & (sc_disp.valid & sc_disp.ready);
+assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) +
+                             (w_ignore_disp   ? 'h1 : 'h0) ;
+
+msrh_credit_return_slave
+  #(.MAX_CREDITS(CMT_ENTRY_SIZE))
+u_credit_return_slave
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_return(o_commit.commit | w_ignore_disp),
+ .i_return_val(w_credit_return_val),
+
+ .cre_ret_if (cre_ret_if)
+ );
 
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : disp_loop
   assign w_disp_grp_id[d_idx] = sc_disp.inst[d_idx].valid;
@@ -81,7 +104,7 @@ logic w_load_valid;
      .i_commit_finish  ((w_entry_all_done[c_idx] | r_killing_uncmts) &
                         (w_out_cmt_id[CMT_ENTRY_W-1:0] == c_idx)),
 
-     .i_kill (o_commit.commit & o_commit.flush_valid & !o_commit.all_dead),
+     .i_kill (w_flush_valid),
 
      .br_upd_if (ex3_br_upd_if)
      );
@@ -163,7 +186,7 @@ endgenerate
 function void dump_entry_json(int fp, rob_entry_t entry, int index);
 
   if (entry.valid) begin
-    $fwrite(fp, "    \"msrh_rob_entry[%d]\" : {", index[$clog2(CMT_ID_SIZE)-1:0]);
+    $fwrite(fp, "    \"msrh_rob_entry[%d]\" : {", index[$clog2(CMT_ENTRY_SIZE)-1:0]);
     $fwrite(fp, "valid:%d, ", entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
 
@@ -184,7 +207,7 @@ function void dump_json(int fp);
     $fwrite(fp, "    in_cmt_id: %d,\n", w_in_cmt_id);
     $fwrite(fp, "    out_cmt_id: %d,\n", w_out_cmt_id);
     $fwrite(fp, "    killing: %d,\n", w_killing_uncmts);
-    for (int c_idx = 0; c_idx < CMT_ID_SIZE; c_idx++) begin
+    for (int c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin
       dump_entry_json (fp, w_entries[c_idx], c_idx);
     end
     $fwrite(fp, "  },\n");
