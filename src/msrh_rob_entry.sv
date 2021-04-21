@@ -4,7 +4,7 @@ module msrh_rob_entry
    input logic                                i_clk,
    input logic                                i_reset_n,
 
-   input logic [CMT_ID_W-1:0]                 i_cmt_id,
+   input logic [CMT_ENTRY_W-1:0]              i_cmt_id,
 
    input logic                                i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1]      i_load_pc_addr,
@@ -35,7 +35,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   done_rpt_t                w_done_rpt_selected;
   for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
     assign w_done_rpt_tmp_valid[c_idx] = i_done_rpt[c_idx].valid &
-                                         i_done_rpt[c_idx].cmt_id[CMT_ID_W-1:0] == i_cmt_id &&
+                                         i_done_rpt[c_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id &&
                                          i_done_rpt[c_idx].grp_id == (1 << d_idx);
   end
   assign w_done_rpt_valid[d_idx] = |w_done_rpt_tmp_valid;
@@ -84,7 +84,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.dead <= r_entry.dead | i_kill;
 
       // Branch condition update
-      if (br_upd_if.update & (br_upd_if.cmt_id == i_cmt_id)) begin
+      if (br_upd_if.update & (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id)) begin
         r_entry.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] <= 1'b1;
         r_entry.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] <= br_upd_if.vaddr;
       end

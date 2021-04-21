@@ -16,7 +16,7 @@ endgenerate
 
 logic [msrh_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
 logic [msrh_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
-assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id;
+assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id;
 assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? committed_rob_entry.grp_id :
                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
 
@@ -60,7 +60,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
                   $time,
                   /* verilator lint_off WIDTH */
                   (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
-                  u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
+                  u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id,
                   1 << grp_idx,
                   rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst,
                   rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst);

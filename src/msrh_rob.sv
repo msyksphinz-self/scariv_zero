@@ -19,7 +19,7 @@ module msrh_rob
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
-logic [CMT_ID_W-1:0] w_in_cmt_id, w_out_cmt_id;
+logic [CMT_ID_W-1:0]     w_in_cmt_id, w_out_cmt_id;
 logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
@@ -43,8 +43,10 @@ logic                              w_killing_uncmts;
 //
 logic                                      w_in_valid, w_out_valid;
 logic [CMT_ENTRY_W-1:0]                    w_out_cmt_entry_id;
+logic [CMT_ENTRY_W-1:0]                    w_in_cmt_entry_id;
 
 assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
+assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
 
 assign w_in_valid  = sc_disp.valid;
 assign w_out_valid = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
@@ -82,7 +84,7 @@ endgenerate
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
-  assign w_load_valid = sc_disp.valid & (w_in_cmt_id[CMT_ENTRY_W-1:0] == c_idx);
+  assign w_load_valid = sc_disp.valid & (w_in_cmt_entry_id == c_idx);
 
   msrh_rob_entry u_entry
     (
@@ -102,7 +104,7 @@ logic w_load_valid;
      .o_entry          (w_entries[c_idx]),
      .o_block_all_done (w_entry_all_done[c_idx]),
      .i_commit_finish  ((w_entry_all_done[c_idx] | r_killing_uncmts) &
-                        (w_out_cmt_id[CMT_ENTRY_W-1:0] == c_idx)),
+                        (w_out_cmt_entry_id == c_idx)),
 
      .i_kill (w_flush_valid),
 
