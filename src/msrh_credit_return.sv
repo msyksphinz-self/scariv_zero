@@ -37,7 +37,6 @@ logic [$clog2(MAX_CREDITS): 0] r_credit_inc;
 
 logic                          w_no_credits;
 
-/* verilator lint_off WIDTH */
 assign w_no_credits = r_credits + cre_ret_if.return_vals < i_credit_val;
 assign w_credits_next =  w_no_credits ? r_credits + cre_ret_if.return_vals :
                          r_credits - (i_get_credit ? i_credit_val : 'h0) + cre_ret_if.return_vals;
@@ -52,7 +51,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-/* verilator lint_off WIDTH */
 assign cre_ret_if.credit_vals = r_credit_inc;
 
 assign o_credits    = r_credits;
@@ -78,7 +76,6 @@ logic [$clog2(MAX_CREDITS): 0] r_return_dec;
 
 logic [$clog2(MAX_CREDITS): 0] w_credits_diff;
 
-/* verilator lint_off WIDTH */
 assign w_credits_diff = ((|cre_ret_if.credit_vals) ? cre_ret_if.credit_vals : 'h0) -
                         (i_get_return ? i_return_val : 'h0);
 
