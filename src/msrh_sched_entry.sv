@@ -64,7 +64,8 @@ logic     w_rs1_mispredicted;
 logic     w_rs2_mispredicted;
 
 logic     w_entry_flush;
-logic     w_entry_to_dead;
+// logic     w_entry_to_dead;
+logic     w_entry_complete;
 logic     w_dead_state_clear;
 
 msrh_pkg::sched_state_t r_state;
@@ -166,11 +167,13 @@ assign w_entry_flush = i_commit.commit &
                        i_commit.flush_valid &
                        !i_commit.all_dead &
                        r_entry.valid;
-assign w_entry_to_dead = w_entry_flush &
-                         (i_commit.cmt_id != r_entry.cmt_id);
+// assign w_entry_to_dead = w_entry_flush &
+// (i_commit.cmt_id != r_entry.cmt_id);
 assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
+
+assign w_entry_complete = i_done_complete | (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -229,9 +232,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       msrh_pkg::WAIT_COMPLETE : begin
-        if (w_entry_to_dead) begin
+        /* if (w_entry_to_dead) begin
           r_state <= msrh_pkg::DEAD;
-        end else if (i_done_complete) begin
+        end else */
+        if (w_entry_complete) begin
           r_state <= msrh_pkg::INIT;
           r_entry.valid <= 1'b0;
           r_issued <= 1'b0;
@@ -269,6 +273,6 @@ assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
 assign o_except_type  = r_entry.except_type;
 assign o_entry_finish = (r_state == msrh_pkg::DEAD) & w_dead_state_clear |
-                        (r_state == msrh_pkg::WAIT_COMPLETE) & !w_entry_to_dead & i_done_complete;
+                        (r_state == msrh_pkg::WAIT_COMPLETE) & w_entry_complete;
 
 endmodule // msrh_sched_entry
