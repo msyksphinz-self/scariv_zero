@@ -49,7 +49,7 @@ logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_out_ptr;
 logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
-logic [ENTRY_SIZE-1:0]          w_entry_dead_done;
+logic [ENTRY_SIZE-1:0]          w_entry_finish;
 logic [msrh_pkg::CMT_ID_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
 logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
@@ -81,14 +81,13 @@ u_req_ptr
 
 logic                                w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
-logic [$clog2(ENTRY_SIZE): 0]        w_entry_dead_cnt;
+logic [$clog2(ENTRY_SIZE): 0]        w_entry_finish_cnt;
 
-bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_dead_cnt (.in(w_entry_dead_done), .out(w_entry_dead_cnt));
+bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_dead_cnt (.in(w_entry_finish), .out(w_entry_finish_cnt));
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_complete)  ? 'h1               : 'h0) +
-                             ((|w_entry_dead_done) ? w_entry_dead_cnt  : 'h0) +
-                             (w_ignore_disp        ? w_input_valid_cnt : 'h0) ;
+assign w_credit_return_val = ((|w_entry_finish)    ? w_entry_finish_cnt : 'h0) +
+                             (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(ENTRY_SIZE))
@@ -97,7 +96,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_entry_complete) | (|w_entry_dead_done) | w_ignore_disp),
+ .i_get_return((|w_entry_finish) | w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -191,7 +190,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_done      (w_entry_done[s_idx]),
     .o_entry_wait_complete (w_entry_wait_complete[s_idx]),
     .i_done_complete   (w_entry_complete[s_idx]),
-    .o_entry_dead_done (w_entry_dead_done[s_idx]),
+    .o_entry_finish    (w_entry_finish[s_idx]),
     .o_cmt_id          (w_entry_cmt_id[s_idx]),
     .o_grp_id          (w_entry_grp_id[s_idx]),
     .o_except_valid    (w_entry_except_valid[s_idx]),

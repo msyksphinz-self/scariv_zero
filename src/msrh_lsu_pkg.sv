@@ -238,7 +238,8 @@ typedef enum logic[3:0] {
   STQ_WAIT_ST_DATA = 5,
   STQ_WAIT_LRQ_REFILL = 6,
   STQ_COMMIT_L1D_CHECK = 7,
-  STQ_L1D_UPDATE = 8
+  STQ_L1D_UPDATE = 8,
+  STQ_DEAD = 9
 } stq_state_t;
 
 typedef struct packed {
@@ -281,7 +282,7 @@ typedef struct packed {
 // LDQ
 // ---------
 
-typedef enum logic[2:0] {
+typedef enum logic[3:0] {
   LDQ_INIT = 0,
   LDQ_EX2_RUN = 1,
   LDQ_LRQ_HAZ = 2,
@@ -289,7 +290,8 @@ typedef enum logic[2:0] {
   LDQ_TLB_HAZ = 4,
   LDQ_READY = 5,
   LDQ_CHECK_ST_DEPEND = 6,
-  LDQ_EX3_DONE = 7
+  LDQ_EX3_DONE = 7,
+  LDQ_DEAD = 8
 } ldq_state_t;
 
 typedef struct packed {

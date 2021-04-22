@@ -28,11 +28,15 @@ module msrh_ldq_entry
  // Commit notification
  input                                           msrh_pkg::commit_blk_t i_commit,
 
+ output logic                                    o_entry_dead_done,
+
  input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
  input logic                                     i_ldq_done
  );
 
-ldq_entry_t r_entry;
+ldq_entry_t                                      r_entry;
+logic                                            w_entry_flush;
+logic                                            w_dead_state_clear;
 
 logic                                            w_lrq_is_hazard;
 logic                                            w_lrq_is_assigned;
@@ -47,6 +51,14 @@ logic                                            w_addr_conflict;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
+assign w_entry_flush = i_commit.commit &
+                       i_commit.flush_valid &
+                       !i_commit.all_dead &
+                       r_entry.is_valid;
+assign w_dead_state_clear = i_commit.commit &
+                            i_commit.all_dead &
+                            (i_commit.cmt_id == r_entry.cmt_id);
+
 assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT ||
                          i_ex2_q_updates.hazard_typ == LRQ_FULL;
 assign w_stq_is_hazard = i_ex2_q_updates.hazard_typ == STQ_DEPEND;
@@ -54,6 +66,8 @@ assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == LRQ_ASSIGNED;
 assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT &
                              i_lrq_resolve.valid &
                              (i_lrq_resolve.resolve_index_oh == i_ex2_q_updates.lrq_index_oh);
+
+assign o_entry_dead_done = (r_entry.state == LDQ_DEAD) & w_dead_state_clear;
 
 msrh_addr_check
   u_addr_check
@@ -76,14 +90,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.lrq_haz_index_oh <= 'h0;
     r_ex2_ldq_entries_recv <= 'h0;
   end else begin
-    if (i_commit.commit &
-        i_commit.flush_valid &
-        !i_commit.all_dead) begin
-      r_entry.state <= LDQ_INIT;
-      r_entry.is_valid <= 1'b0;
-      // prevent all updates from Pipeline
-      r_entry.cmt_id <= 'h0;
-      r_entry.grp_id <= 'h0;
+    if (w_entry_flush) begin
+      if ((i_commit.cmt_id == r_entry.cmt_id) &&
+          (r_entry.state == LDQ_EX3_DONE)) begin
+        r_entry.state <= LDQ_INIT;
+        r_entry.is_valid <= 1'b0;
+        // prevent all updates from Pipeline
+        r_entry.cmt_id <= 'h0;
+        r_entry.grp_id <= 'h0;
+      end else begin
+        r_entry.state <= LDQ_DEAD;
+      end
     end else begin
       case (r_entry.state)
         LDQ_INIT :
@@ -154,6 +171,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_entry.state <= LDQ_INIT;
           end
         end
+        LDQ_DEAD : begin
+          if (w_dead_state_clear) begin
+            r_entry.state <= LDQ_INIT;
+            r_entry.is_valid <= 1'b0;
+            // prevent all updates from Pipeline
+            r_entry.cmt_id <= 'h0;
+            r_entry.grp_id <= 'h0;
+          end
+        end // case: msrh_pkg::DEAD
         LDQ_CHECK_ST_DEPEND: begin
           // Younger Store Instruction, address conflict
           if (w_addr_conflict) begin

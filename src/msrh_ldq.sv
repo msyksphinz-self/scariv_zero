@@ -5,7 +5,8 @@ module msrh_ldq
    input logic                           i_reset_n,
 
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
-   disp_if.slave disp,
+   disp_if.slave                              disp,
+   cre_ret_if.slave                           cre_ret_if,
 
    // Updates from LSU Pipeline EX1 stage
    input ex1_q_update_t        i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
@@ -39,15 +40,44 @@ logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::LDQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_conf_pkg::LDQ_SIZE] ;
 
+ldq_entry_t w_ldq_done_entry;
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_entry_dead_done;
+
 logic                                w_flush_valid;
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
+
+// --------------------------------
+// Credit & Return Interface
+// --------------------------------
+logic                                w_ignore_disp;
+logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_credit_return_val;
+logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_dead_cnt;
+
+bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_entry_dead_cnt (.in(w_entry_dead_done), .out(w_entry_dead_cnt));
+
+assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
+assign w_credit_return_val = ((|w_ldq_done_oh)     ? 'h1               : 'h0) +
+                             ((|w_entry_dead_done) ? w_entry_dead_cnt  : 'h0) +
+                             (w_ignore_disp        ? w_disp_picked_num : 'h0) ;
+
+msrh_credit_return_slave
+  #(.MAX_CREDITS(msrh_conf_pkg::LDQ_SIZE))
+u_credit_return_slave
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_return((|w_ldq_done_oh) | (|w_entry_dead_done) | w_ignore_disp),
+ .i_return_val(w_credit_return_val),
+
+ .cre_ret_if (cre_ret_if)
+ );
+
 
 //
 // Done Selection
 //
-ldq_entry_t w_ldq_done_entry;
-logic [msrh_conf_pkg::LDQ_SIZE-1:0]  w_ldq_done_oh;
-
 msrh_disp_pickup
   #(
     .PORT_BASE(0),
@@ -151,6 +181,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_stq_resolve (i_stq_resolve),
 
      .i_commit (i_commit),
+
+     .o_entry_dead_done (w_entry_dead_done[l_idx]),
 
      .i_ex3_done (i_ex3_done),
      .i_ldq_done (w_ldq_done_oh[l_idx])
