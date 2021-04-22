@@ -135,7 +135,7 @@ msrh_frontend u_frontend (
 
   .csr_info (w_csr_info),
 
-  .s3_disp (w_iq_disp)
+  .iq_disp (w_iq_disp)
 );
 
   // msrh_decoder u_decoder (

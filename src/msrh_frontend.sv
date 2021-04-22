@@ -13,7 +13,7 @@ module msrh_frontend
   csr_info_if.slave           csr_info,
 
  // Dispatch Info
- disp_if.master s3_disp
+ disp_if.master iq_disp
 );
 
 // ==============
@@ -243,7 +243,7 @@ u_msrh_inst_buffer
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
 
-   .s3_disp        (s3_disp)
+   .iq_disp        (iq_disp)
    );
 
 endmodule // msrh_frontend
