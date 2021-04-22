@@ -450,6 +450,7 @@ void step_spike(long long time, long long rtl_pc,
           rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
+  auto iss_insn = p->get_state()->insn;
 
   if (!is_equal_xlen(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");
@@ -459,6 +460,19 @@ void step_spike(long long time, long long rtl_pc,
       stop_sim(1);
       return;
   }
+  if (static_cast<int>(iss_insn.bits()) != rtl_insn) {
+      fprintf(stderr, "==========================================\n");
+      fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
+              rtl_insn, static_cast<uint32_t>(iss_insn.bits()));
+      fprintf(stderr, "            RTL = %s\n",
+              disasm->disassemble(rtl_insn).c_str());
+      fprintf(stderr, "            ISS = %s\n",
+              disasm->disassemble(iss_insn.bits()).c_str());
+      fprintf(stderr, "==========================================\n");
+      stop_sim(1);
+      return;
+  }
+
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
