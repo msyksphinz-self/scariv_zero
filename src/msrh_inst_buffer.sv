@@ -59,6 +59,9 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 1]        pc;
   logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
+`ifdef SIMULATION
+  logic [riscv_pkg::VADDR_W-1: 0]        pc_dbg;
+`endif // SIMULATION
 } inst_buf_t;
 
 inst_buf_t r_inst_queue[msrh_pkg::INST_BUF_SIZE];
@@ -118,6 +121,9 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].data <= i_inst_in;
         r_inst_queue[idx].pc   <= i_inst_pc;
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
+`ifdef SIMULATION
+        r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
+`endif // SIMULATION
       end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx)) begin
         r_inst_queue[idx].valid  <= 1'b0;
       end // if (i_inst_valid & o_inst_ready)

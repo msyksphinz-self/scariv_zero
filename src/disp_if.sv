@@ -6,6 +6,11 @@ interface disp_if;
   logic                             is_br_included; // When Branch Instruction is included
   logic valid;
   logic ready;
+
+`ifdef SIMULATION
+  logic [riscv_pkg::VADDR_W-1:0]  pc_addr_debug;
+  assign pc_addr_debug = {pc_addr, 1'b0};
+`endif // SIMULATION
   modport master(
     output valid,
     output pc_addr,
