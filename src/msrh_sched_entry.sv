@@ -173,7 +173,7 @@ assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
-assign w_entry_complete = i_done_complete | (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
+assign w_entry_complete = /* i_done_complete | */ (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
