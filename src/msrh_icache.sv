@@ -154,6 +154,9 @@ assign o_s2_resp.addr  = r_s2_vaddr [VADDR_W-1: 1];
 assign o_s2_resp.data  = w_s2_selected_data;
 assign o_s2_resp.be    = {ICACHE_DATA_B_W{1'b1}} &
                          ~((1 << r_s2_vaddr[$clog2(ICACHE_DATA_B_W)-1: 0])-1);
+`ifdef SIMULATION
+assign o_s2_resp.addr_dbg  = r_s2_vaddr [VADDR_W-1: 0];
+`endif // SIMULATION
 
 // ======================
 // IC Miss State Machine

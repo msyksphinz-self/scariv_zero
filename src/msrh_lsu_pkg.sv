@@ -48,6 +48,9 @@ package msrh_lsu_pkg;
     logic [riscv_pkg::VADDR_W-1:1]      addr;
     logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
     logic [ICACHE_DATA_B_W-1:0] be;
+`ifdef SIMULATION
+    logic [riscv_pkg::VADDR_W-1:0] addr_dbg;
+`endif // SIMULATION
   } ic_resp_t;
 
   typedef enum logic [4:0] {

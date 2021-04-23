@@ -86,7 +86,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_if_state <= w_if_state_next;
 
     if (w_commit_upd_pc) begin
-      if (w_if_state_next == ISSUED) begin
+      if (w_s0_ic_req.valid & w_s0_ic_ready) begin
         r_s0_vaddr <= (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                       (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
@@ -95,9 +95,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else begin
       case (r_if_state)
         ISSUED : begin
-          if (w_s2_ic_miss) begin
+          if (w_s2_ic_miss & !r_s2_clear) begin
             r_s0_vaddr <= w_s2_ic_miss_vaddr;
-          end else if (!w_inst_buffer_ready) begin
+          end else if (w_s2_inst_valid & !w_inst_buffer_ready) begin
             r_s0_vaddr <= {w_s2_ic_resp.addr, 1'b0};
           end else begin
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -129,7 +129,7 @@ always_comb begin
       w_if_state_next = ISSUED;
     end
     ISSUED : begin
-      if (w_s2_ic_miss) begin
+      if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_RD;
       end else if (!w_inst_buffer_ready) begin
         w_if_state_next = WAIT_FB_FREE;
@@ -177,7 +177,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
   end else begin
     r_s1_valid <= r_s0_valid;
-    r_s1_clear <= w_s0_ic_req.valid & ~w_inst_buffer_ready;
+    r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= w_s0_tlb_resp.miss;
   end
@@ -190,14 +190,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_clear <= 1'b0;
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear & ~w_commit_flush_valid;
+    r_s2_clear <= r_s1_clear;
   end
 end
 
 
-assign w_s0_ic_req.valid = (r_if_state == ISSUED) |
+assign w_s0_ic_req.valid = ((r_if_state == ISSUED) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready))  |
                            ((r_if_state == WAIT_RD) & w_s0_ic_ready) |
-                           ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready);
+                           ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready & w_s0_ic_ready);
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
 assign w_s2_inst_valid = w_s2_ic_resp.valid & !r_s1_clear & !r_s2_clear;
