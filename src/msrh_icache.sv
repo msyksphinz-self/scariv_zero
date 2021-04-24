@@ -33,12 +33,13 @@ logic                        w_s1_hit;
 logic                        r_s2_valid;
 logic                        r_s2_hit;
 logic [ICACHE_WAY_W-1 : 0]   r_s2_tag_hit;
+logic [PADDR_W-1:0]          r_s2_paddr;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_data[ICACHE_WAY_W];
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
 
 logic [L2_CMD_TAG_W-1: 0]                 r_ic_req_tag;
 
-typedef enum                              { ICInit, ICResp } ic_state_t;
+typedef enum                              { ICInit, ICReq, ICResp } ic_state_t;
 ic_state_t r_ic_state;
 logic                                     ic_l2_resp_fire;
 logic [VADDR_W-1: 0]                      r_s2_vaddr;
@@ -164,9 +165,8 @@ assign o_s2_resp.addr_dbg  = r_s2_vaddr [VADDR_W-1: 0];
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ic_state <= ICInit;
-    ic_l2_req.valid <= 1'b0;
-    ic_l2_req.payload <= 'h0;
 
+    r_s2_paddr <= 'h0;
     r_s2_waiting_vaddr <= 'h0;
 
     r_ic_req_tag <= 'h0;
@@ -174,20 +174,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case (r_ic_state)
       ICInit : begin
         if (~i_flush_valid & r_s1_valid & !w_s1_hit) begin
-          ic_l2_req.valid   <= 1'b1;
-          ic_l2_req.payload.cmd  <= M_XRD;
-          ic_l2_req.payload.addr <= i_s1_paddr;
-          ic_l2_req.payload.tag  <= {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-1){1'b0}}};
-          ic_l2_req.payload.data <= 'h0;
-          ic_l2_req.payload.byte_en <= 'h0;
-          if (ic_l2_req.ready) begin
-            r_ic_state <= ICResp;
-            r_s2_waiting_vaddr <= i_s1_paddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
-          end
+          // if (ic_l2_req.ready) begin
+          r_ic_state <= ICReq;
+          r_s2_paddr <= i_s1_paddr;
+          r_s2_waiting_vaddr <= i_s1_paddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+          // end
+        end
+      end // case: ICInit
+      ICReq : begin
+        if (ic_l2_req.ready) begin
+          r_ic_state <= ICResp;
         end
       end
       ICResp : begin
-        ic_l2_req.valid   <= 1'b0;
         if (ic_l2_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
@@ -197,6 +196,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+assign ic_l2_req.valid           = (r_ic_state == ICReq);
+assign ic_l2_req.payload.cmd     = M_XRD;
+assign ic_l2_req.payload.addr    = r_s2_paddr;
+assign ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-1){1'b0}}};
+assign ic_l2_req.payload.data    = 'h0;
+assign ic_l2_req.payload.byte_en = 'h0;
 assign ic_l2_resp.ready = 1'b1;
 
 assign o_s0_ready = (r_ic_state == ICInit);
