@@ -14,8 +14,8 @@ module msrh_rough_older_check
 logic                                       w_cmt_is_older;
 
 assign w_cmt_is_older = i_cmt_id0[msrh_pkg::CMT_ID_W-1] ^ i_cmt_id1[msrh_pkg::CMT_ID_W-1] ?
-                        i_cmt_id0 > i_cmt_id1 :
-                        i_cmt_id0 < i_cmt_id1 ;
+                        i_cmt_id0[msrh_pkg::CMT_ID_W-2:0] > i_cmt_id1[msrh_pkg::CMT_ID_W-2:0] :
+                        i_cmt_id0[msrh_pkg::CMT_ID_W-2:0] < i_cmt_id1[msrh_pkg::CMT_ID_W-2:0] ;
 assign o_0_older_than_1 = w_cmt_is_older ||
                           (i_cmt_id0 == i_cmt_id1 && i_grp_id0 < i_grp_id1);
 
