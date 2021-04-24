@@ -41,8 +41,9 @@ logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::L
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_conf_pkg::LDQ_SIZE] ;
 
 ldq_entry_t w_ldq_done_entry;
+logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_entry_dead_done;
+logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
 logic                                w_flush_valid;
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
@@ -54,12 +55,9 @@ logic                                w_ignore_disp;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_credit_return_val;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_dead_cnt;
 
-bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_entry_dead_cnt (.in(w_entry_dead_done), .out(w_entry_dead_cnt));
-
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_ldq_done_oh)     ? 'h1               : 'h0) +
-                             ((|w_entry_dead_done) ? w_entry_dead_cnt  : 'h0) +
-                             (w_ignore_disp        ? w_disp_picked_num : 'h0) ;
+assign w_credit_return_val = ((|w_entry_complete) ? 'h1               : 'h0) +
+                             (w_ignore_disp       ? w_disp_picked_num : 'h0) ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(msrh_conf_pkg::LDQ_SIZE))
@@ -68,7 +66,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_ldq_done_oh) | (|w_entry_dead_done) | w_ignore_disp),
+ .i_get_return((|w_entry_complete) | w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -103,7 +101,7 @@ logic                        w_out_valid;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_valid  = |disp_picked_inst_valid;
-assign w_out_valid = o_done_report.valid;
+assign w_out_valid = |w_entry_complete;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
@@ -182,7 +180,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .i_commit (i_commit),
 
-     .o_entry_dead_done (w_entry_dead_done[l_idx]),
+     .o_entry_finish (w_entry_complete[l_idx]),
 
      .i_ex3_done (i_ex3_done),
      .i_ldq_done (w_ldq_done_oh[l_idx])
@@ -219,9 +217,10 @@ endgenerate
 // done logic
 // ===============
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : done_loop
-  assign w_ldq_done_oh[l_idx] = w_ldq_entries[l_idx].state == LDQ_EX3_DONE && (w_out_ptr == l_idx);
+  assign w_ldq_done_array[l_idx] = w_ldq_entries[l_idx].state == LDQ_EX3_DONE;
 end
 endgenerate
+bit_extract_msb #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_done_oh (.in(w_ldq_done_array), .out(w_ldq_done_oh));
 bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
 
 assign o_done_report.valid   = |w_ldq_done_oh;

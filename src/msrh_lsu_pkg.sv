@@ -295,7 +295,8 @@ typedef enum logic[3:0] {
   LDQ_READY = 5,
   LDQ_CHECK_ST_DEPEND = 6,
   LDQ_EX3_DONE = 7,
-  LDQ_DEAD = 8
+  LDQ_DEAD = 8,
+  LDQ_WAIT_COMPLETE = 9
 } ldq_state_t;
 
 typedef struct packed {
