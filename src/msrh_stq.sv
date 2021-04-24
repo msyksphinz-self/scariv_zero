@@ -104,6 +104,7 @@ u_credit_return_slave
 // Done Selection
 //
 stq_entry_t w_stq_done_entry;
+logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_array;
 logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
 
 logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req;
@@ -214,6 +215,8 @@ generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
      .o_entry (w_stq_entries[s_idx]),
 
      .i_rerun_accept (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
+
+     .i_stq_entry_done (w_stq_done_oh[s_idx]),
 
      .i_commit (i_commit),
 
@@ -336,9 +339,11 @@ assign o_stq_resolve.resolve_index_oh = w_resolve_st_data_haz | w_resolve_paddr_
 // Done Logic
 // ===============
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : done_loop
-  assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == STQ_DONE && (w_out_ptr == s_idx);
+  // assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == STQ_DONE && (w_out_ptr == s_idx);
+  assign w_stq_done_array[s_idx] = w_stq_entries[s_idx].state == STQ_DONE;
 end
 endgenerate
+bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_done_oh (.in(w_stq_done_array), .out(w_stq_done_oh));
 bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
 // ==============================
