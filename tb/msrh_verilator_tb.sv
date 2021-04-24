@@ -89,7 +89,9 @@ assign w_l2_req_tag     = w_l1d_req_valid ? w_l1d_req_tag     : i_msrh_reset_n ?
 assign w_l2_req_data    = w_l1d_req_valid ? w_l1d_req_data    : i_msrh_reset_n ? w_ic_req_data    : w_elf_req_data;
 assign w_l2_req_byte_en = w_l1d_req_valid ? w_l1d_req_byte_en : i_msrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
 
-assign w_ic_req_ready  = w_l2_req_ready ;
+
+assign w_ic_req_ready  = w_l1d_req_valid ? 1'b0 : w_l2_req_ready ;
+assign w_l1d_req_ready = w_l2_req_ready ;
 assign w_elf_req_ready = w_l2_req_ready ;
 
 assign w_ic_resp_valid = w_l2_resp_valid;

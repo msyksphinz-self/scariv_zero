@@ -132,7 +132,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                              w_lrq_is_hazard ? LDQ_LRQ_HAZ :
                              w_stq_is_hazard ? LDQ_STQ_HAZ :
                              w_lrq_is_assigned ? LDQ_READY : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                             LDQ_CHECK_ST_DEPEND;  // LDQ_EX3_DONE;
+                             LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
             r_entry.lrq_haz_index_oh <= i_ex2_q_updates.lrq_index_oh;
             r_entry.stq_haz_idx      <= i_ex2_q_updates.stq_haz_idx;
 `ifdef SIMULATION

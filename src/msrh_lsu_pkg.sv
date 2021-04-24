@@ -242,7 +242,8 @@ typedef enum logic[3:0] {
   STQ_WAIT_LRQ_REFILL = 6,
   STQ_COMMIT_L1D_CHECK = 7,
   STQ_L1D_UPDATE = 8,
-  STQ_DEAD = 9
+  STQ_DEAD = 9,
+  STQ_WAIT_COMMIT = 10
 } stq_state_t;
 
 typedef struct packed {
