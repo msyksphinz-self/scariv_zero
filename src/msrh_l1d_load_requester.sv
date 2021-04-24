@@ -128,7 +128,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
      .i_load       (w_load_entry_valid[b_idx] | (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx)),
      .i_load_entry (w_load_entry_valid[b_idx] ? load_entry : w_stq_load_entry),
 
-     .i_sent (l1d_ext_req.valid & w_lrq_ready_to_send_oh[b_idx]),
+     .i_sent (l1d_ext_req.valid & l1d_ext_req.ready & w_lrq_ready_to_send_oh[b_idx]),
      .o_entry (w_lrq_entries[b_idx])
      );
 
