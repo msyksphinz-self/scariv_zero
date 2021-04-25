@@ -54,10 +54,13 @@ assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_de
 logic                                w_ignore_disp;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_credit_return_val;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_dead_cnt;
+logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_complete_cnt;
+
+bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_entry_complete_cnt (.in(w_entry_complete), .out(w_entry_complete_cnt));
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_complete) ? 'h1               : 'h0) +
-                             (w_ignore_disp       ? w_disp_picked_num : 'h0) ;
+assign w_credit_return_val = ((|w_entry_complete) ? w_entry_complete_cnt : 'h0) +
+                             (w_ignore_disp       ? w_disp_picked_num    : 'h0) ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(msrh_conf_pkg::LDQ_SIZE))
@@ -71,7 +74,6 @@ u_credit_return_slave
 
  .cre_ret_if (cre_ret_if)
  );
-
 
 //
 // Done Selection
@@ -109,17 +111,6 @@ inoutptr_var #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_rese
                                           .i_rollback(w_flush_valid),
                                           .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                           .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
-
-`ifdef SIMULATION
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-  end else begin
-    if (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)]) begin
-      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
-    end
-  end
-end
-`endif // SIMULATION
 
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -229,6 +220,32 @@ assign o_done_report.grp_id  = w_ldq_done_entry.grp_id;
 assign o_done_report.exc_valid = 'h0;   // Temporary
 
 `ifdef SIMULATION
+// credit / return management assertion
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_ldq_valid;
+logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0]      w_entry_valid_cnt;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)]) begin
+      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
+    end
+  end
+end
+
+
+/* verilator lint_off WIDTH */
+bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_entry_valid_cnt (.in(w_ldq_valid), .out(w_entry_valid_cnt));
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (u_credit_return_slave.r_credits != w_entry_valid_cnt) begin
+      $fatal(0, "credit and entry number different. r_credits = %d, entry_mask = %x\n",
+             u_credit_return_slave.r_credits,
+             w_entry_valid_cnt);
+    end
+  end
+end
 
 function void dump_entry_json(int fp, ldq_entry_t entry, int index);
 
@@ -254,8 +271,7 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
 
 endfunction // dump_json
 
-logic [MEM_Q_SIZE-1: 0] w_ldq_valid;
-generate for (genvar l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
+generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin
   assign w_ldq_valid[l_idx] = w_ldq_entries[l_idx].is_valid;
 end
 endgenerate
@@ -263,7 +279,7 @@ endgenerate
 function void dump_json(int fp);
   if (|w_ldq_valid) begin
     $fwrite(fp, "  \"msrh_ldq\":{\n");
-    for (int l_idx = 0; l_idx < MEM_Q_SIZE; l_idx++) begin
+    for (int l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin
       dump_entry_json (fp, w_ldq_entries[l_idx], l_idx);
     end
     $fwrite(fp, "  },\n");

@@ -113,11 +113,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
     case (r_entry.state)
       STQ_INIT :
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_INIT;
-          r_entry.is_valid <= 1'b0;
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
+        if (w_entry_flush & r_entry.is_valid) begin
+          r_entry.state <= STQ_DEAD;
+          // r_entry.is_valid <= 1'b0;
+          // r_entry.cmt_id <= 'h0;
+          // r_entry.grp_id <= 'h0;
         end else if (i_disp_load) begin
           r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
         end else if (r_entry.is_valid & i_ex1_q_valid) begin
@@ -179,7 +179,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             end
           end else begin
             if (i_sq_lrq_index_oh != 'h0) begin
-              $fatal(0, "LRQ request inserte First request index_oh should be zero.");
+              $fatal(0, "LRQ request first request index_oh should be zero.");
             end
           end
 `endif // SIMULATION

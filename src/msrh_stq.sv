@@ -49,7 +49,7 @@ msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 
-stq_entry_t w_stq_entries[MEM_Q_SIZE];
+stq_entry_t w_stq_entries[msrh_conf_pkg::STQ_SIZE];
 
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
@@ -62,12 +62,12 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_entry_dead_done;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
 
 // Forwarding Logic
-logic [MEM_Q_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
-logic [MEM_Q_SIZE-1: 0]             w_ex2_stq_hazard[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_stq_hazard[msrh_conf_pkg::LSU_INST_NUM];
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
 
-logic [MEM_Q_SIZE-1: 0]             w_resolve_paddr_haz;
-logic [MEM_Q_SIZE-1: 0]             w_resolve_st_data_haz;
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_paddr_haz;
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_st_data_haz;
 
 logic                                w_flush_valid;
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
@@ -151,18 +151,7 @@ inoutptr_var #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_rese
                                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
                                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
 
-`ifdef SIMULATION
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-  end else begin
-    if (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)]) begin
-      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
-    end
-  end
-end
-`endif
-
-generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin : stq_loop
+generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
@@ -424,6 +413,31 @@ assign o_done_report.exc_valid = 'h0;   // Temporary
 
 
 `ifdef SIMULATION
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_valid;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0]      w_entry_valid_cnt;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)]) begin
+      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
+    end
+  end
+end
+
+/* verilator lint_off WIDTH */
+bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_entry_valid_cnt (.in(w_stq_valid), .out(w_entry_valid_cnt));
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (u_credit_return_slave.r_credits != w_entry_valid_cnt) begin
+      $fatal(0, "credit and entry number different. r_credits = %d, entry_mask = %x\n",
+             u_credit_return_slave.r_credits,
+             w_entry_valid_cnt);
+    end
+  end
+end
+
 
 function void dump_entry_json(int fp, stq_entry_t entry, int index);
 
@@ -450,8 +464,7 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
 
 endfunction // dump_json
 
-logic [MEM_Q_SIZE-1: 0] w_stq_valid;
-generate for (genvar s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
+generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin
   assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
 end
 endgenerate
@@ -459,7 +472,7 @@ endgenerate
 function void dump_json(int fp);
   if (|w_stq_valid) begin
     $fwrite(fp, "  \"msrh_stq\":{\n");
-    for (int s_idx = 0; s_idx < MEM_Q_SIZE; s_idx++) begin
+    for (int s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin
       dump_entry_json (fp, w_stq_entries[s_idx], s_idx);
     end
     $fwrite(fp, "  },\n");

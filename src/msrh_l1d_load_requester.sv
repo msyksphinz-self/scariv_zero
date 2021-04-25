@@ -55,6 +55,10 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_req_tag;
 
+// LRQ Search Registers
+logic                                         r_lrq_search_valid;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index;
+
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_load_valid (.in(~w_lrq_valids), .out(w_lrq_load_valid_oh));
 bit_cnt #(.WIDTH(msrh_conf_pkg::LSU_INST_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
 //
@@ -128,6 +132,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
      .i_load       (w_load_entry_valid[b_idx] | (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx)),
      .i_load_entry (w_load_entry_valid[b_idx] ? load_entry : w_stq_load_entry),
 
+     .i_clear (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+
      .i_sent (l1d_ext_req.valid & l1d_ext_req.ready & w_lrq_ready_to_send_oh[b_idx]),
      .o_entry (w_lrq_entries[b_idx])
      );
@@ -181,12 +187,14 @@ assign l1d_lrq_stq_miss_if.resp_payload.full         = l1d_lrq_stq_miss_if.load 
                                                        w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-1].valid;
 for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_buffer_loop
   assign w_hit_stq_lrq_same_addr_valid[b_idx] = l1d_lrq_stq_miss_if.load &
-                                              (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                               l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+                                                w_lrq_entries[b_idx].valid &
+                                                (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                 l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
+                                                ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]);  // L1D is loaded, Entry resolved
 end
 
 assign l1d_lrq_stq_miss_if.resp_payload.conflict     = |w_hit_stq_lrq_same_addr_valid;
-assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh = w_hit_stq_lrq_same_addr_valid;
+assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh =  w_hit_stq_lrq_same_addr_valid;
 assign w_stq_miss_lrq_load = l1d_lrq_stq_miss_if.load &
                              !l1d_lrq_stq_miss_if.resp_payload.full & !(|w_hit_stq_lrq_same_addr_valid);
 assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-2 : msrh_pkg::LRQ_ENTRY_SIZE-1;
@@ -222,9 +230,15 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 always_ff @ (posedge i_clk, posedge i_reset_n) begin
   if (!i_reset_n) begin
     o_lrq_resolve <= 'h0;
+
+    r_lrq_search_valid <= 1'b0;
+    r_lrq_search_index <= 'h0;
   end else begin
-    o_lrq_resolve.valid            <= lrq_search_if.valid;
-    o_lrq_resolve.resolve_index_oh <= 1 << lrq_search_if.index;
+    r_lrq_search_valid <= lrq_search_if.valid;
+    r_lrq_search_index <= 1 << lrq_search_if.index;
+
+    o_lrq_resolve.valid            <= r_lrq_search_valid;
+    o_lrq_resolve.resolve_index_oh <= r_lrq_search_index;
   end
 end
 
