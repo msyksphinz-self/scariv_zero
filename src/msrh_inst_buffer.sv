@@ -26,9 +26,9 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_pick_up;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disp;
 
@@ -237,11 +237,11 @@ assign w_inst_bru_pick_up   = w_inst_is_br;
 assign w_inst_csu_pick_up   = w_inst_is_csu;
 
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::LDQ_SIZE       )) u_ld_disp_pick_up    (.in(w_inst_is_ld      ),   .out(w_inst_ld_disp   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::STQ_SIZE       )) u_st_disp_pick_up    (.in(w_inst_is_st      ),   .out(w_inst_st_disp   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up),   .out(w_inst_mem_disp  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up   (.in(w_inst_bru_pick_up),   .out(w_inst_bru_disp  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up   (.in(w_inst_csu_pick_up),   .out(w_inst_csu_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up  ), .out(w_inst_mem_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disp_pick_up    (.in(w_inst_is_ld        ), .out(w_inst_ld_disp   ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up    (.in(w_inst_is_st        ), .out(w_inst_st_disp   ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up   (.in(w_inst_bru_pick_up  ), .out(w_inst_bru_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up   (.in(w_inst_csu_pick_up  ), .out(w_inst_csu_disp  ));
 
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp;
 
@@ -257,23 +257,26 @@ assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 // Dispatch Inst, Resource Count
 // -------------------------------
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disped;
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disped_pick_up (.in(w_inst_arith_disp & w_inst_disp_mask), .out(w_inst_arith_disped));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::LDQ_SIZE       )) u_ld_disped_pick_up    (.in(w_inst_ld_disp    & w_inst_disp_mask), .out(w_inst_ld_disped   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::STQ_SIZE       )) u_st_disped_pick_up    (.in(w_inst_st_disp    & w_inst_disp_mask), .out(w_inst_st_disped   ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disped_pick_up   (.in(w_inst_mem_disp   & w_inst_disp_mask), .out(w_inst_mem_disped  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disped_pick_up    (.in(w_inst_ld_disp    & w_inst_disp_mask), .out(w_inst_ld_disped   ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disped_pick_up    (.in(w_inst_st_disp    & w_inst_disp_mask), .out(w_inst_st_disped   ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disped_pick_up   (.in(w_inst_bru_disp   & w_inst_disp_mask), .out(w_inst_bru_disped  ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disped_pick_up   (.in(w_inst_csu_disp   & w_inst_disp_mask), .out(w_inst_csu_disped  ));
 
 logic [$clog2(msrh_conf_pkg::ARITH_DISP_SIZE): 0] w_inst_arith_cnt;
-logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0]        w_inst_ld_cnt;
-logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0]        w_inst_st_cnt;
+logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_mem_cnt;
+logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_ld_cnt;
+logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_st_cnt;
 logic [$clog2(msrh_conf_pkg::BRU_DISP_SIZE): 0]   w_inst_bru_cnt;
 logic [$clog2(msrh_conf_pkg::CSU_DISP_SIZE): 0]   w_inst_csu_cnt;
 
-bit_cnt #(.WIDTH(msrh_conf_pkg::ARITH_DISP_SIZE)) u_alu_inst_cnt (.in(w_inst_arith_disped), .out(w_inst_arith_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_alu_inst_cnt (.in(w_inst_arith_disped), .out(w_inst_arith_cnt));
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_rsrc_loop
   logic [$clog2(msrh_conf_pkg::ARITH_DISP_SIZE): 0]  alu_lane_width;
   assign alu_lane_width = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
@@ -284,14 +287,26 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
 end
 endgenerate
 
-bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_ld_inst_cnt (.in(w_inst_ld_disped), .out(w_inst_ld_cnt));
-bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_st_inst_cnt (.in(w_inst_st_disped), .out(w_inst_st_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_mem_inst_cnt (.in(w_inst_mem_disped), .out(w_inst_mem_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_ld_inst_cnt  (.in(w_inst_ld_disped), .out(w_inst_ld_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_st_inst_cnt  (.in(w_inst_st_disped), .out(w_inst_st_cnt));
+
+generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_rsrc_loop
+  logic [$clog2(msrh_conf_pkg::ARITH_DISP_SIZE): 0]  lsu_lane_width;
+  assign lsu_lane_width = msrh_conf_pkg::MEM_DISP_SIZE / msrh_conf_pkg::LSU_INST_NUM;
+  assign iq_disp.resource_cnt.lsu_inst_cnt[l_idx] = (w_inst_mem_cnt >= lsu_lane_width * (l_idx+1)) ? lsu_lane_width :
+                                                    /* verilator lint_off UNSIGNED */
+                                                    (w_inst_mem_cnt <  lsu_lane_width * l_idx) ? 'h0 :
+                                                    w_inst_mem_cnt - lsu_lane_width * l_idx;
+end
+endgenerate
+
 assign iq_disp.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
 assign iq_disp.resource_cnt.st_inst_cnt = w_inst_st_cnt;
 
-bit_cnt #(.WIDTH(msrh_conf_pkg::BRU_DISP_SIZE)) u_bru_inst_cnt (.in(w_inst_bru_disped), .out(w_inst_bru_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_bru_inst_cnt (.in(w_inst_bru_disped), .out(w_inst_bru_cnt));
 assign iq_disp.resource_cnt.bru_inst_cnt = w_inst_bru_cnt;
-bit_cnt #(.WIDTH(msrh_conf_pkg::CSU_DISP_SIZE)) u_csu_inst_cnt (.in(w_inst_csu_disped), .out(w_inst_csu_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_inst_cnt (.in(w_inst_csu_disped), .out(w_inst_csu_cnt));
 assign iq_disp.resource_cnt.csu_inst_cnt = w_inst_csu_cnt;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop

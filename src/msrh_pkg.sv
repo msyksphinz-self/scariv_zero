@@ -105,6 +105,7 @@ typedef enum logic [ 5: 0] {
 
   typedef struct packed {
     logic [ALU_INST_NUM-1: 0][$clog2(ARITH_DISP_SIZE): 0] alu_inst_cnt;
+    logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]   lsu_inst_cnt;
     logic [$clog2(LDQ_SIZE): 0]                           ld_inst_cnt;
     logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
     logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
