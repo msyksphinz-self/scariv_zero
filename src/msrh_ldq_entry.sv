@@ -177,7 +177,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       LDQ_EX3_DONE : begin
         if (w_entry_flush) begin
           r_entry.state <= LDQ_DEAD;
-        end else begin
+        end else if (i_ldq_done) begin
           r_entry.state <= LDQ_WAIT_COMPLETE;
         end
       end

@@ -236,10 +236,12 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
     // Source 2
     $fwrite(fp, "rs2:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
-    $fwrite(fp, "state:\"%s\", ", entry.state == msrh_pkg::INIT ? "INIT" :
-            entry.state == msrh_pkg::WAIT ? "WAIT" :
-            entry.state == msrh_pkg::ISSUED ? "ISSUED" :
-            entry.state == msrh_pkg::DONE ? "DONE" : "x");
+    $fwrite(fp, "state:\"%s\", ", entry.state == msrh_pkg::INIT          ? "INIT" :
+                                  entry.state == msrh_pkg::WAIT          ? "WAIT" :
+                                  entry.state == msrh_pkg::ISSUED        ? "ISSUED" :
+                                  entry.state == msrh_pkg::DONE          ? "DONE" :
+                                  entry.state == msrh_pkg::WAIT_COMPLETE ? "WAIT_COMPLETE" :
+                                  entry.state == msrh_pkg::DEAD          ? "DEAD" : "x");
     $fwrite(fp, " },\n");
   end // if (entry.entry.valid)
 

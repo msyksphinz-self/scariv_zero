@@ -265,7 +265,9 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
                                   entry.state == LDQ_TLB_HAZ         ? "LDQ_TLB_HAZ" :
                                   entry.state == LDQ_READY           ? "LDQ_READY" :
                                   entry.state == LDQ_CHECK_ST_DEPEND ? "LDQ_CHECK_ST_DEPEND" :
-                                  entry.state == LDQ_EX3_DONE        ? "LDQ_EX3_DONE" : "x");
+                                  entry.state == LDQ_EX3_DONE        ? "LDQ_EX3_DONE" :
+                                  entry.state == LDQ_WAIT_COMPLETE   ? "LDQ_WAIT_COMPLETE" :
+                                  entry.state == LDQ_DEAD            ? "LDQ_DEAD" : "x");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 
