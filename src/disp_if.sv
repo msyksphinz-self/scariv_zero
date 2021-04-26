@@ -1,11 +1,13 @@
 interface disp_if;
   /* verilator lint_off UNOPTFLAT */
-  logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
-  logic [riscv_pkg::VADDR_W-1:1]  pc_addr;
-  msrh_pkg::disp_t     [msrh_conf_pkg::DISP_SIZE-1:0] inst;
-  logic                             is_br_included; // When Branch Instruction is included
-  logic valid;
-  logic ready;
+  logic [msrh_pkg::CMT_ID_W-1:0]                  cmt_id;
+  logic [riscv_pkg::VADDR_W-1:1]                  pc_addr;
+  msrh_pkg::resource_cnt_t                        resource_cnt;
+  // Counter for each dispatch Resources
+  msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] inst;
+  logic                                           is_br_included; // When Branch Instruction is included
+  logic                                           valid;
+  logic                                           ready;
 
 `ifdef SIMULATION
   logic [riscv_pkg::VADDR_W-1:0]  pc_addr_debug;
@@ -15,6 +17,7 @@ interface disp_if;
     output valid,
     output pc_addr,
     output cmt_id,
+    output resource_cnt,
     output inst,
     output is_br_included,
     input  ready
@@ -23,6 +26,7 @@ interface disp_if;
     input  valid,
     input  pc_addr,
     input  cmt_id,
+    input  resource_cnt,
     input  inst,
     input  is_br_included,
     output ready
@@ -31,6 +35,7 @@ interface disp_if;
     input  valid,
     input  pc_addr,
     input  cmt_id,
+    input  resource_cnt,
     input  inst,
     input  is_br_included,
     input  ready
