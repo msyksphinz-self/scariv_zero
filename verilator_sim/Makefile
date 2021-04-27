@@ -79,7 +79,7 @@ rv32_tiny: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 rv32_small: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_small --Mdir obj_dir_rv32_small $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_small_conf_pkg.sv -f $(FILELIST)
 
-Rv32_standard: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
+rv32_standard: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_standard --Mdir obj_dir_rv32_standard $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_standard_conf_pkg.sv -f $(FILELIST)
 
 rv32_big: $(DECODE_FILES) $(FILELIST) libspike_dpi.so
