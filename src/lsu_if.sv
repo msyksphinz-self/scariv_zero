@@ -83,3 +83,30 @@ modport slave (
 );
 
 endinterface // fwd_check_if
+
+
+interface tlb_ptw_if;
+
+  msrh_lsu_pkg::ptw_req_t        req;
+  msrh_lsu_pkg::ptw_resp_t       resp;
+  logic [riscv_pkg::XLEN_W-1: 0] ptbr;
+  logic [riscv_pkg::XLEN_W-1: 0] status;
+  msrh_lsu_pkg::pmp_t            pmp[msrh_lsu_pkg::PMP_NUM];
+
+  modport master (
+    output req,
+    input resp,
+    input ptbr,
+    input status,
+    input pmp
+  );
+
+  modport slave (
+    output req,
+    input resp,
+    input ptbr,
+    input status,
+    input pmp
+  );
+
+endinterface // tlb_ptw_if

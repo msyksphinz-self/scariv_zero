@@ -313,5 +313,31 @@ typedef struct packed {
   logic [msrh_conf_pkg::STQ_SIZE-1: 0]  stq_haz_idx;
 } ldq_entry_t;
 
+// -----
+// TLB
+// -----
+
+localparam PG_LEVELS = 3;
+localparam VPN_W = riscv_pkg::VADDR_W - PG_LEVELS;
+localparam PG_IDX_W = 12;
+localparam PG_LEVEL_W = 10 - $clog2(riscv_pkg::XLEN_W / 32);
+localparam SECTOR_NUM = 4;
+
+typedef struct packed {
+  logic              valid;
+  logic [VPN_W-1: 0] addr;
+} ptw_req_t;
+
+typedef struct packed {
+  logic                          ae;
+  logic                          pte;
+  logic [$clog2(PG_LEVELS)-1: 0] level;
+  logic                          fragmented_superpage;
+  logic                          homogeneous;
+} ptw_resp_t;
+
+typedef struct packed {
+  logic  dummy;
+} pmp_t;
 
 endpackage // msrh_lsu_pkg
