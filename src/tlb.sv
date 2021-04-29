@@ -70,6 +70,8 @@ logic [riscv_pkg::VADDR_W-1: PG_IDX_W] w_vpn;
 logic                                  w_priv_s;
 logic                                  w_priv_uses_vm;
 logic                                  w_vm_enabled;
+logic                                  w_bad_va;
+logic                                  w_misaligned;
 
 logic [TLB_ENTRIES-1: 0]               w_is_hit;
 
@@ -137,12 +139,32 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
 end
 endgenerate
 
+
+assign w_bad_va     = 1'b0;
+assign w_misaligned = i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1);
+
+localparam USE_ATOMIC = 1'b1;
+
+logic w_cmd_lrsc          ;
+logic w_cmd_amo_logical   ;
+logic w_cmd_amo_arithmetic;
+logic w_cmd_read          ;
+logic w_cmd_write         ;
+logic w_cmd_write_perms   ;
+
+assign w_cmd_lrsc           = USE_ATOMIC && (i_tlb_req.cmd == M_XLR || i_tlb_req.cmd == M_XSC);
+assign w_cmd_amo_logical    = USE_ATOMIC && is_amo_logical(i_tlb_req.cmd);
+assign w_cmd_amo_arithmetic = USE_ATOMIC && is_amo_arithmetic(i_tlb_req.cmd);
+assign w_cmd_read           = is_read(i_tlb_req.cmd);
+assign w_cmd_write          = is_write(i_tlb_req.cmd);
+assign w_cmd_write_perms    = cmd_write || (i_tlb_req.cmd === M_FLUSH_ALL); // not a write, but needs write permissions
+
+
 // ------------------
 // Response of TLB
 // ------------------
-
-assign o_tlb_resp.pf.ld        = (w_bad_va && cmd_read) || (|(pf_ld_array & w_is_hit));
-assign o_tlb_resp.pf.st        = (w_bad_va && cmd_write_perms) || (|(pf_st_array & w_is_hit));
+assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(pf_ld_array & w_is_hit));
+assign o_tlb_resp.pf.st        = (w_bad_va && W_cmd_write_perms) || (|(pf_st_array & w_is_hit));
 assign o_tlb_resp.pf.inst      = w_bad_va || (|(pf_inst_array & w_is_hit));
 assign o_tlb_resp.ae.ld        = ae_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
 assign o_tlb_resp.ae.st        = ae_st_array & w_vm_enabled ? |w_is_hit : 1'b1;

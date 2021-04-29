@@ -54,28 +54,28 @@ package msrh_lsu_pkg;
   } ic_resp_t;
 
   typedef enum logic [4:0] {
-    M_XRD = 5'b00000,  // int load
-    M_XWR = 5'b00001,  // int store
-    M_PFR = 5'b00010,  // prefetch with intent to read
-    M_PFW = 5'b00011,  // prefetch with intent to write
-    M_XA_SWAP = 5'b00100,
+    M_XRD       = 5'b00000,  // int load
+    M_XWR       = 5'b00001,  // int store
+    M_PFR       = 5'b00010,  // prefetch with intent to read
+    M_PFW       = 5'b00011,  // prefetch with intent to write
+    M_XA_SWAP   = 5'b00100,
     M_FLUSH_ALL = 5'b00101,  // flush all lines
-    M_XLR = 5'b00110,
-    M_XSC = 5'b00111,
-    M_XA_ADD = 5'b01000,
-    M_XA_XOR = 5'b01001,
-    M_XA_OR = 5'b01010,
-    M_XA_AND = 5'b01011,
-    M_XA_MIN = 5'b01100,
-    M_XA_MAX = 5'b01101,
-    M_XA_MINU = 5'b01110,
-    M_XA_MAXU = 5'b01111,
-    M_FLUSH = 5'b10000,  // write back dirty data and cede R/W permissions
-    M_PWR = 5'b10001,  // partial (masked) store
-    M_PRODUCE = 5'b10010,  // write back dirty data and cede W permissions
-    M_CLEAN = 5'b10011,  // write back dirty data and retain R/W permissions
-    M_SFENCE = 5'b10100,  // flush TLB
-    M_WOK = 5'b10111  // check write permissions but don't perform a write
+    M_XLR       = 5'b00110,
+    M_XSC       = 5'b00111,
+    M_XA_ADD    = 5'b01000,
+    M_XA_XOR    = 5'b01001,
+    M_XA_OR     = 5'b01010,
+    M_XA_AND    = 5'b01011,
+    M_XA_MIN    = 5'b01100,
+    M_XA_MAX    = 5'b01101,
+    M_XA_MINU   = 5'b01110,
+    M_XA_MAXU   = 5'b01111,
+    M_FLUSH     = 5'b10000,  // write back dirty data and cede R/W permissions
+    M_PWR       = 5'b10001,  // partial (masked) store
+    M_PRODUCE   = 5'b10010,  // write back dirty data and cede W permissions
+    M_CLEAN     = 5'b10011,  // write back dirty data and retain R/W permissions
+    M_SFENCE    = 5'b10100,  // flush TLB
+    M_WOK       = 5'b10111   // check write permissions but don't perform a write
   } mem_cmd_t;
 
   typedef struct packed {
@@ -106,6 +106,7 @@ package msrh_lsu_pkg;
   typedef struct packed {
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
     mem_cmd_t cmd;
+    logic [$clog2(DCACHE_DATA_W/8)-1: 0] size;
   } tlb_req_t;
 
   typedef struct packed {
@@ -281,6 +282,43 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } srq_resp_t;
 
+function logic is_amo_logical(mem_cmd_t cmd) begin
+  return cmd == M_XA_SWAP ||
+         cmd == M_XA_XOR  ||
+         cmd == M_XA_OR   ||
+         cmd == M_XA_AND;
+endfunction // isAMOLogical
+function logic is_amo_arithmetic(mem_cmd_t cmd) begin
+  return cmd == M_XA_ADD  ||
+         cmd == M_XA_MIN  ||
+         cmd == M_XA_MAX  ||
+         cmd == M_XA_MINU ||
+         cmd == M_XA_MAXU;
+endfunction // isAMOLogical
+function logic is_amo(mem_cmd_t cmd) begin
+  return is_amo_logical(cmd) | is_amo_arithmetic(cmd);
+endfunction // isAMOLogical
+function logic is_prefetch(mem_cmd_t cmd) begin
+  return cmd == M_PFR ||
+         cmd == M_PFW;
+endfunction // isAMOLogical
+function logic is_read(mem_cmd_t cmd) begin
+  return  cmd == M_XRD ||
+          cmd == M_XLR ||
+          cmd == M_XSC ||
+          is_amo(cmd);
+endfunction // isAMOLogical
+function logic is_write(mem_cmd_t cmd) begin
+  return cmd == M_XWR ||
+         cmd == M_PWR ||
+         cmd == M_XSC ||
+         is_amo(cmd);
+endfunction // isAMOLogical
+function logic is_write_intent(mem_cmd_t cmd) begin
+  return is_write(cmd) ||
+         cmd == M_PFW  ||
+         cmd=== M_XLR;
+endfunction // isAMOLogical
 
 // ---------
 // LDQ
