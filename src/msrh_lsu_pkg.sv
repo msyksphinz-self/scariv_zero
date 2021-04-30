@@ -282,39 +282,39 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } srq_resp_t;
 
-function logic is_amo_logical(mem_cmd_t cmd) begin
+function logic is_amo_logical(mem_cmd_t cmd);
   return cmd == M_XA_SWAP ||
          cmd == M_XA_XOR  ||
          cmd == M_XA_OR   ||
          cmd == M_XA_AND;
 endfunction // isAMOLogical
-function logic is_amo_arithmetic(mem_cmd_t cmd) begin
+function logic is_amo_arithmetic(mem_cmd_t cmd);
   return cmd == M_XA_ADD  ||
          cmd == M_XA_MIN  ||
          cmd == M_XA_MAX  ||
          cmd == M_XA_MINU ||
          cmd == M_XA_MAXU;
 endfunction // isAMOLogical
-function logic is_amo(mem_cmd_t cmd) begin
+function logic is_amo(mem_cmd_t cmd);
   return is_amo_logical(cmd) | is_amo_arithmetic(cmd);
 endfunction // isAMOLogical
-function logic is_prefetch(mem_cmd_t cmd) begin
+function logic is_prefetch(mem_cmd_t cmd);
   return cmd == M_PFR ||
          cmd == M_PFW;
 endfunction // isAMOLogical
-function logic is_read(mem_cmd_t cmd) begin
+function logic is_read(mem_cmd_t cmd);
   return  cmd == M_XRD ||
           cmd == M_XLR ||
           cmd == M_XSC ||
           is_amo(cmd);
 endfunction // isAMOLogical
-function logic is_write(mem_cmd_t cmd) begin
+function logic is_write(mem_cmd_t cmd);
   return cmd == M_XWR ||
          cmd == M_PWR ||
          cmd == M_XSC ||
          is_amo(cmd);
 endfunction // isAMOLogical
-function logic is_write_intent(mem_cmd_t cmd) begin
+function logic is_write_intent(mem_cmd_t cmd);
   return is_write(cmd) ||
          cmd == M_PFW  ||
          cmd=== M_XLR;

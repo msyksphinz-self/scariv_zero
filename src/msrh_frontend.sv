@@ -163,7 +163,13 @@ tlb u_tlb
    .i_clk      (i_clk),
    .i_reset_n  (i_reset_n),
 
+   .i_sfence (1'b0),
+   .i_status_prv(),
+   .i_csr_satp(),
+   .ptw_if(),
+
    .i_tlb_req  (w_s0_tlb_req ),
+   .o_tlb_ready (),
    .o_tlb_resp (w_s0_tlb_resp),
 
    .o_tlb_update ()

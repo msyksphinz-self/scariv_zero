@@ -37,6 +37,12 @@ package msrh_pkg;
                            2 +                                  // BRU port
                            1;                                   // CSR port
 
+  typedef enum [1:0] {
+     PRV_U = 0,
+     PRV_S = 2,
+     PRV_M = 3
+  } prv_t;
+
   typedef struct packed {
     logic valid;
     logic [31:0] inst;

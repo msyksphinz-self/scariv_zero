@@ -13,7 +13,7 @@ module tlb
  output logic o_tlb_ready,
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
- input prv_t                          i_status_priv,
+ input msrh_pkg::prv_t                i_status_priv,
  input logic [riscv_pkg::XLEN_W-1: 0] i_csr_satp,
 
  // Page Table Walk I/O
@@ -21,16 +21,10 @@ module tlb
  output logic o_tlb_update
 );
 
-logic         w_vm_enabled;
-logic         w_priv_uses_vm;
-assign w_priv_uses_vm = i_status_priv <= PRV_USER;
-assign w_vm_enabled = msrh_conf_pkg::USING_VM &
-                      (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
-                      w_priv_uses_vm &
-                      !i_tlb_req.passthrough;
+localparam TLB_ENTRIES = 8;
 
 typedef struct packed {
-  logic [PPN_W-1: 0] ppn;
+  logic [riscv_pkg::PPN_W-1: 0] ppn;
   logic              u ;
   logic              g ;
   logic              ae;
@@ -68,7 +62,6 @@ tlb_entry_t w_superpage_entries;
 tlb_entry_t w_special_entry;
 logic [riscv_pkg::VADDR_W-1: PG_IDX_W] w_vpn;
 logic                                  w_priv_s;
-logic                                  w_priv_uses_vm;
 logic                                  w_vm_enabled;
 logic                                  w_bad_va;
 logic                                  w_misaligned;
@@ -78,8 +71,8 @@ logic [TLB_ENTRIES-1: 0]               w_is_hit;
 generate for (genvar t_idx = 0; t_idx < TLB_ENTRIES; t_idx++) begin : tlb_loop
   logic w_is_hit;
   logic [PG_LEVEL-1: 0] w_tag_match;
-  logic                   sector_idx;
-  logic                   sector_tag_match;
+  logic                 sector_idx;
+  logic                 sector_tag_match;
 
   assign sector_idx = w_vpn[$clog2(SECTOR_NUM)-1: 0];
   assign sector_tag_match = w_entries[t_idx].tag[VPN_W-1: $clog2(SECTOR_NUM)] ==
@@ -98,6 +91,11 @@ endgenerate
 assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_W-1: PG_IDX_W];
 
 assign o_tlb_ready = (r_state === ST_READY);
+assign w_priv_uses_vm = i_status_priv <= msrh_pkg::PRV_U;
+assign w_vm_enabled = msrh_conf_pkg::USING_VM &
+                      (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
+                      w_priv_uses_vm &
+                      !i_tlb_req.passthrough;
 
 generate if (msrh_conf_pkg::USING_VM) begin : use_vm
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -142,6 +140,24 @@ endgenerate
 
 assign w_bad_va     = 1'b0;
 assign w_misaligned = i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1);
+
+assign ptw_ae_array = {1'b0, entries.map(_.ae)))
+assign priv_rw_ok   = !priv_s || io.ptw.status.sum ? entries.map(_.u), 0.U) | Mux(priv_s, ~entries.map(_.u) : 'h0;
+assign priv_x_ok    = priv_s ? ~entries.map(_.u) : entries.map(_.u));
+assign r_array      = {1'b1, priv_rw_ok & (entries.map(_.sr) | Mux(io.ptw.status.mxr, entries.map(_.sx), 0.U))))
+assign w_array      = {1'b1, priv_rw_ok & entries.map(_.sw)))
+assign x_array      = {1'b1, priv_x_ok  & entries.map(_.sx)))
+assign pr_array     = {nPhysicalEntries{prot_r  },  normal_entries.map(_.pr)) & ~ptw_ae_array)
+assign pw_array     = {nPhysicalEntries{prot_w  },  normal_entries.map(_.pw)) & ~ptw_ae_array)
+assign px_array     = {nPhysicalEntries{prot_x  },  normal_entries.map(_.px)) & ~ptw_ae_array)
+assign eff_array    = {nPhysicalEntries{prot_eff},  normal_entries.map(_.eff)))
+assign c_array      = {nPhysicalEntries{cacheable}, normal_entries.map(_.c)))
+assign paa_array    = {nPhysicalEntries{prot_aa },  normal_entries.map(_.paa)))
+assign pal_array    = {nPhysicalEntries{prot_al },  normal_entries.map(_.pal)))
+assign paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_entries.map(_.c)))
+
 
 localparam USE_ATOMIC = 1'b1;
 
