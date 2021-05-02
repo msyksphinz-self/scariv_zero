@@ -57,6 +57,7 @@
 ../src/msrh_tile_wrapper.sv
 ../src/msrh_inst_buffer.sv
 ../src/msrh_disp_pickup.sv
+../src/msrh_ptw.sv
 
 ../src/msrh_rename.sv
 ../src/msrh_freelist.sv

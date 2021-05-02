@@ -163,6 +163,8 @@ tlb u_tlb
    .i_clk      (i_clk),
    .i_reset_n  (i_reset_n),
 
+   .i_kill (1'b0),
+
    .i_sfence (1'b0),
    .i_status_prv(),
    .i_csr_satp(),

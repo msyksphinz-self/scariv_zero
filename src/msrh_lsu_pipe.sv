@@ -42,7 +42,10 @@ module msrh_lsu_pipe
  output ex2_addr_check_t               o_ex2_addr_check,
 
  done_if.master                        ex0_sched_done_if,
- done_if.master                        ex3_ldq_stq_done_if
+ done_if.master                        ex3_ldq_stq_done_if,
+
+ // Page Table Walk I/O
+ tlb_ptw_if.master ptw_if
 );
 
 typedef struct packed {
@@ -143,10 +146,17 @@ u_tlb
  .i_clk    (i_clk),
  .i_reset_n(i_reset_n),
 
+ .i_sfence ('h0),
+ .i_status_prv('h0),
+ .i_csr_satp('h0),
+
  .i_tlb_req (w_ex1_tlb_req ),
+ .o_tlb_ready(),
  .o_tlb_resp(w_ex1_tlb_resp),
 
- .o_tlb_update(o_tlb_resolve)
+ .o_tlb_update(o_tlb_resolve),
+
+ .ptw_if (ptw_if)
  );
 
 

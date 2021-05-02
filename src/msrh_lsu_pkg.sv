@@ -106,7 +106,7 @@ package msrh_lsu_pkg;
   typedef struct packed {
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
     mem_cmd_t cmd;
-    logic [$clog2(DCACHE_DATA_W/8)-1: 0] size;
+    logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W/8)-1: 0] size;
   } tlb_req_t;
 
   typedef struct packed {
@@ -147,6 +147,15 @@ typedef struct packed {
 logic          valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 } lrq_resolve_t;
+
+typedef struct packed {
+  logic valid;
+  logic rs1;
+  logic rs2;
+  logic [riscv_pkg::VADDR_W-1: 0] addr;
+  // Temporary Disable
+  // logic asid = UInt(width = asIdBits max 1) // TODO zero-width
+} sfence_t;
 
 typedef struct packed {
   logic          valid;

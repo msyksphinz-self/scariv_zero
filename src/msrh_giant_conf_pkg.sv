@@ -24,4 +24,6 @@ package msrh_conf_pkg;
 
   localparam CMT_ENTRY_SIZE = 128;
 
+  localparam USING_VM = 1'b1;
+
 endpackage // msrh_conf_pkg
