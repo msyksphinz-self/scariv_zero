@@ -22,6 +22,7 @@ module tlb
 );
 
 localparam TLB_ENTRIES = 8;
+localparam TLB_SUPERPAGE_ENTRIES = 4;
 
 typedef struct packed {
   logic [riscv_pkg::PPN_W-1: 0] ppn;
@@ -58,7 +59,7 @@ typedef enum logic [1:0] {
 tlb_state_t r_state;
 
 tlb_entry_t w_sectored_entries[TLB_ENTRIES];
-tlb_entry_t w_superpage_entries;
+tlb_entry_t w_superpage_entries[TLB_SUPERPAGE_ENTRIES];
 tlb_entry_t w_special_entry;
 logic [riscv_pkg::VADDR_W-1: PG_IDX_W] w_vpn;
 logic                                  w_priv_s;
@@ -141,22 +142,96 @@ endgenerate
 assign w_bad_va     = 1'b0;
 assign w_misaligned = i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1);
 
-assign ptw_ae_array = {1'b0, entries.map(_.ae)))
-assign priv_rw_ok   = !priv_s || io.ptw.status.sum ? entries.map(_.u), 0.U) | Mux(priv_s, ~entries.map(_.u) : 'h0;
-assign priv_x_ok    = priv_s ? ~entries.map(_.u) : entries.map(_.u));
-assign r_array      = {1'b1, priv_rw_ok & (entries.map(_.sr) | Mux(io.ptw.status.mxr, entries.map(_.sx), 0.U))))
-assign w_array      = {1'b1, priv_rw_ok & entries.map(_.sw)))
-assign x_array      = {1'b1, priv_x_ok  & entries.map(_.sx)))
-assign pr_array     = {nPhysicalEntries{prot_r  },  normal_entries.map(_.pr)) & ~ptw_ae_array)
-assign pw_array     = {nPhysicalEntries{prot_w  },  normal_entries.map(_.pw)) & ~ptw_ae_array)
-assign px_array     = {nPhysicalEntries{prot_x  },  normal_entries.map(_.px)) & ~ptw_ae_array)
-assign eff_array    = {nPhysicalEntries{prot_eff},  normal_entries.map(_.eff)))
-assign c_array      = {nPhysicalEntries{cacheable}, normal_entries.map(_.c)))
-assign paa_array    = {nPhysicalEntries{prot_aa },  normal_entries.map(_.paa)))
-assign pal_array    = {nPhysicalEntries{prot_al },  normal_entries.map(_.pal)))
-assign paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
-assign pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
-assign prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_entries.map(_.c)))
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_ptw_ae_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_priv_rw_ok;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_priv_x_ok;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_r_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_w_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_x_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_pr_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_pw_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_px_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_eff_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_c_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_paa_array
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_pal_array;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_paa_array_if_cached;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_pal_array_if_cached;
+logic [1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES-1: 0] w_prefetchable_array;
+
+generate for (genvar e_idx = 0; e_idx < 1 + TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES; e_idx++) begin : elem_loop
+  if (e_idx < TLB_ENTRIES) begin : normal_entries
+    assign w_ptw_ae_array[e_idx] = sectoroed_entries[e_idx].ae;
+    assign w_priv_rw_ok  [e_idx] = !priv_s || io.ptw.status.sum ? sectoroed_entries[e_idx].u : 'h0 |
+                                   priv_s ? ~sectoroed_entries[e_idx].u : 'h0;
+    assign w_priv_x_ok   [e_idx] = priv_s ? ~sectoroed_entries[e_idx].u : sectoroed_entries[e_idx].u;
+    assign w_r_array     [e_idx] = priv_rw_ok & (sectoroed_entries[e_idx].sr) | (io.ptw.status.mxr ? sectoroed_entries[e_idx].sx, 'h0);
+assign w_w_array     [e_idx] = {1'b1, priv_rw_ok & sectoroed_entries[e_idx].sw)))
+assign w_x_array     [e_idx] = {1'b1, priv_x_ok  & sectoroed_entries[e_idx].sx)))
+assign w_pr_array    [e_idx] = {nPhysicalEntries{prot_r  },  normal_sectoroed_entries[e_idx].pr)) & ~ptw_ae_array)
+assign w_pw_array    [e_idx] = {nPhysicalEntries{prot_w  },  normal_sectoroed_entries[e_idx].pw)) & ~ptw_ae_array)
+assign w_px_array    [e_idx] = {nPhysicalEntries{prot_x  },  normal_sectoroed_entries[e_idx].px)) & ~ptw_ae_array)
+assign w_eff_array   [e_idx] = {nPhysicalEntries{prot_eff},  normal_sectoroed_entries[e_idx].eff)))
+assign w_c_array     [e_idx] = {nPhysicalEntries{cacheable}, normal_sectoroed_entries[e_idx].c)))
+assign w_paa_array   [e_idx] = {nPhysicalEntries{prot_aa },  normal_sectoroed_entries[e_idx].paa)))
+assign w_pal_array   [e_idx] = {nPhysicalEntries{prot_al },  normal_sectoroed_entries[e_idx].pal)))
+assign w_paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_sectoroed_entries[e_idx].c)))
+  end else if (e_idx < TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES) begin : superpage_entries
+assign w_ptw_ae_array = {1'b0, entries.map(_.ae)))
+assign w_priv_rw_ok   = !priv_s || io.ptw.status.sum ? entries.map(_.u), 0.U) | Mux(priv_s, ~entries.map(_.u) : 'h0;
+assign w_priv_x_ok    = priv_s ? ~entries.map(_.u) : entries.map(_.u));
+assign w_r_array      = {1'b1, priv_rw_ok & (entries.map(_.sr) | Mux(io.ptw.status.mxr, entries.map(_.sx), 0.U))))
+assign w_w_array      = {1'b1, priv_rw_ok & entries.map(_.sw)))
+assign w_x_array      = {1'b1, priv_x_ok  & entries.map(_.sx)))
+assign w_pr_array     = {nPhysicalEntries{prot_r  },  normal_entries.map(_.pr)) & ~ptw_ae_array)
+assign w_pw_array     = {nPhysicalEntries{prot_w  },  normal_entries.map(_.pw)) & ~ptw_ae_array)
+assign w_px_array     = {nPhysicalEntries{prot_x  },  normal_entries.map(_.px)) & ~ptw_ae_array)
+assign w_eff_array    = {nPhysicalEntries{prot_eff},  normal_entries.map(_.eff)))
+assign w_c_array      = {nPhysicalEntries{cacheable}, normal_entries.map(_.c)))
+assign w_paa_array    = {nPhysicalEntries{prot_aa },  normal_entries.map(_.paa)))
+assign w_pal_array    = {nPhysicalEntries{prot_al },  normal_entries.map(_.pal)))
+assign w_paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_entries.map(_.c)))
+  end else if (e_idx < TLB_SUPERPAGE_ENTRIES + TLB_ENTRIES + 1) begin : superpage_entries
+assign w_ptw_ae_array = {1'b0, entries.map(_.ae)))
+assign w_priv_rw_ok   = !priv_s || io.ptw.status.sum ? entries.map(_.u), 0.U) | Mux(priv_s, ~entries.map(_.u) : 'h0;
+assign w_priv_x_ok    = priv_s ? ~entries.map(_.u) : entries.map(_.u));
+assign w_r_array      = {1'b1, priv_rw_ok & (entries.map(_.sr) | Mux(io.ptw.status.mxr, entries.map(_.sx), 0.U))))
+assign w_w_array      = {1'b1, priv_rw_ok & entries.map(_.sw)))
+assign w_x_array      = {1'b1, priv_x_ok  & entries.map(_.sx)))
+assign w_pr_array     = {nPhysicalEntries{prot_r  },  normal_entries.map(_.pr)) & ~ptw_ae_array)
+assign w_pw_array     = {nPhysicalEntries{prot_w  },  normal_entries.map(_.pw)) & ~ptw_ae_array)
+assign w_px_array     = {nPhysicalEntries{prot_x  },  normal_entries.map(_.px)) & ~ptw_ae_array)
+assign w_eff_array    = {nPhysicalEntries{prot_eff},  normal_entries.map(_.eff)))
+assign w_c_array      = {nPhysicalEntries{cacheable}, normal_entries.map(_.c)))
+assign w_paa_array    = {nPhysicalEntries{prot_aa },  normal_entries.map(_.paa)))
+assign w_pal_array    = {nPhysicalEntries{prot_al },  normal_entries.map(_.pal)))
+assign w_paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_entries.map(_.c)))
+  end
+end
+endgenerate
+
+assign w_ptw_ae_array = {1'b0, entries.map(_.ae)))
+assign w_priv_rw_ok   = !priv_s || io.ptw.status.sum ? entries.map(_.u), 0.U) | Mux(priv_s, ~entries.map(_.u) : 'h0;
+assign w_priv_x_ok    = priv_s ? ~entries.map(_.u) : entries.map(_.u));
+assign w_r_array      = {1'b1, priv_rw_ok & (entries.map(_.sr) | Mux(io.ptw.status.mxr, entries.map(_.sx), 0.U))))
+assign w_w_array      = {1'b1, priv_rw_ok & entries.map(_.sw)))
+assign w_x_array      = {1'b1, priv_x_ok  & entries.map(_.sx)))
+assign w_pr_array     = {nPhysicalEntries{prot_r  },  normal_entries.map(_.pr)) & ~ptw_ae_array)
+assign w_pw_array     = {nPhysicalEntries{prot_w  },  normal_entries.map(_.pw)) & ~ptw_ae_array)
+assign w_px_array     = {nPhysicalEntries{prot_x  },  normal_entries.map(_.px)) & ~ptw_ae_array)
+assign w_eff_array    = {nPhysicalEntries{prot_eff},  normal_entries.map(_.eff)))
+assign w_c_array      = {nPhysicalEntries{cacheable}, normal_entries.map(_.c)))
+assign w_paa_array    = {nPhysicalEntries{prot_aa },  normal_entries.map(_.paa)))
+assign w_pal_array    = {nPhysicalEntries{prot_al },  normal_entries.map(_.pal)))
+assign w_paa_array_if_cached = paa_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_pal_array_if_cached = pal_array | Mux(usingAtomicsInCache.B, c_array, 0.U))
+assign w_prefetchable_array  = {(cacheable && homogeneous) << (nPhysicalEntries-1), normal_entries.map(_.c)))
 
 
 localparam USE_ATOMIC = 1'b1;
