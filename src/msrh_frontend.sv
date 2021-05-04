@@ -13,7 +13,9 @@ module msrh_frontend
   csr_info_if.slave           csr_info,
 
  // Dispatch Info
- disp_if.master iq_disp
+ disp_if.master    iq_disp,
+ // Page Table Walk I/O
+ tlb_ptw_if.master ptw_if
 );
 
 // ==============
@@ -168,7 +170,7 @@ tlb u_tlb
    .i_sfence (1'b0),
    .i_status_prv(),
    .i_csr_satp(),
-   .ptw_if(),
+   .ptw_if(ptw_if),
 
    .i_tlb_req  (w_s0_tlb_req ),
    .o_tlb_ready (),

@@ -146,6 +146,7 @@ u_tlb
  .i_clk    (i_clk),
  .i_reset_n(i_reset_n),
 
+ .i_kill(1'b0),
  .i_sfence ('h0),
  .i_status_prv('h0),
  .i_csr_satp('h0),

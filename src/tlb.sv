@@ -25,7 +25,7 @@ module tlb
 
 localparam TLB_NORMAL_ENTRIES_NUM = 8;
 localparam TLB_SUPERPAGE_ENTRIES_NUM = 4;
-localparam USI_ATOMICS_INCACHE = 1'b1;
+localparam USE_ATOMICS_INCACHE = 1'b1;
 localparam USE_ATOMIC = 1'b1;
 localparam TLB_ALL_ENTRIES_NUM = TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM + 1;
 localparam PG_LEVEL = 3;  // Sv39
@@ -49,10 +49,10 @@ typedef struct packed {
 } tlb_entry_data_t;
 
 typedef struct packed {
-  logic              valid;
-  logic [1: 0]       level;
-  logic [VPN_W-1: 0] tag;
-  tlb_entry_data_t   data;
+  logic [SECTOR_NUM-1:0]                 valid;
+  logic [1: 0]                           level;
+  logic [riscv_pkg::VADDR_W-1: PG_IDX_W] tag;
+  tlb_entry_data_t [SECTOR_NUM-1:0]      data;
 } tlb_entry_t;
 
 typedef enum logic [1:0] {
@@ -103,11 +103,11 @@ logic                                  w_tlb_hit;
 logic                                  w_tlb_miss;
 
 
-generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : elem_loop
+generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : all_entries
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
     assign w_all_entries[e_idx]        = w_sectored_entries[e_idx];
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM) begin : superpage_entries
-    assign w_all_entries[e_idx] = w_superpage_entries[e_idx];
+    assign w_all_entries[e_idx] = w_superpage_entries[e_idx - TLB_NORMAL_ENTRIES_NUM];
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM + 1) begin : superpage_entries
     assign w_all_entries[e_idx] = w_special_entry;
   end
@@ -115,31 +115,40 @@ end
 endgenerate
 
 
+logic [riscv_pkg::PPN_W-1:0] w_entry_ppn[TLB_ALL_ENTRIES_NUM];
+logic [riscv_pkg::PPN_W-1:0] w_selected_ppn;
+logic [riscv_pkg::PPN_W-1:0] w_ppn;
 generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tlb_loop
   logic [PG_LEVEL-1: 0] w_tag_match;
-  logic                 sector_idx;
+  logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
   logic                 sector_tag_match;
 
   localparam SUPER_PAGE      = (t_idx >= TLB_NORMAL_ENTRIES_NUM);
   localparam SUPER_PAGE_ONLY = (t_idx >= TLB_NORMAL_ENTRIES_NUM) && (t_idx < TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM);
 
-  assign sector_idx = w_vpn[$clog2(SECTOR_NUM)-1: 0];
-  assign sector_tag_match = w_all_entries[t_idx].tag[VPN_W-1: $clog2(SECTOR_NUM)] ==
-                            w_vpn[VPN_W-1: $clog2(SECTOR_NUM)];
+  assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
+  assign sector_tag_match = (w_all_entries[t_idx].tag == w_vpn);
 
   for (genvar lvl_idx = 0; lvl_idx < PG_LEVEL; lvl_idx++) begin : lvl_loop
     localparam base = VPN_W - (lvl_idx + 1) * PG_LEVEL_W;
-    localparam ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == PG_LEVELS-1);
-    assign w_tag_match[lvl_idx] = ignore || w_all_entries[t_idx].tag[base +: PG_LEVEL_W] == w_vpn[base +: PG_LEVEL_W];
+    logic w_ignore;
+    /* verilator lint_off UNSIGNED */
+    assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == PG_LEVELS-1);
+    assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: PG_LEVEL_W] == w_vpn[base + PG_IDX_W +: PG_LEVEL_W]);
   end
   assign w_is_hit[t_idx] = (SUPER_PAGE && msrh_conf_pkg::USING_VM) ? |w_tag_match :
                            w_all_entries[t_idx].valid[sector_idx] & sector_tag_match;
   assign w_hits_vec[t_idx]  = w_vm_enabled & w_is_hit[t_idx];
   assign w_real_hits[t_idx] = w_hits_vec[t_idx];
+
+  assign w_entry_ppn[t_idx] = w_all_entries[t_idx].data[sector_idx].ppn;
 end
 endgenerate
 
+bit_oh_or #(.T(logic[riscv_pkg::PPN_W-1:0]), .WORDS(TLB_ALL_ENTRIES_NUM)) bit_ppn (.i_data(w_entry_ppn), .i_oh(w_hits_vec), .o_selected(w_selected_ppn));
+
 assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_W-1: PG_IDX_W];
+assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-riscv_pkg::VADDR_W){1'b0}}, w_vpn} : w_selected_ppn;
 
 assign o_tlb_ready = (r_state === ST_READY);
 assign w_priv_uses_vm = i_status_prv <= msrh_pkg::PRV_U;
@@ -165,13 +174,13 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
         ST_REQUEST : begin
           if (i_kill) begin
             r_state <= ST_READY;
-          end else if (ptw_if.ready) begin
+          end else if (ptw_if.req_ready) begin
             if (i_sfence.valid) begin
               r_state <=  ST_WAIT_INVALIDATE;
             end else begin
               r_state <= ST_WAIT;
             end
-          end else if (sfence) begin
+          end else if (i_sfence.valid) begin
             r_state <= ST_READY;
           end
         end
@@ -180,7 +189,7 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
             r_state <= ST_WAIT_INVALIDATE;
           end
         end
-        ST_INVALIDATE : begin
+        ST_WAIT_INVALIDATE : begin
           if (ptw_if.resp.valid) begin
             r_state <= ST_READY;
           end
@@ -193,27 +202,30 @@ endgenerate
 
 
 assign w_bad_va     = 1'b0;
-assign w_misaligned = i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1);
+assign w_misaligned = ((i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1)) != 'h0);
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : elem_loop
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
-    assign w_ptw_ae_array[e_idx] = w_sectored_entries[e_idx].ae;
-    assign w_priv_rw_ok  [e_idx] = !w_priv_s || io.ptw.status.sum ? w_sectored_entries[e_idx].u : 'h0 |
-                                   w_priv_s ? ~w_sectored_entries[e_idx].u : 'h0;
-    assign w_priv_x_ok   [e_idx] = w_priv_s ? ~w_sectored_entries[e_idx].u : w_sectored_entries[e_idx].u;
-    assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_sectored_entries[e_idx].sr | (io.ptw.status.mxr ? w_sectored_entries[e_idx].sx : 1'b0));
-    assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & w_sectored_entries[e_idx].sw;
-    assign w_x_array     [e_idx] = w_priv_x_ok [e_idx] & w_sectored_entries[e_idx].sx;
-    assign w_pr_array    [e_idx] = w_sectored_entries[e_idx].pr & ~w_ptw_ae_array[e_idx];
-    assign w_pw_array    [e_idx] = w_sectored_entries[e_idx].pw & ~w_ptw_ae_array[e_idx];
-    assign w_px_array    [e_idx] = w_sectored_entries[e_idx].px & ~w_ptw_ae_array[e_idx];
-    assign w_eff_array   [e_idx] = w_sectored_entries[e_idx].eff;
-    assign w_c_array     [e_idx] = w_sectored_entries[e_idx].c;
-    assign w_paa_array   [e_idx] = w_sectored_entries[e_idx].paa;
-    assign w_pal_array   [e_idx] = w_sectored_entries[e_idx].pal;
+    logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
+    assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
+
+    assign w_ptw_ae_array[e_idx] = w_sectored_entries[e_idx].data[sector_idx].ae;
+    assign w_priv_rw_ok  [e_idx] = !w_priv_s || ptw_if.status[18] ? w_sectored_entries[e_idx].data[sector_idx].u : 'h0 |
+                                   w_priv_s ? ~w_sectored_entries[e_idx].data[sector_idx].u : 'h0;
+    assign w_priv_x_ok   [e_idx] = w_priv_s ? ~w_sectored_entries[e_idx].data[sector_idx].u : w_sectored_entries[e_idx].data[sector_idx].u;
+    assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_sectored_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? w_sectored_entries[e_idx].data[sector_idx].sx : 1'b0));
+    assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & w_sectored_entries[e_idx].data[sector_idx].sw;
+    assign w_x_array     [e_idx] = w_priv_x_ok [e_idx] & w_sectored_entries[e_idx].data[sector_idx].sx;
+    assign w_pr_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pr & ~w_ptw_ae_array[e_idx];
+    assign w_pw_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pw & ~w_ptw_ae_array[e_idx];
+    assign w_px_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].px & ~w_ptw_ae_array[e_idx];
+    assign w_eff_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].eff;
+    assign w_c_array     [e_idx] = w_sectored_entries[e_idx].data[sector_idx].c;
+    assign w_paa_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].paa;
+    assign w_pal_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pal;
     assign w_paa_array_if_cached[e_idx] = w_paa_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
     assign w_pal_array_if_cached[e_idx] = w_pal_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
-    assign w_prefetchable_array [e_idx] = w_sectored_entries[e_idx].c;
+    assign w_prefetchable_array [e_idx] = w_sectored_entries[e_idx].data[sector_idx].c;
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM) begin : superpage_entries
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM + 1) begin : superpage_entries
   end
@@ -232,27 +244,59 @@ assign w_cmd_amo_logical    = USE_ATOMIC && is_amo_logical(i_tlb_req.cmd);
 assign w_cmd_amo_arithmetic = USE_ATOMIC && is_amo_arithmetic(i_tlb_req.cmd);
 assign w_cmd_read           = is_read(i_tlb_req.cmd);
 assign w_cmd_write          = is_write(i_tlb_req.cmd);
-assign w_cmd_write_perms    = cmd_write || (i_tlb_req.cmd === M_FLUSH_ALL); // not a write, but needs write permissions
+assign w_cmd_write_perms    = w_cmd_write || (i_tlb_req.cmd === M_FLUSH_ALL); // not a write, but needs write permissions
 
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_lrsc_allowed;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ae_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ae_ld_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ae_st_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_must_alloc_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ma_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ma_ld_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_ma_st_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_pf_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_pf_ld_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_pf_st_array;
+logic [TLB_ALL_ENTRIES_NUM-1: 0] w_pf_inst_array;
+
+// assign w_lrsc_allowed = widthMap(w => Mux((usingDataScratchpad || usingAtomicsOnlyForIO).B, 0.U, c_array(w)))
+assign w_lrsc_allowed = w_c_array;
+assign w_ae_array = (w_misaligned ? w_eff_array     : 'h0) |
+                    (w_cmd_lrsc   ? ~w_lrsc_allowed : 'h0);
+assign w_ae_ld_array = w_cmd_read ? w_ae_array | ~w_pr_array : 'h0;
+assign w_ae_st_array = (w_cmd_write_perms    ? w_ae_array | ~w_pw_array : 'h0) |
+                       (w_cmd_amo_logical    ? ~w_pal_array_if_cached : 'h0) |
+                       (w_cmd_amo_arithmetic ? ~w_paa_array_if_cached : 'h0);
+assign w_must_alloc_array = (w_cmd_amo_logical    ? ~w_paa_array : 'h0) |
+                            (w_cmd_amo_arithmetic ? ~w_pal_array : 'h0) |
+                            (w_cmd_lrsc           ? ~'h0         : 'h0);
+assign w_ma_ld_array = w_misaligned && w_cmd_read  ? ~w_eff_array : 'h0;
+assign w_ma_st_array = w_misaligned && w_cmd_write ? ~w_eff_array : 'h0;
+assign w_pf_ld_array = w_cmd_read        ? ~(w_r_array | w_ptw_ae_array) : 'h0;
+assign w_pf_st_array = w_cmd_write_perms ? ~(w_w_array | w_ptw_ae_array) : 'h0;
+assign w_pf_inst_array = ~(w_x_array | w_ptw_ae_array);
+
+logic                            w_do_refill;
+assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
 
 // ------------------
 // Response of TLB
 // ------------------
-assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(pf_ld_array & w_is_hit));
-assign o_tlb_resp.pf.st        = (w_bad_va && W_cmd_write_perms) || (|(pf_st_array & w_is_hit));
-assign o_tlb_resp.pf.inst      = w_bad_va || (|(pf_inst_array & w_is_hit));
-assign o_tlb_resp.ae.ld        = ae_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
-assign o_tlb_resp.ae.st        = ae_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
-assign o_tlb_resp.ae.inst      = ~px_array   & w_vm_enabled ? |w_is_hit : 1'b1;
-assign o_tlb_resp.ma.ld        = ma_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
-assign o_tlb_resp.ma.st        = ma_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
-assign o_tlb_resp.ma.inst      = 1'b0;   // this is up to the pipeline to figure out
-assign o_tlb_resp.cacheable    = |(c_array & w_is_hit);
-assign o_tlb_resp.must_alloc   = |(must_alloc_array & w_is_hit);
-// && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
-assign o_tlb_resp.prefetchable = |(prefetchable_array & w_is_hit);
-assign o_tlb_resp.miss         = do_refill || w_tlb_miss || multipleW_is_hit;
-assign o_tlb_resp.paddr        = {ppn, i_tlb_req.vaddr[PG_IDXW-1: 0]};
+// assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_is_hit));
+// assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_is_hit));
+// assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_is_hit));
+// assign o_tlb_resp.ae.ld        = w_ae_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
+// assign o_tlb_resp.ae.st        = w_ae_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
+// assign o_tlb_resp.ae.inst      = ~w_px_array   & w_vm_enabled ? |w_is_hit : 1'b1;
+// assign o_tlb_resp.ma.ld        = w_ma_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
+// assign o_tlb_resp.ma.st        = w_ma_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
+// assign o_tlb_resp.ma.inst      = 1'b0;   // this is up to the pipeline to figure out
+// assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
+// assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
+// // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
+// assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
+assign o_tlb_resp.miss         = w_do_refill || w_tlb_miss /* || multiplehits */;
+assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
 
 assign o_tlb_update = 1'b0;
 

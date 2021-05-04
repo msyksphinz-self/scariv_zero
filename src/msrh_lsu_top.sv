@@ -12,6 +12,9 @@ module msrh_lsu_top
 
     regread_if.master   ex1_regread[msrh_conf_pkg::LSU_INST_NUM * 2-1:0],
 
+    // Page Table Walk I/O
+    tlb_ptw_if.master ptw_if[msrh_conf_pkg::LSU_INST_NUM],
+
     l2_req_if.master  l1d_ext_req,
     l2_resp_if.slave  l1d_ext_resp,
 
@@ -80,6 +83,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
 
+    .ptw_if(ptw_if[lsu_idx]),
     .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
 

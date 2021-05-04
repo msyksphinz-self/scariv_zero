@@ -104,9 +104,11 @@ package msrh_lsu_pkg;
   } tlb_entry_t;
 
   typedef struct packed {
+    logic          valid;
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
     mem_cmd_t cmd;
     logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W/8)-1: 0] size;
+    logic                                               passthrough;
   } tlb_req_t;
 
   typedef struct packed {
@@ -376,6 +378,7 @@ typedef struct packed {
 } ptw_req_t;
 
 typedef struct packed {
+  logic          valid;
   logic                          ae;
   logic                          pte;
   logic [$clog2(PG_LEVELS)-1: 0] level;

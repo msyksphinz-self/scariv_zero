@@ -40,7 +40,7 @@ regread_if regread[msrh_pkg::REGPORT_NUM] ();
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
-tlb_ptw_if  w_ptw_if();
+tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
 
 // ----------------------------------
 // Committer Components
@@ -138,7 +138,7 @@ msrh_frontend u_frontend (
 
   .iq_disp (w_iq_disp),
 
-  .ptw_if (w_ptw_if)
+  .ptw_if (w_ptw_if[0])
 );
 
   // msrh_decoder u_decoder (
@@ -230,6 +230,7 @@ u_msrh_lsu_top
 
     .ex1_regread (regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
 
+    .ptw_if       (w_ptw_if[1 +: msrh_conf_pkg::LSU_INST_NUM]),
     .l1d_ext_req  (l1d_ext_req ),
     .l1d_ext_resp (l1d_ext_resp),
 

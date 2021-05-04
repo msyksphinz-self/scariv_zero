@@ -34,6 +34,9 @@ module msrh_lsu
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
 
+    // Page Table Walk I/O
+    tlb_ptw_if.master ptw_if,
+
     // Feedbacks to LDQ / STQ
     output ex1_q_update_t   o_ex1_q_updates,
     output logic            o_tlb_resolve,
@@ -164,6 +167,7 @@ u_lsu_pipe
    .ex1_l1d_rd_if (l1d_rd_if),
    .o_ex3_mispred (o_ex3_mispred),
 
+   .ptw_if(ptw_if),
    .l1d_lrq_if (l1d_lrq_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
