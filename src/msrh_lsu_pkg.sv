@@ -372,6 +372,20 @@ localparam PG_IDX_W = 12;
 localparam PG_LEVEL_W = 10 - $clog2(riscv_pkg::XLEN_W / 32);
 localparam SECTOR_NUM = 4;
 
+
+typedef struct packed {
+  logic [PPN_W-1: 0] ppn;
+  logic [ 1: 0]      reserved_for_software;
+  logic              d;
+  logic              a;
+  logic              g;
+  logic              u;
+  logic              x;
+  logic              w;
+  logic              r;
+  logic              v;
+} pte_t;
+
 typedef struct packed {
   logic              valid;
   logic [VPN_W-1: 0] addr;
@@ -380,7 +394,7 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   logic                          ae;
-  logic                          pte;
+  pte_t                          pte;
   logic [$clog2(PG_LEVELS)-1: 0] level;
   logic                          fragmented_superpage;
   logic                          homogeneous;
@@ -389,5 +403,33 @@ typedef struct packed {
 typedef struct packed {
   logic  dummy;
 } pmp_t;
+
+// -----
+// PTW
+// ----
+
+typedef struct packed {
+
+  logic [SETS_NUM-1: 0] idxBits;
+  logic [VPN_W-1: IDX_W-1: 0] tagBits;
+  logic [TAG_W-1: 0] tag;
+  logic [PPN_W-1: 0] ppn;
+  logic              d;
+  logic              a;
+  logic              u;
+  logic              x;
+  logic              w;
+  logic              r;
+
+} l2_tlb_entry_t;
+
+typedef struct packed {
+  logic l2miss;
+  logic l2hit;
+  logic pte_miss;
+  logic pte_hit;
+} ptw_perf_events_t;
+
+
 
 endpackage // msrh_lsu_pkg
