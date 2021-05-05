@@ -1,0 +1,1 @@
+../riscv-torture/output/test.S
