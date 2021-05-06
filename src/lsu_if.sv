@@ -91,7 +91,7 @@ interface tlb_ptw_if;
   logic    req_ready;
   msrh_lsu_pkg::ptw_resp_t       resp;
   logic    resp_ready;
-  logic [riscv_pkg::XLEN_W-1: 0] ptbr;
+  logic [riscv_pkg::XLEN_W-1: 0] satp;
   logic [riscv_pkg::XLEN_W-1: 0] status;
   // msrh_lsu_pkg::pmp_t            pmp[msrh_lsu_pkg::PMP_NUM];
 
@@ -140,4 +140,5 @@ interface datapath_ptw_if;
     output pmp,
     input  perf
   );
-}
+
+endinterface // datapath_ptw_if
