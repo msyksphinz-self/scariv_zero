@@ -8,7 +8,11 @@ module msrh_tile (
 
     // L2 request from L1D
     l2_req_if.master l1d_ext_req,
-    l2_resp_if.slave l1d_ext_resp
+    l2_resp_if.slave l1d_ext_resp,
+
+    // PTW interconnection
+    l2_req_if.master ptw_req,
+    l2_resp_if.slave ptw_resp
 );
 
 localparam ALU_INST_PORT_BASE = 0;
@@ -336,7 +340,13 @@ msrh_rob u_rob
 
 msrh_ptw u_ptw
   (
-   .ptw_if(w_ptw_if)
+   .i_clk    (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .ptw_if   (w_ptw_if),
+
+   .ptw_req  (ptw_req ),
+   .ptw_resp (ptw_resp)
    );
 
 endmodule  // msrh_tile
