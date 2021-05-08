@@ -80,9 +80,9 @@ assign req_if[0].payload.data    = i_elf_req_data;
 assign req_if[0].payload.byte_en = i_elf_req_byte_en;
 assign o_elf_req_ready = req_if[0].ready;
 
-assign o_ic_resp_valid = i_l2_resp_valid;
-assign o_ic_resp_tag   = i_l2_resp_tag;
-assign o_ic_resp_data  = i_l2_resp_data;
+// assign o_ic_resp_valid = i_l2_resp_valid;
+// assign o_ic_resp_tag   = i_l2_resp_tag;
+// assign o_ic_resp_data  = i_l2_resp_data;
 // assign o_l2_resp_ =
 
 // ic_if interconnection
