@@ -29,6 +29,15 @@ module msrh_tb
    input logic i_ram_reset_n
    );
 
+/* from ELF Loader */
+logic                                     w_elf_req_valid;
+msrh_lsu_pkg::mem_cmd_t                   w_elf_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]            w_elf_req_addr;
+logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
+logic                                     w_elf_req_ready;
+
 /* from Frontend IC */
 logic                                     w_ic_req_valid;
 msrh_lsu_pkg::mem_cmd_t                   w_ic_req_cmd;
@@ -43,14 +52,19 @@ logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ic_resp_tag;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_ic_resp_data;
 logic                                     w_ic_resp_ready  ;
 
-/* from ELF Loader */
-logic                                     w_elf_req_valid;
-msrh_lsu_pkg::mem_cmd_t                   w_elf_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]            w_elf_req_addr;
-logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_elf_req_tag;
-logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
-logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
-logic                                     w_elf_req_ready;
+/* L1D Interface */
+logic                                     w_l1d_req_valid;
+msrh_lsu_pkg::mem_cmd_t                   w_l1d_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]            w_l1d_req_addr;
+logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_req_tag;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
+logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
+logic                                     w_l1d_req_ready;
+
+logic                                     w_l1d_resp_valid;
+logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
+logic                                     w_l1d_resp_ready;
 
 /* L2 Interface */
 logic                                     w_l2_req_valid;
@@ -65,21 +79,6 @@ logic                                     w_l2_resp_valid;
 logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
 logic                                     w_l2_resp_ready;
-
-
-/* L1D Interface */
-logic                                     w_l1d_req_valid;
-msrh_lsu_pkg::mem_cmd_t                   w_l1d_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]            w_l1d_req_addr;
-logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_req_tag;
-logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
-logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
-logic                                     w_l1d_req_ready;
-
-logic                                     w_l1d_resp_valid;
-logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
-logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
-logic                                     w_l1d_resp_ready;
 
 /* Connection */
 assign w_l2_req_valid   = w_l1d_req_valid ? w_l1d_req_valid   : i_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
@@ -111,7 +110,7 @@ msrh_tile_wrapper
     .i_clk     (i_clk        ),
     .i_reset_n (i_msrh_reset_n),
 
-    // L2 request from ICache
+    // ICache Interconnection
     .o_ic_req_valid   (w_ic_req_valid ),
     .o_ic_req_cmd     (w_ic_req_cmd   ),
     .o_ic_req_addr    (w_ic_req_addr  ),
@@ -125,7 +124,7 @@ msrh_tile_wrapper
     .i_ic_resp_data   (w_ic_resp_data ),
     .o_ic_resp_ready  (w_ic_resp_ready),
 
-    // L2 request from L1D
+    // L1D Interconnection
     .o_l1d_req_valid  (w_l1d_req_valid  ),
     .o_l1d_req_cmd    (w_l1d_req_cmd    ),
     .o_l1d_req_addr   (w_l1d_req_addr   ),
@@ -137,7 +136,21 @@ msrh_tile_wrapper
     .i_l1d_resp_valid (w_l1d_resp_valid ),
     .i_l1d_resp_tag   (w_l1d_resp_tag   ),
     .i_l1d_resp_data  (w_l1d_resp_data  ),
-    .o_l1d_resp_ready (w_l1d_resp_ready )
+    .o_l1d_resp_ready (w_l1d_resp_ready ),
+
+    // PTW Interconnection
+    .o_ptw_req_valid  (w_ptw_req_valid  ),
+    .o_ptw_req_cmd    (w_ptw_req_cmd    ),
+    .o_ptw_req_addr   (w_ptw_req_addr   ),
+    .o_ptw_req_tag    (w_ptw_req_tag    ),
+    .o_ptw_req_data   (w_ptw_req_data   ),
+    .o_ptw_req_byte_en(w_ptw_req_byte_en),
+    .i_ptw_req_ready  (w_ptw_req_ready  ),
+
+    .i_ptw_resp_valid (w_ptw_resp_valid ),
+    .i_ptw_resp_tag   (w_ptw_resp_tag   ),
+    .i_ptw_resp_data  (w_ptw_resp_data  ),
+    .o_ptw_resp_ready (w_ptw_resp_ready )
      );
 
 
