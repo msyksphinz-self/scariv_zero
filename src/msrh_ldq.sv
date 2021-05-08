@@ -45,6 +45,8 @@ logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
 logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
+logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
+
 logic                                w_flush_valid;
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
 
@@ -100,7 +102,6 @@ logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1:0] w_in_ptr;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1:0] w_out_ptr;
 logic                        w_in_valid;
 logic                        w_out_valid;
-logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_valid  = |disp_picked_inst_valid;
 assign w_out_valid = |w_entry_complete;

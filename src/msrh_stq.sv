@@ -48,6 +48,7 @@ module msrh_stq
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
+logic [$clog2(msrh_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 stq_entry_t w_stq_entries[msrh_conf_pkg::STQ_SIZE];
 
@@ -139,7 +140,6 @@ logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_in_ptr;
 logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_out_ptr;
 logic                                      w_in_valid;
 logic                                      w_out_valid;
-logic [$clog2(msrh_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 assign w_in_valid  = |disp_picked_inst_valid;
 assign w_out_valid = |w_stq_entry_st_finish;

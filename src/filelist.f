@@ -59,6 +59,8 @@
 ../src/msrh_disp_pickup.sv
 ../src/msrh_ptw.sv
 
+../src/simple_arbiter.sv
+
 ../src/msrh_rename.sv
 ../src/msrh_freelist.sv
 ../src/msrh_rename_map.sv
