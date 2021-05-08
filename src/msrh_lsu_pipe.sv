@@ -148,7 +148,7 @@ u_tlb
 
  .i_kill(1'b0),
  .i_sfence ('h0),
- .i_status_prv('h0),
+ .i_status_prv(msrh_pkg::PRV_M),
  .i_csr_satp('h0),
 
  .i_tlb_req (w_ex1_tlb_req ),
