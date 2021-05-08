@@ -33,17 +33,17 @@ ptw_req_t   w_ptw_accepted_req;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_satp;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
 
-logic                          r_ptw_addr[PPN_W-1: 0];
+logic [riscv_pkg::PPN_W-1: 0]  r_ptw_addr;
 
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_loop
-  assign w_ptw_valid [p_idx] = ptw_if[p_idx].valid;
+  assign w_ptw_valid [p_idx] = ptw_if[p_idx].req.valid;
   assign w_ptw_req   [p_idx] = ptw_if[p_idx].req;
   assign w_ptw_satp  [p_idx] = ptw_if[p_idx].satp;
-  assign w_ptw_status[p_idx] = ptw_if[p_idx].statusx;
+  assign w_ptw_status[p_idx] = ptw_if[p_idx].status;
 end
 endgenerate
 
-simple_arbiter #(.WIDTH(PTW_PORT_NUM)) u_simple_arbiter (.i_valid(ptw_valid), .o_accept(w_ptw_accept));
+simple_arbiter #(.WIDTH(PTW_PORT_NUM)) u_simple_arbiter (.i_valid(w_ptw_valid), .o_accept(w_ptw_accept));
 bit_oh_or #(.T(ptw_req_t),                     .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_req    (.i_oh(w_ptw_accept), .i_data(w_ptw_req   ), .o_selected(w_ptw_accepted_req   ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_satp   (.i_oh(w_ptw_accept), .i_data(w_ptw_satp  ), .o_selected(w_ptw_accepted_satp  ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_status (.i_oh(w_ptw_accept), .i_data(w_ptw_status), .o_selected(w_ptw_accepted_status));
@@ -59,8 +59,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (w_ptw_accepted_req.valid) begin
           r_state <= REQUEST;
           r_count <= PG_LEVELS - 1;
-          r_ptw_addr <= w_ptw_accepted_status[PPN_W-1: 0] +
-                        w_ptw_accepted_req.vaddr[PG_IDX_W + (PG_LEVES-1)*VPN_FIELD_W +: VPN_FIELD_W];
+          /* verilator lint_off WIDTH */
+          r_ptw_addr <= w_ptw_accepted_status[riscv_pkg::PPN_W-1: 0] +
+                        w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W];
         end
       end
       REQUEST : begin
@@ -76,6 +77,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_state <= WAIT;
           end
         end
+      end
+      default : begin
+        $fatal(0, "This state must not be come\n");
       end
     endcase // case (r_state)
   end // else: !if(!i_reset_n)

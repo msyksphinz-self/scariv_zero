@@ -375,16 +375,16 @@ localparam SECTOR_NUM = 4;
 
 
 typedef struct packed {
-  logic [PPN_W-1: 0] ppn;
-  logic [ 1: 0]      reserved_for_software;
-  logic              d;
-  logic              a;
-  logic              g;
-  logic              u;
-  logic              x;
-  logic              w;
-  logic              r;
-  logic              v;
+  logic [riscv_pkg::PPN_W-1: 0] ppn;
+  logic [ 1: 0]                 reserved_for_software;
+  logic                         d;
+  logic                         a;
+  logic                         g;
+  logic                         u;
+  logic                         x;
+  logic                         w;
+  logic                         r;
+  logic                         v;
 } pte_t;
 
 typedef struct packed {

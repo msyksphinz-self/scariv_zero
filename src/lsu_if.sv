@@ -100,7 +100,7 @@ interface tlb_ptw_if;
     input  req_ready,
     input  resp,
     output resp_ready,
-    input  ptbr,
+    input  satp,
     input  status
     // input pmp
   );
@@ -110,7 +110,7 @@ interface tlb_ptw_if;
     output req_ready,
     output resp,
     input  resp_ready,
-    output ptbr,
+    output satp,
     output status
     // input pmp
   );
@@ -119,14 +119,14 @@ endinterface // tlb_ptw_if
 
 
 interface datapath_ptw_if;
-  logic [riscv_pkg::XLEN_W-1: 0] ptbr;
+  logic [riscv_pkg::XLEN_W-1: 0] satp;
   sfence_req_t sfence;
   logic [riscv_pkg::XLEN_W-1: 0] status;
   logic [PMP_NUM-1: 0]           pmp_t;
   ptw_perf_events_t              perf;
 
   modport master (
-    input  ptbr,
+    input  satp,
     input  sfence,
     input  status,
     input  pmp,
@@ -134,7 +134,7 @@ interface datapath_ptw_if;
   );
 
   modport slave (
-    output ptbr,
+    output satp,
     output sfence,
     output status,
     output pmp,

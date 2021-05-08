@@ -96,7 +96,7 @@ assign o_ptw_req_addr    = ptw_l2_req.payload.addr   ;
 assign o_ptw_req_tag     = ptw_l2_req.payload.tag    ;
 assign o_ptw_req_data    = ptw_l2_req.payload.data   ;
 assign o_ptw_req_byte_en = ptw_l2_req.payload.byte_en;
-assign ptw_req.ready     = i_ptw_req_ready        ;
+assign ptw_l2_req.ready  = i_ptw_req_ready        ;
 
 assign ptw_l2_resp.valid        = i_ptw_resp_valid ;
 assign ptw_l2_resp.payload.tag  = i_ptw_resp_tag   ;
@@ -113,8 +113,8 @@ msrh_tile u_msrh_tile (
     .l1d_ext_req  (l1d_l2_req ),
     .l1d_ext_resp (l1d_l2_resp),
 
-    .ptw_req  (ptw_req ),
-    .ptw_resp (ptw_resp)
+    .ptw_req  (ptw_l2_req ),
+    .ptw_resp (ptw_l2_resp)
 );
 
 
