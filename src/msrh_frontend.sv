@@ -157,8 +157,11 @@ assign w_commit_flush_valid = i_commit.commit &
                               i_commit.flush_valid &
                               !i_commit.all_dead;
 
+assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
 assign w_s0_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
+assign w_s0_tlb_req.size  = 'h0;
+assign w_s0_tlb_req.passthrough  = 1'b0;
 
 tlb u_tlb
   (
@@ -168,7 +171,7 @@ tlb u_tlb
    .i_kill (1'b0),
 
    .i_sfence ('h0),
-   .i_status_prv(),
+   .i_status_prv(msrh_pkg::PRV_M),
    .i_csr_satp(),
    .ptw_if(ptw_if),
 

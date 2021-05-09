@@ -91,7 +91,7 @@ logic w_load_valid;
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_cmt_id (c_idx),
+     .i_cmt_id (c_idx[CMT_ENTRY_W-1:0]),
 
      .i_load_valid   (w_load_valid),
      .i_load_pc_addr (sc_disp.pc_addr),

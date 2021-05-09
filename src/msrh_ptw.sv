@@ -35,13 +35,23 @@ logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
 
 logic [riscv_pkg::PPN_W-1: 0]  r_ptw_addr;
 
-generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_loop
+generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_req_loop
   assign w_ptw_valid [p_idx] = ptw_if[p_idx].req.valid;
   assign w_ptw_req   [p_idx] = ptw_if[p_idx].req;
   assign w_ptw_satp  [p_idx] = ptw_if[p_idx].satp;
   assign w_ptw_status[p_idx] = ptw_if[p_idx].status;
 end
 endgenerate
+
+generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_loop
+  assign ptw_if[p_idx].resp.valid       = 1'b0;  // resp_valid(i);
+  assign ptw_if[p_idx].resp.ae          = 'h0;   // resp_ae;
+  assign ptw_if[p_idx].resp.pte         = 'h0;   // r_pte;
+  assign ptw_if[p_idx].resp.level       = r_count;
+  assign ptw_if[p_idx].resp.homogeneous = 'h0;   // homogeneous || pageGranularityPMPs;
+end // block: ptw_resp_loop
+endgenerate
+
 
 simple_arbiter #(.WIDTH(PTW_PORT_NUM)) u_simple_arbiter (.i_valid(w_ptw_valid), .o_accept(w_ptw_accept));
 bit_oh_or #(.T(ptw_req_t),                     .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_req    (.i_oh(w_ptw_accept), .i_data(w_ptw_req   ), .o_selected(w_ptw_accepted_req   ));

@@ -102,6 +102,7 @@ logic [TLB_ALL_ENTRIES_NUM-1: 0]       w_real_hits;
 logic                                  w_tlb_hit;
 logic                                  w_tlb_miss;
 
+logic [riscv_pkg::VADDR_W-1: PG_IDX_W] r_refill_tag;
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : all_entries
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
@@ -169,6 +170,7 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
         ST_READY : begin
           if (i_tlb_req.valid & o_tlb_ready & w_tlb_miss) begin
             r_state <= ST_REQUEST;
+            r_refill_tag <= w_vpn;
           end
         end
         ST_REQUEST : begin
@@ -279,6 +281,12 @@ assign w_pf_inst_array = ~(w_x_array | w_ptw_ae_array);
 logic                            w_do_refill;
 assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
 
+// ---------------
+// Request of TLB
+// ---------------
+assign ptw_if.req.valid = r_state == ST_REQUEST;
+assign ptw_if.req.addr  = {r_refill_tag, {PG_IDX_W{1'b0}}};
+
 // ------------------
 // Response of TLB
 // ------------------
@@ -295,7 +303,7 @@ assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
 // assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
 // // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
 // assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
-assign o_tlb_resp.miss         = w_do_refill || w_tlb_miss /* || multiplehits */;
+assign o_tlb_resp.miss         = w_do_refill | w_tlb_miss /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
 
 assign o_tlb_update = 1'b0;
