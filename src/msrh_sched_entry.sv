@@ -33,7 +33,6 @@ module msrh_sched_entry
 
    output logic                                o_entry_done,
    output logic                                o_entry_wait_complete,
-   input logic                                 i_done_complete,
    output logic                                o_entry_finish,
    output logic [msrh_pkg::CMT_ID_W-1:0]       o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
@@ -173,7 +172,7 @@ assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
-assign w_entry_complete = /* i_done_complete | */ (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
+assign w_entry_complete = (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

@@ -124,7 +124,7 @@ assign o_ptw_resp_valid = i_l2_resp_valid;
 assign o_ptw_resp_tag   = i_l2_resp_tag;
 assign o_ptw_resp_data  = i_l2_resp_data;
 
-l2_if_arbiter #(.ARB_NUM(4)) u_l2_if_arbiter (.l2_slave_if(req_if), .l2_master_if(req_if_selected));
+l2_if_arbiter #(.ARB_NUM(4)) u_l2_if_arbiter (.l2_req_slave_if(req_if), .l2_req_master_if(req_if_selected));
 
 // output interconnection
 assign o_l2_req_valid   = req_if_selected.valid;

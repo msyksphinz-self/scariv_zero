@@ -251,6 +251,13 @@ u_tb_elf_loader
    .o_req_byte_en (w_elf_req_byte_en),
    .i_req_ready   (w_elf_req_ready )
    );
+`else // DIRECT_LOAD_HEX
+assign w_elf_req_valid  = 1'b0;
+assign w_elf_req_cmd    = msrh_lsu_pkg::M_XRD;
+assign w_elf_req_addr   = 'h0;
+assign w_elf_req_tag    = 'h0;
+assign w_elf_req_data   = 'h0;
+assign w_elf_req_byte_en = 'h0;
 `endif // DIRECT_LOAD_HEX
 
 localparam STEP = 1;

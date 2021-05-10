@@ -232,6 +232,8 @@ function issue_t assign_issue_t(disp_t in,
   ret.rs2_ready = in.rs2_ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
   ret.rs2_pred_ready = rs2_rel_hit & rs2_may_mispred;
 
+  ret.except_valid = 1'b0;
+  ret.except_type  = INST_ADDR_MISALIGN;
   return ret;
 
 endfunction  // assign_issue_t

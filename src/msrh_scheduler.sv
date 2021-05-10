@@ -74,7 +74,7 @@ u_req_ptr
    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)-1){1'b0}}, w_input_valid_cnt}),
    .o_in_ptr   (w_entry_in_ptr   ),
 
-   .i_out_valid(/* w_entry_complete */ w_entry_complete[w_entry_out_ptr]     ),
+   .i_out_valid(1'b0),
    .i_out_val  ({{($clog2(ENTRY_SIZE)-1){1'b0}}, 1'b1}),
    .o_out_ptr  (w_entry_out_ptr                       )
    );
@@ -156,8 +156,6 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  // assign w_entry_complete[s_idx] = w_entry_wait_complete[s_idx] & (w_entry_out_ptr == s_idx);
-
   msrh_sched_entry
     #(.IS_STORE(IS_STORE))
   u_sched_entry(
@@ -189,7 +187,6 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_entry_picked    (w_picked_inst_oh[s_idx]),
     .o_entry_done      (w_entry_done[s_idx]),
     .o_entry_wait_complete (w_entry_wait_complete[s_idx]),
-    .i_done_complete   (w_entry_complete[s_idx]),
     .o_entry_finish    (w_entry_finish[s_idx]),
     .o_cmt_id          (w_entry_cmt_id[s_idx]),
     .o_grp_id          (w_entry_grp_id[s_idx]),
