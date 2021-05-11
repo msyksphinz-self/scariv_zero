@@ -413,6 +413,7 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
   logic w_inst_arith_valid;
   assign w_inst_arith_valid = iq_disp.valid & |iq_disp.resource_cnt.alu_inst_cnt[a_idx];
   logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] w_alu_inst_cnt;
+  /* verilator lint_off WIDTH */
   assign w_alu_inst_cnt = iq_disp.resource_cnt.alu_inst_cnt[a_idx];
 
   msrh_credit_return_master
@@ -423,7 +424,6 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .i_reset_n(i_reset_n),
 
    .i_get_credit(~w_flush_valid & w_inst_arith_valid & iq_disp.ready),
-   /* verilator lint_off WIDTH */
    .i_credit_val(w_alu_inst_cnt),
 
    .o_credits(),

@@ -285,6 +285,7 @@ assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
 // Request of TLB
 // ---------------
 assign ptw_if.req.valid = r_state == ST_REQUEST;
+/* verilator lint_off WIDTH */
 assign ptw_if.req.addr  = {r_refill_tag, {PG_IDX_W{1'b0}}};
 
 // ------------------
