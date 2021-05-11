@@ -89,6 +89,7 @@ end
 assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
 assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
+assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop

@@ -5,7 +5,7 @@ module msrh_lsu_top
     input logic i_reset_n,
 
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    disp_if.slave                                      disp,
+    disp_if.watch                                      disp,
     cre_ret_if.slave    sch_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,

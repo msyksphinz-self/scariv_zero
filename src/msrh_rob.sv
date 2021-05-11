@@ -5,7 +5,7 @@ module msrh_rob
    input logic                   i_clk,
    input logic                   i_reset_n,
 
-   disp_if.watch                 sc_disp,
+   disp_if.slave                 sc_disp,
 
    cre_ret_if.slave              cre_ret_if,
 
@@ -59,9 +59,10 @@ inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_in_valid (w_in_valid ), .o_in_ptr (w_in_cmt_id  ),
                                          .i_out_valid(w_out_valid), .o_out_ptr(w_out_cmt_id));
 
+assign sc_disp.ready = 1'b1;
 assign w_ignore_disp = w_flush_valid & (sc_disp.valid & sc_disp.ready);
-assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) +
-                             (w_ignore_disp   ? 'h1 : 'h0) ;
+assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) /* +
+                             (w_ignore_disp   ? 'h1 : 'h0) */ ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(CMT_ENTRY_SIZE))
