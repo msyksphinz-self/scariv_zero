@@ -81,8 +81,9 @@ assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
                                 w_rs2_entry_hit |
                                 i_ex1_q_valid & i_ex1_q_updates.inst.rs2_ready;
 
-assign w_cmt_id_match = (i_commit.cmt_id == r_entry.cmt_id) &
-                        ((i_commit.grp_id & r_entry.grp_id) != 'h0);
+assign w_cmt_id_match = i_commit.commit &
+                        (i_commit.cmt_id == r_entry.cmt_id) &
+                        (i_commit.flush_valid ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_entry_dead_done     = (r_entry.state == STQ_DEAD) & w_dead_state_clear;
 assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict;
@@ -150,10 +151,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       STQ_WAIT_COMMIT : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else if (w_cmt_id_match) begin
+        if (w_cmt_id_match) begin
           r_entry.state <= STQ_COMMIT;
+        end else if (w_entry_flush) begin
+          r_entry.state    <= STQ_INIT;
+          r_entry.is_valid <= 1'b0;
+          // prevent all updates from Pipeline
+          r_entry.cmt_id <= 'h0;
+          r_entry.grp_id <= 'h0;
         end
       end
       STQ_WAIT_ST_DATA : begin

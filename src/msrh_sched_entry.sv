@@ -42,6 +42,7 @@ module msrh_sched_entry
    );
 
 logic    r_issued;
+logic    r_dead;
 msrh_pkg::issue_t r_entry;
 msrh_pkg::issue_t w_entry;
 msrh_pkg::issue_t w_init_entry;
@@ -183,6 +184,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_state <= msrh_pkg::INIT;
     r_issued <= 1'b0;
+    r_dead   <= 1'b0;
   end else begin
     case (r_state)
       msrh_pkg::INIT : begin
@@ -196,6 +198,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       msrh_pkg::WAIT : begin
         if (w_entry_flush) begin
           r_state <= msrh_pkg::DEAD;
+          r_dead  <= 1'b1;
         end else begin
           r_entry <= w_entry;
           if (o_entry_valid & o_entry_ready & i_entry_picked) begin
@@ -207,6 +210,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       msrh_pkg::ISSUED : begin
         if (w_entry_flush) begin
           r_state <= msrh_pkg::DEAD;
+          r_dead  <= 1'b1;
         end else begin
           if (i_pipe_done) begin
             r_state <= msrh_pkg::DONE;
@@ -229,6 +233,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       msrh_pkg::DONE : begin
         if (w_entry_flush) begin
           r_state <= msrh_pkg::DEAD;
+          r_dead  <= 1'b1;
         end else begin
           r_state <= msrh_pkg::WAIT_COMPLETE;
         end
@@ -241,6 +246,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state <= msrh_pkg::INIT;
           r_entry.valid <= 1'b0;
           r_issued <= 1'b0;
+          r_dead   <= 1'b0;
           // prevent all updates from Pipeline
           r_entry.cmt_id <= 'h0;
           r_entry.grp_id <= 'h0;
@@ -251,6 +257,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state       <= msrh_pkg::INIT;
           r_entry.valid <= 1'b0;
           r_issued      <= 1'b0;
+          r_dead        <= 1'b0;
           // prevent all updates from Pipeline
           r_entry.cmt_id <= 'h0;
           r_entry.grp_id <= 'h0;
@@ -269,7 +276,7 @@ assign w_oldest_ready = EN_OLDEST ? (i_commit.cmt_id == r_entry.cmt_id) &
                         1'b1;
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & !r_issued & w_oldest_ready & all_operand_ready(w_entry);
+assign o_entry_ready = r_entry.valid & !(r_issued | r_dead) & w_oldest_ready & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
