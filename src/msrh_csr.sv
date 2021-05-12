@@ -523,7 +523,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sep
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SCAUSE        ) begin r_scause        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stval         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STVAL         ) begin r_stval         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_satp          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SATP          ) begin r_satp          <= write_if.data; end end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_satp <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SATP) begin
+    r_satp <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSTATUS       ) begin r_hstatus       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEDELEG       ) begin r_hedeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIDELEG       ) begin r_hideleg       <= write_if.data; end end

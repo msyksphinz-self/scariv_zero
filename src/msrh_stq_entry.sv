@@ -150,17 +150,23 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       STQ_WAIT_COMMIT : begin
-        if (w_cmt_id_match) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (w_cmt_id_match) begin
           r_entry.state <= STQ_COMMIT;
         end
       end
       STQ_WAIT_ST_DATA : begin
-        if (r_entry.inst.rs2_ready) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (r_entry.inst.rs2_ready) begin
           r_entry.state <= STQ_READY;
         end
       end
       STQ_READY : begin
-        if (i_rerun_accept) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (i_rerun_accept) begin
           r_entry.state <= STQ_INIT;
         end
       end

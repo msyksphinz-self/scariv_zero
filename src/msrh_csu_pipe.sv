@@ -166,7 +166,8 @@ assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_e
 assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
                                 msrh_pkg::ECALL_M;                         // r_ex3_pipe_ctrl.is_ecall
 
-assign write_if.valid = r_ex3_issue.valid;
+assign write_if.valid = r_ex3_issue.valid &
+                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 

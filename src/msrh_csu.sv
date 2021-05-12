@@ -63,7 +63,8 @@ u_msrh_disp_pickup
 msrh_scheduler
   #(
     .ENTRY_SIZE  (msrh_conf_pkg::RV_CSU_ENTRY_SIZE),
-    .IN_PORT_SIZE(msrh_conf_pkg::CSU_DISP_SIZE)
+    .IN_PORT_SIZE(msrh_conf_pkg::CSU_DISP_SIZE),
+    .EN_OLDEST(1'b1)
     )
 u_msrh_scheduler
   (

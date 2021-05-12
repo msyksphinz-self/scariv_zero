@@ -1,6 +1,7 @@
 module msrh_sched_entry
   #(
-    parameter IS_STORE = 1'b0
+    parameter IS_STORE = 1'b0,
+    parameter EN_OLDEST = 1'b0
     )
 (
    input logic                                 i_clk,
@@ -44,6 +45,8 @@ logic    r_issued;
 msrh_pkg::issue_t r_entry;
 msrh_pkg::issue_t w_entry;
 msrh_pkg::issue_t w_init_entry;
+
+logic    w_oldest_ready;
 
 logic [msrh_pkg::RNID_W-1:0] w_rs1_rnid;
 logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
@@ -261,8 +264,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
+assign w_oldest_ready = EN_OLDEST ? (i_commit.cmt_id == r_entry.cmt_id) &
+                        ((i_commit.grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) :
+                        1'b1;
+
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & !r_issued & all_operand_ready(w_entry);
+assign o_entry_ready = r_entry.valid & !r_issued & w_oldest_ready & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
