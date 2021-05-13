@@ -672,5 +672,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sta
 
 assign csr_info.mepc  = r_mepc;
 assign csr_info.mtvec = r_mtvec;
+assign csr_info.sepc  = r_sepc;
+assign csr_info.uepc  = r_uepc;
 
 endmodule // msrh_csr

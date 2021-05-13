@@ -72,6 +72,8 @@ logic                           w_inst_buffer_ready;
 
 assign w_s0_vaddr_flush_next = i_commit.except_valid ?
                                (i_commit.except_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
+                                i_commit.except_type == msrh_pkg::SRET    ? csr_info.sepc [riscv_pkg::VADDR_W-1: 0] :
+                                i_commit.except_type == msrh_pkg::URET    ? csr_info.uepc [riscv_pkg::VADDR_W-1: 0] :
                                 i_commit.except_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
                                 'h0) :
                                i_commit.upd_pc_vaddr;

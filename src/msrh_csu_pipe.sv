@@ -24,7 +24,9 @@ module msrh_csu_pipe
 
 typedef struct packed {
   op_t  op;
-  logic is_ret;
+  logic is_mret;
+  logic is_sret;
+  logic is_uret;
   logic is_ecall;
   logic is_ebreak;
   logic is_fence;
@@ -64,7 +66,9 @@ end
 decoder_csu_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
   .op         (w_ex0_pipe_ctrl.op        ),
-  .is_ret     (w_ex0_pipe_ctrl.is_ret    ),
+  .is_mret    (w_ex0_pipe_ctrl.is_mret   ),
+  .is_sret    (w_ex0_pipe_ctrl.is_sret   ),
+  .is_uret    (w_ex0_pipe_ctrl.is_uret   ),
   .is_ecall   (w_ex0_pipe_ctrl.is_ecall  ),
   .is_ebreak  (w_ex0_pipe_ctrl.is_ebreak ),
   .is_fence   (w_ex0_pipe_ctrl.is_fence  ),
@@ -162,9 +166,14 @@ assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_ecall;
-assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
-                                msrh_pkg::ECALL_M;                         // r_ex3_pipe_ctrl.is_ecall
+assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_mret |
+                                   r_ex3_pipe_ctrl.is_sret |
+                                   r_ex3_pipe_ctrl.is_uret |
+                                   r_ex3_pipe_ctrl.is_ecall;
+assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
+                                 r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
+                                 r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
+                                 msrh_pkg::ECALL_M;
 
 assign write_if.valid = r_ex3_issue.valid &
                         !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);
