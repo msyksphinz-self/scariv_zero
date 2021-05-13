@@ -8,6 +8,9 @@ module msrh_lsu
     input logic i_clk,
     input logic i_reset_n,
 
+    /* CSR information */
+    csr_info_if.slave                     csr_info,
+
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
     cre_ret_if.slave                       cre_ret_if,
@@ -145,6 +148,8 @@ u_lsu_pipe
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .csr_info (csr_info),
 
    .i_rv0_issue(w_rv0_issue),
    .i_rv0_index_oh(w_rv0_index_oh),

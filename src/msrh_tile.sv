@@ -225,6 +225,8 @@ u_msrh_lsu_top
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
+    .csr_info (w_csr_info),
+
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
     .sch_cre_ret_if (lsu_cre_ret_if),

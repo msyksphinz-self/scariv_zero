@@ -173,8 +173,8 @@ tlb u_tlb
    .i_kill (1'b0),
 
    .i_sfence ('h0),
-   .i_status_prv(msrh_pkg::PRV_M),
-   .i_csr_satp(),
+   .i_status_prv(csr_info.priv),
+   .i_csr_satp(csr_info.satp),
    .ptw_if(ptw_if),
 
    .i_tlb_req  (w_s0_tlb_req ),

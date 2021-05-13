@@ -15,7 +15,7 @@ module tlb
  output logic o_tlb_ready,
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
- input msrh_pkg::prv_t                i_status_prv,
+ input msrh_pkg::priv_t                i_status_prv,
  input logic [riscv_pkg::XLEN_W-1: 0] i_csr_satp,
 
  // Page Table Walk I/O

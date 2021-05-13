@@ -18,7 +18,7 @@ module msrh_csr
 
 `include "msrh_csr_def.svh"
 
-msrh_pkg::prv_t    r_priv;
+msrh_pkg::priv_t    r_priv;
 
 logic [XLEN_W-1: 0] r_ustatus;
 logic [XLEN_W-1: 0] r_uie;
@@ -647,6 +647,8 @@ assign csr_info.mepc  = r_mepc;
 assign csr_info.mtvec = r_mtvec;
 assign csr_info.sepc  = r_sepc;
 assign csr_info.uepc  = r_uepc;
+assign csr_info.satp  = r_satp;
+assign csr_info.priv  = r_priv;
 
 logic w_delegate;
 assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
@@ -676,7 +678,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (i_commit.commit &
         i_commit.except_valid) begin
-      if (w_delegate) begin
+      if (i_commit.except_type == msrh_pkg::MRET) begin
+      end else if (i_commit.except_type == msrh_pkg::SRET) begin
+        // r_mepc <= epc;
+        r_mcause <= 1 << i_commit.except_type;
+        // r_mtval <= io.tval;
+        r_mstatus[`MSTATUS_MPIE] <= 1'b1;
+        r_mstatus[`MSTATUS_MPP ] <= msrh_pkg::PRV_U;
+        r_mstatus[`MSTATUS_MIE ] <= r_mstatus[`MSTATUS_MPIE];
+        r_priv <= r_mstatus[`MSTATUS_MPP];
+      end else if (i_commit.except_type == msrh_pkg::URET) begin
+      end else if (w_delegate) begin
         // r_sepc <= epc;
         r_scause <= 1 << i_commit.except_type;
         // reg_stval := io.tval

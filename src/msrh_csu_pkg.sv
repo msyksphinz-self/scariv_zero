@@ -41,23 +41,30 @@ endinterface // csr_wr_if
 
 
 interface csr_info_if;
+
+msrh_pkg::priv_t                priv;
 logic [riscv_pkg::XLEN_W-1: 0] mepc;
 logic [riscv_pkg::XLEN_W-1: 0] mtvec;
 logic [riscv_pkg::XLEN_W-1: 0] sepc;
 logic [riscv_pkg::XLEN_W-1: 0] uepc;
+logic [riscv_pkg::XLEN_W-1: 0] satp;
 
 modport master (
+  output priv,
   output mepc,
   output mtvec,
   output sepc,
-  output uepc
+  output uepc,
+  output satp
 );
 
 modport slave (
+  input priv,
   input mepc,
   input mtvec,
   input sepc,
-  input uepc
+  input uepc,
+  input satp
 );
 
 endinterface // csr_info_if

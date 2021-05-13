@@ -9,6 +9,9 @@ module msrh_lsu_pipe
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ /* CSR information */
+ csr_info_if.slave                     csr_info,
+
  input msrh_pkg::issue_t               i_rv0_issue,
  input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
 
@@ -148,8 +151,8 @@ u_tlb
 
  .i_kill(1'b0),
  .i_sfence ('h0),
- .i_status_prv(msrh_pkg::PRV_M),
- .i_csr_satp('h0),
+ .i_status_prv(csr_info.priv),
+ .i_csr_satp(csr_info.satp),
 
  .i_tlb_req (w_ex1_tlb_req ),
  .o_tlb_ready(),

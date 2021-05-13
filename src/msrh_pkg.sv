@@ -41,7 +41,7 @@ package msrh_pkg;
      PRV_U = 0,
      PRV_S = 2,
      PRV_M = 3
-  } prv_t;
+  } priv_t;
 
   typedef struct packed {
     logic valid;
