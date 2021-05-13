@@ -276,7 +276,8 @@ assign w_oldest_ready = EN_OLDEST ? (i_commit.cmt_id == r_entry.cmt_id) &
                         1'b1;
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & !(r_issued | r_dead) & w_oldest_ready & all_operand_ready(w_entry);
+assign o_entry_ready = r_entry.valid & !(r_issued | r_dead) & !w_entry_flush &
+                       w_oldest_ready & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
