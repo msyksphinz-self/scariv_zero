@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
   dut->i_ram_reset_n = 1;
 
   int cycle = 0;
-  while (time_counter < 50000) {
+  while (time_counter < 5000000) {
     if ((time_counter % 5) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
     }
@@ -140,6 +140,10 @@ int main(int argc, char** argv) {
 
     time_counter++;
   }
+
+  fprintf(stdout, "===============================\n");
+  fprintf(stdout, "SIMULATION TIMEOUT\n");
+  fprintf(stdout, "===============================\n");
 
   dut->final();
   if (dump_fst_enable) tfp->close();
