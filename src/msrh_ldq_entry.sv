@@ -30,8 +30,8 @@ module msrh_ldq_entry
 
  output logic                                    o_entry_finish,
 
- input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
- input logic                                     i_ldq_done
+ input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done /*,
+ input logic                                     i_ldq_done */
  );
 
 ldq_entry_t                                      r_entry;

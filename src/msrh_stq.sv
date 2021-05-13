@@ -39,7 +39,7 @@ module msrh_stq
    // Write Data to DCache
    l1d_wr_if.master                      l1d_wr_if,
 
-   output                                msrh_pkg::done_rpt_t o_done_report
+   output                                msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
    );
 
 // =========================
@@ -104,9 +104,6 @@ u_credit_return_slave
 //
 // Done Selection
 //
-stq_entry_t w_stq_done_entry;
-logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_array;
-logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
 
 logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req;
 logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req_oh;
@@ -205,7 +202,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
      .i_rerun_accept (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
-     .i_stq_entry_done (w_stq_done_oh[s_idx]),
+     // .i_stq_entry_done (w_stq_done_oh[s_idx]),
 
      .i_commit (i_commit),
 
@@ -327,13 +324,25 @@ assign o_stq_resolve.resolve_index_oh = w_resolve_st_data_haz | w_resolve_paddr_
 // ===============
 // Done Logic
 // ===============
-generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : done_loop
-  // assign w_stq_done_oh[s_idx] = w_stq_entries[s_idx].state == STQ_DONE && (w_out_ptr == s_idx);
-  assign w_stq_done_array[s_idx] = w_stq_entries[s_idx].state == STQ_DONE;
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) begin : done_loop
+  logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_array;
+  stq_entry_t                          w_stq_done_entry;
+  logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
+
+  for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : q_loop
+    assign w_stq_done_array[s_idx] = (w_stq_entries[s_idx].state == STQ_DONE) &
+                                     w_stq_entries[s_idx].pipe_sel_idx_oh[d_idx];
+  end
+  bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_done_oh (.in(w_stq_done_array), .out(w_stq_done_oh));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
+
+  assign o_done_report[d_idx].valid   = |w_stq_done_oh;
+  assign o_done_report[d_idx].cmt_id  = w_stq_done_entry.cmt_id;
+  assign o_done_report[d_idx].grp_id  = w_stq_done_entry.grp_id;
+  assign o_done_report[d_idx].exc_valid = 'h0;   // Temporary
+
 end
 endgenerate
-bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_done_oh (.in(w_stq_done_array), .out(w_stq_done_oh));
-bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
 // ==============================
 // After commit, store operation
@@ -404,12 +413,6 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
 assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
-
-
-assign o_done_report.valid   = |w_stq_done_oh;
-assign o_done_report.cmt_id  = w_stq_done_entry.cmt_id;
-assign o_done_report.grp_id  = w_stq_done_entry.grp_id;
-assign o_done_report.exc_valid = 'h0;   // Temporary
 
 
 `ifdef SIMULATION

@@ -26,7 +26,7 @@ module msrh_ldq
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
-   output                                msrh_pkg::done_rpt_t o_done_report
+   output                                msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
    );
 
 ldq_entry_t w_ldq_entries[msrh_conf_pkg::LDQ_SIZE];
@@ -40,9 +40,6 @@ logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::LDQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_conf_pkg::LDQ_SIZE] ;
 
-ldq_entry_t w_ldq_done_entry;
-logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
 logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
@@ -174,8 +171,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .o_entry_finish (w_entry_complete[l_idx]),
 
-     .i_ex3_done (i_ex3_done),
-     .i_ldq_done (w_ldq_done_oh[l_idx])
+     .i_ex3_done (i_ex3_done) /*,
+     .i_ldq_done (w_ldq_done_oh[l_idx]) */
      );
 
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
@@ -208,17 +205,24 @@ endgenerate
 // ===============
 // done logic
 // ===============
-generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : done_loop
-  assign w_ldq_done_array[l_idx] = w_ldq_entries[l_idx].state == LDQ_EX3_DONE;
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) begin : done_loop
+  logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
+  ldq_entry_t                              w_ldq_done_entry;
+  logic [msrh_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
+
+  for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : q_loop
+    assign w_ldq_done_array[l_idx] = (w_ldq_entries[l_idx].state == LDQ_EX3_DONE) &
+                                     w_ldq_entries[l_idx].pipe_sel_idx_oh[d_idx];
+  end
+  bit_extract_msb #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_done_oh (.in(w_ldq_done_array), .out(w_ldq_done_oh));
+  bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_done_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
+
+  assign o_done_report[d_idx].valid   = |w_ldq_done_array;
+  assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.cmt_id;
+  assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.grp_id;
+  assign o_done_report[d_idx].exc_valid = 'h0;   // Temporary
 end
 endgenerate
-bit_extract_msb #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_done_oh (.in(w_ldq_done_array), .out(w_ldq_done_oh));
-bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
-
-assign o_done_report.valid   = |w_ldq_done_oh;
-assign o_done_report.cmt_id  = w_ldq_done_entry.cmt_id;
-assign o_done_report.grp_id  = w_ldq_done_entry.grp_id;
-assign o_done_report.exc_valid = 'h0;   // Temporary
 
 `ifdef SIMULATION
 // credit / return management assertion

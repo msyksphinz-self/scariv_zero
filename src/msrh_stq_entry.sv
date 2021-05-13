@@ -24,7 +24,7 @@ module msrh_stq_entry
 
    input logic                                i_rerun_accept,
 
-   input logic                                i_stq_entry_done,
+   // input logic                                i_stq_entry_done,
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
    input logic                                i_sq_op_accept,
@@ -146,7 +146,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       STQ_DONE : begin
         if (w_entry_flush) begin
           r_entry.state <= STQ_DEAD;
-        end else if (i_stq_entry_done) begin
+        end else /* if (i_stq_entry_done) */begin
           r_entry.state <= STQ_WAIT_COMMIT;
         end
       end

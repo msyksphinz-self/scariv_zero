@@ -22,7 +22,7 @@ localparam CSU_INST_PORT_BASE = BRU_INST_PORT_BASE + 1;
 
 localparam ALU_DONE_PORT_BASE = 0;
 localparam LSU_DONE_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
-localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + 2;
+localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 
 // ----------------------------------
@@ -67,7 +67,7 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
 msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::done_rpt_t w_lsu_done_rpt    [2];
+msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::mispred_t  w_ex3_mispred_lsu [msrh_conf_pkg::LSU_INST_NUM] ;
 
 // ----------------------------------
@@ -113,10 +113,9 @@ endgenerate
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[LSU_INST_PORT_BASE + l_idx] = w_ex1_lsu_early_wr[l_idx];
   assign w_ex3_phy_wr  [LSU_INST_PORT_BASE + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
+  assign w_done_rpt    [LSU_DONE_PORT_BASE + l_idx] = w_lsu_done_rpt    [l_idx];
 end
 endgenerate
-assign w_done_rpt    [LSU_DONE_PORT_BASE + 0] = w_lsu_done_rpt[0];
-assign w_done_rpt    [LSU_DONE_PORT_BASE + 1] = w_lsu_done_rpt[1];
 
 // BRU
 assign w_ex1_early_wr[BRU_INST_PORT_BASE] = w_ex1_bru_early_wr;

@@ -26,7 +26,7 @@ module msrh_lsu_top
     output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_conf_pkg::LSU_INST_NUM],
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_conf_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::done_rpt_t o_done_report[2],  // LDQ done report, STQ done report
+    output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
     output msrh_pkg::mispred_t  o_ex3_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
     // Commit notification
@@ -57,6 +57,9 @@ logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
+
+msrh_pkg::done_rpt_t w_ld_done_report[msrh_conf_pkg::LSU_INST_NUM];
+msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -104,6 +107,18 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .o_ex3_done (w_ex3_done [lsu_idx])
    );
 
+  // Done Report Generate
+  assign o_done_report[lsu_idx] = w_ld_done_report[lsu_idx].valid ? w_ld_done_report[lsu_idx] : w_st_done_report[lsu_idx];
+`ifdef SIMULATION
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+    end else begin
+      if (w_ld_done_report[lsu_idx].valid & w_st_done_report[lsu_idx].valid) begin
+        $fatal(0, "ld / st done report asserted in same time");
+      end
+    end
+  end
+`endif // SIMULATION
 end // block: lsu_loop
 endgenerate
 
@@ -139,7 +154,7 @@ msrh_ldq
  .i_ex3_done (w_ex3_done),
 
  .i_commit (i_commit),
- .o_done_report(o_done_report[0])
+ .o_done_report(w_ld_done_report)
  );
 
 
@@ -177,7 +192,7 @@ msrh_stq
 
  .l1d_wr_if (w_l1d_wr_if),
 
- .o_done_report(o_done_report[1])
+ .o_done_report(w_st_done_report)
  );
 
 
