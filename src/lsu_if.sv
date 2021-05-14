@@ -100,8 +100,8 @@ interface tlb_ptw_if;
     input  req_ready,
     input  resp,
     output resp_ready,
-    input  satp,
-    input  status
+    output satp,
+    output status
     // input pmp
   );
 
@@ -110,8 +110,8 @@ interface tlb_ptw_if;
     output req_ready,
     output resp,
     input  resp_ready,
-    output satp,
-    output status
+    input  satp,
+    input  status
     // input pmp
   );
 

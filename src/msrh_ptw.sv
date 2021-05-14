@@ -70,7 +70,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state <= REQUEST;
           r_count <= PG_LEVELS - 1;
           /* verilator lint_off WIDTH */
-          r_ptw_addr <= w_ptw_accepted_status[riscv_pkg::PPN_W-1: 0] +
+          r_ptw_addr <= w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0] +
                         w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W];
         end
       end

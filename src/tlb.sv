@@ -15,7 +15,8 @@ module tlb
  output logic o_tlb_ready,
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
- input msrh_pkg::priv_t                i_status_prv,
+ input msrh_pkg::priv_t               i_status_prv,
+ input logic [riscv_pkg::XLEN_W-1: 0] i_csr_status,
  input logic [riscv_pkg::XLEN_W-1: 0] i_csr_satp,
 
  // Page Table Walk I/O
@@ -137,8 +138,8 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
     assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == PG_LEVELS-1);
     assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: PG_LEVEL_W] == w_vpn[base + PG_IDX_W +: PG_LEVEL_W]);
   end
-  assign w_is_hit[t_idx] = (SUPER_PAGE && msrh_conf_pkg::USING_VM) ? |w_tag_match :
-                           w_all_entries[t_idx].valid[sector_idx] & sector_tag_match;
+  assign w_is_hit[t_idx] = w_all_entries[t_idx].valid[sector_idx] & ((SUPER_PAGE && msrh_conf_pkg::USING_VM) ? |w_tag_match :
+                                                                     sector_tag_match);
   assign w_hits_vec[t_idx]  = w_vm_enabled & w_is_hit[t_idx];
   assign w_real_hits[t_idx] = w_hits_vec[t_idx];
 
@@ -286,7 +287,9 @@ assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
 // ---------------
 assign ptw_if.req.valid = r_state == ST_REQUEST;
 /* verilator lint_off WIDTH */
-assign ptw_if.req.addr  = {r_refill_tag, {PG_IDX_W{1'b0}}};
+assign ptw_if.req.addr  = r_refill_tag;
+assign ptw_if.satp      = i_csr_satp;
+assign ptw_if.status    = i_csr_status;
 
 // ------------------
 // Response of TLB

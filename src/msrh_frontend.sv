@@ -22,11 +22,12 @@ module msrh_frontend
 // s0 stage
 // ==============
 
-typedef enum logic [ 1: 0] {
+typedef enum logic [ 2: 0] {
   INIT = 0,
   ISSUED = 1,
-  WAIT_RD = 2,
-  WAIT_FB_FREE = 3
+  WAIT_TLB_FILL = 2,
+  WAIT_IC_FILL = 3,
+  WAIT_FB_FREE = 4
 } if_sm_t;
 
 if_sm_t  r_if_state;
@@ -47,6 +48,7 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
 
 logic                          r_s1_valid;
 logic                          r_s1_clear;
+logic [riscv_pkg::VADDR_W-1:0] r_s1_vaddr;
 logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
 logic                          r_s1_tlb_miss;
 
@@ -60,6 +62,11 @@ logic                          r_s2_clear;
 msrh_lsu_pkg::ic_resp_t        w_s2_ic_resp;
 logic                          w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
+
+// ==============
+// TLB
+// ==============
+logic                           w_tlb_ready;
 
 
 // ==============
@@ -99,7 +106,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else begin
       case (r_if_state)
         ISSUED : begin
-          if (w_s2_ic_miss & !r_s2_clear) begin
+          if (r_s1_tlb_miss & !r_s1_clear) begin
+            r_s0_vaddr <= r_s1_vaddr;
+          end else if (w_s2_ic_miss & !r_s2_clear) begin
             r_s0_vaddr <= w_s2_ic_miss_vaddr;
           end else if (w_s2_inst_valid & !w_inst_buffer_ready) begin
             r_s0_vaddr <= {w_s2_ic_resp.addr, 1'b0};
@@ -108,8 +117,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
-        WAIT_RD : begin
+        WAIT_IC_FILL : begin
           if (w_s0_ic_ready) begin
+            r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          end
+        end
+        WAIT_TLB_FILL : begin
+          if (w_tlb_ready) begin
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
@@ -133,14 +148,21 @@ always_comb begin
       w_if_state_next = ISSUED;
     end
     ISSUED : begin
-      if (w_s2_ic_miss & !r_s2_clear) begin
-        w_if_state_next = WAIT_RD;
+      if (r_s1_tlb_miss & !r_s1_clear) begin
+        w_if_state_next = WAIT_TLB_FILL;
+      end else if (w_s2_ic_miss & !r_s2_clear) begin
+        w_if_state_next = WAIT_IC_FILL;
       end else if (!w_inst_buffer_ready) begin
         w_if_state_next = WAIT_FB_FREE;
       end
     end
-    WAIT_RD : begin
+    WAIT_IC_FILL : begin
       if (w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    WAIT_TLB_FILL : begin
+      if (w_tlb_ready) begin
         w_if_state_next = ISSUED;
       end
     end
@@ -149,6 +171,7 @@ always_comb begin
         w_if_state_next = ISSUED;
       end
     end
+    default : begin end
   endcase // case (r_if_state)
 end
 
@@ -174,11 +197,12 @@ tlb u_tlb
 
    .i_sfence ('h0),
    .i_status_prv(csr_info.priv),
+   .i_csr_status(csr_info.mstatus),
    .i_csr_satp(csr_info.satp),
    .ptw_if(ptw_if),
 
    .i_tlb_req  (w_s0_tlb_req ),
-   .o_tlb_ready (),
+   .o_tlb_ready (w_tlb_ready),
    .o_tlb_resp (w_s0_tlb_resp),
 
    .o_tlb_update ()
@@ -188,13 +212,15 @@ tlb u_tlb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s1_valid <= 1'b0;
+    r_s1_vaddr <= 'h0;
     r_s1_paddr <= 'h0;
     r_s1_tlb_miss <= 'h0;
   end else begin
     r_s1_valid <= r_s0_valid;
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
-    r_s1_tlb_miss <= w_s0_tlb_resp.miss;
+    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid;
   end
 end
 
@@ -211,7 +237,7 @@ end
 
 
 assign w_s0_ic_req.valid = ((r_if_state == ISSUED) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready))  |
-                           ((r_if_state == WAIT_RD) & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_IC_FILL) & w_s0_ic_ready) |
                            ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready & w_s0_ic_ready);
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 

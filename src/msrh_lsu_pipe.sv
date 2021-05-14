@@ -151,8 +151,10 @@ u_tlb
 
  .i_kill(1'b0),
  .i_sfence ('h0),
- .i_status_prv(csr_info.priv),
- .i_csr_satp(csr_info.satp),
+
+ .i_status_prv(csr_info.priv   ),
+ .i_csr_status(csr_info.mstatus),
+ .i_csr_satp  (csr_info.satp   ),
 
  .i_tlb_req (w_ex1_tlb_req ),
  .o_tlb_ready(),

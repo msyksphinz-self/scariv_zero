@@ -119,7 +119,7 @@ u_csu_pipe
 
 
 msrh_csr
-u_mcsr_csr
+u_msrh_csr
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),

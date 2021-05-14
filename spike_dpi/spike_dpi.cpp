@@ -436,6 +436,7 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
 
 
 void step_spike(long long time, long long rtl_pc,
+                int rtl_priv,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
@@ -451,6 +452,7 @@ void step_spike(long long time, long long rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
   auto iss_insn = p->get_state()->insn;
+  auto iss_priv = p->get_state()->last_inst_priv;
 
   if (!is_equal_xlen(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");
@@ -460,6 +462,15 @@ void step_spike(long long time, long long rtl_pc,
       stop_sim(1);
       return;
   }
+  if (iss_priv != rtl_priv) {
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
+            rtl_priv, static_cast<uint32_t>(iss_priv));
+    fprintf(stderr, "==========================================\n");
+    stop_sim(1);
+    return;
+  }
+
   if (static_cast<int>(iss_insn.bits()) != rtl_insn) {
       fprintf(stderr, "==========================================\n");
       fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
