@@ -687,7 +687,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_mstatus[`MSTATUS_MPIE] <= 1'b1;
         r_mstatus[`MSTATUS_MPP ] <= msrh_pkg::PRV_U;
         r_mstatus[`MSTATUS_MIE ] <= r_mstatus[`MSTATUS_MPIE];
-        r_priv <= r_mstatus[`MSTATUS_MPP];
+        r_priv <= msrh_pkg::priv_t'(r_mstatus[`MSTATUS_MPP]);
       end else if (i_commit.except_type == msrh_pkg::URET) begin
       end else if (w_delegate) begin
         // r_sepc <= epc;

@@ -3,8 +3,8 @@ module msrh_dcache
    input logic i_clk,
    input logic i_reset_n,
 
-   // LSU_INST_NUM ports from pipe, and STQ read and update port
-   l1d_rd_if.slave l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM + 1],
+   // LSU_INST_NUM ports from pipe, and STQ read and update port, PTW
+   l1d_rd_if.slave l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM + 1 + 1],
    l1d_wr_if.slave l1d_wr_if,
 
    // L2 cache response
@@ -14,10 +14,12 @@ module msrh_dcache
    lrq_search_if.master lrq_search_if
    );
 
+localparam RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1;
+
 msrh_lsu_pkg::dc_update_t r_rp2_dc_update;
 
-msrh_lsu_pkg::dc_read_req_t  w_dc_read_req [msrh_conf_pkg::LSU_INST_NUM + 1];
-msrh_lsu_pkg::dc_read_resp_t w_dc_read_resp[msrh_conf_pkg::LSU_INST_NUM + 1];
+msrh_lsu_pkg::dc_read_req_t  w_dc_read_req [RD_PORT_NUM];
+msrh_lsu_pkg::dc_read_resp_t w_dc_read_resp[RD_PORT_NUM];
 
 msrh_dcache_array
   u_dcache_array
@@ -30,7 +32,7 @@ msrh_dcache_array
      .o_dc_read_resp(w_dc_read_resp)
      );
 
-generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM + 1; p_idx++) begin : port_loop
+generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
   assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].valid;
   assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].paddr;
 

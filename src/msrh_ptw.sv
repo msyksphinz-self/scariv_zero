@@ -7,6 +7,9 @@ module msrh_ptw
    // Page Table Walk I/O
    tlb_ptw_if.slave ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM],
 
+   // Interface to check LSU L1D
+   lsu_access_if.master lsu_access,
+
    // L2 request from L1D
    l2_req_if.master ptw_req,
    l2_resp_if.slave ptw_resp
@@ -14,17 +17,21 @@ module msrh_ptw
 
 localparam PTW_PORT_NUM = 1 + msrh_conf_pkg::LSU_INST_NUM;
 
-typedef enum logic [ 1: 0] {
+typedef enum logic [ 2: 0] {
   IDLE = 0,
-  REQUEST = 1,
-  WAIT = 2
+  CHECK_L1D = 1,
+  RESP_L1D  = 2,
+  L2_REQUEST = 3,
+  WAIT_L1D_LRQ = 4,
+  L2_RESP_WAIT = 5
 } state_t;
 
 state_t r_state;
 logic [$clog2(PG_LEVELS)-1: 0] r_count;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_wait_conflicted_lrq_oh;
 
-logic [PTW_PORT_NUM-1: 0] w_ptw_valid;
-logic [PTW_PORT_NUM-1: 0] w_ptw_accept;
+logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
+logic [PTW_PORT_NUM-1: 0]             w_ptw_accept;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_satp  [PTW_PORT_NUM];
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_status[PTW_PORT_NUM];
 ptw_req_t   w_ptw_req [PTW_PORT_NUM];
@@ -35,6 +42,9 @@ logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
 
 logic [riscv_pkg::PPN_W-1: 0]  r_ptw_addr;
 
+logic                          lsu_access_is_leaf;
+msrh_lsu_pkg::pte_t            lsu_access_pte;
+
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_req_loop
   assign w_ptw_valid [p_idx] = ptw_if[p_idx].req.valid;
   assign w_ptw_req   [p_idx] = ptw_if[p_idx].req;
@@ -44,9 +54,9 @@ end
 endgenerate
 
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_loop
-  assign ptw_if[p_idx].resp.valid       = 1'b0;  // resp_valid(i);
+  assign ptw_if[p_idx].resp.valid       = (r_state == RESP_L1D) & lsu_access_is_leaf;  // resp_valid(i);
   assign ptw_if[p_idx].resp.ae          = 'h0;   // resp_ae;
-  assign ptw_if[p_idx].resp.pte         = 'h0;   // r_pte;
+  assign ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
   assign ptw_if[p_idx].resp.level       = r_count;
   assign ptw_if[p_idx].resp.homogeneous = 'h0;   // homogeneous || pageGranularityPMPs;
 end // block: ptw_resp_loop
@@ -58,6 +68,10 @@ bit_oh_or #(.T(ptw_req_t),                     .WORDS(PTW_PORT_NUM)) bit_accepte
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_satp   (.i_oh(w_ptw_accept), .i_data(w_ptw_satp  ), .o_selected(w_ptw_accepted_satp  ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_status (.i_oh(w_ptw_accept), .i_data(w_ptw_status), .o_selected(w_ptw_accepted_status));
 
+assign lsu_access_pte = msrh_lsu_pkg::pte_t'(lsu_access.data[riscv_pkg::XLEN_W-1:0]);
+
+assign lsu_access_is_leaf = lsu_access_pte.v &
+                            (lsu_access_pte.r | lsu_access_pte.w | lsu_access_pte.x);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -67,24 +81,62 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case (r_state)
       IDLE : begin
         if (w_ptw_accepted_req.valid) begin
-          r_state <= REQUEST;
+          r_state <= CHECK_L1D;
           r_count <= PG_LEVELS - 1;
           /* verilator lint_off WIDTH */
           r_ptw_addr <= w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0] +
                         w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W];
         end
       end
-      REQUEST : begin
-        if (ptw_req.valid & ptw_req.ready) begin
-          r_state <= WAIT;
+      CHECK_L1D : begin
+        r_state <= RESP_L1D;
+      end
+      RESP_L1D : begin
+        if (lsu_access.resp_valid) begin
+          case (lsu_access.status)
+            msrh_lsu_pkg::STATUS_HIT : begin
+              if (lsu_access_is_leaf) begin
+                r_state  <= IDLE;
+              end else begin
+                r_state  <= CHECK_L1D;
+              end
+            end
+            msrh_lsu_pkg::STATUS_MISS : begin
+              r_state <= L2_REQUEST;
+            end
+            msrh_lsu_pkg::STATUS_L1D_CONFLICT : begin
+              // L1D port conflict : retry
+              r_state <= CHECK_L1D;
+            end
+            msrh_lsu_pkg::STATUS_LRQ_CONFLICT : begin
+              r_state <= WAIT_L1D_LRQ;
+              r_wait_conflicted_lrq_oh <= lsu_access.lrq_conflicted_idx_oh;
+            end
+            default : begin
+              $fatal(0, "This state must not to be come");
+            end
+          endcase // case (lsu_access.status)
+        end else begin // if (lsu_access.resp_valid)
+          $fatal(0, "lsu_access.resp should be return in one cycle");
+        end // else: !if(lsu_access.resp_valid)
+      end
+      WAIT_L1D_LRQ : begin
+        if (lsu_access.conflict_resolve_vld &&
+            lsu_access.conflict_resolve_idx_oh == r_wait_conflicted_lrq_oh) begin
+          r_state <= CHECK_L1D;
         end
       end
-      WAIT : begin
+      L2_REQUEST : begin
+        if (ptw_req.valid & ptw_req.ready) begin
+          r_state <= L2_RESP_WAIT;
+        end
+      end
+      L2_RESP_WAIT : begin
         if (ptw_resp.valid & ptw_resp.ready) begin
           if (r_count == 'h0) begin
             r_state <= IDLE;
           end else begin
-            r_state <= WAIT;
+            r_state <= L2_RESP_WAIT;
           end
         end
       end
@@ -95,7 +147,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign ptw_req.valid           = (r_state == REQUEST);
+// L1D check Interface
+assign lsu_access.req_valid = (r_state == CHECK_L1D);
+assign lsu_access.paddr = {r_ptw_addr, {PG_IDX_W{1'b0}}};
+assign lsu_access.size  = riscv_pkg::XLEN_W == 64 ? decoder_lsu_ctrl::SIZE_DW :
+                          decoder_lsu_ctrl::SIZE_W;
+
+// PTW to L2 Interface
+assign ptw_req.valid           = (r_state == L2_REQUEST);
 assign ptw_req.payload.cmd     = M_XRD;
 assign ptw_req.payload.addr    = {r_ptw_addr, {PG_IDX_W{1'b0}}};
 assign ptw_req.payload.tag     = 'h0;

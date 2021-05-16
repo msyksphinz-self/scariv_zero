@@ -405,29 +405,14 @@ typedef struct packed {
   logic  dummy;
 } pmp_t;
 
-// -----
-// PTW
-// ----
+// LSU Access Interface Status
 
-// typedef struct packed {
-//   logic [SETS_NUM-1: 0] idxBits;
-//   logic [VPN_W-1: IDX_W] tagBits;
-//   logic [TAG_W-1: 0] tag;
-//   logic [PPN_W-1: 0] ppn;
-//   logic              d;
-//   logic              a;
-//   logic              u;
-//   logic              x;
-//   logic              w;
-//   logic              r;
-//
-// } l2_tlb_entry_t;
-//
-// typedef struct packed {
-//   logic l2miss;
-//   logic l2hit;
-//   logic pte_miss;
-//   logic pte_hit;
-// } ptw_perf_events_t;
+typedef enum logic [2:0]{
+  STATUS_NONE = 0,
+  STATUS_HIT = 1,
+  STATUS_MISS = 2,
+  STATUS_L1D_CONFLICT = 3,
+  STATUS_LRQ_CONFLICT = 4
+} lsu_status_t;
 
 endpackage // msrh_lsu_pkg

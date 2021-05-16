@@ -45,6 +45,7 @@ msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
 tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
+lsu_access_if w_lsu_access();
 
 // ----------------------------------
 // Committer Components
@@ -236,6 +237,8 @@ u_msrh_lsu_top
     .ex1_regread (regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
 
     .ptw_if       (w_ptw_if[1 +: msrh_conf_pkg::LSU_INST_NUM]),
+    .lsu_access   (w_lsu_access),
+
     .l1d_ext_req  (l1d_ext_req ),
     .l1d_ext_resp (l1d_ext_resp),
 
@@ -345,6 +348,8 @@ msrh_ptw u_ptw
    .i_reset_n(i_reset_n),
 
    .ptw_if   (w_ptw_if),
+
+   .lsu_access (w_lsu_access),
 
    .ptw_req  (ptw_req ),
    .ptw_resp (ptw_resp)

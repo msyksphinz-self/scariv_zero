@@ -173,7 +173,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_ic_state)
       ICInit : begin
-        if (~i_flush_valid & r_s1_valid & !w_s1_hit &  & !i_s1_tlb_miss) begin
+        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_tlb_miss) begin
           // if (ic_l2_req.ready) begin
           r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
