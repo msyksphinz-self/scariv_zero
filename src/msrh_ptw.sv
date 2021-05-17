@@ -32,6 +32,7 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_wait_conflicted_lrq_oh;
 
 logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
 logic [PTW_PORT_NUM-1: 0]             w_ptw_accept;
+logic [PTW_PORT_NUM-1: 0]             r_ptw_accept;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_satp  [PTW_PORT_NUM];
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_status[PTW_PORT_NUM];
 ptw_req_t   w_ptw_req [PTW_PORT_NUM];
@@ -53,14 +54,23 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_req_l
 end
 endgenerate
 
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_ptw_accept <= 'h0;
+  end else begin
+    r_ptw_accept <= r_state == IDLE ? w_ptw_accept : r_ptw_accept;
+  end
+end
+
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_loop
   always_comb begin
     ptw_if[p_idx].resp = 'h0;
-    ptw_if[p_idx].req_ready = w_ptw_accept[p_idx];
-    if (w_ptw_accept[p_idx]) begin
+    ptw_if[p_idx].req_ready = (r_state == IDLE) & w_ptw_accept[p_idx];
+    if (r_ptw_accept[p_idx] | w_ptw_accept[p_idx]) begin
       ptw_if[p_idx].resp.valid       = (((r_state == RESP_L1D) & (lsu_access.status == msrh_lsu_pkg::STATUS_HIT)) |
                                         ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready)) &
-                                       (lsu_access_is_leaf | (r_count == 'h0));
+                                       (lsu_access_is_leaf | (r_count == 'h0)) &
+                                       r_ptw_accept[p_idx];
       ptw_if[p_idx].resp.ae          = !lsu_access_pte.v;
       ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
       ptw_if[p_idx].resp.level       = r_count;

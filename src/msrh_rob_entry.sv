@@ -8,9 +8,11 @@ module msrh_rob_entry
 
    input logic                                i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1]      i_load_pc_addr,
-   input                                      disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
+   input disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_grp_id,
    input logic                                i_load_br_included,
+   input logic                                i_load_tlb_except_valid,
+   input msrh_pkg::except_t                   i_load_tlb_except_cause,
 
    input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
@@ -66,7 +68,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
       r_entry.is_br_included <= i_load_br_included;
 
-      r_entry.except_valid <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
+      r_entry.except_valid <= {msrh_conf_pkg::DISP_SIZE{i_load_tlb_except_valid}};
+      r_entry.except_type  <= {msrh_conf_pkg::DISP_SIZE{i_load_tlb_except_cause}};
     end else if (r_entry.valid) begin
       // Condition :
       // all instruction done, or ROB entry dead,

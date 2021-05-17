@@ -99,6 +99,8 @@ logic w_load_valid;
      .i_load_inst    (sc_disp.inst),
      .i_load_grp_id  (w_disp_grp_id),
      .i_load_br_included (sc_disp.is_br_included),
+     .i_load_tlb_except_valid (sc_disp.tlb_except_valid),
+     .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
 
      .i_done_rpt (i_done_rpt),
 

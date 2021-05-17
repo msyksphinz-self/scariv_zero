@@ -51,6 +51,8 @@ logic                          r_s1_clear;
 logic [riscv_pkg::VADDR_W-1:0] r_s1_vaddr;
 logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
 logic                          r_s1_tlb_miss;
+logic                          r_s1_tlb_except_valid;
+msrh_pkg::except_t             r_s1_tlb_except_cause;
 
 // ==============
 // s2 stage
@@ -221,8 +223,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid;
-  end
-end
+    r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
+                             w_s0_tlb_resp.ae.inst |
+                             w_s0_tlb_resp.ma.inst;
+    r_s1_tlb_except_cause <= w_s0_tlb_resp.pf.inst ? msrh_pkg::INST_PAGE_FAULT :
+                             w_s0_tlb_resp.ae.inst ? msrh_pkg::INST_ACC_FAULT  :
+                             msrh_pkg::INST_ADDR_MISALIGN;  // w_s0_tlb_resp.ma.inst
+
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 // s1 --> s2
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -283,6 +293,8 @@ u_msrh_inst_buffer
    .i_inst_pc      (w_s2_ic_resp.addr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
+   .i_inst_tlb_except_valid (r_s1_tlb_except_valid),
+   .i_inst_tlb_except_cause (r_s1_tlb_except_cause),
 
    .iq_disp        (iq_disp)
    );

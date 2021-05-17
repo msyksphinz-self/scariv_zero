@@ -14,6 +14,8 @@ module msrh_inst_buffer
  input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
  input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
+ input logic                                     i_inst_tlb_except_valid,
+ input msrh_pkg::except_t                        i_inst_tlb_except_cause,
 
  disp_if.master                                  iq_disp
  );
@@ -57,12 +59,14 @@ logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 
 typedef struct packed {
-  logic                                  valid;
-  logic [riscv_pkg::VADDR_W-1: 1]        pc;
-  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   data;
+  logic                                      valid;
+  logic [riscv_pkg::VADDR_W-1: 1]            pc;
+  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
+  logic                                      tlb_except_valid;
+  msrh_pkg::except_t                         tlb_except_cause;
 `ifdef SIMULATION
-  logic [riscv_pkg::VADDR_W-1: 0]        pc_dbg;
+  logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
 `endif // SIMULATION
 } inst_buf_t;
 
@@ -119,10 +123,12 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
       if (w_flush_pipeline) begin
         r_inst_queue[idx] <= 'h0;
       end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
-        r_inst_queue[idx].valid  <= 1'b1;
-        r_inst_queue[idx].data <= i_inst_in;
-        r_inst_queue[idx].pc   <= i_inst_pc;
+        r_inst_queue[idx].valid   <= 1'b1;
+        r_inst_queue[idx].data    <= i_inst_in;
+        r_inst_queue[idx].pc      <= i_inst_pc;
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
+        r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
+        r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
@@ -251,6 +257,7 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
+assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 
 // -------------------------------

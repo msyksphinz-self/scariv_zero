@@ -190,6 +190,8 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
         ST_WAIT : begin
           if (i_sfence.valid) begin
             r_state <= ST_WAIT_INVALIDATE;
+          end else if (ptw_if.resp.valid) begin
+            r_state <= ST_READY;
           end
         end
         ST_WAIT_INVALIDATE : begin
@@ -293,19 +295,19 @@ assign ptw_if.status    = i_csr_status;
 // ------------------
 // Response of TLB
 // ------------------
-// assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_is_hit));
-// assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_is_hit));
-// assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_is_hit));
-// assign o_tlb_resp.ae.ld        = w_ae_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
-// assign o_tlb_resp.ae.st        = w_ae_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
-// assign o_tlb_resp.ae.inst      = ~w_px_array   & w_vm_enabled ? |w_is_hit : 1'b1;
-// assign o_tlb_resp.ma.ld        = w_ma_ld_array & w_vm_enabled ? |w_is_hit : 1'b1;
-// assign o_tlb_resp.ma.st        = w_ma_st_array & w_vm_enabled ? |w_is_hit : 1'b1;
-// assign o_tlb_resp.ma.inst      = 1'b0;   // this is up to the pipeline to figure out
-// assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
-// assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
-// // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
-// assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
+assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_is_hit));
+assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_is_hit));
+assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_is_hit));
+assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_is_hit);
+assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_is_hit);
+assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_is_hit);
+assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_is_hit);
+assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_is_hit);
+assign o_tlb_resp.ma.inst      = 1'b0;   // this is up to the pipeline to figure out
+assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
+assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
+// && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
+assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
 assign o_tlb_resp.miss         = w_do_refill | w_tlb_miss /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
 

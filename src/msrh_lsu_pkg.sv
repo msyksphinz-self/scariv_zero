@@ -112,7 +112,19 @@ package msrh_lsu_pkg;
   } tlb_req_t;
 
   typedef struct packed {
-    logic miss;
+    logic          ld;
+    logic          st;
+    logic          inst;
+  } tlb_except_t;
+
+  typedef struct packed {
+    tlb_except_t       pf;
+    tlb_except_t       ae;
+    tlb_except_t       ma;
+    logic              cacheable;
+    logic              must_alloc;
+    logic              prefetchable;
+    logic              miss;
     logic [riscv_pkg::PADDR_W-1:0] paddr;
   } tlb_resp_t;
 
