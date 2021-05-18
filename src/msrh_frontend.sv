@@ -58,12 +58,15 @@ msrh_pkg::except_t             r_s1_tlb_except_cause;
 // s2 stage
 // ==============
 
-logic                          w_s2_inst_valid;
-logic                          r_s2_valid;
-logic                          r_s2_clear;
-msrh_lsu_pkg::ic_resp_t        w_s2_ic_resp;
-logic                          w_s2_ic_miss;
+logic                           w_s2_inst_valid;
+logic                           r_s2_valid;
+logic                           r_s2_clear;
+msrh_lsu_pkg::ic_resp_t         w_s2_ic_resp;
+logic                           w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
+logic                           r_s2_tlb_miss;
+logic                           r_s2_tlb_except_valid;
+msrh_pkg::except_t              r_s2_tlb_except_cause;
 
 // ==============
 // TLB
@@ -239,9 +242,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_valid <= 1'b0;
     r_s2_clear <= 1'b0;
+    r_s2_tlb_miss         <= 1'b0;
+    r_s2_tlb_except_valid <= 1'b0;
+    r_s2_tlb_except_cause <= msrh_pkg::except_t'(0);
   end else begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear;
+    r_s2_tlb_miss         <= r_s1_tlb_miss        ;
+    r_s2_tlb_except_valid <= r_s1_tlb_except_valid;
+    r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
   end
 end
 
@@ -266,7 +275,7 @@ msrh_icache u_msrh_icache
 
 
    .i_s1_paddr (r_s1_paddr),
-   .i_s1_tlb_miss (r_s1_tlb_miss),
+   .i_s1_kill  (r_s1_tlb_miss | r_s1_tlb_except_valid),
 
    .o_s2_resp (w_s2_ic_resp),
 
@@ -285,7 +294,8 @@ u_msrh_inst_buffer
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_commit_flush_valid),
 
-   .i_inst_valid (w_s2_inst_valid),
+   .i_inst_valid (w_s2_inst_valid |
+                  (~r_s2_tlb_miss & r_s2_tlb_except_valid)),
 
    .i_commit (i_commit),
 
@@ -293,8 +303,8 @@ u_msrh_inst_buffer
    .i_inst_pc      (w_s2_ic_resp.addr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
-   .i_inst_tlb_except_valid (r_s1_tlb_except_valid),
-   .i_inst_tlb_except_cause (r_s1_tlb_except_cause),
+   .i_inst_tlb_except_valid (r_s2_tlb_except_valid),
+   .i_inst_tlb_except_cause (r_s2_tlb_except_cause),
 
    .iq_disp        (iq_disp)
    );

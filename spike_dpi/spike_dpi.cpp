@@ -459,6 +459,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
               g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
   }
@@ -467,7 +468,8 @@ void step_spike(long long time, long long rtl_pc,
     fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
             rtl_priv, static_cast<uint32_t>(iss_priv));
     fprintf(stderr, "==========================================\n");
-    stop_sim(1);
+      p->step(10);
+      stop_sim(1);
     return;
   }
 
@@ -480,6 +482,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "            ISS = %s\n",
               disasm->disassemble(iss_insn.bits()).c_str());
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
   }
@@ -493,6 +496,7 @@ void step_spike(long long time, long long rtl_pc,
               g_rv_xlen / 4, rtl_wr_val,
               g_rv_xlen / 4, iss_wr_val);
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
     } else {

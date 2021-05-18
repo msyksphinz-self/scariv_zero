@@ -64,7 +64,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.inst    <= i_load_inst;
       r_entry.br_upd_info <= 'h0;
 
-      r_entry.done_grp_id <= {msrh_conf_pkg::DISP_SIZE{1'b0}};
+      // If TLB Exception detected before execution, this instruction already done.
+      r_entry.done_grp_id <= i_load_tlb_except_valid ? i_load_grp_id :
+                             {msrh_conf_pkg::DISP_SIZE{1'b0}};
 
       r_entry.is_br_included <= i_load_br_included;
 

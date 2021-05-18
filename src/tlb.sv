@@ -65,10 +65,14 @@ typedef enum logic [1:0] {
 
 tlb_state_t r_state;
 
-tlb_entry_t w_sectored_entries[TLB_NORMAL_ENTRIES_NUM];
-tlb_entry_t w_superpage_entries[TLB_SUPERPAGE_ENTRIES_NUM];
-tlb_entry_t w_special_entry;
+tlb_entry_t r_sectored_entries[TLB_NORMAL_ENTRIES_NUM];
+tlb_entry_t r_superpage_entries[TLB_SUPERPAGE_ENTRIES_NUM];
+tlb_entry_t r_special_entry;
 tlb_entry_t w_all_entries[TLB_ALL_ENTRIES_NUM]; // This is a alias of all entries
+
+logic [TLB_NORMAL_ENTRIES_NUM-1: 0]    w_sectored_valids;
+logic [TLB_SUPERPAGE_ENTRIES_NUM-1: 0] w_superpage_valids;
+
 
 logic [riscv_pkg::VADDR_W-1: PG_IDX_W] w_vpn;
 logic                                  w_priv_s;
@@ -107,12 +111,56 @@ logic [riscv_pkg::VADDR_W-1: PG_IDX_W] r_refill_tag;
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : all_entries
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
-    assign w_all_entries[e_idx]        = w_sectored_entries[e_idx];
+    assign w_all_entries[e_idx] = r_sectored_entries[e_idx];
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM) begin : superpage_entries
-    assign w_all_entries[e_idx] = w_superpage_entries[e_idx - TLB_NORMAL_ENTRIES_NUM];
+    assign w_all_entries[e_idx] = r_superpage_entries[e_idx - TLB_NORMAL_ENTRIES_NUM];
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM + 1) begin : superpage_entries
-    assign w_all_entries[e_idx] = w_special_entry;
+    assign w_all_entries[e_idx] = r_special_entry;
   end
+end
+endgenerate
+
+
+// ==================
+// Update TLB Entry
+// ==================
+// Update sectored entries
+logic [TLB_NORMAL_ENTRIES_NUM-1: 0] r_sectored_repl_addr_oh;
+logic [TLB_SUPERPAGE_ENTRIES_NUM-1: 0] r_superpage_repl_addr_oh;
+generate for (genvar e_idx = 0; e_idx < TLB_NORMAL_ENTRIES_NUM; e_idx++) begin : sectored_update_loop
+  logic [$clog2(SECTOR_NUM)-1: 0] w_wr_sector_idx;
+  assign w_wr_sector_idx = r_refill_tag[PG_IDX_W +: $clog2(SECTOR_NUM)];
+
+  tlb_entry_data_t new_pte_entry;
+  assign new_pte_entry.ppn                  = ptw_if.resp.pte.ppn;
+  assign new_pte_entry.u                    = ptw_if.resp.pte.u;
+  assign new_pte_entry.g                    = ptw_if.resp.pte.g;
+  assign new_pte_entry.ae                   = ptw_if.resp.ae;
+  assign new_pte_entry.sw                   = 1'b0;
+  assign new_pte_entry.sx                   = 1'b0;
+  assign new_pte_entry.sr                   = 1'b0;
+  assign new_pte_entry.pw                   = 1'b0;
+  assign new_pte_entry.px                   = 1'b0;
+  assign new_pte_entry.pr                   = 1'b0;
+  assign new_pte_entry.pal                  = 1'b0;
+  assign new_pte_entry.paa                  = 1'b0;
+  assign new_pte_entry.eff                  = 1'b0;
+  assign new_pte_entry.c                    = 1'b1;
+  assign new_pte_entry.fragmented_superpage = ptw_if.resp.fragmented_superpage;
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_sectored_entries[e_idx] <= 'h0;
+    end else begin
+      if (ptw_if.resp.valid & ptw_if.resp_ready &
+          (r_sectored_repl_addr_oh[e_idx[$clog2(TLB_NORMAL_ENTRIES_NUM)-1:0]])) begin
+        r_sectored_entries[e_idx].valid <= 1 << w_wr_sector_idx;
+        r_sectored_entries[e_idx].tag   <= r_refill_tag;
+        r_sectored_entries[e_idx].data[w_wr_sector_idx] <= new_pte_entry;
+      end
+    end
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 end
 endgenerate
 
@@ -162,6 +210,21 @@ assign w_vm_enabled = msrh_conf_pkg::USING_VM &
 assign w_tlb_hit  = |w_real_hits;
 assign w_tlb_miss = w_vm_enabled & !w_bad_va & !w_tlb_hit;
 
+// Replacement Candidate
+logic [TLB_NORMAL_ENTRIES_NUM-1: 0]    w_sectored_candidate_oh;
+logic [TLB_SUPERPAGE_ENTRIES_NUM-1: 0] w_superpage_candidate_oh;
+generate for (genvar p_idx = 0; p_idx < TLB_NORMAL_ENTRIES_NUM; p_idx++) begin : normal_entry_loop
+  assign w_sectored_valids[p_idx] = |r_sectored_entries[p_idx].valid;
+end
+endgenerate
+generate for (genvar p_idx = 0; p_idx < TLB_SUPERPAGE_ENTRIES_NUM; p_idx++) begin : sp_entry_loop
+  assign w_superpage_valids[p_idx] = |r_superpage_entries[p_idx].valid;
+end
+endgenerate
+bit_extract_lsb #(.WIDTH(TLB_NORMAL_ENTRIES_NUM))    sectored_replace_cand  (.in(~w_sectored_valids),  .out(w_sectored_candidate_oh));
+bit_extract_lsb #(.WIDTH(TLB_SUPERPAGE_ENTRIES_NUM)) superpage_replace_cand (.in(~w_superpage_valids), .out(w_superpage_candidate_oh));
+
+
 generate if (msrh_conf_pkg::USING_VM) begin : use_vm
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -172,6 +235,8 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           if (i_tlb_req.valid & o_tlb_ready & w_tlb_miss) begin
             r_state <= ST_REQUEST;
             r_refill_tag <= w_vpn;
+            r_sectored_repl_addr_oh <= w_sectored_candidate_oh;
+            r_superpage_repl_addr_oh <= w_superpage_candidate_oh;
           end
         end
         ST_REQUEST : begin
@@ -214,23 +279,23 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : el
     logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
     assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
 
-    assign w_ptw_ae_array[e_idx] = w_sectored_entries[e_idx].data[sector_idx].ae;
-    assign w_priv_rw_ok  [e_idx] = !w_priv_s || ptw_if.status[18] ? w_sectored_entries[e_idx].data[sector_idx].u : 'h0 |
-                                   w_priv_s ? ~w_sectored_entries[e_idx].data[sector_idx].u : 'h0;
-    assign w_priv_x_ok   [e_idx] = w_priv_s ? ~w_sectored_entries[e_idx].data[sector_idx].u : w_sectored_entries[e_idx].data[sector_idx].u;
-    assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_sectored_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? w_sectored_entries[e_idx].data[sector_idx].sx : 1'b0));
-    assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & w_sectored_entries[e_idx].data[sector_idx].sw;
-    assign w_x_array     [e_idx] = w_priv_x_ok [e_idx] & w_sectored_entries[e_idx].data[sector_idx].sx;
-    assign w_pr_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pr & ~w_ptw_ae_array[e_idx];
-    assign w_pw_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pw & ~w_ptw_ae_array[e_idx];
-    assign w_px_array    [e_idx] = w_sectored_entries[e_idx].data[sector_idx].px & ~w_ptw_ae_array[e_idx];
-    assign w_eff_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].eff;
-    assign w_c_array     [e_idx] = w_sectored_entries[e_idx].data[sector_idx].c;
-    assign w_paa_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].paa;
-    assign w_pal_array   [e_idx] = w_sectored_entries[e_idx].data[sector_idx].pal;
+    assign w_ptw_ae_array[e_idx] = r_sectored_entries[e_idx].data[sector_idx].ae;
+    assign w_priv_rw_ok  [e_idx] = !w_priv_s || ptw_if.status[18] ? r_sectored_entries[e_idx].data[sector_idx].u : 'h0 |
+                                   w_priv_s ? ~r_sectored_entries[e_idx].data[sector_idx].u : 'h0;
+    assign w_priv_x_ok   [e_idx] = w_priv_s ? ~r_sectored_entries[e_idx].data[sector_idx].u : r_sectored_entries[e_idx].data[sector_idx].u;
+    assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (r_sectored_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? r_sectored_entries[e_idx].data[sector_idx].sx : 1'b0));
+    assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & r_sectored_entries[e_idx].data[sector_idx].sw;
+    assign w_x_array     [e_idx] = w_priv_x_ok [e_idx] & r_sectored_entries[e_idx].data[sector_idx].sx;
+    assign w_pr_array    [e_idx] = r_sectored_entries[e_idx].data[sector_idx].pr & ~w_ptw_ae_array[e_idx];
+    assign w_pw_array    [e_idx] = r_sectored_entries[e_idx].data[sector_idx].pw & ~w_ptw_ae_array[e_idx];
+    assign w_px_array    [e_idx] = r_sectored_entries[e_idx].data[sector_idx].px & ~w_ptw_ae_array[e_idx];
+    assign w_eff_array   [e_idx] = r_sectored_entries[e_idx].data[sector_idx].eff;
+    assign w_c_array     [e_idx] = r_sectored_entries[e_idx].data[sector_idx].c;
+    assign w_paa_array   [e_idx] = r_sectored_entries[e_idx].data[sector_idx].paa;
+    assign w_pal_array   [e_idx] = r_sectored_entries[e_idx].data[sector_idx].pal;
     assign w_paa_array_if_cached[e_idx] = w_paa_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
     assign w_pal_array_if_cached[e_idx] = w_pal_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
-    assign w_prefetchable_array [e_idx] = w_sectored_entries[e_idx].data[sector_idx].c;
+    assign w_prefetchable_array [e_idx] = r_sectored_entries[e_idx].data[sector_idx].c;
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM) begin : superpage_entries
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM + 1) begin : superpage_entries
   end
@@ -291,6 +356,7 @@ assign ptw_if.req.valid = r_state == ST_REQUEST;
 assign ptw_if.req.addr  = r_refill_tag;
 assign ptw_if.satp      = i_csr_satp;
 assign ptw_if.status    = i_csr_status;
+assign ptw_if.resp_ready = 1'b1;
 
 // ------------------
 // Response of TLB
