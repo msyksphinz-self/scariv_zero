@@ -646,10 +646,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sta
 assign csr_info.mstatus = r_mstatus;
 assign csr_info.mepc    = r_mepc;
 assign csr_info.mtvec   = r_mtvec;
+assign csr_info.stvec   = r_mtvec;
 assign csr_info.sepc    = r_sepc;
 assign csr_info.uepc    = r_uepc;
 assign csr_info.satp    = r_satp;
 assign csr_info.priv    = r_priv;
+assign csr_info.medeleg = r_medeleg;
+assign csr_info.sedeleg = r_sedeleg;
 
 logic w_delegate;
 assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &

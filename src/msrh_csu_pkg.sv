@@ -46,18 +46,24 @@ msrh_pkg::priv_t                priv;
 logic [riscv_pkg::XLEN_W-1: 0] mstatus;
 logic [riscv_pkg::XLEN_W-1: 0] mepc;
 logic [riscv_pkg::XLEN_W-1: 0] mtvec;
+logic [riscv_pkg::XLEN_W-1: 0] stvec;
 logic [riscv_pkg::XLEN_W-1: 0] sepc;
 logic [riscv_pkg::XLEN_W-1: 0] uepc;
 logic [riscv_pkg::XLEN_W-1: 0] satp;
+logic [riscv_pkg::XLEN_W-1: 0] medeleg;
+logic [riscv_pkg::XLEN_W-1: 0] sedeleg;
 
 modport master (
   output priv,
   output mstatus,
   output mepc,
   output mtvec,
+  output stvec,
   output sepc,
   output uepc,
-  output satp
+  output satp,
+  output medeleg,
+  output sedeleg
 );
 
 modport slave (
@@ -65,9 +71,12 @@ modport slave (
   input mstatus,
   input mepc,
   input mtvec,
+  input stvec,
   input sepc,
   input uepc,
-  input satp
+  input satp,
+  input medeleg,
+  input sedeleg
 );
 
 endinterface // csr_info_if

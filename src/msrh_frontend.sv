@@ -82,13 +82,41 @@ logic                           w_commit_flush_valid;
 
 logic                           w_inst_buffer_ready;
 
-assign w_s0_vaddr_flush_next = i_commit.except_valid ?
-                               (i_commit.except_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
-                                i_commit.except_type == msrh_pkg::SRET    ? csr_info.sepc [riscv_pkg::VADDR_W-1: 0] :
-                                i_commit.except_type == msrh_pkg::URET    ? csr_info.uepc [riscv_pkg::VADDR_W-1: 0] :
-                                i_commit.except_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
-                                'h0) :
-                               i_commit.upd_pc_vaddr;
+always_comb begin
+  if (i_commit.except_valid) begin
+    case (i_commit.except_type)
+      msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::ECALL_M        : w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::INST_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::INST_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::LOAD_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::STAMO_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      default           : begin
+        w_s0_vaddr_flush_next = 'h0;
+        $fatal (0, "This exception not supported now");
+      end
+    endcase // case (i_commit.except_type)
+  end else begin
+    w_s0_vaddr_flush_next = i_commit.upd_pc_vaddr;
+  end // else: !if(i_commit.except_valid)
+end // always_comb
+
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
