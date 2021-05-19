@@ -40,8 +40,8 @@ ptw_req_t   w_ptw_req [PTW_PORT_NUM];
 ptw_req_t   w_ptw_accepted_req;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_satp;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
-
-logic [riscv_pkg::PPN_W-1: 0]  r_ptw_addr;
+logic [msrh_lsu_pkg::VPN_W-1: 0] r_ptw_vpn;
+logic [riscv_pkg::PADDR_W-1: 0] r_ptw_addr;
 
 logic                          lsu_access_is_leaf;
 msrh_lsu_pkg::pte_t            lsu_access_pte;
@@ -102,9 +102,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (w_ptw_accepted_req.valid) begin
           r_state <= CHECK_L1D;
           r_count <= PG_LEVELS - 1;
-          /* verilator lint_off WIDTH */
-          r_ptw_addr <= w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0] +
-                        w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W];
+          r_ptw_vpn <= w_ptw_accepted_req.addr;
+          r_ptw_addr <= {w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0], {PG_IDX_W{1'b0}}} +
+                        {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
+                         w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W],
+                         {$clog2(riscv_pkg::XLEN_W / 8){1'b0}}};
         end
       end
       CHECK_L1D : begin
@@ -119,8 +121,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               end else begin
                 r_count  <= r_count - 1;
                 r_state  <= CHECK_L1D;
-                r_ptw_addr <= w_ptw_accepted_req.addr[(r_count-1)*VPN_FIELD_W +: VPN_FIELD_W] +
-                              lsu_access_pte.ppn;
+                /* verilator lint_off WIDTH */
+                r_ptw_addr <= {lsu_access_pte.ppn, {PG_IDX_W{1'b0}}} +
+                              {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
+                               r_ptw_vpn[(r_count-'h1)*VPN_FIELD_W +: VPN_FIELD_W],
+                               {$clog2(riscv_pkg::XLEN_W / 8){1'b0}}};
+
               end
             end
             msrh_lsu_pkg::STATUS_MISS : begin
@@ -171,14 +177,14 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 // L1D check Interface
 assign lsu_access.req_valid = (r_state == CHECK_L1D);
-assign lsu_access.paddr = {r_ptw_addr, {PG_IDX_W{1'b0}}};
+assign lsu_access.paddr = r_ptw_addr;
 assign lsu_access.size  = riscv_pkg::XLEN_W == 64 ? decoder_lsu_ctrl::SIZE_DW :
                           decoder_lsu_ctrl::SIZE_W;
 
 // PTW to L2 Interface
 assign ptw_req.valid           = (r_state == L2_REQUEST);
 assign ptw_req.payload.cmd     = M_XRD;
-assign ptw_req.payload.addr    = {r_ptw_addr, {PG_IDX_W{1'b0}}};
+assign ptw_req.payload.addr    = r_ptw_addr;
 assign ptw_req.payload.tag     = 'h0;
 assign ptw_req.payload.data    = 'h0;
 assign ptw_req.payload.byte_en = 'h0;

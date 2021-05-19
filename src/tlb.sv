@@ -132,16 +132,22 @@ generate for (genvar e_idx = 0; e_idx < TLB_NORMAL_ENTRIES_NUM; e_idx++) begin :
   assign w_wr_sector_idx = r_refill_tag[PG_IDX_W +: $clog2(SECTOR_NUM)];
 
   tlb_entry_data_t new_pte_entry;
+  pte_t pte;
+  assign pte = ptw_if.resp.pte;
+
+  logic                           w_is_leaf;
+  assign w_is_leaf = pte.v & (pte.r | pte.x & !pte.w)& pte.a;
+
   assign new_pte_entry.ppn                  = ptw_if.resp.pte.ppn;
   assign new_pte_entry.u                    = ptw_if.resp.pte.u;
   assign new_pte_entry.g                    = ptw_if.resp.pte.g;
   assign new_pte_entry.ae                   = ptw_if.resp.ae;
-  assign new_pte_entry.sw                   = 1'b0;
-  assign new_pte_entry.sx                   = 1'b0;
-  assign new_pte_entry.sr                   = 1'b0;
-  assign new_pte_entry.pw                   = 1'b0;
-  assign new_pte_entry.px                   = 1'b0;
-  assign new_pte_entry.pr                   = 1'b0;
+  assign new_pte_entry.sw                   = w_is_leaf & (pte.w & pte.d);
+  assign new_pte_entry.sx                   = w_is_leaf & pte.x;
+  assign new_pte_entry.sr                   = w_is_leaf & pte.r;
+  assign new_pte_entry.pw                   = 1'b1;
+  assign new_pte_entry.px                   = 1'b1;
+  assign new_pte_entry.pr                   = 1'b1;
   assign new_pte_entry.pal                  = 1'b0;
   assign new_pte_entry.paa                  = 1'b0;
   assign new_pte_entry.eff                  = 1'b0;
@@ -201,6 +207,7 @@ assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_W-1: PG_IDX_W];
 assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-riscv_pkg::VADDR_W){1'b0}}, w_vpn} : w_selected_ppn;
 
 assign o_tlb_ready = (r_state === ST_READY);
+assign w_priv_s = i_status_prv[0];
 assign w_priv_uses_vm = i_status_prv <= msrh_pkg::PRV_S;
 assign w_vm_enabled = msrh_conf_pkg::USING_VM &
                       (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &

@@ -226,6 +226,7 @@ msrh_l1d_load_requester
 // PTW L1D Access Interface
 // --------------------------
 logic                                 r_ptw_resp_valid;
+logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr_sel;
 logic                                 r_ptw_lrq_resp_full;
 logic                                 r_ptw_lrq_resp_conflict;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
@@ -240,7 +241,7 @@ assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].miss     ? STATUS_MISS :
                            STATUS_NONE;
 assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
-assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].data[riscv_pkg::XLEN_W-1:0];
+assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
 assign lsu_access.conflict_resolve_vld    = w_lrq_resolve.valid;
 assign lsu_access.conflict_resolve_idx_oh = w_lrq_resolve.resolve_index_oh;
 
@@ -253,10 +254,12 @@ assign w_l1d_lrq_if[LRQ_PTW_PORT].req_payload.paddr = lsu_access.paddr;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ptw_resp_valid    <= 1'b0;
+    r_ptw_paddr_sel     <= 'h0;
     r_ptw_lrq_resp_full <= 1'b0;
     r_ptw_lrq_resp_conflict <= 1'b0;
     r_ptw_lrq_resp_lrq_index_oh <= 'h0;
   end else begin
+    r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
     r_ptw_resp_valid            <= lsu_access.req_valid;
     r_ptw_lrq_resp_full         <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.full;
     r_ptw_lrq_resp_conflict     <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.conflict;

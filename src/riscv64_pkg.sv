@@ -8,7 +8,7 @@ package riscv_pkg;
 
   localparam PG_IDX_BITS = 12;
   // Page Table Walk
-  localparam PPN_W = 55 - 12 + 1; // 26;
+  localparam PPN_W = 55 - 12 + 1; // 44;
 endpackage
 
 `default_nettype wire

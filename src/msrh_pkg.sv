@@ -39,7 +39,7 @@ package msrh_pkg;
 
   typedef enum logic [1:0] {
      PRV_U = 0,
-     PRV_S = 2,
+     PRV_S = 1,
      PRV_M = 3
   } priv_t;
 

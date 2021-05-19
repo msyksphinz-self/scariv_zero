@@ -454,7 +454,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 2) ||  // Illegal Instruction
                        (rtl_exception_cause == 12))) {
     fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "Exception Happened : Cause = %d\n", rtl_exception_cause),
+    fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
     fprintf(stderr, "==========================================\n");
     return;
   }
@@ -482,8 +482,8 @@ void step_spike(long long time, long long rtl_pc,
     fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
             rtl_priv, static_cast<uint32_t>(iss_priv));
     fprintf(stderr, "==========================================\n");
-      p->step(10);
-      stop_sim(1);
+    p->step(10);
+    stop_sim(1);
     return;
   }
 
