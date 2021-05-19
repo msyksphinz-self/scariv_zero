@@ -320,8 +320,10 @@ end
 
 
 assign w_s0_ic_req.valid = ((r_if_state == ISSUED) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready))  |
-                           ((r_if_state == WAIT_IC_FILL) & w_s0_ic_ready) |
-                           ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready & w_s0_ic_ready);
+                           ((r_if_state == WAIT_IC_FILL ) & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_FB_FREE ) & w_inst_buffer_ready & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_TLB_FILL) & w_tlb_ready);
+
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
 assign w_s2_inst_valid = w_s2_ic_resp.valid & !r_s1_clear & !r_s2_clear;
