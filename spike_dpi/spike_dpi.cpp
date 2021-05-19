@@ -437,6 +437,7 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
 
 void step_spike(long long time, long long rtl_pc,
                 int rtl_priv,
+                int rtl_exception, int rtl_exception_cause,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
@@ -444,6 +445,19 @@ void step_spike(long long time, long long rtl_pc,
 {
   processor_t *p = spike_core->get_core(0);
   p->step(1);
+
+  if (rtl_exception) {
+    fprintf(stderr, "Exception Cause = %d\n", rtl_exception_cause);
+  }
+  if (rtl_exception & ((rtl_exception_cause == 0) ||  // Instruction Access Misaligned
+                       (rtl_exception_cause == 1) ||  // Instruction Access Fault
+                       (rtl_exception_cause == 2) ||  // Illegal Instruction
+                       (rtl_exception_cause == 12))) {
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Exception Happened : Cause = %d\n", rtl_exception_cause),
+    fprintf(stderr, "==========================================\n");
+    return;
+  }
 
   auto instret  = p->get_state()->minstret;
   fprintf(stderr, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,

@@ -107,6 +107,42 @@ always_comb begin
         end else begin
           w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
         end
+      msrh_pkg::INST_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::INST_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::LOAD_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::STAMO_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::INST_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::INST_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::LOAD_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::STAMO_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
       default           : begin
         w_s0_vaddr_flush_next = 'h0;
         $fatal (0, "This exception not supported now");

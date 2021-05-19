@@ -201,7 +201,7 @@ assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_W-1: PG_IDX_W];
 assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-riscv_pkg::VADDR_W){1'b0}}, w_vpn} : w_selected_ppn;
 
 assign o_tlb_ready = (r_state === ST_READY);
-assign w_priv_uses_vm = i_status_prv <= msrh_pkg::PRV_U;
+assign w_priv_uses_vm = i_status_prv <= msrh_pkg::PRV_S;
 assign w_vm_enabled = msrh_conf_pkg::USING_VM &
                       (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
                       w_priv_uses_vm &

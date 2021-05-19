@@ -11,6 +11,8 @@ import "DPI-C" function void step_spike
    input longint rtl_time,
    input longint rtl_pc,
    input int     rtl_priv,
+   input int     rtl_exception,
+   input int     rtl_exception_cause,
    input int     rtl_cmt_id,
    input int     rtl_grp_id,
    input int     rtl_insn,
@@ -295,6 +297,8 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
           /* verilator lint_off WIDTH */
           step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
                       int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
+                      |committed_rob_entry.except_valid,
+                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.except_type_selected,
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
                       1 << grp_idx,
                       committed_rob_entry.inst[grp_idx].inst,
