@@ -68,7 +68,7 @@ logic [VADDR_W-1:ICACHE_TAG_LOW] w_s1_tag;
        .o_tag_valid(w_s1_tag_valid)
        );
 
-  assign w_s1_tag_hit[way] = (i_s1_paddr[VADDR_W-1:ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
+  assign w_s1_tag_hit[way] = (r_s1_vaddr[VADDR_W-1:ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
 
   data_array
     #(
@@ -177,7 +177,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           // if (ic_l2_req.ready) begin
           r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
-          r_s2_waiting_vaddr <= i_s1_paddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+          r_s2_waiting_vaddr <= r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
           // end
         end
       end // case: ICInit
