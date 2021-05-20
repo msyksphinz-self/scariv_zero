@@ -43,7 +43,7 @@ module msrh_lsu_top
 l1d_rd_if  w_l1d_rd_if [msrh_conf_pkg::LSU_INST_NUM + 1 + 1] ();
 l1d_wr_if  w_l1d_wr_if();
 // LSU Pipeline + PTW
-l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM + 1] ();
+l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
@@ -227,9 +227,9 @@ msrh_l1d_load_requester
 // --------------------------
 logic                                 r_ptw_resp_valid;
 logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr_sel;
-logic                                 r_ptw_lrq_resp_full;
-logic                                 r_ptw_lrq_resp_conflict;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
+// logic                                 r_ptw_lrq_resp_full;
+// logic                                 r_ptw_lrq_resp_conflict;
+// logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
 
 localparam L1D_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM + 1;
 assign w_l1d_rd_if [L1D_PTW_PORT].valid = lsu_access.req_valid;
@@ -237,33 +237,34 @@ assign w_l1d_rd_if [L1D_PTW_PORT].paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
 assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].conflict ? STATUS_L1D_CONFLICT :
-                           r_ptw_lrq_resp_conflict            ? STATUS_LRQ_CONFLICT :
+                           // r_ptw_lrq_resp_conflict            ? STATUS_LRQ_CONFLICT :
                            w_l1d_rd_if[L1D_PTW_PORT].miss     ? STATUS_MISS :
                            STATUS_NONE;
-assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
+// assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
+assign lsu_access.lrq_conflicted_idx_oh = 'h0;
 assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
 assign lsu_access.conflict_resolve_vld    = w_lrq_resolve.valid;
 assign lsu_access.conflict_resolve_idx_oh = w_lrq_resolve.resolve_index_oh;
 
-// ---------------------------
-// LRQ Access Check Interface
-// ---------------------------
-localparam LRQ_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM;
-assign w_l1d_lrq_if[LRQ_PTW_PORT].load = lsu_access.req_valid;
-assign w_l1d_lrq_if[LRQ_PTW_PORT].req_payload.paddr = lsu_access.paddr;
+// // ---------------------------
+// // LRQ Access Check Interface
+// // ---------------------------
+// localparam LRQ_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM;
+// assign w_l1d_lrq_if[LRQ_PTW_PORT].load = lsu_access.req_valid;
+// assign w_l1d_lrq_if[LRQ_PTW_PORT].req_payload.paddr = lsu_access.paddr;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ptw_resp_valid    <= 1'b0;
     r_ptw_paddr_sel     <= 'h0;
-    r_ptw_lrq_resp_full <= 1'b0;
-    r_ptw_lrq_resp_conflict <= 1'b0;
-    r_ptw_lrq_resp_lrq_index_oh <= 'h0;
+    // r_ptw_lrq_resp_full <= 1'b0;
+    // r_ptw_lrq_resp_conflict <= 1'b0;
+    // r_ptw_lrq_resp_lrq_index_oh <= 'h0;
   end else begin
     r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
     r_ptw_resp_valid            <= lsu_access.req_valid;
-    r_ptw_lrq_resp_full         <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.full;
-    r_ptw_lrq_resp_conflict     <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.conflict;
-    r_ptw_lrq_resp_lrq_index_oh <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.lrq_index_oh;
+    // r_ptw_lrq_resp_full         <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.full;
+    // r_ptw_lrq_resp_conflict     <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.conflict;
+    // r_ptw_lrq_resp_lrq_index_oh <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.lrq_index_oh;
   end
 end
 

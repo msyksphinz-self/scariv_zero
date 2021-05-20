@@ -236,9 +236,11 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_state <= ST_READY;
+      o_tlb_update <= 1'b0;
     end else begin
       case (r_state)
         ST_READY : begin
+          o_tlb_update <= 1'b0;
           if (i_tlb_req.valid & o_tlb_ready & w_tlb_miss) begin
             r_state <= ST_REQUEST;
             r_refill_tag <= w_vpn;
@@ -263,6 +265,7 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           if (i_sfence.valid) begin
             r_state <= ST_WAIT_INVALIDATE;
           end else if (ptw_if.resp.valid) begin
+            o_tlb_update <= 1'b1;
             r_state <= ST_READY;
           end
         end
@@ -383,7 +386,5 @@ assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
 assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
 assign o_tlb_resp.miss         = w_do_refill | w_tlb_miss /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
-
-assign o_tlb_update = 1'b0;
 
 endmodule // tlb

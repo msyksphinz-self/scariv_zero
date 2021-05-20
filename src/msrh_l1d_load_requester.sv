@@ -4,7 +4,7 @@ module msrh_l1d_load_requester
    input logic  i_reset_n,
 
    // from Pipeline for Load + PTW for Load
-   l1d_lrq_if.slave l1d_lrq[msrh_conf_pkg::LSU_INST_NUM + 1],
+   l1d_lrq_if.slave l1d_lrq[msrh_conf_pkg::LSU_INST_NUM],
    // from STQ request
    l1d_lrq_if.slave l1d_lrq_stq_miss_if,
 
@@ -17,7 +17,7 @@ module msrh_l1d_load_requester
    lrq_search_if.slave lrq_search_if
    );
 
-localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1;
+localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
 
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_valids;
