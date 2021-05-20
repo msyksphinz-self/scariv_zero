@@ -435,19 +435,19 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
 }
 
 
-bool inline is_equal_paddr(int64_t val1, int64_t val2)
+bool inline is_equal_vaddr(int64_t val1, int64_t val2)
 {
-  int paddr_len;
+  int vaddr_len;
   if (g_rv_xlen == 32) {
-    paddr_len = 33;  // XLEN = 32
+    vaddr_len = 32;  // XLEN = 32
   } else if (g_rv_xlen == 64) {
-    paddr_len = 39;   // XLEN = 64
+    vaddr_len = 39;   // XLEN = 64
   } else {
     fprintf(stderr, "rv_xlen should be 32 or 64\n");
     exit(-1);
   }
 
-  return (val1 & ((1ULL << paddr_len)-1)) == (val2 & ((1ULL << paddr_len)-1));
+  return (val1 & ((1ULL << vaddr_len)-1)) == (val2 & ((1ULL << vaddr_len)-1));
 }
 
 
@@ -484,7 +484,7 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
 
-  if (!is_equal_paddr(iss_pc, rtl_pc)) {
+  if (!is_equal_vaddr(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");
       fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
               g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
