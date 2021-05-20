@@ -235,7 +235,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
   assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
 
-  assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_raw_gen_except | r_inst_queue[w_inst_buf_ptr].tlb_except_valid);
+  assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (/* w_raw_gen_except | */r_inst_queue[w_inst_buf_ptr].tlb_except_valid);
 end
 endgenerate
 
@@ -251,7 +251,7 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZ
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up    (.in(w_inst_is_st         ), .out(w_inst_st_disp    ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up   (.in(w_inst_bru_pick_up   ), .out(w_inst_bru_disp   ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up   (.in(w_inst_csu_pick_up   ), .out(w_inst_csu_disp   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_except_disp_pick_up(.in(w_inst_except_pick_up), .out(w_inst_except_disp));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                             )) u_except_disp_pick_up(.in(w_inst_except_pick_up), .out(w_inst_except_disp));
 
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | w_inst_except_disp;
 

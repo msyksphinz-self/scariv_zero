@@ -683,6 +683,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (i_commit.commit &
         i_commit.except_valid) begin
       if (i_commit.except_type == msrh_pkg::MRET) begin
+        // r_mepc <= epc;
+        r_mcause <= 1 << i_commit.except_type;
+        // r_mtval <= io.tval;
+        r_mstatus[`MSTATUS_MPIE] <= 1'b1;
+        r_mstatus[`MSTATUS_MPP ] <= msrh_pkg::PRV_U;
+        r_mstatus[`MSTATUS_MIE ] <= r_mstatus[`MSTATUS_MPIE];
+        r_priv <= msrh_pkg::priv_t'(r_mstatus[`MSTATUS_MPP]);
       end else if (i_commit.except_type == msrh_pkg::SRET) begin
         // r_mepc <= epc;
         r_mcause <= 1 << i_commit.except_type;
