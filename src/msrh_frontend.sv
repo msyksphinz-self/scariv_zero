@@ -313,7 +313,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear;
     r_s2_tlb_miss         <= r_s1_tlb_miss        ;
-    r_s2_tlb_except_valid <= r_s1_tlb_except_valid;
+    r_s2_tlb_except_valid <= w_commit_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
   end
 end
