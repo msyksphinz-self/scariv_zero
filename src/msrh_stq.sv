@@ -270,6 +270,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                         ~w_ex1_q_updates.hazard_valid;
     assign w_resolve_st_data_haz[s_idx] = w_stq_entries[s_idx].is_valid &
                                           w_stq_entries[s_idx].rs2_got_data;
+
+    assign w_sq_commit_req_oh[s_idx] = w_sq_commit_req[s_idx] & (s_idx == w_out_ptr);
   end // block: stq_loop
 endgenerate
 
@@ -347,7 +349,8 @@ endgenerate
 // ==============================
 // After commit, store operation
 // ==============================
-bit_extract_lsb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .out(w_sq_commit_req_oh));
+
+// bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .i_ptr(w_out_ptr), .out(w_sq_commit_req_oh));
 bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

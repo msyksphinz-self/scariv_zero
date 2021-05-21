@@ -25,6 +25,7 @@
 ../src/bit_extract_msb.sv
 ../src/bit_tree_msb.sv
 ../src/bit_extract_lsb.sv
+../src/bit_extract_lsb_ptr.sv
 ../src/bit_tree_lsb.sv
 ../src/bit_pick_up.sv
 ../src/bit_pick_1_index.sv
