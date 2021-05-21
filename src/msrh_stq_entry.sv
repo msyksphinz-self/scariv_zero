@@ -39,7 +39,7 @@ module msrh_stq_entry
    input logic                                i_sq_l1d_wr_conflict,
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
-   output logic                                    o_entry_dead_done,
+   input logic                                     i_stq_outptr_valid,
    output logic                                    o_stq_entry_st_finish
    );
 
@@ -85,8 +85,8 @@ assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
                         (i_commit.flush_valid ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_entry_dead_done     = (r_entry.state == STQ_DEAD) & w_dead_state_clear;
-assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict;
+assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
+                               (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -228,7 +228,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       STQ_DEAD : begin
-        if (w_dead_state_clear) begin
+        if (/* w_dead_state_clear*/ i_stq_outptr_valid) begin
           r_entry.state    <= STQ_INIT;
           r_entry.is_valid <= 1'b0;
           // prevent all updates from Pipeline
