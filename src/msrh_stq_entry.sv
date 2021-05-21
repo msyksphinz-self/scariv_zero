@@ -124,7 +124,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end else if (r_entry.is_valid & i_ex1_q_valid) begin
           r_entry.state           <= i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
                                      !i_ex1_q_updates.st_data_valid ? STQ_WAIT_ST_DATA :
-                                     STQ_DONE;
+                                     STQ_DONE_EX2;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
           r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.paddr_valid     <= ~i_ex1_q_updates.hazard_valid;
@@ -143,10 +143,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.state <= STQ_READY;
         end
       end
-      STQ_DONE : begin
+      STQ_DONE_EX2 : begin
         if (w_entry_flush) begin
           r_entry.state <= STQ_DEAD;
-        end else /* if (i_stq_entry_done) */begin
+        end else begin
+          r_entry.state <= STQ_DONE_EX3;
+        end
+      end
+      STQ_DONE_EX3 : begin
+        // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else begin
           r_entry.state <= STQ_WAIT_COMMIT;
         end
       end

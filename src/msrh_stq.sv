@@ -330,7 +330,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
 
   for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : q_loop
-    assign w_stq_done_array[s_idx] = (w_stq_entries[s_idx].state == STQ_DONE) &
+    assign w_stq_done_array[s_idx] = (w_stq_entries[s_idx].state == STQ_DONE_EX3) &
                                      w_stq_entries[s_idx].pipe_sel_idx_oh[d_idx];
   end
   bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_done_oh (.in(w_stq_done_array), .out(w_stq_done_oh));
@@ -456,7 +456,8 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "state:\"%s\", ", entry.state == STQ_INIT               ? "INIT" :
                                   entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
                                   entry.state == STQ_READY              ? "READY" :
-                                  entry.state == STQ_DONE               ? "DONE" :
+                                  entry.state == STQ_DONE_EX2           ? "DONE_EX2" :
+                                  entry.state == STQ_DONE_EX3           ? "DONE_EX3" :
                                   entry.state == STQ_COMMIT             ? "COMMIT" :
                                   entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
                                   entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
