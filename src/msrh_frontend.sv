@@ -88,7 +88,24 @@ always_comb begin
       msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
       msrh_pkg::SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
       msrh_pkg::URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];
-      msrh_pkg::ECALL_M        : w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::ECALL_M        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_M]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::ECALL_S        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_S]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::ECALL_U        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_U]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
       msrh_pkg::INST_ACC_FAULT :
         if (csr_info.medeleg[msrh_pkg::INST_ACC_FAULT]) begin
           w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];

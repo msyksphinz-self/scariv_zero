@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
   dut->i_ram_reset_n = 1;
 
   int cycle = 0;
-  while (time_counter < 60000) {
+  while (time_counter < 1000000) {
     if ((time_counter % 5) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
     }

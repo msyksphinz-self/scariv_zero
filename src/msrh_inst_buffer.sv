@@ -256,10 +256,10 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZ
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up     (.in(w_inst_is_st         ),  .out(w_inst_st_disp     ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up    (.in(w_inst_bru_pick_up   ),  .out(w_inst_bru_disp    ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up    (.in(w_inst_csu_pick_up   ),  .out(w_inst_csu_disp    ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_except_disp_pick_up (.in(w_inst_except_pick_up),  .out(w_inst_except_disp ));
+// bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_except_disp_pick_up (.in(w_inst_except_pick_up),  .out(w_inst_except_disp ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                             )) u_illegal_disp_pick_up(.in(w_inst_illegal_pick_up), .out(w_inst_illegal_disp));
 
-assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | w_inst_except_disp | w_inst_illegal_disp;
+assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | /* w_inst_except_disp | */w_inst_illegal_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
@@ -267,7 +267,6 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
-assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
 assign iq_disp.tlb_except_valid = r_inst_queue[r_inst_buffer_outptr].tlb_except_valid;
 assign iq_disp.tlb_except_cause = r_inst_queue[r_inst_buffer_outptr].tlb_except_cause;

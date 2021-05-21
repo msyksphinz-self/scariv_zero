@@ -647,6 +647,7 @@ assign csr_info.mstatus = r_mstatus;
 assign csr_info.mepc    = r_mepc;
 assign csr_info.mtvec   = r_mtvec;
 assign csr_info.stvec   = r_stvec;
+assign csr_info.utvec   = r_utvec;
 assign csr_info.sepc    = r_sepc;
 assign csr_info.uepc    = r_uepc;
 assign csr_info.satp    = r_satp;
@@ -684,7 +685,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         i_commit.except_valid) begin
       if (i_commit.except_type == msrh_pkg::MRET) begin
         // r_mepc <= epc;
-        r_mcause <= 1 << i_commit.except_type;
+        /* verilator lint_off WIDTH */
+        // r_mcause <= i_commit.except_type;
         // r_mtval <= io.tval;
         r_mstatus[`MSTATUS_MPIE] <= 1'b1;
         r_mstatus[`MSTATUS_MPP ] <= msrh_pkg::PRV_U;
@@ -692,7 +694,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_priv <= msrh_pkg::priv_t'(r_mstatus[`MSTATUS_MPP]);
       end else if (i_commit.except_type == msrh_pkg::SRET) begin
         // r_mepc <= epc;
-        r_mcause <= 1 << i_commit.except_type;
+        /* verilator lint_off WIDTH */
+        // r_mcause <= i_commit.except_type;
         // r_mtval <= io.tval;
         r_mstatus[`MSTATUS_MPIE] <= 1'b1;
         r_mstatus[`MSTATUS_MPP ] <= msrh_pkg::PRV_U;
@@ -701,7 +704,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end else if (i_commit.except_type == msrh_pkg::URET) begin
       end else if (w_delegate) begin
         // r_sepc <= epc;
-        r_scause <= 1 << i_commit.except_type;
+        /* verilator lint_off WIDTH */
+        // r_scause <= i_commit.except_type;
         // reg_stval := io.tval
         r_mstatus[`MSTATUS_SPIE] <= r_mstatus[`MSTATUS_SIE];
         r_mstatus[`MSTATUS_SPP ] <= r_priv[0];
@@ -710,7 +714,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_priv <= msrh_pkg::PRV_S;
       end else begin
         // r_mepc <= epc;
-        r_mcause <= 1 << i_commit.except_type;
+        /* verilator lint_off WIDTH */
+        r_mcause <= i_commit.except_type;
         // r_mtval <= io.tval;
         r_mstatus[`MSTATUS_MPIE] <= r_mstatus[`MSTATUS_MIE];
         r_mstatus[`MSTATUS_MPP ] <= r_priv;

@@ -47,6 +47,7 @@ logic [riscv_pkg::XLEN_W-1: 0] mstatus;
 logic [riscv_pkg::XLEN_W-1: 0] mepc;
 logic [riscv_pkg::XLEN_W-1: 0] mtvec;
 logic [riscv_pkg::XLEN_W-1: 0] stvec;
+logic [riscv_pkg::XLEN_W-1: 0] utvec;
 logic [riscv_pkg::XLEN_W-1: 0] sepc;
 logic [riscv_pkg::XLEN_W-1: 0] uepc;
 logic [riscv_pkg::XLEN_W-1: 0] satp;
@@ -59,6 +60,7 @@ modport master (
   output mepc,
   output mtvec,
   output stvec,
+  output utvec,
   output sepc,
   output uepc,
   output satp,
@@ -72,6 +74,7 @@ modport slave (
   input mepc,
   input mtvec,
   input stvec,
+  input utvec,
   input sepc,
   input uepc,
   input satp,
