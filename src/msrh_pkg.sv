@@ -282,6 +282,8 @@ typedef struct packed {
   logic                           flush_valid;
   logic                           except_valid;
   except_t                        except_type;
+  logic [riscv_pkg::VADDR_W-1: 0] epc;
+  logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
 } commit_blk_t;

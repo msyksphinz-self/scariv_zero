@@ -131,6 +131,15 @@ assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = |w_entries[w_out_cmt_entry_id].except_valid;
 assign o_commit.except_type   = except_type_selected;
+/* verilator lint_off WIDTH */
+assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
+                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} :
+                                'h0;  // Other TVAL, Not yet supported
+logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
+encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_cmt_except_valid_oh), .o_out(w_cmt_except_valid_encoded));
+/* verilator lint_off WIDTH */
+assign o_commit.epc          = w_entries[w_out_cmt_entry_id].pc_addr + w_cmt_except_valid_encoded;
 assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
 assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].dead;
 
@@ -148,7 +157,7 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_lo
 end
 endgenerate
 assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
-assign o_commit_rnid_update.upd_pc_valid     = o_commit.upd_pc_valid & !o_commit.all_dead;
+assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 

@@ -16,7 +16,6 @@ module msrh_rob_entry
 
    input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
-
    output                                     rob_entry_t o_entry,
    output logic                               o_block_all_done,
    input logic                                i_commit_finish,
