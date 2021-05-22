@@ -109,7 +109,9 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD) & !w_ex2_l1d_mispredicted;
+  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.is_load &
+                           !w_ex2_l1d_mispredicted &
+                           !ex1_l1d_rd_if.conflict;
 end
 
 
@@ -272,19 +274,18 @@ end
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       r_ex2_pipe_ctrl.is_load &
                                       (ex1_l1d_rd_if.miss |
-                                       ex1_l1d_rd_if.conflict |
                                        ex2_fwd_check_if.stq_hazard_vld) &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss;
+assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !ex1_l1d_rd_if.conflict;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = w_ex2_l1d_mispredicted ?
                                     (ex2_fwd_check_if.stq_hazard_vld  ? STQ_DEPEND   :
-                                     ex1_l1d_rd_if.conflict           ? L1D_CONFLICT :
                                      l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT : LRQ_ASSIGNED) :
+                                    ex1_l1d_rd_if.conflict            ? L1D_CONFLICT :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
