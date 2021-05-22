@@ -641,7 +641,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmp
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpaddr15     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPADDR15     ) begin r_pmpaddr15     <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stats         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STATS         ) begin r_stats         <= write_if.data; end end
 
-assign csr_info.mstatus = r_mstatus;
+assign csr_info.mstatus = w_mstatus;
 assign csr_info.mepc    = r_mepc;
 assign csr_info.mtvec   = r_mtvec;
 assign csr_info.stvec   = r_stvec;
