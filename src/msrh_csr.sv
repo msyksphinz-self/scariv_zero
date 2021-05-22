@@ -693,6 +693,14 @@ end
 
 always_comb begin
   w_mstatus_next = w_mstatus;
+  w_priv_next    = r_priv  ;
+  w_sepc_next    = r_sepc  ;
+  w_scause_next  = r_scause;
+  w_stval_next   = r_stval ;
+  w_mepc_next    = r_mepc  ;
+  w_mcause_next  = r_mcause;
+  w_mtval_next   = r_mtval ;
+
   if (i_commit.commit &
       i_commit.except_valid) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
@@ -710,7 +718,7 @@ always_comb begin
       // r_mcause <= i_commit.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_SPIE] = 1'b1;
-      w_mstatus_next[`MSTATUS_SPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_SPP ] = r_priv[0];
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
     end else if (i_commit.except_type == msrh_pkg::URET) begin
