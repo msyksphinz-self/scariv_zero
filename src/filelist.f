@@ -53,7 +53,7 @@
 ../src/msrh_icache.sv
 ../src/tag_array.sv
 ../src/msrh_frontend.sv
-../src/tlb.sv
+../src/msrh_tlb.sv
 ../src/msrh_tile.sv
 ../src/msrh_tile_wrapper.sv
 ../src/msrh_inst_buffer.sv
