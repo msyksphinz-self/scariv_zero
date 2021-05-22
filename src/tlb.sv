@@ -162,6 +162,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_NORMAL_ENTRIES_NUM; e_idx++) begin :
           (r_sectored_repl_addr_oh[e_idx[$clog2(TLB_NORMAL_ENTRIES_NUM)-1:0]])) begin
         r_sectored_entries[e_idx].valid <= 1 << w_wr_sector_idx;
         r_sectored_entries[e_idx].tag   <= r_refill_tag;
+        r_sectored_entries[e_idx].level <= ptw_if.resp.level;
         r_sectored_entries[e_idx].data[w_wr_sector_idx] <= new_pte_entry;
       end
     end
@@ -178,6 +179,7 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
   logic [PG_LEVEL-1: 0] w_tag_match;
   logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
   logic                 sector_tag_match;
+  logic [riscv_pkg::PPN_W-1:0] w_filtered_ppn;
 
   localparam SUPER_PAGE      = (t_idx >= TLB_NORMAL_ENTRIES_NUM);
   localparam SUPER_PAGE_ONLY = (t_idx >= TLB_NORMAL_ENTRIES_NUM) && (t_idx < TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM);
@@ -191,13 +193,15 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
     /* verilator lint_off UNSIGNED */
     assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == PG_LEVELS-1);
     assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: PG_LEVEL_W] == w_vpn[base + PG_IDX_W +: PG_LEVEL_W]);
+    assign w_filtered_ppn[base +: PG_LEVEL_W] = w_ignore ? w_vpn[PG_IDX_W + base +: PG_LEVEL_W] :
+                                                w_all_entries[t_idx].data[sector_idx].ppn[base +: PG_LEVEL_W];
   end
   assign w_is_hit[t_idx] = w_all_entries[t_idx].valid[sector_idx] & ((SUPER_PAGE && msrh_conf_pkg::USING_VM) ? |w_tag_match :
                                                                      sector_tag_match);
   assign w_hits_vec[t_idx]  = w_vm_enabled & w_is_hit[t_idx];
   assign w_real_hits[t_idx] = w_hits_vec[t_idx];
 
-  assign w_entry_ppn[t_idx] = w_all_entries[t_idx].data[sector_idx].ppn;
+  assign w_entry_ppn[t_idx] = w_filtered_ppn;
 end
 endgenerate
 
