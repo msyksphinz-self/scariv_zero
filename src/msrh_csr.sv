@@ -710,7 +710,7 @@ always_comb begin
       // r_mcause <= i_commit.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_MPIE] = 1'b1;
-      w_mstatus_next[`MSTATUS_MPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_MPP ] = msrh_pkg::PRV_U;
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
     end else if (i_commit.except_type == msrh_pkg::SRET) begin
