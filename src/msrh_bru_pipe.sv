@@ -190,8 +190,8 @@ end
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_pipe_ctrl.wr_rd & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
-/* verilator lint_off WIDTH */
-assign o_ex3_phy_wr.rd_data = r_ex3_issue.pc_addr + 'h4;
+assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                               r_ex3_issue.pc_addr} + 'h4;
 
 assign ex3_done_if.done     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_done_if.index_oh = r_ex3_index;

@@ -167,8 +167,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     case (r_ex2_pipe_ctrl.op)
       OP_SIGN_LUI: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
-      /* verilator lint_off WIDTH */
-      OP_SIGN_AUIPC:  r_ex3_result <= r_ex2_issue.pc_addr +
+      OP_SIGN_AUIPC:  r_ex3_result <= {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                                       r_ex2_issue.pc_addr} +
                                       {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
       OP_SIGN_ADD:    r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
       OP_SIGN_SUB:    r_ex3_result <= w_ex2_rs1_selected_data - w_ex2_rs2_selected_data;
@@ -180,6 +180,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       OP_SLL:         r_ex3_result <= w_ex2_rs1_selected_data <<  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRL:         r_ex3_result <= w_ex2_rs1_selected_data >>  w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
       OP_SRA:         r_ex3_result <= $signed(w_ex2_rs1_selected_data) >>> w_ex2_rs2_selected_data[$clog2(riscv_pkg::XLEN_W)-1: 0];
+      /* verilator lint_off WIDTH */
       OP_SIGN_SLT:    r_ex3_result <= $signed(w_ex2_rs1_selected_data) < $signed(w_ex2_rs2_selected_data);
       OP_UNSIGN_SLT:  r_ex3_result <= w_ex2_rs1_selected_data < w_ex2_rs2_selected_data;
       default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
