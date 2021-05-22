@@ -57,7 +57,7 @@ always_ff @(negedge i_clk, negedge i_reset_n) begin
     /* verilator lint_off WIDTH */
     debug_tick_val = debug_tick(
       __debug_req_valid,
-      i_req_ready,
+      1'b1,
       __debug_req_bits_addr[31:0],
       __debug_req_bits_data
       );

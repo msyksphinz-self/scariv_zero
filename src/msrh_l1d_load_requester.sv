@@ -3,7 +3,7 @@ module msrh_l1d_load_requester
    input logic  i_clk,
    input logic  i_reset_n,
 
-   // from Pipeline for Load
+   // from Pipeline for Load + PTW for Load
    l1d_lrq_if.slave l1d_lrq[msrh_conf_pkg::LSU_INST_NUM],
    // from STQ request
    l1d_lrq_if.slave l1d_lrq_stq_miss_if,
@@ -17,13 +17,15 @@ module msrh_l1d_load_requester
    lrq_search_if.slave lrq_search_if
    );
 
+localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
+
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_valids;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_load_valid_oh;
 
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_addr_valid[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]   w_hit_port_same_addr_valid[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]   w_resp_confilct;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_addr_valid[REQ_PORT_NUM];
+logic [REQ_PORT_NUM-1: 0]   w_hit_port_same_addr_valid[REQ_PORT_NUM];
+logic [REQ_PORT_NUM-1: 0]   w_resp_confilct;
 
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_in_ptr;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
@@ -33,14 +35,14 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_lrq_load_valid;
 
 msrh_lsu_pkg::lrq_entry_t w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE];
 
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_loads;
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_picked_valids;
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]          w_l1d_lrq_loads_no_conflicts;
-logic [$clog2(msrh_conf_pkg::LSU_INST_NUM): 0]    w_l1d_lrq_loads_cnt;
-msrh_lsu_pkg::lrq_req_t w_l1d_req_payloads        [msrh_conf_pkg::LSU_INST_NUM];
-msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [msrh_conf_pkg::LSU_INST_NUM];
+logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads;
+logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_picked_valids;
+logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads_no_conflicts;
+logic [$clog2(REQ_PORT_NUM): 0] w_l1d_lrq_loads_cnt;
+msrh_lsu_pkg::lrq_req_t w_l1d_req_payloads        [REQ_PORT_NUM];
+msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [REQ_PORT_NUM];
 
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_valid [msrh_conf_pkg::LSU_INST_NUM] ;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_valid [REQ_PORT_NUM] ;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_entry_valid;
 
 // LRQ Miss Load from STQ
@@ -60,7 +62,7 @@ logic                                         r_lrq_search_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index;
 
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_load_valid (.in(~w_lrq_valids), .out(w_lrq_load_valid_oh));
-bit_cnt #(.WIDTH(msrh_conf_pkg::LSU_INST_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
+bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
 //
 // LRQ Pointer
 //
@@ -78,14 +80,14 @@ inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_res
                                                           .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
                                                           .o_out_ptr(w_out_ptr));
 
-generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_req_loop
+generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_loop
   assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
   assign w_l1d_req_payloads[p_idx] = l1d_lrq[p_idx].req_payload;
   assign w_l1d_lrq_loads_no_conflicts[p_idx] = w_l1d_lrq_loads[p_idx] &
                                                !w_resp_confilct[p_idx];
   bit_pick_1_index
                              #(.NUM(p_idx),
-                               .SEL_WIDTH(msrh_conf_pkg::LSU_INST_NUM),
+                               .SEL_WIDTH(REQ_PORT_NUM),
                                .DATA_WIDTH($size(msrh_lsu_pkg::lrq_req_t))
                                )
   u_l1d_req_pick
@@ -104,19 +106,19 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
   assign w_lrq_valids[b_idx] = w_lrq_entries[b_idx].valid;
   msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
 
-  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lrq_port_loop
+  for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lrq_port_loop
     assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] &
                                         (w_in_ptr + p_idx == b_idx);
   end
 
-  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rev_load_valid;
+  logic [REQ_PORT_NUM-1: 0] w_rev_load_valid;
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rev_loop
     assign w_rev_load_valid[p_idx] = w_load_valid[p_idx][b_idx];
   end
 
   assign w_load_entry_valid[b_idx] = |w_rev_load_valid;
 
-  bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
+  bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(REQ_PORT_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
 
   msrh_lsu_pkg::lrq_entry_t load_entry;
   assign load_entry.valid = w_load_entry_valid[b_idx];
@@ -141,9 +143,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 end // block: buffer_loop
 endgenerate
 
-generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : port_loop
+generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   // check the address with different pipeline
-  for (genvar p2_idx = 0; p2_idx < msrh_conf_pkg::LSU_INST_NUM; p2_idx++) begin : adj_port_loop
+  for (genvar p2_idx = 0; p2_idx < REQ_PORT_NUM; p2_idx++) begin : adj_port_loop
     if (p_idx <= p2_idx) begin
       assign w_hit_port_same_addr_valid[p_idx][p2_idx] = 1'b0;
     end else begin
@@ -156,8 +158,9 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   // check the address with exist lrq
   for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
     assign w_hit_lrq_same_addr_valid[p_idx][b_idx] = l1d_lrq[p_idx].load &
-                                                   (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                                    l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+                                                     w_lrq_entries[b_idx].valid &
+                                                     (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                      l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
   assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_valid[p_idx]) | (|w_hit_port_same_addr_valid[p_idx]);

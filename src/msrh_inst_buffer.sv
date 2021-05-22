@@ -14,6 +14,8 @@ module msrh_inst_buffer
  input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
  input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
+ input logic                                     i_inst_tlb_except_valid,
+ input msrh_pkg::except_t                        i_inst_tlb_except_cause,
 
  disp_if.master                                  iq_disp
  );
@@ -24,6 +26,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_pick_up;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_except_pick_up;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_pick_up;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
@@ -31,6 +35,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_except_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_or;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
@@ -38,6 +44,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
 decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
@@ -57,12 +64,14 @@ logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 
 typedef struct packed {
-  logic                                  valid;
-  logic [riscv_pkg::VADDR_W-1: 1]        pc;
-  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   data;
+  logic                                      valid;
+  logic [riscv_pkg::VADDR_W-1: 1]            pc;
+  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
+  logic                                      tlb_except_valid;
+  msrh_pkg::except_t                         tlb_except_cause;
 `ifdef SIMULATION
-  logic [riscv_pkg::VADDR_W-1: 0]        pc_dbg;
+  logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
 `endif // SIMULATION
 } inst_buf_t;
 
@@ -119,10 +128,12 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
       if (w_flush_pipeline) begin
         r_inst_queue[idx] <= 'h0;
       end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
-        r_inst_queue[idx].valid  <= 1'b1;
-        r_inst_queue[idx].data <= i_inst_in;
-        r_inst_queue[idx].pc   <= i_inst_pc;
+        r_inst_queue[idx].valid   <= 1'b1;
+        r_inst_queue[idx].data    <= i_inst_in;
+        r_inst_queue[idx].pc      <= i_inst_pc;
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
+        r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
+        r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
@@ -227,23 +238,28 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
   assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
 
+  assign w_inst_illegal[w_idx]    = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & r_inst_queue[w_inst_buf_ptr].tlb_except_valid;
   assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & w_raw_gen_except;
 end
 endgenerate
 
-assign w_inst_arith_pick_up = w_inst_is_arith;
-assign w_inst_mem_pick_up   = w_inst_is_ld | w_inst_is_st;
-assign w_inst_bru_pick_up   = w_inst_is_br;
-assign w_inst_csu_pick_up   = w_inst_is_csu;
+assign w_inst_arith_pick_up  = w_inst_is_arith;
+assign w_inst_mem_pick_up    = w_inst_is_ld | w_inst_is_st;
+assign w_inst_bru_pick_up    = w_inst_is_br;
+assign w_inst_csu_pick_up    = w_inst_is_csu;
+assign w_inst_except_pick_up = w_inst_gen_except;
+assign w_inst_illegal_pick_up = w_inst_illegal;
 
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up (.in(w_inst_arith_pick_up), .out(w_inst_arith_disp));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up   (.in(w_inst_mem_pick_up  ), .out(w_inst_mem_disp  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disp_pick_up    (.in(w_inst_is_ld        ), .out(w_inst_ld_disp   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up    (.in(w_inst_is_st        ), .out(w_inst_st_disp   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up   (.in(w_inst_bru_pick_up  ), .out(w_inst_bru_disp  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up   (.in(w_inst_csu_pick_up  ), .out(w_inst_csu_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up  (.in(w_inst_arith_pick_up ),  .out(w_inst_arith_disp  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disp_pick_up    (.in(w_inst_mem_pick_up   ),  .out(w_inst_mem_disp    ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disp_pick_up     (.in(w_inst_is_ld         ),  .out(w_inst_ld_disp     ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up     (.in(w_inst_is_st         ),  .out(w_inst_st_disp     ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up    (.in(w_inst_bru_pick_up   ),  .out(w_inst_bru_disp    ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up    (.in(w_inst_csu_pick_up   ),  .out(w_inst_csu_disp    ));
+// bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_except_disp_pick_up (.in(w_inst_except_pick_up),  .out(w_inst_except_disp ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                             )) u_illegal_disp_pick_up(.in(w_inst_illegal_pick_up), .out(w_inst_illegal_disp));
 
-assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp;
+assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | /* w_inst_except_disp | */w_inst_illegal_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
@@ -252,6 +268,9 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
+assign iq_disp.tlb_except_valid = r_inst_queue[r_inst_buffer_outptr].tlb_except_valid;
+assign iq_disp.tlb_except_cause = r_inst_queue[r_inst_buffer_outptr].tlb_except_cause;
+
 
 // -------------------------------
 // Dispatch Inst, Resource Count

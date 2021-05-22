@@ -4,7 +4,7 @@ module msrh_csu
   input logic i_reset_n,
 
   input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
-  disp_if.slave                              disp,
+  disp_if.watch                              disp,
   cre_ret_if.slave                       cre_ret_if,
 
   regread_if.master                          ex1_regread_rs1,
@@ -63,7 +63,8 @@ u_msrh_disp_pickup
 msrh_scheduler
   #(
     .ENTRY_SIZE  (msrh_conf_pkg::RV_CSU_ENTRY_SIZE),
-    .IN_PORT_SIZE(msrh_conf_pkg::CSU_DISP_SIZE)
+    .IN_PORT_SIZE(msrh_conf_pkg::CSU_DISP_SIZE),
+    .EN_OLDEST(1'b1)
     )
 u_msrh_scheduler
   (
@@ -110,6 +111,7 @@ u_csu_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
+   .csr_info (csr_info),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
 
@@ -118,7 +120,7 @@ u_csu_pipe
 
 
 msrh_csr
-u_mcsr_csr
+u_msrh_csr
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),

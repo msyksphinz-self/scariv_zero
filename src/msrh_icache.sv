@@ -12,7 +12,7 @@ module msrh_icache
   input                      ic_req_t i_s0_req,
   output logic               o_s0_ready,
   input logic [PADDR_W-1:0]  i_s1_paddr,
-  input logic                i_s1_tlb_miss,
+  input logic                i_s1_kill,
 
   output                     ic_resp_t o_s2_resp,
 
@@ -68,7 +68,7 @@ logic [VADDR_W-1:ICACHE_TAG_LOW] w_s1_tag;
        .o_tag_valid(w_s1_tag_valid)
        );
 
-  assign w_s1_tag_hit[way] = (i_s1_paddr[VADDR_W-1:ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
+  assign w_s1_tag_hit[way] = (r_s1_vaddr[VADDR_W-1:ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
 
   data_array
     #(
@@ -101,7 +101,7 @@ endgenerate
 // ===============
 // S1 stage
 // ===============
-assign w_s1_hit = (|w_s1_tag_hit) & !i_s1_tlb_miss;
+assign w_s1_hit = (|w_s1_tag_hit);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -173,11 +173,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_ic_state)
       ICInit : begin
-        if (~i_flush_valid & r_s1_valid & !w_s1_hit) begin
+        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill) begin
           // if (ic_l2_req.ready) begin
           r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
-          r_s2_waiting_vaddr <= i_s1_paddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+          r_s2_waiting_vaddr <= r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
           // end
         end
       end // case: ICInit

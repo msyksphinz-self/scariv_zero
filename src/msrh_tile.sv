@@ -8,7 +8,11 @@ module msrh_tile (
 
     // L2 request from L1D
     l2_req_if.master l1d_ext_req,
-    l2_resp_if.slave l1d_ext_resp
+    l2_resp_if.slave l1d_ext_resp,
+
+    // PTW interconnection
+    l2_req_if.master ptw_req,
+    l2_resp_if.slave ptw_resp
 );
 
 localparam ALU_INST_PORT_BASE = 0;
@@ -18,7 +22,7 @@ localparam CSU_INST_PORT_BASE = BRU_INST_PORT_BASE + 1;
 
 localparam ALU_DONE_PORT_BASE = 0;
 localparam LSU_DONE_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
-localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + 2;
+localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 
 // ----------------------------------
@@ -40,6 +44,8 @@ regread_if regread[msrh_pkg::REGPORT_NUM] ();
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
+tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
+lsu_access_if w_lsu_access();
 
 // ----------------------------------
 // Committer Components
@@ -62,7 +68,7 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
 msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::done_rpt_t w_lsu_done_rpt    [2];
+msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::mispred_t  w_ex3_mispred_lsu [msrh_conf_pkg::LSU_INST_NUM] ;
 
 // ----------------------------------
@@ -108,10 +114,9 @@ endgenerate
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[LSU_INST_PORT_BASE + l_idx] = w_ex1_lsu_early_wr[l_idx];
   assign w_ex3_phy_wr  [LSU_INST_PORT_BASE + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
+  assign w_done_rpt    [LSU_DONE_PORT_BASE + l_idx] = w_lsu_done_rpt    [l_idx];
 end
 endgenerate
-assign w_done_rpt    [LSU_DONE_PORT_BASE + 0] = w_lsu_done_rpt[0];
-assign w_done_rpt    [LSU_DONE_PORT_BASE + 1] = w_lsu_done_rpt[1];
 
 // BRU
 assign w_ex1_early_wr[BRU_INST_PORT_BASE] = w_ex1_bru_early_wr;
@@ -135,7 +140,9 @@ msrh_frontend u_frontend (
 
   .csr_info (w_csr_info),
 
-  .iq_disp (w_iq_disp)
+  .iq_disp (w_iq_disp),
+
+  .ptw_if (w_ptw_if[0])
 );
 
   // msrh_decoder u_decoder (
@@ -219,6 +226,8 @@ u_msrh_lsu_top
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
+    .csr_info (w_csr_info),
+
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
     .sch_cre_ret_if (lsu_cre_ret_if),
@@ -226,6 +235,9 @@ u_msrh_lsu_top
     .stq_cre_ret_if (stq_cre_ret_if),
 
     .ex1_regread (regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
+
+    .ptw_if       (w_ptw_if[1 +: msrh_conf_pkg::LSU_INST_NUM]),
+    .lsu_access   (w_lsu_access),
 
     .l1d_ext_req  (l1d_ext_req ),
     .l1d_ext_resp (l1d_ext_resp),
@@ -327,6 +339,20 @@ msrh_rob u_rob
    .o_commit_rnid_update (w_commit_rnid_update),
 
    .ex3_br_upd_if (w_ex3_br_upd_if)
+   );
+
+
+msrh_ptw u_ptw
+  (
+   .i_clk    (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .ptw_if   (w_ptw_if),
+
+   .lsu_access (w_lsu_access),
+
+   .ptw_req  (ptw_req ),
+   .ptw_resp (ptw_resp)
    );
 
 endmodule  // msrh_tile

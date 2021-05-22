@@ -16,6 +16,9 @@ module msrh_csu_pipe
   output                            msrh_pkg::early_wr_t o_ex1_early_wr,
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
+  /* CSR information */
+  csr_info_if.slave                 csr_info,
+
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
 
@@ -24,7 +27,9 @@ module msrh_csu_pipe
 
 typedef struct packed {
   op_t  op;
-  logic is_ret;
+  logic is_mret;
+  logic is_sret;
+  logic is_uret;
   logic is_ecall;
   logic is_ebreak;
   logic is_fence;
@@ -64,7 +69,9 @@ end
 decoder_csu_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
   .op         (w_ex0_pipe_ctrl.op        ),
-  .is_ret     (w_ex0_pipe_ctrl.is_ret    ),
+  .is_mret    (w_ex0_pipe_ctrl.is_mret   ),
+  .is_sret    (w_ex0_pipe_ctrl.is_sret   ),
+  .is_uret    (w_ex0_pipe_ctrl.is_uret   ),
   .is_ecall   (w_ex0_pipe_ctrl.is_ecall  ),
   .is_ebreak  (w_ex0_pipe_ctrl.is_ebreak ),
   .is_fence   (w_ex0_pipe_ctrl.is_fence  ),
@@ -89,6 +96,7 @@ end
 assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
 assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
+assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
@@ -161,11 +169,19 @@ assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_ret | r_ex3_pipe_ctrl.is_ecall;
-assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_ret ? msrh_pkg::MRET :  // r_ex3_pipe_ctrl.is_ret
-                                msrh_pkg::ECALL_M;                         // r_ex3_pipe_ctrl.is_ecall
+assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_mret |
+                                   r_ex3_pipe_ctrl.is_sret |
+                                   r_ex3_pipe_ctrl.is_uret |
+                                   r_ex3_pipe_ctrl.is_ecall;
+assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
+                                 r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
+                                 r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
+                                 csr_info.priv == msrh_pkg::PRV_U ? msrh_pkg::ECALL_U :
+                                 csr_info.priv == msrh_pkg::PRV_S ? msrh_pkg::ECALL_S :
+                                 msrh_pkg::ECALL_M; // dummy
 
-assign write_if.valid = r_ex3_issue.valid;
+assign write_if.valid = r_ex3_issue.valid &
+                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 

@@ -4,8 +4,8 @@ module msrh_bru
   input logic i_reset_n,
 
   input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
-  disp_if.slave                              disp,
-  cre_ret_if.slave                       cre_ret_if,
+  disp_if.watch                              disp,
+  cre_ret_if.slave                           cre_ret_if,
 
   regread_if.master ex1_regread_rs1,
   regread_if.master ex1_regread_rs2,

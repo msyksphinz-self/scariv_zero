@@ -18,7 +18,7 @@ VLOG_OPTS += +define+DIRECT_LOAD_HEX=1
 VLOG_OPTS += -sv
 VLOG_OPTS += -O0
 VLOG_OPTS += -l vlog.log
-
+VLOG_OPTS += -suppress 13314,2583
 FILELIST = sim_filelist.f
 
 VLOG_OPTS += -f $(FILELIST)

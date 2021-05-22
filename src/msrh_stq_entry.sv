@@ -24,7 +24,7 @@ module msrh_stq_entry
 
    input logic                                i_rerun_accept,
 
-   input logic                                i_stq_entry_done,
+   // input logic                                i_stq_entry_done,
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
    input logic                                i_sq_op_accept,
@@ -39,7 +39,7 @@ module msrh_stq_entry
    input logic                                i_sq_l1d_wr_conflict,
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
-   output logic                                    o_entry_dead_done,
+   input logic                                     i_stq_outptr_valid,
    output logic                                    o_stq_entry_st_finish
    );
 
@@ -81,11 +81,12 @@ assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
                                 w_rs2_entry_hit |
                                 i_ex1_q_valid & i_ex1_q_updates.inst.rs2_ready;
 
-assign w_cmt_id_match = (i_commit.cmt_id == r_entry.cmt_id) &
-                        ((i_commit.grp_id & r_entry.grp_id) != 'h0);
+assign w_cmt_id_match = i_commit.commit &
+                        (i_commit.cmt_id == r_entry.cmt_id) &
+                        (i_commit.flush_valid ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_entry_dead_done     = (r_entry.state == STQ_DEAD) & w_dead_state_clear;
-assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict;
+assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
+                               (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -123,7 +124,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end else if (r_entry.is_valid & i_ex1_q_valid) begin
           r_entry.state           <= i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
                                      !i_ex1_q_updates.st_data_valid ? STQ_WAIT_ST_DATA :
-                                     STQ_DONE;
+                                     STQ_DONE_EX2;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
           r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.paddr_valid     <= ~i_ex1_q_updates.hazard_valid;
@@ -142,25 +143,43 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.state <= STQ_READY;
         end
       end
-      STQ_DONE : begin
+      STQ_DONE_EX2 : begin
         if (w_entry_flush) begin
           r_entry.state <= STQ_DEAD;
-        end else if (i_stq_entry_done) begin
+        end else begin
+          r_entry.state <= STQ_DONE_EX3;
+        end
+      end
+      STQ_DONE_EX3 : begin
+        // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else begin
           r_entry.state <= STQ_WAIT_COMMIT;
         end
       end
       STQ_WAIT_COMMIT : begin
         if (w_cmt_id_match) begin
           r_entry.state <= STQ_COMMIT;
+        end else if (w_entry_flush) begin
+          r_entry.state    <= STQ_INIT;
+          r_entry.is_valid <= 1'b0;
+          // prevent all updates from Pipeline
+          r_entry.cmt_id <= 'h0;
+          r_entry.grp_id <= 'h0;
         end
       end
       STQ_WAIT_ST_DATA : begin
-        if (r_entry.inst.rs2_ready) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (r_entry.inst.rs2_ready) begin
           r_entry.state <= STQ_READY;
         end
       end
       STQ_READY : begin
-        if (i_rerun_accept) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (i_rerun_accept) begin
           r_entry.state <= STQ_INIT;
         end
       end
@@ -209,7 +228,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       STQ_DEAD : begin
-        if (w_dead_state_clear) begin
+        if (/* w_dead_state_clear*/ i_stq_outptr_valid) begin
           r_entry.state    <= STQ_INIT;
           r_entry.is_valid <= 1'b0;
           // prevent all updates from Pipeline

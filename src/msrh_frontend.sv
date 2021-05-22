@@ -13,18 +13,21 @@ module msrh_frontend
   csr_info_if.slave           csr_info,
 
  // Dispatch Info
- disp_if.master iq_disp
+ disp_if.master    iq_disp,
+ // Page Table Walk I/O
+ tlb_ptw_if.master ptw_if
 );
 
 // ==============
 // s0 stage
 // ==============
 
-typedef enum logic [ 1: 0] {
+typedef enum logic [ 2: 0] {
   INIT = 0,
   ISSUED = 1,
-  WAIT_RD = 2,
-  WAIT_FB_FREE = 3
+  WAIT_TLB_FILL = 2,
+  WAIT_IC_FILL = 3,
+  WAIT_FB_FREE = 4
 } if_sm_t;
 
 if_sm_t  r_if_state;
@@ -45,19 +48,30 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
 
 logic                          r_s1_valid;
 logic                          r_s1_clear;
+logic [riscv_pkg::VADDR_W-1:0] r_s1_vaddr;
 logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
 logic                          r_s1_tlb_miss;
+logic                          r_s1_tlb_except_valid;
+msrh_pkg::except_t             r_s1_tlb_except_cause;
 
 // ==============
 // s2 stage
 // ==============
 
-logic                          w_s2_inst_valid;
-logic                          r_s2_valid;
-logic                          r_s2_clear;
-msrh_lsu_pkg::ic_resp_t        w_s2_ic_resp;
-logic                          w_s2_ic_miss;
+logic                           w_s2_inst_valid;
+logic                           r_s2_valid;
+logic                           r_s2_clear;
+msrh_lsu_pkg::ic_resp_t         w_s2_ic_resp;
+logic                           w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
+logic                           r_s2_tlb_miss;
+logic                           r_s2_tlb_except_valid;
+msrh_pkg::except_t              r_s2_tlb_except_cause;
+
+// ==============
+// TLB
+// ==============
+logic                           w_tlb_ready;
 
 
 // ==============
@@ -68,11 +82,94 @@ logic                           w_commit_flush_valid;
 
 logic                           w_inst_buffer_ready;
 
-assign w_s0_vaddr_flush_next = i_commit.except_valid ?
-                               (i_commit.except_type == msrh_pkg::MRET    ? csr_info.mepc [riscv_pkg::VADDR_W-1: 0] :
-                                i_commit.except_type == msrh_pkg::ECALL_M ? csr_info.mtvec[riscv_pkg::VADDR_W-1: 0] :
-                                'h0) :
-                               i_commit.upd_pc_vaddr;
+always_comb begin
+  if (i_commit.except_valid) begin
+    case (i_commit.except_type)
+      msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];
+      msrh_pkg::ECALL_M        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_M]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::ECALL_S        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_S]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::ECALL_U        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_U]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::INST_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::INST_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::LOAD_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_ACC_FAULT :
+        if (csr_info.medeleg[msrh_pkg::STAMO_ACC_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::INST_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::INST_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::LOAD_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_PAGE_FAULT :
+        if (csr_info.medeleg[msrh_pkg::STAMO_PAGE_FAULT]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::INST_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::INST_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::LOAD_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::LOAD_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      msrh_pkg::STAMO_ADDR_MISALIGN :
+        if (csr_info.medeleg[msrh_pkg::STAMO_ADDR_MISALIGN]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
+      default           : begin
+        w_s0_vaddr_flush_next = 'h0;
+        $fatal (0, "This exception not supported now");
+      end
+    endcase // case (i_commit.except_type)
+  end else begin
+    w_s0_vaddr_flush_next = i_commit.upd_pc_vaddr;
+  end // else: !if(i_commit.except_valid)
+end // always_comb
+
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -95,7 +192,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else begin
       case (r_if_state)
         ISSUED : begin
-          if (w_s2_ic_miss & !r_s2_clear) begin
+          if (r_s1_tlb_miss & !r_s1_clear) begin
+            r_s0_vaddr <= r_s1_vaddr;
+          end else if (w_s2_ic_miss & !r_s2_clear) begin
             r_s0_vaddr <= w_s2_ic_miss_vaddr;
           end else if (w_s2_inst_valid & !w_inst_buffer_ready) begin
             r_s0_vaddr <= {w_s2_ic_resp.addr, 1'b0};
@@ -104,8 +203,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
         end
-        WAIT_RD : begin
+        WAIT_IC_FILL : begin
           if (w_s0_ic_ready) begin
+            r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          end
+        end
+        WAIT_TLB_FILL : begin
+          if (w_tlb_ready) begin
             r_s0_vaddr <= (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           end
@@ -129,14 +234,21 @@ always_comb begin
       w_if_state_next = ISSUED;
     end
     ISSUED : begin
-      if (w_s2_ic_miss & !r_s2_clear) begin
-        w_if_state_next = WAIT_RD;
+      if (r_s1_tlb_miss & !r_s1_clear) begin
+        w_if_state_next = WAIT_TLB_FILL;
+      end else if (w_s2_ic_miss & !r_s2_clear) begin
+        w_if_state_next = WAIT_IC_FILL;
       end else if (!w_inst_buffer_ready) begin
         w_if_state_next = WAIT_FB_FREE;
       end
     end
-    WAIT_RD : begin
+    WAIT_IC_FILL : begin
       if (w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    WAIT_TLB_FILL : begin
+      if (w_tlb_ready) begin
         w_if_state_next = ISSUED;
       end
     end
@@ -145,6 +257,7 @@ always_comb begin
         w_if_state_next = ISSUED;
       end
     end
+    default : begin end
   endcase // case (r_if_state)
 end
 
@@ -155,15 +268,27 @@ assign w_commit_flush_valid = i_commit.commit &
                               i_commit.flush_valid &
                               !i_commit.all_dead;
 
+assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
 assign w_s0_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
+assign w_s0_tlb_req.size  = 'h0;
+assign w_s0_tlb_req.passthrough  = 1'b0;
 
 tlb u_tlb
   (
    .i_clk      (i_clk),
    .i_reset_n  (i_reset_n),
 
+   .i_kill (1'b0),
+
+   .i_sfence ('h0),
+   .i_status_prv(csr_info.priv),
+   .i_csr_status(csr_info.mstatus),
+   .i_csr_satp(csr_info.satp),
+   .ptw_if(ptw_if),
+
    .i_tlb_req  (w_s0_tlb_req ),
+   .o_tlb_ready (w_tlb_ready),
    .o_tlb_resp (w_s0_tlb_resp),
 
    .o_tlb_update ()
@@ -173,31 +298,49 @@ tlb u_tlb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s1_valid <= 1'b0;
+    r_s1_vaddr <= 'h0;
     r_s1_paddr <= 'h0;
     r_s1_tlb_miss <= 'h0;
   end else begin
     r_s1_valid <= r_s0_valid;
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
-    r_s1_tlb_miss <= w_s0_tlb_resp.miss;
-  end
-end
+    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid;
+    r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
+                             w_s0_tlb_resp.ae.inst |
+                             w_s0_tlb_resp.ma.inst;
+    r_s1_tlb_except_cause <= w_s0_tlb_resp.pf.inst ? msrh_pkg::INST_PAGE_FAULT :
+                             w_s0_tlb_resp.ae.inst ? msrh_pkg::INST_ACC_FAULT  :
+                             msrh_pkg::INST_ADDR_MISALIGN;  // w_s0_tlb_resp.ma.inst
+
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 // s1 --> s2
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_valid <= 1'b0;
     r_s2_clear <= 1'b0;
+    r_s2_tlb_miss         <= 1'b0;
+    r_s2_tlb_except_valid <= 1'b0;
+    r_s2_tlb_except_cause <= msrh_pkg::except_t'(0);
   end else begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear;
+    r_s2_tlb_miss         <= r_s1_tlb_miss        ;
+    r_s2_tlb_except_valid <= w_commit_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
+    r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
   end
 end
 
 
 assign w_s0_ic_req.valid = ((r_if_state == ISSUED) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready))  |
-                           ((r_if_state == WAIT_RD) & w_s0_ic_ready) |
-                           ((r_if_state == WAIT_FB_FREE) & w_inst_buffer_ready & w_s0_ic_ready);
+                           ((r_if_state == WAIT_IC_FILL ) & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_FB_FREE ) & w_inst_buffer_ready & w_s0_ic_ready) |
+                           ((r_if_state == WAIT_TLB_FILL) & w_tlb_ready);
+
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
 assign w_s2_inst_valid = w_s2_ic_resp.valid & !r_s1_clear & !r_s2_clear;
@@ -215,7 +358,7 @@ msrh_icache u_msrh_icache
 
 
    .i_s1_paddr (r_s1_paddr),
-   .i_s1_tlb_miss (r_s1_tlb_miss),
+   .i_s1_kill  (r_s1_tlb_miss | r_s1_tlb_except_valid),
 
    .o_s2_resp (w_s2_ic_resp),
 
@@ -234,7 +377,8 @@ u_msrh_inst_buffer
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_commit_flush_valid),
 
-   .i_inst_valid (w_s2_inst_valid),
+   .i_inst_valid (w_s2_inst_valid |
+                  (~r_s2_tlb_miss & r_s2_tlb_except_valid)),
 
    .i_commit (i_commit),
 
@@ -242,6 +386,8 @@ u_msrh_inst_buffer
    .i_inst_pc      (w_s2_ic_resp.addr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
+   .i_inst_tlb_except_valid (r_s2_tlb_except_valid),
+   .i_inst_tlb_except_cause (r_s2_tlb_except_cause),
 
    .iq_disp        (iq_disp)
    );

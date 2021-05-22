@@ -18,6 +18,8 @@ module msrh_csr
 
 `include "msrh_csr_def.svh"
 
+msrh_pkg::priv_t    r_priv, w_priv_next;
+
 logic [XLEN_W-1: 0] r_ustatus;
 logic [XLEN_W-1: 0] r_uie;
 logic [XLEN_W-1: 0] r_utvec;
@@ -95,16 +97,15 @@ logic [XLEN_W-1: 0] r_hpmcounterh28;
 logic [XLEN_W-1: 0] r_hpmcounterh29;
 logic [XLEN_W-1: 0] r_hpmcounterh30;
 logic [XLEN_W-1: 0] r_hpmcounterh31;
-logic [XLEN_W-1: 0] r_sstatus;
 logic [XLEN_W-1: 0] r_sedeleg;
 logic [XLEN_W-1: 0] r_sideleg;
 logic [XLEN_W-1: 0] r_sie;
 logic [XLEN_W-1: 0] r_stvec;
 logic [XLEN_W-1: 0] r_scounteren;
 logic [XLEN_W-1: 0] r_sscratch;
-logic [XLEN_W-1: 0] r_sepc;
-logic [XLEN_W-1: 0] r_scause;
-logic [XLEN_W-1: 0] r_stval;
+logic [XLEN_W-1: 0] r_sepc, w_sepc_next;
+logic [XLEN_W-1: 0] r_scause, w_scause_next;
+logic [XLEN_W-1: 0] r_stval, w_stval_next;
 logic [XLEN_W-1: 0] r_sip;
 logic [XLEN_W-1: 0] r_satp;
 logic [XLEN_W-1: 0] r_hstatus;
@@ -130,9 +131,9 @@ logic [XLEN_W-1: 0] r_mie;
 logic [XLEN_W-1: 0] r_mtvec;
 logic [XLEN_W-1: 0] r_mcounteren;
 logic [XLEN_W-1: 0] r_mscratch;
-logic [XLEN_W-1: 0] r_mepc;
-logic [XLEN_W-1: 0] r_mcause;
-logic [XLEN_W-1: 0] r_mtval;
+logic [XLEN_W-1: 0] r_mepc,   w_mepc_next;
+logic [XLEN_W-1: 0] r_mcause, w_mcause_next;
+logic [XLEN_W-1: 0] r_mtval,  w_mtval_next;
 logic [XLEN_W-1: 0] r_mip;
 logic [XLEN_W-1: 0] r_mbase;
 logic [XLEN_W-1: 0] r_mbound;
@@ -302,7 +303,7 @@ always_comb begin
     `SYSREG_ADDR_HPMCOUNTERH29  : read_if.data = r_hpmcounterh29;
     `SYSREG_ADDR_HPMCOUNTERH30  : read_if.data = r_hpmcounterh30;
     `SYSREG_ADDR_HPMCOUNTERH31  : read_if.data = r_hpmcounterh31;
-    `SYSREG_ADDR_SSTATUS        : read_if.data = r_sstatus;
+    `SYSREG_ADDR_SSTATUS        : read_if.data = map_sstatus();
     `SYSREG_ADDR_SEDELEG        : read_if.data = r_sedeleg;
     `SYSREG_ADDR_SIDELEG        : read_if.data = r_sideleg;
     `SYSREG_ADDR_SIE            : read_if.data = r_sie;
@@ -329,7 +330,7 @@ always_comb begin
     `SYSREG_ADDR_MARCHID        : read_if.data = r_marchid;
     `SYSREG_ADDR_MIMPID         : read_if.data = r_mimpid;
     `SYSREG_ADDR_MHARTID        : read_if.data = r_mhartid;
-    `SYSREG_ADDR_MSTATUS        : read_if.data = r_mstatus;
+    `SYSREG_ADDR_MSTATUS        : read_if.data = w_mstatus;
     `SYSREG_ADDR_MISA           : read_if.data = r_misa;
     `SYSREG_ADDR_MEDELEG        : read_if.data = r_medeleg;
     `SYSREG_ADDR_MIDELEG        : read_if.data = r_mideleg;
@@ -512,18 +513,22 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpm
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounterh29 <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTERH29 ) begin r_hpmcounterh29 <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounterh30 <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTERH30 ) begin r_hpmcounterh30 <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounterh31 <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTERH31 ) begin r_hpmcounterh31 <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSTATUS       ) begin r_sstatus       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SEDELEG       ) begin r_sedeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIDELEG       ) begin r_sideleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIE           ) begin r_sie           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STVEC         ) begin r_stvec         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SCOUNTEREN    ) begin r_scounteren    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSCRATCH      ) begin r_sscratch      <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SEPC          ) begin r_sepc          <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SCAUSE        ) begin r_scause        <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stval         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STVAL         ) begin r_stval         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_satp          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SATP          ) begin r_satp          <= write_if.data; end end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_satp <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SATP) begin
+    r_satp <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSTATUS       ) begin r_hstatus       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEDELEG       ) begin r_hedeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIDELEG       ) begin r_hideleg       <= write_if.data; end end
@@ -539,7 +544,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mve
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_marchid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MARCHID       ) begin r_marchid       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mimpid        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIMPID        ) begin r_mimpid        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhartid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHARTID       ) begin r_mhartid       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSTATUS       ) begin r_mstatus       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_misa          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MISA          ) begin r_misa          <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_medeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG       ) begin r_medeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG       ) begin r_mideleg       <= write_if.data; end end
@@ -548,31 +552,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mtv
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCOUNTEREN    ) begin r_mcounteren    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSCRATCH      ) begin r_mscratch      <= write_if.data; end end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_mcause        <= 'h0;
-  end else begin
-    if (i_commit.commit & i_commit.except_valid & i_commit.except_type == msrh_pkg::ECALL_M) begin
-      /* verilator lint_off WIDTH */
-      r_mcause        <= msrh_pkg::ECALL_U;
-    end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCAUSE        ) begin
-      r_mcause        <= write_if.data;
-    end
-  end
-end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_mepc          <= 'h0;
-  end else begin
-    if (i_commit.commit & i_commit.except_valid & i_commit.except_type == msrh_pkg::ECALL_M) begin
-      r_mepc          <= 'h0; // temporary
-    end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEPC          ) begin
-      r_mepc          <= write_if.data;
-    end
-  end
-end
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mtval         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MTVAL         ) begin r_mtval         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIP           ) begin r_mip           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbase         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBASE         ) begin r_mbase         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbound        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBOUND        ) begin r_mbound        <= write_if.data; end end
@@ -662,7 +641,232 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmp
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpaddr15     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPADDR15     ) begin r_pmpaddr15     <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stats         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STATS         ) begin r_stats         <= write_if.data; end end
 
-assign csr_info.mepc  = r_mepc;
-assign csr_info.mtvec = r_mtvec;
+assign csr_info.mstatus = w_mstatus;
+assign csr_info.mepc    = r_mepc;
+assign csr_info.mtvec   = r_mtvec;
+assign csr_info.stvec   = r_stvec;
+assign csr_info.utvec   = r_utvec;
+assign csr_info.sepc    = r_sepc;
+assign csr_info.uepc    = r_uepc;
+assign csr_info.satp    = r_satp;
+assign csr_info.priv    = r_priv;
+assign csr_info.medeleg = r_medeleg;
+assign csr_info.sedeleg = r_sedeleg;
+
+logic w_delegate;
+assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
+                    r_medeleg[int'(i_commit.except_type)];
+
+`define MSTATUS_SIE  1
+`define MSTATUS_SPIE 5
+`define MSTATUS_SPP  8
+
+`define MSTATUS_MIE  3
+`define MSTATUS_MPIE 7
+`define MSTATUS_MPP  12:11
+`define MSTATUS_FS   14:13
+`define MSTATUS_XS   16:15
+`define MSTATUS_MPRV 17
+
+`define MSTATUS_SUM 18
+`define MSTATUS_MXR 19
+`define MSTATUS_TVM 20
+`define MSTATUS_TW  21
+`define MSTATUS_TSR 22
+
+`define MSTATUS_UXL  33:32
+`define MSTATUS_SXL  35:34
+
+`define MSTATUS_SD   63
+
+logic [riscv_pkg::XLEN_W-1: 0] init_mstatus;
+logic [riscv_pkg::XLEN_W-1: 0] w_mstatus, w_mstatus_next;
+always_comb begin
+  init_mstatus = {riscv_pkg::XLEN_W{1'b0}};
+  /* verilator lint_off WIDTH */
+  init_mstatus[`MSTATUS_UXL] = $clog2(riscv_pkg::XLEN_W) - 4;
+  init_mstatus[`MSTATUS_SXL] = $clog2(riscv_pkg::XLEN_W) - 4;
+
+  w_mstatus = r_mstatus;
+  w_mstatus[`MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);
+end
+
+always_comb begin
+  w_mstatus_next = w_mstatus;
+  w_priv_next    = r_priv  ;
+  w_sepc_next    = r_sepc  ;
+  w_scause_next  = r_scause;
+  w_stval_next   = r_stval ;
+  w_mepc_next    = r_mepc  ;
+  w_mcause_next  = r_mcause;
+  w_mtval_next   = r_mtval ;
+
+  if (i_commit.commit &
+      i_commit.except_valid &
+      !i_commit.all_dead) begin
+    if (i_commit.except_type == msrh_pkg::MRET) begin
+      // r_mepc <= epc;
+      /* verilator lint_off WIDTH */
+      // r_mcause <= i_commit.except_type;
+      // r_mtval <= io.tval;
+      w_mstatus_next[`MSTATUS_MPIE] = 1'b1;
+      w_mstatus_next[`MSTATUS_MPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
+      w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
+    end else if (i_commit.except_type == msrh_pkg::SRET) begin
+      // r_mepc <= epc;
+      /* verilator lint_off WIDTH */
+      // r_mcause <= i_commit.except_type;
+      // r_mtval <= io.tval;
+      w_mstatus_next[`MSTATUS_SPIE] = 1'b1;
+      w_mstatus_next[`MSTATUS_SPP ] = msrh_pkg::PRV_U;
+      w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
+      w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
+    end else if (i_commit.except_type == msrh_pkg::URET) begin
+    end else if (w_delegate) begin
+      w_sepc_next = i_commit.epc;
+      /* verilator lint_off WIDTH */
+      w_scause_next = i_commit.except_type;
+      if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+          i_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
+          i_commit.except_type == msrh_pkg::INST_PAGE_FAULT     ||
+          i_commit.except_type == msrh_pkg::LOAD_ADDR_MISALIGN  ||
+          i_commit.except_type == msrh_pkg::LOAD_ACC_FAULT      ||
+          i_commit.except_type == msrh_pkg::LOAD_PAGE_FAULT     ||
+          i_commit.except_type == msrh_pkg::STAMO_ADDR_MISALIGN ||
+          i_commit.except_type == msrh_pkg::STAMO_ACC_FAULT     ||
+          i_commit.except_type == msrh_pkg::STAMO_PAGE_FAULT) begin
+        w_stval_next = i_commit.tval;
+      end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
+      w_mstatus_next[`MSTATUS_SPIE] = w_mstatus[`MSTATUS_SIE];
+      w_mstatus_next[`MSTATUS_SPP ] = r_priv[0];
+      w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
+
+      w_priv_next = msrh_pkg::PRV_S;
+    end else begin
+      w_mepc_next = i_commit.epc;
+      /* verilator lint_off WIDTH */
+      w_mcause_next = i_commit.except_type;
+      if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+          i_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
+          i_commit.except_type == msrh_pkg::INST_PAGE_FAULT     ||
+          i_commit.except_type == msrh_pkg::LOAD_ADDR_MISALIGN  ||
+          i_commit.except_type == msrh_pkg::LOAD_ACC_FAULT      ||
+          i_commit.except_type == msrh_pkg::LOAD_PAGE_FAULT     ||
+          i_commit.except_type == msrh_pkg::STAMO_ADDR_MISALIGN ||
+          i_commit.except_type == msrh_pkg::STAMO_ACC_FAULT     ||
+          i_commit.except_type == msrh_pkg::STAMO_PAGE_FAULT) begin
+        w_mtval_next = i_commit.tval;
+      end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
+      w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
+      w_mstatus_next[`MSTATUS_MPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
+      w_priv_next = msrh_pkg::PRV_M;
+    end // else: !if(w_delegate)
+  end else if (write_if.valid) begin
+    case(write_if.addr)
+      `SYSREG_ADDR_SEPC : begin
+        w_sepc_next = write_if.data;
+      end
+      `SYSREG_ADDR_SCAUSE : begin
+        w_scause_next = write_if.data;
+      end
+      `SYSREG_ADDR_STVAL : begin
+        w_stval_next      = write_if.data;
+      end
+      `SYSREG_ADDR_MEPC : begin
+        w_mepc_next       = write_if.data;
+      end
+      `SYSREG_ADDR_MCAUSE : begin
+        w_mcause_next     = write_if.data;
+      end
+      `SYSREG_ADDR_MTVAL : begin
+        w_mtval_next      = write_if.data;
+      end
+      `SYSREG_ADDR_MSTATUS : begin
+        // r_mstatus <= write_if.data;
+        w_mstatus_next[`MSTATUS_MIE ] = write_if.data[`MSTATUS_MIE ];
+        w_mstatus_next[`MSTATUS_MPIE] = write_if.data[`MSTATUS_MPIE];
+
+        w_mstatus_next[`MSTATUS_MPRV] = write_if.data[`MSTATUS_MPRV];
+        w_mstatus_next[`MSTATUS_MPP ] = write_if.data[`MSTATUS_MPP];
+
+        w_mstatus_next[`MSTATUS_SPP ] = write_if.data[`MSTATUS_SPP ];
+        w_mstatus_next[`MSTATUS_SPIE] = write_if.data[`MSTATUS_SPIE];
+        w_mstatus_next[`MSTATUS_SIE ] = write_if.data[`MSTATUS_SIE ];
+        w_mstatus_next[`MSTATUS_TW  ] = write_if.data[`MSTATUS_TW  ];
+        w_mstatus_next[`MSTATUS_TSR ] = write_if.data[`MSTATUS_TSR ];
+
+        if (msrh_conf_pkg::USING_VM) begin
+          w_mstatus_next[`MSTATUS_MXR] = write_if.data[`MSTATUS_MXR];
+          w_mstatus_next[`MSTATUS_SUM] = write_if.data[`MSTATUS_SUM];
+          w_mstatus_next[`MSTATUS_TVM] = write_if.data[`MSTATUS_TVM];
+        end
+
+        w_mstatus_next[`MSTATUS_FS] = write_if.data[`MSTATUS_FS];
+      end // case: `SYSREG_ADDR_MSTATUS
+
+      `SYSREG_ADDR_SSTATUS : begin
+        w_mstatus_next[`MSTATUS_SIE ] = write_if.data[`MSTATUS_SIE ];
+        w_mstatus_next[`MSTATUS_SPIE] = write_if.data[`MSTATUS_SPIE];
+        w_mstatus_next[`MSTATUS_SPP ] = write_if.data[`MSTATUS_SPP ];
+        w_mstatus_next[`MSTATUS_XS  ] = write_if.data[`MSTATUS_XS  ];
+        w_mstatus_next[`MSTATUS_FS  ] = write_if.data[`MSTATUS_FS  ];
+        w_mstatus_next[`MSTATUS_MPP ] = write_if.data[`MSTATUS_MPP ];
+        w_mstatus_next[`MSTATUS_MXR ] = write_if.data[`MSTATUS_MXR ];
+        w_mstatus_next[`MSTATUS_SUM ] = write_if.data[`MSTATUS_SUM ];
+      end
+      default : begin end
+    endcase // case (write_if.addr)
+  end // if (write_if.valid)
+end // always_comb
+
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_priv <= msrh_pkg::PRV_M;
+    r_mstatus <= init_mstatus;
+
+    r_sepc <= 'h0;
+    r_scause <= 'h0;
+    r_stval <= 'h0;
+
+    r_mepc <= 'h0;
+    r_mcause <= 'h0;
+    r_mtval <= 'h0;
+  end else begin
+    r_priv <= w_priv_next;
+    r_mstatus <= w_mstatus_next;
+
+    r_sepc   <= w_sepc_next  ;
+    r_scause <= w_scause_next;
+    r_stval  <= w_stval_next ;
+
+    r_mepc   <= w_mepc_next  ;
+    r_mcause <= w_mcause_next;
+    r_mtval  <= w_mtval_next ;
+  end // else: !if(!i_reset_n)
+
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+function logic [riscv_pkg::XLEN_W-1: 0] map_sstatus ();
+  if (riscv_pkg::XLEN_W == 64) begin
+    return {r_mstatus [riscv_pkg::XLEN_W-1],
+            25'b0,
+            1'b0, 1'b0, 2'b00, r_mstatus[33:32],
+            9'b0_0000_0000, 1'b0, 1'b0, 1'b0, r_mstatus[19], r_mstatus[18],
+            1'b0, r_mstatus[16:15], r_mstatus[14:13], r_mstatus[12:11], 2'b00,
+            r_mstatus[8], 1'b0, 1'b0, r_mstatus[5], 1'b0, 1'b0, 1'b0, r_mstatus[1], 1'b0};
+  end if (riscv_pkg::XLEN_W == 32) begin
+    return {r_mstatus [riscv_pkg::XLEN_W-1],
+            8'b0000_0000,
+            1'b0, 1'b0, 1'b0, r_mstatus[19], r_mstatus[18],
+            1'b0, r_mstatus[16:15], r_mstatus[14:13], r_mstatus[12:11], 2'b00,
+            r_mstatus[8], 1'b0, 1'b0, r_mstatus[5], 1'b0, 1'b0, 1'b0, r_mstatus[1], 1'b0};
+  end else begin // else: !if(riscv_pkg::XLEN_W == 64)
+    $fatal(0, "XLEN should be 32 or 64");
+  end // else: !if(riscv_pkg::XLEN_W == 64)
+endfunction // map_sstatus
 
 endmodule // msrh_csr

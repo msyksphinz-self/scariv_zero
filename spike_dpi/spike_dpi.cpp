@@ -435,7 +435,25 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
 }
 
 
+bool inline is_equal_vaddr(int64_t val1, int64_t val2)
+{
+  int vaddr_len;
+  if (g_rv_xlen == 32) {
+    vaddr_len = 32;  // XLEN = 32
+  } else if (g_rv_xlen == 64) {
+    vaddr_len = 39;   // XLEN = 64
+  } else {
+    fprintf(stderr, "rv_xlen should be 32 or 64\n");
+    exit(-1);
+  }
+
+  return (val1 & ((1ULL << vaddr_len)-1)) == (val2 & ((1ULL << vaddr_len)-1));
+}
+
+
 void step_spike(long long time, long long rtl_pc,
+                int rtl_priv, long long rtl_mstatus,
+                int rtl_exception, int rtl_exception_cause,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_gpr_addr,
@@ -444,6 +462,19 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
   p->step(1);
 
+  if (rtl_exception) {
+    fprintf(stderr, "%lld : Exception Cause = %d\n", time, rtl_exception_cause);
+  }
+  if (rtl_exception & ((rtl_exception_cause == 0) ||  // Instruction Access Misaligned
+                       (rtl_exception_cause == 1) ||  // Instruction Access Fault
+                       (rtl_exception_cause == 2) ||  // Illegal Instruction
+                       (rtl_exception_cause == 12))) {
+    // fprintf(stderr, "==========================================\n");
+    // fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    // fprintf(stderr, "==========================================\n");
+    return;
+  }
+
   auto instret  = p->get_state()->minstret;
   fprintf(stderr, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,
           instret,
@@ -451,15 +482,39 @@ void step_spike(long long time, long long rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
   auto iss_insn = p->get_state()->insn;
+  auto iss_priv = p->get_state()->last_inst_priv;
+  auto iss_mstatus = p->get_state()->mstatus;
 
-  if (!is_equal_xlen(iss_pc, rtl_pc)) {
+  if (!is_equal_vaddr(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");
       fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
               g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
   }
+  if (iss_priv != rtl_priv) {
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
+            rtl_priv, static_cast<uint32_t>(iss_priv));
+    fprintf(stderr, "==========================================\n");
+    p->step(10);
+    stop_sim(1);
+    return;
+  }
+
+  if (iss_mstatus != rtl_mstatus) {
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
+            g_rv_xlen / 4, rtl_mstatus,
+            g_rv_xlen / 4, iss_mstatus);
+    fprintf(stderr, "==========================================\n");
+    p->step(10);
+    stop_sim(1);
+    return;
+  }
+
   if (static_cast<int>(iss_insn.bits()) != rtl_insn) {
       fprintf(stderr, "==========================================\n");
       fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
@@ -469,6 +524,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(stderr, "            ISS = %s\n",
               disasm->disassemble(iss_insn.bits()).c_str());
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
   }
@@ -482,6 +538,7 @@ void step_spike(long long time, long long rtl_pc,
               g_rv_xlen / 4, rtl_wr_val,
               g_rv_xlen / 4, iss_wr_val);
       fprintf(stderr, "==========================================\n");
+      p->step(10);
       stop_sim(1);
       return;
     } else {

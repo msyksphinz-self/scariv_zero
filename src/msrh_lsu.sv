@@ -8,6 +8,9 @@ module msrh_lsu
     input logic i_clk,
     input logic i_reset_n,
 
+    /* CSR information */
+    csr_info_if.slave                     csr_info,
+
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
     cre_ret_if.slave                       cre_ret_if,
@@ -33,6 +36,9 @@ module msrh_lsu
 
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
+
+    // Page Table Walk I/O
+    tlb_ptw_if.master ptw_if,
 
     // Feedbacks to LDQ / STQ
     output ex1_q_update_t   o_ex1_q_updates,
@@ -143,6 +149,8 @@ u_lsu_pipe
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
+   .csr_info (csr_info),
+
    .i_rv0_issue(w_rv0_issue),
    .i_rv0_index_oh(w_rv0_index_oh),
 
@@ -164,6 +172,7 @@ u_lsu_pipe
    .ex1_l1d_rd_if (l1d_rd_if),
    .o_ex3_mispred (o_ex3_mispred),
 
+   .ptw_if(ptw_if),
    .l1d_lrq_if (l1d_lrq_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),

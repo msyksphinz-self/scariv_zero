@@ -54,28 +54,28 @@ package msrh_lsu_pkg;
   } ic_resp_t;
 
   typedef enum logic [4:0] {
-    M_XRD = 5'b00000,  // int load
-    M_XWR = 5'b00001,  // int store
-    M_PFR = 5'b00010,  // prefetch with intent to read
-    M_PFW = 5'b00011,  // prefetch with intent to write
-    M_XA_SWAP = 5'b00100,
+    M_XRD       = 5'b00000,  // int load
+    M_XWR       = 5'b00001,  // int store
+    M_PFR       = 5'b00010,  // prefetch with intent to read
+    M_PFW       = 5'b00011,  // prefetch with intent to write
+    M_XA_SWAP   = 5'b00100,
     M_FLUSH_ALL = 5'b00101,  // flush all lines
-    M_XLR = 5'b00110,
-    M_XSC = 5'b00111,
-    M_XA_ADD = 5'b01000,
-    M_XA_XOR = 5'b01001,
-    M_XA_OR = 5'b01010,
-    M_XA_AND = 5'b01011,
-    M_XA_MIN = 5'b01100,
-    M_XA_MAX = 5'b01101,
-    M_XA_MINU = 5'b01110,
-    M_XA_MAXU = 5'b01111,
-    M_FLUSH = 5'b10000,  // write back dirty data and cede R/W permissions
-    M_PWR = 5'b10001,  // partial (masked) store
-    M_PRODUCE = 5'b10010,  // write back dirty data and cede W permissions
-    M_CLEAN = 5'b10011,  // write back dirty data and retain R/W permissions
-    M_SFENCE = 5'b10100,  // flush TLB
-    M_WOK = 5'b10111  // check write permissions but don't perform a write
+    M_XLR       = 5'b00110,
+    M_XSC       = 5'b00111,
+    M_XA_ADD    = 5'b01000,
+    M_XA_XOR    = 5'b01001,
+    M_XA_OR     = 5'b01010,
+    M_XA_AND    = 5'b01011,
+    M_XA_MIN    = 5'b01100,
+    M_XA_MAX    = 5'b01101,
+    M_XA_MINU   = 5'b01110,
+    M_XA_MAXU   = 5'b01111,
+    M_FLUSH     = 5'b10000,  // write back dirty data and cede R/W permissions
+    M_PWR       = 5'b10001,  // partial (masked) store
+    M_PRODUCE   = 5'b10010,  // write back dirty data and cede W permissions
+    M_CLEAN     = 5'b10011,  // write back dirty data and retain R/W permissions
+    M_SFENCE    = 5'b10100,  // flush TLB
+    M_WOK       = 5'b10111   // check write permissions but don't perform a write
   } mem_cmd_t;
 
   typedef struct packed {
@@ -104,12 +104,27 @@ package msrh_lsu_pkg;
   } tlb_entry_t;
 
   typedef struct packed {
+    logic          valid;
     logic [riscv_pkg::VADDR_W-1:0] vaddr;
     mem_cmd_t cmd;
+    logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W/8)-1: 0] size;
+    logic                                               passthrough;
   } tlb_req_t;
 
   typedef struct packed {
-    logic miss;
+    logic          ld;
+    logic          st;
+    logic          inst;
+  } tlb_except_t;
+
+  typedef struct packed {
+    tlb_except_t       pf;
+    tlb_except_t       ae;
+    tlb_except_t       ma;
+    logic              cacheable;
+    logic              must_alloc;
+    logic              prefetchable;
+    logic              miss;
     logic [riscv_pkg::PADDR_W-1:0] paddr;
   } tlb_resp_t;
 
@@ -146,6 +161,15 @@ typedef struct packed {
 logic          valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 } lrq_resolve_t;
+
+typedef struct packed {
+  logic valid;
+  logic rs1;
+  logic rs2;
+  logic [riscv_pkg::VADDR_W-1: 0] addr;
+  // Temporary Disable
+  // logic asid = UInt(width = asIdBits max 1) // TODO zero-width
+} sfence_t;
 
 typedef struct packed {
   logic          valid;
@@ -236,14 +260,15 @@ typedef enum logic[3:0] {
   STQ_INIT = 0,
   STQ_TLB_HAZ = 1,
   STQ_READY = 2,
-  STQ_DONE = 3,
+  STQ_DONE_EX2 = 3,
   STQ_COMMIT = 4,
   STQ_WAIT_ST_DATA = 5,
   STQ_WAIT_LRQ_REFILL = 6,
   STQ_COMMIT_L1D_CHECK = 7,
   STQ_L1D_UPDATE = 8,
   STQ_DEAD = 9,
-  STQ_WAIT_COMMIT = 10
+  STQ_WAIT_COMMIT = 10,
+  STQ_DONE_EX3 = 11
 } stq_state_t;
 
 typedef struct packed {
@@ -281,6 +306,43 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } srq_resp_t;
 
+function logic is_amo_logical(mem_cmd_t cmd);
+  return cmd == M_XA_SWAP ||
+         cmd == M_XA_XOR  ||
+         cmd == M_XA_OR   ||
+         cmd == M_XA_AND;
+endfunction // isAMOLogical
+function logic is_amo_arithmetic(mem_cmd_t cmd);
+  return cmd == M_XA_ADD  ||
+         cmd == M_XA_MIN  ||
+         cmd == M_XA_MAX  ||
+         cmd == M_XA_MINU ||
+         cmd == M_XA_MAXU;
+endfunction // isAMOLogical
+function logic is_amo(mem_cmd_t cmd);
+  return is_amo_logical(cmd) | is_amo_arithmetic(cmd);
+endfunction // isAMOLogical
+function logic is_prefetch(mem_cmd_t cmd);
+  return cmd == M_PFR ||
+         cmd == M_PFW;
+endfunction // isAMOLogical
+function logic is_read(mem_cmd_t cmd);
+  return  cmd == M_XRD ||
+          cmd == M_XLR ||
+          cmd == M_XSC ||
+          is_amo(cmd);
+endfunction // isAMOLogical
+function logic is_write(mem_cmd_t cmd);
+  return cmd == M_XWR ||
+         cmd == M_PWR ||
+         cmd == M_XSC ||
+         is_amo(cmd);
+endfunction // isAMOLogical
+function logic is_write_intent(mem_cmd_t cmd);
+  return is_write(cmd) ||
+         cmd == M_PFW  ||
+         cmd=== M_XLR;
+endfunction // isAMOLogical
 
 // ---------
 // LDQ
@@ -313,5 +375,57 @@ typedef struct packed {
   logic [msrh_conf_pkg::STQ_SIZE-1: 0]  stq_haz_idx;
 } ldq_entry_t;
 
+// -----
+// TLB
+// -----
+
+localparam PG_LEVELS = 3;
+localparam PG_IDX_W = 12;
+localparam VPN_W = riscv_pkg::VADDR_W - PG_IDX_W;
+localparam VPN_FIELD_W = 9;
+localparam PG_LEVEL_W = 10 - $clog2(riscv_pkg::XLEN_W / 32);
+localparam SECTOR_NUM = 4;
+
+
+typedef struct packed {
+  logic [riscv_pkg::PPN_W-1: 0] ppn;
+  logic [ 1: 0]                 reserved_for_software;
+  logic                         d;
+  logic                         a;
+  logic                         g;
+  logic                         u;
+  logic                         x;
+  logic                         w;
+  logic                         r;
+  logic                         v;
+} pte_t;
+
+typedef struct packed {
+  logic              valid;
+  logic [VPN_W-1: 0] addr;
+} ptw_req_t;
+
+typedef struct packed {
+  logic          valid;
+  logic                          ae;
+  pte_t                          pte;
+  logic [$clog2(PG_LEVELS)-1: 0] level;
+  logic                          fragmented_superpage;
+  logic                          homogeneous;
+} ptw_resp_t;
+
+typedef struct packed {
+  logic  dummy;
+} pmp_t;
+
+// LSU Access Interface Status
+
+typedef enum logic [2:0]{
+  STATUS_NONE = 0,
+  STATUS_HIT = 1,
+  STATUS_MISS = 2,
+  STATUS_L1D_CONFLICT = 3,
+  STATUS_LRQ_CONFLICT = 4
+} lsu_status_t;
 
 endpackage // msrh_lsu_pkg

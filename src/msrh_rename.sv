@@ -84,7 +84,8 @@ logic                                               w_stq_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
 
-assign iq_disp.ready = !(w_rob_no_credits_remained |
+assign iq_disp.ready = !(i_commit_rnid_update.commit & (i_commit.flush_valid | i_commit.all_dead)) &
+                       !(w_rob_no_credits_remained |
                          (|w_alu_no_credits_remained) |
                          (|w_lsu_no_credits_remained) |
                          w_ldq_no_credits_remained |
@@ -230,6 +231,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.pc_addr        <= iq_disp.pc_addr;
     sc_disp.is_br_included <= iq_disp.is_br_included;
     sc_disp.inst           <= w_disp_inst;
+    sc_disp.tlb_except_valid <= iq_disp.tlb_except_valid;
+    sc_disp.tlb_except_cause <= iq_disp.tlb_except_cause;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -412,6 +415,9 @@ u_rob_credit_return
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   logic w_inst_arith_valid;
   assign w_inst_arith_valid = iq_disp.valid & |iq_disp.resource_cnt.alu_inst_cnt[a_idx];
+  logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] w_alu_inst_cnt;
+  /* verilator lint_off WIDTH */
+  assign w_alu_inst_cnt = iq_disp.resource_cnt.alu_inst_cnt[a_idx];
 
   msrh_credit_return_master
     #(.MAX_CREDITS(msrh_conf_pkg::RV_ALU_ENTRY_SIZE))
@@ -421,8 +427,7 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
    .i_reset_n(i_reset_n),
 
    .i_get_credit(~w_flush_valid & w_inst_arith_valid & iq_disp.ready),
-   /* verilator lint_off WIDTH */
-   .i_credit_val(iq_disp.resource_cnt.alu_inst_cnt[a_idx]),
+   .i_credit_val(w_alu_inst_cnt),
 
    .o_credits(),
    .o_no_credits(w_alu_no_credits_remained[a_idx]),
@@ -435,6 +440,8 @@ endgenerate
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
   logic w_inst_lsu_valid;
   assign w_inst_lsu_valid = iq_disp.valid & |iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
+  logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
+  assign w_lsu_inst_cnt = iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
 
   msrh_credit_return_master
     #(.MAX_CREDITS(msrh_lsu_pkg::MEM_Q_SIZE))
@@ -444,7 +451,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) be
    .i_reset_n(i_reset_n),
 
    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & iq_disp.ready),
-   .i_credit_val(iq_disp.resource_cnt.lsu_inst_cnt[l_idx]),   /* verilator lint_off WIDTH */
+   .i_credit_val(w_lsu_inst_cnt),
 
    .o_credits(),
    .o_no_credits(w_lsu_no_credits_remained[l_idx]),
@@ -496,6 +503,8 @@ u_stq_credit_return
 
 logic   w_inst_csu_valid;
 assign w_inst_csu_valid = iq_disp.valid & |iq_disp.resource_cnt.csu_inst_cnt;
+logic [$clog2(msrh_conf_pkg::RV_CSU_ENTRY_SIZE):0] w_inst_csu_cnt;
+assign w_inst_csu_cnt = iq_disp.resource_cnt.csu_inst_cnt;
 msrh_credit_return_master
   #(.MAX_CREDITS(msrh_conf_pkg::RV_CSU_ENTRY_SIZE))
 u_csu_credit_return
@@ -504,7 +513,7 @@ u_csu_credit_return
  .i_reset_n(i_reset_n),
 
  .i_get_credit(~w_flush_valid & w_inst_csu_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.csu_inst_cnt),   /* verilator lint_off WIDTH */
+ .i_credit_val(w_inst_csu_cnt),
 
  .o_credits(),
  .o_no_credits(w_csu_no_credits_remained),
@@ -514,6 +523,8 @@ u_csu_credit_return
 
 logic   w_inst_bru_valid;
 assign w_inst_bru_valid = iq_disp.valid & |iq_disp.resource_cnt.bru_inst_cnt;
+logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE):0] w_bru_inst_cnt;
+assign w_bru_inst_cnt = iq_disp.resource_cnt.bru_inst_cnt;
 msrh_credit_return_master
   #(.MAX_CREDITS(msrh_conf_pkg::RV_BRU_ENTRY_SIZE))
 u_bru_credit_return
@@ -522,7 +533,7 @@ u_bru_credit_return
  .i_reset_n(i_reset_n),
 
  .i_get_credit(~w_flush_valid & w_inst_bru_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.bru_inst_cnt),   /* verilator lint_off WIDTH */
+ .i_credit_val(w_bru_inst_cnt),
 
  .o_credits(),
  .o_no_credits(w_bru_no_credits_remained),

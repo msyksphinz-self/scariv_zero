@@ -5,7 +5,7 @@ module msrh_rob
    input logic                   i_clk,
    input logic                   i_reset_n,
 
-   disp_if.watch                 sc_disp,
+   disp_if.slave                 sc_disp,
 
    cre_ret_if.slave              cre_ret_if,
 
@@ -59,9 +59,10 @@ inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_in_valid (w_in_valid ), .o_in_ptr (w_in_cmt_id  ),
                                          .i_out_valid(w_out_valid), .o_out_ptr(w_out_cmt_id));
 
+assign sc_disp.ready = 1'b1;
 assign w_ignore_disp = w_flush_valid & (sc_disp.valid & sc_disp.ready);
-assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) +
-                             (w_ignore_disp   ? 'h1 : 'h0) ;
+assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) /* +
+                             (w_ignore_disp   ? 'h1 : 'h0) */ ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(CMT_ENTRY_SIZE))
@@ -91,13 +92,15 @@ logic w_load_valid;
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_cmt_id (c_idx),
+     .i_cmt_id (c_idx[CMT_ENTRY_W-1:0]),
 
      .i_load_valid   (w_load_valid),
      .i_load_pc_addr (sc_disp.pc_addr),
      .i_load_inst    (sc_disp.inst),
      .i_load_grp_id  (w_disp_grp_id),
      .i_load_br_included (sc_disp.is_br_included),
+     .i_load_tlb_except_valid (sc_disp.tlb_except_valid),
+     .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
 
      .i_done_rpt (i_done_rpt),
 
@@ -128,6 +131,15 @@ assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = |w_entries[w_out_cmt_entry_id].except_valid;
 assign o_commit.except_type   = except_type_selected;
+/* verilator lint_off WIDTH */
+assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
+                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} :
+                                'h0;  // Other TVAL, Not yet supported
+logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
+encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_cmt_except_valid_oh), .o_out(w_cmt_except_valid_encoded));
+/* verilator lint_off WIDTH */
+assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
 assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
 assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].dead;
 
@@ -145,7 +157,7 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_lo
 end
 endgenerate
 assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
-assign o_commit_rnid_update.upd_pc_valid     = o_commit.upd_pc_valid & !o_commit.all_dead;
+assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 

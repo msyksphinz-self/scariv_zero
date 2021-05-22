@@ -25,6 +25,7 @@
 ../src/bit_extract_msb.sv
 ../src/bit_tree_msb.sv
 ../src/bit_extract_lsb.sv
+../src/bit_extract_lsb_ptr.sv
 ../src/bit_tree_lsb.sv
 ../src/bit_pick_up.sv
 ../src/bit_pick_1_index.sv
@@ -57,6 +58,9 @@
 ../src/msrh_tile_wrapper.sv
 ../src/msrh_inst_buffer.sv
 ../src/msrh_disp_pickup.sv
+../src/msrh_ptw.sv
+
+../src/simple_arbiter.sv
 
 ../src/msrh_rename.sv
 ../src/msrh_freelist.sv
@@ -94,3 +98,5 @@
 ../src/msrh_csu.sv
 ../src/msrh_csu_pipe.sv
 ../src/msrh_csr.sv
+
+../src/l2_if_arbiter.sv

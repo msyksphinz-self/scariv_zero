@@ -37,6 +37,12 @@ package msrh_pkg;
                            2 +                                  // BRU port
                            1;                                   // CSR port
 
+  typedef enum logic [1:0] {
+     PRV_U = 0,
+     PRV_S = 1,
+     PRV_M = 3
+  } priv_t;
+
   typedef struct packed {
     logic valid;
     logic [31:0] inst;
@@ -226,6 +232,8 @@ function issue_t assign_issue_t(disp_t in,
   ret.rs2_ready = in.rs2_ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
   ret.rs2_pred_ready = rs2_rel_hit & rs2_may_mispred;
 
+  ret.except_valid = 1'b0;
+  ret.except_type  = INST_ADDR_MISALIGN;
   return ret;
 
 endfunction  // assign_issue_t
@@ -274,6 +282,8 @@ typedef struct packed {
   logic                           flush_valid;
   logic                           except_valid;
   except_t                        except_type;
+  logic [riscv_pkg::VADDR_W-1: 0] epc;
+  logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
 } commit_blk_t;

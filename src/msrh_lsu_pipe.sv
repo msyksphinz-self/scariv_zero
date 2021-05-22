@@ -9,6 +9,9 @@ module msrh_lsu_pipe
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ /* CSR information */
+ csr_info_if.slave                     csr_info,
+
  input msrh_pkg::issue_t               i_rv0_issue,
  input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
 
@@ -42,7 +45,10 @@ module msrh_lsu_pipe
  output ex2_addr_check_t               o_ex2_addr_check,
 
  done_if.master                        ex0_sched_done_if,
- done_if.master                        ex3_ldq_stq_done_if
+ done_if.master                        ex3_ldq_stq_done_if,
+
+ // Page Table Walk I/O
+ tlb_ptw_if.master ptw_if
 );
 
 typedef struct packed {
@@ -85,6 +91,7 @@ lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
 logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_tmp;
 logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_sign_ext;
 logic                                 w_ex2_l1d_mispredicted;
+logic                                 r_ex2_tlb_miss;
 
 //
 // EX3 stage
@@ -115,7 +122,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_index_oh   <= 'h0;
 
     r_ex2_issue     <= 'h0;
-    r_ex2_index_oh     <= 'h0;
+    r_ex2_index_oh  <= 'h0;
+    r_ex2_tlb_miss  <= 1'b0;
   end else begin
     r_ex0_rs_issue  <= i_rv0_issue;
     r_ex0_rs_index_oh <= i_rv0_index_oh;
@@ -127,6 +135,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue     <= w_ex2_issue_next;
     r_ex2_index_oh  <= r_ex1_index_oh;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
+    r_ex2_tlb_miss  <= r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
     r_ex3_issue     <= w_ex3_issue_next;
   end // else: !if(!i_reset_n)
@@ -143,10 +152,20 @@ u_tlb
  .i_clk    (i_clk),
  .i_reset_n(i_reset_n),
 
+ .i_kill(1'b0),
+ .i_sfence ('h0),
+
+ .i_status_prv(csr_info.priv   ),
+ .i_csr_status(csr_info.mstatus),
+ .i_csr_satp  (csr_info.satp   ),
+
  .i_tlb_req (w_ex1_tlb_req ),
+ .o_tlb_ready(),
  .o_tlb_resp(w_ex1_tlb_resp),
 
- .o_tlb_update(o_tlb_resolve)
+ .o_tlb_update(o_tlb_resolve),
+
+ .ptw_if (ptw_if)
  );
 
 
@@ -187,14 +206,20 @@ assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
-assign w_ex1_tlb_req.cmd   = M_XRD;
-assign w_ex1_tlb_req.vaddr = w_ex1_vaddr;
+assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
+assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.is_load ? M_XRD : M_XWR;
+assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
+assign w_ex1_tlb_req.size        = r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
+                                   r_ex1_pipe_ctrl.size == SIZE_W  ? 4 :
+                                   r_ex1_pipe_ctrl.size == SIZE_H  ? 2 :
+                                   r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
+assign w_ex1_tlb_req.passthrough = 1'b0;
 
-assign o_ex1_early_wr.valid   = r_ex1_issue.valid & r_ex1_issue.rd_valid;
-assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
-assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.rd_rnid;
+assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.rd_valid;
-assign o_ex1_tlb_miss_hazard = 1'b0;
+assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
@@ -251,7 +276,7 @@ assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                        ex2_fwd_check_if.stq_hazard_vld) &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted;
+assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss;
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
