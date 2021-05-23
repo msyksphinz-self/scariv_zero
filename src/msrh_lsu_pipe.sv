@@ -217,7 +217,7 @@ assign w_ex1_tlb_req.size        = r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
 assign w_ex1_tlb_req.passthrough = 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid & !w_ex1_tlb_resp.miss;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.rd_rnid;
 assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.rd_valid;
@@ -371,7 +371,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex3_aligned_data <= w_ex2_data_sign_ext;
 
-    o_ex3_mispred.mis_valid <= w_ex2_l1d_mispredicted;
+    o_ex3_mispred.mis_valid <= w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.conflict;
     o_ex3_mispred.rd_type   <= r_ex2_issue.rd_type;
     o_ex3_mispred.rd_rnid   <= r_ex2_issue.rd_rnid;
   end
@@ -388,7 +388,7 @@ assign ex3_ldq_stq_done_if.index_oh = 'h0;
 assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
 assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & !o_ex3_mispred.mis_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
