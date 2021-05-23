@@ -277,7 +277,7 @@ assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                        ex2_fwd_check_if.stq_hazard_vld) &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !ex1_l1d_rd_if.conflict;
+assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.conflict | ex1_l1d_rd_if.hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 
 // Interface to EX2 updates
