@@ -34,6 +34,7 @@ typedef struct packed {
   logic is_ebreak;
   logic is_fence;
   logic is_fence_i;
+  logic is_sfence_vma;
 } pipe_ctrl_t;
 
 msrh_pkg::issue_t                        r_ex0_issue;
@@ -68,14 +69,15 @@ end
 
 decoder_csu_ctrl u_pipe_ctrl (
   .inst(r_ex0_issue.inst),
-  .op         (w_ex0_pipe_ctrl.op        ),
-  .is_mret    (w_ex0_pipe_ctrl.is_mret   ),
-  .is_sret    (w_ex0_pipe_ctrl.is_sret   ),
-  .is_uret    (w_ex0_pipe_ctrl.is_uret   ),
-  .is_ecall   (w_ex0_pipe_ctrl.is_ecall  ),
-  .is_ebreak  (w_ex0_pipe_ctrl.is_ebreak ),
-  .is_fence   (w_ex0_pipe_ctrl.is_fence  ),
-  .is_fence_i (w_ex0_pipe_ctrl.is_fence_i)
+  .op            (w_ex0_pipe_ctrl.op           ),
+  .is_mret       (w_ex0_pipe_ctrl.is_mret      ),
+  .is_sret       (w_ex0_pipe_ctrl.is_sret      ),
+  .is_uret       (w_ex0_pipe_ctrl.is_uret      ),
+  .is_ecall      (w_ex0_pipe_ctrl.is_ecall     ),
+  .is_ebreak     (w_ex0_pipe_ctrl.is_ebreak    ),
+  .is_fence      (w_ex0_pipe_ctrl.is_fence     ),
+  .is_fence_i    (w_ex0_pipe_ctrl.is_fence_i   ),
+  .is_sfence_vma (w_ex0_pipe_ctrl.is_sfence_vma)
 );
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;

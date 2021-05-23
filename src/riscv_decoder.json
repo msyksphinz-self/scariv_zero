@@ -506,5 +506,13 @@
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
         "csu_ctrl": [["is_fence_i", "1"]]
+    },
+    {
+        "name":"sfence.vma r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "csu_ctrl": [["is_sfence_vma", "1"]]
     }
 ]
