@@ -297,6 +297,16 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
   return 'hx;
 endfunction // encoder_grp_id
 
+function logic is_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
+                               logic [DISP_SIZE-1: 0] entry_grp_id,
+                               msrh_pkg::commit_blk_t commit);
+  return commit.commit & commit.flush_valid &
+         ~((entry_cmt_id == commit.cmt_id) & ~|(entry_grp_id & commit.dead_id)) &
+         ~commit.all_dead;
+
+endfunction // is_flush_target
+
+
 // RNID Update signals
 typedef struct packed {
   logic                                                      commit;

@@ -166,10 +166,8 @@ assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
                                                w_rs1_phy_hit, w_rs2_phy_hit,
                                                w_rs1_may_mispred, w_rs2_may_mispred);
 
-assign w_entry_flush = i_commit.commit &
-                       i_commit.flush_valid &
-                       !i_commit.all_dead &
-                       r_entry.valid;
+assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
+
 // assign w_entry_to_dead = w_entry_flush &
 // (i_commit.cmt_id != r_entry.cmt_id);
 assign w_dead_state_clear = i_commit.commit &

@@ -69,10 +69,8 @@ select_early_wr_bus rs2_rel_select
  .o_may_mispred(w_rs2_may_mispred)
  );
 
-assign w_entry_flush = i_commit.commit &
-                       i_commit.flush_valid &
-                       !i_commit.all_dead &
-                       r_entry.is_valid;
+assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+
 assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
@@ -159,15 +157,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       STQ_WAIT_COMMIT : begin
-        if (w_cmt_id_match) begin
+        if (w_entry_flush) begin
+          r_entry.state <= STQ_DEAD;
+        end else if (w_cmt_id_match) begin
           r_entry.state <= STQ_COMMIT;
-        end else if (w_entry_flush) begin
-          r_entry.state    <= STQ_INIT;
-          r_entry.is_valid <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
         end
+        // r_entry.is_valid <= 1'b1;
+        // prevent all updates from Pipeline
+        // r_entry.cmt_id <= 'h0;
+        // r_entry.grp_id <= 'h0;
+        // end
       end
       STQ_WAIT_ST_DATA : begin
         if (w_entry_flush) begin
