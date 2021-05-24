@@ -82,6 +82,9 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : disp_loop
 end
 endgenerate
 
+`ifdef SIMULATION
+logic [riscv_pkg::XLEN_W-1: 0] w_sim_mstatus[CMT_ENTRY_SIZE][msrh_conf_pkg::DISP_SIZE];
+`endif // SIMULATION
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
@@ -113,6 +116,12 @@ logic w_load_valid;
 
      .br_upd_if (ex3_br_upd_if)
      );
+
+`ifdef SIMULATION
+  for (genvar d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+    assign w_sim_mstatus[c_idx][d] = u_entry.r_mstatus[d];
+  end
+`endif // SIMULATION
 
 end
 endgenerate

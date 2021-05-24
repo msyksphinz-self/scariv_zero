@@ -49,6 +49,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
+`ifdef SIMULATION
+logic [riscv_pkg::XLEN_W-1:0]   r_mstatus[msrh_conf_pkg::DISP_SIZE];
+`endif // SIMULATION
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -92,6 +95,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_entry.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] <= 1'b1;
         r_entry.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] <= br_upd_if.vaddr;
       end
+
+`ifdef SIMULATION
+      for (int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+        if (w_done_rpt_valid[d]) begin
+          r_mstatus[d] = u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.w_mstatus_next;
+        end
+      end
+`endif // SIMULATION
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)

@@ -74,7 +74,8 @@ typedef enum logic [ 5: 0] {
 
   MRET = 24,
   SRET = 25,
-  URET = 26
+  URET = 26,
+  SILENT_FLUSH = 27
 } except_t;
 
   typedef struct packed {

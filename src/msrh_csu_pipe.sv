@@ -35,11 +35,13 @@ typedef struct packed {
   logic is_fence;
   logic is_fence_i;
   logic is_sfence_vma;
+  logic csr_update;
 } pipe_ctrl_t;
 
 msrh_pkg::issue_t                        r_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
+csr_update_t                             w_ex0_csr_update;
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex1_issue;
@@ -77,8 +79,10 @@ decoder_csu_ctrl u_pipe_ctrl (
   .is_ebreak     (w_ex0_pipe_ctrl.is_ebreak    ),
   .is_fence      (w_ex0_pipe_ctrl.is_fence     ),
   .is_fence_i    (w_ex0_pipe_ctrl.is_fence_i   ),
-  .is_sfence_vma (w_ex0_pipe_ctrl.is_sfence_vma)
+  .is_sfence_vma (w_ex0_pipe_ctrl.is_sfence_vma),
+  .csr_update    (w_ex0_csr_update             )
 );
+assign w_ex0_pipe_ctrl.csr_update = w_ex0_csr_update == decoder_csu_ctrl_pkg::CSR_UPDATE_1 ? 1'b1 : 1'b0;
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
@@ -171,7 +175,8 @@ assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.is_mret |
+assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
+                                   r_ex3_pipe_ctrl.is_mret |
                                    r_ex3_pipe_ctrl.is_sret |
                                    r_ex3_pipe_ctrl.is_uret |
                                    r_ex3_pipe_ctrl.is_ecall;
@@ -180,7 +185,7 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
                                  csr_info.priv == msrh_pkg::PRV_U ? msrh_pkg::ECALL_U :
                                  csr_info.priv == msrh_pkg::PRV_S ? msrh_pkg::ECALL_S :
-                                 msrh_pkg::ECALL_M; // dummy
+                                 msrh_pkg::SILENT_FLUSH;
 
 assign write_if.valid = r_ex3_issue.valid &
                         !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);

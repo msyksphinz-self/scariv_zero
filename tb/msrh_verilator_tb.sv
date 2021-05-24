@@ -298,7 +298,7 @@ always_ff @ (negedge i_clk, negedge i_msrh_reset_n) begin
           /* verilator lint_off WIDTH */
           step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
                       int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
-                      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.w_mstatus_next,
+                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_sim_mstatus[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id][grp_idx],
                       |committed_rob_entry.except_valid,
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.except_type_selected,
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,

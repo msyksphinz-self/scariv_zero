@@ -47,6 +47,7 @@ logic [RNID_W-1: 0]                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SI
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 
 logic                                     w_commit_rnid_restore_valid;
+logic                                     w_commit_flush_rnid_restore_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
@@ -173,8 +174,11 @@ endgenerate
 
 assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit &
                                      i_commit_rnid_update.is_br_included;
-
-assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid}} &
+// assign w_commit_flush_rnid_restore_valid = i_commit.commit &
+//                                            i_commit.flush_valid & !i_commit.all_dead;
+//
+assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid /* |
+                                                     w_commit_flush_rnid_restore_valid*/}} &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop

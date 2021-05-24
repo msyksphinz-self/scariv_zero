@@ -407,49 +407,49 @@
         "name":"csrrw      r[11:7],h[31:20],r[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["op", "rw"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
     },
     {
         "name":"csrrs      r[11:7],h[31:20],r[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["op", "rs"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
     {
         "name":"csrrc      r[11:7],h[31:20],r[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["op", "rc"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
     {
         "name":"csrrwi     r[11:7],h[31:20],h[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["op", "rw"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
     },
     {
         "name":"csrrsi     r[11:7],h[31:20],h[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["op", "rs"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
     {
         "name":"csrrci     r[11:7],h[31:20],h[19:15]",
         "length":"32", "dlength":"32",
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["op", "rc"]]
+        "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
     {
         "name":"uret",
@@ -457,7 +457,7 @@
         "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["is_uret", "1"]]
+        "csu_ctrl":[["csr_update", "0"], ["is_uret", "1"]]
     },
     {
         "name":"sret",
@@ -465,7 +465,7 @@
         "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["is_sret", "1"]]
+        "csu_ctrl":[["csr_update", "0"], ["is_sret", "1"]]
     },
     {
         "name":"mret",
@@ -473,7 +473,7 @@
         "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["is_mret", "1"]]
+        "csu_ctrl":[["csr_update", "0"], ["is_mret", "1"]]
     },
     {
         "name":"ecall",
@@ -495,7 +495,7 @@
         "name":"fence",
         "length":"32", "dlength":"32",
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
         "csu_ctrl": [["is_fence", "1"]]
     },
