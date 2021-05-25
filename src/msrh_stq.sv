@@ -84,7 +84,6 @@ logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0] w_entry_dead_cnt;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
 assign w_credit_return_val = ((|w_stq_entry_st_finish) ? 'h1               : 'h0) +
-                             /* ((|w_entry_dead_done)     ? w_entry_dead_cnt  : 'h0) + */
                              (w_ignore_disp            ? w_disp_picked_num : 'h0) ;
 
 msrh_credit_return_slave
@@ -122,7 +121,7 @@ msrh_disp_pickup
     )
 u_msrh_disp_pickup
   (
-   .i_disp_valid (i_disp_valid & {msrh_conf_pkg::DISP_SIZE{w_flush_valid}}),
+   .i_disp_valid (i_disp_valid),
    .i_disp (disp),
 
    .o_disp_valid  (disp_picked_inst_valid),
@@ -138,7 +137,7 @@ logic [msrh_conf_pkg::STQ_SIZE-1:0] w_out_ptr_oh;
 logic                               w_in_valid;
 logic                               w_out_valid;
 
-assign w_in_valid  = |disp_picked_inst_valid;
+assign w_in_valid  = (|disp_picked_inst_valid) & !w_flush_valid;
 assign w_out_valid = |w_stq_entry_st_finish;
 
 /* verilator lint_off WIDTH */

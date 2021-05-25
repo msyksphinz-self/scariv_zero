@@ -649,7 +649,9 @@ assign csr_info.utvec   = r_utvec;
 assign csr_info.sepc    = r_sepc;
 assign csr_info.uepc    = r_uepc;
 assign csr_info.satp    = r_satp;
-assign csr_info.priv    = r_priv;
+// assign csr_info.priv    = r_priv;
+// Priviledge should be pass immediately when exception is valid
+assign csr_info.priv    = w_priv_next;
 assign csr_info.medeleg = r_medeleg;
 assign csr_info.sedeleg = r_sedeleg;
 
