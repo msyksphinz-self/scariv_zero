@@ -122,7 +122,7 @@ msrh_disp_pickup
     )
 u_msrh_disp_pickup
   (
-   .i_disp_valid (i_disp_valid),
+   .i_disp_valid (i_disp_valid & {msrh_conf_pkg::DISP_SIZE{w_flush_valid}}),
    .i_disp (disp),
 
    .o_disp_valid  (disp_picked_inst_valid),
@@ -133,20 +133,20 @@ u_msrh_disp_pickup
 //
 // STQ Pointer
 //
-logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_in_ptr;
-logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1:0] w_out_ptr;
-logic                                      w_in_valid;
-logic                                      w_out_valid;
+logic [msrh_conf_pkg::STQ_SIZE-1:0] w_in_ptr_oh;
+logic [msrh_conf_pkg::STQ_SIZE-1:0] w_out_ptr_oh;
+logic                               w_in_valid;
+logic                               w_out_valid;
 
 assign w_in_valid  = |disp_picked_inst_valid;
 assign w_out_valid = |w_stq_entry_st_finish;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::STQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
-inoutptr_var #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                         .i_rollback(1'b0),
-                                                         .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                                         .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+inoutptr_var_oh #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                            .i_rollback(1'b0),
+                                                            .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
+                                                            .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
 
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -155,9 +155,9 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]  w_in_entry_ptr;
-    assign w_in_entry_ptr = w_in_ptr + i_idx;
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_in_entry_ptr == s_idx);
+    logic [msrh_conf_pkg::LDQ_SIZE-1: 0]  w_entry_ptr_oh;
+    bit_rotate_left #(.WIDTH(msrh_conf_pkg::LDQ_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_in_ptr_oh), .o_out(w_entry_ptr_oh));
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr_oh[s_idx]);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
@@ -217,7 +217,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_sq_l1d_wr_conflict (l1d_wr_if.conflict),
 
      .i_ex3_done            (i_ex3_done),
-     .i_stq_outptr_valid    (s_idx == w_out_ptr),
+     .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
@@ -272,7 +272,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
     assign w_resolve_st_data_haz[s_idx] = w_stq_entries[s_idx].is_valid &
                                           w_stq_entries[s_idx].rs2_got_data;
 
-    assign w_sq_commit_req_oh[s_idx] = w_sq_commit_req[s_idx] & (s_idx == w_out_ptr);
+    assign w_sq_commit_req_oh[s_idx] = w_sq_commit_req[s_idx] & (w_out_ptr_oh[s_idx]);
   end // block: stq_loop
 endgenerate
 
@@ -351,7 +351,7 @@ endgenerate
 // After commit, store operation
 // ==============================
 
-// bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .i_ptr(w_out_ptr), .out(w_sq_commit_req_oh));
+// bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .i_ptr(w_out_ptr_oh), .out(w_sq_commit_req_oh));
 bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

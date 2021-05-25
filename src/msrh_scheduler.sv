@@ -44,8 +44,8 @@ logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 msrh_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
-logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_in_ptr;
-logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_out_ptr;
+logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
+logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
 
 logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
@@ -62,7 +62,7 @@ assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_de
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-inoutptr_var
+inoutptr_var_oh
   #(.SIZE(ENTRY_SIZE))
 u_req_ptr
   (
@@ -73,11 +73,11 @@ u_req_ptr
 
    .i_in_valid (|i_disp_valid    ),
    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)-1){1'b0}}, w_input_valid_cnt}),
-   .o_in_ptr   (w_entry_in_ptr   ),
+   .o_in_ptr_oh(w_entry_in_ptr_oh   ),
 
    .i_out_valid(1'b0),
    .i_out_val  ({{($clog2(ENTRY_SIZE)-1){1'b0}}, 1'b1}),
-   .o_out_ptr  (w_entry_out_ptr                       )
+   .o_out_ptr_oh(w_entry_out_ptr_oh                       )
    );
 
 logic                                w_ignore_disp;
@@ -119,10 +119,6 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
 end
 `endif // SIMULATION
 
-logic [ENTRY_SIZE-1: 0]              w_entry_out_ptr_oh;
-/* verilator lint_off WIDTH */
-assign w_entry_out_ptr_oh = 1 << w_entry_out_ptr;
-
 bit_brshift
   #(.WIDTH(ENTRY_SIZE))
 u_age_selector
@@ -149,9 +145,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    logic [$clog2(ENTRY_SIZE)-1: 0] target_idx;
-    assign target_idx = w_entry_in_ptr + i_idx;
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx == s_idx);
+    logic [ENTRY_SIZE-1: 0] target_idx_oh;
+    bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
@@ -256,8 +252,8 @@ endgenerate
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
     $fwrite(fp, "  \"msrh_scheduler_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
-    $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr);
-    $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr);
+    $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
+    $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
       dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
     end

@@ -95,20 +95,20 @@ u_msrh_disp_pickup
 //
 // LDQ Pointer
 //
-logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1:0] w_in_ptr;
-logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1:0] w_out_ptr;
-logic                        w_in_valid;
-logic                        w_out_valid;
+logic [msrh_conf_pkg::LDQ_SIZE-1:0]        w_in_ptr_oh;
+logic [msrh_conf_pkg::LDQ_SIZE-1:0]        w_out_ptr_oh;
+logic                                      w_in_valid;
+logic                                      w_out_valid;
 
 assign w_in_valid  = |disp_picked_inst_valid;
 assign w_out_valid = |w_entry_complete;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
-inoutptr_var #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                          .i_rollback(w_flush_valid),
-                                          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr (w_in_ptr ),
-                                          .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr(w_out_ptr));
+inoutptr_var_oh #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                            .i_rollback(w_flush_valid),
+                                                            .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
+                                                            .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
 
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -117,9 +117,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_ldq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]  w_entry_ptr;
-    assign w_entry_ptr = w_in_ptr + i_idx;
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr == l_idx);
+    logic [msrh_conf_pkg::LDQ_SIZE-1: 0]  w_entry_ptr_oh;
+    bit_rotate_left #(.WIDTH(msrh_conf_pkg::LDQ_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_in_ptr_oh), .o_out(w_entry_ptr_oh));
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr_oh[l_idx]);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));

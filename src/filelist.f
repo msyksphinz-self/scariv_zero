@@ -32,6 +32,7 @@
 ../src/bit_brshift.sv
 ../src/bit_blshift.sv
 ../src/bit_reverse.sv
+../src/bit_rotate.sv
 
 ../src/encoder.sv
 ../src/inoutptr.sv
