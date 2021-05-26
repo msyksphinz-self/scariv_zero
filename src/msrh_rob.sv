@@ -45,6 +45,12 @@ logic                                      w_in_valid, w_out_valid;
 logic [CMT_ENTRY_W-1:0]                    w_out_cmt_entry_id;
 logic [CMT_ENTRY_W-1:0]                    w_in_cmt_entry_id;
 
+// Commiter Selection
+logic [DISP_SIZE-1: 0]              w_valid_upd_pc_grp_id;
+logic [DISP_SIZE-1: 0]              w_cmt_pc_upd_valid_oh;
+logic [DISP_SIZE-1: 0]              w_valid_except_grp_id;
+logic [DISP_SIZE-1: 0]              w_valid_branch_grp_id;
+
 assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
 assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
 
@@ -138,7 +144,7 @@ assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_entry_id].except_valid);
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
-assign o_commit.except_valid  = |w_entries[w_out_cmt_entry_id].except_valid;
+assign o_commit.except_valid  = |w_valid_except_grp_id;
 assign o_commit.except_type   = except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
@@ -146,16 +152,27 @@ assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MIS
                                  o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} :
                                 'h0;  // Other TVAL, Not yet supported
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
-encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_cmt_except_valid_oh), .o_out(w_cmt_except_valid_encoded));
+encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
 assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
 assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].dead;
 
-// Select Exception Instruction
-bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_except_valid (.in(w_entries[w_out_cmt_entry_id].except_valid), .out(w_cmt_except_valid_oh));
-bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_cmt_except_valid_oh), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(except_type_selected));
+// Select Jump Insntruction
+assign w_valid_upd_pc_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid | w_entries[w_out_cmt_entry_id].except_valid;
+bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_id), .out(w_cmt_pc_upd_valid_oh));
 
+// Select Exception Instruction
+assign w_valid_except_grp_id = w_entries[w_out_cmt_entry_id].except_valid & w_cmt_pc_upd_valid_oh;
+bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(except_type_selected));
+
+
+// Select Branch Target Address
+assign w_valid_branch_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid & w_cmt_pc_upd_valid_oh;
+bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
+br_sel_addr (.i_oh(w_valid_branch_grp_id),
+             .i_data(w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr),
+             .o_selected(w_upd_br_vaddr));
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
@@ -170,13 +187,6 @@ assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.a
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 
-
-// Select Branch Target Address
-bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_br_sel (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_br_upd_valid_oh));
-bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
-br_sel_addr (.i_oh(w_br_upd_valid_oh),
-             .i_data(w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr),
-             .o_selected(w_upd_br_vaddr));
 
 // Make dead Instruction, (after branch instruction)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
