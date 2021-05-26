@@ -484,6 +484,7 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
+  fprintf(stderr, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
       fprintf(stderr, "==========================================\n");

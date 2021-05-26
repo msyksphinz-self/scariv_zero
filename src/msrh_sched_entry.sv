@@ -269,7 +269,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = EN_OLDEST ? (i_commit.cmt_id == r_entry.cmt_id) &
+// When previous instruction
+assign w_oldest_ready = EN_OLDEST ? !i_commit.upd_pc_valid & !i_commit.except_valid &
+                        (i_commit.cmt_id == r_entry.cmt_id) &
                         ((i_commit.grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) :
                         1'b1;
 
