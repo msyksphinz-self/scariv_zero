@@ -279,7 +279,7 @@ end
 
 generate if (EN_OLDEST == 1'b1) begin
   assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                          ((rob_info_if.grp_id & rob_info_if.grp_id-1) == r_entry.grp_id-1);
+                          ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
   assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
 end else begin
   assign w_oldest_ready = 1'b1;

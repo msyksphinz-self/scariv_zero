@@ -256,7 +256,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
          .o_0_older_than_1 (w_entry_older_than_fwd)
          );
 
-      assign w_ex2_stq_hazard[p_idx][s_idx] = ex2_fwd_check_if[p_idx].valid &
+      assign w_ex2_stq_hazard[p_idx][s_idx] = !w_stq_entry_st_finish[s_idx] &
+                                              ex2_fwd_check_if[p_idx].valid &
                                               w_entry_older_than_fwd &
                                               w_stq_entries[s_idx].is_valid &
                                               (w_same_addr_region & ~w_stq_entries[s_idx].rs2_got_data |  // Same region and rs2 not decided
@@ -320,8 +321,13 @@ endgenerate
 // =================================
 // STQ HAZARD RESOLVE NOTIFICATION
 // =================================
-assign o_stq_resolve.valid            = (|w_resolve_st_data_haz) | (|w_resolve_paddr_haz);
-assign o_stq_resolve.resolve_index_oh = w_resolve_st_data_haz | w_resolve_paddr_haz;
+assign o_stq_resolve.valid            = (|w_resolve_st_data_haz) |
+                                        (|w_resolve_paddr_haz)   |
+                                        (|w_stq_entry_st_finish);
+assign o_stq_resolve.resolve_index_oh = w_resolve_st_data_haz |
+                                        w_resolve_paddr_haz |
+                                        w_stq_entry_st_finish;
+
 
 // ===============
 // Done Logic

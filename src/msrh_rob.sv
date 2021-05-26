@@ -213,7 +213,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 // ROB Notification Information
-assign rob_info_if.cmt_id       = w_out_cmt_entry_id;
+assign rob_info_if.cmt_id       = w_out_cmt_id;
 assign rob_info_if.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
 assign rob_info_if.done_grp_id  = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign rob_info_if.upd_pc_valid = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid;
