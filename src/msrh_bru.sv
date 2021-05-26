@@ -3,6 +3,9 @@ module msrh_bru
   input logic i_clk,
   input logic i_reset_n,
 
+  /* ROB notification interface */
+  rob_info_if.slave                     rob_info_if,
+
   input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
   disp_if.watch                              disp,
   cre_ret_if.slave                           cre_ret_if,
@@ -64,6 +67,8 @@ u_msrh_scheduler
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
    .i_cmt_id    (disp.cmt_id),

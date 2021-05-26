@@ -15,7 +15,10 @@ module msrh_rob
    br_upd_if.slave  ex3_br_upd_if,
 
    output commit_blk_t o_commit,
-   output cmt_rnid_upd_t o_commit_rnid_update
+   output cmt_rnid_upd_t o_commit_rnid_update,
+
+   // ROB notification interface
+   rob_info_if.master rob_info_if
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
@@ -208,6 +211,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
   end
 end
+
+// ROB Notification Information
+assign rob_info_if.cmt_id       = w_out_cmt_entry_id;
+assign rob_info_if.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
+assign rob_info_if.done_grp_id  = w_entries[w_out_cmt_entry_id].done_grp_id;
+assign rob_info_if.upd_pc_valid = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid;
+assign rob_info_if.except_valid = w_entries[w_out_cmt_entry_id].except_valid;
 
 `ifdef SIMULATION
 logic [CMT_ENTRY_SIZE-1: 0] w_entry_valids;

@@ -20,6 +20,8 @@ module msrh_csu
 
   /* CSR information */
   csr_info_if.master          csr_info,
+  /* ROB notification interface */
+  rob_info_if.slave           rob_info_if,
 
   output msrh_pkg::done_rpt_t o_done_report,
 
@@ -70,6 +72,8 @@ u_msrh_scheduler
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
    .i_cmt_id    (disp.cmt_id),

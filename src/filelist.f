@@ -16,6 +16,7 @@
 ../src/regread_if.sv
 ../src/l1d_lrq_if.sv
 ../src/lsu_if.sv
+../src/msrh_if.sv
 
 ../src/bit_cnt.sv
 ../src/bit_or.sv

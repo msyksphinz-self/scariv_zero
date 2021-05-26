@@ -9,8 +9,11 @@ module msrh_scheduler
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ // ROB notification interface
+ rob_info_if.slave                     rob_info_if,
+
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input logic [msrh_pkg::CMT_ID_W-1:0] i_cmt_id,
+ input logic [msrh_pkg::CMT_ID_W-1:0]  i_cmt_id,
  input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
@@ -159,6 +162,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   u_sched_entry(
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
+
+    .rob_info_if   (rob_info_if),
 
     .i_put      (|w_input_valid),
 

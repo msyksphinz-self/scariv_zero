@@ -7,6 +7,9 @@ module msrh_lsu_top
     /* CSR information */
     csr_info_if.slave                     csr_info,
 
+    /* ROB notification interface */
+    rob_info_if.slave           rob_info_if,
+
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.watch                                      disp,
     cre_ret_if.slave    sch_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -82,6 +85,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .i_reset_n(i_reset_n),
 
     .csr_info (csr_info),
+    .rob_info_if (rob_info_if),
 
     .disp_valid (disp_valid),
     .disp (disp),

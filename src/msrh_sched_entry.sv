@@ -7,8 +7,11 @@ module msrh_sched_entry
    input logic                                 i_clk,
    input logic                                 i_reset_n,
 
+   // ROB notification interface
+   rob_info_if.slave                           rob_info_if,
+
    input logic                                 i_put,
-   input logic [msrh_pkg::CMT_ID_W-1:0]       i_cmt_id,
+   input logic [msrh_pkg::CMT_ID_W-1:0]        i_cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_grp_id,
    input                                       msrh_pkg::disp_t i_put_data,
 
@@ -70,6 +73,9 @@ logic     w_entry_flush;
 // logic     w_entry_to_dead;
 logic     w_entry_complete;
 logic     w_dead_state_clear;
+
+// When previous instruction generates exception or jump
+logic w_pc_update_before_entry;
 
 msrh_pkg::sched_state_t r_state;
 
@@ -199,7 +205,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_dead  <= 1'b1;
         end else begin
           r_entry <= w_entry;
-          if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+          if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
+            r_state <= msrh_pkg::DONE;
+          end else if (o_entry_valid & o_entry_ready & i_entry_picked) begin
             r_issued <= 1'b1;
             r_state <= msrh_pkg::ISSUED;
           end
@@ -269,15 +277,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-// When previous instruction
-assign w_oldest_ready = EN_OLDEST ? !i_commit.upd_pc_valid & !i_commit.except_valid &
-                        (i_commit.cmt_id == r_entry.cmt_id) &
-                        ((i_commit.grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) :
-                        1'b1;
+generate if (EN_OLDEST == 1'b1) begin
+  assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                          ((rob_info_if.grp_id & rob_info_if.grp_id-1) == r_entry.grp_id-1);
+  assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
+end else begin
+  assign w_oldest_ready = 1'b1;
+  assign w_pc_update_before_entry = 1'b0;
+end
+endgenerate
+
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & !(r_issued | r_dead) & !w_entry_flush &
-                       w_oldest_ready & all_operand_ready(w_entry);
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry);
 assign o_entry       = w_entry;
 
 assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;

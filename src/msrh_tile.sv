@@ -44,6 +44,7 @@ regread_if regread[msrh_pkg::REGPORT_NUM] ();
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
+rob_info_if w_rob_info_if();
 tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
 lsu_access_if w_lsu_access();
 
@@ -198,6 +199,8 @@ msrh_rename u_msrh_rename (
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),
 
+          .rob_info_if   (w_rob_info_if),
+
           .disp_valid(w_disp_alu_valids),
           .disp(w_sc_disp),
           .cre_ret_if (alu_cre_ret_if[alu_idx]),
@@ -225,6 +228,8 @@ u_msrh_lsu_top
   (
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
+
+    .rob_info_if   (w_rob_info_if),
 
     .csr_info (w_csr_info),
 
@@ -259,6 +264,8 @@ msrh_bru
 u_msrh_bru (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+
+    .rob_info_if   (w_rob_info_if),
 
     .disp_valid(w_disp_bru_valids),
     .disp(w_sc_disp),
@@ -304,7 +311,8 @@ u_msrh_csu (
     .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
     .i_mispred_lsu (w_ex3_mispred_lsu),
 
-    .csr_info (w_csr_info),
+    .csr_info    (w_csr_info   ),
+    .rob_info_if (w_rob_info_if),
 
     .o_done_report (w_csu_done_rpt),
 
@@ -337,6 +345,8 @@ msrh_rob u_rob
 
    .o_commit (w_commit),
    .o_commit_rnid_update (w_commit_rnid_update),
+
+   .rob_info_if   (w_rob_info_if),
 
    .ex3_br_upd_if (w_ex3_br_upd_if)
    );

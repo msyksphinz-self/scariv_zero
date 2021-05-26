@@ -10,6 +10,8 @@ module msrh_lsu
 
     /* CSR information */
     csr_info_if.slave                     csr_info,
+    /* ROB notification interface */
+    rob_info_if.slave                     rob_info_if,
 
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.slave                          disp,
@@ -101,6 +103,8 @@ msrh_scheduler #(
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
    .i_cmt_id    (disp.cmt_id),
