@@ -51,7 +51,7 @@ endgenerate
 
 int debug_tick_val;
 
-always_ff @(negedge i_clk, negedge i_reset_n) begin
+always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     /* verilator lint_off WIDTH */
