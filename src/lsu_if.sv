@@ -185,3 +185,28 @@ interface lsu_access_if;
   );
 
 endinterface // lsu_access_if
+
+//
+// SFENCE interface for updating TLB
+//
+interface sfence_if;
+  logic      valid;
+  logic      is_rs1_x0;
+  logic      is_rs2_x0;
+  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+
+  modport master (
+    output valid,
+    output is_rs1_x0,
+    output is_rs2_x0,
+    output vaddr
+  );
+
+  modport slave (
+    input valid,
+    input is_rs1_x0,
+    input is_rs2_x0,
+    input vaddr
+  );
+
+endinterface // sfence_if

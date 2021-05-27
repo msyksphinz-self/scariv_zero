@@ -47,6 +47,7 @@ csr_info_if w_csr_info ();
 rob_info_if w_rob_info_if();
 tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
 lsu_access_if w_lsu_access();
+sfence_if     w_sfence_if();
 
 // ----------------------------------
 // Committer Components
@@ -133,6 +134,8 @@ assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 msrh_frontend u_frontend (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
+
+  .sfence_if (w_sfence_if),
 
   .ic_l2_req(ic_l2_req),
   .ic_l2_resp(ic_l2_resp),
@@ -230,6 +233,7 @@ u_msrh_lsu_top
     .i_reset_n(i_reset_n),
 
     .rob_info_if   (w_rob_info_if),
+    .sfence_if     (w_sfence_if),
 
     .csr_info (w_csr_info),
 
@@ -313,6 +317,8 @@ u_msrh_csu (
 
     .csr_info    (w_csr_info   ),
     .rob_info_if (w_rob_info_if),
+
+    .sfence_if (w_sfence_if),
 
     .o_done_report (w_csu_done_rpt),
 

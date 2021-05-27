@@ -22,6 +22,9 @@ module msrh_csu_pipe
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
 
+  /* SFENCE update information */
+  sfence_if.master                  sfence_if,
+
   done_if.master   ex3_done_if
 );
 
@@ -142,6 +145,9 @@ end
 
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 
+// ------------
+// CSR Read
+// ------------
 assign read_if.valid = r_ex2_issue.valid;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
@@ -161,7 +167,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       OP_RS: r_ex3_result <= read_if.data | w_ex2_rs1_selected_data;
       OP_RC: r_ex3_result <= read_if.data & ~w_ex2_rs1_selected_data;
       OP__ : r_ex3_result <= 'h0;
-      default : r_ex3_result <= 'h0;
+      default : r_ex3_result <= w_ex2_rs1_selected_data;
     endcase // case (r_ex2_pipe_ctrl.op)
 
     r_ex3_csr_rd_data <= read_if.data;
@@ -187,9 +193,20 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_ecall & (csr_info.priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
                                  msrh_pkg::SILENT_FLUSH;
 
+// ------------
+// CSR Update
+// ------------
 assign write_if.valid = r_ex3_issue.valid &
                         !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
+
+// ------------
+// SFENCE Update
+// ------------
+assign sfence_if.valid = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma;
+assign sfence_if.is_rs1_x0  = r_ex3_issue.rs1_regidx == 'h0;
+assign sfence_if.is_rs2_x0  = r_ex3_issue.rs2_regidx == 'h0;
+assign sfence_if.vaddr      = r_ex3_result[riscv_pkg::VADDR_W-1:0];
 
 endmodule // msrh_csu_pipe

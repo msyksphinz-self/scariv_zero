@@ -7,6 +7,9 @@ module msrh_lsu_top
     /* CSR information */
     csr_info_if.slave                     csr_info,
 
+    /* SFENCE update information */
+    sfence_if.slave  sfence_if,
+
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
@@ -86,6 +89,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .csr_info (csr_info),
     .rob_info_if (rob_info_if),
+    .sfence_if   (sfence_if),
 
     .disp_valid (disp_valid),
     .disp (disp),

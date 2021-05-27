@@ -7,7 +7,7 @@ module tlb
  input logic  i_clk,
  input logic  i_reset_n,
 
- input        sfence_t i_sfence,
+ sfence_if.slave sfence_if,
 
  input logic  i_kill,
 
@@ -164,6 +164,8 @@ generate for (genvar e_idx = 0; e_idx < TLB_NORMAL_ENTRIES_NUM; e_idx++) begin :
         r_sectored_entries[e_idx].tag   <= r_refill_tag;
         r_sectored_entries[e_idx].level <= ptw_if.resp.level;
         r_sectored_entries[e_idx].data[w_wr_sector_idx] <= new_pte_entry;
+      end else if (sfence_if.valid) begin
+        r_sectored_entries[e_idx].valid <= 'h0;
       end
     end
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -256,17 +258,17 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           if (i_kill) begin
             r_state <= ST_READY;
           end else if (ptw_if.req_ready) begin
-            if (i_sfence.valid) begin
+            if (sfence_if.valid) begin
               r_state <=  ST_WAIT_INVALIDATE;
             end else begin
               r_state <= ST_WAIT;
             end
-          end else if (i_sfence.valid) begin
+          end else if (sfence_if.valid) begin
             r_state <= ST_READY;
           end
         end
         ST_WAIT : begin
-          if (i_sfence.valid) begin
+          if (sfence_if.valid) begin
             r_state <= ST_WAIT_INVALIDATE;
           end else if (ptw_if.resp.valid) begin
             o_tlb_update <= 1'b1;

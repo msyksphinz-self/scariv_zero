@@ -238,6 +238,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
       assign w_same_addr_region = w_stq_entries[s_idx].paddr[riscv_pkg::PADDR_W-1:3] == ex2_fwd_check_if[p_idx].paddr;
 
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                             (w_stq_entries[s_idx].state != STQ_DEAD) &
                                              w_entry_older_than_fwd &
                                              w_stq_entries[s_idx].paddr_valid &
                                              w_stq_entries[s_idx].rs2_got_data &

@@ -3,6 +3,9 @@ module msrh_frontend
  input logic i_clk,
  input logic i_reset_n,
 
+ /* SFENCE update information */
+ sfence_if.slave  sfence_if,
+
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp,
 
@@ -281,8 +284,8 @@ tlb u_tlb
    .i_reset_n  (i_reset_n),
 
    .i_kill (1'b0),
+   .sfence_if(sfence_if),
 
-   .i_sfence ('h0),
    .i_status_prv(csr_info.priv),
    .i_csr_status(csr_info.mstatus),
    .i_csr_satp(csr_info.satp),

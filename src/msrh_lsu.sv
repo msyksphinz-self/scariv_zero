@@ -10,6 +10,8 @@ module msrh_lsu
 
     /* CSR information */
     csr_info_if.slave                     csr_info,
+    /* SFENCE update information */
+    sfence_if.slave                       sfence_if,
     /* ROB notification interface */
     rob_info_if.slave                     rob_info_if,
 
@@ -154,6 +156,7 @@ u_lsu_pipe
    .i_reset_n(i_reset_n),
 
    .csr_info (csr_info),
+   .sfence_if(sfence_if),
 
    .i_rv0_issue(w_rv0_issue),
    .i_rv0_index_oh(w_rv0_index_oh),

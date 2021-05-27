@@ -11,6 +11,8 @@ module msrh_lsu_pipe
 
  /* CSR information */
  csr_info_if.slave                     csr_info,
+ /* SFENCE update information */
+ sfence_if.slave                       sfence_if,
 
  input msrh_pkg::issue_t               i_rv0_issue,
  input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
@@ -155,7 +157,7 @@ u_tlb
  .i_reset_n(i_reset_n),
 
  .i_kill(1'b0),
- .i_sfence ('h0),
+ .sfence_if(sfence_if),
 
  .i_status_prv(csr_info.priv   ),
  .i_csr_status(csr_info.mstatus),
