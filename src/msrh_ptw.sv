@@ -44,6 +44,7 @@ logic [msrh_lsu_pkg::VPN_W-1: 0] r_ptw_vpn;
 logic [riscv_pkg::PADDR_W-1: 0] r_ptw_addr;
 
 logic                          lsu_access_is_leaf;
+logic                          lsu_access_bad_pte;
 msrh_lsu_pkg::pte_t            lsu_access_pte;
 
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_req_loop
@@ -69,7 +70,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
     if (r_ptw_accept[p_idx] | w_ptw_accept[p_idx]) begin
       ptw_if[p_idx].resp.valid       = (((r_state == RESP_L1D) & (lsu_access.status == msrh_lsu_pkg::STATUS_HIT)) |
                                         ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready)) &
-                                       (lsu_access_is_leaf | (r_count == 'h0)) &
+                                       (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == 'h0)) &
                                        r_ptw_accept[p_idx];
       ptw_if[p_idx].resp.ae          = 1'b0; // if instruction region fault
       ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
@@ -91,6 +92,9 @@ assign lsu_access_pte = (r_state == L2_RESP_WAIT) ? msrh_lsu_pkg::pte_t'(ptw_res
 
 assign lsu_access_is_leaf = lsu_access_pte.v &
                             (lsu_access_pte.r | lsu_access_pte.w | lsu_access_pte.x);
+
+assign lsu_access_bad_pte = ~lsu_access_pte.v |
+                            (~lsu_access_pte.r & lsu_access_pte.w);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -162,6 +166,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       L2_RESP_WAIT : begin
         if (ptw_resp.valid & ptw_resp.ready) begin
           if (lsu_access_is_leaf || r_count == 'h0) begin
+            r_state <= IDLE;
+          end else if (lsu_access_bad_pte) begin
             r_state <= IDLE;
           end else begin
             r_state <= L2_RESP_WAIT;

@@ -11,8 +11,8 @@ module msrh_rob_entry
    input disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_grp_id,
    input logic                                i_load_br_included,
-   input logic                                i_load_tlb_except_valid,
-   input msrh_pkg::except_t                   i_load_tlb_except_cause,
+   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_tlb_except_valid,
+   input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
 
    input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
@@ -66,14 +66,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry.inst    <= i_load_inst;
       r_entry.br_upd_info <= 'h0;
 
-      // If TLB Exception detected before execution, this instruction already done.
-      r_entry.done_grp_id <= i_load_tlb_except_valid ? i_load_grp_id :
-                             {msrh_conf_pkg::DISP_SIZE{1'b0}};
 
       r_entry.is_br_included <= i_load_br_included;
 
-      r_entry.except_valid <= {msrh_conf_pkg::DISP_SIZE{i_load_tlb_except_valid}};
-      r_entry.except_type  <= {msrh_conf_pkg::DISP_SIZE{i_load_tlb_except_cause}};
+      for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+        // If TLB Exception detected before execution, this instruction already done.
+        r_entry.done_grp_id [d_idx] <= i_load_tlb_except_valid[d_idx] ? i_load_grp_id[d_idx] : 1'b0;
+        r_entry.except_valid[d_idx] <= i_load_tlb_except_valid[d_idx];
+        r_entry.except_type [d_idx] <= i_load_tlb_except_cause[d_idx];
+      end
     end else if (r_entry.valid) begin
       // Condition :
       // all instruction done, or ROB entry dead,

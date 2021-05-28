@@ -51,6 +51,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
 
+msrh_pkg::except_t w_inst_illegal_cause[msrh_conf_pkg::DISP_SIZE];
+
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
 
 rd_t rd_field_type [msrh_conf_pkg::DISP_SIZE];
@@ -239,6 +241,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
 
   assign w_inst_illegal[w_idx]    = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & r_inst_queue[w_inst_buf_ptr].tlb_except_valid;
+  assign w_inst_illegal_cause[w_idx] = r_inst_queue[w_inst_buf_ptr].tlb_except_cause;
   assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & w_raw_gen_except;
 end
 endgenerate
@@ -268,8 +271,8 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
-assign iq_disp.tlb_except_valid = r_inst_queue[r_inst_buffer_outptr].tlb_except_valid;
-assign iq_disp.tlb_except_cause = r_inst_queue[r_inst_buffer_outptr].tlb_except_cause;
+assign iq_disp.tlb_except_valid = w_inst_illegal;
+assign iq_disp.tlb_except_cause = w_inst_illegal_cause;
 
 
 // -------------------------------

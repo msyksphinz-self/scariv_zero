@@ -152,7 +152,7 @@ assign o_commit.except_type   = except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
                                  o_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
-                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} :
+                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00}:
                                 'h0;  // Other TVAL, Not yet supported
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
