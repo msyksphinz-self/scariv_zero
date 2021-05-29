@@ -423,6 +423,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
+`ifdef SIMULATION
+logic                                      l1d_wr_if_valid;
+logic [riscv_pkg::PADDR_W-1: 0]            l1d_wr_if_paddr;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  l1d_wr_if_data ;
+logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] l1d_wr_if_be   ;
+
+assign l1d_wr_if_valid = l1d_wr_if.valid;
+assign l1d_wr_if_paddr = l1d_wr_if.paddr;
+assign l1d_wr_if_data  = l1d_wr_if.data ;
+assign l1d_wr_if_be    = l1d_wr_if.be   ;
+`endif // SIMULATION
+
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
 assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
 
