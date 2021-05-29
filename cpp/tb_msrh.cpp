@@ -119,15 +119,10 @@ int main(int argc, char** argv) {
   dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
-  int cycle = 0;
   while (time_counter < 1000000) {
-    if ((time_counter % 5) == 0) {
-      dut->i_clk = !dut->i_clk; // Toggle clock
-    }
-    if ((time_counter % 10) == 0) {
-      // Cycle Count
-      cycle ++;
-    }
+    // if ((time_counter % 5) == 0) {
+    dut->i_clk = !dut->i_clk; // Toggle clock
+    // }
 
     // Evaluate DUT
     dut->eval();
