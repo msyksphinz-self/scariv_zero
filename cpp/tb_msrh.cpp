@@ -136,10 +136,11 @@ int main(int argc, char** argv) {
     time_counter++;
   }
 
-  fprintf(stdout, "===============================\n");
-  fprintf(stdout, "SIMULATION TIMEOUT\n");
-  fprintf(stdout, "===============================\n");
-
+  if (!Verilated::gotFinish()) {
+    fprintf(stdout, "===============================\n");
+    fprintf(stdout, "SIMULATION TIMEOUT\n");
+    fprintf(stdout, "===============================\n");
+  }
   dut->final();
   if (dump_fst_enable) tfp->close();
 }

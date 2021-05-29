@@ -13,6 +13,7 @@ MSRH RISC-V CPUコアのドキュメントにようこそ！
    sections/scheduler
    sections/committer
    sections/csr
+   sections/tlb
 
 Indices and tables
 ==================
