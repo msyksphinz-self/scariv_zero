@@ -80,7 +80,7 @@ load_binary(char const* path_exec,
   dump_segment (".text", fd);
   dump_segment (".text.init", fd);
   dump_segment (".data", fd);
-
+  dump_segment (".rodata.str1.8", fd);
   return 0;
 }
 
