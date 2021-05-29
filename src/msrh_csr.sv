@@ -715,6 +715,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MPP ] = msrh_pkg::PRV_U;
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
+      w_mtval_next = 'h0;
     end else if (i_commit.except_type == msrh_pkg::SRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
@@ -724,7 +725,9 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SPP ] = msrh_pkg::PRV_U;
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
-    end else if (i_commit.except_type == msrh_pkg::URET) begin
+      w_mtval_next = 'h0;
+    end else if (i_commit.except_type == msrh_pkg::URET) begin // if (i_commit.except_type == msrh_pkg::SRET)
+      w_mtval_next = 'h0;
     end else if (w_delegate) begin
       w_sepc_next = i_commit.epc;
       /* verilator lint_off WIDTH */
@@ -739,6 +742,8 @@ always_comb begin
           i_commit.except_type == msrh_pkg::STAMO_ACC_FAULT     ||
           i_commit.except_type == msrh_pkg::STAMO_PAGE_FAULT) begin
         w_stval_next = i_commit.tval;
+      end else begin // if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||...
+        w_stval_next = 'h0;
       end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
       w_mstatus_next[`MSTATUS_SPIE] = w_mstatus[`MSTATUS_SIE];
       w_mstatus_next[`MSTATUS_SPP ] = r_priv[0];
@@ -759,6 +764,8 @@ always_comb begin
           i_commit.except_type == msrh_pkg::STAMO_ACC_FAULT     ||
           i_commit.except_type == msrh_pkg::STAMO_PAGE_FAULT) begin
         w_mtval_next = i_commit.tval;
+      end else begin // if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||...
+        w_mtval_next = 'h0;
       end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
       w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
       w_mstatus_next[`MSTATUS_MPP ] = r_priv;

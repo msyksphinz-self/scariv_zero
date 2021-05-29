@@ -187,7 +187,8 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
   localparam SUPER_PAGE_ONLY = (t_idx >= TLB_NORMAL_ENTRIES_NUM) && (t_idx < TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM);
 
   assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
-  assign sector_tag_match = (w_all_entries[t_idx].tag == w_vpn);
+  assign sector_tag_match = (w_all_entries[t_idx].tag[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)] ==
+                             w_vpn[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)]);
 
   for (genvar lvl_idx = 0; lvl_idx < PG_LEVEL; lvl_idx++) begin : lvl_loop
     localparam base = VPN_W - (lvl_idx + 1) * PG_LEVEL_W;
@@ -250,8 +251,8 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           if (i_tlb_req.valid & o_tlb_ready & w_tlb_miss) begin
             r_state <= ST_REQUEST;
             r_refill_tag <= w_vpn;
-            r_sectored_repl_addr_oh <= w_sectored_candidate_oh;
-            r_superpage_repl_addr_oh <= w_superpage_candidate_oh;
+            r_sectored_repl_addr_oh  <= w_sectored_candidate_oh  == 'h0 ? 'h1 : w_sectored_candidate_oh;
+            r_superpage_repl_addr_oh <= w_superpage_candidate_oh == 'h0 ? 'h1 : w_superpage_candidate_oh;
           end
         end
         ST_REQUEST : begin
