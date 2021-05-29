@@ -11,6 +11,7 @@ module msrh_stq_entry
 
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input msrh_pkg::phy_wr_t                   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
    // Updates from LSU Pipeline EX1 stage
    input logic                                i_ex1_q_valid,
@@ -44,14 +45,15 @@ module msrh_stq_entry
    );
 
 stq_entry_t                          r_entry;
+stq_entry_t                          w_entry_next;
 logic                                              w_entry_flush;
 logic                                              w_dead_state_clear;
 logic                                              w_cmt_id_match;
 
 logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
 msrh_pkg::reg_t              w_rs2_type;
-logic                        w_rs2_entry_hit;
-logic                        w_rs2_may_mispred;
+logic                        w_rs2_phy_hit;
+logic [riscv_pkg::XLEN_W-1: 0] w_rs2_phy_data;
 logic                        w_entry_rs2_ready_next;
 
 assign o_entry = r_entry;
@@ -59,15 +61,17 @@ assign o_entry = r_entry;
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
 assign w_rs2_type = msrh_pkg::GPR;
 
-select_early_wr_bus rs2_rel_select
+select_phy_wr_data rs2_phy_select
 (
  .i_entry_rnid (w_rs2_rnid),
  .i_entry_type (w_rs2_type),
- .i_early_wr   (i_early_wr),
+ .i_phy_wr     (i_phy_wr),
 
- .o_valid      (w_rs2_entry_hit),
- .o_may_mispred(w_rs2_may_mispred)
+ .o_valid      (w_rs2_phy_hit),
+ .o_data       (w_rs2_phy_data)
  );
+
+
 
 assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
 
@@ -76,8 +80,8 @@ assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
-                                w_rs2_entry_hit |
-                                i_ex1_q_valid & i_ex1_q_updates.inst.rs2_ready;
+                                w_rs2_phy_hit |
+                                i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
 
 assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
@@ -91,156 +95,151 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.is_valid <= 1'b0;
     r_entry.state <= STQ_INIT;
   end else begin
-    r_entry.inst.rs2_ready <= w_entry_rs2_ready_next;
-    // if (w_entry_flush &
-    //     !((r_entry.state == STQ_DONE ||
-    //        r_entry.state == STQ_ ||
-    //        r_entry.state == STQ_COMMIT ||
-    //        r_entry.state == STQ_WAIT_LRQ_REFILL ||
-    //        r_entry.state == STQ_COMMIT_L1D_CHECK ||
-    //        r_entry.state == STQ_L1D_UPDATE))) begin
-    //   r_entry.state    <= STQ_DEAD;
-    //   r_entry.is_valid <= 1'b0;
-    //   // prevent all updates from Pipeline
-    //   // r_entry.cmt_id <= 'h0;
-    //   // r_entry.grp_id <= 'h0;
-    // end else begin
+    r_entry <= w_entry_next;
+
 `ifdef SIMULATION
     if (i_disp_load && r_entry.state != STQ_INIT) begin
       $fatal(0, "When STQ is worked, it shouldn't come to i_disp_load");
     end
 `endif // SIMULATION
-    case (r_entry.state)
-      STQ_INIT :
-        if (w_entry_flush & r_entry.is_valid) begin
-          r_entry.state <= STQ_DEAD;
-          // r_entry.is_valid <= 1'b0;
-          // r_entry.cmt_id <= 'h0;
-          // r_entry.grp_id <= 'h0;
-        end else if (i_disp_load) begin
-          r_entry <= assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
-        end else if (r_entry.is_valid & i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
-                                     !i_ex1_q_updates.st_data_valid ? STQ_WAIT_ST_DATA :
-                                     STQ_DONE_EX2;
-          r_entry.vaddr           <= i_ex1_q_updates.vaddr;
-          r_entry.paddr           <= i_ex1_q_updates.paddr;
-          r_entry.paddr_valid     <= ~i_ex1_q_updates.hazard_valid;
-          r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
-          r_entry.inst            <= i_ex1_q_updates.inst;
-          r_entry.size            <= i_ex1_q_updates.size;
-          r_entry.inst.rs2_ready  <= w_entry_rs2_ready_next;
+  end
+end
 
-          r_entry.rs2_got_data    <= i_ex1_q_updates.st_data_valid;
-          r_entry.rs2_data        <= i_ex1_q_updates.st_data;
-        end
-      STQ_TLB_HAZ : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else if (|i_tlb_resolve) begin
-          r_entry.state <= STQ_READY;
-        end
+always_comb begin
+  w_entry_next = r_entry;
+  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next;
+  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
+                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
+                          r_entry.rs2_data;
+
+  case (r_entry.state)
+    STQ_INIT :
+      if (w_entry_flush & w_entry_next.is_valid) begin
+        w_entry_next.state = STQ_DEAD;
+        // w_entry_next.is_valid = 1'b0;
+        // w_entry_next.cmt_id = 'h0;
+        // w_entry_next.grp_id = 'h0;
+      end else if (i_disp_load) begin
+        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
+      end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
+        w_entry_next.state           = i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
+                                       !w_entry_rs2_ready_next ? STQ_WAIT_ST_DATA :
+                                       STQ_DONE_EX2;
+        w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
+        w_entry_next.paddr           = i_ex1_q_updates.paddr;
+        w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
+        w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
+        w_entry_next.inst            = i_ex1_q_updates.inst;
+        w_entry_next.size            = i_ex1_q_updates.size;
+
       end
-      STQ_DONE_EX2 : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else begin
-          r_entry.state <= STQ_DONE_EX3;
-        end
+    STQ_TLB_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (|i_tlb_resolve) begin
+        w_entry_next.state = STQ_READY;
       end
-      STQ_DONE_EX3 : begin
-        // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else begin
-          r_entry.state <= STQ_WAIT_COMMIT;
-        end
+    end
+    STQ_DONE_EX2 : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else begin
+        w_entry_next.state = STQ_DONE_EX3;
       end
-      STQ_WAIT_COMMIT : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else if (w_cmt_id_match) begin
-          r_entry.state <= STQ_COMMIT;
-        end
-        // r_entry.is_valid <= 1'b1;
-        // prevent all updates from Pipeline
-        // r_entry.cmt_id <= 'h0;
-        // r_entry.grp_id <= 'h0;
-        // end
+    end
+    STQ_DONE_EX3 : begin
+      // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else begin
+        w_entry_next.state = STQ_WAIT_COMMIT;
       end
-      STQ_WAIT_ST_DATA : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else if (r_entry.inst.rs2_ready) begin
-          r_entry.state <= STQ_READY;
-        end
+    end
+    STQ_WAIT_COMMIT : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (w_cmt_id_match) begin
+        w_entry_next.state = STQ_COMMIT;
       end
-      STQ_READY : begin
-        if (w_entry_flush) begin
-          r_entry.state <= STQ_DEAD;
-        end else if (i_rerun_accept) begin
-          r_entry.state <= STQ_INIT;
-        end
+      // w_entry_next.is_valid = 1'b1;
+      // prevent all updates from Pipeline
+      // w_entry_next.cmt_id = 'h0;
+      // w_entry_next.grp_id = 'h0;
+      // end
+    end
+    STQ_WAIT_ST_DATA : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (w_entry_next.inst.rs2_ready) begin
+        w_entry_next.state = STQ_READY;
       end
-      STQ_COMMIT : begin
-        if (i_sq_op_accept) begin
-          r_entry.state <= STQ_COMMIT_L1D_CHECK;
-        end
+    end
+    STQ_READY : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (i_rerun_accept) begin
+        w_entry_next.state = STQ_INIT;
       end
-      STQ_COMMIT_L1D_CHECK : begin
-        if (i_sq_l1d_rd_miss) begin
-          r_entry.lrq_index_oh <= i_sq_lrq_index_oh;
+    end
+    STQ_COMMIT : begin
+      if (i_sq_op_accept) begin
+        w_entry_next.state = STQ_COMMIT_L1D_CHECK;
+      end
+    end
+    STQ_COMMIT_L1D_CHECK : begin
+      if (i_sq_l1d_rd_miss) begin
+        w_entry_next.lrq_index_oh = i_sq_lrq_index_oh;
 `ifdef SIMULATION
-          if (i_sq_lrq_conflict) begin
-            if (!$onehot(i_sq_lrq_index_oh)) begin
-              $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
-            end
-          end else begin
-            if (i_sq_lrq_index_oh != 'h0) begin
-              $fatal(0, "LRQ request first request index_oh should be zero.");
-            end
+        if (i_sq_lrq_conflict) begin
+          if (!$onehot(i_sq_lrq_index_oh)) begin
+            $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
           end
+        end else begin
+          if (i_sq_lrq_index_oh != 'h0) begin
+            $fatal(0, "LRQ request first request index_oh should be zero.");
+          end
+        end
 `endif // SIMULATION
-          r_entry.state <= STQ_WAIT_LRQ_REFILL;
-        end else if (i_sq_l1d_rd_conflict) begin
-          r_entry.state <= STQ_COMMIT; // Replay
-        end else begin
-          r_entry.state <= STQ_L1D_UPDATE;
-        end
+        w_entry_next.state = STQ_WAIT_LRQ_REFILL;
+      end else if (i_sq_l1d_rd_conflict) begin
+        w_entry_next.state = STQ_COMMIT; // Replay
+      end else begin
+        w_entry_next.state = STQ_L1D_UPDATE;
       end
-      STQ_WAIT_LRQ_REFILL : begin
-        if (r_entry.lrq_index_oh == 'h0) begin
-          // if index_oh is zero, it means LRQ is correctly allocated,
-          // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
-          r_entry.state <= STQ_COMMIT; // Replay
-        end else if (i_lrq_resolve.valid &&
-                     i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-          r_entry.state <= STQ_COMMIT; // Replay
-        end
+    end
+    STQ_WAIT_LRQ_REFILL : begin
+      if (w_entry_next.lrq_index_oh == 'h0) begin
+        // if index_oh is zero, it means LRQ is correctly allocated,
+        // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
+        w_entry_next.state = STQ_COMMIT; // Replay
+      end else if (i_lrq_resolve.valid &&
+                   i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+        w_entry_next.state = STQ_COMMIT; // Replay
       end
-      STQ_L1D_UPDATE : begin
-        if (i_sq_l1d_wr_conflict) begin
-          r_entry.state <= STQ_COMMIT; // Replay
-        end else begin
-          r_entry.is_valid <= 1'b0;
-          r_entry.state <= STQ_INIT;
-        end
+    end
+    STQ_L1D_UPDATE : begin
+      if (i_sq_l1d_wr_conflict) begin
+        w_entry_next.state = STQ_COMMIT; // Replay
+      end else begin
+        w_entry_next.is_valid = 1'b0;
+        w_entry_next.state = STQ_INIT;
       end
-      STQ_DEAD : begin
-        if (/* w_dead_state_clear*/ i_stq_outptr_valid) begin
-          r_entry.state    <= STQ_INIT;
-          r_entry.is_valid <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
-        end
-      end // case: msrh_pkg::DEAD
-      default : begin
-        $fatal (0, "This state sholudn't be reached.\n");
+    end
+    STQ_DEAD : begin
+      if (/* w_dead_state_clear*/ i_stq_outptr_valid) begin
+        w_entry_next.state    = STQ_INIT;
+        w_entry_next.is_valid = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
       end
-    endcase // case (r_entry.state)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
+    end // case: msrh_pkg::DEAD
+    default : begin
+      $fatal (0, "This state sholudn't be reached.\n");
+    end
+  endcase // case (w_entry_next.state)
+end // always_comb
+
 
 function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
                                                     logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
@@ -252,8 +251,6 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.inst.rs2_valid = in.rs2_valid;
   ret.inst.rs2_rnid  = in.rs2_rnid;
   ret.inst.rs2_ready = in.rs2_ready;
-
-  ret.rs2_got_data = in.rs2_ready;
 
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;

@@ -83,17 +83,17 @@ assign o_resp_valid = rd_valid[RD_LAT-1];
 assign o_resp_tag   = rd_tag  [RD_LAT-1];
 assign o_resp_data  = rd_data [RD_LAT-1];
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-  end else begin
-    if (req_fire) begin
-      /* verilator lint_off WIDTH */
-      if (actual_line_pos >= SIZE || i_req_addr < BASE_ADDR) begin
-        $display("ERROR: address %10x is out of region of L2 RAM", i_req_addr);
-        $stop;
-      end
-    end
-  end
-end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//   end else begin
+//     if (req_fire) begin
+//       /* verilator lint_off WIDTH */
+//       if (actual_line_pos >= SIZE || i_req_addr < BASE_ADDR) begin
+//         $display("ERROR: address %10x is out of region of L2 RAM", i_req_addr);
+//         $stop;
+//       end
+//     end
+//   end
+// end
 
 endmodule // tb_l2_behavior_ram

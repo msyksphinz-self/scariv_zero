@@ -190,6 +190,7 @@ msrh_stq
  .cre_ret_if   (stq_cre_ret_if  ),
 
  .i_early_wr (i_early_wr),
+ .i_phy_wr   (i_phy_wr  ),
 
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),

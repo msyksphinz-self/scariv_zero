@@ -282,7 +282,6 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic                           paddr_valid;
-  logic                           rs2_got_data;
   logic [riscv_pkg::XLEN_W-1: 0]  rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } stq_entry_t;

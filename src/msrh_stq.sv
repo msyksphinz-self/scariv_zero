@@ -11,6 +11,7 @@ module msrh_stq
 
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input msrh_pkg::phy_wr_t                   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
 
    // Updates from LSU Pipeline EX1 stage
    input ex1_q_update_t        i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
@@ -188,6 +189,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_disp        (w_disp_entry),
 
      .i_early_wr (i_early_wr),
+     .i_phy_wr   (i_phy_wr),
 
      .i_ex1_q_valid   (|w_ex1_q_valid),
      .i_ex1_q_updates (w_ex1_q_updates),
@@ -241,7 +243,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                              (w_stq_entries[s_idx].state != STQ_DEAD) &
                                              w_entry_older_than_fwd &
                                              w_stq_entries[s_idx].paddr_valid &
-                                             w_stq_entries[s_idx].rs2_got_data &
+                                             w_stq_entries[s_idx].inst.rs2_ready &
                                              w_same_addr_region &
                                              |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
@@ -261,7 +263,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                               ex2_fwd_check_if[p_idx].valid &
                                               w_entry_older_than_fwd &
                                               w_stq_entries[s_idx].is_valid &
-                                              (w_same_addr_region & ~w_stq_entries[s_idx].rs2_got_data |  // Same region and rs2 not decided
+                                              (w_same_addr_region & ~w_stq_entries[s_idx].inst.rs2_ready |  // Same region and rs2 not decided
                                                ~w_stq_entries[s_idx].paddr_valid);                        // physical addr not decided
     end // block: fwd_loop
 
@@ -271,7 +273,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                         |w_ex1_q_valid &
                                         ~w_ex1_q_updates.hazard_valid;
     assign w_resolve_st_data_haz[s_idx] = w_stq_entries[s_idx].is_valid &
-                                          w_stq_entries[s_idx].rs2_got_data;
+                                          w_stq_entries[s_idx].inst.rs2_ready;
 
     assign w_sq_commit_req_oh[s_idx] = w_sq_commit_req[s_idx] & (w_out_ptr_oh[s_idx]);
   end // block: stq_loop
