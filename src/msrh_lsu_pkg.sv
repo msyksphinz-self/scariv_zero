@@ -380,8 +380,7 @@ typedef struct packed {
 
 localparam PG_IDX_W = 12;
 localparam VPN_W = riscv_pkg::VADDR_W - PG_IDX_W;
-localparam VPN_FIELD_W = 9;
-localparam PG_LEVEL_W = 10 - $clog2(riscv_pkg::XLEN_W / 32);
+localparam VPN_FIELD_W = 10 - $clog2(riscv_pkg::XLEN_W / 32);
 localparam SECTOR_NUM = 4;
 
 

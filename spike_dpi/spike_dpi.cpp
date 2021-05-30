@@ -510,7 +510,7 @@ void step_spike(long long time, long long rtl_pc,
 
   // When RTL generate exception, stop to compare mstatus.
   // Because mstatus update timing is too much complex.
-  if (!rtl_exception && (iss_mstatus != rtl_mstatus)) {
+  if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus)) {
     fprintf(stderr, "==========================================\n");
     fprintf(stderr, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
             g_rv_xlen / 4, rtl_mstatus,

@@ -190,13 +190,13 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
                              w_vpn[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)]);
 
   for (genvar lvl_idx = 0; lvl_idx < riscv_pkg::PG_LEVELS; lvl_idx++) begin : lvl_loop
-    localparam base = VPN_W - (lvl_idx + 1) * PG_LEVEL_W;
+    localparam base = VPN_W - (lvl_idx + 1) * VPN_FIELD_W;
     logic w_ignore;
     /* verilator lint_off UNSIGNED */
     assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == riscv_pkg::PG_LEVELS-1);
-    assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: PG_LEVEL_W] == w_vpn[base + PG_IDX_W +: PG_LEVEL_W]);
-    assign w_filtered_ppn[base +: PG_LEVEL_W] = w_ignore ? w_vpn[PG_IDX_W + base +: PG_LEVEL_W] :
-                                                w_all_entries[t_idx].data[sector_idx].ppn[base +: PG_LEVEL_W];
+    assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: VPN_FIELD_W] == w_vpn[base + PG_IDX_W +: VPN_FIELD_W]);
+    assign w_filtered_ppn[base +: VPN_FIELD_W] = w_ignore ? w_vpn[PG_IDX_W + base +: VPN_FIELD_W] :
+                                                w_all_entries[t_idx].data[sector_idx].ppn[base +: VPN_FIELD_W];
   end
   assign w_is_hit[t_idx] = w_all_entries[t_idx].valid[sector_idx] & ((SUPER_PAGE && msrh_conf_pkg::USING_VM) ? |w_tag_match :
                                                                      sector_tag_match);
