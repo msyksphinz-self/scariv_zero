@@ -38,6 +38,7 @@
 ../src/encoder.sv
 ../src/inoutptr.sv
 ../src/inoutptr_var.sv
+../src/inoutptr_var_oh.sv
 ../src/inoutptr_oh.sv
 
 ../src/select_latest.sv
@@ -45,6 +46,7 @@
 ../src/select_oh.sv
 ../src/select_release_bus.sv
 ../src/select_phy_wr_bus.sv
+../src/select_phy_wr_data.sv
 ../src/select_mispred_bus.sv
 
 ../src/msrh_credit_return.sv

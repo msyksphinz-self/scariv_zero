@@ -5,7 +5,7 @@ module msrh_disp_pickup
     )
 (
  input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_disp_valid,
- disp_if.slave                          i_disp,
+ disp_if.watch                          i_disp,
 
  output logic [PORT_SIZE-1:0]           o_disp_valid,
  output msrh_pkg::disp_t                o_disp[PORT_SIZE],

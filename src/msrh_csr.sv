@@ -123,6 +123,7 @@ logic [XLEN_W-1: 0] r_mvendorid;
 logic [XLEN_W-1: 0] r_marchid;
 logic [XLEN_W-1: 0] r_mimpid;
 logic [XLEN_W-1: 0] r_mhartid;
+logic [riscv_pkg::XLEN_W-1: 0] w_mstatus, w_mstatus_next;
 logic [XLEN_W-1: 0] r_mstatus;
 logic [XLEN_W-1: 0] r_misa;
 logic [XLEN_W-1: 0] r_medeleg;
@@ -676,7 +677,6 @@ assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
 `define MSTATUS_TW  21
 `define MSTATUS_TSR 22
 
-logic [riscv_pkg::XLEN_W-1: 0] w_mstatus, w_mstatus_next;
 always_comb begin
   w_mstatus = r_mstatus;
   w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);

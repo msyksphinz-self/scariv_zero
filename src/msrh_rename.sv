@@ -17,7 +17,7 @@ module msrh_rename
    // -------------------------------
    // Credit Return Update interface
    // -------------------------------
-   cre_ret_if.slave  rob_cre_ret_if,
+   cre_ret_if.master rob_cre_ret_if,
    cre_ret_if.master alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM],
    cre_ret_if.master lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
    cre_ret_if.master ldq_cre_ret_if,

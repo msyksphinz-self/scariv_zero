@@ -5,7 +5,7 @@ module msrh_ldq
    input logic                           i_reset_n,
 
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
-   disp_if.slave                              disp,
+   disp_if.watch                              disp,
    cre_ret_if.slave                           cre_ret_if,
 
    // Updates from LSU Pipeline EX1 stage

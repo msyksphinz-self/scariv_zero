@@ -5,17 +5,17 @@ initial begin
   pipe_fp = $fopen("pipetrace.log");
 end
 
-logic [msrh_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;
-msrh_pkg::rob_entry_t rob_entries[msrh_pkg::CMT_ENTRY_SIZE];
+logic [msrh_conf_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;
+msrh_pkg::rob_entry_t rob_entries[msrh_conf_pkg::CMT_ENTRY_SIZE];
 msrh_pkg::rob_entry_t committed_rob_entry;
-generate for (genvar r_idx = 0; r_idx < msrh_pkg::CMT_ENTRY_SIZE; r_idx++) begin : rob_loop
+generate for (genvar r_idx = 0; r_idx < msrh_conf_pkg::CMT_ENTRY_SIZE; r_idx++) begin : rob_loop
   assign rob_entries[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
   assign rob_entries_valid[r_idx] = u_msrh_tile_wrapper.u_msrh_tile.u_rob.entry_loop[r_idx].u_entry.r_entry.valid;
 end
 endgenerate
 
-logic [msrh_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
-logic [msrh_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
+logic [msrh_conf_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
 assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id;
 assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? committed_rob_entry.grp_id :
                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
@@ -23,7 +23,7 @@ assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? 
 bit_oh_or
   #(
     .T(msrh_pkg::rob_entry_t),
-    .WORDS(msrh_pkg::CMT_ENTRY_SIZE)
+    .WORDS(msrh_conf_pkg::CMT_ENTRY_SIZE)
     )
 committed_entry
   (
@@ -52,7 +52,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     end
     if (&r_timeout_counter) begin
       $display("FATAL : COMMIT DEADLOCKED\n");
-      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+      for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (rob_entries_valid[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]] &
             rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]].grp_id[grp_idx] &
             !rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id[msrh_pkg::CMT_ENTRY_W-1: 0]].done_grp_id[grp_idx]) begin
@@ -65,7 +65,7 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
                   rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst,
                   rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst);
         end // if (rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].valid &...
-      end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+      end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
       $fatal;
     end
   end
@@ -123,7 +123,7 @@ end
 // always @ (negedge w_clk, negedge w_msrh_reset_n) begin
 //   if (w_msrh_reset_n) begin
 //     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
-//       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+//       for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
 //         if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
 //           if (committed_rob_entry.inst[grp_idx].rd_valid &&
 //               (committed_rob_entry.inst[grp_idx].rd_regidx != 0)) begin
@@ -153,7 +153,7 @@ end
 //             rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx] <= poped_rnid;
 //           end // if (committed_rob_entry.inst[grp_idx].rd_valid)
 //         end // if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx])
-//       end // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
+//       end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
 //     end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)
 //   end // if (i_reset_n)
 // end // always_ff @ (negedge i_clk, negedge i_reset_n)
