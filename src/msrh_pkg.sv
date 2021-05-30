@@ -56,7 +56,7 @@ package msrh_pkg;
 // ------------------------
 // Exception Control
 // ------------------------
-typedef enum logic [ 5: 0] {
+typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
   INST_ADDR_MISALIGN = 0,
   INST_ACC_FAULT     = 1,
   ILLEGAL_INST       = 2,
