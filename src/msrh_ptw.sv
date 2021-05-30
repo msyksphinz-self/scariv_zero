@@ -27,7 +27,7 @@ typedef enum logic [ 2: 0] {
 } state_t;
 
 state_t r_state;
-logic [$clog2(PG_LEVELS)-1: 0] r_count;
+logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] r_count;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_wait_conflicted_lrq_oh;
 
 logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
@@ -105,11 +105,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       IDLE : begin
         if (w_ptw_accepted_req.valid) begin
           r_state <= CHECK_L1D;
-          r_count <= PG_LEVELS - 1;
+          /* verilator lint_off WIDTH */
+          r_count <= riscv_pkg::PG_LEVELS - 'h1;
           r_ptw_vpn <= w_ptw_accepted_req.addr;
           r_ptw_addr <= {w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0], {PG_IDX_W{1'b0}}} +
                         {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
-                         w_ptw_accepted_req.addr[(PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W],
+                         w_ptw_accepted_req.addr[(riscv_pkg::PG_LEVELS-1)*VPN_FIELD_W +: VPN_FIELD_W],
                          {$clog2(riscv_pkg::XLEN_W / 8){1'b0}}};
         end
       end

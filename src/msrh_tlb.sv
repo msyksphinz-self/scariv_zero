@@ -29,7 +29,6 @@ localparam TLB_SUPERPAGE_ENTRIES_NUM = 4;
 localparam USE_ATOMICS_INCACHE = 1'b1;
 localparam USE_ATOMIC = 1'b1;
 localparam TLB_ALL_ENTRIES_NUM = TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM + 1;
-localparam PG_LEVEL = 3;  // Sv39
 
 typedef struct packed {
   logic [riscv_pkg::PPN_W-1: 0] ppn;
@@ -51,7 +50,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic [SECTOR_NUM-1:0]                 valid;
-  logic [1: 0]                           level;
+  logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] level;
   logic [riscv_pkg::VADDR_W-1: PG_IDX_W] tag;
   tlb_entry_data_t [SECTOR_NUM-1:0]      data;
 } tlb_entry_t;
@@ -178,7 +177,7 @@ logic [riscv_pkg::PPN_W-1:0] w_entry_ppn[TLB_ALL_ENTRIES_NUM];
 logic [riscv_pkg::PPN_W-1:0] w_selected_ppn;
 logic [riscv_pkg::PPN_W-1:0] w_ppn;
 generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tlb_loop
-  logic [PG_LEVEL-1: 0] w_tag_match;
+  logic [riscv_pkg::PG_LEVELS-1: 0] w_tag_match;
   logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
   logic                 sector_tag_match;
   logic [riscv_pkg::PPN_W-1:0] w_filtered_ppn;
@@ -190,11 +189,11 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
   assign sector_tag_match = (w_all_entries[t_idx].tag[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)] ==
                              w_vpn[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)]);
 
-  for (genvar lvl_idx = 0; lvl_idx < PG_LEVEL; lvl_idx++) begin : lvl_loop
+  for (genvar lvl_idx = 0; lvl_idx < riscv_pkg::PG_LEVELS; lvl_idx++) begin : lvl_loop
     localparam base = VPN_W - (lvl_idx + 1) * PG_LEVEL_W;
     logic w_ignore;
     /* verilator lint_off UNSIGNED */
-    assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == PG_LEVELS-1);
+    assign w_ignore = (w_all_entries[t_idx].level < lvl_idx) || (SUPER_PAGE_ONLY && lvl_idx == riscv_pkg::PG_LEVELS-1);
     assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: PG_LEVEL_W] == w_vpn[base + PG_IDX_W +: PG_LEVEL_W]);
     assign w_filtered_ppn[base +: PG_LEVEL_W] = w_ignore ? w_vpn[PG_IDX_W + base +: PG_LEVEL_W] :
                                                 w_all_entries[t_idx].data[sector_idx].ppn[base +: PG_LEVEL_W];

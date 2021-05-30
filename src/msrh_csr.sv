@@ -676,21 +676,10 @@ assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
 `define MSTATUS_TW  21
 `define MSTATUS_TSR 22
 
-`define MSTATUS_UXL  33:32
-`define MSTATUS_SXL  35:34
-
-`define MSTATUS_SD   63
-
-logic [riscv_pkg::XLEN_W-1: 0] init_mstatus;
 logic [riscv_pkg::XLEN_W-1: 0] w_mstatus, w_mstatus_next;
 always_comb begin
-  init_mstatus = {riscv_pkg::XLEN_W{1'b0}};
-  /* verilator lint_off WIDTH */
-  init_mstatus[`MSTATUS_UXL] = $clog2(riscv_pkg::XLEN_W) - 4;
-  init_mstatus[`MSTATUS_SXL] = $clog2(riscv_pkg::XLEN_W) - 4;
-
   w_mstatus = r_mstatus;
-  w_mstatus[`MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);
+  w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);
 end
 
 always_comb begin
@@ -834,7 +823,7 @@ end // always_comb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_priv <= msrh_pkg::PRV_M;
-    r_mstatus <= init_mstatus;
+    r_mstatus <= riscv_pkg::init_mstatus;
 
     r_sepc <= 'h0;
     r_scause <= 'h0;

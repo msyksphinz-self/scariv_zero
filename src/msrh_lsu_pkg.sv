@@ -378,7 +378,6 @@ typedef struct packed {
 // TLB
 // -----
 
-localparam PG_LEVELS = 3;
 localparam PG_IDX_W = 12;
 localparam VPN_W = riscv_pkg::VADDR_W - PG_IDX_W;
 localparam VPN_FIELD_W = 9;
@@ -408,7 +407,7 @@ typedef struct packed {
   logic          valid;
   logic                          ae;
   pte_t                          pte;
-  logic [$clog2(PG_LEVELS)-1: 0] level;
+  logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] level;
   logic                          fragmented_superpage;
   logic                          homogeneous;
 } ptw_resp_t;
