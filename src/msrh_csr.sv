@@ -303,7 +303,7 @@ always_comb begin
     `SYSREG_ADDR_HPMCOUNTERH29  : read_if.data = r_hpmcounterh29;
     `SYSREG_ADDR_HPMCOUNTERH30  : read_if.data = r_hpmcounterh30;
     `SYSREG_ADDR_HPMCOUNTERH31  : read_if.data = r_hpmcounterh31;
-    `SYSREG_ADDR_SSTATUS        : read_if.data = map_sstatus();
+    `SYSREG_ADDR_SSTATUS        : read_if.data = riscv_pkg::map_sstatus(r_mstatus);
     `SYSREG_ADDR_SEDELEG        : read_if.data = r_sedeleg;
     `SYSREG_ADDR_SIDELEG        : read_if.data = r_sideleg;
     `SYSREG_ADDR_SIE            : read_if.data = r_sie;
@@ -858,24 +858,5 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-
-function logic [riscv_pkg::XLEN_W-1: 0] map_sstatus ();
-  if (riscv_pkg::XLEN_W == 64) begin
-    return {r_mstatus [riscv_pkg::XLEN_W-1],
-            25'b0,
-            1'b0, 1'b0, 2'b00, r_mstatus[33:32],
-            9'b0_0000_0000, 1'b0, 1'b0, 1'b0, r_mstatus[19], r_mstatus[18],
-            1'b0, r_mstatus[16:15], r_mstatus[14:13], r_mstatus[12:11], 2'b00,
-            r_mstatus[8], 1'b0, 1'b0, r_mstatus[5], 1'b0, 1'b0, 1'b0, r_mstatus[1], 1'b0};
-  end if (riscv_pkg::XLEN_W == 32) begin
-    return {r_mstatus [riscv_pkg::XLEN_W-1],
-            8'b0000_0000,
-            1'b0, 1'b0, 1'b0, r_mstatus[19], r_mstatus[18],
-            1'b0, r_mstatus[16:15], r_mstatus[14:13], r_mstatus[12:11], 2'b00,
-            r_mstatus[8], 1'b0, 1'b0, r_mstatus[5], 1'b0, 1'b0, 1'b0, r_mstatus[1], 1'b0};
-  end else begin // else: !if(riscv_pkg::XLEN_W == 64)
-    $fatal(0, "XLEN should be 32 or 64");
-  end // else: !if(riscv_pkg::XLEN_W == 64)
-endfunction // map_sstatus
 
 endmodule // msrh_csr
