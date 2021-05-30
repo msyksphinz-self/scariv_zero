@@ -59,7 +59,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_rp1_lrq_resp_data <= 'h0;
   end else begin
     r_rp1_l1d_exp_resp_valid <= l1d_ext_resp.valid &
-                                (l1d_ext_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1] == msrh_lsu_pkg::L2_UPPER_TAG_L1D);
+                                (l1d_ext_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1:msrh_lsu_pkg::L2_CMD_TAG_W-2] == msrh_lsu_pkg::L2_UPPER_TAG_L1D);
     r_rp1_lrq_resp_tag       <= l1d_ext_resp.payload.tag[msrh_pkg::LRQ_ENTRY_W-1:0];
     r_rp1_lrq_resp_data      <= l1d_ext_resp.payload.data;
   end

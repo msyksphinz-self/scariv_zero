@@ -207,7 +207,7 @@ assign w_stq_load_entry.paddr = {l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg
 assign w_stq_load_entry.sent  = 1'b0;
 
 
-localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 1 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
+localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
 
 // selection of external memory request
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : lrq_sel_loop

@@ -2,10 +2,11 @@ package msrh_lsu_pkg;
 
   import msrh_pkg::*;
 
-  localparam L2_CMD_TAG_W = 4;
+  localparam L2_CMD_TAG_W = 5;
 
-  localparam L2_UPPER_TAG_IC  = 1'b0;
-  localparam L2_UPPER_TAG_L1D = 1'b1;
+  localparam L2_UPPER_TAG_IC  = 2'b00;
+  localparam L2_UPPER_TAG_L1D = 2'b01;
+  localparam L2_UPPER_TAG_PTW = 2'b10;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = 12;

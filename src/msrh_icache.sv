@@ -149,7 +149,7 @@ cache_data_sel (
                 );
 
 assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
-                         (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-1){1'b0}}});
+                         (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}});
 assign o_s2_resp.valid = !i_flush_valid & r_s2_valid & r_s2_hit & (r_ic_state == ICInit);
 assign o_s2_resp.addr  = r_s2_vaddr [VADDR_W-1: 1];
 assign o_s2_resp.data  = w_s2_selected_data;
@@ -199,7 +199,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign ic_l2_req.valid           = (r_ic_state == ICReq);
 assign ic_l2_req.payload.cmd     = M_XRD;
 assign ic_l2_req.payload.addr    = r_s2_paddr;
-assign ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-1){1'b0}}};
+assign ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
 assign ic_l2_req.payload.data    = 'h0;
 assign ic_l2_req.payload.byte_en = 'h0;
 assign ic_l2_resp.ready = 1'b1;

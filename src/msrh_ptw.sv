@@ -165,7 +165,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       L2_RESP_WAIT : begin
-        if (ptw_resp.valid & ptw_resp.ready) begin
+        if (ptw_resp.valid & ptw_resp.ready &
+            (ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}})) begin
           if (lsu_access_is_leaf || r_count == 'h0) begin
             r_state <= IDLE;
           end else if (lsu_access_bad_pte) begin
@@ -192,7 +193,7 @@ assign lsu_access.size  = riscv_pkg::XLEN_W == 64 ? decoder_lsu_ctrl::SIZE_DW :
 assign ptw_req.valid           = (r_state == L2_REQUEST);
 assign ptw_req.payload.cmd     = M_XRD;
 assign ptw_req.payload.addr    = r_ptw_addr;
-assign ptw_req.payload.tag     = 'h0;
+assign ptw_req.payload.tag     = {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};;
 assign ptw_req.payload.data    = 'h0;
 assign ptw_req.payload.byte_en = 'h0;
 assign ptw_resp.ready = 1'b1;
