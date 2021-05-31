@@ -25,7 +25,7 @@ module msrh_frontend
 // s0 stage
 // ==============
 
-typedef enum logic [ 2: 0] {
+typedef enum logic [ 2: 0]  {
   INIT = 0,
   ISSUED = 1,
   WAIT_TLB_FILL = 2,
@@ -64,6 +64,7 @@ msrh_pkg::except_t             r_s1_tlb_except_cause;
 logic                           w_s2_inst_valid;
 logic                           r_s2_valid;
 logic                           r_s2_clear;
+logic [riscv_pkg::VADDR_W-1:0]  r_s2_vaddr;
 msrh_lsu_pkg::ic_resp_t         w_s2_ic_resp;
 logic                           w_s2_ic_miss;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
@@ -196,8 +197,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else begin
       case (r_if_state)
         ISSUED : begin
-          if (r_s1_tlb_miss & !r_s1_clear) begin
-            r_s0_vaddr <= r_s1_vaddr;
+          // if (r_s1_tlb_miss & !r_s1_clear) begin
+          if (r_s2_tlb_miss & !r_s2_clear) begin
+            r_s0_vaddr <= r_s2_vaddr;
           end else if (w_s2_ic_miss & !r_s2_clear) begin
             r_s0_vaddr <= w_s2_ic_miss_vaddr;
           end else if (w_s2_inst_valid & !w_inst_buffer_ready) begin
@@ -238,7 +240,7 @@ always_comb begin
       w_if_state_next = ISSUED;
     end
     ISSUED : begin
-      if (r_s1_tlb_miss & !r_s1_clear) begin
+      if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
       end else if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
@@ -310,7 +312,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
-    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid;
+    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid & w_tlb_ready;
     r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
                              w_s0_tlb_resp.ae.inst |
                              w_s0_tlb_resp.ma.inst;
@@ -327,12 +329,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_valid <= 1'b0;
     r_s2_clear <= 1'b0;
+    r_s2_vaddr <= 'h0;
     r_s2_tlb_miss         <= 1'b0;
     r_s2_tlb_except_valid <= 1'b0;
     r_s2_tlb_except_cause <= msrh_pkg::except_t'(0);
   end else begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear;
+    r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss        ;
     r_s2_tlb_except_valid <= w_commit_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
@@ -362,7 +366,7 @@ msrh_icache u_msrh_icache
 
 
    .i_s1_paddr (r_s1_paddr),
-   .i_s1_kill  (r_s1_tlb_miss | r_s1_tlb_except_valid),
+   .i_s1_kill  (r_s1_tlb_miss | r_s2_tlb_miss | r_s1_tlb_except_valid),
 
    .o_s2_resp (w_s2_ic_resp),
 
