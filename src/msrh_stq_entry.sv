@@ -107,10 +107,6 @@ end
 
 always_comb begin
   w_entry_next = r_entry;
-  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next;
-  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
-                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
-                          r_entry.rs2_data;
 
   case (r_entry.state)
     STQ_INIT :
@@ -238,6 +234,12 @@ always_comb begin
       $fatal (0, "This state sholudn't be reached.\n");
     end
   endcase // case (w_entry_next.state)
+
+  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next | r_entry.inst.rs2_ready;
+  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
+                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
+                          r_entry.rs2_data;
+
 end // always_comb
 
 

@@ -192,12 +192,49 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
+logic w_s0_update_cond_0, w_s0_update_cond_1;
+assign w_s0_update_cond_0 = (w_s0_ic_req.valid & w_s0_ic_ready & w_tlb_ready);
+assign w_s0_update_cond_1 = w_if_state_next == ISSUED;
+
 always_comb begin
   w_if_state_next = r_if_state;
+  case (r_if_state)
+    INIT : begin
+      w_if_state_next = ISSUED;
+    end
+    ISSUED : begin
+      if (r_s2_tlb_miss & !r_s2_clear) begin
+        w_if_state_next = WAIT_TLB_FILL;
+      end else if (w_s2_ic_miss & !r_s2_clear) begin
+        w_if_state_next = WAIT_IC_FILL;
+      end else if (!w_inst_buffer_ready) begin
+        w_if_state_next = WAIT_FB_FREE;
+      end
+    end
+    WAIT_IC_FILL : begin
+      if (w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    WAIT_TLB_FILL : begin
+      if (w_tlb_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    WAIT_FB_FREE : begin
+      if (w_inst_buffer_ready & w_s0_ic_ready) begin
+        w_if_state_next = ISSUED;
+      end
+    end
+    default : begin end
+  endcase // case (r_if_state)
+
+
   w_s0_vaddr_next = r_s0_vaddr;
 
   if (w_commit_upd_pc) begin
-    if (w_s0_ic_req.valid & w_s0_ic_ready & w_tlb_ready) begin
+    if ((w_s0_ic_req.valid & w_s0_ic_ready & w_tlb_ready) |
+        (w_if_state_next == ISSUED)) begin
       w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                         (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
     end else begin
@@ -205,18 +242,13 @@ always_comb begin
     end
   end else begin
     case (r_if_state)
-      INIT : begin
-        w_if_state_next = ISSUED;
-      end
+      INIT : begin end
       ISSUED : begin
         if (r_s2_tlb_miss & !r_s2_clear) begin
-          w_if_state_next = WAIT_TLB_FILL;
           w_s0_vaddr_next = r_s2_vaddr;
         end else if (w_s2_ic_miss & !r_s2_clear) begin
-          w_if_state_next = WAIT_IC_FILL;
           w_s0_vaddr_next = w_s2_ic_miss_vaddr;
         end else if (!w_inst_buffer_ready) begin
-          w_if_state_next = WAIT_FB_FREE;
           w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
         end else begin
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -225,21 +257,18 @@ always_comb begin
       end
       WAIT_IC_FILL : begin
         if (w_s0_ic_ready) begin
-          w_if_state_next = ISSUED;
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end
       WAIT_TLB_FILL : begin
         if (w_tlb_ready) begin
-          w_if_state_next = ISSUED;
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end
       WAIT_FB_FREE : begin
         if (w_inst_buffer_ready & w_s0_ic_ready) begin
-          w_if_state_next = ISSUED;
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
@@ -247,6 +276,7 @@ always_comb begin
       default : begin end
     endcase // case (r_if_state)
   end // else: !if(w_commit_upd_pc)
+
 end
 
 
