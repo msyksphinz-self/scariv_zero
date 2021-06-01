@@ -363,7 +363,7 @@ assign w_pf_st_array = w_cmd_write_perms ? ~(w_w_array | w_ptw_ae_array) : 'h0;
 assign w_pf_inst_array = ~(w_x_array | w_ptw_ae_array);
 
 logic                            w_do_refill;
-assign w_do_refill = msrh_conf_pkg::USING_VM && ptw_if.resp.valid;
+assign w_do_refill = msrh_conf_pkg::USING_VM && (r_state == ST_WAIT) & ptw_if.resp.valid;
 
 // ---------------
 // Request of TLB
