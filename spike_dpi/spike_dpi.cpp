@@ -465,11 +465,17 @@ void step_spike(long long time, long long rtl_pc,
   if (rtl_exception) {
     fprintf(stderr, "%lld : Exception Cause = %d\n", time, rtl_exception_cause);
   }
-  if (rtl_exception & ((rtl_exception_cause == 0) ||  // Instruction Access Misaligned
-                       (rtl_exception_cause == 1) ||  // Instruction Access Fault
-                       (rtl_exception_cause == 2) ||  // Illegal Instruction
-                       (rtl_exception_cause == 8) ||  // ECALL
-                       (rtl_exception_cause == 9) ||  // ECALL
+  if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
+                       (rtl_exception_cause == 1 ) ||  // Instruction Access Fault
+                       (rtl_exception_cause == 2 ) ||  // Illegal Instruction
+                       (rtl_exception_cause == 4 ) ||  // Load Access Misaligned
+                       (rtl_exception_cause == 5 ) ||  // Load Access Fault
+                       (rtl_exception_cause == 13) ||  // Load Page Fault
+                       (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
+                       (rtl_exception_cause == 7 ) ||  // Store Access Fault
+                       (rtl_exception_cause == 15) ||  // Store Page Fault
+                       (rtl_exception_cause == 8 ) ||  // ECALL
+                       (rtl_exception_cause == 9 ) ||  // ECALL
                        (rtl_exception_cause == 10) ||  // ECALL
                        (rtl_exception_cause == 12))) {
     fprintf(stderr, "==========================================\n");

@@ -26,7 +26,7 @@ module msrh_ldq
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
-   output                                msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
+   output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
    );
 
 ldq_entry_t w_ldq_entries[msrh_conf_pkg::LDQ_SIZE];
@@ -220,7 +220,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].valid   = |w_ldq_done_array;
   assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.cmt_id;
   assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.grp_id;
-  assign o_done_report[d_idx].exc_valid = 'h0;   // Temporary
+  assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
+  assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
 end
 endgenerate
 

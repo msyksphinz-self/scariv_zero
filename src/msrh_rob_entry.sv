@@ -44,8 +44,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   sel_done_rpt (.i_oh(w_done_rpt_tmp_valid),
                 .i_data(i_done_rpt),
                 .o_selected(w_done_rpt_selected));
-  assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.exc_valid;
-  assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.exc_type;
+  assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.except_valid;
+  assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.except_type;
 end
 endgenerate
 

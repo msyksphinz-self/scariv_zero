@@ -350,8 +350,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].valid   = |w_stq_done_oh;
   assign o_done_report[d_idx].cmt_id  = w_stq_done_entry.cmt_id;
   assign o_done_report[d_idx].grp_id  = w_stq_done_entry.grp_id;
-  assign o_done_report[d_idx].exc_valid = 'h0;   // Temporary
-
+  assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
+  assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
 end
 endgenerate
 

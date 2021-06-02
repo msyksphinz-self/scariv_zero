@@ -267,8 +267,8 @@ endfunction  // assign_issue_t
     logic                 valid;
     logic [CMT_ID_W-1:0]  cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
-    logic                 exc_valid;
-    except_t              exc_type;
+    logic                 except_valid;
+    except_t              except_type;
   } done_rpt_t;
 
 // -----------------

@@ -176,16 +176,18 @@ endgenerate
 logic [riscv_pkg::PPN_W-1:0] w_entry_ppn[TLB_ALL_ENTRIES_NUM];
 logic [riscv_pkg::PPN_W-1:0] w_selected_ppn;
 logic [riscv_pkg::PPN_W-1:0] w_ppn;
+
+logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
+assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
+
 generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tlb_loop
   logic [riscv_pkg::PG_LEVELS-1: 0] w_tag_match;
-  logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
   logic                 sector_tag_match;
   logic [riscv_pkg::PPN_W-1:0] w_filtered_ppn;
 
   localparam SUPER_PAGE      = (t_idx >= TLB_NORMAL_ENTRIES_NUM);
   localparam SUPER_PAGE_ONLY = (t_idx >= TLB_NORMAL_ENTRIES_NUM) && (t_idx < TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM);
 
-  assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
   assign sector_tag_match = (w_all_entries[t_idx].tag[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)] ==
                              w_vpn[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)]);
 
@@ -288,16 +290,15 @@ endgenerate
 
 
 assign w_bad_va     = 1'b0;
-assign w_misaligned = ((i_tlb_req.vaddr & ((1 << i_tlb_req.size) - 1)) != 'h0);
+/* verilator lint_off WIDTH */
+assign w_misaligned = ((i_tlb_req.vaddr & (i_tlb_req.size - 1)) != 'h0);
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : elem_loop
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
-    logic [$clog2(SECTOR_NUM)-1: 0] sector_idx;
-    assign sector_idx = w_vpn[PG_IDX_W +: $clog2(SECTOR_NUM)] ;
 
     assign w_ptw_ae_array[e_idx] = r_sectored_entries[e_idx].data[sector_idx].ae;
-    assign w_priv_rw_ok  [e_idx] = !w_priv_s || ptw_if.status[18] ? r_sectored_entries[e_idx].data[sector_idx].u : 'h0 |
-                                   w_priv_s ? ~r_sectored_entries[e_idx].data[sector_idx].u : 'h0;
+    assign w_priv_rw_ok  [e_idx] = (!w_priv_s || ptw_if.status[18] ? r_sectored_entries[e_idx].data[sector_idx].u : 'h0) |
+                                   (w_priv_s ? ~r_sectored_entries[e_idx].data[sector_idx].u : 'h0);
     assign w_priv_x_ok   [e_idx] = w_priv_s ? ~r_sectored_entries[e_idx].data[sector_idx].u : r_sectored_entries[e_idx].data[sector_idx].u;
     assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (r_sectored_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? r_sectored_entries[e_idx].data[sector_idx].sx : 1'b0));
     assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & r_sectored_entries[e_idx].data[sector_idx].sw;

@@ -121,6 +121,8 @@ always_comb begin
         w_entry_next.state           = i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
                                        !w_entry_rs2_ready_next ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
+        w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
+        w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
@@ -259,6 +261,8 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.state     = STQ_INIT;
   ret.vaddr     = 'h0;
   ret.paddr_valid = 1'b0;
+
+  ret.except_valid = 1'b0;
 
   return ret;
 endfunction // assign_stq_disp

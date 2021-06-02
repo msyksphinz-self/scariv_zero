@@ -185,6 +185,8 @@ typedef struct packed {
   logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   logic                           hazard_valid;
+  logic                           tlb_except_valid;
+  msrh_pkg::except_t              tlb_except_type;
   logic [MEM_Q_SIZE-1:0]          index_oh;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
@@ -285,6 +287,9 @@ typedef struct packed {
   logic                           paddr_valid;
   logic [riscv_pkg::XLEN_W-1: 0]  rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+
+  logic                                 except_valid;
+  msrh_pkg::except_t                    except_type;
 } stq_entry_t;
 
 
@@ -358,7 +363,8 @@ typedef enum logic[3:0] {
   LDQ_CHECK_ST_DEPEND = 6,
   LDQ_EX3_DONE = 7,
   LDQ_DEAD = 8,
-  LDQ_WAIT_COMPLETE = 9
+  LDQ_WAIT_COMPLETE = 9,
+  LDQ_EXCEPT = 10
 } ldq_state_t;
 
 typedef struct packed {
@@ -373,6 +379,9 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1: 0]  stq_haz_idx;
+
+  logic                                 except_valid;
+  msrh_pkg::except_t                    except_type;
 } ldq_entry_t;
 
 // -----

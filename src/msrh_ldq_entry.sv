@@ -30,8 +30,7 @@ module msrh_ldq_entry
 
  output logic                                    o_entry_finish,
 
- input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done /*,
- input logic                                     i_ldq_done */
+ input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done
  );
 
 ldq_entry_t                                      r_entry;
@@ -102,7 +101,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end else if (i_disp_load) begin
           r_entry <= assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
         end else if (r_entry.is_valid & i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_valid ? LDQ_TLB_HAZ : LDQ_EX2_RUN;
+          r_entry.state           <= i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
+                                     LDQ_EX2_RUN;
+          r_entry.except_valid    <= i_ex1_q_updates.tlb_except_valid;
+          r_entry.except_type     <= i_ex1_q_updates.tlb_except_type;
           r_entry.vaddr           <= i_ex1_q_updates.vaddr;
           r_entry.paddr           <= i_ex1_q_updates.paddr;
           r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
@@ -226,6 +228,7 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.grp_id    = grp_id;
   ret.state     = LDQ_INIT;
   ret.vaddr     = 'h0;
+  ret.except_valid = 1'b0;
 
   return ret;
 endfunction // assign_ldq_disp

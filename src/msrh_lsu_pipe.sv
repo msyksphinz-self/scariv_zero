@@ -225,6 +225,20 @@ assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.rd_valid;
 assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
+logic w_ld_except_valid;
+logic w_st_except_valid;
+msrh_pkg::except_t w_tlb_except_type;
+assign w_ld_except_valid = r_ex1_pipe_ctrl.is_load &
+                           (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_st_except_valid = r_ex1_pipe_ctrl.is_store &
+                           (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
+assign w_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
+                           w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :
+                           w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :
+                           w_ex1_tlb_resp.ma.st ? msrh_pkg::STAMO_ADDR_MISALIGN:
+                           w_ex1_tlb_resp.pf.st ? msrh_pkg::STAMO_PAGE_FAULT   :
+                           /* w_ex1_tlb_resp.ae.st ? */ msrh_pkg::STAMO_ACC_FAULT;
+
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
 assign o_ex1_q_updates.inst       = r_ex1_issue;
@@ -232,6 +246,8 @@ assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_valid = w_ex1_tlb_resp.miss;
+assign o_ex1_q_updates.tlb_except_valid = !w_ex1_tlb_resp.miss & (w_ld_except_valid | w_st_except_valid);
+assign o_ex1_q_updates.tlb_except_type  = w_tlb_except_type;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
