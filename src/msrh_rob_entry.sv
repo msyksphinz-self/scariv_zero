@@ -29,7 +29,8 @@ rob_entry_t             r_entry;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_except_valid;
-except_t                                w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
+except_t                               w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
+logic [riscv_pkg::XLEN_W-1: 0]         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
   logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_valid;
@@ -46,6 +47,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                 .o_selected(w_done_rpt_selected));
   assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.except_valid;
   assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.except_type;
+  assign w_done_rpt_except_tval [d_idx] = w_done_rpt_selected.except_tval;
 end
 endgenerate
 
@@ -86,6 +88,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
           r_entry.except_valid[d] <= w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
           r_entry.except_type [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
+          r_entry.except_tval [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_tval [d] : r_entry.except_tval [d];
         end
       end
 

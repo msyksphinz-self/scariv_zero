@@ -33,7 +33,8 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id;
 
 logic [DISP_SIZE-1: 0] w_cmt_except_valid_oh;
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
-except_t                except_type_selected;
+except_t                            w_except_type_selected;
+logic [riscv_pkg::XLEN_W-1: 0]      w_except_tval_selected;
 
 logic                                w_ignore_disp;
 logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
@@ -149,12 +150,12 @@ assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_entry_id].br_upd_info.upd_
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = |w_valid_except_grp_id;
-assign o_commit.except_type   = except_type_selected;
+assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
                                  o_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
                                  o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00}:
-                                'h0;  // Other TVAL, Not yet supported
+                                w_except_tval_selected;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
@@ -167,7 +168,13 @@ bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_
 
 // Select Exception Instruction
 assign w_valid_except_grp_id = w_entries[w_out_cmt_entry_id].except_valid & w_cmt_pc_upd_valid_oh;
-bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(except_type_selected));
+bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(w_except_type_selected));
+// logic [riscv_pkg::XLEN_W-1: 0] except_tval_packed[DISP_SIZE];
+// generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : except_tval_loop
+//   assign except_tval_packed[d_idx] = w_entries[w_out_cmt_entry_id].except_tval[d_idx];
+// end
+// endgenerate
+bit_oh_or_packed #(.T(logic[riscv_pkg::XLEN_W-1:0]), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_tval), .o_selected(w_except_tval_selected));
 
 
 // Select Branch Target Address

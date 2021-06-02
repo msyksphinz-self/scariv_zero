@@ -228,6 +228,7 @@ assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 logic w_ld_except_valid;
 logic w_st_except_valid;
 msrh_pkg::except_t w_tlb_except_type;
+
 assign w_ld_except_valid = r_ex1_pipe_ctrl.is_load &
                            (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
 assign w_st_except_valid = r_ex1_pipe_ctrl.is_store &

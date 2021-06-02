@@ -212,6 +212,7 @@ bit_oh_or #(.T(msrh_pkg::except_t), .WORDS(ENTRY_SIZE))                  bit_oh_
 
 assign o_done_report.valid = |w_entry_done;
 assign o_done_report.except_valid = |(w_entry_except_valid & w_entry_done);
+assign o_done_report.except_tval  = 'h0;
 
 `ifdef SIMULATION
 typedef struct packed {

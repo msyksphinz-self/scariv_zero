@@ -157,6 +157,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
 
     logic [msrh_conf_pkg::DISP_SIZE-1:0]   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::XLEN_W-1:0] except_tval;
 
     logic                                   dead;
     // Branch update info
@@ -269,6 +270,7 @@ endfunction  // assign_issue_t
     logic [DISP_SIZE-1:0] grp_id;
     logic                 except_valid;
     except_t              except_type;
+    logic [riscv_pkg::XLEN_W-1: 0] except_tval;
   } done_rpt_t;
 
 // -----------------
