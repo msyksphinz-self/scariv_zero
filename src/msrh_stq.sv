@@ -269,9 +269,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
     // STQ Hazard Resolve Notofication
     assign w_resolve_paddr_haz[s_idx] = w_stq_entries[s_idx].is_valid &
-                                        (w_stq_entries[s_idx].state == STQ_INIT) &
-                                        |w_ex1_q_valid &
-                                        ~w_ex1_q_updates.hazard_valid;
+                                        (w_stq_entries[s_idx].state != STQ_DEAD) &
+                                        w_stq_entries[s_idx].paddr_valid;
     assign w_resolve_st_data_haz[s_idx] = w_stq_entries[s_idx].is_valid &
                                           w_stq_entries[s_idx].inst.rs2_ready;
 
@@ -324,11 +323,9 @@ endgenerate
 // =================================
 // STQ HAZARD RESOLVE NOTIFICATION
 // =================================
-assign o_stq_resolve.valid            = (|w_resolve_st_data_haz) |
-                                        (|w_resolve_paddr_haz)   |
+assign o_stq_resolve.valid            = |(w_resolve_st_data_haz & w_resolve_paddr_haz)  |
                                         (|w_stq_entry_st_finish);
-assign o_stq_resolve.resolve_index_oh = w_resolve_st_data_haz |
-                                        w_resolve_paddr_haz |
+assign o_stq_resolve.resolve_index_oh = (w_resolve_st_data_haz & w_resolve_paddr_haz) |
                                         w_stq_entry_st_finish;
 
 
