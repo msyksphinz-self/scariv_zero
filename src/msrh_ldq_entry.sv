@@ -237,6 +237,7 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.is_valid  = 1'b1;
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
+  ret.inst      = msrh_pkg::assign_issue_t(in, cmt_id, grp_id, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0);
   ret.state     = LDQ_ISSUE_WAIT;
   ret.vaddr     = 'h0;
   ret.except_valid = 1'b0;

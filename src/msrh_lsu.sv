@@ -158,8 +158,8 @@ u_lsu_pipe
    .csr_info (csr_info),
    .sfence_if(sfence_if),
 
-   .i_rv0_issue(w_rv0_issue),
-   .i_rv0_index_oh(w_rv0_index_oh),
+   .i_rv0_issue('h0),
+   .i_rv0_index_oh('h0),
 
    .o_ex0_rs_conflicted    (w_ex0_rs_conflicted),
    .o_ex0_rs_conf_index_oh (w_ex0_rs_conf_index_oh),
