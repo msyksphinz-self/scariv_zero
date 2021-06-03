@@ -52,9 +52,10 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_
 logic [$clog2(msrh_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 stq_entry_t w_stq_entries[msrh_conf_pkg::STQ_SIZE];
+logic [msrh_conf_pkg::STQ_SIZE-1:0] w_entry_ready;
 
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::STQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[msrh_conf_pkg::STQ_SIZE] ;
 
@@ -146,7 +147,7 @@ bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::
 inoutptr_var_oh #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                             .i_rollback(1'b0),
                                                             .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
-                                                            .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
+                                                            .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::STQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
 
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
@@ -155,8 +156,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
-    logic [msrh_conf_pkg::LDQ_SIZE-1: 0]  w_entry_ptr_oh;
-    bit_rotate_left #(.WIDTH(msrh_conf_pkg::LDQ_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_in_ptr_oh), .o_out(w_entry_ptr_oh));
+    logic [msrh_conf_pkg::STQ_SIZE-1: 0]  w_entry_ptr_oh;
+    bit_rotate_left #(.WIDTH(msrh_conf_pkg::STQ_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_in_ptr_oh), .o_out(w_entry_ptr_oh));
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr_oh[s_idx]);
   end
 
@@ -200,8 +201,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_ex2_q_updates(w_ex2_q_updates),
 
      .o_entry (w_stq_entries[s_idx]),
-
-     .i_rerun_accept (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
+     .o_entry_ready (w_entry_ready[s_idx]),
+     .i_entry_picked (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
      // .i_stq_entry_done (w_stq_done_oh[s_idx]),
 
@@ -223,8 +224,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      );
 
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-      assign w_rerun_request[p_idx][s_idx] = w_stq_entries[s_idx].state == STQ_READY &&
-                                             w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
+      assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
     assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT);
 
@@ -463,17 +463,22 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
-    $fwrite(fp, "state:\"%s\", ", entry.state == STQ_INIT               ? "INIT" :
-                                  entry.state == STQ_TLB_HAZ            ? "TLB_HAZ" :
-                                  entry.state == STQ_READY              ? "READY" :
-                                  entry.state == STQ_DONE_EX2           ? "DONE_EX2" :
-                                  entry.state == STQ_DONE_EX3           ? "DONE_EX3" :
-                                  entry.state == STQ_COMMIT             ? "COMMIT" :
-                                  entry.state == STQ_WAIT_ST_DATA       ? "WAIT_ST_DATA" :
-                                  entry.state == STQ_WAIT_LRQ_REFILL    ? "WAIT_LRQ_REFILL" :
-                                  entry.state == STQ_COMMIT_L1D_CHECK   ? "COMMIT_L1D_CHECK" :
-                                  entry.state == STQ_L1D_UPDATE         ? "L1D_UPDATE" : "x");
-    $fwrite(fp, "    },\n");
+    $fwrite(fp, "state:\"");
+    unique case(entry.state)
+      STQ_INIT             : $fwrite(fp, "INIT");
+      STQ_TLB_HAZ          : $fwrite(fp, "TLB_HAZ");
+      STQ_ISSUE_WAIT       : $fwrite(fp, "ISSUE_WAIT");
+      STQ_DONE_EX2         : $fwrite(fp, "DONE_EX2");
+      STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
+      STQ_COMMIT           : $fwrite(fp, "COMMIT");
+      STQ_WAIT_ST_DATA     : $fwrite(fp, "WAIT_ST_DATA");
+      STQ_WAIT_LRQ_REFILL  : $fwrite(fp, "WAIT_LRQ_REFILL");
+      STQ_COMMIT_L1D_CHECK : $fwrite(fp, "COMMIT_L1D_CHECK");
+      STQ_L1D_UPDATE       : $fwrite(fp, "L1D_UPDATE");
+      default              : $fatal(0, "State Log lacked. %d\n", entry.state);
+    endcase // unique case (entry.state)
+    $fwrite(fp, "\"");
+    $fwrite(fp, "},\n");
   end // if (entry.valid)
 
 endfunction // dump_json

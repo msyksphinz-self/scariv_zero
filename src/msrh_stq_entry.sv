@@ -5,7 +5,7 @@ module msrh_stq_entry
    input logic                                i_reset_n,
 
    input logic                                i_disp_load,
-   input logic [msrh_pkg::CMT_ID_W-1:0]      i_disp_cmt_id,
+   input logic [msrh_pkg::CMT_ID_W-1:0]       i_disp_cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_grp_id,
    input msrh_pkg::disp_t                     i_disp,
 
@@ -22,8 +22,9 @@ module msrh_stq_entry
    input ex2_q_update_t                       i_ex2_q_updates,
 
    output stq_entry_t                         o_entry,
+   output logic                               o_entry_ready,
 
-   input logic                                i_rerun_accept,
+   input logic                                i_entry_picked,
 
    // input logic                                i_stq_entry_done,
    // Commit notification
@@ -105,6 +106,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
+                       all_operand_ready(r_entry);
+
 always_comb begin
   w_entry_next = r_entry;
 
@@ -117,7 +121,16 @@ always_comb begin
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
-      end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
+      end
+    STQ_ISSUE_WAIT : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (o_entry_ready & i_entry_picked) begin
+        w_entry_next.state = STQ_ISSUED;
+      end
+    end
+    STQ_ISSUED : begin
+      if (w_entry_next.is_valid & i_ex1_q_valid) begin
         w_entry_next.state           = i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
                                        !w_entry_rs2_ready_next ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
@@ -130,12 +143,13 @@ always_comb begin
         w_entry_next.inst            = i_ex1_q_updates.inst;
         w_entry_next.size            = i_ex1_q_updates.size;
 
-      end
+      end // if (w_entry_next.is_valid & i_ex1_q_valid)
+    end // case: STQ_ISSUED
     STQ_TLB_HAZ : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (|i_tlb_resolve) begin
-        w_entry_next.state = STQ_READY;
+        w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
     STQ_DONE_EX2 : begin
@@ -169,14 +183,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.inst.rs2_ready) begin
-        w_entry_next.state = STQ_READY;
-      end
-    end
-    STQ_READY : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (i_rerun_accept) begin
-        w_entry_next.state = STQ_INIT;
+        w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
     STQ_COMMIT : begin
@@ -246,8 +253,8 @@ end // always_comb
 
 
 function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
-                                                    logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
-                                                    logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
+                                      logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
+                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
@@ -266,5 +273,12 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
 
   return ret;
 endfunction // assign_stq_disp
+
+
+function logic all_operand_ready(stq_entry_t entry);
+  logic     ret;
+  ret = (!entry.inst.rs1_valid | entry.inst.rs1_valid  & (entry.inst.rs1_ready | entry.inst.rs1_pred_ready));
+  return ret;
+endfunction // all_operand_ready
 
 endmodule // msrh_stq_entry

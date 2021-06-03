@@ -31,13 +31,15 @@ module msrh_ldq
 
 ldq_entry_t w_ldq_entries[msrh_conf_pkg::LDQ_SIZE];
 
+logic [msrh_conf_pkg::LDQ_SIZE-1:0] w_entry_ready;
+
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_rerun_request_oh[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[msrh_conf_pkg::LDQ_SIZE] ;
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_run_request[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_run_request_oh[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_run_request_rev_oh[msrh_conf_pkg::LDQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_conf_pkg::LDQ_SIZE] ;
 
 logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
@@ -160,9 +162,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_ex2_addr_check(i_ex2_addr_check),
 
      .o_entry (w_ldq_entries[l_idx]),
+     .o_entry_ready (w_entry_ready[l_idx]),
      .o_ex2_ldq_entries_recv(w_ex2_ldq_entries_recv),
 
-     .i_rerun_accept (|w_rerun_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
+     .i_entry_picked (|w_run_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
 
      .i_lrq_resolve (i_lrq_resolve),
      .i_stq_resolve (i_stq_resolve),
@@ -175,29 +178,29 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_ldq_done (w_ldq_done_oh[l_idx]) */
      );
 
+  // request pickup logic
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-    assign w_rerun_request[p_idx][l_idx] = w_ldq_entries[l_idx].state == LDQ_READY &&
-                                           w_ldq_entries[l_idx].pipe_sel_idx_oh[p_idx];
+    assign w_run_request[p_idx][l_idx] = w_entry_ready[l_idx] & w_ldq_entries[l_idx].pipe_sel_idx_oh[p_idx];
   end
 end
 endgenerate
 
-// replay logic
+// request logic
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-  assign ldq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
+  assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
   ldq_entry_t w_ldq_replay_entry;
 
-  bit_extract_lsb #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
-  bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
+  bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
+  bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
 
   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
 
-  assign ldq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
+  assign ldq_replay_if[p_idx].index_oh = w_run_request_oh[p_idx];
 
   for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
-    assign w_rerun_request_rev_oh[l_idx][p_idx] = w_rerun_request_oh[p_idx][l_idx];
+    assign w_run_request_rev_oh[l_idx][p_idx] = w_run_request_oh[p_idx][l_idx];
 
-    assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_rerun_request[p_idx][l_idx];
+    assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_run_request[p_idx][l_idx];
   end
 end
 endgenerate
@@ -265,16 +268,22 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.grp_id);
 
-    $fwrite(fp, "state:\"%s\", ", entry.state == LDQ_INIT            ? "LDQ_INIT" :
-                                  entry.state == LDQ_EX2_RUN         ? "LDQ_EX2_RUN" :
-                                  entry.state == LDQ_LRQ_HAZ         ? "LDQ_LRQ_HAZ" :
-                                  entry.state == LDQ_STQ_HAZ         ? "LDQ_STQ_HAZ" :
-                                  entry.state == LDQ_TLB_HAZ         ? "LDQ_TLB_HAZ" :
-                                  entry.state == LDQ_READY           ? "LDQ_READY" :
-                                  entry.state == LDQ_CHECK_ST_DEPEND ? "LDQ_CHECK_ST_DEPEND" :
-                                  entry.state == LDQ_EX3_DONE        ? "LDQ_EX3_DONE" :
-                                  entry.state == LDQ_WAIT_COMPLETE   ? "LDQ_WAIT_COMPLETE" :
-                                  entry.state == LDQ_DEAD            ? "LDQ_DEAD" : "x");
+    $fwrite(fp, "state:\"");
+    unique case (entry.state)
+      LDQ_INIT            : $fwrite(fp, "LDQ_INIT");
+      LDQ_EX2_RUN         : $fwrite(fp, "LDQ_EX2_RUN");
+      LDQ_LRQ_HAZ         : $fwrite(fp, "LDQ_LRQ_HAZ");
+      LDQ_STQ_HAZ         : $fwrite(fp, "LDQ_STQ_HAZ");
+      LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
+      LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
+      LDQ_CHECK_ST_DEPEND : $fwrite(fp, "LDQ_CHECK_ST_DEPEND");
+      LDQ_EX3_DONE        : $fwrite(fp, "LDQ_EX3_DONE");
+      LDQ_WAIT_COMPLETE   : $fwrite(fp, "LDQ_WAIT_COMPLETE");
+      LDQ_DEAD            : $fwrite(fp, "LDQ_DEAD");
+      LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
+      default             : $fatal(0, "State Log lacked. %d\n", entry.state);
+    endcase // unique case (entry.state)
+    $fwrite(fp, "\"");
     $fwrite(fp, "    },\n");
   end // if (entry.valid)
 

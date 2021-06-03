@@ -95,7 +95,7 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::CMT_ENTRY_SIZE   )) rob_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)) alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM]();
-cre_ret_if #(.MAX_INC(msrh_lsu_pkg::MEM_Q_SIZE        )) lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
+// cre_ret_if #(.MAX_INC(msrh_lsu_pkg::MEM_Q_SIZE        )) lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::LDQ_SIZE         )) ldq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
@@ -173,7 +173,7 @@ msrh_rename u_msrh_rename (
 
   .rob_cre_ret_if (rob_cre_ret_if),
   .alu_cre_ret_if (alu_cre_ret_if),
-  .lsu_cre_ret_if (lsu_cre_ret_if),
+  // .lsu_cre_ret_if (lsu_cre_ret_if),
   .ldq_cre_ret_if (ldq_cre_ret_if),
   .stq_cre_ret_if (stq_cre_ret_if),
   .csu_cre_ret_if (csu_cre_ret_if),
@@ -239,7 +239,7 @@ u_msrh_lsu_top
 
     .disp_valid (w_disp_lsu_valids),
     .disp (w_sc_disp),
-    .sch_cre_ret_if (lsu_cre_ret_if),
+    // .sch_cre_ret_if (lsu_cre_ret_if),
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 

@@ -262,7 +262,7 @@ endfunction // is_dw_included
 typedef enum logic[3:0] {
   STQ_INIT = 0,
   STQ_TLB_HAZ = 1,
-  STQ_READY = 2,
+  STQ_ISSUE_WAIT = 2,
   STQ_DONE_EX2 = 3,
   STQ_COMMIT = 4,
   STQ_WAIT_ST_DATA = 5,
@@ -271,7 +271,8 @@ typedef enum logic[3:0] {
   STQ_L1D_UPDATE = 8,
   STQ_DEAD = 9,
   STQ_WAIT_COMMIT = 10,
-  STQ_DONE_EX3 = 11
+  STQ_DONE_EX3 = 11,
+  STQ_ISSUED = 12
 } stq_state_t;
 
 typedef struct packed {
@@ -359,12 +360,12 @@ typedef enum logic[3:0] {
   LDQ_LRQ_HAZ = 2,
   LDQ_STQ_HAZ = 3,
   LDQ_TLB_HAZ = 4,
-  LDQ_READY = 5,
+  LDQ_ISSUE_WAIT = 5,
   LDQ_CHECK_ST_DEPEND = 6,
   LDQ_EX3_DONE = 7,
   LDQ_DEAD = 8,
   LDQ_WAIT_COMPLETE = 9,
-  LDQ_EXCEPT = 10
+  LDQ_ISSUED = 10
 } ldq_state_t;
 
 typedef struct packed {

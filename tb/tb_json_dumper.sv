@@ -76,31 +76,31 @@ generate if (msrh_conf_pkg::ALU_INST_NUM > 5)
     end
 endgenerate
 
-  // LSU Scheduler
-generate if (msrh_conf_pkg::LSU_INST_NUM > 0)
-  always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-    if (w_msrh_reset_n) begin
-      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[0].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu0", json_fp, 0);
-    end
-endgenerate
-generate if (msrh_conf_pkg::LSU_INST_NUM > 1)
-  always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-    if (w_msrh_reset_n) begin
-      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[1].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu1", json_fp, 1);
-    end
-endgenerate
-generate if (msrh_conf_pkg::LSU_INST_NUM > 2)
-  always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-    if (w_msrh_reset_n) begin
-      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[2].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu2", json_fp, 2);
-    end
-endgenerate
-generate if (msrh_conf_pkg::LSU_INST_NUM > 3)
-  always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-    if (w_msrh_reset_n) begin
-      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[3].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu3", json_fp, 3);
-    end
-endgenerate
+// // LSU Scheduler
+// generate if (msrh_conf_pkg::LSU_INST_NUM > 0)
+//   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+//     if (w_msrh_reset_n) begin
+//       u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[0].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu0", json_fp, 0);
+//     end
+// endgenerate
+// generate if (msrh_conf_pkg::LSU_INST_NUM > 1)
+//   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+//     if (w_msrh_reset_n) begin
+//       u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[1].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu1", json_fp, 1);
+//     end
+// endgenerate
+// generate if (msrh_conf_pkg::LSU_INST_NUM > 2)
+//   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+//     if (w_msrh_reset_n) begin
+//       u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[2].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu2", json_fp, 2);
+//     end
+// endgenerate
+// generate if (msrh_conf_pkg::LSU_INST_NUM > 3)
+//   always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+//     if (w_msrh_reset_n) begin
+//       u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.lsu_loop[3].u_msrh_lsu.u_msrh_scheduler.dump_json("lsu3", json_fp, 3);
+//     end
+// endgenerate
 
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (w_msrh_reset_n) begin

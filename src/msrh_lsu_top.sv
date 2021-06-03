@@ -15,7 +15,7 @@ module msrh_lsu_top
 
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.watch                                      disp,
-    cre_ret_if.slave    sch_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
+    // cre_ret_if.slave    sch_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
@@ -91,9 +91,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .rob_info_if (rob_info_if),
     .sfence_if   (sfence_if),
 
-    .disp_valid (disp_valid),
-    .disp (disp),
-    .cre_ret_if  (sch_cre_ret_if[lsu_idx]),
+    // .disp_valid (disp_valid),
+    // .disp (disp),
+    // .cre_ret_if  (sch_cre_ret_if[lsu_idx]),
 
     .ex1_regread_rs1 (ex1_regread[lsu_idx * 2 + 0]),
     .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
