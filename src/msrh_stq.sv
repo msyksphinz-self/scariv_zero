@@ -12,6 +12,7 @@ module msrh_stq
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
    input msrh_pkg::phy_wr_t                   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+   input msrh_pkg::mispred_t                  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
    input ex1_q_update_t        i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
@@ -191,6 +192,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
      .i_early_wr (i_early_wr),
      .i_phy_wr   (i_phy_wr),
+     .i_mispred_lsu (i_mispred_lsu),
 
      .i_ex1_q_valid   (|w_ex1_q_valid),
      .i_ex1_q_updates (w_ex1_q_updates),

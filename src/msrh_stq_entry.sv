@@ -12,6 +12,7 @@ module msrh_stq_entry
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
    input msrh_pkg::phy_wr_t                   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+   input msrh_pkg::mispred_t                  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
    input logic                                i_ex1_q_valid,
@@ -51,16 +52,56 @@ logic                                              w_entry_flush;
 logic                                              w_dead_state_clear;
 logic                                              w_cmt_id_match;
 
-logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
-msrh_pkg::reg_t              w_rs2_type;
-logic                        w_rs2_phy_hit;
-logic [riscv_pkg::XLEN_W-1: 0] w_rs2_phy_data;
-logic                        w_entry_rs2_ready_next;
+logic [msrh_pkg::RNID_W-1:0]                     w_rs1_rnid;
+logic [msrh_pkg::RNID_W-1:0]                     w_rs2_rnid;
+msrh_pkg::reg_t                                  w_rs1_type;
+msrh_pkg::reg_t                                  w_rs2_type;
+logic                                            w_rs1_rel_hit;
+logic                                            w_rs1_phy_hit;
+logic                                            w_rs1_may_mispred;
+logic                                            w_rs1_mispredicted;
+logic                                            w_rs2_phy_hit;
+logic [riscv_pkg::XLEN_W-1: 0]                   w_rs2_phy_data;
+logic                                            w_entry_rs2_ready_next;
 
 assign o_entry = r_entry;
 
+assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
-assign w_rs2_type = msrh_pkg::GPR;
+
+assign w_rs1_type = i_disp_load ? i_disp.rs1_type : r_entry.inst.rs1_type;
+assign w_rs2_type = i_disp_load ? i_disp.rs2_type : r_entry.inst.rs2_type;
+
+select_early_wr_bus rs1_rel_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_early_wr   (i_early_wr),
+
+ .o_valid      (w_rs1_rel_hit),
+ .o_may_mispred(w_rs1_may_mispred)
+ );
+
+
+select_phy_wr_bus rs1_phy_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs1_phy_hit)
+ );
+
+
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs1_mispredicted)
+ );
+
 
 select_phy_wr_data rs2_phy_select
 (
@@ -144,6 +185,11 @@ always_comb begin
         w_entry_next.size            = i_ex1_q_updates.size;
 
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
+      if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted) begin
+        w_entry_next.state = STQ_ISSUE_WAIT;
+        w_entry_next.inst.rs1_pred_ready = 1'b0;
+        w_entry_next.inst.rs2_pred_ready = 1'b0;
+      end
     end // case: STQ_ISSUED
     STQ_TLB_HAZ : begin
       if (w_entry_flush) begin
@@ -248,7 +294,8 @@ always_comb begin
   w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
                           i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
                           r_entry.rs2_data;
-
+  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
 end // always_comb
 
 

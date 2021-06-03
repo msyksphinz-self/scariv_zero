@@ -159,6 +159,10 @@ msrh_ldq
  .disp         (disp            ),
  .cre_ret_if   (ldq_cre_ret_if  ),
 
+ .i_early_wr    (i_early_wr),
+ .i_phy_wr      (i_phy_wr  ),
+ .i_mispred_lsu (o_ex3_mispred),
+
  .i_tlb_resolve   (w_tlb_resolve   ),
  .i_ex1_q_updates (w_ex1_q_updates ),
  .i_ex2_q_updates (w_ex2_q_updates ),
@@ -189,8 +193,9 @@ msrh_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
- .i_early_wr (i_early_wr),
- .i_phy_wr   (i_phy_wr  ),
+ .i_early_wr    (i_early_wr),
+ .i_phy_wr      (i_phy_wr  ),
+ .i_mispred_lsu (o_ex3_mispred),
 
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),

@@ -5,9 +5,14 @@ module msrh_ldq_entry
  input logic                                     i_reset_n,
 
  input logic                                     i_disp_load,
- input logic [msrh_pkg::CMT_ID_W-1:0]           i_disp_cmt_id,
+ input logic [msrh_pkg::CMT_ID_W-1:0]            i_disp_cmt_id,
  input logic [msrh_conf_pkg::DISP_SIZE-1:0]      i_disp_grp_id,
  input                                           msrh_pkg::disp_t i_disp,
+
+ /* Forwarding path */
+ input                                           msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
+ input                                           msrh_pkg::phy_wr_t i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+ input                                           msrh_pkg::mispred_t i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
  // Updates from LSU Pipeline EX1 stage
  input logic                                     i_ex1_q_valid,
@@ -24,8 +29,8 @@ module msrh_ldq_entry
 
  input logic                                     i_entry_picked,
 
- input lrq_resolve_t                             i_lrq_resolve,
- input stq_resolve_t                             i_stq_resolve,
+ input                                           lrq_resolve_t i_lrq_resolve,
+ input                                           stq_resolve_t i_stq_resolve,
  // Commit notification
  input                                           msrh_pkg::commit_blk_t i_commit,
 
@@ -37,6 +42,7 @@ module msrh_ldq_entry
 logic                                            w_entry_ready;
 
 ldq_entry_t                                      r_entry;
+ldq_entry_t                                      w_entry;
 logic                                            w_entry_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_complete;
@@ -50,6 +56,23 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0]             stq_haz_idx_next;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
 
 logic                                            w_addr_conflict;
+
+logic [msrh_pkg::RNID_W-1:0]                     w_rs1_rnid;
+logic [msrh_pkg::RNID_W-1:0]                     w_rs2_rnid;
+msrh_pkg::reg_t                                  w_rs1_type;
+msrh_pkg::reg_t                                  w_rs2_type;
+
+logic                                            w_rs1_rel_hit;
+logic                                            w_rs2_rel_hit;
+
+logic                                            w_rs1_may_mispred;
+logic                                            w_rs2_may_mispred;
+
+logic                                            w_rs1_phy_hit;
+logic                                            w_rs2_phy_hit;
+
+logic                                            w_rs1_mispredicted;
+logic                                            w_rs2_mispredicted;
 
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
@@ -89,6 +112,81 @@ assign stq_haz_idx_next = i_stq_resolve.valid ? r_entry.stq_haz_idx & ~i_stq_res
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(r_entry);
+
+assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
+assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
+
+assign w_rs1_type = i_disp_load ? i_disp.rs1_type : r_entry.inst.rs1_type;
+assign w_rs2_type = i_disp_load ? i_disp.rs2_type : r_entry.inst.rs2_type;
+
+select_early_wr_bus rs1_rel_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_early_wr   (i_early_wr),
+
+ .o_valid      (w_rs1_rel_hit),
+ .o_may_mispred(w_rs1_may_mispred)
+ );
+
+
+select_early_wr_bus rs2_rel_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_early_wr   (i_early_wr),
+
+ .o_valid      (w_rs2_rel_hit),
+ .o_may_mispred(w_rs2_may_mispred)
+ );
+
+select_phy_wr_bus rs1_phy_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs1_phy_hit)
+ );
+
+
+select_phy_wr_bus rs2_phy_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs2_phy_hit)
+ );
+
+
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (w_rs1_rnid),
+ .i_entry_type (w_rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs1_mispredicted)
+ );
+
+
+select_mispred_bus rs2_mispred_select
+(
+ .i_entry_rnid (w_rs2_rnid),
+ .i_entry_type (w_rs2_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs2_mispredicted)
+ );
+
+always_comb begin
+  w_entry = r_entry;
+  w_entry.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry.inst.rs2_ready = r_entry.inst.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+
+  w_entry.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry.inst.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -134,6 +232,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                            i_ex1_q_updates.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)
+        if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
+            r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
+          r_entry.state <= LDQ_ISSUE_WAIT;
+          r_entry.inst.rs1_pred_ready <= 1'b0;
+          r_entry.inst.rs2_pred_ready <= 1'b0;
+        end
       end // case: LDQ_ISSUED
       LDQ_TLB_HAZ : begin
         if (w_entry_flush) begin

@@ -8,6 +8,11 @@ module msrh_ldq
    disp_if.watch                              disp,
    cre_ret_if.slave                           cre_ret_if,
 
+   /* Forwarding path */
+   input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
+   input msrh_pkg::phy_wr_t                   i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
+   input msrh_pkg::mispred_t                  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
+
    // Updates from LSU Pipeline EX1 stage
    input ex1_q_update_t        i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
@@ -151,6 +156,10 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_disp_cmt_id (disp.cmt_id),
      .i_disp_grp_id (w_disp_grp_id),
      .i_disp        (w_disp_entry),
+
+     .i_early_wr (i_early_wr),
+     .i_phy_wr   (i_phy_wr),
+     .i_mispred_lsu (i_mispred_lsu),
 
      .i_ex1_q_valid   (|w_ex1_q_valid),
      .i_ex1_q_updates (w_ex1_q_updates),
