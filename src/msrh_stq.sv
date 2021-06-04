@@ -471,12 +471,15 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_TLB_HAZ          : $fwrite(fp, "TLB_HAZ");
       STQ_ISSUE_WAIT       : $fwrite(fp, "ISSUE_WAIT");
       STQ_DONE_EX2         : $fwrite(fp, "DONE_EX2");
-      STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
       STQ_COMMIT           : $fwrite(fp, "COMMIT");
       STQ_WAIT_ST_DATA     : $fwrite(fp, "WAIT_ST_DATA");
       STQ_WAIT_LRQ_REFILL  : $fwrite(fp, "WAIT_LRQ_REFILL");
       STQ_COMMIT_L1D_CHECK : $fwrite(fp, "COMMIT_L1D_CHECK");
       STQ_L1D_UPDATE       : $fwrite(fp, "L1D_UPDATE");
+      STQ_DEAD             : $fwrite(fp, "DEAD");
+      STQ_WAIT_COMMIT      : $fwrite(fp, "WAIT_COMMIT");
+      STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
+      STQ_ISSUED           : $fwrite(fp, "ISSUED");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

@@ -210,6 +210,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry.state <= LDQ_DEAD;
         end else if (o_entry_ready & i_entry_picked) begin
           r_entry.state <= LDQ_ISSUED;
+        end else begin
+          r_entry <= w_entry;
         end
       end
       LDQ_ISSUED : begin
