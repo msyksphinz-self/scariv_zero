@@ -179,9 +179,9 @@ typedef struct packed {
 
 typedef struct packed {
   logic                           update;
-  msrh_pkg::issue_t               inst;
+  // msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
+  // logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
   logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   logic                           hazard_valid;
@@ -234,11 +234,11 @@ function logic [ 7: 0] gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [2:0] add
   case(size)
     decoder_lsu_ctrl_pkg::SIZE_DW : return 8'b1111_1111;
     decoder_lsu_ctrl_pkg::SIZE_W : begin
-      if (addr[1:0] != 2'b00) $fatal(0, "gen_dw with SIZE_W, addr[1:0] should be zero");
+      // if (addr[1:0] != 2'b00) $fatal(0, "gen_dw with SIZE_W, addr[1:0] should be zero");
       return 8'b0000_1111 << addr;
     end
     decoder_lsu_ctrl_pkg::SIZE_H  : begin
-      if (addr[0] != 1'b0) $fatal(0, "gen_dw with SIZE_H, addr[0] should be zero");
+      // if (addr[0] != 1'b0) $fatal(0, "gen_dw with SIZE_H, addr[0] should be zero");
       return 8'b0000_0011 << addr;
     end
     decoder_lsu_ctrl_pkg::SIZE_B  : return 8'b0000_0001 << addr;

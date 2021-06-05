@@ -8,6 +8,7 @@ module msrh_stq_entry
    input logic [msrh_pkg::CMT_ID_W-1:0]       i_disp_cmt_id,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_grp_id,
    input msrh_pkg::disp_t                     i_disp,
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_disp_pipe_sel_oh,
 
    /* Forwarding path */
    input msrh_pkg::early_wr_t                 i_early_wr[msrh_pkg::REL_BUS_SIZE],
@@ -153,6 +154,13 @@ assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
 always_comb begin
   w_entry_next = r_entry;
 
+  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next | r_entry.inst.rs2_ready;
+  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
+                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
+                          r_entry.rs2_data;
+  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+
   case (r_entry.state)
     STQ_INIT :
       if (w_entry_flush & w_entry_next.is_valid) begin
@@ -161,7 +169,12 @@ always_comb begin
         // w_entry_next.cmt_id = 'h0;
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
-        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id);
+        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
+        w_entry_next.inst = msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                                     w_rs1_rel_hit, 1'b0,
+                                                     w_rs1_phy_hit, w_rs2_phy_hit,
+                                                     w_rs1_may_mispred, 1'b0);
+
       end
     STQ_ISSUE_WAIT : begin
       if (w_entry_flush) begin
@@ -180,8 +193,8 @@ always_comb begin
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
-        w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
-        w_entry_next.inst            = i_ex1_q_updates.inst;
+        // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
+        // w_entry_next.inst            = i_ex1_q_updates.inst;
         w_entry_next.size            = i_ex1_q_updates.size;
 
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
@@ -290,27 +303,21 @@ always_comb begin
     end
   endcase // case (w_entry_next.state)
 
-  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next | r_entry.inst.rs2_ready;
-  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
-                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
-                          r_entry.rs2_data;
-  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
 end // always_comb
 
 
 function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
                                       logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
-                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id);
+                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id,
+                                      logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
 
-  ret.inst      = msrh_pkg::assign_issue_t(in, cmt_id, grp_id, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0);
-
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
-  ret.state     = STQ_INIT;
+  ret.state     = STQ_ISSUE_WAIT;
+  ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;
   ret.paddr_valid = 1'b0;
 

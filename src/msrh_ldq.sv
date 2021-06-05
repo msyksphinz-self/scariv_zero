@@ -47,6 +47,8 @@ logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_run_request_oh[msrh_conf_pkg::LSU_INST_NU
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_run_request_rev_oh[msrh_conf_pkg::LDQ_SIZE] ;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ldq_replay_conflict[msrh_conf_pkg::LDQ_SIZE] ;
 
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[msrh_conf_pkg::MEM_DISP_SIZE];
+
 logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
@@ -117,10 +119,16 @@ inoutptr_var_oh #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_r
                                                             .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
                                                             .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
 
+generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::MEM_DISP_SIZE; s_idx++) begin : disp_idx_loop
+  assign w_pipe_sel_idx_oh[s_idx] = 1 << (s_idx % msrh_conf_pkg::LSU_INST_NUM);
+end
+endgenerate
+
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_ldq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
@@ -131,6 +139,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.T(logic[msrh_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
 
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
@@ -156,6 +165,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_disp_cmt_id (disp.cmt_id),
      .i_disp_grp_id (w_disp_grp_id),
      .i_disp        (w_disp_entry),
+     .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
 
      .i_early_wr (i_early_wr),
      .i_phy_wr   (i_phy_wr),

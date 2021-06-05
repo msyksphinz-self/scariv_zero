@@ -463,7 +463,8 @@ void step_spike(long long time, long long rtl_pc,
   p->step(1);
 
   if (rtl_exception) {
-    fprintf(stderr, "%lld : Exception Cause = %d\n", time, rtl_exception_cause);
+    fprintf(stderr, "%lld : RTL(%d,%d) Exception Cause = %d\n",
+            time, rtl_cmt_id, rtl_grp_id, rtl_exception_cause);
   }
   if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
                        (rtl_exception_cause == 1 ) ||  // Instruction Access Fault
