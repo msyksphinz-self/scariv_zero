@@ -184,7 +184,9 @@ always_comb begin
       end
     end
     STQ_ISSUED : begin
-      if (w_entry_next.is_valid & i_ex1_q_valid) begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
         w_entry_next.state           = i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
                                        !w_entry_rs2_ready_next ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;

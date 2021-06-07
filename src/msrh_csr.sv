@@ -693,7 +693,7 @@ always_comb begin
   w_mtval_next   = r_mtval ;
 
   if (i_commit.commit &
-      i_commit.except_valid &
+      (|i_commit.except_valid) &
       !i_commit.all_dead) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
       // r_mepc <= epc;

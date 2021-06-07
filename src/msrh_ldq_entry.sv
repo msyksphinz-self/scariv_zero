@@ -222,29 +222,31 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       LDQ_ISSUED : begin
         if (w_entry_flush) begin
           r_entry.state <= LDQ_DEAD;
-        end else if (r_entry.is_valid & i_ex1_q_valid) begin
-          r_entry.state           <= i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
-                                     LDQ_EX2_RUN;
-          r_entry.except_valid    <= i_ex1_q_updates.tlb_except_valid;
-          r_entry.except_type     <= i_ex1_q_updates.tlb_except_type;
-          r_entry.vaddr           <= i_ex1_q_updates.vaddr;
-          r_entry.paddr           <= i_ex1_q_updates.paddr;
-          // r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
-          // r_entry.inst            <= i_ex1_q_updates.inst;
-          r_entry.size            <= i_ex1_q_updates.size;
+        end else begin
+          if (r_entry.is_valid & i_ex1_q_valid) begin
+            r_entry.state           <= i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
+                                       LDQ_EX2_RUN;
+            r_entry.except_valid    <= i_ex1_q_updates.tlb_except_valid;
+            r_entry.except_type     <= i_ex1_q_updates.tlb_except_type;
+            r_entry.vaddr           <= i_ex1_q_updates.vaddr;
+            r_entry.paddr           <= i_ex1_q_updates.paddr;
+            // r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
+            // r_entry.inst            <= i_ex1_q_updates.inst;
+            r_entry.size            <= i_ex1_q_updates.size;
 
-          for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-            r_ex2_ldq_entries_recv[p_idx] <=  i_ex1_q_valid &
-                           !i_ex1_q_updates.hazard_valid &
-                           r_entry.pipe_sel_idx_oh[p_idx];
+            for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+              r_ex2_ldq_entries_recv[p_idx] <=  i_ex1_q_valid &
+                             !i_ex1_q_updates.hazard_valid &
+                             r_entry.pipe_sel_idx_oh[p_idx];
+            end
+          end // if (i_ex1_q_valid)
+          if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
+              r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
+            r_entry.state <= LDQ_ISSUE_WAIT;
+            r_entry.inst.rs1_pred_ready <= 1'b0;
+            r_entry.inst.rs2_pred_ready <= 1'b0;
           end
-        end // if (i_ex1_q_valid)
-        if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
-            r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
-          r_entry.state <= LDQ_ISSUE_WAIT;
-          r_entry.inst.rs1_pred_ready <= 1'b0;
-          r_entry.inst.rs2_pred_ready <= 1'b0;
-        end
+        end // else: !if(w_entry_flush)
       end // case: LDQ_ISSUED
       LDQ_TLB_HAZ : begin
         if (w_entry_flush) begin
@@ -350,7 +352,7 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
   ret.state     = LDQ_ISSUE_WAIT;
-  // ret.pipe_sel_idx_oh = pipe_sel_oh;
+  ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;
   ret.except_valid = 1'b0;
 
