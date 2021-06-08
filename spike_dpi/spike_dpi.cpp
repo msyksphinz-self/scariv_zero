@@ -450,6 +450,8 @@ bool inline is_equal_vaddr(int64_t val1, int64_t val2)
   return (val1 & ((1ULL << vaddr_len)-1)) == (val2 & ((1ULL << vaddr_len)-1));
 }
 
+const int fail_max = 5;
+int fail_count = 0;
 
 void step_spike(long long time, long long rtl_pc,
                 int rtl_priv, long long rtl_mstatus,
@@ -460,7 +462,6 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
   processor_t *p = spike_core->get_core(0);
-  p->step(1);
 
   if (rtl_exception) {
     fprintf(stderr, "%lld : RTL(%d,%d) Exception Cause = %d\n",
@@ -471,19 +472,28 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 2 ) ||  // Illegal Instruction
                        (rtl_exception_cause == 4 ) ||  // Load Access Misaligned
                        (rtl_exception_cause == 5 ) ||  // Load Access Fault
-                       (rtl_exception_cause == 13) ||  // Load Page Fault
                        (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
-                       (rtl_exception_cause == 7 ) ||  // Store Access Fault
-                       (rtl_exception_cause == 15) ||  // Store Page Fault
-                       (rtl_exception_cause == 8 ) ||  // ECALL
-                       (rtl_exception_cause == 9 ) ||  // ECALL
-                       (rtl_exception_cause == 10) ||  // ECALL
-                       (rtl_exception_cause == 12))) {
+                       (rtl_exception_cause == 7 ))) { // Store Access Fault
     fprintf(stderr, "==========================================\n");
     fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
     fprintf(stderr, "==========================================\n");
     return;
   }
+
+  if (rtl_exception & ((rtl_exception_cause == 13) ||  // Load Page Fault
+                       (rtl_exception_cause == 15) ||  // Store Page Fault
+                       (rtl_exception_cause == 12) || // Instruction Page Fault
+                       (rtl_exception_cause == 8 ) ||  // ECALL_U
+                       (rtl_exception_cause == 9 ) ||  // ECALL_S
+                       (rtl_exception_cause == 10))) { // ECALL_M
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(stderr, "==========================================\n");
+    p->step(1);
+    return;
+  }
+
+  p->step(1);
 
   auto instret  = p->get_state()->minstret;
   fprintf(stderr, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,
@@ -494,24 +504,37 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
+  // fprintf(stderr, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
+  //         time,
+  //         iss_pc,
+  //         p->get_state()->prev_pc,
+  //         iss_insn);
   // fprintf(stderr, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
-      fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
-              g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
-      fprintf(stderr, "==========================================\n");
-      p->step(10);
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
+            g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
+    fprintf(stderr, "==========================================\n");
+    fail_count ++;
+    if (fail_count >= fail_max) {
+      // p->step(10);
       stop_sim(1);
-      return;
+    }
+    return;
   }
   if (iss_priv != rtl_priv) {
     fprintf(stderr, "==========================================\n");
     fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
             rtl_priv, static_cast<uint32_t>(iss_priv));
     fprintf(stderr, "==========================================\n");
-    p->step(10);
-    stop_sim(1);
+    fail_count ++;
+    if (fail_count >= fail_max) {
+      // p->step(10);
+      stop_sim(1);
+    }
+    // p->step(10);
+    // stop_sim(1);
     return;
   }
 
@@ -523,23 +546,33 @@ void step_spike(long long time, long long rtl_pc,
             g_rv_xlen / 4, rtl_mstatus,
             g_rv_xlen / 4, iss_mstatus);
     fprintf(stderr, "==========================================\n");
-    p->step(10);
-    stop_sim(1);
+    fail_count ++;
+    if (fail_count >= fail_max) {
+      // p->step(10);
+      stop_sim(1);
+    }
+    // p->step(10);
+    // stop_sim(1);
     return;
   }
 
   if (static_cast<int>(iss_insn.bits()) != rtl_insn) {
-      fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
-              rtl_insn, static_cast<uint32_t>(iss_insn.bits()));
-      fprintf(stderr, "            RTL = %s\n",
-              disasm->disassemble(rtl_insn).c_str());
-      fprintf(stderr, "            ISS = %s\n",
-              disasm->disassemble(iss_insn.bits()).c_str());
-      fprintf(stderr, "==========================================\n");
-      p->step(10);
+    fprintf(stderr, "==========================================\n");
+    fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
+            rtl_insn, static_cast<uint32_t>(iss_insn.bits()));
+    fprintf(stderr, "            RTL = %s\n",
+            disasm->disassemble(rtl_insn).c_str());
+    fprintf(stderr, "            ISS = %s\n",
+            disasm->disassemble(iss_insn.bits()).c_str());
+    fprintf(stderr, "==========================================\n");
+    fail_count ++;
+    if (fail_count >= fail_max) {
+      // p->step(10);
       stop_sim(1);
-      return;
+    }
+    // p->step(10);
+    // stop_sim(1);
+    return;
   }
 
   if (rtl_wr_valid) {
@@ -551,8 +584,13 @@ void step_spike(long long time, long long rtl_pc,
               g_rv_xlen / 4, rtl_wr_val,
               g_rv_xlen / 4, iss_wr_val);
       fprintf(stderr, "==========================================\n");
-      p->step(10);
-      stop_sim(1);
+      fail_count ++;
+      if (fail_count >= fail_max) {
+        // p->step(10);
+        stop_sim(1);
+      }
+      // p->step(10);
+      // stop_sim(1);
       return;
     } else {
       fprintf(stderr, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);

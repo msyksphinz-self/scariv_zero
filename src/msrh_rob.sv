@@ -205,8 +205,22 @@ bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_
 
 // Make dead Instruction, (after exception)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(w_entries[w_out_cmt_entry_id].except_valid), .out(w_dead_grp_id_except_tmp));
-assign w_dead_grp_id = {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0} |   // 1-bit shift
-                       {w_dead_grp_id_br_tmp   [DISP_SIZE-2: 0], 1'b0} ;   // 1-bit shift
+logic [DISP_SIZE-1: 0] w_except_dead_grp_id;
+logic                  w_is_active_except;   // Instruction generates exception but itself active
+assign w_is_active_except = (w_except_type_selected == msrh_pkg::SILENT_FLUSH) |
+                            (w_except_type_selected == msrh_pkg::ECALL_U)      |
+                            (w_except_type_selected == msrh_pkg::ECALL_S)      |
+                            (w_except_type_selected == msrh_pkg::ECALL_M)      |
+                            (w_except_type_selected == msrh_pkg::URET)         |
+                            (w_except_type_selected == msrh_pkg::SRET)         |
+                            (w_except_type_selected == msrh_pkg::MRET)         |
+                            1'b0;
+
+assign w_except_dead_grp_id = w_is_active_except ?  // active flush itself doesn't include dead instruction
+                              {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0} :  // so, 1-bit left shift
+                              w_dead_grp_id_except_tmp;                           // otherwise, except itself includes dead instruction
+assign w_dead_grp_id = w_except_dead_grp_id |
+                       {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
 
 // Killing all uncommitted instructions
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

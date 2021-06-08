@@ -194,9 +194,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_commit_rd_regidx[d_idx] = i_commit_rnid_update.rd_regidx[d_idx];
   assign w_commit_rd_rnid[d_idx]   = i_commit_rnid_update.rd_rnid[d_idx];
 
-  assign w_commit_except_rd_valid[d_idx] = (i_commit.commit & i_commit.except_valid[d_idx] & (i_commit.except_type == msrh_pkg::SILENT_FLUSH)) |
-                                           (w_commit_except_valid & i_commit.grp_id[d_idx] & !i_commit.dead_id[d_idx] &
-                                            ((i_commit.except_valid[d_idx] & (i_commit.except_type != msrh_pkg::SILENT_FLUSH)) ? 1'b0 : 1'b1));
+  assign w_commit_except_rd_valid[d_idx] = w_commit_except_valid & i_commit.grp_id[d_idx] & !i_commit.dead_id[d_idx];
 end
 endgenerate
 
