@@ -146,7 +146,9 @@ assign w_killing_uncmts = r_killing_uncmts &
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
-assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_entry_id].except_valid);
+assign o_commit.upd_pc_valid   = |((w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
+                                    w_entries[w_out_cmt_entry_id].except_valid) &
+                                   w_entries[w_out_cmt_entry_id].grp_id);
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = w_valid_except_grp_id;
@@ -163,7 +165,8 @@ assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
 assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].dead;
 
 // Select Jump Insntruction
-assign w_valid_upd_pc_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid | w_entries[w_out_cmt_entry_id].except_valid;
+assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
+                                w_entries[w_out_cmt_entry_id].except_valid) & w_entries[w_out_cmt_entry_id].done_grp_id;
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_id), .out(w_cmt_pc_upd_valid_oh));
 
 // Select Exception Instruction
@@ -259,7 +262,8 @@ function void dump_entry_json(int fp, rob_entry_t entry, int index);
     $fwrite(fp, "grp_id:\"0x%02x\", ", entry.grp_id);
     $fwrite(fp, "done_grp_id:\"0x%02x\", ", entry.done_grp_id);
 
-    $fwrite(fp, "except_valid:%d", entry.except_valid);
+    $fwrite(fp, "dead:%d, ", entry.dead);
+    $fwrite(fp, "except_valid:0x%02x", entry.except_valid);
 
     $fwrite(fp, " },\n");
   end // if (entry.valid)
