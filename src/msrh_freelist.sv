@@ -35,6 +35,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
     if (i_pop) begin
       r_head_ptr <= r_head_ptr + 'h1;
+`ifdef SIMULATION
+      // delete poped ID for debug
+      r_freelist[r_head_ptr] <= 'h0;
+`endif // SIMULATION
     end
   end
 end

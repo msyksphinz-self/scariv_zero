@@ -242,8 +242,8 @@ assign w_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
 
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
-assign o_ex1_q_updates.inst       = r_ex1_issue;
-assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
+// assign o_ex1_q_updates.inst       = r_ex1_issue;
+// assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_valid = w_ex1_tlb_resp.miss;
@@ -259,11 +259,11 @@ assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (o_ex1_q_updates.update &
-        !$onehot(o_ex1_q_updates.pipe_sel_idx_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex1_q_updates.pipe_sel_idx_oh should be one-hot Value=%x\n",
-             o_ex1_q_updates.pipe_sel_idx_oh);
-    end
+    // if (o_ex1_q_updates.update &
+    //     !$onehot(o_ex1_q_updates.pipe_sel_idx_oh)) begin
+    //   $fatal(0, "LSU Pipeline : o_ex1_q_updates.pipe_sel_idx_oh should be one-hot Value=%x\n",
+    //          o_ex1_q_updates.pipe_sel_idx_oh);
+    // end
     if (o_ex1_q_updates.update &
         !$onehot0(o_ex1_q_updates.index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex1_q_updates.index_oh should be one-hot. Value=%x\n",

@@ -49,6 +49,8 @@ logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 logic                                     w_commit_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_rd_valid;
+logic                                     w_commit_except_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 
@@ -57,8 +59,11 @@ logic [ 4: 0]                             w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_data;
 
 // Current rename map information to stack
+logic                                     w_restore_valid;
 logic [RNID_W-1: 0]                       w_rn_list[32];
 logic [RNID_W-1: 0]                       w_restore_rn_list[32];
+logic [RNID_W-1: 0]                       w_restore_queue_list[32];
+logic [RNID_W-1: 0]                       w_restore_commit_map_list[32];
 
 logic                                     w_flush_valid;
 
@@ -94,8 +99,44 @@ assign iq_disp.ready = !(i_commit_rnid_update.commit & (i_commit.flush_valid | i
                          w_csu_no_credits_remained |
                          w_bru_no_credits_remained);
 
+
+//                                          Freelist      RenameMap
+// normal commit inst                    => old ID push / no update
+// dead instruction                      => new ID push / no update
+// normal exception                      => new ID push / restore
+// silent flush (actually normally exit) => old ID push / no update
+
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
   logic [RNID_W-1: 0] w_rd_rnid_tmp;
+
+  logic                 w_push_freelist;
+  logic                 except_flush_valid;
+  logic [RNID_W-1: 0]   w_push_freelist_id;
+
+  // When instruction commit normally, return old RNID
+  // even thouhg instruction is dead, newly allocated RNID should be return
+  assign w_push_freelist = i_commit_rnid_update.commit &
+                           i_commit_rnid_update.rnid_valid[d_idx] &
+                           (i_commit_rnid_update.rd_regidx[d_idx] != 'h0);
+  // Pushed ID, normal commit inst                    => old ID
+  //            dead instruction                      => new ID
+  //            normal exception                      => new ID
+  //            silent flush (actually normally exit) => old ID
+  assign except_flush_valid = i_commit_rnid_update.commit &
+                              i_commit_rnid_update.except_valid[d_idx] &
+                              (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH);
+
+  always_comb begin
+    if (i_commit_rnid_update.commit &
+        !i_commit_rnid_update.all_dead &
+        !(i_commit_rnid_update.dead_id[d_idx] | except_flush_valid)) begin
+      // old ID push
+      w_push_freelist_id = i_commit_rnid_update.old_rnid[d_idx];
+    end else begin
+      w_push_freelist_id = i_commit_rnid_update.rd_rnid[d_idx];
+    end
+  end
+
   msrh_freelist
     #(
       .SIZE (FLIST_SIZE),
@@ -107,11 +148,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_clk     (i_clk ),
     .i_reset_n (i_reset_n),
 
-    .i_push(i_commit_rnid_update.commit &
-            i_commit_rnid_update.rnid_valid[d_idx] &
-            (i_commit_rnid_update.rd_regidx[d_idx] != 'h0)),
-    .i_push_id(i_commit_rnid_update.commit & (i_commit_rnid_update.all_dead | i_commit_rnid_update.dead_id[d_idx]) ?
-               i_commit_rnid_update.rd_rnid[d_idx] : i_commit_rnid_update.old_rnid[d_idx]),
+    .i_push(w_push_freelist),
+    .i_push_id(w_push_freelist_id),
 
     .i_pop(w_iq_fire &
            iq_disp.inst[d_idx].valid &
@@ -122,41 +160,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
-
-// `ifdef SIMULATION
-// generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
-//
-//   logic [RNID_W-1: 0] freelist_model[$];
-//   logic [RNID_W-1: 0] pop_data;
-//
-//   initial begin
-//     for (int i = 0; i < 32; i++) begin
-//       /* verilator lint_off WIDTH */
-//       freelist_model.push_back(32 + d_idx * FLIST_SIZE + i);
-//     end
-//   end
-//
-//   always_ff @ (negedge i_clk, negedge i_reset_n) begin
-//     if (i_reset_n) begin
-//       if (free_loop[d_idx].u_freelist.i_push) begin
-//         freelist_model.push_back(free_loop[d_idx].u_freelist.i_push_id);
-//       end
-//       if (free_loop[d_idx].u_freelist.i_pop) begin
-//         pop_data = freelist_model.pop_front();
-//         if (free_loop[d_idx].u_freelist.o_pop_id != pop_data) begin
-//           $fatal(0, "Pop back error. RTL=%d, MODEL=%d\n", free_loop[d_idx].u_freelist.o_pop_id, pop_data);
-//         end
-//       end
-//     end
-//
-//     if (freelist_model.size > 32) begin
-//       $fatal(0, "freelist_model shouldn't be over 32");
-//     end
-//   end
-// end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++)
-// endgenerate
-//
-// `endif // SIMULATION
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
@@ -177,13 +180,23 @@ assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit &
 // assign w_commit_flush_rnid_restore_valid = i_commit.commit &
 //                                            i_commit.flush_valid & !i_commit.all_dead;
 //
-assign w_commit_rd_valid = {msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid /* |
-                                                     w_commit_flush_rnid_restore_valid*/}} &
+assign w_commit_rd_valid = ({msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid}} | w_commit_except_rd_valid) &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
+
+assign w_commit_except_valid = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
+
+assign w_restore_valid = (|w_commit_except_valid)  |                        // Exception : Restore from CommitMap
+                         w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid; // Speculation Miss : Restore from Br Queue
+assign w_restore_rn_list = (|w_commit_except_valid) ? w_restore_commit_map_list :
+                           w_restore_queue_list;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop
   assign w_commit_rd_regidx[d_idx] = i_commit_rnid_update.rd_regidx[d_idx];
   assign w_commit_rd_rnid[d_idx]   = i_commit_rnid_update.rd_rnid[d_idx];
+
+  assign w_commit_except_rd_valid[d_idx] = (i_commit.commit & i_commit.except_valid[d_idx] & (i_commit.except_type == msrh_pkg::SILENT_FLUSH)) |
+                                           (w_commit_except_valid & i_commit.grp_id[d_idx] & !i_commit.dead_id[d_idx] &
+                                            ((i_commit.except_valid[d_idx] & (i_commit.except_type != msrh_pkg::SILENT_FLUSH)) ? 1'b0 : 1'b1));
 end
 endgenerate
 
@@ -203,7 +216,7 @@ msrh_rename_map u_msrh_rename_map
    .i_update_arch_id (w_update_arch_id),
    .i_update_rnid    (w_update_rnid   ),
 
-   .i_restore_from_queue (w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid),
+   .i_restore_from_queue (w_restore_valid  ),
    .i_restore_rn_list    (w_restore_rn_list),
 
    .i_commit_rd_valid (w_commit_rd_valid),
@@ -372,10 +385,22 @@ msrh_rn_map_queue
      .i_rn_list (w_rn_list),
 
      .i_restore (w_commit_rnid_restore_valid),
-     .o_rn_list (w_restore_rn_list),
+     .o_rn_list (w_restore_queue_list),
 
      .o_full (/*xxx*/)
      );
+
+
+// Commit Map
+msrh_commit_map
+u_commit_map
+  (
+   .i_clk (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_commit_rnid_update(i_commit_rnid_update),
+   .o_rnid_map (w_restore_commit_map_list)
+   );
 
 
 // -----------------------------
@@ -596,6 +621,36 @@ function void dump_json(int fp);
   $fwrite(fp, "  },\n");
 
 endfunction // dump
+
+logic [RNID_W-1: 0] w_rnid_list[RNID_SIZE];
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rn_loop
+  for (genvar f_idx = 0; f_idx < msrh_pkg::FLIST_SIZE; f_idx++) begin : flist_loop
+    assign w_rnid_list[d_idx * FLIST_SIZE + f_idx] = free_loop[d_idx].u_freelist.r_freelist[f_idx];
+  end
+end
+endgenerate
+generate for (genvar r_idx = 0; r_idx < 32; r_idx++) begin : rmap_loop
+  assign w_rnid_list[msrh_conf_pkg::DISP_SIZE * FLIST_SIZE + r_idx] = u_msrh_rename_map.r_map[r_idx];
+end
+endgenerate
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    for (int f1_idx = 0; f1_idx < RNID_SIZE; f1_idx++) begin : list_check1_loop
+      for (int f2_idx = 0; f2_idx < RNID_SIZE; f2_idx++) begin : list_check2_loop
+        if (f1_idx != f2_idx) begin
+          if (w_rnid_list[f1_idx] !='h0 && (w_rnid_list[f1_idx] == w_rnid_list[f2_idx])) begin
+            $fatal(0, "Index %d(%2d, %2d) and %d(%2d, %2d) are same ID: %3d\n",
+                   f1_idx[$clog2(RNID_SIZE)-1: 0], f1_idx[$clog2(RNID_SIZE)-1: 0] / msrh_pkg::FLIST_SIZE, f1_idx[$clog2(RNID_SIZE)-1: 0] % msrh_pkg::FLIST_SIZE,
+                   f2_idx[$clog2(RNID_SIZE)-1: 0], f2_idx[$clog2(RNID_SIZE)-1: 0] / msrh_pkg::FLIST_SIZE, f2_idx[$clog2(RNID_SIZE)-1: 0] % msrh_pkg::FLIST_SIZE,
+                   w_rnid_list[f1_idx]);
+          end
+        end
+      end
+    end
+  end // if (i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
 `endif // SIMULATION
 
 endmodule // msrh_rename

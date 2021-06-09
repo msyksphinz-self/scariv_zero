@@ -88,7 +88,7 @@ logic                           w_commit_flush_valid;
 logic                           w_inst_buffer_ready;
 
 always_comb begin
-  if (i_commit.except_valid) begin
+  if (|i_commit.except_valid) begin
     case (i_commit.except_type)
       msrh_pkg::SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
       msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];

@@ -283,7 +283,7 @@ typedef struct packed {
   logic                           upd_pc_valid;
   logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
   logic                           flush_valid;
-  logic                           except_valid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
   except_t                        except_type;
   logic [riscv_pkg::VADDR_W-1: 0] epc;
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
@@ -319,6 +319,8 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
   logic                                                      is_br_included;
   logic                                                      upd_pc_valid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;
+  except_t                                                   except_type;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
   logic                                                      all_dead;
 } cmt_rnid_upd_t;

@@ -149,7 +149,7 @@ assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign o_commit.upd_pc_valid   = |w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid | (|w_entries[w_out_cmt_entry_id].except_valid);
 assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
 assign o_commit.flush_valid   = o_commit.upd_pc_valid;
-assign o_commit.except_valid  = |w_valid_except_grp_id;
+assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
@@ -196,6 +196,8 @@ assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br
 assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
+assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
+assign o_commit_rnid_update.except_type    = o_commit.except_type;
 
 
 // Make dead Instruction, (after branch instruction)

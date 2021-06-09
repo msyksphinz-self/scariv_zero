@@ -270,7 +270,7 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
-assign iq_disp.is_br_included = (|w_inst_is_br) | (|w_inst_gen_except);
+assign iq_disp.is_br_included = |w_inst_is_br;
 assign iq_disp.tlb_except_valid = w_inst_illegal;
 assign iq_disp.tlb_except_cause = w_inst_illegal_cause;
 

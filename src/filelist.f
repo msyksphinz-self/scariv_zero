@@ -71,6 +71,7 @@
 ../src/msrh_rename_map.sv
 ../src/msrh_inflight_list.sv
 ../src/msrh_rn_map_queue.sv
+../src/msrh_commit_map.sv
 
 ../src/msrh_scheduler.sv
 ../src/msrh_sched_entry.sv
