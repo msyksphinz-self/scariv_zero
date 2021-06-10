@@ -70,7 +70,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
     if (r_ptw_accept[p_idx] | w_ptw_accept[p_idx]) begin
       ptw_if[p_idx].resp.valid       = (((r_state == RESP_L1D) & (lsu_access.status == msrh_lsu_pkg::STATUS_HIT)) |
                                         ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready)) &
-                                       (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == 'h0)) &
+                                       (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == riscv_pkg::PG_LEVELS-1)) &
                                        r_ptw_accept[p_idx];
       ptw_if[p_idx].resp.ae          = 1'b0; // if instruction region fault
       ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
@@ -106,7 +106,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (w_ptw_accepted_req.valid) begin
           r_state <= CHECK_L1D;
           /* verilator lint_off WIDTH */
-          r_count <= riscv_pkg::PG_LEVELS - 'h1;
+          r_count <= 'h0;
           r_ptw_vpn <= w_ptw_accepted_req.addr;
           r_ptw_addr <= {w_ptw_accepted_satp[riscv_pkg::PPN_W-1: 0], {PG_IDX_W{1'b0}}} +
                         {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
@@ -121,15 +121,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (lsu_access.resp_valid) begin
           case (lsu_access.status)
             msrh_lsu_pkg::STATUS_HIT : begin
-              if (lsu_access_is_leaf || r_count == 'h0) begin
+              if (lsu_access_is_leaf || (r_count == riscv_pkg::PG_LEVELS-1)) begin
                 r_state  <= IDLE;
               end else begin
-                r_count  <= r_count - 1;
+                r_count  <= r_count + 1;
                 r_state  <= CHECK_L1D;
                 /* verilator lint_off WIDTH */
                 r_ptw_addr <= {lsu_access_pte.ppn, {PG_IDX_W{1'b0}}} +
                               {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
-                               r_ptw_vpn[(r_count-'h1)*VPN_FIELD_W +: VPN_FIELD_W],
+                               r_ptw_vpn[(riscv_pkg::PG_LEVELS - r_count - 'h2)*VPN_FIELD_W +: VPN_FIELD_W],
                                {$clog2(riscv_pkg::XLEN_W / 8){1'b0}}};
 
               end
@@ -167,7 +167,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       L2_RESP_WAIT : begin
         if (ptw_resp.valid & ptw_resp.ready &
             (ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}})) begin
-          if (lsu_access_is_leaf || r_count == 'h0) begin
+          if (lsu_access_is_leaf || (r_count == riscv_pkg::PG_LEVELS -1)) begin
             r_state <= IDLE;
           end else if (lsu_access_bad_pte) begin
             r_state <= IDLE;
