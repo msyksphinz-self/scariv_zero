@@ -436,4 +436,16 @@ typedef enum logic [2:0]{
   STATUS_LRQ_CONFLICT = 4
 } lsu_status_t;
 
+
+// Snoop interface
+
+typedef struct packed {
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+} req_payload;
+
+typedef struct packed {
+  logic [DCACHE_DATA_W-1: 0] data;
+  logic [DCACHE_DATA_B_W-1: 0] be;
+} req_payload;
+
 endpackage // msrh_lsu_pkg

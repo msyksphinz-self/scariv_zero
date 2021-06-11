@@ -210,3 +210,27 @@ interface sfence_if;
   );
 
 endinterface // sfence_if
+
+
+interface snoop_if;
+  logic     req_valid;
+  logic     resp_valid;
+
+  snoop_req_t  req_payload;
+  snoop_resp_t resp_payload;
+
+  modport master (
+    output req_valid,
+    output req,
+    input  resp_valid,
+    input  resp_payload
+  );
+
+  modport master (
+    output req_valid,
+    output req,
+    input  resp_valid,
+    input  resp_payload
+  );
+
+endinterface // snoop_if

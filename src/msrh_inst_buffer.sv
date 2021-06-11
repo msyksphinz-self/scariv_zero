@@ -291,12 +291,12 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZ
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disped_pick_up   (.in(w_inst_bru_disp   & w_inst_disp_mask), .out(w_inst_bru_disped  ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disped_pick_up   (.in(w_inst_csu_disp   & w_inst_disp_mask), .out(w_inst_csu_disped  ));
 
-logic [$clog2(msrh_conf_pkg::ARITH_DISP_SIZE): 0] w_inst_arith_cnt;
-logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_mem_cnt;
-logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_ld_cnt;
-logic [$clog2(msrh_conf_pkg::MEM_DISP_SIZE): 0]   w_inst_st_cnt;
-logic [$clog2(msrh_conf_pkg::BRU_DISP_SIZE): 0]   w_inst_bru_cnt;
-logic [$clog2(msrh_conf_pkg::CSU_DISP_SIZE): 0]   w_inst_csu_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_arith_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_mem_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_ld_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_st_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_bru_cnt;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_csu_cnt;
 
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_alu_inst_cnt (.in(w_inst_arith_disped), .out(w_inst_arith_cnt));
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_rsrc_loop

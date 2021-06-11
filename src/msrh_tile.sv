@@ -10,6 +10,9 @@ module msrh_tile (
     l2_req_if.master l1d_ext_req,
     l2_resp_if.slave l1d_ext_resp,
 
+    // Cache Coherent Interface
+    snoop_if.slave snoop_if,
+
     // PTW interconnection
     l2_req_if.master ptw_req,
     l2_resp_if.slave ptw_resp
