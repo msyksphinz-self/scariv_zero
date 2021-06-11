@@ -250,6 +250,6 @@ ctrl_fields.each{|ct|
   sv_file.print ct.name + " = decoder_" + ctrl_idx + "_pkg::" + ct.name + "_t'(raw_" + ct.name + ");\n"
 }
 
-sv_file.print "endmodule"
+sv_file.print "endmodule\n\n"
 
 sv_file.close
