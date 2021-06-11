@@ -2,7 +2,6 @@ module msrh_tile_wrapper
 (
     input logic i_clk,
     input logic i_reset_n,
-
     // L2 request from ICache
     output logic                                      o_ic_req_valid,
     output msrh_lsu_pkg::mem_cmd_t                    o_ic_req_cmd,
@@ -54,6 +53,8 @@ l2_resp_if l1d_l2_resp ();
 
 l2_req_if  ptw_l2_req  ();
 l2_resp_if ptw_l2_resp ();
+
+snoop_if snoop_if();
 
 // -------------------
 // IC Interconnection
@@ -113,6 +114,10 @@ msrh_tile u_msrh_tile (
     .l1d_ext_req  (l1d_l2_req ),
     .l1d_ext_resp (l1d_l2_resp),
 
+    // Snoop Interface
+    .snoop_if (snoop_if),
+
+    // Page Table Walk Interface
     .ptw_req  (ptw_l2_req ),
     .ptw_resp (ptw_l2_resp)
 );

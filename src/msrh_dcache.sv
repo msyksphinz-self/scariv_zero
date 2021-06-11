@@ -1,10 +1,13 @@
 module msrh_dcache
-  (
+  #(
+    parameter RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1
+    )
+(
    input logic i_clk,
    input logic i_reset_n,
 
    // LSU_INST_NUM ports from pipe, and STQ read and update port, PTW
-   l1d_rd_if.slave l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM + 1 + 1],
+   l1d_rd_if.slave l1d_rd_if[RD_PORT_NUM],
    l1d_wr_if.slave l1d_wr_if,
 
    // L2 cache response
@@ -13,8 +16,6 @@ module msrh_dcache
    // LRQ search interface
    lrq_search_if.master lrq_search_if
    );
-
-localparam RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1;
 
 msrh_lsu_pkg::dc_update_t r_rp2_dc_update;
 

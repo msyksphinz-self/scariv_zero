@@ -38,6 +38,9 @@ module msrh_stq
 
    input lrq_resolve_t     i_lrq_resolve,
 
+   // Snoop Interface
+   snoop_unit_if.slave     snoop_if,
+
    // Write Data to DCache
    l1d_wr_if.master                      l1d_wr_if,
 

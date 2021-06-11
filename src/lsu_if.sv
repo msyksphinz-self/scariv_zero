@@ -216,21 +216,79 @@ interface snoop_if;
   logic     req_valid;
   logic     resp_valid;
 
-  snoop_req_t  req_payload;
-  snoop_resp_t resp_payload;
+  msrh_lsu_pkg::snoop_req_t  req_payload;
+  msrh_lsu_pkg::snoop_resp_t resp_payload;
 
   modport master (
     output req_valid,
-    output req,
+    output req_payload,
     input  resp_valid,
     input  resp_payload
   );
 
-  modport master (
-    output req_valid,
-    output req,
-    input  resp_valid,
-    input  resp_payload
+  modport slave (
+    input  req_valid,
+    input  req_payload,
+    output resp_valid,
+    output resp_payload
   );
 
 endinterface // snoop_if
+
+
+interface snoop_unit_if;
+  logic                     req_valid;
+  msrh_lsu_pkg::snoop_req_t req_payload;
+
+  // L1D interface
+  logic                      resp_valid;
+  msrh_lsu_pkg::snoop_resp_t resp_payload;
+
+  modport master (
+    output req_valid,
+    output req_payload,
+    input  resp_valid,
+    input  resp_payload
+  );
+
+  modport slave (
+    input  req_valid,
+    input  req_payload,
+    output resp_valid,
+    output resp_payload
+  );
+
+endinterface // snoop_unit_if
+
+
+interface snoop_bcast_if;
+  logic        req_valid;
+  msrh_lsu_pkg::snoop_req_t  req_payload;
+
+  // L1D interface
+  logic                      resp_l1d_valid;
+  msrh_lsu_pkg::snoop_resp_t resp_l1d_payload;
+
+  // STQ interface
+  logic                      resp_stq_valid;
+  msrh_lsu_pkg::snoop_resp_t resp_stq_payload;
+
+  modport master (
+    output req_valid,
+    output req_payload,
+    input  resp_l1d_valid,
+    input  resp_l1d_payload,
+    input  resp_stq_valid,
+    input  resp_stq_payload
+  );
+
+  modport slave (
+    input  req_valid,
+    input  req_payload,
+    output resp_l1d_valid,
+    output resp_l1d_payload,
+    output resp_stq_valid,
+    output resp_stq_payload
+  );
+
+endinterface // snoop_bcast_if

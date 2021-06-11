@@ -93,6 +93,11 @@ msrh_pkg::early_wr_t w_ex1_csu_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 msrh_pkg::done_rpt_t w_csu_done_rpt;
 
+// -------------------------------
+// Internal Broadcast Interface
+// -------------------------------
+snoop_bcast_if snoop_bcast_if();
+
 // ----------------------------------
 // Credit/Return Management
 // ----------------------------------
@@ -263,6 +268,8 @@ u_msrh_lsu_top
     .o_done_report(w_lsu_done_rpt),
     .o_ex3_mispred (w_ex3_mispred_lsu),
 
+    .snoop_bcast_if (snoop_bcast_if),
+
     .i_commit (w_commit)
    );
 
@@ -373,5 +380,17 @@ msrh_ptw u_ptw
    .ptw_req  (ptw_req ),
    .ptw_resp (ptw_resp)
    );
+
+
+// Snoop Unit
+msrh_snoop_top u_snoop_top
+(
+ .i_clk     (i_clk    ),
+ .i_reset_n (i_reset_n),
+
+ .snoop_if       (snoop_if),
+ .snoop_bcast_if (snoop_bcast_if)
+ );
+
 
 endmodule  // msrh_tile

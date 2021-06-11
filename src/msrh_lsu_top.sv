@@ -41,12 +41,17 @@ module msrh_lsu_top
     output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
     output msrh_pkg::mispred_t  o_ex3_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
+    // Internal Broadcast Interface
+    snoop_bcast_if.slave snoop_bcast_if,
+
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit
    );
 
-// LSU Pipeline + STQ Interface + PTW
-l1d_rd_if  w_l1d_rd_if [msrh_conf_pkg::LSU_INST_NUM + 1 + 1] ();
+// LSU Pipeline + STQ Interface + PTW + Snoop
+localparam L1D_RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1;
+
+l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
 // LSU Pipeline + PTW
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
@@ -180,6 +185,16 @@ msrh_ldq
  );
 
 
+// ---------------------------
+//  STQ Snoop Interface
+// ---------------------------
+snoop_unit_if stq_snoop_if();
+assign stq_snoop_if.req_valid   = snoop_bcast_if.req_valid;
+assign stq_snoop_if.req_payload = snoop_bcast_if.req_payload;
+
+assign snoop_bcast_if.resp_stq_valid   = stq_snoop_if.resp_valid;
+assign snoop_bcast_if.resp_stq_payload = stq_snoop_if.resp_payload;
+
 // -----------------------------------
 // STQ
 // -----------------------------------
@@ -215,6 +230,8 @@ msrh_stq
  .o_stq_resolve (w_stq_resolve),
 
  .l1d_wr_if (w_l1d_wr_if),
+
+ .snoop_if(stq_snoop_if),
 
  .o_done_report(w_st_done_report)
  );
@@ -260,29 +277,41 @@ assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].data[{r_pt
 assign lsu_access.conflict_resolve_vld    = w_lrq_resolve.valid;
 assign lsu_access.conflict_resolve_idx_oh = w_lrq_resolve.resolve_index_oh;
 
-// // ---------------------------
-// // LRQ Access Check Interface
-// // ---------------------------
-// localparam LRQ_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM;
-// assign w_l1d_lrq_if[LRQ_PTW_PORT].load = lsu_access.req_valid;
-// assign w_l1d_lrq_if[LRQ_PTW_PORT].req_payload.paddr = lsu_access.paddr;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ptw_resp_valid    <= 1'b0;
     r_ptw_paddr_sel     <= 'h0;
-    // r_ptw_lrq_resp_full <= 1'b0;
-    // r_ptw_lrq_resp_conflict <= 1'b0;
-    // r_ptw_lrq_resp_lrq_index_oh <= 'h0;
   end else begin
     r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
     r_ptw_resp_valid            <= lsu_access.req_valid;
-    // r_ptw_lrq_resp_full         <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.full;
-    // r_ptw_lrq_resp_conflict     <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.conflict;
-    // r_ptw_lrq_resp_lrq_index_oh <= w_l1d_lrq_if[LRQ_PTW_PORT].resp_payload.lrq_index_oh;
+  end
+end
+
+// ---------------------------
+//  L1D Snoop Interface
+// ---------------------------
+logic r_snoop_resp_valid;
+snoop_unit_if l1d_snoop_if();
+assign l1d_snoop_if.req_valid   = snoop_bcast_if.req_valid;
+assign l1d_snoop_if.req_payload = snoop_bcast_if.req_payload;
+
+localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].valid = snoop_bcast_if.req_valid;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].paddr = snoop_bcast_if.req_payload.paddr;
+
+assign snoop_bcast_if.resp_l1d_valid   = r_snoop_resp_valid;
+assign snoop_bcast_if.resp_l1d_payload.data = w_l1d_rd_if[L1D_PTW_PORT].data;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_snoop_resp_valid <= 1'b0;
+  end else begin
+    r_snoop_resp_valid <= snoop_bcast_if.req_valid;
   end
 end
 
 msrh_dcache
+  #(.RD_PORT_NUM (L1D_RD_PORT_NUM))
 u_msrh_dcache
   (
    .i_clk(i_clk),

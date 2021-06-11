@@ -441,11 +441,11 @@ typedef enum logic [2:0]{
 
 typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
-} req_payload;
+} snoop_req_t;
 
 typedef struct packed {
-  logic [DCACHE_DATA_W-1: 0] data;
-  logic [DCACHE_DATA_B_W-1: 0] be;
-} req_payload;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
+} snoop_resp_t;
 
 endpackage // msrh_lsu_pkg

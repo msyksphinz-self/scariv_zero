@@ -1,15 +1,16 @@
 module msrh_dcache_array
+  #(
+    // from LSU Pipeline + STQ Update + PTW
+    parameter READ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1
+    )
   (
    input logic i_clk,
    input logic i_reset_n,
 
    input msrh_lsu_pkg::dc_update_t     i_dc_update,
-   input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [msrh_conf_pkg::LSU_INST_NUM + 1 + 1],
-   output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[msrh_conf_pkg::LSU_INST_NUM + 1 + 1]
+   input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [READ_PORT_NUM],
+   output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[READ_PORT_NUM]
    );
-
-// from LSU Pipeline + STQ Update + PTW
-localparam READ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1;
 
 localparam TAG_SIZE = riscv_pkg::PADDR_W - msrh_lsu_pkg::DCACHE_TAG_LOW;
 
