@@ -23,12 +23,12 @@ package msrh_lsu_pkg;
                           msrh_conf_pkg::LDQ_SIZE :
                           msrh_conf_pkg::STQ_SIZE;
 
-  // typedef enum logic [ 1: 0] {
-  //   LEN1B,
-  //   LEN2B,
-  //   LEN4B,
-  //   LEN8B
-  // } size_t;
+    typedef enum logic [ 1: 0] {
+        MESI_INVALID = 0,
+        MESI_EXCLUSIVE = 1,
+        MESI_SHARED = 2,
+        MESI_MODIFIED = 3
+    } mesi_t;
 
   typedef enum logic [ 2: 0] {
     NONE,
@@ -255,6 +255,19 @@ function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [2:0] ad
 
   return (addr1_dw & addr2_dw) == addr2_dw;
 endfunction // is_dw_included
+
+
+function logic [DCACHE_DATA_B_W-1: 0] gen_dw_cacheline(decoder_lsu_ctrl_pkg::size_t size,
+                                                       logic [$clog2(DCACHE_DATA_B_W)-1:0] addr);
+  case(size)
+    decoder_lsu_ctrl_pkg::SIZE_DW : return 'hff << addr;
+    decoder_lsu_ctrl_pkg::SIZE_W  : return 'h0f << addr;
+    decoder_lsu_ctrl_pkg::SIZE_H  : return 'h03 << addr;
+    decoder_lsu_ctrl_pkg::SIZE_B  : return 'h01 << addr;
+    default : return 'h0;
+  endcase // case (size)
+endfunction // gen_dw
+
 
 // ---------
 // STQ

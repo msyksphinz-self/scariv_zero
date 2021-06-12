@@ -42,6 +42,10 @@ module msrh_stq_entry
 
    input logic                                i_sq_l1d_wr_conflict,
 
+   // Snoop Interface
+   stq_snoop_if.slave                         stq_snoop_if,
+
+
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
    input logic                                     i_stq_outptr_valid,
    output logic                                    o_stq_entry_st_finish
@@ -306,6 +310,30 @@ always_comb begin
   endcase // case (w_entry_next.state)
 
 end // always_comb
+
+
+// Snoop Interface Hit
+/* verilator lint_off WIDTH */
+logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
+assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+logic                                              w_snoop_s0_hit;
+assign w_snoop_s0_hit = r_entry.paddr_valid &
+                        ((r_entry.state == STQ_COMMIT) |
+                         (r_entry.state == STQ_COMMIT_L1D_CHECK) |
+                         (r_entry.state == STQ_WAIT_LRQ_REFILL) |
+                         (r_entry.state == STQ_L1D_UPDATE)) &
+                        (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                         r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    stq_snoop_if.resp_s1_valid <= 1'b0;
+  end else begin
+    stq_snoop_if.resp_s1_valid <= stq_snoop_if.req_s0_valid;
+    stq_snoop_if.resp_s1_be   <= w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
+    stq_snoop_if.resp_s1_data <= w_snoop_s0_hit ? {{(msrh_conf_pkg::DCACHE_DATA_W-riscv_pkg::XLEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,

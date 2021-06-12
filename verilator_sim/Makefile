@@ -30,6 +30,7 @@ VERILATOR_OPTS += --trace-fst
 VERILATOR_OPTS += --trace-params
 VERILATOR_OPTS += --trace-structs
 VERILATOR_OPTS += --trace-underscore
+# VERILATOR_OPTS += --trace-max-array 5000
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION

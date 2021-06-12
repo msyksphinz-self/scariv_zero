@@ -39,7 +39,7 @@ module msrh_stq
    input lrq_resolve_t     i_lrq_resolve,
 
    // Snoop Interface
-   snoop_unit_if.slave     snoop_if,
+   stq_snoop_if.slave     stq_snoop_if,
 
    // Write Data to DCache
    l1d_wr_if.master                      l1d_wr_if,
@@ -161,12 +161,24 @@ end
 endgenerate
 
 
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_valid;
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_hit ;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]              w_stq_snoop_data[msrh_conf_pkg::STQ_SIZE];
+logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0]             w_stq_snoop_be  [msrh_conf_pkg::STQ_SIZE];
+
+assign stq_snoop_if.resp_s1_valid = |w_stq_snoop_valid;
+bit_or #(.WIDTH(msrh_conf_pkg::DCACHE_DATA_W),  .WORDS(msrh_conf_pkg::STQ_SIZE)) u_snoop_data_or (.i_data(w_stq_snoop_data), .o_selected(stq_snoop_if.resp_s1_data));
+bit_or #(.WIDTH(msrh_lsu_pkg::DCACHE_DATA_B_W), .WORDS(msrh_conf_pkg::STQ_SIZE)) u_snoop_be_or   (.i_data(w_stq_snoop_be),   .o_selected(stq_snoop_if.resp_s1_be));
+
+
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
+
+  stq_snoop_if stq_entry_snoop_if();
 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     logic [msrh_conf_pkg::STQ_SIZE-1: 0]  w_entry_ptr_oh;
@@ -190,6 +202,17 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                          .q_index(s_idx[$clog2(msrh_conf_pkg::STQ_SIZE)-1:0]),
                                          .i_ex2_recv(r_ex2_stq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
+
+
+  // ---------------
+  // STQ Snoop If
+  // ---------------
+  assign stq_entry_snoop_if.req_s0_valid = stq_snoop_if.req_s0_valid;
+  assign stq_entry_snoop_if.req_s0_paddr = stq_snoop_if.req_s0_paddr;
+
+  assign w_stq_snoop_valid[s_idx] = stq_entry_snoop_if.resp_s1_valid;
+  assign w_stq_snoop_data [s_idx] = stq_entry_snoop_if.resp_s1_data;
+  assign w_stq_snoop_be   [s_idx] = stq_entry_snoop_if.resp_s1_be;
 
   msrh_stq_entry
   u_msrh_stq_entry
@@ -232,6 +255,9 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
      .i_lrq_resolve (i_lrq_resolve),
      .i_sq_l1d_wr_conflict (l1d_wr_if.conflict),
+
+     // Snoop Interface
+     .stq_snoop_if (stq_entry_snoop_if),
 
      .i_ex3_done            (i_ex3_done),
      .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),

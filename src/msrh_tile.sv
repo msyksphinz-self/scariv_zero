@@ -96,7 +96,8 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
-snoop_bcast_if snoop_bcast_if();
+l1d_snoop_if l1d_snoop_if();
+stq_snoop_if stq_snoop_if();
 
 // ----------------------------------
 // Credit/Return Management
@@ -268,7 +269,8 @@ u_msrh_lsu_top
     .o_done_report(w_lsu_done_rpt),
     .o_ex3_mispred (w_ex3_mispred_lsu),
 
-    .snoop_bcast_if (snoop_bcast_if),
+    .l1d_snoop_if (l1d_snoop_if),
+    .stq_snoop_if (stq_snoop_if),
 
     .i_commit (w_commit)
    );
@@ -389,7 +391,9 @@ msrh_snoop_top u_snoop_top
  .i_reset_n (i_reset_n),
 
  .snoop_if       (snoop_if),
- .snoop_bcast_if (snoop_bcast_if)
+
+ .l1d_snoop_if (l1d_snoop_if),
+ .stq_snoop_if (stq_snoop_if)
  );
 
 

@@ -42,7 +42,8 @@ module msrh_lsu_top
     output msrh_pkg::mispred_t  o_ex3_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
-    snoop_bcast_if.slave snoop_bcast_if,
+    l1d_snoop_if.slave l1d_snoop_if,
+    stq_snoop_if.slave stq_snoop_if,
 
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit
@@ -185,16 +186,6 @@ msrh_ldq
  );
 
 
-// ---------------------------
-//  STQ Snoop Interface
-// ---------------------------
-snoop_unit_if stq_snoop_if();
-assign stq_snoop_if.req_valid   = snoop_bcast_if.req_valid;
-assign stq_snoop_if.req_payload = snoop_bcast_if.req_payload;
-
-assign snoop_bcast_if.resp_stq_valid   = stq_snoop_if.resp_valid;
-assign snoop_bcast_if.resp_stq_payload = stq_snoop_if.resp_payload;
-
 // -----------------------------------
 // STQ
 // -----------------------------------
@@ -231,7 +222,7 @@ msrh_stq
 
  .l1d_wr_if (w_l1d_wr_if),
 
- .snoop_if(stq_snoop_if),
+ .stq_snoop_if(stq_snoop_if),
 
  .o_done_report(w_st_done_report)
  );
@@ -268,7 +259,6 @@ assign w_l1d_rd_if [L1D_PTW_PORT].paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
 assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].conflict ? STATUS_L1D_CONFLICT :
-                           // r_ptw_lrq_resp_conflict            ? STATUS_LRQ_CONFLICT :
                            w_l1d_rd_if[L1D_PTW_PORT].miss     ? STATUS_MISS :
                            STATUS_NONE;
 // assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
@@ -291,22 +281,24 @@ end
 //  L1D Snoop Interface
 // ---------------------------
 logic r_snoop_resp_valid;
-snoop_unit_if l1d_snoop_if();
-assign l1d_snoop_if.req_valid   = snoop_bcast_if.req_valid;
-assign l1d_snoop_if.req_payload = snoop_bcast_if.req_payload;
 
 localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
-assign w_l1d_rd_if [L1D_SNOOP_PORT].valid = snoop_bcast_if.req_valid;
-assign w_l1d_rd_if [L1D_SNOOP_PORT].paddr = snoop_bcast_if.req_payload.paddr;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].valid = l1d_snoop_if.req_s0_valid;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].paddr = l1d_snoop_if.req_s0_paddr;
 
-assign snoop_bcast_if.resp_l1d_valid   = r_snoop_resp_valid;
-assign snoop_bcast_if.resp_l1d_payload.data = w_l1d_rd_if[L1D_PTW_PORT].data;
+assign l1d_snoop_if.resp_s1_valid  = r_snoop_resp_valid;
+assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].hit      ? STATUS_HIT :
+                                     w_l1d_rd_if[L1D_SNOOP_PORT].conflict ? STATUS_L1D_CONFLICT :
+                                     w_l1d_rd_if[L1D_SNOOP_PORT].miss     ? STATUS_MISS :
+                                     STATUS_NONE;
+assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
+assign l1d_snoop_if.resp_s1_data   = w_l1d_rd_if[L1D_SNOOP_PORT].data;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_snoop_resp_valid <= 1'b0;
   end else begin
-    r_snoop_resp_valid <= snoop_bcast_if.req_valid;
+    r_snoop_resp_valid <= l1d_snoop_if.req_s0_valid;
   end
 end
 

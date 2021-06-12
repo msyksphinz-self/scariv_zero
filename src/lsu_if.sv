@@ -261,34 +261,60 @@ interface snoop_unit_if;
 endinterface // snoop_unit_if
 
 
-interface snoop_bcast_if;
-  logic        req_valid;
-  msrh_lsu_pkg::snoop_req_t  req_payload;
+interface l1d_snoop_if;
+  logic                           req_s0_valid;
+  logic [riscv_pkg::PADDR_W-1: 0] req_s0_paddr ;
 
-  // L1D interface
-  logic                      resp_l1d_valid;
-  msrh_lsu_pkg::snoop_resp_t resp_l1d_payload;
-
-  // STQ interface
-  logic                      resp_stq_valid;
-  msrh_lsu_pkg::snoop_resp_t resp_stq_payload;
+  logic                                      resp_s1_valid;
+  msrh_lsu_pkg::lsu_status_t                 resp_s1_status;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
   modport master (
-    output req_valid,
-    output req_payload,
-    input  resp_l1d_valid,
-    input  resp_l1d_payload,
-    input  resp_stq_valid,
-    input  resp_stq_payload
+    output req_s0_valid,
+    output req_s0_paddr,
+    input  resp_s1_valid,
+    input  resp_s1_status,
+    input  resp_s1_data,
+    input  resp_s1_be
   );
 
   modport slave (
-    input  req_valid,
-    input  req_payload,
-    output resp_l1d_valid,
-    output resp_l1d_payload,
-    output resp_stq_valid,
-    output resp_stq_payload
+    input  req_s0_valid,
+    input  req_s0_paddr,
+    output resp_s1_valid,
+    output resp_s1_status,
+    output resp_s1_data,
+    output resp_s1_be
   );
 
-endinterface // snoop_bcast_if
+endinterface // l1d_snoop_if
+
+
+interface stq_snoop_if;
+  logic                           req_s0_valid;
+  logic [riscv_pkg::PADDR_W-1: 0] req_s0_paddr ;
+
+  logic                                      resp_s1_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+
+  modport master (
+    output req_s0_valid,
+    output req_s0_paddr,
+
+    input  resp_s1_valid,
+    input  resp_s1_data,
+    input  resp_s1_be
+  );
+
+  modport slave (
+    input  req_s0_valid,
+    input  req_s0_paddr,
+
+    output resp_s1_valid,
+    output resp_s1_data,
+    output resp_s1_be
+  );
+
+endinterface // stq_snoop_if

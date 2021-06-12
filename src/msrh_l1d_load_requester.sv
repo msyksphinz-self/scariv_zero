@@ -113,7 +113,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
   logic [REQ_PORT_NUM-1: 0] w_rev_load_valid;
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rev_loop
-    assign w_rev_load_valid[p_idx] = w_load_valid[p_idx][b_idx];
+    assign w_rev_load_valid[p_idx] =  w_load_valid[p_idx][b_idx];
   end
 
   assign w_load_entry_valid[b_idx] = |w_rev_load_valid;
@@ -200,7 +200,7 @@ assign l1d_lrq_stq_miss_if.resp_payload.conflict     = |w_hit_stq_lrq_same_addr_
 assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh =  w_hit_stq_lrq_same_addr_valid;
 assign w_stq_miss_lrq_load = l1d_lrq_stq_miss_if.load &
                              !l1d_lrq_stq_miss_if.resp_payload.full & !(|w_hit_stq_lrq_same_addr_valid);
-assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-2 : msrh_pkg::LRQ_ENTRY_SIZE-1;
+assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-1 : msrh_pkg::LRQ_ENTRY_SIZE-2;
 assign w_stq_load_entry.valid = 1'b1;
 assign w_stq_load_entry.paddr = {l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                                  {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
