@@ -69,16 +69,16 @@ bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts),
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
 assign w_out_valid = 1'b0;  // l1d_ext_req.valid;
 
-inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                          .i_rollback(1'b0),
-                                                          .i_in_valid (w_in_valid ),
-                                                          /* verilator lint_off WIDTH */
-                                                          .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_loads_cnt}),
-                                                          .o_in_ptr (w_in_ptr ),
+inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE-2)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                            .i_rollback(1'b0),
+                                                            .i_in_valid (w_in_valid ),
+                                                            /* verilator lint_off WIDTH */
+                                                            .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_loads_cnt}),
+                                                            .o_in_ptr (w_in_ptr ),
 
-                                                          .i_out_valid(w_out_valid),
-                                                          .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
-                                                          .o_out_ptr(w_out_ptr));
+                                                            .i_out_valid(w_out_valid),
+                                                            .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
+                                                            .o_out_ptr(w_out_ptr));
 
 generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_loop
   assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;

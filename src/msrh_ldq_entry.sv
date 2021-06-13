@@ -43,7 +43,7 @@ module msrh_ldq_entry
 logic                                            w_entry_ready;
 
 ldq_entry_t                                      r_entry;
-ldq_entry_t                                      w_entry;
+ldq_entry_t                                      w_entry_next;
 logic                                            w_entry_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_complete;
@@ -55,6 +55,7 @@ logic                                            w_stq_is_hazard;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             stq_haz_idx_next;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         w_ex2_ldq_entries_recv_next;
 
 logic                                            w_addr_conflict;
 
@@ -180,166 +181,171 @@ select_mispred_bus rs2_mispred_select
  .o_mispred    (w_rs2_mispredicted)
  );
 
-always_comb begin
-  w_entry = r_entry;
-  w_entry.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry.inst.rs2_ready = r_entry.inst.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
-
-  w_entry.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry.inst.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
-end
-
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry.is_valid <= 1'b0;
     r_entry.state <= LDQ_INIT;
     r_entry.lrq_haz_index_oh <= 'h0;
+
     r_ex2_ldq_entries_recv <= 'h0;
   end else begin
-    case (r_entry.state)
-      LDQ_INIT :
-        if (w_entry_flush & r_entry.is_valid) begin
-          r_entry.state    <= LDQ_DEAD;
-          // r_entry.is_valid <= 1'b0;
-          // r_entry.cmt_id <= 'h0;
-          // r_entry.grp_id <= 'h0;
-        end else if (i_disp_load) begin
-          r_entry <= assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
-          r_entry.inst <= msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                   w_rs1_rel_hit, w_rs2_rel_hit,
-                                                   w_rs1_phy_hit, w_rs2_phy_hit,
-                                                   w_rs1_may_mispred, w_rs2_may_mispred);
-        end
-      LDQ_ISSUE_WAIT : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else if (o_entry_ready & i_entry_picked) begin
-          r_entry.state <= LDQ_ISSUED;
-        end else begin
-          r_entry <= w_entry;
-        end
-      end
-      LDQ_ISSUED : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else begin
-          if (r_entry.is_valid & i_ex1_q_valid) begin
-            r_entry.state           <= i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
-                                       LDQ_EX2_RUN;
-            r_entry.except_valid    <= i_ex1_q_updates.tlb_except_valid;
-            r_entry.except_type     <= i_ex1_q_updates.tlb_except_type;
-            r_entry.vaddr           <= i_ex1_q_updates.vaddr;
-            r_entry.paddr           <= i_ex1_q_updates.paddr;
-            // r_entry.pipe_sel_idx_oh <= i_ex1_q_updates.pipe_sel_idx_oh;
-            // r_entry.inst            <= i_ex1_q_updates.inst;
-            r_entry.size            <= i_ex1_q_updates.size;
+    r_entry <= w_entry_next;
+    r_ex2_ldq_entries_recv <= w_ex2_ldq_entries_recv_next;
+  end
+end
 
-            for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-              r_ex2_ldq_entries_recv[p_idx] <=  i_ex1_q_valid &
-                             !i_ex1_q_updates.hazard_valid &
-                             r_entry.pipe_sel_idx_oh[p_idx];
-            end
-          end // if (i_ex1_q_valid)
-          if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
-              r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
-            r_entry.state <= LDQ_ISSUE_WAIT;
-            r_entry.inst.rs1_pred_ready <= 1'b0;
-            r_entry.inst.rs2_pred_ready <= 1'b0;
-          end
-        end // else: !if(w_entry_flush)
-      end // case: LDQ_ISSUED
-      LDQ_TLB_HAZ : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else if (|i_tlb_resolve) begin
-          r_entry.state <= LDQ_ISSUE_WAIT;
-        end
+always_comb begin
+
+  w_entry_next = r_entry;
+  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.inst.rs2_ready = r_entry.inst.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+
+  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.inst.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+
+  w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
+
+  case (r_entry.state)
+    LDQ_INIT :
+      if (w_entry_flush & r_entry.is_valid) begin
+        w_entry_next.state    = LDQ_DEAD;
+        // w_entry_next.is_valid = 1'b0;
+        // w_entry_next.cmt_id = 'h0;
+        // w_entry_next.grp_id = 'h0;
+      end else if (i_disp_load) begin
+        w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
+        w_entry_next.inst = msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                                 w_rs1_rel_hit, w_rs2_rel_hit,
+                                                 w_rs1_phy_hit, w_rs2_phy_hit,
+                                                 w_rs1_may_mispred, w_rs2_may_mispred);
       end
-      LDQ_EX2_RUN : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else if (i_ex2_q_valid) begin
-          r_entry.state <= i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
-                           w_lrq_resolve_match ? LDQ_ISSUE_WAIT :
-                           w_lrq_is_hazard ? LDQ_LRQ_HAZ :
-                           w_stq_is_hazard ? LDQ_STQ_HAZ :
-                           w_lrq_is_assigned ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                           LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
-          r_entry.lrq_haz_index_oh <= i_ex2_q_updates.lrq_index_oh;
-          r_entry.stq_haz_idx      <= i_ex2_q_updates.stq_haz_idx;
+    LDQ_ISSUE_WAIT : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (o_entry_ready & i_entry_picked) begin
+        w_entry_next.state = LDQ_ISSUED;
+      end
+    end
+    LDQ_ISSUED : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else begin
+        if (w_entry_next.is_valid & i_ex1_q_valid) begin
+          w_entry_next.state           = i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
+                                     LDQ_EX2_RUN;
+          w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
+          w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
+          w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
+          w_entry_next.paddr           = i_ex1_q_updates.paddr;
+          // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
+          // w_entry_next.inst            = i_ex1_q_updates.inst;
+          w_entry_next.size            = i_ex1_q_updates.size;
+
+          for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+            w_ex2_ldq_entries_recv_next[p_idx] =  i_ex1_q_valid &
+                                                  !i_ex1_q_updates.hazard_valid &
+                                                  r_entry.pipe_sel_idx_oh[p_idx];
+          end
+        end // if (i_ex1_q_valid)
+        if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
+            r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
+          w_entry_next.state = LDQ_ISSUE_WAIT;
+          w_entry_next.inst.rs1_pred_ready = 1'b0;
+          w_entry_next.inst.rs2_pred_ready = 1'b0;
+        end
+      end // else: !if(w_entry_flush)
+    end // case: LDQ_ISSUED
+    LDQ_TLB_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (|i_tlb_resolve) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
+      end
+    end
+    LDQ_EX2_RUN : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (i_ex2_q_valid) begin
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
+                         w_lrq_resolve_match ? LDQ_ISSUE_WAIT :
+                         w_lrq_is_hazard ? LDQ_LRQ_HAZ :
+                         w_stq_is_hazard ? LDQ_STQ_HAZ :
+                         w_lrq_is_assigned ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
+                         LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
+        w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+        w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;
 `ifdef SIMULATION
-          if (!i_reset_n) begin
-          end else begin
-            if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
-              $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
-            end
-            if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
-              $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
-            end
+        if (!i_reset_n) begin
+        end else begin
+          if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
+            $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
           end
+          if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
+            $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
+          end
+        end
 `endif // SIMULATION
-          r_ex2_ldq_entries_recv     <= 'h0;
+        w_ex2_ldq_entries_recv_next = 'h0;
+      end
+    end
+    LDQ_LRQ_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
+      end
+    end
+    LDQ_STQ_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else begin
+        w_entry_next.stq_haz_idx = stq_haz_idx_next;
+        if (stq_haz_idx_next == 'h0) begin
+          w_entry_next.state = LDQ_ISSUE_WAIT;
         end
       end
-      LDQ_LRQ_HAZ : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
-          r_entry.state <= LDQ_ISSUE_WAIT;
-        end
+    end
+    LDQ_EX3_DONE : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else begin
+        w_entry_next.state = LDQ_WAIT_COMPLETE;
       end
-      LDQ_STQ_HAZ : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else begin
-          r_entry.stq_haz_idx <= stq_haz_idx_next;
-          if (stq_haz_idx_next == 'h0) begin
-            r_entry.state <= LDQ_ISSUE_WAIT;
-          end
-        end
+    end
+    LDQ_WAIT_COMPLETE : begin
+      if (w_entry_complete) begin
+        w_entry_next.state = LDQ_INIT;
+        w_entry_next.is_valid = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
       end
-      LDQ_EX3_DONE : begin
-        if (w_entry_flush) begin
-          r_entry.state <= LDQ_DEAD;
-        end else begin
-          r_entry.state <= LDQ_WAIT_COMPLETE;
-        end
+    end
+    LDQ_DEAD : begin
+      if (w_dead_state_clear) begin
+        w_entry_next.state = LDQ_INIT;
+        w_entry_next.is_valid = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
       end
-      LDQ_WAIT_COMPLETE : begin
-        if (w_entry_complete) begin
-          r_entry.state <= LDQ_INIT;
-          r_entry.is_valid <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
-        end
+    end // case: LDQ_DEAD
+    LDQ_CHECK_ST_DEPEND: begin
+      // Younger Store Instruction, address conflict
+      if (w_addr_conflict) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
       end
-      LDQ_DEAD : begin
-        if (w_dead_state_clear) begin
-          r_entry.state <= LDQ_INIT;
-          r_entry.is_valid <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
-        end
-      end // case: LDQ_DEAD
-      LDQ_CHECK_ST_DEPEND: begin
-        // Younger Store Instruction, address conflict
-        if (w_addr_conflict) begin
-          r_entry.state <= LDQ_ISSUE_WAIT;
-        end
-        // When entry become oldest uncommitted
-        if (i_commit.cmt_id == r_entry.cmt_id &&
-            (i_commit.grp_id & (r_entry.grp_id-1)) == r_entry.grp_id-1) begin
-          r_entry.state <= LDQ_EX3_DONE;
-        end
+      // When entry become oldest uncommitted
+      if (i_commit.cmt_id == r_entry.cmt_id &&
+          (i_commit.grp_id & (r_entry.grp_id-1)) == r_entry.grp_id-1) begin
+        w_entry_next.state = LDQ_EX3_DONE;
       end
-      default : begin
-        $fatal ("This state sholudn't be reached.\n");
-      end
-    endcase // case (r_entry.state)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
+    end
+    default : begin
+      $fatal ("This state sholudn't be reached.\n");
+    end
+  endcase // case (r_entry.state)
+end // always_comb
 
 
 function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,

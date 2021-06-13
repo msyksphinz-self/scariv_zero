@@ -24,7 +24,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_entry <= i_load_entry;
 `ifdef SIMULATION
       if (r_entry.valid & i_load) begin
-        $fatal(0, "During LRQ entry valid, i_loud must not be come\n");
+        $fatal(0, "During LRQ entry valid, i_load must not be come\n");
       end
 `endif // SIMULATION
     end else if (i_sent) begin

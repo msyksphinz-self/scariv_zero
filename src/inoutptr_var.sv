@@ -22,10 +22,12 @@ logic [$clog2(SIZE)-1:0] r_outptr;
 logic [$clog2(SIZE)-1:0] w_inptr_next;
 logic [$clog2(SIZE)-1:0] w_outptr_next;
 
-assign w_inptr_next  = i_in_valid ? r_inptr + i_in_val  :
+/* verilator lint_off WIDTH */
+assign w_inptr_next  = i_in_valid ? (r_inptr + i_in_val < SIZE ? r_inptr + i_in_val : r_inptr + i_in_val - SIZE)  :
                        r_inptr;
+/* verilator lint_off WIDTH */
 assign w_outptr_next = i_rollback  ? w_inptr_next :
-                       i_out_valid ? r_outptr + i_out_val :
+                       i_out_valid ? (r_outptr + i_out_val < SIZE ? r_outptr + i_out_val : r_outptr + i_out_val - SIZE) :
                        r_outptr;
 
 

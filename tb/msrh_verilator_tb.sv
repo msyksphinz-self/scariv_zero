@@ -257,7 +257,7 @@ module msrh_tb (
       .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
       .ADDR_W   (riscv_pkg::PADDR_W),
       .BASE_ADDR('h8000_0000),
-      .SIZE     (4096),
+      .SIZE     ('h4000),
       .RD_LAT   (10)
   ) u_tb_l2_behavior_ram (
       .i_clk    (i_clk),
