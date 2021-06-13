@@ -4,9 +4,10 @@ package msrh_lsu_pkg;
 
   localparam L2_CMD_TAG_W = 5;
 
-  localparam L2_UPPER_TAG_IC  = 2'b00;
-  localparam L2_UPPER_TAG_L1D = 2'b01;
-  localparam L2_UPPER_TAG_PTW = 2'b10;
+  localparam L2_UPPER_TAG_IC     = 2'b00;
+  localparam L2_UPPER_TAG_RD_L1D = 2'b01;
+  localparam L2_UPPER_TAG_WR_L1D = 2'b10;
+  localparam L2_UPPER_TAG_PTW    = 2'b11;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = $clog2(msrh_conf_pkg::ICACHE_WORDS);
@@ -143,7 +144,15 @@ package msrh_lsu_pkg;
   } l2_resp_t;
 
 typedef struct packed {
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
+  logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]   way;
+  logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+} evict_payload_t;
+
+typedef struct packed {
   logic [riscv_pkg::PADDR_W-1:0] paddr;
+  logic   evict_valid;
+  evict_payload_t evict_payload;
 } lrq_req_t;
 
 typedef struct packed {
@@ -155,7 +164,9 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
-  logic                           sent;
+  logic                          sent;
+  logic                          evict_valid;
+  evict_payload_t                evict;
 } lrq_entry_t;
 
 typedef struct packed {
@@ -228,6 +239,13 @@ typedef struct packed {
   logic            miss;
   logic            conflict;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
+
+  // Eviction: Replaced Address
+  logic                                    replace_valid;
+  logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]  replace_way;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
+  logic [riscv_pkg::PADDR_W-1: 0]          replace_paddr;
+
 } dc_read_resp_t;
 
 function logic [ 7: 0] gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [2:0] addr);

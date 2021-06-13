@@ -42,6 +42,10 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
   assign l1d_rd_if[p_idx].s1_conflict = w_dc_read_resp[p_idx].conflict;
   assign l1d_rd_if[p_idx].s1_data     = w_dc_read_resp[p_idx].data;
 
+  assign l1d_rd_if[p_idx].s1_replace_valid = w_dc_read_resp[p_idx].replace_valid;
+  assign l1d_rd_if[p_idx].s1_replace_way   = w_dc_read_resp[p_idx].replace_way;
+  assign l1d_rd_if[p_idx].s1_replace_data  = w_dc_read_resp[p_idx].replace_data;
+  assign l1d_rd_if[p_idx].s1_replace_paddr = w_dc_read_resp[p_idx].replace_paddr;
 end
 endgenerate
 
@@ -60,7 +64,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_rp1_lrq_resp_data <= 'h0;
   end else begin
     r_rp1_l1d_exp_resp_valid <= l1d_ext_resp.valid &
-                                (l1d_ext_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1:msrh_lsu_pkg::L2_CMD_TAG_W-2] == msrh_lsu_pkg::L2_UPPER_TAG_L1D);
+                                (l1d_ext_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1:msrh_lsu_pkg::L2_CMD_TAG_W-2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D);
     r_rp1_lrq_resp_tag       <= l1d_ext_resp.payload.tag[msrh_pkg::LRQ_ENTRY_W-1:0];
     r_rp1_lrq_resp_data      <= l1d_ext_resp.payload.data;
   end

@@ -62,6 +62,9 @@ fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 lrq_search_if w_lrq_search_if ();
 lrq_resolve_t w_lrq_resolve;
 
+l2_req_if    w_l1d_ext_req[2]();
+l1d_evict_if w_l1d_evict_if();
+
 // Feedbacks to LDQ / STQ
 ex1_q_update_t        w_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
@@ -235,14 +238,37 @@ msrh_l1d_load_requester
  .i_reset_n(i_reset_n),
  .l1d_lrq  (w_l1d_lrq_if),
 
- .l1d_ext_req  (l1d_ext_req ),
- .l1d_ext_resp (l1d_ext_resp),
+ .l1d_ext_rd_req  (w_l1d_ext_req[0]),
+ .l1d_ext_rd_resp (l1d_ext_resp  ),
 
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
+
+ .l1d_evict_if  (w_l1d_evict_if),
 
  .lrq_search_if (w_lrq_search_if),
  .o_lrq_resolve (w_lrq_resolve)
  );
+
+
+msrh_store_requestor
+u_msrh_store_requester
+  (
+   .i_clk (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .l1d_evict_if  (w_l1d_evict_if),
+   .l1d_ext_wr_req(w_l1d_ext_req[1])
+   );
+
+
+msrh_l2_req_arbiter
+  #(.REQ_PORT_NUM(2))
+u_msrh_l2_req_arbiter
+(
+ .l1d_ext_in_req (w_l1d_ext_req),
+ .l1d_ext_req    (l1d_ext_req  )
+ );
+
 
 // --------------------------
 // PTW L1D Access Interface

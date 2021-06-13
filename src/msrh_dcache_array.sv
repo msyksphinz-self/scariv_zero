@@ -28,6 +28,8 @@ logic [READ_PORT_NUM-1:0]       r_s1_dc_read_req_valid_oh;
 logic [msrh_lsu_pkg::DCACHE_WAY_W-1 : 0] w_s1_tag_hit;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_data[msrh_lsu_pkg::DCACHE_WAY_W];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_selected_data;
+logic [msrh_lsu_pkg::DCACHE_WAY_W-1 : 0]  w_s1_tag_valid;
+logic [TAG_SIZE-1:0]                      w_s1_tag[msrh_lsu_pkg::DCACHE_WAY_W];
 
 logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 
@@ -49,12 +51,29 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
     end
   end
 
-  assign o_dc_read_resp[l_idx].hit      = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & (|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].miss     = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same) & ~(|w_s1_tag_hit);
+  logic w_s1_read_req_valid;
+  // read_req_valid condition:
+  // 1. Not Update Path
+  // 2. Read Request
+  // 3. Read Request Selected
+  // 4. Read Request not selected, but same as selected address line.
+  assign w_s1_read_req_valid = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same);
+
+  assign o_dc_read_resp[l_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_valid |
                                            r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
 
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
+
+  // Need to replace: line existed but not hit
+  // temporary tied to way-0
+  assign o_dc_read_resp[l_idx].replace_valid = |(w_s1_tag_valid & ~w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].replace_way   = 'h0;  // temporary
+  assign o_dc_read_resp[l_idx].replace_data  = w_s1_data[0];
+  assign o_dc_read_resp[l_idx].replace_paddr = {w_s1_tag[0],
+                                                r_s1_dc_tag_addr[msrh_lsu_pkg::DCACHE_TAG_LOW-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+                                                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 end
 endgenerate
 bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_valid_oh));
@@ -82,8 +101,6 @@ end
 
 
 generate for(genvar way = 0; way < msrh_lsu_pkg::DCACHE_WAY_W; way++) begin : icache_way_loop
-logic    w_s1_tag_valid;
-logic [TAG_SIZE-1:0] w_s1_tag;
 
   tag_array
     #(
@@ -98,11 +115,11 @@ logic [TAG_SIZE-1:0] w_s1_tag;
        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .i_tag_valid  (1'b1),
        .i_tag (i_dc_update.addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
-       .o_tag(w_s1_tag),
-       .o_tag_valid(w_s1_tag_valid)
+       .o_tag(w_s1_tag[way]),
+       .o_tag_valid(w_s1_tag_valid[way])
        );
 
-  assign w_s1_tag_hit[way] = (r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;
+  assign w_s1_tag_hit[way] = (r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW] == w_s1_tag[way]) & w_s1_tag_valid[way];
 
   data_array
     #(

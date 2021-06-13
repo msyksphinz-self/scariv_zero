@@ -92,7 +92,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           end
         end else if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD) begin
           if (status[actual_line_pos[SIZE_W-1:0]] == ST_INIT) begin
-            if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_L1D) begin
+            if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
               status[actual_line_pos[SIZE_W-1:0]] <= ST_GIVEN;
             end
             rd_data[0] <= ram[actual_line_pos[SIZE_W-1:0]];

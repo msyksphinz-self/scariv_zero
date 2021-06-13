@@ -10,8 +10,11 @@ module msrh_l1d_load_requester
 
    output msrh_lsu_pkg::lrq_resolve_t o_lrq_resolve,
 
-   l2_req_if.master  l1d_ext_req,
-   l2_resp_if.slave  l1d_ext_resp,
+   l2_req_if.master  l1d_ext_rd_req,
+   l2_resp_if.slave  l1d_ext_rd_resp,
+
+   // Interface to L1D eviction
+   l1d_evict_if.master l1d_evict_if,
 
    // LRQ search interface
    lrq_search_if.slave lrq_search_if
@@ -67,7 +70,7 @@ bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts),
 // LRQ Pointer
 //
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
-assign w_out_valid = 1'b0;  // l1d_ext_req.valid;
+assign w_out_valid = 1'b0;  // l1d_ext_rd_req.valid;
 
 inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE-2)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                             .i_rollback(1'b0),
@@ -125,6 +128,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
   assign load_entry.paddr = {w_l1d_picked_req_payloads_oh.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                              {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
   assign load_entry.sent  = 1'b0;
+  assign load_entry.evict_valid = w_l1d_picked_req_payloads_oh.evict_valid;
+  assign load_entry.evict       = w_l1d_picked_req_payloads_oh.evict_payload;
+
   msrh_lrq_entry
   u_entry
     (
@@ -136,7 +142,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
      .i_clear (r_lrq_search_valid & r_lrq_search_index[b_idx]),
 
-     .i_sent (l1d_ext_req.valid & l1d_ext_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+     .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
      .o_entry (w_lrq_entries[b_idx])
      );
 
@@ -218,12 +224,20 @@ bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_re
 encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_req_tag));
 bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
 
-assign l1d_ext_req.valid = w_lrq_ready_to_send_entry.valid & !w_lrq_ready_to_send_entry.sent;
-assign l1d_ext_req.payload.cmd     = msrh_lsu_pkg::M_XRD;
-assign l1d_ext_req.payload.addr    = w_lrq_ready_to_send_entry.paddr;
-assign l1d_ext_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_req_tag};
-assign l1d_ext_req.payload.data    = 'h0;
-assign l1d_ext_req.payload.byte_en = 'h0;
+assign l1d_ext_rd_req.valid = w_lrq_ready_to_send_entry.valid & !w_lrq_ready_to_send_entry.sent;
+assign l1d_ext_rd_req.payload.cmd     = msrh_lsu_pkg::M_XRD;
+assign l1d_ext_rd_req.payload.addr    = w_lrq_ready_to_send_entry.paddr;
+assign l1d_ext_rd_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_req_tag};
+assign l1d_ext_rd_req.payload.data    = 'h0;
+assign l1d_ext_rd_req.payload.byte_en = 'h0;
+
+// -----------------
+// Eviction Request
+// -----------------
+assign l1d_evict_if.valid = l1d_ext_rd_req.valid & w_lrq_ready_to_send_entry.evict_valid;
+assign l1d_evict_if.payload.paddr = w_lrq_ready_to_send_entry.evict.paddr;
+assign l1d_evict_if.payload.data  = w_lrq_ready_to_send_entry.evict.data;
+
 
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];

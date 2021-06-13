@@ -22,8 +22,8 @@ module bit_pick_1_index
 /* verilator lint_off UNOPTFLAT */
 logic [SEL_WIDTH-1:0]    w_index_hit;
 /* verilator lint_off UNOPTFLAT */
-logic [$clog2(DATA_WIDTH)-1:0] w_valid_cnt[DATA_WIDTH];
-logic [$clog2(DATA_WIDTH)-1:0] w_valid_next_cnt[DATA_WIDTH];
+logic [$clog2(DATA_WIDTH)-1:0] w_valid_cnt     [SEL_WIDTH];
+logic [$clog2(DATA_WIDTH)-1:0] w_valid_next_cnt[SEL_WIDTH];
 
 assign w_valid_cnt[0]      = 'h0;
 assign w_index_hit[0]      = i_valids[0] && w_valid_cnt[0] == NUM[$clog2(DATA_WIDTH)-1:0];

@@ -298,6 +298,11 @@ assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       /* !ex2_fwd_check_if.fwd_valid; */
 assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
+// L1D replace information
+assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
+assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way;
+assign l1d_lrq_if.req_payload.evict_payload.data  = ex1_l1d_rd_if.s1_replace_data;
+assign l1d_lrq_if.req_payload.evict_payload.paddr = ex1_l1d_rd_if.s1_replace_paddr;
 
 
 // Interface to EX2 updates
