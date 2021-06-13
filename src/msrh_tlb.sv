@@ -159,6 +159,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
         r_sectored_entries[e_idx] <= 'h0;
       end else begin
         if (ptw_if.resp.valid & ptw_if.resp_ready &
+            /* verilator lint_off WIDTH */
             (ptw_if.resp.level == riscv_pkg::PG_LEVELS-1)) begin
           if (r_sectored_repl_addr_oh[e_idx[$clog2(TLB_NORMAL_ENTRIES_NUM)-1:0]]) begin
             r_sectored_entries[e_idx].valid <= 1 << w_wr_sector_idx;

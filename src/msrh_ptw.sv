@@ -70,6 +70,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
     if (r_ptw_accept[p_idx] | w_ptw_accept[p_idx]) begin
       ptw_if[p_idx].resp.valid       = (((r_state == RESP_L1D) & (lsu_access.status == msrh_lsu_pkg::STATUS_HIT)) |
                                         ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready)) &
+                                       /* verilator lint_off WIDTH */
                                        (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == riscv_pkg::PG_LEVELS-1)) &
                                        r_ptw_accept[p_idx];
       ptw_if[p_idx].resp.ae          = 1'b0; // if instruction region fault
