@@ -254,16 +254,16 @@ logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr
 // logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
 
 localparam L1D_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM + 1;
-assign w_l1d_rd_if [L1D_PTW_PORT].valid = lsu_access.req_valid;
-assign w_l1d_rd_if [L1D_PTW_PORT].paddr = lsu_access.paddr;
+assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
+assign w_l1d_rd_if [L1D_PTW_PORT].s0_paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
-assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].hit      ? STATUS_HIT :
-                           w_l1d_rd_if[L1D_PTW_PORT].conflict ? STATUS_L1D_CONFLICT :
-                           w_l1d_rd_if[L1D_PTW_PORT].miss     ? STATUS_MISS :
+assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :
+                           w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+                           w_l1d_rd_if[L1D_PTW_PORT].s1_miss     ? STATUS_MISS :
                            STATUS_NONE;
 // assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
 assign lsu_access.lrq_conflicted_idx_oh = 'h0;
-assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
+assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
 assign lsu_access.conflict_resolve_vld    = w_lrq_resolve.valid;
 assign lsu_access.conflict_resolve_idx_oh = w_lrq_resolve.resolve_index_oh;
 
@@ -283,16 +283,16 @@ end
 logic r_snoop_resp_valid;
 
 localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
-assign w_l1d_rd_if [L1D_SNOOP_PORT].valid = l1d_snoop_if.req_s0_valid;
-assign w_l1d_rd_if [L1D_SNOOP_PORT].paddr = l1d_snoop_if.req_s0_paddr;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
 
 assign l1d_snoop_if.resp_s1_valid  = r_snoop_resp_valid;
-assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].hit      ? STATUS_HIT :
-                                     w_l1d_rd_if[L1D_SNOOP_PORT].conflict ? STATUS_L1D_CONFLICT :
-                                     w_l1d_rd_if[L1D_SNOOP_PORT].miss     ? STATUS_MISS :
+assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit      ? STATUS_HIT :
+                                     w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+                                     w_l1d_rd_if[L1D_SNOOP_PORT].s1_miss     ? STATUS_MISS :
                                      STATUS_NONE;
-assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
-assign l1d_snoop_if.resp_s1_data   = w_l1d_rd_if[L1D_SNOOP_PORT].data;
+assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
+assign l1d_snoop_if.resp_s1_data   = w_l1d_rd_if[L1D_SNOOP_PORT].s1_data;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

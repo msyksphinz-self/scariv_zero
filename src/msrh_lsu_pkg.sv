@@ -9,13 +9,13 @@ package msrh_lsu_pkg;
   localparam L2_UPPER_TAG_PTW = 2'b10;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
-  localparam ICACHE_TAG_LOW = 12;
+  localparam ICACHE_TAG_LOW = $clog2(msrh_conf_pkg::ICACHE_WORDS);
   localparam ICACHE_WAY_W = 4;
   localparam ICACHE_DATA_B_W = msrh_conf_pkg::ICACHE_DATA_W / 8;
 
 
   localparam DCACHE_TAG_HIGH = riscv_pkg::XLEN_W;
-  localparam DCACHE_TAG_LOW = 12;
+  localparam DCACHE_TAG_LOW = $clog2(msrh_conf_pkg::DCACHE_WORDS);
   localparam DCACHE_WAY_W = 4;
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 

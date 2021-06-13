@@ -247,8 +247,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_commit (i_commit),
 
      .i_sq_op_accept(w_sq_commit_req_oh[s_idx]),
-     .i_sq_l1d_rd_miss     (l1d_rd_if.miss),
-     .i_sq_l1d_rd_conflict (l1d_rd_if.conflict),
+     .i_sq_l1d_rd_miss     (l1d_rd_if.s1_miss),
+     .i_sq_l1d_rd_conflict (l1d_rd_if.s1_conflict),
      .i_sq_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
      .i_sq_lrq_conflict(l1d_lrq_stq_miss_if.resp_payload.conflict),
      .i_sq_lrq_index_oh(l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh),
@@ -414,9 +414,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign l1d_rd_if.valid = w_stq_cmt_entry.state == STQ_COMMIT;
-assign l1d_rd_if.paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
-                          {$clog2(DCACHE_DATA_B_W){1'b0}}};
+assign l1d_rd_if.s0_valid = w_stq_cmt_entry.state == STQ_COMMIT;
+assign l1d_rd_if.s0_paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
+                             {$clog2(DCACHE_DATA_B_W){1'b0}}};
 
 always_comb begin
   case (r_st1_committed_entry.size)
@@ -445,9 +445,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_l1d_rd_if_resp <= 'b0;
     l1d_wr_if.valid <= 1'b0;
   end else begin
-    r_l1d_rd_if_resp <= l1d_rd_if.valid;
+    r_l1d_rd_if_resp <= l1d_rd_if.s0_valid;
     if (r_l1d_rd_if_resp) begin
-      if (l1d_rd_if.hit) begin
+      if (l1d_rd_if.s1_hit) begin
         l1d_wr_if.valid <= 1'b1;
         l1d_wr_if.paddr <= r_st1_committed_entry.paddr;
         l1d_wr_if.data  <= w_st1_rs2_data_tmp;
@@ -462,7 +462,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.miss;
+assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.s1_miss;
 assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
 
 

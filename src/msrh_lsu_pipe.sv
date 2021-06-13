@@ -113,7 +113,7 @@ always_comb begin
   w_ex3_issue_next       = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_pipe_ctrl.is_load &
                            !w_ex2_l1d_mispredicted &
-                           !ex1_l1d_rd_if.conflict;
+                           !ex1_l1d_rd_if.s1_conflict;
 end
 
 
@@ -275,9 +275,9 @@ end
 
 
 // Interface to L1D cache
-assign ex1_l1d_rd_if.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
-assign ex1_l1d_rd_if.paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
-                              {$clog2(DCACHE_DATA_B_W){1'b0}}};
+assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
+assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
+                                 {$clog2(DCACHE_DATA_B_W){1'b0}}};
 
 //
 // EX2 stage pipeline
@@ -292,19 +292,20 @@ end
 
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       r_ex2_pipe_ctrl.is_load &
-                                      (ex1_l1d_rd_if.miss |
+                                      (ex1_l1d_rd_if.s1_miss |
                                        ex2_fwd_check_if.stq_hazard_vld) &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.conflict | ex1_l1d_rd_if.hit);
+assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
+
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = w_ex2_l1d_mispredicted ?
                                     (ex2_fwd_check_if.stq_hazard_vld  ? STQ_DEPEND   :
                                      l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT : LRQ_ASSIGNED) :
-                                    ex1_l1d_rd_if.conflict            ? L1D_CONFLICT :
+                                    ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
@@ -360,11 +361,11 @@ endgenerate
 always_comb begin
   case(r_ex2_pipe_ctrl.size)
 `ifdef RV64
-    SIZE_DW : w_ex2_data_tmp = ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: 64];
+    SIZE_DW : w_ex2_data_tmp = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: 64];
 `endif // RV64
-    SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:2],  2'b00, 3'b000} +: 32]};
-    SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:1],   1'b0, 3'b000} +: 16]};
-    SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, ex1_l1d_rd_if.data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0],         3'b000} +:  8]};
+    SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:2],  2'b00, 3'b000} +: 32]};
+    SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:1],   1'b0, 3'b000} +: 16]};
+    SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0],         3'b000} +:  8]};
     default : w_ex2_data_tmp =  {(riscv_pkg::XLEN_W- 0){1'b0}};
   endcase // case (r_ex2_pipe_ctrl.size)
   if (r_ex2_pipe_ctrl.sign == SIGN_S) begin
@@ -390,7 +391,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex3_aligned_data <= w_ex2_data_sign_ext;
 
-    o_ex3_mispred.mis_valid <= w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.conflict;
+    o_ex3_mispred.mis_valid <= w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
     o_ex3_mispred.rd_type   <= r_ex2_issue.rd_type;
     o_ex3_mispred.rd_rnid   <= r_ex2_issue.rd_rnid;
   end

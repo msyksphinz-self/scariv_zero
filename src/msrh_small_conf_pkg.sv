@@ -2,6 +2,8 @@ package msrh_conf_pkg;
 
   localparam ICACHE_DATA_W = 256;
   localparam DCACHE_DATA_W = 256;
+  localparam ICACHE_WORDS = 1024;
+  localparam DCACHE_WORDS = 1024;
 
   localparam DISP_SIZE = 3;
 

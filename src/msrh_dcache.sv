@@ -34,13 +34,13 @@ msrh_dcache_array
      );
 
 generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
-  assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].valid;
-  assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].paddr;
+  assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid;
+  assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].s0_paddr;
 
-  assign l1d_rd_if[p_idx].hit      = w_dc_read_resp[p_idx].hit ;
-  assign l1d_rd_if[p_idx].miss     = w_dc_read_resp[p_idx].miss;
-  assign l1d_rd_if[p_idx].conflict = w_dc_read_resp[p_idx].conflict;
-  assign l1d_rd_if[p_idx].data     = w_dc_read_resp[p_idx].data;
+  assign l1d_rd_if[p_idx].s1_hit      = w_dc_read_resp[p_idx].hit ;
+  assign l1d_rd_if[p_idx].s1_miss     = w_dc_read_resp[p_idx].miss;
+  assign l1d_rd_if[p_idx].s1_conflict = w_dc_read_resp[p_idx].conflict;
+  assign l1d_rd_if[p_idx].s1_data     = w_dc_read_resp[p_idx].data;
 
 end
 endgenerate
