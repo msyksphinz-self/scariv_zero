@@ -13,7 +13,9 @@ msrh_lsu_pkg::l2_req_t [REQ_PORT_NUM-1:0] w_req_payload;
 msrh_lsu_pkg::l2_req_t                    w_req_payload_selected;
 
 generate for (genvar idx=0; idx < REQ_PORT_NUM; idx++) begin : req_loop
-  assign w_req_valid[idx] = l1d_ext_in_req[idx].valid;
+  assign w_req_valid[idx]   = l1d_ext_in_req[idx].valid;
+  assign w_req_payload[idx] = l1d_ext_in_req[idx].payload;
+  assign l1d_ext_in_req[idx].ready = w_req_accept_oh[idx] & l1d_ext_req.ready;
 end
 endgenerate
 
