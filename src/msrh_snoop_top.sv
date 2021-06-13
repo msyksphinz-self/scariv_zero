@@ -54,7 +54,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_l1d_state <= WAIT_RESP;
           r_resp_valid[L1D_INDEX] <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
-          l1d_snoop_if.req_s0_paddr <= snoop_if.req_payload.paddr;
+          l1d_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
         end
       end
       WAIT_RESP : begin
@@ -88,7 +88,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_resp_valid[STQ_INDEX] <= 1'b0;
           r_stq_state <= WAIT_RESP;
           stq_snoop_if.req_s0_valid <= 1'b1;
-          stq_snoop_if.req_s0_paddr <= snoop_if.req_payload.paddr;
+          stq_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
         end
       end
       WAIT_RESP : begin
