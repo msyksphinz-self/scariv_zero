@@ -22,6 +22,7 @@ module tag_array
     if (!i_reset_n) begin
       o_tag_valid <= 1'b0;
 
+      /* verilator lint_off WIDTHCONCAT */
       r_tag_valids <= {(2**WORDS){1'b0}};
     end else begin
       if (i_wr) begin
