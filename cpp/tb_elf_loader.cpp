@@ -17,6 +17,8 @@
 #include <memory>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+#include <functional>
 
 bool g_dump_hex = false;
 std::unique_ptr<Memory> g_memory;
@@ -110,6 +112,7 @@ void dump_segment (const char* segname, int fd)
 
       lseek (fd,shdr->sh_offset,SEEK_SET);
       buffer = (Byte_t *) malloc ((shdr->sh_size)*sizeof(unsigned char));
+      memset (buffer, 0, (shdr->sh_size)*sizeof(unsigned char));
       valsRead=read(fd,buffer, shdr->sh_size);
 
       // base = phdr->p_paddr;
@@ -136,19 +139,20 @@ void dump_segment (const char* segname, int fd)
       }
 
       for(count=0; count < valsRead; count=count+4) {
-        // fprintf (stderr,"%08lx: ", base);
+        fprintf (stderr,"%08lx: ", base);
 
         base = base + 4;
         switch (identity[EI_DATA]) {
 
-          case 1:	/* Little endian */
-            for (count2 = 3;count2 >= 0;count2--) {
-              // fprintf (stderr,"%.2x",static_cast<UByte_t>(buffer[count+count2]));
+          case 1: {	/* Little endian */
+            int max_count = valsRead - count < 4 ? valsRead - count : 4;
+            for (count2 = max_count-1;count2 >= 0;count2--) {
+              fprintf (stderr,"%.2x",static_cast<UByte_t>(buffer[count+count2]));
               g_memory->StoreMemory<Byte_t> (base - 4 + count2, static_cast<Byte_t *>(&buffer[count+count2]));
             }
-            // fprintf (stderr,"\n");
+            fprintf (stderr,"\n");
             break;
-
+          }
           case 2:	/* Big endian */
             for (count2=0;count2<4;count2++) {
               // fprintf (stderr,"%.2x",static_cast<UByte_t>(buffer[count+count2]));
