@@ -158,7 +158,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
       if (!i_reset_n) begin
         r_sectored_entries[e_idx] <= 'h0;
       end else begin
-        if (ptw_if.resp.valid & ptw_if.resp_ready &
+        if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
             /* verilator lint_off WIDTH */
             (ptw_if.resp.level == riscv_pkg::PG_LEVELS-1)) begin
           if (r_sectored_repl_addr_oh[e_idx[$clog2(TLB_NORMAL_ENTRIES_NUM)-1:0]]) begin
@@ -180,7 +180,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
       if (!i_reset_n) begin
         r_superpage_entries[super_idx] <= 'h0;
       end else begin
-        if (ptw_if.resp.valid & ptw_if.resp_ready &
+        if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
             (ptw_if.resp.level < riscv_pkg::PG_LEVELS-1)) begin
           if (r_superpage_repl_addr_oh[super_idx]) begin
             r_superpage_entries[super_idx].valid <= 1 << w_wr_sector_idx;
