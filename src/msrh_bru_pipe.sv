@@ -60,6 +60,7 @@ logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
 logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
 logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
+logic                                    r_ex2_wr_valid;
 
 msrh_pkg::issue_t                        r_ex3_issue;
 pipe_ctrl_t                              r_ex3_pipe_ctrl;
@@ -169,6 +170,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue <= 'h0;
     r_ex2_index <= 'h0;
     r_ex2_pipe_ctrl <= 'h0;
+
+    r_ex2_wr_valid <= 1'b0;
   end else begin
     r_ex2_rs1_data <= ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
@@ -176,6 +179,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue <= r_ex1_issue;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
+
+    r_ex2_wr_valid <= o_ex1_early_wr.valid;
   end
 end
 

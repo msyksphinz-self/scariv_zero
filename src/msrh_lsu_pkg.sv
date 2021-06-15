@@ -145,7 +145,7 @@ package msrh_lsu_pkg;
 
 typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]   way;
+  logic [DCACHE_WAY_W-1: 0]   way;
   logic [riscv_pkg::PADDR_W-1: 0]           paddr;
 } evict_payload_t;
 
@@ -207,7 +207,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          update;
-  msrh_lsu_pkg::lmq_haz_t               hazard_typ;
+  lmq_haz_t               hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1: 0] stq_haz_idx;
   logic [MEM_Q_SIZE-1:0]                index_oh;
@@ -226,7 +226,7 @@ typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1: 0] addr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
+  logic [DCACHE_DATA_B_W-1: 0] be;
 } dc_update_t;
 
 typedef struct packed {
@@ -242,7 +242,7 @@ typedef struct packed {
 
   // Eviction: Replaced Address
   logic                                    replace_valid;
-  logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]  replace_way;
+  logic [DCACHE_WAY_W-1: 0]  replace_way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
   logic [riscv_pkg::PADDR_W-1: 0]          replace_paddr;
 
@@ -476,7 +476,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
+  logic [DCACHE_DATA_B_W-1: 0] be;
 } snoop_resp_t;
 
 endpackage // msrh_lsu_pkg

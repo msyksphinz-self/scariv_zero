@@ -54,10 +54,12 @@ module msrh_alu_pipe
   logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
+  logic                                    r_ex2_wr_valid;
 
-  msrh_pkg::issue_t                         r_ex3_issue;
+  msrh_pkg::issue_t                        r_ex3_issue;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
+  logic                                    r_ex3_wr_valid;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -160,6 +162,8 @@ select_mispred_bus rs2_mispred_select
       r_ex2_issue <= 'h0;
       r_ex2_index <= 'h0;
       r_ex2_pipe_ctrl <= 'h0;
+
+      r_ex2_wr_valid <= 1'b0;
     end else begin
       r_ex2_rs1_data <= ex1_regread_rs1.data;
       r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
@@ -169,6 +173,8 @@ select_mispred_bus rs2_mispred_select
       r_ex2_issue <= r_ex1_issue;
       r_ex2_index <= r_ex1_index;
       r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
+
+      r_ex2_wr_valid <= o_ex1_early_wr.valid;
     end
   end
 
@@ -193,9 +199,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_result <= 'h0;
     r_ex3_index <= 'h0;
     r_ex3_issue <= 'h0;
+
+    r_ex3_wr_valid <= 1'b0;
   end else begin
     r_ex3_issue <= r_ex2_issue;
     r_ex3_index <= r_ex2_index;
+
+    r_ex3_wr_valid <= r_ex2_wr_valid;
 
     case (r_ex2_pipe_ctrl.op)
       OP_SIGN_LUI: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
@@ -220,7 +230,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid = r_ex3_issue.valid & r_ex3_issue.rd_valid;
+assign o_ex3_phy_wr.valid   = r_ex3_wr_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_result;

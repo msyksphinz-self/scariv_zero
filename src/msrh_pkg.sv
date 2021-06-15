@@ -92,19 +92,19 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
-    logic [msrh_pkg::RNID_W-1:0] rd_old_rnid;
+    logic [RNID_W-1:0] rd_rnid;
+    logic [RNID_W-1:0] rd_old_rnid;
 
     logic rs1_valid;
     reg_t rs1_type;
     logic [4:0] rs1_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
+    logic [RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
-    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
+    logic [RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
 
   } disp_t;
@@ -151,7 +151,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
     logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 
-    msrh_pkg::disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
+    disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
 
     logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
 
@@ -177,24 +177,24 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [RNID_W-1:0] rd_rnid;
 
     logic rs1_valid;
     reg_t rs1_type;
     logic [4:0] rs1_regidx;
-    logic [msrh_pkg::RNID_W-1:0] rs1_rnid;
+    logic [RNID_W-1:0] rs1_rnid;
     logic rs1_ready;
     logic rs1_pred_ready;
 
     logic rs2_valid;
     logic [4:0] rs2_regidx;
     reg_t rs2_type;
-    logic [msrh_pkg::RNID_W-1:0] rs2_rnid;
+    logic [RNID_W-1:0] rs2_rnid;
     logic rs2_ready;
     logic rs2_pred_ready;
 
     logic             except_valid;
-    msrh_pkg::except_t except_type;
+    except_t except_type;
   } issue_t;
 
 
@@ -244,7 +244,7 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic valid;
-    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [RNID_W-1:0] rd_rnid;
     reg_t rd_type;
 
     logic                        may_mispred;
@@ -252,7 +252,7 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic valid;
-    logic [msrh_pkg::RNID_W-1:0] rd_rnid;
+    logic [RNID_W-1:0] rd_rnid;
     reg_t rd_type;
     logic [riscv_pkg::XLEN_W-1:0] rd_data;
   } phy_wr_t;
@@ -302,7 +302,7 @@ endfunction // encoder_grp_id
 
 function logic is_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                                logic [DISP_SIZE-1: 0] entry_grp_id,
-                               msrh_pkg::commit_blk_t commit);
+                               commit_blk_t commit);
   return commit.commit & commit.flush_valid &
          ~((entry_cmt_id == commit.cmt_id) & ~|(entry_grp_id & commit.dead_id)) &
          ~commit.all_dead;
@@ -314,8 +314,8 @@ endfunction // is_flush_target
 typedef struct packed {
   logic                                                      commit;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       rnid_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] old_rnid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][msrh_pkg::RNID_W-1:0] rd_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
   logic                                                      is_br_included;
   logic                                                      upd_pc_valid;

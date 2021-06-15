@@ -107,6 +107,7 @@ logic                                 r_ex2_tlb_miss;
 //
 msrh_pkg::issue_t                  r_ex3_issue, w_ex3_issue_next;
 logic [riscv_pkg::XLEN_W-1: 0]     r_ex3_aligned_data;
+logic                              r_ex3_mis_valid;
 
 //
 // Pipeline Logic
@@ -432,8 +433,10 @@ end // always_comb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
+    r_ex3_mis_valid <= 1'b0;
   end else begin
     r_ex3_aligned_data <= w_ex2_data_sign_ext;
+    r_ex3_mis_valid <= o_ex2_mispred.mis_valid;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -448,7 +451,7 @@ assign ex3_ldq_stq_done_if.index_oh = 'h0;
 assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
 assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & !o_ex2_mispred.mis_valid;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & ~r_ex3_mis_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
