@@ -11,6 +11,8 @@ module msrh_bru_pipe
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
   input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
+  input msrh_pkg::mispred_t         i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
+
  regread_if.master ex1_regread_rs1,
  regread_if.master ex1_regread_rs2,
 
@@ -46,6 +48,11 @@ logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
 
 logic                                    w_ex2_rs1_pred_hit;
 logic                                    w_ex2_rs2_pred_hit;
+
+logic                                    w_ex1_rs1_lsu_mispred;
+logic                                    w_ex1_rs2_lsu_mispred;
+logic                                    w_ex1_rs1_mispred;
+logic                                    w_ex1_rs2_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex2_issue;
@@ -92,7 +99,31 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs1_rnid),
+ .i_entry_type (r_ex1_issue.rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs1_lsu_mispred)
+ );
+
+
+select_mispred_bus rs2_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs2_rnid),
+ .i_entry_type (r_ex1_issue.rs2_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs2_lsu_mispred)
+ );
+
+
+assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
+assign w_ex1_rs2_mispred = r_ex1_issue.rs2_valid & r_ex1_issue.rs2_pred_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
+
+assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid &
+                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
 assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = 1'b0;
@@ -151,8 +182,8 @@ end
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
 
-assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_pred_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
-assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
+assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_valid & r_ex2_issue.rs1_pred_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
+assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_valid & r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin

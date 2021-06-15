@@ -14,10 +14,12 @@ module msrh_alu_pipe
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
+    input msrh_pkg::mispred_t i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
+
     output msrh_pkg::early_wr_t o_ex1_early_wr,
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
-  done_if.master ex3_done_if
+    done_if.master ex3_done_if
 );
 
   typedef struct packed {
@@ -41,6 +43,11 @@ module msrh_alu_pipe
 
   logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
   logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
+
+  logic                                    w_ex1_rs1_lsu_mispred;
+  logic                                    w_ex1_rs2_lsu_mispred;
+  logic                                    w_ex1_rs1_mispred;
+  logic                                    w_ex1_rs2_mispred;
 
   pipe_ctrl_t                              r_ex2_pipe_ctrl;
   msrh_pkg::issue_t                         r_ex2_issue;
@@ -81,7 +88,32 @@ end
     end
   end
 
-  assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs1_rnid),
+ .i_entry_type (r_ex1_issue.rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs1_lsu_mispred)
+ );
+
+
+select_mispred_bus rs2_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs2_rnid),
+ .i_entry_type (r_ex1_issue.rs2_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs2_lsu_mispred)
+ );
+
+  assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
+  assign w_ex1_rs2_mispred = r_ex1_issue.rs2_valid & r_ex1_issue.rs2_pred_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
+
+  assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid &
+                                ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+
   assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
   assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
   assign o_ex1_early_wr.may_mispred = 1'b0;

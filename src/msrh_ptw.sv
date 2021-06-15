@@ -42,6 +42,7 @@ logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_satp;
 logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
 logic [msrh_lsu_pkg::VPN_W-1: 0] r_ptw_vpn;
 logic [riscv_pkg::PADDR_W-1: 0] r_ptw_addr;
+logic [riscv_pkg::XLEN_W-1: 0]  w_ptw_resp_payload_align_data;
 
 logic                          lsu_access_is_leaf;
 logic                          lsu_access_bad_pte;
@@ -88,7 +89,10 @@ bit_oh_or #(.T(ptw_req_t),                     .WORDS(PTW_PORT_NUM)) bit_accepte
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_satp   (.i_oh(w_ptw_accept), .i_data(w_ptw_satp  ), .o_selected(w_ptw_accepted_satp  ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_status (.i_oh(w_ptw_accept), .i_data(w_ptw_status), .o_selected(w_ptw_accepted_status));
 
-assign lsu_access_pte = (r_state == L2_RESP_WAIT) ? msrh_lsu_pkg::pte_t'(ptw_resp.payload.data[riscv_pkg::XLEN_W-1:0]) :
+
+assign w_ptw_resp_payload_align_data = ptw_resp.payload.data[{r_ptw_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0], 3'b000} +: riscv_pkg::XLEN_W];
+
+assign lsu_access_pte = (r_state == L2_RESP_WAIT) ? w_ptw_resp_payload_align_data :
                         msrh_lsu_pkg::pte_t'(lsu_access.data[riscv_pkg::XLEN_W-1:0]);
 
 assign lsu_access_is_leaf = lsu_access_pte.v &

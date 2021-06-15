@@ -450,7 +450,7 @@ bool inline is_equal_vaddr(int64_t val1, int64_t val2)
   return (val1 & ((1ULL << vaddr_len)-1)) == (val2 & ((1ULL << vaddr_len)-1));
 }
 
-const int fail_max = 5;
+const int fail_max = 1;
 int fail_count = 0;
 
 void step_spike(long long time, long long rtl_pc,

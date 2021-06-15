@@ -211,7 +211,8 @@ assign w_stq_load_entry.valid = 1'b1;
 assign w_stq_load_entry.paddr = {l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                                  {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 assign w_stq_load_entry.sent  = 1'b0;
-
+assign w_stq_load_entry.evict_valid = l1d_lrq_stq_miss_if.req_payload.evict_valid;
+assign w_stq_load_entry.evict = l1d_lrq_stq_miss_if.req_payload.evict_payload;
 
 localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
 

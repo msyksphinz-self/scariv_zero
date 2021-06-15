@@ -112,6 +112,8 @@ u_alu
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),
 
+   .i_mispred_lsu (i_mispred_lsu),
+
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 

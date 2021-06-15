@@ -74,7 +74,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
 msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::mispred_t  w_ex3_mispred_lsu [msrh_conf_pkg::LSU_INST_NUM] ;
+msrh_pkg::mispred_t  w_ex2_mispred_lsu [msrh_conf_pkg::LSU_INST_NUM] ;
 
 // ----------------------------------
 // BRU Components
@@ -222,7 +222,7 @@ msrh_rename u_msrh_rename (
 
           .i_early_wr(w_ex1_early_wr),
           .i_phy_wr  (w_ex3_phy_wr),
-          .i_mispred_lsu (w_ex3_mispred_lsu),
+          .i_mispred_lsu (w_ex2_mispred_lsu),
 
           .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
           .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
@@ -267,7 +267,7 @@ u_msrh_lsu_top
     .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
     .o_done_report(w_lsu_done_rpt),
-    .o_ex3_mispred (w_ex3_mispred_lsu),
+    .o_ex2_mispred (w_ex2_mispred_lsu),
 
     .l1d_snoop_if (l1d_snoop_if),
     .stq_snoop_if (stq_snoop_if),
@@ -296,7 +296,7 @@ u_msrh_bru (
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),
-    .i_mispred_lsu (w_ex3_mispred_lsu),
+    .i_mispred_lsu (w_ex2_mispred_lsu),
 
     .o_ex1_early_wr(w_ex1_bru_early_wr),
     .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
@@ -325,7 +325,7 @@ u_msrh_csu (
 
     .o_ex1_early_wr(w_ex1_csu_early_wr),
     .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
-    .i_mispred_lsu (w_ex3_mispred_lsu),
+    .i_mispred_lsu (w_ex2_mispred_lsu),
 
     .csr_info    (w_csr_info   ),
     .rob_info_if (w_rob_info_if),

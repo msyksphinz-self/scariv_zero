@@ -464,6 +464,10 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.s1_miss;
 assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
+assign l1d_lrq_stq_miss_if.req_payload.evict_valid = l1d_rd_if.s1_replace_valid;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = l1d_rd_if.s1_replace_paddr;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = l1d_rd_if.s1_replace_way;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = l1d_rd_if.s1_replace_data;
 
 
 `ifdef SIMULATION

@@ -57,7 +57,7 @@ module msrh_lsu
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit,
 
-    output msrh_pkg::mispred_t   o_ex3_mispred,
+    output msrh_pkg::mispred_t   o_ex2_mispred,
     output logic  o_ex3_done
    );
 
@@ -173,11 +173,13 @@ u_lsu_pipe
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),
 
+   .i_mispred_lsu (i_mispred_lsu),
+
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
    .ex1_l1d_rd_if (l1d_rd_if),
-   .o_ex3_mispred (o_ex3_mispred),
+   .o_ex2_mispred (o_ex2_mispred),
 
    .ptw_if(ptw_if),
    .l1d_lrq_if (l1d_lrq_if),

@@ -17,6 +17,8 @@ module msrh_lsu_pipe
  input msrh_pkg::issue_t               i_rv0_issue,
  input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
 
+ input msrh_pkg::mispred_t             i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
+
  output logic                          o_ex0_rs_conflicted,
  output logic [RV_ENTRY_SIZE-1: 0]     o_ex0_rs_conf_index_oh,
 
@@ -33,7 +35,7 @@ module msrh_lsu_pipe
  output                                msrh_pkg::phy_wr_t   o_ex3_phy_wr,
 
  l1d_rd_if.master                      ex1_l1d_rd_if,
- output msrh_pkg::mispred_t            o_ex3_mispred,
+ output msrh_pkg::mispred_t            o_ex2_mispred,
 
  // Forwarding checker
  fwd_check_if.master                   ex2_fwd_check_if,
@@ -82,6 +84,11 @@ logic [riscv_pkg::VADDR_W-1: 0]        w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
 tlb_resp_t               w_ex1_tlb_resp;
 lsu_pipe_ctrl_t                        r_ex1_pipe_ctrl;
+
+logic                                  w_ex1_rs1_lsu_mispred;
+logic                                  w_ex1_rs2_lsu_mispred;
+logic                                  w_ex1_rs1_mispred;
+logic                                  w_ex1_rs2_mispred;
 
 //
 // EX2 stage
@@ -219,7 +226,30 @@ assign w_ex1_tlb_req.size        = r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
 assign w_ex1_tlb_req.passthrough = 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid & !w_ex1_tlb_resp.miss;
+select_mispred_bus rs1_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs1_rnid),
+ .i_entry_type (r_ex1_issue.rs1_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs1_lsu_mispred)
+ );
+
+
+select_mispred_bus rs2_mispred_select
+(
+ .i_entry_rnid (r_ex1_issue.rs2_rnid),
+ .i_entry_type (r_ex1_issue.rs2_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex1_rs2_lsu_mispred)
+ );
+
+assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
+assign w_ex1_rs2_mispred = r_ex1_issue.rs2_valid & r_ex1_issue.rs2_pred_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
+
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid & !w_ex1_tlb_resp.miss &
+                                    ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.rd_rnid;
 assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.rd_valid;
@@ -316,6 +346,17 @@ assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
+
+// ---------------------
+// Misprediction Update
+// ---------------------
+always_comb begin
+  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
+  o_ex2_mispred.rd_type   = r_ex2_issue.rd_type;
+  o_ex2_mispred.rd_rnid   = r_ex2_issue.rd_rnid;
+end
+
+
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
@@ -391,14 +432,8 @@ end // always_comb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
-
-    o_ex3_mispred <= 'h0;
   end else begin
     r_ex3_aligned_data <= w_ex2_data_sign_ext;
-
-    o_ex3_mispred.mis_valid <= w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
-    o_ex3_mispred.rd_type   <= r_ex2_issue.rd_type;
-    o_ex3_mispred.rd_rnid   <= r_ex2_issue.rd_rnid;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -413,7 +448,7 @@ assign ex3_ldq_stq_done_if.index_oh = 'h0;
 assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
 assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & !o_ex3_mispred.mis_valid;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & !o_ex2_mispred.mis_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
