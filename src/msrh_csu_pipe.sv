@@ -24,6 +24,8 @@ module msrh_csu_pipe
 
   /* SFENCE update information */
   sfence_if.master                  sfence_if,
+  /* FENCE.I update */
+  output logic                      o_fence_i,
 
   done_if.master   ex3_done_if
 );
@@ -185,7 +187,8 @@ assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                    r_ex3_pipe_ctrl.is_mret |
                                    r_ex3_pipe_ctrl.is_sret |
                                    r_ex3_pipe_ctrl.is_uret |
-                                   r_ex3_pipe_ctrl.is_ecall;
+                                   r_ex3_pipe_ctrl.is_ecall |
+                                   r_ex3_pipe_ctrl.is_fence_i;
 assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
@@ -208,5 +211,10 @@ assign sfence_if.valid = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma;
 assign sfence_if.is_rs1_x0  = r_ex3_issue.rs1_regidx == 'h0;
 assign sfence_if.is_rs2_x0  = r_ex3_issue.rs2_regidx == 'h0;
 assign sfence_if.vaddr      = r_ex3_result[riscv_pkg::VADDR_W-1:0];
+
+// ---------------
+// FENCE_I update
+// ---------------
+assign o_fence_i = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_fence_i;
 
 endmodule // msrh_csu_pipe

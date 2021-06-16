@@ -122,6 +122,7 @@ generate for(genvar way = 0; way < msrh_lsu_pkg::DCACHE_WAY_W; way++) begin : ic
        .i_clk(i_clk),
        .i_reset_n(i_reset_n),
 
+       .i_tag_clear (1'b0),
        .i_wr  (w_s0_dc_tag_wr),
        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .i_tag_valid  (1'b1),

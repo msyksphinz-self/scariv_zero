@@ -4,8 +4,10 @@ module tag_array
   #(parameter TAG_W = 24,
     parameter WORDS = 12)
   (
-    input logic i_clk,
-    input logic i_reset_n,
+    input logic              i_clk,
+    input logic              i_reset_n,
+
+    input logic              i_tag_clear,
 
     input logic              i_wr,
     input logic [WORDS-1: 0] i_addr,
@@ -25,7 +27,9 @@ module tag_array
       /* verilator lint_off WIDTHCONCAT */
       r_tag_valids <= {(2**WORDS){1'b0}};
     end else begin
-      if (i_wr) begin
+      if (i_tag_clear) begin
+        r_tag_valids <= 'h0;
+      end else if (i_wr) begin
         r_tag_valids[i_addr[WORDS-1:0]] <= i_tag_valid;
       end else begin
         o_tag_valid <= r_tag_valids[i_addr[WORDS-1:0]];

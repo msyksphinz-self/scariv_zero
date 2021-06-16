@@ -27,6 +27,8 @@ module msrh_csu
 
   /* SFENCE update information */
   sfence_if.master            sfence_if,
+  /* FENCE.I update */
+  output logic                      o_fence_i,
 
   // Commit notification
   input msrh_pkg::commit_blk_t i_commit
@@ -122,6 +124,7 @@ u_csu_pipe
    .read_if (w_csr_read),
    .write_if (w_csr_write),
    .sfence_if (sfence_if),
+   .o_fence_i (o_fence_i),
 
    .ex3_done_if   (w_ex3_done_if)
    );

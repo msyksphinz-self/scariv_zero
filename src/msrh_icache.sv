@@ -9,6 +9,8 @@ module msrh_icache
 
   input logic                i_flush_valid,
 
+  input logic                i_fence_i,
+
   input                      ic_req_t i_s0_req,
   output logic               o_s0_ready,
   input logic [PADDR_W-1:0]  i_s1_paddr,
@@ -39,7 +41,7 @@ logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_selected_data;
 
 logic [L2_CMD_TAG_W-1: 0]                 r_ic_req_tag;
 
-typedef enum                              { ICInit, ICReq, ICResp } ic_state_t;
+typedef enum                              { ICInit, ICReq, ICInvalidate, ICResp } ic_state_t;
 ic_state_t r_ic_state;
 logic                                     ic_l2_resp_fire;
 logic [VADDR_W-1: 0]                      r_s2_vaddr;
@@ -57,6 +59,8 @@ logic [VADDR_W-1:ICACHE_TAG_LOW] w_s1_tag;
   tag (
        .i_clk(i_clk),
        .i_reset_n(i_reset_n),
+
+       .i_tag_clear(i_fence_i),
 
        .i_wr  (ic_l2_resp_fire),
        .i_addr(ic_l2_resp_fire ?
@@ -173,7 +177,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_ic_state)
       ICInit : begin
-        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill) begin
+        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i) begin
           // if (ic_l2_req.ready) begin
           r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
@@ -182,11 +186,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end // case: ICInit
       ICReq : begin
-        if (ic_l2_req.ready) begin
+        if (ic_l2_req.ready & !i_fence_i) begin
           r_ic_state <= ICResp;
+        end else if (i_fence_i) begin
+          r_ic_state <= ICInvalidate;
         end
       end
       ICResp : begin
+        if (ic_l2_resp_fire) begin
+          r_ic_state <= ICInit;
+          r_ic_req_tag <= r_ic_req_tag + 'h1;
+        end else if (i_fence_i) begin
+          r_ic_state <= ICInvalidate;
+        end
+      end
+      ICInvalidate: begin
         if (ic_l2_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
