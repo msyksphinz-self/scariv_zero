@@ -48,6 +48,9 @@ logic                          lsu_access_is_leaf;
 logic                          lsu_access_bad_pte;
 msrh_lsu_pkg::pte_t            lsu_access_pte;
 
+logic                          l2_resp_tag_match;
+logic                          l2_resp_fin;
+
 generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_req_loop
   assign w_ptw_valid [p_idx] = ptw_if[p_idx].req.valid;
   assign w_ptw_req   [p_idx] = ptw_if[p_idx].req;
@@ -70,7 +73,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
     ptw_if[p_idx].req_ready = (r_state == IDLE) & w_ptw_accept[p_idx];
     if (r_ptw_accept[p_idx] | w_ptw_accept[p_idx]) begin
       ptw_if[p_idx].resp.valid       = (((r_state == RESP_L1D) & (lsu_access.status == msrh_lsu_pkg::STATUS_HIT)) |
-                                        ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready)) &
+                                        ((r_state == L2_RESP_WAIT) & ptw_resp.valid & ptw_resp.ready & l2_resp_tag_match & l2_resp_fin)) &
                                        /* verilator lint_off WIDTH */
                                        (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == riscv_pkg::PG_LEVELS-1)) &
                                        r_ptw_accept[p_idx];
@@ -100,6 +103,11 @@ assign lsu_access_is_leaf = lsu_access_pte.v &
 
 assign lsu_access_bad_pte = ~lsu_access_pte.v |
                             (~lsu_access_pte.r & lsu_access_pte.w);
+
+assign l2_resp_tag_match = ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};
+
+assign l2_resp_fin = lsu_access_is_leaf | (r_count == riscv_pkg::PG_LEVELS -1) |
+                     lsu_access_bad_pte;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -170,11 +178,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       L2_RESP_WAIT : begin
-        if (ptw_resp.valid & ptw_resp.ready &
-            (ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}})) begin
-          if (lsu_access_is_leaf || (r_count == riscv_pkg::PG_LEVELS -1)) begin
-            r_state <= IDLE;
-          end else if (lsu_access_bad_pte) begin
+        if (ptw_resp.valid & ptw_resp.ready & l2_resp_tag_match) begin
+          if (l2_resp_fin) begin
             r_state <= IDLE;
           end else begin
             r_state <= L2_RESP_WAIT;
