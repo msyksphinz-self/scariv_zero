@@ -392,6 +392,11 @@ msrh_icache u_msrh_icache
    .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
    );
 
+logic w_inst_buffer_load_valid;
+assign w_inst_buffer_load_valid = (r_if_state == ISSUED) &
+                                  (w_s2_inst_valid  |
+                                   (~r_s2_tlb_miss & r_s2_tlb_except_valid));
+
 msrh_inst_buffer
 u_msrh_inst_buffer
   (
@@ -400,8 +405,7 @@ u_msrh_inst_buffer
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_commit_flush_valid),
 
-   .i_inst_valid (w_s2_inst_valid  |
-                  (~r_s2_tlb_miss & r_s2_tlb_except_valid)),
+   .i_inst_valid (w_inst_buffer_load_valid),
 
    .i_commit (i_commit),
 
