@@ -32,15 +32,15 @@ module tb_l2_behavior_ram #(
     input logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] i_snoop_resp_be
 );
 
-  localparam SIZE_W = $clog2(SIZE);
+  // localparam SIZE_W = $clog2(SIZE);
 
     typedef enum logic [0:0] {
         ST_INIT = 0,
         ST_GIVEN = 1
     } line_status_t;
 
-    logic                [DATA_W-1:0] ram             [  SIZE];
-    line_status_t                     status          [  SIZE];
+    logic                [DATA_W-1:0] ram             [int unsigned];
+    line_status_t                     status          [int unsigned];
     logic                             req_fire;
     logic                [ADDR_W-1:0] actual_addr;
     logic                [ADDR_W-1:0] actual_line_pos;
@@ -48,7 +48,7 @@ module tb_l2_behavior_ram #(
     logic                [ TAG_W-1:0] rd_tag          [RD_LAT];
     logic                [RD_LAT-1:0] rd_valid;
 
-    logic [riscv_pkg::PADDR_W-1:0] r_req_paddr;
+    logic [riscv_pkg::PADDR_W-1:0] r_req_paddr_pos;
     logic                [ TAG_W-1:0] r_req_tag;
 
 typedef enum logic [0:0] {
@@ -61,14 +61,14 @@ state_t r_state;
 assign o_req_ready = (r_state == IDLE);
 assign req_fire = i_req_valid & o_req_ready;
 /* verilator lint_off WIDTH */
-assign actual_addr = i_req_addr - BASE_ADDR;
+assign actual_addr = i_req_addr /* - BASE_ADDR */;
 assign actual_line_pos = actual_addr >> $clog2(DATA_W / 8);
 
-initial begin
-  for (int i = 0; i < SIZE; i++) begin
-    status[i] = ST_INIT;
-  end
-end
+// initial begin
+//   for (int i = 0; i < SIZE; i++) begin
+//     status[i] = ST_INIT;
+//   end
+// end
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -76,33 +76,33 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_state <= IDLE;
     o_snoop_req_valid <= 1'b0;
     o_snoop_req_paddr <= 'h0;
-    r_req_paddr <= 'h0;
+    r_req_paddr_pos <= 'h0;
     r_req_tag <= 'h0;
   end else begin
     case(r_state)
       IDLE: begin
         if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XWR) begin
-          if (status[actual_line_pos[SIZE_W-1:0]] == ST_GIVEN) begin
-            status[actual_line_pos[SIZE_W-1:0]] <= ST_INIT;
+          if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
+            status[actual_line_pos] <= ST_INIT;
           end
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
             if (i_req_byte_en[byte_idx]) begin
-              ram[actual_line_pos[SIZE_W-1:0]][byte_idx*8+:8] <= i_req_data[byte_idx*8+:8];
+              ram[actual_line_pos][byte_idx*8+:8] <= i_req_data[byte_idx*8+:8];
             end
           end
         end else if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD) begin
-          if (status[actual_line_pos[SIZE_W-1:0]] == ST_INIT) begin
+          if (status[actual_line_pos] == ST_INIT) begin
             if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
-              status[actual_line_pos[SIZE_W-1:0]] <= ST_GIVEN;
+              status[actual_line_pos] <= ST_GIVEN;
             end
-            rd_data[0] <= ram[actual_line_pos[SIZE_W-1:0]];
+            rd_data[0] <= ram.exists(actual_line_pos) ? ram[actual_line_pos] : 'h0;
             rd_tag[0] <= i_req_tag;
             rd_valid[0] <= 1'b1;
           end else begin
             r_state <= SNOOP;
             o_snoop_req_valid <= 1'b1;
             o_snoop_req_paddr <= i_req_addr;
-            r_req_paddr <= i_req_addr;
+            r_req_paddr_pos <= actual_line_pos;
             r_req_tag <= i_req_tag;
           end
         end else begin
@@ -114,10 +114,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         o_snoop_req_paddr <= 'h0;
         if (i_snoop_resp_valid) begin
           r_state <= IDLE;
-          status[r_req_paddr[SIZE_W-1:0]] <= ST_GIVEN;
+          status[r_req_paddr_pos] <= ST_GIVEN;
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
             if (i_snoop_resp_be[byte_idx]) begin
-              ram[r_req_paddr[SIZE_W-1:0]][byte_idx*8+:8] <= i_snoop_resp_data[byte_idx*8+:8];
+              ram[r_req_paddr_pos][byte_idx*8+:8] <= i_snoop_resp_data[byte_idx*8+:8];
             end
           end
           rd_data[0] <= i_snoop_resp_data;
@@ -154,14 +154,14 @@ assign o_resp_data = rd_data[RD_LAT-1];
 //       end
 //     end
 //   end
-  // end
+// end
 
-`ifdef SIMULATION
-generate for (genvar idx=0; idx < SIZE; idx++) begin : ram_loop
-  line_status_t debug_line_status = status[idx];
-  wire [DATA_W-1: 0] debug_ram = ram[idx];
-end
-endgenerate
-`endif // SIMULATION
+// `ifdef SIMULATION
+// generate for (genvar idx=0; idx < SIZE; idx++) begin : ram_loop
+//   line_status_t debug_line_status = status[idx];
+//   wire [DATA_W-1: 0] debug_ram = ram[idx];
+// end
+// endgenerate
+// `endif // SIMULATION
 
 endmodule  // tb_l2_behavior_ram
