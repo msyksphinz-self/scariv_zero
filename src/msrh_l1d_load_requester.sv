@@ -142,7 +142,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
      .i_clear (r_lrq_search_valid & r_lrq_search_index[b_idx]),
 
-     .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+     .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+     .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
      .o_entry (w_lrq_entries[b_idx])
      );
 
@@ -218,7 +219,9 @@ localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_
 
 // selection of external memory request
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : lrq_sel_loop
-  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid & !w_lrq_entries[b_idx].sent;
+  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid &
+                                      !w_lrq_entries[b_idx].sent &
+                                      (w_lrq_entries[b_idx].evict_valid ? !w_lrq_entries[b_idx].evict_sent : 1'b1);
 end
 endgenerate
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .out(w_lrq_ready_to_send_oh));
@@ -235,7 +238,9 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 // Eviction Request
 // -----------------
-assign l1d_evict_if.valid = l1d_ext_rd_req.valid & w_lrq_ready_to_send_entry.evict_valid;
+assign l1d_evict_if.valid = w_lrq_ready_to_send_entry.valid &
+                            w_lrq_ready_to_send_entry.evict_valid &
+                            !w_lrq_ready_to_send_entry.evict_sent;
 assign l1d_evict_if.payload.paddr = w_lrq_ready_to_send_entry.evict.paddr;
 assign l1d_evict_if.payload.data  = w_lrq_ready_to_send_entry.evict.data;
 

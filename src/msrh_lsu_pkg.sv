@@ -167,6 +167,7 @@ typedef struct packed {
   logic                          sent;
   logic                          evict_valid;
   evict_payload_t                evict;
+  logic                          evict_sent;
 } lrq_entry_t;
 
 typedef struct packed {

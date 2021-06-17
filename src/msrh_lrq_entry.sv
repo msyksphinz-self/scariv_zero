@@ -9,27 +9,42 @@ module msrh_lrq_entry
    input logic i_clear,
 
    input logic i_sent,
+   input logic i_evict_sent,
+
    output      msrh_lsu_pkg::lrq_entry_t o_entry
    );
 
 msrh_lsu_pkg::lrq_entry_t r_entry;
+msrh_lsu_pkg::lrq_entry_t w_entry_next;
+
+always_comb begin
+  w_entry_next = r_entry;
+
+  if (i_clear) begin
+    w_entry_next.valid = 1'b0;
+  end else if (i_load) begin
+    w_entry_next = i_load_entry;
+  end
+
+  if (i_sent) begin
+    w_entry_next.sent = 1'b1;
+  end
+  if (i_evict_sent) begin
+    w_entry_next.evict_sent = 1'b1;
+  end
+end // always_comb
+
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
   end else begin
-    if (i_clear) begin
-      r_entry.valid <= 1'b0;
-    end else if (i_load) begin
-      r_entry <= i_load_entry;
+    r_entry <= w_entry_next;
 `ifdef SIMULATION
-      if (r_entry.valid & i_load) begin
-        $fatal(0, "During LRQ entry valid, i_load must not be come\n");
-      end
-`endif // SIMULATION
-    end else if (i_sent) begin
-      r_entry.sent <= 1'b1;
+    if (r_entry.valid & i_load) begin
+      $fatal(0, "During LRQ entry valid, i_load must not be come\n");
     end
+`endif // SIMULATION
   end
 end
 
