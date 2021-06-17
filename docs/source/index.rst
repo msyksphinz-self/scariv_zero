@@ -10,6 +10,9 @@ MSRH RISC-V CPUコアのドキュメントにようこそ！
    :maxdepth: 2
    :caption: Contents:
 
+   sections/msrh
+
+   sections/frontend
    sections/scheduler
    sections/committer
    sections/csr
