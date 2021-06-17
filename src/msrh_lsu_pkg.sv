@@ -144,9 +144,9 @@ package msrh_lsu_pkg;
   } l2_resp_t;
 
 typedef struct packed {
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [DCACHE_WAY_W-1: 0]   way;
-  logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+  logic [DCACHE_WAY_W-1: 0]                way;
+  logic [riscv_pkg::PADDR_W-1: 0]          paddr;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
 } evict_payload_t;
 
 typedef struct packed {
@@ -166,6 +166,7 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic                          sent;
   logic                          evict_valid;
+  logic                          evict_ready;
   evict_payload_t                evict;
   logic                          evict_sent;
 } lrq_entry_t;
@@ -244,7 +245,6 @@ typedef struct packed {
   // Eviction: Replaced Address
   logic                                    replace_valid;
   logic [DCACHE_WAY_W-1: 0]  replace_way;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
   logic [riscv_pkg::PADDR_W-1: 0]          replace_paddr;
 
 } dc_read_resp_t;

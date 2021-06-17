@@ -13,11 +13,11 @@ module msrh_l1d_load_requester
    l2_req_if.master  l1d_ext_rd_req,
    l2_resp_if.slave  l1d_ext_rd_resp,
 
-   // Interface to L1D eviction
-   l1d_evict_if.master l1d_evict_if,
+   l1d_rd_if.master  l1d_rd_if,
+   l1d_wr_if.master  l1d_wr_if,
 
-   // LRQ search interface
-   lrq_search_if.slave lrq_search_if
+   // Interface to L1D eviction
+   l1d_evict_if.master l1d_evict_if
    );
 
 localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
@@ -60,7 +60,13 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_req_tag;
 
-// LRQ Search Registers
+
+msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_evict_entry;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict_oh;
+
+// LRQ Search Interface
+lrq_search_if                lrq_search_if();
 logic                                         r_lrq_search_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index;
 
@@ -140,10 +146,15 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
      .i_load       (w_load_entry_valid[b_idx] | (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx)),
      .i_load_entry (w_load_entry_valid[b_idx] ? load_entry : w_stq_load_entry),
 
-     .i_clear (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+     .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
 
-     .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-     .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
+     .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+
+     .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
+     .i_evict_update (r_lrq_search_index[b_idx]),
+     .i_evict_data   (l1d_rd_if.s1_data),
+
+     .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
      .o_entry (w_lrq_entries[b_idx])
      );
 
@@ -219,9 +230,7 @@ localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_
 
 // selection of external memory request
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : lrq_sel_loop
-  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid &
-                                      !w_lrq_entries[b_idx].sent &
-                                      (w_lrq_entries[b_idx].evict_valid ? !w_lrq_entries[b_idx].evict_sent : 1'b1);
+  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid & !w_lrq_entries[b_idx].sent;
 end
 endgenerate
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .out(w_lrq_ready_to_send_oh));
@@ -238,12 +247,77 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 // Eviction Request
 // -----------------
-assign l1d_evict_if.valid = w_lrq_ready_to_send_entry.valid &
-                            w_lrq_ready_to_send_entry.evict_valid &
-                            !w_lrq_ready_to_send_entry.evict_sent;
-assign l1d_evict_if.payload.paddr = w_lrq_ready_to_send_entry.evict.paddr;
-assign l1d_evict_if.payload.data  = w_lrq_ready_to_send_entry.evict.data;
 
+bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .out(w_lrq_ready_to_evict_oh));
+bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
+assign l1d_evict_if.valid = w_lrq_ready_to_evict_entry.valid &
+                            w_lrq_ready_to_evict_entry.evict_valid &
+                            w_lrq_ready_to_evict_entry.evict_ready &
+                            !w_lrq_ready_to_evict_entry.evict_sent;
+assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;
+assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.evict.data;
+
+
+// ==========================
+// L2 Reponse
+// RESP1 : Getting Data
+// ==========================
+logic r_rp1_l1d_exp_resp_valid;
+logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_rp1_l1d_exp_resp_valid <= 1'b0;
+    r_rp1_lrq_resp_tag <= 'h0;
+    r_rp1_lrq_resp_data <= 'h0;
+  end else begin
+    r_rp1_l1d_exp_resp_valid <= l1d_ext_rd_resp.valid &
+                                (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1:msrh_lsu_pkg::L2_CMD_TAG_W-2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D);
+    r_rp1_lrq_resp_tag       <= l1d_ext_rd_resp.payload.tag[msrh_pkg::LRQ_ENTRY_W-1:0];
+    r_rp1_lrq_resp_data      <= l1d_ext_rd_resp.payload.data;
+  end
+end
+
+
+// --------------------------------------------------
+// Interface of LRQ Search Entry to get information
+// --------------------------------------------------
+assign lrq_search_if.valid = r_rp1_l1d_exp_resp_valid;
+assign lrq_search_if.index = r_rp1_lrq_resp_tag;
+
+// ===========================
+// L2 Reponse
+// RESP2 : Search LRQ Entiers
+// ===========================
+
+logic r_rp2_valid;
+msrh_lsu_pkg::lrq_entry_t r_rp2_searched_lrq_entry;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
+logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_rp2_be;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_rp2_valid <= 1'b0;
+    r_rp2_searched_lrq_entry <= 'h0;
+    r_rp2_resp_data <= 'h0;
+    r_rp2_be <= 'h0;
+  end else begin
+    r_rp2_valid              <= r_rp1_l1d_exp_resp_valid;
+    r_rp2_searched_lrq_entry <= lrq_search_if.lrq_entry;
+    r_rp2_resp_data          <= r_rp1_lrq_resp_data;
+    r_rp2_be                 <= {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+  end
+end
+
+// ----------------------------
+// Update DCache: Read DCache
+// ----------------------------
+assign l1d_rd_if.s0_valid = lrq_search_if.lrq_entry.evict_valid;
+assign l1d_rd_if.s0_paddr = lrq_search_if.lrq_entry.evict.paddr;
+
+assign l1d_wr_if.valid = r_rp2_valid;
+assign l1d_wr_if.paddr = r_rp2_searched_lrq_entry;
+assign l1d_wr_if.be    = r_rp2_resp_data;
+assign l1d_wr_if.data  = r_rp2_be;
 
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];

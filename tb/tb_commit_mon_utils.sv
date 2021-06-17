@@ -74,14 +74,14 @@ end
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_wr_if.valid &
-        (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_wr_if.paddr == 'h8000_1000)) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_stq_wr_if.valid &
+        (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_stq_wr_if.paddr == 'h8000_1000)) begin
       $write("===============================\n");
       $write("SIMULATION FINISH : ");
-      if (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_wr_if.data[31: 0] == 32'h1) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_stq_wr_if.data[31: 0] == 32'h1) begin
         $write("PASS\n");
       end else begin
-        $write("FAIL(%x)\n", u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_wr_if.data[31: 0]);
+        $write("FAIL(%x)\n", u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.w_l1d_stq_wr_if.data[31: 0]);
       end
       $write("===============================\n");
       $finish;
