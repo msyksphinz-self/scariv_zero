@@ -302,7 +302,7 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .out(w_lrq_ready_to_evict_oh));
-bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
+bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_evict_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
 assign l1d_evict_if.valid = w_lrq_ready_to_evict_entry.valid &
                             w_lrq_ready_to_evict_entry.evict_valid &
                             w_lrq_ready_to_evict_entry.evict_ready &
