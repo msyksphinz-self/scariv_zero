@@ -120,7 +120,7 @@ u_csu_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .csr_info (csr_info),
+   .i_status_priv (csr_info.priv),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
    .sfence_if (sfence_if),

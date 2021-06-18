@@ -10,6 +10,7 @@ module bit_extract_lsb_ptr
 
 logic [WIDTH-1: 0]                shifted_in;
 logic [WIDTH-1: 0]                shifted_out;
+/* verilator lint_off WIDTH */
 assign shifted_in = ((in >> i_ptr) & ((1 << (WIDTH-i_ptr))-1)) | (in << (WIDTH-i_ptr));
 
 if (WIDTH == 1) begin

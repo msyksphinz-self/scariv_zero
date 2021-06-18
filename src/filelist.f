@@ -88,6 +88,8 @@
 ../src/msrh_lsu.sv
 ../src/msrh_lsu_pipe.sv
 ../src/msrh_l1d_load_requester.sv
+../src/msrh_store_requestor.sv
+../src/msrh_l2_req_arbiter.sv
 ../src/msrh_lrq_entry.sv
 ../src/msrh_ldq.sv
 ../src/msrh_ldq_entry.sv
@@ -96,6 +98,8 @@
 ../src/msrh_dcache.sv
 ../src/msrh_dcache_array.sv
 ../src/msrh_addr_check.sv
+
+../src/msrh_snoop_top.sv
 
 ../src/msrh_bru.sv
 ../src/msrh_bru_pipe.sv

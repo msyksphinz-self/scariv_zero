@@ -171,9 +171,24 @@ typedef struct packed {
   logic                          evict_sent;
 } lrq_entry_t;
 
+function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
+  lrq_entry_t ret;
+
+  ret.valid = valid;
+  ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+               {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+  ret.sent  = 1'b0;
+  ret.evict_valid = req.evict_valid;
+  ret.evict       = req.evict_payload;
+
+  return ret;
+
+endfunction // assign_lrq_entry
+
+
 typedef struct packed {
-logic          valid;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
+  logic          valid;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
 } lrq_resolve_t;
 
 typedef struct packed {

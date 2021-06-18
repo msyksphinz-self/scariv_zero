@@ -23,18 +23,20 @@ module msrh_l1d_load_requester
 localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
 
 
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_valids;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_load_valid_oh;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0] w_norm_lrq_valids;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0] w_norm_lrq_load_valid_oh;
+logic                                      w_lrq_norm_entries_full;
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_addr_valid[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]   w_hit_port_same_addr_valid[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]   w_resp_confilct;
 
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_in_ptr;
-logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0] w_out_ptr;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_in_ptr_oh;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_out_ptr_oh;
 logic                                        w_in_valid;
 logic                                        w_out_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_lrq_load_valid;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]   w_norm_lrq_clear_ready;
 
 msrh_lsu_pkg::lrq_entry_t w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE];
 
@@ -42,11 +44,16 @@ logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads;
 logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_picked_valids;
 logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads_no_conflicts;
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_lrq_loads_cnt;
+logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE):0] r_lrq_remained_size;
+logic [$clog2(REQ_PORT_NUM): 0] w_l1d_lrq_valid_load_cnt;
 msrh_lsu_pkg::lrq_req_t w_l1d_req_payloads        [REQ_PORT_NUM];
 msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads [REQ_PORT_NUM];
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_valid [REQ_PORT_NUM] ;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]        w_load_entry_valid;
+
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: msrh_pkg::LRQ_NORM_ENTRY_SIZE] w_st_lrq_valids;
+
 
 // LRQ Miss Load from STQ
 logic                                        w_stq_miss_lrq_load;
@@ -70,24 +77,40 @@ lrq_search_if                lrq_search_if();
 logic                                         r_lrq_search_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index;
 
-bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_load_valid (.in(~w_lrq_valids), .out(w_lrq_load_valid_oh));
+bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_load_valid (.in(~w_norm_lrq_valids), .out(w_norm_lrq_load_valid_oh));
 bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
+
+/* verilator lint_off WIDTH */
+assign w_l1d_lrq_valid_load_cnt = r_lrq_remained_size > w_l1d_lrq_loads_cnt ? w_l1d_lrq_loads_cnt : r_lrq_remained_size;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_lrq_remained_size <= msrh_pkg::LRQ_NORM_ENTRY_SIZE;
+  end else begin
+    r_lrq_remained_size <= r_lrq_remained_size -
+                           (w_in_valid ? w_l1d_lrq_valid_load_cnt : 'h0) +
+                           (w_out_valid ? 'h1 : 'h0);
+  end
+end
+
 //
 // LRQ Pointer
 //
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
-assign w_out_valid = 1'b0;  // l1d_ext_rd_req.valid;
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0] w_norm_lrq_clear_oh;
+assign w_norm_lrq_clear_oh = w_norm_lrq_clear_ready & w_norm_out_ptr_oh;
+assign w_out_valid = |w_norm_lrq_clear_oh;
 
-inoutptr_var #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE-2)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                            .i_rollback(1'b0),
-                                                            .i_in_valid (w_in_valid ),
-                                                            /* verilator lint_off WIDTH */
-                                                            .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_loads_cnt}),
-                                                            .o_in_ptr (w_in_ptr ),
+inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+                                                                  .i_rollback(1'b0),
+                                                                  .i_in_valid (w_in_valid ),
+                                                                  /* verilator lint_off WIDTH */
+                                                                  .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_valid_load_cnt}),
+                                                                  .o_in_ptr_oh (w_norm_in_ptr_oh ),
 
-                                                            .i_out_valid(w_out_valid),
-                                                            .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
-                                                            .o_out_ptr(w_out_ptr));
+                                                                  .i_out_valid(w_out_valid),
+                                                                  .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
+                                                                  .o_out_ptr_oh(w_norm_out_ptr_oh));
 
 generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_loop
   assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
@@ -111,52 +134,87 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_l
 end
 endgenerate
 
+// Full condition: next target input entry is still "valid".
+assign w_lrq_norm_entries_full = |(w_norm_in_ptr_oh & w_norm_lrq_valids);
+
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
-  assign w_lrq_valids[b_idx] = w_lrq_entries[b_idx].valid;
-  msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
+  if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin : normal_entry
+    // ----------------------------
+    // Load Miss Request
+    // ----------------------------
 
-  for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lrq_port_loop
-    assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] &
-                                        (w_in_ptr + p_idx == b_idx);
-  end
+    assign w_norm_lrq_valids[b_idx] = w_lrq_entries[b_idx].valid;
+    msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
 
-  logic [REQ_PORT_NUM-1: 0] w_rev_load_valid;
-  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rev_loop
-    assign w_rev_load_valid[p_idx] =  w_load_valid[p_idx][b_idx];
-  end
+    for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lrq_port_loop
+      logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]  w_entry_ptr_oh;
+      bit_rotate_left #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE), .VAL(p_idx)) target_bit_rotate (.i_in(w_norm_in_ptr_oh), .o_out(w_entry_ptr_oh));
+      assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] & w_entry_ptr_oh[b_idx] & (p_idx < w_l1d_lrq_valid_load_cnt);
+    end
 
-  assign w_load_entry_valid[b_idx] = |w_rev_load_valid;
+    logic [REQ_PORT_NUM-1: 0] w_rev_load_valid;
+    for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rev_loop
+      assign w_rev_load_valid[p_idx] =  w_load_valid[p_idx][b_idx];
+    end
 
-  bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(REQ_PORT_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
+    assign w_load_entry_valid[b_idx] = |w_rev_load_valid;
 
-  msrh_lsu_pkg::lrq_entry_t load_entry;
-  assign load_entry.valid = w_load_entry_valid[b_idx];
-  assign load_entry.paddr = {w_l1d_picked_req_payloads_oh.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
-                             {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-  assign load_entry.sent  = 1'b0;
-  assign load_entry.evict_valid = w_l1d_picked_req_payloads_oh.evict_valid;
-  assign load_entry.evict       = w_l1d_picked_req_payloads_oh.evict_payload;
+    bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(REQ_PORT_NUM)) bit_oh_paddr (.i_oh(w_rev_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
 
-  msrh_lrq_entry
-  u_entry
-    (
-     .i_clk     (i_clk    ),
-     .i_reset_n (i_reset_n),
+    msrh_lsu_pkg::lrq_entry_t load_entry;
+    assign load_entry = msrh_lsu_pkg::assign_lrq_entry(w_load_entry_valid[b_idx],
+                                                       w_l1d_picked_req_payloads_oh);
 
-     .i_load       (w_load_entry_valid[b_idx] | (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx)),
-     .i_load_entry (w_load_entry_valid[b_idx] ? load_entry : w_stq_load_entry),
+    msrh_lrq_entry
+      u_entry
+        (
+         .i_clk     (i_clk    ),
+         .i_reset_n (i_reset_n),
 
-     .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+         .i_load       (w_load_entry_valid[b_idx]),
+         .i_load_entry (load_entry),
 
-     .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+         .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+         .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+         .i_clear (w_norm_lrq_clear_oh[b_idx]),
 
-     .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
-     .i_evict_update (r_lrq_search_index[b_idx]),
-     .i_evict_data   (l1d_rd_if.s1_data),
+         .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
+         .i_evict_data   (l1d_rd_if.s1_data),
 
-     .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
-     .o_entry (w_lrq_entries[b_idx])
-     );
+         .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
+         .o_clear_ready (w_norm_lrq_clear_ready[b_idx]),
+         .o_entry (w_lrq_entries[b_idx])
+         );
+
+  end else begin : stq_entry // if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
+    // ----------------------------
+    // STQ Load Request
+    // ----------------------------
+
+    assign w_st_lrq_valids[b_idx] = w_lrq_entries[b_idx].valid;
+
+    msrh_lrq_entry
+      u_entry
+        (
+         .i_clk     (i_clk    ),
+         .i_reset_n (i_reset_n),
+
+         .i_load       (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx),
+         .i_load_entry (w_stq_load_entry),
+
+         .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+         .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+         .i_clear (1'b1),  // When finish, immediately clear
+
+         .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
+         .i_evict_data   (l1d_rd_if.s1_data),
+
+         .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
+         .o_clear_ready(),
+         .o_entry (w_lrq_entries[b_idx])
+         );
+
+  end // else: !if(b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
 
 end // block: buffer_loop
 endgenerate
@@ -182,7 +240,7 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   end
 
   assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_valid[p_idx]) | (|w_hit_port_same_addr_valid[p_idx]);
-  assign l1d_lrq[p_idx].resp_payload.full         = &(w_lrq_valids | w_lrq_load_valid_oh);
+  assign l1d_lrq[p_idx].resp_payload.full         = (p_idx >= w_l1d_lrq_valid_load_cnt);
   assign l1d_lrq[p_idx].resp_payload.conflict     = |w_hit_lrq_same_addr_valid[p_idx];
   assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = w_hit_lrq_same_addr_valid[p_idx];
 
@@ -204,8 +262,8 @@ endgenerate
 // ---------------------------------------
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_addr_valid;
 assign l1d_lrq_stq_miss_if.resp_payload.full         = l1d_lrq_stq_miss_if.load &
-                                                       w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid &
-                                                       w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-1].valid;
+                                                       &w_st_lrq_valids;
+
 for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_buffer_loop
   assign w_hit_stq_lrq_same_addr_valid[b_idx] = l1d_lrq_stq_miss_if.load &
                                                 w_lrq_entries[b_idx].valid &
@@ -219,12 +277,7 @@ assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh =  w_hit_stq_lrq_same_addr_
 assign w_stq_miss_lrq_load = l1d_lrq_stq_miss_if.load &
                              !l1d_lrq_stq_miss_if.resp_payload.full & !(|w_hit_stq_lrq_same_addr_valid);
 assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-1 : msrh_pkg::LRQ_ENTRY_SIZE-2;
-assign w_stq_load_entry.valid = 1'b1;
-assign w_stq_load_entry.paddr = {l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
-                                 {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-assign w_stq_load_entry.sent  = 1'b0;
-assign w_stq_load_entry.evict_valid = l1d_lrq_stq_miss_if.req_payload.evict_valid;
-assign w_stq_load_entry.evict = l1d_lrq_stq_miss_if.req_payload.evict_payload;
+assign w_stq_load_entry = msrh_lsu_pkg::assign_lrq_entry(1'b1, l1d_lrq_stq_miss_if.req_payload);
 
 localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
 
@@ -233,7 +286,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
   assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid & !w_lrq_entries[b_idx].sent;
 end
 endgenerate
-bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .out(w_lrq_ready_to_send_oh));
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_norm_out_ptr_oh), .out(w_lrq_ready_to_send_oh));
 encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_req_tag));
 bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
 
@@ -315,9 +368,9 @@ assign l1d_rd_if.s0_valid = lrq_search_if.lrq_entry.evict_valid;
 assign l1d_rd_if.s0_paddr = lrq_search_if.lrq_entry.evict.paddr;
 
 assign l1d_wr_if.valid = r_rp2_valid;
-assign l1d_wr_if.paddr = r_rp2_searched_lrq_entry;
-assign l1d_wr_if.be    = r_rp2_resp_data;
-assign l1d_wr_if.data  = r_rp2_be;
+assign l1d_wr_if.paddr = r_rp2_searched_lrq_entry.paddr;
+assign l1d_wr_if.be    = r_rp2_be;
+assign l1d_wr_if.data  = r_rp2_resp_data;
 
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];

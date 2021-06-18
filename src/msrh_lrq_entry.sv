@@ -7,25 +7,26 @@ module msrh_lrq_entry
    input       msrh_lsu_pkg::lrq_entry_t i_load_entry,
 
    input logic i_resp,
-
    input logic i_sent,
+   input logic i_clear,
 
    output logic o_evict_ready,
-   input logic i_evict_update,
    input logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] i_evict_data,
    input logic i_evict_sent,
 
+   output logic o_clear_ready,
    output      msrh_lsu_pkg::lrq_entry_t o_entry
    );
 
 msrh_lsu_pkg::lrq_entry_t r_entry;
 msrh_lsu_pkg::lrq_entry_t w_entry_next;
 
-typedef enum logic [1:0] {
+typedef enum logic [2:0] {
   IDLE = 0,
   SENT_READY = 1,
   RESP_WAIT = 2,
-  EVICT = 3
+  EVICT = 3,
+  READY_CLEAR = 4
 } lrq_state_t;
 
 
@@ -53,28 +54,37 @@ always_comb begin
         if (r_entry.evict_valid) begin
           w_state_next = EVICT;
           w_entry_next.evict_ready = 1'b1;
+          w_entry_next.evict.data = i_evict_data;
         end else begin
-          w_state_next = IDLE;
-          w_entry_next.valid = 1'b0;
-          w_entry_next.sent  = 1'b0;
+          w_state_next = READY_CLEAR;
         end
       end
     end
     EVICT : begin
       if (i_evict_sent) begin
+        w_state_next = READY_CLEAR;
+        w_entry_next.evict_sent  = 1'b1;
+      end
+    end
+    READY_CLEAR : begin
+      if (i_clear) begin
+        w_state_next = IDLE;
         w_entry_next.valid = 1'b0;
         w_entry_next.sent  = 1'b0;
         w_entry_next.evict_sent  = 1'b0;
         w_entry_next.evict_ready = 1'b0;
       end
     end
+    default : begin
+      $fatal(0, "This state must not to come\n");
+    end
   endcase // case (r_state)
 
-  if (i_evict_update) begin
-    w_entry_next.evict_ready = 1'b1;
-    w_entry_next.evict.data = i_evict_data;
-  end
 end // always_comb
+
+
+assign o_evict_ready = r_entry.evict_ready;
+assign o_clear_ready = (r_state == READY_CLEAR);
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

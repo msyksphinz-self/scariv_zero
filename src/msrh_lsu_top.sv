@@ -51,6 +51,9 @@ module msrh_lsu_top
 
 // LSU Pipeline + STQ Interface + PTW + Snoop + DC Update Read
 localparam L1D_RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1 + 1;
+localparam L1D_PTW_PORT   = msrh_conf_pkg::LSU_INST_NUM + 1;
+localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
+localparam L1D_LRQ_PORT   = L1D_SNOOP_PORT + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_stq_wr_if();
@@ -232,8 +235,6 @@ msrh_stq
  );
 
 
-localparam L1D_LRQ_PORT = L1D_SNOOP_PORT + 1;
-
 msrh_l1d_load_requester
   u_msrh_l1d_load_requester
 (
@@ -283,7 +284,6 @@ logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr
 // logic                                 r_ptw_lrq_resp_conflict;
 // logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
 
-localparam L1D_PTW_PORT = msrh_conf_pkg::LSU_INST_NUM + 1;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
@@ -312,7 +312,6 @@ end
 // ---------------------------
 logic r_snoop_resp_valid;
 
-localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
 
