@@ -33,6 +33,7 @@ logic [REQ_PORT_NUM-1: 0]   w_resp_confilct;
 
 logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_in_ptr_oh;
 logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_out_ptr_oh;
+logic [$clog2(msrh_pkg::LRQ_NORM_ENTRY_SIZE)-1:0] w_norm_out_ptr;
 logic                                        w_in_valid;
 logic                                        w_out_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0]         w_lrq_load_valid;
@@ -118,6 +119,8 @@ inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk)
                                                                   .i_out_valid(w_out_valid),
                                                                   .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
                                                                   .o_out_ptr_oh(w_norm_out_ptr_oh));
+
+encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in(w_norm_out_ptr_oh), .o_out(w_norm_out_ptr));
 
 generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_loop
   assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
@@ -306,8 +309,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
   assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid & !w_lrq_entries[b_idx].sent;
 end
 endgenerate
-bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_norm_out_ptr_oh), .out(w_lrq_ready_to_send_oh));
-encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_req_tag));
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_send_oh));
+encoder#(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_req_tag));
 bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
 
 assign l1d_ext_rd_req.valid = w_lrq_ready_to_send_entry.valid & !w_lrq_ready_to_send_entry.sent;
@@ -321,7 +324,7 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // Eviction Request
 // -----------------
 
-bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .i_ptr(w_norm_out_ptr_oh), .out(w_lrq_ready_to_evict_oh));
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_evict_oh));
 bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_evict_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
 assign l1d_evict_if.valid = w_lrq_ready_to_evict_entry.valid &
                             w_lrq_ready_to_evict_entry.evict_valid &
@@ -382,7 +385,9 @@ end
 // Update DCache: Read DCache
 // ----------------------------
 
-bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_l1drd_sel (.in(w_lrq_ready_to_l1d_upddate), .i_ptr(w_norm_out_ptr_oh), .out(w_lrq_ready_to_l1d_upddate_oh));
+
+
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_l1drd_sel (.in(w_lrq_ready_to_l1d_upddate), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_l1d_upddate_oh));
 bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_l1drd_entry  (.i_oh(w_lrq_ready_to_l1d_upddate_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_l1d_upddate_entry));
 
 assign l1d_rd_if.s0_valid = (|w_lrq_ready_to_l1d_upddate) & w_lrq_ready_to_l1d_upddate_entry.l1drd_ready;
