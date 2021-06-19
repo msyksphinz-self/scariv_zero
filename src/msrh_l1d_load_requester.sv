@@ -67,6 +67,13 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_req_tag;
 
+logic r_rp1_l1d_exp_resp_valid;
+logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
+
+msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_l1d_upddate_entry;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_l1d_upddate;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_l1d_upddate_oh;
 
 msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_evict_entry;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
@@ -137,6 +144,9 @@ endgenerate
 // Full condition: next target input entry is still "valid".
 assign w_lrq_norm_entries_full = |(w_norm_in_ptr_oh & w_norm_lrq_valids);
 
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_rp1_lrq_resp_tag_oh;
+assign w_rp1_lrq_resp_tag_oh = 1 << r_rp1_lrq_resp_tag;
+
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
   if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin : normal_entry
     // ----------------------------
@@ -174,12 +184,17 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+         .i_resp (r_rp1_l1d_exp_resp_valid & w_rp1_lrq_resp_tag_oh[b_idx]),
+         .i_resp_data   (r_rp1_lrq_resp_data),
+
          .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_clear (w_norm_lrq_clear_oh[b_idx]),
 
+         .o_l1d_update_ready (w_lrq_ready_to_l1d_upddate[b_idx]),
+         .i_l1drd_sent       (w_lrq_ready_to_l1d_upddate_oh[b_idx]),
+
+         .i_evict_data (l1d_rd_if.s1_data),
          .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
-         .i_evict_data   (l1d_rd_if.s1_data),
 
          .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
          .o_clear_ready (w_norm_lrq_clear_ready[b_idx]),
@@ -202,12 +217,17 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx),
          .i_load_entry (w_stq_load_entry),
 
-         .i_resp (r_lrq_search_valid & r_lrq_search_index[b_idx]),
+         .i_resp (r_rp1_l1d_exp_resp_valid & w_rp1_lrq_resp_tag_oh[b_idx]),
+         .i_resp_data   (r_rp1_lrq_resp_data),
+
          .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_clear (1'b1),  // When finish, immediately clear
 
+         .o_l1d_update_ready  (w_lrq_ready_to_l1d_upddate[b_idx]),
+         .i_l1drd_sent       (w_lrq_ready_to_l1d_upddate_oh[b_idx]),
+
+         .i_evict_data (l1d_rd_if.s1_data),
          .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
-         .i_evict_data   (l1d_rd_if.s1_data),
 
          .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
          .o_clear_ready(),
@@ -315,9 +335,6 @@ assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.evict.data;
 // L2 Reponse
 // RESP1 : Getting Data
 // ==========================
-logic r_rp1_l1d_exp_resp_valid;
-logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
-logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_rp1_l1d_exp_resp_valid <= 1'b0;
@@ -364,14 +381,18 @@ end
 // ----------------------------
 // Update DCache: Read DCache
 // ----------------------------
-assign l1d_rd_if.s0_valid = lrq_search_if.valid & lrq_search_if.lrq_entry.evict_valid;
-assign l1d_rd_if.s0_paddr = lrq_search_if.lrq_entry.evict.paddr;
+
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_l1drd_sel (.in(w_lrq_ready_to_l1d_upddate), .i_ptr(w_norm_out_ptr_oh), .out(w_lrq_ready_to_l1d_upddate_oh));
+bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_l1drd_entry  (.i_oh(w_lrq_ready_to_l1d_upddate_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_l1d_upddate_entry));
+
+assign l1d_rd_if.s0_valid = (|w_lrq_ready_to_l1d_upddate) & w_lrq_ready_to_l1d_upddate_entry.l1drd_ready;
+assign l1d_rd_if.s0_paddr = w_lrq_ready_to_l1d_upddate_entry.evict.paddr;
 assign l1d_rd_if.s0_h_pri = 1'b1;
 
-assign l1d_wr_if.valid = r_rp2_valid;
-assign l1d_wr_if.paddr = r_rp2_searched_lrq_entry.paddr;
-assign l1d_wr_if.be    = r_rp2_be;
-assign l1d_wr_if.data  = r_rp2_resp_data;
+assign l1d_wr_if.valid = (|w_lrq_ready_to_l1d_upddate) & w_lrq_ready_to_l1d_upddate_entry.l1dwr_ready;
+assign l1d_wr_if.paddr = w_lrq_ready_to_l1d_upddate_entry.paddr;
+assign l1d_wr_if.be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+assign l1d_wr_if.data  = w_lrq_ready_to_l1d_upddate_entry.evict.data;
 
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
@@ -388,8 +409,8 @@ always_ff @ (posedge i_clk, posedge i_reset_n) begin
     r_lrq_search_valid <= lrq_search_if.valid;
     r_lrq_search_index <= 1 << lrq_search_if.index;
 
-    o_lrq_resolve.valid            <= r_lrq_search_valid;
-    o_lrq_resolve.resolve_index_oh <= r_lrq_search_index;
+    o_lrq_resolve.valid            <= l1d_wr_if.valid;
+    o_lrq_resolve.resolve_index_oh <= w_lrq_ready_to_l1d_upddate_oh;
   end
 end
 

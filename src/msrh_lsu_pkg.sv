@@ -165,6 +165,8 @@ typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic                          sent;
+  logic                          l1drd_ready;
+  logic                          l1dwr_ready;
   logic                          evict_valid;
   logic                          evict_ready;
   evict_payload_t                evict;

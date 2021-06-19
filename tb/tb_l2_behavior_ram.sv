@@ -83,17 +83,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       IDLE: begin
         if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XWR) begin
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
-            status[actual_line_pos] <= ST_INIT;
+            status[actual_line_pos] = ST_INIT;
           end
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
             if (i_req_byte_en[byte_idx]) begin
-              ram[actual_line_pos][byte_idx*8+:8] <= i_req_data[byte_idx*8+:8];
+              ram[actual_line_pos][byte_idx*8+:8] = i_req_data[byte_idx*8+:8];
             end
           end
         end else if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD) begin
           if (status[actual_line_pos] == ST_INIT) begin
             if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
-              status[actual_line_pos] <= ST_GIVEN;
+              status[actual_line_pos] = ST_GIVEN;
             end
             rd_data[0] <= ram.exists(actual_line_pos) ? ram[actual_line_pos] : 'h0;
             rd_tag[0] <= i_req_tag;
@@ -114,10 +114,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         o_snoop_req_paddr <= 'h0;
         if (i_snoop_resp_valid) begin
           r_state <= IDLE;
-          status[r_req_paddr_pos] <= ST_GIVEN;
+          status[r_req_paddr_pos] = ST_GIVEN;
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
             if (i_snoop_resp_be[byte_idx]) begin
-              ram[r_req_paddr_pos][byte_idx*8+:8] <= i_snoop_resp_data[byte_idx*8+:8];
+              ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];
             end
           end
           rd_data[0] <= i_snoop_resp_data;
