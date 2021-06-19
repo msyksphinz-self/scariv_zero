@@ -2,6 +2,7 @@ interface l1d_rd_if;
 
   logic                          s0_valid;
   logic [riscv_pkg::PADDR_W-1:0] s0_paddr;
+  logic                          s0_h_pri;   // Highest Priority (used for when L1D eviction swap)
   logic                                    s1_hit;
   logic                                    s1_miss;
   logic                                    s1_conflict;
@@ -15,6 +16,7 @@ interface l1d_rd_if;
   modport master(
     output s0_valid,
     output s0_paddr,
+    output s0_h_pri,
     input  s1_hit,
     input  s1_miss,
     input  s1_conflict,
@@ -28,6 +30,7 @@ interface l1d_rd_if;
   modport slave(
     input  s0_valid,
     input  s0_paddr,
+    input  s0_h_pri,
     output s1_hit,
     output s1_miss,
     output s1_conflict,

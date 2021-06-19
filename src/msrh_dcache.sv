@@ -34,6 +34,7 @@ u_dcache_array
 generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
   assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid;
   assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].s0_paddr;
+  assign w_dc_read_req [p_idx].h_pri = l1d_rd_if[p_idx].s0_h_pri;
 
   assign l1d_rd_if[p_idx].s1_hit      = w_dc_read_resp[p_idx].hit ;
   assign l1d_rd_if[p_idx].s1_miss     = w_dc_read_resp[p_idx].miss;

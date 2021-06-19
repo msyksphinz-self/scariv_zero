@@ -364,8 +364,9 @@ end
 // ----------------------------
 // Update DCache: Read DCache
 // ----------------------------
-assign l1d_rd_if.s0_valid = lrq_search_if.lrq_entry.evict_valid;
+assign l1d_rd_if.s0_valid = lrq_search_if.valid & lrq_search_if.lrq_entry.evict_valid;
 assign l1d_rd_if.s0_paddr = lrq_search_if.lrq_entry.evict.paddr;
+assign l1d_rd_if.s0_h_pri = 1'b1;
 
 assign l1d_wr_if.valid = r_rp2_valid;
 assign l1d_wr_if.paddr = r_rp2_searched_lrq_entry.paddr;

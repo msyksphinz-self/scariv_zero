@@ -415,6 +415,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_rd_if.s0_valid = w_stq_cmt_entry.state == STQ_COMMIT;
+assign l1d_rd_if.s0_h_pri = 1'b0;
 assign l1d_rd_if.s0_paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                              {$clog2(DCACHE_DATA_B_W){1'b0}}};
 

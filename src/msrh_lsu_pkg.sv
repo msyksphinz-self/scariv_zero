@@ -248,6 +248,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
+  logic          h_pri;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
 } dc_read_req_t;
 

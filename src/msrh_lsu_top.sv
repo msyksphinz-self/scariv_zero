@@ -285,6 +285,7 @@ logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr
 // logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_ptw_lrq_resp_lrq_index_oh;
 
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
+assign w_l1d_rd_if [L1D_PTW_PORT].s0_h_pri = 1'b0;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
 assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :

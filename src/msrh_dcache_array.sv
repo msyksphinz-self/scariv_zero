@@ -17,6 +17,9 @@ localparam TAG_SIZE = riscv_pkg::PADDR_W - msrh_lsu_pkg::DCACHE_TAG_LOW;
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid;
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_oh;
 msrh_lsu_pkg::dc_read_req_t w_s0_dc_selected_read_req;
+logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_h_pri;
+logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_norm_valid_oh;
+logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_h_pri_oh;
 
 logic                              w_s0_dc_tag_valid;
 logic                              w_s0_dc_tag_wr;
@@ -36,6 +39,7 @@ logic                                    r_s1_dc_update_valid;
 // Selection of Request from LSU ports
 generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   assign w_s0_dc_read_req_valid[l_idx] = i_dc_read_req[l_idx].valid;
+  assign w_s0_dc_read_req_h_pri[l_idx] = i_dc_read_req[l_idx].h_pri;
 
   logic w_s0_dc_read_tag_same;
   logic r_s1_dc_read_tag_same;
@@ -86,7 +90,10 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
                                                 {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 end
 endgenerate
-bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_valid_oh));
+
+bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_h_pri_sel (.in(w_s0_dc_read_req_valid & w_s0_dc_read_req_h_pri), .out(w_s0_dc_read_req_h_pri_oh));
+bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_norm_valid_oh));
+assign w_s0_dc_read_req_valid_oh = |w_s0_dc_read_req_h_pri_oh ? w_s0_dc_read_req_h_pri_oh : w_s0_dc_read_req_norm_valid_oh;
 bit_oh_or #(.T(msrh_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 
 assign w_s0_dc_tag_valid = i_dc_update.valid | (|w_s0_dc_read_req_valid);
