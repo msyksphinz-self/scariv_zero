@@ -322,11 +322,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_paddr <= 'h0;
     r_s1_tlb_miss <= 'h0;
   end else begin
-    r_s1_valid <= r_s0_valid;
+    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
-    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid /* & w_tlb_ready */;
+    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid & w_s0_ic_req.valid /* & w_tlb_ready */;
     r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
                              w_s0_tlb_resp.ae.inst |
                              w_s0_tlb_resp.ma.inst;
