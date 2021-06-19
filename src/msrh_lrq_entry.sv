@@ -63,6 +63,7 @@ always_comb begin
     EVICT : begin
       if (i_evict_sent) begin
         w_state_next = READY_CLEAR;
+        w_entry_next.evict_ready = 1'b0;
         w_entry_next.evict_sent  = 1'b1;
       end
     end

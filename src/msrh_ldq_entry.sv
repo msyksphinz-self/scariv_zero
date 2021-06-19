@@ -232,7 +232,7 @@ always_comb begin
       end else begin
         if (w_entry_next.is_valid & i_ex1_q_valid) begin
           w_entry_next.state           = i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
-                                     LDQ_EX2_RUN;
+                                         LDQ_EX2_RUN;
           w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
           w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
@@ -267,10 +267,10 @@ always_comb begin
         w_entry_next.state = LDQ_DEAD;
       end else if (i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
-                         w_lrq_resolve_match ? LDQ_ISSUE_WAIT :
-                         w_lrq_is_hazard ? LDQ_LRQ_HAZ :
-                         w_stq_is_hazard ? LDQ_STQ_HAZ :
-                         w_lrq_is_assigned ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
+                             w_lrq_resolve_match ? LDQ_ISSUE_WAIT :
+                             w_lrq_is_hazard ? LDQ_LRQ_HAZ :
+                             w_stq_is_hazard ? LDQ_STQ_HAZ :
+                             w_lrq_is_assigned ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                          LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;

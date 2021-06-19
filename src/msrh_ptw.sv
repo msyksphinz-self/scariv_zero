@@ -182,7 +182,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           if (l2_resp_fin) begin
             r_state <= IDLE;
           end else begin
-            r_state <= L2_RESP_WAIT;
+            r_count <= r_count + 1;
+            r_state <= CHECK_L1D;
+            /* verilator lint_off WIDTH */
+            r_ptw_addr <= {lsu_access_pte.ppn, {PG_IDX_W{1'b0}}} +
+                          {{(riscv_pkg::PADDR_W-VPN_FIELD_W-$clog2(riscv_pkg::XLEN_W / 8)){1'b0}},
+                           r_ptw_vpn[(riscv_pkg::PG_LEVELS - r_count - 'h2)*VPN_FIELD_W +: VPN_FIELD_W],
+                           {$clog2(riscv_pkg::XLEN_W / 8){1'b0}}};
           end
         end
       end
