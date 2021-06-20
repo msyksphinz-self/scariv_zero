@@ -82,6 +82,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case(r_state)
       IDLE: begin
         if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XWR) begin
+          rd_valid[0] <= 1'b0;
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
             status[actual_line_pos] = ST_INIT;
           end
