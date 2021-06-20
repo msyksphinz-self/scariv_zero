@@ -10,7 +10,7 @@ interface l1d_rd_if;
 
   // Eviction: Replaced Address
   logic                                     s1_replace_valid;
-  logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]   s1_replace_way;
+  logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]   s1_replace_way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s1_replace_data;
   logic [riscv_pkg::PADDR_W-1: 0]           s1_replace_paddr;
 

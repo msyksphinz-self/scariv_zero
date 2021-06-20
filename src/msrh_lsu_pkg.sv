@@ -11,13 +11,11 @@ package msrh_lsu_pkg;
 
   localparam ICACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam ICACHE_TAG_LOW = $clog2(msrh_conf_pkg::ICACHE_WORDS);
-  localparam ICACHE_WAY_W = 4;
   localparam ICACHE_DATA_B_W = msrh_conf_pkg::ICACHE_DATA_W / 8;
 
 
   localparam DCACHE_TAG_HIGH = riscv_pkg::XLEN_W;
   localparam DCACHE_TAG_LOW = $clog2(msrh_conf_pkg::DCACHE_WORDS);
-  localparam DCACHE_WAY_W = 4;
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
   localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
@@ -145,7 +143,7 @@ package msrh_lsu_pkg;
 
 typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [DCACHE_WAY_W-1: 0]   way;
+  logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]   way;
   logic [riscv_pkg::PADDR_W-1: 0]           paddr;
 } evict_payload_t;
 
@@ -261,7 +259,7 @@ typedef struct packed {
 
   // Eviction: Replaced Address
   logic                                    replace_valid;
-  logic [DCACHE_WAY_W-1: 0]  replace_way;
+  logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  replace_way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
   logic [riscv_pkg::PADDR_W-1: 0]          replace_paddr;
 
