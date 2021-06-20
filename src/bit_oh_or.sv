@@ -11,13 +11,13 @@ module bit_oh_or
   output T                 o_selected
 );
   /* verilator lint_off UNOPTFLAT */
-  T w_selected_array[WORDS];
-  assign w_selected_array[0] = T'({$size(T){i_oh[0]}} & i_data[0]);
+  logic [$size(T)-1: 0]    w_selected_array[WORDS];
+  assign w_selected_array[0] = {$size(T){i_oh[0]}} & i_data[0];
   generate for (genvar i = 1; i < WORDS; i++) begin : oh_loop
-    assign w_selected_array[i] = w_selected_array[i-1] | T'({$size(T){i_oh[i]}} & i_data[i]);
+    assign w_selected_array[i] = w_selected_array[i-1] | {$size(T){i_oh[i]}} & i_data[i];
   end
   endgenerate
-  assign o_selected = w_selected_array[WORDS-1];
+  assign o_selected = T'(w_selected_array[WORDS-1]);
 
 endmodule
 

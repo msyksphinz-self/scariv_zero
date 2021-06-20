@@ -120,7 +120,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];
             end
           end
-          rd_data[0] <= i_snoop_resp_data;
+          rd_data[0] <= ram[r_req_paddr_pos];
           rd_tag[0] <= r_req_tag;
           rd_valid[0] <= 1'b1;
         end else begin

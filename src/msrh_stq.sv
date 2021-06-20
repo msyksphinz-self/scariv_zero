@@ -463,6 +463,34 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (l1d_wr_if.valid & !l1d_wr_if.conflict) begin
+      $fwrite(msrh_pkg::STDERR, "%t : L1D Stq Store : %0x(%x) <= ",
+              $time,
+              l1d_wr_if.paddr,
+              l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W-1; i >=0 ; i--) begin
+        if (l1d_wr_if.be[i]) begin
+          $fwrite(msrh_pkg::STDERR, "%02x", l1d_wr_if.data[i*8 +: 8]);
+        end else begin
+          $fwrite(msrh_pkg::STDERR, "__");
+        end
+        if (i == 0) begin
+          $fwrite(msrh_pkg::STDERR, "\n");
+        end else begin
+          if (i % 4 == 0) begin
+            $fwrite(msrh_pkg::STDERR, "_");
+          end
+        end
+      end
+    end // if (l1d_wr_if.valid)
+  end // if (i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // SIMULATION
+
+
 assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.s1_miss;
 assign l1d_lrq_stq_miss_if.req_payload.paddr = r_st1_committed_entry.paddr;
 assign l1d_lrq_stq_miss_if.req_payload.evict_valid = l1d_rd_if.s1_replace_valid;

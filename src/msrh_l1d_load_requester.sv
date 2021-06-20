@@ -399,6 +399,27 @@ assign l1d_wr_if.paddr = w_lrq_ready_to_l1d_upddate_entry.paddr;
 assign l1d_wr_if.be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
 assign l1d_wr_if.data  = w_lrq_ready_to_l1d_upddate_entry.evict.data;
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (l1d_wr_if.valid) begin
+      $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
+              $time,
+              l1d_wr_if.paddr,
+              l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
+        $fwrite(msrh_pkg::STDERR, "%08x", l1d_wr_if.data[i*32 +: 32]);
+        if (i != 0) begin
+          $fwrite(msrh_pkg::STDERR, "_");
+        end else begin
+          $fwrite(msrh_pkg::STDERR, "\n");
+        end
+      end
+    end // if (l1d_wr_if.valid)
+  end // if (i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // SIMULATION
+
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 

@@ -43,4 +43,25 @@ end // always_comb
 
 assign l1d_evict_if.ready = !r_ext_wr_req_valid;
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (l1d_ext_wr_req.valid & l1d_ext_wr_req.ready) begin
+      $fwrite(msrh_pkg::STDERR, "%t : L1D Store-Out : %0x(%x) <= ",
+              $time,
+              l1d_ext_wr_req.payload.addr,
+              l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
+        $fwrite(msrh_pkg::STDERR, "%08x", l1d_ext_wr_req.payload.data[i*32 +: 32]);
+        if (i != 0) begin
+          $fwrite(msrh_pkg::STDERR, "_");
+        end else begin
+          $fwrite(msrh_pkg::STDERR, "\n");
+        end
+      end
+    end // if (l1d_ext_wr_req.valid)
+  end // if (i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // SIMULATION
+
 endmodule // msrh_store_requestor

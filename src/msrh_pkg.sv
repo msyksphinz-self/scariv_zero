@@ -6,6 +6,8 @@ package msrh_pkg;
 
   import decoder_inst_cat_pkg::*;
 
+  integer STDERR = 32'h8000_0002;
+
   localparam PC_INIT_VAL = 'h8000_0000;
 
   localparam INST_BUF_SIZE = 4;
