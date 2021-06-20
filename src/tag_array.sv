@@ -45,14 +45,6 @@ module tag_array
     o_tag <= r_tag_array[i_addr[WORDS-1:0]];
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-// `ifdef SIMULATION
-// generate for (genvar i = 0; i < 2**WORDS; i++) begin : tag_debug_loop
-//   logic [TAG_W-1: 0] w_debug_tag;
-//   assign w_debug_tag = r_tag_array[i];
-// end
-// endgenerate
-// `endif // SIMULATION
-
 endmodule
 
 // `default_nettype wire

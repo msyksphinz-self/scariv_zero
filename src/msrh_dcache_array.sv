@@ -1,7 +1,7 @@
 module msrh_dcache_array
   #(
     // from LSU Pipeline + STQ Update + PTW
-    parameter READ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM
+    parameter READ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1
     )
   (
    input logic i_clk,
@@ -85,6 +85,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   // temporary tied to way-0
   assign o_dc_read_resp[l_idx].replace_valid = |(w_s1_tag_valid & ~w_s1_tag_hit);
   assign o_dc_read_resp[l_idx].replace_way   = 'h0;  // temporary
+  assign o_dc_read_resp[l_idx].replace_data  = w_s1_data[0];
   assign o_dc_read_resp[l_idx].replace_paddr = {w_s1_tag[0],
                                                 r_s1_dc_tag_addr[msrh_lsu_pkg::DCACHE_TAG_LOW-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                                                 {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};

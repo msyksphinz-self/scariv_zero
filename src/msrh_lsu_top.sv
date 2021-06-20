@@ -49,21 +49,20 @@ module msrh_lsu_top
     input msrh_pkg::commit_blk_t i_commit
    );
 
-// LSU Pipeline + STQ Interface + PTW + Snoop + DC Update Read
-localparam L1D_RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1 + 1;
+// LSU Pipeline + STQ Interface + PTW + Snoop
+localparam L1D_RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1;
 localparam L1D_PTW_PORT   = msrh_conf_pkg::LSU_INST_NUM + 1;
 localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
 localparam L1D_LRQ_PORT   = L1D_SNOOP_PORT + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
-l1d_wr_if  w_l1d_stq_wr_if();
-l1d_wr_if  w_l1d_ext_wr_if();
-
+l1d_wr_if  w_l1d_wr_if();
 // LSU Pipeline + PTW
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
+lrq_search_if w_lrq_search_if ();
 lrq_resolve_t w_lrq_resolve;
 
 l2_req_if    w_l1d_ext_req[2]();
@@ -227,7 +226,7 @@ msrh_stq
  .i_lrq_resolve (w_lrq_resolve),
  .o_stq_resolve (w_stq_resolve),
 
- .l1d_wr_if (w_l1d_stq_wr_if),
+ .l1d_wr_if (w_l1d_wr_if),
 
  .stq_snoop_if(stq_snoop_if),
 
@@ -247,10 +246,9 @@ msrh_l1d_load_requester
 
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 
- .l1d_evict_if (w_l1d_evict_if),
- .l1d_rd_if    (w_l1d_rd_if[L1D_LRQ_PORT]),
- .l1d_wr_if    (w_l1d_ext_wr_if),
+ .l1d_evict_if  (w_l1d_evict_if),
 
+ .lrq_search_if (w_lrq_search_if),
  .o_lrq_resolve (w_lrq_resolve)
  );
 
@@ -339,8 +337,11 @@ u_msrh_dcache
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
    .l1d_rd_if (w_l1d_rd_if),
-   .l1d_stq_wr_if (w_l1d_stq_wr_if),
-   .l1d_ext_wr_if (w_l1d_ext_wr_if)
+   .l1d_wr_if (w_l1d_wr_if),
+
+   .l1d_ext_resp (l1d_ext_resp),
+
+   .lrq_search_if (w_lrq_search_if)
    );
 
 endmodule // mrsh_lsu_top

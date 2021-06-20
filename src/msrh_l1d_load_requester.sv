@@ -13,11 +13,11 @@ module msrh_l1d_load_requester
    l2_req_if.master  l1d_ext_rd_req,
    l2_resp_if.slave  l1d_ext_rd_resp,
 
-   l1d_rd_if.master  l1d_rd_if,
-   l1d_wr_if.master  l1d_wr_if,
-
    // Interface to L1D eviction
-   l1d_evict_if.master l1d_evict_if
+   l1d_evict_if.master l1d_evict_if,
+
+   // LRQ search interface
+   lrq_search_if.slave lrq_search_if
    );
 
 localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
@@ -80,10 +80,9 @@ msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_evict_entry;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict_oh;
 
-// LRQ Search Interface
-lrq_search_if                lrq_search_if();
+// LRQ Search Registers
 logic                                         r_lrq_search_valid;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index_oh;
 
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_load_valid (.in(~w_norm_lrq_valids), .out(w_norm_lrq_load_valid_oh));
 bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
@@ -105,9 +104,7 @@ end
 // LRQ Pointer
 //
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
-logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0] w_norm_lrq_clear_oh;
-assign w_norm_lrq_clear_oh = w_norm_lrq_clear_ready & w_norm_out_ptr_oh;
-assign w_out_valid = |w_norm_lrq_clear_oh;
+assign w_out_valid = r_lrq_search_valid & (|r_lrq_search_index_oh[msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]);
 
 inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                                   .i_rollback(1'b0),
@@ -187,23 +184,12 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_resp (r_rp1_l1d_exp_resp_valid & w_rp1_lrq_resp_tag_oh[b_idx]),
-         .i_resp_data   (r_rp1_lrq_resp_data),
+         .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
-         .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-         .i_clear (w_norm_lrq_clear_oh[b_idx]),
-
-         .o_l1d_update_ready (w_lrq_ready_to_l1d_upddate[b_idx]),
-         .i_l1drd_sent       (w_lrq_ready_to_l1d_upddate_oh[b_idx]),
-
-         .i_evict_data (l1d_rd_if.s1_data),
-         .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
-
-         .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
-         .o_clear_ready (w_norm_lrq_clear_ready[b_idx]),
+         .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx])
          );
-
   end else begin : stq_entry // if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
     // ----------------------------
     // STQ Load Request
@@ -220,20 +206,10 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx),
          .i_load_entry (w_stq_load_entry),
 
-         .i_resp (r_rp1_l1d_exp_resp_valid & w_rp1_lrq_resp_tag_oh[b_idx]),
-         .i_resp_data   (r_rp1_lrq_resp_data),
+         .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
-         .i_sent (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-         .i_clear (1'b1),  // When finish, immediately clear
-
-         .o_l1d_update_ready  (w_lrq_ready_to_l1d_upddate[b_idx]),
-         .i_l1drd_sent       (w_lrq_ready_to_l1d_upddate_oh[b_idx]),
-
-         .i_evict_data (l1d_rd_if.s1_data),
-         .o_evict_ready  (w_lrq_ready_to_evict[b_idx]),
-
-         .i_evict_sent (l1d_evict_if.valid & l1d_evict_if.ready & w_lrq_ready_to_evict_oh[b_idx]),
-         .o_clear_ready(),
+         .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
+         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx])
          );
 
@@ -306,7 +282,9 @@ localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_
 
 // selection of external memory request
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : lrq_sel_loop
-  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid & !w_lrq_entries[b_idx].sent;
+  assign w_lrq_ready_to_send[b_idx] = w_lrq_entries[b_idx].valid &
+                                      !w_lrq_entries[b_idx].sent &
+                                      (w_lrq_entries[b_idx].evict_valid ? !w_lrq_entries[b_idx].evict_sent : 1'b1);
 end
 endgenerate
 bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_send_oh));
@@ -323,102 +301,11 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 // Eviction Request
 // -----------------
-
-bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_evict_oh));
-bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_evict_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
-assign l1d_evict_if.valid = w_lrq_ready_to_evict_entry.valid &
-                            w_lrq_ready_to_evict_entry.evict_valid &
-                            w_lrq_ready_to_evict_entry.evict_ready &
-                            !w_lrq_ready_to_evict_entry.evict_sent;
-assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;
-assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.evict.data;
-
-
-// ==========================
-// L2 Reponse
-// RESP1 : Getting Data
-// ==========================
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_rp1_l1d_exp_resp_valid <= 1'b0;
-    r_rp1_lrq_resp_tag <= 'h0;
-    r_rp1_lrq_resp_data <= 'h0;
-  end else begin
-    r_rp1_l1d_exp_resp_valid <= l1d_ext_rd_resp.valid &
-                                (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1:msrh_lsu_pkg::L2_CMD_TAG_W-2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D);
-    r_rp1_lrq_resp_tag       <= l1d_ext_rd_resp.payload.tag[msrh_pkg::LRQ_ENTRY_W-1:0];
-    r_rp1_lrq_resp_data      <= l1d_ext_rd_resp.payload.data;
-  end
-end
-
-
-// --------------------------------------------------
-// Interface of LRQ Search Entry to get information
-// --------------------------------------------------
-assign lrq_search_if.valid = r_rp1_l1d_exp_resp_valid;
-assign lrq_search_if.index = r_rp1_lrq_resp_tag;
-
-// ===========================
-// L2 Reponse
-// RESP2 : Search LRQ Entiers
-// ===========================
-
-logic r_rp2_valid;
-msrh_lsu_pkg::lrq_entry_t r_rp2_searched_lrq_entry;
-logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
-logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_rp2_be;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_rp2_valid <= 1'b0;
-    r_rp2_searched_lrq_entry <= 'h0;
-    r_rp2_resp_data <= 'h0;
-    r_rp2_be <= 'h0;
-  end else begin
-    r_rp2_valid              <= r_rp1_l1d_exp_resp_valid;
-    r_rp2_searched_lrq_entry <= lrq_search_if.lrq_entry;
-    r_rp2_resp_data          <= r_rp1_lrq_resp_data;
-    r_rp2_be                 <= {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
-  end
-end
-
-// ----------------------------
-// Update DCache: Read DCache
-// ----------------------------
-
-
-
-bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_l1drd_sel (.in(w_lrq_ready_to_l1d_upddate), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_l1d_upddate_oh));
-bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_l1drd_entry  (.i_oh(w_lrq_ready_to_l1d_upddate_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_l1d_upddate_entry));
-
-assign l1d_rd_if.s0_valid = (|w_lrq_ready_to_l1d_upddate) & w_lrq_ready_to_l1d_upddate_entry.l1drd_ready;
-assign l1d_rd_if.s0_paddr = w_lrq_ready_to_l1d_upddate_entry.evict.paddr;
-assign l1d_rd_if.s0_h_pri = 1'b1;
-
-assign l1d_wr_if.valid = (|w_lrq_ready_to_l1d_upddate) & w_lrq_ready_to_l1d_upddate_entry.l1dwr_ready;
-assign l1d_wr_if.paddr = w_lrq_ready_to_l1d_upddate_entry.paddr;
-assign l1d_wr_if.be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
-assign l1d_wr_if.data  = w_lrq_ready_to_l1d_upddate_entry.evict.data;
-
-`ifdef SIMULATION
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
-    if (l1d_wr_if.valid) begin
-      $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
-              $time,
-              l1d_wr_if.paddr,
-              l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
-      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
-        $fwrite(msrh_pkg::STDERR, "%08x", l1d_wr_if.data[i*32 +: 32]);
-        if (i != 0) begin
-          $fwrite(msrh_pkg::STDERR, "_");
-        end else begin
-          $fwrite(msrh_pkg::STDERR, "\n");
-        end
-      end
-    end // if (l1d_wr_if.valid)
-  end // if (i_reset_n)
-end // always_ff @ (negedge i_clk, negedge i_reset_n)
-`endif // SIMULATION
+assign l1d_evict_if.valid = w_lrq_ready_to_send_entry.valid &
+                            w_lrq_ready_to_send_entry.evict_valid &
+                            !w_lrq_ready_to_send_entry.evict_sent;
+assign l1d_evict_if.payload.paddr = w_lrq_ready_to_send_entry.evict.paddr;
+assign l1d_evict_if.payload.data  = w_lrq_ready_to_send_entry.evict.data;
 
 // Searching LRQ Interface from DCache
 assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
@@ -430,13 +317,13 @@ always_ff @ (posedge i_clk, posedge i_reset_n) begin
     o_lrq_resolve <= 'h0;
 
     r_lrq_search_valid <= 1'b0;
-    r_lrq_search_index <= 'h0;
+    r_lrq_search_index_oh <= 'h0;
   end else begin
     r_lrq_search_valid <= lrq_search_if.valid;
-    r_lrq_search_index <= 1 << lrq_search_if.index;
+    r_lrq_search_index_oh <= 1 << lrq_search_if.index;
 
-    o_lrq_resolve.valid            <= l1d_wr_if.valid;
-    o_lrq_resolve.resolve_index_oh <= w_lrq_ready_to_l1d_upddate_oh;
+    o_lrq_resolve.valid            <= r_lrq_search_valid;
+    o_lrq_resolve.resolve_index_oh <= r_lrq_search_index_oh;
   end
 end
 

@@ -310,7 +310,7 @@ initial begin
     $finish(1);
   end
 
-  load_binary("", filename, 1'b1);
+  // load_binary("", filename, 1'b1);
 `endif // DIRECT_LOAD_HEX
 
 end

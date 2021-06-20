@@ -11,6 +11,7 @@ interface l1d_rd_if;
   // Eviction: Replaced Address
   logic                                     s1_replace_valid;
   logic [msrh_lsu_pkg::DCACHE_WAY_W-1: 0]   s1_replace_way;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s1_replace_data;
   logic [riscv_pkg::PADDR_W-1: 0]           s1_replace_paddr;
 
   modport master(
@@ -24,6 +25,7 @@ interface l1d_rd_if;
 
     input  s1_replace_valid,
     input  s1_replace_way,
+    input  s1_replace_data,
     input  s1_replace_paddr
   );
 
@@ -38,6 +40,7 @@ interface l1d_rd_if;
 
     output s1_replace_valid,
     output s1_replace_way,
+    output s1_replace_data,
     output s1_replace_paddr
   );
 

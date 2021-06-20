@@ -16,7 +16,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ext_wr_req_valid <= 1'b0;
     r_ext_evict_payload <= 'h0;
   end else begin
-    if (l1d_evict_if.valid & l1d_evict_if.ready & !l1d_ext_wr_req.ready) begin
+    if (l1d_evict_if.valid & !l1d_ext_wr_req.ready) begin
       r_ext_wr_req_valid <= 1'b1;
       r_ext_evict_payload <= l1d_evict_if.payload;
     end else if (l1d_ext_wr_req.ready) begin
