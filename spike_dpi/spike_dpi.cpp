@@ -511,6 +511,18 @@ void step_spike(long long time, long long rtl_pc,
   //         iss_insn);
   // fprintf(stderr, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
+  for (auto &iss_rd: p->get_state()->log_mem_read) {
+    int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+    fprintf(stderr, "MR%d(0x%0*llx)=>%0*llx\n", std::get<2>(iss_rd),
+            g_rv_xlen / 4, std::get<0>(iss_rd),
+            g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+  }
+  for (auto &iss_wr: p->get_state()->log_mem_write) {
+    fprintf(stderr, "MW%d(0x%0*llx)=>%0*llx\n", std::get<2>(iss_wr),
+            g_rv_xlen / 4, std::get<0>(iss_wr),
+            g_rv_xlen / 4, std::get<1>(iss_wr));
+  }
+
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
     fprintf(stderr, "==========================================\n");
     fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
