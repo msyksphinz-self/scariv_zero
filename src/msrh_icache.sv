@@ -46,14 +46,16 @@ ic_state_t r_ic_state;
 logic                                     ic_l2_resp_fire;
 logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [VADDR_W-1: 0]                      r_s2_vaddr;
-logic [ICACHE_TAG_LOW-1: 0]               r_s2_waiting_vaddr;
+logic [VADDR_W-1: 0]                      r_s2_waiting_vaddr;
 
 
 logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] r_replace_way[2**ICACHE_TAG_LOW];
 logic [ICACHE_TAG_LOW-1: 0]                     w_replace_addr;
 logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] w_next_way;
 
-logic [ICACHE_TAG_LOW-1: 0]                     w_ram_addr;
+logic [ICACHE_TAG_LOW-1: 0]                     w_tag_ram_addr;
+logic [VADDR_W-1:ICACHE_TAG_LOW]                w_tag_ram_tag;
+logic [ICACHE_TAG_LOW-1: 0]                     w_dat_ram_addr;
 
 assign w_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -75,16 +77,23 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // else: !if(msrh_conf_pkg::ICACHE_WAYS == 2)
 
 
-assign w_ram_addr = ic_l2_resp_fire ?
-                    r_s2_waiting_vaddr :
-                    i_s0_req.vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+assign w_tag_ram_addr = ic_l2_resp_fire ?
+                        r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        i_s0_req.vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+assign w_tag_ram_tag = ic_l2_resp_fire ?
+                       r_s2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW] :
+                       i_s0_req.vaddr[VADDR_W-1:ICACHE_TAG_LOW];
+
+assign w_dat_ram_addr = ic_l2_resp_fire ?
+                        r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
 generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : icache_way_loop //
   logic    w_s1_tag_valid;
   logic [VADDR_W-1:ICACHE_TAG_LOW] w_s1_tag;
 
   logic                    w_ram_wr;
-  assign w_ram_wr = ic_l2_resp_fire & (r_replace_way[w_ram_addr] == way);
+  assign w_ram_wr = ic_l2_resp_fire & (r_replace_way[w_tag_ram_addr] == way);
 
   tag_array
     #(
@@ -98,9 +107,9 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
        .i_tag_clear(i_fence_i),
 
        .i_wr  (w_ram_wr),
-       .i_addr(w_ram_addr),
+       .i_addr(w_tag_ram_addr),
        .i_tag_valid  (1'b1),
-       .i_tag (i_s0_req.vaddr[VADDR_W-1:ICACHE_TAG_LOW]),
+       .i_tag (w_tag_ram_tag),
        .o_tag(w_s1_tag),
        .o_tag_valid(w_s1_tag_valid)
        );
@@ -116,7 +125,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_wr  (w_ram_wr),
-        .i_addr(w_ram_addr),
+        .i_addr(w_dat_ram_addr),
         .i_be  ({ICACHE_DATA_B_W{1'b1}}),
         .i_data(ic_l2_resp.payload.data),
         .o_data(w_s2_data[way])
@@ -214,7 +223,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
           r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
-          r_s2_waiting_vaddr <= r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+          r_s2_waiting_vaddr <= r_s1_vaddr;
           // end
         end
       end // case: ICInit
