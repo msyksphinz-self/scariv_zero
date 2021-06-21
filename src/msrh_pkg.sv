@@ -84,6 +84,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
 
   typedef struct packed {
     logic valid;
+    logic illegal_valid; // decode error: illegal instruction
     logic [31:0] inst;
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     inst_cat_t   cat;

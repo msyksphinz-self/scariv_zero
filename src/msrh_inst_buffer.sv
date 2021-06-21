@@ -27,6 +27,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_except_pick_up;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except_pick_up;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_pick_up;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
@@ -35,8 +36,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_except_disp;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_or;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
@@ -44,14 +45,15 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 4;
 decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
 
-msrh_pkg::except_t w_inst_illegal_cause[msrh_conf_pkg::DISP_SIZE];
+msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
 
@@ -240,8 +242,10 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_br   [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR  );
   assign w_inst_is_csu  [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU );
 
-  assign w_inst_illegal[w_idx]    = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & r_inst_queue[w_inst_buf_ptr].tlb_except_valid;
-  assign w_inst_illegal_cause[w_idx] = r_inst_queue[w_inst_buf_ptr].tlb_except_cause;
+  assign w_inst_illegal [w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ );
+
+  assign w_fetch_except[w_idx]    = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & r_inst_queue[w_inst_buf_ptr].tlb_except_valid;
+  assign w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr].tlb_except_cause;
   assign w_inst_gen_except[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & w_raw_gen_except;
 end
 endgenerate
@@ -251,6 +255,7 @@ assign w_inst_mem_pick_up    = w_inst_is_ld | w_inst_is_st;
 assign w_inst_bru_pick_up    = w_inst_is_br;
 assign w_inst_csu_pick_up    = w_inst_is_csu;
 assign w_inst_except_pick_up = w_inst_gen_except;
+assign w_fetch_except_pick_up = w_fetch_except;
 assign w_inst_illegal_pick_up = w_inst_illegal;
 
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disp_pick_up  (.in(w_inst_arith_pick_up ),  .out(w_inst_arith_disp  ));
@@ -259,10 +264,10 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZ
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disp_pick_up     (.in(w_inst_is_st         ),  .out(w_inst_st_disp     ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disp_pick_up    (.in(w_inst_bru_pick_up   ),  .out(w_inst_bru_disp    ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disp_pick_up    (.in(w_inst_csu_pick_up   ),  .out(w_inst_csu_disp    ));
-// bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_except_disp_pick_up (.in(w_inst_except_pick_up),  .out(w_inst_except_disp ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                             )) u_illegal_disp_pick_up(.in(w_inst_illegal_pick_up), .out(w_inst_illegal_disp));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                             )) u_except_disp_pick_up (.in(w_fetch_except_pick_up), .out(w_fetch_except_disp));
 
-assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | /* w_inst_except_disp | */w_inst_illegal_disp;
+assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | w_inst_illegal_disp | w_fetch_except_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
@@ -271,8 +276,8 @@ assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
 assign iq_disp.is_br_included = |w_inst_is_br;
-assign iq_disp.tlb_except_valid = w_inst_illegal;
-assign iq_disp.tlb_except_cause = w_inst_illegal_cause;
+assign iq_disp.tlb_except_valid = w_fetch_except;
+assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 
 
 // -------------------------------
@@ -284,12 +289,13 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disped;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disped;
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disped_pick_up (.in(w_inst_arith_disp & w_inst_disp_mask), .out(w_inst_arith_disped));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disped_pick_up   (.in(w_inst_mem_disp   & w_inst_disp_mask), .out(w_inst_mem_disped  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disped_pick_up    (.in(w_inst_ld_disp    & w_inst_disp_mask), .out(w_inst_ld_disped   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disped_pick_up    (.in(w_inst_st_disp    & w_inst_disp_mask), .out(w_inst_st_disped   ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disped_pick_up   (.in(w_inst_bru_disp   & w_inst_disp_mask), .out(w_inst_bru_disped  ));
-bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disped_pick_up   (.in(w_inst_csu_disp   & w_inst_disp_mask), .out(w_inst_csu_disped  ));
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_disped;
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE)) u_arith_disped_pick_up   (.in(w_inst_arith_disp   & w_inst_disp_mask), .out(w_inst_arith_disped  ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_mem_disped_pick_up     (.in(w_inst_mem_disp     & w_inst_disp_mask), .out(w_inst_mem_disped    ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_ld_disped_pick_up      (.in(w_inst_ld_disp      & w_inst_disp_mask), .out(w_inst_ld_disped     ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE  )) u_st_disped_pick_up      (.in(w_inst_st_disp      & w_inst_disp_mask), .out(w_inst_st_disped     ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZE  )) u_bru_disped_pick_up     (.in(w_inst_bru_disp     & w_inst_disp_mask), .out(w_inst_bru_disped    ));
+bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE  )) u_csu_disped_pick_up     (.in(w_inst_csu_disp     & w_inst_disp_mask), .out(w_inst_csu_disped    ));
 
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_arith_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_mem_cnt;
@@ -335,7 +341,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
       iq_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
-      iq_disp.inst[d_idx].inst  = w_inst[d_idx];
+      iq_disp.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
+      iq_disp.inst[d_idx].inst = w_inst[d_idx];
       iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
 
       iq_disp.inst[d_idx].rd_valid   = rd_field_type[d_idx] != RD__;

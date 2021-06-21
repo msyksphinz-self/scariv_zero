@@ -168,6 +168,12 @@ always_comb begin
         end else begin
           w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
         end
+      msrh_pkg::ILLEGAL_INST        :
+        if (csr_info.medeleg[msrh_pkg::ECALL_M]) begin
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+        end else begin
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+        end
       default           : begin
         w_s0_vaddr_flush_next = 'h0;
         $fatal (0, "This exception not supported now");

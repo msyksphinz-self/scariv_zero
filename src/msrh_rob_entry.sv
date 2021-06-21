@@ -73,9 +73,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         // If TLB Exception detected before execution, this instruction already done.
-        r_entry.done_grp_id [d_idx] <= i_load_tlb_except_valid[d_idx] ? i_load_grp_id[d_idx] : 1'b0;
-        r_entry.except_valid[d_idx] <= i_load_tlb_except_valid[d_idx];
-        r_entry.except_type [d_idx] <= i_load_tlb_except_cause[d_idx];
+        r_entry.done_grp_id [d_idx] <= (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) ? i_load_grp_id[d_idx] : 1'b0;
+        r_entry.except_valid[d_idx] <= (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
+        r_entry.except_type [d_idx] <= i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
       end
     end else if (r_entry.valid) begin
       // Condition :
