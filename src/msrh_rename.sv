@@ -10,20 +10,12 @@ module msrh_rename
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
    disp_if.master           sc_disp,
 
+   // from Resource Allocator
+   input logic i_resource_ok,
+
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,
-   input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update,
-
-   // -------------------------------
-   // Credit Return Update interface
-   // -------------------------------
-   cre_ret_if.master rob_cre_ret_if,
-   cre_ret_if.master alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM],
-   // cre_ret_if.master lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM],
-   cre_ret_if.master ldq_cre_ret_if,
-   cre_ret_if.master stq_cre_ret_if,
-   cre_ret_if.master csu_cre_ret_if,
-   cre_ret_if.master bru_cre_ret_if
+   input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
    );
 
 logic    w_iq_fire;
@@ -67,21 +59,6 @@ logic [RNID_W-1: 0]                       w_restore_commit_map_list[32];
 
 logic                                     w_flush_valid;
 
-// -----------------------------
-// Credits / Return Interface
-// -----------------------------
-// logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_arith;
-// logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_ld;
-// logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_st;
-// logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_br;
-// logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_inst_is_csu;
-//
-// logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_arith;
-// logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_ld;
-// logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_st;
-// logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_br;
-// logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_cnt_csu;
-
 logic                                               w_rob_no_credits_remained;
 logic [msrh_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            w_lsu_no_credits_remained;
@@ -90,15 +67,7 @@ logic                                               w_stq_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
 
-assign iq_disp.ready = !(i_commit_rnid_update.commit & (i_commit.flush_valid | i_commit.all_dead)) &
-                       !(w_rob_no_credits_remained |
-                         (|w_alu_no_credits_remained) |
-                         (|w_lsu_no_credits_remained) |
-                         w_ldq_no_credits_remained |
-                         w_stq_no_credits_remained |
-                         w_csu_no_credits_remained |
-                         w_bru_no_credits_remained);
-
+assign iq_disp.ready = !(i_commit_rnid_update.commit & (i_commit.flush_valid | i_commit.all_dead)) & i_resource_ok;
 
 //                                          Freelist      RenameMap
 // normal commit inst                    => old ID push / no update
@@ -400,173 +369,7 @@ u_commit_map
    .o_rnid_map (w_restore_commit_map_list)
    );
 
-
-// -----------------------------
-// Credits / Return Interface
-// -----------------------------
-// generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-//   assign w_inst_is_arith[d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH);
-//   assign w_inst_is_ld   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD  );
-//   assign w_inst_is_st   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST  );
-//   assign w_inst_is_br   [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR  );
-//   assign w_inst_is_csu  [d_idx] = iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU );
-// end
-// endgenerate
-//
-// bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_arith_cnt (.in(w_inst_is_arith), .out(w_inst_cnt_arith));
-// bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_ld_cnt    (.in(w_inst_is_ld   ), .out(w_inst_cnt_ld   ));
-// bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_st_cnt    (.in(w_inst_is_st   ), .out(w_inst_cnt_st   ));
-// bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_bru_cnt   (.in(w_inst_is_br   ), .out(w_inst_cnt_br   ));
-// bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_csu_cnt   (.in(w_inst_is_csu  ), .out(w_inst_cnt_csu  ));
-
 assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
-
-
-msrh_credit_return_master
-  #(.MAX_CREDITS(msrh_conf_pkg::CMT_ENTRY_SIZE))
-u_rob_credit_return
-(
- .i_clk(i_clk),
- .i_reset_n(i_reset_n),
-
- .i_get_credit(~w_flush_valid & w_iq_fire),
- .i_credit_val('h1),
-
- .o_credits(),
- .o_no_credits(w_rob_no_credits_remained),
-
- .cre_ret_if (rob_cre_ret_if)
-);
-
-
-generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
-  logic w_inst_arith_valid;
-  assign w_inst_arith_valid = iq_disp.valid & |iq_disp.resource_cnt.alu_inst_cnt[a_idx];
-  logic [$clog2(msrh_conf_pkg::RV_ALU_ENTRY_SIZE):0] w_alu_inst_cnt;
-  /* verilator lint_off WIDTH */
-  assign w_alu_inst_cnt = iq_disp.resource_cnt.alu_inst_cnt[a_idx];
-
-  msrh_credit_return_master
-    #(.MAX_CREDITS(msrh_conf_pkg::RV_ALU_ENTRY_SIZE))
-  u_alu_credit_return
-  (
-   .i_clk(i_clk),
-   .i_reset_n(i_reset_n),
-
-   .i_get_credit(~w_flush_valid & w_inst_arith_valid & iq_disp.ready),
-   .i_credit_val(w_alu_inst_cnt),
-
-   .o_credits(),
-   .o_no_credits(w_alu_no_credits_remained[a_idx]),
-
-   .cre_ret_if (alu_cre_ret_if[a_idx])
-   );
-end // block: alu_cre_ret_loop
-endgenerate
-
-generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
-//   logic w_inst_lsu_valid;
-//   assign w_inst_lsu_valid = iq_disp.valid & |iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
-//   logic [$clog2(msrh_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
-//   assign w_lsu_inst_cnt = iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
-//
-//   msrh_credit_return_master
-//     #(.MAX_CREDITS(msrh_lsu_pkg::MEM_Q_SIZE))
-//   u_lsu_credit_return
-//   (
-//    .i_clk(i_clk),
-//    .i_reset_n(i_reset_n),
-//
-//    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & iq_disp.ready),
-//    .i_credit_val(w_lsu_inst_cnt),
-//
-//    .o_credits(),
-//    .o_no_credits(w_lsu_no_credits_remained[l_idx]),
-//
-//    .cre_ret_if (lsu_cre_ret_if[l_idx])
-//    );
-  assign w_lsu_no_credits_remained[l_idx] = 1'b0;
-end
-endgenerate
-
-
-logic   w_inst_ld_valid;
-assign w_inst_ld_valid = iq_disp.valid & |iq_disp.resource_cnt.ld_inst_cnt;
-msrh_credit_return_master
-  #(.MAX_CREDITS(msrh_conf_pkg::LDQ_SIZE))
-u_ldq_credit_return
-(
- .i_clk(i_clk),
- .i_reset_n(i_reset_n),
-
- .i_get_credit(~w_flush_valid & w_inst_ld_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.ld_inst_cnt),
-
- .o_credits(),
- .o_no_credits(w_ldq_no_credits_remained),
-
- .cre_ret_if (ldq_cre_ret_if)
-);
-
-
-logic   w_inst_st_valid;
-assign w_inst_st_valid = iq_disp.valid & |iq_disp.resource_cnt.st_inst_cnt;
-msrh_credit_return_master
-  #(.MAX_CREDITS(msrh_conf_pkg::STQ_SIZE))
-u_stq_credit_return
-(
- .i_clk(i_clk),
- .i_reset_n(i_reset_n),
-
- .i_get_credit(~w_flush_valid & w_inst_st_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.st_inst_cnt),
-
- .o_credits    (),
- .o_no_credits (w_stq_no_credits_remained),
-
- .cre_ret_if (stq_cre_ret_if)
-);
-
-
-logic   w_inst_csu_valid;
-assign w_inst_csu_valid = iq_disp.valid & |iq_disp.resource_cnt.csu_inst_cnt;
-logic [$clog2(msrh_conf_pkg::RV_CSU_ENTRY_SIZE):0] w_inst_csu_cnt;
-assign w_inst_csu_cnt = iq_disp.resource_cnt.csu_inst_cnt;
-msrh_credit_return_master
-  #(.MAX_CREDITS(msrh_conf_pkg::RV_CSU_ENTRY_SIZE))
-u_csu_credit_return
-(
- .i_clk(i_clk),
- .i_reset_n(i_reset_n),
-
- .i_get_credit(~w_flush_valid & w_inst_csu_valid & iq_disp.ready),
- .i_credit_val(w_inst_csu_cnt),
-
- .o_credits(),
- .o_no_credits(w_csu_no_credits_remained),
-
- .cre_ret_if (csu_cre_ret_if)
-);
-
-logic   w_inst_bru_valid;
-assign w_inst_bru_valid = iq_disp.valid & |iq_disp.resource_cnt.bru_inst_cnt;
-logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE):0] w_bru_inst_cnt;
-assign w_bru_inst_cnt = iq_disp.resource_cnt.bru_inst_cnt;
-msrh_credit_return_master
-  #(.MAX_CREDITS(msrh_conf_pkg::RV_BRU_ENTRY_SIZE))
-u_bru_credit_return
-(
- .i_clk(i_clk),
- .i_reset_n(i_reset_n),
-
- .i_get_credit(~w_flush_valid & w_inst_bru_valid & iq_disp.ready),
- .i_credit_val(w_bru_inst_cnt),
-
- .o_credits(),
- .o_no_credits(w_bru_no_credits_remained),
-
- .cre_ret_if (bru_cre_ret_if)
-);
 
 
 `ifdef SIMULATION

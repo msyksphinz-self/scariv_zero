@@ -67,6 +67,7 @@
 ../src/simple_arbiter.sv
 
 ../src/msrh_rename.sv
+../src/msrh_resource_alloc.sv
 ../src/msrh_freelist.sv
 ../src/msrh_rename_map.sv
 ../src/msrh_inflight_list.sv

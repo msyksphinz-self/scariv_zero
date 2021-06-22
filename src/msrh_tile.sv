@@ -103,9 +103,9 @@ stq_snoop_if stq_snoop_if();
 // ----------------------------------
 // Credit/Return Management
 // ----------------------------------
+logic                                w_resource_ok;
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::CMT_ENTRY_SIZE   )) rob_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)) alu_cre_ret_if[msrh_conf_pkg::ALU_INST_NUM]();
-// cre_ret_if #(.MAX_INC(msrh_lsu_pkg::MEM_Q_SIZE        )) lsu_cre_ret_if[msrh_conf_pkg::LSU_INST_NUM]();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::LDQ_SIZE         )) ldq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
@@ -179,17 +179,32 @@ msrh_rename u_msrh_rename (
   .i_commit             (w_commit),
   .i_commit_rnid_update (w_commit_rnid_update),
 
+  .i_resource_ok (w_resource_ok),
+
   .i_phy_wr (w_ex3_phy_wr),
-  .sc_disp  (w_sc_disp),
+  .sc_disp  (w_sc_disp)
+);
+
+
+msrh_resource_alloc u_msrh_resource_alloc
+(
+  .i_clk(i_clk),
+  .i_reset_n(i_reset_n),
+
+  .iq_disp(w_iq_disp),
 
   .rob_cre_ret_if (rob_cre_ret_if),
   .alu_cre_ret_if (alu_cre_ret_if),
-  // .lsu_cre_ret_if (lsu_cre_ret_if),
   .ldq_cre_ret_if (ldq_cre_ret_if),
   .stq_cre_ret_if (stq_cre_ret_if),
   .csu_cre_ret_if (csu_cre_ret_if),
-  .bru_cre_ret_if (bru_cre_ret_if)
-);
+  .bru_cre_ret_if (bru_cre_ret_if),
+
+  .i_commit (w_commit),
+
+  .o_resource_ok (w_resource_ok)
+ );
+
 
 
   generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
