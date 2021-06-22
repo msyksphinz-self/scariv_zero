@@ -513,12 +513,12 @@ void step_spike(long long time, long long rtl_pc,
 
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
-    fprintf(stderr, "MR%d(0x%0*llx)=>%0*llx\n", std::get<2>(iss_rd),
+    fprintf(stderr, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
             g_rv_xlen / 4, std::get<0>(iss_rd),
             g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
   }
   for (auto &iss_wr: p->get_state()->log_mem_write) {
-    fprintf(stderr, "MW%d(0x%0*llx)=>%0*llx\n", std::get<2>(iss_wr),
+    fprintf(stderr, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
             g_rv_xlen / 4, std::get<0>(iss_wr),
             g_rv_xlen / 4, std::get<1>(iss_wr));
   }

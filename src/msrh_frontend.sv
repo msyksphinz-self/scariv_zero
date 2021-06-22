@@ -74,6 +74,9 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 msrh_pkg::except_t              r_s2_tlb_except_cause;
+`ifdef SIMULATION
+logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
+`endif // SIMULATION
 
 // ==============
 // TLB
@@ -353,6 +356,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_tlb_miss         <= 1'b0;
     r_s2_tlb_except_valid <= 1'b0;
     r_s2_tlb_except_cause <= msrh_pkg::except_t'(0);
+`ifdef SIMULATION
+    r_s2_paddr <= 'h0;
+`endif // SIMULATION
   end else begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear;
@@ -360,6 +366,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_tlb_miss         <= r_s1_tlb_miss        ;
     r_s2_tlb_except_valid <= w_commit_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
+`ifdef SIMULATION
+    r_s2_paddr <= r_s1_paddr;
+`endif // SIMULATION
   end
 end
 

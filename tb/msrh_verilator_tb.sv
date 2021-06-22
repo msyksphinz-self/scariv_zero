@@ -335,4 +335,24 @@ module msrh_tb (
 
   `include "tb_json_dumper.sv"
 
+// ------------------------------
+// Instruction Cache Checker
+// ------------------------------
+logic [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)] ram_addr;
+assign ram_addr = u_msrh_tile_wrapper.u_msrh_tile.u_frontend.r_s2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)];
+
+always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
+  if (i_msrh_reset_n) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_icache.o_s2_resp.valid &
+        ~u_msrh_tile_wrapper.u_msrh_tile.u_frontend.r_s2_tlb_miss) begin
+      if (u_tb_l2_behavior_ram.ram[ram_addr] != u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_icache.o_s2_resp.data) begin
+        $fatal(0, "Fetched data from ICache and External L2 data is different.\n Addr = %x\n  Fetch = %x\n  Data  = %x\n",
+               u_msrh_tile_wrapper.u_msrh_tile.u_frontend.r_s2_paddr,
+               u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_icache.o_s2_resp.data,
+               u_tb_l2_behavior_ram.ram[ram_addr]);
+      end
+    end
+  end // else: !if(!i_msrh_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
+
 endmodule  // msrh_tb
