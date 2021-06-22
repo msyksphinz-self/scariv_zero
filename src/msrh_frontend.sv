@@ -218,7 +218,7 @@ always_comb begin
         w_if_state_next = WAIT_TLB_FILL;
       end else if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
-      end else if (!w_inst_buffer_ready) begin
+      end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready) begin
         w_if_state_next = WAIT_FB_FREE;
       end
     end
@@ -259,7 +259,7 @@ always_comb begin
           w_s0_vaddr_next = r_s2_vaddr;
         end else if (w_s2_ic_miss & !r_s2_clear) begin
           w_s0_vaddr_next = w_s2_ic_miss_vaddr;
-        end else if (!w_inst_buffer_ready) begin
+        end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready) begin
           w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
         end else begin
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
