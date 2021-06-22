@@ -188,7 +188,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
+         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx])
          );
   end else begin : stq_entry // if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
@@ -210,7 +210,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_send_oh[b_idx]),
+         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx])
          );
 
