@@ -26,7 +26,8 @@ module msrh_alu #(
 
     output msrh_pkg::done_rpt_t o_done_report,
     // Commit notification
-    input msrh_pkg::commit_blk_t i_commit
+    input msrh_pkg::commit_blk_t i_commit,
+    br_upd_if.slave              br_upd_if
 );
 
 localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
@@ -92,6 +93,7 @@ u_msrh_scheduler
 
    .pipe_done_if(w_ex3_done_if),
    .i_commit      (i_commit),
+   .br_upd_if     (br_upd_if),
    .o_done_report (o_done_report)
    );
 

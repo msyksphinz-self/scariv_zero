@@ -89,7 +89,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     inst_cat_t   cat;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-    logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask;
+    logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
     logic [2:0] op;
     logic imm;
@@ -134,7 +134,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
                                       logic               rs2_active,
                                       logic [RNID_W-1: 0] rs2_rnid,
                                       logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag,
-                                      logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask
+                                      logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask
                                       );
     disp_t ret;
     ret = disp;
@@ -146,15 +146,16 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     ret.rs2_ready   = rs2_active;
     ret.rs2_rnid    = rs2_rnid;
     ret.brtag       = brtag;
-    ret.brmask      = brmask;
+    ret.br_mask     = br_mask;
 
     return ret;
 
   endfunction  // assign_disp_rename
 
   typedef struct packed {
-    logic [msrh_conf_pkg::DISP_SIZE-1:0] upd_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0]                         upd_valid;
+    logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0]         brtag;
   } br_upd_info_t;
 
   typedef struct packed {
@@ -182,6 +183,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
+    logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
+    logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
     logic [CMT_ID_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
@@ -223,6 +226,9 @@ function issue_t assign_issue_t(disp_t in,
   ret.pc_addr = in.pc_addr;
 
   ret.cat = in.cat;
+
+  ret.brtag   = in.brtag;
+  ret.br_mask = in.br_mask;
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -313,15 +319,21 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
   return 'hx;
 endfunction // encoder_grp_id
 
-function logic is_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
+function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                                logic [DISP_SIZE-1: 0] entry_grp_id,
                                commit_blk_t commit);
   return commit.commit & commit.flush_valid &
          ~((entry_cmt_id == commit.cmt_id) & ~|(entry_grp_id & commit.dead_id)) &
          ~commit.all_dead;
 
-endfunction // is_flush_target
+endfunction // is_commit_flush_target
 
+
+function logic is_br_flush_target(logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] entry_br_mask,
+                                  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag);
+  return entry_br_mask & (1 << brtag);
+
+endfunction // is_br_flush_target
 
 // RNID Update signals
 typedef struct packed {

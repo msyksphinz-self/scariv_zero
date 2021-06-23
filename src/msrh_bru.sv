@@ -89,6 +89,7 @@ u_msrh_scheduler
    .pipe_done_if(w_ex3_done_if),
 
    .i_commit (i_commit),
+   .br_upd_if (ex3_br_upd_if),
 
    .o_done_report (o_done_report)
    );

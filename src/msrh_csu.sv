@@ -31,7 +31,8 @@ module msrh_csu
   output logic                      o_fence_i,
 
   // Commit notification
-  input msrh_pkg::commit_blk_t i_commit
+  input msrh_pkg::commit_blk_t i_commit,
+  br_upd_if.slave              br_upd_if
 );
 
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
@@ -98,6 +99,7 @@ u_msrh_scheduler
 
    .pipe_done_if(w_ex3_done_if),
    .i_commit      (i_commit),
+   .br_upd_if     (br_upd_if),
    .o_done_report (o_done_report)
    );
 

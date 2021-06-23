@@ -264,6 +264,6 @@ assign ex3_br_upd_if.update = r_ex3_issue.valid & r_ex3_result & r_ex3_rs1_pred_
 assign ex3_br_upd_if.vaddr  = r_ex3_br_vaddr;
 assign ex3_br_upd_if.cmt_id = r_ex3_issue.cmt_id;
 assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;
-
+assign ex3_br_upd_if.brtag  = r_ex3_issue.brtag;
 
 endmodule // msrh_bru_pipe

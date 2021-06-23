@@ -120,7 +120,7 @@ select_phy_wr_data rs2_phy_select
 
 
 
-assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_entry_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
 
 assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &

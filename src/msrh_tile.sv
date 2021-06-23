@@ -257,7 +257,8 @@ msrh_resource_alloc u_msrh_resource_alloc
           .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
           .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
-          .i_commit (w_commit),
+          .i_commit  (w_commit),
+          .br_upd_if (w_ex3_br_upd_if),
 
           .o_done_report (w_alu_done_rpt[alu_idx])
       );
@@ -365,8 +366,8 @@ u_msrh_csu (
 
     .o_done_report (w_csu_done_rpt),
 
-    .i_commit (w_commit)
-
+    .i_commit (w_commit),
+    .br_upd_if (w_ex3_br_upd_if)
 );
 
 

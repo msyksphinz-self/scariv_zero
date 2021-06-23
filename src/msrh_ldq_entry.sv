@@ -79,7 +79,7 @@ logic                                            w_rs2_mispredicted;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_entry_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
 
 assign w_dead_state_clear = i_commit.commit &
                             i_commit.all_dead &
