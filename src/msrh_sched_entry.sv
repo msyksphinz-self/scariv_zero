@@ -34,6 +34,8 @@ module msrh_sched_entry
 
    // Commit notification
    input                                       msrh_pkg::commit_blk_t i_commit,
+   // Branch Flush Notification
+   br_upd_if.slave                             br_upd_if,
 
    output logic                                o_entry_done,
    output logic                                o_entry_wait_complete,
@@ -173,6 +175,7 @@ assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
                                                w_rs1_may_mispred, w_rs2_may_mispred);
 
 assign w_entry_flush = msrh_pkg::is_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
+assign w_br_flush = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & r_entry.valid;
 
 // assign w_entry_to_dead = w_entry_flush &
 // (i_commit.cmt_id != r_entry.cmt_id);

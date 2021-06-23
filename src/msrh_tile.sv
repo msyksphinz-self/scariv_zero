@@ -112,6 +112,13 @@ cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
 
 // ----------------------------------
+// Branch Tag
+// ----------------------------------
+
+logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_iq_brtag  [msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]         w_iq_brmask [msrh_conf_pkg::DISP_SIZE];
+
+// ----------------------------------
 // Merging Forwarding / Done signals
 // ----------------------------------
 // ALU
@@ -180,6 +187,9 @@ msrh_rename u_msrh_rename (
   .i_commit_rnid_update (w_commit_rnid_update),
 
   .i_resource_ok (w_resource_ok),
+  .i_brtag  (w_iq_brtag),
+  .i_brmask (w_iq_brmask),
+
 
   .i_phy_wr (w_ex3_phy_wr),
   .sc_disp  (w_sc_disp)
@@ -201,6 +211,9 @@ msrh_resource_alloc u_msrh_resource_alloc
   .bru_cre_ret_if (bru_cre_ret_if),
 
   .i_commit (w_commit),
+
+  .o_brtag  (w_iq_brtag),
+  .o_brmask (w_iq_brmask),
 
   .o_resource_ok (w_resource_ok)
  );

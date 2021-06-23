@@ -11,7 +11,9 @@ module msrh_rename
    disp_if.master           sc_disp,
 
    // from Resource Allocator
-   input logic i_resource_ok,
+   input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag  [msrh_conf_pkg::DISP_SIZE],
+   input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         i_brmask [msrh_conf_pkg::DISP_SIZE],
+   input logic                                                i_resource_ok,
 
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,
@@ -308,12 +310,14 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign rd_old_rnid_fwd[d_idx] = (d_idx == 0) ? w_rd_old_rnid[0] : rd_old_rnid_tmp[d_idx-1];
 
   assign w_disp_inst[d_idx] = assign_disp_rename (iq_disp.inst[d_idx],
-                                                            w_rd_rnid[d_idx],
-                                                            rd_old_rnid_fwd[d_idx],
-                                                            w_active [d_idx*2+0],
-                                                            rs1_rnid_fwd[d_idx],
-                                                            w_active [d_idx*2+1],
-                                                            rs2_rnid_fwd[d_idx]);
+                                                  w_rd_rnid[d_idx],
+                                                  rd_old_rnid_fwd[d_idx],
+                                                  w_active [d_idx*2+0],
+                                                  rs1_rnid_fwd[d_idx],
+                                                  w_active [d_idx*2+1],
+                                                  rs2_rnid_fwd[d_idx],
+                                                  i_brtag[d_idx],
+                                                  i_brmask[d_idx]);
 
 end // block: src_rn_loop
 endgenerate

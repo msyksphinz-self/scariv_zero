@@ -35,7 +35,9 @@ module msrh_scheduler
  output                                msrh_pkg::done_rpt_t o_done_report,
 
  // Commit notification
- input msrh_pkg::commit_blk_t i_commit
+ input msrh_pkg::commit_blk_t          i_commit,
+ // Branch Flush Notification
+ br_upd_if.slave                       br_upd_if
  );
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
@@ -186,6 +188,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .pipe_done_if (pipe_done_if),
 
     .i_commit (i_commit),
+    .br_upd_if (br_upd_if),
 
     .i_entry_picked    (w_picked_inst_oh[s_idx]),
     .o_entry_done      (w_entry_done[s_idx]),
