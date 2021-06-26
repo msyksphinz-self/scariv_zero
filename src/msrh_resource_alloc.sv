@@ -17,6 +17,8 @@ module msrh_resource_alloc
    cre_ret_if.master bru_cre_ret_if,
 
    input msrh_pkg::commit_blk_t   i_commit,
+   // Branch Tag Update Signal
+   cmt_brtag_if.slave             cmt_brtag_if,
 
    output logic o_resource_ok,
 
@@ -195,16 +197,30 @@ u_bru_credit_return
 
 
 logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    r_br_mask_valid;
+logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    w_br_mask_valid_next;
 /* verilator lint_off UNOPTFLAT */
 logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE+1];
 
 logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE+1];
 logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] r_br_tag_latest_idx;
 
-assign w_br_mask_temp_valid[0] = r_br_mask_valid;
+generate for (genvar b_idx = 0; b_idx < msrh_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
+  always_comb begin
+    w_br_mask_valid_next[b_idx] = r_br_mask_valid[b_idx];
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
+      if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
+        w_br_mask_valid_next[b_idx] = 1'b0;
+      end
+    end
+  end
+end
+endgenerate
+
+
+assign w_br_mask_temp_valid[0] = w_br_mask_valid_next;
 assign w_br_tag_temp_idx[0] = r_br_tag_latest_idx;
 
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_loop
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
   logic w_find_empty_entry;
   logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]         w_empty_entry_idx_oh;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_empty_entry_idx;
@@ -214,7 +230,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   encoder #(.SIZE(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) u_entry_encoder (.i_in(w_empty_entry_idx_oh), .o_out(w_empty_entry_idx));
 
   always_comb begin
-    if (iq_disp.valid & iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR) begin
+    if (iq_disp.valid & iq_disp.ready & iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR) begin
       /* verilator lint_off ALWCOMBORDER */
       w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx] | w_empty_entry_idx_oh;
       w_br_tag_temp_idx[d_idx+1] = w_empty_entry_idx;
@@ -222,6 +238,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx];
       w_br_tag_temp_idx[d_idx+1] = w_br_tag_temp_idx[d_idx];
     end
+
   end // always_comb
 
   assign o_brtag[d_idx]  = w_br_tag_temp_idx[d_idx+1];
@@ -229,12 +246,13 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end // block: branch_loop
 endgenerate
 
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_br_mask_valid <= 'h0;
+    r_br_mask_valid     <= 'h0;
     r_br_tag_latest_idx <= 'h0;
   end else begin
-    r_br_mask_valid <= w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE];
+    r_br_mask_valid     <= w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE];
     r_br_tag_latest_idx <= w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE];
   end
 end

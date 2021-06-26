@@ -26,6 +26,7 @@ module msrh_rob_entry
    );
 
 rob_entry_t             r_entry;
+rob_entry_t             w_entry_next;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_except_valid;
@@ -60,56 +61,73 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
   end else begin
-    if (i_load_valid) begin
-      r_entry.valid <= 1'b1;
-      r_entry.dead  <= i_kill;
-      r_entry.grp_id <= i_load_grp_id;
-      r_entry.pc_addr <= i_load_pc_addr;
-      r_entry.inst    <= i_load_inst;
-      r_entry.br_upd_info <= 'h0;
-
-
-      r_entry.is_br_included <= i_load_br_included;
-
-      for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        // If TLB Exception detected before execution, this instruction already done.
-        r_entry.done_grp_id [d_idx] <= (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) ? i_load_grp_id[d_idx] : 1'b0;
-        r_entry.except_valid[d_idx] <= (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
-        r_entry.except_type [d_idx] <= i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
-      end
-    end else if (r_entry.valid) begin
-      // Condition :
-      // all instruction done, or ROB entry dead,
-      // So, during killing, allocated new instruction should be killed.
-      if (i_commit_finish & (o_block_all_done | r_entry.dead)) begin
-        r_entry.valid <= 1'b0;
-      end else begin
-        r_entry.done_grp_id <= r_entry.done_grp_id | w_done_rpt_valid;
-        for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
-          r_entry.except_valid[d] <= w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
-          r_entry.except_type [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
-          r_entry.except_tval [d] <= w_done_rpt_valid[d] ? w_done_rpt_except_tval [d] : r_entry.except_tval [d];
-        end
-      end
-
-      r_entry.dead <= r_entry.dead | i_kill;
-
-      // Branch condition update
-      if (br_upd_if.update & (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id)) begin
-        r_entry.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] <= 1'b1;
-        r_entry.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] <= br_upd_if.vaddr;
-      end
+    r_entry <= w_entry_next;
 
 `ifdef SIMULATION
-      for (int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
-        if (w_done_rpt_valid[d]) begin
-          r_mstatus[d] = u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.w_mstatus_next;
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
+      if (w_entry_next.done_grp_id[d_idx] & ~r_entry.done_grp_id[d_idx]) begin
+        r_mstatus[d_idx] <= u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.w_mstatus_next;
+      end
+    end
+`endif // SIMULATION
+  end
+end
+
+always_comb begin
+  w_entry_next = r_entry;
+
+  if (i_load_valid) begin
+    w_entry_next.valid = 1'b1;
+    w_entry_next.dead  = i_kill;
+    w_entry_next.grp_id = i_load_grp_id;
+    w_entry_next.pc_addr = i_load_pc_addr;
+    w_entry_next.inst    = i_load_inst;
+    w_entry_next.br_upd_info = 'h0;
+
+
+    w_entry_next.is_br_included = i_load_br_included;
+
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+      // If TLB Exception detected before execution, this instruction already done.
+      w_entry_next.done_grp_id [d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) ? i_load_grp_id[d_idx] : 1'b0;
+      w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
+      w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
+    end
+  end // if (i_load_valid)
+
+  if (r_entry.valid) begin
+    // Condition :
+    // all instruction done, or ROB entry dead,
+    // So, during killing, allocated new instruction should be killed.
+    if (i_commit_finish & (o_block_all_done | r_entry.dead)) begin
+      w_entry_next.valid = 1'b0;
+    end else begin
+      w_entry_next.done_grp_id = r_entry.done_grp_id | w_done_rpt_valid;
+      for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+        w_entry_next.except_valid[d] = w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
+        w_entry_next.except_type [d] = w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
+        w_entry_next.except_tval [d] = w_done_rpt_valid[d] ? w_done_rpt_except_tval [d] : r_entry.except_tval [d];
+      end
+    end
+
+    w_entry_next.dead = r_entry.dead | i_kill;
+
+    // Branch condition update
+    if (br_upd_if.update) begin
+      for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+        if (r_entry.inst[d_idx].valid &
+            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag)) begin
+          w_entry_next.done_grp_id[d_idx] = 1'b1;
         end
       end
-`endif // SIMULATION
+      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
+        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.vaddr;
+      end
     end
   end
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
+end // always_comb
+
 
 assign o_entry = r_entry;
 assign o_block_all_done = r_entry.valid & (r_entry.grp_id == r_entry.done_grp_id);

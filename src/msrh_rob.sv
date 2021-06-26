@@ -17,6 +17,9 @@ module msrh_rob
    output commit_blk_t o_commit,
    output cmt_rnid_upd_t o_commit_rnid_update,
 
+   // Branch Tag Update Signal
+   cmt_brtag_if.master cmt_brtag_if,
+
    // ROB notification interface
    rob_info_if.master rob_info_if
    );
@@ -245,6 +248,15 @@ assign rob_info_if.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
 assign rob_info_if.done_grp_id  = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign rob_info_if.upd_pc_valid = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid;
 assign rob_info_if.except_valid = w_entries[w_out_cmt_entry_id].except_valid;
+
+// Commit Branch Tag Update
+assign cmt_brtag_if.commit     = o_commit.commit;
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
+  assign cmt_brtag_if.is_br_inst[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR;
+  assign cmt_brtag_if.brtag     [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].brtag;
+end
+endgenerate
+
 
 `ifdef SIMULATION
 logic [CMT_ENTRY_SIZE-1: 0] w_entry_valids;

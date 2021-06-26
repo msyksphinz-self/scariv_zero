@@ -45,3 +45,24 @@ interface br_upd_if;
   );
 
 endinterface // br_upd_if
+
+
+interface cmt_brtag_if;
+
+  logic          commit;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] is_br_inst;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0][$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
+
+  modport master (
+    output commit,
+    output is_br_inst,
+    output brtag
+  );
+
+  modport slave (
+    input commit,
+    input is_br_inst,
+    input brtag
+  );
+
+endinterface // cmt_brtag_if

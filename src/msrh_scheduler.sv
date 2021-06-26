@@ -1,6 +1,7 @@
 module msrh_scheduler
   #(
     parameter IS_STORE = 0,
+    parameter IS_BRANCH = 1'b0,
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
     parameter EN_OLDEST = 0
@@ -159,8 +160,11 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   msrh_sched_entry
-    #(.IS_STORE(IS_STORE),
-      .EN_OLDEST(EN_OLDEST))
+    #(
+      .IS_STORE(IS_STORE),
+      .IS_BRANCH (IS_BRANCH),
+      .EN_OLDEST(EN_OLDEST)
+      )
   u_sched_entry(
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),

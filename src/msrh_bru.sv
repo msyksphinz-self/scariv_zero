@@ -61,6 +61,7 @@ u_msrh_disp_pickup
 msrh_scheduler
   #(
     .ENTRY_SIZE  (msrh_conf_pkg::RV_BRU_ENTRY_SIZE),
+    .IS_BRANCH (1'b1),
     .IN_PORT_SIZE(msrh_conf_pkg::BRU_DISP_SIZE)
     )
 u_msrh_scheduler

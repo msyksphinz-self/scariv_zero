@@ -1,6 +1,7 @@
 module msrh_sched_entry
   #(
     parameter IS_STORE = 1'b0,
+    parameter IS_BRANCH = 1'b0,
     parameter EN_OLDEST = 1'b0
     )
 (
@@ -182,7 +183,7 @@ assign w_entry_flush = w_commit_flush | w_br_flush;
 // assign w_entry_to_dead = w_entry_flush &
 // (i_commit.cmt_id != r_entry.cmt_id);
 assign w_dead_state_clear = i_commit.commit &
-                            i_commit.all_dead &
+                            /* i_commit.all_dead & */
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_complete = (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
@@ -246,7 +247,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state <= msrh_pkg::DEAD;
           r_dead  <= 1'b1;
         end else begin
-          r_state <= msrh_pkg::WAIT_COMPLETE;
+          if (IS_BRANCH & w_entry_complete) begin
+            // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
+            r_state <= msrh_pkg::INIT;
+            r_entry.valid <= 1'b0;
+            r_issued <= 1'b0;
+            r_dead   <= 1'b0;
+            // prevent all updates from Pipeline
+            r_entry.cmt_id <= 'h0;
+            r_entry.grp_id <= 'h0;
+          end else begin
+            r_state <= msrh_pkg::WAIT_COMPLETE;
+          end // else: !if(IS_BRANCH & w_entry_complete)
         end
       end
       msrh_pkg::WAIT_COMPLETE : begin
@@ -305,6 +317,6 @@ assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
 assign o_except_type  = r_entry.except_type;
 assign o_entry_finish = (r_state == msrh_pkg::DEAD) & w_dead_state_clear |
-                        (r_state == msrh_pkg::WAIT_COMPLETE) & w_entry_complete;
+                        ((r_state == msrh_pkg::DONE) | (r_state == msrh_pkg::WAIT_COMPLETE)) & w_entry_complete;
 
 endmodule // msrh_sched_entry
