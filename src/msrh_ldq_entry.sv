@@ -34,6 +34,7 @@ module msrh_ldq_entry
  input                                           stq_resolve_t i_stq_resolve,
  // Commit notification
  input                                           msrh_pkg::commit_blk_t i_commit,
+ br_upd_if.slave                                 br_upd_if,
 
  output logic                                    o_entry_finish,
 
@@ -45,6 +46,8 @@ logic                                            w_entry_ready;
 ldq_entry_t                                      r_entry;
 ldq_entry_t                                      w_entry_next;
 logic                                            w_entry_flush;
+logic                                            w_commit_flush;
+logic                                            w_br_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_complete;
 
@@ -79,10 +82,11 @@ logic                                            w_rs2_mispredicted;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_entry_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & br_upd_if.update & r_entry.is_valid;
+assign w_entry_flush  = w_commit_flush | w_br_flush;
 
 assign w_dead_state_clear = i_commit.commit &
-                            i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT ||
@@ -357,6 +361,10 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.is_valid  = 1'b1;
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
+
+  ret.brtag   = in.brtag;
+  ret.br_mask = in.br_mask;
+
   ret.state     = LDQ_ISSUE_WAIT;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;

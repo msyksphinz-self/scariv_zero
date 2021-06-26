@@ -305,7 +305,8 @@ u_msrh_lsu_top
     .l1d_snoop_if (l1d_snoop_if),
     .stq_snoop_if (stq_snoop_if),
 
-    .i_commit (w_commit)
+    .i_commit  (w_commit),
+    .br_upd_if (w_ex3_br_upd_if)
    );
 
 

@@ -46,7 +46,8 @@ module msrh_lsu_top
     stq_snoop_if.slave stq_snoop_if,
 
     // Commit notification
-    input msrh_pkg::commit_blk_t i_commit
+    input msrh_pkg::commit_blk_t i_commit,
+    br_upd_if.slave              br_upd_if
    );
 
 // LSU Pipeline + STQ Interface + PTW + Snoop
@@ -188,6 +189,7 @@ msrh_ldq
  .i_ex3_done (w_ex3_done),
 
  .i_commit (i_commit),
+ .br_upd_if (br_upd_if),
  .o_done_report(w_ld_done_report)
  );
 
@@ -220,6 +222,7 @@ msrh_stq
  .i_ex3_done (w_ex3_done),
 
  .i_commit (i_commit),
+ .br_upd_if (br_upd_if),
  .l1d_rd_if (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 

@@ -31,7 +31,8 @@ module msrh_stq
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
    // Commit notification
-   input msrh_pkg::commit_blk_t               i_commit,
+   input msrh_pkg::commit_blk_t   i_commit,
+   br_upd_if.slave                br_upd_if,
 
    l1d_rd_if.master                      l1d_rd_if,
    l1d_lrq_if.master                     l1d_lrq_stq_miss_if,  // Interface of Missed Data for Store
@@ -245,6 +246,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      // .i_stq_entry_done (w_stq_done_oh[s_idx]),
 
      .i_commit (i_commit),
+     .br_upd_if (br_upd_if),
 
      .i_sq_op_accept(w_sq_commit_req_oh[s_idx]),
      .i_sq_l1d_rd_miss     (l1d_rd_if.s1_miss),

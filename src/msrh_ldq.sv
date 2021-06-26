@@ -28,6 +28,7 @@ module msrh_ldq
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
+   br_upd_if.slave              br_upd_if,
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
 
@@ -190,6 +191,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_stq_resolve (i_stq_resolve),
 
      .i_commit (i_commit),
+     .br_upd_if (br_upd_if),
 
      .o_entry_finish (w_entry_complete[l_idx]),
 

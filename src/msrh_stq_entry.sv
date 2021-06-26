@@ -31,6 +31,8 @@ module msrh_stq_entry
    // input logic                                i_stq_entry_done,
    // Commit notification
    input msrh_pkg::commit_blk_t               i_commit,
+   br_upd_if.slave                            br_upd_if,
+
    input logic                                i_sq_op_accept,
    input logic                                i_sq_l1d_rd_miss,
    input logic                                i_sq_l1d_rd_conflict,
@@ -54,6 +56,8 @@ module msrh_stq_entry
 stq_entry_t                          r_entry;
 stq_entry_t                          w_entry_next;
 logic                                              w_entry_flush;
+logic                                              w_commit_flush;
+logic                                              w_br_flush;
 logic                                              w_dead_state_clear;
 logic                                              w_cmt_id_match;
 
@@ -120,10 +124,12 @@ select_phy_wr_data rs2_phy_select
 
 
 
-assign w_entry_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & br_upd_if.update & r_entry.is_valid;
+assign w_entry_flush  = w_commit_flush | w_br_flush;
+
 
 assign w_dead_state_clear = i_commit.commit &
-                            i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
@@ -346,6 +352,10 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
 
   ret.cmt_id    = cmt_id;
   ret.grp_id    = grp_id;
+
+  ret.brtag   = in.brtag;
+  ret.br_mask = in.br_mask;
+
   ret.state     = STQ_ISSUE_WAIT;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;
