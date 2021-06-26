@@ -15,6 +15,9 @@ module msrh_rename
    input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         i_brmask [msrh_conf_pkg::DISP_SIZE],
    input logic                                                i_resource_ok,
 
+   // Branch Tag Update Signal
+   br_upd_if.slave                                            br_upd_if,
+
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,
    input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
@@ -40,7 +43,7 @@ logic [RNID_W-1: 0]                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SI
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 
-logic                                     w_commit_rnid_restore_valid;
+logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_rd_valid;
 logic                                     w_commit_except_valid;
@@ -146,18 +149,15 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-assign w_commit_rnid_restore_valid = i_commit_rnid_update.commit &
-                                     i_commit_rnid_update.is_br_included;
-// assign w_commit_flush_rnid_restore_valid = i_commit.commit &
-//                                            i_commit.flush_valid & !i_commit.all_dead;
+assign w_brupd_rnid_restore_valid = br_upd_if.update;
 //
-assign w_commit_rd_valid = ({msrh_conf_pkg::DISP_SIZE{w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid}} | w_commit_except_rd_valid) &
+assign w_commit_rd_valid = ({msrh_conf_pkg::DISP_SIZE{w_brupd_rnid_restore_valid}} | w_commit_except_rd_valid) &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
 
 assign w_commit_except_valid = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
 
 assign w_restore_valid = (|w_commit_except_valid)  |                        // Exception : Restore from CommitMap
-                         w_commit_rnid_restore_valid & i_commit_rnid_update.upd_pc_valid; // Speculation Miss : Restore from Br Queue
+                         w_brupd_rnid_restore_valid; // Speculation Miss : Restore from Br Queue
 assign w_restore_rn_list = (|w_commit_except_valid) ? w_restore_commit_map_list :
                            w_restore_queue_list;
 
@@ -346,20 +346,29 @@ msrh_inflight_list u_inflight_map
 );
 
 // Map List Queue
-msrh_rn_map_queue
-  u_rn_map_queue
-    (
-     .i_clk (i_clk),
-     .i_reset_n(i_reset_n),
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_br_inst;
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : br_loop
+  assign w_is_br_inst[d_idx] = sc_disp.inst[d_idx].valid & (sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+end
+endgenerate
 
-     .i_load (w_iq_fire & iq_disp.is_br_included),
-     .i_rn_list (w_rn_list),
 
-     .i_restore (w_commit_rnid_restore_valid),
-     .o_rn_list (w_restore_queue_list),
+msrh_bru_rn_snapshots
+u_msrh_bru_rn_snapshots
+  (
+   .i_clk (i_clk),
+   .i_reset_n(i_reset_n),
 
-     .o_full (/*xxx*/)
-     );
+   .i_rn_list (w_rn_list),
+
+   .i_load ({msrh_conf_pkg::DISP_SIZE{w_iq_fire}} & w_is_br_inst),
+   .i_rd_archreg (w_update_arch_id),
+   .i_rd_rnid    (w_rd_rnid),
+   .i_brtag      (i_brtag  ),
+
+   .br_upd_if (br_upd_if),
+   .o_rn_list (w_restore_queue_list)
+   );
 
 
 // Commit Map

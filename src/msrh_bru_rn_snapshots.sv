@@ -1,44 +1,56 @@
-module msrh_rn_map_queue
+module msrh_bru_rn_snapshots
   import msrh_pkg::*;
   (
-   input logic                i_clk,
-   input logic                i_reset_n,
+   input logic                                                i_clk,
+   input logic                                                i_reset_n,
 
-   input logic                i_load,
-   input logic [RNID_W-1: 0]  i_rn_list[32],
+   input logic [RNID_W-1: 0]                                  i_rn_list[32],
 
-   input logic                i_restore,
-   output logic [RNID_W-1: 0] o_rn_list[32],
+   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]                i_load,
+   input logic [ 4: 0]                                        i_rd_archreg[msrh_conf_pkg::DISP_SIZE],
+   input logic [RNID_W-1: 0]                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
+   input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag [msrh_conf_pkg::DISP_SIZE],
 
-   output logic               o_full
+   // Branch Tag Update Signal
+   br_upd_if.slave                                            br_upd_if,
+
+   output logic [RNID_W-1: 0]                                 o_rn_list[32]
    );
 
-localparam MAP_QUEUE_SIZE = msrh_conf_pkg::CMT_ENTRY_SIZE;
+logic [31: 0][RNID_W-1: 0]                                    r_snapshots[msrh_conf_pkg::RV_BRU_ENTRY_SIZE];
+/* verilator lint_off UNOPTFLAT */
+logic [31: 0][RNID_W-1: 0]                                    w_tmp_snapshots[msrh_conf_pkg::DISP_SIZE+1];
 
-logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_in_ptr;
-logic [$clog2(MAP_QUEUE_SIZE)-1: 0] w_out_ptr;
-logic [RNID_W-1: 0]                 r_rnid_list[MAP_QUEUE_SIZE][32];
-
-logic [RNID_W * 32 -1 : 0]         w_in_rn_list;
-logic [RNID_W * 32 -1 : 0]         w_out_rn_list;
-
-inoutptr #(.SIZE(MAP_QUEUE_SIZE)) u_inoutptr(.i_clk (i_clk), .i_reset_n (i_reset_n), .i_clear (1'b0),
-                                             .i_in_valid  (i_load),    .o_in_ptr (w_in_ptr),
-                                             .i_out_valid (i_restore), .o_out_ptr(w_out_ptr));
-
-
-always_ff @ (posedge i_clk) begin
-  if (i_load) begin
-    for(int i =  0; i < 32; i++) begin
-      r_rnid_list[w_in_ptr][i] <= i_rn_list[i];
-    end
-  end
-end
-
-generate for (genvar i = 0; i < 32; i++) begin : extract_loop
-  assign w_in_rn_list[i * RNID_W +: RNID_W] = i_rn_list[i];
-  assign o_rn_list[i] = r_rnid_list[w_out_ptr][i];
+generate for(genvar i =  0; i < 32; i++) begin
+  assign w_tmp_snapshots[0][i] = i_rn_list[i];
 end
 endgenerate
 
-endmodule // msrh_rn_map_queue
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+
+  always_comb begin
+    for(int i =  0; i < 32; i++) begin
+      /* verilator lint_off ALWCOMBORDER */
+      w_tmp_snapshots[d_idx+1][i] = i_load[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? w_tmp_snapshots[d_idx][i] : i_rd_rnid[d_idx];
+    end
+  end
+
+  always_ff @ (posedge i_clk) begin
+    if (i_load[d_idx]) begin
+      for(int i =  0; i < 32; i++) begin
+        r_snapshots[i_brtag[d_idx]][i] <= w_tmp_snapshots[d_idx+1][i];
+      end
+    end
+  end
+
+end
+endgenerate
+
+
+generate for(genvar i =  0; i < 32; i++) begin : o_loop
+  assign o_rn_list[i] = r_snapshots[br_upd_if.brtag][i];
+end
+endgenerate
+
+endmodule // msrh_bru_rn_snapshots

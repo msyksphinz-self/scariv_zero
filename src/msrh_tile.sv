@@ -191,6 +191,7 @@ msrh_rename u_msrh_rename (
   .i_brtag  (w_iq_brtag),
   .i_brmask (w_iq_brmask),
 
+  .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
   .sc_disp  (w_sc_disp)
