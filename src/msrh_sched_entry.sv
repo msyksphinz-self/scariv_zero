@@ -288,7 +288,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end // case: msrh_pkg::DEAD
       default : begin
         r_state <= msrh_pkg::INIT;
+`ifdef SIMULATION
         $fatal(0, "Unknown state reached\n");
+`endif // SIMULATION
       end
     endcase // case (r_state)
   end // else: !if(!i_reset_n)

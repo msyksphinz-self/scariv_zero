@@ -179,7 +179,9 @@ always_comb begin
         end
       default           : begin
         w_s0_vaddr_flush_next = 'h0;
+`ifdef SIMULATION
         $fatal (0, "This exception not supported now");
+`endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
   end else begin

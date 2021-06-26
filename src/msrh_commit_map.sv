@@ -18,9 +18,9 @@ always_comb begin
     w_commit_map_next[r_idx] = r_commit_map[r_idx];
   end
 
-  assign w_dead_id_with_except = (|i_commit_rnid_update.except_valid) & (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH) ?
-                                 {i_commit_rnid_update.dead_id | i_commit_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
-                                 i_commit_rnid_update.dead_id;
+  w_dead_id_with_except = (|i_commit_rnid_update.except_valid) & (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH) ?
+                          {i_commit_rnid_update.dead_id | i_commit_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
+                          i_commit_rnid_update.dead_id;
 
   if (i_commit_rnid_update.commit) begin
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
