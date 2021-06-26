@@ -348,7 +348,9 @@ msrh_inflight_list u_inflight_map
 // Map List Queue
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_br_inst;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : br_loop
-  assign w_is_br_inst[d_idx] = sc_disp.inst[d_idx].valid & (sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+  assign w_is_br_inst[d_idx] = w_iq_fire &
+                               iq_disp.inst[d_idx].valid &
+                               (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
 end
 endgenerate
 

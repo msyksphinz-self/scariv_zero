@@ -32,7 +32,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   always_comb begin
     for(int i =  0; i < 32; i++) begin
       /* verilator lint_off ALWCOMBORDER */
-      w_tmp_snapshots[d_idx+1][i] = i_load[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? w_tmp_snapshots[d_idx][i] : i_rd_rnid[d_idx];
+      w_tmp_snapshots[d_idx+1][i] = i_load[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? i_rd_rnid[d_idx] : w_tmp_snapshots[d_idx][i];
     end
   end
 
