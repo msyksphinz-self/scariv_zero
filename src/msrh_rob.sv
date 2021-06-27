@@ -29,7 +29,7 @@ logic [CMT_ID_W-1:0]     w_in_cmt_id, w_out_cmt_id;
 logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
-logic [riscv_pkg::VADDR_W-1: 0]    w_upd_br_vaddr;
+// logic [riscv_pkg::VADDR_W-1: 0]    w_upd_br_vaddr;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_except_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
@@ -57,7 +57,7 @@ logic [CMT_ENTRY_W-1:0]                    w_in_cmt_entry_id;
 logic [DISP_SIZE-1: 0]              w_valid_upd_pc_grp_id;
 logic [DISP_SIZE-1: 0]              w_cmt_pc_upd_valid_oh;
 logic [DISP_SIZE-1: 0]              w_valid_except_grp_id;
-logic [DISP_SIZE-1: 0]              w_valid_branch_grp_id;
+// logic [DISP_SIZE-1: 0]              w_valid_branch_grp_id;
 
 assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
 assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
@@ -66,7 +66,7 @@ assign w_in_valid  = sc_disp.valid;
 assign w_out_valid = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
 
 logic                                      w_flush_valid;
-assign w_flush_valid = o_commit.commit & o_commit.flush_valid & !o_commit.all_dead;
+assign w_flush_valid = msrh_pkg::is_flushed_commit(o_commit);
 
 inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_clear (1'b0),
@@ -144,16 +144,16 @@ assign o_sc_new_cmt_id = w_in_cmt_id;
 
 assign w_killing_uncmts = r_killing_uncmts &
                           w_entries[w_out_cmt_entry_id].valid &
-                          w_entries[w_out_cmt_entry_id].dead;
+                          &w_entries[w_out_cmt_entry_id].dead;
 
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
-assign o_commit.upd_pc_valid   = |((w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
-                                    w_entries[w_out_cmt_entry_id].except_valid) &
-                                   w_entries[w_out_cmt_entry_id].grp_id);
-assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
-assign o_commit.flush_valid   = o_commit.upd_pc_valid;
+// assign o_commit.upd_pc_valid   = |((w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
+//                                     w_entries[w_out_cmt_entry_id].except_valid) &
+//                                    w_entries[w_out_cmt_entry_id].grp_id);
+// assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
+// assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
@@ -165,7 +165,7 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
 assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
-assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].dead;
+assign o_commit.all_dead     = &w_entries[w_out_cmt_entry_id].dead;
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
@@ -184,11 +184,11 @@ bit_oh_or_packed #(.T(logic[riscv_pkg::XLEN_W-1:0]), .WORDS(DISP_SIZE)) u_bit_ex
 
 
 // Select Branch Target Address
-assign w_valid_branch_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid & w_cmt_pc_upd_valid_oh;
-bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
-br_sel_addr (.i_oh(w_valid_branch_grp_id),
-             .i_data(w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr),
-             .o_selected(w_upd_br_vaddr));
+// assign w_valid_branch_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid & w_cmt_pc_upd_valid_oh;
+// bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
+// br_sel_addr (.i_oh(w_valid_branch_grp_id),
+//              .i_data(w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr),
+//              .o_selected(w_upd_br_vaddr));
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
@@ -198,8 +198,8 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_lo
   assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].rd_regidx;
 end
 endgenerate
-assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
-assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
+// assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
+// assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
 assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
 assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
@@ -234,9 +234,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_killing_uncmts <= 1'b0;
   end else begin
-    if (o_commit.commit & o_commit.flush_valid & (w_in_cmt_id != w_out_cmt_id)) begin
+    if (o_commit.commit & (|o_commit.except_valid) & (w_in_cmt_id != w_out_cmt_id)) begin
       r_killing_uncmts <= 1'b1;
-    end else if (r_killing_uncmts & !w_entries[w_out_cmt_entry_id].dead) begin
+    end else if (r_killing_uncmts & !(&w_entries[w_out_cmt_entry_id].dead)) begin
       r_killing_uncmts <= 1'b0;
     end
   end

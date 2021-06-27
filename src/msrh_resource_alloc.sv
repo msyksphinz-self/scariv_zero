@@ -46,7 +46,7 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_bru_no_credits_remained;
 
 
-assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
+assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 assign w_iq_fire = ~w_flush_valid & iq_disp.valid & iq_disp.ready;
 
 msrh_credit_return_master
@@ -242,7 +242,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   end // always_comb
 
   assign o_brtag[d_idx]  = w_br_tag_temp_idx[d_idx+1];
-  assign o_brmask[d_idx] = w_br_mask_temp_valid[d_idx+1];
+  assign o_brmask[d_idx] = w_br_mask_temp_valid[d_idx];
 end // block: branch_loop
 endgenerate
 

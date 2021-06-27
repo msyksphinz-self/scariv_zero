@@ -55,7 +55,7 @@ logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
 logic                                w_flush_valid;
-assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
+assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 
 // --------------------------------
 // Credit & Return Interface

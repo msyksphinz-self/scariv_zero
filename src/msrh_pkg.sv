@@ -172,7 +172,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
     logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::XLEN_W-1:0] except_tval;
 
-    logic                                   dead;
+    logic [msrh_conf_pkg::DISP_SIZE-1: 0]  dead;
     // Branch update info
     logic                               is_br_included;
     br_upd_info_t br_upd_info;
@@ -298,9 +298,9 @@ typedef struct packed {
   logic                 commit;
   logic [CMT_ID_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
-  logic                           upd_pc_valid;
-  logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
-  logic                           flush_valid;
+  // logic                           upd_pc_valid;
+  // logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
+  // logic                           flush_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
   except_t                        except_type;
   logic                           fence_i;
@@ -319,10 +319,14 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
   return 'hx;
 endfunction // encoder_grp_id
 
+function logic is_flushed_commit (commit_blk_t commit);
+  return commit.commit & (|commit.except_valid) & ~commit.all_dead;
+endfunction // is_flushed_commit
+
 function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
-                               logic [DISP_SIZE-1: 0] entry_grp_id,
-                               commit_blk_t commit);
-  return commit.commit & commit.flush_valid &
+                                      logic [DISP_SIZE-1: 0] entry_grp_id,
+                                      commit_blk_t commit);
+  return commit.commit & (|commit.except_valid) &
          ~((entry_cmt_id == commit.cmt_id) & ~|(entry_grp_id & commit.dead_id)) &
          ~commit.all_dead;
 
@@ -342,8 +346,8 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
-  logic                                                      is_br_included;
-  logic                                                      upd_pc_valid;
+  // logic                                                      is_br_included;
+  // logic                                                      upd_pc_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;
   except_t                                                   except_type;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;

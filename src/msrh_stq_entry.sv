@@ -138,7 +138,7 @@ assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
 
 assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
-                        (i_commit.flush_valid ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
+                        ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
                                (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;

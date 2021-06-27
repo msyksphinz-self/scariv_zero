@@ -160,6 +160,7 @@ msrh_frontend u_frontend (
   .ic_l2_resp(ic_l2_resp),
 
   .i_commit (w_commit),
+  .br_upd_if (w_ex3_br_upd_if),
 
   .csr_info (w_csr_info),
 

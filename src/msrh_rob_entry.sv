@@ -78,7 +78,7 @@ always_comb begin
 
   if (i_load_valid) begin
     w_entry_next.valid = 1'b1;
-    w_entry_next.dead  = i_kill;
+    w_entry_next.dead  = {msrh_conf_pkg::DISP_SIZE{i_kill}};
     w_entry_next.grp_id = i_load_grp_id;
     w_entry_next.pc_addr = i_load_pc_addr;
     w_entry_next.inst    = i_load_inst;
@@ -99,7 +99,7 @@ always_comb begin
     // Condition :
     // all instruction done, or ROB entry dead,
     // So, during killing, allocated new instruction should be killed.
-    if (i_commit_finish & (o_block_all_done | r_entry.dead)) begin
+    if (i_commit_finish & ((r_entry.done_grp_id | r_entry.dead) == r_entry.grp_id)) begin
       w_entry_next.valid = 1'b0;
     end else begin
       w_entry_next.done_grp_id = r_entry.done_grp_id | w_done_rpt_valid;
@@ -110,7 +110,7 @@ always_comb begin
       end
     end
 
-    w_entry_next.dead = r_entry.dead | i_kill;
+    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}};
 
     // Branch condition update
     if (br_upd_if.update) begin
@@ -118,6 +118,7 @@ always_comb begin
         if (r_entry.inst[d_idx].valid &
             is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag)) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
+          w_entry_next.dead[d_idx] = 1'b1;
         end
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin

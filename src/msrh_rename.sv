@@ -72,7 +72,7 @@ logic                                               w_stq_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
 
-assign iq_disp.ready = !(i_commit_rnid_update.commit & (i_commit.flush_valid | i_commit.all_dead)) & i_resource_ok;
+assign iq_disp.ready = !(i_commit_rnid_update.commit & ((|i_commit.except_valid) | i_commit.all_dead)) & i_resource_ok;
 
 //                                          Freelist      RenameMap
 // normal commit inst                    => old ID push / no update
@@ -384,7 +384,7 @@ u_commit_map
    .o_rnid_map (w_restore_commit_map_list)
    );
 
-assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
+assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 
 
 `ifdef SIMULATION

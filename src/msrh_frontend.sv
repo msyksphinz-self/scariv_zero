@@ -13,6 +13,8 @@ module msrh_frontend
 
  // PC Update from Committer
  input msrh_pkg::commit_blk_t i_commit,
+ // Branch Tag Update Signal
+ br_upd_if.slave              br_upd_if,
 
   /* CSR information */
   csr_info_if.slave           csr_info,
@@ -87,13 +89,15 @@ logic                           w_tlb_ready;
 // ==============
 // Commiter PC
 // ==============
-logic                           w_commit_upd_pc;
+logic                           w_commit_except_upd;
 logic                           w_commit_flush_valid;
 
 logic                           w_inst_buffer_ready;
 
 always_comb begin
-  if (|(i_commit.except_valid & ~i_commit.dead_id)) begin
+  if (br_upd_if.update) begin
+    w_s0_vaddr_flush_next = br_upd_if.vaddr;
+  end else if (|(i_commit.except_valid & ~i_commit.dead_id)) begin
     case (i_commit.except_type)
       msrh_pkg::SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
       msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
@@ -184,9 +188,9 @@ always_comb begin
 `endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
-  end else begin
-    w_s0_vaddr_flush_next = i_commit.upd_pc_vaddr;
-  end // else: !if(i_commit.except_valid)
+  end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
+    w_s0_vaddr_flush_next = 'h0;
+  end // else: !if(|(i_commit.except_valid & ~i_commit.dead_id))
 end // always_comb
 
 
@@ -245,7 +249,7 @@ always_comb begin
 
   w_s0_vaddr_next = r_s0_vaddr;
 
-  if (w_commit_upd_pc) begin
+  if (w_commit_except_upd | br_upd_if.update) begin
     if ((w_s0_ic_req.valid & w_s0_ic_ready & w_tlb_ready) |
         (w_if_state_next == ISSUED)) begin
       w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -288,16 +292,14 @@ always_comb begin
       end
       default : begin end
     endcase // case (r_if_state)
-  end // else: !if(w_commit_upd_pc)
+  end // else: !if(w_commit_except_upd)
 
 end
 
 
-assign w_s0_vaddr = w_commit_upd_pc ? w_s0_vaddr_flush_next : r_s0_vaddr;
-assign w_commit_upd_pc = i_commit.commit & i_commit.upd_pc_valid & !i_commit.all_dead;
-assign w_commit_flush_valid = i_commit.commit &
-                              i_commit.flush_valid &
-                              !i_commit.all_dead;
+assign w_s0_vaddr = w_commit_except_upd ? w_s0_vaddr_flush_next : r_s0_vaddr;
+assign w_commit_except_upd = i_commit.commit & i_commit.except_valid & !i_commit.all_dead;
+assign w_commit_flush_valid = w_commit_except_upd;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;

@@ -63,7 +63,7 @@ logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
 msrh_pkg::except_t                    w_entry_except_type [ENTRY_SIZE];
 
 logic                                w_flush_valid;
-assign w_flush_valid = i_commit.commit & i_commit.flush_valid & !i_commit.all_dead;
+assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
