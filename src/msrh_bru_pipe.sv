@@ -32,10 +32,13 @@ typedef struct packed {
 msrh_pkg::issue_t                        r_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
+logic                      w_ex0_br_flush;
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex1_issue;
+msrh_pkg::issue_t                        w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
+logic                      w_ex1_br_flush;
 
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
@@ -56,13 +59,16 @@ logic                                    w_ex1_rs2_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex2_issue;
+msrh_pkg::issue_t                        w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
 logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
 logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
 logic                                    r_ex2_wr_valid;
+logic                                    w_ex2_br_flush;
 
 msrh_pkg::issue_t                        r_ex3_issue;
+msrh_pkg::issue_t                        w_ex3_issue_next;
 pipe_ctrl_t                              r_ex3_pipe_ctrl;
 logic                                    r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
@@ -87,6 +93,14 @@ assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
 
 assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
+
+// EX0 brtag flush check
+assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex0_issue.valid;
+
+always_comb begin
+  w_ex1_issue_next = r_ex0_issue;
+  w_ex1_issue_next.valid = r_ex0_issue.valid & ~w_ex0_br_flush;
+end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -162,6 +176,14 @@ bit_oh_or #(
     .o_selected(w_ex2_rs2_fwd_data)
 );
 
+// EX1 brtag flush check
+assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex1_issue.valid;
+
+always_comb begin
+  w_ex2_issue_next = r_ex1_issue;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_br_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_rs1_data <= 'h0;
@@ -176,7 +198,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_rs1_data <= ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
 
-    r_ex2_issue <= r_ex1_issue;
+    r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
@@ -190,6 +212,13 @@ assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_e
 assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_valid & r_ex2_issue.rs1_pred_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
 assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_valid & r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
+// EX2 brtag flush check
+assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex3_issue.valid;
+
+always_comb begin
+  w_ex3_issue_next = r_ex2_issue;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_br_flush;
+end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -202,7 +231,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_rs1_pred_hit <= 1'b0;
     r_ex3_rs2_pred_hit <= 1'b0;
   end else begin
-    r_ex3_issue    <= r_ex2_issue;
+    r_ex3_issue    <= w_ex3_issue_next;
     r_ex3_index    <= r_ex2_index;
     r_ex3_br_vaddr <= w_ex2_br_vaddr;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
