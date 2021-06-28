@@ -20,8 +20,6 @@ module msrh_sched_entry
    output logic                                o_entry_ready,
    output                                      msrh_pkg::issue_t o_entry,
 
-   input logic                                 i_ex0_rs_conflicted,
-
    /* Forwarding path */
    input                                       msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
    input                                       msrh_pkg::phy_wr_t i_phy_wr [msrh_pkg::TGT_BUS_SIZE],
@@ -228,10 +226,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_state <= msrh_pkg::DONE;
             r_entry.except_valid <= pipe_done_if.except_valid;
             r_entry.except_type  <= pipe_done_if.except_type;
-          end
-          if (i_ex0_rs_conflicted) begin
-            r_state <= msrh_pkg::WAIT;
-            r_issued <= 1'b0;
           end
           if (r_entry.rs1_pred_ready & w_rs1_mispredicted ||
               r_entry.rs2_pred_ready & w_rs2_mispredicted) begin

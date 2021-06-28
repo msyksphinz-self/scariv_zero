@@ -70,9 +70,6 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
 msrh_pkg::issue_t w_rv0_issue;
 logic [MEM_Q_SIZE-1: 0] w_rv0_index_oh;
 
-logic                                 w_ex0_rs_conflicted;
-logic [MEM_Q_SIZE-1: 0] w_ex0_rs_conf_index_oh;
-
 done_if #(.RV_ENTRY_SIZE(MEM_Q_SIZE)) w_ex3_ldq_stq_done_if();
 done_if #(.RV_ENTRY_SIZE(MEM_Q_SIZE)) w_ex0_sched_done_if();
 
@@ -161,8 +158,8 @@ u_lsu_pipe
    .i_rv0_issue('h0),
    .i_rv0_index_oh('h0),
 
-   .o_ex0_rs_conflicted    (w_ex0_rs_conflicted),
-   .o_ex0_rs_conf_index_oh (w_ex0_rs_conf_index_oh),
+   .o_ex0_rs_conflicted    (),
+   .o_ex0_rs_conf_index_oh (),
 
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),

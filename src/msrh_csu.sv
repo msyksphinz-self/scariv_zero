@@ -94,9 +94,6 @@ u_msrh_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .i_ex0_rs_conflicted    (1'b0),
-   .i_ex0_rs_conf_index_oh ({msrh_conf_pkg::RV_CSU_ENTRY_SIZE{1'b0}}),
-
    .pipe_done_if(w_ex3_done_if),
    .i_commit      (i_commit),
    .br_upd_if     (br_upd_if),
