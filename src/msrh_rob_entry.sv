@@ -29,6 +29,7 @@ rob_entry_t             r_entry;
 rob_entry_t             w_entry_next;
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_finished_grp_id;
 logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_except_valid;
 except_t                               w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
@@ -73,6 +74,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+assign w_finished_grp_id = (r_entry.done_grp_id | r_entry.dead) & r_entry.grp_id;
+
 always_comb begin
   w_entry_next = r_entry;
 
@@ -99,7 +102,7 @@ always_comb begin
     // Condition :
     // all instruction done, or ROB entry dead,
     // So, during killing, allocated new instruction should be killed.
-    if (i_commit_finish & ((r_entry.done_grp_id | r_entry.dead) == r_entry.grp_id)) begin
+    if (i_commit_finish & o_block_all_done) begin
       w_entry_next.valid = 1'b0;
     end else begin
       w_entry_next.done_grp_id = r_entry.done_grp_id | w_done_rpt_valid;
@@ -131,6 +134,6 @@ end // always_comb
 
 
 assign o_entry = r_entry;
-assign o_block_all_done = r_entry.valid & (r_entry.grp_id == r_entry.done_grp_id);
+assign o_block_all_done = r_entry.valid & (w_finished_grp_id == r_entry.grp_id);
 
 endmodule // msrh_rob_entry

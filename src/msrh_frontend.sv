@@ -298,7 +298,7 @@ end
 
 
 assign w_s0_vaddr = w_commit_except_upd ? w_s0_vaddr_flush_next : r_s0_vaddr;
-assign w_commit_except_upd = i_commit.commit & i_commit.except_valid & !i_commit.all_dead;
+assign w_commit_except_upd = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
 assign w_commit_flush_valid = w_commit_except_upd;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
