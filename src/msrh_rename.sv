@@ -150,15 +150,25 @@ end
 endgenerate
 
 assign w_brupd_rnid_restore_valid = br_upd_if.update;
-//
 assign w_commit_rd_valid = ({msrh_conf_pkg::DISP_SIZE{w_brupd_rnid_restore_valid}} | w_commit_except_rd_valid) &
                            i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
+msrh_pkg::commit_blk_t r_commit_dly;
+logic                  r_commit_except_valid_dly;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_commit_dly <= 'h0;
+    r_commit_except_valid_dly <= 1'b0;
+  end else begin
+    r_commit_dly <= i_commit;
+    r_commit_except_valid_dly <= w_commit_except_valid;
+  end
+end
 
 assign w_commit_except_valid = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
 
-assign w_restore_valid = (|w_commit_except_valid)  |                        // Exception : Restore from CommitMap
+assign w_restore_valid = (|r_commit_except_valid_dly)  |                        // Exception : Restore from CommitMap
                          w_brupd_rnid_restore_valid; // Speculation Miss : Restore from Br Queue
-assign w_restore_rn_list = (|w_commit_except_valid) ? w_restore_commit_map_list :
+assign w_restore_rn_list = (|r_commit_except_valid_dly) ? w_restore_commit_map_list :
                            w_restore_queue_list;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop

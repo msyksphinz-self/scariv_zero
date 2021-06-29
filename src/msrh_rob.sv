@@ -164,8 +164,8 @@ assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MIS
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
-assign o_commit.dead_id      = w_dead_grp_id & o_commit.grp_id;
-assign o_commit.all_dead     = &w_entries[w_out_cmt_entry_id].dead;
+assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
+assign o_commit.all_dead     = o_commit.dead_id == o_commit.grp_id;
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
@@ -200,8 +200,8 @@ end
 endgenerate
 // assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
 // assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
-assign o_commit_rnid_update.dead_id        = w_dead_grp_id;
-assign o_commit_rnid_update.all_dead       = w_killing_uncmts;
+assign o_commit_rnid_update.dead_id        = o_commit.dead_id;
+assign o_commit_rnid_update.all_dead       = o_commit.all_dead;
 assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
 assign o_commit_rnid_update.except_type    = o_commit.except_type;
 
@@ -236,7 +236,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (o_commit.commit & (|o_commit.except_valid) & (w_in_cmt_id != w_out_cmt_id)) begin
       r_killing_uncmts <= 1'b1;
-    end else if (r_killing_uncmts & !(&w_entries[w_out_cmt_entry_id].dead)) begin
+    end else /* if (r_killing_uncmts & !(&w_entries[w_out_cmt_entry_id].dead)) */ begin
       r_killing_uncmts <= 1'b0;
     end
   end
