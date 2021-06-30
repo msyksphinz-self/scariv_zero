@@ -16,6 +16,9 @@ module msrh_resource_alloc
    cre_ret_if.master csu_cre_ret_if,
    cre_ret_if.master bru_cre_ret_if,
 
+   // Branch Tag Update Signal
+   br_upd_if.slave                br_upd_if,
+
    input msrh_pkg::commit_blk_t   i_commit,
    // Branch Tag Update Signal
    cmt_brtag_if.slave             cmt_brtag_if,
@@ -211,6 +214,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx+
       if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
         w_br_mask_valid_next[b_idx] = 1'b0;
       end
+    end
+    if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
+      w_br_mask_valid_next[b_idx] = 1'b0;
     end
   end
 end

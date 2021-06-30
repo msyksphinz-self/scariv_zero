@@ -213,6 +213,8 @@ msrh_resource_alloc u_msrh_resource_alloc
   .csu_cre_ret_if (csu_cre_ret_if),
   .bru_cre_ret_if (bru_cre_ret_if),
 
+  .br_upd_if (w_ex3_br_upd_if),
+
   .i_commit (w_commit),
   .cmt_brtag_if (w_cmt_brtag_if),
 
