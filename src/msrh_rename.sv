@@ -198,7 +198,7 @@ msrh_rename_map u_msrh_rename_map
    .i_restore_from_queue (w_restore_valid  ),
    .i_restore_rn_list    (w_restore_rn_list),
 
-   .i_commit_rd_valid (w_commit_rd_valid),
+   .i_commit_rd_valid ({msrh_conf_pkg::DISP_SIZE{1'b0}} /* w_commit_rd_valid*/),
    .i_commit_rd_regidx(w_commit_rd_regidx),
    .i_commit_rd_rnid  (w_commit_rd_rnid),
 

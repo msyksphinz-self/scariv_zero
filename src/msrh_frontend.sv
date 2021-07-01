@@ -89,8 +89,9 @@ logic                           w_tlb_ready;
 // ==============
 // Commiter PC
 // ==============
-logic                           w_commit_except_upd;
-logic                           w_commit_flush_valid;
+logic                           w_commit_flush;
+logic                           w_br_flush;
+logic                           w_flush_valid;
 
 logic                           w_inst_buffer_ready;
 
@@ -249,7 +250,7 @@ always_comb begin
 
   w_s0_vaddr_next = r_s0_vaddr;
 
-  if (w_commit_except_upd | br_upd_if.update) begin
+  if (w_flush_valid) begin
     if ((w_s0_ic_req.valid & w_s0_ic_ready & w_tlb_ready) |
         (w_if_state_next == ISSUED)) begin
       w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -297,9 +298,10 @@ always_comb begin
 end
 
 
-assign w_s0_vaddr = w_commit_except_upd ? w_s0_vaddr_flush_next : r_s0_vaddr;
-assign w_commit_except_upd = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
-assign w_commit_flush_valid = w_commit_except_upd;
+assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
+assign w_br_flush     = br_upd_if.update;
+assign w_flush_valid  = w_commit_flush | w_br_flush;
+assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next : r_s0_vaddr;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
@@ -368,7 +370,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_clear <= r_s1_clear;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss        ;
-    r_s2_tlb_except_valid <= w_commit_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
+    r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
 `ifdef SIMULATION
     r_s2_paddr <= r_s1_paddr;
@@ -393,7 +395,7 @@ msrh_icache u_msrh_icache
    .i_reset_n (i_reset_n),
 
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (w_commit_flush_valid),
+   .i_flush_valid (w_flush_valid),
 
    .i_fence_i (i_fence_i),
 
@@ -430,7 +432,7 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (w_commit_flush_valid),
+   .i_flush_valid (w_flush_valid),
 
    .i_inst_valid (w_inst_buffer_load_valid),
 
