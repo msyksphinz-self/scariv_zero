@@ -239,15 +239,13 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     if (iq_disp.valid & iq_disp.ready & iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR) begin
       /* verilator lint_off ALWCOMBORDER */
       w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx] | w_empty_entry_idx_oh;
-      w_br_tag_temp_idx[d_idx+1] = w_empty_entry_idx;
     end else begin
       w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx];
-      w_br_tag_temp_idx[d_idx+1] = w_br_tag_temp_idx[d_idx];
     end
-
+    w_br_tag_temp_idx[d_idx+1] = w_empty_entry_idx;
   end // always_comb
 
-  assign o_brtag[d_idx]  = w_br_tag_temp_idx[d_idx+1];
+  assign o_brtag[d_idx]  = w_br_tag_temp_idx   [d_idx+1];
   assign o_brmask[d_idx] = w_br_mask_temp_valid[d_idx];
 end // block: branch_loop
 endgenerate
