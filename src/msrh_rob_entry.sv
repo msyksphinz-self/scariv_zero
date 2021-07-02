@@ -96,6 +96,19 @@ always_comb begin
       w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
     end
+
+    if (br_upd_if.update) begin
+      for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag)) begin
+          w_entry_next.done_grp_id[d_idx] = 1'b1;
+          w_entry_next.dead[d_idx] = 1'b1;
+        end
+      end
+      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
+        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.vaddr;
+      end
+    end
   end // if (i_load_valid)
 
   if (r_entry.valid) begin

@@ -335,7 +335,7 @@ endfunction // is_commit_flush_target
 
 function logic is_br_flush_target(logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] entry_br_mask,
                                   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag);
-  return entry_br_mask & (1 << brtag);
+  return |(entry_br_mask & (1 << brtag));
 
 endfunction // is_br_flush_target
 

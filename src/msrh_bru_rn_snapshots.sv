@@ -7,6 +7,7 @@ module msrh_bru_rn_snapshots
    input logic [RNID_W-1: 0]                                  i_rn_list[32],
 
    input logic [msrh_conf_pkg::DISP_SIZE-1: 0]                i_load,
+   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]                i_rd_valid,
    input logic [ 4: 0]                                        i_rd_archreg[msrh_conf_pkg::DISP_SIZE],
    input logic [RNID_W-1: 0]                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
    input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag [msrh_conf_pkg::DISP_SIZE],
@@ -32,7 +33,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   always_comb begin
     for(int i =  0; i < 32; i++) begin
       /* verilator lint_off ALWCOMBORDER */
-      w_tmp_snapshots[d_idx+1][i] = i_load[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? i_rd_rnid[d_idx] : w_tmp_snapshots[d_idx][i];
+      w_tmp_snapshots[d_idx+1][i] = i_rd_valid[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? i_rd_rnid[d_idx] : w_tmp_snapshots[d_idx][i];
     end
   end
 

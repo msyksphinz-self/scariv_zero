@@ -73,6 +73,7 @@ logic     w_rs2_mispredicted;
 logic     w_entry_flush;
 logic     w_commit_flush;
 logic     w_br_flush;
+logic     w_load_br_flush;
 logic     w_entry_complete;
 logic     w_dead_state_clear;
 
@@ -178,6 +179,8 @@ assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry
 assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
+assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag) & br_upd_if.update;
+
 // assign w_entry_to_dead = w_entry_flush &
 // (i_commit.cmt_id != r_entry.cmt_id);
 assign w_dead_state_clear = i_commit.commit &
@@ -200,7 +203,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state <= msrh_pkg::INIT;
         end else if (i_put) begin
           r_entry <= w_init_entry;
-          r_state <= msrh_pkg::WAIT;
+          if (w_load_br_flush) begin
+            r_state <= msrh_pkg::DEAD;
+          end else begin
+            r_state <= msrh_pkg::WAIT;
+          end
         end
       end
       msrh_pkg::WAIT : begin

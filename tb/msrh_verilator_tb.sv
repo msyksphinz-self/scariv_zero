@@ -306,9 +306,10 @@ module msrh_tb (
   always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
     if (!i_msrh_reset_n) begin
     end else begin
-      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid & !committed_rob_entry.dead) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
         for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
-          if (committed_rob_entry.grp_id[grp_idx] & (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_valid_except_grp_id[grp_idx] | !w_dead_grp_id[grp_idx])) begin
+          if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
+              ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
                       int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),

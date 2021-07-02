@@ -374,6 +374,8 @@ u_msrh_bru_rn_snapshots
    .i_rn_list (w_rn_list),
 
    .i_load ({msrh_conf_pkg::DISP_SIZE{w_iq_fire}} & w_is_br_inst),
+
+   .i_rd_valid   (w_rd_valids),
    .i_rd_archreg (w_update_arch_id),
    .i_rd_rnid    (w_rd_rnid),
    .i_brtag      (i_brtag  ),
