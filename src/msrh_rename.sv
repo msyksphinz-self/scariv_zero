@@ -45,7 +45,6 @@ logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_rd_valid;
 logic                                     w_commit_except_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
@@ -89,25 +88,25 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
   // When instruction commit normally, return old RNID
   // even thouhg instruction is dead, newly allocated RNID should be return
-  assign w_push_freelist = i_commit_rnid_update.commit &
-                           i_commit_rnid_update.rnid_valid[d_idx] &
-                           (i_commit_rnid_update.rd_regidx[d_idx] != 'h0);
+  assign w_push_freelist = r_commit_rnid_update_dly.commit &
+                           r_commit_rnid_update_dly.rnid_valid[d_idx] &
+                           (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0);
   // Pushed ID, normal commit inst                    => old ID
   //            dead instruction                      => new ID
   //            normal exception                      => new ID
   //            silent flush (actually normally exit) => old ID
-  assign except_flush_valid = i_commit_rnid_update.commit &
-                              i_commit_rnid_update.except_valid[d_idx] &
-                              (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH);
+  assign except_flush_valid = r_commit_rnid_update_dly.commit &
+                              r_commit_rnid_update_dly.except_valid[d_idx] &
+                              (r_commit_rnid_update_dly.except_type != msrh_pkg::SILENT_FLUSH);
 
   always_comb begin
-    if (i_commit_rnid_update.commit &
-        !i_commit_rnid_update.all_dead &
-        !(i_commit_rnid_update.dead_id[d_idx] | except_flush_valid)) begin
+    if (r_commit_rnid_update_dly.commit &
+        !r_commit_rnid_update_dly.all_dead &
+        !(r_commit_rnid_update_dly.dead_id[d_idx] | except_flush_valid)) begin
       // old ID push
-      w_push_freelist_id = i_commit_rnid_update.old_rnid[d_idx];
+      w_push_freelist_id = r_commit_rnid_update_dly.old_rnid[d_idx];
     end else begin
-      w_push_freelist_id = i_commit_rnid_update.rd_rnid[d_idx];
+      w_push_freelist_id = r_commit_rnid_update_dly.rd_rnid[d_idx];
     end
   end
 
@@ -150,17 +149,19 @@ end
 endgenerate
 
 assign w_brupd_rnid_restore_valid = br_upd_if.update;
-assign w_commit_rd_valid = ({msrh_conf_pkg::DISP_SIZE{w_brupd_rnid_restore_valid}} | w_commit_except_rd_valid) &
-                           i_commit_rnid_update.rnid_valid & ~i_commit_rnid_update.dead_id;
 msrh_pkg::commit_blk_t r_commit_dly;
 logic                  r_commit_except_valid_dly;
+msrh_pkg::cmt_rnid_upd_t r_commit_rnid_update_dly;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_commit_dly <= 'h0;
     r_commit_except_valid_dly <= 1'b0;
+    r_commit_rnid_update_dly <= 'h0;
   end else begin
     r_commit_dly <= i_commit;
     r_commit_except_valid_dly <= w_commit_except_valid;
+    r_commit_rnid_update_dly <= i_commit_rnid_update;
   end
 end
 
@@ -198,7 +199,7 @@ msrh_rename_map u_msrh_rename_map
    .i_restore_from_queue (w_restore_valid  ),
    .i_restore_rn_list    (w_restore_rn_list),
 
-   .i_commit_rd_valid ({msrh_conf_pkg::DISP_SIZE{1'b0}} /* w_commit_rd_valid*/),
+   .i_commit_rd_valid ({msrh_conf_pkg::DISP_SIZE{1'b0}}),
    .i_commit_rd_regidx(w_commit_rd_regidx),
    .i_commit_rd_rnid  (w_commit_rd_rnid),
 

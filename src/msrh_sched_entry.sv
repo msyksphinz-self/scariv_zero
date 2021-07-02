@@ -205,6 +205,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_entry <= w_init_entry;
           if (w_load_br_flush) begin
             r_state <= msrh_pkg::DEAD;
+            r_dead  <= 1'b1;
           end else begin
             r_state <= msrh_pkg::WAIT;
           end
