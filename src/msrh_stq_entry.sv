@@ -54,6 +54,7 @@ module msrh_stq_entry
    );
 
 stq_entry_t                          r_entry;
+/* verilator lint_off UNOPTFLAT */
 stq_entry_t                          w_entry_next;
 logic                                              w_entry_flush;
 logic                                              w_commit_flush;
@@ -161,7 +162,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
-                       all_operand_ready(r_entry);
+                       all_operand_ready(w_entry_next);
 
 always_comb begin
   w_entry_next = r_entry;
@@ -170,8 +171,8 @@ always_comb begin
   w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
                           i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
                           r_entry.rs2_data;
-  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
+  w_entry_next.inst.rs1_pred_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
 
   // BrMask update
   if (br_upd_if.update) begin

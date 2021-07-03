@@ -44,6 +44,7 @@ module msrh_ldq_entry
 logic                                            w_entry_ready;
 
 ldq_entry_t                                      r_entry;
+/* verilator lint_off UNOPTFLAT */
 ldq_entry_t                                      w_entry_next;
 logic                                            w_entry_flush;
 logic                                            w_commit_flush;
@@ -120,7 +121,7 @@ assign stq_haz_idx_next = i_stq_resolve.valid ? r_entry.stq_haz_idx & ~i_stq_res
                           r_entry.stq_haz_idx;
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
-                       all_operand_ready(r_entry);
+                       all_operand_ready(w_entry_next);
 
 assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
@@ -204,11 +205,11 @@ end
 always_comb begin
 
   w_entry_next = r_entry;
-  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.inst.rs2_ready = r_entry.inst.rs2_ready | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | /* (w_rs1_rel_hit & ~w_rs1_may_mispred) | */ w_rs1_phy_hit;
+  w_entry_next.inst.rs2_ready = r_entry.inst.rs2_ready | /* (w_rs2_rel_hit & ~w_rs2_may_mispred) | */ w_rs2_phy_hit;
 
-  w_entry_next.inst.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry_next.inst.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+  w_entry_next.inst.rs1_pred_ready = 1'b0; // w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.inst.rs2_pred_ready = 1'b0; // w_rs2_rel_hit & w_rs2_may_mispred;
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
 
