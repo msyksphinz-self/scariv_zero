@@ -11,6 +11,9 @@ module msrh_bru_pipe
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
   input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
+  // Commit notification
+  input msrh_pkg::commit_blk_t      i_commit,
+
   input msrh_pkg::mispred_t         i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
  regread_if.master ex1_regread_rs1,
@@ -28,6 +31,8 @@ typedef struct packed {
   imm_t imm;
   logic wr_rd;
 } pipe_ctrl_t;
+
+logic   w_commit_flushed;
 
 msrh_pkg::issue_t                        r_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
@@ -99,7 +104,7 @@ assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_b
 
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
-  w_ex1_issue_next.valid = r_ex0_issue.valid & ~w_ex0_br_flush;
+  w_ex1_issue_next.valid = r_ex0_issue.valid & ~w_ex0_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -132,6 +137,8 @@ select_mispred_bus rs2_mispred_select
 
  .o_mispred    (w_ex1_rs2_lsu_mispred)
  );
+
+assign w_commit_flushed = msrh_pkg::is_flushed_commit(i_commit);
 
 
 assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
@@ -181,7 +188,7 @@ assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_b
 
 always_comb begin
   w_ex2_issue_next = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_br_flush;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -217,7 +224,7 @@ assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_b
 
 always_comb begin
   w_ex3_issue_next = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_br_flush;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
