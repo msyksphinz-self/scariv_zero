@@ -129,15 +129,19 @@ always_comb begin
     w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}};
 
     // Branch condition update
-    if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
+    if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (r_entry.inst[d_idx].valid &
-            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag)) begin
+            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag) &
+            ~br_upd_if.dead & br_upd_if.mispredict) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
           w_entry_next.dead[d_idx] = 1'b1;
         end
+        // Resolve the branch dependency
+        w_entry_next.inst[d_idx].br_mask[1 << br_upd_if.brtag] = 1'b0;
       end
-      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
+      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) &
+          ~br_upd_if.dead & br_upd_if.mispredict) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.vaddr;
       end
