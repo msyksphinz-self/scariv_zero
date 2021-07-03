@@ -95,6 +95,15 @@ logic                           w_flush_valid;
 
 logic                           w_inst_buffer_ready;
 
+
+logic                           w_ic_refill_wakeup;
+logic                           w_tlb_refill_wakeup;
+logic                           w_fb_refill_wakeup;
+
+assign w_ic_refill_wakeup  = (r_if_state == WAIT_IC_FILL ) & w_s0_ic_ready & w_tlb_ready;
+assign w_tlb_refill_wakeup = (r_if_state == WAIT_TLB_FILL) & w_s0_ic_ready & w_tlb_ready;
+assign w_fb_refill_wakeup  = (r_if_state == WAIT_FB_FREE ) & w_inst_buffer_ready & w_s0_ic_ready & w_tlb_ready;
+
 always_comb begin
   if (|(i_commit.except_valid & ~i_commit.dead_id)) begin
     case (i_commit.except_type)
@@ -230,17 +239,17 @@ always_comb begin
       end
     end
     WAIT_IC_FILL : begin
-      if (w_s0_ic_ready) begin
+      if (w_ic_refill_wakeup) begin
         w_if_state_next = ISSUED;
       end
     end
     WAIT_TLB_FILL : begin
-      if (w_tlb_ready) begin
+      if (w_tlb_refill_wakeup) begin
         w_if_state_next = ISSUED;
       end
     end
     WAIT_FB_FREE : begin
-      if (w_inst_buffer_ready & w_s0_ic_ready) begin
+      if (w_fb_refill_wakeup) begin
         w_if_state_next = ISSUED;
       end
     end
@@ -274,19 +283,19 @@ always_comb begin
         end
       end
       WAIT_IC_FILL : begin
-        if (w_s0_ic_ready) begin
+        if (w_ic_refill_wakeup) begin
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end
       WAIT_TLB_FILL : begin
-        if (w_tlb_ready) begin
+        if (w_tlb_refill_wakeup) begin
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end
       WAIT_FB_FREE : begin
-        if (w_inst_buffer_ready & w_s0_ic_ready) begin
+        if (w_fb_refill_wakeup) begin
           w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
@@ -381,9 +390,7 @@ end
 
 assign w_s0_ic_req.valid = ((r_if_state == ISSUED) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready) &
                             !r_s1_tlb_miss & !r_s2_tlb_miss)  |
-                           ((r_if_state == WAIT_IC_FILL ) & w_s0_ic_ready) |
-                           ((r_if_state == WAIT_FB_FREE ) & w_inst_buffer_ready & w_s0_ic_ready) |
-                           ((r_if_state == WAIT_TLB_FILL) & w_tlb_ready);
+                           w_ic_refill_wakeup | w_tlb_refill_wakeup | w_fb_refill_wakeup;
 
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
