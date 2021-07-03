@@ -138,7 +138,7 @@ always_comb begin
           w_entry_next.dead[d_idx] = 1'b1;
         end
         // Resolve the branch dependency
-        w_entry_next.inst[d_idx].br_mask[1 << br_upd_if.brtag] = 1'b0;
+        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) &
           ~br_upd_if.dead & br_upd_if.mispredict) begin

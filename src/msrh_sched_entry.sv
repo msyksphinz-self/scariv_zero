@@ -46,9 +46,12 @@ module msrh_sched_entry
    );
 
 logic    r_issued;
+logic    w_issued_next;
 logic    r_dead;
+logic    w_dead_next;
 msrh_pkg::issue_t r_entry;
-msrh_pkg::issue_t w_entry;
+/* verilator lint_off UNOPTFLAT */
+msrh_pkg::issue_t w_entry_next;
 msrh_pkg::issue_t w_init_entry;
 
 logic    w_oldest_ready;
@@ -81,6 +84,7 @@ logic     w_dead_state_clear;
 logic w_pc_update_before_entry;
 
 msrh_pkg::sched_state_t r_state;
+msrh_pkg::sched_state_t w_state_next;
 
 function logic all_operand_ready(msrh_pkg::issue_t entry);
   logic     ret;
@@ -161,12 +165,119 @@ select_mispred_bus rs2_mispred_select
 
 
 always_comb begin
-  w_entry = r_entry;
-  w_entry.rs1_ready = r_entry.rs1_ready /* | r_entry.rs1_pred_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry.rs2_ready = r_entry.rs2_ready /* | r_entry.rs2_pred_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_state_next  = r_state;
+  w_dead_next   = r_dead;
+  w_issued_next = r_issued;
+  w_entry_next  = r_entry;
 
-  w_entry.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+  w_entry_next.rs1_ready = r_entry.rs1_ready /* | r_entry.rs1_pred_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.rs2_ready = r_entry.rs2_ready /* | r_entry.rs2_pred_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+
+  w_entry_next.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+
+  case (r_state)
+    msrh_pkg::INIT : begin
+      if (w_entry_flush) begin
+        w_state_next = msrh_pkg::INIT;
+      end else if (i_put) begin
+        w_entry_next = w_init_entry;
+        if (w_load_br_flush) begin
+          w_state_next = msrh_pkg::DEAD;
+          w_dead_next  = 1'b1;
+        end else begin
+          w_state_next = msrh_pkg::WAIT;
+        end
+      end
+    end
+    msrh_pkg::WAIT : begin
+      if (w_entry_flush) begin
+        w_state_next = msrh_pkg::DEAD;
+        w_dead_next  = 1'b1;
+      end else begin
+        if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
+          w_state_next = msrh_pkg::DONE;
+        end else if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+          w_issued_next = 1'b1;
+          w_state_next = msrh_pkg::ISSUED;
+        end
+      end
+    end
+    msrh_pkg::ISSUED : begin
+      if (w_entry_flush) begin
+        w_state_next = msrh_pkg::DEAD;
+        w_dead_next  = 1'b1;
+      end else begin
+        if (i_pipe_done) begin
+          w_state_next = msrh_pkg::DONE;
+          w_entry_next.except_valid = pipe_done_if.except_valid;
+          w_entry_next.except_type  = pipe_done_if.except_type;
+        end
+        if (r_entry.rs1_pred_ready & w_rs1_mispredicted ||
+            r_entry.rs2_pred_ready & w_rs2_mispredicted) begin
+          w_state_next = msrh_pkg::WAIT;
+          w_issued_next = 1'b0;
+          w_entry_next.rs1_pred_ready = 1'b0;
+          w_entry_next.rs2_pred_ready = 1'b0;
+        end
+      end
+    end
+    msrh_pkg::DONE : begin
+      if (w_entry_flush) begin
+        w_state_next = msrh_pkg::DEAD;
+        w_dead_next  = 1'b1;
+      end else begin
+        if (IS_BRANCH & w_entry_complete) begin
+          // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
+          w_state_next = msrh_pkg::INIT;
+          w_entry_next.valid = 1'b0;
+          w_issued_next = 1'b0;
+          w_dead_next = 1'b0;
+          // prevent all updates from Pipeline
+          w_entry_next.cmt_id = 'h0;
+          w_entry_next.grp_id = 'h0;
+        end else begin
+          w_state_next = msrh_pkg::WAIT_COMPLETE;
+        end // else: !if(IS_BRANCH & w_entry_complete)
+      end
+    end
+    msrh_pkg::WAIT_COMPLETE : begin
+      /* if (w_entry_to_dead) begin
+       w_state_next = msrh_pkg::DEAD;
+        end else */
+      if (w_entry_complete) begin
+        w_state_next = msrh_pkg::INIT;
+        w_entry_next.valid = 1'b0;
+        w_issued_next = 1'b0;
+        w_dead_next = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
+      end
+    end
+    msrh_pkg::DEAD : begin
+      if (w_dead_state_clear) begin
+        w_state_next = msrh_pkg::INIT;
+        w_entry_next.valid = 1'b0;
+        w_issued_next = 1'b0;
+        w_dead_next   = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
+      end
+    end // case: msrh_pkg::DEAD
+    default : begin
+      w_state_next = msrh_pkg::INIT;
+`ifdef SIMULATION
+      $fatal(0, "Unknown state reached\n");
+`endif // SIMULATION
+    end
+  endcase // case (r_state)
+
+  // BrMask update
+  if (br_upd_if.update) begin
+    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 end
 
 
@@ -197,104 +308,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_issued <= 1'b0;
     r_dead   <= 1'b0;
   end else begin
-    case (r_state)
-      msrh_pkg::INIT : begin
-        if (w_entry_flush) begin
-          r_state <= msrh_pkg::INIT;
-        end else if (i_put) begin
-          r_entry <= w_init_entry;
-          if (w_load_br_flush) begin
-            r_state <= msrh_pkg::DEAD;
-            r_dead  <= 1'b1;
-          end else begin
-            r_state <= msrh_pkg::WAIT;
-          end
-        end
-      end
-      msrh_pkg::WAIT : begin
-        if (w_entry_flush) begin
-          r_state <= msrh_pkg::DEAD;
-          r_dead  <= 1'b1;
-        end else begin
-          r_entry <= w_entry;
-          if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
-            r_state <= msrh_pkg::DONE;
-          end else if (o_entry_valid & o_entry_ready & i_entry_picked) begin
-            r_issued <= 1'b1;
-            r_state <= msrh_pkg::ISSUED;
-          end
-        end
-      end
-      msrh_pkg::ISSUED : begin
-        if (w_entry_flush) begin
-          r_state <= msrh_pkg::DEAD;
-          r_dead  <= 1'b1;
-        end else begin
-          if (i_pipe_done) begin
-            r_state <= msrh_pkg::DONE;
-            r_entry.except_valid <= pipe_done_if.except_valid;
-            r_entry.except_type  <= pipe_done_if.except_type;
-          end
-          if (r_entry.rs1_pred_ready & w_rs1_mispredicted ||
-              r_entry.rs2_pred_ready & w_rs2_mispredicted) begin
-            r_state <= msrh_pkg::WAIT;
-            r_issued <= 1'b0;
-            r_entry.rs1_pred_ready <= 1'b0;
-            r_entry.rs2_pred_ready <= 1'b0;
-          end
-        end
-      end
-      msrh_pkg::DONE : begin
-        if (w_entry_flush) begin
-          r_state <= msrh_pkg::DEAD;
-          r_dead  <= 1'b1;
-        end else begin
-          if (IS_BRANCH & w_entry_complete) begin
-            // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
-            r_state <= msrh_pkg::INIT;
-            r_entry.valid <= 1'b0;
-            r_issued <= 1'b0;
-            r_dead   <= 1'b0;
-            // prevent all updates from Pipeline
-            r_entry.cmt_id <= 'h0;
-            r_entry.grp_id <= 'h0;
-          end else begin
-            r_state <= msrh_pkg::WAIT_COMPLETE;
-          end // else: !if(IS_BRANCH & w_entry_complete)
-        end
-      end
-      msrh_pkg::WAIT_COMPLETE : begin
-        /* if (w_entry_to_dead) begin
-          r_state <= msrh_pkg::DEAD;
-        end else */
-        if (w_entry_complete) begin
-          r_state <= msrh_pkg::INIT;
-          r_entry.valid <= 1'b0;
-          r_issued <= 1'b0;
-          r_dead   <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
-        end
-      end
-      msrh_pkg::DEAD : begin
-        if (w_dead_state_clear) begin
-          r_state       <= msrh_pkg::INIT;
-          r_entry.valid <= 1'b0;
-          r_issued      <= 1'b0;
-          r_dead        <= 1'b0;
-          // prevent all updates from Pipeline
-          r_entry.cmt_id <= 'h0;
-          r_entry.grp_id <= 'h0;
-        end
-      end // case: msrh_pkg::DEAD
-      default : begin
-        r_state <= msrh_pkg::INIT;
-`ifdef SIMULATION
-        $fatal(0, "Unknown state reached\n");
-`endif // SIMULATION
-      end
-    endcase // case (r_state)
+    r_entry <= w_entry_next;
+
+    r_state <= w_state_next;
+    r_issued <= w_issued_next;
+    r_dead   <= w_dead_next;
   end // else: !if(!i_reset_n)
 end
 
@@ -310,9 +328,9 @@ endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & !(r_issued | r_dead) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry);
-assign o_entry       = w_entry;
+assign o_entry_ready = r_entry.valid & /* !(r_issued | r_dead)*/ (r_state == msrh_pkg::WAIT) & !w_entry_flush &
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
+assign o_entry       = w_entry_next;
 
 assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
 assign o_entry_wait_complete = (r_state == msrh_pkg::WAIT_COMPLETE);
