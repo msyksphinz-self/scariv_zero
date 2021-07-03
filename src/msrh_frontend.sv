@@ -96,9 +96,7 @@ logic                           w_flush_valid;
 logic                           w_inst_buffer_ready;
 
 always_comb begin
-  if (br_upd_if.update) begin
-    w_s0_vaddr_flush_next = br_upd_if.vaddr;
-  end else if (|(i_commit.except_valid & ~i_commit.dead_id)) begin
+  if (|(i_commit.except_valid & ~i_commit.dead_id)) begin
     case (i_commit.except_type)
       msrh_pkg::SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
       msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
@@ -189,6 +187,8 @@ always_comb begin
 `endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
+  end else if (br_upd_if.update) begin
+    w_s0_vaddr_flush_next = br_upd_if.vaddr;
   end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
     w_s0_vaddr_flush_next = 'h0;
   end // else: !if(|(i_commit.except_valid & ~i_commit.dead_id))
