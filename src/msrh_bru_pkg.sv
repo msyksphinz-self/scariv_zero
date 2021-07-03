@@ -23,6 +23,7 @@ endinterface // done_if
 interface br_upd_if;
 
   logic                                update;
+  logic                                mispredict;
   logic [riscv_pkg::VADDR_W-1: 0]      vaddr;
   logic                                dead;
   logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
@@ -31,6 +32,7 @@ interface br_upd_if;
 
   modport master (
     output update,
+    output mispredict,
     output dead,
     output vaddr,
     output cmt_id,
@@ -40,6 +42,7 @@ interface br_upd_if;
 
   modport slave (
     input update,
+    input mispredict,
     input dead,
     input vaddr,
     input cmt_id,

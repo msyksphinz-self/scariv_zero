@@ -148,7 +148,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-assign w_brupd_rnid_restore_valid = br_upd_if.update;
+assign w_brupd_rnid_restore_valid = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 msrh_pkg::commit_blk_t r_commit_dly;
 logic                  r_commit_except_valid_dly;
 msrh_pkg::cmt_rnid_upd_t r_commit_rnid_update_dly;

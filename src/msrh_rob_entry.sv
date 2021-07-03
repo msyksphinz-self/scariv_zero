@@ -97,7 +97,7 @@ always_comb begin
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
     end
 
-    if (br_upd_if.update) begin
+    if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag)) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
@@ -129,7 +129,7 @@ always_comb begin
     w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}};
 
     // Branch condition update
-    if (br_upd_if.update) begin
+    if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (r_entry.inst[d_idx].valid &
             is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag)) begin

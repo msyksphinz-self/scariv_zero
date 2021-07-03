@@ -93,9 +93,6 @@ u_msrh_scheduler
    );
 
 
-// br_upd_if tie_br_if();
-// assign tie_br_if.update = 1'b0;
-
 msrh_bru_pipe
   #(
     .RV_ENTRY_SIZE(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)

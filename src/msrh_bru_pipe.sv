@@ -44,6 +44,7 @@ msrh_pkg::issue_t                        r_ex1_issue;
 msrh_pkg::issue_t                        w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 logic                      w_ex1_br_flush;
+logic                      r_ex1_dead;
 
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
@@ -71,6 +72,7 @@ logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
 logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
 logic                                    r_ex2_wr_valid;
 logic                                    w_ex2_br_flush;
+logic                                    r_ex2_dead;
 
 msrh_pkg::issue_t                        r_ex3_issue;
 msrh_pkg::issue_t                        w_ex3_issue_next;
@@ -80,6 +82,7 @@ logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
 logic [riscv_pkg::VADDR_W-1: 0]          r_ex3_br_vaddr;
 logic                                    r_ex3_rs1_pred_hit;
 logic                                    r_ex3_rs2_pred_hit;
+logic                                    r_ex3_dead;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -100,11 +103,10 @@ assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 // EX0 brtag flush check
-assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex0_issue.valid;
+assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex0_issue.valid;
 
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
-  w_ex1_issue_next.valid = r_ex0_issue.valid & ~w_ex0_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -112,10 +114,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= 'h0;
     r_ex1_index <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
+    r_ex1_dead <= 1'b0;
   end else begin
     r_ex1_issue <= r_ex0_issue;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
+    r_ex1_dead <= r_ex0_issue.valid & (w_ex0_br_flush | w_commit_flushed);
   end
 end
 
@@ -184,11 +188,10 @@ bit_oh_or #(
 );
 
 // EX1 brtag flush check
-assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex1_issue.valid;
+assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex1_issue.valid;
 
 always_comb begin
   w_ex2_issue_next = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -199,6 +202,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue <= 'h0;
     r_ex2_index <= 'h0;
     r_ex2_pipe_ctrl <= 'h0;
+    r_ex2_dead <= 1'b0;
 
     r_ex2_wr_valid <= 1'b0;
   end else begin
@@ -208,6 +212,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
+    r_ex2_dead <= r_ex1_dead | r_ex1_issue.valid & (w_ex1_br_flush | w_commit_flushed);
 
     r_ex2_wr_valid <= o_ex1_early_wr.valid;
   end
@@ -220,11 +225,10 @@ assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_valid & r_ex2_issue.rs1_pred_ready ?
 assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_valid & r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
 // EX2 brtag flush check
-assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & r_ex3_issue.valid;
+assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex3_issue.valid;
 
 always_comb begin
   w_ex3_issue_next = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_br_flush & ~w_commit_flushed;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -234,6 +238,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue    <= 'h0;
     r_ex3_br_vaddr <= 'h0;
     r_ex3_pipe_ctrl <= 'h0;
+    r_ex3_dead <= 1'b0;
 
     r_ex3_rs1_pred_hit <= 1'b0;
     r_ex3_rs2_pred_hit <= 1'b0;
@@ -242,6 +247,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_index    <= r_ex2_index;
     r_ex3_br_vaddr <= w_ex2_br_vaddr;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
+    r_ex3_dead <= r_ex2_dead | r_ex2_issue.valid & (w_ex2_br_flush | w_commit_flushed);
 
     r_ex3_rs1_pred_hit <= w_ex2_rs1_pred_hit;
     r_ex3_rs2_pred_hit <= w_ex2_rs2_pred_hit;
@@ -296,7 +302,9 @@ always_comb begin
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 
-assign ex3_br_upd_if.update = r_ex3_issue.valid & r_ex3_result & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.update     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.dead       = r_ex3_dead;
+assign ex3_br_upd_if.mispredict = r_ex3_result; // xxx: currently every branch taken is misprediction
 assign ex3_br_upd_if.vaddr  = r_ex3_br_vaddr;
 assign ex3_br_upd_if.cmt_id = r_ex3_issue.cmt_id;
 assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;

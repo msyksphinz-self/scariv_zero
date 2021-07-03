@@ -187,7 +187,7 @@ always_comb begin
 `endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
-  end else if (br_upd_if.update) begin
+  end else if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
     w_s0_vaddr_flush_next = br_upd_if.vaddr;
   end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
     w_s0_vaddr_flush_next = 'h0;
@@ -299,7 +299,7 @@ end
 
 
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
-assign w_br_flush     = br_upd_if.update;
+assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next : r_s0_vaddr;
 
