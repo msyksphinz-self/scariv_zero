@@ -34,8 +34,12 @@ module msrh_stq
    input msrh_pkg::commit_blk_t   i_commit,
    br_upd_if.slave                br_upd_if,
 
+   // L1D Miss/Hit Interface
    l1d_rd_if.master                      l1d_rd_if,
-   l1d_lrq_if.master                     l1d_lrq_stq_miss_if,  // Interface of Missed Data for Store
+   // Search LRQ interface during eviction
+   lrq_evict_search_if.master            lrq_evict_search_if,
+   // Interface of Missed Data for Store
+   l1d_lrq_if.master                     l1d_lrq_stq_miss_if,
 
    input lrq_resolve_t     i_lrq_resolve,
 
