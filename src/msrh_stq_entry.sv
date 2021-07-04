@@ -174,11 +174,6 @@ always_comb begin
   w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
   w_entry_next.inst.rs1_pred_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
 
-  // BrMask update
-  if (br_upd_if.update) begin
-    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
-  end
-
   case (r_entry.state)
     STQ_INIT : begin
       if (w_entry_flush & w_entry_next.is_valid) begin
@@ -325,6 +320,11 @@ always_comb begin
       $fatal (0, "This state sholudn't be reached.\n");
     end
   endcase // case (w_entry_next.state)
+
+  // BrMask update
+  if (br_upd_if.update) begin
+    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 
 end // always_comb
 

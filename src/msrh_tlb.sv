@@ -63,6 +63,7 @@ typedef enum logic [1:0] {
 } tlb_state_t;
 
 tlb_state_t r_state;
+tlb_state_t r_state_dly;
 
 tlb_entry_t r_sectored_entries[TLB_NORMAL_ENTRIES_NUM];
 tlb_entry_t r_superpage_entries[TLB_SUPERPAGE_ENTRIES_NUM];
@@ -272,11 +273,11 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_state <= ST_READY;
-      o_tlb_update <= 1'b0;
+      r_state_dly <= ST_READY;
     end else begin
+      r_state_dly <= r_state;
       case (r_state)
         ST_READY : begin
-          o_tlb_update <= 1'b0;
           if (i_tlb_req.valid & o_tlb_ready & w_tlb_miss) begin
             r_state <= ST_REQUEST;
             r_refill_tag <= w_vpn;
@@ -301,7 +302,6 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           if (sfence_if.valid) begin
             r_state <= ST_WAIT_INVALIDATE;
           end else if (ptw_if.resp.valid) begin
-            o_tlb_update <= 1'b1;
             r_state <= ST_READY;
           end
         end
@@ -439,5 +439,7 @@ assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
 assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
 assign o_tlb_resp.miss         = w_do_refill | w_tlb_miss /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
+
+assign o_tlb_update = (r_state_dly != ST_READY) & (r_state == ST_READY);
 
 endmodule // tlb

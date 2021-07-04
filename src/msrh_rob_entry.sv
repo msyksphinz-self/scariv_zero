@@ -97,12 +97,15 @@ always_comb begin
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
     end
 
-    if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
+    if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag)) begin
+        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag) &
+            ~br_upd_if.dead & br_upd_if.mispredict) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
           w_entry_next.dead[d_idx] = 1'b1;
         end
+        // Resolve the branch dependency
+        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;

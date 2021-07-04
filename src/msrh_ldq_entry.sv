@@ -213,11 +213,6 @@ always_comb begin
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
 
-  // BrMask update
-  if (br_upd_if.update) begin
-    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
-  end
-
   case (r_entry.state)
     LDQ_INIT :
       if (w_entry_flush & r_entry.is_valid) begin
@@ -361,6 +356,12 @@ always_comb begin
       $fatal ("This state sholudn't be reached.\n");
     end
   endcase // case (r_entry.state)
+
+  // BrMask update
+  if (br_upd_if.update) begin
+    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
+
 end // always_comb
 
 
