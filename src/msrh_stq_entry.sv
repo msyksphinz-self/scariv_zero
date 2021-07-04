@@ -180,7 +180,7 @@ always_comb begin
   end
 
   case (r_entry.state)
-    STQ_INIT :
+    STQ_INIT : begin
       if (w_entry_flush & w_entry_next.is_valid) begin
         w_entry_next.state = STQ_DEAD;
         // w_entry_next.is_valid = 1'b0;
@@ -193,9 +193,10 @@ always_comb begin
                                                      w_rs1_phy_hit, w_rs2_phy_hit,
                                                      w_rs1_may_mispred, 1'b0);
         if (w_load_br_flush) begin
-          w_entry_next.state    = LDQ_DEAD;
+          w_entry_next.state    = STQ_DEAD;
         end
       end
+    end // case: STQ_INIT
     STQ_ISSUE_WAIT : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
