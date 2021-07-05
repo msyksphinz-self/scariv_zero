@@ -8,6 +8,8 @@ module msrh_lrq_entry
 
    input logic i_clear,
 
+   input msrh_lsu_pkg::evict_merge_t i_evict_merge,
+
    input logic i_sent,
    input logic i_evict_sent,
 
@@ -32,6 +34,15 @@ always_comb begin
   if (i_evict_sent) begin
     w_entry_next.evict_sent = 1'b1;
   end
+
+  if (i_evict_merge.valid) begin
+    for (int b = 0; b < msrh_lsu_pkg::DCACHE_DATA_B_W; b++) begin : evict_byte_loop
+      if (i_evict_merge.be[b]) begin
+        w_entry_next.evict.data[b +: 8] = i_evict_merge.data[b % riscv_pkg::XLEN_W/8 +: 8];
+      end
+    end
+  end
+
 end // always_comb
 
 

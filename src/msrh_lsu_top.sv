@@ -60,6 +60,7 @@ l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
 // LSU Pipeline + PTW
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
+lrq_evict_search_if w_lrq_evict_search_if();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
@@ -224,6 +225,7 @@ msrh_stq
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
  .l1d_rd_if (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
+ .lrq_evict_search_if (w_lrq_evict_search_if),
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 
  .i_lrq_resolve (w_lrq_resolve),
@@ -248,6 +250,7 @@ msrh_l1d_load_requester
  .l1d_ext_rd_resp (l1d_ext_resp  ),
 
  .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
+ .lrq_evict_search_if (w_lrq_evict_search_if),
 
  .l1d_evict_if  (w_l1d_evict_if),
 

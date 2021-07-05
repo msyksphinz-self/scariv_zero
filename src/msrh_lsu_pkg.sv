@@ -184,6 +184,11 @@ function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
 
 endfunction // assign_lrq_entry
 
+typedef struct packed {
+  logic                                      valid;
+  logic [riscv_pkg::XLEN_W-1: 0]             data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
+} evict_merge_t;
 
 typedef struct packed {
   logic          valid;

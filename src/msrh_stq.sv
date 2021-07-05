@@ -404,18 +404,12 @@ endgenerate
 // After commit, store operation
 // ==============================
 
-// bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_cmt_sel (.in(w_sq_commit_req), .i_ptr(w_out_ptr_oh), .out(w_sq_commit_req_oh));
 bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_cmt_oh  (.i_oh(w_sq_commit_req_oh), .i_data(w_stq_entries), .o_selected(w_stq_cmt_entry));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    // r_cmt_head_idx <= 'h0;
     r_st1_committed_entry <= 'h0;
   end else begin
-    // if (w_stq_entries[r_cmt_head_idx].state == STQ_COMMIT) begin
-    //   r_cmt_head_idx <= r_cmt_head_idx + 'h1;
-    //   r_committed_sq <= w_stq_entries[r_cmt_head_idx];
-    // end
     r_st1_committed_entry <= w_stq_cmt_entry;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -424,6 +418,26 @@ assign l1d_rd_if.s0_valid = w_stq_cmt_entry.state == STQ_COMMIT;
 assign l1d_rd_if.s0_h_pri = 1'b0;
 assign l1d_rd_if.s0_paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                              {$clog2(DCACHE_DATA_B_W){1'b0}}};
+
+// --------------------------------------------
+// Search Eviction Data that is ready to Evict
+// --------------------------------------------
+assign lrq_evict_search_if.s0_valid = l1d_rd_if.s0_valid;
+assign lrq_evict_search_if.s0_paddr = l1d_rd_if.s0_paddr;
+assign lrq_evict_search_if.s0_data  = w_stq_cmt_entry.size == SIZE_B ? {(riscv_pkg::XLEN_W/8){w_stq_cmt_entry.rs2_data[ 8: 0]}} :
+                                      w_stq_cmt_entry.size == SIZE_H ? {(riscv_pkg::XLEN_W/4){w_stq_cmt_entry.rs2_data[15: 0]}} :
+                                      w_stq_cmt_entry.size == SIZE_W ? {(riscv_pkg::XLEN_W/2){w_stq_cmt_entry.rs2_data[31: 0]}} :
+`ifdef RV64
+                                      w_stq_cmt_entry.size == SIZE_DW ? w_stq_cmt_entry.rs2_data :
+`endif // RV64
+                                      'hx;
+assign lrq_evict_search_if.s0_strb  = w_stq_cmt_entry.size == SIZE_B ? 'h1 :
+                                      w_stq_cmt_entry.size == SIZE_H ? 'h3 :
+                                      w_stq_cmt_entry.size == SIZE_W ? 'h7 :
+`ifdef RV64
+                                      w_stq_cmt_entry.size == SIZE_DW ? 'hf :
+`endif // RV64
+                                      'hx;
 
 always_comb begin
   case (r_st1_committed_entry.size)

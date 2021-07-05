@@ -15,7 +15,8 @@ module msrh_l1d_load_requester
 
    // Interface to L1D eviction
    l1d_evict_if.master l1d_evict_if,
-
+   // Search LRQ interface during eviction
+   lrq_evict_search_if.slave  lrq_evict_search_if,
    // LRQ search interface
    lrq_search_if.slave lrq_search_if
    );
@@ -85,6 +86,9 @@ logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_evict_tag;
 logic                                         r_lrq_search_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index_oh;
 
+
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         w_s0_evict_search_hit;
+
 bit_extract_lsb #(.WIDTH(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_load_valid (.in(~w_norm_lrq_valids), .out(w_norm_lrq_load_valid_oh));
 bit_cnt #(.WIDTH(REQ_PORT_NUM)) u_lrq_req_cnt(.in(w_l1d_lrq_loads_no_conflicts), .out(w_l1d_lrq_loads_cnt));
 
@@ -148,7 +152,35 @@ assign w_lrq_norm_entries_full = |(w_norm_in_ptr_oh & w_norm_lrq_valids);
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_rp1_lrq_resp_tag_oh;
 assign w_rp1_lrq_resp_tag_oh = 1 << r_rp1_lrq_resp_tag;
 
+
+// ---------------------
+// Eviction Data Search
+// ---------------------
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      lrq_evict_search_if.s1_hit_merged <= 1'b0;
+    end else begin
+      lrq_evict_search_if.s1_hit_merged <= |w_s0_evict_search_hit;
+    end
+end
+
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
+
+  // ---------------------
+  // Eviction Data Search
+  // ---------------------
+  assign w_s0_evict_search_hit[b_idx] = w_lrq_entries[b_idx].valid &
+                                     w_lrq_entries[b_idx].evict_valid &
+                                     ~w_lrq_entries[b_idx].evict_sent &
+                                     lrq_evict_search_if.s0_valid &
+                                     (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                      lrq_evict_search_if.s0_paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  msrh_lsu_pkg::evict_merge_t w_evict_merge;
+  assign w_evict_merge.valid = lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
+  assign w_evict_merge.data  = lrq_evict_search_if.s0_data;
+  assign w_evict_merge.be    = lrq_evict_search_if.s0_strb << lrq_evict_search_if.s0_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
+
+
   if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin : normal_entry
     // ----------------------------
     // Load Miss Request
@@ -187,6 +219,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
          .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
+         .i_evict_merge (w_evict_merge),
+
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx])
@@ -206,6 +240,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
          .i_load       (w_stq_miss_lrq_load & w_stq_miss_lrq_idx == b_idx),
          .i_load_entry (w_stq_load_entry),
+
+         .i_evict_merge (w_evict_merge),
 
          .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
