@@ -10,7 +10,11 @@
 #include "extension.h"
 #include "../VERSION"
 
+#ifdef SIM_MAIN
+FILE *compare_log_fp;
+#else // SIM_MAIN
 extern FILE *compare_log_fp;
+#endif // SIM_MAIN
 
 sim_t *spike_core;
 disassembler_t *disasm;
