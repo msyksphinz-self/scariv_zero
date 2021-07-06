@@ -45,7 +45,9 @@ int main(int argc, char** argv) {
   while (1) {
     static struct option long_options[] = {
       {"elf",  no_argument, 0, 'e' },
+#ifdef DUMP_FST
       {"dump", no_argument, 0, 'd' },
+#endif // DUMP_FST
       {"help", no_argument, 0, 'h' }
     };
 
@@ -75,6 +77,7 @@ int main(int argc, char** argv) {
   // Instantiate DUT
   dut = new Vmsrh_tb();
 
+#ifdef TRACE_FST
   if (dump_fst_enable) {
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
@@ -82,6 +85,7 @@ int main(int argc, char** argv) {
     dut->trace(tfp, 100);  // Trace 100 levels of hierarchy
     tfp->open("simx.fst");
   }
+#endif // TRACE_FST
 
   fprintf(stderr, "initial_spike opening %s ...\n", filename);
   initial_spike(filename, RV_XLEN);
@@ -100,7 +104,9 @@ int main(int argc, char** argv) {
   // Reset Time
   while (time_counter < 10) {
     dut->eval();
+#ifdef TRACE_FST
     if (dump_fst_enable) tfp->dump(time_counter);
+#endif // TRACE_FST
     time_counter++;
   }
 
@@ -111,7 +117,9 @@ int main(int argc, char** argv) {
   dut->i_clk = 0;
   while (time_counter < 100) {
     dut->eval();
+#ifdef TRACE_FST
     if (dump_fst_enable) tfp->dump(time_counter);
+#endif // TRACE_FST
     time_counter++;
   }
   // Release reset
@@ -126,7 +134,10 @@ int main(int argc, char** argv) {
 
     // Evaluate DUT
     dut->eval();
+
+#ifdef TRACE_FST
     if (dump_fst_enable) tfp->dump(time_counter);
+#endif // TRACE_FST
 
     if (elf_load_finish) {
       dut->i_elf_loader_reset_n = 0;
@@ -142,7 +153,9 @@ int main(int argc, char** argv) {
     fprintf(stdout, "===============================\n");
   }
   dut->final();
+#ifdef TRACE_FST
   if (dump_fst_enable) tfp->close();
+#endif // TRACE_FST
 }
 
 
@@ -158,7 +171,9 @@ void stop_sim(int code)
   fprintf(stdout, "===============================\n");
 
   dut->final();
+#ifdef TRACE_FST
   if (dump_fst_enable) tfp->close();
+#endif // TRACE_FST
 
   exit(code);
 }

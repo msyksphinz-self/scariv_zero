@@ -1,5 +1,7 @@
 NPROCS = $(shell nproc)
 
+DEBUG = ON
+
 VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 VERILATOR_OPTS += --build
@@ -26,17 +28,18 @@ VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../tb
-VERILATOR_OPTS += --trace-fst
-VERILATOR_OPTS += --trace-params
-VERILATOR_OPTS += --trace-structs
-VERILATOR_OPTS += --trace-underscore
-# VERILATOR_OPTS += --trace-max-array 5000
+ifeq ($(DEBUG),ON)
+	VERILATOR_OPTS += --trace-fst
+	VERILATOR_OPTS += --trace-params
+	VERILATOR_OPTS += --trace-structs
+	VERILATOR_OPTS += --trace-underscore
+	VERILATOR_OPTS += -CFLAGS "-DVL_DEBUG"
+	VERILATOR_OPTS += -CFLAGS "-DDUMP_FST"
+endif
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION
 VERILATOR_OPTS += --compiler clang
-
-VERILATOR_OPTS_RV64 += -CFLAGS "-DVL_DEBUG"
 
 VERILATOR_OPTS_RV64 += ../cpp/tb_elf_loader.cpp
 VERILATOR_OPTS_RV64 += -CFLAGS "-DRV_XLEN=64"
@@ -110,43 +113,43 @@ regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32
 	rv64_tiny_test rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test
 
 rv32_tiny_test:
-	$(MAKE) rv32_tiny
+	$(MAKE) rv32_tiny DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv32_tiny 2>&1 | tee rv32_tiny.log
 
 rv32_small_test:
-	$(MAKE) rv32_small
+	$(MAKE) rv32_small DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv32_small 2>&1 | tee rv32_small.log
 
 rv32_standard_test:
-	$(MAKE) rv32_standard
+	$(MAKE) rv32_standard DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv32_standard 2>&1 | tee rv32_standard.log
 
 rv32_big_test:
-	$(MAKE) rv32_big
+	$(MAKE) rv32_big DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv32_big 2>&1 | tee rv32_big.log
 
 rv32_giant_test:
-	$(MAKE) rv32_giant
+	$(MAKE) rv32_giant DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv32_giant 2>&1 | tee rv32_giant.log
 
 rv64_tiny_test:
-	$(MAKE) rv64_tiny
+	$(MAKE) rv64_tiny DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_tiny 2>&1 | tee rv64_tiny.log
 
 rv64_small_test:
-	$(MAKE) rv64_small
+	$(MAKE) rv64_small DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_small 2>&1 | tee rv64_small.log
 
 rv64_standard_test:
-	$(MAKE) rv64_standard
+	$(MAKE) rv64_standard DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_standard 2>&1 | tee rv64_standard.log
 
 rv64_big_test:
-	$(MAKE) rv64_big
+	$(MAKE) rv64_big DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_big 2>&1 | tee rv64_big.log
 
 rv64_giant_test:
-	$(MAKE) rv64_giant
+	$(MAKE) rv64_giant DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_giant 2>&1 | tee rv64_giant.log
 
 
