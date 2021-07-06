@@ -38,7 +38,7 @@ always_comb begin
   if (i_evict_merge.valid) begin
     for (int b = 0; b < msrh_lsu_pkg::DCACHE_DATA_B_W; b++) begin : evict_byte_loop
       if (i_evict_merge.be[b]) begin
-        w_entry_next.evict.data[b +: 8] = i_evict_merge.data[b % riscv_pkg::XLEN_W/8 +: 8];
+        w_entry_next.evict.data[b*8 +: 8] = i_evict_merge.data[(b * 8) % riscv_pkg::XLEN_W +: 8];
       end
     end
   end

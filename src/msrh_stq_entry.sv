@@ -36,6 +36,7 @@ module msrh_stq_entry
    input logic                                i_sq_op_accept,
    input logic                                i_sq_l1d_rd_miss,
    input logic                                i_sq_l1d_rd_conflict,
+   input logic                                i_sq_evict_merged,
    input logic                                i_sq_lrq_full,
    input logic                                i_sq_lrq_conflict,
    input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_sq_lrq_index_oh,
@@ -143,7 +144,8 @@ assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_stq_entry_st_finish = (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
+assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT_L1D_CHECK) & i_sq_evict_merged |
+                               (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
                                (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -285,6 +287,9 @@ always_comb begin
         w_entry_next.state = STQ_WAIT_LRQ_REFILL;
       end else if (i_sq_l1d_rd_conflict) begin
         w_entry_next.state = STQ_COMMIT; // Replay
+      end else if (i_sq_evict_merged) begin
+        w_entry_next.is_valid = 1'b0;
+        w_entry_next.state = STQ_INIT;
       end else begin
         w_entry_next.state = STQ_L1D_UPDATE;
       end

@@ -247,14 +247,14 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .o_entry_ready (w_entry_ready[s_idx]),
      .i_entry_picked (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
-     // .i_stq_entry_done (w_stq_done_oh[s_idx]),
-
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
      .i_sq_op_accept(w_sq_commit_req_oh[s_idx]),
      .i_sq_l1d_rd_miss     (l1d_rd_if.s1_miss),
      .i_sq_l1d_rd_conflict (l1d_rd_if.s1_conflict),
+     .i_sq_evict_merged    (lrq_evict_search_if.s1_hit_merged),
+
      .i_sq_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
      .i_sq_lrq_conflict(l1d_lrq_stq_miss_if.resp_payload.conflict),
      .i_sq_lrq_index_oh(l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh),
@@ -423,7 +423,7 @@ assign l1d_rd_if.s0_paddr = {w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(D
 // Search Eviction Data that is ready to Evict
 // --------------------------------------------
 assign lrq_evict_search_if.s0_valid = l1d_rd_if.s0_valid;
-assign lrq_evict_search_if.s0_paddr = l1d_rd_if.s0_paddr;
+assign lrq_evict_search_if.s0_paddr = w_stq_cmt_entry.paddr;
 assign lrq_evict_search_if.s0_data  = w_stq_cmt_entry.size == SIZE_B ? {(riscv_pkg::XLEN_W/8){w_stq_cmt_entry.rs2_data[ 8: 0]}} :
                                       w_stq_cmt_entry.size == SIZE_H ? {(riscv_pkg::XLEN_W/4){w_stq_cmt_entry.rs2_data[15: 0]}} :
                                       w_stq_cmt_entry.size == SIZE_W ? {(riscv_pkg::XLEN_W/2){w_stq_cmt_entry.rs2_data[31: 0]}} :
@@ -433,9 +433,9 @@ assign lrq_evict_search_if.s0_data  = w_stq_cmt_entry.size == SIZE_B ? {(riscv_p
                                       'hx;
 assign lrq_evict_search_if.s0_strb  = w_stq_cmt_entry.size == SIZE_B ? 'h1 :
                                       w_stq_cmt_entry.size == SIZE_H ? 'h3 :
-                                      w_stq_cmt_entry.size == SIZE_W ? 'h7 :
+                                      w_stq_cmt_entry.size == SIZE_W ? 'hf :
 `ifdef RV64
-                                      w_stq_cmt_entry.size == SIZE_DW ? 'hf :
+                                      w_stq_cmt_entry.size == SIZE_DW ? 'hff :
 `endif // RV64
                                       'hx;
 
