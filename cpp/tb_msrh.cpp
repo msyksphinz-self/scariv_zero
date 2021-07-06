@@ -11,6 +11,9 @@
 
 extern std::unique_ptr<Memory> g_memory;
 extern bool elf_load_finish;
+extern "C" {
+  FILE *compare_log_fp;
+}
 
 // Instantiate DUT
 Vmsrh_tb *dut;
@@ -44,15 +47,17 @@ int main(int argc, char** argv) {
 
   while (1) {
     static struct option long_options[] = {
-      {"elf",  no_argument, 0, 'e' },
+      {"elf"   , required_argument, 0, 'e' },
 #ifdef DUMP_FST
-      {"dump", no_argument, 0, 'd' },
+      {"dump"  , no_argument,       0, 'd' },
 #endif // DUMP_FST
-      {"help", no_argument, 0, 'h' }
+      {"output", required_argument, 0, 'o' },
+      {"help"  , no_argument,       0, 'h' },
+      {0       , 0          ,       0, 0   }
     };
 
     int option_index = 0;
-    int c = getopt_long(argc, argv, "-e:h:d", long_options, &option_index);
+    int c = getopt_long(argc, argv, "e:dho:", long_options, &option_index);
 
     if (c == -1) break;
  retry:
@@ -71,6 +76,14 @@ int main(int argc, char** argv) {
 
         break;
       }
+      case 'o': {
+        if ((compare_log_fp = fopen(optarg, "w")) == NULL) {
+          fprintf(stderr, "optarg = %s", optarg);
+          perror("failed to open log file");
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
     }
   }
 
@@ -87,7 +100,7 @@ int main(int argc, char** argv) {
   }
 #endif // TRACE_FST
 
-  fprintf(stderr, "initial_spike opening %s ...\n", filename);
+  fprintf(compare_log_fp, "initial_spike opening %s ...\n", filename);
   initial_spike(filename, RV_XLEN);
 
   // Format
@@ -148,9 +161,9 @@ int main(int argc, char** argv) {
   }
 
   if (!Verilated::gotFinish()) {
-    fprintf(stdout, "===============================\n");
-    fprintf(stdout, "SIMULATION TIMEOUT\n");
-    fprintf(stdout, "===============================\n");
+    fprintf(compare_log_fp, "===============================\n");
+    fprintf(compare_log_fp, "SIMULATION TIMEOUT\n");
+    fprintf(compare_log_fp, "===============================\n");
   }
   dut->final();
 #ifdef TRACE_FST
@@ -161,14 +174,14 @@ int main(int argc, char** argv) {
 
 void stop_sim(int code)
 {
-  fprintf(stdout, "===============================\n");
-  fprintf(stdout, "SIMULATION FINISH : ");
+  fprintf(compare_log_fp, "===============================\n");
+  fprintf(compare_log_fp, "SIMULATION FINISH : ");
   if (code == 0) {
-    fprintf(stdout, "PASS\n");
+    fprintf(compare_log_fp, "PASS\n");
   } else {
-    fprintf(stdout, "FAIL (CODE=%d)\n", code);
+    fprintf(compare_log_fp, "FAIL (CODE=%d)\n", code);
   }
-  fprintf(stdout, "===============================\n");
+  fprintf(compare_log_fp, "===============================\n");
 
   dut->final();
 #ifdef TRACE_FST

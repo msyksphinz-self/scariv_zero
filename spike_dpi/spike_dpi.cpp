@@ -10,6 +10,8 @@
 #include "extension.h"
 #include "../VERSION"
 
+extern FILE *compare_log_fp;
+
 sim_t *spike_core;
 disassembler_t *disasm;
 
@@ -23,62 +25,62 @@ static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*
 
 static void help(int exit_code = 1)
 {
-  fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
-  fprintf(stderr, "usage: spike [host options] <target program> [target options]\n");
-  fprintf(stderr, "Host Options:\n");
-  fprintf(stderr, "  -p<n>                 Simulate <n> processors [default 1]\n");
-  fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
-  fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
-  fprintf(stderr, "                          at base addresses a and b (with 4 KiB alignment)\n");
-  fprintf(stderr, "  -d                    Interactive debug mode\n");
-  fprintf(stderr, "  -g                    Track histogram of PCs\n");
-  fprintf(stderr, "  -l                    Generate a log of execution\n");
-  fprintf(stderr, "  -h, --help            Print this help message\n");
-  fprintf(stderr, "  -H                    Start halted, allowing a debugger to connect\n");
-  fprintf(stderr, "  --isa=<name>          RISC-V ISA string [default %s]\n", DEFAULT_ISA);
-  fprintf(stderr, "  --priv=<m|mu|msu>     RISC-V privilege modes supported [default %s]\n", DEFAULT_PRIV);
-  fprintf(stderr, "  --varch=<name>        RISC-V Vector uArch string [default %s]\n", DEFAULT_VARCH);
-  fprintf(stderr, "  --pc=<address>        Override ELF entry point\n");
-  fprintf(stderr, "  --hartids=<a,b,...>   Explicitly specify hartids, default is 0,1,...\n");
-  fprintf(stderr, "  --ic=<S>:<W>:<B>      Instantiate a cache model with S sets,\n");
-  fprintf(stderr, "  --dc=<S>:<W>:<B>        W ways, and B-byte blocks (with S and\n");
-  fprintf(stderr, "  --l2=<S>:<W>:<B>        B both powers of 2).\n");
-  fprintf(stderr, "  --device=<P,B,A>      Attach MMIO plugin device from an --extlib library\n");
-  fprintf(stderr, "                          P -- Name of the MMIO plugin\n");
-  fprintf(stderr, "                          B -- Base memory address of the device\n");
-  fprintf(stderr, "                          A -- String arguments to pass to the plugin\n");
-  fprintf(stderr, "                          This flag can be used multiple times.\n");
-  fprintf(stderr, "                          The extlib flag for the library must come first.\n");
-  fprintf(stderr, "  --log-cache-miss      Generate a log of cache miss\n");
-  fprintf(stderr, "  --extension=<name>    Specify RoCC Extension\n");
-  fprintf(stderr, "  --extlib=<name>       Shared library to load\n");
-  fprintf(stderr, "                        This flag can be used multiple times.\n");
-  fprintf(stderr, "  --rbb-port=<port>     Listen on <port> for remote bitbang connection\n");
-  fprintf(stderr, "  --dump-dts            Print device tree string and exit\n");
-  fprintf(stderr, "  --disable-dtb         Don't write the device tree blob into memory\n");
-  fprintf(stderr, "  --kernel=<path>       Load kernel flat image into memory\n");
-  fprintf(stderr, "  --initrd=<path>       Load kernel initrd into memory\n");
-  fprintf(stderr, "  --bootargs=<args>     Provide custom bootargs for kernel [default: console=hvc0 earlycon=sbi]\n");
-  fprintf(stderr, "  --real-time-clint     Increment clint time at real-time rate\n");
-  fprintf(stderr, "  --dm-progsize=<words> Progsize for the debug module [default 2]\n");
-  fprintf(stderr, "  --dm-sba=<bits>       Debug bus master supports up to "
+  fprintf(compare_log_fp, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
+  fprintf(compare_log_fp, "usage: spike [host options] <target program> [target options]\n");
+  fprintf(compare_log_fp, "Host Options:\n");
+  fprintf(compare_log_fp, "  -p<n>                 Simulate <n> processors [default 1]\n");
+  fprintf(compare_log_fp, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
+  fprintf(compare_log_fp, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
+  fprintf(compare_log_fp, "                          at base addresses a and b (with 4 KiB alignment)\n");
+  fprintf(compare_log_fp, "  -d                    Interactive debug mode\n");
+  fprintf(compare_log_fp, "  -g                    Track histogram of PCs\n");
+  fprintf(compare_log_fp, "  -l                    Generate a log of execution\n");
+  fprintf(compare_log_fp, "  -h, --help            Print this help message\n");
+  fprintf(compare_log_fp, "  -H                    Start halted, allowing a debugger to connect\n");
+  fprintf(compare_log_fp, "  --isa=<name>          RISC-V ISA string [default %s]\n", DEFAULT_ISA);
+  fprintf(compare_log_fp, "  --priv=<m|mu|msu>     RISC-V privilege modes supported [default %s]\n", DEFAULT_PRIV);
+  fprintf(compare_log_fp, "  --varch=<name>        RISC-V Vector uArch string [default %s]\n", DEFAULT_VARCH);
+  fprintf(compare_log_fp, "  --pc=<address>        Override ELF entry point\n");
+  fprintf(compare_log_fp, "  --hartids=<a,b,...>   Explicitly specify hartids, default is 0,1,...\n");
+  fprintf(compare_log_fp, "  --ic=<S>:<W>:<B>      Instantiate a cache model with S sets,\n");
+  fprintf(compare_log_fp, "  --dc=<S>:<W>:<B>        W ways, and B-byte blocks (with S and\n");
+  fprintf(compare_log_fp, "  --l2=<S>:<W>:<B>        B both powers of 2).\n");
+  fprintf(compare_log_fp, "  --device=<P,B,A>      Attach MMIO plugin device from an --extlib library\n");
+  fprintf(compare_log_fp, "                          P -- Name of the MMIO plugin\n");
+  fprintf(compare_log_fp, "                          B -- Base memory address of the device\n");
+  fprintf(compare_log_fp, "                          A -- String arguments to pass to the plugin\n");
+  fprintf(compare_log_fp, "                          This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "                          The extlib flag for the library must come first.\n");
+  fprintf(compare_log_fp, "  --log-cache-miss      Generate a log of cache miss\n");
+  fprintf(compare_log_fp, "  --extension=<name>    Specify RoCC Extension\n");
+  fprintf(compare_log_fp, "  --extlib=<name>       Shared library to load\n");
+  fprintf(compare_log_fp, "                        This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "  --rbb-port=<port>     Listen on <port> for remote bitbang connection\n");
+  fprintf(compare_log_fp, "  --dump-dts            Print device tree string and exit\n");
+  fprintf(compare_log_fp, "  --disable-dtb         Don't write the device tree blob into memory\n");
+  fprintf(compare_log_fp, "  --kernel=<path>       Load kernel flat image into memory\n");
+  fprintf(compare_log_fp, "  --initrd=<path>       Load kernel initrd into memory\n");
+  fprintf(compare_log_fp, "  --bootargs=<args>     Provide custom bootargs for kernel [default: console=hvc0 earlycon=sbi]\n");
+  fprintf(compare_log_fp, "  --real-time-clint     Increment clint time at real-time rate\n");
+  fprintf(compare_log_fp, "  --dm-progsize=<words> Progsize for the debug module [default 2]\n");
+  fprintf(compare_log_fp, "  --dm-sba=<bits>       Debug bus master supports up to "
       "<bits> wide accesses [default 0]\n");
-  fprintf(stderr, "  --dm-auth             Debug module requires debugger to authenticate\n");
-  fprintf(stderr, "  --dmi-rti=<n>         Number of Run-Test/Idle cycles "
+  fprintf(compare_log_fp, "  --dm-auth             Debug module requires debugger to authenticate\n");
+  fprintf(compare_log_fp, "  --dmi-rti=<n>         Number of Run-Test/Idle cycles "
       "required for a DMI access [default 0]\n");
-  fprintf(stderr, "  --dm-abstract-rti=<n> Number of Run-Test/Idle cycles "
+  fprintf(compare_log_fp, "  --dm-abstract-rti=<n> Number of Run-Test/Idle cycles "
       "required for an abstract command to execute [default 0]\n");
-  fprintf(stderr, "  --dm-no-hasel         Debug module supports hasel\n");
-  fprintf(stderr, "  --dm-no-abstract-csr  Debug module won't support abstract to authenticate\n");
-  fprintf(stderr, "  --dm-no-halt-groups   Debug module won't support halt groups\n");
-  fprintf(stderr, "  --dm-no-impebreak     Debug module won't support implicit ebreak in program buffer\n");
+  fprintf(compare_log_fp, "  --dm-no-hasel         Debug module supports hasel\n");
+  fprintf(compare_log_fp, "  --dm-no-abstract-csr  Debug module won't support abstract to authenticate\n");
+  fprintf(compare_log_fp, "  --dm-no-halt-groups   Debug module won't support halt groups\n");
+  fprintf(compare_log_fp, "  --dm-no-impebreak     Debug module won't support implicit ebreak in program buffer\n");
 
   exit(exit_code);
 }
 
 static void suggest_help()
 {
-  fprintf(stderr, "Try 'spike --help' for more information.\n");
+  fprintf(compare_log_fp, "Try 'spike --help' for more information.\n");
   exit(1);
 }
 
@@ -109,7 +111,7 @@ void initial_spike (const char *filename, int rv_xlen)
   } else if (rv_xlen == 64) {
     argv[1] = "--isa=rv64gc";
   } else {
-    fprintf(stderr, "RV_XLEN should be 32 or 64.\n");
+    fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
   }
   g_rv_xlen = rv_xlen;
@@ -253,7 +255,7 @@ void initial_spike (const char *filename, int rv_xlen)
   parser.option(0, "extlib", 1, [&](const char *s){
     void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
     if (lib == NULL) {
-      fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
+      fprintf(compare_log_fp, "Unable to load extlib '%s': %s\n", s, dlerror());
       exit(-1);
     }
   });
@@ -280,7 +282,7 @@ void initial_spike (const char *filename, int rv_xlen)
   parser.option(0, "log", 1,
                 [&](const char* s){log_path = s;});
 
-  fprintf(stderr, "argv = %s\n", argv[0]);
+  fprintf(compare_log_fp, "argv = %s\n", argv[0]);
   auto argv1 = parser.parse(static_cast<const char* const*>(argv));
 
   std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
@@ -325,7 +327,7 @@ void initial_spike (const char *filename, int rv_xlen)
   // spike_core->get_core(0)->get_state()->pc = 0x80000000;
   spike_core->get_core(0)->step(5);
 
-  fprintf(stderr, "spike iss done\n");
+  fprintf(compare_log_fp, "spike iss done\n");
 
   disasm = new disassembler_t (64);
 
@@ -364,7 +366,7 @@ static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg)
       help();
 
     if (size != size0) {
-      fprintf(stderr, "Warning: the memory at  [0x%llX, 0x%llX] has been realigned\n"
+      fprintf(compare_log_fp, "Warning: the memory at  [0x%llX, 0x%llX] has been realigned\n"
                       "to the %ld KiB page size: [0x%llX, 0x%llX]\n",
               base0, base0 + size0 - 1, long(PGSIZE / 1024), base, base + size - 1);
     }
@@ -429,7 +431,7 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
   } else if (g_rv_xlen == 64) {
     return val1 == val2;
   } else {
-    fprintf(stderr, "rv_xlen should be 32 or 64\n");
+    fprintf(compare_log_fp, "rv_xlen should be 32 or 64\n");
     exit(-1);
   }
 }
@@ -443,7 +445,7 @@ bool inline is_equal_vaddr(int64_t val1, int64_t val2)
   } else if (g_rv_xlen == 64) {
     vaddr_len = 39;   // XLEN = 64
   } else {
-    fprintf(stderr, "rv_xlen should be 32 or 64\n");
+    fprintf(compare_log_fp, "rv_xlen should be 32 or 64\n");
     exit(-1);
   }
 
@@ -464,7 +466,7 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {
-    fprintf(stderr, "%lld : RTL(%d,%d) Exception Cause = %d\n",
+    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %d\n",
             time, rtl_cmt_id, rtl_grp_id, rtl_exception_cause);
   }
   if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
@@ -474,9 +476,9 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 5 ) ||  // Load Access Fault
                        (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
                        (rtl_exception_cause == 7 ))) { // Store Access Fault
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "==========================================\n");
     return;
   }
 
@@ -486,9 +488,9 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 8 ) ||  // ECALL_U
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
                        (rtl_exception_cause == 10))) { // ECALL_M
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "==========================================\n");
     p->step(1);
     return;
   }
@@ -496,7 +498,7 @@ void step_spike(long long time, long long rtl_pc,
   p->step(1);
 
   auto instret  = p->get_state()->minstret;
-  fprintf(stderr, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,
           instret,
           rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
@@ -504,30 +506,30 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
-  // fprintf(stderr, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
+  // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
   //         time,
   //         iss_pc,
   //         p->get_state()->prev_pc,
   //         iss_insn);
-  // fprintf(stderr, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
+  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
-    fprintf(stderr, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+    fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
             g_rv_xlen / 4, std::get<0>(iss_rd),
             g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
   }
   for (auto &iss_wr: p->get_state()->log_mem_write) {
-    fprintf(stderr, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
+    fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
             g_rv_xlen / 4, std::get<0>(iss_wr),
             g_rv_xlen / 4, std::get<1>(iss_wr));
   }
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
             g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
@@ -536,10 +538,10 @@ void step_spike(long long time, long long rtl_pc,
     return;
   }
   if (iss_priv != rtl_priv) {
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
             rtl_priv, static_cast<uint32_t>(iss_priv));
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
@@ -553,11 +555,11 @@ void step_spike(long long time, long long rtl_pc,
   // When RTL generate exception, stop to compare mstatus.
   // Because mstatus update timing is too much complex.
   if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus)) {
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
             g_rv_xlen / 4, rtl_mstatus,
             g_rv_xlen / 4, iss_mstatus);
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
@@ -569,14 +571,14 @@ void step_spike(long long time, long long rtl_pc,
   }
 
   if (static_cast<int>(iss_insn.bits()) != rtl_insn) {
-    fprintf(stderr, "==========================================\n");
-    fprintf(stderr, "Wrong INSN: RTL = %08x, ISS = %08x\n",
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "Wrong INSN: RTL = %08x, ISS = %08x\n",
             rtl_insn, static_cast<uint32_t>(iss_insn.bits()));
-    fprintf(stderr, "            RTL = %s\n",
+    fprintf(compare_log_fp, "            RTL = %s\n",
             disasm->disassemble(rtl_insn).c_str());
-    fprintf(stderr, "            ISS = %s\n",
+    fprintf(compare_log_fp, "            ISS = %s\n",
             disasm->disassemble(iss_insn.bits()).c_str());
-    fprintf(stderr, "==========================================\n");
+    fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
@@ -590,12 +592,12 @@ void step_spike(long long time, long long rtl_pc,
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
-      fprintf(stderr, "==========================================\n");
-      fprintf(stderr, "Wrong GPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
+      fprintf(compare_log_fp, "==========================================\n");
+      fprintf(compare_log_fp, "Wrong GPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
               rtl_wr_gpr_addr, rtl_wr_gpr_rnid,
               g_rv_xlen / 4, rtl_wr_val,
               g_rv_xlen / 4, iss_wr_val);
-      fprintf(stderr, "==========================================\n");
+      fprintf(compare_log_fp, "==========================================\n");
       fail_count ++;
       if (fail_count >= fail_max) {
         // p->step(10);
@@ -605,7 +607,7 @@ void step_spike(long long time, long long rtl_pc,
       // stop_sim(1);
       return;
     } else {
-      fprintf(stderr, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
     }
   }
 }
@@ -619,7 +621,7 @@ int main(int argc, char **argv)
   for (int i = 0; i < 100; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
-    fprintf(stderr, "iss_pc = %08lx\n", iss_pc);
+    fprintf(compare_log_fp, "iss_pc = %08lx\n", iss_pc);
   }
 
   return 0;
@@ -627,6 +629,6 @@ int main(int argc, char **argv)
 
 void stop_sim(int code)
 {
-  fprintf(stderr, "stop_ism %d\n", code);
+  fprintf(compare_log_fp, "stop_ism %d\n", code);
 }
 #endif // SIM_MAIN
