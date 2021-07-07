@@ -359,7 +359,7 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
-always_ff @ (posedge i_clk, posedge i_reset_n) begin
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     o_lrq_resolve <= 'h0;
 

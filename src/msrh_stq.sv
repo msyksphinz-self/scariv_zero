@@ -484,6 +484,20 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 `ifdef SIMULATION
+
+import "DPI-C" function record_stq_store
+(
+ input logic [riscv_pkg::PADDR_W-1: 0] addr,
+ input logic [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] array,
+ input logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] size
+);
+
+logic [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] l1d_array;
+generate for (genvar idx = 0; idx < $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8); idx++) begin : array_loop
+  assign l1d_array[idx] = l1d_wr_if.data[idx*64+:64];
+end
+endgenerate
+
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (l1d_wr_if.valid & !l1d_wr_if.conflict) begin
@@ -527,7 +541,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     if (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)]) begin
-      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
+      $fatal(0, "w_disp_picked_num MSB == 1, too much requests inserted\n");
     end
   end
 end

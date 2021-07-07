@@ -259,7 +259,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     if (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)]) begin
-      $fatal("w_disp_picked_num MSB == 1, too much requests inserted\n");
+      $fatal(0, "w_disp_picked_num MSB == 1, too much requests inserted\n");
     end
   end
 end
