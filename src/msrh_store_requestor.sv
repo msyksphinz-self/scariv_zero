@@ -44,21 +44,43 @@ end // always_comb
 assign l1d_evict_if.ready = !r_ext_wr_req_valid;
 
 `ifdef SIMULATION
+
+import "DPI-C" function void record_l1d_evict
+(
+ input longint rtl_time,
+ input longint paddr,
+ input int     ram_addr,
+ input byte    array[msrh_lsu_pkg::DCACHE_DATA_B_W],
+ input int     size
+);
+
+byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
+generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
+  assign l1d_array[idx] = l1d_ext_wr_req.payload.data[idx*8+:8];
+end
+endgenerate
+
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (l1d_ext_wr_req.valid & l1d_ext_wr_req.ready) begin
-      $fwrite(msrh_pkg::STDERR, "%t : L1D Store-Out : %0x(%x) <= ",
-              $time,
-              l1d_ext_wr_req.payload.addr,
-              l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
-      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
-        $fwrite(msrh_pkg::STDERR, "%08x", l1d_ext_wr_req.payload.data[i*32 +: 32]);
-        if (i != 0) begin
-          $fwrite(msrh_pkg::STDERR, "_");
-        end else begin
-          $fwrite(msrh_pkg::STDERR, "\n");
-        end
-      end
+      /* verilator lint_off WIDTH */
+      record_l1d_evict ($time,
+                        l1d_ext_wr_req.payload.addr,
+                        l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
+                        l1d_array,
+                        msrh_lsu_pkg::DCACHE_DATA_B_W);
+      // $fwrite(msrh_pkg::STDERR, "%t : L1D Store-Out : %0x(%x) <= ",
+      //         $time,
+      //         l1d_ext_wr_req.payload.addr,
+      //         l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      // for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
+      //   $fwrite(msrh_pkg::STDERR, "%08x", l1d_ext_wr_req.payload.data[i*32 +: 32]);
+      //   if (i != 0) begin
+      //     $fwrite(msrh_pkg::STDERR, "_");
+      //   end else begin
+      //     $fwrite(msrh_pkg::STDERR, "\n");
+      //   end
+      // end
     end // if (l1d_ext_wr_req.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)

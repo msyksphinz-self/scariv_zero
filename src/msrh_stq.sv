@@ -487,41 +487,47 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 import "DPI-C" function void record_stq_store
 (
- input longint addr,
- input bit [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] array,
- input int size
+ input longint rtl_time,
+ input longint paddr,
+ input int     ram_addr,
+ input byte    array[msrh_lsu_pkg::DCACHE_DATA_B_W],
+ input longint be,
+ input int     size
 );
 
-logic [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] l1d_array;
-generate for (genvar idx = 0; idx < $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8); idx++) begin : array_loop
-  assign l1d_array[idx] = l1d_wr_if.data[idx*64+:64];
+byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
+generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
+  assign l1d_array[idx] = l1d_wr_if.data[idx*8+:8];
 end
 endgenerate
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (l1d_wr_if.valid & !l1d_wr_if.conflict) begin
-      record_stq_store(l1d_wr_if.paddr,
+      record_stq_store($time,
+                       l1d_wr_if.paddr,
+                       l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
                        l1d_array,
+                       l1d_wr_if.be,
                        msrh_lsu_pkg::DCACHE_DATA_B_W);
-      $fwrite(msrh_pkg::STDERR, "%t : L1D Stq Store : %0x(%x) <= ",
-              $time,
-              l1d_wr_if.paddr,
-              l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
-      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W-1; i >=0 ; i--) begin
-        if (l1d_wr_if.be[i]) begin
-          $fwrite(msrh_pkg::STDERR, "%02x", l1d_wr_if.data[i*8 +: 8]);
-        end else begin
-          $fwrite(msrh_pkg::STDERR, "__");
-        end
-        if (i == 0) begin
-          $fwrite(msrh_pkg::STDERR, "\n");
-        end else begin
-          if (i % 4 == 0) begin
-            $fwrite(msrh_pkg::STDERR, "_");
-          end
-        end
-      end
+      // $fwrite(msrh_pkg::STDERR, "%t : L1D Stq Store : %0x(%x) <= ",
+      //         $time,
+      //         l1d_wr_if.paddr,
+      //         l1d_wr_if.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      // for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W-1; i >=0 ; i--) begin
+      //   if (l1d_wr_if.be[i]) begin
+      //     $fwrite(msrh_pkg::STDERR, "%02x", l1d_wr_if.data[i*8 +: 8]);
+      //   end else begin
+      //     $fwrite(msrh_pkg::STDERR, "__");
+      //   end
+      //   if (i == 0) begin
+      //     $fwrite(msrh_pkg::STDERR, "\n");
+      //   end else begin
+      //     if (i % 4 == 0) begin
+      //       $fwrite(msrh_pkg::STDERR, "_");
+      //     end
+      //   end
+      // end
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)

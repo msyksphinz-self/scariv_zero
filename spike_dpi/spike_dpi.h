@@ -12,8 +12,22 @@ extern "C" {
                   int rtl_wr_gpr_rnid, long long rtl_wr_val);
   void stop_sim(int code);
 
-  void record_stq_store(const long long addr,
-                        const svBitVecVal* array,
-                        const int size);
+  void record_stq_store(long long rtl_time,
+                        long long paddr,
+                        int ram_addr,
+                        const char* l1d_data,
+                        long long be,
+                        int size);
 
+  void record_l1d_load(long long rtl_time,
+                       long long paddr,
+                       int ram_addr,
+                       const char* l1d_data,
+                       int size);
+
+  void record_l1d_evict(long long rtl_time,
+                        long long paddr,
+                        int ram_addr,
+                        const char* l1d_data,
+                        int size);
 }

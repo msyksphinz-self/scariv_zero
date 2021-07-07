@@ -616,15 +616,62 @@ void step_spike(long long time, long long rtl_pc,
   }
 }
 
-void record_stq_store(const long long addr,
-                      const svBitVecVal* array,
-                      const int size)
+void record_stq_store(long long rtl_time,
+                      long long paddr,
+                      int ram_addr,
+                      const char* l1d_data,
+                      long long be,
+                      int size)
 {
-  fprintf(compare_log_fp, "addr.aval = %x, addr.bval = %x\n", addr[0].aval, addr[0].bval);
-  for (int i = 0; i < 4; i++) {
-    fprintf(compare_log_fp, "array.aval = %x, array.bval = %x\n", array[i].aval, array[i].bval);
+
+  fprintf(compare_log_fp, "%lld : L1D Stq Store : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  for (int i = 0; i < size; i++) {
+    if ((be >> i) & 0x01) {
+      fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
+    } else {
+      fprintf(compare_log_fp, "__");
+    }
+    if (i % 4 == 3) {
+      fprintf(compare_log_fp, "_");
+    }
   }
-  fprintf(compare_log_fp, "size.aval = %x, size.bval = %x\n", size[0].aval, size[0].bval);
+  fprintf(compare_log_fp, "\n");
+}
+
+
+void record_l1d_load(long long rtl_time,
+                     long long paddr,
+                     int ram_addr,
+                     const char* l1d_data,
+                     int size)
+{
+
+  fprintf(compare_log_fp, "%lld : L1D Load-In   : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  for (int i = 0; i < size; i++) {
+    fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
+    if (i % 4 == 3) {
+      fprintf(compare_log_fp, "_");
+    }
+  }
+  fprintf(compare_log_fp, "\n");
+}
+
+
+void record_l1d_evict(long long rtl_time,
+                      long long paddr,
+                      int ram_addr,
+                      const char* l1d_data,
+                      int size)
+{
+
+  fprintf(compare_log_fp, "%lld : L1D Evict      : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  for (int i = 0; i < size; i++) {
+    fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
+    if (i % 4 == 3) {
+      fprintf(compare_log_fp, "_");
+    }
+  }
+  fprintf(compare_log_fp, "\n");
 }
 
 

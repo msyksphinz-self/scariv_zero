@@ -117,21 +117,42 @@ assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 
 
 `ifdef SIMULATION
+import "DPI-C" function void record_l1d_load
+(
+ input longint rtl_time,
+ input longint paddr,
+ input int     ram_addr,
+ input byte    array[msrh_lsu_pkg::DCACHE_DATA_B_W],
+ input int     size
+);
+
+byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
+generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
+  assign l1d_array[idx] = r_rp2_resp_data[idx*8+:8];
+end
+endgenerate
+
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (r_rp2_valid) begin
-      $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
-              $time,
-              r_rp2_searched_lrq_entry.paddr,
-              r_rp2_searched_lrq_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
-      for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
-        $fwrite(msrh_pkg::STDERR, "%08x", r_rp2_resp_data[i*32 +: 32]);
-        if (i != 0) begin
-          $fwrite(msrh_pkg::STDERR, "_");
-        end else begin
-          $fwrite(msrh_pkg::STDERR, "\n");
-        end
-      end
+      /* verilator lint_off WIDTH */
+      record_l1d_load($time,
+                      r_rp2_searched_lrq_entry.paddr,
+                      r_rp2_searched_lrq_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
+                      l1d_array,
+                      msrh_lsu_pkg::DCACHE_DATA_B_W);
+      // $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
+      //         $time,
+      //         r_rp2_searched_lrq_entry.paddr,
+      //         r_rp2_searched_lrq_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
+      // for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
+      //   $fwrite(msrh_pkg::STDERR, "%08x", r_rp2_resp_data[i*32 +: 32]);
+      //   if (i != 0) begin
+      //     $fwrite(msrh_pkg::STDERR, "_");
+      //   end else begin
+      //     $fwrite(msrh_pkg::STDERR, "\n");
+      //   end
+      // end
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
