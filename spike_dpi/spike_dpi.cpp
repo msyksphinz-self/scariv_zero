@@ -616,6 +616,18 @@ void step_spike(long long time, long long rtl_pc,
   }
 }
 
+void record_stq_store(const long long addr,
+                      const svBitVecVal* array,
+                      const int size)
+{
+  fprintf(compare_log_fp, "addr.aval = %x, addr.bval = %x\n", addr[0].aval, addr[0].bval);
+  for (int i = 0; i < 4; i++) {
+    fprintf(compare_log_fp, "array.aval = %x, array.bval = %x\n", array[i].aval, array[i].bval);
+  }
+  fprintf(compare_log_fp, "size.aval = %x, size.bval = %x\n", size[0].aval, size[0].bval);
+}
+
+
 
 #ifdef SIM_MAIN
 int main(int argc, char **argv)

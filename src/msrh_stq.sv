@@ -485,11 +485,11 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 `ifdef SIMULATION
 
-import "DPI-C" function record_stq_store
+import "DPI-C" function void record_stq_store
 (
- input logic [riscv_pkg::PADDR_W-1: 0] addr,
- input logic [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] array,
- input logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] size
+ input longint addr,
+ input bit [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] array,
+ input int size
 );
 
 logic [63: 0][$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W/8)-1: 0] l1d_array;
@@ -501,6 +501,9 @@ endgenerate
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (l1d_wr_if.valid & !l1d_wr_if.conflict) begin
+      record_stq_store(l1d_wr_if.paddr,
+                       l1d_array,
+                       msrh_lsu_pkg::DCACHE_DATA_B_W);
       $fwrite(msrh_pkg::STDERR, "%t : L1D Stq Store : %0x(%x) <= ",
               $time,
               l1d_wr_if.paddr,

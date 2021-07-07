@@ -1,5 +1,7 @@
 .PHONY: riscv_isa_sim
 
+VERILATOR_HOME = /usr/share/verilator
+
 CFLAGS += -g
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)
@@ -11,6 +13,7 @@ CFLAGS += $(abspath riscv-isa-sim)/libdisasm.a
 CFLAGS += $(abspath riscv-isa-sim)/libsoftfloat.a
 CFLAGS += $(abspath riscv-isa-sim)/libfesvr.a
 CFLAGS += $(abspath riscv-isa-sim)/libfdt.a
+CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 # CFLAGS += -lriscv
 
 EXE_CFLAGS += -g
@@ -30,6 +33,7 @@ EXE_CFLAGS += -lpthread
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
 EXE_CFLAGS += -DSIM_MAIN
+EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 
 all: libspike_dpi.so spike_main
 

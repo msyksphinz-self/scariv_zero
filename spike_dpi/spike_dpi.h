@@ -1,4 +1,5 @@
 #pragma once
+#include <svdpi.h>
 
 extern "C" {
   void initial_spike (const char *filename, int rv_xlen);
@@ -10,4 +11,9 @@ extern "C" {
                   int rtl_wr_valid, int rtl_wr_gpr_addr,
                   int rtl_wr_gpr_rnid, long long rtl_wr_val);
   void stop_sim(int code);
+
+  void record_stq_store(const long long addr,
+                        const svBitVecVal* array,
+                        const int size);
+
 }
