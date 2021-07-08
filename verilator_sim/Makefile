@@ -157,7 +157,7 @@ rv64_giant_test:
 
 libspike-dpi:
 	$(MAKE) -C ../spike_dpi
-	ln -s ../spike_dpi/$@ .
+	ln -sf ../spike_dpi/$@ .
 
 $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@

@@ -30,7 +30,7 @@ $test_table.each{ |test|
   if test.key?("skip") and test["skip"] == 1 then
     next
   end
-  command_str = "./" + ARGV[0] + " -e " + "../tests/" + test["elf"] + " -o " + File.dirname(test["elf"]) + ".log"
+  command_str = "./" + ARGV[0] + " -e " + "../tests/" + test["elf"] + " -o " + File.basename(test["elf"], ".*") + ".log"
   stdout_txt = log_dir + "stdout_" + test["name"] + ".txt"
   stderr_txt = log_dir + "stderr_" + test["name"] + ".txt"
   system("#{command_str} 2> #{stderr_txt} 1> #{stdout_txt}")
