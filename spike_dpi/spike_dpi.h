@@ -22,12 +22,12 @@ extern "C" {
   void record_l1d_load(long long rtl_time,
                        long long paddr,
                        int ram_addr,
-                       const char* l1d_data,
+                       const unsigned int* l1d_data,
                        int size);
 
   void record_l1d_evict(long long rtl_time,
                         long long paddr,
                         int ram_addr,
-                        const char* l1d_data,
+                        const unsigned int* l1d_data,
                         int size);
 }

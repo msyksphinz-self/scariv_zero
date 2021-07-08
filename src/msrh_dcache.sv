@@ -121,14 +121,14 @@ import "DPI-C" function void record_l1d_load
 (
  input longint rtl_time,
  input longint paddr,
- input int     ram_addr,
- input byte    array[msrh_lsu_pkg::DCACHE_DATA_B_W],
+ input int ram_addr,
+ input int unsigned array[msrh_conf_pkg::DCACHE_DATA_W/32],
  input int     size
 );
 
-byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
-generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
-  assign l1d_array[idx] = r_rp2_resp_data[idx*8+:8];
+int unsigned l1d_array[msrh_conf_pkg::DCACHE_DATA_W/32];
+generate for (genvar idx = 0; idx < msrh_conf_pkg::DCACHE_DATA_W/32; idx++) begin : array_loop
+  assign l1d_array[idx] = r_rp2_resp_data[idx*32+:32];
 end
 endgenerate
 

@@ -631,7 +631,7 @@ void record_stq_store(long long rtl_time,
     } else {
       fprintf(compare_log_fp, "__");
     }
-    if (i % 4 == 0) {
+    if (i % 4 == 0 && i != 0) {
       fprintf(compare_log_fp, "_");
     }
   }
@@ -642,14 +642,14 @@ void record_stq_store(long long rtl_time,
 void record_l1d_load(long long rtl_time,
                      long long paddr,
                      int ram_addr,
-                     const char* l1d_data,
+                     const unsigned int* l1d_data,
                      int size)
 {
 
   fprintf(compare_log_fp, "%lld : L1D Load-In   : %llx(%02d) : ", rtl_time, paddr, ram_addr);
-  for (int i = size-1; i >= 0; i--) {
-    fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
-    if (i % 4 == 0) {
+  for (int i = size/4-1; i >= 0; i--) {
+    fprintf(compare_log_fp, "%08x", l1d_data[i]);
+    if (i != 0) {
       fprintf(compare_log_fp, "_");
     }
   }
@@ -660,14 +660,14 @@ void record_l1d_load(long long rtl_time,
 void record_l1d_evict(long long rtl_time,
                       long long paddr,
                       int ram_addr,
-                      const char* l1d_data,
+                      const unsigned int* l1d_data,
                       int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Evict      : %llx(%02d) : ", rtl_time, paddr, ram_addr);
-  for (int i = size-1; i >= 0; i--) {
-    fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
-    if (i % 4 == 0) {
+  fprintf(compare_log_fp, "%lld : L1D Evict     : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  for (int i = size/4-1; i >= 0; i--) {
+    fprintf(compare_log_fp, "%08x", l1d_data[i]);
+    if (i != 0) {
       fprintf(compare_log_fp, "_");
     }
   }
