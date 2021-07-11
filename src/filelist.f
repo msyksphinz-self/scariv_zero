@@ -63,6 +63,7 @@
 ../src/msrh_inst_buffer.sv
 ../src/msrh_disp_pickup.sv
 ../src/msrh_ptw.sv
+../src/msrh_rvc_expander.sv
 
 ../src/simple_arbiter.sv
 
