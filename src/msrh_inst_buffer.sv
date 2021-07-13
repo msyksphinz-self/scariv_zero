@@ -209,11 +209,13 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_valid;
 // =================================
 logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE];
 logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
 assign w_rvc_buf_idx[0] = r_head_start_pos + w_out_inst_q_pc;
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : rvc_expand_loop
   logic [15: 0]                    w_rvc_inst;
-  logic [15: 0]                    w_rvc_inst_next;
-
+  logic [15: 0]                    w_rvc_next_inst;
+  logic [ 1: 0]                    w_rvc_byte_en;
+  logic [ 1: 0]                    w_rvc_next_byte_en;
   logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
 
   assign w_inst_buf_ptr = (w_rvc_buf_idx[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
@@ -221,16 +223,22 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
   assign w_rvc_inst      = r_inst_queue[w_inst_buf_ptr].data[ w_rvc_buf_idx[w_idx]*16 +:16];
   assign w_rvc_inst_next = r_inst_queue[w_inst_buf_ptr].data[(w_rvc_buf_idx[w_idx]+1)*16 +:16];
+  assign w_rvc_byte_en   = r_inst_queue[w_inst_buf_ptr].byte_en[w_rvc_buf_idx[w_idx]*2 +: 2];
+  assign w_rvc_byte_en_next = r_inst_queue[w_inst_buf_ptr].data[(w_rvc_buf_idx[w_idx]+1)*2 +: 2];
   msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_rvc_inst), .out_32bit(w_expand_inst));
+
+  assign w_expanded_valid[w_idx] = r_inst_queue[w_inst_buf_ptr].valid & w_inst_be_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH);
 
   if (r_inst_queue[w_inst_buf_ptr].data[w_rvc_buf_idx[w_idx]*16 +: 2] != 3) begin
     // RVC instruction
     assign w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
-    assign w_expand_inst[w_rvc_buf_idx[w_idx]] = w_expand_inst;
+    assign w_expand_inst[w_idx]     = w_expand_inst;
+    assign w_expanded_valid[w_idx]  = &w_rvc_byte_en;
   end else begin
     // Normal instruction
     assign w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
-    assign w_expand_inst[w_rvc_buf_idx[w_idx]] = {w_rvc_inst_next, w_rvc_inst};
+    assign w_expand_inst[w_idx]     = {w_rvc_inst_next, w_rvc_inst};
+    assign w_expanded_valid[w_idx]  = &{w_rvc_byte_en_next, w_rvc_byte_en};
   end
 
 end
