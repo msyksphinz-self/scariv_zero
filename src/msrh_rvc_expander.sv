@@ -4,13 +4,13 @@ module msrh_rvc_expander
    output logic [31: 0] out_32bit
    );
 
-wire [ 7: 0]            w_addi4spn_imm = {i_rv_inst[10: 7], i_rvc_inst[12:11], i_rvc_inst[5], i_rvc_inst[6], 2'b00};
-wire [ 6: 0]            w_lw_imm       = {i_rv_inst[    5], i_rvc_inst[12:10], i_rvc_inst[6], 2'b00};
-wire [ 7: 0]            w_ld_imm       = {i_rv_inst[ 6: 5], i_rvc_inst[12:10], 3'b000};
-wire [ 6: 0]            w_lwsp_imm     = {i_rv_inst[ 3: 2], i_rvc_inst[   12], i_rvc_inst[ 6: 4], 2'b00};
-wire [ 7: 0]            w_ldsp_imm     = {i_rv_inst[ 4: 2], i_rvc_inst[   12], i_rvc_inst[ 6: 5], 3'b000};
-wire [ 6: 0]            w_swsp_imm     = {i_rv_inst[ 8: 7], i_rvc_inst[12: 9], 2'b00};
-wire [ 7: 0]            w_sdsp_imm     = {i_rv_inst[ 9: 7], i_rvc_inst[12:10], 3'b000};
+wire [ 7: 0]            w_addi4spn_imm = {i_rvc_inst[10: 7], i_rvc_inst[12:11], i_rvc_inst[5], i_rvc_inst[6], 2'b00};
+wire [ 6: 0]            w_lw_imm       = {i_rvc_inst[    5], i_rvc_inst[12:10], i_rvc_inst[6], 2'b00};
+wire [ 7: 0]            w_ld_imm       = {i_rvc_inst[ 6: 5], i_rvc_inst[12:10], 3'b000};
+wire [ 6: 0]            w_lwsp_imm     = {i_rvc_inst[ 3: 2], i_rvc_inst[   12], i_rvc_inst[ 6: 4], 2'b00};
+wire [ 7: 0]            w_ldsp_imm     = {i_rvc_inst[ 4: 2], i_rvc_inst[   12], i_rvc_inst[ 6: 5], 3'b000};
+wire [ 6: 0]            w_swsp_imm     = {i_rvc_inst[ 8: 7], i_rvc_inst[12: 9], 2'b00};
+wire [ 7: 0]            w_sdsp_imm     = {i_rvc_inst[ 9: 7], i_rvc_inst[12:10], 3'b000};
 wire [31: 0]            w_lui_imm      = {{15{i_rvc_inst[12]}}, i_rvc_inst[ 6: 2], 12'h000};
 wire [11: 0]            w_addi16sp_imm = {{ 3{i_rvc_inst[12]}}, i_rvc_inst[ 4: 3], i_rvc_inst[5], i_rvc_inst[2], i_rvc_inst[6], 4'b0000};
 wire [11: 0]            w_addi_imm     = {{ 7{i_rvc_inst[12]}}, i_rvc_inst[ 6: 2]};
@@ -29,8 +29,10 @@ wire [ 4: 0]            rd   = i_rvc_inst[11: 7];
 always_comb begin
   case ({i_rvc_inst[15:13], i_rvc_inst[1: 0]})
     5'b000_00 : begin
+      logic [ 6: 0] w_opc;
+      assign w_opc = |i_rvc_inst[12: 5] ? 7'h13 : 7'h1f;
       // `c.addi4spn rd', nzuimm`        00        `addi rd, x2, nzuimm`
-      out_32bit = {w_addi4spn_imm, sp, 3'b000, rs2p, opc};
+      out_32bit = {w_addi4spn_imm, sp, 3'b000, rs2p, w_opc};
     end
     5'b001_00 : begin
       // `c.fld      rd', offset(rs1')`  00        `fld rd, offset(rs1)`
@@ -38,12 +40,12 @@ always_comb begin
     end
     5'b010_00 : begin
       // `c.lw       rd', offset(rs1')`  00        `lw rd, offset(rs1)`
-      out_32bit = {lw_imm, rs1p, 3'b010, rs2p, 7'b0000011};
+      out_32bit = {w_lw_imm, rs1p, 3'b010, rs2p, 7'b0000011};
     end
     5'b011_00 : begin
 `ifdef RV32
       // `c.flw      rd', offset(rs1')`  00        `flw rd, offset(rs1)`
-      out_32bit = {lw_imm, rs1p, 3'b010, rs2p, 7'b0000111};
+      out_32bit = {w_lw_imm, rs1p, 3'b010, rs2p, 7'b0000111};
 `else // RV32
       // `c.ld       rd', offset(rs1')`  00        `ld rd, offset(rs1)`
       out_32bit = {w_ld_imm, rs1p, 3'b011, rs2p, 7'b0000011};
@@ -58,12 +60,12 @@ always_comb begin
     end
     5'b110_00 : begin
       // `c.sw       rd', offset(rs1')`  00        `sw rs2, offset(rs1)`
-      out_32bit = {lw_imm >> 5, rs2p, rs1p, 3'b010, lw_imm[ 4: 0], 7'b0100011};
+      out_32bit = {w_lw_imm >> 5, rs2p, rs1p, 3'b010, w_lw_imm[ 4: 0], 7'b0100011};
     end
     5'b111_00 : begin
 `ifdef RV32
       // `c.fsw      rd', offset(rs1')`  00        `fsw rs2, offset(rs1)`
-      out_32bit = {lw_imm >> 5, rs2p, rs1p, 3'b010, lw_imm[ 4: 0], 7'b0100111};
+      out_32bit = {w_lw_imm >> 5, rs2p, rs1p, 3'b010, w_lw_imm[ 4: 0], 7'b0100111};
 `else // RV32
       // `c.sd       rd', offset(rs1')`  00        `sd rs2, offset(rs1)`
       out_32bit = {w_ld_imm >> 5, rs2p, rs1p, 3'b011, w_ld_imm[ 4: 0], 7'b0100011};
@@ -73,7 +75,7 @@ always_comb begin
     5'b000_01 : begin
       // `c.nop`                         01        `nop`
       // `c.addi     rd, nzimm`          01        `addi rd, rd, nzimm`
-      out_32bit = {addi_imm, rd, 3'b000, rd, 7'b0010011};
+      out_32bit = {w_addi_imm, rd, 3'b000, rd, 7'b0010011};
     end
     5'b001_01 : begin
 `ifdef RV32
@@ -81,7 +83,9 @@ always_comb begin
       out_32bit = {w_j_imm[20], w_j_imm[10,1], w_j_imm[11], w_j_imm[19,12], ra, 7'b110_1111};
 `else // RV32
       // `c.addiw    rd, imm`            01        `addiw rd, rd, imm`
-      out_32bit = {w_addi_imm, rd, 3'b000, rd, opc};
+      logic [ 6: 0]  w_opc;
+      assign w_opc = |rd ? 7'h1b : 7'h1f;
+      out_32bit = {w_addi_imm, rd, 3'b000, rd, w_opc};
 `endif // RV32
     end
     5'b010_01 : begin
@@ -91,12 +95,16 @@ always_comb begin
     5'b011_01 : begin
       if (i_rvc_inst[11: 7] == 'h0 || i_rvc_inst[11: 7] == 'h2) begin
         // `c.addi16sp rd',nzimm`          01        `addi x2, x2, nzimm`
-        out_32bit = {w_addi16sp_imm, rd, 3'b000, rd, opc};
+        logic [ 6: 0] w_opc;
+        w_opc = |w_addi_imm ? 7'h13 : 7'h1f;
+        out_32bit = {w_addi16sp_imm, rd, 3'b000, rd, w_opc};
       end else begin
         // `c.lui      rd, nzimm`          01        `lui rd, nzimm`
-        out_32bit = {w_lui_imm[31:12], rd, opc};
-      end
-    end
+        logic [ 6: 0] w_opc;
+        w_opc = |w_addi_imm ? 7'h37 : 7'h3f;
+        out_32bit = {w_lui_imm[31:12], rd, w_opc};
+      end // else: !if(i_rvc_inst[11: 7] == 'h0 || i_rvc_inst[11: 7] == 'h2)
+    end // case: 5'b011_01
     5'b100_01 : begin
       case (i_rvc_inst[11:10])
         2'b00 : begin
@@ -105,11 +113,11 @@ always_comb begin
         end
         2'b01 : begin
           // `c.srai     rd', uimm`          01        `srai rd, rd, shamt`
-          out_32bit = srli | (1 << 30).U;
+          out_32bit = {w_shamt, rs1p, 3'b101, rs1p, 7'b0010011} | (1 << 30);
         end
         2'b10 : begin
           // `c.andi     rd', uimm`          01        `andi rd,  rd, imm`
-          out_32bit = {addi_imm, rs1p, 3'b111, rs1p, 7'b0010011};
+          out_32bit = {w_addi_imm, rs1p, 3'b111, rs1p, 7'b0010011};
         end
         2'b11 : begin
           case ({i_rvc_inst[12], i_rvc_inst[6:5]})
@@ -192,7 +200,9 @@ always_comb begin
       end else begin
         if (i_rvc_inst[11:7] == 'h0 && i_rvc_inst[6:2] == 'h0) begin
           // `c.ebreak`                      10        `ebreak`
-          assign out_32bit = {jr >> 7, 7'b111_0011} | (1 << 20);
+          logic [ 31: 0] w_jr;
+          assign w_jr = {rs2, rd, 3'b000, x0, 7'h67};
+          assign out_32bit = {w_jr >> 7, 7'b111_0011} | (1 << 20);
         end else if (i_rvc_inst[11:7] != 'h0 && i_rvc_inst[6:2] == 'h0) begin
           // `c.jalr     rs1`                10        `jalr x1, 0(rs1)`
           assign out_32bit = {rs2, rd, 3'b000, ra, 7'b110_0111};
@@ -204,19 +214,19 @@ always_comb begin
     end
     5'b101_10 : begin
       // `c.fsdsp    rs2, offset(x2)`    10        `fsd rs2, offset(sp)`
-      out_32bit = {sdsp_imm >> 5, rs2, sp, 3'b011, sdsp_imm[ 4: 0], 7'b0100111};
+      out_32bit = {w_sdsp_imm >> 5, rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100111};
     end
     5'b110_10 : begin
       // `c.swsp     rs2, offset(x2)`    10        `sw rs2, offset(sp)`
-      out_32bit = {swsp_imm >> 5, rs2, sp, 3'b010, swsp_imm[ 4: 0], 7'b0100011};
+      out_32bit = {w_swsp_imm >> 5, rs2, sp, 3'b010, w_swsp_imm[ 4: 0], 7'b0100011};
     end
     5'b111_10 : begin
 `ifdef RV32
       // `c.fswsp    rs2, offset(x2)`    10        `fsw rs2, offset(sp)`
-      out_32bit = {swsp_imm >> 5, rs2, sp, 3'b010, swsp_imm[ 4: 0], 7'b0100111};
+      out_32bit = {w_swsp_imm >> 5, rs2, sp, 3'b010, w_swsp_imm[ 4: 0], 7'b0100111};
 `else // RV32
       // `c.sdsp     rs2, offset(x2)`    10        `sd rs2, offset(sp)`
-      out_32bit = {sdsp_imm >> 5, rs2, sp, 3'b011, sdsp_imm[ 4: 0], 7'b0100011};
+      out_32bit = {w_sdsp_imm >> 5, rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100011};
 `endif // RV32
     end
   endcase // case (i_rvc_inst[15:13] , i_rvc_inst[1: 0])
