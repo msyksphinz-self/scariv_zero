@@ -61,8 +61,6 @@ rd_t rd_field_type [msrh_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[msrh_conf_pkg::DISP_SIZE];
 r2_t rs2_field_type[msrh_conf_pkg::DISP_SIZE];
 
-logic [ic_word_num-1:0] r_head_inst_issued;
-logic [ic_word_num*2-1:0] w_head_inst_issued_next;
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
 logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
@@ -101,7 +99,8 @@ logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx_with_offset[msrh_conf_pkg::DI
 logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
 
-assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next[ic_word_num-1:0]);
+/* verilator lint_off WIDTH */
+assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 
 assign w_ptr_in_fire  = i_inst_valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued;
@@ -162,14 +161,6 @@ endgenerate
 
 assign o_inst_ready = !(&w_inst_buffer_valid);
 
-// encoder
-//   #(.SIZE(ic_word_num + 1))
-// u_start_pos_enc
-//   (
-//    .i_in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
-//    .o_out(w_head_start_pos_next)
-//    );
-
 // Extract next start position of decoding
 logic [ic_word_num-1: 0] w_bit_next_start_pos_oh;
 bit_extract_lsb
@@ -182,48 +173,25 @@ u_start_pos_bit
 // Note: MSB (DISP_SIZE) bit is dummy.
 bit_oh_or #(.T(logic[$clog2(ic_word_num): 0]), .WORDS(msrh_conf_pkg::DISP_SIZE+1))
 u_select_next_pos (
- .i_oh      (w_bit_next_start_pos_oh[msrh_conf_pkg::DISP_SIZE:0]),
- .i_data    (w_rvc_buf_idx),
- .o_selected(w_head_start_pos_next)
+ .i_oh       (w_bit_next_start_pos_oh[msrh_conf_pkg::DISP_SIZE:0]),
+ .i_data     (w_rvc_buf_idx),
+ .o_selected (w_head_start_pos_next)
 );
 
 
-logic [ic_word_num-1: 0] w_head_start_pos_upper_next;
-logic [$clog2(ic_word_num):0]   w_head_start_upper_next;
-
-assign w_head_start_pos_upper_next = w_head_inst_issued_next[ic_word_num +: ic_word_num];
-
-encoder
-  #(.SIZE(ic_word_num + 1))
-u_start_pos_next_uppper_enc
-  (
-   .i_in({w_head_start_pos_upper_next, w_head_start_pos_upper_next[0]} ^ {1'b0, w_head_start_pos_upper_next}),
-   .o_out(w_head_start_upper_next)
-   );
-
 assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[1+:$clog2(ic_word_num)];
-
-/* verilator lint_off WIDTH */
-assign w_head_inst_issued_next = r_head_inst_issued |
-                                 w_inst_disp_mask << (r_head_start_pos + w_out_inst_q_pc) |
-                                 (1 << w_out_inst_q_pc)-1;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_head_inst_issued <= {ic_word_num{1'b0}};
     r_head_start_pos   <= 'h0;
   end else begin
     if (w_flush_pipeline) begin
-      r_head_inst_issued <= 'h0;
-      r_head_start_pos   <= 'h0;
+      r_head_start_pos <= 'h0;
+    end else if (w_head_all_inst_issued) begin
+      // Move to next Line, carring lower bits for next
+      r_head_start_pos <= w_head_start_pos_next + w_out_inst_q_pc;
     end else if (w_inst_buffer_fire) begin
-      if (&w_head_inst_issued_next[ic_word_num-1:0]) begin
-        r_head_inst_issued <= w_head_inst_issued_next[ic_word_num +: ic_word_num];
-        r_head_start_pos   <= w_head_start_upper_next;
-      end else begin
-        r_head_inst_issued <= w_head_inst_issued_next;
-        r_head_start_pos   <= r_head_start_pos + w_head_start_pos_next[$clog2(ic_word_num)-1:0];
-      end
+      r_head_start_pos <= w_head_start_pos_next[$clog2(ic_word_num)-1:0];
     end
   end
 end
@@ -233,8 +201,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_valid;
 // =================================
 // RVC Expand from 16-bit to 32-bit
 // =================================
-assign w_rvc_buf_idx[0] = r_head_start_pos;
-assign w_rvc_buf_idx_with_offset[0] = w_rvc_buf_idx[0] + w_out_inst_q_pc;
+assign w_rvc_buf_idx[0] = {1'b0, r_head_start_pos};
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : rvc_expand_loop
   logic [15: 0]                    w_rvc_inst;
   logic [15: 0]                    w_rvc_next_inst;
@@ -246,7 +213,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
   assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
 
-  assign w_inst_buf_ptr = (w_rvc_buf_idx[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
+  /* verilator lint_off WIDTH */
+  assign w_inst_buf_ptr = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
 
   assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr].data   [ w_rvc_buf_idx_with_offset[w_idx]   *16 +:16];
@@ -337,7 +305,7 @@ bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~
 assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
-assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + {r_head_start_pos, 1'b0};
+assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
 assign iq_disp.is_br_included = |w_inst_is_br;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
@@ -405,7 +373,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
       iq_disp.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
       iq_disp.inst[d_idx].inst = w_expand_inst[d_idx];
-      iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + ((r_head_start_pos + d_idx) << 2);
+      iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       iq_disp.inst[d_idx].rd_valid   = rd_field_type[d_idx] != RD__;
       iq_disp.inst[d_idx].rd_type    = msrh_pkg::GPR;
