@@ -43,6 +43,8 @@ int main(int argc, char** argv) {
 
   char *filename;
 
+  int cycle = 1000000;
+
   Verilated::commandArgs(argc, argv);
 
   while (1) {
@@ -52,6 +54,7 @@ int main(int argc, char** argv) {
       {"dump"  , no_argument,       0, 'd' },
 #endif // DUMP_FST
       {"output", required_argument, 0, 'o' },
+      {"cycle",  required_argument, 0, 'c' },
       {"help"  , no_argument,       0, 'h' },
       {0       , 0          ,       0, 0   }
     };
@@ -82,6 +85,11 @@ int main(int argc, char** argv) {
           perror("failed to open log file");
           exit(EXIT_FAILURE);
         }
+        break;
+      }
+      case 'c': {
+        cycle = strtol(optarg, NULL, 10);
+
         break;
       }
     }
@@ -140,7 +148,7 @@ int main(int argc, char** argv) {
   dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
-  while (time_counter < 1000000 && !Verilated::gotFinish()) {
+  while (time_counter < cycle && !Verilated::gotFinish()) {
     // if ((time_counter % 5) == 0) {
     dut->i_clk = !dut->i_clk; // Toggle clock
     // }
