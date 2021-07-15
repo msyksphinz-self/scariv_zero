@@ -1,3 +1,9 @@
+/*
+ * Extract bit from LSB
+ * 1010001100101000
+ * -->
+ * 0000000000001000
+ */
 module bit_extract_lsb
   #(
     parameter WIDTH = 32

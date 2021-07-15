@@ -1,3 +1,9 @@
+/*
+ * Make mask from LSB 1-bit
+ * 1010001100101000
+ * -->
+ * 1111111111111000
+ */
 module bit_tree_lsb
   #(
     parameter WIDTH = 32
