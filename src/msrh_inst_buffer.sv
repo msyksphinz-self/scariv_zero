@@ -88,9 +88,18 @@ logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_inst_buffer_outptr_p1;
 logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
-logic [$clog2(ic_word_num)+2-1:2]           w_out_inst_q_pc;
+logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
 
 logic                                       w_flush_pipeline;
+
+// =================================
+// RVC Expand from 16-bit to 32-bit
+// =================================
+/* verilator lint_off UNOPTFLAT */
+logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE + 1];
+logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx_with_offset[msrh_conf_pkg::DISP_SIZE + 1];
+logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
 
 assign w_head_all_inst_issued = w_inst_buffer_fire & (&w_head_inst_issued_next[ic_word_num-1:0]);
 
@@ -153,13 +162,31 @@ endgenerate
 
 assign o_inst_ready = !(&w_inst_buffer_valid);
 
-encoder
-  #(.SIZE(ic_word_num + 1))
-u_start_pos_enc
+// encoder
+//   #(.SIZE(ic_word_num + 1))
+// u_start_pos_enc
+//   (
+//    .i_in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
+//    .o_out(w_head_start_pos_next)
+//    );
+
+// Extract next start position of decoding
+logic [ic_word_num-1: 0] w_bit_next_start_pos_oh;
+bit_extract_lsb
+  #(.WIDTH(ic_word_num))
+u_start_pos_bit
   (
-   .i_in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, {w_inst_disp_mask, w_inst_disp_mask[0]} ^ {1'b0, w_inst_disp_mask}}),
-   .o_out(w_head_start_pos_next)
+   .in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, ~w_inst_disp_mask}),
+   .out(w_bit_next_start_pos_oh)
    );
+// Note: MSB (DISP_SIZE) bit is dummy.
+bit_oh_or #(.T(logic[$clog2(ic_word_num): 0]), .WORDS(msrh_conf_pkg::DISP_SIZE+1))
+u_select_next_pos (
+ .i_oh      (w_bit_next_start_pos_oh[msrh_conf_pkg::DISP_SIZE:0]),
+ .i_data    (w_rvc_buf_idx),
+ .o_selected(w_head_start_pos_next)
+);
+
 
 logic [ic_word_num-1: 0] w_head_start_pos_upper_next;
 logic [$clog2(ic_word_num):0]   w_head_start_upper_next;
@@ -174,7 +201,7 @@ u_start_pos_next_uppper_enc
    .o_out(w_head_start_upper_next)
    );
 
-assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[2+:$clog2(ic_word_num)];
+assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[1+:$clog2(ic_word_num)];
 
 /* verilator lint_off WIDTH */
 assign w_head_inst_issued_next = r_head_inst_issued |
@@ -206,11 +233,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_valid;
 // =================================
 // RVC Expand from 16-bit to 32-bit
 // =================================
-/* verilator lint_off UNOPTFLAT */
-logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE + 1];
-logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
-assign w_rvc_buf_idx[0] = r_head_start_pos + w_out_inst_q_pc;
+assign w_rvc_buf_idx[0] = r_head_start_pos;
+assign w_rvc_buf_idx_with_offset[0] = w_rvc_buf_idx[0] + w_out_inst_q_pc;
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : rvc_expand_loop
   logic [15: 0]                    w_rvc_inst;
   logic [15: 0]                    w_rvc_next_inst;
@@ -220,13 +244,15 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
   logic [31: 0]                                w_local_expand_inst;
 
+  assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
+
   assign w_inst_buf_ptr = (w_rvc_buf_idx[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
                           w_inst_buffer_outptr_p1;
 
-  assign w_rvc_inst      = r_inst_queue[w_inst_buf_ptr].data[ w_rvc_buf_idx[w_idx]*16 +:16];
-  assign w_rvc_next_inst = r_inst_queue[w_inst_buf_ptr].data[(w_rvc_buf_idx[w_idx]+1)*16 +:16];
-  assign w_rvc_byte_en   = r_inst_queue[w_inst_buf_ptr].byte_en[w_rvc_buf_idx[w_idx]*2 +: 2];
-  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr].data[(w_rvc_buf_idx[w_idx]+1)*2 +: 2];
+  assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr].data   [ w_rvc_buf_idx_with_offset[w_idx]   *16 +:16];
+  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr].data   [(w_rvc_buf_idx_with_offset[w_idx]+1)*16 +:16];
+  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr].byte_en[ w_rvc_buf_idx_with_offset[w_idx]    *2 +: 2];
+  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr].byte_en[(w_rvc_buf_idx_with_offset[w_idx]+1) *2 +: 2];
   msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin
