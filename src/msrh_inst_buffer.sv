@@ -167,7 +167,7 @@ bit_extract_lsb
   #(.WIDTH(ic_word_num))
 u_start_pos_bit
   (
-   .in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b0}}, ~w_inst_disp_mask}),
+   .in({{(ic_word_num - msrh_conf_pkg::DISP_SIZE){1'b1}}, ~w_inst_disp_mask}),
    .out(w_bit_next_start_pos_oh)
    );
 // Note: MSB (DISP_SIZE) bit is dummy.
@@ -229,13 +229,13 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
       w_expand_inst[w_idx]     = w_local_expand_inst;
-      w_expanded_valid[w_idx]  = &w_rvc_byte_en;
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr].valid & (&w_rvc_byte_en);
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_rvc_inst};
-      w_expanded_valid[w_idx]  = &{w_rvc_next_byte_en, w_rvc_byte_en};
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr].valid & &{w_rvc_next_byte_en, w_rvc_byte_en};
     end
   end // always_comb
 
@@ -373,7 +373,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
       iq_disp.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
       iq_disp.inst[d_idx].inst = w_expand_inst[d_idx];
-      iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc, 1'b0} + {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
+      iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc[riscv_pkg::VADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
+                                    {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       iq_disp.inst[d_idx].rd_valid   = rd_field_type[d_idx] != RD__;
       iq_disp.inst[d_idx].rd_type    = msrh_pkg::GPR;
