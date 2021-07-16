@@ -78,6 +78,7 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_l1d_upddate;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_l1d_upddate_oh;
 
 msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_evict_entry;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_entry_evict_ready;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_evict_tag;
@@ -166,15 +167,21 @@ end
 
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
 
+  logic w_evict_sent;
+  logic w_ext_req_sent;
+
+  assign w_evict_sent = l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx];
+  assign w_ext_req_sent = l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx];
+
   // ---------------------
   // Eviction Data Search
   // ---------------------
   assign w_s0_evict_search_hit[b_idx] = w_lrq_entries[b_idx].valid &
-                                     w_lrq_entries[b_idx].evict_valid &
-                                     ~w_lrq_entries[b_idx].evict_sent &
-                                     lrq_evict_search_if.s0_valid &
-                                     (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                      lrq_evict_search_if.s0_paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+                                        w_lrq_entries[b_idx].evict_valid &
+                                        ~w_evict_sent &
+                                        lrq_evict_search_if.s0_valid &
+                                        (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                         lrq_evict_search_if.s0_paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   msrh_lsu_pkg::evict_merge_t w_evict_merge;
   assign w_evict_merge.valid = lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
   assign w_evict_merge.data  = lrq_evict_search_if.s0_data;
@@ -217,13 +224,14 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
          .i_evict_merge (w_evict_merge),
 
-         .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
-         .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
-         .o_entry (w_lrq_entries[b_idx])
+         .i_sent       (w_ext_req_sent),
+         .i_evict_sent (w_evict_sent),
+         .o_entry (w_lrq_entries[b_idx]),
+         .o_evict_ready (w_lrq_entry_evict_ready[b_idx])
          );
   end else begin : stq_entry // if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
     // ----------------------------
@@ -243,11 +251,12 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
          .i_evict_merge (w_evict_merge),
 
-         .i_clear (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
-         .o_entry (w_lrq_entries[b_idx])
+         .o_entry (w_lrq_entries[b_idx]),
+         .o_evict_ready (w_lrq_entry_evict_ready[b_idx])
          );
 
   end // else: !if(b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
@@ -324,7 +333,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
   assign w_lrq_ready_to_evict[b_idx] = w_lrq_entries[b_idx].valid &
                                        w_lrq_entries[b_idx].evict_valid &
-                                       !w_lrq_entries[b_idx].evict_sent;
+                                       w_lrq_entry_evict_ready[b_idx];
 end
 endgenerate
 bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_norm_out_ptr), .out(w_lrq_ready_to_send_oh));
@@ -346,9 +355,7 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 // Eviction Request
 // -----------------
-assign l1d_evict_if.valid = w_lrq_ready_to_evict_entry.valid &
-                            w_lrq_ready_to_evict_entry.evict_valid &
-                            !w_lrq_ready_to_evict_entry.evict_sent;
+assign l1d_evict_if.valid = w_lrq_ready_to_evict;
 // assign l1d_evict_if.payload.cmd     = msrh_lsu_pkg::M_XWR;
 // assign l1d_evict_if.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_evict_tag};
 assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;

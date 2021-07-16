@@ -167,7 +167,6 @@ typedef struct packed {
   logic                          l1dwr_ready;
   logic                          evict_valid;
   evict_payload_t                evict;
-  logic                          evict_sent;
 } lrq_entry_t;
 
 function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
