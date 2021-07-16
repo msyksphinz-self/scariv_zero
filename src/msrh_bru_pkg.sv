@@ -29,6 +29,7 @@ interface br_upd_if;
   logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
+  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
   modport master (
     output update,
@@ -37,7 +38,8 @@ interface br_upd_if;
     output vaddr,
     output cmt_id,
     output grp_id,
-    output brtag
+    output brtag,
+    output br_mask
   );
 
   modport slave (
@@ -47,7 +49,8 @@ interface br_upd_if;
     input vaddr,
     input cmt_id,
     input grp_id,
-    input brtag
+    input brtag,
+    input br_mask
   );
 
 endinterface // br_upd_if

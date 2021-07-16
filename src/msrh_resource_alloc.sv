@@ -218,6 +218,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx+
     if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
       w_br_mask_valid_next[b_idx] = 1'b0;
     end
+    if (br_upd_if.update & br_upd_if.mispredict & !br_upd_if.br_mask[b_idx]) begin
+      w_br_mask_valid_next[b_idx] = 1'b0;
+    end
   end
 end
 endgenerate
