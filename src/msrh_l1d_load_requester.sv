@@ -355,7 +355,7 @@ assign l1d_ext_rd_req.payload.byte_en = 'h0;
 // -----------------
 // Eviction Request
 // -----------------
-assign l1d_evict_if.valid = w_lrq_ready_to_evict;
+assign l1d_evict_if.valid = |w_lrq_ready_to_evict;
 // assign l1d_evict_if.payload.cmd     = msrh_lsu_pkg::M_XWR;
 // assign l1d_evict_if.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_evict_tag};
 assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;
