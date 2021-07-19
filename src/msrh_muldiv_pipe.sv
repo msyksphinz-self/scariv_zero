@@ -36,10 +36,16 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic [MUL_UNROLL: 0] w_step_multiplier;
   logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0] w_prod;
   logic [riscv_pkg::XLEN_W: 0] w_step_multiplicand;
-  assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL-1: 0]};
-  /* verilator lint_off WIDTH */
-  assign w_prod = multiplicand_pipe[s_idx] * w_step_multiplier +
-                   prod_pipe[s_idx][riscv_pkg::XLEN_W + MUL_UNROLL * s_idx: 0];
+  if (s_idx == 0) begin
+    assign w_step_multiplier = {1'b0, w_op2[MUL_UNROLL-1: 0]};
+    /* verilator lint_off WIDTH */
+    assign w_prod = w_op1 * w_step_multiplier;
+  end else begin
+    assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL-1: 0]};
+    /* verilator lint_off WIDTH */
+    assign w_prod = multiplicand_pipe[s_idx] * w_step_multiplier +
+                    prod_pipe[s_idx][riscv_pkg::XLEN_W + MUL_UNROLL * s_idx: 0];
+  end // else: !if(s_idx == 0)
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -54,7 +60,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         prod_pipe        [s_idx+1] <= 'h0;
         multiplicand_pipe[s_idx+1] <= w_op1;
         multiplier_pipe  [s_idx+1] <= w_op2;
-        valid_pipe       [s_idx+1] <= 1'b0;
+        valid_pipe       [s_idx+1] <= i_valid;
         op_pipe          [s_idx+1] <= i_op;
       end else begin
         /* verilator lint_off WIDTH */
