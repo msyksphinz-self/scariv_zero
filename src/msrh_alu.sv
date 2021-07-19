@@ -44,7 +44,6 @@ msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[ALU_PORT_SIZE];
 logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
-
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
