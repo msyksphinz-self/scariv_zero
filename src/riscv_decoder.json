@@ -578,7 +578,7 @@
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "urem"]]
-    }
+    },
     {
         "name":"mulw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "dlength":"32",
@@ -618,5 +618,5 @@
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "remuw"]]
-    },
+    }
 ]
