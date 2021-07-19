@@ -68,6 +68,7 @@ msrh_pkg::early_wr_t w_ex1_alu_early_wr[msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_alu_phy_wr  [msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 
+
 // ----------------------------------
 // LSU Components
 // ----------------------------------
@@ -228,7 +229,8 @@ msrh_resource_alloc u_msrh_resource_alloc
 
   generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
     assign w_disp_alu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH);
+                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH ||
+                                       w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_MULDIV);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
                                        w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);

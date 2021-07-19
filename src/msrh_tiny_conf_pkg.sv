@@ -13,6 +13,7 @@ package msrh_conf_pkg;
   localparam LSU_INST_NUM = 1;
 
   localparam ARITH_DISP_SIZE = 1;
+  localparam MULDIV_DISP_SIZE = ARITH_DISP_SIZE / ALU_INST_NUM;
   localparam MEM_DISP_SIZE   = 1;
   localparam BRU_DISP_SIZE   = 1;
   localparam CSU_DISP_SIZE   = 1;

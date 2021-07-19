@@ -1,6 +1,7 @@
 ../src/decoder_inst_cat.sv
 ../src/decoder_reg.sv
 ../src/decoder_alu_ctrl.sv
+../src/decoder_muldiv_ctrl.sv
 ../src/decoder_lsu_ctrl.sv
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv

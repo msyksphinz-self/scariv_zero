@@ -514,5 +514,109 @@
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg": [["r1", "r1"], ["r2", "r2"]],
         "csu_ctrl": [["is_sfence_vma", "1"]]
+    },
+    {
+        "name":"mul        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl" :[["op", "smul"]]
+    },
+    {
+        "name":"mulh       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "mulh"]]
+    },
+    {
+        "name":"mulhsu     r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "mulhsu"]]
+    },
+    {
+        "name":"mulhu      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "mulhu"]]
+    },
+    {
+        "name":"div        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "sdiv"]]
+    },
+    {
+        "name":"divu       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "udiv"]]
+    },
+    {
+        "name":"rem        r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "srem"]]
+    },
+    {
+        "name":"remu       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field": ["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "urem"]]
     }
+    {
+        "name":"mulw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "mulw"]]
+    },
+    {
+        "name":"divw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "divw"]]
+    },
+    {
+        "name":"divuw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "divuw"]]
+    },
+    {
+        "name":"remw       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "remw"]]
+    },
+    {
+        "name":"remuw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "dlength":"32",
+        "field":["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "muldiv"]],
+        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl": [["op", "remuw"]]
+    },
 ]
