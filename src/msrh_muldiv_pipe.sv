@@ -16,8 +16,8 @@ module msrh_muldiv_pipe
  output logic [riscv_pkg::XLEN_W-1: 0] o_res
  );
 
-logic [riscv_pkg::XLEN: 0]             w_op1;
-logic [riscv_pkg::XLEN: 0]             w_op2;
+logic [riscv_pkg::XLEN_W: 0]           w_op1;
+logic [riscv_pkg::XLEN_W: 0]           w_op2;
 
 assign w_op1 = (i_op == S_MUL || i_op == S_MULH || i_SMULHSU) ? {i_rs1[riscv_pkg::XLEN_W-1], i_rs1} : {1'b0, i_rs1};
 assign w_op2 = (i_op == S_MUL || i_op == S_MULH)              ? {i_rs2[riscv_pkg::XLEN_W-1], i_rs2} : {1'b0, i_rs2};
