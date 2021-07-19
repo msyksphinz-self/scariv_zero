@@ -593,6 +593,43 @@ void step_spike(long long time, long long rtl_pc,
     return;
   }
 
+  if (rtl_wr_valid && p->get_state()->log_reg_write.size() == 0) {
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "RTL Writes Register but ISS NOT. RTL GPR[%d] = %0*llx\n",
+            rtl_wr_gpr_addr,
+            g_rv_xlen / 4, rtl_wr_val);
+    fprintf(compare_log_fp, "==========================================\n");
+    stop_sim(1);
+  }
+
+  // // Dumping for ISS GPR Register Writes
+  // fprintf(compare_log_fp, "INFO %d %d\n", rtl_wr_valid, p->get_state()->log_reg_write.size());
+  // for (auto &iss_rd: p->get_state()->log_reg_write) {
+  //   int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd)];
+  //
+  //   fprintf(compare_log_fp, "  GPR[%ld]<=%0*lx\n",
+  //           std::get<0>(iss_rd) / 16,
+  //           g_rv_xlen / 4, iss_wr_val);
+  // }
+
+  if (!rtl_wr_valid && p->get_state()->log_reg_write.size() != 0) {
+    for (auto &iss_rd: p->get_state()->log_reg_write) {
+      // magic number "16" is category of register write
+      if (std::get<0>(iss_rd) < 32 * 16) {
+        fprintf(compare_log_fp, "==========================================\n");
+        fprintf(compare_log_fp, "ISS Writes Register but RTL NOT");
+        int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd)];
+
+        fprintf(compare_log_fp, "  GPR[%ld]<=%0*lx\n",
+                std::get<0>(iss_rd) / 16,
+                g_rv_xlen / 4, iss_wr_val);
+        fprintf(compare_log_fp, "==========================================\n");
+        stop_sim(1);
+      }
+    }
+  }
+
+
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
