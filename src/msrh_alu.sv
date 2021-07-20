@@ -47,6 +47,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[ALU_PORT_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
+logic                                        w_muldiv_stall;
+
 done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if();
 
 msrh_disp_pickup
@@ -82,6 +84,8 @@ u_msrh_scheduler
    .i_disp_info (disp_picked_inst),
    .cre_ret_if  (cre_ret_if),
 
+   .i_stall    (w_muldiv_stall),
+
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
    .i_mispred_lsu (i_mispred_lsu),
@@ -108,6 +112,8 @@ u_alu
    .rv0_issue(w_rv0_issue),
    .rv0_index(w_rv0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
+
+   .o_muldiv_stall(w_muldiv_stall),
 
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),

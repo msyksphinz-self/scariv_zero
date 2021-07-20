@@ -20,6 +20,8 @@ module msrh_scheduler
 
  cre_ret_if.slave                      cre_ret_if,
 
+ input logic                           i_stall,
+
  /* Forwarding path */
  input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
  input msrh_pkg::phy_wr_t   i_phy_wr  [msrh_pkg::TGT_BUS_SIZE],
@@ -127,7 +129,7 @@ bit_brshift
   #(.WIDTH(ENTRY_SIZE))
 u_age_selector
   (
-   .in   (w_entry_valid & w_entry_ready),
+   .in   (w_entry_valid & w_entry_ready & {ENTRY_SIZE{~i_stall}}),
    .i_sel(w_entry_out_ptr_oh),
    .out  (w_picked_inst)
    );

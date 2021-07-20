@@ -520,7 +520,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl" :[["op", "smul"]]
     },
     {
@@ -528,7 +528,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulh"]]
     },
     {
@@ -536,7 +536,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulhsu"]]
     },
     {
@@ -544,7 +544,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulhu"]]
     },
     {
@@ -552,7 +552,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "sdiv"]]
     },
     {
@@ -560,7 +560,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "udiv"]]
     },
     {
@@ -568,7 +568,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "srem"]]
     },
     {
@@ -576,7 +576,7 @@
         "length":"32", "dlength":"32",
         "field": ["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "urem"]]
     },
     {
@@ -584,7 +584,7 @@
         "length":"32", "dlength":"32",
         "field":["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulw"]]
     },
     {
@@ -592,7 +592,7 @@
         "length":"32", "dlength":"32",
         "field":["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "divw"]]
     },
     {
@@ -600,7 +600,7 @@
         "length":"32", "dlength":"32",
         "field":["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "divuw"]]
     },
     {
@@ -608,7 +608,7 @@
         "length":"32", "dlength":"32",
         "field":["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "remw"]]
     },
     {
@@ -616,7 +616,7 @@
         "length":"32", "dlength":"32",
         "field":["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
-        "reg": [["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "remuw"]]
     }
 ]

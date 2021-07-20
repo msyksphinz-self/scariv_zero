@@ -11,6 +11,8 @@ module msrh_alu_pipe
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
     input msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
+    output logic o_muldiv_stall,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
 
@@ -76,6 +78,8 @@ logic [riscv_pkg::XLEN_W-1: 0]             w_muldiv_res;
 
 logic                                      r_ex2_muldiv_valid;
 
+logic                                      r_ex3_muldiv_valid;
+
 always_comb begin
   r_ex0_issue = rv0_issue;
   w_ex0_index = rv0_index;
@@ -136,19 +140,19 @@ select_mispred_bus rs2_mispred_select
 // -----------------------------
 // EX1 : Multiplier Control
 // -----------------------------
-assign w_ex1_muldiv_type_valid = (r_ex2_pipe_ctrl.op == OP_SMUL  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_MULH  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_MULHSU) |
-                                 (r_ex2_pipe_ctrl.op == OP_MULHU ) |
-                                 (r_ex2_pipe_ctrl.op == OP_SDIV  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_UDIV  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_SREM  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_UREM  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_MULW  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_DIVW  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_DIVUW ) |
-                                 (r_ex2_pipe_ctrl.op == OP_REMW  ) |
-                                 (r_ex2_pipe_ctrl.op == OP_REMUW );
+assign w_ex1_muldiv_type_valid = (r_ex1_pipe_ctrl.op == OP_SMUL  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_MULH  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_MULHSU) |
+                                 (r_ex1_pipe_ctrl.op == OP_MULHU ) |
+                                 (r_ex1_pipe_ctrl.op == OP_SDIV  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_UDIV  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_SREM  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_UREM  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_MULW  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_DIVW  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_DIVUW ) |
+                                 (r_ex1_pipe_ctrl.op == OP_REMW  ) |
+                                 (r_ex1_pipe_ctrl.op == OP_REMUW );
 
 assign w_ex1_muldiv_valid = r_ex1_issue.valid & w_ex1_muldiv_type_valid;
 
@@ -258,6 +262,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex3_wr_valid <= r_ex2_wr_valid;
 
+    r_ex3_muldiv_valid <= r_ex2_muldiv_valid;
+
     case (r_ex2_pipe_ctrl.op)
       OP_SIGN_LUI: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
       OP_SIGN_AUIPC:  r_ex3_result <= {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
@@ -322,6 +328,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+assign o_muldiv_stall = r_mul_valid_pipe[MUL_PIPE_MAX-1-3];
+
 always_comb begin
   if (w_muldiv_res_valid) begin
     o_ex3_phy_wr.valid   = 1'b1;
@@ -339,7 +347,7 @@ always_comb begin
     o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
     o_ex3_phy_wr.rd_data = r_ex3_result;
 
-    ex3_done_if.done         = r_ex3_issue.valid & ~r_ex2_muldiv_valid;
+    ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
     ex3_done_if.index_oh     = r_ex3_index;
     ex3_done_if.except_valid = 1'b0;
     ex3_done_if.except_type  = msrh_pkg::except_t'('h0);

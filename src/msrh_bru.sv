@@ -77,6 +77,8 @@ u_msrh_scheduler
    .i_disp_info (disp_picked_inst),
    .cre_ret_if  (cre_ret_if),
 
+   .i_stall (1'b0),
+
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
    .i_mispred_lsu (i_mispred_lsu),

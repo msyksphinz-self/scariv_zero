@@ -41,9 +41,9 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     /* verilator lint_off WIDTH */
     assign w_prod = w_op1 * w_step_multiplier;
   end else begin
-    assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL-1: 0]};
+    assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     /* verilator lint_off WIDTH */
-    assign w_prod = multiplicand_pipe[s_idx] * w_step_multiplier +
+    assign w_prod = {multiplicand_pipe[s_idx] * w_step_multiplier, {(MUL_UNROLL * s_idx){1'b0}}} +
                     prod_pipe[s_idx][riscv_pkg::XLEN_W + MUL_UNROLL * s_idx: 0];
   end // else: !if(s_idx == 0)
 
@@ -57,7 +57,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     end else begin
       if (s_idx == 0) begin
         /* verilator lint_off WIDTH */
-        prod_pipe        [s_idx+1] <= 'h0;
+        prod_pipe        [s_idx+1] <= w_prod;
         multiplicand_pipe[s_idx+1] <= w_op1;
         multiplier_pipe  [s_idx+1] <= w_op2;
         valid_pipe       [s_idx+1] <= i_valid;

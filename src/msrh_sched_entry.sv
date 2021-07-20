@@ -328,7 +328,7 @@ endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & /* !(r_issued | r_dead)*/ (r_state == msrh_pkg::WAIT) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & (r_state == msrh_pkg::WAIT) & !w_entry_flush &
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
 assign o_entry       = w_entry_next;
 
