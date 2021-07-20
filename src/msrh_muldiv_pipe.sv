@@ -43,9 +43,11 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   end else begin
     assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     /* verilator lint_off WIDTH */
-    assign w_prod[MUL_UNROLL * s_idx -1: 0] = 'h0;
-    assign w_prod[MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = multiplicand_pipe[s_idx] * w_step_multiplier +
-                                                                prod_pipe[s_idx][riscv_pkg::XLEN_W + MUL_UNROLL * s_idx: MUL_UNROLL * (s_idx-1)];
+    assign w_prod[MUL_UNROLL * s_idx -1: 0] = prod_pipe[s_idx][MUL_UNROLL * s_idx -1: 0];
+    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = multiplicand_pipe[s_idx] * w_step_multiplier +
+                                                                                    prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W];
+    // assign w_prod = {multiplicand_pipe[s_idx] * w_step_multiplier, {(MUL_UNROLL * s_idx){1'b0}}} +
+    //                 prod_pipe[s_idx][riscv_pkg::XLEN_W + MUL_UNROLL * s_idx: MUL_UNROLL * s_idx];
   end // else: !if(s_idx == 0)
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
