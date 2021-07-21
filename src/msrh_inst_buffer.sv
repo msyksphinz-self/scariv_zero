@@ -210,20 +210,26 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   logic [15: 0]                    w_rvc_next_inst;
   logic [ 1: 0]                    w_rvc_byte_en;
   logic [ 1: 0]                    w_rvc_next_byte_en;
-  logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr;
+  logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr_b0;
+  logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr_b2;
 
   logic [31: 0]                                w_local_expand_inst;
+  logic [$clog2(ic_word_num): 0]               w_rvc_buf_idx_with_offset_b2;
+
 
   assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
+  assign w_rvc_buf_idx_with_offset_b2     = w_rvc_buf_idx_with_offset[w_idx] + 1;
 
   /* verilator lint_off WIDTH */
-  assign w_inst_buf_ptr = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
-                          w_inst_buffer_outptr_p1;
+  assign w_inst_buf_ptr_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
+                             w_inst_buffer_outptr_p1;
+  assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
+                             w_inst_buffer_outptr_p1;
 
-  assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr].data   [ w_rvc_buf_idx_with_offset[w_idx]   *16 +:16];
-  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr].data   [(w_rvc_buf_idx_with_offset[w_idx]+1)*16 +:16];
-  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr].byte_en[ w_rvc_buf_idx_with_offset[w_idx]    *2 +: 2];
-  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr].byte_en[(w_rvc_buf_idx_with_offset[w_idx]+1) *2 +: 2];
+  assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
+  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    *16 +:16];
+  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx] *2 +: 2];
+  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2     *2 +: 2];
   msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin
@@ -232,18 +238,20 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
       w_expand_inst[w_idx]     = w_local_expand_inst;
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr].valid & (&w_rvc_byte_en);
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & (&w_rvc_byte_en);
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_rvc_inst};
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr].valid & &{w_rvc_next_byte_en, w_rvc_byte_en};
-    end
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
+                                 r_inst_queue[w_inst_buf_ptr_b2].valid &
+                                 &{w_rvc_next_byte_en, w_rvc_byte_en};
+    end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
-  assign w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr].tlb_except_valid;
-  assign w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr].tlb_except_cause;
+  assign w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
+  assign w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
 
 end
 endgenerate
