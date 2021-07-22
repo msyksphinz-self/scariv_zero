@@ -35,6 +35,7 @@ op_t  op_pipe                                  [MUL_STEP + 1];
 generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic [MUL_UNROLL: 0] w_step_multiplicand;
   logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0] w_prod;
+  logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0] w_prod_part;
   if (s_idx == 0) begin
     assign w_step_multiplicand = {w_op1[MUL_UNROLL-1], w_op1[MUL_UNROLL-1: 0]};
     /* verilator lint_off WIDTH */
@@ -43,8 +44,9 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     assign w_step_multiplicand = {multiplicand_pipe[s_idx][MUL_UNROLL*(s_idx+1)-1],
                                   multiplicand_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     /* verilator lint_off WIDTH */
+    assign w_prod_part = w_step_multiplicand * multiplier_pipe[s_idx];
     assign w_prod[MUL_UNROLL * s_idx -1: 0] = prod_pipe[s_idx][MUL_UNROLL * s_idx -1: 0];
-    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = w_step_multiplicand * multiplier_pipe[s_idx] +
+    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = w_prod_part +
                                                                                     prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W];
   end // else: !if(s_idx == 0)
 
