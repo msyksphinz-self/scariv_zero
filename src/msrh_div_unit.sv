@@ -58,11 +58,17 @@ always_comb begin
     default : w_is_64bit = 1'b0;
   endcase // case (i_op)
 
-
-  w_fn[0] = 1'b0;  // for MUL
-  w_fn[1] = i_op == OP_SREM || i_op == OP_UREM || i_op == OP_REMW || i_op == OP_REMUW;  // for cmdHi
-  w_fn[2] = i_op == OP_SDIV || i_op == OP_DIVW || i_op == OP_SREM || i_op == OP_REMW;  // for lhsSigned
-  w_fn[3] = i_op == OP_SDIV || i_op == OP_DIVW || i_op == OP_SREM || i_op == OP_REMW;  // for rhsSigned
+  case (i_op)
+    OP_SDIV  : w_fn = 'h04;
+    OP_UDIV  : w_fn = 'h05;
+    OP_SREM  : w_fn = 'h06;
+    OP_UREM  : w_fn = 'h07;
+    OP_DIVW  : w_fn = 'h04;
+    OP_DIVUW : w_fn = 'h05;
+    OP_REMW  : w_fn = 'h06;
+    OP_REMUW : w_fn = 'h07;
+    default  : w_fn = 'h00;
+  endcase // case (i_op)
 
 end // always_comb
 
