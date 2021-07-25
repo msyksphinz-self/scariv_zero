@@ -69,7 +69,6 @@ module msrh_alu_pipe
 localparam MUL_UNROLL = 8;
 localparam MUL_PIPE_MAX = riscv_pkg::XLEN_W/MUL_UNROLL;
 
-logic [MUL_PIPE_MAX-1: 0]                  r_mul_valid_pipe;
 logic                                      w_mul_stall_pipe;
 logic                                      w_ex1_muldiv_valid;
 logic                                      w_ex1_muldiv_type_valid;
@@ -79,6 +78,11 @@ logic [riscv_pkg::XLEN_W-1: 0]             w_muldiv_res;
 logic                                      r_ex2_muldiv_valid;
 
 logic                                      r_ex3_muldiv_valid;
+
+logic [msrh_pkg::RNID_W-1: 0]              w_muldiv_rd_rnid;
+msrh_pkg::reg_t                            w_muldiv_rd_type;
+logic [RV_ENTRY_SIZE-1: 0]                 w_muldiv_index_oh;
+
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -290,12 +294,11 @@ end
 // ----------------------
 // Multiplier Pipeline
 // ----------------------
-logic [msrh_pkg::RNID_W-1: 0]             r_muldiv_rd_rnid[MUL_PIPE_MAX];
-msrh_pkg::reg_t                           r_muldiv_rd_type[MUL_PIPE_MAX];
-logic [RV_ENTRY_SIZE-1: 0]                r_muldiv_index_oh[MUL_PIPE_MAX];
-
 msrh_muldiv_pipe
-  #(.MUL_UNROLL(MUL_UNROLL))
+  #(
+    .RV_ENTRY_SIZE (RV_ENTRY_SIZE),
+    .MUL_UNROLL(MUL_UNROLL)
+    )
 u_msrh_muldiv_pipe
   (
    .i_clk    (i_clk),
@@ -304,41 +307,31 @@ u_msrh_muldiv_pipe
    .i_valid  (r_ex2_muldiv_valid),
    .i_op     (r_ex2_pipe_ctrl.op),
 
+   .i_rd_rnid  (r_ex2_issue.rd_rnid),
+   .i_rd_type  (r_ex2_issue.rd_type),
+   .i_index_oh (r_ex2_index        ),
+
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),
 
+   .o_stall (o_muldiv_stall),
    .o_valid (w_muldiv_res_valid),
-   .o_res   (w_muldiv_res)
+   .o_res   (w_muldiv_res),
+
+   .o_rd_rnid  (w_muldiv_rd_rnid ),
+   .o_rd_type  (w_muldiv_rd_type ),
+   .o_index_oh (w_muldiv_index_oh)
    );
-
-always_ff @(posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_mul_valid_pipe <= 'h0;
-  end else begin
-    r_mul_valid_pipe [0] <= r_ex2_muldiv_valid;
-    r_muldiv_rd_rnid [0] <= r_ex2_issue.rd_rnid;
-    r_muldiv_rd_type [0] <= r_ex2_issue.rd_type;
-    r_muldiv_index_oh[0] <= r_ex2_index;
-    for(int p = 1; p < MUL_PIPE_MAX; p++) begin : pipe_loop
-      r_mul_valid_pipe [p] <= r_mul_valid_pipe [p-1];
-      r_muldiv_rd_rnid [p] <= r_muldiv_rd_rnid [p-1];
-      r_muldiv_rd_type [p] <= r_muldiv_rd_type [p-1];
-      r_muldiv_index_oh[p] <= r_muldiv_index_oh[p-1];
-    end
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
-assign o_muldiv_stall = r_mul_valid_pipe[MUL_PIPE_MAX-1-3];
 
 always_comb begin
   if (w_muldiv_res_valid) begin
     o_ex3_phy_wr.valid   = 1'b1;
-    o_ex3_phy_wr.rd_rnid = r_muldiv_rd_rnid[MUL_PIPE_MAX-1];
-    o_ex3_phy_wr.rd_type = r_muldiv_rd_type[MUL_PIPE_MAX-1];
+    o_ex3_phy_wr.rd_rnid = w_muldiv_rd_rnid;
+    o_ex3_phy_wr.rd_type = w_muldiv_rd_type;
     o_ex3_phy_wr.rd_data = w_muldiv_res;
 
     ex3_done_if.done          = w_muldiv_res_valid;
-    ex3_done_if.index_oh      = r_muldiv_index_oh[MUL_PIPE_MAX-1];
+    ex3_done_if.index_oh      = w_muldiv_index_oh;
     ex3_done_if.except_valid  = 1'b0;
     ex3_done_if.except_type   = msrh_pkg::except_t'('h0);
   end else begin
