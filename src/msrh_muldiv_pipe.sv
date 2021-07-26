@@ -69,9 +69,8 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     /* verilator lint_off WIDTH */
     assign w_prod_part = $signed(w_step_multiplier) * $signed(multiplicand_pipe[s_idx]);
     assign w_prod[MUL_UNROLL * s_idx -1: 0] = prod_pipe[s_idx][MUL_UNROLL * s_idx -1: 0];
-    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = $signed(w_prod_part) +
-                                                                                    // $signed({prod_pipe[s_idx][MUL_UNROLL * (s_idx + 1)-1], prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W]});
-                                                                                    $signed(prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W]);
+    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1)-1: MUL_UNROLL * s_idx] = $signed(w_prod_part) +
+                                                                                      $signed(prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W+1]);
   end // else: !if(s_idx == 0)
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin

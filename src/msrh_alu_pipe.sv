@@ -83,6 +83,13 @@ logic [msrh_pkg::RNID_W-1: 0]              w_muldiv_rd_rnid;
 msrh_pkg::reg_t                            w_muldiv_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]                 w_muldiv_index_oh;
 
+logic                                      w_ex0_div_stall;
+logic                                      r_ex1_div_stall;
+
+logic                                      w_ex2_muldiv_stall;
+
+assign o_muldiv_stall = w_ex2_muldiv_stall | r_ex1_div_stall /* | w_ex0_div_stall*/;
+
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -99,6 +106,15 @@ decoder_alu_ctrl u_pipe_ctrl (
     .imm (w_ex0_pipe_ctrl.imm)
 );
 
+assign w_ex0_div_stall = (w_ex0_pipe_ctrl.op == OP_SDIV  ) |
+                         (w_ex0_pipe_ctrl.op == OP_UDIV  ) |
+                         (w_ex0_pipe_ctrl.op == OP_SREM  ) |
+                         (w_ex0_pipe_ctrl.op == OP_UREM  ) |
+                         (w_ex0_pipe_ctrl.op == OP_DIVW  ) |
+                         (w_ex0_pipe_ctrl.op == OP_DIVUW ) |
+                         (w_ex0_pipe_ctrl.op == OP_REMW  ) |
+                         (w_ex0_pipe_ctrl.op == OP_REMUW );
+
 // ---------------------
 // EX1
 // ---------------------
@@ -114,10 +130,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= 'h0;
     r_ex1_index <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
+    r_ex1_div_stall <= 1'b0;
   end else begin
     r_ex1_issue <= r_ex0_issue;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
+    r_ex1_div_stall <= w_ex0_div_stall;
   end
 end
 
@@ -314,7 +332,7 @@ u_msrh_muldiv_pipe
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),
 
-   .o_stall (o_muldiv_stall),
+   .o_stall (w_ex2_muldiv_stall),
    .o_valid (w_muldiv_res_valid),
    .o_res   (w_muldiv_res),
 
