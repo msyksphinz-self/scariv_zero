@@ -211,7 +211,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
   ldq_entry_t w_ldq_replay_entry;
 
-  bit_extract_lsb_ptr #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
+  bit_extract_lsb_ptr_oh #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
   bit_oh_or #(.T(ldq_entry_t), .WORDS(msrh_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
 
   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;

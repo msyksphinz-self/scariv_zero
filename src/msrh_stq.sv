@@ -332,7 +332,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
   stq_entry_t w_stq_replay_entry;
 
-  bit_extract_lsb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .out(w_rerun_request_oh[p_idx]));
+  bit_extract_lsb_ptr_oh #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rerun_request_oh[p_idx]));
   bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
 
   assign stq_replay_if[p_idx].issue    = w_stq_replay_entry.inst;
