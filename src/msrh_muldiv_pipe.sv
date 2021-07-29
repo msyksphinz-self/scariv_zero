@@ -52,25 +52,31 @@ msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP];
 logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP];
 
 generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
-  logic [MUL_UNROLL: 0] w_step_multiplier;
-  logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0] w_prod;
-  logic [riscv_pkg::XLEN_W + MUL_UNROLL + 2 - 1: 0] w_prod_part;
+  logic [MUL_UNROLL: 0]                                   w_step_multiplier;
+  logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0]   w_prod;
+  logic [riscv_pkg::XLEN_W + MUL_UNROLL + 2 - 1: 0]       w_prod_part;
+  logic                                                   w_is_s_mul;
+
   if (s_idx == 0) begin
     assign w_step_multiplier = {1'b0, w_op1[MUL_UNROLL-1: 0]};
     /* verilator lint_off WIDTH */
     assign w_prod = w_step_multiplier * w_op2;
+    assign w_is_s_mul = i_op == OP_MULH || i_op == OP_SMUL;
   end else begin
     if (s_idx == MUL_STEP - 1) begin
       assign w_step_multiplier = {neg_out_pipe[s_idx], multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     end else begin
       assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     end
+    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL;
 
     /* verilator lint_off WIDTH */
     assign w_prod_part = $signed(w_step_multiplier) * $signed(multiplicand_pipe[s_idx]);
     assign w_prod[MUL_UNROLL * s_idx -1: 0] = prod_pipe[s_idx][MUL_UNROLL * s_idx -1: 0];
-    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1)-1: MUL_UNROLL * s_idx] = $signed(w_prod_part) +
-                                                                                      $signed(prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W+1]);
+    assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = $signed(w_prod_part) +
+                                                                                      (w_is_s_mul ? $signed({prod_pipe[s_idx][MUL_UNROLL * s_idx + riscv_pkg::XLEN_W-1], prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W]}) :
+                                                                                       $signed({1'b0, prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W]}));
+
   end // else: !if(s_idx == 0)
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -79,7 +85,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
       multiplier_pipe[s_idx+1] <= 'h0;
       multiplicand_pipe  [s_idx+1] <= 'h0;
       r_mul_valid_pipe       [s_idx+1] <= 1'b0;
-      op_pipe          [s_idx+1] <= 'h0;
+      op_pipe          [s_idx+1] <= OP__;
       neg_out_pipe     [s_idx+1] <= 1'b0;
     end else begin
       if (s_idx == 0) begin

@@ -77,7 +77,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       default : begin
+`ifdef SIMULATION
         $fatal(0, "default state reached.");
+`endif // SIMULATION
       end
     endcase // case (r_l1d_state)
 
@@ -101,7 +103,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       default : begin
+`ifdef SIMULATION
         $fatal(0, "default state reached.");
+`endif // SIMULATION
       end
     endcase // case (r_state)
 

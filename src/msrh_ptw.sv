@@ -159,11 +159,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               r_wait_conflicted_lrq_oh <= lsu_access.lrq_conflicted_idx_oh;
             end
             default : begin
+`ifdef SIMULATION
               $fatal(0, "This state must not to be come");
+`endif // SIMULATION
             end
           endcase // case (lsu_access.status)
         end else begin // if (lsu_access.resp_valid)
+`ifdef SIMULATION
           $fatal(0, "lsu_access.resp should be return in one cycle");
+`endif // SIMULATION
         end // else: !if(lsu_access.resp_valid)
       end
       WAIT_L1D_LRQ : begin
@@ -193,7 +197,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       default : begin
+`ifdef SIMULATION
         $fatal(0, "This state must not be come\n");
+`endif // SIMULATION
       end
     endcase // case (r_state)
   end // else: !if(!i_reset_n)

@@ -343,7 +343,8 @@ u_msrh_bru (
 
     .o_done_report (w_bru_done_rpt),
     .i_commit      (w_commit),
-    .ex3_br_upd_if (w_ex3_br_upd_if)
+    .ex3_br_upd_if (w_ex3_br_upd_if),
+    .ex3_br_upd_slave_if (w_ex3_br_upd_if)
 );
 
 

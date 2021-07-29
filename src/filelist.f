@@ -85,6 +85,8 @@
 
 ../src/msrh_alu.sv
 ../src/msrh_alu_pipe.sv
+../src/msrh_muldiv_pipe.sv
+../src/msrh_div_unit.sv
 
 ../src/msrh_lsu_top.sv
 ../src/msrh_lsu.sv
