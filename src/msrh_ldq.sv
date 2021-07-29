@@ -116,7 +116,7 @@ assign w_out_valid = |w_entry_complete;
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
 inoutptr_var_oh #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                            .i_rollback(w_flush_valid),
+                                                            .i_rollback(1'b0),
                                                             .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
                                                             .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::LDQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
 
