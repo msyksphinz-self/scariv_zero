@@ -268,9 +268,9 @@ always_comb begin
     end // case: msrh_pkg::DEAD
     default : begin
       w_state_next = msrh_pkg::INIT;
-`ifdef SIMULATION
-      $fatal(0, "Unknown state reached\n");
-`endif // SIMULATION
+// `ifdef SIMULATION
+//       $fatal(0, "Unknown state reached\n");
+// `endif // SIMULATION
     end
   endcase // case (r_state)
 

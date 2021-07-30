@@ -199,8 +199,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_be_valid;
-
 // =================================
 // RVC Expand from 16-bit to 32-bit
 // =================================

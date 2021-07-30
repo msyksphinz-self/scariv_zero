@@ -354,9 +354,9 @@ always_comb begin
     end
     default : begin
       w_entry_next.state = LDQ_INIT;
-`ifdef SIMULATION
-      $fatal (0, "This state sholudn't be reached.\n");
-`endif // SIMULATION
+// `ifdef SIMULATION
+//       $fatal (0, "This state sholudn't be reached.\n");
+// `endif // SIMULATION
     end
   endcase // case (r_entry.state)
 

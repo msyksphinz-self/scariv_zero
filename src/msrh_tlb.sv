@@ -197,6 +197,13 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
 
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM + 1) begin : superpage_entries
 
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_special_entry <= 'h0;
+      end else begin
+      end
+    end
+
   end // block: superpage_entries
 end
 endgenerate

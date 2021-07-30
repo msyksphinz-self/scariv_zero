@@ -84,6 +84,14 @@ logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
 logic                                     w_l2_resp_ready;
 
+// Snoop Interface
+logic                                     w_snoop_req_valid;
+logic [            riscv_pkg::PADDR_W-1:0] w_snoop_req_paddr;
+
+logic                                      w_snoop_resp_valid;
+logic [  msrh_conf_pkg::DCACHE_DATA_W-1:0] w_snoop_resp_data;
+logic [ msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] w_snoop_resp_be;
+
 
 /* Connection */
 l2c_arbiter_wrapper
@@ -201,7 +209,15 @@ msrh_tile_wrapper u_msrh_tile_wrapper
     .i_ptw_resp_valid (w_ptw_resp_valid ),
     .i_ptw_resp_tag   (w_ptw_resp_tag   ),
     .i_ptw_resp_data  (w_ptw_resp_data  ),
-    .o_ptw_resp_ready (w_ptw_resp_ready )
+    .o_ptw_resp_ready (w_ptw_resp_ready ),
+
+   // Snoop Interface
+   .i_snoop_req_valid(w_snoop_req_valid),
+   .i_snoop_req_paddr(w_snoop_req_paddr),
+
+   .o_snoop_resp_valid(w_snoop_resp_valid),
+   .o_snoop_resp_data (w_snoop_resp_data),
+   .o_snoop_resp_be   (w_snoop_resp_be)
    );
 
 
@@ -231,7 +247,15 @@ u_tb_l2_behavior_ram
    .o_resp_valid  (w_l2_resp_valid),
    .o_resp_tag    (w_l2_resp_tag  ),
    .o_resp_data   (w_l2_resp_data ),
-   .i_resp_ready  (w_l2_resp_ready)
+   .i_resp_ready  (w_l2_resp_ready),
+
+   // Snoop Interface
+   .o_snoop_req_valid(w_snoop_req_valid),
+   .o_snoop_req_paddr(w_snoop_req_paddr),
+
+   .i_snoop_resp_valid(w_snoop_resp_valid),
+   .i_snoop_resp_data (w_snoop_resp_data),
+   .i_snoop_resp_be   (w_snoop_resp_be)
    );
 
 

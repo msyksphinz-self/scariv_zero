@@ -323,9 +323,9 @@ always_comb begin
     end // case: msrh_pkg::DEAD
     default : begin
       w_entry_next.state    = STQ_INIT;
-`ifdef SIMULATION
-      $fatal (0, "This state sholudn't be reached.\n");
-`endif // SIMULATION
+// `ifdef SIMULATION
+//       $fatal (0, "This state sholudn't be reached.\n");
+// `endif // SIMULATION
     end
   endcase // case (w_entry_next.state)
 
