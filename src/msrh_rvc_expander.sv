@@ -122,7 +122,7 @@ always_comb begin
           case ({i_rvc_inst[12], i_rvc_inst[6:5]})
             3'b000 : begin
               // `c.sub      rd', rd'`           01        `sub rd, rd, rs2`
-              out_32bit = {7'b000_0000, rs2p, rs1p, 3'b000, rs1p, 7'b011_0011};
+              out_32bit = {7'b010_0000, rs2p, rs1p, 3'b000, rs1p, 7'b011_0011};
             end
             3'b001 : begin
               // `c.xor      rd', rd'`           01        `xor rd, rd, rs2`
@@ -138,7 +138,7 @@ always_comb begin
             end
             3'b100 : begin
               // `c.subw     rd', rs2`           01        `subw rd, rd, rs2`
-              out_32bit = {7'b000_0000, rs2p, rs1p, 3'b000, rs1p, 7'b011_1011};
+              out_32bit = {7'b010_0000, rs2p, rs1p, 3'b000, rs1p, 7'b011_1011};
             end
             3'b101 : begin
               // `c.addw     rd', rs2`           01        `addw rd, rd, rs2`
@@ -190,10 +190,10 @@ always_comb begin
 `endif // RV32
     end
     5'b100_10 : begin
-      if (i_rvc_inst[12]) begin
-        if (i_rvc_inst[11:7] != 'h0) begin
+      if (~i_rvc_inst[12]) begin
+        if (i_rvc_inst[6:2] == 'h0) begin
           // `c.jr       rd`                 10        `jalr x0, 0(rs1)`
-          out_32bit = {7'b000_0000, rs2, rd, 3'b000, x0, 7'b110_0111};
+          out_32bit = {7'b000_0000, 5'b00000, rd, 3'b000, x0, 7'b110_0111};
         end else begin
           // `c.mv       rd, rs2`            10        `add rd, x0, rs2`
           out_32bit = {7'b000_0000, rs2, x0, 3'b000, rd, 7'b011_0011};

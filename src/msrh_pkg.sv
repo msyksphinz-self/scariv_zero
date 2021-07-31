@@ -190,6 +190,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
+    logic        is_rvc;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
     logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
@@ -233,6 +234,7 @@ function issue_t assign_issue_t(disp_t in,
   ret.pc_addr = in.pc_addr;
 
   ret.cat = in.cat;
+  ret.is_rvc = in.rvc_inst_valid;
 
   ret.brtag   = in.brtag;
   ret.br_mask = in.br_mask;

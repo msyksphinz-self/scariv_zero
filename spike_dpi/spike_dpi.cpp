@@ -593,7 +593,7 @@ void step_spike(long long time, long long rtl_pc,
     return;
   }
 
-  if (rtl_wr_valid && p->get_state()->log_reg_write.size() == 0) {
+  if (rtl_wr_valid && (rtl_wr_gpr_addr != 0) && (p->get_state()->log_reg_write.size() == 0)) {
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "RTL Writes Register but ISS NOT. RTL GPR[%d] = %0*llx\n",
             rtl_wr_gpr_addr,

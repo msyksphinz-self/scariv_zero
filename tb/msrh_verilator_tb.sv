@@ -311,7 +311,7 @@ module msrh_tb (
           if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
               ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
-            step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
+            step_spike ($time, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
                         int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
                         u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_sim_mstatus[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id][grp_idx],
                         u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_valid_except_grp_id[grp_idx],

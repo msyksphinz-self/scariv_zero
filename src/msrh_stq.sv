@@ -361,7 +361,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 
   assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
   assign ex2_fwd_check_if[p_idx].fwd_dw         =  w_ex2_fwd_dw_selected;
-  assign ex2_fwd_check_if[p_idx].fwd_data       =  w_stq_fwd_entry.rs2_data;
+  assign ex2_fwd_check_if[p_idx].fwd_data       =  w_stq_fwd_entry.rs2_data << {w_stq_fwd_entry.paddr[2:0], 3'b000};
   assign ex2_fwd_check_if[p_idx].stq_hazard_vld = |w_ex2_stq_hazard[p_idx];
   assign ex2_fwd_check_if[p_idx].stq_hazard_idx =  w_ex2_stq_hazard[p_idx];
 end
