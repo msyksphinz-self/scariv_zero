@@ -75,7 +75,6 @@ int main(int argc, char** argv) {
 
         filename = (char*)malloc(strlen(optarg) + 1);
         strcpy(filename, optarg);
-        load_binary("", optarg, true);
 
         break;
       }
@@ -94,6 +93,8 @@ int main(int argc, char** argv) {
       }
     }
   }
+
+  load_binary("", filename, true);
 
   // Instantiate DUT
   dut = new Vmsrh_tb();
@@ -184,7 +185,7 @@ void stop_sim(int code)
 {
   fprintf(compare_log_fp, "===============================\n");
   fprintf(compare_log_fp, "SIMULATION FINISH : ");
-  if (code == 0) {
+  if (code == 1) {
     fprintf(compare_log_fp, "PASS\n");
   } else {
     fprintf(compare_log_fp, "FAIL (CODE=%d)\n", code);
@@ -196,5 +197,5 @@ void stop_sim(int code)
   if (dump_fst_enable) tfp->close();
 #endif // DUMP_FST
 
-  exit(code);
+  exit(!(code == 1));
 }

@@ -14,6 +14,8 @@
 FILE *compare_log_fp;
 #else // SIM_MAIN
 extern FILE *compare_log_fp;
+extern uint64_t  tohost_addr; // define in tb_elf_loader.cpp
+extern bool    tohost_en;   // define in tb_elf_loader.cpp
 #endif // SIM_MAIN
 
 sim_t *spike_core;
@@ -537,7 +539,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(1);
+      stop_sim(100);
     }
     return;
   }
@@ -549,10 +551,10 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(1);
+      stop_sim(100);
     }
     // p->step(10);
-    // stop_sim(1);
+    // stop_sim(100);
     return;
   }
 
@@ -567,10 +569,10 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(1);
+      stop_sim(100);
     }
     // p->step(10);
-    // stop_sim(1);
+    // stop_sim(100);
     return;
   }
 
@@ -586,10 +588,10 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(1);
+      stop_sim(100);
     }
     // p->step(10);
-    // stop_sim(1);
+    // stop_sim(100);
     return;
   }
 
@@ -599,7 +601,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_gpr_addr,
             g_rv_xlen / 4, rtl_wr_val);
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(1);
+    stop_sim(100);
   }
 
   // // Dumping for ISS GPR Register Writes
@@ -624,7 +626,7 @@ void step_spike(long long time, long long rtl_pc,
                 std::get<0>(iss_rd) / 16,
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
-        stop_sim(1);
+        stop_sim(100);
       }
     }
   }
@@ -642,10 +644,10 @@ void step_spike(long long time, long long rtl_pc,
       fail_count ++;
       if (fail_count >= fail_max) {
         // p->step(10);
-        stop_sim(1);
+        stop_sim(100);
       }
       // p->step(10);
-      // stop_sim(1);
+      // stop_sim(100);
       return;
     } else {
       fprintf(compare_log_fp, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
@@ -673,6 +675,12 @@ void record_stq_store(long long rtl_time,
     }
   }
   fprintf(compare_log_fp, "\n");
+
+#ifndef SIM_MAIN
+  if (tohost_en && tohost_addr == paddr) {
+    stop_sim(l1d_data[0]);
+  }
+#endif // SIM_MAIN
 }
 
 
