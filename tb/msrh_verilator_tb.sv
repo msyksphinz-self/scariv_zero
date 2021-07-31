@@ -312,17 +312,17 @@ module msrh_tb (
               ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time, longint'((committed_rob_entry.pc_addr << 1) + (4 * grp_idx)),
-                      int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
-                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_sim_mstatus[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id][grp_idx],
-                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_valid_except_grp_id[grp_idx],
-                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_except_type_selected,
-                      u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
-                      1 << grp_idx,
-                      committed_rob_entry.inst[grp_idx].inst,
-                      committed_rob_entry.inst[grp_idx].rd_valid,
-                      committed_rob_entry.inst[grp_idx].rd_regidx,
-                      committed_rob_entry.inst[grp_idx].rd_rnid,
-                      w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+                        int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
+                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_sim_mstatus[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id][grp_idx],
+                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_valid_except_grp_id[grp_idx],
+                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_except_type_selected,
+                        u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
+                        1 << grp_idx,
+                        committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
+                        committed_rob_entry.inst[grp_idx].rd_valid,
+                        committed_rob_entry.inst[grp_idx].rd_regidx,
+                        committed_rob_entry.inst[grp_idx].rd_rnid,
+                        w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
           end
         end  // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)

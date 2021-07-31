@@ -38,6 +38,8 @@ ifeq ($(strip $(PRE_COMPILE)), on)
   XELAB_ARGS += -L libcell=$(PATH_VIVADO_LIB)
 endif
 
+XELAB_ARGS += -O0
+
 # XELAB_ARGS += -sv_lib dpi
 # XELAB_ARGS += --lib elf
 
