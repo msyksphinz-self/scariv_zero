@@ -116,43 +116,43 @@ regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32
 
 rv32_tiny_test:
 	$(MAKE) rv32_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_tiny 2>&1 | tee rv32_tiny.log
+	../scripts/runtest.rb msrh_tb_rv32_tiny $(shell nproc) 2>&1 | tee rv32_tiny.log
 
 rv32_small_test:
 	$(MAKE) rv32_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_small 2>&1 | tee rv32_small.log
+	../scripts/runtest.rb msrh_tb_rv32_small $(shell nproc) 2>&1 | tee rv32_small.log
 
 rv32_standard_test:
 	$(MAKE) rv32_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_standard 2>&1 | tee rv32_standard.log
+	../scripts/runtest.rb msrh_tb_rv32_standard $(shell nproc) 2>&1 | tee rv32_standard.log
 
 rv32_big_test:
 	$(MAKE) rv32_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_big 2>&1 | tee rv32_big.log
+	../scripts/runtest.rb msrh_tb_rv32_big $(shell nproc) 2>&1 | tee rv32_big.log
 
 rv32_giant_test:
 	$(MAKE) rv32_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_giant 2>&1 | tee rv32_giant.log
+	../scripts/runtest.rb msrh_tb_rv32_giant $(shell nproc) 2>&1 | tee rv32_giant.log
 
 rv64_tiny_test:
 	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny 2>&1 | tee rv64_tiny.log
+	../scripts/runtest.rb msrh_tb_rv64_tiny $(shell nproc) 2>&1 | tee rv64_tiny.log
 
 rv64_small_test:
 	$(MAKE) rv64_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_small 2>&1 | tee rv64_small.log
+	../scripts/runtest.rb msrh_tb_rv64_small $(shell nproc) 2>&1 | tee rv64_small.log
 
 rv64_standard_test:
 	$(MAKE) rv64_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_standard 2>&1 | tee rv64_standard.log
+	../scripts/runtest.rb msrh_tb_rv64_standard $(shell nproc) 2>&1 | tee rv64_standard.log
 
 rv64_big_test:
 	$(MAKE) rv64_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_big 2>&1 | tee rv64_big.log
+	../scripts/runtest.rb msrh_tb_rv64_big $(shell nproc) 2>&1 | tee rv64_big.log
 
 rv64_giant_test:
 	$(MAKE) rv64_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_giant 2>&1 | tee rv64_giant.log
+	../scripts/runtest.rb msrh_tb_rv64_giant $(shell nproc) 2>&1 | tee rv64_giant.log
 
 
 libspike-dpi:
