@@ -163,7 +163,7 @@ assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MIS
                                 w_except_tval_selected;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
-assign o_commit.epc          = {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00};
+assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.all_dead     = o_commit.dead_id == o_commit.grp_id;
 
