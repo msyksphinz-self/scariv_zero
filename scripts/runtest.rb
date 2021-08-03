@@ -5,17 +5,8 @@ require "json"
 require "fileutils"
 
 veri_sim_binary = ARGV[0]
-max_threads = ARGV[1].to_i
-
-if veri_sim_binary.include?("rv32") then
-  test_json_file = "rv32-tests.json"
-elsif veri_sim_binary.include?("rv64") then
-  test_json_file = "rv64-tests.json"
-else
-  puts "Invalid Verilator binary specified. Exit"
-  exit
-end
-
+test_json_file = ARGV[1]
+max_threads = ARGV[2].to_i
 
 File.open(test_json_file) do |file|
   $test_table = JSON.load(file)
