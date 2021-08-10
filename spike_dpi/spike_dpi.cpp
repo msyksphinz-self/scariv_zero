@@ -634,6 +634,22 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_wr_valid) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+    if ((((iss_insn.bits() & MASK_CSRRW) == MATCH_CSRRW) ||
+         ((iss_insn.bits() & MASK_CSRRS) == MATCH_CSRRS) ||
+         ((iss_insn.bits() & MASK_CSRRC) == MATCH_CSRRC) ||
+         ((iss_insn.bits() & MASK_CSRRWI) == MATCH_CSRRWI) ||
+         ((iss_insn.bits() & MASK_CSRRSI) == MATCH_CSRRSI) ||
+         ((iss_insn.bits() & MASK_CSRRCI) == MATCH_CSRRCI)) &&
+        ((iss_insn.bits() >> 20) & 0x0fff) == CSR_MCYCLE) {
+      p->set_csr(static_cast<int>(CSR_MCYCLE), static_cast<reg_t>(rtl_wr_val));
+      fprintf(compare_log_fp, "==========================================\n");
+      fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
+      fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "==========================================\n");
+
+      return;
+    }
+
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
       fprintf(compare_log_fp, "==========================================\n");
       fprintf(compare_log_fp, "Wrong GPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",

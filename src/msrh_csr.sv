@@ -560,8 +560,25 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mib
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mibound       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIBOUND       ) begin r_mibound       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mdbase        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MDBASE        ) begin r_mdbase        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mdbound       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MDBOUND       ) begin r_mdbound       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcycle        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCYCLE        ) begin r_mcycle        <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_minstret      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MINSTRET      ) begin r_minstret      <= write_if.data; end end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mcycle <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCYCLE) begin
+    r_mcycle <= write_if.data;
+  end else begin
+    r_mcycle <= r_mcycle + 1'b1;
+  end
+end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_minstret <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MINSTRET) begin
+    r_minstret <= write_if.data;
+  end else if (i_commit.commit) begin
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter3  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_mhpmcounter3  <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter4  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_mhpmcounter4  <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter5  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER5  ) begin r_mhpmcounter5  <= write_if.data; end end
