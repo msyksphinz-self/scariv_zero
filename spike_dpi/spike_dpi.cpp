@@ -332,6 +332,8 @@ void initial_spike (const char *filename, int rv_xlen)
   spike_core->get_core(0)->reset();
   // spike_core->get_core(0)->get_state()->pc = 0x80000000;
   spike_core->get_core(0)->step(5);
+  spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MCYCLE),   0);
+  spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MINSTRET), 0);
 
   fprintf(compare_log_fp, "spike iss done\n");
 
@@ -543,20 +545,20 @@ void step_spike(long long time, long long rtl_pc,
     }
     return;
   }
-  // if (iss_priv != rtl_priv) {
-  //   fprintf(compare_log_fp, "==========================================\n");
-  //   fprintf(compare_log_fp, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
-  //           rtl_priv, static_cast<uint32_t>(iss_priv));
-  //   fprintf(compare_log_fp, "==========================================\n");
-  //   fail_count ++;
-  //   if (fail_count >= fail_max) {
-  //     // p->step(10);
-  //     stop_sim(100);
-  //   }
-  //   // p->step(10);
-  //   // stop_sim(100);
-  //   return;
-  // }
+  if (iss_priv != rtl_priv) {
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "Wrong Priv Mode: RTL = %d, ISS = %d\n",
+            rtl_priv, static_cast<uint32_t>(iss_priv));
+    fprintf(compare_log_fp, "==========================================\n");
+    fail_count ++;
+    if (fail_count >= fail_max) {
+      // p->step(10);
+      stop_sim(100);
+    }
+    // p->step(10);
+    // stop_sim(100);
+    return;
+  }
 
   // When RTL generate exception, stop to compare mstatus.
   // Because mstatus update timing is too much complex.
@@ -642,6 +644,7 @@ void step_spike(long long time, long long rtl_pc,
          ((iss_insn.bits() & MASK_CSRRCI) == MATCH_CSRRCI)) &&
         ((iss_insn.bits() >> 20) & 0x0fff) == CSR_MCYCLE) {
       p->set_csr(static_cast<int>(CSR_MCYCLE), static_cast<reg_t>(rtl_wr_val));
+      p->get_state()->XPR[rtl_wr_gpr_addr] = rtl_wr_val;
       fprintf(compare_log_fp, "==========================================\n");
       fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
       fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);

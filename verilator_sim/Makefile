@@ -174,4 +174,4 @@ $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) libspike_dpi.so
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES)
