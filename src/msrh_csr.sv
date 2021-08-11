@@ -564,21 +564,29 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mdb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mcycle <= 'h0;
-  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCYCLE) begin
+  end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_MCYCLE)) begin
     r_mcycle <= write_if.data;
   end else begin
     r_mcycle <= r_mcycle + 1'b1;
   end
 end
 
+
+logic [$clog2(msrh_pkg::DISP_SIZE): 0] w_inst_bit_cnt;
+bit_cnt #(.WIDTH(msrh_pkg::DISP_SIZE)) u_minstret_bit_cnt(.in(i_commit.grp_id & ~i_commit.dead_id), .out(w_inst_bit_cnt));
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_minstret <= 'h0;
-  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MINSTRET) begin
+  end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_MINSTRET)) begin
     r_minstret <= write_if.data;
-  end else if (i_commit.commit) begin
+  end else if (i_commit.commit & !i_commit.all_dead) begin
+    /* verilator lint_off WIDTH */
+    r_minstret <= r_minstret + w_inst_bit_cnt;
   end
 end
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter3  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_mhpmcounter3  <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter4  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_mhpmcounter4  <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpmcounter5  <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER5  ) begin r_mhpmcounter5  <= write_if.data; end end
