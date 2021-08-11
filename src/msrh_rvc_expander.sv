@@ -215,7 +215,7 @@ always_comb begin
     end
     5'b101_10 : begin
       // `c.fsdsp    rs2, offset(x2)`    10        `fsd rs2, offset(sp)`
-      out_32bit = {4'b0000, w_sdsp_imm[ 7: 5], rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100111};
+      out_32bit = {3'b000, w_sdsp_imm[ 8: 5], rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100111};
     end
     5'b110_10 : begin
       // `c.swsp     rs2, offset(x2)`    10        `sw rs2, offset(sp)`
@@ -224,10 +224,10 @@ always_comb begin
     5'b111_10 : begin
 `ifdef RV32
       // `c.fswsp    rs2, offset(x2)`    10        `fsw rs2, offset(sp)`
-      out_32bit = {5'b00000, w_swsp_imm[ 7: 5], rs2, sp, 3'b010, w_swsp_imm[ 4: 0], 7'b0100111};
+      out_32bit = {4'b0000, w_swsp_imm[ 7: 5], rs2, sp, 3'b010, w_swsp_imm[ 4: 0], 7'b0100111};
 `else // RV32
       // `c.sdsp     rs2, offset(x2)`    10        `sd rs2, offset(sp)`
-      out_32bit = {4'b0000, w_sdsp_imm[ 7: 5], rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100011};
+      out_32bit = {3'b000, w_sdsp_imm[ 8: 5], rs2, sp, 3'b011, w_sdsp_imm[ 4: 0], 7'b0100011};
 `endif // RV32
     end
     default : begin
