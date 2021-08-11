@@ -1,5 +1,3 @@
-.PHONY: libspike-dpi
-
 NPROCS = $(shell nproc)
 
 DEBUG = ON
@@ -81,34 +79,44 @@ build_decode_v: $(DECODE_FILES)
 
 FILELIST = sim_filelist.f
 
-rv32_tiny: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv32_tiny: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_tiny --Mdir obj_dir_rv32_tiny $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_tiny_conf_pkg.sv -f $(FILELIST)
 
-rv32_small: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv32_small: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_small --Mdir obj_dir_rv32_small $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_small_conf_pkg.sv -f $(FILELIST)
 
-rv32_standard: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv32_standard: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_standard --Mdir obj_dir_rv32_standard $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_standard_conf_pkg.sv -f $(FILELIST)
 
-rv32_big: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv32_big: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_big --Mdir obj_dir_rv32_big $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_big_conf_pkg.sv -f $(FILELIST)
 
-rv32_giant: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv32_giant: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_giant --Mdir obj_dir_rv32_giant $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
-rv64_tiny: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv64_tiny: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_tiny --Mdir obj_dir_rv64_tiny $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_tiny_conf_pkg.sv  -f $(FILELIST)
 
-rv64_small: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv64_small: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_small --Mdir obj_dir_rv64_small $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_small_conf_pkg.sv  -f $(FILELIST)
 
-rv64_standard: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv64_standard: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_standard --Mdir obj_dir_rv64_standard $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_standard_conf_pkg.sv  -f $(FILELIST)
 
-rv64_big: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv64_big: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_big --Mdir obj_dir_rv64_big $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_big_conf_pkg.sv  -f $(FILELIST)
 
-rv64_giant: $(DECODE_FILES) $(FILELIST) libspike-dpi
+rv64_giant: $(DECODE_FILES) $(FILELIST)
+	$(MAKE) -C ../spike_dpi libspike_dpi.so
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_giant --Mdir obj_dir_rv64_giant $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
 regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
@@ -158,7 +166,7 @@ rv64_small_benchmarks:
 	$(MAKE) rv64_small DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_small rv64-bench.json $(shell nproc) 2>&1 | tee rv64_small.log
 
-libspike-dpi:
+../spike_dpi/libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
 	ln -sf ../spike_dpi/$@ .
 
