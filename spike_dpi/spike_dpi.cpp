@@ -644,7 +644,7 @@ void step_spike(long long time, long long rtl_pc,
          ((iss_insn.bits() & MASK_CSRRCI) == MATCH_CSRRCI)) &&
         ((iss_insn.bits() >> 20) & 0x0fff) == CSR_MCYCLE) {
       p->set_csr(static_cast<int>(CSR_MCYCLE), static_cast<reg_t>(rtl_wr_val));
-      p->get_state()->XPR[rtl_wr_gpr_addr] = rtl_wr_val;
+      p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
       fprintf(compare_log_fp, "==========================================\n");
       fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
       fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
