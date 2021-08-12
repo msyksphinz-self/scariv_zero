@@ -707,7 +707,7 @@ void record_stq_store(long long rtl_time,
   fprintf(compare_log_fp, "\n");
 
 #ifndef SIM_MAIN
-  if (tohost_en && tohost_addr == paddr) {
+  if (tohost_en && tohost_addr == paddr & (l1d_data[0] & 0x1 == 1)) {
     stop_sim(l1d_data[0]);
   }
 #endif // SIM_MAIN
