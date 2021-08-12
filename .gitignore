@@ -24,9 +24,9 @@ vivado_*/*.dcp
 vivado_*/*.xpr
 vivado_*/*.rpt
 
-*/*.so
-*/spike_main
-*/*.o
+spike_dpi/*.so
+spike_dpi/spike_main
+spike_dpi/*.o
 
 src/decoder*.sv
 
