@@ -467,7 +467,9 @@ assign ex3_ldq_stq_done_if.index_oh = 'h0;
 assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
 assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.rd_valid & ~r_ex3_mis_valid;
+assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
+                              r_ex3_issue.rd_valid & (r_ex3_issue.rd_regidx != 'h0) &
+                              ~r_ex3_mis_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
