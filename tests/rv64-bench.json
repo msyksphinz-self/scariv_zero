@@ -1,0 +1,12 @@
+[
+    { "name": "dhrystone"       ,         "elf": "riscv-tests/benchmarks/dhrystone.riscv" , "xlen": 64},
+    { "name": "median"          ,         "elf": "riscv-tests/benchmarks/median.riscv"    , "xlen": 64},
+    { "name": "mm"              ,         "elf": "riscv-tests/benchmarks/mm.riscv"        , "xlen": 64},
+    { "name": "mt-matmul"       ,         "elf": "riscv-tests/benchmarks/mt-matmul.riscv" , "xlen": 64},
+    { "name": "mt-vvadd"        ,         "elf": "riscv-tests/benchmarks/mt-vvadd.riscv"  , "xlen": 64},
+    { "name": "multiply"        ,         "elf": "riscv-tests/benchmarks/multiply.riscv"  , "xlen": 64},
+    { "name": "pmp"             ,         "elf": "riscv-tests/benchmarks/pmp.riscv"       , "xlen": 64},
+    { "name": "qsort"           ,         "elf": "riscv-tests/benchmarks/qsort.riscv"     , "xlen": 64},
+    { "name": "rsort"           ,         "elf": "riscv-tests/benchmarks/rsort.riscv"     , "xlen": 64},
+    { "name": "spmv"            ,         "elf": "riscv-tests/benchmarks/spmv.riscv"      , "xlen": 64}
+]
