@@ -106,8 +106,8 @@ endinterface // l1d_lrq_if
 interface lrq_evict_search_if;
 logic                            s0_valid;
 logic [riscv_pkg::PADDR_W-1:0]   s0_paddr;
-logic [riscv_pkg::XLEN_W-1: 0]   s0_data;
-logic [riscv_pkg::XLEN_W/8-1: 0] s0_strb;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0] s0_data;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] s0_strb;
 
 logic                            s1_hit_merged;
 

@@ -34,16 +34,6 @@ module msrh_stq_entry
    br_upd_if.slave                            br_upd_if,
 
    input logic                                i_sq_op_accept,
-   input logic                                i_sq_l1d_rd_miss,
-   input logic                                i_sq_l1d_rd_conflict,
-   input logic                                i_sq_evict_merged,
-   input logic                                i_sq_lrq_full,
-   input logic                                i_sq_lrq_conflict,
-   input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_sq_lrq_index_oh,
-
-   input lrq_resolve_t                        i_lrq_resolve,
-
-   input logic                                i_sq_l1d_wr_conflict,
 
    // Snoop Interface
    stq_snoop_if.slave                         stq_snoop_if,
@@ -144,8 +134,7 @@ assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT_L1D_CHECK) & i_sq_evict_merged |
-                               (r_entry.state == STQ_L1D_UPDATE) & !i_sq_l1d_wr_conflict |
+assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT) & i_sq_op_accept |
                                (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -267,48 +256,6 @@ always_comb begin
     end
     STQ_COMMIT : begin
       if (i_sq_op_accept) begin
-        w_entry_next.state = STQ_COMMIT_L1D_CHECK;
-      end
-    end
-    STQ_COMMIT_L1D_CHECK : begin
-      if (i_sq_l1d_rd_miss) begin
-        w_entry_next.lrq_index_oh = i_sq_lrq_index_oh;
-`ifdef SIMULATION
-        if (i_sq_lrq_conflict) begin
-          if (!$onehot(i_sq_lrq_index_oh)) begin
-            $fatal(0, "LRQ refill. i_sq_lrq_index_oh should be one hot.");
-          end
-        end else begin
-          if (i_sq_lrq_index_oh != 'h0) begin
-            $fatal(0, "LRQ request first request index_oh should be zero.");
-          end
-        end
-`endif // SIMULATION
-        w_entry_next.state = STQ_WAIT_LRQ_REFILL;
-      end else if (i_sq_l1d_rd_conflict) begin
-        w_entry_next.state = STQ_COMMIT; // Replay
-      end else if (i_sq_evict_merged) begin
-        w_entry_next.is_valid = 1'b0;
-        w_entry_next.state = STQ_INIT;
-      end else begin
-        w_entry_next.state = STQ_L1D_UPDATE;
-      end
-    end
-    STQ_WAIT_LRQ_REFILL : begin
-      if (w_entry_next.lrq_index_oh == 'h0) begin
-        // if index_oh is zero, it means LRQ is correctly allocated,
-        // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
-        w_entry_next.state = STQ_COMMIT; // Replay
-      end else if (i_lrq_resolve.valid &&
-                   i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-        w_entry_next.state = STQ_COMMIT; // Replay
-      end
-    end
-    STQ_L1D_UPDATE : begin
-      if (i_sq_l1d_wr_conflict) begin
-        w_entry_next.state = STQ_COMMIT; // Replay
-      end else begin
-        w_entry_next.is_valid = 1'b0;
         w_entry_next.state = STQ_INIT;
       end
     end
@@ -343,10 +290,7 @@ logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
 assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 logic                                              w_snoop_s0_hit;
 assign w_snoop_s0_hit = r_entry.paddr_valid &
-                        ((r_entry.state == STQ_COMMIT) |
-                         (r_entry.state == STQ_COMMIT_L1D_CHECK) |
-                         (r_entry.state == STQ_WAIT_LRQ_REFILL) |
-                         (r_entry.state == STQ_L1D_UPDATE)) &
+                        (r_entry.state == STQ_COMMIT) &
                         (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                          r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
 

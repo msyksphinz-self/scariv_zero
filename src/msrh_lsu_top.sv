@@ -89,6 +89,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
 msrh_pkg::done_rpt_t w_ld_done_report[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 
+st_buffer_if            w_st_buffer_if();
+
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
   msrh_lsu
@@ -224,14 +226,10 @@ msrh_stq
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
- .l1d_rd_if (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
- .lrq_evict_search_if (w_lrq_evict_search_if),
- .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
 
- .i_lrq_resolve (w_lrq_resolve),
  .o_stq_resolve (w_stq_resolve),
 
- .l1d_wr_if (w_l1d_wr_if),
+ .st_buffer_if (w_st_buffer_if),
 
  .stq_snoop_if(stq_snoop_if),
 
@@ -267,6 +265,21 @@ u_msrh_store_requester
 
    .l1d_evict_if  (w_l1d_evict_if),
    .l1d_ext_wr_req(w_l1d_ext_req[1])
+   );
+
+msrh_st_buffer
+u_st_buffer
+  (
+   .i_clk (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .st_buffer_if        (w_st_buffer_if),
+   .l1d_rd_if           (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
+   .lrq_evict_search_if (w_lrq_evict_search_if),
+   .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
+   .l1d_wr_if           (w_l1d_wr_if),
+
+   .i_lrq_resolve       (w_lrq_resolve)
    );
 
 

@@ -318,3 +318,31 @@ interface stq_snoop_if;
   );
 
 endinterface // stq_snoop_if
+
+
+interface st_buffer_if;
+logic                                     valid;
+logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+
+msrh_lsu_pkg::st_buffer_resp_t resp;
+
+modport master (
+  output valid,
+  output paddr,
+  output strb,
+  output data,
+  input  resp
+);
+
+
+modport slave (
+  input valid,
+  input paddr,
+  input strb,
+  input data,
+  output resp
+);
+
+endinterface // st_buffer_if
