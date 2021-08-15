@@ -66,6 +66,9 @@
 ../src/msrh_ptw.sv
 ../src/msrh_rvc_expander.sv
 
+../src/msrh_predictor.sv
+../src/msrh_ras.sv
+
 ../src/simple_arbiter.sv
 
 ../src/msrh_rename.sv
