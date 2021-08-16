@@ -73,7 +73,7 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_paddr_haz;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_st_data_haz;
 
 // Store Buffer Selection
-logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_accepted_disp;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]            w_stbuf_accepted_disp;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_req_accepted[msrh_conf_pkg::DISP_SIZE];
 
 logic                                w_flush_valid;
@@ -84,12 +84,12 @@ assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 // --------------------------------
 logic                                w_ignore_disp;
 logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0] w_credit_return_val;
-logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0] w_entry_dead_cnt;
+logic [$clog2(msrh_conf_pkg::STQ_SIZE): 0] w_entry_finish_cnt;
 
-// bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_entry_dead_cnt (.in(w_entry_dead_done), .out(w_entry_dead_cnt));
+bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_entry_finish_cnt (.in(w_stq_entry_st_finish), .out(w_entry_finish_cnt));
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_stq_entry_st_finish) ? 'h1               : 'h0) +
+assign w_credit_return_val = ((|w_stq_entry_st_finish) ? w_entry_finish_cnt : 'h0) +
                              (w_ignore_disp            ? w_disp_picked_num : 'h0) ;
 
 msrh_credit_return_slave
@@ -150,7 +150,7 @@ bit_cnt #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::
 inoutptr_var_oh #(.SIZE(msrh_conf_pkg::STQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                             .i_rollback(1'b0),
                                                             .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0]), .o_in_ptr_oh (w_in_ptr_oh ),
-                                                            .i_out_valid(w_out_valid), .i_out_val({{($clog2(msrh_conf_pkg::STQ_SIZE)-1){1'b0}}, 1'b1}), .o_out_ptr_oh(w_out_ptr_oh));
+                                                            .i_out_valid(w_out_valid), .i_out_val(w_entry_finish_cnt), .o_out_ptr_oh(w_out_ptr_oh));
 
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::MEM_DISP_SIZE; s_idx++) begin : disp_idx_loop
   assign w_pipe_sel_idx_oh[s_idx] = 1 << (s_idx % msrh_conf_pkg::LSU_INST_NUM);
@@ -413,35 +413,35 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid;
   end else begin
 
-    stq_entry_t w_stq_cmt_entry;
-    bit_oh_or
-      #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE))
-    select_cmt_oh
-      (
-       .i_oh(w_shifted_out_ptr_oh),
-       .i_data(w_stq_entries),
-       .o_selected(w_stq_cmt_entry)
-       );
-
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid &
                                             (w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)] == w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)]);
-
-    logic [msrh_lsu_pkg::ST_BUF_WIDTH / 8-1:0] w_strb_origin;
-    always_comb begin
-      case (w_stq_cmt_entry.size)
-        decoder_lsu_ctrl_pkg::SIZE_DW : w_strb_origin = 'h0ff;
-        decoder_lsu_ctrl_pkg::SIZE_W  : w_strb_origin = 'h00f;
-        decoder_lsu_ctrl_pkg::SIZE_H  : w_strb_origin = 'h003;
-        decoder_lsu_ctrl_pkg::SIZE_B  : w_strb_origin = 'h001;
-        default                       : w_strb_origin = 'h0;
-      endcase // case (w_stq_cmt_entry.size)
-      w_st_buffer_strb[d_idx] = w_strb_origin << w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0];
-      w_st_buffer_data[d_idx] = w_stq_cmt_entry.rs2_data << {w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0], 3'b000};
-    end
-
-    assign w_stbuf_req_accepted[d_idx] = w_shifted_out_ptr_oh & {msrh_conf_pkg::STQ_SIZE{w_stbuf_accepted_disp[d_idx]}};
-
   end // else: !if(d_idx == 0)
+
+  stq_entry_t w_stq_cmt_entry;
+  bit_oh_or
+    #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE))
+  select_cmt_oh
+    (
+     .i_oh(w_shifted_out_ptr_oh),
+     .i_data(w_stq_entries),
+     .o_selected(w_stq_cmt_entry)
+     );
+
+  logic [msrh_lsu_pkg::ST_BUF_WIDTH / 8-1:0] w_strb_origin;
+  always_comb begin
+    case (w_stq_cmt_entry.size)
+      decoder_lsu_ctrl_pkg::SIZE_DW : w_strb_origin = 'h0ff;
+      decoder_lsu_ctrl_pkg::SIZE_W  : w_strb_origin = 'h00f;
+      decoder_lsu_ctrl_pkg::SIZE_H  : w_strb_origin = 'h003;
+      decoder_lsu_ctrl_pkg::SIZE_B  : w_strb_origin = 'h001;
+      default                       : w_strb_origin = 'h0;
+    endcase // case (w_stq_cmt_entry.size)
+    w_st_buffer_strb[d_idx] = w_strb_origin << w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0];
+    w_st_buffer_data[d_idx] = w_stq_cmt_entry.rs2_data << {w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0], 3'b000};
+  end
+
+  assign w_stbuf_req_accepted[d_idx] = w_shifted_out_ptr_oh & {msrh_conf_pkg::STQ_SIZE{w_stbuf_accepted_disp[d_idx]}};
+
 end // block: stb_loop
 endgenerate
 

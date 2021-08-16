@@ -257,6 +257,10 @@ always_comb begin
     STQ_COMMIT : begin
       if (i_sq_op_accept) begin
         w_entry_next.state = STQ_INIT;
+        w_entry_next.is_valid = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
       end
     end
     STQ_DEAD : begin
