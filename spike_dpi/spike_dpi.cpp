@@ -1,6 +1,6 @@
 #include "spike_dpi.h"
 #include "sim.h"
-#include "mmu.h"
+// #include "mmu.h"
 #include "disasm.h"
 
 #include <dlfcn.h>
@@ -13,7 +13,11 @@
 #ifdef SIM_MAIN
 FILE *compare_log_fp;
 #else // SIM_MAIN
+#ifdef VERILATOR
 extern FILE *compare_log_fp;
+#else // VERILATOR
+FILE     *compare_log_fp;
+#endif // VERILATOR
 extern uint64_t  tohost_addr; // define in tb_elf_loader.cpp
 extern bool    tohost_en;   // define in tb_elf_loader.cpp
 #endif // SIM_MAIN
@@ -789,3 +793,13 @@ void stop_sim(int code)
   fprintf(compare_log_fp, "stop_ism %d\n", code);
 }
 #endif // SIM_MAIN
+
+#ifndef VERILATOR
+void open_log_fp()
+{
+  if ((compare_log_fp = fopen("compare.log", "w")) == NULL) {
+    perror("failed to open log file");
+    exit(EXIT_FAILURE);
+  }
+}
+#endif // VERILATOR
