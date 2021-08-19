@@ -20,7 +20,7 @@ proc dump_vcd {start length hier} {
 
 proc dump_wdb {start length hier} {
   log_wave -r $hier
-  run -all
+  run all
   quit
 }
 
