@@ -117,6 +117,9 @@ bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_valid_cnt (.in(w_entry_valid), .out(w_entr
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (u_credit_return_slave.r_credits != w_entry_valid_cnt) begin
+      $display("%m credit and entry number different. r_credits = %d, entry_mask = %x\n",
+               u_credit_return_slave.r_credits,
+               w_entry_valid_cnt);
       $fatal(0, "credit and entry number different. r_credits = %d, entry_mask = %x\n",
              u_credit_return_slave.r_credits,
              w_entry_valid_cnt);

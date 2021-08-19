@@ -51,10 +51,12 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       endcase // case ({i_in_valid, i_out_valid})
     end
     if (num_counter < 0) begin
-      $fatal(0, "inoutptr counter become minus. Invalid");
+      $display("%m inoutptr counter become minus. Invalid");
+      $fatal(0, "%m inoutptr counter become minus. Invalid");
     end
     if (num_counter > SIZE) begin
-      $fatal(0, "inoutptr counter exceeded. Fatal");
+      $display("%m inoutptr counter exceeded. Fatal");
+      $fatal(0, "%m inoutptr counter exceeded. Fatal");
     end
   end
 end
