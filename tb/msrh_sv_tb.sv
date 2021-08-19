@@ -6,7 +6,10 @@ import "DPI-C" function load_binary
  input logic is_load_dump
 );
 
-import "DPI-C" function open_log_fp ();
+import "DPI-C" function open_log_fp
+(
+ input string filename
+ );
 
 import "DPI-C" function void step_spike
   (
@@ -352,7 +355,7 @@ initial begin
     $display("+ELF= is not specified");
     $finish(1);
   end
-  open_log_fp();
+  open_log_fp(filename);
   load_binary("", filename, 1'b1);
 `endif // DIRECT_LOAD_HEX
 
@@ -386,11 +389,11 @@ end
 // end
 
 
-always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
-  if (!i_msrh_reset_n) begin
+always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
   end else begin
     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
-      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+      for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
             ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
           /* verilator lint_off WIDTH */

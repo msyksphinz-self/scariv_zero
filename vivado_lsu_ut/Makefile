@@ -3,6 +3,8 @@ all: sim_vivado
 PATH_INC += ../src
 
 DEFINE += SIMULATION
+DEFINE += RV64
+DEFINE += RV_XLEN=64
 
 XVLOG_ARGS += --sv
 XVLOG_ARGS += $(addprefix -i , $(PATH_INC))
@@ -33,22 +35,26 @@ INC2_DIR += $(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
 INC2_DIR += /usr/include/
 INC2_DIR += /usr/include/x86_64-linux-gnu/
 
-XSC_ARGS += -v
+XSC_ARGS += -mt off
+XSC_ARGS += -v 1
 XSC_ARGS += -compile
 XSC_ARGS += --cppversion 14
 XSC_ARGS += $(CPP_FILELIST)
 XSC_ARGS += -gcc_link_options "-L/usr/lib64 -lelf $(addprefix -I, $(INC_DIR))"
 XSC_ARGS += $(addprefix -gcc_compile_options "-I, $(addsuffix ", $(INC_DIR)))
+XSC_ARGS += $(addprefix -gcc_compile_options "-D, $(addsuffix ", $(DEFINE)))
 
+XSC2_ARGS += -mt off
 XSC2_ARGS += -v
 XSC2_ARGS += -compile
 XSC2_ARGS += --cppversion 14
 XSC2_ARGS += $(ELF_LOADER)
 XSC2_ARGS += -gcc_link_options "-L/usr/lib64 -lelf $(addprefix -I, $(INC_DIR))"
 XSC2_ARGS += $(addprefix -gcc_compile_options "-I, $(addsuffix ", $(INC2_DIR)))
+XSC2_ARGS += $(addprefix -gcc_compile_options "-D, $(addsuffix ", $(DEFINE)))
 
 XSC_LINK_ARGS += -shared
-XSC_LINK_ARGS += -gcc_link_options "-L/usr/lib64 -lelf $(addprefix -I, $(INC_DIR))"
+XSC_LINK_ARGS += -gcc_link_options "-L/usr/lib64 $(addprefix -L, $(INC_DIR)) -lelf -lriscv -lsoftfloat -ldisasm -lfesvr -lfdt -ldl -lpthread $(addprefix -I, $(INC_DIR))"
 XSC_LINK_ARGS += -v 1
 
 
@@ -116,7 +122,9 @@ $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ > $@
 
 gui_vivado:
-	$(XSIM) -g work.tb --wdb out.wdb
+	vivado -mode gui -source ./wdb_view.tcl
+
+#	$(XSIM) -g work.tb --wdb out.wdb
 
 lib_vivado: pre_vivado
 	-mv $(PATH_VIVADO_LIB) $(PATH_VIVADO_LIB)_$(TIME_CURRENT)

@@ -795,11 +795,13 @@ void stop_sim(int code)
 #endif // SIM_MAIN
 
 #ifndef VERILATOR
-void open_log_fp()
+void open_log_fp(const char *filename)
 {
   if ((compare_log_fp = fopen("compare.log", "w")) == NULL) {
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
+  initial_spike(filename, RV_XLEN);
+
 }
 #endif // VERILATOR

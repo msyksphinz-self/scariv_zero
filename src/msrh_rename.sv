@@ -224,12 +224,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     // sc_disp.cat <= 'h0;
     sc_disp.inst <= 'h0;
   end else begin
-    sc_disp.valid          <= w_iq_fire;
-    sc_disp.pc_addr        <= iq_disp.pc_addr;
-    sc_disp.is_br_included <= iq_disp.is_br_included;
-    sc_disp.inst           <= w_disp_inst;
+    sc_disp.valid            <= w_iq_fire;
+    sc_disp.pc_addr          <= iq_disp.pc_addr;
+    sc_disp.is_br_included   <= iq_disp.is_br_included;
+    sc_disp.inst             <= w_disp_inst;
     sc_disp.tlb_except_valid <= iq_disp.tlb_except_valid;
     sc_disp.tlb_except_cause <= iq_disp.tlb_except_cause;
+    sc_dips.resource_cnt     <= iq_disp.resource_cnt;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 

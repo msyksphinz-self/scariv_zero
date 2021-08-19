@@ -13,7 +13,7 @@ extern "C" {
   void stop_sim(int code);
 
 #ifndef VERILATOR
-  void open_log_fp();
+  void open_log_fp(const char *filename);
 #endif // VERILATOR
   void record_stq_store(long long rtl_time,
                         long long paddr,
