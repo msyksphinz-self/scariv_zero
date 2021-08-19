@@ -345,6 +345,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_vaddr <= 'h0;
     r_s1_paddr <= 'h0;
     r_s1_tlb_miss <= 'h0;
+    r_s1_tlb_except_valid <= 1'b0;
   end else begin
     r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
