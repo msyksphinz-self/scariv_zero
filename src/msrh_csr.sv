@@ -572,8 +572,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-logic [$clog2(msrh_pkg::DISP_SIZE): 0] w_inst_bit_cnt;
-bit_cnt #(.WIDTH(msrh_pkg::DISP_SIZE)) u_minstret_bit_cnt(.in(i_commit.grp_id & ~i_commit.dead_id), .out(w_inst_bit_cnt));
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_bit_cnt;
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_minstret_bit_cnt(.in(i_commit.grp_id & ~i_commit.dead_id), .out(w_inst_bit_cnt));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
