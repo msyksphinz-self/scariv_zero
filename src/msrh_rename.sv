@@ -230,7 +230,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.inst             <= w_disp_inst;
     sc_disp.tlb_except_valid <= iq_disp.tlb_except_valid;
     sc_disp.tlb_except_cause <= iq_disp.tlb_except_cause;
-    sc_dips.resource_cnt     <= iq_disp.resource_cnt;
+    sc_disp.resource_cnt     <= iq_disp.resource_cnt;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
