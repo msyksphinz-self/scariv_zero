@@ -174,6 +174,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
   logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_stbuf_accept_array;
 
   stq_snoop_if stq_entry_snoop_if();
 
@@ -252,10 +253,9 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_stbuf_accept_array;
-  for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
-    assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
-  end
+    for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
+      assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
+    end
 
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
       assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
@@ -478,7 +478,7 @@ assign st_buffer_if.valid = |w_stbuf_accepted_disp;
 assign st_buffer_if.paddr = {w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)], {$clog2(128/8){1'b0}}};
 generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   logic [msrh_conf_pkg::DISP_SIZE-1:0] w_strb_array;
-  for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stb_disp_loop
     assign w_strb_array[d_idx] = w_st_buffer_strb[d_idx][b_idx];
   end
   assign st_buffer_if.strb[b_idx] = |w_strb_array;
@@ -489,7 +489,7 @@ generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) be
   /* verilator lint_off UNOPTFLAT */
   logic [7: 0] w_data_byte_array[msrh_conf_pkg::DISP_SIZE+1];
   assign w_data_byte_array[0] = w_st_buffer_data[0][b_idx*8 +: 8];
-  for (genvar d2_idx = 0; d2_idx < msrh_conf_pkg::DISP_SIZE; d2_idx++) begin : disp_loop
+  for (genvar d2_idx = 0; d2_idx < msrh_conf_pkg::DISP_SIZE; d2_idx++) begin : st_buf_disp_loop
     assign w_data_byte_array[d2_idx+1] = w_strb_array_msb[d2_idx] ? w_st_buffer_data[d2_idx][b_idx*8 +: 8] : w_data_byte_array[d2_idx];
   end
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[msrh_conf_pkg::DISP_SIZE];
