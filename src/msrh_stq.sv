@@ -271,7 +271,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
       assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0]);
       assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0],
                                         ex2_fwd_check_if[p_idx].paddr_dw);
-      assign w_same_addr_region = w_stq_entries[s_idx].paddr[riscv_pkg::PADDR_W-1:3] == ex2_fwd_check_if[p_idx].paddr;
+      assign w_same_addr_region = w_stq_entries   [s_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(riscv_pkg::XLEN_W/8)] ==
+                                  ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(riscv_pkg::XLEN_W/8)];
 
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                              (w_stq_entries[s_idx].state != STQ_DEAD) &
@@ -351,7 +352,11 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
     // bit_oh_or #(.T(logic[7:0]),  .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_dw     (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_ex2_fwd_dw[p_idx]), .o_selected(w_ex2_fwd_dw_selected));
 
     assign ex2_fwd_check_if[p_idx].fwd_dw  [b_idx]        = |w_ex2_fwd_strb_valid;
-    assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_entry.rs2_data << {w_stq_fwd_entry.paddr[2:0], 3'b000};
+    logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] w_byte_diff;
+    assign w_byte_diff = w_stq_fwd_entry.paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0] +
+                         ex2_fwd_check_if[p_idx].paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0];
+
+    assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_entry.rs2_data[w_byte_diff*8+:8];
   end // block: byte_loop
 
   assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];

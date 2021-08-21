@@ -383,7 +383,7 @@ end
 assign ex2_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
 assign ex2_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign ex2_fwd_check_if.grp_id = r_ex2_issue.grp_id;
-assign ex2_fwd_check_if.paddr  = r_ex2_paddr[riscv_pkg::PADDR_W-1: 3];
+assign ex2_fwd_check_if.paddr  = r_ex2_paddr;
 assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
 logic [ 7: 0]                  w_ex2_fwd_dw;
