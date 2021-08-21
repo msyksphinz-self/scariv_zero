@@ -42,8 +42,13 @@ logic                          w_st_buffer_allocated;
 logic                          w_st_buffer_accepted;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req_oh;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req_oh;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
+
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req_oh;
 
 logic                          r_l1d_rd_if_resp;
 
@@ -87,12 +92,17 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
 
      .i_load (w_load),
      .i_entry(w_init_load),
-
+     .i_merge_accept (w_merge_accept[e_idx]),
 
      .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
-
      .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
+
+     .o_lrq_req      (w_entry_lrq_req   [e_idx]),
+     .i_lrq_accepted (w_entry_lrq_req_oh[e_idx]),
+
      .i_l1d_rd_miss     (l1d_rd_if.s1_miss),
+
+     .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_rd_conflict (l1d_rd_if.s1_conflict),
      .i_evict_merged    (lrq_evict_search_if.s1_hit_merged),
      .i_l1d_wr_conflict (l1d_wr_if.conflict),
@@ -119,62 +129,115 @@ endgenerate
 // -----------------
 // Make L1D request
 // -----------------
-st_buffer_entry_t  w_l1d_target_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_bit_req_sel (.in(w_entry_l1d_rd_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_l1d_rd_req_oh));
+st_buffer_entry_t  w_l1d_rd_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_l1d_rd_req_sel (.in(w_entry_l1d_rd_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_l1d_rd_req_oh));
 bit_oh_or
   #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
 select_l1d_rd_entry_oh
   (
    .i_oh(w_entry_l1d_rd_req_oh),
    .i_data(w_entries),
-   .o_selected(w_l1d_target_entry)
+   .o_selected(w_l1d_rd_entry)
    );
 
 assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
 assign l1d_rd_if.s0_h_pri = 1'b0;
-assign l1d_rd_if.s0_paddr = {w_l1d_target_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+assign l1d_rd_if.s0_paddr = {w_l1d_rd_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
 
-assign l1d_lrq_stq_miss_if.load = r_l1d_rd_if_resp & l1d_rd_if.s1_miss;
-assign l1d_lrq_stq_miss_if.req_payload.paddr = {w_l1d_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
-assign l1d_lrq_stq_miss_if.req_payload.evict_valid = l1d_rd_if.s1_replace_valid;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = l1d_rd_if.s1_replace_paddr;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = l1d_rd_if.s1_replace_way;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = l1d_rd_if.s1_replace_data;
+
+// ------------------------
+// Make LRQ Refill request-
+// -----------------------
+st_buffer_entry_t  w_lrq_target_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_lrq_req_sel (.in(w_entry_lrq_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_lrq_req_oh));
+bit_oh_or
+  #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
+select_lrq_entry_oh
+  (
+   .i_oh(w_entry_lrq_req_oh),
+   .i_data(w_entries),
+   .o_selected(w_lrq_target_entry)
+   );
+
+// Eviction: Replaced Address
+logic                                     r_s2_replace_valid;
+logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]   r_s2_replace_way;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_s2_replace_data;
+logic [riscv_pkg::PADDR_W-1: 0]           r_s2_replace_paddr;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_s2_replace_valid <= 1'b0;
+  end else begin
+    r_s2_replace_valid <= l1d_rd_if.s1_replace_valid;
+    r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
+    r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
+    r_s2_replace_paddr <= l1d_rd_if.s1_replace_paddr;
+  end
+end
+
+
+assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req;
+assign l1d_lrq_stq_miss_if.req_payload.paddr               = {w_lrq_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_lrq_stq_miss_if.req_payload.evict_valid         = r_s2_replace_valid;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = r_s2_replace_way;
+assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = r_s2_replace_data;
 
 
 // --------------------------------------------
 // Search Eviction Data that is ready to Evict
 // --------------------------------------------
 assign lrq_evict_search_if.s0_valid = l1d_rd_if.s0_valid;
-assign lrq_evict_search_if.s0_paddr = {w_l1d_target_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
-assign lrq_evict_search_if.s0_data  = w_l1d_target_entry.data;
-assign lrq_evict_search_if.s0_strb  = w_l1d_target_entry.strb;
+assign lrq_evict_search_if.s0_paddr = {w_l1d_rd_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+assign lrq_evict_search_if.s0_data  = w_l1d_rd_entry.data;
+assign lrq_evict_search_if.s0_strb  = w_l1d_rd_entry.strb;
 
 localparam multiply_dc_stbuf_width  = msrh_conf_pkg::DCACHE_DATA_W / msrh_lsu_pkg::ST_BUF_WIDTH;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_l1d_rd_if_resp <= 'b0;
-    l1d_wr_if.valid <= 1'b0;
-  end else begin
-    r_l1d_rd_if_resp <= l1d_rd_if.s0_valid;
-    if (r_l1d_rd_if_resp) begin
-      if (l1d_rd_if.s1_hit) begin
-        l1d_wr_if.valid <= 1'b1;
-        l1d_wr_if.paddr <= {w_l1d_target_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
-        l1d_wr_if.data  <= {multiply_dc_stbuf_width{w_l1d_target_entry.data}};
-        /* verilator lint_off WIDTH */
-        l1d_wr_if.be    <= w_l1d_target_entry.strb << {w_l1d_target_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], 3'b000};
-      end else begin
-        l1d_wr_if.valid <= 1'b0;
-      end
-    end else begin
-      l1d_wr_if.valid <= 1'b0;
-    end // else: !if(r_l1d_rd_if_resp)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+// --------------------------------------------
+// Write L1D Interface
+// --------------------------------------------
+st_buffer_entry_t  w_l1d_wr_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_l1d_wr_req_sel (.in(w_entry_l1d_wr_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_l1d_wr_req_oh));
+bit_oh_or
+  #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
+select_l1d_wr_entry_oh
+  (
+   .i_oh(w_entry_l1d_wr_req_oh),
+   .i_data(w_entries),
+   .o_selected(w_l1d_wr_entry)
+   );
+
+assign l1d_wr_if.valid = |w_entry_l1d_wr_req_oh;
+assign l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+/* verilator lint_off WIDTH */
+assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], 3'b000};
 
 
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//     r_l1d_rd_if_resp <= 'b0;
+//     l1d_wr_if.valid <= 1'b0;
+//   end else begin
+//     r_l1d_rd_if_resp <= l1d_rd_if.s0_valid;
+//     if (r_l1d_rd_if_resp) begin
+//       if (l1d_rd_if.s1_hit) begin
+//         l1d_wr_if.valid <= 1'b1;
+//         l1d_wr_if.paddr <= {w_l1d_rd_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+//         l1d_wr_if.data  <= {multiply_dc_stbuf_width{w_l1d_rd_entry.data}};
+//         /* verilator lint_off WIDTH */
+//         l1d_wr_if.be    <= w_l1d_rd_entry.strb << {w_l1d_rd_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], 3'b000};
+//       end else begin
+//         l1d_wr_if.valid <= 1'b0;
+//       end
+//     end else begin
+//       l1d_wr_if.valid <= 1'b0;
+//     end // else: !if(r_l1d_rd_if_resp)
+//   end // else: !if(!i_reset_n)
+// end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 `ifdef SIMULATION
 

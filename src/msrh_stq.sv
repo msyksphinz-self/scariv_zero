@@ -337,20 +337,27 @@ endgenerate
 // STQ Forwarding Logic
 // =========================
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-  logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
-  stq_entry_t                          w_stq_fwd_entry;
-  logic [ 7: 0]                        w_ex2_fwd_dw_selected;
 
-  bit_extract_msb #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .out(w_ex2_fwd_valid_oh));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
-  bit_oh_or #(.T(logic[7:0]),  .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_dw     (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_ex2_fwd_dw[p_idx]), .o_selected(w_ex2_fwd_dw_selected));
+  for (genvar b_idx = 0; b_idx < 8; b_idx++) begin : byte_loop
+    stq_entry_t                          w_stq_fwd_entry;
+    logic [ 7: 0]                        w_ex2_fwd_dw_selected;
+    logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
+    logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_strb_valid;
+    for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+      assign w_ex2_fwd_strb_valid[s_idx] = w_ex2_fwd_dw[p_idx][s_idx][b_idx] & w_ex2_fwd_valid[p_idx][s_idx];
+    end
+    bit_extract_lsb_ptr_oh #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_strb_valid), .i_ptr_oh(w_out_ptr_oh), .out(w_ex2_fwd_valid_oh));
+    bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_stq_entries), .o_selected(w_stq_fwd_entry));
+    // bit_oh_or #(.T(logic[7:0]),  .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_dw     (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_ex2_fwd_dw[p_idx]), .o_selected(w_ex2_fwd_dw_selected));
+
+    assign ex2_fwd_check_if[p_idx].fwd_dw  [b_idx]        = |w_ex2_fwd_strb_valid;
+    assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_entry.rs2_data << {w_stq_fwd_entry.paddr[2:0], 3'b000};
+  end // block: byte_loop
 
   assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
-  assign ex2_fwd_check_if[p_idx].fwd_dw         =  w_ex2_fwd_dw_selected;
-  assign ex2_fwd_check_if[p_idx].fwd_data       =  w_stq_fwd_entry.rs2_data << {w_stq_fwd_entry.paddr[2:0], 3'b000};
   assign ex2_fwd_check_if[p_idx].stq_hazard_vld = |w_ex2_stq_hazard[p_idx];
   assign ex2_fwd_check_if[p_idx].stq_hazard_idx =  w_ex2_stq_hazard[p_idx];
-end
+end // block: fwd_loop
 endgenerate
 
 // =================================
@@ -429,13 +436,17 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
   logic [msrh_lsu_pkg::ST_BUF_WIDTH / 8-1:0] w_strb_origin;
   always_comb begin
-    case (w_stq_cmt_entry.size)
-      decoder_lsu_ctrl_pkg::SIZE_DW : w_strb_origin = 'h0ff;
-      decoder_lsu_ctrl_pkg::SIZE_W  : w_strb_origin = 'h00f;
-      decoder_lsu_ctrl_pkg::SIZE_H  : w_strb_origin = 'h003;
-      decoder_lsu_ctrl_pkg::SIZE_B  : w_strb_origin = 'h001;
-      default                       : w_strb_origin = 'h0;
-    endcase // case (w_stq_cmt_entry.size)
+    if (w_sq_commit_valid) begin
+      case (w_stq_cmt_entry.size)
+        decoder_lsu_ctrl_pkg::SIZE_DW : w_strb_origin = 'h0ff;
+        decoder_lsu_ctrl_pkg::SIZE_W  : w_strb_origin = 'h00f;
+        decoder_lsu_ctrl_pkg::SIZE_H  : w_strb_origin = 'h003;
+        decoder_lsu_ctrl_pkg::SIZE_B  : w_strb_origin = 'h001;
+        default                       : w_strb_origin = 'h0;
+      endcase // case (w_stq_cmt_entry.size)
+    end else begin
+      w_strb_origin = 'h0;
+    end // else: !if(w_sq_commit_valid)
     w_st_buffer_strb[d_idx] = w_strb_origin << w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0];
     w_st_buffer_data[d_idx] = w_stq_cmt_entry.rs2_data << {w_stq_cmt_entry.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)-1: 0], 3'b000};
   end

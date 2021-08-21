@@ -15,13 +15,19 @@ module msrh_st_buffer_entry
 
  input logic  i_load,
  input        st_buffer_entry_t i_entry,
+ input logic  i_merge_accept,
 
  output logic o_l1d_rd_req, // Read Request of L1D
-
  input logic  i_l1d_rd_accepted,
+
+ output logic o_lrq_req, // Refill request to LRQ
+ input logic  i_lrq_accepted,
+
  input logic  i_l1d_rd_miss,
  input logic  i_l1d_rd_conflict,
  input logic  i_evict_merged,
+
+ output logic o_l1d_wr_req,
  input logic  i_l1d_wr_conflict,
 
  input logic i_lrq_full,
@@ -64,6 +70,13 @@ always_comb begin
   w_l1d_rd_req_next = 1'b0;
   o_entry_finish = 1'b0;
 
+  if (r_entry.valid & i_merge_accept) begin
+    for (int b_idx = 0; b_idx < ST_BUF_WIDTH / 8; b_idx++) begin
+      w_entry_next.strb[b_idx]        = r_entry.strb[b_idx] | i_entry.strb[b_idx];
+      w_entry_next.data[b_idx*8 +: 8] = i_entry.strb[b_idx] ? i_entry.data[b_idx*8 +: 8] : r_entry.data[b_idx*8 +: 8];
+    end
+  end
+
   case (r_state)
     ST_BUF_INIT: begin
       if (i_load) begin
@@ -84,6 +97,7 @@ always_comb begin
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_evict_merged) begin
         w_state_next = ST_BUF_INIT;
+        w_entry_next.valid = 1'b0;
         o_entry_finish = 1'b1;
       end else begin
         w_state_next = ST_BUF_L1D_UPDATE;
@@ -94,17 +108,20 @@ always_comb begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_INIT;
+        w_entry_next.valid = 1'b0;
         o_entry_finish = 1'b1;
       end
     end
     ST_BUF_LRQ_REFILL: begin
-      if (i_lrq_index_oh == 'h0) begin
-        // if index_oh is zero, it means LRQ is correctly allocated,
-        // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
-        w_state_next = ST_BUF_RD_L1D; // Replay
-      end else if (i_lrq_resolve.valid &&
-                   i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-        w_state_next = ST_BUF_RD_L1D; // Replay
+      if (i_lrq_accepted) begin
+        if (i_lrq_index_oh == 'h0) begin
+          // if index_oh is zero, it means LRQ is correctly allocated,
+          // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
+          w_state_next = ST_BUF_RD_L1D; // Replay
+        end else if (i_lrq_resolve.valid &&
+                     i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+          w_state_next = ST_BUF_RD_L1D; // Replay
+        end
       end
     end
     default : begin
@@ -114,5 +131,8 @@ end // always_comb
 
 assign o_entry = r_entry;
 assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE);
+assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
+assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
+assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
 
 endmodule // msrh_st_buffer_entry
