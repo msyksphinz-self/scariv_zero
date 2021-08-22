@@ -32,24 +32,24 @@ module tb_l2_behavior_ram #(
     input logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] i_snoop_resp_be
 );
 
-  // localparam SIZE_W = $clog2(SIZE);
+// localparam SIZE_W = $clog2(SIZE);
 
-    typedef enum logic [0:0] {
-        ST_INIT = 0,
-        ST_GIVEN = 1
-    } line_status_t;
+typedef enum logic [0:0] {
+    ST_INIT = 0,
+    ST_GIVEN = 1
+} line_status_t;
 
-    logic                [DATA_W-1:0] ram             [int unsigned];
-    line_status_t                     status          [int unsigned];
-    logic                             req_fire;
-    logic                [ADDR_W-1:0] actual_addr;
-    logic                [ADDR_W-1:0] actual_line_pos;
-    logic                [DATA_W-1:0] rd_data         [RD_LAT];
-    logic                [ TAG_W-1:0] rd_tag          [RD_LAT];
-    logic                [RD_LAT-1:0] rd_valid;
+logic                [DATA_W-1:0] ram             [int unsigned];
+line_status_t                     status          [int unsigned];
+logic                             req_fire;
+logic                [ADDR_W-1:0] actual_addr;
+logic                [ADDR_W-1:0] actual_line_pos;
+logic                [DATA_W-1:0] rd_data         [RD_LAT];
+logic                [ TAG_W-1:0] rd_tag          [RD_LAT];
+logic                [RD_LAT-1:0] rd_valid;
 
-    logic [riscv_pkg::PADDR_W-1:0] r_req_paddr_pos;
-    logic                [ TAG_W-1:0] r_req_tag;
+logic [riscv_pkg::PADDR_W-1:0] r_req_paddr_pos;
+logic                [ TAG_W-1:0] r_req_tag;
 
 typedef enum logic [0:0] {
    IDLE = 0,
@@ -92,7 +92,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             end
           end
         end else if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD) begin
-          if (status[actual_line_pos] == ST_INIT) begin
+          if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
             if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
               status[actual_line_pos] = ST_GIVEN;
             end
