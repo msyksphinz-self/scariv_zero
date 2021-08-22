@@ -388,7 +388,7 @@ end
 //   end
 // end
 
-`ifndef DIRECT_LOAD_HEX
+`ifdef DIRECT_LOAD_HEX
 
 always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
@@ -414,10 +414,15 @@ always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
     $fwrite(pipe_fp, "\n");
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-`endif //  `ifndef DIRECT_LOAD_HEX
+
+`else //  `ifndef DIRECT_LOAD_HEX
 
 `include "tb_json_dumper.sv"
-=======
+always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+  end else begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
+      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
             ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
           /* verilator lint_off WIDTH */
@@ -439,55 +444,7 @@ end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
   end  // else: !if(!i_msrh_reset_n)
 end  // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 
-
-// always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
-//   if (!w_msrh_reset_n) begin
-//   end else begin
-//     $fwrite(pipe_fp, "%t PC=%010x | ", $time, u_msrh_tile_wrapper.u_msrh_tile.w_iq_disp.pc_addr);
-//     // Schedule Pipe
-//     for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
-//       $fwrite(pipe_fp, "(");
-//       if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rd_valid)
-//         $fwrite(pipe_fp, "%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rd_rnid);
-//       else
-//         $fwrite(pipe_fp, "   ,");
-//       if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_valid)
-//         $fwrite(pipe_fp, "%01d,%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_ready,
-//                 u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs1_rnid);
-//       else
-//         $fwrite(pipe_fp, "     ,");
-//       if (u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_valid)
-//         $fwrite(pipe_fp, "%01d,%03d,", u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_ready,
-//                 u_msrh_tile_wrapper.u_msrh_tile.w_sc_disp.inst[grp_idx].rs2_rnid);
-//       else
-//         $fwrite(pipe_fp, "     ,");
-//       $fwrite(pipe_fp, ")");
-//     end
-//     $fwrite(pipe_fp, " | ");
-//     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
-//       for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
-//         if (committed_rob_entry.grp_id[grp_idx]) begin
-//           $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
-//                    u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
-//                    (committed_rob_entry.pc_addr << 1) + (4 * grp_idx));
-//           if (committed_rob_entry.inst[grp_idx].rd_valid) begin
-//             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
-//                      committed_rob_entry.inst[grp_idx].rd_regidx,
-//                      committed_rob_entry.inst[grp_idx].rd_rnid,
-//                      w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
-//           end else begin
-//             $fwrite (pipe_fp, "                                        : ");
-//           end
-//           $fwrite (pipe_fp, "DASM(%08x)", committed_rob_entry.inst[grp_idx].inst);
-//         end // if (committed_rob_entry.grp_id[grp_idx])
-//       end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
-//     end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmd_id])
-//     $fwrite(pipe_fp, "\n");
-//   end // else: !if(!w_msrh_reset_n)
-// end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-//
-// `include "tb_json_dumper.sv"
->>>>>>> 71d5661cd32adc3d7b02a9ce6c790f14916c95ed
+`endif // !`ifndef DIRECT_LOAD_HEX
 
 // always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
 //   if (!w_msrh_reset_n) begin
