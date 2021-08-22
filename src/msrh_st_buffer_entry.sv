@@ -124,10 +124,23 @@ always_comb begin
           // if index_oh is zero, it means LRQ is correctly allocated,
           // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
           w_state_next = ST_BUF_RD_L1D; // Replay
-        end else if (i_lrq_resolve.valid &&
-                     i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-          w_state_next = ST_BUF_RD_L1D; // Replay
+        end else if (i_lrq_full) begin
+          w_state_next = ST_BUF_WAIT_FULL;
+        end else begin
+          w_state_next = ST_BUF_WAIT_REFILL; // Replay
+          w_entry_next.lrq_index_oh = i_lrq_index_oh;
         end
+      end
+    end // case: ST_BUF_LRQ_REFILL
+    ST_BUF_WAIT_REFILL: begin
+      if (i_lrq_resolve.valid &&
+          i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+        w_state_next = ST_BUF_RD_L1D; // Replay
+      end
+    end
+    ST_BUF_WAIT_FULL: begin
+      if (!i_lrq_full) begin
+        w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end
     default : begin
