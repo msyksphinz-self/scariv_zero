@@ -63,6 +63,7 @@ l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
 lrq_evict_search_if w_lrq_evict_search_if();
 l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
+fwd_check_if w_stbuf_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
 lrq_search_if w_lrq_search_if ();
 lrq_resolve_t w_lrq_resolve;
@@ -119,6 +120,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .i_mispred_lsu (o_ex2_mispred),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
+    .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
 
     .ptw_if(ptw_if[lsu_idx]),
     .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
@@ -278,6 +280,8 @@ u_st_buffer
    .lrq_evict_search_if (w_lrq_evict_search_if),
    .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
    .l1d_wr_if           (w_l1d_wr_if),
+
+   .stbuf_fwd_check_if  (w_stbuf_fwd_check),
 
    .i_lrq_resolve       (w_lrq_resolve)
    );

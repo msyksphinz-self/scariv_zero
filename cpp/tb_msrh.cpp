@@ -15,6 +15,12 @@ extern "C" {
   FILE *compare_log_fp;
 }
 
+extern "C" {
+  int load_binary(char const* path_exec,
+                  char const* filename,
+                  bool is_load_dump);
+}
+
 // Instantiate DUT
 Vmsrh_tb *dut;
 // Trace DUMP ON

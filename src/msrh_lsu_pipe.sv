@@ -39,6 +39,7 @@ module msrh_lsu_pipe
 
  // Forwarding checker
  fwd_check_if.master                   ex2_fwd_check_if,
+ fwd_check_if.master                   stbuf_fwd_check_if,
 
  l1d_lrq_if.master                     l1d_lrq_if,
 
@@ -386,6 +387,13 @@ assign ex2_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign ex2_fwd_check_if.paddr  = r_ex2_paddr;
 assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
+assign stbuf_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign stbuf_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
+assign stbuf_fwd_check_if.grp_id = r_ex2_issue.grp_id;
+assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
+assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
+
+
 logic [ 7: 0]                  w_ex2_fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0] w_ex2_fwd_aligned_data;
 logic [riscv_pkg::XLEN_W-1: 0] w_ex2_fwd_final_data;
@@ -415,9 +423,39 @@ always_comb begin
   endcase // case (r_ex2_pipe_ctrl.size)
 end
 
+
+logic [ 7: 0]                  w_stbuf_fwd_dw;
+logic [riscv_pkg::XLEN_W-1: 0] w_stbuf_fwd_aligned_data;
+
+always_comb begin
+  case (r_ex2_pipe_ctrl.size)
+    SIZE_DW : begin
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
+    end
+    SIZE_W  : begin
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[2], 2'b00};
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2], 2'b00, 3'b000};
+    end
+    SIZE_H  : begin
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[2:1], 1'b0};
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2:1], 1'b0, 3'b000};
+    end
+    SIZE_B  : begin
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >>  r_ex2_paddr[2:0];
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2:0], 3'b000};
+    end
+    default : begin
+      w_stbuf_fwd_dw = 'h0;
+      w_stbuf_fwd_aligned_data = 'h0;
+    end
+  endcase // case (r_ex2_pipe_ctrl.size)
+end
+
 generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin
-  assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_ex2_fwd_dw[b_idx] ? w_ex2_fwd_aligned_data[b_idx*8 +: 8] :
-                                        w_ex2_data_tmp[b_idx*8 +: 8];
+  assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_stbuf_fwd_dw[b_idx] ? w_stbuf_fwd_aligned_data[b_idx*8 +: 8] :
+                                              w_ex2_fwd_dw  [b_idx] ? w_ex2_fwd_aligned_data  [b_idx*8 +: 8] :
+                                                                      w_ex2_data_tmp          [b_idx*8 +: 8];
 end
 endgenerate
 

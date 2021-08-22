@@ -23,6 +23,10 @@ module msrh_st_buffer_entry
  output logic o_lrq_req, // Refill request to LRQ
  input logic  i_lrq_accepted,
 
+ // Forward check interface from LSU Pipeline
+ fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
+ output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_fwd_lsu_hit,
+
  input logic  i_l1d_rd_miss,
  input logic  i_l1d_rd_conflict,
  input logic  i_evict_merged,
@@ -47,6 +51,8 @@ st_buffer_state_t r_state;
 st_buffer_state_t w_state_next;
 
 logic         w_l1d_rd_req_next;
+
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -134,5 +140,16 @@ assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
+
+
+// -----------------------------------
+// Forwarding check from LSU Pipeline
+// -----------------------------------
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
+  assign o_fwd_lsu_hit[p_idx] = r_entry.valid & stbuf_fwd_check_if[p_idx].valid &
+                                (r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] ==
+                                 stbuf_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)]);
+end
+endgenerate
 
 endmodule // msrh_st_buffer_entry

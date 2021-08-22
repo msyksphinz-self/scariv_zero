@@ -24,6 +24,9 @@ module msrh_st_buffer
  // Write Data to DCache
  l1d_wr_if.master l1d_wr_if,
 
+ // Forward check interface from LSU Pipeline
+ fwd_check_if.slave  stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
  // LRQ Resolve Notofication
  input       lrq_resolve_t i_lrq_resolve
  );
@@ -53,6 +56,8 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req_oh;
 logic                          r_l1d_rd_if_resp;
 
 st_buffer_entry_t w_init_load;
+
+logic [msrh_conf_pkg::LSU_INST_NUM-1:0] w_stbuf_fwd_hit[ST_BUF_ENTRY_SIZE];
 
 // ----------------------
 // STQ All Entries
@@ -101,6 +106,10 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .i_lrq_accepted (w_entry_lrq_req_oh[e_idx]),
 
      .i_l1d_rd_miss     (l1d_rd_if.s1_miss),
+
+     // Forward check interface from LSU Pipeline
+     .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
+     .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
      .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_rd_conflict (l1d_rd_if.s1_conflict),
@@ -215,6 +224,30 @@ assign l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}
 assign l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 /* verilator lint_off WIDTH */
 assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], 3'b000};
+
+
+// -----------------------------------
+// Forwarding check from LSU Pipeline
+// -----------------------------------
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
+  logic [ST_BUF_ENTRY_SIZE-1:0] st_buf_hit_array;
+  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : st_buf_loop
+    assign st_buf_hit_array[s_idx] = w_stbuf_fwd_hit[s_idx][p_idx];
+  end
+  st_buffer_entry_t w_fwd_entry;
+  bit_oh_or #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE)) fwd_select_entry (.i_data(w_entries), .i_oh(st_buf_hit_array), .o_selected(w_fwd_entry));
+
+  logic dw_upper;
+  assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
+
+  assign stbuf_fwd_check_if[p_idx].fwd_valid = |st_buf_hit_array;
+  assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[riscv_pkg::XLEN_W/8 +: riscv_pkg::XLEN_W/8] :
+                                               w_fwd_entry.strb[riscv_pkg::XLEN_W/8-1: 0];
+  assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
+                                               w_fwd_entry.data[riscv_pkg::XLEN_W-1: 0];
+
+end
+endgenerate
 
 
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
