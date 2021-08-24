@@ -90,6 +90,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
 msrh_pkg::done_rpt_t w_ld_done_report[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 
+lrq_haz_check_if w_lrq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM];
+
 st_buffer_if            w_st_buffer_if();
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
@@ -125,6 +127,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .ptw_if(ptw_if[lsu_idx]),
     .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
+    .lrq_haz_check_if (w_lrq_haz_check_if[lsu_idx]),
 
     .ldq_replay_if (w_ldq_replay[lsu_idx]),
     .stq_replay_if (w_stq_replay[lsu_idx]),
@@ -245,6 +248,7 @@ msrh_l1d_load_requester
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
  .l1d_lrq  (w_l1d_lrq_if),
+ .lrq_haz_check_if (w_lrq_haz_check_if),
 
  .l1d_ext_rd_req  (w_l1d_ext_req[0]),
  .l1d_ext_rd_resp (l1d_ext_resp  ),

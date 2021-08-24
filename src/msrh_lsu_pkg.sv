@@ -35,7 +35,8 @@ package msrh_lsu_pkg;
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL,
-    STQ_DEPEND
+    STQ_DEPEND,
+    LRQ_EVICT_CONFLICT
   } lmq_haz_t;
 
   typedef struct packed {
@@ -416,7 +417,8 @@ typedef enum logic[3:0] {
   LDQ_EX3_DONE = 7,
   LDQ_DEAD = 8,
   LDQ_WAIT_COMPLETE = 9,
-  LDQ_ISSUED = 10
+  LDQ_ISSUED = 10,
+  LDQ_LRQ_EVICT_HAZ = 11
 } ldq_state_t;
 
 typedef struct packed {

@@ -5,6 +5,9 @@ module msrh_l1d_load_requester
 
    // from Pipeline for Load + PTW for Load
    l1d_lrq_if.slave l1d_lrq[msrh_conf_pkg::LSU_INST_NUM],
+   // from LS-Pipe hazard check
+   lrq_haz_check_if.slave lrq_haz_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    // from STQ request
    l1d_lrq_if.slave l1d_lrq_stq_miss_if,
 
@@ -380,6 +383,35 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     o_lrq_resolve.resolve_index_oh <= r_lrq_search_index_oh;
   end
 end
+
+// Eviction Hazard Check
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_evict_hit;
+  for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
+    assign w_lrq_evict_hit[b_idx] = w_lrq_entries[b_idx].valid &
+                                    w_lrq_entries[b_idx].evict_valid &
+                                    lrq_haz_check_if[p_idx].ex2_valid &
+                                    (w_lrq_entries[b_idx].evict.paddr [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0] ==
+                                     lrq_haz_check_if[p_idx].ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0]);
+  end
+
+  msrh_lsu_pkg::lrq_entry_t w_lrq_evict_entry;
+  bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
+
+  assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
+  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_entry.evict.paddr;
+
+`ifdef SIMULATION
+  always_comb begin
+    if (!$onehot0(w_lrq_evict_hit)) begin
+      $fatal(0, "LRQ Hazard Check : lrq_evict_hit should be one-hot. Value=%x\n", w_lrq_evict_hit);
+    end
+  end
+`endif // SIMULATION
+
+end
+endgenerate
+
 
 initial begin
   assert (msrh_lsu_pkg::L2_CMD_TAG_W >= $clog2(msrh_pkg::LRQ_ENTRY_SIZE) + 1);

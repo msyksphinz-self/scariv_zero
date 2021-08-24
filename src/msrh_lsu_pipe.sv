@@ -40,6 +40,7 @@ module msrh_lsu_pipe
  // Forwarding checker
  fwd_check_if.master                   ex2_fwd_check_if,
  fwd_check_if.master                   stbuf_fwd_check_if,
+ lrq_haz_check_if.master               lrq_haz_check_if,
 
  l1d_lrq_if.master                     l1d_lrq_if,
 
@@ -343,17 +344,18 @@ assign o_ex2_q_updates.hazard_typ = w_ex2_l1d_mispredicted ?
                                     (ex2_fwd_check_if.stq_hazard_vld  ? STQ_DEPEND   :
                                      l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT : LRQ_ASSIGNED) :
                                     ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
+                                    lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
                                     NONE;
-assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
+assign o_ex2_q_updates.lrq_index_oh = lrq_haz_check_if.ex2_evict_haz_valid ? lrq_haz_check_if.ex2_evict_entry_idx :
+                                      l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
-
 
 // ---------------------
 // Misprediction Update
 // ---------------------
 always_comb begin
-  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
+  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict | lrq_haz_check_if.ex2_evict_haz_valid;
   o_ex2_mispred.rd_type   = r_ex2_issue.rd_type;
   o_ex2_mispred.rd_rnid   = r_ex2_issue.rd_rnid;
 end
@@ -393,6 +395,9 @@ assign stbuf_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
 assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
+// LRQ Hazard Check
+assign lrq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign lrq_haz_check_if.ex2_paddr  = r_ex2_paddr;
 
 logic [ 7: 0]                  w_ex2_fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0] w_ex2_fwd_aligned_data;
