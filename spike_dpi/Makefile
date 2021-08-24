@@ -2,6 +2,10 @@
 
 VERILATOR_HOME = /usr/share/verilator
 
+ifeq ($(VERILATOR),1)
+	CFLAGS += -DVERILATOR
+endif
+
 CFLAGS += -g
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)
