@@ -227,7 +227,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
 
          .i_evict_merge (w_evict_merge),
 
@@ -254,7 +254,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
          .i_evict_merge (w_evict_merge),
 
-         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
@@ -369,18 +369,16 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
+assign o_lrq_resolve.valid            = lrq_search_if.valid;
+assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_lrq_resolve <= 'h0;
-
     r_lrq_search_valid <= 1'b0;
     r_lrq_search_index_oh <= 'h0;
   end else begin
-    r_lrq_search_valid <= lrq_search_if.valid;
+    r_lrq_search_valid    <= lrq_search_if.valid;
     r_lrq_search_index_oh <= 1 << lrq_search_if.index;
-
-    o_lrq_resolve.valid            <= r_lrq_search_valid;
-    o_lrq_resolve.resolve_index_oh <= r_lrq_search_index_oh;
   end
 end
 

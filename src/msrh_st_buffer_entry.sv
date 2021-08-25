@@ -40,6 +40,7 @@ module msrh_st_buffer_entry
  input lrq_resolve_t i_lrq_resolve,
 
  output logic             o_ready_to_merge,
+ output logic             o_l1d_merge_req,
  output st_buffer_entry_t o_entry,
  output logic             o_entry_finish
  );
@@ -135,13 +136,18 @@ always_comb begin
     ST_BUF_WAIT_REFILL: begin
       if (i_lrq_resolve.valid &&
           i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-        w_state_next = ST_BUF_RD_L1D; // Replay
+        w_state_next = ST_BUF_L1D_MERGE;
       end
     end
     ST_BUF_WAIT_FULL: begin
       if (!i_lrq_full) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
+    end
+    ST_BUF_L1D_MERGE : begin
+      w_state_next = ST_BUF_INIT;
+      w_entry_next.valid = 1'b0;
+      o_entry_finish = 1'b1;
     end
     default : begin
     end
@@ -153,7 +159,7 @@ assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
-
+assign o_l1d_merge_req = r_entry.valid & (r_state == ST_BUF_L1D_MERGE);
 
 // -----------------------------------
 // Forwarding check from LSU Pipeline

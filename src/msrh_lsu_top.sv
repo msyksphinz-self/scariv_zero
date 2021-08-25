@@ -58,6 +58,7 @@ localparam L1D_LRQ_PORT   = L1D_SNOOP_PORT + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
+l1d_wr_if  w_l1d_merge_if();
 // LSU Pipeline + PTW
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
 lrq_evict_search_if w_lrq_evict_search_if();
@@ -284,6 +285,7 @@ u_st_buffer
    .lrq_evict_search_if (w_lrq_evict_search_if),
    .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
    .l1d_wr_if           (w_l1d_wr_if),
+   .l1d_merge_if        (w_l1d_merge_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
 
@@ -365,6 +367,7 @@ u_msrh_dcache
    .i_reset_n(i_reset_n),
    .l1d_rd_if (w_l1d_rd_if),
    .l1d_wr_if (w_l1d_wr_if),
+   .l1d_merge_if (w_l1d_merge_if),
 
    .l1d_ext_resp (l1d_ext_resp),
 

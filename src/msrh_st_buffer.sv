@@ -23,6 +23,7 @@ module msrh_st_buffer
  l1d_lrq_if.master l1d_lrq_stq_miss_if,
  // Write Data to DCache
  l1d_wr_if.master l1d_wr_if,
+ l1d_wr_if.master l1d_merge_if,
 
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave  stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -47,6 +48,8 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req_oh;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req_oh;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req_oh;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
 
@@ -123,6 +126,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .i_lrq_resolve (i_lrq_resolve),
 
      .o_ready_to_merge (w_ready_to_merge),
+     .o_l1d_merge_req  (w_entry_l1d_merge_req[e_idx]),
      .o_entry(w_entries[e_idx]),
      .o_entry_finish (w_entry_finish[e_idx])
      );
@@ -224,6 +228,27 @@ assign l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}
 assign l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 /* verilator lint_off WIDTH */
 assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+
+// --------------------------------------------
+// L1D Merge Interface
+// --------------------------------------------
+st_buffer_entry_t  w_l1d_merge_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_l1d_merge_req_sel (.in(w_entry_l1d_merge_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_l1d_merge_req_oh));
+bit_oh_or
+  #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
+select_l1d_merge_entry_oh
+  (
+   .i_oh(w_entry_l1d_merge_req_oh),
+   .i_data(w_entries),
+   .o_selected(w_l1d_merge_entry)
+   );
+
+assign l1d_merge_if.valid = |w_entry_l1d_merge_req_oh;
+assign l1d_merge_if.paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_merge_if.data  = {multiply_dc_stbuf_width{w_l1d_merge_entry.data}};
+/* verilator lint_off WIDTH */
+assign l1d_merge_if.be    = w_l1d_merge_entry.strb << {w_l1d_merge_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+
 
 
 // -----------------------------------

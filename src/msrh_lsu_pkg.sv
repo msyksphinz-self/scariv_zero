@@ -531,7 +531,8 @@ typedef enum logic [ 2: 0] {
   ST_BUF_L1D_UPDATE = 3,
   ST_BUF_LRQ_REFILL = 4,
   ST_BUF_WAIT_REFILL = 5,
-  ST_BUF_WAIT_FULL   = 6
+  ST_BUF_WAIT_FULL   = 6,
+  ST_BUF_L1D_MERGE = 7
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  paddr,
