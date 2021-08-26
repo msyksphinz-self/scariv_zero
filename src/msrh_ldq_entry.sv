@@ -286,19 +286,9 @@ always_comb begin
                              w_stq_is_hazard       ? LDQ_STQ_HAZ :
                              w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                         LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
+                             LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;
-`ifdef SIMULATION
-        if (i_reset_n) begin
-          if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
-            $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
-          end
-          if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
-            $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
-          end
-        end
-`endif // SIMULATION
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
@@ -376,6 +366,20 @@ always_comb begin
   end
 
 end // always_comb
+
+
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex2_q_valid) begin
+    if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
+      $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
+    end
+    if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
+      $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
+    end
+  end
+end
+`endif // SIMULATION
 
 
 function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,

@@ -302,6 +302,7 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
       LDQ_WAIT_COMPLETE   : $fwrite(fp, "LDQ_WAIT_COMPLETE");
       LDQ_DEAD            : $fwrite(fp, "LDQ_DEAD");
       LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
+      LDQ_LRQ_EVICT_HAZ   : $fwrite(fp, "LDQ_LRQ_EVICT_HAZ");
       default             : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

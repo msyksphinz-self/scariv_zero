@@ -521,7 +521,7 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: $clog2(ST_BUF_WIDTH/8)] paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                  lrq_index_oh;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
 } st_buffer_entry_t;
 
 typedef enum logic [ 2: 0] {

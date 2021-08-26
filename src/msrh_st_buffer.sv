@@ -243,12 +243,33 @@ select_l1d_merge_entry_oh
    .o_selected(w_l1d_merge_entry)
    );
 
-assign l1d_merge_if.valid = |w_entry_l1d_merge_req_oh;
+assign l1d_merge_if.valid = |w_entry_l1d_merge_req;
 assign l1d_merge_if.paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
-assign l1d_merge_if.data  = {multiply_dc_stbuf_width{w_l1d_merge_entry.data}};
-/* verilator lint_off WIDTH */
-assign l1d_merge_if.be    = w_l1d_merge_entry.strb << {w_l1d_merge_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
 
+logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
+generate for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
+  /* verilator lint_off WIDTH */
+  assign w_entries_be  [s_idx] = w_entries[s_idx].strb << {w_entries[s_idx].paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+  assign w_entries_data[s_idx] = {multiply_dc_stbuf_width{w_entries[s_idx].data}};
+end
+endgenerate
+
+generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : l1d_merge_loop
+  logic [ST_BUF_ENTRY_SIZE-1: 0] w_st_buf_byte_valid;
+  logic [ 7: 0]                  w_st_buf_byte_data [ST_BUF_ENTRY_SIZE];
+  logic [ 7: 0]                  w_st_buf_byte_sel_data;
+  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_loop
+    assign w_st_buf_byte_valid[s_idx] = w_entry_l1d_merge_req[s_idx] & w_entries_be[s_idx][b_idx];
+    assign w_st_buf_byte_data [s_idx] = w_entries_data[s_idx][b_idx*8 +: 8];
+  end
+
+  bit_oh_or #(.T(logic[7:0]), .WORDS(ST_BUF_ENTRY_SIZE)) select_be_data(.i_oh(w_st_buf_byte_valid), .i_data(w_st_buf_byte_data), .o_selected(w_st_buf_byte_sel_data));
+
+  assign l1d_merge_if.data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
+  assign l1d_merge_if.be[b_idx]           = |w_st_buf_byte_valid;
+end
+endgenerate
 
 
 // -----------------------------------
