@@ -86,6 +86,8 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_evict_tag;
 
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         w_lrq_entry_clear;
+
 // LRQ Search Registers
 logic                                         r_lrq_search_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         r_lrq_search_index_oh;
@@ -234,7 +236,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_sent       (w_ext_req_sent),
          .i_evict_sent (w_evict_sent),
          .o_entry (w_lrq_entries[b_idx]),
-         .o_evict_ready (w_lrq_entry_evict_ready[b_idx])
+         .o_evict_ready (w_lrq_entry_evict_ready[b_idx]),
+         .o_entry_clear (w_lrq_entry_clear[b_idx])
          );
   end else begin : stq_entry // if (b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
     // ----------------------------
@@ -259,7 +262,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
          .o_entry (w_lrq_entries[b_idx]),
-         .o_evict_ready (w_lrq_entry_evict_ready[b_idx])
+         .o_evict_ready (w_lrq_entry_evict_ready[b_idx]),
+         .o_entry_clear (w_lrq_entry_clear[b_idx])
          );
 
   end // else: !if(b_idx < msrh_pkg::LRQ_NORM_ENTRY_SIZE)
@@ -283,6 +287,7 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
     assign w_hit_lrq_same_addr_valid[p_idx][b_idx] = l1d_lrq[p_idx].load &
                                                      w_lrq_entries[b_idx].valid &
+                                                     ~w_lrq_entry_clear[b_idx] &
                                                      (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                                                       l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
