@@ -389,15 +389,15 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
     assign w_lrq_evict_hit[b_idx] = w_lrq_entries[b_idx].valid &
                                     w_lrq_entries[b_idx].evict_valid &
                                     lrq_haz_check_if[p_idx].ex2_valid &
-                                    (w_lrq_entries[b_idx].evict.paddr [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0] ==
-                                     lrq_haz_check_if[p_idx].ex2_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1:0]);
+                                    (w_lrq_entries[b_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                     lrq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
   msrh_lsu_pkg::lrq_entry_t w_lrq_evict_entry;
   bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
 
   assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
-  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_entry.evict.paddr;
+  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_hit;
 
 `ifdef SIMULATION
   always_comb begin

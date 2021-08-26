@@ -290,8 +290,7 @@ always_comb begin
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;
 `ifdef SIMULATION
-        if (!i_reset_n) begin
-        end else begin
+        if (i_reset_n) begin
           if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
             $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
           end
