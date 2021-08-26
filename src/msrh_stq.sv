@@ -431,7 +431,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   end else begin
 
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid &
-                                            (w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)] == w_stq_cmt_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)]);
+                                            (w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)] ==
+                                             w_stq_cmt_entry.paddr     [riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)
 
   stq_entry_t w_stq_cmt_entry;
@@ -478,7 +479,7 @@ assign st_buffer_if.paddr = {w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$cl
 generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   logic [msrh_conf_pkg::DISP_SIZE-1:0] w_strb_array;
   for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stb_disp_loop
-    assign w_strb_array[d_idx] = w_st_buffer_strb[d_idx][b_idx];
+    assign w_strb_array[d_idx] = w_st_buffer_strb[d_idx][b_idx] & w_stbuf_accepted_disp[d_idx];
   end
   assign st_buffer_if.strb[b_idx] = |w_strb_array;
 
