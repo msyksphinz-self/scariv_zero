@@ -261,7 +261,7 @@ always_comb begin
     end
     WAIT_IC_FILL : begin
       if (w_flush_valid) begin
-        if (w_tlb_refill_wakeup) begin
+        if (w_ic_refill_wakeup) begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
@@ -308,7 +308,15 @@ always_comb begin
       end
     end
     WAIT_FLUSH_FREE : begin
-      if (w_flush_haz_clear) begin
+      if (w_flush_valid) begin
+        if (w_flush_haz_clear) begin
+          w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_s0_vaddr_flush_next;
+        end
+      end else if (w_flush_haz_clear) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         w_if_state_next = FETCH_REQ;
@@ -405,7 +413,7 @@ end
 
 assign w_s0_ic_req.valid = ((r_if_state == FETCH_REQ) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready) &
                             !r_s1_tlb_miss & !r_s2_tlb_miss)  |
-                           w_ic_refill_wakeup | w_tlb_refill_wakeup | w_ibuf_refill_wakeup;
+                           w_ic_refill_wakeup | w_tlb_refill_wakeup | w_ibuf_refill_wakeup | w_flush_haz_clear;
 
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
