@@ -159,7 +159,9 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
       if (!i_reset_n) begin
         r_sectored_entries[e_idx] <= 'h0;
       end else begin
-        if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
+        if (sfence_if.valid) begin
+          r_sectored_entries[e_idx].valid <= 'h0;
+        end else if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
             /* verilator lint_off WIDTH */
             (ptw_if.resp.level == riscv_pkg::PG_LEVELS-1)) begin
           if (r_sectored_repl_addr_oh[e_idx[$clog2(TLB_NORMAL_ENTRIES_NUM)-1:0]]) begin
@@ -168,8 +170,6 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
             r_sectored_entries[e_idx].level <= ptw_if.resp.level;
             r_sectored_entries[e_idx].data[w_wr_sector_idx] <= new_pte_entry;
           end
-        end else if (sfence_if.valid) begin
-          r_sectored_entries[e_idx].valid <= 'h0;
         end
       end
     end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -181,7 +181,9 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
       if (!i_reset_n) begin
         r_superpage_entries[super_idx] <= 'h0;
       end else begin
-        if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
+        if (sfence_if.valid) begin
+          r_superpage_entries[super_idx].valid <= 'h0;
+        end else if (ptw_if.resp.valid & ptw_if.resp_ready & ~((r_state ==  ST_WAIT_INVALIDATE) | sfence_if.valid) &
             (ptw_if.resp.level < riscv_pkg::PG_LEVELS-1)) begin
           if (r_superpage_repl_addr_oh[super_idx]) begin
             r_superpage_entries[super_idx].valid <= 1 << w_wr_sector_idx;
@@ -189,8 +191,6 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
             r_superpage_entries[super_idx].level <= ptw_if.resp.level;
             r_superpage_entries[super_idx].data[w_wr_sector_idx] <= new_pte_entry;
           end
-        end else if (sfence_if.valid) begin
-          r_superpage_entries[super_idx].valid <= 'h0;
         end
       end
     end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -306,10 +306,10 @@ generate if (msrh_conf_pkg::USING_VM) begin : use_vm
           end
         end
         ST_WAIT : begin
-          if (sfence_if.valid) begin
-            r_state <= ST_WAIT_INVALIDATE;
-          end else if (ptw_if.resp.valid) begin
+          if (ptw_if.resp.valid) begin
             r_state <= ST_READY;
+          end else if (sfence_if.valid) begin
+            r_state <= ST_WAIT_INVALIDATE;
           end
         end
         ST_WAIT_INVALIDATE : begin
