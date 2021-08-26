@@ -155,7 +155,8 @@ always_comb begin
 end // always_comb
 
 assign o_entry = r_entry;
-assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE);
+assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE) &
+                          (r_state != ST_BUF_L1D_MERGE);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
