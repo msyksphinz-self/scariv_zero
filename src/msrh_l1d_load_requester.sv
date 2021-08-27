@@ -188,7 +188,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
                                         (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                                          lrq_evict_search_if.s0_paddr    [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   msrh_lsu_pkg::evict_merge_t w_evict_merge;
-  assign w_evict_merge.valid = lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
+  // Eviction Merge not supported
+  assign w_evict_merge.valid = 1'b0; // lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
   assign w_evict_merge.data  = lrq_evict_search_if.s0_data;
   assign w_evict_merge.be    = lrq_evict_search_if.s0_strb << lrq_evict_search_if.s0_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
 

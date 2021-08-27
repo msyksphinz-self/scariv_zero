@@ -167,6 +167,7 @@ typedef struct packed {
   logic                          l1drd_ready;
   logic                          l1dwr_ready;
   logic                          evict_valid;
+  logic                          evict_sent;
   evict_payload_t                evict;
 } lrq_entry_t;
 
@@ -178,6 +179,7 @@ function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
   ret.sent  = 1'b0;
   ret.evict_valid = req.evict_valid;
+  ret.evict_sent  = 1'b0;
   ret.evict       = req.evict_payload;
 
   return ret;

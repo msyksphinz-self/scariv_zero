@@ -21,8 +21,8 @@ module msrh_lrq_entry
 typedef enum logic [1:0] {
   INIT = 0,
   READY_REQ = 1,
-  WAIT_RESP = 2,
-  READY_EVICT = 3
+  WAIT_RESP = 2 /*,
+  READY_EVICT = 3 */
 } state_t;
 
 
@@ -53,35 +53,40 @@ always_comb begin
     end
     WAIT_RESP : begin
       if (i_ext_load_fin) begin
-        if (r_entry.evict_valid) begin
-          w_state_next = READY_EVICT;
-        end else begin
-          w_state_next = INIT;
-          w_entry_next = 'h0;
-          o_entry_clear = 1'b1;
-        end
-      end
-    end
-    READY_EVICT : begin
-      if (i_evict_sent) begin
+        // if (r_entry.evict_valid) begin
+        //   w_state_next = READY_EVICT;
+        // end else begin
         w_state_next = INIT;
         w_entry_next = 'h0;
         o_entry_clear = 1'b1;
+        // end
       end
     end
+    // READY_EVICT : begin
+    //   if (i_evict_sent) begin
+    //     w_state_next = INIT;
+    //     w_entry_next = 'h0;
+    //     o_entry_clear = 1'b1;
+    //   end
+    // end
+    default : begin end
   endcase // case (r_state)
 
-  if (i_evict_merge.valid) begin
-    for (int b = 0; b < msrh_lsu_pkg::DCACHE_DATA_B_W; b++) begin : evict_byte_loop
-      if (i_evict_merge.be[b]) begin
-        w_entry_next.evict.data[b*8 +: 8] = i_evict_merge.data[(b * 8) % riscv_pkg::XLEN_W +: 8];
-      end
-    end
+  if (o_evict_ready & i_evict_sent) begin
+    w_entry_next.evict_sent = 1'b1;
   end
+
+  // if (i_evict_merge.valid) begin
+  //   for (int b = 0; b < msrh_lsu_pkg::DCACHE_DATA_B_W; b++) begin : evict_byte_loop
+  //     if (i_evict_merge.be[b]) begin
+  //       w_entry_next.evict.data[b*8 +: 8] = i_evict_merge.data[(b * 8) % riscv_pkg::XLEN_W +: 8];
+  //     end
+  //   end
+  // end
 
 end // always_comb
 
-assign o_evict_ready = r_state == READY_EVICT;
+assign o_evict_ready = r_entry.valid & r_entry.evict_valid & ~r_entry.evict_sent;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
