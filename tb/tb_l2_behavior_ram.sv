@@ -105,6 +105,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             o_snoop_req_paddr <= i_req_addr;
             r_req_paddr_pos <= actual_line_pos;
             r_req_tag <= i_req_tag;
+            rd_valid[0] <= 1'b0;
           end
         end else begin
           rd_valid[0] <= 1'b0;
