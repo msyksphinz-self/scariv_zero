@@ -109,11 +109,33 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (r_lrq_remained_size > msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin
+      $fatal (0, "LRQ remained size must not exceed default value %d\n",
+            msrh_pkg::LRQ_NORM_ENTRY_SIZE);
+    end
+    if (r_lrq_remained_size != msrh_pkg::LRQ_NORM_ENTRY_SIZE - $countones(w_norm_lrq_valids)) begin
+      $fatal (0, "LRQ counter size and emptied LRQ entry size is different %d != %d\n",
+              r_lrq_remained_size, msrh_pkg::LRQ_NORM_ENTRY_SIZE - $countones(w_norm_lrq_valids));
+    end
+  end
+end
+
+final begin
+  if (r_lrq_remained_size != msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin
+    $fatal (0, "LRQ remained size must return to default value %d, but currently %d\n",
+            msrh_pkg::LRQ_NORM_ENTRY_SIZE, r_lrq_remained_size);
+  end
+end
+`endif // SIMULATION
+
 //
 // LRQ Pointer
 //
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
-assign w_out_valid = r_lrq_search_valid & (|r_lrq_search_index_oh[msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]);
+assign w_out_valid = o_lrq_resolve.valid & (|o_lrq_resolve.resolve_index_oh[msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]);
 
 inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                                   .i_rollback(1'b0),
@@ -201,8 +223,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
     msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
 
     for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lrq_port_loop
-      logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]  w_entry_ptr_oh;
-      bit_rotate_left #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE), .VAL(p_idx)) target_bit_rotate (.i_in(w_norm_in_ptr_oh), .o_out(w_entry_ptr_oh));
+      logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]  w_entry_ptr_oh;
+      bit_rotate_left #(.WIDTH(msrh_pkg::LRQ_NORM_ENTRY_SIZE), .VAL(p_idx)) target_bit_rotate (.i_in(w_norm_in_ptr_oh), .o_out(w_entry_ptr_oh));
       assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] & w_entry_ptr_oh[b_idx] & (p_idx < w_l1d_lrq_valid_load_cnt);
     end
 
