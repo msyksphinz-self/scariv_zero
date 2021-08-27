@@ -14,8 +14,7 @@ module msrh_lrq_entry
    input logic i_evict_sent,
 
    output      msrh_lsu_pkg::lrq_entry_t o_entry,
-   output logic o_evict_ready,
-   output logic o_entry_clear
+   output logic o_evict_ready
    );
 
 typedef enum logic [1:0] {
@@ -36,7 +35,6 @@ state_t w_state_next;
 always_comb begin
   w_entry_next = r_entry;
   w_state_next = r_state;
-  o_entry_clear = 1'b0;
 
   case (r_state)
     INIT : begin
@@ -58,7 +56,6 @@ always_comb begin
         // end else begin
         w_state_next = INIT;
         w_entry_next = 'h0;
-        o_entry_clear = 1'b1;
         // end
       end
     end
@@ -66,7 +63,6 @@ always_comb begin
     //   if (i_evict_sent) begin
     //     w_state_next = INIT;
     //     w_entry_next = 'h0;
-    //     o_entry_clear = 1'b1;
     //   end
     // end
     default : begin end
