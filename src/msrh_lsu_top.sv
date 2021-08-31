@@ -91,7 +91,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
 msrh_pkg::done_rpt_t w_ld_done_report[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 
-lrq_haz_check_if w_lrq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM];
+lrq_haz_check_if w_lrq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
 
