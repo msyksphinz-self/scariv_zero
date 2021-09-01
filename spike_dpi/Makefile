@@ -53,9 +53,6 @@ spike_dpi.o: spike_dpi.cpp
 
 riscv_isa_sim: riscv-isa-sim-makefile
 	make -C riscv-isa-sim -j$(shell nproc)
-
-riscv-isa-sim-makefile:
-	cd riscv-isa-sim && ./configure --enable-commitlog
 	touch -f riscv-isa-sim-makefile
 
 clean:
