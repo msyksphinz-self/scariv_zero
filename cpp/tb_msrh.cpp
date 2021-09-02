@@ -53,6 +53,8 @@ int main(int argc, char** argv) {
 
   Verilated::commandArgs(argc, argv);
 
+  bool set_output_file = false;
+
   while (1) {
     static struct option long_options[] = {
       {"elf"   , required_argument, 0, 'e' },
@@ -90,6 +92,7 @@ int main(int argc, char** argv) {
           perror("failed to open log file");
           exit(EXIT_FAILURE);
         }
+        set_output_file = true;
         break;
       }
       case 'c': {
@@ -100,6 +103,9 @@ int main(int argc, char** argv) {
     }
   }
 
+  if (set_output_file == false) {
+    compare_log_fp = stdout;
+  }
   load_binary("", filename, true);
 
   // Instantiate DUT
@@ -198,7 +204,7 @@ void stop_sim(int code)
   }
   fprintf(compare_log_fp, "===============================\n");
 
-  dut->final();
+  // dut->final();
 #ifdef DUMP_FST
   if (dump_fst_enable) tfp->close();
 #endif // DUMP_FST

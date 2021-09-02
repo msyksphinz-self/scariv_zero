@@ -71,7 +71,7 @@ st_buffer_entry_t w_entries[ST_BUF_ENTRY_SIZE];
 assign w_st_buffer_allocated = st_buffer_if.valid &
                                (!(|w_merge_accept) & !w_entry_full);
 assign w_entry_full = &w_entry_valids;
-assign w_out_valid  = |w_entry_finish;
+assign w_out_valid  = |(w_entry_finish & w_out_ptr_oh);
 
 // -----------------------
 // Input / Output Pointer
@@ -83,6 +83,9 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
 // New Entry create
 assign w_init_load = assign_st_buffer(st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data);
 
+assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
+                           |w_merge_accept ? ST_BUF_MERGE :
+                           ST_BUF_FULL;
 
 generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop
   logic w_ready_to_merge;
@@ -128,7 +131,8 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_ready_to_merge (w_ready_to_merge),
      .o_l1d_merge_req  (w_entry_l1d_merge_req[e_idx]),
      .o_entry(w_entries[e_idx]),
-     .o_entry_finish (w_entry_finish[e_idx])
+     .o_entry_finish (w_entry_finish[e_idx]),
+     .i_finish_accepted(w_out_ptr_oh[e_idx])
      );
 
   // Search Merging

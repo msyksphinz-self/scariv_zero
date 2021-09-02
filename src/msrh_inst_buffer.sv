@@ -101,10 +101,8 @@ logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE + 1]
 logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx_with_offset[msrh_conf_pkg::DISP_SIZE + 1];
 logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
-`ifdef SIMULATION
-logic [15: 0]                        w_sim_rvc_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_sim_rvc_valid;
-`endif // SIMULATION
+logic [15: 0]                        w_rvc_inst[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
@@ -240,10 +238,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
       w_expand_inst[w_idx]     = w_local_expand_inst;
-`ifdef SIMULATION
-      w_sim_rvc_inst[w_idx]    = w_rvc_inst;
-      w_sim_rvc_valid[w_idx]   = 1'b1;
-`endif // SIMULATION
+      w_rvc_inst[w_idx]    = w_rvc_inst;
+      w_rvc_valid[w_idx]   = 1'b1;
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & (&w_rvc_byte_en);
     end else begin
       // Normal instruction
@@ -253,10 +249,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
                                  r_inst_queue[w_inst_buf_ptr_b2].valid &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
-`ifdef SIMULATION
-      w_sim_rvc_inst[w_idx]    = w_rvc_inst;
-      w_sim_rvc_valid[w_idx]   = 1'b0;
-`endif // SIMULATION
+      w_rvc_inst[w_idx]    = w_rvc_inst;
+      w_rvc_valid[w_idx]   = 1'b0;
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
@@ -403,10 +397,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
       iq_disp.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
       iq_disp.inst[d_idx].inst = w_expand_inst[d_idx];
-`ifdef SIMULATION
-      iq_disp.inst[d_idx].rvc_inst_valid = w_sim_rvc_valid[d_idx];
-      iq_disp.inst[d_idx].rvc_inst       = w_sim_rvc_inst [d_idx];
-`endif // SIMULATION
+      iq_disp.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
+      iq_disp.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
       iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc[riscv_pkg::VADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 

@@ -85,10 +85,10 @@ logic [RV_ENTRY_SIZE-1: 0]                 w_muldiv_index_oh;
 
 logic                                      w_ex0_div_stall;
 logic                                      r_ex1_div_stall;
+logic                                      r_ex2_div_stall;
+logic                                      w_ex3_muldiv_stall;
 
-logic                                      w_ex2_muldiv_stall;
-
-assign o_muldiv_stall = w_ex2_muldiv_stall | r_ex1_div_stall /* | w_ex0_div_stall*/;
+assign o_muldiv_stall = w_ex3_muldiv_stall | r_ex2_div_stall | r_ex1_div_stall;
 
 
 always_comb begin
@@ -239,6 +239,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_wr_valid <= 1'b0;
 
     r_ex2_muldiv_valid <= 1'b0;
+
+    r_ex2_div_stall <= 1'b0;
   end else begin
     r_ex2_rs1_data <= ex1_regread_rs1.data;
     r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
@@ -252,6 +254,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_wr_valid <= o_ex1_early_wr.valid;
 
     r_ex2_muldiv_valid <= w_ex1_muldiv_valid;
+
+    r_ex2_div_stall <= r_ex1_div_stall;
   end
 end
 
@@ -332,7 +336,7 @@ u_msrh_muldiv_pipe
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),
 
-   .o_stall (w_ex2_muldiv_stall),
+   .o_stall (w_ex3_muldiv_stall),
    .o_valid (w_muldiv_res_valid),
    .o_res   (w_muldiv_res),
 

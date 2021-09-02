@@ -42,7 +42,8 @@ module msrh_st_buffer_entry
  output logic             o_ready_to_merge,
  output logic             o_l1d_merge_req,
  output st_buffer_entry_t o_entry,
- output logic             o_entry_finish
+ output logic             o_entry_finish,
+ input logic              i_finish_accepted
  );
 
 st_buffer_entry_t w_entry_next;
@@ -103,9 +104,7 @@ always_comb begin
       end else if (i_l1d_rd_conflict) begin
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_evict_merged) begin
-        w_state_next = ST_BUF_INIT;
-        w_entry_next.valid = 1'b0;
-        o_entry_finish = 1'b1;
+        w_state_next = ST_BUF_WAIT_FINISH;
       end else begin
         w_state_next = ST_BUF_L1D_UPDATE;
       end
@@ -114,9 +113,7 @@ always_comb begin
       if (i_l1d_wr_conflict) begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
-        w_state_next = ST_BUF_INIT;
-        w_entry_next.valid = 1'b0;
-        o_entry_finish = 1'b1;
+        w_state_next = ST_BUF_WAIT_FINISH;
       end
     end
     ST_BUF_LRQ_REFILL: begin
@@ -145,9 +142,14 @@ always_comb begin
       end
     end
     ST_BUF_L1D_MERGE : begin
-      w_state_next = ST_BUF_INIT;
-      w_entry_next.valid = 1'b0;
+      w_state_next = ST_BUF_WAIT_FINISH;
+    end
+    ST_BUF_WAIT_FINISH : begin
       o_entry_finish = 1'b1;
+      if (i_finish_accepted) begin
+        w_state_next = ST_BUF_INIT;
+        w_entry_next.valid = 1'b0;
+      end
     end
     default : begin
     end
@@ -156,7 +158,8 @@ end // always_comb
 
 assign o_entry = r_entry;
 assign o_ready_to_merge = r_entry.valid & (r_state != ST_BUF_L1D_UPDATE) &
-                          (r_state != ST_BUF_L1D_MERGE);
+                          (r_state != ST_BUF_L1D_MERGE) &
+                          (r_state != ST_BUF_WAIT_FINISH);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);

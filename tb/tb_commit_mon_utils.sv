@@ -1,8 +1,8 @@
 int log_fp;
 int pipe_fp;
 initial begin
-  log_fp = $fopen("simulate.log");
-  pipe_fp = $fopen("pipetrace.log");
+  log_fp = $fopen("simulate.log", "w");
+  pipe_fp = $fopen("pipetrace.log", "w");
 end
 
 logic [msrh_conf_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;

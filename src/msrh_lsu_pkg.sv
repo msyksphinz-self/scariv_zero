@@ -526,7 +526,7 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
 } st_buffer_entry_t;
 
-typedef enum logic [ 2: 0] {
+typedef enum logic [ 3: 0] {
   ST_BUF_INIT = 0,
   ST_BUF_RD_L1D = 1,
   ST_BUF_RESP_L1D = 2,
@@ -534,7 +534,8 @@ typedef enum logic [ 2: 0] {
   ST_BUF_LRQ_REFILL = 4,
   ST_BUF_WAIT_REFILL = 5,
   ST_BUF_WAIT_FULL   = 6,
-  ST_BUF_L1D_MERGE = 7
+  ST_BUF_L1D_MERGE = 7,
+  ST_BUF_WAIT_FINISH = 8
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  paddr,
