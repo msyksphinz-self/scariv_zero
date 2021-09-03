@@ -27,8 +27,9 @@ puts_locks = Queue.new
 select_test.each_slice(max_threads) do |group|
   group.map do |test|
     Thread.new do
-      output_file = log_dir + File.basename(test["elf"], ".*") + ".log"
+      output_file = log_dir + test["name"] + "_" + File.basename(test["elf"], ".*") + ".log"
       command_str = "./" + ARGV[0] + " -e " + "../tests/" + test["elf"] + " -o " + output_file
+      # puts "#{command_str} 2> /dev/null 1> /dev/null"
       system("#{command_str} 2> /dev/null 1> /dev/null")
 
       lock = puts_locks.pop

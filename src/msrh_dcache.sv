@@ -9,6 +9,7 @@ module msrh_dcache
    // LSU_INST_NUM ports from pipe, and STQ read and update port, PTW
    l1d_rd_if.slave l1d_rd_if[RD_PORT_NUM],
    l1d_wr_if.slave l1d_wr_if,
+   l1d_wr_if.slave l1d_merge_if,
 
    // L2 cache response
    l2_resp_if.slave  l1d_ext_resp,
@@ -105,10 +106,19 @@ end
 // -------------
 // Update of DC
 // -------------
-assign r_rp2_dc_update.valid = r_rp2_valid  | l1d_wr_if.valid;
+logic                                     w_rp2_merge_valid;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_rp2_merge_data;
+assign w_rp2_merge_valid = r_rp2_valid | l1d_merge_if.valid;
+generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::DCACHE_DATA_B_W; b_idx++) begin : merge_byte_loop
+  assign w_rp2_merge_data[b_idx*8 +: 8] = l1d_merge_if.be[b_idx] ? l1d_merge_if.data[b_idx*8 +: 8] :
+                                          r_rp2_resp_data[b_idx*8 +: 8];
+end
+endgenerate
+
+assign r_rp2_dc_update.valid = w_rp2_merge_valid | l1d_wr_if.valid;
 assign r_rp2_dc_update.addr  = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
                                l1d_wr_if.paddr;
-assign r_rp2_dc_update.data  = r_rp2_valid ? r_rp2_resp_data :
+assign r_rp2_dc_update.data  = r_rp2_valid ? w_rp2_merge_data :
                                l1d_wr_if.data;
 assign r_rp2_dc_update.be    = r_rp2_valid ? r_rp2_be :
                                l1d_wr_if.be;

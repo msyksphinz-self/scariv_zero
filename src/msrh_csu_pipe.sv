@@ -175,7 +175,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     endcase // case (r_ex2_pipe_ctrl.op)
 
     /* verilator lint_off WIDTH */
-    r_ex3_csr_rd_data <= (read_if.addr == `SYSREG_ADDR_MINSTRET) ? read_if.data + msrh_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[msrh_pkg::DISP_SIZE-1:1]}) :
+    r_ex3_csr_rd_data <= (read_if.addr == `SYSREG_ADDR_MINSTRET) ? read_if.data + msrh_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[msrh_conf_pkg::DISP_SIZE-1:1]}) :
                          read_if.data;
   end
 end
