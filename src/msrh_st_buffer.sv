@@ -227,11 +227,19 @@ select_l1d_wr_entry_oh
    .o_selected(w_l1d_wr_entry)
    );
 
-assign l1d_wr_if.valid = |w_entry_l1d_wr_req_oh;
-assign l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
-assign l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
-/* verilator lint_off WIDTH */
-assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+always_comb begin
+  l1d_wr_if.valid = |w_entry_l1d_wr_req_oh;
+  l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+  l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+end
+
+generate if (multiply_dc_stbuf_width == 1) begin
+  assign l1d_wr_if.be    = w_l1d_wr_entry.strb;
+end else begin
+  /* verilator lint_off WIDTH */
+  assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+end
+endgenerate
 
 // --------------------------------------------
 // L1D Merge Interface
@@ -252,10 +260,17 @@ assign l1d_merge_if.paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){
 
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
-generate for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
-  /* verilator lint_off WIDTH */
-  assign w_entries_be  [s_idx] = w_entries[s_idx].strb << {w_entries[s_idx].paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
-  assign w_entries_data[s_idx] = {multiply_dc_stbuf_width{w_entries[s_idx].data}};
+generate if (multiply_dc_stbuf_width == 1) begin
+  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
+    assign w_entries_be  [s_idx] = w_entries[s_idx].strb;
+    assign w_entries_data[s_idx] = w_entries[s_idx].data;
+  end
+end else begin
+  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
+    /* verilator lint_off WIDTH */
+    assign w_entries_be  [s_idx] = w_entries[s_idx].strb << {w_entries[s_idx].paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+    assign w_entries_data[s_idx] = {multiply_dc_stbuf_width{w_entries[s_idx].data}};
+  end
 end
 endgenerate
 
