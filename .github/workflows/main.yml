@@ -34,9 +34,9 @@ jobs:
       # Apt updates
       - name: apt_updates
         run: |
-          apt update
-          apt install -y tzdata
-          apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+          sudo apt update
+          sudo apt install -y tzdata
+          sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
 
       # Build Verilator
       - name: Cache Verilator ${{ matrix.verilator }}
