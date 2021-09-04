@@ -57,6 +57,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
 
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
+logic [riscv_pkg::XLEN_W-1: 0]       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
 
@@ -244,6 +245,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
       w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
       w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
+      w_fetch_except_tval [w_idx] = iq_disp.inst[w_idx].pc_addr;
 
     end else begin
       // Normal instruction
@@ -260,6 +262,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
                                     r_inst_queue[w_inst_buf_ptr_b2].tlb_except_valid;
       w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause :
                                     r_inst_queue[w_inst_buf_ptr_b2].tlb_except_cause;
+      w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
+                                    iq_disp.inst[w_idx].pc_addr + 'h2;
 
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
@@ -334,7 +338,7 @@ assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_s
 assign iq_disp.is_br_included = |w_inst_is_br;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
-
+assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
 
 // -------------------------------
 // Dispatch Inst, Resource Count

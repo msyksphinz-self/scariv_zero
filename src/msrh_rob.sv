@@ -118,6 +118,7 @@ logic w_load_valid;
      .i_load_br_included (sc_disp.is_br_included),
      .i_load_tlb_except_valid (sc_disp.tlb_except_valid),
      .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
+     .i_load_tlb_except_tval  (sc_disp.tlb_except_tval),
 
      .i_done_rpt (i_done_rpt),
 
@@ -158,8 +159,8 @@ assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
-                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
-                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00}:
+                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT /*      ||
+                                 o_commit.except_type == msrh_pkg::INST_PAGE_FAULT */) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00}:
                                 w_except_tval_selected;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
