@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y tzdata
-          sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev
+          sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler
 
       # Build Verilator
       - name: Cache Verilator ${{ matrix.verilator }}
