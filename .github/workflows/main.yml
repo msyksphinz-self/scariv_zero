@@ -17,20 +17,58 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    name: ci
+    strategy:
+      matrix:
+        system: ["ubuntu-20.04"]
+        verilator: ["4.204"]
+
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.system }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # Apt updates
+      - name: apt_updates
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          sudo apt update
+          sudo apt install -y tzdata
+          sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev
+
+      # Build Verilator
+      - name: Cache Verilator ${{ matrix.verilator }}
+        uses: actions/cache@v2.1.6
+        id: cache-verilator
+        with:
+          path: verilator-${{ matrix.verilator }}
+          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+
+      - name: Compile Verilator ${{ matrix.verilator }}
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+          tar xvf v${{ matrix.verilator }}.tar.gz
+          cd verilator-${{ matrix.verilator }}
+          autoconf
+          ./configure
+          make
+      - name: Install Verilator ${{ matrix.verilator }}
+        run: |
+          cd verilator-${{ matrix.verilator }}
+          sudo make install
+          verilator --version
+
+      # Build Test
+      - name: RV64 Tiny Build
+        run: make -C verilator_sim/ rv64_tiny
+      - name: RV64 Small Build
+        run: make -C verilator_sim/ rv64_small
+      - name: RV64 Standard Build
+        run: make -C verilator_sim/ rv64_standard
+      - name: RV64 Big Build
+        run: make -C verilator_sim/ rv64_big
+      - name: RV64 Giant Build
+        run: make -C verilator_sim/ rv64_giant
