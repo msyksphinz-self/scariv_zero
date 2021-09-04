@@ -61,6 +61,11 @@ jobs:
           sudo make install
           verilator --version
 
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
       # Build Test
       - name: RV64 Tiny Build
         run: make -C verilator_sim/ rv64_tiny
