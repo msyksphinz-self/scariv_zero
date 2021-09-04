@@ -206,7 +206,7 @@ end
 // =================================
 assign w_rvc_buf_idx[0] = {1'b0, r_head_start_pos};
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : rvc_expand_loop
-  logic [15: 0]                    w_rvc_inst;
+  logic [15: 0]                    w_local_rvc_inst;
   logic [15: 0]                    w_rvc_next_inst;
   logic [ 1: 0]                    w_rvc_byte_en;
   logic [ 1: 0]                    w_rvc_next_byte_en;
@@ -226,30 +226,30 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
                              w_inst_buffer_outptr_p1;
 
-  assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
+  assign w_local_rvc_inst   = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
   assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    *16 +:16];
   assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx] *2 +: 2];
   assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2     *2 +: 2];
-  msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_rvc_inst), .out_32bit(w_local_expand_inst));
+  msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_local_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin
-    if (w_rvc_inst[1:0] != 2'b11) begin
+    if (w_local_rvc_inst[1:0] != 2'b11) begin
       // RVC instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
       w_expand_inst[w_idx]     = w_local_expand_inst;
-      w_rvc_inst[w_idx]    = w_rvc_inst;
+      w_rvc_inst[w_idx]    = w_local_rvc_inst;
       w_rvc_valid[w_idx]   = 1'b1;
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & (&w_rvc_byte_en);
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
-      w_expand_inst[w_idx]     = {w_rvc_next_inst, w_rvc_inst};
+      w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
                                  r_inst_queue[w_inst_buf_ptr_b2].valid &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
-      w_rvc_inst[w_idx]    = w_rvc_inst;
+      w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
