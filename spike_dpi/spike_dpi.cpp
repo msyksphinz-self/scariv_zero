@@ -653,6 +653,7 @@ void step_spike(long long time, long long rtl_pc,
         fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
         fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
+        return;
       } else if (((iss_insn.bits() >> 20) & 0x0fff) == CSR_MINSTRET) {
         if (rtl_wr_val != iss_wr_val) {
           p->set_csr(static_cast<int>(CSR_MINSTRET), static_cast<reg_t>(rtl_wr_val));
@@ -663,9 +664,9 @@ void step_spike(long long time, long long rtl_pc,
           fprintf(compare_log_fp, "ISS MINSTRET = %0*llx\n", g_rv_xlen / 4, iss_wr_val);
           fprintf(compare_log_fp, "RTL MINSTRET = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
           fprintf(compare_log_fp, "==========================================\n");
+          return;
         }
       }
-      return;
     }
 
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
