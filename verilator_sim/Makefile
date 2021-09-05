@@ -167,9 +167,25 @@ rv64_giant_test:
 	$(MAKE) rv64_giant DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_giant rv64-tests.json $(shell nproc) 2>&1 | tee rv64_giant.log
 
+rv64_tiny_benchmarks:
+	$(MAKE) rv64_tiny DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_tiny rv64-bench.json $(shell nproc) 2>&1 | tee rv64_tiny.log
+
 rv64_small_benchmarks:
 	$(MAKE) rv64_small DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_small rv64-bench.json $(shell nproc) 2>&1 | tee rv64_small.log
+
+rv64_standard_benchmarks:
+	$(MAKE) rv64_standard DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_standard rv64-bench.json $(shell nproc) 2>&1 | tee rv64_standard.log
+
+rv64_big_benchmarks:
+	$(MAKE) rv64_big DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_big rv64-bench.json $(shell nproc) 2>&1 | tee rv64_big.log
+
+rv64_giant_benchmarks:
+	$(MAKE) rv64_giant DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_giant rv64-bench.json $(shell nproc) 2>&1 | tee rv64_giant.log
 
 ../spike_dpi/libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
