@@ -72,31 +72,31 @@ jobs:
 
   rv64_tiny_build:
     needs: build
-    runs-on: ${{ matrix.system }}
+    runs-on: "ubuntu-20.04"
     steps:
     - name: RV64 Tiny Build
       run: make -C verilator_sim/ rv64_tiny
   rv64_small_build:
     needs: build
-    runs-on: ${{ matrix.system }}
+    runs-on: "ubuntu-20.04"
     steps:
     - name: RV64 Small Build
       run: make -C verilator_sim/ rv64_small
   rv64_standard_build:
     needs: build
-    runs-on: ${{ matrix.system }}
+    runs-on: "ubuntu-20.04"
     steps:
     - name: RV64 Standard Build
       run: make -C verilator_sim/ rv64_standard
   rv64_big_build:
     needs: build
-    runs-on: ${{ matrix.system }}
+    runs-on: "ubuntu-20.04"
     steps:
     - name: RV64 Big Build
       run: make -C verilator_sim/ rv64_big
   rv64_giant_build:
     needs: build
-    runs-on: ${{ matrix.system }}
+    runs-on: "ubuntu-20.04"
     steps:
     - name: RV64 Giant Build
       run: make -C verilator_sim/ rv64_giant
