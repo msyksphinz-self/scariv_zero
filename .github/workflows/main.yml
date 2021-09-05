@@ -17,7 +17,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
-    name: ci
+    name: ci_rv64_build
     strategy:
       matrix:
         system: ["ubuntu-20.04"]
@@ -68,7 +68,7 @@ jobs:
 
       # Build library
       - name: Build Spike DPI Library
-        run: make -C spike_dpi/ VERILATOR=1
+        run: make -C spike_dpi/ libspike_dpi.so VERILATOR=1
 
       # Build Test
       - name: RV64 Tiny Build
