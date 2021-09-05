@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         system: ["ubuntu-20.04"]
-        verilator: ["4.204"]
+        verilator: ["4.210"]
 
     # The type of runner that the job will run on
     runs-on: ${{ matrix.system }}
