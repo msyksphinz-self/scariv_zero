@@ -1,6 +1,6 @@
 NPROCS = $(shell nproc)
 
-DEBUG = ON
+DEBUG = on
 
 BINARY_SUFFIX = ""
 ifeq ($(DEBUG),ON)
@@ -33,7 +33,10 @@ VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../tb
-ifeq ($(DEBUG),ON)
+ifeq ($(LINT),on)
+	VERILATOR_OPTS += --lint-only
+endif
+ifeq ($(DEBUG),on)
 	VERILATOR_OPTS += --trace-fst
 	VERILATOR_OPTS += --trace-params
 	VERILATOR_OPTS += --trace-structs

@@ -66,21 +66,21 @@ jobs:
         with:
           submodules: recursive
 
-      # Build library
-      - name: Build Spike DPI Library
-        run: make -C spike_dpi/ libspike_dpi.so VERILATOR=1
+      # # Build library
+      # - name: Build Spike DPI Library
+      #   run: make -C spike_dpi/ libspike_dpi.so VERILATOR=1
 
       - name: RV64 Tiny Build
-        run: make -C verilator_sim/ rv64_tiny DEBUG=off NPROCS=1
+        run: make -C verilator_sim/ rv64_tiny LINT=on
 
       - name: RV64 Small Build
-        run: make -C verilator_sim/ rv64_small DEBUG=off NPROCS=1
+        run: make -C verilator_sim/ rv64_small LINT=on
 
       - name: RV64 Standard Build
-        run: make -C verilator_sim/ rv64_standard DEBUG=off NPROCS=1
+        run: make -C verilator_sim/ rv64_standard LINT=on
 
       - name: RV64 Big Build
-        run: make -C verilator_sim/ rv64_big DEBUG=off NPROCS=1
+        run: make -C verilator_sim/ rv64_big LINT=on
 
       - name: RV64 Giant Build
-        run: make -C verilator_sim/ rv64_giant DEBUG=off NPROCS=1
+        run: make -C verilator_sim/ rv64_giant LINT=on
