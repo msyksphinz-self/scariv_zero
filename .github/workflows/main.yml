@@ -68,7 +68,7 @@ jobs:
 
       # Build library
       - name: Build Spike DPI Library
-        run: make -C spike_dpi/
+        run: make -C spike_dpi/ VERILATOR=1
 
       # Build Test
       - name: RV64 Tiny Build
