@@ -51,10 +51,12 @@ module msrh_lsu_top
    );
 
 // LSU Pipeline + STQ Interface + PTW + Snoop
-localparam L1D_RD_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM + 1 + 1 + 1;
-localparam L1D_PTW_PORT   = msrh_conf_pkg::LSU_INST_NUM + 1;
-localparam L1D_SNOOP_PORT = L1D_PTW_PORT + 1;
-localparam L1D_LRQ_PORT   = L1D_SNOOP_PORT + 1;
+localparam L1D_SNOOP_PORT    = 0;
+localparam L1D_PTW_PORT      = L1D_SNOOP_PORT   + 1;
+localparam L1D_LRQ_PORT      = L1D_PTW_PORT     + 1;
+localparam L1D_ST_RD_PORT    = L1D_LRQ_PORT     + 1;
+localparam L1D_LS_PORT_BASE  = L1D_ST_RD_PORT   + 1;
+localparam L1D_RD_PORT_NUM   = L1D_LS_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
@@ -126,7 +128,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
 
     .ptw_if(ptw_if[lsu_idx]),
-    .l1d_rd_if (w_l1d_rd_if[lsu_idx]),
+    .l1d_rd_if (w_l1d_rd_if[L1D_LS_PORT_BASE + lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
     .lrq_haz_check_if (w_lrq_haz_check_if[lsu_idx]),
 
@@ -281,7 +283,7 @@ u_st_buffer
    .i_reset_n (i_reset_n),
 
    .st_buffer_if        (w_st_buffer_if),
-   .l1d_rd_if           (w_l1d_rd_if[msrh_conf_pkg::LSU_INST_NUM]),
+   .l1d_rd_if           (w_l1d_rd_if[L1D_ST_RD_PORT]),
    .lrq_evict_search_if (w_lrq_evict_search_if),
    .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
    .l1d_wr_if           (w_l1d_wr_if),

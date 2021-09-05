@@ -24,15 +24,16 @@ msrh_lsu_pkg::dc_read_req_t  w_dc_read_req [RD_PORT_NUM];
 msrh_lsu_pkg::dc_read_resp_t w_dc_read_resp[RD_PORT_NUM];
 
 msrh_dcache_array
-  u_dcache_array
-    (
-     .i_clk     (i_clk    ),
-     .i_reset_n (i_reset_n),
+  #(.READ_PORT_NUM(RD_PORT_NUM))
+u_dcache_array
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
 
-     .i_dc_update (r_rp2_dc_update),
-     .i_dc_read_req (w_dc_read_req ),
-     .o_dc_read_resp(w_dc_read_resp)
-     );
+   .i_dc_update (r_rp2_dc_update),
+   .i_dc_read_req (w_dc_read_req ),
+   .o_dc_read_resp(w_dc_read_resp)
+   );
 
 generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
   assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid;
