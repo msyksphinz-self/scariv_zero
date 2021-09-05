@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Build-RV64 configurations
 
 # Controls when the workflow will run
 on:
@@ -71,16 +71,16 @@ jobs:
         run: make -C spike_dpi/ libspike_dpi.so VERILATOR=1
 
       - name: RV64 Tiny Build
-        run: make -C verilator_sim/ rv64_tiny DEBUG=off
+        run: make -C verilator_sim/ rv64_tiny DEBUG=off NPROCS=1
 
       - name: RV64 Small Build
-        run: make -C verilator_sim/ rv64_small DEBUG=off
+        run: make -C verilator_sim/ rv64_small DEBUG=off NPROCS=1
 
       - name: RV64 Standard Build
-        run: make -C verilator_sim/ rv64_standard DEBUG=off
+        run: make -C verilator_sim/ rv64_standard DEBUG=off NPROCS=1
 
       - name: RV64 Big Build
-        run: make -C verilator_sim/ rv64_big DEBUG=off
+        run: make -C verilator_sim/ rv64_big DEBUG=off NPROCS=1
 
       - name: RV64 Giant Build
-        run: make -C verilator_sim/ rv64_giant DEBUG=off
+        run: make -C verilator_sim/ rv64_giant DEBUG=off NPROCS=1
