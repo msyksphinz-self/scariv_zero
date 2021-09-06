@@ -1,9 +1,9 @@
-import "DPI-C" function load_binary
-(
- input string path_exec,
- input string filename,
- input logic is_load_dump
-);
+// import "DPI-C" function load_binary
+// (
+//  input string path_exec,
+//  input string filename,
+//  input logic is_load_dump
+// );
 
 
 import "DPI-C" function void step_spike

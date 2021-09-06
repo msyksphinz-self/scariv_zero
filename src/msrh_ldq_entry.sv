@@ -57,6 +57,7 @@ logic                                            w_lrq_is_hazard;
 logic                                            w_lrq_is_assigned;
 logic                                            w_lrq_resolve_match;
 logic                                            w_stq_is_hazard;
+logic                                            w_lrq_evict_is_hazard;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             stq_haz_idx_next;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
@@ -96,6 +97,8 @@ assign w_dead_state_clear = i_commit.commit &
 assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT ||
                          i_ex2_q_updates.hazard_typ == LRQ_FULL;
 assign w_stq_is_hazard = i_ex2_q_updates.hazard_typ == STQ_DEPEND;
+assign w_lrq_evict_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_EVICT_CONFLICT;
+
 assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == LRQ_ASSIGNED;
 assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT &
                              i_lrq_resolve.valid &
@@ -278,24 +281,14 @@ always_comb begin
         w_entry_next.state = LDQ_DEAD;
       end else if (i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
-                             w_lrq_resolve_match ? LDQ_ISSUE_WAIT :
-                             w_lrq_is_hazard ? LDQ_LRQ_HAZ :
-                             w_stq_is_hazard ? LDQ_STQ_HAZ :
-                             w_lrq_is_assigned ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                         LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
+                             w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
+                             w_lrq_is_hazard       ? LDQ_LRQ_HAZ :
+                             w_stq_is_hazard       ? LDQ_STQ_HAZ :
+                             w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
+                             w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
+                             LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;
-`ifdef SIMULATION
-        if (!i_reset_n) begin
-        end else begin
-          if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
-            $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
-          end
-          if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
-            $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
-          end
-        end
-`endif // SIMULATION
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
@@ -314,6 +307,13 @@ always_comb begin
         if (stq_haz_idx_next == 'h0) begin
           w_entry_next.state = LDQ_ISSUE_WAIT;
         end
+      end
+    end
+    LDQ_LRQ_EVICT_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
     LDQ_EX3_DONE : begin
@@ -366,6 +366,20 @@ always_comb begin
   end
 
 end // always_comb
+
+
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex2_q_valid) begin
+    if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
+      $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
+    end
+    if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
+      $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
+    end
+  end
+end
+`endif // SIMULATION
 
 
 function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,

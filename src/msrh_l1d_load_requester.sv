@@ -5,6 +5,9 @@ module msrh_l1d_load_requester
 
    // from Pipeline for Load + PTW for Load
    l1d_lrq_if.slave l1d_lrq[msrh_conf_pkg::LSU_INST_NUM],
+   // from LS-Pipe hazard check
+   lrq_haz_check_if.slave lrq_haz_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    // from STQ request
    l1d_lrq_if.slave l1d_lrq_stq_miss_if,
 
@@ -106,11 +109,33 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+`ifdef SIMULATION
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (r_lrq_remained_size > msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin
+      $fatal (0, "LRQ remained size must not exceed default value %d\n",
+            msrh_pkg::LRQ_NORM_ENTRY_SIZE);
+    end
+    if (r_lrq_remained_size != msrh_pkg::LRQ_NORM_ENTRY_SIZE - $countones(w_norm_lrq_valids)) begin
+      $fatal (0, "LRQ counter size and emptied LRQ entry size is different %d != %d\n",
+              r_lrq_remained_size, msrh_pkg::LRQ_NORM_ENTRY_SIZE - $countones(w_norm_lrq_valids));
+    end
+  end
+end
+
+final begin
+  if (r_lrq_remained_size != msrh_pkg::LRQ_NORM_ENTRY_SIZE) begin
+    $fatal (0, "LRQ remained size must return to default value %d, but currently %d\n",
+            msrh_pkg::LRQ_NORM_ENTRY_SIZE, r_lrq_remained_size);
+  end
+end
+`endif // SIMULATION
+
 //
 // LRQ Pointer
 //
 assign w_in_valid  = |w_l1d_lrq_loads_no_conflicts;
-assign w_out_valid = r_lrq_search_valid & (|r_lrq_search_index_oh[msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]);
+assign w_out_valid = o_lrq_resolve.valid & (|o_lrq_resolve.resolve_index_oh[msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]);
 
 inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                                                   .i_rollback(1'b0),
@@ -181,9 +206,10 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
                                         ~w_evict_sent &
                                         lrq_evict_search_if.s0_valid &
                                         (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                         lrq_evict_search_if.s0_paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+                                         lrq_evict_search_if.s0_paddr    [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   msrh_lsu_pkg::evict_merge_t w_evict_merge;
-  assign w_evict_merge.valid = lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
+  // Eviction Merge not supported
+  assign w_evict_merge.valid = 1'b0; // lrq_evict_search_if.s0_valid & w_s0_evict_search_hit[b_idx];
   assign w_evict_merge.data  = lrq_evict_search_if.s0_data;
   assign w_evict_merge.be    = lrq_evict_search_if.s0_strb << lrq_evict_search_if.s0_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0];
 
@@ -197,8 +223,8 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
     msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
 
     for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lrq_port_loop
-      logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]  w_entry_ptr_oh;
-      bit_rotate_left #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE), .VAL(p_idx)) target_bit_rotate (.i_in(w_norm_in_ptr_oh), .o_out(w_entry_ptr_oh));
+      logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0]  w_entry_ptr_oh;
+      bit_rotate_left #(.WIDTH(msrh_pkg::LRQ_NORM_ENTRY_SIZE), .VAL(p_idx)) target_bit_rotate (.i_in(w_norm_in_ptr_oh), .o_out(w_entry_ptr_oh));
       assign w_load_valid[p_idx][b_idx] = w_l1d_lrq_picked_valids[p_idx] & w_entry_ptr_oh[b_idx] & (p_idx < w_l1d_lrq_valid_load_cnt);
     end
 
@@ -224,7 +250,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
 
          .i_evict_merge (w_evict_merge),
 
@@ -251,7 +277,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
 
          .i_evict_merge (w_evict_merge),
 
-         .i_ext_load_fin (r_lrq_search_valid & r_lrq_search_index_oh[b_idx]),
+         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
@@ -280,6 +306,7 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
     assign w_hit_lrq_same_addr_valid[p_idx][b_idx] = l1d_lrq[p_idx].load &
                                                      w_lrq_entries[b_idx].valid &
+                                                     ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]) &
                                                      (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                                                       l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
@@ -366,20 +393,48 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
+assign o_lrq_resolve.valid            = lrq_search_if.valid;
+assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_lrq_resolve <= 'h0;
-
     r_lrq_search_valid <= 1'b0;
     r_lrq_search_index_oh <= 'h0;
   end else begin
-    r_lrq_search_valid <= lrq_search_if.valid;
+    r_lrq_search_valid    <= lrq_search_if.valid;
     r_lrq_search_index_oh <= 1 << lrq_search_if.index;
-
-    o_lrq_resolve.valid            <= r_lrq_search_valid;
-    o_lrq_resolve.resolve_index_oh <= r_lrq_search_index_oh;
   end
 end
+
+// Eviction Hazard Check
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_evict_hit;
+  for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : buffer_loop
+    assign w_lrq_evict_hit[b_idx] = w_lrq_entries[b_idx].valid &
+                                    w_lrq_entries[b_idx].evict_valid &
+                                    ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]) &
+                                    lrq_haz_check_if[p_idx].ex2_valid &
+                                    (w_lrq_entries[b_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                     lrq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  end
+
+  msrh_lsu_pkg::lrq_entry_t w_lrq_evict_entry;
+  bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
+
+  assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
+  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_hit;
+
+`ifdef SIMULATION
+  always_comb begin
+    if (!$onehot0(w_lrq_evict_hit)) begin
+      $fatal(0, "LRQ Hazard Check : lrq_evict_hit should be one-hot. Value=%x\n", w_lrq_evict_hit);
+    end
+  end
+`endif // SIMULATION
+
+end
+endgenerate
+
 
 initial begin
   assert (msrh_lsu_pkg::L2_CMD_TAG_W >= $clog2(msrh_pkg::LRQ_ENTRY_SIZE) + 1);

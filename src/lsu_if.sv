@@ -48,7 +48,7 @@ interface fwd_check_if;
 logic                           valid;
 logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
-logic [riscv_pkg::PADDR_W-1: 3] paddr;
+logic [riscv_pkg::PADDR_W-1: 0] paddr;
 logic [ 7: 0]                   paddr_dw;
 logic                           fwd_valid;
 logic [ 7: 0]                   fwd_dw;
@@ -83,6 +83,30 @@ modport slave (
 );
 
 endinterface // fwd_check_if
+
+interface lrq_haz_check_if;
+logic                                 ex2_valid;
+logic [riscv_pkg::PADDR_W-1: 0]       ex2_paddr;
+logic                                 ex2_evict_haz_valid;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] ex2_evict_entry_idx;
+
+modport master
+  (
+   output ex2_valid,
+   output ex2_paddr,
+   input  ex2_evict_haz_valid,
+   input  ex2_evict_entry_idx
+   );
+
+modport slave
+  (
+   input  ex2_valid,
+   input  ex2_paddr,
+   output ex2_evict_haz_valid,
+   output ex2_evict_entry_idx
+   );
+
+endinterface // lrq_haz_check_if
 
 
 interface tlb_ptw_if;
@@ -318,3 +342,31 @@ interface stq_snoop_if;
   );
 
 endinterface // stq_snoop_if
+
+
+interface st_buffer_if;
+logic                                     valid;
+logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
+logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+
+msrh_lsu_pkg::st_buffer_resp_t resp;
+
+modport master (
+  output valid,
+  output paddr,
+  output strb,
+  output data,
+  input  resp
+);
+
+
+modport slave (
+  input valid,
+  input paddr,
+  input strb,
+  input data,
+  output resp
+);
+
+endinterface // st_buffer_if

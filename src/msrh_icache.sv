@@ -306,7 +306,7 @@ function void dump_json(int fp);
     $fwrite(fp, "      valid : \"%d\",\n", o_s2_resp.valid);
     $fwrite(fp, "      data : \"%x\",\n",  o_s2_resp.data);
     $fwrite(fp, "      miss : \"%d\",\n",  o_s2_miss);
-    $fwrite(fp, "      vaddr : \"%d\",\n", o_s2_miss_vaddr);
+    $fwrite(fp, "      vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
     $fwrite(fp, "    },\n");
   end
 

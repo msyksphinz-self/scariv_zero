@@ -57,6 +57,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
 
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
+logic [riscv_pkg::XLEN_W-1: 0]       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
 
@@ -101,10 +102,8 @@ logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE + 1]
 logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx_with_offset[msrh_conf_pkg::DISP_SIZE + 1];
 logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
-`ifdef SIMULATION
-logic [15: 0]                        w_sim_rvc_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_sim_rvc_valid;
-`endif // SIMULATION
+logic [15: 0]                        w_rvc_inst[msrh_conf_pkg::DISP_SIZE];
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
@@ -208,7 +207,7 @@ end
 // =================================
 assign w_rvc_buf_idx[0] = {1'b0, r_head_start_pos};
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : rvc_expand_loop
-  logic [15: 0]                    w_rvc_inst;
+  logic [15: 0]                    w_local_rvc_inst;
   logic [15: 0]                    w_rvc_next_inst;
   logic [ 1: 0]                    w_rvc_byte_en;
   logic [ 1: 0]                    w_rvc_next_byte_en;
@@ -228,40 +227,46 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
                              w_inst_buffer_outptr_p1;
 
-  assign w_rvc_inst         = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
+  assign w_local_rvc_inst   = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
   assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    *16 +:16];
   assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx] *2 +: 2];
   assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2     *2 +: 2];
-  msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_rvc_inst), .out_32bit(w_local_expand_inst));
+  msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_local_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin
-    if (w_rvc_inst[1:0] != 2'b11) begin
+    if (w_local_rvc_inst[1:0] != 2'b11) begin
       // RVC instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 1;
       w_expand_inst[w_idx]     = w_local_expand_inst;
-`ifdef SIMULATION
-      w_sim_rvc_inst[w_idx]    = w_rvc_inst;
-      w_sim_rvc_valid[w_idx]   = 1'b1;
-`endif // SIMULATION
+      w_rvc_inst[w_idx]    = w_local_rvc_inst;
+      w_rvc_valid[w_idx]   = 1'b1;
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & (&w_rvc_byte_en);
+
+      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
+      w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
+      w_fetch_except_tval [w_idx] = iq_disp.inst[w_idx].pc_addr;
+
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
-      w_expand_inst[w_idx]     = {w_rvc_next_inst, w_rvc_inst};
+      w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
       w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
                                  r_inst_queue[w_inst_buf_ptr_b2].valid &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
-`ifdef SIMULATION
-      w_sim_rvc_inst[w_idx]    = w_rvc_inst;
-      w_sim_rvc_valid[w_idx]   = 1'b0;
-`endif // SIMULATION
+      w_rvc_inst[w_idx]    = 'h0;
+      w_rvc_valid[w_idx]   = 1'b0;
+
+      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid |
+                                    r_inst_queue[w_inst_buf_ptr_b2].tlb_except_valid;
+      w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause :
+                                    r_inst_queue[w_inst_buf_ptr_b2].tlb_except_cause;
+      w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
+                                    iq_disp.inst[w_idx].pc_addr + 'h2;
+
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
-
-  assign w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
-  assign w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
 
 end
 endgenerate
@@ -333,7 +338,7 @@ assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_s
 assign iq_disp.is_br_included = |w_inst_is_br;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
-
+assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
 
 // -------------------------------
 // Dispatch Inst, Resource Count
@@ -403,10 +408,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].valid = w_inst_disp_mask[d_idx];
       iq_disp.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
       iq_disp.inst[d_idx].inst = w_expand_inst[d_idx];
-`ifdef SIMULATION
-      iq_disp.inst[d_idx].rvc_inst_valid = w_sim_rvc_valid[d_idx];
-      iq_disp.inst[d_idx].rvc_inst       = w_sim_rvc_inst [d_idx];
-`endif // SIMULATION
+      iq_disp.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
+      iq_disp.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
       iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc[riscv_pkg::VADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 

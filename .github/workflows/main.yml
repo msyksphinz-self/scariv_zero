@@ -1,0 +1,86 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build-RV64 configurations
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    name: ci_rv64_build
+    strategy:
+      matrix:
+        system: ["ubuntu-20.04"]
+        verilator: ["4.210"]
+
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.system }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Apt updates
+      - name: apt_updates
+        run: |
+          sudo apt update
+          sudo apt install -y tzdata
+          sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
+
+      # Build Verilator
+      - name: Cache Verilator ${{ matrix.verilator }}
+        uses: actions/cache@v2.1.6
+        id: cache-verilator
+        with:
+          path: verilator-${{ matrix.verilator }}
+          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+
+      - name: Compile Verilator ${{ matrix.verilator }}
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+          tar xvf v${{ matrix.verilator }}.tar.gz
+          cd verilator-${{ matrix.verilator }}
+          autoconf
+          ./configure
+          make
+      - name: Install Verilator ${{ matrix.verilator }}
+        run: |
+          cd verilator-${{ matrix.verilator }}
+          sudo make install
+          verilator --version
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      # # Build library
+      # - name: Build Spike DPI Library
+      #   run: make -C spike_dpi/ libspike_dpi.so VERILATOR=1
+
+      - name: RV64 Tiny Build
+        run: make -C verilator_sim/ rv64_tiny LINT=on
+
+      - name: RV64 Small Build
+        run: make -C verilator_sim/ rv64_small LINT=on
+
+      - name: RV64 Standard Build
+        run: make -C verilator_sim/ rv64_standard LINT=on
+
+      - name: RV64 Big Build
+        run: make -C verilator_sim/ rv64_big LINT=on
+
+      - name: RV64 Giant Build
+        run: make -C verilator_sim/ rv64_giant LINT=on

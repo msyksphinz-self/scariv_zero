@@ -1,6 +1,6 @@
 #include "spike_dpi.h"
 #include "sim.h"
-#include "mmu.h"
+// #include "mmu.h"
 #include "disasm.h"
 
 #include <dlfcn.h>
@@ -13,7 +13,11 @@
 #ifdef SIM_MAIN
 FILE *compare_log_fp;
 #else // SIM_MAIN
+#ifdef VERILATOR
 extern FILE *compare_log_fp;
+#else // VERILATOR
+FILE     *compare_log_fp;
+#endif // VERILATOR
 extern uint64_t  tohost_addr; // define in tb_elf_loader.cpp
 extern bool    tohost_en;   // define in tb_elf_loader.cpp
 #endif // SIM_MAIN
@@ -649,6 +653,7 @@ void step_spike(long long time, long long rtl_pc,
         fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
         fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
+        return;
       } else if (((iss_insn.bits() >> 20) & 0x0fff) == CSR_MINSTRET) {
         if (rtl_wr_val != iss_wr_val) {
           p->set_csr(static_cast<int>(CSR_MINSTRET), static_cast<reg_t>(rtl_wr_val));
@@ -659,9 +664,9 @@ void step_spike(long long time, long long rtl_pc,
           fprintf(compare_log_fp, "ISS MINSTRET = %0*llx\n", g_rv_xlen / 4, iss_wr_val);
           fprintf(compare_log_fp, "RTL MINSTRET = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
           fprintf(compare_log_fp, "==========================================\n");
+          return;
         }
       }
-      return;
     }
 
     if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
@@ -789,3 +794,15 @@ void stop_sim(int code)
   fprintf(compare_log_fp, "stop_ism %d\n", code);
 }
 #endif // SIM_MAIN
+
+#ifndef VERILATOR
+void open_log_fp(const char *filename)
+{
+  if ((compare_log_fp = fopen("compare.log", "w")) == NULL) {
+    perror("failed to open log file");
+    exit(EXIT_FAILURE);
+  }
+  initial_spike(filename, RV_XLEN);
+
+}
+#endif // VERILATOR

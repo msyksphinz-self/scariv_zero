@@ -35,7 +35,8 @@ package msrh_lsu_pkg;
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL,
-    STQ_DEPEND
+    STQ_DEPEND,
+    LRQ_EVICT_CONFLICT
   } lmq_haz_t;
 
   typedef struct packed {
@@ -166,6 +167,7 @@ typedef struct packed {
   logic                          l1drd_ready;
   logic                          l1dwr_ready;
   logic                          evict_valid;
+  logic                          evict_sent;
   evict_payload_t                evict;
 } lrq_entry_t;
 
@@ -177,6 +179,7 @@ function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
   ret.sent  = 1'b0;
   ret.evict_valid = req.evict_valid;
+  ret.evict_sent  = 1'b0;
   ret.evict       = req.evict_payload;
 
   return ret;
@@ -318,9 +321,6 @@ typedef enum logic[3:0] {
   STQ_DONE_EX2 = 3,
   STQ_COMMIT = 4,
   STQ_WAIT_ST_DATA = 5,
-  STQ_WAIT_LRQ_REFILL = 6,
-  STQ_COMMIT_L1D_CHECK = 7,
-  STQ_L1D_UPDATE = 8,
   STQ_DEAD = 9,
   STQ_WAIT_COMMIT = 10,
   STQ_DONE_EX3 = 11,
@@ -419,7 +419,8 @@ typedef enum logic[3:0] {
   LDQ_EX3_DONE = 7,
   LDQ_DEAD = 8,
   LDQ_WAIT_COMPLETE = 9,
-  LDQ_ISSUED = 10
+  LDQ_ISSUED = 10,
+  LDQ_LRQ_EVICT_HAZ = 11
 } ldq_state_t;
 
 typedef struct packed {
@@ -503,5 +504,53 @@ typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
   logic [DCACHE_DATA_B_W-1: 0] be;
 } snoop_resp_t;
+
+
+// -----------------------
+// Store Buffer Interface
+// -----------------------
+localparam ST_BUF_WIDTH = riscv_pkg::XLEN_W * 2;
+localparam ST_BUF_ENTRY_SIZE = msrh_conf_pkg::STQ_SIZE / 4;
+
+typedef enum logic [1:0] {
+  ST_BUF_ALLOC = 0,
+  ST_BUF_MERGE = 1,
+  ST_BUF_FULL  = 2
+} st_buffer_resp_t;
+
+typedef struct packed {
+  logic                                                valid;
+  logic [riscv_pkg::PADDR_W-1: $clog2(ST_BUF_WIDTH/8)] paddr;
+  logic [ST_BUF_WIDTH/8-1:0]                           strb;
+  logic [ST_BUF_WIDTH-1: 0]                            data;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+} st_buffer_entry_t;
+
+typedef enum logic [ 3: 0] {
+  ST_BUF_INIT = 0,
+  ST_BUF_RD_L1D = 1,
+  ST_BUF_RESP_L1D = 2,
+  ST_BUF_L1D_UPDATE = 3,
+  ST_BUF_LRQ_REFILL = 4,
+  ST_BUF_WAIT_REFILL = 5,
+  ST_BUF_WAIT_FULL   = 6,
+  ST_BUF_L1D_MERGE = 7,
+  ST_BUF_WAIT_FINISH = 8
+} st_buffer_state_t;
+
+function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  paddr,
+                                             logic [ST_BUF_WIDTH/8-1: 0] strb,
+                                             logic [ST_BUF_WIDTH-1: 0]   data
+                                             );
+  st_buffer_entry_t ret;
+
+  ret.valid = 1'b1;
+  ret.paddr = paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
+  ret.strb  = strb;
+  ret.data  = data;
+
+  return ret;
+endfunction // assign_st_buffer
+
 
 endpackage // msrh_lsu_pkg

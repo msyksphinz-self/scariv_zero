@@ -3,17 +3,17 @@ module inoutptr_var_oh
     parameter SIZE = 32
     )
 (
- input logic                    i_clk,
- input logic                    i_reset_n,
+ input logic                  i_clk,
+ input logic                  i_reset_n,
 
- input logic                    i_rollback,
+ input logic                  i_rollback,
 
- input logic                    i_in_valid,
- input logic [$clog2(SIZE)-1:0] i_in_val,
- output logic [SIZE-1:0]        o_in_ptr_oh,
- input logic                    i_out_valid,
- input logic [$clog2(SIZE)-1:0] i_out_val,
- output logic [SIZE-1:0]        o_out_ptr_oh
+ input logic                  i_in_valid,
+ input logic [$clog2(SIZE):0] i_in_val,
+ output logic [SIZE-1:0]      o_in_ptr_oh,
+ input logic                  i_out_valid,
+ input logic [$clog2(SIZE):0] i_out_val,
+ output logic [SIZE-1:0]      o_out_ptr_oh
  );
 
 logic [SIZE-1:0] r_inptr_oh;

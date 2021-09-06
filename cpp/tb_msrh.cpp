@@ -15,6 +15,12 @@ extern "C" {
   FILE *compare_log_fp;
 }
 
+extern "C" {
+  int load_binary(char const* path_exec,
+                  char const* filename,
+                  bool is_load_dump);
+}
+
 // Instantiate DUT
 Vmsrh_tb *dut;
 // Trace DUMP ON
@@ -46,6 +52,8 @@ int main(int argc, char** argv) {
   int cycle = 1000000;
 
   Verilated::commandArgs(argc, argv);
+
+  bool set_output_file = false;
 
   while (1) {
     static struct option long_options[] = {
@@ -84,6 +92,7 @@ int main(int argc, char** argv) {
           perror("failed to open log file");
           exit(EXIT_FAILURE);
         }
+        set_output_file = true;
         break;
       }
       case 'c': {
@@ -94,6 +103,9 @@ int main(int argc, char** argv) {
     }
   }
 
+  if (set_output_file == false) {
+    compare_log_fp = stdout;
+  }
   load_binary("", filename, true);
 
   // Instantiate DUT
@@ -192,7 +204,7 @@ void stop_sim(int code)
   }
   fprintf(compare_log_fp, "===============================\n");
 
-  dut->final();
+  // dut->final();
 #ifdef DUMP_FST
   if (dump_fst_enable) tfp->close();
 #endif // DUMP_FST

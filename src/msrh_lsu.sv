@@ -34,12 +34,16 @@ module msrh_lsu
 
     // STQ Forwarding checker
     fwd_check_if.master           ex2_fwd_check_if,
+    // STBuf Forward checker
+    fwd_check_if.master           stbuf_fwd_check_if,
 
     /* L1D Interface */
     l1d_rd_if.master              l1d_rd_if,
 
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
+    // LRQ Hazard Check
+    lrq_haz_check_if.master    lrq_haz_check_if,
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if,
@@ -180,8 +184,10 @@ u_lsu_pipe
 
    .ptw_if(ptw_if),
    .l1d_lrq_if (l1d_lrq_if),
+   .lrq_haz_check_if (lrq_haz_check_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
+   .stbuf_fwd_check_if (stbuf_fwd_check_if),
 
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),

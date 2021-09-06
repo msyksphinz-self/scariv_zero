@@ -13,6 +13,7 @@ module msrh_rob_entry
    input logic                                i_load_br_included,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_tlb_except_valid,
    input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
+   input logic [riscv_pkg::XLEN_W-1: 0]       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
 
    input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
 
@@ -95,6 +96,7 @@ always_comb begin
       w_entry_next.done_grp_id [d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) ? i_load_grp_id[d_idx] : 1'b0;
       w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
+      w_entry_next.except_tval [d_idx] = i_load_tlb_except_tval[d_idx];
     end
 
     if (br_upd_if.update) begin

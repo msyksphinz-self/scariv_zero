@@ -87,10 +87,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic illegal_valid; // decode error: illegal instruction
     logic [31:0] inst;
 
-`ifdef SIMULATION
   logic          rvc_inst_valid;
   logic [15: 0]  rvc_inst;
-`endif // SIMULATION
 
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     inst_cat_t   cat;
