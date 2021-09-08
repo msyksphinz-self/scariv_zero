@@ -478,4 +478,84 @@ u_msrh_inst_buffer
    .iq_disp        (iq_disp)
    );
 
+
+
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_is_call;
+logic [msrh_conf_pkg::BRU_DISP_SIZE-1: 0] w_bru_is_call;
+logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_bru_call_cnt;
+
+msrh_pkg::disp_t                          w_disp_bru_inst[msrh_conf_pkg::BRU_DISP_SIZE];
+logic [msrh_conf_pkg::BRU_DISP_SIZE-1:0]  w_disp_bru_inst_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]      w_disp_bru_grp_id[msrh_conf_pkg::BRU_DISP_SIZE];
+
+// Current RAS active index
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_idx;
+
+assign w_disp_ras_idx[0] = r_ras_idx;
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin: call_loop
+  always_comb begin
+    if (iq_disp.valid &
+        iq_disp.inst[d_idx].valid &
+        (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR) &
+        (iq_disp.inst[d_idx].inst[14:12] == 'h0) &
+        (iq_disp.inst[d_idx].inst[ 7: 0] == 'b11001_11)) begin // JALR
+      w_disp_is_call[d_idx] = 1'b1;
+    end else begin
+      w_disp_is_call[d_idx] = 1'b0;
+    end
+  end // always_comb
+
+  assign w_disp_ras_idx[d_idx+1] = w_disp_is_call[d_idx] ? ras_idx + 'h1 : w_disp_ras_idx[d_idx];
+
+  assign iq_disp.inst[d_idx].ras_idx = w_disp_ras_idx[d_idx+1];
+
+end
+endgenerate
+
+bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_call_cnt (.in(w_disp_is_call), .out(w_bru_call_cnt));
+
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_ras_idx <= 'h0;
+  end else begin
+    if (|w_disp_is_call) begin
+      r_ras_idx <= w_bru_call_cnt;
+    end
+  end
+end
+
+msrh_disp_pickup
+  #(
+    .PORT_BASE(0),
+    .PORT_SIZE(msrh_conf_pkg::BRU_DISP_SIZE)
+    )
+u_disp_call_pickup
+  (
+   .i_disp_valid ({msrh_conf_pkg::DISP_SIZE{iq_disp.valid}} & w_disp_is_call),
+   .i_disp       (iq_disp.inst),
+
+   .o_disp_valid  (w_disp_bru_inst_valid),
+   .o_disp        (w_disp_bru_inst),
+   .o_disp_grp_id (w_disp_bru_grp_id)
+   );
+
+
+msrh_ras
+u_ras
+  (
+   .i_clk   (i_clk  ),
+   .i_reset (i_reset),
+
+   .i_wr_valid (),
+   .i_wr_index (),
+   .i_wr_pa    (),
+
+   .i_rd_valid (),
+   .i_rd_index (),
+   .o_rd_pa    ()
+   );
+
+
 endmodule // msrh_frontend

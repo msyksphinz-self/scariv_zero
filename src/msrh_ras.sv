@@ -3,9 +3,9 @@ module msrh_ras
    input logic                                              i_clk,
    input logic                                              i_reset,
 
-   input logic                                              i_wr_valid,
-   input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_wr_index,
-   input logic [riscv_pkg::PADDR_W-1: 0]                    i_wr_pa,
+   input logic                                              i_wr_valid[msrh_conf_pkg::BRU_DISP_SIZE],
+   input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_wr_index[msrh_conf_pkg::BRU_DISP_SIZE],
+   input logic [riscv_pkg::PADDR_W-1: 0]                    i_wr_pa   [msrh_conf_pkg::BRU_DISP_SIZE],
 
    output logic                                             i_rd_valid,
    output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_rd_index,
@@ -20,8 +20,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_ras_array[i] <= 'h0;
     end
   end else begin
-    if (i_wr_valid) begin
-      r_ras_array[i_wr_index] <= i_wr_pa;
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::BRU_DISP_SIZE; d_idx++) begin
+      if (i_wr_valid[d_idx]) begin
+        r_ras_array[i_wr_index[d_idx]] <= i_wr_pa[d_idx];
+      end
     end
   end
 end
