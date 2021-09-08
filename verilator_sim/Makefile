@@ -3,7 +3,7 @@ NPROCS = $(shell nproc)
 DEBUG = on
 
 BINARY_SUFFIX = ""
-ifeq ($(DEBUG),ON)
+ifeq ($(DEBUG),on)
 	BINARY_SUFFIX = -debug
 endif
 
@@ -35,6 +35,9 @@ VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../tb
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
+endif
+ifeq ($(VERI_DEBUG),on)
+	VERILATOR_OPTS += --debug
 endif
 ifeq ($(DEBUG),on)
 	VERILATOR_OPTS += --trace-fst
