@@ -253,7 +253,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_wr_valid <= o_ex1_early_wr.valid;
 
-    r_ex2_muldiv_valid <= w_ex1_muldiv_valid;
+    r_ex2_muldiv_valid <= w_ex1_muldiv_valid & (~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred);
 
     r_ex2_div_stall <= r_ex1_div_stall;
   end
