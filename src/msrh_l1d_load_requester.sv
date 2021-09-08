@@ -333,7 +333,7 @@ endgenerate
 // Interface of Filling L1D for STQ
 // ---------------------------------------
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_addr_valid;
-assign l1d_lrq_stq_miss_if.resp_payload.full         = l1d_lrq_stq_miss_if.load &
+assign l1d_lrq_stq_miss_if.resp_payload.full         = /* l1d_lrq_stq_miss_if.load & */
                                                        &w_st_lrq_valids;
 
 for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_buffer_loop
