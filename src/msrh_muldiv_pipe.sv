@@ -32,10 +32,10 @@ logic [riscv_pkg::XLEN_W: 0]           w_op1;
 logic [riscv_pkg::XLEN_W: 0]           w_op2;
 
 logic                                  w_is_mul;
-assign w_is_mul = i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHU || i_op == OP_MULHSU;
+assign w_is_mul = i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHU || i_op == OP_MULHSU || i_op == OP_MULW;
 
-assign w_op1 = (i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHSU) ? {i_rs1[riscv_pkg::XLEN_W-1], i_rs1} : {1'b0, i_rs1};
-assign w_op2 = (i_op == OP_SMUL || i_op == OP_MULH)                      ? {i_rs2[riscv_pkg::XLEN_W-1], i_rs2} : {1'b0, i_rs2};
+assign w_op1 = (i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHSU || i_op == OP_MULW) ? {i_rs1[riscv_pkg::XLEN_W-1], i_rs1} : {1'b0, i_rs1};
+assign w_op2 = (i_op == OP_SMUL || i_op == OP_MULH                      || i_op == OP_MULW) ? {i_rs2[riscv_pkg::XLEN_W-1], i_rs2} : {1'b0, i_rs2};
 
 
 
@@ -61,14 +61,14 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     assign w_step_multiplier = {1'b0, w_op1[MUL_UNROLL-1: 0]};
     /* verilator lint_off WIDTH */
     assign w_prod = w_step_multiplier * w_op2;
-    assign w_is_s_mul = i_op == OP_MULH || i_op == OP_SMUL;
+    assign w_is_s_mul = i_op == OP_MULH || i_op == OP_SMUL || i_op == OP_MULW;
   end else begin
     if (s_idx == MUL_STEP - 1) begin
       assign w_step_multiplier = {neg_out_pipe[s_idx], multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     end else begin
       assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
     end
-    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL;
+    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL || op_pipe[s_idx] == OP_MULW;
 
     /* verilator lint_off WIDTH */
     assign w_prod_part = $signed(w_step_multiplier) * $signed(multiplicand_pipe[s_idx]);
@@ -169,6 +169,7 @@ u_msrh_div_unit
 assign o_valid = r_mul_valid_pipe[MUL_STEP] | w_div_valid;
 assign o_res   = w_div_valid ? w_div_res :
                  (op_pipe[MUL_STEP] == OP_MULH || op_pipe[MUL_STEP] == OP_MULHU || op_pipe[MUL_STEP] == OP_MULHSU) ? prod_pipe [MUL_STEP][riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
+                 (op_pipe[MUL_STEP] == OP_MULW) ? {{(riscv_pkg::XLEN_W-32){prod_pipe [MUL_STEP][31]}}, prod_pipe [MUL_STEP][31 : 0]}:
                  prod_pipe [MUL_STEP][riscv_pkg::XLEN_W-1: 0];
 
 assign o_rd_rnid  = w_div_valid ? w_div_rd_rnid  : r_mul_rd_rnid[MUL_STEP];
