@@ -26,6 +26,8 @@ extern "C" {
                        long long paddr,
                        int ram_addr,
                        const unsigned int* l1d_data,
+                       int merge_valid,
+                       const unsigned int* merged_l1d_data,
                        int size);
 
   void record_l1d_evict(long long rtl_time,

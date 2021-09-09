@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
   char *filename;
 
-  int cycle = 1000000;
+  int cycle = 10000000;
 
   Verilated::commandArgs(argc, argv);
 

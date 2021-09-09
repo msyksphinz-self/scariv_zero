@@ -723,6 +723,8 @@ void record_l1d_load(long long rtl_time,
                      long long paddr,
                      int ram_addr,
                      const unsigned int* l1d_data,
+                     int merge_valid,
+                     const unsigned int* merged_l1d_data,
                      int size)
 {
 
@@ -734,6 +736,16 @@ void record_l1d_load(long long rtl_time,
     }
   }
   fprintf(compare_log_fp, "\n");
+  if (merge_valid) {
+    fprintf(compare_log_fp, "%lld : L1D Merged    : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+    for (int i = size/4-1; i >= 0; i--) {
+      fprintf(compare_log_fp, "%08x", merged_l1d_data[i]);
+      if (i != 0) {
+        fprintf(compare_log_fp, "_");
+      }
+    }
+    fprintf(compare_log_fp, "\n");
+  }
 }
 
 

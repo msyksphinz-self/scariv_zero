@@ -130,16 +130,20 @@ assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 `ifdef SIMULATION
 import "DPI-C" function void record_l1d_load
 (
- input longint rtl_time,
- input longint paddr,
- input int ram_addr,
+ input longint      rtl_time,
+ input longint      paddr,
+ input int          ram_addr,
  input int unsigned array[msrh_conf_pkg::DCACHE_DATA_W/32],
- input int     size
+ input int          merge_valid,
+ input int unsigned merged_array[msrh_conf_pkg::DCACHE_DATA_W/32],
+ input int          size
 );
 
 int unsigned l1d_array[msrh_conf_pkg::DCACHE_DATA_W/32];
+int unsigned merged_l1d_array[msrh_conf_pkg::DCACHE_DATA_W/32];
 generate for (genvar idx = 0; idx < msrh_conf_pkg::DCACHE_DATA_W/32; idx++) begin : array_loop
   assign l1d_array[idx] = r_rp2_resp_data[idx*32+:32];
+  assign merged_l1d_array[idx] = w_rp2_merge_data[idx*32+:32];
 end
 endgenerate
 
@@ -151,6 +155,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                       r_rp2_searched_lrq_entry.paddr,
                       r_rp2_searched_lrq_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
                       l1d_array,
+                      l1d_merge_if.valid,
+                      merged_l1d_array,
                       msrh_lsu_pkg::DCACHE_DATA_B_W);
       // $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
       //         $time,
