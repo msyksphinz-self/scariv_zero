@@ -9,10 +9,10 @@ interface l1d_rd_if;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
 
   // Eviction: Replaced Address
-  logic                                     s1_replace_valid;
-  logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]   s1_replace_way;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s1_replace_data;
-  logic [riscv_pkg::PADDR_W-1: 0]           s1_replace_paddr;
+  logic                                           s1_replace_valid;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s1_replace_data;
+  logic [riscv_pkg::PADDR_W-1: 0]                 s1_replace_paddr;
 
   modport master(
     output s0_valid,
@@ -54,6 +54,7 @@ interface l1d_wr_if;
   logic hit;
   logic miss;
   logic conflict;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] be;
 
@@ -63,6 +64,7 @@ interface l1d_wr_if;
     input hit,
     input miss,
     input conflict,
+    output way,
     output data,
     output be
   );
@@ -73,6 +75,7 @@ interface l1d_wr_if;
     output hit,
     output miss,
     output conflict,
+    input way,
     input data,
     input be
   );

@@ -177,10 +177,10 @@ select_lrq_entry_oh
    );
 
 // Eviction: Replaced Address
-logic                                     r_s2_replace_valid;
-logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]   r_s2_replace_way;
-logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_s2_replace_data;
-logic [riscv_pkg::PADDR_W-1: 0]           r_s2_replace_paddr;
+logic                                           r_s2_replace_valid;
+logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
+logic [riscv_pkg::PADDR_W-1: 0]                 r_s2_replace_paddr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

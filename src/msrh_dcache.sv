@@ -123,7 +123,8 @@ assign r_rp2_dc_update.data  = r_rp2_valid ? w_rp2_merge_data :
                                l1d_wr_if.data;
 assign r_rp2_dc_update.be    = r_rp2_valid ? r_rp2_be :
                                l1d_wr_if.be;
-
+assign r_rp2_dc_update.way   = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
+                               l1d_wr_if.way;
 assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 
 

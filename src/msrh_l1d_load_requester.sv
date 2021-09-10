@@ -35,6 +35,8 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_addr_valid[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]   w_hit_port_same_addr_valid[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]   w_resp_confilct;
 
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_evict_addr_valid[REQ_PORT_NUM];
+
 logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_in_ptr_oh;
 logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1:0] w_norm_out_ptr_oh;
 logic [$clog2(msrh_pkg::LRQ_NORM_ENTRY_SIZE)-1:0] w_norm_out_ptr;
@@ -151,10 +153,17 @@ inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk)
 encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in(w_norm_out_ptr_oh), .o_out(w_norm_out_ptr));
 
 generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_loop
-  assign w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
-  assign w_l1d_req_payloads[p_idx] = l1d_lrq[p_idx].req_payload;
-  assign w_l1d_lrq_loads_no_conflicts[p_idx] = w_l1d_lrq_loads[p_idx] &
-                                               !w_resp_confilct[p_idx];
+
+  always_comb begin
+    w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
+    w_l1d_req_payloads[p_idx] = l1d_lrq[p_idx].req_payload;
+    if (|w_hit_lrq_same_evict_addr_valid[p_idx]) begin
+      w_l1d_req_payloads[p_idx].evict_valid = 1'b0;
+    end
+    w_l1d_lrq_loads_no_conflicts[p_idx] = w_l1d_lrq_loads[p_idx] &
+                                          !w_resp_confilct[p_idx];
+  end
+
   bit_pick_1_index
                              #(.NUM(p_idx),
                                .SEL_WIDTH(REQ_PORT_NUM),
@@ -326,6 +335,17 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
     end
   end
 `endif // SIMULATION
+
+  // check the evicted address with existed evict LRQ
+  for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : evict_loop
+    assign w_hit_lrq_same_evict_addr_valid[p_idx][b_idx] = l1d_lrq[p_idx].load &
+                                                           w_lrq_entries[b_idx].valid &
+                                                           ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]) &
+                                                           w_lrq_entries[b_idx].evict_valid &
+                                                           (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                            l1d_lrq[p_idx].req_payload.evict_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  end
+
 end
 endgenerate
 
@@ -333,15 +353,25 @@ endgenerate
 // Interface of Filling L1D for STQ
 // ---------------------------------------
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_addr_valid;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_evict_addr_valid;
+
 assign l1d_lrq_stq_miss_if.resp_payload.full         = /* l1d_lrq_stq_miss_if.load & */
                                                        &w_st_lrq_valids;
 
 for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_buffer_loop
   assign w_hit_stq_lrq_same_addr_valid[b_idx] = l1d_lrq_stq_miss_if.load &
                                                 w_lrq_entries[b_idx].valid &
+                                                ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]) &  // L1D is loaded, Entry resolved
                                                 (w_lrq_entries[b_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                                 l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
-                                                ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]);  // L1D is loaded, Entry resolved
+                                                 l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+
+  // check the evicted address with existed evict LRQ
+  assign w_hit_stq_lrq_same_evict_addr_valid[b_idx] = l1d_lrq_stq_miss_if.load &
+                                                      w_lrq_entries[b_idx].valid &
+                                                      ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[b_idx]) &
+                                                      w_lrq_entries[b_idx].evict_valid &
+                                                      (w_lrq_entries[b_idx].evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                       l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
 end
 
 assign l1d_lrq_stq_miss_if.resp_payload.conflict     = |w_hit_stq_lrq_same_addr_valid;
@@ -349,7 +379,13 @@ assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh =  w_hit_stq_lrq_same_addr_
 assign w_stq_miss_lrq_load = l1d_lrq_stq_miss_if.load &
                              !l1d_lrq_stq_miss_if.resp_payload.full & !(|w_hit_stq_lrq_same_addr_valid);
 assign w_stq_miss_lrq_idx  = w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE-2].valid ? msrh_pkg::LRQ_ENTRY_SIZE-1 : msrh_pkg::LRQ_ENTRY_SIZE-2;
-assign w_stq_load_entry = msrh_lsu_pkg::assign_lrq_entry(1'b1, l1d_lrq_stq_miss_if.req_payload);
+
+always_comb begin
+  w_stq_load_entry = msrh_lsu_pkg::assign_lrq_entry(1'b1, l1d_lrq_stq_miss_if.req_payload);
+  if (|w_hit_stq_lrq_same_evict_addr_valid) begin
+    w_stq_load_entry.evict_valid = 1'b0;
+  end
+end
 
 localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_ENTRY_SIZE);
 
