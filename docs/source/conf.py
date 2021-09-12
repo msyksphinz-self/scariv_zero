@@ -20,6 +20,7 @@
 project = 'MSRH-MAS'
 copyright = '2021, msyksphinz'
 author = 'msyksphinz'
+master_doc = 'index'
 
 
 # -- General configuration ---------------------------------------------------
