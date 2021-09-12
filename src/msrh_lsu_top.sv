@@ -246,6 +246,7 @@ msrh_stq
  .o_done_report(w_st_done_report)
  );
 
+assign w_l1d_rd_if [L1D_LRQ_PORT].s0_valid = 'h0;
 
 msrh_l1d_load_requester
   u_msrh_l1d_load_requester

@@ -4,6 +4,7 @@ interface l1d_rd_if;
   logic [riscv_pkg::PADDR_W-1:0] s0_paddr;
   logic                          s0_h_pri;   // Highest Priority (used for when L1D eviction swap)
   logic                                    s1_hit;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
   logic                                    s1_miss;
   logic                                    s1_conflict;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
@@ -19,6 +20,7 @@ interface l1d_rd_if;
     output s0_paddr,
     output s0_h_pri,
     input  s1_hit,
+    input  s1_hit_way,
     input  s1_miss,
     input  s1_conflict,
     input  s1_data,
@@ -34,6 +36,7 @@ interface l1d_rd_if;
     input  s0_paddr,
     input  s0_h_pri,
     output s1_hit,
+    output s1_hit_way,
     output s1_miss,
     output s1_conflict,
     output s1_data,

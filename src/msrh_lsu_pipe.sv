@@ -311,6 +311,7 @@ end
 assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & r_ex1_pipe_ctrl.is_load & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
+assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
 
 //
 // EX2 stage pipeline

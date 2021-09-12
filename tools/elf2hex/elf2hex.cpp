@@ -122,7 +122,7 @@ void dump_segment (const char* segname, int fd)
         // fprintf (stderr, "# %s\n", endian);
       }
 
-      fprintf (stderr,"@%08lx // %08lx\n", base / dump_bytewidth, base);
+      fprintf (stdout,"@%08lx // %08lx\n", base / dump_bytewidth, base);
       for(count=0; count < valsRead; count=count+dump_bytewidth) {
 
         base = base + dump_bytewidth;
@@ -131,16 +131,16 @@ void dump_segment (const char* segname, int fd)
           case 1: {	/* Little endian */
             int max_count = valsRead - count < dump_bytewidth ? valsRead - count : dump_bytewidth;
             for (count2 = max_count-1;count2 >= 0;count2--) {
-              fprintf (stderr,"%.2x",static_cast<uint8_t>(buffer[count+count2]));
+              fprintf (stdout,"%.2x",static_cast<uint8_t>(buffer[count+count2]));
             }
-            fprintf (stderr,"\n");
+            fprintf (stdout,"\n");
             break;
           }
           case 2:	/* Big endian */
             for (count2=0;count2<4;count2++) {
-              fprintf (stderr,"%.2x",static_cast<uint8_t>(buffer[count+count2]));
+              fprintf (stdout,"%.2x",static_cast<uint8_t>(buffer[count+count2]));
             }
-            fprintf (stderr,"\n");
+            fprintf (stdout,"\n");
             break;
 
           default:

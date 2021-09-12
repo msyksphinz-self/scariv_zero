@@ -41,6 +41,7 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
   assign w_dc_read_req [p_idx].h_pri = l1d_rd_if[p_idx].s0_h_pri;
 
   assign l1d_rd_if[p_idx].s1_hit      = w_dc_read_resp[p_idx].hit ;
+  assign l1d_rd_if[p_idx].s1_hit_way  = w_dc_read_resp[p_idx].hit_way ;
   assign l1d_rd_if[p_idx].s1_miss     = w_dc_read_resp[p_idx].miss;
   assign l1d_rd_if[p_idx].s1_conflict = w_dc_read_resp[p_idx].conflict;
   assign l1d_rd_if[p_idx].s1_data     = w_dc_read_resp[p_idx].data;
@@ -129,6 +130,7 @@ assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 
 
 `ifdef SIMULATION
+`ifdef VERILATOR
 import "DPI-C" function void record_l1d_load
 (
  input longint      rtl_time,
@@ -174,6 +176,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // VERILATOR
 `endif // SIMULATION
 
 

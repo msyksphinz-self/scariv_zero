@@ -147,11 +147,11 @@ inoutptr_var_oh #(.SIZE(msrh_pkg::LRQ_NORM_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk)
                                                                   .i_rollback(1'b0),
                                                                   .i_in_valid (w_in_valid ),
                                                                   /* verilator lint_off WIDTH */
-                                                                  .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)-1){1'b0}}, w_l1d_lrq_valid_load_cnt}),
+                                                                  .i_in_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-$clog2(msrh_conf_pkg::LSU_INST_NUM)){1'b0}}, w_l1d_lrq_valid_load_cnt}),
                                                                   .o_in_ptr_oh (w_norm_in_ptr_oh ),
 
                                                                   .i_out_valid(w_out_valid),
-                                                                  .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1){1'b0}}, 1'b1}),
+                                                                  .i_out_val({{($clog2(msrh_pkg::LRQ_ENTRY_SIZE)){1'b0}}, 1'b1}),
                                                                   .o_out_ptr_oh(w_norm_out_ptr_oh));
 
 encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in(w_norm_out_ptr_oh), .o_out(w_norm_out_ptr));
@@ -161,10 +161,10 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_l
   always_comb begin
     w_l1d_lrq_loads[p_idx] = l1d_lrq[p_idx].load;
     w_l1d_req_payloads[p_idx] = l1d_lrq[p_idx].req_payload;
-    if (|w_hit_lrq_same_evict_addr_valid[p_idx] |
-        |w_hit_port_same_evict_addr_valid[p_idx]) begin
-      w_l1d_req_payloads[p_idx].evict_valid = 1'b0;
-    end
+    // if (|w_hit_lrq_same_evict_addr_valid[p_idx] |
+    //     |w_hit_port_same_evict_addr_valid[p_idx]) begin
+    //   w_l1d_req_payloads[p_idx].evict_valid = 1'b0;
+    // end
     w_l1d_lrq_loads_no_conflicts[p_idx] = w_l1d_lrq_loads[p_idx] &
                                           !w_resp_confilct[p_idx];
   end
@@ -320,12 +320,15 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
                                                       l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
-  assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_valid[p_idx]) | (|w_hit_port_same_addr_valid[p_idx]);
+  assign w_resp_confilct[p_idx] = (|w_hit_lrq_same_addr_valid[p_idx]) | (|w_hit_port_same_addr_valid[p_idx]) |
+                                  (|w_hit_lrq_same_evict_addr_valid[p_idx]) | (|w_hit_port_same_evict_addr_valid[p_idx]);
   assign l1d_lrq[p_idx].resp_payload.full         = (w_valid_load_index[p_idx] > w_l1d_lrq_valid_load_cnt);
   assign l1d_lrq[p_idx].resp_payload.evict_conflict = 1'b0;
-  assign l1d_lrq[p_idx].resp_payload.conflict     = |w_hit_lrq_same_addr_valid[p_idx];
+  assign l1d_lrq[p_idx].resp_payload.conflict     = w_resp_confilct[p_idx];
   assign l1d_lrq[p_idx].resp_payload.lrq_index_oh = |w_l1d_lrq_loads_no_conflicts[p_idx] ? w_load_valid[w_l1d_lrq_picked_index_enc[p_idx]] :
-                                                    w_hit_lrq_same_addr_valid[p_idx];
+                                                    |w_hit_lrq_same_addr_valid[p_idx] ? w_hit_lrq_same_addr_valid[p_idx] :
+                                                    /* |w_hit_lrq_same_evict_addr_valid[p_idx] ? */ w_hit_lrq_same_evict_addr_valid[p_idx];
+
 
 `ifdef SIMULATION
   always @(negedge i_clk, negedge i_reset_n) begin
@@ -368,6 +371,7 @@ endgenerate
 // ---------------------------------------
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_addr_valid;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_stq_lrq_same_evict_addr_valid;
+logic [REQ_PORT_NUM-1: 0]             w_hit_stq_port_same_addr_valid;
 logic [REQ_PORT_NUM-1: 0]             w_hit_stq_port_same_evict_addr_valid[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]             w_hit_stq_port_same_evict_addr_reduced_valid;
 
@@ -388,6 +392,10 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : stq_port_
     end
   end // block: adj_evict_port_loop
   assign w_hit_stq_port_same_evict_addr_reduced_valid[p_idx] = |w_hit_stq_port_same_evict_addr_valid[p_idx];
+
+  assign w_hit_stq_port_same_addr_valid[p_idx] = l1d_lrq_stq_miss_if.load & l1d_lrq[p_idx].load &
+                                                 (l1d_lrq_stq_miss_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                  l1d_lrq[p_idx].req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
 end // block: port_loop
 endgenerate
 
@@ -408,9 +416,10 @@ for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin : stq_bu
 end
 
 assign l1d_lrq_stq_miss_if.resp_payload.evict_conflict = |w_hit_stq_lrq_same_evict_addr_valid;
-assign l1d_lrq_stq_miss_if.resp_payload.conflict     = |w_hit_stq_lrq_same_addr_valid;
+assign l1d_lrq_stq_miss_if.resp_payload.conflict     = (|w_hit_stq_lrq_same_addr_valid) | (|w_hit_stq_port_same_addr_valid);
 assign l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh = w_stq_miss_lrq_load ? 1 << w_stq_miss_lrq_idx :
-                                                       |w_hit_stq_lrq_same_addr_valid ? w_hit_stq_lrq_same_addr_valid :
+                                                       |w_hit_stq_lrq_same_addr_valid  ? w_hit_stq_lrq_same_addr_valid :
+                                                       |w_hit_stq_port_same_addr_valid ? w_hit_stq_port_same_addr_valid :
                                                        w_hit_stq_lrq_same_evict_addr_valid;
 
 assign w_stq_miss_lrq_load = l1d_lrq_stq_miss_if.load &

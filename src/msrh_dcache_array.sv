@@ -81,7 +81,11 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   // 4. Read Request not selected, but same as selected address line.
   assign w_s1_read_req_valid = !r_s1_dc_update_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same);
 
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] w_s1_tag_hit_idx;
+  encoder #(.SIZE(msrh_conf_pkg::DCACHE_WAYS)) hit_encoder (.i_in(w_s1_tag_hit), .o_out(w_s1_tag_hit_idx));
+
   assign o_dc_read_resp[l_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
+  assign o_dc_read_resp[l_idx].hit_way  = w_s1_tag_hit_idx;
   assign o_dc_read_resp[l_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_update_valid |
                                            r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
@@ -147,7 +151,7 @@ end
 endgenerate
 
 
-generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : icache_way_loop
+generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc_way_loop
 
   tag_array
     #(

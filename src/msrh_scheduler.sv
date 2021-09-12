@@ -78,11 +78,11 @@ u_req_ptr
    .i_rollback (w_flush_valid),
 
    .i_in_valid (|i_disp_valid    ),
-   .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)-1){1'b0}}, w_input_valid_cnt}),
+   .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
    .o_in_ptr_oh(w_entry_in_ptr_oh   ),
 
    .i_out_valid(1'b0),
-   .i_out_val  ({{($clog2(ENTRY_SIZE)-1){1'b0}}, 1'b1}),
+   .i_out_val  ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
    .o_out_ptr_oh(w_entry_out_ptr_oh                       )
    );
 

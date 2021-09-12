@@ -262,6 +262,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic            hit;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] hit_way;
   logic            miss;
   logic            conflict;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;

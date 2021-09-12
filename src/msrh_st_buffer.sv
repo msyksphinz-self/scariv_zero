@@ -177,6 +177,7 @@ logic                                           r_s2_replace_valid;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
 logic [riscv_pkg::PADDR_W-1: 0]                 r_s2_replace_paddr;
+logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_hit_way;
 // logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_lrq_evict_hit_ways;
 // logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         w_s2_conflict_evict_addr;
 
@@ -186,6 +187,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     // r_s2_lrq_evict_hit_ways <= 'h0;
   end else begin
+    r_s2_hit_way <= l1d_rd_if.s1_hit_way;
+
     r_s2_replace_valid <= l1d_rd_if.s1_replace_valid;
     r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
     r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
@@ -230,6 +233,7 @@ select_l1d_wr_entry_oh
 
 always_comb begin
   l1d_wr_if.valid = |w_entry_l1d_wr_req_oh;
+  l1d_wr_if.way   = r_s2_hit_way;
   l1d_wr_if.paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
   l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end
@@ -339,7 +343,7 @@ endgenerate
 // end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 `ifdef SIMULATION
-
+`ifdef VERILATOR
 import "DPI-C" function void record_stq_store
 (
  input longint rtl_time,
@@ -387,6 +391,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // VERILATOR
 `endif // SIMULATION
 
 endmodule // msrh_st_buffer

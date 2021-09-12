@@ -28,6 +28,10 @@ ISA=rv64
 RV_PKG = ../src/riscv64_pkg.sv
 CONFIG = standard
 
+ifeq ($(strip $(ISA)), rv64)
+	VLOG_OPTS += +define+RV64
+endif
+
 ifeq ($(strip $(ISA)), rv32)
 	RV_PKG = ../src/riscv32_pkg.sv
 endif
