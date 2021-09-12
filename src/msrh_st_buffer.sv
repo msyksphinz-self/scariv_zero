@@ -119,13 +119,9 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
 
      .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_rd_conflict (l1d_rd_if.s1_conflict),
-     .i_evict_merged    (lrq_evict_search_if.s1_hit_merged),
      .i_l1d_wr_conflict (l1d_wr_if.conflict),
 
-     .i_lrq_full    (l1d_lrq_stq_miss_if.resp_payload.full    ),
-     .i_lrq_conflict(l1d_lrq_stq_miss_if.resp_payload.conflict),
-     .i_lrq_index_oh(l1d_lrq_stq_miss_if.resp_payload.lrq_index_oh),
-
+     .i_st_lrq_resp  (l1d_lrq_stq_miss_if.resp_payload ),
      .i_lrq_resolve (i_lrq_resolve),
 
      .o_ready_to_merge (w_ready_to_merge),
@@ -181,20 +177,27 @@ logic                                           r_s2_replace_valid;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
 logic [riscv_pkg::PADDR_W-1: 0]                 r_s2_replace_paddr;
+// logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_lrq_evict_hit_ways;
+// logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         w_s2_conflict_evict_addr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_replace_valid <= 1'b0;
+
+    // r_s2_lrq_evict_hit_ways <= 'h0;
   end else begin
     r_s2_replace_valid <= l1d_rd_if.s1_replace_valid;
     r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
     r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
     r_s2_replace_paddr <= l1d_rd_if.s1_replace_paddr;
+
+    // r_s2_lrq_evict_hit_ways <= lrq_evict_search_if.hit_ways;
   end
 end
 
+// assign w_s2_conflict_evict_addr = ~|(r_s2_replace_way & lrq_evict_search_if.hit_ways);
 
-assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req;
+assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
 assign l1d_lrq_stq_miss_if.req_payload.paddr               = {w_lrq_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
 assign l1d_lrq_stq_miss_if.req_payload.evict_valid         = r_s2_replace_valid;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
@@ -205,10 +208,8 @@ assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = r_s2_replace_data;
 // --------------------------------------------
 // Search Eviction Data that is ready to Evict
 // --------------------------------------------
-assign lrq_evict_search_if.s0_valid = l1d_rd_if.s0_valid;
-assign lrq_evict_search_if.s0_paddr = {w_l1d_rd_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
-assign lrq_evict_search_if.s0_data  = w_l1d_rd_entry.data;
-assign lrq_evict_search_if.s0_strb  = w_l1d_rd_entry.strb;
+assign lrq_evict_search_if.valid   = l1d_rd_if.s0_valid;
+assign lrq_evict_search_if.tag_low = w_l1d_rd_entry.paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW];
 
 localparam multiply_dc_stbuf_width  = msrh_conf_pkg::DCACHE_DATA_W / msrh_lsu_pkg::ST_BUF_WIDTH;
 

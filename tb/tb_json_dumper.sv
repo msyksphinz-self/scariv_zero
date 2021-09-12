@@ -27,6 +27,9 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     // LSU STQ
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_stq.dump_json(json_fp);
 
+    // LSU LRQ
+    u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_msrh_l1d_load_requester.dump_json(json_fp);
+
     // BRU Scheduler
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_bru.u_msrh_scheduler.dump_json("bru", json_fp, 0);
 

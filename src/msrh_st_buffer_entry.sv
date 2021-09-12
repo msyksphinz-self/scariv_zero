@@ -29,14 +29,11 @@ module msrh_st_buffer_entry
 
  input logic  i_l1d_rd_miss,
  input logic  i_l1d_rd_conflict,
- input logic  i_evict_merged,
 
  output logic o_l1d_wr_req,
  input logic  i_l1d_wr_conflict,
 
- input logic i_lrq_full,
- input logic i_lrq_conflict,
- input logic [msrh_pkg::LRQ_ENTRY_SIZE-1:0] i_lrq_index_oh,
+ input lrq_resp_t    i_st_lrq_resp,
  input lrq_resolve_t i_lrq_resolve,
 
  output logic             o_ready_to_merge,
@@ -103,8 +100,6 @@ always_comb begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else if (i_l1d_rd_conflict) begin
         w_state_next = ST_BUF_RD_L1D;
-      end else if (i_evict_merged) begin
-        w_state_next = ST_BUF_WAIT_FINISH;
       end else begin
         w_state_next = ST_BUF_L1D_UPDATE;
       end
@@ -118,10 +113,13 @@ always_comb begin
     end
     ST_BUF_LRQ_REFILL: begin
       if (i_lrq_accepted) begin
-        if (i_lrq_index_oh != 'h0) begin
+        if (i_st_lrq_resp.evict_conflict) begin
+          w_state_next = ST_BUF_WAIT_EVICT;
+          w_entry_next.lrq_index_oh = i_st_lrq_resp.lrq_index_oh;
+        end else if (i_st_lrq_resp.lrq_index_oh != 'h0) begin
           w_state_next = ST_BUF_WAIT_REFILL; // Replay
-          w_entry_next.lrq_index_oh = i_lrq_index_oh;
-        end else if (i_lrq_full) begin
+          w_entry_next.lrq_index_oh = i_st_lrq_resp.lrq_index_oh;
+        end else if (i_st_lrq_resp.full) begin
           w_state_next = ST_BUF_WAIT_FULL;
         end else begin
           // if index_oh is zero, it means LRQ is correctly allocated,
@@ -130,6 +128,12 @@ always_comb begin
         end
       end
     end // case: ST_BUF_LRQ_REFILL
+    ST_BUF_WAIT_EVICT : begin
+      if (i_lrq_resolve.valid &&
+          i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+        w_state_next = ST_BUF_RD_L1D; // Replay
+      end
+    end
     ST_BUF_WAIT_REFILL: begin
       if (i_lrq_resolve.valid &&
           i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
@@ -137,7 +141,7 @@ always_comb begin
       end
     end
     ST_BUF_WAIT_FULL: begin
-      if (!i_lrq_full) begin
+      if (!i_st_lrq_resp.full) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end

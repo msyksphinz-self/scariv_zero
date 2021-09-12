@@ -107,29 +107,20 @@ endinterface // l1d_lrq_if
 // from STQ --> LRQ Eviction
 // to search hitting eviction address
 interface lrq_evict_search_if;
-logic                            s0_valid;
-logic [riscv_pkg::PADDR_W-1:0]   s0_paddr;
-logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0] s0_data;
-logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] s0_strb;
-
-logic                            s1_hit_merged;
+logic                                    valid;
+logic [msrh_lsu_pkg::DCACHE_TAG_LOW-1:0] tag_low;
+logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  hit_ways;
 
 modport master (
-  output s0_valid,
-  output s0_paddr,
-  output s0_data,
-  output s0_strb,
-
-  input  s1_hit_merged
+  output valid,
+  output tag_low,
+  input  hit_ways
 );
 
 modport slave (
-  input  s0_valid,
-  input  s0_paddr,
-  input  s0_data,
-  input  s0_strb,
-
-  output s1_hit_merged
+  input  valid,
+  input  tag_low,
+  output hit_ways
 );
 
 endinterface // lrq_evict_search_if

@@ -308,7 +308,7 @@ end
 
 
 // Interface to L1D cache
-assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
+assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & r_ex1_pipe_ctrl.is_load & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 
@@ -343,7 +343,9 @@ assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
                                     w_ex2_l1d_mispredicted ?
                                     (ex2_fwd_check_if.stq_hazard_vld      ? STQ_DEPEND   :
-                                     l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT : LRQ_ASSIGNED) :
+                                     l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT :
+                                     l1d_lrq_if.resp_payload.full         ? LRQ_FULL     :
+                                     LRQ_ASSIGNED) :
                                     ex1_l1d_rd_if.s1_conflict             ? L1D_CONFLICT :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = lrq_haz_check_if.ex2_evict_haz_valid ? lrq_haz_check_if.ex2_evict_entry_idx :
@@ -374,7 +376,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (o_ex2_q_updates.update &
         r_ex2_pipe_ctrl.is_load &
         (o_ex2_q_updates.hazard_typ == LRQ_ASSIGNED) &
-        o_ex2_q_updates.lrq_index_oh != 'h0) begin
+        !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
              o_ex2_q_updates.lrq_index_oh);
     end

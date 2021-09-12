@@ -98,7 +98,8 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
                                                 {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 
 
-  assign w_update_tag_valid [l_idx] = o_dc_read_resp[l_idx].miss & o_dc_read_resp[l_idx].replace_valid;
+  assign w_update_tag_valid [l_idx] = ~o_dc_read_resp[l_idx].conflict &
+                                      o_dc_read_resp[l_idx].miss;
   assign w_update_tag_addr  [l_idx] = r_s1_dc_tag_low;
 end
 endgenerate
@@ -133,7 +134,7 @@ end
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DCACHE_WORDS; w_idx++) begin : tag_loop
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      r_replace_target[w_idx] <= 'h1;
+      r_replace_target[w_idx] <= 'h0;
     end else begin
       for (int i = 0; i < READ_PORT_NUM; i++) begin
         if (w_update_tag_valid[i] & (w_idx == w_update_tag_addr[i])) begin

@@ -31,6 +31,7 @@ module msrh_ldq_entry
  input logic                                     i_entry_picked,
 
  input                                           lrq_resolve_t i_lrq_resolve,
+ input logic                                     i_lrq_is_full,
  input                                           stq_resolve_t i_stq_resolve,
  // Commit notification
  input                                           msrh_pkg::commit_blk_t i_commit,
@@ -53,7 +54,8 @@ logic                                            w_load_br_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_complete;
 
-logic                                            w_lrq_is_hazard;
+logic                                            w_lrq_is_conflict;
+logic                                            w_lrq_is_full;
 logic                                            w_lrq_is_assigned;
 logic                                            w_lrq_resolve_match;
 logic                                            w_stq_is_hazard;
@@ -94,8 +96,8 @@ assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.
 assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
-assign w_lrq_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT ||
-                         i_ex2_q_updates.hazard_typ == LRQ_FULL;
+assign w_lrq_is_conflict = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT;
+assign w_lrq_is_full     = i_ex2_q_updates.hazard_typ == LRQ_FULL;
 assign w_stq_is_hazard = i_ex2_q_updates.hazard_typ == STQ_DEPEND;
 assign w_lrq_evict_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_EVICT_CONFLICT;
 
@@ -282,7 +284,8 @@ always_comb begin
       end else if (i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
                              w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
-                             w_lrq_is_hazard       ? LDQ_LRQ_HAZ :
+                             w_lrq_is_conflict     ? LDQ_LRQ_CONFLICT :
+                             w_lrq_is_full         ? LDQ_LRQ_FULL :
                              w_stq_is_hazard       ? LDQ_STQ_HAZ :
                              w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
@@ -292,10 +295,17 @@ always_comb begin
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
-    LDQ_LRQ_HAZ : begin
+    LDQ_LRQ_CONFLICT : begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_DEAD;
       end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
+      end
+    end
+    LDQ_LRQ_FULL : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
+      end else if (!i_lrq_is_full) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
@@ -371,10 +381,10 @@ end // always_comb
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex2_q_valid) begin
-    if (w_lrq_is_assigned & i_ex2_q_updates.lrq_index_oh != 0) begin
-      $fatal (0, "When LRQ is assigned, LRQ index ID must be zero\n");
+    if (w_lrq_is_assigned & !$onehot(i_ex2_q_updates.lrq_index_oh)) begin
+      $fatal (0, "When LRQ is assigned, LRQ index ID must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
     end
-    if (w_lrq_is_hazard & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
+    if (w_lrq_is_conflict & !$onehot0(i_ex2_q_updates.lrq_index_oh)) begin
       $fatal (0, "lrq_index_oh must be one hot but actually %x\n", i_ex2_q_updates.lrq_index_oh);
     end
   end

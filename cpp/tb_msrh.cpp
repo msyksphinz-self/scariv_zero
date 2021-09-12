@@ -162,9 +162,9 @@ int main(int argc, char** argv) {
   dut->i_ram_reset_n = 1;
 
   while (time_counter < cycle && !Verilated::gotFinish()) {
-    // if ((time_counter % 5) == 0) {
-    dut->i_clk = !dut->i_clk; // Toggle clock
-    // }
+    if ((time_counter % 2) == 0) {
+      dut->i_clk = !dut->i_clk; // Toggle clock
+    }
 
     // Evaluate DUT
     dut->eval();

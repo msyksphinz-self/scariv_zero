@@ -156,6 +156,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic                          full;
+  logic                          evict_conflict;
   logic                          conflict;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 } lrq_resp_t;
@@ -412,7 +413,7 @@ endfunction // isAMOLogical
 typedef enum logic[3:0] {
   LDQ_INIT = 0,
   LDQ_EX2_RUN = 1,
-  LDQ_LRQ_HAZ = 2,
+  LDQ_LRQ_CONFLICT = 2,
   LDQ_STQ_HAZ = 3,
   LDQ_TLB_HAZ = 4,
   LDQ_ISSUE_WAIT = 5,
@@ -421,7 +422,8 @@ typedef enum logic[3:0] {
   LDQ_DEAD = 8,
   LDQ_WAIT_COMPLETE = 9,
   LDQ_ISSUED = 10,
-  LDQ_LRQ_EVICT_HAZ = 11
+  LDQ_LRQ_EVICT_HAZ = 11,
+  LDQ_LRQ_FULL = 12
 } ldq_state_t;
 
 typedef struct packed {
@@ -535,8 +537,9 @@ typedef enum logic [ 3: 0] {
   ST_BUF_LRQ_REFILL = 4,
   ST_BUF_WAIT_REFILL = 5,
   ST_BUF_WAIT_FULL   = 6,
-  ST_BUF_L1D_MERGE = 7,
-  ST_BUF_WAIT_FINISH = 8
+  ST_BUF_WAIT_EVICT = 7,
+  ST_BUF_L1D_MERGE = 8,
+  ST_BUF_WAIT_FINISH = 9
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  paddr,
