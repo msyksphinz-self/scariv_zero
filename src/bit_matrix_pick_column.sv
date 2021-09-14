@@ -5,7 +5,7 @@ module bit_matrix_pick_column
     parameter H_IDX = 2
     )
 (
- input logic [WIDTH-1 : 0]  in [WORDS]
+ input logic [WIDTH-1 : 0]  in [WORDS],
  output logic [WORDS-1 : 0] out
  );
 

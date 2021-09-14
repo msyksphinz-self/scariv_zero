@@ -35,10 +35,15 @@ module msrh_load_requester
    lrq_search_if.slave lrq_search_if
    );
 
+localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
+
+logic [msrh_pkg::LRQ_NORM_ENTRY_SIZE-1: 0] w_norm_lrq_valids;
+
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;
 logic [REQ_PORT_NUM-1: 0]   w_resp_evict_conflict;
 
 logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads;
+logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_picked_valids;
 msrh_lsu_pkg::lrq_req_t         w_l1d_req_payloads        [REQ_PORT_NUM];
 msrh_lsu_pkg::lrq_req_t         w_l1d_picked_req_payloads [REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]       w_l1d_lrq_loads_no_conflicts;
@@ -82,6 +87,8 @@ function automatic logic hit_port_pa (logic p0_valid, logic p1_valid,
 
 endfunction // hit_port_pa
 
+/* verilator lint_off UNOPTFLAT */
+logic [$clog2(REQ_PORT_NUM): 0] w_valid_load_index[REQ_PORT_NUM];
 
 generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   if (p_idx == 0) begin
@@ -118,7 +125,7 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   // 3. check the evicted address with existed evict LRQ
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_evict_pa;
   for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : entry_evict_loop
-    assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load, l1d_lrq[p_idx].req_payload.evict_payload.paddr
+    assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load, l1d_lrq[p_idx].req_payload.evict_payload.paddr,
                                                                    w_lrq_entries[e_idx], e_idx);
   end
 
@@ -136,8 +143,8 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   end
 
   logic [REQ_PORT_NUM-1: 0] w_hit_port_same_evict_pa_lsb;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_port_same_evict_pa_load_valid
-  bit_extract_lsb #(.WIDTH(REQ_PORT_NUM)) u_same_port_lsb (.in(w_hit_port_same_evict_pa[p_idx]), .out(w_hit_port_same_evict_pa_lsb));
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_port_same_evict_pa_load_valid;
+  bit_extract_lsb #(.WIDTH(REQ_PORT_NUM)) u_same_port_evict_lsb (.in(w_hit_port_same_evict_pa[p_idx]), .out(w_hit_port_same_evict_pa_lsb));
   bit_oh_or #(.T(msrh_pkg::LRQ_ENTRY_SIZE), .WORDS(REQ_PORT_NUM)) select_port_evict_pa_entry  (.i_oh(w_hit_port_same_evict_pa_lsb), .i_data(w_load_picked_valid), .o_selected(w_hit_port_same_evict_pa_load_valid));
 
   assign w_resp_conflict[p_idx] = (|w_hit_lrq_same_pa) |  // 1. hazard

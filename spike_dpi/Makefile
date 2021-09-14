@@ -55,8 +55,10 @@ riscv_isa_sim: riscv-isa-sim-makefile
 	make -C riscv-isa-sim -j$(shell nproc)
 
 riscv-isa-sim-makefile:
-	cd riscv-isa-sim && ./configure --enable-commitlog
-	touch -f $@
+	@if [ ! -f $@ ]; then \
+		cd riscv-isa-sim && ./configure --enable-commitlog; \
+		touch -f $@; \
+	fi
 
 clean:
 	rm -rf riscv-isa-sim-makefile

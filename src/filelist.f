@@ -42,6 +42,9 @@
 ../src/inoutptr_var_oh.sv
 ../src/inoutptr_oh.sv
 
+../src/transpose_matrix.sv
+../src/bit_matrix_pick_column.sv
+
 ../src/select_latest.sv
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv
@@ -93,6 +96,7 @@
 ../src/msrh_lsu.sv
 ../src/msrh_lsu_pipe.sv
 ../src/msrh_l1d_load_requester.sv
+../src/msrh_load_requester.sv
 ../src/msrh_store_requestor.sv
 ../src/msrh_l2_req_arbiter.sv
 ../src/msrh_lrq_entry.sv

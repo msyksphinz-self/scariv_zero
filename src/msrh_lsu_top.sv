@@ -248,25 +248,26 @@ msrh_stq
 
 assign w_l1d_rd_if [L1D_LRQ_PORT].s0_valid = 'h0;
 
-msrh_l1d_load_requester
-  u_msrh_l1d_load_requester
+msrh_load_requester
+  u_load_requester
 (
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
+
  .l1d_lrq  (w_l1d_lrq_if),
  .lrq_haz_check_if (w_lrq_haz_check_if),
+
+ .lrq_stq_if (w_l1d_lrq_from_stq_miss),
+
+ .o_lrq_is_full (w_lrq_is_full),
+ .o_lrq_resolve (w_lrq_resolve),
 
  .l1d_ext_rd_req  (w_l1d_ext_req[0]),
  .l1d_ext_rd_resp (l1d_ext_resp  ),
 
- .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
- .lrq_evict_search_if (w_lrq_evict_search_if),
-
  .l1d_evict_if  (w_l1d_evict_if),
 
- .lrq_search_if (w_lrq_search_if),
- .o_lrq_is_full (w_lrq_is_full),
- .o_lrq_resolve (w_lrq_resolve)
+ .lrq_search_if (w_lrq_search_if)
  );
 
 
