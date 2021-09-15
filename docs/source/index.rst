@@ -22,6 +22,7 @@ MSRH RISC-V CPUコアのドキュメントにようこそ！
    sections/tlb
    sections/l2
    sections/branch
+   sections/memory_map
    sections/terminology
 
 Indices and tables
