@@ -11,7 +11,9 @@ end
 
 out_sv = File.open("pma_map.sv", "w")
 
-printf(out_sv, "module pma_map (\n")
+printf(out_sv, "module pma_map\n")
+printf(out_sv, "  import msrh_lsu_pkg::*;\n")
+printf(out_sv, "(\n")
 printf(out_sv, "  input logic [riscv_pkg::PADDR_W-1: 0] i_pa\n")
 printf(out_sv, "  output logic o_map_hit,\n")
 printf(out_sv, "  output map_attr_t o_mapt_attr_hit\n")

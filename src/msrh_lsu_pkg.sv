@@ -29,6 +29,14 @@ package msrh_lsu_pkg;
         MESI_MODIFIED = 3
     } mesi_t;
 
+typedef struct   packed {
+  logic          r;
+  logic          w;
+  logic          x;
+  logic          a;
+  logic          c;
+} map_attr_t;
+
   typedef enum logic [ 2: 0] {
     NONE,
     L1D_CONFLICT,
