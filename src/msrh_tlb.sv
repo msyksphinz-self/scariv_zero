@@ -107,6 +107,17 @@ logic [TLB_ALL_ENTRIES_NUM-1: 0]       w_real_hits;
 logic                                  w_tlb_hit;
 logic                                  w_tlb_miss;
 
+
+// PMA Memory Map
+pma_map
+  u_pma_map
+(
+ .i_pa          (),
+ .o_map_hit     (),
+ .o_map_attr_hit()
+ );
+
+
 logic [riscv_pkg::VADDR_W-1: PG_IDX_W] r_refill_tag;
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : all_entries
