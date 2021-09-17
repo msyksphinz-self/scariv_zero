@@ -5,7 +5,10 @@ require "json"
 require 'open3'
 require "tempfile"
 
-File.open("pma_memory_map.json") do |file|
+json_file = ARGV[0]
+rv_xlen = ARGV[1].to_i
+
+File.open(json_file) do |file|
   $map_table = JSON.load(file)
 end
 
@@ -16,7 +19,7 @@ printf(out_sv, "  import msrh_lsu_pkg::*;\n")
 printf(out_sv, "(\n")
 printf(out_sv, "  input logic [riscv_pkg::PADDR_W-1: 0] i_pa,\n")
 printf(out_sv, "  output logic o_map_hit,\n")
-printf(out_sv, "  output map_attr_t o_mapt_attr_hit\n")
+printf(out_sv, "  output map_attr_t o_map_attr\n")
 printf(out_sv, ");\n\n\n")
 
 printf(out_sv, "localparam MAP_TABLE_SIZE = %d;\n", $map_table.size)
@@ -43,7 +46,7 @@ $map_table.each_with_index{ |map, map_index|
   end
 
 
-  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa & 'h%014x) = 'h%014x;  // Address Region : %x - %x\n",
+  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa & 56'h%014x) == 56'h%014x;  // Address Region : %x - %x\n",
          map_index,
          ~(size_byte-1) & 0xff_ffff_ffff_ffff,
          base_addr & ~size_byte,

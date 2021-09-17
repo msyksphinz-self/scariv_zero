@@ -114,9 +114,9 @@ map_attr_t                             w_map_attributes;
 pma_map
   u_pma_map
 (
- .i_pa          ({w_ppn, i_tlb_req.vaddr[11: 0]}),
- .o_map_hit     (w_map_hit),
- .o_map_attr_hit(w_map_attributes)
+ .i_pa      ({w_ppn, i_tlb_req.vaddr[11: 0]}),
+ .o_map_hit (w_map_hit),
+ .o_map_attr(w_map_attributes)
  );
 
 
