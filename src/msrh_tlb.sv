@@ -114,7 +114,7 @@ map_attr_t                             w_map_attributes;
 pma_map
   u_pma_map
 (
- .i_pa      ({w_ppn, i_tlb_req.vaddr[11: 0]}),
+ .i_pa      (o_tlb_resp.paddr),
  .o_map_hit (w_map_hit),
  .o_map_attr(w_map_attributes)
  );
@@ -158,13 +158,13 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
   assign new_pte_entry.sw                   = w_is_leaf & (pte.w & pte.d);
   assign new_pte_entry.sx                   = w_is_leaf & pte.x;
   assign new_pte_entry.sr                   = w_is_leaf & pte.r;
-  assign new_pte_entry.pw                   = 1'b1;
-  assign new_pte_entry.px                   = 1'b1;
-  assign new_pte_entry.pr                   = 1'b1;
-  assign new_pte_entry.pal                  = 1'b0;
-  assign new_pte_entry.paa                  = 1'b0;
+  assign new_pte_entry.pw                   = w_map_attributes.w;
+  assign new_pte_entry.px                   = w_map_attributes.x;
+  assign new_pte_entry.pr                   = w_map_attributes.r;
+  assign new_pte_entry.pal                  = w_map_attributes.a;
+  assign new_pte_entry.paa                  = w_map_attributes.a;
   assign new_pte_entry.eff                  = 1'b0;
-  assign new_pte_entry.c                    = 1'b1;
+  assign new_pte_entry.c                    = w_map_attributes.c;
   assign new_pte_entry.fragmented_superpage = ptw_if.resp.fragmented_superpage;
 
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
@@ -370,13 +370,13 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : el
     assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_all_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? w_all_entries[e_idx].data[sector_idx].sx : 1'b0));
     assign w_w_array     [e_idx] = w_priv_rw_ok[e_idx] & w_all_entries[e_idx].data[sector_idx].sw;
     assign w_x_array     [e_idx] = w_priv_x_ok [e_idx] & w_all_entries[e_idx].data[sector_idx].sx;
-    assign w_pr_array    [e_idx] = 1'b1;
-    assign w_pw_array    [e_idx] = 1'b1;
-    assign w_px_array    [e_idx] = 1'b1;
+    assign w_pr_array    [e_idx] = w_map_attributes.r;
+    assign w_pw_array    [e_idx] = w_map_attributes.w;
+    assign w_px_array    [e_idx] = w_map_attributes.x;
     assign w_eff_array   [e_idx] = 1'b1;
-    assign w_c_array     [e_idx] = 1'b1;
-    assign w_paa_array   [e_idx] = 1'b1;
-    assign w_pal_array   [e_idx] = 1'b1;
+    assign w_c_array     [e_idx] = w_map_attributes.c;
+    assign w_paa_array   [e_idx] = w_map_attributes.a;
+    assign w_pal_array   [e_idx] = w_map_attributes.a;
     assign w_paa_array_if_cached[e_idx] = w_paa_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
     assign w_pal_array_if_cached[e_idx] = w_pal_array[e_idx] | USE_ATOMICS_INCACHE ? w_c_array[e_idx] : 1'b0;
     assign w_prefetchable_array [e_idx] = w_all_entries[e_idx].data[sector_idx].c;
