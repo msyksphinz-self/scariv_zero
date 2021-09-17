@@ -107,14 +107,16 @@ logic [TLB_ALL_ENTRIES_NUM-1: 0]       w_real_hits;
 logic                                  w_tlb_hit;
 logic                                  w_tlb_miss;
 
+logic                                  w_map_hit;
+map_attr_t                             w_map_attributes;
 
 // PMA Memory Map
 pma_map
   u_pma_map
 (
- .i_pa          (),
- .o_map_hit     (),
- .o_map_attr_hit()
+ .i_pa          ({w_ppn, i_tlb_req.vaddr[11: 0]}),
+ .o_map_hit     (w_map_hit),
+ .o_map_attr_hit(w_map_attributes)
  );
 
 
