@@ -61,10 +61,9 @@ localparam L1D_RD_PORT_NUM   = L1D_LS_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
 l1d_wr_if  w_l1d_merge_if();
-// LSU Pipeline + PTW
-l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM] ();
+// LSU Pipeline + ST-Buffer
+l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM + 1] ();
 lrq_evict_search_if w_lrq_evict_search_if();
-l1d_lrq_if w_l1d_lrq_from_stq_miss ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
@@ -257,8 +256,6 @@ msrh_load_requester
  .l1d_lrq  (w_l1d_lrq_if),
  .lrq_haz_check_if (w_lrq_haz_check_if),
 
- .lrq_stq_if (w_l1d_lrq_from_stq_miss),
-
  .o_lrq_is_full (w_lrq_is_full),
  .o_lrq_resolve (w_lrq_resolve),
 
@@ -290,7 +287,7 @@ u_st_buffer
    .st_buffer_if        (w_st_buffer_if),
    .l1d_rd_if           (w_l1d_rd_if[L1D_ST_RD_PORT]),
    .lrq_evict_search_if (w_lrq_evict_search_if),
-   .l1d_lrq_stq_miss_if (w_l1d_lrq_from_stq_miss),
+   .l1d_lrq_stq_miss_if (w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM]),
    .l1d_wr_if           (w_l1d_wr_if),
    .l1d_merge_if        (w_l1d_merge_if),
 
