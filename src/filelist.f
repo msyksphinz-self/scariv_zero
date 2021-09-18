@@ -119,4 +119,6 @@
 ../src/msrh_csu_pipe.sv
 ../src/msrh_csr.sv
 
+../src/pma_map.sv
+
 ../src/l2_if_arbiter.sv
