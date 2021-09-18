@@ -72,6 +72,7 @@ DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_bru_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
+DECODE_FILES += ../src/pma_map.sv
 
 build_decode_v: $(DECODE_FILES)
 
@@ -87,6 +88,8 @@ build_decode_v: $(DECODE_FILES)
 	cd ../src && ./build_decoder.rb csu_ctrl
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg
+../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
+	cd ../src && ../scripts/build_memory_map.rb $<
 
 FILELIST = sim_filelist.f
 
