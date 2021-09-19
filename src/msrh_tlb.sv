@@ -13,6 +13,7 @@ module tlb
 
  input        msrh_lsu_pkg::tlb_req_t i_tlb_req,
  output logic o_tlb_ready,
+ /* verilator lint_off UNOPTFLAT */
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
  input msrh_pkg::priv_t               i_status_prv,
