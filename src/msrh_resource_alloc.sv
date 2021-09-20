@@ -231,16 +231,12 @@ assign w_br_tag_temp_idx[0] = r_br_tag_current_idx;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
 
-  always_comb begin
-    if (iq_disp.valid & iq_disp.ready & iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR) begin
-      /* verilator lint_off ALWCOMBORDER */
-      w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx] | (1 << w_br_tag_temp_idx[d_idx]);
-      w_br_tag_temp_idx   [d_idx+1] = w_br_tag_temp_idx[d_idx] + 'h1;
-    end else begin
-      w_br_mask_temp_valid[d_idx+1] = w_br_mask_temp_valid[d_idx];
-      w_br_tag_temp_idx   [d_idx+1] = w_br_tag_temp_idx   [d_idx];
-    end
-  end // always_comb
+  logic w_is_br_inst;
+  assign w_is_br_inst = iq_disp.valid & iq_disp.ready &
+                        iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+
+  assign w_br_mask_temp_valid[d_idx+1] = !w_is_br_inst ? w_br_mask_temp_valid[d_idx] : w_br_mask_temp_valid[d_idx] | (1 << w_br_tag_temp_idx[d_idx]);
+  assign w_br_tag_temp_idx   [d_idx+1] = !w_is_br_inst ? w_br_tag_temp_idx   [d_idx] : w_br_tag_temp_idx[d_idx] + 'h1;
 
   assign o_brtag[d_idx]  = w_br_tag_temp_idx   [d_idx];
   assign o_brmask[d_idx] = w_br_mask_temp_valid[d_idx];
