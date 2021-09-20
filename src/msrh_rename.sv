@@ -63,14 +63,6 @@ logic [RNID_W-1: 0]                       w_restore_commit_map_list[32];
 
 logic                                     w_flush_valid;
 
-logic                                               w_rob_no_credits_remained;
-logic [msrh_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]            w_lsu_no_credits_remained;
-logic                                               w_ldq_no_credits_remained;
-logic                                               w_stq_no_credits_remained;
-logic                                               w_csu_no_credits_remained;
-logic                                               w_bru_no_credits_remained;
-
 assign iq_disp.ready = !(i_commit_rnid_update.commit & ((|i_commit.except_valid) | i_commit.all_dead)) & i_resource_ok;
 
 //                                          Freelist      RenameMap
