@@ -135,9 +135,11 @@ always_comb begin
       end
     end
     ST_BUF_WAIT_REFILL: begin
-      if (i_lrq_resolve.valid &&
-          i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
-        w_state_next = ST_BUF_L1D_MERGE;
+      if (i_lrq_resolve.valid & (i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh)) begin
+          w_state_next = ST_BUF_L1D_MERGE;
+      end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_index_oh)) begin
+        // cleared dependent entry
+        w_state_next = ST_BUF_RD_L1D;
       end
     end
     ST_BUF_WAIT_FULL: begin

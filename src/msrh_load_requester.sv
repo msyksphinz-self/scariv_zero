@@ -50,7 +50,7 @@ logic [REQ_PORT_NUM-1: 0]   w_l1d_lrq_loads;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_load_picked_valid [REQ_PORT_NUM] ;
 logic [$clog2(REQ_PORT_NUM)-1: 0]     w_l1d_lrq_picked_index[REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]             w_l1d_lrq_picked_valids;
-logic [$clog2(REQ_PORT_NUM)-1: 0]     w_l1d_lrq_picked_index_oh[REQ_PORT_NUM];
+logic [REQ_PORT_NUM-1: 0]             w_l1d_lrq_picked_index_oh[REQ_PORT_NUM];
 msrh_lsu_pkg::lrq_req_t               w_l1d_req_payloads        [REQ_PORT_NUM];
 msrh_lsu_pkg::lrq_req_t               w_l1d_picked_req_payloads [REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]             w_l1d_lrq_loads_no_conflicts;
@@ -144,11 +144,9 @@ function automatic logic hit_lrq_same_pa (logic valid, logic [riscv_pkg::PADDR_W
                                           msrh_lsu_pkg::lrq_entry_t lrq_entry,
                                           logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
-  return valid &
-    lrq_entry.valid &
-      ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[entry_idx]) &
-        (lrq_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-         req_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  return valid & lrq_entry.valid & ~w_entry_finish[entry_idx] &
+    (lrq_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+     req_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
 
 endfunction // hit_lrq_same_pa
 
@@ -156,11 +154,9 @@ function automatic logic hit_lrq_same_evict_pa (logic valid, logic [riscv_pkg::P
                                                 msrh_lsu_pkg::lrq_entry_t lrq_entry,
                                                 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
-  return valid &
-    lrq_entry.valid & lrq_entry.evict_valid &
-      ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[entry_idx]) &
-        (lrq_entry.evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-         req_evict_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  return valid & lrq_entry.valid & lrq_entry.evict_valid & ~w_entry_finish[entry_idx] &
+    (lrq_entry.evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+     req_evict_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
 
 endfunction // hit_lrq_same_pa
 
@@ -284,9 +280,15 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_l
      .o_picked_pos(w_l1d_lrq_picked_index_oh[p_idx])
      );
 
-  encoder #(.SIZE(REQ_PORT_NUM)) encode_picked_index (.i_in(w_l1d_lrq_picked_index_oh[p_idx]), .o_out(w_l1d_lrq_picked_index[p_idx]));
+  logic [REQ_PORT_NUM-1: 0] selected_index_oh;
+  bit_matrix_pick_column #(.WIDTH(REQ_PORT_NUM), .WORDS(REQ_PORT_NUM), .H_IDX(p_idx)) pick_selected_index
+    (.in(w_l1d_lrq_picked_index_oh), .out(selected_index_oh));
+  encoder #(.SIZE(REQ_PORT_NUM)) encode_picked_index (.i_in(selected_index_oh), .o_out(w_l1d_lrq_picked_index[p_idx]));
+
 end
 endgenerate
+
+
 
 // ----------------------
 // Entries
@@ -387,7 +389,7 @@ assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
 assign o_lrq_resolve.valid            = lrq_search_if.valid;
 assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
-
+assign o_lrq_resolve.lrq_entry_valids = w_lrq_valids;
 assign o_lrq_is_full = &w_lrq_valids;
 
 // ---------------------

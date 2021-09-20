@@ -183,12 +183,12 @@ typedef struct packed {
 function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
   lrq_entry_t ret;
 
+  ret = 'h0;
+
   ret.valid = valid;
   ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-  ret.sent  = 1'b0;
   ret.evict_valid = req.evict_valid;
-  ret.evict_sent  = 1'b0;
   ret.evict       = req.evict_payload;
 
   return ret;
@@ -204,6 +204,7 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_entry_valids;
 } lrq_resolve_t;
 
 typedef struct packed {
@@ -556,6 +557,8 @@ function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  pa
                                              logic [ST_BUF_WIDTH-1: 0]   data
                                              );
   st_buffer_entry_t ret;
+
+  ret = 'h0;
 
   ret.valid = 1'b1;
   ret.paddr = paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
