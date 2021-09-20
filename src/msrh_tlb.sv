@@ -111,11 +111,15 @@ logic                                  w_tlb_miss;
 logic                                  w_map_hit;
 map_attr_t                             w_map_attributes;
 
+logic [riscv_pkg::PADDR_W-1: 0]        mpu_physaddr;
+assign mpu_physaddr = (r_state == ST_WAIT) & ptw_if.resp.valid ? {ptw_if.resp.pte.ppn, i_tlb_req.vaddr[11: 0]} :
+                      o_tlb_resp.paddr;
+
 // PMA Memory Map
 pma_map
   u_pma_map
 (
- .i_pa      (o_tlb_resp.paddr),
+ .i_pa      (mpu_physaddr),
  .o_map_hit (w_map_hit),
  .o_map_attr(w_map_attributes)
  );
@@ -249,7 +253,10 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
     assign w_tag_match[lvl_idx] = w_ignore | (w_all_entries[t_idx].tag[base + PG_IDX_W +: VPN_FIELD_W] == w_vpn[base + PG_IDX_W +: VPN_FIELD_W]);
     assign w_filtered_ppn[base +: VPN_FIELD_W] = w_ignore ? w_vpn[PG_IDX_W + base +: VPN_FIELD_W] :
                                                 w_all_entries[t_idx].data[sector_idx].ppn[base +: VPN_FIELD_W];
-  end
+  end // block: lvl_loop
+  localparam REMAINED_LENGTH = riscv_pkg::PPN_W - VPN_W - riscv_pkg::PG_LEVELS * VPN_FIELD_W + VPN_FIELD_W;
+  assign w_filtered_ppn[riscv_pkg::PPN_W-1: VPN_W - VPN_FIELD_W + VPN_FIELD_W] = {REMAINED_LENGTH{w_filtered_ppn[VPN_W - VPN_FIELD_W + VPN_FIELD_W-1]}};
+
   assign w_is_hit[t_idx] = w_all_entries[t_idx].valid[sector_idx] & ((SUPER_PAGE && msrh_conf_pkg::USING_VM) ? &w_tag_match :
                                                                      sector_tag_match);
   assign w_hits_vec[t_idx]  = w_vm_enabled & w_is_hit[t_idx];
