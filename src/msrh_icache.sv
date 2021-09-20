@@ -61,6 +61,8 @@ assign w_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
 generate if (msrh_conf_pkg::ICACHE_WAYS == 2) begin : replace_way_2
   assign w_next_way = ~r_replace_way[w_replace_addr];
+end else begin
+  assign w_next_way = r_replace_way[w_replace_addr] + 'h1;
 end
 endgenerate
 
