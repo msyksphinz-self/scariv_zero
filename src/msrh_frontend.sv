@@ -448,7 +448,7 @@ msrh_icache u_msrh_icache
 logic w_inst_buffer_load_valid;
 assign w_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                   (w_s2_inst_valid  |
-                                   (~r_s2_tlb_miss & r_s2_tlb_except_valid));
+                                   (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
 `ifdef SIMULATION
 logic [riscv_pkg::PADDR_W-1: 0] w_s2_ic_resp_debug_addr;
