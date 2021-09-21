@@ -267,11 +267,12 @@ assign w_ld_except_valid = r_ex1_pipe_ctrl.is_load &
 assign w_st_except_valid = r_ex1_pipe_ctrl.is_store &
                            (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
 assign w_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
-                           w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :
-                           w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :
+                           w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                           w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
                            w_ex1_tlb_resp.ma.st ? msrh_pkg::STAMO_ADDR_MISALIGN:
-                           w_ex1_tlb_resp.pf.st ? msrh_pkg::STAMO_PAGE_FAULT   :
-                           /* w_ex1_tlb_resp.ae.st ? */ msrh_pkg::STAMO_ACC_FAULT;
+                           w_ex1_tlb_resp.pf.st ? msrh_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
+                           w_ex1_tlb_resp.ae.st ? msrh_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                           msrh_pkg::except_t'('h0);
 
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
