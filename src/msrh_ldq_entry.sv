@@ -300,6 +300,8 @@ always_comb begin
         w_entry_next.state = LDQ_DEAD;
       end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
+      end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
     LDQ_LRQ_FULL : begin
