@@ -461,32 +461,35 @@ always_comb begin
   endcase // case (r_ex2_pipe_ctrl.size)
 end
 
+logic [riscv_pkg::XLEN_W-1: 0] w_ex2_l1d_data;
+assign w_ex2_l1d_data = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0], 3'b000} +: riscv_pkg::XLEN_W];
+
 generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin
   assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_stbuf_fwd_dw[b_idx] ? w_stbuf_fwd_aligned_data[b_idx*8 +: 8] :
                                               w_ex2_fwd_dw  [b_idx] ? w_ex2_fwd_aligned_data  [b_idx*8 +: 8] :
-                                                                      w_ex2_data_tmp          [b_idx*8 +: 8];
+                                                                      w_ex2_l1d_data          [b_idx*8 +: 8];
 end
 endgenerate
 
 always_comb begin
   case(r_ex2_pipe_ctrl.size)
 `ifdef RV64
-    SIZE_DW : w_ex2_data_tmp = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:3], 3'b000, 3'b000} +: 64];
+    SIZE_DW : w_ex2_data_tmp = w_ex2_fwd_final_data;
 `endif // RV64
-    SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:2],  2'b00, 3'b000} +: 32]};
-    SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:1],   1'b0, 3'b000} +: 16]};
-    SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0],         3'b000} +:  8]};
-    default : w_ex2_data_tmp =  {(riscv_pkg::XLEN_W- 0){1'b0}};
+    SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, w_ex2_fwd_final_data[31: 0]};
+    SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, w_ex2_fwd_final_data[15: 0]};
+    SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, w_ex2_fwd_final_data[ 7: 0]};
+    default : w_ex2_data_tmp = 'h0;
   endcase // case (r_ex2_pipe_ctrl.size)
   if (r_ex2_pipe_ctrl.sign == SIGN_S) begin
     case(r_ex2_pipe_ctrl.size)
-      SIZE_W  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){w_ex2_fwd_final_data[31]}}, w_ex2_fwd_final_data[31: 0]};
-      SIZE_H  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-16){w_ex2_fwd_final_data[15]}}, w_ex2_fwd_final_data[15: 0]};
-      SIZE_B  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W- 8){w_ex2_fwd_final_data[ 7]}}, w_ex2_fwd_final_data[ 7: 0]};
-      default : w_ex2_data_sign_ext = w_ex2_fwd_final_data;
+      SIZE_W  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){w_ex2_data_tmp[31]}}, w_ex2_data_tmp[31: 0]};
+      SIZE_H  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-16){w_ex2_data_tmp[15]}}, w_ex2_data_tmp[15: 0]};
+      SIZE_B  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W- 8){w_ex2_data_tmp[ 7]}}, w_ex2_data_tmp[ 7: 0]};
+      default : w_ex2_data_sign_ext = w_ex2_data_tmp;
     endcase // case (r_ex2_pipe_ctrl.size)
   end else begin
-    w_ex2_data_sign_ext = w_ex2_fwd_final_data;
+    w_ex2_data_sign_ext = w_ex2_data_tmp;
   end
 end // always_comb
 
