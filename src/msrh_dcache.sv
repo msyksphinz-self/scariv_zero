@@ -177,6 +177,70 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 `endif // VERILATOR
+
+
+logic [63: 0] r_cycle_count;
+logic [10: 0] r_req_valid_count [RD_PORT_NUM];
+logic [10: 0] r_hit_count       [RD_PORT_NUM];
+logic [10: 0] r_miss_count      [RD_PORT_NUM];
+logic [10: 0] r_conflict_count  [RD_PORT_NUM];
+
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+  end
+end
+
+generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : perf_port_loop
+  logic r_s1_valid;
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_req_valid_count [p_idx] <= 'h0;
+      r_hit_count [p_idx] <= 'h0;
+      r_miss_count [p_idx] <= 'h0;
+      r_conflict_count [p_idx] <= 'h0;
+    end else begin
+      r_s1_valid <= l1d_rd_if[p_idx].s0_valid;
+      if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+        r_req_valid_count [p_idx] <= 'h0;
+        r_hit_count [p_idx] <= 'h0;
+        r_miss_count [p_idx] <= 'h0;
+        r_conflict_count [p_idx] <= 'h0;
+      end else begin
+        if (r_s1_valid) begin
+          r_req_valid_count [p_idx] <= r_req_valid_count [p_idx] + 'h1;
+          if (w_dc_read_resp[p_idx].conflict) begin
+            r_conflict_count [p_idx] <= r_conflict_count [p_idx] + 'h1;
+          end else if (w_dc_read_resp[p_idx].miss) begin
+            r_miss_count [p_idx] <= r_miss_count [p_idx] + 'h1;
+          end else if (w_dc_read_resp[p_idx].hit) begin
+            r_hit_count [p_idx] <= r_hit_count [p_idx] + 'h1;
+          end
+        end
+      end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+    end // else: !if(!i_reset_n)
+  end // always_ff @ (negedge i_clk, negedge i_reset_n)
+end // block: port_loop
+endgenerate
+
+function void dump_perf (int fp);
+
+  $fwrite(fp, "  \"dcache\" : {\n");
+  for (int p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
+    $fwrite(fp, "    \"port[%1d]\" : {", p_idx);
+    $fwrite(fp, "    \"req\" : %5d, ", r_req_valid_count[p_idx]);
+    $fwrite(fp, "    \"hit\" : %5d, ", r_hit_count[p_idx]);
+    $fwrite(fp, "    \"miss\" : %5d, ", r_miss_count[p_idx]);
+    $fwrite(fp, "    \"conflict\" : %5d", r_conflict_count[p_idx]);
+    $fwrite(fp, "    \"}\n");
+  end
+  $fwrite(fp, "  },\n");
+
+endfunction // dump_perf
+
 `endif // SIMULATION
 
 

@@ -304,11 +304,13 @@ logic [63: 0] r_inst_count;
 logic [63: 0] r_dead_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
     r_commit_count <= 'h0;
     r_inst_count   <= 'h0;
     r_dead_count   <= 'h0;
+    r_cycle_count  <= 'h0;
   end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
       r_commit_count <= 'h0;
       r_inst_count   <= 'h0;
@@ -329,9 +331,9 @@ end
 
 function void dump_perf (int fp);
   $fwrite(fp, "  \"commit\" : {");
-  $fwrite(fp, "  \"cmt\" : %d, ", r_commit_count);
-  $fwrite(fp, "  \"inst\" : %d, ", r_inst_count);
-  $fwrite(fp, "  \"dead\" : %d", r_dead_count);
+  $fwrite(fp, "  \"cmt\" : %5d, ", r_commit_count);
+  $fwrite(fp, "  \"inst\" : %5d, ", r_inst_count);
+  $fwrite(fp, "  \"dead\" : %5d", r_dead_count);
   $fwrite(fp, "  },\n");
 endfunction
 

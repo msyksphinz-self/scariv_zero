@@ -313,4 +313,48 @@ assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;
 assign ex3_br_upd_if.brtag  = r_ex3_issue.brtag;
 assign ex3_br_upd_if.br_mask= r_ex3_issue.br_mask;
 
+
+`ifdef SIMULATION
+logic [63: 0] r_cycle_count;
+logic [10: 0] r_bru_valid_count;
+logic [10: 0] r_bru_hit_count;
+
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+  end
+end
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_bru_valid_count <= 'h0;
+    r_bru_hit_count <= 'h0;
+  end else begin
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_bru_valid_count <= 'h0;
+      r_bru_hit_count <= 'h0;
+    end else begin
+      if (ex3_br_upd_if.update) begin
+        r_bru_valid_count <= r_bru_valid_count + 'h1;
+        if (!ex3_br_upd_if.mispredict) begin
+          r_bru_hit_count <= r_bru_hit_count + 'h1;
+        end
+      end
+    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+function void dump_perf (int fp);
+
+  $fwrite(fp, "  \"branch\" : {");
+  $fwrite(fp, "    \"execute\" : %5d, ", r_bru_valid_count);
+  $fwrite(fp, "    \"hit\" : %5d ", r_bru_hit_count);
+  $fwrite(fp, "  },\n");
+
+endfunction // dump_perf
+`endif // SIMULATION
+
 endmodule // msrh_bru_pipe
