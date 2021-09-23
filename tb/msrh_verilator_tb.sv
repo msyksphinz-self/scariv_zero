@@ -335,6 +335,7 @@ module msrh_tb (
   assign w_msrh_reset_n = i_msrh_reset_n;
 
   `include "tb_json_dumper.sv"
+  `include "tb_json_perf_dumper.sv"
 
 // ------------------------------
 // Instruction Cache Checker

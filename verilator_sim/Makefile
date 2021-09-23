@@ -201,7 +201,8 @@ rv64_giant_benchmarks:
 	ln -sf ../spike_dpi/$@ .
 
 $(FILELIST): ../src/filelist.f filelist.f
-	cat $^ > $@
+	echo "../tb/sim_pkg.sv" > $@
+	cat $^ >> $@
 
 clean:
 	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES)
