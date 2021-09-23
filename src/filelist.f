@@ -9,6 +9,7 @@
 ../src/msrh_lsu_pkg.sv
 ../src/msrh_bru_pkg.sv
 ../src/msrh_csu_pkg.sv
+../src/msrh_predict_pkg.sv
 
 ../src/l2_if.sv
 ../src/l1d_if.sv
@@ -120,5 +121,7 @@
 ../src/msrh_csr.sv
 
 ../src/pma_map.sv
+
+../src/msrh_btb.sv
 
 ../src/l2_if_arbiter.sv
