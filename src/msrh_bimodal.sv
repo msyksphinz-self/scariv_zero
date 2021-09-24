@@ -23,7 +23,7 @@ logic [ 1: 0] w_counter;
 data_array_2p
   #(
     .WIDTH (2),
-    .ADDR_W (BTB_ENTRY_SIZE)
+    .ADDR_W ($clog2(BTB_ENTRY_SIZE))
     )
 bim_array
   (
@@ -31,10 +31,10 @@ bim_array
    .i_reset_n (i_reset_n),
 
    .i_wr   (update_bim_if.valid),
-   .i_wr_addr (update_bim_if.pc_vaddr[$clog2(BTB_ENTRY_SIZE)-1: 2]),
+   .i_wr_addr (update_bim_if.pc_vaddr[$clog2(BTB_ENTRY_SIZE): 1]),
    .i_wr_data (w_update_counter),
 
-   .i_rd_addr (search_bim_if.s0_pc_vaddr[$clog2(BTB_ENTRY_SIZE)-1: 2]),
+   .i_rd_addr (search_bim_if.s0_pc_vaddr[$clog2(BTB_ENTRY_SIZE): 1]),
    .o_rd_data (w_counter)
  );
 
