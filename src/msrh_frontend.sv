@@ -1,4 +1,14 @@
+// ------------------------------------------------------------------------
+// NAME : MRSH Frontend Instruction Fetcher
+// TYPE : module
+// ------------------------------------------------------------------------
+// Frontend Instruction Fetcher and Predictor
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module msrh_frontend
+  import msrh_predict_pkg::*;
 (
  input logic i_clk,
  input logic i_reset_n,
@@ -202,7 +212,7 @@ always_comb begin
       end
     endcase // case (i_commit.except_type)
   end else if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
-    w_s0_vaddr_flush_next = br_upd_if.vaddr;
+    w_s0_vaddr_flush_next = br_upd_if.target_vaddr;
   end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
     w_s0_vaddr_flush_next = 'h0;
   end // else: !if(|(i_commit.except_valid & ~i_commit.dead_id))
@@ -477,5 +487,47 @@ u_msrh_inst_buffer
 
    .iq_disp        (iq_disp)
    );
+
+// =======================
+// Predictors
+// =======================
+btb_update_if w_btb_update_if ();
+btb_search_if w_btb_search_if ();
+
+bim_update_if w_bim_update_if ();
+bim_search_if w_bim_search_if ();
+
+assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
+assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
+// assign w_btb_search_if.s1_hit         = ;
+// assign w_btb_search_if.s1_target_addr = ;
+
+assign w_btb_update_if.valid          = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
+assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
+
+assign w_bim_search_if.s0_valid       = w_s0_ic_req.valid;
+assign w_bim_search_if.s0_pc_vaddr    = w_s0_vaddr;
+// assign w_bim_search_if.s1_bim_value   = ;
+
+assign w_bim_update_if.valid          = br_upd_if.update & ~br_upd_if.dead;
+assign w_bim_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
+assign w_bim_update_if.hit            = br_upd_if.update & ~br_upd_if.dead & ~br_upd_if.mispredict;
+// assign w_bim_update_if.bim_value      = ;
+
+msrh_predictor u_predictor
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .update_btb_if (w_btb_update_if),
+   .search_btb_if (w_btb_search_if),
+
+   .update_bim_if (w_bim_update_if),
+   .search_bim_if (w_bim_search_if),
+
+   .i_commit (i_commit)
+   );
+
 
 endmodule // msrh_frontend

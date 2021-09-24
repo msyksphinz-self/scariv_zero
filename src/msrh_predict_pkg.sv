@@ -22,20 +22,20 @@ endpackage // msrh_predict_pkg
 interface btb_search_if;
 
   logic                                                 s0_valid;
-  logic [riscv_pkg::VADDR_W-1:0]                        s0_vaddr;
+  logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
   logic                                                 s1_hit;
   logic [riscv_pkg::VADDR_W-1:0]                        s1_target_addr;
 
   modport master (
     output s0_valid,
-    output s0_vaddr,
+    output s0_pc_vaddr,
     input s1_hit,
     input s1_target_addr
   );
 
   modport slave (
     input s0_valid,
-    input s0_vaddr,
+    input s0_pc_vaddr,
     output s1_hit,
     output s1_target_addr
   );
@@ -51,7 +51,7 @@ interface btb_update_if;
 
   modport master (
     output valid,
-    output pc_addr,
+    output pc_vaddr,
     output target_vaddr
   );
 
@@ -59,6 +59,51 @@ interface btb_update_if;
     input valid,
     input pc_vaddr,
     input target_vaddr
+  );
+
+endinterface // btb_search_if
+
+
+interface bim_search_if;
+
+  logic                                                 s0_valid;
+  logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
+  logic [ 1: 0]                                         s1_bim_value;
+
+  modport master (
+    output s0_valid,
+    output s0_pc_vaddr,
+    input  s1_bim_value
+  );
+
+  modport slave (
+    input s0_valid,
+    input s0_pc_vaddr,
+    output s1_bim_value
+  );
+
+endinterface // btb_search_if
+
+
+interface bim_update_if;
+
+  logic                                                 valid;
+  logic [riscv_pkg::VADDR_W-1:0]                        pc_vaddr;
+  logic                                                 hit;
+  logic [ 1: 0]                                         bim_value;
+
+  modport master (
+    output valid,
+    output pc_vaddr,
+    output hit,
+    output bim_value
+  );
+
+  modport slave (
+    input valid,
+    input pc_vaddr,
+    input hit,
+    input bim_value
   );
 
 endinterface // btb_search_if

@@ -304,14 +304,15 @@ always_comb begin
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 
-assign ex3_br_upd_if.update     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
-assign ex3_br_upd_if.dead       = r_ex3_dead;
-assign ex3_br_upd_if.mispredict = r_ex3_result; // xxx: currently every branch taken is misprediction
-assign ex3_br_upd_if.vaddr  = r_ex3_br_vaddr;
-assign ex3_br_upd_if.cmt_id = r_ex3_issue.cmt_id;
-assign ex3_br_upd_if.grp_id = r_ex3_issue.grp_id;
-assign ex3_br_upd_if.brtag  = r_ex3_issue.brtag;
-assign ex3_br_upd_if.br_mask= r_ex3_issue.br_mask;
+assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.dead          = r_ex3_dead;
+assign ex3_br_upd_if.mispredict    = r_ex3_result; // xxx: currently every branch taken is misprediction
+assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.pc_addr;
+assign ex3_br_upd_if.target_vaddr  = r_ex3_br_vaddr;
+assign ex3_br_upd_if.cmt_id        = r_ex3_issue.cmt_id;
+assign ex3_br_upd_if.grp_id        = r_ex3_issue.grp_id;
+assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
+assign ex3_br_upd_if.br_mask       = r_ex3_issue.br_mask;
 
 
 `ifdef SIMULATION

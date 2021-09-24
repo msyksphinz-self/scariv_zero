@@ -59,6 +59,7 @@
 ../src/msrh_rough_older_check.sv
 
 ../src/data_array.sv
+../src/data_array_2p.sv
 ../src/msrh_icache.sv
 ../src/tag_array.sv
 ../src/msrh_frontend.sv
@@ -122,6 +123,8 @@
 
 ../src/pma_map.sv
 
+../src/msrh_predictor.sv
+../src/msrh_bimodal.sv
 ../src/msrh_btb.sv
 
 ../src/l2_if_arbiter.sv

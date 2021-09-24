@@ -111,7 +111,7 @@ always_comb begin
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.vaddr;
+        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
       end
     end
   end // if (i_load_valid)
@@ -148,7 +148,7 @@ always_comb begin
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) &
           ~br_upd_if.dead & br_upd_if.mispredict) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.vaddr;
+        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
       end
     end
   end

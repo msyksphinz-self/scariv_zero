@@ -24,7 +24,8 @@ interface br_upd_if;
 
   logic                                update;
   logic                                mispredict;
-  logic [riscv_pkg::VADDR_W-1: 0]      vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
   logic                                dead;
   logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
@@ -35,7 +36,8 @@ interface br_upd_if;
     output update,
     output mispredict,
     output dead,
-    output vaddr,
+    output pc_vaddr,
+    output target_vaddr,
     output cmt_id,
     output grp_id,
     output brtag,
@@ -46,7 +48,8 @@ interface br_upd_if;
     input update,
     input mispredict,
     input dead,
-    input vaddr,
+    input pc_vaddr,
+    input target_vaddr,
     input cmt_id,
     input grp_id,
     input brtag,
