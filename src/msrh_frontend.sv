@@ -87,6 +87,13 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
 logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 msrh_pkg::except_t              r_s2_tlb_except_cause;
+
+logic                           r_s2_bim_valid;
+logic [ 1: 0]                   r_s2_bim_value;
+logic                           r_s2_btb_valid;
+logic [riscv_pkg::VADDR_W-1: 0] r_s2_btb_target_vaddr;
+
+
 `ifdef SIMULATION
 logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
 `endif // SIMULATION
@@ -455,8 +462,8 @@ msrh_icache u_msrh_icache
    .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
    );
 
-logic w_inst_buffer_load_valid;
-assign w_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
+logic w_s2_inst_buffer_load_valid;
+assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                   (w_s2_inst_valid  |
                                    (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
@@ -464,7 +471,6 @@ assign w_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
 logic [riscv_pkg::PADDR_W-1: 0] w_s2_ic_resp_debug_addr;
 assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.addr, 1'b0};
 `endif // SIMULATION
-
 
 msrh_inst_buffer
 u_msrh_inst_buffer
@@ -474,7 +480,10 @@ u_msrh_inst_buffer
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_flush_valid),
 
-   .i_inst_valid (w_inst_buffer_load_valid),
+   .i_s2_inst_valid       (w_s2_inst_buffer_load_valid),
+   .i_s2_bim_value        (r_s2_bim_value),
+   .i_s2_btb_valid        (r_s2_btb_valid),
+   .i_s2_btb_target_vaddr (r_s2_btb_target_vaddr),
 
    .i_commit (i_commit),
 
@@ -498,7 +507,8 @@ bim_update_if w_bim_update_if ();
 bim_search_if w_bim_search_if ();
 
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
-assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
+assign w_btb_search_if.s0_pc_vaddr    = {w_s0_vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)],
+                                         {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
 // assign w_btb_search_if.s1_hit         = ;
 // assign w_btb_search_if.s1_target_addr = ;
 
@@ -508,7 +518,8 @@ assign w_btb_update_if.pc_vaddr       = {br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 
 assign w_bim_search_if.s0_valid       = w_s0_ic_req.valid;
-assign w_bim_search_if.s0_pc_vaddr    = w_s0_vaddr;
+assign w_bim_search_if.s0_pc_vaddr    = {w_s0_vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)],
+                                         {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
 // assign w_bim_search_if.s1_bim_value   = ;
 
 assign w_bim_update_if.valid          = br_upd_if.update & ~br_upd_if.dead;
@@ -516,6 +527,21 @@ assign w_bim_update_if.pc_vaddr       = {br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1
                                          {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
 assign w_bim_update_if.hit            = br_upd_if.update & ~br_upd_if.dead & ~br_upd_if.mispredict;
 // assign w_bim_update_if.bim_value      = ;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_s2_bim_valid <= 1'b0;
+    r_s2_bim_value <= 2'b00;
+
+    r_s2_btb_valid <= 1'b0;
+    r_s2_btb_target_vaddr <= 'h0;
+  end else begin
+    r_s2_bim_value <= w_bim_search_if.s1_bim_value;
+
+    r_s2_btb_valid <= w_btb_search_if.s1_hit;
+    r_s2_btb_target_vaddr <= w_btb_search_if.s1_target_vaddr;
+  end
+end
 
 msrh_predictor u_predictor
   (

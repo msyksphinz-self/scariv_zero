@@ -27,11 +27,9 @@ assign update_entry.target_vaddr = update_btb_if.target_vaddr;
 logic           r_s1_search_valid;
 logic [riscv_pkg::VADDR_W-1: $clog2(BTB_ENTRY_SIZE)] r_s1_pc_tag;
 
-localparam SRAM_WIDTH = $bits(btb_entry_t) * 8 / 8;
-
-data_array
+data_array_1p
   #(
-    .WIDTH (SRAM_WIDTH),
+    .WIDTH ($bits(btb_entry_t)),
     .ADDR_W ($clog2(BTB_ENTRY_SIZE))
     )
 btb_array
@@ -42,7 +40,6 @@ btb_array
    .i_wr   (update_btb_if.valid),
    .i_addr (update_btb_if.pc_vaddr[$clog2(BTB_ENTRY_SIZE): 1]),
    .o_data (search_entry),
-   .i_be   ({(SRAM_WIDTH/8){1'b1}}),
    .i_data (update_entry)
  );
 
@@ -58,6 +55,7 @@ end
 
 
 assign search_btb_if.s1_hit = r_s1_search_valid &
+                              search_entry.valid &
                               (search_entry.pc_tag == r_s1_pc_tag);
 assign search_btb_if.s1_target_vaddr = search_entry.target_vaddr;
 

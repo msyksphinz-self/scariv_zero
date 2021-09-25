@@ -5,7 +5,10 @@ module msrh_inst_buffer
  input logic                                     i_reset_n,
  input logic                                     i_flush_valid,
 
- input logic                                     i_inst_valid,
+ input logic                                     i_s2_inst_valid,
+ input logic [ 1: 0]                             i_s2_bim_value,
+ input logic                                     i_s2_btb_valid,
+ input logic [riscv_pkg::VADDR_W-1: 0]           i_s2_btb_target_vaddr,
 
  // PC Update from Committer
  input msrh_pkg::commit_blk_t                    i_commit,
@@ -76,6 +79,11 @@ typedef struct packed {
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
   logic                                      tlb_except_valid;
   msrh_pkg::except_t                         tlb_except_cause;
+
+  logic                                      pred_taken;
+  logic [ 1: 0]                              bim_value;
+  logic                                      btb_valid;
+  logic [riscv_pkg::VADDR_W-1: 0]            btb_target_vaddr;
 `ifdef SIMULATION
   logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
 `endif // SIMULATION
@@ -108,7 +116,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 
-assign w_ptr_in_fire  = i_inst_valid & o_inst_ready;
+assign w_ptr_in_fire  = i_s2_inst_valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued;
 
 assign w_flush_pipeline = i_flush_valid;
@@ -152,12 +160,18 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
         r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
         r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
+
+        r_inst_queue[idx].pred_taken <= i_s2_bim_value[1] & i_s2_btb_valid;
+        r_inst_queue[idx].bim_value  <= i_s2_bim_value;
+        r_inst_queue[idx].btb_valid  <= i_s2_btb_valid;
+        r_inst_queue[idx].btb_target_vaddr <= i_s2_btb_target_vaddr;
+
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
       end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx)) begin
         r_inst_queue[idx].valid  <= 1'b0;
-      end // if (i_inst_valid & o_inst_ready)
+      end // if (i_s2_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -426,6 +440,12 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].rs2_regidx = w_expand_inst[d_idx][24:20];
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
+
+      iq_disp.inst[d_idx].pred_taken       = r_inst_queue[r_inst_buffer_outptr].pred_taken;
+      iq_disp.inst[d_idx].bim_value        = r_inst_queue[r_inst_buffer_outptr].bim_value;
+      iq_disp.inst[d_idx].btb_valid        = r_inst_queue[r_inst_buffer_outptr].btb_valid;
+      iq_disp.inst[d_idx].btb_target_vaddr = r_inst_queue[r_inst_buffer_outptr].btb_target_vaddr;
+
     end else begin // if (w_inst_disp_mask[d_idx])
       iq_disp.inst[d_idx] = 'h0;
     end // else: !if(w_inst_disp_mask[d_idx])

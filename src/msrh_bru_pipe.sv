@@ -306,7 +306,11 @@ end // always_comb
 
 assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
-assign ex3_br_upd_if.mispredict    = r_ex3_result; // xxx: currently every branch taken is misprediction
+assign ex3_br_upd_if.mispredict    = ~r_ex3_issue.btb_valid & r_ex3_result |
+                                      r_ex3_issue.btb_valid &
+                                     ((r_ex3_result != r_ex3_issue.pred_taken) |
+                                      (r_ex3_result & r_ex3_issue.pred_taken &
+                                       (r_ex3_br_vaddr != r_ex3_issue.btb_target_vaddr)));
 assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.pc_addr;
 assign ex3_br_upd_if.target_vaddr  = r_ex3_br_vaddr;
 assign ex3_br_upd_if.cmt_id        = r_ex3_issue.cmt_id;

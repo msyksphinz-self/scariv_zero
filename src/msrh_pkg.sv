@@ -87,18 +87,23 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic illegal_valid; // decode error: illegal instruction
     logic [31:0] inst;
 
-  logic          rvc_inst_valid;
-  logic [15: 0]  rvc_inst;
+    logic          rvc_inst_valid;
+    logic [15: 0]  rvc_inst;
 
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     inst_cat_t   cat;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
     logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
-    logic [2:0] op;
-    logic imm;
-    logic size;
-    logic sign;
+    // logic [2:0] op;
+    // logic imm;
+    // logic size;
+    // logic sign;
+
+    logic                           pred_taken;
+    logic [ 1: 0]                   bim_value;
+    logic                           btb_valid;
+    logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
 
     logic rd_valid;
     reg_t rd_type;
@@ -195,6 +200,11 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [CMT_ID_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
 
+    logic                           pred_taken;
+    logic [ 1: 0]                   bim_value;
+    logic                           btb_valid;
+    logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
+
     logic rd_valid;
     reg_t rd_type;
     logic [4:0] rd_regidx;
@@ -239,6 +249,11 @@ function issue_t assign_issue_t(disp_t in,
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
+
+  ret.pred_taken       = in.pred_taken;
+  ret.bim_value        = in.bim_value;
+  ret.btb_valid        = in.btb_valid;
+  ret.btb_target_vaddr = in.btb_target_vaddr;
 
   ret.rd_valid = in.rd_valid;
   ret.rd_type = in.rd_type;

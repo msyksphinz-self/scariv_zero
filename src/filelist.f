@@ -59,6 +59,7 @@
 ../src/msrh_rough_older_check.sv
 
 ../src/data_array.sv
+../src/data_array_1p.sv
 ../src/data_array_2p.sv
 ../src/msrh_icache.sv
 ../src/tag_array.sv
