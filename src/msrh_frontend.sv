@@ -526,7 +526,7 @@ assign w_bim_update_if.valid          = br_upd_if.update & ~br_upd_if.dead;
 assign w_bim_update_if.pc_vaddr       = {br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)],
                                          {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
 assign w_bim_update_if.hit            = br_upd_if.update & ~br_upd_if.dead & ~br_upd_if.mispredict;
-// assign w_bim_update_if.bim_value      = ;
+assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

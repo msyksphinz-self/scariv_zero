@@ -61,7 +61,8 @@ vlib:
 	$(VLIB) work
 
 $(FILELIST): ../src/filelist.f filelist.f
-	$(shell cygpath -w -a $(RV_PKG) > $@)
+	$(shell cygpath -w -a ../tb/sim_pkg.sv > $@)
+	$(shell cygpath -w -a $(RV_PKG) >> $@)
 	$(shell cygpath -w -a $(CONFIG_PKG) >> $@)
 	../scripts/gen_filelist.sh $^ >> $@
 	sed -i 's|\\|/|g' $@
