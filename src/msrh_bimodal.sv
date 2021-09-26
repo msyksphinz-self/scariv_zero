@@ -20,6 +20,22 @@ module msrh_bim
 logic [ 1: 0] w_update_counter;
 logic [ 1: 0] w_counter;
 
+logic [BTB_ENTRY_SIZE-1: 0] r_bim_valids;
+logic                       r_s1_bim_valids;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_bim_valids <= {BTB_ENTRY_SIZE{1'b0}};
+    r_s1_bim_valids <= 1'b0;
+  end else begin
+    if (update_bim_if.valid) begin
+      r_bim_valids[update_bim_if.pc_vaddr[$clog2(BTB_ENTRY_SIZE): 1]] <= 1'b1;
+    end
+    r_s1_bim_valids <= r_bim_valids[search_bim_if.s0_pc_vaddr[$clog2(BTB_ENTRY_SIZE): 1]];
+  end
+end
+
+
 data_array_2p
   #(
     .WIDTH (2),
@@ -43,6 +59,6 @@ assign w_update_counter =  (&update_bim_if.bim_value & update_bim_if.hit |
                            update_bim_if.taken ? update_bim_if.bim_value + 2'b01 :
                            update_bim_if.bim_value - 2'b01;
 
-assign search_bim_if.s1_bim_value = w_counter;
+assign search_bim_if.s1_bim_value = r_s1_bim_valids ? w_counter : 2'b10;  // by default, weakly taken
 
 endmodule // msrh_bim

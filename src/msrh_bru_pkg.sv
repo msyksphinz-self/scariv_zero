@@ -25,6 +25,7 @@ interface br_upd_if;
   logic                                update;
   logic                                taken;
   logic                                mispredict;
+  logic [ 1: 0]                        bim_value;
   logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
   logic                                dead;
@@ -37,6 +38,7 @@ interface br_upd_if;
     output update,
     output taken,
     output mispredict,
+    output bim_value,
     output dead,
     output pc_vaddr,
     output target_vaddr,
@@ -50,6 +52,7 @@ interface br_upd_if;
     input update,
     input taken,
     input mispredict,
+    input bim_value,
     input dead,
     input pc_vaddr,
     input target_vaddr,

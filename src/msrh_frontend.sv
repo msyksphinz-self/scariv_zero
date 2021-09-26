@@ -531,7 +531,7 @@ assign w_bim_update_if.pc_vaddr       = {br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1
                                          {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
 assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
 assign w_bim_update_if.taken          = br_upd_if.taken;
-// assign w_bim_update_if.bim_value      = ;
+assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
 assign w_s2_predict_valid = r_s2_btb_valid & r_s2_bim_value[1];
 
