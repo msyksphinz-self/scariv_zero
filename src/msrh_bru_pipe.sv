@@ -305,6 +305,7 @@ always_comb begin
 end // always_comb
 
 assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.taken         = r_ex3_result;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
 assign ex3_br_upd_if.mispredict    = ~r_ex3_issue.btb_valid & r_ex3_result |
                                       r_ex3_issue.btb_valid &

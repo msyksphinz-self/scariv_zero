@@ -38,9 +38,9 @@ bim_array
    .o_rd_data (w_counter)
  );
 
-assign w_update_counter =  (&update_bim_if.bim_value &  update_bim_if.hit |
-                           ~|update_bim_if.bim_value & ~update_bim_if.hit) ? update_bim_if.bim_value :
-                           update_bim_if.hit ? update_bim_if.bim_value + 2'b01 :
+assign w_update_counter =  (&update_bim_if.bim_value & update_bim_if.hit |
+                           ~|update_bim_if.bim_value & update_bim_if.hit) ? update_bim_if.bim_value :
+                           update_bim_if.taken ? update_bim_if.bim_value + 2'b01 :
                            update_bim_if.bim_value - 2'b01;
 
 assign search_bim_if.s1_bim_value = w_counter;

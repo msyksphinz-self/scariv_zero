@@ -93,6 +93,8 @@ logic [ 1: 0]                   r_s2_bim_value;
 logic                           r_s2_btb_valid;
 logic [riscv_pkg::VADDR_W-1: 0] r_s2_btb_target_vaddr;
 
+logic                           w_s2_predict_valid;
+
 
 `ifdef SIMULATION
 logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
@@ -349,7 +351,9 @@ end
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
-assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next : r_s0_vaddr;
+assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next :
+                        w_s2_predict_valid ? r_s2_btb_target_vaddr :
+                        r_s0_vaddr;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
@@ -387,7 +391,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
     r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
-    r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready | w_s2_predict_valid;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid & w_s0_ic_req.valid /* & w_tlb_ready */;
@@ -416,7 +420,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear;
+    r_s2_clear <= r_s1_clear | w_s2_predict_valid;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss        ;
     r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
@@ -525,8 +529,11 @@ assign w_bim_search_if.s0_pc_vaddr    = {w_s0_vaddr[riscv_pkg::VADDR_W-1: $clog2
 assign w_bim_update_if.valid          = br_upd_if.update & ~br_upd_if.dead;
 assign w_bim_update_if.pc_vaddr       = {br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)],
                                          {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W){1'b0}}};
-assign w_bim_update_if.hit            = br_upd_if.update & ~br_upd_if.dead & ~br_upd_if.mispredict;
+assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
+assign w_bim_update_if.taken          = br_upd_if.taken;
 // assign w_bim_update_if.bim_value      = ;
+
+assign w_s2_predict_valid = r_s2_btb_valid & r_s2_bim_value[1];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

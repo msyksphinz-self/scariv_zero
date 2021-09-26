@@ -90,12 +90,14 @@ interface bim_update_if;
   logic                                                 valid;
   logic [riscv_pkg::VADDR_W-1:0]                        pc_vaddr;
   logic                                                 hit;
+  logic                                                 taken;
   logic [ 1: 0]                                         bim_value;
 
   modport master (
     output valid,
     output pc_vaddr,
     output hit,
+    output taken,
     output bim_value
   );
 
@@ -103,6 +105,7 @@ interface bim_update_if;
     input valid,
     input pc_vaddr,
     input hit,
+    input taken,
     input bim_value
   );
 

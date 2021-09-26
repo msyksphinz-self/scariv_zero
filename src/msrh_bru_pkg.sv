@@ -23,6 +23,7 @@ endinterface // done_if
 interface br_upd_if;
 
   logic                                update;
+  logic                                taken;
   logic                                mispredict;
   logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
@@ -34,6 +35,7 @@ interface br_upd_if;
 
   modport master (
     output update,
+    output taken,
     output mispredict,
     output dead,
     output pc_vaddr,
@@ -46,6 +48,7 @@ interface br_upd_if;
 
   modport slave (
     input update,
+    input taken,
     input mispredict,
     input dead,
     input pc_vaddr,
