@@ -344,8 +344,11 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(1                          
 assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | w_inst_illegal_disp | w_fetch_except_disp;
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
-bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b0, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
-assign w_inst_disp_mask = w_inst_disp_mask_tmp - 1;
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
+assign w_inst_disp_mask = r_inst_queue[r_inst_buffer_outptr].btb_valid &
+                          r_inst_queue[r_inst_buffer_outptr].pred_taken &
+                          |((w_inst_disp_mask_tmp - 1) & w_inst_bru_disp) ? {w_inst_bru_disp, 1'b0} - 1 :
+                          w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
