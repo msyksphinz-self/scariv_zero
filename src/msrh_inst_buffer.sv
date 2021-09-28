@@ -71,6 +71,9 @@ r2_t rs2_field_type[msrh_conf_pkg::DISP_SIZE];
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
 logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
+logic                           w_head_predict_taken_issued;
+logic                           w_predict_taken_valid;
+
 
 typedef struct packed {
   logic                                      valid;
@@ -115,7 +118,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
-
+assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst_valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued;
 
@@ -169,7 +172,8 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
-      end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx)) begin
+      end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx) |
+                   w_head_predict_taken_issued) begin
         r_inst_queue[idx].valid  <= 1'b0;
       end // if (i_s2_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)
@@ -345,14 +349,15 @@ assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | 
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
-assign w_inst_disp_mask = r_inst_queue[r_inst_buffer_outptr].btb_valid &
-                          r_inst_queue[r_inst_buffer_outptr].pred_taken &
+assign w_predict_taken_valid = r_inst_queue[r_inst_buffer_outptr].btb_valid &
+                               r_inst_queue[r_inst_buffer_outptr].pred_taken;
+assign w_inst_disp_mask = w_predict_taken_valid &
                           |((w_inst_disp_mask_tmp - 1) & w_inst_bru_disp) ? {w_inst_bru_disp, 1'b0} - 1 :
                           w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
-assign iq_disp.is_br_included = |w_inst_is_br;
+assign iq_disp.is_br_included = |w_inst_bru_disp;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
