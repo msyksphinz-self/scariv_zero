@@ -264,6 +264,8 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
         end
+      end else if (w_s2_predict_valid) begin
+        w_s0_vaddr_next = r_s2_btb_target_vaddr;
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
@@ -533,7 +535,8 @@ assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
 assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
-assign w_s2_predict_valid = r_s2_btb_valid & r_s2_bim_value[1];
+assign w_s2_predict_valid = w_s2_inst_buffer_load_valid &
+                            r_s2_btb_valid & r_s2_bim_value[1];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

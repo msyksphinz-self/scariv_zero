@@ -120,7 +120,7 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst_valid & o_inst_ready;
-assign w_ptr_out_fire = w_head_all_inst_issued;
+assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued;
 
 assign w_flush_pipeline = i_flush_valid;
 
@@ -209,7 +209,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_head_start_pos   <= 'h0;
   end else begin
-    if (w_flush_pipeline) begin
+    if (w_flush_pipeline | w_head_predict_taken_issued) begin
       r_head_start_pos <= 'h0;
     end else if (w_head_all_inst_issued) begin
       // Move to next Line, carring lower bits for next
