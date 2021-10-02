@@ -314,7 +314,8 @@ assign ex3_br_upd_if.mispredict    = ~r_ex3_issue.btb_valid & r_ex3_result |
                                        (r_ex3_br_vaddr != r_ex3_issue.btb_target_vaddr)));
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.pc_addr;
-assign ex3_br_upd_if.target_vaddr  = r_ex3_br_vaddr;
+assign ex3_br_upd_if.target_vaddr  = r_ex3_result ? r_ex3_br_vaddr :
+                                     r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr + 'h2 : r_ex3_issue.pc_addr + 'h4;
 assign ex3_br_upd_if.cmt_id        = r_ex3_issue.cmt_id;
 assign ex3_br_upd_if.grp_id        = r_ex3_issue.grp_id;
 assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
