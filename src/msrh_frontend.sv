@@ -264,18 +264,18 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
         end
-      end else if (w_s2_predict_valid) begin
-        w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
       end else if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
         w_s0_vaddr_next = w_s2_ic_miss_vaddr;
-      end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready) begin
+      end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready & !r_s2_clear) begin
         w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
         w_if_state_next = WAIT_IBUF_FREE;
+      end else if (w_s2_predict_valid) begin
+        w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -291,6 +291,14 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
         end
+//       end else if (w_s2_predict_valid) begin
+//         if (w_ic_refill_wakeup) begin
+//           w_if_state_next = FETCH_REQ;
+//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+//         end else begin
+//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//         end
       end else if (w_ic_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -307,6 +315,14 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
         end
+//       end else if (w_s2_predict_valid) begin
+//         if (w_tlb_refill_wakeup) begin
+//           w_if_state_next = FETCH_REQ;
+//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+//         end else begin
+//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//         end
       end else if (w_tlb_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -323,6 +339,14 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
         end
+//       end else if (w_s2_predict_valid) begin
+//         if (w_ibuf_refill_wakeup) begin
+//           w_if_state_next = FETCH_REQ;
+//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+//         end else begin
+//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//         end
       end else if (w_ibuf_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -532,8 +556,7 @@ assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
 assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
-assign w_s2_predict_valid = w_s2_inst_buffer_load_valid &
-                            r_s2_btb_valid & r_s2_bim_value[1];
+assign w_s2_predict_valid = w_s2_inst_valid & r_s2_btb_valid & r_s2_bim_value[1];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

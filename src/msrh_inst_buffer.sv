@@ -172,8 +172,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
-      end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx) |
-                   w_head_predict_taken_issued) begin
+      end else if ((w_head_all_inst_issued | w_head_predict_taken_issued) & (r_inst_buffer_outptr == idx)) begin
         r_inst_queue[idx].valid  <= 1'b0;
       end // if (i_s2_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)

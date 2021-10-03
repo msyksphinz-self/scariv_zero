@@ -313,7 +313,7 @@ assign ex3_br_upd_if.mispredict    = ~r_ex3_issue.btb_valid & r_ex3_result |
                                       (r_ex3_result & r_ex3_issue.pred_taken &
                                        (r_ex3_br_vaddr != r_ex3_issue.btb_target_vaddr)));
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
-assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.pc_addr;
+assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr : r_ex3_issue.pc_addr + 'h2;
 assign ex3_br_upd_if.target_vaddr  = r_ex3_result ? r_ex3_br_vaddr :
                                      r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr + 'h2 : r_ex3_issue.pc_addr + 'h4;
 assign ex3_br_upd_if.cmt_id        = r_ex3_issue.cmt_id;
@@ -325,8 +325,10 @@ assign ex3_br_upd_if.br_mask       = r_ex3_issue.br_mask;
 `ifdef SIMULATION
 logic [63: 0] r_cycle_count;
 logic [10: 0] r_bru_valid_count;
-logic [10: 0] r_bru_hit_count;
-
+logic [10: 0] r_bru_cmp_count;
+logic [10: 0] r_bru_cmp_hit_count;
+logic [10: 0] r_bru_uncond_count;
+logic [10: 0] r_bru_uncond_hit_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -339,16 +341,30 @@ end
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_bru_valid_count <= 'h0;
-    r_bru_hit_count <= 'h0;
+    r_bru_cmp_count <= 'h0;
+    r_bru_cmp_hit_count    <= 'h0;
+    r_bru_uncond_count     <= 'h0;
+    r_bru_uncond_hit_count <= 'h0;
   end else begin
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
       r_bru_valid_count <= 'h0;
-      r_bru_hit_count <= 'h0;
+      r_bru_cmp_count <= 'h0;
+      r_bru_cmp_hit_count    <= 'h0;
+      r_bru_uncond_count     <= 'h0;
+      r_bru_uncond_hit_count <= 'h0;
     end else begin
       if (ex3_br_upd_if.update) begin
         r_bru_valid_count <= r_bru_valid_count + 'h1;
-        if (!ex3_br_upd_if.mispredict) begin
-          r_bru_hit_count <= r_bru_hit_count + 'h1;
+        if (r_ex3_pipe_ctrl.op != OP__) begin
+          r_bru_cmp_count <= r_bru_cmp_count + 'h1;
+          if (!ex3_br_upd_if.mispredict) begin
+            r_bru_cmp_hit_count <= r_bru_cmp_hit_count + 'h1;
+          end
+        end else begin
+          r_bru_uncond_count <= r_bru_uncond_count + 'h1;
+          if (!ex3_br_upd_if.mispredict) begin
+            r_bru_uncond_hit_count <= r_bru_uncond_hit_count + 'h1;
+          end
         end
       end
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
@@ -359,10 +375,11 @@ function void dump_perf (int fp);
 
   $fwrite(fp, "  \"branch\" : {");
   $fwrite(fp, "    \"execute\" : %5d, ", r_bru_valid_count);
-  $fwrite(fp, "    \"hit\" : %5d ", r_bru_hit_count);
+  $fwrite(fp, "    \"cmp\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_cmp_count, r_bru_cmp_hit_count);
+  $fwrite(fp, "    \"uncond\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_uncond_count, r_bru_uncond_hit_count);
   $fwrite(fp, "  },\n");
 
-endfunction // dump_perf
+endfunction // dump_perfto
 `endif // SIMULATION
 
 endmodule // msrh_bru_pipe
