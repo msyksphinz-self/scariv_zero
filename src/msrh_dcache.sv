@@ -235,7 +235,7 @@ function void dump_perf (int fp);
     $fwrite(fp, "    \"hit\" : %5d, ", r_hit_count[p_idx]);
     $fwrite(fp, "    \"miss\" : %5d, ", r_miss_count[p_idx]);
     $fwrite(fp, "    \"conflict\" : %5d", r_conflict_count[p_idx]);
-    $fwrite(fp, "    \"}\n");
+    $fwrite(fp, "    \}\n");
   end
   $fwrite(fp, "  },\n");
 

@@ -172,8 +172,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
-      end else if (w_head_all_inst_issued & (r_inst_buffer_outptr == idx) |
-                   w_head_predict_taken_issued) begin
+      end else if ((w_head_all_inst_issued | w_head_predict_taken_issued) & (r_inst_buffer_outptr == idx)) begin
         r_inst_queue[idx].valid  <= 1'b0;
       end // if (i_s2_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)
@@ -245,10 +244,10 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
                              w_inst_buffer_outptr_p1;
 
-  assign w_local_rvc_inst   = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx]*16 +:16];
-  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    *16 +:16];
-  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx] *2 +: 2];
-  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2     *2 +: 2];
+  assign w_local_rvc_inst   = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]*16 +:16];
+  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0]*16 +:16];
+  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0] *2 +: 2];
+  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0] *2 +: 2];
   msrh_rvc_expander u_msrh_rvc_expander (.i_rvc_inst(w_local_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin

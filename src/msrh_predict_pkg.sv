@@ -11,10 +11,15 @@ package msrh_predict_pkg;
 
 localparam BTB_ENTRY_SIZE = 1024;
 
+localparam BTB_ENTRY_FIELD_MSB = $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2);
+
+localparam BTB_ENTRY_BIT_LSB   = BTB_ENTRY_FIELD_MSB + 1;
+localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
+
 typedef struct packed {
-  logic          valid;
-  logic [riscv_pkg::VADDR_W-1:$clog2(BTB_ENTRY_SIZE)] pc_tag;
-  logic [riscv_pkg::VADDR_W-1:0]                      target_vaddr;
+  logic                                            valid;
+  logic [riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1] pc_tag;
+  logic [riscv_pkg::VADDR_W-1:0]                   target_vaddr;
 } btb_entry_t;
 
 endpackage // msrh_predict_pkg
