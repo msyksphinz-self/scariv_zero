@@ -6,21 +6,20 @@ module msrh_inst_buffer
  input logic                                     i_flush_valid,
 
  input logic                                     i_s2_inst_valid,
- input logic [ 1: 0]                             i_s2_bim_value,
- input logic                                     i_s2_btb_valid,
- input logic [riscv_pkg::VADDR_W-1: 0]           i_s2_btb_target_vaddr,
+ btb_search_if.monitor                           btb_search_if,
+ bim_search_if.monitor                           bim_search_if,
 
  // PC Update from Committer
- input msrh_pkg::commit_blk_t                    i_commit,
+ input                                           msrh_pkg::commit_blk_t i_commit,
 
  output logic                                    o_inst_ready,
  input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
  input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
  input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
  input logic                                     i_inst_tlb_except_valid,
- input msrh_pkg::except_t                        i_inst_tlb_except_cause,
+ input                                           msrh_pkg::except_t i_inst_tlb_except_cause,
 
- disp_if.master                                  iq_disp
+                                                 disp_if.master iq_disp
  );
 
 logic                                       w_inst_buffer_fire;
@@ -74,6 +73,12 @@ logic                           w_head_all_inst_issued;
 logic                           w_head_predict_taken_issued;
 logic                           w_predict_taken_valid;
 
+typedef struct packed {
+  logic                           pred_taken;
+  logic [1:0]                     bim_value;
+  logic                           btb_valid;
+  logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
+} pred_info_t;
 
 typedef struct packed {
   logic                                      valid;
@@ -83,10 +88,8 @@ typedef struct packed {
   logic                                      tlb_except_valid;
   msrh_pkg::except_t                         tlb_except_cause;
 
-  logic                                      pred_taken;
-  logic [ 1: 0]                              bim_value;
-  logic                                      btb_valid;
-  logic [riscv_pkg::VADDR_W-1: 0]            btb_target_vaddr;
+  pred_info_t [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
+
 `ifdef SIMULATION
   logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
 `endif // SIMULATION
@@ -164,10 +167,12 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
         r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
 
-        r_inst_queue[idx].pred_taken <= i_s2_bim_value[1] & i_s2_btb_valid;
-        r_inst_queue[idx].bim_value  <= i_s2_bim_value;
-        r_inst_queue[idx].btb_valid  <= i_s2_btb_valid;
-        r_inst_queue[idx].btb_target_vaddr <= i_s2_btb_target_vaddr;
+        for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
+          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_valid[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_valid[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].btb_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
+        end
 
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};

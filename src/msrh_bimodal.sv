@@ -57,6 +57,10 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
         r_bim_valids[update_bim_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_bim_valids <= r_bim_valids[search_bim_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
+
+      search_bim_if.s2_bim_value[b_idx] <= w_s1_counter[b_idx];
+      search_bim_if.s2_pred_taken[b_idx] <= w_s1_counter[b_idx][1];
+
     end
   end
 
@@ -69,9 +73,5 @@ assign w_update_counter =  (&update_bim_if.bim_value & update_bim_if.hit |
                             ~|update_bim_if.bim_value & update_bim_if.hit) ? update_bim_if.bim_value :
                            update_bim_if.taken ? update_bim_if.bim_value + 2'b01 :
                            update_bim_if.bim_value - 2'b01;
-
-bit_oh_or #(.T(logic[1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
-bit_oh_target_bim(.i_oh(i_s1_btb_hit_oh), .i_data(w_s1_counter), .o_selected(search_bim_if.s1_bim_value));
-
 
 endmodule // msrh_bim

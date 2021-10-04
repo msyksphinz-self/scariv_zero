@@ -88,10 +88,7 @@ logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 msrh_pkg::except_t              r_s2_tlb_except_cause;
 
-logic                           r_s2_bim_valid;
-logic [ 1: 0]                   r_s2_bim_value;
-logic                           r_s2_btb_valid;
-logic [riscv_pkg::VADDR_W-1: 0] r_s2_btb_target_vaddr;
+logic [riscv_pkg::VADDR_W-1: 0] w_s2_btb_target_vaddr;
 
 logic                           w_s2_predict_valid;
 
@@ -274,7 +271,7 @@ always_comb begin
         w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
         w_if_state_next = WAIT_IBUF_FREE;
       end else if (w_s2_predict_valid) begin
-        w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+        w_s0_vaddr_next = (w_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -294,10 +291,10 @@ always_comb begin
 //       end else if (w_s2_predict_valid) begin
 //         if (w_ic_refill_wakeup) begin
 //           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//           w_s0_vaddr_next = (w_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
 //                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
 //         end else begin
-//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//           w_s0_vaddr_next = w_s2_btb_target_vaddr;
 //         end
       end else if (w_ic_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -318,10 +315,10 @@ always_comb begin
 //       end else if (w_s2_predict_valid) begin
 //         if (w_tlb_refill_wakeup) begin
 //           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//           w_s0_vaddr_next = (w_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
 //                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
 //         end else begin
-//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//           w_s0_vaddr_next = w_s2_btb_target_vaddr;
 //         end
       end else if (w_tlb_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -342,10 +339,10 @@ always_comb begin
 //       end else if (w_s2_predict_valid) begin
 //         if (w_ibuf_refill_wakeup) begin
 //           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (r_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+//           w_s0_vaddr_next = (w_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
 //                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
 //         end else begin
-//           w_s0_vaddr_next = r_s2_btb_target_vaddr;
+//           w_s0_vaddr_next = w_s2_btb_target_vaddr;
 //         end
       end else if (w_ibuf_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -379,7 +376,7 @@ assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next :
-                        w_s2_predict_valid ? r_s2_btb_target_vaddr :
+                        w_s2_predict_valid ? w_s2_btb_target_vaddr :
                         r_s0_vaddr;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
@@ -512,9 +509,8 @@ u_msrh_inst_buffer
    .i_flush_valid (w_flush_valid),
 
    .i_s2_inst_valid       (w_s2_inst_buffer_load_valid),
-   .i_s2_bim_value        (r_s2_bim_value),
-   .i_s2_btb_valid        (r_s2_btb_valid),
-   .i_s2_btb_target_vaddr (r_s2_btb_target_vaddr),
+   .bim_search_if         (w_bim_search_if),
+   .btb_search_if         (w_btb_search_if),
 
    .i_commit (i_commit),
 
@@ -556,22 +552,16 @@ assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
 assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
-assign w_s2_predict_valid = w_s2_inst_valid & r_s2_btb_valid & r_s2_bim_value[1];
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_array;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_oh;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_s2_bim_valid <= 1'b0;
-    r_s2_bim_value <= 2'b00;
+assign w_btb_bim_hit_array = w_btb_search_if.s2_hit & w_bim_search_if.s2_pred_taken;
 
-    r_s2_btb_valid <= 1'b0;
-    r_s2_btb_target_vaddr <= 'h0;
-  end else begin
-    r_s2_bim_value <= w_bim_search_if.s1_bim_value;
+assign w_s2_predict_valid = w_s2_inst_valid & |w_btb_bim_hit_array;
 
-    r_s2_btb_valid <= w_btb_search_if.s1_hit;
-    r_s2_btb_target_vaddr <= w_btb_search_if.s1_target_vaddr;
-  end
-end
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) bit_btb_select (.in(w_btb_bim_hit_array), .out(w_btb_bim_hit_oh));
+bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
+bit_oh_target_vaddr(.i_oh(w_btb_bim_hit_oh), .i_data(w_btb_search_if.s2_target_vaddr), .o_selected(w_s2_btb_target_vaddr));
 
 msrh_predictor u_predictor
   (

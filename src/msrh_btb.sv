@@ -16,15 +16,13 @@ module msrh_btb
    btb_update_if.slave update_btb_if,
    btb_search_if.slave search_btb_if,
 
- output logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] o_s1_btb_hit_oh
-   );
+   output logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] o_s1_btb_hit_oh
+ );
 
 logic           r_s1_search_valid;
 logic [riscv_pkg::VADDR_W-1: BTB_ENTRY_BIT_MSB+1] r_s1_pc_tag;
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] search_btb_s1_hit;
-logic [riscv_pkg::VADDR_W-1:0]               search_btb_target_vaddr[msrh_lsu_pkg::ICACHE_DATA_B_W/2];
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_masked_hit;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s1_btb_bank_mask;
 
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
@@ -63,7 +61,6 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
                                     search_entry.valid &
                                     r_s1_btb_valid &
                                     (search_entry.pc_tag == r_s1_pc_tag);
-  assign search_btb_target_vaddr[b_idx] = search_entry.target_vaddr;
 
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -78,6 +75,15 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
     end
   end
 
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      search_btb_if.s2_target_vaddr[b_idx] <= 1'b0;
+      search_btb_if.s2_valid       [b_idx] <= 'h0;
+    end else begin
+      search_btb_if.s2_target_vaddr[b_idx] <= search_btb_s1_hit ? search_entry.target_vaddr : 'h0;
+      search_btb_if.s2_valid       [b_idx] <= search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
+    end
+  end
 end
 endgenerate
 
@@ -93,11 +99,5 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_btb_masked_hit = search_btb_s1_hit & r_s1_btb_bank_mask;
-
-assign search_btb_if.s1_hit = |w_btb_masked_hit;
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) bit_btb_select (.in(w_btb_masked_hit), .out(o_s1_btb_hit_oh));
-bit_oh_or #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
-bit_oh_target_vaddr(.i_oh(o_s1_btb_hit_oh), .i_data(search_btb_target_vaddr), .o_selected(search_btb_if.s1_target_vaddr));
 
 endmodule // msrh_btb
