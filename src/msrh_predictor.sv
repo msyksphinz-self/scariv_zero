@@ -23,13 +23,17 @@ module msrh_predictor
 
  );
 
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
+
 msrh_btb u_btb
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
    .update_btb_if (update_btb_if),
-   .search_btb_if (search_btb_if)
+   .search_btb_if (search_btb_if),
+
+   .o_s1_btb_hit_oh (w_s1_btb_hit_oh)
    );
 
 msrh_bim u_bim
@@ -38,7 +42,9 @@ msrh_bim u_bim
    .i_reset_n(i_reset_n),
 
    .update_bim_if (update_bim_if),
-   .search_bim_if (search_bim_if)
+   .search_bim_if (search_bim_if),
+
+   .i_s1_btb_hit_oh (w_s1_btb_hit_oh)
    );
 
 endmodule // msrh_predictor
