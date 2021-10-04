@@ -380,6 +380,33 @@ function void dump_perf (int fp);
   $fwrite(fp, "  },\n");
 
 endfunction // dump_perfto
+
+integer bim_fp;
+initial begin
+  bim_fp = $fopen("bru_detail.log", "w");
+end
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (ex3_br_upd_if.update) begin
+      if (r_ex3_pipe_ctrl.op != OP__) begin
+        $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, %s, bim=%1d, %s, DASM(0x%08x)\n",
+                $time,
+                r_ex3_issue.pc_addr,
+                ex3_br_upd_if.target_vaddr,
+                r_ex3_result ? "Taken   " : "NotTaken",
+                ex3_br_upd_if.bim_value,
+                ex3_br_upd_if.mispredict ? "Miss" : "Succ",
+                r_ex3_issue.inst);
+      end
+    end
+  end
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+final begin
+  $fclose(bim_fp);
+end
+
 `endif // SIMULATION
 
 endmodule // msrh_bru_pipe
