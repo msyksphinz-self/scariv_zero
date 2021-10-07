@@ -92,6 +92,16 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s2_btb_target_vaddr;
 
 logic                           w_s2_predict_valid;
 
+// =======================
+// Predictors
+// =======================
+
+btb_update_if w_btb_update_if ();
+btb_search_if w_btb_search_if ();
+
+bim_update_if w_bim_update_if ();
+bim_search_if w_bim_search_if ();
+
 
 `ifdef SIMULATION
 logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
@@ -267,9 +277,15 @@ always_comb begin
       end else if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
         w_s0_vaddr_next = w_s2_ic_miss_vaddr;
-      end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready & !r_s2_clear) begin
-        w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
-        w_if_state_next = WAIT_IBUF_FREE;
+      end else if (w_s2_ic_resp.valid & !w_inst_buffer_ready) begin
+        if (r_s2_clear) begin
+          // Vaddr at S2 stage is no more used, Stall vaddr
+          w_s0_vaddr_next = r_s0_vaddr;
+        end else begin
+          // Retry from S2 stage Vaddr
+          w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
+          w_if_state_next = WAIT_IBUF_FREE;
+        end
       end else if (w_s2_predict_valid) begin
         w_s0_vaddr_next = (w_s2_btb_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -446,7 +462,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear | w_s2_predict_valid;
     r_s2_vaddr <= r_s1_vaddr;
-    r_s2_tlb_miss         <= r_s1_tlb_miss        ;
+    r_s2_tlb_miss         <= r_s1_tlb_miss;
     r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
 `ifdef SIMULATION
@@ -527,12 +543,6 @@ u_msrh_inst_buffer
 // =======================
 // Predictors
 // =======================
-btb_update_if w_btb_update_if ();
-btb_search_if w_btb_search_if ();
-
-bim_update_if w_bim_update_if ();
-bim_search_if w_bim_search_if ();
-
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 // assign w_btb_search_if.s1_hit         = ;

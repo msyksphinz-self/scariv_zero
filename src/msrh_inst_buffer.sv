@@ -72,6 +72,9 @@ logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 logic                           w_head_predict_taken_issued;
 logic                           w_predict_taken_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0 ] w_predict_taken_valid_array;
+logic [msrh_conf_pkg::DISP_SIZE: 0]    w_predict_taken_valid_lsb;
+logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_pred_lsb_index;
 
 typedef struct packed {
   logic                           pred_taken;
@@ -80,8 +83,12 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
 } pred_info_t;
 
+pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
+logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_expand_pred_index[msrh_conf_pkg::DISP_SIZE];
+
 typedef struct packed {
   logic                                      valid;
+  logic                                      dead;
   logic [riscv_pkg::VADDR_W-1: 1]            pc;
   logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  data;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
@@ -123,7 +130,8 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst_valid & o_inst_ready;
-assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued;
+assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
+                        r_inst_queue[r_inst_buffer_outptr].valid & r_inst_queue[r_inst_buffer_outptr].dead ;
 
 assign w_flush_pipeline = i_flush_valid;
 
@@ -140,9 +148,9 @@ inst_buf_ptr
    .i_clear   (w_flush_pipeline),
 
    .i_in_valid  (w_ptr_in_fire),
-   .o_in_ptr  (r_inst_buffer_inptr),
+   .o_in_ptr    (r_inst_buffer_inptr),
    .i_out_valid (w_ptr_out_fire),
-   .o_out_ptr (r_inst_buffer_outptr)
+   .o_out_ptr   (r_inst_buffer_outptr)
    );
 
 assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr + 'h1;
@@ -168,17 +176,22 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_valid[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_valid[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
         end
 
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
 `endif // SIMULATION
-      end else if ((w_head_all_inst_issued | w_head_predict_taken_issued) & (r_inst_buffer_outptr == idx)) begin
+      end else if ((w_head_all_inst_issued |
+                    w_head_predict_taken_issued |
+                    r_inst_queue[idx].valid & r_inst_queue[idx].dead) & (r_inst_buffer_outptr == idx)) begin
         r_inst_queue[idx].valid  <= 1'b0;
+        r_inst_queue[idx].dead   <= 1'b0;
+      end else if (w_head_predict_taken_issued & (w_pred_lsb_index == idx)) begin
+        r_inst_queue[idx].dead <= 1'b1;
       end // if (i_s2_inst_valid & o_inst_ready)
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -263,19 +276,23 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_expand_inst[w_idx]     = w_local_expand_inst;
       w_rvc_inst[w_idx]    = w_local_rvc_inst;
       w_rvc_valid[w_idx]   = 1'b1;
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & (&w_rvc_byte_en);
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
+       !r_inst_queue[w_inst_buf_ptr_b0].dead &
+       & (&w_rvc_byte_en);
 
       w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
       w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
       w_fetch_except_tval [w_idx] = iq_disp.inst[w_idx].pc_addr;
 
+      w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
+      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
-                                 r_inst_queue[w_inst_buf_ptr_b2].valid &
+      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & !r_inst_queue[w_inst_buf_ptr_b0].dead &
+                                 r_inst_queue[w_inst_buf_ptr_b2].valid & !r_inst_queue[w_inst_buf_ptr_b2].dead &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
       w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
@@ -287,8 +304,13 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
                                     iq_disp.inst[w_idx].pc_addr + 'h2;
 
+      w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
+      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
+
+  assign w_predict_taken_valid_array[w_idx] = w_expand_pred_info[w_idx].btb_valid &
+                                              w_expand_pred_info[w_idx].pred_taken;
 
 end
 endgenerate
@@ -353,9 +375,12 @@ assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | 
 
 logic [msrh_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
-assign w_predict_taken_valid = r_inst_queue[r_inst_buffer_outptr].btb_valid &
-                               r_inst_queue[r_inst_buffer_outptr].pred_taken;
-assign w_inst_disp_mask = w_predict_taken_valid &
+assign w_predict_taken_valid = |(w_inst_disp_mask & w_predict_taken_valid_array);
+
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_predict_valid_lsb (.in(w_inst_disp_mask & w_predict_taken_valid_array), .out(w_predict_taken_valid_lsb));
+bit_oh_or #(.T(logic[$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(msrh_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
+
+assign w_inst_disp_mask = |w_predict_taken_valid_array &
                           |((w_inst_disp_mask_tmp - 1) & w_inst_bru_disp) ? {w_inst_bru_disp, 1'b0} - 1 :
                           w_inst_disp_mask_tmp - 1;
 
@@ -453,10 +478,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
-      iq_disp.inst[d_idx].pred_taken       = r_inst_queue[r_inst_buffer_outptr].pred_taken;
-      iq_disp.inst[d_idx].bim_value        = r_inst_queue[r_inst_buffer_outptr].bim_value;
-      iq_disp.inst[d_idx].btb_valid        = r_inst_queue[r_inst_buffer_outptr].btb_valid;
-      iq_disp.inst[d_idx].btb_target_vaddr = r_inst_queue[r_inst_buffer_outptr].btb_target_vaddr;
+      iq_disp.inst[d_idx].pred_taken       = w_expand_pred_info[d_idx].pred_taken;
+      iq_disp.inst[d_idx].bim_value        = w_expand_pred_info[d_idx].bim_value;
+      iq_disp.inst[d_idx].btb_valid        = w_expand_pred_info[d_idx].btb_valid;
+      iq_disp.inst[d_idx].btb_target_vaddr = w_expand_pred_info[d_idx].btb_target_vaddr;
 
     end else begin // if (w_inst_disp_mask[d_idx])
       iq_disp.inst[d_idx] = 'h0;
