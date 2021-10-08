@@ -327,8 +327,10 @@ logic [63: 0] r_cycle_count;
 logic [10: 0] r_bru_valid_count;
 logic [10: 0] r_bru_cmp_count;
 logic [10: 0] r_bru_cmp_hit_count;
-logic [10: 0] r_bru_uncond_count;
-logic [10: 0] r_bru_uncond_hit_count;
+logic [10: 0] r_bru_ret_count;
+logic [10: 0] r_bru_ret_hit_count;
+logic [10: 0] r_bru_other_count;
+logic [10: 0] r_bru_other_hit_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -343,15 +345,19 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     r_bru_valid_count <= 'h0;
     r_bru_cmp_count <= 'h0;
     r_bru_cmp_hit_count    <= 'h0;
-    r_bru_uncond_count     <= 'h0;
-    r_bru_uncond_hit_count <= 'h0;
+    r_bru_ret_count     <= 'h0;
+    r_bru_ret_hit_count <= 'h0;
+    r_bru_other_count     <= 'h0;
+    r_bru_other_hit_count <= 'h0;
   end else begin
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
       r_bru_valid_count <= 'h0;
       r_bru_cmp_count <= 'h0;
-      r_bru_cmp_hit_count    <= 'h0;
-      r_bru_uncond_count     <= 'h0;
-      r_bru_uncond_hit_count <= 'h0;
+      r_bru_cmp_hit_count <= 'h0;
+      r_bru_ret_count     <= 'h0;
+      r_bru_ret_hit_count <= 'h0;
+      r_bru_other_count     <= 'h0;
+      r_bru_other_hit_count <= 'h0;
     end else begin
       if (ex3_br_upd_if.update) begin
         r_bru_valid_count <= r_bru_valid_count + 'h1;
@@ -361,10 +367,17 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
             r_bru_cmp_hit_count <= r_bru_cmp_hit_count + 'h1;
           end
         end else begin
-          r_bru_uncond_count <= r_bru_uncond_count + 'h1;
-          if (!ex3_br_upd_if.mispredict) begin
-            r_bru_uncond_hit_count <= r_bru_uncond_hit_count + 'h1;
-          end
+          if (r_ex3_issue.inst == 32'h00008067) begin  // RET
+            r_bru_ret_count <= r_bru_ret_count + 'h1;
+            if (!ex3_br_upd_if.mispredict) begin
+              r_bru_ret_hit_count <= r_bru_ret_hit_count + 'h1;
+            end
+          end else begin
+            r_bru_other_count <= r_bru_other_count + 'h1;
+            if (!ex3_br_upd_if.mispredict) begin
+              r_bru_other_hit_count <= r_bru_other_hit_count + 'h1;
+            end
+          end // else: !if(r_ex3_issue.inst == 32'h00008082)
         end
       end
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
@@ -376,7 +389,10 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"branch\" : {");
   $fwrite(fp, "    \"execute\" : %5d, ", r_bru_valid_count);
   $fwrite(fp, "    \"cmp\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_cmp_count, r_bru_cmp_hit_count);
-  $fwrite(fp, "    \"uncond\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_uncond_count, r_bru_uncond_hit_count);
+  $fwrite(fp, "    \"uncond\" : { \"ret\" : { \"execute\" : %5d, \"hit\" : %5d}, ",
+          r_bru_ret_count, r_bru_ret_hit_count);
+  $fwrite(fp, "\"others\" : { \"execute\" : %5d, \"hit\" : %5d }}, ",
+          r_bru_other_count, r_bru_other_hit_count);
   $fwrite(fp, "  },\n");
 
 endfunction // dump_perfto
