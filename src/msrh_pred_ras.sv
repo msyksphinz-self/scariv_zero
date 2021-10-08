@@ -1,7 +1,7 @@
-module msrh_ras
+module msrh_pred_ras
   (
    input logic                                              i_clk,
-   input logic                                              i_reset,
+   input logic                                              i_reset_n,
 
    input logic                                              i_wr_valid[msrh_conf_pkg::BRU_DISP_SIZE],
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_wr_index[msrh_conf_pkg::BRU_DISP_SIZE],
@@ -12,7 +12,7 @@ module msrh_ras
    output logic [riscv_pkg::PADDR_W-1: 0]                   o_rd_pa
    );
 
-logic [PADDR_W-1: 0] r_ras_array[msrh_conf_pkg::RAS_ENTRY_SIZE];
+logic [riscv_pkg::PADDR_W-1: 0] r_ras_array[msrh_conf_pkg::RAS_ENTRY_SIZE];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
