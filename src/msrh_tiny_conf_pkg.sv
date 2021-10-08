@@ -31,4 +31,6 @@ package msrh_conf_pkg;
 
   localparam USING_VM = 1'b1;
 
+  localparam RAS_ENTRY_SIZE = 8;
+
 endpackage // msrh_conf_pkg

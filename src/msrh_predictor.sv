@@ -127,20 +127,20 @@ logic [riscv_pkg::PADDR_W-1: 1] ras_next_pc;
 /* verilator lint_off WIDTH */
 assign ras_next_pc = i_s2_ic_resp.addr + w_call_be_enc + selected_call_size == STD_CALL ? 2 : 1;
 
-// msrh_pred_ras
-// u_ras
-//   (
-//    .i_clk (i_clk),
-//    .i_reset_n (i_reset_n),
-//
-//    .i_wr_valid (w_ras_upd_valid),
-//    .i_wr_index (o_ras_idx),
-//    .i_wr_pa    (ras_next_pc),
-//
-//    .i_rd_valid (),
-//    .i_rd_index (),
-//    .o_rd_pa    ()
-//    );
+msrh_pred_ras
+u_ras
+  (
+   .i_clk (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_wr_valid (w_ras_upd_valid),
+   .i_wr_index (o_ras_idx),
+   .i_wr_pa    (ras_next_pc),
+
+   .i_rd_valid (),
+   .i_rd_index (),
+   .o_rd_pa    ()
+   );
 
 
 endmodule // msrh_predictor

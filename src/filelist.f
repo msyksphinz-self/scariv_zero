@@ -72,9 +72,6 @@
 ../src/msrh_ptw.sv
 ../src/msrh_rvc_expander.sv
 
-../src/msrh_predictor.sv
-../src/msrh_ras.sv
-
 ../src/simple_arbiter.sv
 
 ../src/msrh_rename.sv
@@ -130,5 +127,6 @@
 ../src/msrh_predictor.sv
 ../src/msrh_bimodal.sv
 ../src/msrh_btb.sv
+../src/msrh_pred_ras.sv
 
 ../src/l2_if_arbiter.sv
