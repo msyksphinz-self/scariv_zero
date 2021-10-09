@@ -23,7 +23,7 @@ module msrh_predictor
  bim_search_if.slave search_bim_if,
 
  input msrh_pkg::commit_blk_t i_commit,
- output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_ras_idx
+ output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_ras_index
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -64,6 +64,9 @@ logic                             w_ras_upd_valid;
 logic [ICACHE_DATA_B_W/2-1:0]     w_call_be_lsb;
 call_size_t                       selected_call_size;
 
+logic [ICACHE_DATA_B_W/2-1: 0]    w_ret_be;
+logic [ICACHE_DATA_B_W/2-1: 0]    w_ret_be_lsb;
+
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
   logic [15: 0] w_rvc_inst;
   logic         is_rvc_jal;
@@ -100,8 +103,20 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
                             i_s2_ic_resp.be[c_idx * 2];
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
+
+  // --------------------------
+  // Decode RET (JALR X0,X1,0)
+  // --------------------------
+  logic             w_is_rvc_ret;
+  logic             w_is_std_ret;
+  assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
+  assign w_is_std_ret = w_std_inst == 32'h00008067;
+  assign w_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
+                           i_s2_ic_resp.be[c_idx * 2];
 end // block: rvc_jal_loop
 endgenerate
+
+
 
 assign w_ras_upd_valid = |w_call_be;
 
@@ -113,19 +128,25 @@ bit_oh_or #(.T(call_size_t), .WORDS(ICACHE_DATA_B_W/2))
 select_call_size (.i_oh(w_call_be_lsb), .i_data(w_call_size_array), .o_selected(selected_call_size));
 encoder #(.SIZE(ICACHE_DATA_B_W/2)) sel_encoder (.i_in(w_call_be_lsb), .o_out(w_call_be_enc));
 
+logic                                 w_ras_rd_valid;
+assign w_ras_rd_valid = |w_ret_be;
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) ret_be_lsb (.in(w_ret_be), .out(w_ret_be_lsb));
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_ras_idx <= 'h0;
+    o_ras_index <= 'h0;
   end else begin
     if (w_ras_upd_valid) begin
-      o_ras_idx <= o_ras_idx + 'h1;
+      o_ras_index <= o_ras_index + 'h1;
     end
   end
 end
 
-logic [riscv_pkg::PADDR_W-1: 1] ras_next_pc;
+logic [riscv_pkg::VADDR_W-1: 1] ras_next_pc;
+logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
 /* verilator lint_off WIDTH */
-assign ras_next_pc = i_s2_ic_resp.addr + w_call_be_enc + selected_call_size == STD_CALL ? 2 : 1;
+assign ras_next_pc = i_s2_ic_resp.vaddr + w_call_be_enc + (selected_call_size == STD_CALL ? 2 : 1);
 
 msrh_pred_ras
 u_ras
@@ -134,12 +155,12 @@ u_ras
    .i_reset_n (i_reset_n),
 
    .i_wr_valid (w_ras_upd_valid),
-   .i_wr_index (o_ras_idx),
+   .i_wr_index (o_ras_index),
    .i_wr_pa    (ras_next_pc),
 
-   .i_rd_valid (),
-   .i_rd_index (),
-   .o_rd_pa    ()
+   .i_rd_valid (w_ras_rd_valid),
+   .i_rd_index (o_ras_index),
+   .o_rd_pa    (w_ras_ret_vaddr)
    );
 
 

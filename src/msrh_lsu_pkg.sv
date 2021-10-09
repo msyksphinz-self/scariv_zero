@@ -54,11 +54,11 @@ typedef struct   packed {
 
   typedef struct packed {
     logic valid;
-    logic [riscv_pkg::VADDR_W-1:1]      addr;
+    logic [riscv_pkg::VADDR_W-1:1]      vaddr;
     logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
     logic [ICACHE_DATA_B_W-1:0] be;
 `ifdef SIMULATION
-    logic [riscv_pkg::VADDR_W-1:0] addr_dbg;
+    logic [riscv_pkg::VADDR_W-1:0] vaddr_dbg;
 `endif // SIMULATION
   } ic_resp_t;
 

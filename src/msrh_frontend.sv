@@ -283,7 +283,7 @@ always_comb begin
           w_s0_vaddr_next = r_s0_vaddr;
         end else begin
           // Retry from S2 stage Vaddr
-          w_s0_vaddr_next = {w_s2_ic_resp.addr, 1'b0};
+          w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
           w_if_state_next = WAIT_IBUF_FREE;
         end
       end else if (w_s2_predict_valid) begin
@@ -513,7 +513,7 @@ assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
 
 `ifdef SIMULATION
 logic [riscv_pkg::PADDR_W-1: 0] w_s2_ic_resp_debug_addr;
-assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.addr, 1'b0};
+assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.vaddr, 1'b0};
 `endif // SIMULATION
 
 msrh_inst_buffer
@@ -531,7 +531,7 @@ u_msrh_inst_buffer
    .i_commit (i_commit),
 
    .o_inst_ready   (w_inst_buffer_ready),
-   .i_inst_pc      (w_s2_ic_resp.addr),
+   .i_inst_pc      (w_s2_ic_resp.vaddr),
    .i_inst_in      (w_s2_ic_resp.data),
    .i_inst_byte_en (w_s2_ic_resp.be),
    .i_inst_tlb_except_valid (r_s2_tlb_except_valid),
@@ -588,7 +588,7 @@ msrh_predictor u_predictor
 
    .i_commit (i_commit),
 
-   .o_ras_idx ()
+   .o_ras_index ()
    );
 
 endmodule // msrh_frontend
