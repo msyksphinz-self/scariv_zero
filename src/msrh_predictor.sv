@@ -24,7 +24,7 @@ module msrh_predictor
 
  ras_search_if.master ras_search_if,
 
- input msrh_pkg::commit_blk_t i_commit
+ input br_upd_if.slave br_upd_if
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -61,7 +61,7 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_std_call_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_call_be;
 call_size_t w_call_size_array[ICACHE_DATA_B_W/2];
 
-logic                             w_ras_upd_valid;
+logic                             w_call_ras_upd;
 logic [ICACHE_DATA_B_W/2-1:0]     w_call_be_lsb;
 call_size_t                       selected_call_size;
 
@@ -120,7 +120,7 @@ endgenerate
 /* verilator lint_off WIDTH */
 assign w_call_be = (w_rvc_call_be | w_std_call_be | {w_std_call_be, 1'b0}) & i_s2_ic_resp.be;
 
-assign w_ras_upd_valid = i_s2_ic_resp.valid & |w_call_be;
+assign w_call_ras_upd = i_s2_ic_resp.valid & |w_call_be;
 
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) call_be_lsb (.in(w_call_be), .out(w_call_be_lsb));
 
@@ -139,28 +139,26 @@ logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_input_index;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_output_index;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_cmt_ras_index_next;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
-logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_cmt_index;
 logic                                              w_cmt_update_ras_idx;
 logic                                              w_cmt_dead_valid;
 
-assign w_cmt_update_ras_idx = i_commit.commit & ~i_commit.all_dead & i_commit.is_call &
-                                  |(i_commit.grp_id & ~i_commit.dead_id);
-
-assign w_cmt_dead_valid = i_commit.commit & i_commit.is_call & i_commit.all_dead;
+assign w_br_call_mispredict = br_upd_if.update & ~br_upd_if.dead & br_upd_if.is_call & br_upd_if.mispredict;
+assign w_br_ret_mispredict  = br_upd_if.update & ~br_upd_if.dead & br_upd_if.is_ret  & br_upd_if.mispredict;
 
 always_comb begin
   w_cmt_ras_index_next = r_ras_input_index;
-  if (w_cmt_update_ras_idx) begin
-    w_cmt_ras_index_next = i_commit.ras_index;
-  end else if (w_cmt_dead_valid) begin
-    // When following instruction dead, rolling back
-    w_cmt_ras_index_next = i_commit.cmt_ras_index;
+
+  if (w_br_call_mispreict | w_br_ret_mispreict) begin
+    w_cmt_ras_index_next = br_upd_if.ras_index;
   end
 
-  if (w_ras_upd_valid) begin
+  if (w_call_be) begin
+    w_cmt_ras_index_next = r_ras_input_index - 'h1;
+  end
+
+  w_ras_index_next = w_cmt_ras_index_next;
+  if (w_call_be) begin
     w_ras_index_next = w_cmt_ras_index_next + 'h1;
-  end else begin
-    w_ras_index_next = w_cmt_ras_index_next;
   end
   w_ras_wr_index = w_ras_index_next;
 end
@@ -173,13 +171,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ras_input_index <= w_ras_index_next;
     if (w_cmt_update_ras_idx) begin
-      r_ras_cmt_index <= i_commit.ras_index;
     end
   end
 end
 
 assign ras_search_if.s2_is_call   = w_call_be;
-assign ras_search_if.s2_ras_valid = w_ret_be;
+assign ras_search_if.s2_is_ret    = w_ret_be;
 assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
 assign ras_search_if.s2_ras_index = w_ras_index_next;
 assign ras_search_if.s2_cmt_ras_index = w_ras_cmt_index;
@@ -195,7 +192,7 @@ u_ras
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
-   .i_wr_valid (w_ras_upd_valid),
+   .i_wr_valid (w_call_ras_upd),
    .i_wr_index (w_ras_wr_index),
    .i_wr_pa    (ras_next_pc),
 

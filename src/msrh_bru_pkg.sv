@@ -25,6 +25,9 @@ interface br_upd_if;
   logic                                update;
   logic                                taken;
   logic                                mispredict;
+  logic                                is_call;
+  logic                                is_ret;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [ 1: 0]                        bim_value;
   logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
@@ -38,6 +41,9 @@ interface br_upd_if;
     output update,
     output taken,
     output mispredict,
+    output is_call,
+    output is_ret,
+    output ras_index,
     output bim_value,
     output dead,
     output pc_vaddr,
@@ -52,6 +58,9 @@ interface br_upd_if;
     input update,
     input taken,
     input mispredict,
+    input is_call,
+    input is_ret,
+    input ras_index,
     input bim_value,
     input dead,
     input pc_vaddr,

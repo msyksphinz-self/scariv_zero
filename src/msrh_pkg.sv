@@ -100,6 +100,9 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     // logic size;
     // logic sign;
 
+    logic                           is_call;
+    logic                           is_ret;
+    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
     logic                           pred_taken;
     logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
@@ -186,8 +189,6 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [msrh_conf_pkg::DISP_SIZE-1: 0]  dead;
     // Branch update info
     logic                               is_br_included;
-    logic                               is_call_included;
-    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
 
     br_upd_info_t br_upd_info;
   } rob_entry_t;
@@ -204,6 +205,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [CMT_ID_W-1:0] cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
 
+    logic                   is_call;
+    logic                   is_ret;
     logic                           pred_taken;
     logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
@@ -255,6 +258,9 @@ function issue_t assign_issue_t(disp_t in,
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
+  ret.is_call          = in.is_call;
+  ret.is_ret           = in.is_ret;
+  ret.ras_index        = in.ras_index;
   ret.pred_taken       = in.pred_taken;
   ret.bim_value        = in.bim_value;
   ret.btb_valid        = in.btb_valid;
@@ -333,11 +339,6 @@ typedef struct packed {
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
-
-  // Prediction RAS result
-  logic                                              is_call;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] cmt_ras_index;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);

@@ -166,11 +166,6 @@ assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_v
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.all_dead     = o_commit.dead_id == o_commit.grp_id;
 
-// RAS result notification
-assign o_commit.is_call   = w_entries[w_out_cmt_entry_id].is_call_included;
-assign o_commit.ras_index = w_entries[w_out_cmt_entry_id].ras_index;
-assign o_commit.cmt_ras_index = w_entries[w_out_cmt_entry_id].cmt_ras_index;
-
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
                                 w_entries[w_out_cmt_entry_id].except_valid) & w_entries[w_out_cmt_entry_id].done_grp_id;
