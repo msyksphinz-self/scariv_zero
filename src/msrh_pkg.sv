@@ -101,9 +101,10 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     // logic sign;
 
     logic                           pred_taken;
+    logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
-    logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
+    logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
     logic rd_valid;
     reg_t rd_type;
@@ -185,6 +186,9 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [msrh_conf_pkg::DISP_SIZE-1: 0]  dead;
     // Branch update info
     logic                               is_br_included;
+    logic                               is_call_included;
+    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+
     br_upd_info_t br_upd_info;
   } rob_entry_t;
 
@@ -201,9 +205,10 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [DISP_SIZE-1:0] grp_id;
 
     logic                           pred_taken;
+    logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
-    logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
+    logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
     logic rd_valid;
     reg_t rd_type;
@@ -253,7 +258,8 @@ function issue_t assign_issue_t(disp_t in,
   ret.pred_taken       = in.pred_taken;
   ret.bim_value        = in.bim_value;
   ret.btb_valid        = in.btb_valid;
-  ret.btb_target_vaddr = in.btb_target_vaddr;
+  ret.pred_target_vaddr = in.pred_target_vaddr;
+  ret.ras_valid         = in.ras_valid;
 
   ret.rd_valid = in.rd_valid;
   ret.rd_type = in.rd_type;
@@ -320,9 +326,6 @@ typedef struct packed {
   logic                 commit;
   logic [CMT_ID_W-1:0] cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
-  // logic                           upd_pc_valid;
-  // logic [riscv_pkg::VADDR_W-1: 0] upd_pc_vaddr;
-  // logic                           flush_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
   except_t                        except_type;
   logic                           fence_i;
@@ -330,6 +333,11 @@ typedef struct packed {
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   logic                           all_dead;
+
+  // Prediction RAS result
+  logic                                              is_call;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] cmt_ras_index;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);

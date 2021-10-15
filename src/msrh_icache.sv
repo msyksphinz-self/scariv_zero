@@ -271,7 +271,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     o_s2_miss <= 1'b0;
     o_s2_miss_vaddr <= 'h0;
   end else begin
-    o_s2_miss       <= (r_ic_state == ICInit) & r_s1_valid & !i_flush_valid & !w_s1_hit;
+    o_s2_miss       <= r_s1_valid &
+                       ((r_ic_state == ICInit) &  & !i_flush_valid & !w_s1_hit |
+                        (r_ic_state != ICInit));
     o_s2_miss_vaddr <= r_s1_vaddr;
   end
 end

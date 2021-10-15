@@ -22,8 +22,9 @@ module msrh_predictor
  bim_update_if.slave update_bim_if,
  bim_search_if.slave search_bim_if,
 
- input msrh_pkg::commit_blk_t i_commit,
- output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_ras_index
+ ras_search_if.master ras_search_if,
+
+ input msrh_pkg::commit_blk_t i_commit
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -67,6 +68,10 @@ call_size_t                       selected_call_size;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_ret_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_ret_be_lsb;
 
+logic [riscv_pkg::VADDR_W-1: 1] ras_next_pc;
+logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
+
+
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
   logic [15: 0] w_rvc_inst;
   logic         is_rvc_jal;
@@ -98,10 +103,6 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
                        (w_std_inst[11: 7] == 5'h1);
   assign w_std_call_be[c_idx] = is_std_jal | is_std_jalr;
 
-  assign w_call_be[c_idx] = (w_rvc_call_be[c_idx] | w_std_call_be[c_idx]) &
-                            i_s2_ic_resp.valid &
-                            i_s2_ic_resp.be[c_idx * 2];
-
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
 
   // --------------------------
@@ -116,9 +117,10 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
 end // block: rvc_jal_loop
 endgenerate
 
+/* verilator lint_off WIDTH */
+assign w_call_be = (w_rvc_call_be | w_std_call_be | {w_std_call_be, 1'b0}) & i_s2_ic_resp.be;
 
-
-assign w_ras_upd_valid = |w_call_be;
+assign w_ras_upd_valid = i_s2_ic_resp.valid & |w_call_be;
 
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) call_be_lsb (.in(w_call_be), .out(w_call_be_lsb));
 
@@ -132,21 +134,60 @@ logic                                 w_ras_rd_valid;
 assign w_ras_rd_valid = |w_ret_be;
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) ret_be_lsb (.in(w_ret_be), .out(w_ret_be_lsb));
 
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_next;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_input_index;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_output_index;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_cmt_ras_index_next;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_cmt_index;
+logic                                              w_cmt_update_ras_idx;
+logic                                              w_cmt_dead_valid;
+
+assign w_cmt_update_ras_idx = i_commit.commit & ~i_commit.all_dead & i_commit.is_call &
+                                  |(i_commit.grp_id & ~i_commit.dead_id);
+
+assign w_cmt_dead_valid = i_commit.commit & i_commit.is_call & i_commit.all_dead;
+
+always_comb begin
+  w_cmt_ras_index_next = r_ras_input_index;
+  if (w_cmt_update_ras_idx) begin
+    w_cmt_ras_index_next = i_commit.ras_index;
+  end else if (w_cmt_dead_valid) begin
+    // When following instruction dead, rolling back
+    w_cmt_ras_index_next = i_commit.cmt_ras_index;
+  end
+
+  if (w_ras_upd_valid) begin
+    w_ras_index_next = w_cmt_ras_index_next + 'h1;
+  end else begin
+    w_ras_index_next = w_cmt_ras_index_next;
+  end
+  w_ras_wr_index = w_ras_index_next;
+end
+
+assign w_ras_output_index = w_ras_index_next;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_ras_index <= 'h0;
+    r_ras_input_index <= 'h0;
   end else begin
-    if (w_ras_upd_valid) begin
-      o_ras_index <= o_ras_index + 'h1;
+    r_ras_input_index <= w_ras_index_next;
+    if (w_cmt_update_ras_idx) begin
+      r_ras_cmt_index <= i_commit.ras_index;
     end
   end
 end
 
-logic [riscv_pkg::VADDR_W-1: 1] ras_next_pc;
-logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
+assign ras_search_if.s2_is_call   = w_call_be;
+assign ras_search_if.s2_ras_valid = w_ret_be;
+assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
+assign ras_search_if.s2_ras_index = w_ras_index_next;
+assign ras_search_if.s2_cmt_ras_index = w_ras_cmt_index;
+
 /* verilator lint_off WIDTH */
-assign ras_next_pc = i_s2_ic_resp.vaddr + w_call_be_enc + (selected_call_size == STD_CALL ? 2 : 1);
+assign ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1:$clog2(ICACHE_DATA_B_W/2)+1], {$clog2(ICACHE_DATA_B_W/2){1'b0}}} +
+                     w_call_be_enc +
+                     (selected_call_size == STD_CALL ? 2 : 1);
 
 msrh_pred_ras
 u_ras
@@ -155,13 +196,53 @@ u_ras
    .i_reset_n (i_reset_n),
 
    .i_wr_valid (w_ras_upd_valid),
-   .i_wr_index (o_ras_index),
+   .i_wr_index (w_ras_wr_index),
    .i_wr_pa    (ras_next_pc),
 
    .i_rd_valid (w_ras_rd_valid),
-   .i_rd_index (o_ras_index),
+   .i_rd_index (w_ras_output_index),
    .o_rd_pa    (w_ras_ret_vaddr)
    );
+
+// `ifdef SIMULATION
+// function void dump_json(int fp);
+//   $fwrite(fp, "  \"msrh_predictor\" : {\n");
+//
+//   if (w_cmt_update_ras_idx) begin
+//     $fwrite(fp, "    r_ras_input_index : \"%d\",\n", i_s0_req.valid);
+//     $fwrite(fp, "    i_s0_req.vaddr : \"0x%x\",\n", i_s0_req.vaddr);
+//   end
+//   // $fwrite(fp, "    state : \"%d\",\n", r_ic_state);
+//   if (r_s1_valid) begin
+//     for(int way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin
+//       $fwrite(fp, "    \"w_s1_tag_hit[%1d]\" : \"%d\",\n", way, w_s1_tag_hit[way]);
+//     end
+//   end
+//   if (r_s2_valid) begin
+//     $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_miss);
+//     $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
+//   end
+//   if (ic_l2_req.valid) begin
+//     $fwrite(fp, "    \"ic_l2_req\" : {\n");
+//     $fwrite(fp, "      valid : \"%d\",\n", ic_l2_req.valid);
+//     $fwrite(fp, "      cmd : \"%d\",\n", ic_l2_req.payload.cmd);
+//     $fwrite(fp, "      addr : \"0x%x\",\n", ic_l2_req.payload.addr);
+//     $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.payload.tag);
+//     $fwrite(fp, "    },\n");
+//   end
+//
+//   if (o_s2_resp.valid) begin
+//     $fwrite(fp, "    \"o_s2_resp\" : {\n");
+//     $fwrite(fp, "      valid : \"%d\",\n", o_s2_resp.valid);
+//     $fwrite(fp, "      data : \"%x\",\n",  o_s2_resp.data);
+//     $fwrite(fp, "      miss : \"%d\",\n",  o_s2_miss);
+//     $fwrite(fp, "      vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
+//     $fwrite(fp, "    },\n");
+//   end
+//
+//   $fwrite(fp, "  },\n");
+// endfunction // dump
+
 
 
 endmodule // msrh_predictor

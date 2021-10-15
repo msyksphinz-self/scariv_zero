@@ -8,6 +8,7 @@ module msrh_inst_buffer
  input logic                                     i_s2_inst_valid,
  btb_search_if.monitor                           btb_search_if,
  bim_search_if.monitor                           bim_search_if,
+ ras_search_if.slave                             ras_search_if,
 
  // PC Update from Committer
  input                                           msrh_pkg::commit_blk_t i_commit,
@@ -58,6 +59,14 @@ logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
 
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_call;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_call_lsb;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_inst_ras_index[msrh_conf_pkg::DISP_SIZE];
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_disp_ras_index;
+
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_inst_cmt_ras_index[msrh_conf_pkg::DISP_SIZE];
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_disp_cmt_ras_index;
+
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
 
@@ -78,9 +87,11 @@ logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_pred_lsb_index;
 
 typedef struct packed {
   logic                           pred_taken;
+  logic                           ras_valid;
+  logic                           is_call;
   logic [1:0]                     bim_value;
   logic                           btb_valid;
-  logic [riscv_pkg::VADDR_W-1: 0] btb_target_vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 } pred_info_t;
 
 pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
@@ -94,6 +105,8 @@ typedef struct packed {
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
   logic                                      tlb_except_valid;
   msrh_pkg::except_t                         tlb_except_cause;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] cmt_ras_index;
 
   pred_info_t [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
 
@@ -174,12 +187,17 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].byte_en <= i_inst_byte_en;
         r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
         r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
+        r_inst_queue[idx].ras_index        <= ras_search_if.s2_ras_index;
+        r_inst_queue[idx].cmt_ras_index    <= ras_search_if.s2_cmt_ras_index;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
           r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].btb_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= ras_search_if.s2_ras_valid[b_idx] ? {ras_search_if.s2_ras_vaddr, 1'b0} :
+                                                                  btb_search_if.s2_target_vaddr[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].ras_valid        <= ras_search_if.s2_ras_valid[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].is_call          <= ras_search_if.s2_is_call[b_idx];
         end
 
 `ifdef SIMULATION
@@ -309,8 +327,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
-  assign w_predict_taken_valid_array[w_idx] = w_expand_pred_info[w_idx].btb_valid &
-                                              w_expand_pred_info[w_idx].pred_taken;
+  assign w_predict_taken_valid_array[w_idx] = w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken | // BIM
+                                              w_expand_pred_info[w_idx].ras_valid;  // RAS
 
 end
 endgenerate
@@ -346,6 +364,9 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
   assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
 
+  assign w_inst_is_call  [w_idx] = w_expanded_valid[w_idx] & w_expand_pred_info[w_idx].is_call;
+  assign w_inst_ras_index[w_idx] = r_inst_queue[w_expand_pred_index[w_idx]].ras_index;
+  assign w_inst_cmt_ras_index[w_idx] = r_inst_queue[w_expand_pred_index[w_idx]].cmt_ras_index;
   assign w_inst_illegal  [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ );
 
   assign w_inst_gen_except[w_idx]  = w_expanded_valid[w_idx] & w_raw_gen_except;
@@ -387,6 +408,14 @@ assign w_inst_disp_mask = |w_predict_taken_valid_array &
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
 assign iq_disp.is_br_included = |w_inst_bru_disp;
+assign iq_disp.is_call_included = |(w_inst_is_call & w_inst_bru_disp);
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) ras_index_call_lsb (.in(w_inst_is_call & w_inst_bru_disp), .out(w_inst_is_call_lsb));
+bit_oh_or #(.T(logic[$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0]), .WORDS(msrh_conf_pkg::DISP_SIZE)) ras_index_sel (.i_oh(w_inst_is_call_lsb), .i_data(w_inst_ras_index), .o_selected(w_disp_ras_index));
+assign iq_disp.ras_index        = w_disp_ras_index;
+
+bit_oh_or #(.T(logic[$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0]), .WORDS(msrh_conf_pkg::DISP_SIZE)) cmt_ras_index_sel (.i_oh(w_inst_is_call_lsb), .i_data(w_cmt_inst_ras_index), .o_selected(w_disp_cmt_ras_index));
+assign iq_disp.cmt_ras_index    = w_disp_cmt_ras_index;
+
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
@@ -479,9 +508,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
       iq_disp.inst[d_idx].pred_taken       = w_expand_pred_info[d_idx].pred_taken;
+      iq_disp.inst[d_idx].ras_valid        = w_expand_pred_info[d_idx].ras_valid;
       iq_disp.inst[d_idx].bim_value        = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid        = w_expand_pred_info[d_idx].btb_valid;
-      iq_disp.inst[d_idx].btb_target_vaddr = w_expand_pred_info[d_idx].btb_target_vaddr;
+      iq_disp.inst[d_idx].pred_target_vaddr = w_expand_pred_info[d_idx].pred_target_vaddr;
 
     end else begin // if (w_inst_disp_mask[d_idx])
       iq_disp.inst[d_idx] = 'h0;

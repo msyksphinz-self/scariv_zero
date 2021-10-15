@@ -1,6 +1,6 @@
 module msrh_bru_pipe
   import decoder_bru_ctrl_pkg::*;
-#(
+q#(
   parameter RV_ENTRY_SIZE = 32
   )
 (
@@ -304,14 +304,22 @@ always_comb begin
   endcase // case (w_ex2_pipe_ctrl.imm)
 end // always_comb
 
+// logic w_ex3_not_predict_taken;
+logic w_ex3_ras_hit;
+logic w_ex3_bim_hit;
+
+// assign w_ex3_not_predict_taken = ~(r_ex3_issue.btb_valid | r_ex3_issue.ras_valid) & r_ex3_result;
+assign w_ex3_ras_hit = r_ex3_issue.ras_valid & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
+assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
+                       ((~r_ex3_result & ~r_ex3_issue.pred_taken) |
+                        (r_ex3_result & r_ex3_issue.pred_taken &
+                         (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr)));
+
 assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_br_upd_if.taken         = r_ex3_result;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
-assign ex3_br_upd_if.mispredict    = ~r_ex3_issue.btb_valid & r_ex3_result |
-                                      r_ex3_issue.btb_valid &
-                                     ((r_ex3_result != r_ex3_issue.pred_taken) |
-                                      (r_ex3_result & r_ex3_issue.pred_taken &
-                                       (r_ex3_br_vaddr != r_ex3_issue.btb_target_vaddr)));
+assign ex3_br_upd_if.mispredict    = ~w_ex3_ras_hit & ~w_ex3_bim_hit;
+
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr : r_ex3_issue.pc_addr + 'h2;
 assign ex3_br_upd_if.target_vaddr  = r_ex3_result ? r_ex3_br_vaddr :
@@ -414,9 +422,26 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                 ex3_br_upd_if.bim_value,
                 ex3_br_upd_if.mispredict ? "Miss" : "Succ",
                 r_ex3_issue.inst);
+      end else if (r_ex3_issue.ras_valid) begin
+        $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, %s, DASM(0x%08x)\n",
+                $time,
+                r_ex3_issue.pc_addr,
+                ex3_br_upd_if.target_vaddr,
+                r_ex3_issue.pred_target_vaddr,
+                ex3_br_upd_if.mispredict ? "Miss" : "Succ",
+                r_ex3_issue.inst);
       end
     end
   end
+  // if (msrh_tb.u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_predictor.u_ras.i_wr_valid) begin
+  //   $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, ras_idx=%1d, %s, DASM(0x%08x)\n",
+  //           $time,
+  //           r_ex3_issue.pc_addr,
+  //           ex3_br_upd_if.target_vaddr,
+  //           r_ex3_issue.pred_target_vaddr,
+  //           r_ex3_issue.ras_index,
+  //           r_ex3_issue.inst);
+  // end
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 final begin

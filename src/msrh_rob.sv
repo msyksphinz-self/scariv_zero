@@ -116,6 +116,9 @@ logic w_load_valid;
      .i_load_inst    (sc_disp.inst),
      .i_load_grp_id  (w_disp_grp_id),
      .i_load_br_included (sc_disp.is_br_included),
+     .i_load_call_included (sc_disp.is_call_included),
+     .i_load_ras_index     (sc_disp.ras_index),
+     .i_load_cmt_ras_index (sc_disp.cmt_ras_index),
      .i_load_tlb_except_valid (sc_disp.tlb_except_valid),
      .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
      .i_load_tlb_except_tval  (sc_disp.tlb_except_tval),
@@ -150,11 +153,6 @@ assign w_killing_uncmts = r_killing_uncmts &
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
-// assign o_commit.upd_pc_valid   = |((w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
-//                                     w_entries[w_out_cmt_entry_id].except_valid) &
-//                                    w_entries[w_out_cmt_entry_id].grp_id);
-// assign o_commit.upd_pc_vaddr = w_upd_br_vaddr;
-// assign o_commit.flush_valid   = o_commit.upd_pc_valid;
 assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
@@ -167,6 +165,11 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.all_dead     = o_commit.dead_id == o_commit.grp_id;
+
+// RAS result notification
+assign o_commit.is_call   = w_entries[w_out_cmt_entry_id].is_call_included;
+assign o_commit.ras_index = w_entries[w_out_cmt_entry_id].ras_index;
+assign o_commit.cmt_ras_index = w_entries[w_out_cmt_entry_id].cmt_ras_index;
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |

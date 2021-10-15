@@ -9,6 +9,9 @@ interface disp_if;
   // Counter for each dispatch Resources
   msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] inst;
   logic                                           is_br_included; // When Branch Instruction is included
+  logic                                           is_call_included;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] cmt_ras_index;
   logic                                           valid;
   logic                                           ready;
 
@@ -26,6 +29,9 @@ interface disp_if;
     output resource_cnt,
     output inst,
     output is_br_included,
+    output is_call_included,
+    output ras_index,
+    output cmt_ras_index,
     input  ready
   );
   modport slave(
@@ -38,6 +44,9 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
+    input  is_call_included,
+    input  ras_index,
+    input  cmt_ras_index,
     output ready
   );
   modport watch(
@@ -50,6 +59,9 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
+    input  is_call_included,
+    input  ras_index,
+    input  cmt_ras_index,
     input  ready
   );
 
