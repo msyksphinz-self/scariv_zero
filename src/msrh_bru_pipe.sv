@@ -414,22 +414,25 @@ end
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (ex3_br_upd_if.update) begin
+    if (ex3_br_upd_if.update & ~ex3_br_upd_if.dead) begin
       if (r_ex3_pipe_ctrl.op != OP__) begin
-        $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, %s, bim=%1d, %s, DASM(0x%08x)\n",
+        $fwrite(bim_fp, "%t : (%02d,%d) pc_vaddr = %08x, target_addr = %08x, %s, bim=%1d, %s, DASM(0x%08x)\n",
                 $time,
+                r_ex3_issue.cmt_id, r_ex3_issue.grp_id,
                 r_ex3_issue.pc_addr,
                 ex3_br_upd_if.target_vaddr,
                 r_ex3_result ? "Taken   " : "NotTaken",
                 ex3_br_upd_if.bim_value,
                 ex3_br_upd_if.mispredict ? "Miss" : "Succ",
                 r_ex3_issue.inst);
-      end else if (r_ex3_issue.is_ret) begin
-        $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, %s, DASM(0x%08x)\n",
+      end else if (r_ex3_issue.is_ret | r_ex3_issue.is_call) begin
+        $fwrite(bim_fp, "%t : (%02d,%d) pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, ras_index = %d, %s, DASM(0x%08x)\n",
                 $time,
+                r_ex3_issue.cmt_id, r_ex3_issue.grp_id,
                 r_ex3_issue.pc_addr,
                 ex3_br_upd_if.target_vaddr,
                 r_ex3_issue.pred_target_vaddr,
+                r_ex3_issue.ras_index,
                 ex3_br_upd_if.mispredict ? "Miss" : "Succ",
                 r_ex3_issue.inst);
       end
