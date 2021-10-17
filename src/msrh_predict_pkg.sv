@@ -131,25 +131,22 @@ endinterface // bim_update_if
 interface ras_search_if;
 
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_call;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_ras_valid;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_ret;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_ras_vaddr;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s2_ras_index;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s2_cmt_ras_index;
 
   modport master (
     output s2_is_call,
-    output s2_ras_valid,
+    output s2_is_ret,
     output s2_ras_vaddr,
-    output s2_ras_index,
-    output s2_cmt_ras_index
+    output s2_ras_index
   );
 
   modport slave (
     input s2_is_call,
-    input s2_ras_valid,
+    input s2_is_ret,
     input s2_ras_vaddr,
-    input s2_ras_index,
-    input s2_cmt_ras_index
+    input s2_ras_index
   );
 
 endinterface // bim_search_if

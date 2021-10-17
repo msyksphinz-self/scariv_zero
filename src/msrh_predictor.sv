@@ -7,6 +7,8 @@
 //
 // ------------------------------------------------------------------------
 
+`default_nettype none
+
 module msrh_predictor
   import msrh_predict_pkg::*;
   import msrh_lsu_pkg::*;
@@ -14,10 +16,12 @@ module msrh_predictor
  input logic  i_clk,
  input logic  i_reset_n,
 
+ input logic i_s2_valid,
  input msrh_lsu_pkg::ic_resp_t i_s2_ic_resp,
 
  btb_update_if.slave update_btb_if,
  btb_search_if.slave search_btb_if,
+ output logic [riscv_pkg::VADDR_W-1: 0] o_s2_btb_target_vaddr,
 
  bim_update_if.slave update_bim_if,
  bim_search_if.slave search_bim_if,
@@ -71,6 +75,9 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_ret_be_lsb;
 logic [riscv_pkg::VADDR_W-1: 1] ras_next_pc;
 logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
 
+logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_valid;
+logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_valid;
+
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
   logic [15: 0] w_rvc_inst;
@@ -101,7 +108,8 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   assign is_std_jalr = (w_std_inst[ 6: 0] == 7'b1100111) &
                        (w_std_inst[14:12] == 3'b000) &
                        (w_std_inst[11: 7] == 5'h1);
-  assign w_std_call_be[c_idx] = is_std_jal | is_std_jalr;
+  // Last 16-bit, it can't decide CALL and predict immediately
+  assign w_std_call_be[c_idx] = (c_idx != (ICACHE_DATA_B_W / 2 - 1)) & (is_std_jal | is_std_jalr);
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
 
@@ -142,22 +150,39 @@ logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
 logic                                              w_cmt_update_ras_idx;
 logic                                              w_cmt_dead_valid;
 
-assign w_br_call_mispredict = br_upd_if.update & ~br_upd_if.dead & br_upd_if.is_call & br_upd_if.mispredict;
-assign w_br_ret_mispredict  = br_upd_if.update & ~br_upd_if.dead & br_upd_if.is_ret  & br_upd_if.mispredict;
+logic                                              w_br_call_dead;
+logic                                              w_br_ret_dead;
+logic                                              r_during_recover;
+
+assign w_br_call_dead = br_upd_if.update & br_upd_if.dead & br_upd_if.is_call;
+assign w_br_ret_dead  = br_upd_if.update & br_upd_if.dead & br_upd_if.is_ret ;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_during_recover <= 1'b0;
+  end else begin
+    if (br_upd_if.update &
+        (br_upd_if.is_call | br_upd_if.is_ret)) begin
+      if (br_upd_if.dead) begin
+        r_during_recover <= 1'b1; // Enter recovering mode
+      end else begin
+        r_during_recover <= 1'b0; // Leave recovering mode
+      end
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 always_comb begin
   w_cmt_ras_index_next = r_ras_input_index;
 
-  if (w_br_call_mispreict | w_br_ret_mispreict) begin
+  if ((w_br_call_dead | w_br_ret_dead) & ~r_during_recover) begin
     w_cmt_ras_index_next = br_upd_if.ras_index;
   end
 
-  if (w_call_be) begin
-    w_cmt_ras_index_next = r_ras_input_index - 'h1;
-  end
-
   w_ras_index_next = w_cmt_ras_index_next;
-  if (w_call_be) begin
+  if (|w_s2_ret_valid) begin
+    w_ras_index_next = w_cmt_ras_index_next - 'h1;
+  end else if (|w_s2_call_valid) begin
     w_ras_index_next = w_cmt_ras_index_next + 'h1;
   end
   w_ras_wr_index = w_ras_index_next;
@@ -170,16 +195,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ras_input_index <= 'h0;
   end else begin
     r_ras_input_index <= w_ras_index_next;
-    if (w_cmt_update_ras_idx) begin
-    end
   end
 end
 
-assign ras_search_if.s2_is_call   = w_call_be;
-assign ras_search_if.s2_is_ret    = w_ret_be;
+assign ras_search_if.s2_is_call   = w_s2_call_valid;
+assign ras_search_if.s2_is_ret    = w_s2_ret_valid;
 assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
-assign ras_search_if.s2_ras_index = w_ras_index_next;
-assign ras_search_if.s2_cmt_ras_index = w_ras_cmt_index;
+assign ras_search_if.s2_ras_index = w_cmt_ras_index_next;
+
 
 /* verilator lint_off WIDTH */
 assign ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1:$clog2(ICACHE_DATA_B_W/2)+1], {$clog2(ICACHE_DATA_B_W/2){1'b0}}} +
@@ -193,12 +216,17 @@ u_ras
    .i_reset_n (i_reset_n),
 
    .i_wr_valid (w_call_ras_upd),
-   .i_wr_index (w_ras_wr_index),
+   .i_wr_index (w_cmt_ras_index_next),
    .i_wr_pa    (ras_next_pc),
 
    .i_rd_valid (w_ras_rd_valid),
    .i_rd_index (w_ras_output_index),
-   .o_rd_pa    (w_ras_ret_vaddr)
+   .o_rd_pa    (w_ras_ret_vaddr),
+
+   .i_br_call_cmt_valid     (br_upd_if.update & ~br_upd_if.dead & br_upd_if.is_call),
+   .i_br_call_cmt_ras_index (br_upd_if.ras_index),
+   .i_br_call_recover_valid (w_br_call_dead),
+   .i_br_call_recover_ras_index (br_upd_if.ras_index)
    );
 
 // `ifdef SIMULATION
@@ -242,4 +270,26 @@ u_ras
 
 
 
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_pred_hit_oh;
+
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_array;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_lsb;
+
+// ----------------------------------------
+// Extracting Call/Ret for 1st instruction
+// ----------------------------------------
+assign w_btb_bim_hit_array = search_btb_if.s2_hit & search_bim_if.s2_pred_taken;
+
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) pred_hit_select (.in(w_btb_bim_hit_array | w_call_be | w_ret_be), .out(w_pred_hit_oh));
+
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_btb_bim_hit_array), .out(w_btb_bim_hit_lsb));
+bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
+bit_oh_target_vaddr(.i_oh(w_btb_bim_hit_lsb), .i_data(search_btb_if.s2_target_vaddr), .o_selected(o_s2_btb_target_vaddr));
+
+assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_call_be & w_pred_hit_oh) ? w_call_be : 'h0);
+assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_ret_be  & w_pred_hit_oh) ? w_ret_be  : 'h0);
+
+
 endmodule // msrh_predictor
+
+`default_nettype wire

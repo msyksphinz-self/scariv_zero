@@ -213,17 +213,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.valid <= 'h0;
     sc_disp.pc_addr <= 'h0;
     sc_disp.is_br_included <= 1'b0;
-    sc_disp.is_call_included <= 1'b0;
-    sc_disp.is_ret_included  <= 1'b0;
-    // sc_disp.cat <= 'h0;
     sc_disp.inst <= 'h0;
   end else begin
     sc_disp.valid            <= w_iq_fire;
     sc_disp.pc_addr          <= iq_disp.pc_addr;
     sc_disp.is_br_included   <= iq_disp.is_br_included;
-    sc_disp.is_call_included <= iq_disp.is_call_included;
-    sc_disp.is_ret_included  <= iq_disp.is_ret_included;
-    sc_disp.ras_index        <= iq_disp.ras_index;
     sc_disp.inst             <= w_disp_inst;
     sc_disp.tlb_except_valid <= iq_disp.tlb_except_valid;
     sc_disp.tlb_except_cause <= iq_disp.tlb_except_cause;

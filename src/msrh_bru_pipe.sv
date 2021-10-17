@@ -1,6 +1,6 @@
 module msrh_bru_pipe
   import decoder_bru_ctrl_pkg::*;
-q#(
+#(
   parameter RV_ENTRY_SIZE = 32
   )
 (
@@ -308,8 +308,7 @@ end // always_comb
 logic w_ex3_ras_hit;
 logic w_ex3_bim_hit;
 
-// assign w_ex3_not_predict_taken = ~(r_ex3_issue.btb_valid | r_ex3_issue.ras_valid) & r_ex3_result;
-assign w_ex3_ras_hit = r_ex3_issue.ras_valid & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
+assign w_ex3_ras_hit = r_ex3_issue.is_ret & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
 assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
                        ((~r_ex3_result & ~r_ex3_issue.pred_taken) |
                         (r_ex3_result & r_ex3_issue.pred_taken &
@@ -370,7 +369,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_bru_other_count     <= 'h0;
       r_bru_other_hit_count <= 'h0;
     end else begin
-      if (ex3_br_upd_if.update) begin
+      if (ex3_br_upd_if.update & ~ex3_br_upd_if.dead) begin
         r_bru_valid_count <= r_bru_valid_count + 'h1;
         if (r_ex3_pipe_ctrl.op != OP__) begin
           r_bru_cmp_count <= r_bru_cmp_count + 'h1;
@@ -425,7 +424,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                 ex3_br_upd_if.bim_value,
                 ex3_br_upd_if.mispredict ? "Miss" : "Succ",
                 r_ex3_issue.inst);
-      end else if (r_ex3_issue.ras_valid) begin
+      end else if (r_ex3_issue.is_ret) begin
         $fwrite(bim_fp, "%t : pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, %s, DASM(0x%08x)\n",
                 $time,
                 r_ex3_issue.pc_addr,

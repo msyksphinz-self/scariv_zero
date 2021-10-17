@@ -104,7 +104,6 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic                           is_ret;
     logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
     logic                           pred_taken;
-    logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
@@ -207,8 +206,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
 
     logic                   is_call;
     logic                   is_ret;
+    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
     logic                           pred_taken;
-    logic                           ras_valid;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
@@ -265,7 +264,6 @@ function issue_t assign_issue_t(disp_t in,
   ret.bim_value        = in.bim_value;
   ret.btb_valid        = in.btb_valid;
   ret.pred_target_vaddr = in.pred_target_vaddr;
-  ret.ras_valid         = in.ras_valid;
 
   ret.rd_valid = in.rd_valid;
   ret.rd_type = in.rd_type;

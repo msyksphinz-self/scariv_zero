@@ -566,39 +566,34 @@ assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_array;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_pred_hit_oh;
-
-logic                                        w_ras_pred_hit;
-assign w_ras_pred_hit = |(w_ras_search_if.s2_ras_valid & w_pred_hit_oh);
-
 assign w_btb_bim_hit_array = w_btb_search_if.s2_hit & w_bim_search_if.s2_pred_taken;
 
 assign w_s2_predict_valid = w_s2_inst_valid &
                             ((|w_btb_bim_hit_array) |   // from BIM and BTB
-                             (|w_ras_search_if.s2_ras_valid));  // from RAS
-assign w_s2_predict_target_vaddr = w_ras_pred_hit ? {w_ras_search_if.s2_ras_vaddr, 1'b0} :
+                             (|w_ras_search_if.s2_is_call) | // from RAS
+                             (|w_ras_search_if.s2_is_ret));  // from RAS
+assign w_s2_predict_target_vaddr = |w_ras_search_if.s2_is_ret ? {w_ras_search_if.s2_ras_vaddr, 1'b0} :
                                    w_s2_btb_target_vaddr;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) pred_hit_select (.in(w_btb_bim_hit_array | w_ras_search_if.s2_ras_valid), .out(w_pred_hit_oh));
-bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
-bit_oh_target_vaddr(.i_oh(w_pred_hit_oh), .i_data(w_btb_search_if.s2_target_vaddr), .o_selected(w_s2_btb_target_vaddr));
 
 msrh_predictor u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
+   .i_s2_valid   (w_s2_inst_buffer_load_valid),
    .i_s2_ic_resp (w_s2_ic_resp),
 
    .update_btb_if (w_btb_update_if),
    .search_btb_if (w_btb_search_if),
+   .o_s2_btb_target_vaddr (w_s2_btb_target_vaddr),
 
    .update_bim_if (w_bim_update_if),
    .search_bim_if (w_bim_search_if),
 
    .ras_search_if (w_ras_search_if),
 
-   .i_commit (i_commit)
+   .br_upd_if (br_upd_if)
    );
 
 endmodule // msrh_frontend

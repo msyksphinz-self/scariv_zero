@@ -11,9 +11,6 @@ module msrh_rob_entry
    input disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_grp_id,
    input logic                                i_load_br_included,
-   input logic                                i_load_call_included,
-   input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_load_ras_index,
-   input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_load_cmt_ras_index,
    input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_tlb_except_valid,
    input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
    input logic [riscv_pkg::XLEN_W-1: 0]       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
@@ -93,9 +90,6 @@ always_comb begin
 
 
     w_entry_next.is_br_included = i_load_br_included;
-    w_entry_next.is_call_included = i_load_call_included;
-    w_entry_next.ras_index        = i_load_ras_index;
-    w_entry_next.cmt_ras_index    = i_load_cmt_ras_index;
 
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       // If TLB Exception detected before execution, this instruction already done.
