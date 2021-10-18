@@ -14,8 +14,9 @@ module msrh_rob
    input done_rpt_t i_done_rpt [CMT_BUS_SIZE],
    br_upd_if.slave  ex3_br_upd_if,
 
-   output commit_blk_t o_commit,
-   output cmt_rnid_upd_t o_commit_rnid_update,
+   output commit_blk_t     o_commit,
+   output cmt_rnid_upd_t   o_commit_rnid_update,
+   output cmt_ras_update_t o_commit_ras_update,
 
    // Branch Tag Update Signal
    cmt_brtag_if.master cmt_brtag_if,
@@ -201,6 +202,14 @@ assign o_commit_rnid_update.all_dead       = o_commit.all_dead;
 assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
 assign o_commit_rnid_update.except_type    = o_commit.except_type;
 
+
+// --------------------------------------------------
+// Notification of RAS Recovery by dead instruction
+// --------------------------------------------------
+assign o_commit_ras_update.dead_cmt_valid = o_commit.commit & o_commit.all_dead;
+assign o_commit_ras_update.is_call        = w_entries[w_out_cmt_entry_id].is_call  ;
+assign o_commit_ras_update.is_ret         = w_entries[w_out_cmt_entry_id].is_ret   ;
+assign o_commit_ras_update.ras_index      = w_entries[w_out_cmt_entry_id].ras_index;
 
 // Make dead Instruction, (after branch instruction)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));

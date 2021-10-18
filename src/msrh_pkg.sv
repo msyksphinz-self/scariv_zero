@@ -383,6 +383,16 @@ typedef struct packed {
   logic                                                      all_dead;
 } cmt_rnid_upd_t;
 
+localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
+
+// RAS Recovery Information
+typedef struct packed {
+  logic              dead_cmt_valid;
+  logic              is_call;
+  logic              is_ret;
+  logic [RAS_W-1: 0] ras_index;
+} cmt_ras_update_t;
+
 endpackage
 
 `default_nettype wire

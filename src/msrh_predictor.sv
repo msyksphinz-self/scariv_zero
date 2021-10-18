@@ -28,7 +28,8 @@ module msrh_predictor
 
  ras_search_if.master ras_search_if,
 
- input br_upd_if.slave br_upd_if
+ input msrh_pkg::commit_blk_t i_commit,
+ input br_upd_if.slave        br_upd_if
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
