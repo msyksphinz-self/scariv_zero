@@ -387,6 +387,7 @@ localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
 
 // RAS Recovery Information
 typedef struct packed {
+  logic              cmt_valid;
   logic              dead_cmt_valid;
   logic              is_call;
   logic              is_ret;

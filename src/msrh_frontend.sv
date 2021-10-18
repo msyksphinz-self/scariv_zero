@@ -29,6 +29,9 @@ module msrh_frontend
   /* CSR information */
   csr_info_if.slave           csr_info,
 
+ // RAS recovery
+ input msrh_pkg::cmt_ras_update_t i_commit_ras_update,
+
  // Dispatch Info
  disp_if.master    iq_disp,
  // Page Table Walk I/O
@@ -593,6 +596,7 @@ msrh_predictor u_predictor
 
    .ras_search_if (w_ras_search_if),
 
+   .i_commit_ras_update (i_commit_ras_update),
    .br_upd_if (br_upd_if)
    );
 

@@ -57,8 +57,9 @@ logic                          w_fence_i;
 // Committer Components
 // ----------------------------------
 /* verilator lint_off UNOPTFLAT */
-msrh_pkg::commit_blk_t w_commit;
-msrh_pkg::cmt_rnid_upd_t w_commit_rnid_update;
+msrh_pkg::commit_blk_t     w_commit;
+msrh_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
+msrh_pkg::cmt_ras_update_t w_commit_ras_update;
 
 // ----------------------------------
 // ALU Components
@@ -162,6 +163,7 @@ msrh_frontend u_frontend (
 
   .i_commit (w_commit),
   .br_upd_if (w_ex3_br_upd_if),
+  .i_commit_ras_update  (w_commit_ras_update),
 
   .csr_info (w_csr_info),
 
@@ -405,6 +407,7 @@ msrh_rob u_rob
 
    .o_commit (w_commit),
    .o_commit_rnid_update (w_commit_rnid_update),
+   .o_commit_ras_update  (w_commit_ras_update),
    .cmt_brtag_if (w_cmt_brtag_if),
 
    .rob_info_if   (w_rob_info_if),

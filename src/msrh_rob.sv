@@ -206,10 +206,28 @@ assign o_commit_rnid_update.except_type    = o_commit.except_type;
 // --------------------------------------------------
 // Notification of RAS Recovery by dead instruction
 // --------------------------------------------------
-assign o_commit_ras_update.dead_cmt_valid = o_commit.commit & o_commit.all_dead;
-assign o_commit_ras_update.is_call        = w_entries[w_out_cmt_entry_id].is_call  ;
-assign o_commit_ras_update.is_ret         = w_entries[w_out_cmt_entry_id].is_ret   ;
-assign o_commit_ras_update.ras_index      = w_entries[w_out_cmt_entry_id].ras_index;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_call_array;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_ret_array;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_array[msrh_conf_pkg::DISP_SIZE];
+
+logic                                              w_call_ret_part_dead;
+assign w_call_ret_part_dead = |(w_is_call_array | w_is_ret_array) & o_commit.dead_id;
+
+assign o_commit_ras_update.cmt_valid      = o_commit.commit & ~(o_commit.all_dead | w_call_ret_part_dead);
+assign o_commit_ras_update.dead_cmt_valid = o_commit.commit &  (o_commit.all_dead | w_call_ret_part_dead);
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : ras_recov_loop
+  assign w_is_call_array[d_idx] = (o_commit.grp_id[d_idx] & ~o_commit.dead_id[d_idx]) &
+                                  w_entries[w_out_cmt_entry_id].inst[d_idx].is_call;
+  assign w_is_ret_array[d_idx] = (o_commit.grp_id[d_idx] & ~o_commit.dead_id[d_idx]) &
+                                 w_entries[w_out_cmt_entry_id].inst[d_idx].is_ret;
+  assign w_ras_index_array[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].ras_index;
+end
+endgenerate
+
+assign o_commit_ras_update.is_call        = |w_is_call_array;
+assign o_commit_ras_update.is_ret         = |w_is_ret_array ;
+bit_oh_or #(.T(logic[$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]), .WORDS(msrh_conf_pkg::DISP_SIZE))
+u_bit_extract_ras_index (.i_oh(w_is_call_array | w_is_ret_array), .i_data(w_ras_index_array), .o_selected(o_commit_ras_update.ras_index));
 
 // Make dead Instruction, (after branch instruction)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));

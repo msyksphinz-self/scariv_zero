@@ -28,8 +28,9 @@ module msrh_predictor
 
  ras_search_if.master ras_search_if,
 
- input msrh_pkg::commit_blk_t i_commit,
- input br_upd_if.slave        br_upd_if
+ // RAS recovery
+ input msrh_pkg::cmt_ras_update_t i_commit_ras_update,
+ input br_upd_if.slave  br_upd_if
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -155,20 +156,17 @@ logic                                              w_br_call_dead;
 logic                                              w_br_ret_dead;
 logic                                              r_during_recover;
 
-assign w_br_call_dead = br_upd_if.update & br_upd_if.dead & br_upd_if.is_call;
-assign w_br_ret_dead  = br_upd_if.update & br_upd_if.dead & br_upd_if.is_ret ;
+assign w_br_call_dead = i_commit_ras_update.dead_cmt_valid & i_commit_ras_update.is_call;
+assign w_br_ret_dead  = i_commit_ras_update.dead_cmt_valid & i_commit_ras_update.is_ret ;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_during_recover <= 1'b0;
   end else begin
-    if (br_upd_if.update &
-        (br_upd_if.is_call | br_upd_if.is_ret)) begin
-      if (br_upd_if.dead) begin
-        r_during_recover <= 1'b1; // Enter recovering mode
-      end else begin
-        r_during_recover <= 1'b0; // Leave recovering mode
-      end
+    if (i_commit_ras_update.dead_cmt_valid) begin
+      r_during_recover <= 1'b1; // Enter recovering mode
+    end else if (i_commit_ras_update.cmt_valid) begin
+      r_during_recover <= 1'b0; // Leave recovering mode
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -177,7 +175,7 @@ always_comb begin
   w_cmt_ras_index_next = r_ras_input_index;
 
   if ((w_br_call_dead | w_br_ret_dead) & ~r_during_recover) begin
-    w_cmt_ras_index_next = br_upd_if.ras_index;
+    w_cmt_ras_index_next = i_commit_ras_update.ras_index;
   end
 
   w_ras_index_next = w_cmt_ras_index_next;
