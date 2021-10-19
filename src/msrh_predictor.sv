@@ -80,6 +80,10 @@ logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_valid;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_valid;
 
+logic [15: 0]                     r_s2_old_upper_16bit;
+logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
+assign w_s2_inst = {i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-16-1:0], r_s2_old_upper_16bit};
+
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
   logic [15: 0] w_rvc_inst;
@@ -104,7 +108,7 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   logic           is_std_jalr;
   logic           std_call_be;
   /* verilator lint_off SELRANGE */
-  assign w_std_inst = i_s2_ic_resp.data[c_idx*16 +: 32];
+  assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
   assign is_std_jal = (w_std_inst[ 6:0] == 7'b1101111) &
                       (w_std_inst[11:7] == 5'h1);
   assign is_std_jalr = (w_std_inst[ 6: 0] == 7'b1100111) &
@@ -162,11 +166,16 @@ assign w_br_ret_dead  = i_commit_ras_update.dead_cmt_valid & i_commit_ras_update
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_during_recover <= 1'b0;
+    r_s2_old_upper_16bit <= 'h0;
   end else begin
     if (w_br_call_dead | w_br_ret_dead) begin
       r_during_recover <= 1'b1; // Enter recovering mode
     end else if (i_commit_ras_update.cmt_valid) begin
       r_during_recover <= 1'b0; // Leave recovering mode
+    end
+
+    if (i_s2_valid) begin
+      r_s2_old_upper_16bit <= i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W -: 16];
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
