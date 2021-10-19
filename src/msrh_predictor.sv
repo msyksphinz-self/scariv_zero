@@ -163,7 +163,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_during_recover <= 1'b0;
   end else begin
-    if (i_commit_ras_update.dead_cmt_valid) begin
+    if (w_br_call_dead | w_br_ret_dead) begin
       r_during_recover <= 1'b1; // Enter recovering mode
     end else if (i_commit_ras_update.cmt_valid) begin
       r_during_recover <= 1'b0; // Leave recovering mode

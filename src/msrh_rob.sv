@@ -216,10 +216,8 @@ assign w_call_ret_part_dead = |(w_is_call_array | w_is_ret_array) & o_commit.dea
 assign o_commit_ras_update.cmt_valid      = o_commit.commit & ~(o_commit.all_dead | w_call_ret_part_dead);
 assign o_commit_ras_update.dead_cmt_valid = o_commit.commit &  (o_commit.all_dead | w_call_ret_part_dead);
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : ras_recov_loop
-  assign w_is_call_array[d_idx] = (o_commit.grp_id[d_idx] & ~o_commit.dead_id[d_idx]) &
-                                  w_entries[w_out_cmt_entry_id].inst[d_idx].is_call;
-  assign w_is_ret_array[d_idx] = (o_commit.grp_id[d_idx] & ~o_commit.dead_id[d_idx]) &
-                                 w_entries[w_out_cmt_entry_id].inst[d_idx].is_ret;
+  assign w_is_call_array[d_idx] = o_commit.grp_id[d_idx] & w_entries[w_out_cmt_entry_id].inst[d_idx].is_call;
+  assign w_is_ret_array[d_idx]  = o_commit.grp_id[d_idx] & w_entries[w_out_cmt_entry_id].inst[d_idx].is_ret;
   assign w_ras_index_array[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].ras_index;
 end
 endgenerate
