@@ -81,8 +81,8 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_valid;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_valid;
 
 logic [15: 0]                     r_s2_old_upper_16bit;
-logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
-assign w_s2_inst = {i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-16-1:0], r_s2_old_upper_16bit};
+logic [msrh_conf_pkg::ICACHE_DATA_W+16-1: 0] w_s2_inst;
+assign w_s2_inst = {i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-1:0], r_s2_old_upper_16bit};
 
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
@@ -115,7 +115,7 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
                        (w_std_inst[14:12] == 3'b000) &
                        (w_std_inst[11: 7] == 5'h1);
   // Last 16-bit, it can't decide CALL and predict immediately
-  assign w_std_call_be[c_idx] = (c_idx != (ICACHE_DATA_B_W / 2 - 1)) & (is_std_jal | is_std_jalr);
+  assign w_std_call_be[c_idx] = (is_std_jal | is_std_jalr);
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
 
@@ -175,7 +175,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
 
     if (i_s2_valid) begin
-      r_s2_old_upper_16bit <= i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W -: 16];
+      r_s2_old_upper_16bit <= i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-1 -: 16];
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -215,7 +215,7 @@ assign ras_search_if.s2_ras_index = w_cmt_ras_index_next;
 /* verilator lint_off WIDTH */
 assign ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1:$clog2(ICACHE_DATA_B_W/2)+1], {$clog2(ICACHE_DATA_B_W/2){1'b0}}} +
                      w_call_be_enc +
-                     (selected_call_size == STD_CALL ? 2 : 1);
+                     (selected_call_size == STD_CALL ? 1 : 0);
 
 msrh_pred_ras
 u_ras
