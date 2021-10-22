@@ -34,6 +34,11 @@ module msrh_frontend
 
  // Dispatch Info
  disp_if.master    iq_disp,
+
+ // For checking RAS updates
+ disp_if.watch     sc_disp,
+ output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
+
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if
 );
@@ -583,6 +588,9 @@ msrh_predictor u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+
+   .sc_disp   (sc_disp),
+   .o_sc_ras_index (o_sc_ras_index),
 
    .i_s2_valid   (w_s2_inst_buffer_load_valid),
    .i_s2_ic_resp (w_s2_ic_resp),

@@ -18,6 +18,8 @@ module msrh_rename
    // Branch Tag Update Signal
    br_upd_if.slave                                            br_upd_if,
 
+   input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
+
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,
    input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
@@ -35,7 +37,8 @@ logic [RNID_W-1: 0]                       w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
 logic [ 4: 0]                             w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]                       w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
 
-disp_t [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_inst;
+disp_t [msrh_conf_pkg::DISP_SIZE-1:0]     w_disp_inst;
+disp_t [msrh_conf_pkg::DISP_SIZE-1:0]     r_disp_inst;
 
 logic [RNID_W-1: 0]                       rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]                       rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
@@ -213,20 +216,30 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.valid <= 'h0;
     sc_disp.pc_addr <= 'h0;
     sc_disp.is_br_included <= 1'b0;
-    sc_disp.inst <= 'h0;
+
+    // sc_disp.inst <= 'h0;
+    r_disp_inst <= 'h0;
   end else begin
     sc_disp.valid            <= w_iq_fire;
     sc_disp.pc_addr          <= iq_disp.pc_addr;
     sc_disp.is_br_included   <= iq_disp.is_br_included;
-    sc_disp.inst             <= w_disp_inst;
+    // sc_disp.inst             <= w_disp_inst;
     sc_disp.tlb_except_valid <= iq_disp.tlb_except_valid;
     sc_disp.tlb_except_cause <= iq_disp.tlb_except_cause;
     sc_disp.tlb_except_tval  <= iq_disp.tlb_except_tval;
     sc_disp.resource_cnt     <= iq_disp.resource_cnt;
+
+    r_disp_inst <= w_disp_inst;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign sc_disp.cmt_id = i_sc_new_cmt_id;
+always_comb begin
+  sc_disp.inst = r_disp_inst;
+  for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
+    sc_disp.inst[d_idx].ras_index = i_sc_ras_index;
+  end
+end
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */

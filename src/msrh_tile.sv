@@ -53,6 +53,8 @@ lsu_access_if w_lsu_access();
 sfence_if     w_sfence_if();
 logic                          w_fence_i;
 
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
+
 // ----------------------------------
 // Committer Components
 // ----------------------------------
@@ -168,6 +170,8 @@ msrh_frontend u_frontend (
   .csr_info (w_csr_info),
 
   .iq_disp (w_iq_disp),
+  .sc_disp (w_sc_disp),
+  .o_sc_ras_index (w_sc_ras_index),
 
   .ptw_if (w_ptw_if[0])
 );
@@ -198,7 +202,8 @@ msrh_rename u_msrh_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .sc_disp  (w_sc_disp)
+  .sc_disp  (w_sc_disp),
+  .i_sc_ras_index (w_sc_ras_index)
 );
 
 
