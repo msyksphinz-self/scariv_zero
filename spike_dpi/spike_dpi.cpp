@@ -510,7 +510,7 @@ void step_spike(long long time, long long rtl_pc,
   p->step(1);
 
   auto instret  = p->get_state()->minstret;
-  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%02d,%02x) %08x %s\n", time,
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%02d,%02d) %08x %s\n", time,
           instret,
           rtl_pc,
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
