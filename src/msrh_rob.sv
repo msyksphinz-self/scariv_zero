@@ -227,6 +227,47 @@ assign o_commit_ras_update.is_ret         = |w_is_ret_array ;
 bit_oh_or #(.T(logic[$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]), .WORDS(msrh_conf_pkg::DISP_SIZE))
 u_bit_extract_ras_index (.i_oh(w_is_call_array | w_is_ret_array), .i_data(w_ras_index_array), .o_selected(o_commit_ras_update.ras_index));
 
+`ifdef SIMULATION
+integer ras_fp;
+initial begin
+  ras_fp = $fopen("ras_detail.log", "w");
+end
+
+msrh_pkg::disp_t call_ret_extract_inst;
+bit_oh_or_packed #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+u_bit_extract_inst (.i_oh(w_is_call_array | w_is_ret_array),
+                    .i_data(w_entries[w_out_cmt_entry_id].inst),
+                    .o_selected(call_ret_extract_inst)
+                    );
+
+logic [$clog2(msrh_conf_pkg::DISP_SIZE)-1:0] w_call_ret_grp_id;
+assign w_call_ret_grp_id = $clog2(w_is_call_array | w_is_ret_array);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (o_commit_ras_update.cmt_valid &
+        (o_commit_ras_update.is_call | o_commit_ras_update.is_ret)) begin
+      $fwrite(ras_fp, "%t : (%02d,%d) pc_vaddr = %08x, ras_index = %02d, target_addr = %08x, pred_target_addr = %08x, %s, DASM(0x%08x)\n",
+              $time,
+              o_commit.cmt_id, w_is_call_array | w_is_ret_array,
+              call_ret_extract_inst.pc_addr,
+              w_entries[w_out_cmt_entry_id].br_upd_info.ras_index,
+              w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr[w_call_ret_grp_id],
+              w_entries[w_out_cmt_entry_id].br_upd_info.pred_vaddr,
+              w_entries[w_out_cmt_entry_id].br_upd_info.mispredicted ? "Miss" : "Succ",
+              call_ret_extract_inst.inst
+              );
+    end // if (o_commit_ras_update.cmt_valid)
+  end // if (i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+`endif // SIMULATION
+
+final begin
+  $fclose(ras_fp);
+end
+
+
+
 // Make dead Instruction, (after branch instruction)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
 

@@ -83,9 +83,6 @@ logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_pred_lsb_index;
 
 typedef struct packed {
   logic                           pred_taken;
-  logic                           is_call;
-  logic                           is_ret;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [1:0]                     bim_value;
   logic                           btb_valid;
   logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
@@ -93,6 +90,14 @@ typedef struct packed {
 
 pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] w_expand_pred_index[msrh_conf_pkg::DISP_SIZE];
+
+typedef struct packed {
+  logic                           is_call;
+  logic                           is_ret;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+} ras_info_t;
+
+ras_info_t w_expand_ras_info[msrh_conf_pkg::DISP_SIZE];
 
 typedef struct packed {
   logic                                      valid;
@@ -104,7 +109,7 @@ typedef struct packed {
   msrh_pkg::except_t                         tlb_except_cause;
 
   pred_info_t [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
-
+  ras_info_t  [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
 `ifdef SIMULATION
   logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
 `endif // SIMULATION
@@ -189,9 +194,10 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
           r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_ret[b_idx] ? {ras_search_if.s2_ras_vaddr, 1'b0} :
                                                                   btb_search_if.s2_target_vaddr[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].is_call          <= ras_search_if.s2_is_call[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].is_ret           <= ras_search_if.s2_is_ret [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].ras_index        <= ras_search_if.s2_ras_index;
+
+          r_inst_queue[idx].ras_info[b_idx].is_call          <= ras_search_if.s2_is_call[b_idx];
+          r_inst_queue[idx].ras_info[b_idx].is_ret           <= ras_search_if.s2_is_ret [b_idx];
+          r_inst_queue[idx].ras_info[b_idx].ras_index        <= ras_search_if.s2_ras_index;
         end
 
 `ifdef SIMULATION
@@ -298,6 +304,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
       w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
+
+      w_expand_ras_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
@@ -318,12 +326,14 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
 
       w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
+
+      w_expand_ras_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
   assign w_predict_taken_valid_array[w_idx] = w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken | // BIM
-                                              w_expand_pred_info[w_idx].is_call |  // RAS
-                                              w_expand_pred_info[w_idx].is_ret;  // RAS
+                                              w_expand_ras_info[w_idx].is_call |  // RAS
+                                              w_expand_ras_info[w_idx].is_ret;  // RAS
 
 end
 endgenerate
@@ -359,8 +369,15 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
   assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
 
-  assign w_inst_is_call  [w_idx] = w_expanded_valid[w_idx] & w_expand_pred_info[w_idx].is_call;
-  assign w_inst_is_ret   [w_idx] = w_expanded_valid[w_idx] & w_expand_pred_info[w_idx].is_ret;
+  logic          w_is_std_call;
+  logic          w_is_std_ret;
+  assign w_is_std_call = (w_expand_inst[w_idx][ 6:0] == 7'b1101111) &
+                         (w_expand_inst[w_idx][11:7] == 5'h1);
+  assign w_is_std_ret = w_expand_inst[w_idx] == 32'h00008067;
+
+  assign w_inst_is_call  [w_idx] = w_expanded_valid[w_idx] & w_is_std_call;
+  assign w_inst_is_ret   [w_idx] = w_expanded_valid[w_idx] & w_is_std_ret;
+
   assign w_inst_illegal  [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ );
 
   assign w_inst_gen_except[w_idx]  = w_expanded_valid[w_idx] & w_raw_gen_except;
@@ -493,14 +510,14 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
-      iq_disp.inst[d_idx].is_call           = w_expand_pred_info[d_idx].is_call;
-      iq_disp.inst[d_idx].ras_index         = w_expand_pred_info[d_idx].ras_index;
       iq_disp.inst[d_idx].pred_taken        = w_expand_pred_info[d_idx].pred_taken;
-      iq_disp.inst[d_idx].is_ret            = w_expand_pred_info[d_idx].is_ret;
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
       iq_disp.inst[d_idx].pred_target_vaddr = w_expand_pred_info[d_idx].pred_target_vaddr;
 
+      iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
+      iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
+      iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
     end else begin // if (w_inst_disp_mask[d_idx])
       iq_disp.inst[d_idx] = 'h0;
     end // else: !if(w_inst_disp_mask[d_idx])

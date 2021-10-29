@@ -113,6 +113,12 @@ always_comb begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
       end
+
+`ifdef SIMULATION
+      w_entry_next.br_upd_info.mispredicted = 1'b0;
+      w_entry_next.br_upd_info.ras_index    = 'h0;
+      w_entry_next.br_upd_info.pred_vaddr   = 'h0;
+`endif // SIMULATION
     end
   end // if (i_load_valid)
 
@@ -150,6 +156,13 @@ always_comb begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
       end
+`ifdef SIMULATION
+      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) & ~br_upd_if.dead) begin
+        w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
+        w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
+        w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
+      end
+`endif // SIMULATION
     end
   end
 end // always_comb

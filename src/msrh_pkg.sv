@@ -169,6 +169,12 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [msrh_conf_pkg::DISP_SIZE-1:0]                         upd_valid;
     logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0]         brtag;
+
+`ifdef SIMULATION
+  logic                                                          mispredicted;
+  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0]             ras_index;
+  logic [riscv_pkg::VADDR_W-1: 0]                                pred_vaddr;
+`endif // SIMULATION
   } br_upd_info_t;
 
   typedef struct packed {

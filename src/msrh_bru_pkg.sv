@@ -31,6 +31,9 @@ interface br_upd_if;
   logic [ 1: 0]                        bim_value;
   logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
+`ifdef SIMULATION
+  logic [riscv_pkg::VADDR_W-1: 0]      pred_vaddr;
+`endif // SIMULATION
   logic                                dead;
   logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
@@ -48,6 +51,9 @@ interface br_upd_if;
     output dead,
     output pc_vaddr,
     output target_vaddr,
+`ifdef SIMULATION
+    output pred_vaddr,
+`endif // SIMULATION
     output cmt_id,
     output grp_id,
     output brtag,
@@ -65,6 +71,9 @@ interface br_upd_if;
     input dead,
     input pc_vaddr,
     input target_vaddr,
+`ifdef SIMULATION
+    input pred_vaddr,
+`endif // SIMULATION
     input cmt_id,
     input grp_id,
     input brtag,

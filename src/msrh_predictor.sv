@@ -89,15 +89,18 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_ret_be;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_ret_valid;
 
-logic [15: 0]                     r_s2_old_upper_16bit;
-logic [msrh_conf_pkg::ICACHE_DATA_W+16-1: 0] w_s2_inst;
-assign w_s2_inst = {i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-1:0], r_s2_old_upper_16bit};
+logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
+logic [ICACHE_DATA_B_W-1: 0]              w_s2_inst_be;
+assign w_s2_inst    = i_s2_ic_resp.data;
+assign w_s2_inst_be = i_s2_ic_resp.be;
 
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
+  assign w_s2_inst_be[c_idx] = &(i_s2_ic_resp.be[c_idx*2 +: 2]);
+
   logic [15: 0] w_rvc_inst;
   logic         is_rvc_jal;
-  logic         is_rvc_jalr;
+  // logic         is_rvc_jalr;
   logic         rvc_call_be;
   assign w_rvc_inst = i_s2_ic_resp.data[c_idx*16 +: 16];
 `ifdef RV32
@@ -106,11 +109,11 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
 `else // RV32
   assign is_rvc_jal = 'b0;
 `endif // RV32
-  assign is_rvc_jalr = (w_rvc_inst[1:0] == 2'b10) &
-                       (w_rvc_inst[15:12] == 4'b1001) &
-                       (w_rvc_inst[11: 7] != 5'h0) &
-                       (w_rvc_inst[ 6: 2] == 5'h0);
-  assign w_rvc_call_be[c_idx] = is_rvc_jal | is_rvc_jalr;
+  // assign is_rvc_jalr = (w_rvc_inst[1:0] == 2'b10) &
+  //                      (w_rvc_inst[15:12] == 4'b1001) &
+  //                      (w_rvc_inst[11: 7] != 5'h0) &
+  //                      (w_rvc_inst[ 6: 2] == 5'h0);
+  assign w_rvc_call_be[c_idx] = is_rvc_jal;
 
   logic [31: 0]   w_std_inst;
   logic           is_std_jal;
@@ -120,11 +123,11 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
   assign is_std_jal = (w_std_inst[ 6:0] == 7'b1101111) &
                       (w_std_inst[11:7] == 5'h1);
-  assign is_std_jalr = (w_std_inst[ 6: 0] == 7'b1100111) &
-                       (w_std_inst[14:12] == 3'b000) &
-                       (w_std_inst[11: 7] == 5'h1);
+  // assign is_std_jalr = (w_std_inst[ 6: 0] == 7'b1100111) &
+  //                      (w_std_inst[14:12] == 3'b000) &
+  //                      (w_std_inst[11: 7] == 5'h1);
   // Last 16-bit, it can't decide CALL and predict immediately
-  assign w_std_call_be[c_idx] = (is_std_jal | is_std_jalr);
+  assign w_std_call_be[c_idx] = (is_std_jal /* | is_std_jalr */);
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
 
@@ -136,12 +139,12 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
   assign w_is_std_ret = w_std_inst == 32'h00008067;
   assign w_s2_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
-                           i_s2_ic_resp.be[c_idx * 2];
+                              i_s2_ic_resp.be[c_idx * 2];
 end // block: rvc_jal_loop
 endgenerate
 
 /* verilator lint_off WIDTH */
-assign w_s2_call_be = (w_rvc_call_be | w_std_call_be | {w_std_call_be, 1'b0}) & i_s2_ic_resp.be;
+assign w_s2_call_be = (w_rvc_call_be | w_std_call_be | {w_std_call_be, 1'b0}) & w_s2_inst_be;
 
 assign w_call_ras_upd = i_s2_ic_resp.valid & |w_s2_call_be;
 
@@ -176,7 +179,6 @@ assign w_br_ret_dead  = i_commit_ras_update.dead_cmt_valid & i_commit_ras_update
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_during_recover <= 1'b0;
-    r_s2_old_upper_16bit <= 'h0;
   end else begin
     if (w_br_call_dead | w_br_ret_dead) begin
       r_during_recover <= 1'b1; // Enter recovering mode
@@ -184,9 +186,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_during_recover <= 1'b0; // Leave recovering mode
     end
 
-    if (i_s2_valid) begin
-      r_s2_old_upper_16bit <= i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-1 -: 16];
-    end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -322,7 +321,7 @@ end
 endgenerate
 
 assign w_sc_call_valid = sc_disp.valid & sc_disp.ready & |(w_sc_call_be & w_sc_grp_valid);
-assign w_sc_ret_valid  = sc_disp.valid & sc_disp.ready & |(w_sc_ret_be & w_sc_grp_valid);
+assign w_sc_ret_valid  = sc_disp.valid & sc_disp.ready & |(w_sc_ret_be  & w_sc_grp_valid);
 
 endmodule // msrh_predictor
 

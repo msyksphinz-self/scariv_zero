@@ -578,7 +578,6 @@ assign w_btb_bim_hit_array = w_btb_search_if.s2_hit & w_bim_search_if.s2_pred_ta
 
 assign w_s2_predict_valid = w_s2_inst_valid &
                             ((|w_btb_bim_hit_array) |   // from BIM and BTB
-                             (|w_ras_search_if.s2_is_call) | // from RAS
                              (|w_ras_search_if.s2_is_ret));  // from RAS
 assign w_s2_predict_target_vaddr = |w_ras_search_if.s2_is_ret ? {w_ras_search_if.s2_ras_vaddr, 1'b0} :
                                    w_s2_btb_target_vaddr;
