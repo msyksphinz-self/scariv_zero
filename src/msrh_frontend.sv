@@ -122,6 +122,10 @@ logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
 // ==============
 logic                           w_tlb_ready;
 
+// ===================
+// Fetch Target Queue
+// ===================
+br_upd_if              br_upd_fe_if();
 
 // ==============
 // Commiter PC
@@ -237,8 +241,8 @@ always_comb begin
 `endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
-  end else if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
-    w_s0_vaddr_flush_next = br_upd_if.target_vaddr;
+  end else if (br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict) begin
+    w_s0_vaddr_flush_next = br_upd_fe_if.target_vaddr;
   end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
     w_s0_vaddr_flush_next = 'h0;
   end // else: !if(|(i_commit.except_valid & ~i_commit.dead_id))
@@ -399,7 +403,7 @@ end
 
 
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
-assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_br_flush     = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next :
                         w_s2_predict_valid ? w_s2_predict_target_vaddr :
@@ -551,6 +555,21 @@ u_msrh_inst_buffer
    .iq_disp        (iq_disp)
    );
 
+
+// =======================
+// Fetch Target Queue
+// =======================
+msrh_ftq u_ftq
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .sc_disp (sc_disp),
+   .br_upd_if (br_upd_if),
+
+   .br_upd_fe_if (br_upd_fe_if)
+   );
+
 // =======================
 // Predictors
 // =======================
@@ -603,8 +622,7 @@ msrh_predictor u_predictor
 
    .ras_search_if (w_ras_search_if),
 
-   .i_commit_ras_update (i_commit_ras_update),
-   .br_upd_if (br_upd_if)
+   .br_upd_fe_if (br_upd_fe_if)
    );
 
 endmodule // msrh_frontend
