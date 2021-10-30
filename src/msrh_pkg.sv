@@ -338,7 +338,6 @@ typedef struct packed {
   logic [DISP_SIZE-1:0] grp_id;
   logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
   except_t                        except_type;
-  logic                           fence_i;
   logic [riscv_pkg::VADDR_W-1: 0] epc;
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
