@@ -20,8 +20,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_inptr  <= {{(SIZE-1){1'b0}}, 1'b1};
     r_outptr <= {{(SIZE-1){1'b0}}, 1'b1};
   end else begin
-    r_inptr  <= i_in_valid  ? {r_inptr [SIZE-2:1], r_inptr [SIZE-1]} : r_inptr;
-    r_outptr <= i_out_valid ? {r_outptr[SIZE-2:1], r_outptr[SIZE-1]} : r_outptr;
+    r_inptr  <= i_in_valid  ? {r_inptr [SIZE-2:0], r_inptr [SIZE-1]} : r_inptr;
+    r_outptr <= i_out_valid ? {r_outptr[SIZE-2:0], r_outptr[SIZE-1]} : r_outptr;
   end
 end
 
