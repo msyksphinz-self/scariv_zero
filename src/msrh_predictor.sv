@@ -7,7 +7,7 @@
 //
 // ------------------------------------------------------------------------
 
-`default_nettype none
+// `default_nettype none
 
 module msrh_predictor
   import msrh_predict_pkg::*;
@@ -31,7 +31,7 @@ module msrh_predictor
 
  ras_search_if.master ras_search_if,
 
- input br_upd_if.slave  br_upd_fe_if
+ br_upd_if.slave  br_upd_fe_if
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -323,4 +323,4 @@ assign w_sc_ret_valid  = sc_disp.valid & sc_disp.ready & |(w_sc_ret_be  & w_sc_g
 
 endmodule // msrh_predictor
 
-`default_nettype wire
+// `default_nettype wire

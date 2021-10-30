@@ -7,8 +7,8 @@ module msrh_pred_ras
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_wr_index,
    input logic [riscv_pkg::VADDR_W-1: 1]                    i_wr_pa ,
 
-   output logic                                             i_rd_valid,
-   output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_rd_index,
+   input  logic                                             i_rd_valid,
+   input  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_rd_index,
    output logic [riscv_pkg::VADDR_W-1: 1]                   o_rd_pa,
 
    input logic                                              i_br_call_cmt_valid,

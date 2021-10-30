@@ -128,5 +128,6 @@
 ../src/msrh_bimodal.sv
 ../src/msrh_btb.sv
 ../src/msrh_pred_ras.sv
+../src/msrh_ftq.sv
 
 ../src/l2_if_arbiter.sv

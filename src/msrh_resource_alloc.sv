@@ -29,8 +29,10 @@ module msrh_resource_alloc
    output logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         o_brmask [msrh_conf_pkg::DISP_SIZE]
    );
 
-logic           w_flush_valid;
-logic           w_iq_fire;
+logic                                     w_commit_flush;
+logic                                     w_br_flush;
+logic                                     w_flush_valid;
+logic                                     w_iq_fire;
 
 logic                                               w_rob_no_credits_remained;
 logic [msrh_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
@@ -49,7 +51,10 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_bru_no_credits_remained;
 
 
-assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
+assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_flush_valid  = w_commit_flush | w_br_flush;
+
 assign w_iq_fire = ~w_flush_valid & iq_disp.valid & iq_disp.ready;
 
 msrh_credit_return_master

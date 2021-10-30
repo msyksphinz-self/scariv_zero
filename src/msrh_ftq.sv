@@ -46,6 +46,7 @@ function ftq_entry_t assign_ftq_entry(logic [msrh_pkg::CMT_ID_W-1:0]  cmt_id,
 endfunction // assign_ftq_entry
 
 module msrh_ftq
+  import msrh_pkg::*;
   (
    input logic i_clk,
    input logic i_reset_n,
@@ -87,7 +88,7 @@ u_ptr
    );
 
 
-msrh_pkg::disp_t w_sc_br_inst;
+disp_t w_sc_br_inst;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] sc_br_inst_array;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
   assign sc_br_inst_array[d_idx] = sc_disp.inst[d_idx].valid &
@@ -95,7 +96,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-bit_oh_or_packed #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+bit_oh_or_packed #(.T(disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
 bit_br_select(.i_oh(sc_br_inst_array), .i_data(sc_disp.inst), .o_selected(w_sc_br_inst));
 
 generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
@@ -121,11 +122,17 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
         w_ftq_entry_next.taken      = br_upd_if.taken;
         w_ftq_entry_next.mispredict = br_upd_if.mispredict;
         w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
+      end else if (r_ftq_entry[e_idx].valid &
+                   br_upd_if.update &
+                   br_upd_if.mispredict &
+                   is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_if.brtag)) begin
+        w_ftq_entry_next.done       = 1'b1;
+        w_ftq_entry_next.dead       = 1'b1;
       end
     end // else: !if(w_load)
   end // always_comb
 
-  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ftq_entry[e_idx].valid <= 1'b0;
     end else begin

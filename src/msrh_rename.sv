@@ -64,6 +64,8 @@ logic [RNID_W-1: 0]                       w_restore_rn_list[32];
 logic [RNID_W-1: 0]                       w_restore_queue_list[32];
 logic [RNID_W-1: 0]                       w_restore_commit_map_list[32];
 
+logic                                     w_commit_flush;
+logic                                     w_br_flush;
 logic                                     w_flush_valid;
 
 assign iq_disp.ready = !(i_commit_rnid_update.commit & ((|i_commit.except_valid) | i_commit.all_dead)) & i_resource_ok;
@@ -403,8 +405,9 @@ u_commit_map
    .o_rnid_map (w_restore_commit_map_list)
    );
 
-assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
-
+assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
+assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 `ifdef SIMULATION
 function void dump_json(int fp);
