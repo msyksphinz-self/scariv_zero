@@ -209,7 +209,8 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   // 3. check the evicted address with existed evict LRQ
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_evict_pa;
   for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : entry_evict_loop
-    assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load, l1d_lrq[p_idx].req_payload.evict_payload.paddr,
+    assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load & l1d_lrq[p_idx].req_payload.evict_valid,
+                                                                   l1d_lrq[p_idx].req_payload.evict_payload.paddr,
                                                                    w_lrq_entries[e_idx], e_idx);
   end
 
