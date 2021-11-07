@@ -237,7 +237,7 @@ assign w_br_tag_temp_idx[0] = r_br_tag_current_idx;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
 
   logic w_is_br_inst;
-  assign w_is_br_inst = iq_disp.valid & iq_disp.ready &
+  assign w_is_br_inst = w_iq_fire &
                         iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
 
   assign w_br_mask_temp_valid[d_idx+1] = !w_is_br_inst ? w_br_mask_temp_valid[d_idx] : w_br_mask_temp_valid[d_idx] | (1 << w_br_tag_temp_idx[d_idx]);

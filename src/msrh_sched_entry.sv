@@ -287,15 +287,14 @@ assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
                                                w_rs1_may_mispred, w_rs2_may_mispred);
 
 assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
-assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict & r_entry.valid;
+assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
+                                                     br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
-assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag) & br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
+                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
-// assign w_entry_to_dead = w_entry_flush &
-// (i_commit.cmt_id != r_entry.cmt_id);
 assign w_dead_state_clear = i_commit.commit &
-                            /* i_commit.all_dead & */
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_complete = (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));

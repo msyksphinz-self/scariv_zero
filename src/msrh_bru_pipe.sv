@@ -103,7 +103,8 @@ assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
 
 // EX0 brtag flush check
-assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex0_issue.valid;
+assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag,
+                                                      ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex0_issue.valid;
 
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
@@ -188,7 +189,8 @@ bit_oh_or #(
 );
 
 // EX1 brtag flush check
-assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex1_issue.valid;
+assign w_ex1_br_flush  = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag,
+                                                      ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex1_issue.valid;
 
 always_comb begin
   w_ex2_issue_next = r_ex1_issue;
@@ -225,7 +227,8 @@ assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_valid & r_ex2_issue.rs1_pred_ready ?
 assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_valid & r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
 // EX2 brtag flush check
-assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag) & ex3_br_upd_if.update & ~ex3_br_upd_if.dead & ex3_br_upd_if.mispredict & r_ex3_issue.valid;
+assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag,
+                                                      ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex3_issue.valid;
 
 always_comb begin
   w_ex3_issue_next = r_ex2_issue;
@@ -317,6 +320,7 @@ assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
 assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_br_upd_if.is_call       = r_ex3_issue.is_call;
 assign ex3_br_upd_if.is_ret        = r_ex3_issue.is_ret;
+assign ex3_br_upd_if.is_rvc        = r_ex3_issue.is_rvc;
 assign ex3_br_upd_if.ras_index     = r_ex3_issue.ras_index;
 assign ex3_br_upd_if.taken         = r_ex3_result;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
@@ -335,81 +339,7 @@ assign ex3_br_upd_if.grp_id        = r_ex3_issue.grp_id;
 assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
 assign ex3_br_upd_if.br_mask       = r_ex3_issue.br_mask;
 
-
 `ifdef SIMULATION
-logic [63: 0] r_cycle_count;
-logic [10: 0] r_bru_valid_count;
-logic [10: 0] r_bru_cmp_count;
-logic [10: 0] r_bru_cmp_hit_count;
-logic [10: 0] r_bru_ret_count;
-logic [10: 0] r_bru_ret_hit_count;
-logic [10: 0] r_bru_other_count;
-logic [10: 0] r_bru_other_hit_count;
-
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_cycle_count  <= 'h0;
-  end else begin
-    r_cycle_count <= r_cycle_count + 'h1;
-  end
-end
-
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_bru_valid_count <= 'h0;
-    r_bru_cmp_count <= 'h0;
-    r_bru_cmp_hit_count    <= 'h0;
-    r_bru_ret_count     <= 'h0;
-    r_bru_ret_hit_count <= 'h0;
-    r_bru_other_count     <= 'h0;
-    r_bru_other_hit_count <= 'h0;
-  end else begin
-    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
-      r_bru_valid_count <= 'h0;
-      r_bru_cmp_count <= 'h0;
-      r_bru_cmp_hit_count <= 'h0;
-      r_bru_ret_count     <= 'h0;
-      r_bru_ret_hit_count <= 'h0;
-      r_bru_other_count     <= 'h0;
-      r_bru_other_hit_count <= 'h0;
-    end else begin
-      if (ex3_br_upd_if.update & ~ex3_br_upd_if.dead) begin
-        r_bru_valid_count <= r_bru_valid_count + 'h1;
-        if (r_ex3_pipe_ctrl.op != OP__) begin
-          r_bru_cmp_count <= r_bru_cmp_count + 'h1;
-          if (!ex3_br_upd_if.mispredict) begin
-            r_bru_cmp_hit_count <= r_bru_cmp_hit_count + 'h1;
-          end
-        end else begin
-          if (r_ex3_issue.inst == 32'h00008067) begin  // RET
-            r_bru_ret_count <= r_bru_ret_count + 'h1;
-            if (!ex3_br_upd_if.mispredict) begin
-              r_bru_ret_hit_count <= r_bru_ret_hit_count + 'h1;
-            end
-          end else begin
-            r_bru_other_count <= r_bru_other_count + 'h1;
-            if (!ex3_br_upd_if.mispredict) begin
-              r_bru_other_hit_count <= r_bru_other_hit_count + 'h1;
-            end
-          end // else: !if(r_ex3_issue.inst == 32'h00008082)
-        end
-      end
-    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (negedge i_clk, negedge i_reset_n)
-
-function void dump_perf (int fp);
-
-  $fwrite(fp, "  \"branch\" : {");
-  $fwrite(fp, "    \"execute\" : %5d, ", r_bru_valid_count);
-  $fwrite(fp, "    \"cmp\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_cmp_count, r_bru_cmp_hit_count);
-  $fwrite(fp, "    \"uncond\" : { \"ret\" : { \"execute\" : %5d, \"hit\" : %5d}, ",
-          r_bru_ret_count, r_bru_ret_hit_count);
-  $fwrite(fp, "\"others\" : { \"execute\" : %5d, \"hit\" : %5d }}, ",
-          r_bru_other_count, r_bru_other_hit_count);
-  $fwrite(fp, "  },\n");
-
-endfunction // dump_perfto
 
 integer bim_fp;
 initial begin

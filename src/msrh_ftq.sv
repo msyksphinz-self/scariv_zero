@@ -11,13 +11,16 @@ typedef struct packed {
   logic                                                valid;
   logic                                                is_call;
   logic                                                is_ret;
+  logic                                                is_rvc;
   logic [msrh_pkg::CMT_ID_W-1:0]                       cmt_id;
   logic [msrh_pkg::DISP_SIZE-1:0]                      grp_id;
   logic [msrh_pkg::RAS_W-1: 0]                         ras_index;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
   logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
+  logic [riscv_pkg::VADDR_W-1: 0]                      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]                      target_vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0]                      ras_prev_vaddr;
   logic                                                taken;
   logic                                                mispredict;
   logic                                                done;
@@ -30,8 +33,11 @@ function ftq_entry_t assign_ftq_entry(logic [msrh_pkg::CMT_ID_W-1:0]  cmt_id,
   ftq_entry_t ret;
 
   ret.valid    = 1'b1;
+  ret.pc_vaddr = inst.pc_addr;
+  ret.ras_prev_vaddr = inst.ras_prev_vaddr;
   ret.is_call  = inst.is_call;
   ret.is_ret   = inst.is_ret;
+  ret.is_rvc   = inst.rvc_inst_valid;
   ret.cmt_id   = cmt_id;
   ret.grp_id   = grp_id;
   ret.ras_index = inst.ras_index;
@@ -54,6 +60,8 @@ module msrh_ftq
    disp_if.watch   sc_disp,
    br_upd_if.slave br_upd_if,
 
+   output logic o_is_ftq_empty,
+
    // Fetch direction update to Frontend
    br_upd_if.master br_upd_fe_if
    );
@@ -65,8 +73,12 @@ logic          w_out_valid;
 logic [FTQ_SIZE-1: 0] w_in_ptr_oh;
 logic [FTQ_SIZE-1: 0] w_out_ptr_oh;
 
+logic [FTQ_SIZE-1: 0] w_entry_valids;
+
 ftq_entry_t r_ftq_entry[FTQ_SIZE];
 ftq_entry_t w_out_ftq_entry;
+
+assign o_is_ftq_empty = (w_entry_valids == 'h0);
 
 assign w_in_valid = sc_disp.valid &
                     sc_disp.ready &
@@ -104,6 +116,8 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
   ftq_entry_t w_ftq_entry_next;
   assign w_load = w_in_valid & w_in_ptr_oh[e_idx];
 
+  assign w_entry_valids[e_idx] = r_ftq_entry[e_idx].valid;
+
   always_comb begin
     w_ftq_entry_next = r_ftq_entry[e_idx];
 
@@ -111,24 +125,24 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
       w_ftq_entry_next = assign_ftq_entry (sc_disp.cmt_id,
                                            sc_br_inst_array,
                                            w_sc_br_inst);
-    end else if (w_out_valid & w_out_ptr_oh[e_idx]) begin
+    end
+
+    if (w_out_valid & w_out_ptr_oh[e_idx]) begin
       w_ftq_entry_next.valid = 1'b0;
-    end else begin
-      if (br_upd_if.update & r_ftq_entry[e_idx].valid &
-          (br_upd_if.cmt_id == r_ftq_entry[e_idx].cmt_id) &
-          (br_upd_if.grp_id == r_ftq_entry[e_idx].grp_id)) begin
-        w_ftq_entry_next.done       = 1'b1;
-        w_ftq_entry_next.dead       = br_upd_if.dead;
-        w_ftq_entry_next.taken      = br_upd_if.taken;
-        w_ftq_entry_next.mispredict = br_upd_if.mispredict;
-        w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
-      end else if (r_ftq_entry[e_idx].valid &
-                   br_upd_if.update &
-                   br_upd_if.mispredict &
-                   is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_if.brtag)) begin
-        w_ftq_entry_next.done       = 1'b1;
-        w_ftq_entry_next.dead       = 1'b1;
-      end
+    end else if (br_upd_if.update & r_ftq_entry[e_idx].valid &
+                 (br_upd_if.cmt_id == r_ftq_entry[e_idx].cmt_id) &
+                 (br_upd_if.grp_id == r_ftq_entry[e_idx].grp_id)) begin
+      w_ftq_entry_next.done       = 1'b1;
+      w_ftq_entry_next.dead       = br_upd_if.dead;
+      w_ftq_entry_next.taken      = br_upd_if.taken;
+      w_ftq_entry_next.mispredict = br_upd_if.mispredict;
+      w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
+    end
+    if (br_upd_fe_if.update &
+        (r_ftq_entry[e_idx].valid & is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict) |
+         w_load &                   is_br_flush_target (w_ftq_entry_next.br_mask,   br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict))) begin
+      w_ftq_entry_next.done       = 1'b1;
+      w_ftq_entry_next.dead       = 1'b1;
     end // else: !if(w_load)
   end // always_comb
 
@@ -155,20 +169,22 @@ sel_out_entry
    .o_selected(w_out_ftq_entry)
    );
 
-assign br_upd_fe_if.update       = w_out_ftq_entry.valid &
-                                   w_out_ftq_entry.done;
-assign br_upd_fe_if.taken        = w_out_ftq_entry.taken;
-assign br_upd_fe_if.mispredict   = w_out_ftq_entry.mispredict;
-assign br_upd_fe_if.is_call      = w_out_ftq_entry.is_call;
-assign br_upd_fe_if.is_ret       = w_out_ftq_entry.is_ret;
-assign br_upd_fe_if.ras_index    = w_out_ftq_entry.ras_index;
-assign br_upd_fe_if.bim_value    = 'h0;
-assign br_upd_fe_if.pc_vaddr     = 'h0;
-assign br_upd_fe_if.target_vaddr = w_out_ftq_entry.target_vaddr;
-assign br_upd_fe_if.dead         = w_out_ftq_entry.dead;
-assign br_upd_fe_if.cmt_id       = w_out_ftq_entry.cmt_id;
-assign br_upd_fe_if.grp_id       = w_out_ftq_entry.grp_id;
-assign br_upd_fe_if.brtag        = 'h0;
-assign br_upd_fe_if.br_mask      = 'h0;
+assign br_upd_fe_if.update         = w_out_ftq_entry.valid &
+                                     w_out_ftq_entry.done;
+assign br_upd_fe_if.taken          = w_out_ftq_entry.taken;
+assign br_upd_fe_if.mispredict     = w_out_ftq_entry.mispredict;
+assign br_upd_fe_if.is_call        = w_out_ftq_entry.is_call;
+assign br_upd_fe_if.is_ret         = w_out_ftq_entry.is_ret;
+assign br_upd_fe_if.is_rvc         = w_out_ftq_entry.is_rvc;
+assign br_upd_fe_if.ras_index      = w_out_ftq_entry.ras_index;
+assign br_upd_fe_if.bim_value      = 'h0;
+assign br_upd_fe_if.pc_vaddr       = w_out_ftq_entry.pc_vaddr;
+assign br_upd_fe_if.target_vaddr   = w_out_ftq_entry.target_vaddr;
+assign br_upd_fe_if.ras_prev_vaddr = w_out_ftq_entry.ras_prev_vaddr;
+assign br_upd_fe_if.dead           = w_out_ftq_entry.dead;
+assign br_upd_fe_if.cmt_id         = w_out_ftq_entry.cmt_id;
+assign br_upd_fe_if.grp_id         = w_out_ftq_entry.grp_id;
+assign br_upd_fe_if.brtag          = w_out_ftq_entry.brtag;
+assign br_upd_fe_if.br_mask        = 'h0;
 
 endmodule // msrh_ftq

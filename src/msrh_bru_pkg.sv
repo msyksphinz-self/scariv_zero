@@ -27,10 +27,12 @@ interface br_upd_if;
   logic                                mispredict;
   logic                                is_call;
   logic                                is_ret;
+  logic                                is_rvc;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [ 1: 0]                        bim_value;
   logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
+  logic [riscv_pkg::VADDR_W-1: 0]      ras_prev_vaddr;
 `ifdef SIMULATION
   logic [riscv_pkg::VADDR_W-1: 0]      pred_vaddr;
 `endif // SIMULATION
@@ -46,11 +48,13 @@ interface br_upd_if;
     output mispredict,
     output is_call,
     output is_ret,
+    output is_rvc,
     output ras_index,
     output bim_value,
     output dead,
     output pc_vaddr,
     output target_vaddr,
+    output ras_prev_vaddr,
 `ifdef SIMULATION
     output pred_vaddr,
 `endif // SIMULATION
@@ -66,11 +70,13 @@ interface br_upd_if;
     input mispredict,
     input is_call,
     input is_ret,
+    input is_rvc,
     input ras_index,
     input bim_value,
     input dead,
     input pc_vaddr,
     input target_vaddr,
+    input ras_prev_vaddr,
 `ifdef SIMULATION
     input pred_vaddr,
 `endif // SIMULATION

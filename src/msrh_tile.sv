@@ -54,6 +54,7 @@ sfence_if     w_sfence_if();
 logic                          w_fence_i;
 
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
+logic [riscv_pkg::VADDR_W-1: 0]                    w_sc_ras_vaddr;
 
 // ----------------------------------
 // Committer Components
@@ -89,6 +90,7 @@ msrh_pkg::early_wr_t w_ex1_bru_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 msrh_pkg::done_rpt_t w_bru_done_rpt;
 br_upd_if w_ex3_br_upd_if();
+br_upd_if br_upd_fe_if ();
 
 // ----------------------------------
 // CSU Components
@@ -171,7 +173,11 @@ msrh_frontend u_frontend (
 
   .iq_disp (w_iq_disp),
   .sc_disp (w_sc_disp),
-  .o_sc_ras_index (w_sc_ras_index),
+  .o_sc_ras_index  (w_sc_ras_index),
+  .o_sc_ras_vaddr (w_sc_ras_vaddr),
+
+   // Fetch Target Queue
+  .br_upd_fe_if (br_upd_fe_if),
 
   .ptw_if (w_ptw_if[0])
 );
@@ -199,11 +205,12 @@ msrh_rename u_msrh_rename (
   .i_brtag  (w_iq_brtag),
   .i_brmask (w_iq_brmask),
 
-  .br_upd_if (w_ex3_br_upd_if),
+  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
 
   .i_phy_wr (w_ex3_phy_wr),
   .sc_disp  (w_sc_disp),
-  .i_sc_ras_index (w_sc_ras_index)
+  .i_sc_ras_index (w_sc_ras_index),
+  .i_sc_ras_vaddr (w_sc_ras_vaddr)
 );
 
 
@@ -221,7 +228,7 @@ msrh_resource_alloc u_msrh_resource_alloc
   .csu_cre_ret_if (csu_cre_ret_if),
   .bru_cre_ret_if (bru_cre_ret_if),
 
-  .br_upd_if (w_ex3_br_upd_if),
+  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if */),
 
   .i_commit (w_commit),
   .cmt_brtag_if (w_cmt_brtag_if),
@@ -273,7 +280,7 @@ msrh_resource_alloc u_msrh_resource_alloc
           .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
           .i_commit  (w_commit),
-          .br_upd_if (w_ex3_br_upd_if),
+          .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
 
           .o_done_report (w_alu_done_rpt[alu_idx])
       );
@@ -319,7 +326,7 @@ u_msrh_lsu_top
     .stq_snoop_if (stq_snoop_if),
 
     .i_commit  (w_commit),
-    .br_upd_if (w_ex3_br_upd_if)
+    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
    );
 
 
@@ -351,7 +358,7 @@ u_msrh_bru (
     .o_done_report (w_bru_done_rpt),
     .i_commit      (w_commit),
     .ex3_br_upd_if (w_ex3_br_upd_if),
-    .ex3_br_upd_slave_if (w_ex3_br_upd_if)
+    .ex3_br_upd_slave_if (br_upd_fe_if)
 );
 
 
@@ -384,7 +391,7 @@ u_msrh_csu (
     .o_done_report (w_csu_done_rpt),
 
     .i_commit (w_commit),
-    .br_upd_if (w_ex3_br_upd_if)
+    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
 );
 
 
@@ -417,7 +424,7 @@ msrh_rob u_rob
 
    .rob_info_if   (w_rob_info_if),
 
-   .ex3_br_upd_if (w_ex3_br_upd_if)
+   .ex3_br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
    );
 
 

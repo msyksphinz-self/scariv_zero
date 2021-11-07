@@ -19,6 +19,7 @@ module msrh_rename
    br_upd_if.slave                                            br_upd_if,
 
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
+   input logic [riscv_pkg::VADDR_W-1: 0]                    i_sc_ras_vaddr,
 
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,
@@ -239,7 +240,13 @@ assign sc_disp.cmt_id = i_sc_new_cmt_id;
 always_comb begin
   sc_disp.inst = r_disp_inst;
   for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
-    sc_disp.inst[d_idx].ras_index = i_sc_ras_index;
+    sc_disp.inst[d_idx].ras_index      = i_sc_ras_index;
+    if (sc_disp.inst[d_idx].is_call) begin
+      sc_disp.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
+    end
+    // if (sc_disp.inst[d_idx].is_ret) begin
+    //   sc_disp.inst[d_idx].pred_target_vaddr = i_sc_ras_vaddr;  // When RET, use pred adddres
+    // end
   end
 end
 

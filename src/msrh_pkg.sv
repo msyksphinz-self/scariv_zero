@@ -103,6 +103,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic                           is_call;
     logic                           is_ret;
     logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+    logic [riscv_pkg::VADDR_W-1: 0]                    ras_prev_vaddr;
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
@@ -368,8 +369,10 @@ endfunction // is_commit_flush_target
 
 
 function logic is_br_flush_target(logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] entry_br_mask,
-                                  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag);
-  return |(entry_br_mask & (1 << brtag));
+                                  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag,
+                                  logic br_dead,
+                                  logic br_mispredicted);
+  return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
 
 endfunction // is_br_flush_target
 

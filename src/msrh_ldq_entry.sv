@@ -88,10 +88,12 @@ assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
 assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
-assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag) & br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict & r_entry.is_valid;
+assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
+                                                     br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
 
-assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.brtag) & br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.brtag,
+                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
 assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);

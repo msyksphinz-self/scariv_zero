@@ -18,6 +18,7 @@ module msrh_predictor
 
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
+ output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
 
  input logic i_s2_valid,
  input msrh_lsu_pkg::ic_resp_t i_s2_ic_resp,
@@ -74,9 +75,10 @@ call_size_t                       selected_call_size;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be_lsb;
+logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_ret_vaddr;
 
 logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_next_pc;
-logic [riscv_pkg::VADDR_W-1: 1] w_ras_ret_vaddr;
+logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
 
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid;
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_ret_valid;
@@ -154,8 +156,8 @@ bit_oh_or #(.T(call_size_t), .WORDS(ICACHE_DATA_B_W/2))
 select_call_size (.i_oh(w_s2_call_be_lsb), .i_data(w_call_size_array), .o_selected(selected_call_size));
 encoder #(.SIZE(ICACHE_DATA_B_W/2)) sel_encoder (.i_in(w_s2_call_be_lsb), .o_out(w_s2_call_be_enc));
 
-logic                                 w_ras_rd_valid;
-assign w_ras_rd_valid = |w_s2_ret_be;
+logic                                 w_s2_ras_rd_valid;
+assign w_s2_ras_rd_valid = |w_s2_ret_be;
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) ret_be_lsb (.in(w_s2_ret_be), .out(w_s2_ret_be_lsb));
 
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_next;
@@ -215,10 +217,11 @@ end
 
 assign ras_search_if.s2_is_call   = w_s2_call_valid;
 assign ras_search_if.s2_is_ret    = w_s2_ret_valid;
-assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
+assign ras_search_if.s2_ras_vaddr = w_s2_ras_ret_vaddr;
 assign ras_search_if.s2_ras_index = w_cmt_ras_index_next;
 
 assign o_sc_ras_index = w_cmt_ras_index_next;
+assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_be_array_vld;
 msrh_pkg::disp_t w_sc_call_entry;
@@ -237,18 +240,21 @@ u_ras
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
-   .i_wr_valid (w_sc_call_valid),
+   .i_wr_valid (|w_sc_call_valid),
    .i_wr_index (w_cmt_ras_index_next),
    .i_wr_pa    (w_sc_ras_next_pc),
 
-   .i_rd_valid (w_ras_rd_valid),
-   .i_rd_index (w_ras_output_index),
-   .o_rd_pa    (w_ras_ret_vaddr),
+   .i_sc_rd_valid (|(w_sc_ret_valid | w_sc_call_valid)),
+   .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
+   .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
 
-   .i_br_call_cmt_valid     (br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.is_call),
+   .i_s2_rd_valid (|w_s2_ret_valid),
+   .i_s2_rd_index (r_ras_input_index-1),
+   .o_s2_rd_pa    (w_s2_ras_ret_vaddr),
+
+   .i_br_call_cmt_valid     (w_br_call_dead & ~r_during_recover),
    .i_br_call_cmt_ras_index (br_upd_fe_if.ras_index),
-   .i_br_call_recover_valid (w_br_call_dead),
-   .i_br_call_recover_ras_index (br_upd_fe_if.ras_index)
+   .i_br_call_cmt_wr_vpc    (br_upd_fe_if.ras_prev_vaddr[riscv_pkg::VADDR_W-1: 1])
    );
 
 // `ifdef SIMULATION

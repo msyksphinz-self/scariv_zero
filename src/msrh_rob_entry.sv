@@ -101,8 +101,8 @@ always_comb begin
 
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag) &
-            ~br_upd_if.dead & br_upd_if.mispredict) begin
+        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag,
+                                br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
           w_entry_next.dead[d_idx] = 1'b1;
         end
@@ -143,8 +143,8 @@ always_comb begin
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (r_entry.inst[d_idx].valid &
-            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag) &
-            ~br_upd_if.dead & br_upd_if.mispredict) begin
+            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag,
+                                br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
           w_entry_next.dead[d_idx] = 1'b1;
         end

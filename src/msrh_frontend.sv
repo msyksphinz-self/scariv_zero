@@ -38,6 +38,10 @@ module msrh_frontend
  // For checking RAS updates
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
+ output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
+
+ // Fetch Target Queue
+ br_upd_if.master  br_upd_fe_if,
 
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if
@@ -122,11 +126,6 @@ logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
 // ==============
 logic                           w_tlb_ready;
 
-// ===================
-// Fetch Target Queue
-// ===================
-br_upd_if              br_upd_fe_if();
-
 // ==============
 // Commiter PC
 // ==============
@@ -142,12 +141,17 @@ logic                           w_tlb_refill_wakeup;
 logic                           w_ibuf_refill_wakeup;
 logic                           w_flush_haz_clear;
 
+logic                           w_is_ftq_empty;
+logic                           r_br_wait_ftq_free;
+logic                           w_br_wait_ftq_free;
+
 logic                           w_s0_req_ready;
 assign w_s0_req_ready = w_s0_ic_ready & w_tlb_ready;
 assign w_ic_refill_wakeup    = (r_if_state == WAIT_IC_FILL ) & w_s0_req_ready;
 assign w_tlb_refill_wakeup   = (r_if_state == WAIT_TLB_FILL) & w_s0_req_ready;
 assign w_ibuf_refill_wakeup  = (r_if_state == WAIT_IBUF_FREE ) & w_inst_buffer_ready & w_s0_req_ready;
-assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready;
+assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready &
+                               (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
 always_comb begin
   if (i_commit.commit & |(i_commit.except_valid & ~i_commit.dead_id)) begin
@@ -256,10 +260,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s0_valid <= 1'b0;
     /* verilator lint_off WIDTH */
     r_s0_vaddr <= msrh_pkg::PC_INIT_VAL;
+    r_br_wait_ftq_free <= 1'b0;
   end else begin
     r_if_state <= w_if_state_next;
     r_s0_valid <= 1'b1;
     r_s0_vaddr <= w_s0_vaddr_next;
+    r_br_wait_ftq_free <= w_br_wait_ftq_free;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -271,6 +277,7 @@ assign w_s0_update_cond_1 = w_if_state_next == FETCH_REQ;
 always_comb begin
   w_s0_vaddr_next = r_s0_vaddr;
   w_if_state_next = r_if_state;
+  w_br_wait_ftq_free = r_br_wait_ftq_free;
 
   case (r_if_state)
     INIT : begin
@@ -278,12 +285,13 @@ always_comb begin
     end
     FETCH_REQ : begin
       if (w_flush_valid) begin
-        if (w_s0_req_ready) begin
-          w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
-        end else begin
+        if (!w_s0_req_ready | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
+          w_br_wait_ftq_free = w_br_flush & !w_is_ftq_empty;
+        end else begin
+          w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
@@ -310,22 +318,15 @@ always_comb begin
     end
     WAIT_IC_FILL : begin
       if (w_flush_valid) begin
-        if (w_ic_refill_wakeup) begin
+        if (!w_ic_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
+          w_s0_vaddr_next = w_s0_vaddr_flush_next;
+          w_if_state_next = WAIT_FLUSH_FREE;
+          w_br_wait_ftq_free = w_br_flush & !w_is_ftq_empty;
+        end else begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
-        end else begin
-          w_s0_vaddr_next = w_s0_vaddr_flush_next;
-          w_if_state_next = WAIT_FLUSH_FREE;
         end
-//       end else if (w_s2_predict_valid) begin
-//         if (w_ic_refill_wakeup) begin
-//           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
-//         end else begin
-//           w_s0_vaddr_next = w_s2_predict_target_vaddr;
-//         end
       end else if (w_ic_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -334,22 +335,15 @@ always_comb begin
     end
     WAIT_TLB_FILL : begin
       if (w_flush_valid) begin
-        if (w_tlb_refill_wakeup) begin
+        if (!w_tlb_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
+          w_s0_vaddr_next = w_s0_vaddr_flush_next;
+          w_if_state_next = WAIT_FLUSH_FREE;
+          w_br_wait_ftq_free = w_br_flush & !w_is_ftq_empty;
+        end else begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
-        end else begin
-          w_s0_vaddr_next = w_s0_vaddr_flush_next;
-          w_if_state_next = WAIT_FLUSH_FREE;
         end
-//       end else if (w_s2_predict_valid) begin
-//         if (w_tlb_refill_wakeup) begin
-//           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
-//         end else begin
-//           w_s0_vaddr_next = w_s2_predict_target_vaddr;
-//         end
       end else if (w_tlb_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -358,22 +352,14 @@ always_comb begin
     end
     WAIT_IBUF_FREE : begin
       if (w_flush_valid) begin
-        if (w_ibuf_refill_wakeup) begin
+        if (!w_ibuf_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
+          w_s0_vaddr_next = w_s0_vaddr_flush_next;
+          w_if_state_next = WAIT_FLUSH_FREE;
+        end else begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
-        end else begin
-          w_s0_vaddr_next = w_s0_vaddr_flush_next;
-          w_if_state_next = WAIT_FLUSH_FREE;
         end
-//       end else if (w_s2_predict_valid) begin
-//         if (w_ibuf_refill_wakeup) begin
-//           w_if_state_next = FETCH_REQ;
-//           w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-//                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
-//         end else begin
-//           w_s0_vaddr_next = w_s2_predict_target_vaddr;
-//         end
       end else if (w_ibuf_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -402,12 +388,14 @@ always_comb begin
 end
 
 
-assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
-assign w_br_flush     = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
-assign w_flush_valid  = w_commit_flush | w_br_flush;
-assign w_s0_vaddr     = w_flush_valid ? w_s0_vaddr_flush_next :
-                        w_s2_predict_valid ? w_s2_predict_target_vaddr :
-                        r_s0_vaddr;
+assign w_commit_flush  = msrh_pkg::is_flushed_commit(i_commit);
+
+assign w_br_flush      = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
+assign w_flush_valid   = w_commit_flush | w_br_flush;
+
+assign w_s0_vaddr      = w_flush_valid ? w_s0_vaddr_flush_next :
+                         w_s2_predict_valid ? w_s2_predict_target_vaddr :
+                         r_s0_vaddr;
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
@@ -564,6 +552,8 @@ msrh_ftq u_ftq
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
+   .o_is_ftq_empty (w_is_ftq_empty),
+
    .sc_disp (sc_disp),
    .br_upd_if (br_upd_if),
 
@@ -608,7 +598,8 @@ msrh_predictor u_predictor
    .i_reset_n (i_reset_n),
 
    .sc_disp   (sc_disp),
-   .o_sc_ras_index (o_sc_ras_index),
+   .o_sc_ras_index  (o_sc_ras_index),
+   .o_sc_ras_vaddr (o_sc_ras_vaddr),
 
    .i_s2_valid   (w_s2_inst_buffer_load_valid),
    .i_s2_ic_resp (w_s2_ic_resp),
