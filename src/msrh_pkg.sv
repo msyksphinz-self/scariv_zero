@@ -197,6 +197,9 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic                               is_br_included;
 
     br_upd_info_t br_upd_info;
+`ifdef SIMULATION
+    logic [msrh_conf_pkg::DISP_SIZE-1:0][31: 0] lifetime;
+`endif // SIMULATION
   } rob_entry_t;
 
   typedef struct packed {

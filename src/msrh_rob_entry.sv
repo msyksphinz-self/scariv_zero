@@ -119,7 +119,13 @@ always_comb begin
       w_entry_next.br_upd_info.ras_index    = 'h0;
       w_entry_next.br_upd_info.pred_vaddr   = 'h0;
 `endif // SIMULATION
+    end // if (br_upd_if.update)
+
+`ifdef SIMULATION
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin: life_loop
+      w_entry_next.lifetime[d_idx] = 0;
     end
+`endif // SIMULATION
   end // if (i_load_valid)
 
   if (r_entry.valid) begin
@@ -163,7 +169,15 @@ always_comb begin
         w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
       end
 `endif // SIMULATION
+    end // if (br_upd_if.update)
+
+`ifdef SIMULATION
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin: life_loop
+      if (r_entry.done_grp_id[d_idx]) begin
+        w_entry_next.lifetime[d_idx] = r_entry.lifetime[d_idx] + 1;
+      end
     end
+`endif // SIMULATION
   end
 end // always_comb
 
