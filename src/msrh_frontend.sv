@@ -552,6 +552,8 @@ msrh_ftq u_ftq
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
+   .i_commit (i_commit),
+
    .o_is_ftq_empty (w_is_ftq_empty),
 
    .sc_disp (sc_disp),

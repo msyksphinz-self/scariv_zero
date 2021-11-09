@@ -62,6 +62,9 @@ module msrh_ftq
 
    output logic o_is_ftq_empty,
 
+   // PC Update from Committer
+   input msrh_pkg::commit_blk_t i_commit,
+
    // Fetch direction update to Frontend
    br_upd_if.master br_upd_fe_if
    );
@@ -74,6 +77,8 @@ logic [FTQ_SIZE-1: 0] w_in_ptr_oh;
 logic [FTQ_SIZE-1: 0] w_out_ptr_oh;
 
 logic [FTQ_SIZE-1: 0] w_entry_valids;
+
+logic                 w_commit_flush;
 
 ftq_entry_t r_ftq_entry[FTQ_SIZE];
 ftq_entry_t w_out_ftq_entry;
@@ -99,6 +104,7 @@ u_ptr
    .o_out_ptr   (w_out_ptr_oh)
    );
 
+assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
 
 disp_t w_sc_br_inst;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] sc_br_inst_array;
@@ -138,7 +144,8 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
       w_ftq_entry_next.mispredict = br_upd_if.mispredict;
       w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
     end
-    if (br_upd_fe_if.update &
+    if (w_commit_flush |
+        br_upd_fe_if.update &
         (r_ftq_entry[e_idx].valid & is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict) |
          w_load &                   is_br_flush_target (w_ftq_entry_next.br_mask,   br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict))) begin
       w_ftq_entry_next.done       = 1'b1;
