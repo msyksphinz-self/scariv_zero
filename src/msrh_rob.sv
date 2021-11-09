@@ -488,7 +488,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
           new_life.inst     = w_entries[w_out_cmt_entry_id].inst[d_idx].inst;
           new_life.cmt_time = $time;
 
-          life_array.push_back();
+          life_array.push_back(new_life);
         end // if (o_commit.grp_id[d_idx] & !o_commit.all_dead)
       end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d++)
 
