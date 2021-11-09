@@ -474,8 +474,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-assign w_s0_ic_req.valid = ((r_if_state == FETCH_REQ) & !(w_s2_ic_resp.valid & !w_inst_buffer_ready) &
-                            !r_s1_tlb_miss & !r_s2_tlb_miss)  |
+assign w_s0_ic_req.valid = ((r_if_state == FETCH_REQ) & (w_if_state_next == FETCH_REQ)) |
                            (w_if_state_next == FETCH_REQ);
 
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
