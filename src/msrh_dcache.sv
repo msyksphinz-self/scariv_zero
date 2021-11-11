@@ -19,8 +19,8 @@ module msrh_dcache
    lrq_search_if.master lrq_search_if
    );
 
-dc_read_resp_t w_dc_read_resp[RD_PORT_NUM][msrh_conf_pkg::DCACHE_BANKS];
-dc_update_t    w_rp2_dc_update;
+dc_read_resp_t[msrh_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
+dc_update_t                                      w_rp2_dc_update;
 
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_dc_read_val[RD_PORT_NUM];
 
@@ -260,11 +260,11 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : perf_port_
       end else begin
         if (r_s1_valid) begin
           r_req_valid_count [p_idx] <= r_req_valid_count [p_idx] + 'h1;
-          if (w_dc_read_resp[p_idx].conflict) begin
+          if (rd_resp_loop[p_idx].w_dc_read_resp_port.conflict) begin
             r_conflict_count [p_idx] <= r_conflict_count [p_idx] + 'h1;
-          end else if (w_dc_read_resp[p_idx].miss) begin
+          end else if (rd_resp_loop[p_idx].w_dc_read_resp_port.miss) begin
             r_miss_count [p_idx] <= r_miss_count [p_idx] + 'h1;
-          end else if (w_dc_read_resp[p_idx].hit) begin
+          end else if (rd_resp_loop[p_idx].w_dc_read_resp_port.hit) begin
             r_hit_count [p_idx] <= r_hit_count [p_idx] + 'h1;
           end
         end

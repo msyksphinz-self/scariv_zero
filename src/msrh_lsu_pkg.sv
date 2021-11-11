@@ -14,12 +14,13 @@ package msrh_lsu_pkg;
   localparam ICACHE_DATA_B_W = msrh_conf_pkg::ICACHE_DATA_W / 8;
 
 
-  localparam DCACHE_TAG_HIGH = riscv_pkg::XLEN_W;
-  localparam DCACHE_TAG_LOW = $clog2(msrh_conf_pkg::DCACHE_WORDS);
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
+  localparam DCACHE_TAG_HIGH = riscv_pkg::PADDR_W-1;
+  localparam DCACHE_TAG_LOW = $clog2(DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_WORDS);
+
 localparam DCACHE_BANK_HIGH = DCACHE_TAG_LOW-1;
-localparam DCACHE_BANK_LOW  = DCACHE_TAG_LOW-1-$clog2(msrh_conf_pkg::DCACHE_BANKS);
+localparam DCACHE_BANK_LOW  = DCACHE_TAG_LOW-$clog2(msrh_conf_pkg::DCACHE_BANKS);
 
   localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
                           msrh_conf_pkg::LDQ_SIZE :
