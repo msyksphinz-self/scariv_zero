@@ -18,6 +18,9 @@ package msrh_lsu_pkg;
   localparam DCACHE_TAG_LOW = $clog2(msrh_conf_pkg::DCACHE_WORDS);
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
+localparam DCACHE_BANK_HIGH = DCACHE_TAG_LOW-1;
+localparam DCACHE_BANK_LOW  = DCACHE_TAG_LOW-1-$clog2(msrh_conf_pkg::DCACHE_BANKS);
+
   localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
                           msrh_conf_pkg::LDQ_SIZE :
                           msrh_conf_pkg::STQ_SIZE;
@@ -258,7 +261,7 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
-  logic [riscv_pkg::PADDR_W-1: 0] addr;
+  logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
   logic [DCACHE_DATA_B_W-1: 0] be;
 } dc_update_t;

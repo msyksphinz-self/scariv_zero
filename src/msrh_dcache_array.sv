@@ -115,7 +115,7 @@ bit_oh_or #(.T(msrh_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun
 
 assign w_s0_dc_tag_valid = i_dc_update.valid | (|w_s0_dc_read_req_valid);
 assign w_s0_dc_tag_wr    = i_dc_update.valid;
-assign w_s0_dc_tag_addr  = i_dc_update.valid ? i_dc_update.addr : w_s0_dc_selected_read_req.paddr;
+assign w_s0_dc_tag_addr  = i_dc_update.valid ? i_dc_update.paddr : w_s0_dc_selected_read_req.paddr;
 assign w_s0_dc_tag_way   = i_dc_update.way;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -166,7 +166,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
        .i_wr  (w_s0_dc_tag_wr & (w_s0_dc_tag_way == way)),
        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .i_tag_valid  (1'b1),
-       .i_tag (i_dc_update.addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
+       .i_tag (i_dc_update.paddr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .o_tag(w_s1_tag[way]),
        .o_tag_valid(w_s1_tag_valid[way])
        );
