@@ -661,7 +661,7 @@ void step_spike(long long time, long long rtl_pc,
 
           fprintf(compare_log_fp, "==========================================\n");
           fprintf(compare_log_fp, "WARNING : RTL MINSTRET is different from ISS. Backported\n");
-          fprintf(compare_log_fp, "ISS MINSTRET = %0*llx\n", g_rv_xlen / 4, iss_wr_val);
+          fprintf(compare_log_fp, "ISS MINSTRET = %0*lx\n", g_rv_xlen / 4, iss_wr_val);
           fprintf(compare_log_fp, "RTL MINSTRET = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
           fprintf(compare_log_fp, "==========================================\n");
           return;

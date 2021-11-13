@@ -100,7 +100,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
   tag_array
     #(
       .TAG_W(VADDR_W-ICACHE_TAG_LOW),
-      .WORDS(ICACHE_TAG_LOW)
+      .WORDS(1 << ICACHE_TAG_LOW)
       )
   tag (
        .i_clk(i_clk),
@@ -121,7 +121,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
   data_array
     #(
       .WIDTH(msrh_conf_pkg::ICACHE_DATA_W),
-      .ADDR_W(ICACHE_TAG_LOW)
+      .WORDS(1 << ICACHE_TAG_LOW)
       )
   data (
         .i_clk(i_clk),

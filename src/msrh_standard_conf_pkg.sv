@@ -6,6 +6,7 @@ package msrh_conf_pkg;
   localparam DCACHE_WORDS = 64;
   localparam ICACHE_WAYS = 4;
   localparam DCACHE_WAYS = 4;
+  localparam DCACHE_BANKS = 4;
 
   localparam DISP_SIZE = 5;
 

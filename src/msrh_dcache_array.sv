@@ -12,7 +12,25 @@ module msrh_dcache_array
    output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[READ_PORT_NUM]
    );
 
-localparam TAG_SIZE = riscv_pkg::PADDR_W - msrh_lsu_pkg::DCACHE_TAG_LOW;
+//
+//                            <------> log2(NWORDS/DCACHE_BANKS) = log2(DCACHE_WORDS_PER_BANK)
+//                                   <---> log2(DCACHE_BANKS)
+// PADDR_W(TAG_HIGH)   TAG_LOW           <-------> log2(DCACHE_DATA_B_W)
+// +--------------------------+------+---+-------+
+// |                          |      |   |       |
+// +--------------------------+------+---+-------+
+//
+// Standard configuration
+//  1000 0000 0000 0000 0011|0 000 |1  00 0| 0000   0x8000_3080
+//  1000 0000 0000 0000 0011|0 000 |1  01 0| 0000   0x8000_30A0
+// +--------------------------+------+---+-------+
+// |                          |      |   |       |
+// +--------------------------+------+---+-------+
+// 55                       11 10   7 6 5 4     0
+//
+//
+localparam TAG_SIZE = msrh_lsu_pkg::DCACHE_TAG_HIGH - msrh_lsu_pkg::DCACHE_TAG_LOW + 1;
+localparam DCACHE_WORDS_PER_BANK = msrh_conf_pkg::DCACHE_WORDS / msrh_conf_pkg::DCACHE_BANKS;
 
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid;
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_oh;
@@ -36,9 +54,9 @@ logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 
 logic                                    r_s1_dc_update_valid;
 
-logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[msrh_conf_pkg::DCACHE_WORDS];
+logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[DCACHE_WORDS_PER_BANK];
 logic [READ_PORT_NUM-1: 0]                       w_update_tag_valid;
-logic [msrh_lsu_pkg::DCACHE_TAG_LOW-1: 0]        w_update_tag_addr[READ_PORT_NUM];
+logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]       w_update_tag_addr[READ_PORT_NUM];
 
 // Selection of Request from LSU ports
 generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
@@ -49,7 +67,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   logic r_s1_dc_read_tag_same;
   logic [riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW] r_s1_dc_lsu_tag_addr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]                 w_s1_selected_data;
-  logic [msrh_lsu_pkg::DCACHE_TAG_LOW-1: 0]                 r_s1_dc_tag_low;
+  logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]                r_s1_dc_tag_low;
 
   assign w_s0_dc_read_tag_same = w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW] ==
                                  i_dc_read_req[l_idx].paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW];
@@ -61,7 +79,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
     end else begin
       r_s1_dc_read_tag_same <= w_s0_dc_read_tag_same;
       r_s1_dc_lsu_tag_addr <= i_dc_read_req[l_idx].paddr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW];
-      r_s1_dc_tag_low      <= w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW];
+      r_s1_dc_tag_low      <= w_s0_dc_tag_addr[msrh_lsu_pkg::DCACHE_TAG_LOW-1 -: $clog2(DCACHE_WORDS_PER_BANK)];
     end
   end
 
@@ -69,6 +87,16 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : icache_way_loop
     assign w_s1_tag_hit[way] = (r_s1_dc_lsu_tag_addr == w_s1_tag[way]) & w_s1_tag_valid[way];
   end
+
+`ifdef SIMULATION
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (!$onehot0(w_s1_tag_hit)) begin
+        $fatal(0, "DCache : w_s1_tag_hit should be one-hot : %x\n", w_s1_tag_hit);
+      end
+    end
+  end
+`endif // SIMULATION
 
   bit_oh_or #(.T(logic[msrh_conf_pkg::ICACHE_DATA_W-1:0]), .WORDS(msrh_conf_pkg::ICACHE_WAYS))
   cache_data_sel (.i_oh (w_s1_tag_hit), .i_data(w_s1_data), .o_selected(w_s1_selected_data));
@@ -115,7 +143,7 @@ bit_oh_or #(.T(msrh_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun
 
 assign w_s0_dc_tag_valid = i_dc_update.valid | (|w_s0_dc_read_req_valid);
 assign w_s0_dc_tag_wr    = i_dc_update.valid;
-assign w_s0_dc_tag_addr  = i_dc_update.valid ? i_dc_update.addr : w_s0_dc_selected_read_req.paddr;
+assign w_s0_dc_tag_addr  = i_dc_update.valid ? i_dc_update.paddr : w_s0_dc_selected_read_req.paddr;
 assign w_s0_dc_tag_way   = i_dc_update.way;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -135,7 +163,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DCACHE_WORDS; w_idx++) begin : tag_loop
+generate for (genvar w_idx = 0; w_idx < DCACHE_WORDS_PER_BANK; w_idx++) begin : tag_loop
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_replace_target[w_idx] <= 'h0;
@@ -156,7 +184,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
   tag_array
     #(
       .TAG_W(TAG_SIZE),
-      .WORDS(msrh_lsu_pkg::DCACHE_TAG_LOW)
+      .WORDS(DCACHE_WORDS_PER_BANK)
       )
   tag (
        .i_clk(i_clk),
@@ -164,9 +192,9 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
 
        .i_tag_clear (1'b0),
        .i_wr  (w_s0_dc_tag_wr & (w_s0_dc_tag_way == way)),
-       .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
+       .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)]),
        .i_tag_valid  (1'b1),
-       .i_tag (i_dc_update.addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
+       .i_tag (i_dc_update.paddr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .o_tag(w_s1_tag[way]),
        .o_tag_valid(w_s1_tag_valid[way])
        );
@@ -174,13 +202,13 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
   data_array
     #(
       .WIDTH(msrh_conf_pkg::DCACHE_DATA_W),
-      .ADDR_W(msrh_lsu_pkg::DCACHE_TAG_LOW)
+      .WORDS(DCACHE_WORDS_PER_BANK)
       )
   data (
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_wr  (i_dc_update.valid & (w_s0_dc_tag_way == way)),
-        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]),
+        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)]),
         .i_be  (i_dc_update.be),
         .i_data(i_dc_update.data),
         .o_data(w_s1_data[way])
