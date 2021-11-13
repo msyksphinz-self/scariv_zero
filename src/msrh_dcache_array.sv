@@ -13,14 +13,22 @@ module msrh_dcache_array
    );
 
 //
-//                                     <------> log2(NWORDS/DCACHE_BANKS) = log2(DCACHE_WORDS_PER_BANK)
-//                                            <--> log2(DCACHE_BANKS)
-// PADDR_W(TAG_HIGH)            TAG_LOW          <-------> log2(DCACHE_DATA_B_W)
-// +-----------------------------------+------+--+-------+
-// |                                   |      |  |       |
-// +-----------------------------------+------+--+-------+
+//                            <------> log2(NWORDS/DCACHE_BANKS) = log2(DCACHE_WORDS_PER_BANK)
+//                                   <---> log2(DCACHE_BANKS)
+// PADDR_W(TAG_HIGH)   TAG_LOW           <-------> log2(DCACHE_DATA_B_W)
+// +--------------------------+------+---+-------+
+// |                          |      |   |       |
+// +--------------------------+------+---+-------+
 //
-
+// Standard configuration
+//  1000 0000 0000 0000 0011|0 000 |1  00 0| 0000   0x8000_3080
+//  1000 0000 0000 0000 0011|0 000 |1  01 0| 0000   0x8000_30A0
+// +--------------------------+------+---+-------+
+// |                          |      |   |       |
+// +--------------------------+------+---+-------+
+// 55                       11 10   7 6 5 4     0
+//
+//
 localparam TAG_SIZE = msrh_lsu_pkg::DCACHE_TAG_HIGH - msrh_lsu_pkg::DCACHE_TAG_LOW + 1;
 localparam DCACHE_WORDS_PER_BANK = msrh_conf_pkg::DCACHE_WORDS / msrh_conf_pkg::DCACHE_BANKS;
 
@@ -79,6 +87,16 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : icache_way_loop
     assign w_s1_tag_hit[way] = (r_s1_dc_lsu_tag_addr == w_s1_tag[way]) & w_s1_tag_valid[way];
   end
+
+`ifdef SIMULATION
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (!$onehot0(w_s1_tag_hit)) begin
+        $fatal(0, "DCache : w_s1_tag_hit should be one-hot : %x\n", w_s1_tag_hit);
+      end
+    end
+  end
+`endif // SIMULATION
 
   bit_oh_or #(.T(logic[msrh_conf_pkg::ICACHE_DATA_W-1:0]), .WORDS(msrh_conf_pkg::ICACHE_WAYS))
   cache_data_sel (.i_oh (w_s1_tag_hit), .i_data(w_s1_data), .o_selected(w_s1_selected_data));

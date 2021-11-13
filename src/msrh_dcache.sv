@@ -26,8 +26,6 @@ logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_dc_read_val[RD_PORT_NUM];
 
 generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_idx++) begin : bank_loop
 
-  l1d_rd_if l1d_rd_if_banks[RD_PORT_NUM]();
-
   dc_read_req_t  w_dc_read_req [RD_PORT_NUM];
   dc_read_resp_t w_dc_read_resp_bank[RD_PORT_NUM];
 
@@ -56,12 +54,12 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
      );
 
   for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
-    logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] w_paddr_bank;
-    logic                                            w_bank_valid;
-    assign w_paddr_bank = l1d_rd_if[p_idx].s0_paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
-    assign w_bank_valid = (w_paddr_bank == bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]);
+    logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] w_rd_paddr_bank;
+    logic                                            w_rd_bank_valid;
+    assign w_rd_paddr_bank = l1d_rd_if[p_idx].s0_paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
+    assign w_rd_bank_valid = (w_rd_paddr_bank == bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]);
 
-    assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid & w_bank_valid;
+    assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid & w_rd_bank_valid;
     assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].s0_paddr;
     assign w_dc_read_req [p_idx].h_pri = l1d_rd_if[p_idx].s0_h_pri;
 

@@ -19,8 +19,8 @@ package msrh_lsu_pkg;
   localparam DCACHE_TAG_HIGH = riscv_pkg::PADDR_W-1;
   localparam DCACHE_TAG_LOW = $clog2(DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_WORDS);
 
-localparam DCACHE_BANK_HIGH = DCACHE_TAG_LOW-1;
-localparam DCACHE_BANK_LOW  = DCACHE_TAG_LOW-$clog2(msrh_conf_pkg::DCACHE_BANKS);
+localparam DCACHE_BANK_LOW  = $clog2(DCACHE_DATA_B_W);
+localparam DCACHE_BANK_HIGH = $clog2(msrh_conf_pkg::DCACHE_BANKS) + DCACHE_BANK_LOW - 1;
 
   localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
                           msrh_conf_pkg::LDQ_SIZE :
