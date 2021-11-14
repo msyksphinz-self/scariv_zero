@@ -28,11 +28,16 @@ interface btb_search_if;
 
   logic                                                 s0_valid;
   logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_hit;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s1_target_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_hit;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s2_target_vaddr;
+
   modport master (
     output s0_valid,
     output s0_pc_vaddr,
+    input s1_hit,
+    input s1_target_vaddr,
     input s2_hit,
     input s2_target_vaddr
   );
@@ -40,11 +45,15 @@ interface btb_search_if;
   modport slave (
     input s0_valid,
     input s0_pc_vaddr,
+    output s1_hit,
+    output s1_target_vaddr,
     output s2_hit,
     output s2_target_vaddr
   );
 
   modport monitor (
+    input s1_hit,
+    input s1_target_vaddr,
     input s2_hit,
     input s2_target_vaddr
   );
@@ -77,12 +86,16 @@ interface bim_search_if;
 
   logic                                                 s0_valid;
   logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s1_bim_value;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_pred_taken;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s2_bim_value;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_pred_taken;
 
   modport master (
     output s0_valid,
     output s0_pc_vaddr,
+    input  s1_bim_value,
+    input  s1_pred_taken,
     input  s2_bim_value,
     input  s2_pred_taken
   );
@@ -90,11 +103,14 @@ interface bim_search_if;
   modport slave (
     input s0_valid,
     input s0_pc_vaddr,
+    output s1_bim_value,
+    output s1_pred_taken,
     output s2_bim_value,
     output s2_pred_taken
   );
 
   modport monitor (
+    input s1_bim_value,
     input s2_bim_value
   );
 

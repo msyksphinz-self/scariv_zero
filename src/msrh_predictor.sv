@@ -25,7 +25,7 @@ module msrh_predictor
 
  btb_update_if.slave update_btb_if,
  btb_search_if.slave search_btb_if,
- output logic [riscv_pkg::VADDR_W-1: 0] o_s2_btb_target_vaddr,
+ output logic [riscv_pkg::VADDR_W-1: 0] o_s1_btb_target_vaddr,
 
  bim_update_if.slave update_bim_if,
  bim_search_if.slave search_bim_if,
@@ -300,19 +300,19 @@ u_ras
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_pred_hit_oh;
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_array;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_btb_bim_hit_lsb;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_bim_hit_array;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_bim_hit_lsb;
 
 // ----------------------------------------
 // Extracting Call/Ret for 1st instruction
 // ----------------------------------------
-assign w_btb_bim_hit_array = search_btb_if.s2_hit & search_bim_if.s2_pred_taken;
+assign w_s1_btb_bim_hit_array = search_btb_if.s1_hit & search_bim_if.s1_pred_taken;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) pred_hit_select (.in(w_btb_bim_hit_array | w_s2_call_be | w_s2_ret_be), .out(w_pred_hit_oh));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) pred_hit_select (.in(w_s1_btb_bim_hit_array | w_s2_call_be | w_s2_ret_be), .out(w_pred_hit_oh));
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_btb_bim_hit_array), .out(w_btb_bim_hit_lsb));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_s1_btb_bim_hit_array), .out(w_s1_btb_bim_hit_lsb));
 bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
-bit_oh_target_vaddr(.i_oh(w_btb_bim_hit_lsb), .i_data(search_btb_if.s2_target_vaddr), .o_selected(o_s2_btb_target_vaddr));
+bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target_vaddr), .o_selected(o_s1_btb_target_vaddr));
 
 assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & w_pred_hit_oh) ? w_s2_call_be : 'h0);
 assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_ret_be  & w_pred_hit_oh) ? w_s2_ret_be  : 'h0);

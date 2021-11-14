@@ -57,14 +57,23 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
         r_bim_valids[update_bim_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_bim_valids <= r_bim_valids[search_bim_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
-
-      search_bim_if.s2_bim_value [b_idx] <= w_s1_counter[b_idx];
-      search_bim_if.s2_pred_taken[b_idx] <= w_s1_counter[b_idx][1];
-
     end
   end
 
+  assign search_bim_if.s1_bim_value [b_idx] = w_s1_counter[b_idx];
+  assign search_bim_if.s1_pred_taken[b_idx] = w_s1_counter[b_idx][1];
+
   assign w_s1_counter[b_idx] = r_s1_bim_valids ? w_s1_counter_tmp : 2'b10;  // by default, weakly taken
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      search_bim_if.s2_bim_value [b_idx] <= 'h0;
+      search_bim_if.s2_pred_taken[b_idx] <= 1'b0;
+    end else begin
+      search_bim_if.s2_bim_value [b_idx] <= search_bim_if.s1_bim_value [b_idx];
+      search_bim_if.s2_pred_taken[b_idx] <= search_bim_if.s1_pred_taken[b_idx];
+    end
+  end
 
 end // block: btb_loop
 endgenerate

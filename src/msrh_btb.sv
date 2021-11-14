@@ -75,15 +75,19 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
     end
   end
 
+  assign search_btb_if.s1_target_vaddr[b_idx] = search_entry.target_vaddr;
+  assign search_btb_if.s1_hit         [b_idx] = search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
+
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       search_btb_if.s2_target_vaddr[b_idx] <= 'h0;
       search_btb_if.s2_hit         [b_idx] <= 1'b0;
     end else begin
-      search_btb_if.s2_target_vaddr[b_idx] <= search_entry.target_vaddr;
-      search_btb_if.s2_hit         [b_idx] <= search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
+      search_btb_if.s2_target_vaddr[b_idx] <= search_btb_if.s1_target_vaddr[b_idx];
+      search_btb_if.s2_hit         [b_idx] <= search_btb_if.s1_hit         [b_idx];
     end
   end
+
 end
 endgenerate
 

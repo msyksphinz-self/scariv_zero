@@ -66,7 +66,8 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
                   rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst);
         end // if (rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].valid &...
       end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
-      $fatal;
+      // $fatal;
+      $finish;
     end
   end
 end
