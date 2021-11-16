@@ -572,6 +572,8 @@ assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 assign w_btb_update_if.valid          = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
+assign w_btb_update_if.is_call        = br_upd_if.is_call;
+assign w_btb_update_if.is_ret         = br_upd_if.is_ret;
 
 assign w_bim_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_bim_search_if.s0_pc_vaddr    = w_s0_vaddr;
@@ -588,8 +590,8 @@ assign w_s1_btb_bim_hit_array = w_btb_search_if.s1_hit & w_bim_search_if.s1_pred
 
 assign w_s1_predict_valid = w_s1_inst_valid &
                             ((|w_s1_btb_bim_hit_array) |   // from BIM and BTB
-                             (|w_ras_search_if.s2_is_ret));  // from RAS
-assign w_s1_predict_target_vaddr = |w_ras_search_if.s2_is_ret ? {w_ras_search_if.s2_ras_vaddr, 1'b0} :
+                             (|w_ras_search_if.s1_is_ret));  // from RAS
+assign w_s1_predict_target_vaddr = |w_ras_search_if.s1_is_ret ? {w_ras_search_if.s1_ras_vaddr, 1'b0} :
                                    w_s1_btb_target_vaddr;
 
 
@@ -601,6 +603,8 @@ msrh_predictor u_predictor
    .sc_disp   (sc_disp),
    .o_sc_ras_index  (o_sc_ras_index),
    .o_sc_ras_vaddr (o_sc_ras_vaddr),
+
+   .i_s1_valid   (w_s1_inst_valid),
 
    .i_s2_valid   (w_s2_inst_buffer_load_valid),
    .i_s2_ic_resp (w_s2_ic_resp),
