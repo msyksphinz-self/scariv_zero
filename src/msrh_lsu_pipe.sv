@@ -96,7 +96,7 @@ logic                                  w_ex1_rs2_mispred;
 // EX2 stage
 //
 msrh_pkg::issue_t                     r_ex2_issue, w_ex2_issue_next;
-logic [MEM_Q_SIZE-1: 0] r_ex2_index_oh;
+logic [MEM_Q_SIZE-1: 0]               r_ex2_index_oh;
 logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
 lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
 logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_tmp;
@@ -327,8 +327,7 @@ end
 
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       r_ex2_pipe_ctrl.is_load &
-                                      (ex1_l1d_rd_if.s1_miss |
-                                       ex2_fwd_check_if.stq_hazard_vld) &
+                                      ex1_l1d_rd_if.s1_miss &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
 assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
@@ -344,15 +343,13 @@ assign l1d_lrq_if.req_payload.evict_payload.paddr = ex1_l1d_rd_if.s1_replace_pad
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
                                     w_ex2_l1d_mispredicted ?
-                                    (ex2_fwd_check_if.stq_hazard_vld      ? STQ_DEPEND   :
-                                     l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT :
+                                    (l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT :
                                      l1d_lrq_if.resp_payload.full         ? LRQ_FULL     :
                                      LRQ_ASSIGNED) :
                                     ex1_l1d_rd_if.s1_conflict             ? L1D_CONFLICT :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = lrq_haz_check_if.ex2_evict_haz_valid ? lrq_haz_check_if.ex2_evict_entry_idx :
                                       l1d_lrq_if.resp_payload.lrq_index_oh;
-assign o_ex2_q_updates.stq_haz_idx  = ex2_fwd_check_if.stq_hazard_idx;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 // ---------------------

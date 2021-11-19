@@ -23,9 +23,6 @@ module msrh_stq
    // Forwarding checker
    fwd_check_if.slave                        ex2_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
-   // From STQ to LDQ, resolve notification
-   output stq_resolve_t                      o_stq_resolve,
-
    lsu_replay_if.master stq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
@@ -66,11 +63,7 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
 
 // Forwarding Logic
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_stq_hazard[msrh_conf_pkg::LSU_INST_NUM];
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
-
-logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_paddr_haz;
-logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_resolve_st_data_haz;
 
 // Store Buffer Selection
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]            w_stbuf_accepted_disp;
@@ -294,20 +287,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
          .o_0_older_than_1 (w_entry_older_than_fwd)
          );
 
-      assign w_ex2_stq_hazard[p_idx][s_idx] = !w_stq_entry_st_finish[s_idx] &
-                                              ex2_fwd_check_if[p_idx].valid &
-                                              w_entry_older_than_fwd &
-                                              w_stq_entries[s_idx].is_valid &
-                                              (w_same_addr_region & ~w_stq_entries[s_idx].inst.rs2_ready |  // Same region and rs2 not decided
-                                               ~w_stq_entries[s_idx].paddr_valid);                        // physical addr not decided
     end // block: fwd_loop
-
-    // STQ Hazard Resolve Notofication
-    assign w_resolve_paddr_haz[s_idx] = w_stq_entries[s_idx].is_valid &
-                                        (w_stq_entries[s_idx].state != STQ_DEAD) &
-                                        w_stq_entries[s_idx].paddr_valid;
-    assign w_resolve_st_data_haz[s_idx] = w_stq_entries[s_idx].is_valid &
-                                          w_stq_entries[s_idx].inst.rs2_ready;
 
   end // block: stq_loop
 endgenerate
@@ -365,18 +345,8 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   end // block: byte_loop
 
   assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
-  assign ex2_fwd_check_if[p_idx].stq_hazard_vld = |w_ex2_stq_hazard[p_idx];
-  assign ex2_fwd_check_if[p_idx].stq_hazard_idx =  w_ex2_stq_hazard[p_idx];
 end // block: fwd_loop
 endgenerate
-
-// =================================
-// STQ HAZARD RESOLVE NOTIFICATION
-// =================================
-assign o_stq_resolve.valid            = |(w_resolve_st_data_haz & w_resolve_paddr_haz)  |
-                                        (|w_stq_entry_st_finish);
-assign o_stq_resolve.resolve_index_oh = (w_resolve_st_data_haz & w_resolve_paddr_haz) |
-                                        w_stq_entry_st_finish;
 
 
 // ===============

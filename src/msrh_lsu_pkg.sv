@@ -47,7 +47,6 @@ typedef struct   packed {
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL,
-    STQ_DEPEND,
     LRQ_EVICT_CONFLICT
   } lmq_haz_t;
 
@@ -221,11 +220,6 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  logic          valid;
-  logic [msrh_conf_pkg::STQ_SIZE-1: 0] resolve_index_oh;
-} stq_resolve_t;
-
-typedef struct packed {
   logic                           update;
   // msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
@@ -246,7 +240,6 @@ typedef struct packed {
   logic          update;
   lmq_haz_t               hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
-  logic [msrh_conf_pkg::STQ_SIZE-1: 0] stq_haz_idx;
   logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
 
@@ -428,7 +421,6 @@ typedef enum logic[3:0] {
   LDQ_INIT = 0,
   LDQ_EX2_RUN = 1,
   LDQ_LRQ_CONFLICT = 2,
-  LDQ_STQ_HAZ = 3,
   LDQ_TLB_HAZ = 4,
   LDQ_ISSUE_WAIT = 5,
   LDQ_CHECK_ST_DEPEND = 6,
@@ -453,7 +445,6 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
-  logic [msrh_conf_pkg::STQ_SIZE-1: 0]  stq_haz_idx;
 
   logic                                 except_valid;
   msrh_pkg::except_t                    except_type;

@@ -32,7 +32,6 @@ module msrh_ldq_entry
 
  input                                           lrq_resolve_t i_lrq_resolve,
  input logic                                     i_lrq_is_full,
- input                                           stq_resolve_t i_stq_resolve,
  // Commit notification
  input                                           msrh_pkg::commit_blk_t i_commit,
  br_upd_if.slave                                 br_upd_if,
@@ -58,9 +57,7 @@ logic                                            w_lrq_is_conflict;
 logic                                            w_lrq_is_full;
 logic                                            w_lrq_is_assigned;
 logic                                            w_lrq_resolve_match;
-logic                                            w_stq_is_hazard;
 logic                                            w_lrq_evict_is_hazard;
-logic [msrh_conf_pkg::STQ_SIZE-1: 0]             stq_haz_idx_next;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         w_ex2_ldq_entries_recv_next;
@@ -100,7 +97,6 @@ assign w_dead_state_clear = i_commit.commit &
 
 assign w_lrq_is_conflict = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT;
 assign w_lrq_is_full     = i_ex2_q_updates.hazard_typ == LRQ_FULL;
-assign w_stq_is_hazard = i_ex2_q_updates.hazard_typ == STQ_DEPEND;
 assign w_lrq_evict_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_EVICT_CONFLICT;
 
 assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == LRQ_ASSIGNED;
@@ -123,9 +119,6 @@ msrh_addr_check
      .i_ex2_addr_check (i_ex2_addr_check),
      .o_addr_conflict  (w_addr_conflict )
      );
-
-assign stq_haz_idx_next = i_stq_resolve.valid ? r_entry.stq_haz_idx & ~i_stq_resolve.resolve_index_oh :
-                          r_entry.stq_haz_idx;
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
@@ -288,12 +281,10 @@ always_comb begin
                              w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
                              w_lrq_is_conflict     ? LDQ_LRQ_CONFLICT :
                              w_lrq_is_full         ? LDQ_LRQ_FULL :
-                             w_stq_is_hazard       ? LDQ_STQ_HAZ :
                              w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                              LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
-        w_entry_next.stq_haz_idx      = i_ex2_q_updates.stq_haz_idx;
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
@@ -311,16 +302,6 @@ always_comb begin
         w_entry_next.state = LDQ_DEAD;
       end else if (!i_lrq_is_full) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
-      end
-    end
-    LDQ_STQ_HAZ : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
-      end else begin
-        w_entry_next.stq_haz_idx = stq_haz_idx_next;
-        if (stq_haz_idx_next == 'h0) begin
-          w_entry_next.state = LDQ_ISSUE_WAIT;
-        end
       end
     end
     LDQ_LRQ_EVICT_HAZ : begin

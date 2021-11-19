@@ -24,8 +24,6 @@ module msrh_ldq
 
    input lrq_resolve_t     i_lrq_resolve,
    input logic             i_lrq_is_full,
-   // From STQ to LDQ, resolve notification
-   input stq_resolve_t     i_stq_resolve,
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
@@ -190,7 +188,6 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .i_lrq_resolve (i_lrq_resolve),
      .i_lrq_is_full (i_lrq_is_full),
-     .i_stq_resolve (i_stq_resolve),
 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
@@ -297,7 +294,6 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
       LDQ_EX2_RUN         : $fwrite(fp, "LDQ_EX2_RUN");
       LDQ_LRQ_CONFLICT    : $fwrite(fp, "LDQ_LRQ_CONFLICT");
       LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
-      LDQ_STQ_HAZ         : $fwrite(fp, "LDQ_STQ_HAZ");
       LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
       LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
       LDQ_CHECK_ST_DEPEND : $fwrite(fp, "LDQ_CHECK_ST_DEPEND");

@@ -80,8 +80,6 @@ logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 ex2_addr_check_t      w_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM];
 
-stq_resolve_t w_stq_resolve;
-
 lsu_replay_if w_ldq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 
@@ -194,7 +192,6 @@ msrh_ldq
 
  .i_lrq_resolve (w_lrq_resolve),
  .i_lrq_is_full (w_lrq_is_full),
- .i_stq_resolve (w_stq_resolve),
 
  .ldq_replay_if (w_ldq_replay),
 
@@ -235,8 +232,6 @@ msrh_stq
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
-
- .o_stq_resolve (w_stq_resolve),
 
  .st_buffer_if (w_st_buffer_if),
 

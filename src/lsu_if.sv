@@ -53,8 +53,6 @@ logic [ 7: 0]                   paddr_dw;
 logic                           fwd_valid;
 logic [ 7: 0]                   fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]  fwd_data;
-logic                           stq_hazard_vld;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] stq_hazard_idx;
 
 modport master (
   output valid,
@@ -64,9 +62,7 @@ modport master (
   output paddr_dw,
   input  fwd_valid,
   input  fwd_dw,
-  input  fwd_data,
-  input  stq_hazard_vld,
-  input  stq_hazard_idx
+  input  fwd_data
 );
 
 modport slave (
@@ -77,9 +73,7 @@ modport slave (
   input  paddr_dw,
   output fwd_valid,
   output fwd_dw,
-  output fwd_data,
-  output stq_hazard_vld,
-  output stq_hazard_idx
+  output fwd_data
 );
 
 endinterface // fwd_check_if
