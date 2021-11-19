@@ -20,6 +20,9 @@ module msrh_ldq
    input ex2_q_update_t        i_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM],
    input ex2_addr_check_t      i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],
 
+   // Hazard check for STQ -> LDQ
+   ldq_haz_check_if.slave      ldq_haz_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    lsu_replay_if.master ldq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
    input lrq_resolve_t     i_lrq_resolve,
@@ -52,6 +55,9 @@ logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[msrh_conf_pkg::MEM_DI
 logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
+
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex1_ldq_stq_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex1_ldq_stq_haz_vld_oh[msrh_conf_pkg::LSU_INST_NUM];
 
 logic                                w_flush_valid;
 assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
@@ -202,8 +208,34 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
     assign w_run_request[p_idx][l_idx] = w_entry_ready[l_idx] & w_ldq_entries[l_idx].pipe_sel_idx_oh[p_idx];
   end
+
+
+  // STQ -> LDQ Hazard check
+  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : st_ld_haz_loop
+    logic ld_is_younger_than_st;
+    msrh_rough_older_check
+    st_pipe_ldq_older_check
+      (
+       .i_cmt_id0 (w_ldq_entries[l_idx].cmt_id),
+       .i_grp_id0 (w_ldq_entries[l_idx].grp_id),
+
+       .i_cmt_id1 (ldq_haz_check_if[p_idx].ex2_cmt_id),
+       .i_grp_id1 (ldq_haz_check_if[p_idx].ex2_grp_id),
+
+       .o_0_older_than_1 (ld_is_younger_than_st)
+       );
+
+    logic   w_same_dw;
+    assign w_same_dw = |(msrh_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
+                         msrh_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].paddr[2:0]));
+    assign w_ex1_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
+                                                 ld_is_younger_than_st &
+                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_same_dw;
+  end // block: st_ld_haz_loop
 end
 endgenerate
+
+
 
 // request logic
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
@@ -248,6 +280,50 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_tval  = w_ldq_done_entry.vaddr;
 end
 endgenerate
+
+
+// ==================
+// LDQ Flush Hazard
+// ==================
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : ldq_stq_haz_loop
+  msrh_entry_selector
+    #(
+      .ENTRY_SIZE (msrh_conf_pkg::LDQ_SIZE)
+      )
+  u_entry_selector
+    (
+     .i_oh_ptr       (w_out_ptr_oh),
+     .i_entry_valids (w_ex1_ldq_stq_haz_vld[p_idx]),
+     .o_entry_valid  (w_ex1_ldq_stq_haz_vld_oh[p_idx])
+     );
+
+  ldq_entry_t w_sel_ldq_entry;
+
+  bit_oh_or
+    #(
+      .T     (ldq_entry_t),
+      .WORDS (msrh_conf_pkg::LDQ_SIZE)
+      )
+  u_flush_sel
+    (
+     .i_oh   (w_ex1_ldq_stq_haz_vld_oh[p_idx]),
+     .i_data (w_ldq_entries),
+     .o_selected(w_sel_ldq_entry)
+     );
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      ldq_haz_check_if[p_idx].ex3_haz_valid <= 1'b0;
+    end else begin
+      ldq_haz_check_if[p_idx].ex3_haz_valid  <= |w_ex1_ldq_stq_haz_vld;
+      ldq_haz_check_if[p_idx].ex3_haz_cmt_id <= w_sel_ldq_entry.cmt_id;
+      ldq_haz_check_if[p_idx].ex3_haz_grp_id <= w_sel_ldq_entry.grp_id;
+    end
+  end
+
+end
+endgenerate
+
 
 `ifdef SIMULATION
 // credit / return management assertion

@@ -103,6 +103,43 @@ modport slave
 endinterface // lrq_haz_check_if
 
 
+interface ldq_haz_check_if;
+logic                                 ex2_valid;
+logic [riscv_pkg::PADDR_W-1: 0]       ex2_paddr;
+logic [msrh_pkg::CMT_ID_W-1:0]        ex2_cmt_id;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]  ex2_grp_id;
+decoder_lsu_ctrl_pkg::size_t          ex2_size;
+logic                                 ex3_haz_valid;
+logic [msrh_pkg::CMT_ID_W-1:0]        ex3_haz_cmt_id;
+logic [msrh_conf_pkg::DISP_SIZE-1:0]  ex3_haz_grp_id;
+
+modport master
+  (
+   output ex2_valid,
+   output ex2_paddr,
+   output ex2_cmt_id,
+   output ex2_grp_id,
+   output ex2_size,
+   input  ex3_haz_valid,
+   input  ex3_haz_cmt_id,
+   input  ex3_haz_grp_id
+   );
+
+modport slave
+  (
+   input  ex2_valid,
+   input  ex2_paddr,
+   input  ex2_cmt_id,
+   input  ex2_grp_id,
+   input  ex2_size,
+   output ex3_haz_valid,
+   output ex3_haz_cmt_id,
+   output ex3_haz_grp_id
+   );
+
+endinterface // ldq_haz_check_if
+
+
 interface tlb_ptw_if;
 
   msrh_lsu_pkg::ptw_req_t        req;
