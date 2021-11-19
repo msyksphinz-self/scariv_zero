@@ -398,7 +398,7 @@ assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
 assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
 // LDQ Speculative Load Hazard Check
-assign ldq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign ldq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST);
 assign ldq_haz_check_if.ex2_paddr  = r_ex2_paddr;
 assign ldq_haz_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
 assign ldq_haz_check_if.ex2_grp_id = r_ex2_issue.grp_id;

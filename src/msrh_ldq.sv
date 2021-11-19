@@ -56,8 +56,8 @@ logic [msrh_conf_pkg::LDQ_SIZE-1:0]      w_entry_complete;
 
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex1_ldq_stq_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex1_ldq_stq_haz_vld_oh[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld_oh[msrh_conf_pkg::LSU_INST_NUM];
 
 logic                                w_flush_valid;
 assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
@@ -225,12 +225,12 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
        .o_0_older_than_1 (ld_is_younger_than_st)
        );
 
-    logic   w_same_dw;
-    assign w_same_dw = |(msrh_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
-                         msrh_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].paddr[2:0]));
-    assign w_ex1_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
+    logic   w_ex2_same_dw;
+    assign w_ex2_same_dw = |(msrh_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
+                             msrh_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].paddr[2:0]));
+    assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
                                                  ld_is_younger_than_st &
-                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_same_dw;
+                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
 end
 endgenerate
@@ -293,8 +293,8 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   u_entry_selector
     (
      .i_oh_ptr       (w_out_ptr_oh),
-     .i_entry_valids (w_ex1_ldq_stq_haz_vld[p_idx]),
-     .o_entry_valid  (w_ex1_ldq_stq_haz_vld_oh[p_idx])
+     .i_entry_valids (w_ex2_ldq_stq_haz_vld[p_idx]),
+     .o_entry_valid  (w_ex2_ldq_stq_haz_vld_oh[p_idx])
      );
 
   ldq_entry_t w_sel_ldq_entry;
@@ -306,7 +306,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
       )
   u_flush_sel
     (
-     .i_oh   (w_ex1_ldq_stq_haz_vld_oh[p_idx]),
+     .i_oh   (w_ex2_ldq_stq_haz_vld_oh[p_idx]),
      .i_data (w_ldq_entries),
      .o_selected(w_sel_ldq_entry)
      );
@@ -315,7 +315,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
     if (!i_reset_n) begin
       ldq_haz_check_if[p_idx].ex3_haz_valid <= 1'b0;
     end else begin
-      ldq_haz_check_if[p_idx].ex3_haz_valid  <= |w_ex1_ldq_stq_haz_vld;
+      ldq_haz_check_if[p_idx].ex3_haz_valid  <= |w_ex2_ldq_stq_haz_vld[p_idx];
       ldq_haz_check_if[p_idx].ex3_haz_cmt_id <= w_sel_ldq_entry.cmt_id;
       ldq_haz_check_if[p_idx].ex3_haz_grp_id <= w_sel_ldq_entry.grp_id;
     end
