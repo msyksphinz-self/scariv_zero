@@ -137,11 +137,30 @@ done_if #(.RV_ENTRY_SIZE(MEM_Q_SIZE)) w_ex0_sched_done_if();
 
 msrh_pkg::issue_t                     w_ex0_replay_issue;
 logic [MEM_Q_SIZE-1: 0] w_ex0_replay_index_oh;
-assign w_ex0_replay_issue    = stq_replay_if.valid ? stq_replay_if.issue    : ldq_replay_if.issue;
-assign w_ex0_replay_index_oh = stq_replay_if.valid ? stq_replay_if.index_oh : ldq_replay_if.index_oh;
+logic                   w_ld_is_older_than_st;
+logic                   w_ld_selected;
 
-assign ldq_replay_if.conflict = stq_replay_if.valid & ldq_replay_if.valid;
-assign stq_replay_if.conflict = 1'b0;
+assign w_ld_selected = ldq_replay_if.valid & ~stq_replay_if.valid |
+                       ldq_replay_if.valid &  stq_replay_if.valid & w_ld_is_older_than_st;
+
+assign w_ex0_replay_issue    = w_ld_selected ? ldq_replay_if.issue    : stq_replay_if.issue   ;
+assign w_ex0_replay_index_oh = w_ld_selected ? ldq_replay_if.index_oh : stq_replay_if.index_oh;
+
+msrh_rough_older_check
+u_pipe_age
+  (
+   .i_cmt_id0 (ldq_replay_if.issue.cmt_id),
+   .i_grp_id0 (ldq_replay_if.issue.grp_id),
+
+   .i_cmt_id1 (stq_replay_if.issue.cmt_id),
+   .i_grp_id1 (stq_replay_if.issue.grp_id),
+
+   .o_0_older_than_1 (w_ld_is_older_than_st)
+   );
+
+
+assign ldq_replay_if.conflict = ~w_ld_selected;
+assign stq_replay_if.conflict =  w_ld_selected;
 
 
 // ===========================
