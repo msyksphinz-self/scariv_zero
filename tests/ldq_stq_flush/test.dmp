@@ -1,0 +1,71 @@
+
+test.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000080000000 <_start>:
+    80000000:	00000097          	auipc	ra,0x0
+    80000004:	10008093          	addi	ra,ra,256 # 80000100 <data>
+    80000008:	00300113          	li	sp,3
+    8000000c:	00000197          	auipc	gp,0x0
+    80000010:	0f418193          	addi	gp,gp,244 # 80000100 <data>
+    80000014:	00100213          	li	tp,1
+    80000018:	56700513          	li	a0,1383
+    8000001c:	23300593          	li	a1,563
+    80000020:	0bb00613          	li	a2,187
+    80000024:	000116b7          	lui	a3,0x11
+    80000028:	5676869b          	addiw	a3,a3,1383
+    8000002c:	00011737          	lui	a4,0x11
+    80000030:	2337071b          	addiw	a4,a4,563
+    80000034:	000117b7          	lui	a5,0x11
+    80000038:	0bb7879b          	addiw	a5,a5,187
+    8000003c:	00022837          	lui	a6,0x22
+    80000040:	5678081b          	addiw	a6,a6,1383
+    80000044:	000228b7          	lui	a7,0x22
+    80000048:	2338889b          	addiw	a7,a7,563
+
+000000008000004c <loop>:
+    8000004c:	0241c1b3          	div	gp,gp,tp
+    80000050:	00a1b023          	sd	a0,0(gp) # 80000918 <__global_pointer$>
+    80000054:	00b1b423          	sd	a1,8(gp) # 80000920 <__global_pointer$+0x8>
+    80000058:	00c1b823          	sd	a2,16(gp) # 80000928 <__global_pointer$+0x10>
+    8000005c:	00d1bc23          	sd	a3,24(gp) # 80000930 <__global_pointer$+0x18>
+    80000060:	02e1b023          	sd	a4,32(gp) # 80000938 <__global_pointer$+0x20>
+    80000064:	02f1b423          	sd	a5,40(gp) # 80000940 <__global_pointer$+0x28>
+    80000068:	0301b823          	sd	a6,48(gp) # 80000948 <__global_pointer$+0x30>
+    8000006c:	0311bc23          	sd	a7,56(gp) # 80000950 <__global_pointer$+0x38>
+    80000070:	0000ba03          	ld	s4,0(ra)
+    80000074:	0080ba83          	ld	s5,8(ra)
+    80000078:	0100bb03          	ld	s6,16(ra)
+    8000007c:	0180bb83          	ld	s7,24(ra)
+    80000080:	0200bc03          	ld	s8,32(ra)
+    80000084:	0280bc83          	ld	s9,40(ra)
+    80000088:	0300bd03          	ld	s10,48(ra)
+    8000008c:	0380bd83          	ld	s11,56(ra)
+    80000090:	06750513          	addi	a0,a0,103
+    80000094:	03358593          	addi	a1,a1,51
+    80000098:	0bb60613          	addi	a2,a2,187
+    8000009c:	06768693          	addi	a3,a3,103 # 11067 <_start-0x7ffeef99>
+    800000a0:	03370713          	addi	a4,a4,51 # 11033 <_start-0x7ffeefcd>
+    800000a4:	0bb78793          	addi	a5,a5,187 # 110bb <_start-0x7ffeef45>
+    800000a8:	06780813          	addi	a6,a6,103 # 22067 <_start-0x7ffddf99>
+    800000ac:	03388893          	addi	a7,a7,51 # 22033 <_start-0x7ffddfcd>
+    800000b0:	fff10113          	addi	sp,sp,-1
+    800000b4:	f8011ce3          	bnez	sp,8000004c <loop>
+    800000b8:	00000013          	nop
+    800000bc:	00000013          	nop
+    800000c0:	00000013          	nop
+    800000c4:	00100513          	li	a0,1
+    800000c8:	000805b7          	lui	a1,0x80
+    800000cc:	0015859b          	addiw	a1,a1,1
+    800000d0:	00c59593          	slli	a1,a1,0xc
+
+00000000800000d4 <_finish_loop>:
+    800000d4:	00a5a023          	sw	a0,0(a1) # 80000 <_start-0x7ff80000>
+    800000d8:	ffdff06f          	j	800000d4 <_finish_loop>
+
+Disassembly of section .data:
+
+0000000080000100 <data>:
+	...
