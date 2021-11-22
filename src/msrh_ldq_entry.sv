@@ -22,7 +22,6 @@ module msrh_ldq_entry
  input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_tlb_resolve,
  input logic                                     i_ex2_q_valid,
  input                                           ex2_q_update_t i_ex2_q_updates,
- input                                           ex2_addr_check_t i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],
 
  output                                          ldq_entry_t o_entry,
  output logic                                    o_entry_ready,
@@ -61,8 +60,6 @@ logic                                            w_lrq_evict_is_hazard;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         w_ex2_ldq_entries_recv_next;
-
-logic                                            w_addr_conflict;
 
 logic [msrh_pkg::RNID_W-1:0]                     w_rs1_rnid;
 logic [msrh_pkg::RNID_W-1:0]                     w_rs2_rnid;
@@ -108,17 +105,6 @@ assign o_entry_finish = (r_entry.state == LDQ_DEAD) & w_dead_state_clear |
                         (r_entry.state == LDQ_WAIT_COMPLETE) & w_entry_complete;
 
 assign w_entry_complete = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
-
-msrh_addr_check
-  u_addr_check
-    (
-     .i_entry_cmt_id   (r_entry.cmt_id  ),
-     .i_entry_grp_id   (r_entry.grp_id  ),
-     .i_entry_paddr    (r_entry.paddr   ),
-     .i_entry_size     (r_entry.size    ),
-     .i_ex2_addr_check (i_ex2_addr_check),
-     .o_addr_conflict  (w_addr_conflict )
-     );
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
@@ -283,7 +269,7 @@ always_comb begin
                              w_lrq_is_full         ? LDQ_LRQ_FULL :
                              w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
-                             LDQ_EX3_DONE;    // LDQ_CHECK_ST_DEPEND
+                             LDQ_EX3_DONE;
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_ex2_ldq_entries_recv_next = 'h0;
       end
@@ -338,17 +324,6 @@ always_comb begin
         w_entry_next.grp_id = 'h0;
       end
     end // case: LDQ_DEAD
-    LDQ_CHECK_ST_DEPEND: begin
-      // Younger Store Instruction, address conflict
-      if (w_addr_conflict) begin
-        w_entry_next.state = LDQ_ISSUE_WAIT;
-      end
-      // When entry become oldest uncommitted
-      if (i_commit.cmt_id == r_entry.cmt_id &&
-          (i_commit.grp_id & (r_entry.grp_id-1)) == r_entry.grp_id-1) begin
-        w_entry_next.state = LDQ_EX3_DONE;
-      end
-    end
     default : begin
       w_entry_next.state = LDQ_INIT;
 // `ifdef SIMULATION

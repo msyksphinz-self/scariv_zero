@@ -49,7 +49,6 @@ module msrh_lsu_pipe
  output ex1_q_update_t                 o_ex1_q_updates,
  output logic                          o_tlb_resolve,
  output ex2_q_update_t                 o_ex2_q_updates,
- output ex2_addr_check_t               o_ex2_addr_check,
 
  done_if.master                        ex0_sched_done_if,
  done_if.master                        ex3_ldq_stq_done_if,
@@ -509,12 +508,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_mis_valid <= o_ex2_mispred.mis_valid;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
-assign o_ex2_addr_check.valid  = 1'b0; // r_ex2_issue.valid & r_ex2_pipe_ctrl.is_store;
-assign o_ex2_addr_check.cmt_id = r_ex2_issue.cmt_id;
-assign o_ex2_addr_check.grp_id = r_ex2_issue.grp_id;
-assign o_ex2_addr_check.paddr  = r_ex2_paddr[riscv_pkg::PADDR_W-1: 3];
-assign o_ex2_addr_check.dw     = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
 
 assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
 assign ex3_ldq_stq_done_if.index_oh = 'h0;

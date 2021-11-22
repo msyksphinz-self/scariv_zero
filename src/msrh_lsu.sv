@@ -54,7 +54,6 @@ module msrh_lsu
     output ex1_q_update_t   o_ex1_q_updates,
     output logic            o_tlb_resolve,
     output ex2_q_update_t   o_ex2_q_updates,
-    output ex2_addr_check_t o_ex2_addr_check,
 
     /* write output */
     output msrh_pkg::early_wr_t o_ex1_early_wr,
@@ -214,7 +213,6 @@ u_lsu_pipe
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),
    .o_ex2_q_updates  (o_ex2_q_updates ),
-   .o_ex2_addr_check (o_ex2_addr_check),
 
    .ex0_sched_done_if   (w_ex0_sched_done_if),
    .ex3_ldq_stq_done_if (w_ex3_ldq_stq_done_if)

@@ -18,7 +18,6 @@ module msrh_ldq
    // Updates from LSU Pipeline EX2 stage
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input ex2_q_update_t        i_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM],
-   input ex2_addr_check_t      i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],
 
    // Hazard check for STQ -> LDQ
    ldq_haz_check_if.slave      ldq_haz_check_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -184,7 +183,6 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
-     .i_ex2_addr_check(i_ex2_addr_check),
 
      .o_entry (w_ldq_entries[l_idx]),
      .o_entry_ready (w_entry_ready[l_idx]),
@@ -372,7 +370,6 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
       LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
       LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
       LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
-      LDQ_CHECK_ST_DEPEND : $fwrite(fp, "LDQ_CHECK_ST_DEPEND");
       LDQ_EX3_DONE        : $fwrite(fp, "LDQ_EX3_DONE");
       LDQ_WAIT_COMPLETE   : $fwrite(fp, "LDQ_WAIT_COMPLETE");
       LDQ_DEAD            : $fwrite(fp, "LDQ_DEAD");

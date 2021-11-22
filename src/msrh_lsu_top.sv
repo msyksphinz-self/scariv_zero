@@ -78,7 +78,6 @@ l1d_evict_if w_l1d_evict_if();
 ex1_q_update_t        w_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
-ex2_addr_check_t      w_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM];
 
 lsu_replay_if w_ldq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
@@ -138,7 +137,6 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .o_ex1_q_updates (w_ex1_q_updates [lsu_idx]),
     .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
     .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
-    .o_ex2_addr_check(w_ex2_addr_check[lsu_idx]),
 
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
@@ -190,7 +188,6 @@ msrh_ldq
  .i_tlb_resolve   (w_tlb_resolve   ),
  .i_ex1_q_updates (w_ex1_q_updates ),
  .i_ex2_q_updates (w_ex2_q_updates ),
- .i_ex2_addr_check(w_ex2_addr_check),
 
  .ldq_haz_check_if (w_ldq_haz_check_if),
 
