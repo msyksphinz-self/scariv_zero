@@ -206,6 +206,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
   // Selection of EX3 Update signal
   ex3_done_if_select
+    #(.ENTRY_SIZE(msrh_conf_pkg::STQ_SIZE))
   u_ex3_done_if_select
     (
      .i_select  (r_ex3_q_valid),

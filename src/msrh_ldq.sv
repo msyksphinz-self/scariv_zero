@@ -172,6 +172,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
   // Selection of EX3 Update signal
   ex3_done_if_select
+    #(.ENTRY_SIZE(msrh_conf_pkg::LDQ_SIZE))
   u_ex3_done_if_select
     (
      .i_select  (r_ex3_q_valid),
@@ -472,25 +473,58 @@ endmodule // ex2_update_select
 
 module ex3_done_if_select
   import msrh_lsu_pkg::*;
+#(
+  parameter ENTRY_SIZE = 32
+  )
 (
  input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_select,
  done_if.slave        slave_if [msrh_conf_pkg::LSU_INST_NUM],
  done_if.master       master_if
  );
 
-always_comb begin
-  master_if = 'h0;
-  for (int i=0; i < msrh_conf_pkg::LSU_INST_NUM; i++) begin
-    if (i_select[i]) begin
-      master_if.done                 = slave_if[i].done                ;
-      master_if.index_oh             = slave_if[i].index_oh            ;
-      master_if.except_valid         = slave_if[i].except_valid        ;
-      master_if.except_type          = slave_if[i].except_type         ;
-      master_if.another_flush_valid  = slave_if[i].another_flush_valid ;
-      master_if.another_flush_cmt_id = slave_if[i].another_flush_cmt_id;
-      master_if.another_flush_grp_id = slave_if[i].another_flush_grp_id;
-    end
-  end
+typedef struct packed {
+  logic                                done;
+  logic [ENTRY_SIZE-1: 0]              index_oh;
+  logic                                except_valid;
+  msrh_pkg::except_t                   except_type;
+  // For flushing another instruction
+  logic                                another_flush_valid;
+  logic [msrh_pkg::CMT_ID_W-1:0]       another_flush_cmt_id;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] another_flush_grp_id;
+} done_if_t;
+
+done_if_t w_done_array [msrh_conf_pkg::LSU_INST_NUM];
+done_if_t w_done_selected;
+
+generate for (genvar i=0; i < msrh_conf_pkg::LSU_INST_NUM; i++) begin
+  assign w_done_array[i].done                 = slave_if[i].done                ;
+  assign w_done_array[i].index_oh             = slave_if[i].index_oh            ;
+  assign w_done_array[i].except_valid         = slave_if[i].except_valid        ;
+  assign w_done_array[i].except_type          = slave_if[i].except_type         ;
+  assign w_done_array[i].another_flush_valid  = slave_if[i].another_flush_valid ;
+  assign w_done_array[i].another_flush_cmt_id = slave_if[i].another_flush_cmt_id;
+  assign w_done_array[i].another_flush_grp_id = slave_if[i].another_flush_grp_id;
 end
+endgenerate
+
+bit_oh_or
+  #(
+    .T(done_if_t),
+    .WORDS(msrh_conf_pkg::LSU_INST_NUM)
+    )
+bit_oh_update
+  (
+   .i_oh(i_select),
+   .i_data(w_done_array),
+   .o_selected(w_done_selected)
+   );
+
+assign master_if.done                 = w_done_selected.done                ;
+assign master_if.index_oh             = w_done_selected.index_oh            ;
+assign master_if.except_valid         = w_done_selected.except_valid        ;
+assign master_if.except_type          = w_done_selected.except_type         ;
+assign master_if.another_flush_valid  = w_done_selected.another_flush_valid ;
+assign master_if.another_flush_cmt_id = w_done_selected.another_flush_cmt_id;
+assign master_if.another_flush_grp_id = w_done_selected.another_flush_grp_id;
 
 endmodule // ex3_done_if_select
