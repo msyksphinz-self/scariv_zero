@@ -25,7 +25,7 @@ module msrh_stq
 
    lsu_replay_if.master stq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
-   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
+   done_if.slave        ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
 
    // Commit notification
    input msrh_pkg::commit_blk_t   i_commit,
@@ -188,12 +188,30 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
   // Selection of EX2 Update signal
   ex2_q_update_t w_ex2_q_updates;
-  logic w_ex2_q_valid;
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
                                          .q_index(s_idx[$clog2(msrh_conf_pkg::STQ_SIZE)-1:0]),
                                          .i_ex2_recv(r_ex2_stq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ex3_q_valid <= 'h0;
+    end else begin
+      r_ex3_q_valid <= w_ex2_q_valid;
+    end
+  end
+  done_if w_ex3_done_sel_if();
+
+  // Selection of EX3 Update signal
+  ex3_done_if_select
+  u_ex3_done_if_select
+    (
+     .i_select  (r_ex3_q_valid),
+     .slave_if  (ex3_done_if),
+     .master_if (w_ex3_done_sel_if)
+     );
 
   // ---------------
   // STQ Snoop If
@@ -241,7 +259,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      // Snoop Interface
      .stq_snoop_if (stq_entry_snoop_if),
 
-     .i_ex3_done            (i_ex3_done),
+     .ex3_done_if           (w_ex3_done_sel_if),
      .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
@@ -370,6 +388,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = w_stq_done_entry.vaddr;
+  assign o_done_report[d_idx].another_flush_valid  = w_stq_done_entry.another_flush_valid;
+  assign o_done_report[d_idx].another_flush_cmt_id = w_stq_done_entry.another_flush_cmt_id;
+  assign o_done_report[d_idx].another_flush_grp_id = w_stq_done_entry.another_flush_grp_id;
+
 end
 endgenerate
 

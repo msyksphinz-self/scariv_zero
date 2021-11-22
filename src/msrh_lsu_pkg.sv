@@ -354,6 +354,10 @@ typedef struct packed {
 
   logic                                 except_valid;
   msrh_pkg::except_t                    except_type;
+
+  logic                                another_flush_valid;
+  logic [msrh_pkg::CMT_ID_W-1:0]       another_flush_cmt_id;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] another_flush_grp_id;
 } stq_entry_t;
 
 

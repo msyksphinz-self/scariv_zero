@@ -82,7 +82,7 @@ ex2_q_update_t        w_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM];
 lsu_replay_if w_ldq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 
-logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]   w_ex3_done;
+done_if w_ex3_done_if[msrh_conf_pkg::LSU_INST_NUM];
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
@@ -144,7 +144,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .i_commit (i_commit),
 
     .o_ex2_mispred (o_ex2_mispred[lsu_idx]),
-    .o_ex3_done (w_ex3_done [lsu_idx])
+    .ex3_done_if   (w_ex3_done_if[lsu_idx])
    );
 
   // Done Report Generate
@@ -196,7 +196,7 @@ msrh_ldq
 
  .ldq_replay_if (w_ldq_replay),
 
- .i_ex3_done (w_ex3_done),
+ .ex3_done_if (w_ex3_done_if),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
@@ -229,7 +229,7 @@ msrh_stq
 
  .stq_replay_if (w_stq_replay),
 
- .i_ex3_done (w_ex3_done),
+ .ex3_done_if (w_ex3_done_if),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),

@@ -31,7 +31,7 @@ module msrh_ldq
    input msrh_pkg::commit_blk_t i_commit,
    br_upd_if.slave              br_upd_if,
 
-   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_ex3_done,
+   done_if.slave ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
 
    output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
    );
@@ -154,11 +154,30 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
   // Selection of EX1 Update signal
   ex2_q_update_t w_ex2_q_updates;
-  logic w_ex2_q_valid;
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
                                          .q_index(l_idx[$clog2(msrh_conf_pkg::LDQ_SIZE)-1:0]),
                                          .i_ex2_recv(w_ex2_ldq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
+
+  logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ex3_q_valid <= 'h0;
+    end else begin
+      r_ex3_q_valid <= w_ex2_q_valid;
+    end
+  end
+  done_if w_ex3_done_sel_if();
+
+  // Selection of EX3 Update signal
+  ex3_done_if_select
+  u_ex3_done_if_select
+    (
+     .i_select  (r_ex3_q_valid),
+     .slave_if  (ex3_done_if),
+     .master_if (w_ex3_done_sel_if)
+     );
 
   msrh_ldq_entry
   u_msrh_ldq_entry
@@ -196,10 +215,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
-     .o_entry_finish (w_entry_complete[l_idx]),
+     .ex3_done_if    (w_ex3_done_sel_if),
 
-     .i_ex3_done (i_ex3_done) /*,
-     .i_ldq_done (w_ldq_done_oh[l_idx]) */
+     .o_entry_finish (w_entry_complete[l_idx])
      );
 
   // request pickup logic
@@ -276,6 +294,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = w_ldq_done_entry.vaddr;
+  assign o_done_report[d_idx].another_flush_valid  = 1'b0;
+  assign o_done_report[d_idx].another_flush_cmt_id = 'h0;
+  assign o_done_report[d_idx].another_flush_grp_id = 'h0;
+
 end
 endgenerate
 
@@ -429,20 +451,46 @@ module ex2_update_select
   (
    input ex2_q_update_t i_ex2_q_updates[msrh_conf_pkg::LSU_INST_NUM],
    input logic [$clog2(msrh_conf_pkg::LDQ_SIZE)-1: 0] q_index,
-   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         i_ex2_recv,
-   output                                            o_ex2_q_valid,
-   output                                            ex2_q_update_t o_ex2_q_updates
+   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]     i_ex2_recv,
+   output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]    o_ex2_q_valid,
+   output                                             ex2_q_update_t o_ex2_q_updates
    );
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
 
-for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
   assign w_ex2_update_match[p_idx] = (i_ex2_q_updates[p_idx].update &&
                                       i_ex2_q_updates[p_idx].index_oh[q_index]) |
                                      i_ex2_recv[p_idx];
 end
+endgenerate
 
-assign o_ex2_q_valid = |w_ex2_update_match;
+assign o_ex2_q_valid = w_ex2_update_match;
 bit_oh_or #(.T(ex2_q_update_t), .WORDS(msrh_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(i_ex2_q_updates), .o_selected(o_ex2_q_updates));
 
 endmodule // ex2_update_select
+
+module ex3_done_if_select
+  import msrh_lsu_pkg::*;
+(
+ input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_select,
+ done_if.slave        slave_if [msrh_conf_pkg::LSU_INST_NUM],
+ done_if.master       master_if
+ );
+
+always_comb begin
+  master_if = 'h0;
+  for (int i=0; i < msrh_conf_pkg::LSU_INST_NUM; i++) begin
+    if (i_select[i]) begin
+      master_if.done                 = slave_if[i].done                ;
+      master_if.index_oh             = slave_if[i].index_oh            ;
+      master_if.except_valid         = slave_if[i].except_valid        ;
+      master_if.except_type          = slave_if[i].except_type         ;
+      master_if.another_flush_valid  = slave_if[i].another_flush_valid ;
+      master_if.another_flush_cmt_id = slave_if[i].another_flush_cmt_id;
+      master_if.another_flush_grp_id = slave_if[i].another_flush_grp_id;
+    end
+  end
+end
+
+endmodule // ex3_done_if_select

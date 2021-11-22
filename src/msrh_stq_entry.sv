@@ -38,8 +38,7 @@ module msrh_stq_entry
    // Snoop Interface
    stq_snoop_if.slave                         stq_snoop_if,
 
-
-   input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done,
+   done_if.slave    ex3_done_if,
    input logic                                     i_stq_outptr_valid,
    output logic                                    o_stq_entry_st_finish
    );
@@ -235,6 +234,9 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else begin
         w_entry_next.state = STQ_WAIT_COMMIT;
+        w_entry_next.another_flush_valid  = ex3_done_if.another_flush_valid;
+        w_entry_next.another_flush_cmt_id = ex3_done_if.another_flush_cmt_id;
+        w_entry_next.another_flush_grp_id = ex3_done_if.another_flush_grp_id;
       end
     end
     STQ_WAIT_COMMIT : begin

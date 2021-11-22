@@ -50,8 +50,7 @@ module msrh_lsu_pipe
  output logic                          o_tlb_resolve,
  output ex2_q_update_t                 o_ex2_q_updates,
 
- done_if.master                        ex0_sched_done_if,
- done_if.master                        ex3_ldq_stq_done_if,
+ done_if.master                        ex3_done_if,
 
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if
@@ -201,11 +200,6 @@ assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs
 assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
 assign o_ex0_rs_conflicted    = i_ex0_replay_issue.valid & r_ex0_rs_issue.valid;
 assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
-
-// Interface to scheduler done signal
-assign ex0_sched_done_if.done = w_ex0_issue.valid & !o_ex0_rs_conflicted;
-assign ex0_sched_done_if.index_oh = r_ex0_rs_index_oh;
-
 
 //
 // EX1 stage pipeline
@@ -509,10 +503,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign ex3_ldq_stq_done_if.done = r_ex3_issue.valid;
-assign ex3_ldq_stq_done_if.index_oh = 'h0;
-assign ex3_ldq_stq_done_if.except_valid  = 1'b0;
-assign ex3_ldq_stq_done_if.except_type = msrh_pkg::except_t'('h0);
+assign ex3_done_if.done          = r_ex3_issue.valid;
+assign ex3_done_if.index_oh      = 'h0;
+assign ex3_done_if.except_valid  = 1'b0;
+assign ex3_done_if.except_type   = msrh_pkg::except_t'('h0);
+assign ex3_done_if.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
+assign ex3_done_if.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
+assign ex3_done_if.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
                               r_ex3_issue.rd_valid & (r_ex3_issue.rd_regidx != 'h0) &

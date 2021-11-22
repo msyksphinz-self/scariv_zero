@@ -37,7 +37,7 @@ module msrh_ldq_entry
 
  output logic                                    o_entry_finish,
 
- input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  i_ex3_done
+ done_if.slave   ex3_done_if
  );
 
 logic                                            w_entry_ready;
