@@ -77,11 +77,11 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 // LSU Components
 // ----------------------------------
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
-msrh_pkg::early_wr_t w_ex1_lsu_early_wr[msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::phy_wr_t   w_ex3_lsu_phy_wr  [msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::done_rpt_t w_lsu_done_rpt    [msrh_conf_pkg::LSU_INST_NUM];
-msrh_pkg::mispred_t  w_ex2_mispred_lsu [msrh_conf_pkg::LSU_INST_NUM] ;
-
+msrh_pkg::early_wr_t      w_ex1_lsu_early_wr      [msrh_conf_pkg::LSU_INST_NUM];
+msrh_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [msrh_conf_pkg::LSU_INST_NUM];
+msrh_pkg::done_rpt_t      w_lsu_done_rpt          [msrh_conf_pkg::LSU_INST_NUM];
+msrh_pkg::mispred_t       w_ex2_mispred_lsu       [msrh_conf_pkg::LSU_INST_NUM];
+msrh_pkg::another_flush_t w_lsu_another_flush_rpt [msrh_conf_pkg::LSU_INST_NUM];
 // ----------------------------------
 // BRU Components
 // ----------------------------------
@@ -320,6 +320,7 @@ u_msrh_lsu_top
     .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
     .o_done_report(w_lsu_done_rpt),
+    .o_another_flush_report(w_lsu_another_flush_rpt),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
     .l1d_snoop_if (l1d_snoop_if),
@@ -416,6 +417,7 @@ msrh_rob u_rob
    .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
    .i_done_rpt (w_done_rpt),
+   .i_another_flush_report(w_lsu_another_flush_rpt),
 
    .o_commit (w_commit),
    .o_commit_rnid_update (w_commit_rnid_update),

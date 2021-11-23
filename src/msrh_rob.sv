@@ -11,7 +11,9 @@ module msrh_rob
 
    output logic [CMT_ID_W-1: 0] o_sc_new_cmt_id,
 
-   input done_rpt_t i_done_rpt [CMT_BUS_SIZE],
+   input done_rpt_t      i_done_rpt             [CMT_BUS_SIZE],
+   input another_flush_t i_another_flush_report [LSU_INST_NUM],
+
    br_upd_if.slave  ex3_br_upd_if,
 
    output commit_blk_t     o_commit,
@@ -121,7 +123,8 @@ logic w_load_valid;
      .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
      .i_load_tlb_except_tval  (sc_disp.tlb_except_tval),
 
-     .i_done_rpt (i_done_rpt),
+     .i_done_rpt             (i_done_rpt),
+     .i_another_flush_report (i_another_flush_report),
 
      .o_entry          (w_entries[c_idx]),
      .o_block_all_done (w_entry_all_done[c_idx]),

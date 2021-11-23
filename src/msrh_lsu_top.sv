@@ -38,7 +38,9 @@ module msrh_lsu_top
     output msrh_pkg::early_wr_t o_ex1_early_wr[msrh_conf_pkg::LSU_INST_NUM],
     output msrh_pkg::phy_wr_t   o_ex3_phy_wr  [msrh_conf_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
+    output msrh_pkg::done_rpt_t      o_done_report          [msrh_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
+    output msrh_pkg::another_flush_t o_another_flush_report [msrh_conf_pkg::LSU_INST_NUM],
+
     output msrh_pkg::mispred_t  o_ex2_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
@@ -238,7 +240,8 @@ msrh_stq
 
  .stq_snoop_if(stq_snoop_if),
 
- .o_done_report(w_st_done_report)
+ .o_done_report          (w_st_done_report),
+ .o_another_flush_report (o_another_flush_report)
  );
 
 assign w_l1d_rd_if [L1D_LRQ_PORT].s0_valid = 'h0;

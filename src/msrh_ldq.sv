@@ -295,9 +295,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = w_ldq_done_entry.vaddr;
-  assign o_done_report[d_idx].another_flush_valid  = 1'b0;
-  assign o_done_report[d_idx].another_flush_cmt_id = 'h0;
-  assign o_done_report[d_idx].another_flush_grp_id = 'h0;
 
 end
 endgenerate

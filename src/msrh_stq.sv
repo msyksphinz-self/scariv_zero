@@ -37,7 +37,8 @@ module msrh_stq
    // Snoop Interface
    stq_snoop_if.slave     stq_snoop_if,
 
-   output                                msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
+   output msrh_pkg::done_rpt_t      o_done_report[msrh_conf_pkg::LSU_INST_NUM],
+   output msrh_pkg::another_flush_t o_another_flush_report[msrh_conf_pkg::LSU_INST_NUM]
    );
 
 // =========================
@@ -389,10 +390,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = w_stq_done_entry.vaddr;
-  assign o_done_report[d_idx].another_flush_valid  = w_stq_done_entry.another_flush_valid;
-  assign o_done_report[d_idx].another_flush_cmt_id = w_stq_done_entry.another_flush_cmt_id;
-  assign o_done_report[d_idx].another_flush_grp_id = w_stq_done_entry.another_flush_grp_id;
 
+  assign o_another_flush_report[d_idx].valid  = w_stq_done_entry.another_flush_valid;
+  assign o_another_flush_report[d_idx].cmt_id = w_stq_done_entry.another_flush_cmt_id;
+  assign o_another_flush_report[d_idx].grp_id = w_stq_done_entry.another_flush_grp_id;
 end
 endgenerate
 

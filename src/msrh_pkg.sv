@@ -331,12 +331,14 @@ endfunction  // assign_issue_t
     logic                 except_valid;
     except_t              except_type;
     logic [riscv_pkg::XLEN_W-1: 0] except_tval;
-
-    // For flushing another instruction
-    logic                                another_flush_valid;
-    logic [CMT_ID_W-1:0]                 another_flush_cmt_id;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0] another_flush_grp_id;
   } done_rpt_t;
+
+// For flushing another instruction
+typedef struct packed {
+  logic                                valid;
+  logic [CMT_ID_W-1:0]                 cmt_id;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+} another_flush_t;
 
 // -----------------
 // Commit Signals

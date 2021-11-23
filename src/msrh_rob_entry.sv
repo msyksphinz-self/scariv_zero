@@ -15,7 +15,8 @@ module msrh_rob_entry
    input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
    input logic [riscv_pkg::XLEN_W-1: 0]       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
 
-   input                                      done_rpt_t i_done_rpt [CMT_BUS_SIZE],
+   input done_rpt_t      i_done_rpt [CMT_BUS_SIZE],
+   input another_flush_t i_another_flush_report [msrh_conf_pkg::LSU_INST_NUM],
 
    output                                     rob_entry_t o_entry,
    output logic                               o_block_all_done,
@@ -53,6 +54,28 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_done_rpt_except_tval [d_idx] = w_done_rpt_selected.except_tval;
 end
 endgenerate
+
+
+// --------------------
+// Another Flush Match
+// --------------------
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_tree_flush_valid;
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : another_flush_loop
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
+  for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+    assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
+                                              (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) ? i_another_flush_report[l_idx].grp_id : 'h0;
+  end
+end
+endgenerate
+
+bit_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(msrh_conf_pkg::LSU_INST_NUM))
+another_flush_select (.i_data(w_another_flush_tmp_valid), .o_selected(w_another_flush_valid));
+
+bit_tree_msb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
+bit_tree_another_flush (.in(w_another_flush_valid), .out(w_another_tree_flush_valid));
 
 `ifdef SIMULATION
 logic [riscv_pkg::XLEN_W-1:0]   r_mstatus[msrh_conf_pkg::DISP_SIZE];
@@ -143,7 +166,7 @@ always_comb begin
       end
     end
 
-    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}};
+    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} | w_another_tree_flush_valid;
 
     // Branch condition update
     if (br_upd_if.update) begin
