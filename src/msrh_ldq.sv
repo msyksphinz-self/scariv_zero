@@ -233,11 +233,11 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
     msrh_rough_older_check
     st_pipe_ldq_older_check
       (
-       .i_cmt_id0 (w_ldq_entries[l_idx].cmt_id),
-       .i_grp_id0 (w_ldq_entries[l_idx].grp_id),
+       .i_cmt_id0 (ldq_haz_check_if[p_idx].ex2_cmt_id),
+       .i_grp_id0 (ldq_haz_check_if[p_idx].ex2_grp_id),
 
-       .i_cmt_id1 (ldq_haz_check_if[p_idx].ex2_cmt_id),
-       .i_grp_id1 (ldq_haz_check_if[p_idx].ex2_grp_id),
+       .i_cmt_id1 (w_ldq_entries[l_idx].cmt_id),
+       .i_grp_id1 (w_ldq_entries[l_idx].grp_id),
 
        .o_0_older_than_1 (ld_is_younger_than_st)
        );
