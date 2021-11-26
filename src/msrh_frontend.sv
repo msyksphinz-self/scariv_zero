@@ -158,6 +158,7 @@ always_comb begin
   if (i_commit.commit & |(i_commit.except_valid & ~i_commit.dead_id)) begin
     case (i_commit.except_type)
       msrh_pkg::SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
+      msrh_pkg::ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
       msrh_pkg::MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
       msrh_pkg::SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
       msrh_pkg::URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];

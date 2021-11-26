@@ -65,7 +65,15 @@ logic                                            w_rs2_phy_hit;
 logic [riscv_pkg::XLEN_W-1: 0]                   w_rs2_phy_data;
 logic                                            w_entry_rs2_ready_next;
 
-assign o_entry = r_entry;
+always_comb begin
+  o_entry = r_entry;
+  // When EX3, fast forwarding to another flush
+  if (r_entry.state == STQ_DONE_EX3) begin
+    o_entry.another_flush_valid  = ex3_done_if.another_flush_valid;
+    o_entry.another_flush_cmt_id = ex3_done_if.another_flush_cmt_id;
+    o_entry.another_flush_grp_id = ex3_done_if.another_flush_grp_id;
+  end
+end
 
 assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
 assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;

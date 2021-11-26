@@ -120,9 +120,8 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.is_load &
-                           !w_ex2_l1d_mispredicted &
-                           !ex1_l1d_rd_if.s1_conflict;
+  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.is_load ? !w_ex2_l1d_mispredicted & !ex1_l1d_rd_if.s1_conflict :
+                           r_ex2_issue.valid;
 end
 
 

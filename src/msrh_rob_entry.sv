@@ -62,19 +62,16 @@ endgenerate
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_tree_flush_valid;
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : another_flush_loop
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
-  for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
-    assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
-                                              (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) ? i_another_flush_report[l_idx].grp_id : 'h0;
-  end
+generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+  assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
+                                            (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) ? i_another_flush_report[l_idx].grp_id : 'h0;
 end
 endgenerate
 
 bit_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(msrh_conf_pkg::LSU_INST_NUM))
 another_flush_select (.i_data(w_another_flush_tmp_valid), .o_selected(w_another_flush_valid));
 
-bit_tree_msb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
+bit_tree_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
 bit_tree_another_flush (.in(w_another_flush_valid), .out(w_another_tree_flush_valid));
 
 `ifdef SIMULATION
@@ -163,6 +160,11 @@ always_comb begin
         w_entry_next.except_valid[d] = w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
         w_entry_next.except_type [d] = w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
         w_entry_next.except_tval [d] = w_done_rpt_valid[d] ? w_done_rpt_except_tval [d] : r_entry.except_tval [d];
+      end
+
+      for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
+        w_entry_next.except_valid[d] = w_another_tree_flush_valid[d] | r_entry.except_valid[d];
+        w_entry_next.except_type [d] = w_another_tree_flush_valid[d] ? ANOTHER_FLUSH : r_entry.except_type [d];
       end
     end
 
