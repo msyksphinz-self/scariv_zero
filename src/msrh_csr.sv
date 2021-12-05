@@ -764,7 +764,8 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
 
       w_priv_next = msrh_pkg::PRV_S;
-    end else if (i_commit.except_type != msrh_pkg::SILENT_FLUSH) begin
+    end else if (i_commit.except_type != msrh_pkg::SILENT_FLUSH &&
+                 i_commit.except_type != msrh_pkg::ANOTHER_FLUSH) begin
       w_mepc_next = i_commit.epc;
       /* verilator lint_off WIDTH */
       w_mcause_next = i_commit.except_type;

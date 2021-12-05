@@ -151,7 +151,7 @@ assign w_killing_uncmts = r_killing_uncmts &
                           w_entries[w_out_cmt_entry_id].valid &
                           &w_entries[w_out_cmt_entry_id].dead;
 
-assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] | w_killing_uncmts;
+assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] & ~o_commit.all_dead;
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign o_commit.except_valid  = w_valid_except_grp_id;

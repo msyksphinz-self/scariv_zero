@@ -507,6 +507,13 @@ void step_spike(long long time, long long rtl_pc,
     return;
   }
 
+  if (rtl_exception & (rtl_exception_cause == 28)) {  // Another Flush
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "==========================================\n");
+    return;
+  }
+
   p->step(1);
 
   auto instret  = p->get_state()->minstret;

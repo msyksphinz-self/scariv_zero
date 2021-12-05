@@ -89,7 +89,7 @@ assign w_entry_flush  = w_commit_flush | w_br_flush;
 assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.brtag,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
-assign w_dead_state_clear = i_commit.commit &
+assign w_dead_state_clear = i_commit.all_dead &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_lrq_is_conflict = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT;
@@ -313,6 +313,8 @@ always_comb begin
         // prevent all updates from Pipeline
         w_entry_next.cmt_id = 'h0;
         w_entry_next.grp_id = 'h0;
+      end else if (w_entry_flush) begin
+        w_entry_next.state = LDQ_DEAD;
       end
     end
     LDQ_DEAD : begin

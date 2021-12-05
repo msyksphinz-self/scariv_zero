@@ -168,7 +168,7 @@ always_comb begin
       end
     end
 
-    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} | w_another_tree_flush_valid;
+    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} /* | w_another_tree_flush_valid */;
 
     // Branch condition update
     if (br_upd_if.update) begin

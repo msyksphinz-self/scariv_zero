@@ -163,7 +163,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_commit_except_valid = i_commit.commit & (|i_commit.except_valid) & !i_commit.all_dead;
+assign w_commit_except_valid = msrh_pkg::is_flushed_commit(i_commit);
 
 assign w_restore_valid = (|r_commit_except_valid_dly)  |                        // Exception : Restore from CommitMap
                          w_brupd_rnid_restore_valid; // Speculation Miss : Restore from Br Queue
