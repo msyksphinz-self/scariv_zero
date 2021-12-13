@@ -32,7 +32,16 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   logic btb_update_hit;
   assign btb_update_hit = update_btb_if.valid & (update_btb_if.pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
+  // logic btb_update_call_ret_hit;
+  // logic [riscv_pkg::VADDR_W-1: 0] pc_ret_vaddr;
+  // assign pc_ret_vaddr = update_btb_if.pc_vaddr + (update_btb_if.is_rvc ? 'h2 : 'h4);
+  // assign btb_update_call_ret_hit = update_btb_if.valid &
+  //                                  update_btb_if.is_call &
+  //                                  (pc_ret_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+
   assign update_entry.valid        = btb_update_hit;
+  assign update_entry.is_call      = update_btb_if.is_call;
+  assign update_entry.is_ret       = update_btb_if.is_ret;
   assign update_entry.pc_tag       = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
   assign update_entry.target_vaddr = update_btb_if.target_vaddr;
 
@@ -77,16 +86,22 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
 
   assign search_btb_if.s1_target_vaddr[b_idx] = search_entry.target_vaddr;
   assign search_btb_if.s1_hit         [b_idx] = search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
+  assign search_btb_if.s1_is_call     [b_idx] = search_entry.is_call;
+  assign search_btb_if.s1_is_call     [b_idx] = search_entry.is_ret;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       search_btb_if.s2_target_vaddr[b_idx] <= 'h0;
       search_btb_if.s2_hit         [b_idx] <= 1'b0;
+      search_btb_if.s2_is_call     [b_idx] <= 1'b0;
+      search_btb_if.s2_is_ret      [b_idx] <= 1'b0;
     end else begin
       search_btb_if.s2_target_vaddr[b_idx] <= search_btb_if.s1_target_vaddr[b_idx];
       search_btb_if.s2_hit         [b_idx] <= search_btb_if.s1_hit         [b_idx];
-    end
-  end
+      search_btb_if.s2_is_call     [b_idx] <= search_btb_if.s1_is_call     [b_idx];
+      search_btb_if.s2_is_ret      [b_idx] <= search_btb_if.s1_is_ret      [b_idx];
+    end // else: !if(!i_reset_n)
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 end
 endgenerate

@@ -575,6 +575,7 @@ assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 assign w_btb_update_if.is_call        = br_upd_if.is_call;
 assign w_btb_update_if.is_ret         = br_upd_if.is_ret;
+assign w_btb_update_if.is_rvc         = br_upd_if.is_rvc;
 
 assign w_bim_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_bim_search_if.s0_pc_vaddr    = w_s0_vaddr;

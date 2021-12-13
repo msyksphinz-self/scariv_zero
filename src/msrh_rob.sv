@@ -88,7 +88,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return(o_commit.commit | w_ignore_disp),
+ .i_get_return(o_commit.commit | o_commit.all_dead | w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -151,7 +151,7 @@ assign w_killing_uncmts = r_killing_uncmts &
                           w_entries[w_out_cmt_entry_id].valid &
                           &w_entries[w_out_cmt_entry_id].dead;
 
-assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id] & ~o_commit.all_dead;
+assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
 assign o_commit.except_valid  = w_valid_except_grp_id;
@@ -165,7 +165,8 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
-assign o_commit.all_dead     = w_entries[w_out_cmt_entry_id].grp_id == w_entries[w_out_cmt_entry_id].dead;
+assign o_commit.all_dead     = r_killing_uncmts |
+                               ~r_killing_uncmts & (w_entries[w_out_cmt_entry_id].grp_id == w_entries[w_out_cmt_entry_id].dead);
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
@@ -299,9 +300,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_killing_uncmts <= 1'b0;
   end else begin
-    if (o_commit.commit & (|o_commit.except_valid) & (w_in_cmt_id != w_out_cmt_id)) begin
+    if (o_commit.commit & (|o_commit.except_valid) & !r_killing_uncmts) begin
       r_killing_uncmts <= 1'b1;
-    end else /* if (r_killing_uncmts & !(&w_entries[w_out_cmt_entry_id].dead)) */ begin
+    end else if (r_killing_uncmts & (w_in_cmt_id == w_out_cmt_id)) begin
       r_killing_uncmts <= 1'b0;
     end
   end

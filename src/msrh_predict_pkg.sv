@@ -80,6 +80,7 @@ interface btb_update_if;
   logic                                                 valid;
   logic                                                 is_call;
   logic                                                 is_ret;
+  logic                                                 is_rvc;
   logic [riscv_pkg::VADDR_W-1:0]                        pc_vaddr;
   logic [riscv_pkg::VADDR_W-1:0]                        target_vaddr;
 
@@ -87,6 +88,7 @@ interface btb_update_if;
     output valid,
     output is_call,
     output is_ret,
+    output is_rvc,
     output pc_vaddr,
     output target_vaddr
   );
@@ -95,6 +97,7 @@ interface btb_update_if;
     input valid,
     input is_call,
     input is_ret,
+    input is_rvc,
     input pc_vaddr,
     input target_vaddr
   );

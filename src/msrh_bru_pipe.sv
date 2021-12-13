@@ -311,7 +311,7 @@ end // always_comb
 logic w_ex3_ras_hit;
 logic w_ex3_bim_hit;
 
-assign w_ex3_ras_hit = r_ex3_issue.is_ret & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
+assign w_ex3_ras_hit = r_ex3_issue.is_ret & r_ex3_issue.pred_taken & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
 assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
                        ((~r_ex3_result & ~r_ex3_issue.pred_taken) |
                         (r_ex3_result & r_ex3_issue.pred_taken &

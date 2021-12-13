@@ -95,7 +95,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   //            silent flush (actually normally exit) => old ID
   assign except_flush_valid = r_commit_rnid_update_dly.commit &
                               r_commit_rnid_update_dly.except_valid[d_idx] &
-                              (r_commit_rnid_update_dly.except_type != msrh_pkg::SILENT_FLUSH);
+                              (r_commit_rnid_update_dly.except_type != msrh_pkg::SILENT_FLUSH) &
+                              (r_commit_rnid_update_dly.except_type != msrh_pkg::ANOTHER_FLUSH);
 
   always_comb begin
     if (r_commit_rnid_update_dly.commit &

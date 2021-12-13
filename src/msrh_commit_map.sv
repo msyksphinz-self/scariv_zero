@@ -18,7 +18,9 @@ always_comb begin
     w_commit_map_next[r_idx] = r_commit_map[r_idx];
   end
 
-  w_dead_id_with_except = (|i_commit_rnid_update.except_valid) & (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH) ?
+  w_dead_id_with_except = (|i_commit_rnid_update.except_valid) &
+                          (i_commit_rnid_update.except_type != msrh_pkg::SILENT_FLUSH) &
+                          (i_commit_rnid_update.except_type != msrh_pkg::ANOTHER_FLUSH) ?
                           {i_commit_rnid_update.dead_id | i_commit_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
                           i_commit_rnid_update.dead_id;
 
