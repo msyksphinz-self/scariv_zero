@@ -15,6 +15,7 @@ MSRH RISC-V CPUコアのドキュメントにようこそ！
    sections/frontend
    sections/bpd
    sections/decoder
+   sections/rename
    sections/scheduler
    sections/committer
    sections/csr
