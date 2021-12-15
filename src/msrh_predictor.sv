@@ -21,7 +21,6 @@ module msrh_predictor
  output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
 
  input logic i_s1_valid,
- input logic i_s2_valid,
  input msrh_lsu_pkg::ic_resp_t i_s2_ic_resp,
 
  btb_update_if.slave update_btb_if,
@@ -318,12 +317,15 @@ u_ras
 
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_pred_hit_oh;
-
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_pred_hit_oh;
+logic                                        r_s2_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_pred_hit_oh <= 'h0;
+    r_s2_valid <= 1'b0;
   end else begin
     r_s2_pred_hit_oh <= w_s1_pred_hit_oh;
+    r_s2_valid <= i_s1_valid;
   end
 end
 
@@ -333,14 +335,16 @@ end
 // ----------------------------------------
 assign w_s1_btb_bim_hit_array = search_btb_if.s1_hit & search_bim_if.s1_pred_taken;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) pred_hit_select (.in(w_s1_btb_bim_hit_array | w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_btb_bim_hit_array | w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
 
 bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_s1_btb_bim_hit_array), .out(w_s1_btb_bim_hit_lsb));
 bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
 bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target_vaddr), .o_selected(o_s1_btb_target_vaddr));
 
-assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & r_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
-assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_ret_be  & r_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(r_s2_pred_hit_oh | w_s2_ret_be), .out(w_s2_pred_hit_oh));
+
+assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){r_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
+assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){r_s2_valid}} & (|(w_s2_ret_be  & w_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
   assign w_sc_grp_valid[d_idx] = sc_disp.inst[d_idx].valid;

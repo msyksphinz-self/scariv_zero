@@ -86,6 +86,11 @@ logic                          r_s1_tlb_miss;
 logic                          r_s1_tlb_except_valid;
 msrh_pkg::except_t             r_s1_tlb_except_cause;
 
+logic [riscv_pkg::VADDR_W-1: 0] w_s1_btb_target_vaddr;
+
+logic                           w_s1_predict_valid;
+logic [riscv_pkg::VADDR_W-1: 0] w_s1_predict_target_vaddr;
+
 // ==============
 // s2 stage
 // ==============
@@ -101,10 +106,8 @@ logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 msrh_pkg::except_t              r_s2_tlb_except_cause;
 
-logic [riscv_pkg::VADDR_W-1: 0] w_s1_btb_target_vaddr;
-
-logic                           w_s1_predict_valid;
-logic [riscv_pkg::VADDR_W-1: 0] w_s1_predict_target_vaddr;
+logic                           w_s2_predict_valid;
+logic [riscv_pkg::VADDR_W-1: 0] w_s2_predict_target_vaddr;
 
 // =======================
 // Predictors
@@ -310,6 +313,9 @@ always_comb begin
           w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
           w_if_state_next = WAIT_IBUF_FREE;
         end
+      end else if (w_s2_predict_valid) begin
+        w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else if (w_s1_predict_valid) begin
         w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -464,7 +470,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear /* | w_s1_predict_valid */;
+    r_s2_clear <= r_s1_clear | w_s2_predict_valid;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss;
     r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
@@ -596,6 +602,9 @@ assign w_s1_predict_valid = w_s1_inst_valid &
 assign w_s1_predict_target_vaddr = |w_ras_search_if.s1_is_ret ? {w_ras_search_if.s1_ras_vaddr, 1'b0} :
                                    w_s1_btb_target_vaddr;
 
+assign w_s2_predict_valid        = |w_ras_search_if.s2_is_ret;  // from RAS
+assign w_s2_predict_target_vaddr = {w_ras_search_if.s2_ras_vaddr, 1'b0};
+
 
 msrh_predictor u_predictor
   (
@@ -608,7 +617,6 @@ msrh_predictor u_predictor
 
    .i_s1_valid   (w_s1_inst_valid),
 
-   .i_s2_valid   (w_s2_inst_buffer_load_valid),
    .i_s2_ic_resp (w_s2_ic_resp),
 
    .update_btb_if (w_btb_update_if),
