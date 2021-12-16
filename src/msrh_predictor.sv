@@ -76,8 +76,7 @@ logic [ICACHE_DATA_B_W / 2-1: 0]  w_s1_ret_valid;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
-logic [riscv_pkg::VADDR_W-1: 1]   w_s1_ras_ret_vaddr;
-logic [riscv_pkg::VADDR_W-1: 1]   r_s2_ras_ret_vaddr;
+logic [riscv_pkg::VADDR_W-1: 1]   w_ras_ret_vaddr;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
@@ -217,11 +216,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ras_input_index   <= 'h0;
     r_s2_ras_index_next <= 'h0;
-    r_s2_ras_ret_vaddr  <= 'h0;
   end else begin
     r_ras_input_index   <= w_ras_index_next;
     r_s2_ras_index_next <= w_s1_ras_index_next;
-    r_s2_ras_ret_vaddr  <= w_s1_ras_ret_vaddr;
   end
 end
 
@@ -230,12 +227,12 @@ assign w_s1_ret_valid  = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_ret_be  & w
 
 assign ras_search_if.s1_is_call   = w_s1_call_be_lsb;
 assign ras_search_if.s1_is_ret    = w_s1_ret_be_lsb;
-assign ras_search_if.s1_ras_vaddr = w_s1_ras_ret_vaddr;
+assign ras_search_if.s1_ras_vaddr = w_ras_ret_vaddr;
 assign ras_search_if.s1_ras_index = w_s1_ras_index_next;
 
 assign ras_search_if.s2_is_call   = w_s2_call_valid;
 assign ras_search_if.s2_is_ret    = w_s2_ret_valid;
-assign ras_search_if.s2_ras_vaddr = r_s2_ras_ret_vaddr;
+assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
 assign ras_search_if.s2_ras_index = r_s2_ras_index_next;
 
 assign o_sc_ras_index = w_s1_ras_index_next;
@@ -266,9 +263,9 @@ u_ras
    .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
    .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
 
-   .i_s1_rd_valid (|w_s1_ret_valid),
+   .i_s1_rd_valid ((|w_s2_ret_valid) | (|w_s1_ret_valid)),
    .i_s1_rd_index (r_ras_input_index-1),
-   .o_s1_rd_pa    (w_s1_ras_ret_vaddr),
+   .o_s1_rd_pa    (w_ras_ret_vaddr),
 
    .i_br_call_cmt_valid     (w_br_call_dead & ~r_during_recover),
    .i_br_call_cmt_ras_index (br_upd_fe_if.ras_index),

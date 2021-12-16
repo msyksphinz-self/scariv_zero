@@ -125,8 +125,6 @@ always_comb begin
                                 br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id[d_idx] = 1'b1;
           w_entry_next.dead[d_idx] = 1'b1;
-          w_entry_next.except_valid[d_idx] = 1'b1;
-          w_entry_next.except_type [d_idx] = r_entry.except_valid [d_idx] ? r_entry.except_type[d_idx] : msrh_pkg::SILENT_FLUSH;
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;

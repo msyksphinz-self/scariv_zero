@@ -166,7 +166,7 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.all_dead     = r_killing_uncmts |
-                               ~r_killing_uncmts & (w_entries[w_out_cmt_entry_id].grp_id == o_commit.dead_id);
+                               ~r_killing_uncmts & ((w_entries[w_out_cmt_entry_id].grp_id & o_commit.dead_id) == w_entries[w_out_cmt_entry_id].grp_id);
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
