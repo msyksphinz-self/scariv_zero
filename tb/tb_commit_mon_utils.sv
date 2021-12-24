@@ -17,8 +17,7 @@ endgenerate
 logic [msrh_conf_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
 assign w_commited_oh = 'h1 << u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id;
-assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_killing_uncmts ? committed_rob_entry.grp_id :
-                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
+assign w_dead_grp_id = u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_dead_grp_id;
 
 bit_oh_or
   #(

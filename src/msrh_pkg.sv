@@ -366,15 +366,22 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & (|commit.except_valid) & ~commit.all_dead;
+  return commit.commit & (|commit.except_valid);
 endfunction // is_flushed_commit
 
 function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                                       logic [DISP_SIZE-1: 0] entry_grp_id,
                                       commit_blk_t commit);
-  return commit.commit & (|commit.except_valid) &
-         ~((entry_cmt_id == commit.cmt_id) & ~|(entry_grp_id & commit.dead_id)) &
-         ~commit.all_dead;
+  logic w_cmt_is_older;
+  logic entry_older;
+
+  w_cmt_is_older = commit.cmt_id[msrh_pkg::CMT_ID_W-1]   ^ entry_cmt_id[msrh_pkg::CMT_ID_W-1] ?
+                   commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] > entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
+                   commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] < entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older ||
+                (commit.cmt_id == entry_cmt_id && |(commit.except_valid & entry_grp_id));
+
+  return is_flushed_commit(commit) & entry_older;
 
 endfunction // is_commit_flush_target
 

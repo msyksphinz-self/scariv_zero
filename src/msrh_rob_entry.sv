@@ -159,7 +159,6 @@ always_comb begin
       for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
         w_entry_next.except_valid[d] = ~r_entry.dead[d] & w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
         w_entry_next.except_type [d] =                    w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
-        w_entry_next.except_tval [d] =                    w_done_rpt_valid[d] ? w_done_rpt_except_tval [d] : r_entry.except_tval [d];
       end
 
       for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
@@ -168,7 +167,7 @@ always_comb begin
       end
     end
 
-    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} /* | w_another_tree_flush_valid */;
+    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} | w_another_tree_flush_valid;
 
     // Branch condition update
     if (br_upd_if.update) begin
