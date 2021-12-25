@@ -306,7 +306,7 @@ module msrh_tb (
   always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
     if (!i_msrh_reset_n) begin
     end else begin
-      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
         for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
           if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
               ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin

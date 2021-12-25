@@ -580,7 +580,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_minstret <= 'h0;
   end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_MINSTRET)) begin
     r_minstret <= write_if.data;
-  end else if (i_commit.commit & !i_commit.all_dead) begin
+  end else if (i_commit.commit) begin
     /* verilator lint_off WIDTH */
     r_minstret <= r_minstret + w_inst_bit_cnt;
   end
@@ -717,9 +717,7 @@ always_comb begin
   w_mcause_next  = r_mcause;
   w_mtval_next   = r_mtval ;
 
-  if (i_commit.commit &
-      (|i_commit.except_valid) &
-      !i_commit.all_dead) begin
+  if (i_commit.commit & (|i_commit.except_valid)) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */

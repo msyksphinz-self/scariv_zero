@@ -117,14 +117,16 @@ always_comb begin
       w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
       w_entry_next.except_tval [d_idx] = i_load_tlb_except_tval[d_idx];
+      w_entry_next.dead        [d_idx] = w_entry_next.except_valid[d_idx];
     end
 
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag,
                                 br_upd_if.dead, br_upd_if.mispredict)) begin
-          w_entry_next.done_grp_id[d_idx] = 1'b1;
-          w_entry_next.dead[d_idx] = 1'b1;
+          w_entry_next.done_grp_id [d_idx] = 1'b1;
+          w_entry_next.dead        [d_idx] = 1'b1;
+          w_entry_next.except_valid[d_idx] = 1'b0;
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
@@ -167,7 +169,19 @@ always_comb begin
       end
     end
 
-    w_entry_next.dead = r_entry.dead | {msrh_conf_pkg::DISP_SIZE{i_kill}} | w_another_tree_flush_valid;
+
+    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+      if (i_kill) begin
+        w_entry_next.except_valid[d_idx] = 1'b0;
+        w_entry_next.dead        [d_idx] = 1'b1;
+      end
+
+      if (w_another_tree_flush_valid[d_idx]) begin
+        w_entry_next.except_valid[d_idx] = 1'b0;
+        w_entry_next.dead        [d_idx] = 1'b1;
+      end
+    end
+
 
     // Branch condition update
     if (br_upd_if.update) begin
@@ -175,8 +189,9 @@ always_comb begin
         if (r_entry.inst[d_idx].valid &
             is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag,
                                 br_upd_if.dead, br_upd_if.mispredict)) begin
-          w_entry_next.done_grp_id[d_idx] = 1'b1;
-          w_entry_next.dead[d_idx] = 1'b1;
+          w_entry_next.done_grp_id [d_idx] = 1'b1;
+          w_entry_next.dead        [d_idx] = 1'b1;
+          w_entry_next.except_valid[d_idx] = 1'b0;
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;

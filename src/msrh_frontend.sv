@@ -27,11 +27,8 @@ module msrh_frontend
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
 
-  /* CSR information */
-  csr_info_if.slave           csr_info,
-
- // RAS recovery
- input cmt_ras_update_t i_commit_ras_update,
+ /* CSR information */
+ csr_info_if.slave           csr_info,
 
  // Dispatch Info
  disp_if.master    iq_disp,

@@ -26,8 +26,7 @@ always_comb begin
 
   if (i_commit_rnid_update.commit) begin
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
-      if (!i_commit_rnid_update.all_dead &
-          i_commit_rnid_update.rnid_valid[d_idx] &
+      if (i_commit_rnid_update.rnid_valid[d_idx] &
           !w_dead_id_with_except[d_idx]) begin
         w_commit_map_next[i_commit_rnid_update.rd_regidx[d_idx]] = i_commit_rnid_update.rd_rnid[d_idx];
       end

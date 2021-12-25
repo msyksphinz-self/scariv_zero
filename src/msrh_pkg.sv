@@ -353,7 +353,8 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] epc;
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
-  logic                           all_dead;
+  // logic                           all_dead;
+  logic                           flush_valid;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
@@ -422,19 +423,10 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;
   except_t                                                   except_type;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
-  logic                                                      all_dead;
+  // logic                                                        all_dead;
 } cmt_rnid_upd_t;
 
 localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
-
-// RAS Recovery Information
-typedef struct packed {
-  logic              cmt_valid;
-  logic              dead_cmt_valid;
-  logic              is_call;
-  logic              is_ret;
-  logic [RAS_W-1: 0] ras_index;
-} cmt_ras_update_t;
 
 endpackage
 

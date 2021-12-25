@@ -69,7 +69,7 @@ logic                                     w_commit_flush;
 logic                                     w_br_flush;
 logic                                     w_flush_valid;
 
-assign iq_disp.ready = !(i_commit_rnid_update.commit & ((|i_commit.except_valid) | i_commit.all_dead)) & i_resource_ok;
+assign iq_disp.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) & i_resource_ok;
 
 //                                          Freelist      RenameMap
 // normal commit inst                    => old ID push / no update
@@ -100,7 +100,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
   always_comb begin
     if (r_commit_rnid_update_dly.commit &
-        !r_commit_rnid_update_dly.all_dead &
         !(r_commit_rnid_update_dly.dead_id[d_idx] | except_flush_valid)) begin
       // old ID push
       w_push_freelist_id = r_commit_rnid_update_dly.old_rnid[d_idx];
