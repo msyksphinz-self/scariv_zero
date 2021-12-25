@@ -369,6 +369,22 @@ function logic is_flushed_commit (commit_blk_t commit);
   return commit.commit & (|commit.except_valid);
 endfunction // is_flushed_commit
 
+function inst0_older (logic inst0_vld, logic [CMT_ID_W-1:0] inst0_cmt_id, logic [DISP_SIZE-1: 0] inst0_grp_id,
+                      logic inst1_vld, logic [CMT_ID_W-1:0] inst1_cmt_id, logic [DISP_SIZE-1: 0] inst1_grp_id);
+
+logic                                     inst0_cmt_id_older;
+logic                                     inst0_grp_id_older;
+
+  inst0_cmt_id_older = inst0_cmt_id[msrh_pkg::CMT_ID_W-1]   ^ inst1_cmt_id[msrh_pkg::CMT_ID_W-1] ?
+                       inst0_cmt_id[msrh_pkg::CMT_ID_W-2:0] > inst1_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
+                       inst0_cmt_id[msrh_pkg::CMT_ID_W-2:0] < inst1_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
+  inst0_grp_id_older = inst0_cmt_id_older ||
+                       (inst0_cmt_id == inst1_cmt_id && (inst0_grp_id < inst1_grp_id));
+
+  return inst0_vld & inst1_vld & inst0_grp_id_older;
+
+endfunction // inst0_older
+
 function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                                       logic [DISP_SIZE-1: 0] entry_grp_id,
                                       commit_blk_t commit);
