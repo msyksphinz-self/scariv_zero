@@ -419,8 +419,8 @@ assign w_br_flush      = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if
 assign w_flush_valid   = w_commit_flush | w_br_flush;
 
 assign w_flush_valid_next  = w_commit_flush | w_br_flush;
-assign w_flush_cmt_id_next = w_commit_flush ? i_commit.cmt_id : br_upd_fe_if.cmt_id;
-assign w_flush_grp_id_next = w_commit_flush ? i_commit.grp_id : br_upd_fe_if.grp_id;
+assign w_flush_cmt_id_next = w_commit_flush ? i_commit.cmt_id       : br_upd_fe_if.cmt_id;
+assign w_flush_grp_id_next = w_commit_flush ? i_commit.except_valid : br_upd_fe_if.grp_id;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

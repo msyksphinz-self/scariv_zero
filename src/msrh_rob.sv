@@ -144,7 +144,7 @@ assign o_sc_new_cmt_id = w_in_cmt_id;
 
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
-assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].done_grp_id;
+assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
 assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
@@ -156,6 +156,7 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
+assign o_commit.flush_valid  = w_entries[w_out_cmt_entry_id].flush_valid;
 // assign o_commit.all_dead     = (w_entries[w_out_cmt_entry_id].grp_id & w_entries[w_out_cmt_entry_id].dead) == w_entries[w_out_cmt_entry_id].grp_id;
 
 // Select Jump Insntruction

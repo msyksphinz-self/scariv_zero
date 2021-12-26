@@ -118,6 +118,7 @@ always_comb begin
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
       w_entry_next.except_tval [d_idx] = i_load_tlb_except_tval[d_idx];
       w_entry_next.dead        [d_idx] = w_entry_next.except_valid[d_idx];
+      w_entry_next.flush_valid [d_idx] = w_entry_next.except_valid[d_idx];
     end
 
     if (br_upd_if.update) begin
@@ -126,7 +127,7 @@ always_comb begin
                                 br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
-          w_entry_next.except_valid[d_idx] = 1'b0;
+          w_entry_next.flush_valid [d_idx] = 1'b0;
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
@@ -156,32 +157,33 @@ always_comb begin
     // So, during killing, allocated new instruction should be killed.
     if (i_commit_finish & o_block_all_done) begin
       w_entry_next.valid = 1'b0;
-    end else begin
-      w_entry_next.done_grp_id = r_entry.done_grp_id | w_done_rpt_valid;
-      for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
-        w_entry_next.except_valid[d] = ~r_entry.dead[d] & w_done_rpt_valid[d] ? w_done_rpt_except_valid[d] : r_entry.except_valid[d];
-        w_entry_next.except_type [d] =                    w_done_rpt_valid[d] ? w_done_rpt_except_type [d] : r_entry.except_type [d];
-      end
-
-      for(int d = 0; d < msrh_conf_pkg::DISP_SIZE; d++) begin
-        w_entry_next.except_valid[d] = ~r_entry.dead[d] & w_another_tree_flush_valid[d] ? 1'b1          : r_entry.except_valid[d];
-        w_entry_next.except_type [d] =                    w_another_tree_flush_valid[d] ? ANOTHER_FLUSH : r_entry.except_type [d];
-      end
     end
 
+    w_entry_next.done_grp_id = r_entry.done_grp_id | w_done_rpt_valid;
 
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-      if (i_kill) begin
-        w_entry_next.except_valid[d_idx] = 1'b0;
-        w_entry_next.dead        [d_idx] = 1'b1;
+      if (w_done_rpt_valid[d_idx]) begin
+        w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
+        w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
+        if (!r_entry.dead[d_idx]) begin
+          w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
+        end
       end
 
       if (w_another_tree_flush_valid[d_idx]) begin
-        w_entry_next.except_valid[d_idx] = 1'b0;
+        w_entry_next.except_valid[d_idx] = 1'b1;
+        w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
         w_entry_next.dead        [d_idx] = 1'b1;
+        if (!r_entry.dead[d_idx]) begin
+          w_entry_next.flush_valid [d_idx] = 1'b1;
+        end
+      end
+
+      if (i_kill) begin
+        w_entry_next.dead        [d_idx] = 1'b1;
+        w_entry_next.flush_valid [d_idx] = 1'b0;
       end
     end
-
 
     // Branch condition update
     if (br_upd_if.update) begin
@@ -192,6 +194,9 @@ always_comb begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           w_entry_next.except_valid[d_idx] = 1'b0;
+          // if (!r_entry.dead[d_idx]) begin
+          w_entry_next.flush_valid [d_idx] = 1'b0;
+          // end
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;

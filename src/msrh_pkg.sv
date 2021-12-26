@@ -194,6 +194,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::XLEN_W-1:0] except_tval;
 
     logic [msrh_conf_pkg::DISP_SIZE-1: 0]  dead;
+    logic [msrh_conf_pkg::DISP_SIZE-1: 0]  flush_valid;
     // Branch update info
     logic                               is_br_included;
 
@@ -354,7 +355,7 @@ typedef struct packed {
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   // logic                           all_dead;
-  logic                           flush_valid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0] flush_valid;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
@@ -367,7 +368,7 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & (|commit.except_valid);
+  return commit.commit & (|commit.flush_valid);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, logic [CMT_ID_W-1:0] inst0_cmt_id, logic [DISP_SIZE-1: 0] inst0_grp_id,
@@ -396,7 +397,7 @@ function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                    commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] > entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
                    commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] < entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |(commit.except_valid & entry_grp_id));
+                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & entry_grp_id));
 
   return is_flushed_commit(commit) & entry_older;
 

@@ -717,7 +717,7 @@ always_comb begin
   w_mcause_next  = r_mcause;
   w_mtval_next   = r_mtval ;
 
-  if (i_commit.commit & (|i_commit.except_valid)) begin
+  if (i_commit.commit & |(i_commit.except_valid & ~i_commit.dead_id)) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
