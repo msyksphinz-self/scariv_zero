@@ -189,7 +189,8 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
+                                                                 ras_search_if.s2_is_ret   [b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_ret[b_idx] ? {ras_search_if.s2_ras_vaddr, 1'b0} :
@@ -324,10 +325,10 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
                                     iq_disp.inst[w_idx].pc_addr + 'h2;
 
-      w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
-      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
+      w_expand_pred_info [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
+      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
 
-      w_expand_ras_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
+      w_expand_ras_info  [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info [w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
@@ -418,7 +419,7 @@ assign w_inst_disp_mask = |w_predict_taken_valid_array &
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
 assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
-assign iq_disp.is_br_included = |w_inst_bru_disp;
+assign iq_disp.is_br_included = |w_inst_bru_disped;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
@@ -510,7 +511,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
-      iq_disp.inst[d_idx].pred_taken        = w_expand_pred_info[d_idx].pred_taken;
+      iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx];
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
       iq_disp.inst[d_idx].pred_target_vaddr = w_expand_pred_info[d_idx].pred_target_vaddr;

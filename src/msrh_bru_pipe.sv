@@ -327,7 +327,7 @@ assign ex3_br_upd_if.dead          = r_ex3_dead;
 assign ex3_br_upd_if.mispredict    = ~w_ex3_ras_hit & ~w_ex3_bim_hit;
 
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
-assign ex3_br_upd_if.pc_vaddr      = r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr : r_ex3_issue.pc_addr + 'h2;
+assign ex3_br_upd_if.pc_vaddr      = /* r_ex3_issue.is_rvc ? */ r_ex3_issue.pc_addr /* : r_ex3_issue.pc_addr + 'h2 */;
 assign ex3_br_upd_if.target_vaddr  = r_ex3_result ? r_ex3_br_vaddr :
                                      r_ex3_issue.is_rvc ? r_ex3_issue.pc_addr + 'h2 : r_ex3_issue.pc_addr + 'h4;
 `ifdef SIMULATION

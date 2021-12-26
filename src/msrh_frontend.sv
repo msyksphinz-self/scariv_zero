@@ -608,7 +608,7 @@ msrh_ftq u_ftq
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 
-assign w_btb_update_if.valid          = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
+assign w_btb_update_if.valid          = br_upd_if.update & ~br_upd_if.dead & ~br_upd_if.is_ret;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 assign w_btb_update_if.is_call        = br_upd_if.is_call;
