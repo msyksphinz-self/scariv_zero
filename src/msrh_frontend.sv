@@ -166,9 +166,10 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready 
                                (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
 always_comb begin
-  if (i_commit.commit & |(i_commit.except_valid & ~i_commit.dead_id)) begin
+  if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
       SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
+      ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
       MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
       SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
       URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];
@@ -255,16 +256,6 @@ always_comb begin
 `ifdef SIMULATION
         $fatal (0, "This exception not supported now : %d", i_commit.except_type);
 `endif // SIMULATION
-      end
-    endcase // case (i_commit.except_type)
-  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.dead_id)) begin
-    case (i_commit.except_type)
-      ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
-      default           : begin
-        w_s0_vaddr_flush_next = r_s0_vaddr;
-// `ifdef SIMULATION
-//         $fatal (0, "This exception not supported now : %d", i_commit.except_type);
-// `endif // SIMULATION
       end
     endcase // case (i_commit.except_type)
   end else if (br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict) begin
