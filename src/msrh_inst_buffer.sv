@@ -95,6 +95,7 @@ typedef struct packed {
   logic                           is_call;
   logic                           is_ret;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+  logic [riscv_pkg::VADDR_W-1: 0]                    pred_target_vaddr;
 } ras_info_t;
 
 ras_info_t w_expand_ras_info[msrh_conf_pkg::DISP_SIZE];
@@ -193,12 +194,12 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
                                                                  ras_search_if.s2_is_ret   [b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_ret[b_idx] ? {ras_search_if.s2_ras_vaddr, 1'b0} :
-                                                                  btb_search_if.s2_target_vaddr[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
 
-          r_inst_queue[idx].ras_info[b_idx].is_call          <= ras_search_if.s2_is_call[b_idx];
-          r_inst_queue[idx].ras_info[b_idx].is_ret           <= ras_search_if.s2_is_ret [b_idx];
-          r_inst_queue[idx].ras_info[b_idx].ras_index        <= ras_search_if.s2_ras_index;
+          r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
+          r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
+          r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_index;
+          r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= {ras_search_if.s2_ras_vaddr, 1'b0};
         end
 
 `ifdef SIMULATION
@@ -325,8 +326,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
                                     iq_disp.inst[w_idx].pc_addr + 'h2;
 
-      w_expand_pred_info [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
-      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
+      w_expand_pred_info [w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
+      w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
 
       w_expand_ras_info  [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info [w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
@@ -514,7 +515,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx];
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
-      iq_disp.inst[d_idx].pred_target_vaddr = w_expand_pred_info[d_idx].pred_target_vaddr;
+      iq_disp.inst[d_idx].pred_target_vaddr = w_inst_is_ret [d_idx] ? w_expand_ras_info[d_idx].pred_target_vaddr :
+                                              w_expand_pred_info[d_idx].pred_target_vaddr;
 
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];

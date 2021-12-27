@@ -65,6 +65,7 @@ logic  r_s0_valid;
 logic [riscv_pkg::VADDR_W-1:0]  r_s0_vaddr;
 logic [riscv_pkg::VADDR_W-1:0]  w_s0_vaddr_next;
 logic [riscv_pkg::VADDR_W-1:0]  w_s0_vaddr;
+logic                           w_s0_predicted;
 msrh_lsu_pkg::tlb_req_t         w_s0_tlb_req;
 msrh_lsu_pkg::tlb_resp_t        w_s0_tlb_resp;
 msrh_lsu_pkg::ic_req_t          w_s0_ic_req;
@@ -78,6 +79,7 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
 logic                          r_s1_valid;
 logic                          w_s1_inst_valid;
 logic                          r_s1_clear;
+logic                          r_s1_predicted;
 logic [riscv_pkg::VADDR_W-1:0] r_s1_vaddr;
 logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
 logic                          r_s1_tlb_miss;
@@ -96,6 +98,7 @@ logic [riscv_pkg::VADDR_W-1: 0] w_s1_predict_target_vaddr;
 logic                           w_s2_inst_valid;
 logic                           r_s2_valid;
 logic                           r_s2_clear;
+logic                           r_s2_predicted;
 logic [riscv_pkg::VADDR_W-1:0]  r_s2_vaddr;
 msrh_lsu_pkg::ic_resp_t         w_s2_ic_resp;
 logic                           w_s2_ic_miss;
@@ -321,10 +324,10 @@ always_comb begin
           w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
           w_if_state_next = WAIT_IBUF_FREE;
         end
-      end else if (w_s2_predict_valid) begin
+      end else if (w_s2_predict_valid & !r_s2_clear) begin
         w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
-      end else if (w_s1_predict_valid) begin
+      end else if (w_s1_predict_valid & !r_s1_clear) begin
         w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else begin
@@ -431,10 +434,10 @@ assign w_existed_flush_is_older = inst0_older (r_flush_valid,      r_flush_cmt_i
                                                w_flush_valid_next, w_flush_cmt_id_next, w_flush_grp_id_next);
 
 
-assign w_s0_vaddr      = w_flush_valid ? w_s0_vaddr_flush_next :
-                         r_s2_valid & ~r_s2_clear & w_s2_predict_valid ? w_s2_predict_target_vaddr :
-                         r_s1_valid & ~r_s1_clear & w_s1_predict_valid ? w_s1_predict_target_vaddr :
-                         r_s0_vaddr;
+assign {w_s0_predicted, w_s0_vaddr} = w_flush_valid ? {1'b0, w_s0_vaddr_flush_next} :
+                                      r_s2_valid & ~r_s2_clear & w_s2_predict_valid ? {1'b1, w_s2_predict_target_vaddr} :
+                                      r_s1_valid & ~r_s1_clear & w_s1_predict_valid ? {1'b0, w_s1_predict_target_vaddr} :
+                                      {1'b0, r_s0_vaddr};
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
@@ -466,6 +469,7 @@ tlb u_tlb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s1_valid <= 1'b0;
+    r_s1_predicted <= 1'b0;
     r_s1_vaddr <= 'h0;
     r_s1_paddr <= 'h0;
     r_s1_tlb_miss <= 'h0;
@@ -473,6 +477,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
     r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid & w_s0_ic_req.valid /* & w_tlb_ready */;
@@ -493,6 +498,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_valid <= 1'b0;
     r_s2_clear <= 1'b0;
     r_s2_vaddr <= 'h0;
+    r_s2_predicted <= 1'b0;
     r_s2_tlb_miss         <= 1'b0;
     r_s2_tlb_except_valid <= 1'b0;
     r_s2_tlb_except_cause <= except_t'(0);
@@ -501,8 +507,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear | w_s2_predict_valid |
+    r_s2_clear <= r_s1_clear | w_s2_predict_valid & ~r_s1_predicted |
                   w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s2_predicted <= r_s1_predicted;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss;
     r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
