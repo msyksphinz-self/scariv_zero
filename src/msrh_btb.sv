@@ -30,7 +30,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   btb_entry_t search_entry;
 
   logic btb_update_hit;
-  assign btb_update_hit = update_btb_if.valid & (update_btb_if.pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  logic [BTB_ENTRY_FIELD_MSB: 1] w_update_addr;
+  assign w_update_addr = update_btb_if.pc_vaddr[BTB_ENTRY_FIELD_MSB:1] + (update_btb_if.is_rvc ? 'h0 : 'h1);
+  assign btb_update_hit = update_btb_if.valid & (w_update_addr == b_idx);
 
   // logic btb_update_call_ret_hit;
   // logic [riscv_pkg::VADDR_W-1: 0] pc_ret_vaddr;
