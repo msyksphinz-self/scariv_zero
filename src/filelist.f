@@ -12,10 +12,8 @@
 ../src/msrh_predict_pkg.sv
 
 ../src/l2_if.sv
-../src/l1d_if.sv
 ../src/disp_if.sv
 ../src/regread_if.sv
-../src/l1d_lrq_if.sv
 ../src/lsu_if.sv
 ../src/msrh_if.sv
 
