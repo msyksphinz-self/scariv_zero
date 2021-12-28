@@ -16,7 +16,7 @@ module msrh_dcache
    l2_resp_if.slave  l1d_ext_resp,
 
    // LRQ search interface
-   lrq_search_if.master lrq_search_if
+   lrq_dc_search_if.master lrq_dc_search_if
    );
 
 dc_read_resp_t[msrh_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
@@ -124,8 +124,8 @@ end
 // --------------------------------------------------
 // Interface of LRQ Search Entry to get information
 // --------------------------------------------------
-assign lrq_search_if.valid = r_rp1_l1d_exp_resp_valid;
-assign lrq_search_if.index = r_rp1_lrq_resp_tag;
+assign lrq_dc_search_if.valid = r_rp1_l1d_exp_resp_valid;
+assign lrq_dc_search_if.index = r_rp1_lrq_resp_tag;
 
 // ===========================
 // L2 Reponse
@@ -144,7 +144,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_rp2_be <= 'h0;
   end else begin
     r_rp2_valid <= r_rp1_l1d_exp_resp_valid;
-    r_rp2_searched_lrq_entry <= lrq_search_if.lrq_entry;
+    r_rp2_searched_lrq_entry <= lrq_dc_search_if.lrq_entry;
     r_rp2_resp_data <= r_rp1_lrq_resp_data;
     r_rp2_be        <= {DCACHE_DATA_B_W{1'b1}};
   end

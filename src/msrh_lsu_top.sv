@@ -68,7 +68,7 @@ l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM + 1] ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
-lrq_search_if w_lrq_search_if ();
+lrq_dc_search_if w_lrq_dc_search_if ();
 lrq_resolve_t w_lrq_resolve;
 logic     w_lrq_is_full;
 
@@ -262,7 +262,7 @@ msrh_load_requester
 
  .l1d_evict_if  (w_l1d_evict_if),
 
- .lrq_search_if (w_lrq_search_if)
+ .lrq_dc_search_if (w_lrq_dc_search_if)
  );
 
 
@@ -373,7 +373,7 @@ u_msrh_dcache
 
    .l1d_ext_resp (l1d_ext_resp),
 
-   .lrq_search_if (w_lrq_search_if)
+   .lrq_dc_search_if (w_lrq_dc_search_if)
    );
 
 endmodule // mrsh_lsu_top

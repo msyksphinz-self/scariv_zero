@@ -22,7 +22,7 @@ module msrh_l1d_load_requester
    // Search LRQ interface during eviction
    lrq_evict_search_if.slave  lrq_evict_search_if,
    // LRQ search interface
-   lrq_search_if.slave lrq_search_if
+   lrq_dc_search_if.slave lrq_dc_search_if
    );
 
 localparam REQ_PORT_NUM = msrh_conf_pkg::LSU_INST_NUM;
@@ -251,7 +251,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_load_entry_valid[b_idx]),
          .i_load_entry (load_entry),
 
-         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
+         .i_ext_load_fin (lrq_dc_search_if.valid & (lrq_dc_search_if.index == b_idx)),
 
          .i_sent       (w_ext_req_sent),
          .i_evict_sent (w_evict_sent),
@@ -275,7 +275,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::LRQ_ENTRY_SIZE; b_idx++) begin
          .i_load       (w_stq_miss_lrq_load & (w_stq_miss_lrq_idx == b_idx)),
          .i_load_entry (w_stq_load_entry),
 
-         .i_ext_load_fin (lrq_search_if.valid & (lrq_search_if.index == b_idx)),
+         .i_ext_load_fin (lrq_dc_search_if.valid & (lrq_dc_search_if.index == b_idx)),
 
          .i_sent       (l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh[b_idx]),
          .i_evict_sent (l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[b_idx]),
@@ -473,12 +473,12 @@ assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;
 assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.evict.data;
 
 // Searching LRQ Interface from DCache
-assign lrq_search_if.lrq_entry = w_lrq_entries[lrq_search_if.index];
+assign lrq_dc_search_if.lrq_entry = w_lrq_entries[lrq_dc_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
-assign o_lrq_resolve.valid            = lrq_search_if.valid;
-assign o_lrq_resolve.resolve_index_oh = 1 << lrq_search_if.index;
+assign o_lrq_resolve.valid            = lrq_dc_search_if.valid;
+assign o_lrq_resolve.resolve_index_oh = 1 << lrq_dc_search_if.index;
 
 assign o_lrq_is_full = &w_norm_lrq_valids;
 
@@ -487,8 +487,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_lrq_search_valid <= 1'b0;
     r_lrq_search_index_oh <= 'h0;
   end else begin
-    r_lrq_search_valid    <= lrq_search_if.valid;
-    r_lrq_search_index_oh <= 1 << lrq_search_if.index;
+    r_lrq_search_valid    <= lrq_dc_search_if.valid;
+    r_lrq_search_index_oh <= 1 << lrq_dc_search_if.index;
   end
 end
 

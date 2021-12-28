@@ -1,4 +1,4 @@
-interface lrq_search_if;
+interface lrq_dc_search_if;
 
 logic valid;
 logic [msrh_pkg::LRQ_ENTRY_W-1: 0] index;
@@ -16,7 +16,7 @@ modport slave (
   output lrq_entry
 );
 
-endinterface // lrq_search_if
+endinterface // lrq_dc_search_if
 
 
 interface lsu_replay_if;
