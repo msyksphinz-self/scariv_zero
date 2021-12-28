@@ -65,7 +65,6 @@ l1d_wr_if  w_l1d_wr_if();
 l1d_wr_if  w_l1d_merge_if();
 // LSU Pipeline + ST-Buffer
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM + 1] ();
-lrq_evict_search_if w_lrq_evict_search_if();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
@@ -285,7 +284,6 @@ u_st_buffer
 
    .st_buffer_if        (w_st_buffer_if),
    .l1d_rd_if           (w_l1d_rd_if[L1D_ST_RD_PORT]),
-   .lrq_evict_search_if (w_lrq_evict_search_if),
    .l1d_lrq_stq_miss_if (w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM]),
    .l1d_wr_if           (w_l1d_wr_if),
    .l1d_merge_if        (w_l1d_merge_if),

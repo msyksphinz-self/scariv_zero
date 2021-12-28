@@ -17,8 +17,7 @@ module msrh_st_buffer
  st_buffer_if.slave st_buffer_if,
  // L1D Miss/Hit Interface
  l1d_rd_if.master l1d_rd_if,
- // Search LRQ interface during eviction
- lrq_evict_search_if.master lrq_evict_search_if,
+
  // Interface of Missed Data for Store
  l1d_lrq_if.master l1d_lrq_stq_miss_if,
  // Write Data to DCache
@@ -193,12 +192,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
     r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
     r_s2_replace_paddr <= l1d_rd_if.s1_replace_paddr;
-
-    // r_s2_lrq_evict_hit_ways <= lrq_evict_search_if.hit_ways;
   end
 end
-
-// assign w_s2_conflict_evict_addr = ~|(r_s2_replace_way & lrq_evict_search_if.hit_ways);
 
 assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
 assign l1d_lrq_stq_miss_if.req_payload.paddr               = {w_lrq_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
@@ -207,12 +202,6 @@ assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = r_s2_replace_way;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = r_s2_replace_data;
 
-
-// --------------------------------------------
-// Search Eviction Data that is ready to Evict
-// --------------------------------------------
-assign lrq_evict_search_if.valid   = l1d_rd_if.s0_valid;
-assign lrq_evict_search_if.tag_low = w_l1d_rd_entry.paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW];
 
 localparam multiply_dc_stbuf_width  = msrh_conf_pkg::DCACHE_DATA_W / msrh_lsu_pkg::ST_BUF_WIDTH;
 
