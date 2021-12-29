@@ -25,14 +25,15 @@ logic [riscv_pkg::VADDR_W-1: BTB_ENTRY_BIT_MSB+1] r_s1_pc_tag;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] search_btb_s1_hit;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s1_btb_bank_mask;
 
+logic [riscv_pkg::VADDR_W-1: 1]              w_update_pc_vaddr;
+assign w_update_pc_vaddr = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:1] + (update_btb_if.is_rvc ? 'h0 : 'h1);
+
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
   btb_entry_t update_entry;
   btb_entry_t search_entry;
 
   logic btb_update_hit;
-  logic [BTB_ENTRY_FIELD_MSB: 1] w_update_addr;
-  assign w_update_addr = update_btb_if.pc_vaddr[BTB_ENTRY_FIELD_MSB:1] + (update_btb_if.is_rvc ? 'h0 : 'h1);
-  assign btb_update_hit = update_btb_if.valid & (w_update_addr == b_idx);
+  assign btb_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
   // logic btb_update_call_ret_hit;
   // logic [riscv_pkg::VADDR_W-1: 0] pc_ret_vaddr;
@@ -58,7 +59,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
      .i_reset_n (i_reset_n),
 
      .i_wr      (btb_update_hit),
-     .i_wr_addr (update_btb_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
+     .i_wr_addr (w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
      .i_wr_data (update_entry),
 
      .i_rd_addr (search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
