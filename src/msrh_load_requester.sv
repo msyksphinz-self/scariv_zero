@@ -28,6 +28,9 @@ module msrh_load_requester
    // Interface to L1D eviction to Store Requestor
    l1d_evict_if.master l1d_evict_if,
 
+   // Search LRQ entry
+   lrq_pa_search_if.slave   lrq_pa_search_if,
+
    // LRQ search interface (from DCache)
    lrq_dc_search_if.slave lrq_dc_search_if
    );
@@ -439,6 +442,28 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 
 end
 endgenerate
+
+
+// --------------------------
+// LRQ search from ST-Buffer
+// --------------------------
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_stbuf_lrq_hit_array_next;
+generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : stbuf_lrq_loop
+  assign w_stbuf_lrq_hit_array_next[e_idx] = lrq_pa_search_if.s0_valid &
+                                             !w_entry_finish[e_idx] &
+                                             (w_lrq_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                              lrq_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      lrq_pa_search_if.s1_hit_index_oh[e_idx] <= 1'b0;
+    end else begin
+      lrq_pa_search_if.s1_hit_index_oh[e_idx] <= w_stbuf_lrq_hit_array_next[e_idx];
+    end
+  end
+
+end
+endgenerate
+
 
 
 initial begin

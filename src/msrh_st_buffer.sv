@@ -27,6 +27,9 @@ module msrh_st_buffer
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave  stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
+ // Search LRQ entry: same cycle as L1D Search
+ lrq_pa_search_if.master   lrq_pa_search_if,
+
  // LRQ Resolve Notofication
  input       lrq_resolve_t i_lrq_resolve
  );
@@ -110,13 +113,14 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_lrq_req      (w_entry_lrq_req   [e_idx]),
      .i_lrq_accepted (w_entry_lrq_req_oh[e_idx]),
 
-     .i_l1d_rd_miss     (l1d_rd_if.s1_miss),
+     .i_lrq_search_hit  (lrq_pa_search_if.s1_hit_index_oh),
 
      // Forward check interface from LSU Pipeline
      .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
      .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
      .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
+     .i_l1d_rd_miss     (l1d_rd_if.s1_miss),
      .i_l1d_rd_conflict (l1d_rd_if.s1_conflict),
      .i_l1d_wr_conflict (l1d_wr_if.conflict),
 
@@ -156,6 +160,11 @@ assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
 assign l1d_rd_if.s0_h_pri = 1'b0;
 assign l1d_rd_if.s0_paddr = {w_l1d_rd_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
 
+// -----------------
+// LRQ entry search
+// -----------------
+assign lrq_pa_search_if.s0_valid = l1d_rd_if.s0_valid;
+assign lrq_pa_search_if.s0_paddr = l1d_rd_if.s0_paddr;
 
 // ------------------------
 // Make LRQ Refill request-

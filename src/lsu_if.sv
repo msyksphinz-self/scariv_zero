@@ -189,6 +189,27 @@ modport slave (
 endinterface // lrq_dc_search_if
 
 
+interface lrq_pa_search_if;
+
+logic                                 s0_valid;
+logic [riscv_pkg::PADDR_W-1: 0]       s0_paddr;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+
+modport master (
+  output s0_valid,
+  output s0_paddr,
+  input  s1_hit_index_oh
+);
+
+modport slave (
+  input  s0_valid,
+  input  s0_paddr,
+  output s1_hit_index_oh
+);
+
+endinterface // lrq_pa_search_if
+
+
 interface lsu_replay_if;
 
 logic    valid;

@@ -95,6 +95,7 @@ lrq_haz_check_if w_lrq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
+lrq_pa_search_if        w_lrq_pa_search_if();
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -262,6 +263,7 @@ msrh_load_requester
 
  .l1d_evict_if  (w_l1d_evict_if),
 
+ .lrq_pa_search_if (w_lrq_pa_search_if),
  .lrq_dc_search_if (w_lrq_dc_search_if)
  );
 
@@ -289,6 +291,7 @@ u_st_buffer
    .l1d_merge_if        (w_l1d_merge_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
+   .lrq_pa_search_if    (w_lrq_pa_search_if),
 
    .i_lrq_resolve       (w_lrq_resolve)
    );

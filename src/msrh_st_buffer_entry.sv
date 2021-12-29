@@ -23,6 +23,8 @@ module msrh_st_buffer_entry
  output logic o_lrq_req, // Refill request to LRQ
  input logic  i_lrq_accepted,
 
+ input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_lrq_search_hit,
+
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
  output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_fwd_lsu_hit,
@@ -96,7 +98,16 @@ always_comb begin
       end
     end
     ST_BUF_RESP_L1D: begin
-      if (i_l1d_rd_miss) begin
+      if (i_lrq_search_hit != 'h0) begin
+        if (i_lrq_resolve.valid &
+            (i_lrq_resolve.resolve_index_oh == i_lrq_search_hit)) begin
+          // LRQ hit and resolve immediately : replay again
+          w_state_next = ST_BUF_RD_L1D;
+        end else begin
+          w_state_next = ST_BUF_WAIT_REFILL; // Replay
+          w_entry_next.lrq_index_oh = i_lrq_search_hit;
+        end
+      end else if (i_l1d_rd_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else if (i_l1d_rd_conflict) begin
         w_state_next = ST_BUF_RD_L1D;
