@@ -147,13 +147,15 @@ interface bim_update_if;
   logic                                                 hit;
   logic                                                 taken;
   logic [ 1: 0]                                         bim_value;
+  logic                                                 is_rvc;
 
   modport master (
     output valid,
     output pc_vaddr,
     output hit,
     output taken,
-    output bim_value
+    output bim_value,
+    output is_rvc
   );
 
   modport slave (
@@ -161,7 +163,8 @@ interface bim_update_if;
     input pc_vaddr,
     input hit,
     input taken,
-    input bim_value
+    input bim_value,
+    input is_rvc
   );
 
 endinterface // bim_update_if

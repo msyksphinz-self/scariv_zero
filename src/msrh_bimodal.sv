@@ -21,10 +21,13 @@ module msrh_bim
 logic [ 1: 0] w_update_counter;
 logic [ 1: 0] w_s1_counter[msrh_lsu_pkg::ICACHE_DATA_B_W/2];
 
+logic [riscv_pkg::VADDR_W-1: 1]              w_update_pc_vaddr;
+assign w_update_pc_vaddr = update_bim_if.pc_vaddr[riscv_pkg::VADDR_W-1:1] + (update_bim_if.is_rvc ? 'h0 : 'h1);
+
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
 
   logic bim_update_hit;
-  assign bim_update_hit = update_bim_if.valid & (update_bim_if.pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  assign bim_update_hit = update_bim_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
   logic [BTB_ENTRY_SIZE-1: 0] r_bim_valids;
   logic                       r_s1_bim_valids;
@@ -41,7 +44,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
      .i_reset_n (i_reset_n),
 
      .i_wr   (bim_update_hit),
-     .i_wr_addr (update_bim_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
+     .i_wr_addr (w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
      .i_wr_data (w_update_counter),
 
      .i_rd_addr (search_bim_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),

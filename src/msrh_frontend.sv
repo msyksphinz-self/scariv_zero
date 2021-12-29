@@ -631,6 +631,7 @@ assign w_bim_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
 assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
+assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_bim_hit_array;
 assign w_s1_btb_bim_hit_array = w_btb_search_if.s1_hit & w_bim_search_if.s1_pred_taken;
