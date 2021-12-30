@@ -118,7 +118,7 @@ always_comb begin
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
       w_entry_next.except_tval [d_idx] = i_load_tlb_except_tval[d_idx];
       w_entry_next.dead        [d_idx] = w_entry_next.dead[d_idx] | w_entry_next.except_valid[d_idx];
-      w_entry_next.flush_valid [d_idx] = w_entry_next.except_valid[d_idx];
+      w_entry_next.flush_valid [d_idx] = w_entry_next.dead[d_idx] ? 1'b0 : w_entry_next.except_valid[d_idx];
     end
 
     if (br_upd_if.update) begin
@@ -165,6 +165,7 @@ always_comb begin
       if (w_done_rpt_valid[d_idx]) begin
         w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
         w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
+        w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
         if (!r_entry.dead[d_idx]) begin
           w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
         end
