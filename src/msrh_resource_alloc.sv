@@ -254,8 +254,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_br_mask_valid     <= 'h0;
     r_br_tag_current_idx <= 'h0;
   end else begin
-    r_br_mask_valid     <= w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE];
-    r_br_tag_current_idx <= w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE];
+    if (w_commit_flush) begin
+      r_br_mask_valid <= 'h0;
+    end else begin
+      r_br_mask_valid      <= w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE];
+      r_br_tag_current_idx <= w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE];
+    end
   end
 end
 
