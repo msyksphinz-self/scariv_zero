@@ -8,6 +8,9 @@ module msrh_sched_entry
    input logic                                 i_clk,
    input logic                                 i_reset_n,
 
+   // Output point valid specifield
+   input logic                                 i_out_ptr_valid,
+
    // ROB notification interface
    rob_info_if.slave                           rob_info_if,
 
@@ -77,8 +80,7 @@ logic     w_entry_flush;
 logic     w_commit_flush;
 logic     w_br_flush;
 logic     w_load_br_flush;
-logic     w_entry_complete;
-logic     w_dead_state_clear;
+logic     w_entry_finish;
 
 // When previous instruction generates exception or jump
 logic w_pc_update_before_entry;
@@ -227,22 +229,22 @@ always_comb begin
         w_state_next = msrh_pkg::DEAD;
         w_dead_next  = 1'b1;
       end else begin
-        if (IS_BRANCH & w_entry_complete) begin
-          // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
-          w_state_next = msrh_pkg::INIT;
-          w_entry_next.valid = 1'b0;
-          w_issued_next = 1'b0;
-          w_dead_next = 1'b0;
-          // prevent all updates from Pipeline
-          w_entry_next.cmt_id = 'h0;
-          w_entry_next.grp_id = 'h0;
-        end else begin
-          w_state_next = msrh_pkg::WAIT_COMPLETE;
-        end // else: !if(IS_BRANCH & w_entry_complete)
+        // if (IS_BRANCH & w_entry_finish) begin
+        //   // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
+        //   w_state_next = msrh_pkg::INIT;
+        //   w_entry_next.valid = 1'b0;
+        //   w_issued_next = 1'b0;
+        //   w_dead_next = 1'b0;
+        //   // prevent all updates from Pipeline
+        //   w_entry_next.cmt_id = 'h0;
+        //   w_entry_next.grp_id = 'h0;
+        // end else begin
+        w_state_next = msrh_pkg::WAIT_COMPLETE;
+        // end // else: !if(IS_BRANCH & w_entry_finish)
       end
     end
     msrh_pkg::WAIT_COMPLETE : begin
-      if (w_entry_complete) begin
+      if (w_entry_finish) begin
         w_state_next = msrh_pkg::INIT;
         w_entry_next.valid = 1'b0;
         w_issued_next = 1'b0;
@@ -256,7 +258,7 @@ always_comb begin
       end
     end // case: msrh_pkg::WAIT_COMPLETE
     msrh_pkg::DEAD : begin
-      if (w_dead_state_clear) begin
+      if (w_entry_finish) begin
         w_state_next = msrh_pkg::INIT;
         w_entry_next.valid = 1'b0;
         w_issued_next = 1'b0;
@@ -294,9 +296,7 @@ assign w_entry_flush = w_commit_flush | w_br_flush;
 assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
-assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
-
-assign w_entry_complete = (i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id));
+assign w_entry_finish = i_out_ptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -336,7 +336,7 @@ assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
 assign o_except_type  = r_entry.except_type;
-assign o_entry_finish = (r_state == msrh_pkg::DEAD) & w_dead_state_clear |
-                        ((r_state == msrh_pkg::DONE) | (r_state == msrh_pkg::WAIT_COMPLETE)) & w_entry_complete;
+assign o_entry_finish = w_entry_finish & ((r_state == msrh_pkg::DEAD) |
+                                          (r_state == msrh_pkg::WAIT_COMPLETE));
 
 endmodule // msrh_sched_entry

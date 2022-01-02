@@ -65,6 +65,9 @@ msrh_pkg::except_t                    w_entry_except_type [ENTRY_SIZE];
 logic                                w_flush_valid;
 assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 
+logic                                w_ignore_disp;
+logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
+
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
@@ -75,25 +78,19 @@ u_req_ptr
    .i_clk (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_rollback (w_flush_valid),
+   .i_rollback (1'b0),
 
-   .i_in_valid (|i_disp_valid    ),
+   .i_in_valid (|i_disp_valid & ~w_ignore_disp),
    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
    .o_in_ptr_oh(w_entry_in_ptr_oh   ),
 
-   .i_out_valid(1'b0),
-   .i_out_val  ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
-   .o_out_ptr_oh(w_entry_out_ptr_oh                       )
+   .i_out_valid  (|w_entry_finish),
+   .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
+   .o_out_ptr_oh (w_entry_out_ptr_oh                  )
    );
 
-logic                                w_ignore_disp;
-logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
-logic [$clog2(ENTRY_SIZE): 0]        w_entry_finish_cnt;
-
-bit_cnt #(.WIDTH(ENTRY_SIZE)) u_entry_dead_cnt (.in(w_entry_finish), .out(w_entry_finish_cnt));
-
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_finish)    ? w_entry_finish_cnt : 'h0) +
+assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
                              (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
 
 msrh_credit_return_slave
@@ -172,6 +169,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
+    .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx]),
     .rob_info_if   (rob_info_if),
 
     .i_put      (|w_input_valid),
