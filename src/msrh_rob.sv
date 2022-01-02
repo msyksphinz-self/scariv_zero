@@ -161,7 +161,7 @@ assign o_commit.flush_valid  = w_entries[w_out_cmt_entry_id].flush_valid;
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
-                                w_entries[w_out_cmt_entry_id].except_valid) & w_entries[w_out_cmt_entry_id].done_grp_id;
+                                w_entries[w_out_cmt_entry_id].except_valid) /* & w_entries[w_out_cmt_entry_id].done_grp_id */;
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_id), .out(w_cmt_pc_upd_valid_oh));
 
 // Select Exception Instruction
