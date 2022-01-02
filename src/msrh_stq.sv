@@ -345,7 +345,7 @@ endgenerate
 
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
 
-  for (genvar b_idx = 0; b_idx < 8; b_idx++) begin : byte_loop
+  for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin : byte_loop
     logic [riscv_pkg::XLEN_W-1:0]        w_stq_fwd_rs2_data;
     logic [ 7: 0]                        w_ex2_fwd_dw_selected;
     logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;

@@ -7,6 +7,10 @@ require "tempfile"
 
 json_file = ARGV[0]
 rv_xlen = ARGV[1].to_i
+if rv_xlen != 32 and rv_xlen != 64 then
+  printf("rv_xlen should be 32 or 64.");
+  exit
+end
 
 File.open(json_file) do |file|
   $map_table = JSON.load(file)
@@ -45,10 +49,12 @@ $map_table.each_with_index{ |map, map_index|
     exit
   end
 
-
-  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa & 56'h%014x) == 56'h%014x;  // Address Region : %x - %x\n",
+  paddr_bitlen = rv_xlen == 32 ? 34 : 56
+  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa & %d'h%014x) == %d'h%014x;  // Address Region : %x - %x\n",
          map_index,
-         ~(size_byte-1) & 0xff_ffff_ffff_ffff,
+         paddr_bitlen,
+         ~(size_byte-1) & ((1 << paddr_bitlen)-1),
+         paddr_bitlen,
          base_addr & ~size_byte,
          base_addr,
          base_addr + size_byte -1)
