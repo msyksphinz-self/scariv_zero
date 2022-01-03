@@ -88,7 +88,13 @@ MulDiv u_MulDiv
    .io_req_valid (w_valid),
    .io_req_ready    (o_ready),
    .io_req_bits_fn  (w_fn),
+`ifdef RV64
    .io_req_bits_dw  (w_is_64bit),
+`endif // RV64
+`ifdef RV32
+   .io_req_bits_tag ('h0),
+   .io_resp_bits_tag (),
+`endif // RV32
    .io_req_bits_in1 (i_rs1),
    .io_req_bits_in2 (i_rs2),
    .io_kill (1'b0),
@@ -99,6 +105,8 @@ MulDiv u_MulDiv
 
 endmodule // msrh_div_unit
 
+
+`ifdef RV64
 
 module MulDiv(
   input         clock,
@@ -569,3 +577,282 @@ end // initial
 `endif
 `endif // SYNTHESIS
 endmodule
+
+`endif //  `ifdef RV64
+
+`ifdef RV32
+
+module MulDiv(
+  input         clock,
+  input         reset,
+  output        io_req_ready,
+  input         io_req_valid,
+  input  [3:0]  io_req_bits_fn,
+  input  [31:0] io_req_bits_in1,
+  input  [31:0] io_req_bits_in2,
+  input  [4:0]  io_req_bits_tag,
+  input         io_kill,
+  input         io_resp_ready,
+  output        io_resp_valid,
+  output [31:0] io_resp_bits_data,
+  output [4:0]  io_resp_bits_tag
+);
+`ifdef RANDOMIZE_REG_INIT
+  reg [31:0] _RAND_0;
+  reg [31:0] _RAND_1;
+  reg [31:0] _RAND_2;
+  reg [31:0] _RAND_3;
+  reg [31:0] _RAND_4;
+  reg [31:0] _RAND_5;
+  reg [63:0] _RAND_6;
+  reg [95:0] _RAND_7;
+`endif // RANDOMIZE_REG_INIT
+  reg [2:0] state; // @[Multiplier.scala 52:22]
+  reg [4:0] req_tag; // @[Multiplier.scala 54:16]
+  reg [5:0] count; // @[Multiplier.scala 55:18]
+  reg  neg_out; // @[Multiplier.scala 58:20]
+  reg  isHi; // @[Multiplier.scala 59:17]
+  reg  resHi; // @[Multiplier.scala 60:18]
+  reg [32:0] divisor; // @[Multiplier.scala 61:20]
+  reg [65:0] remainder; // @[Multiplier.scala 62:22]
+  wire [3:0] _T = io_req_bits_fn & 4'h4; // @[Decode.scala 14:65]
+  wire  cmdMul = _T == 4'h0; // @[Decode.scala 14:121]
+  wire [3:0] _T_3 = io_req_bits_fn & 4'h5; // @[Decode.scala 14:65]
+  wire  _T_4 = _T_3 == 4'h1; // @[Decode.scala 14:121]
+  wire [3:0] _T_5 = io_req_bits_fn & 4'h2; // @[Decode.scala 14:65]
+  wire  _T_6 = _T_5 == 4'h2; // @[Decode.scala 14:121]
+  wire  cmdHi = _T_4 | _T_6; // @[Decode.scala 15:30]
+  wire [3:0] _T_9 = io_req_bits_fn & 4'h6; // @[Decode.scala 14:65]
+  wire  _T_10 = _T_9 == 4'h0; // @[Decode.scala 14:121]
+  wire [3:0] _T_11 = io_req_bits_fn & 4'h1; // @[Decode.scala 14:65]
+  wire  _T_12 = _T_11 == 4'h0; // @[Decode.scala 14:121]
+  wire  lhsSigned = _T_10 | _T_12; // @[Decode.scala 15:30]
+  wire  _T_16 = _T_3 == 4'h4; // @[Decode.scala 14:121]
+  wire  rhsSigned = _T_10 | _T_16; // @[Decode.scala 15:30]
+  wire  lhs_sign = lhsSigned & io_req_bits_in1[31]; // @[Multiplier.scala 82:23]
+  wire [15:0] hi = io_req_bits_in1[31:16]; // @[Multiplier.scala 83:43]
+  wire [15:0] lo = io_req_bits_in1[15:0]; // @[Multiplier.scala 84:15]
+  wire [31:0] lhs_in = {hi,lo}; // @[Cat.scala 30:58]
+  wire  rhs_sign = rhsSigned & io_req_bits_in2[31]; // @[Multiplier.scala 82:23]
+  wire [15:0] hi_1 = io_req_bits_in2[31:16]; // @[Multiplier.scala 83:43]
+  wire [15:0] lo_1 = io_req_bits_in2[15:0]; // @[Multiplier.scala 84:15]
+  wire [32:0] subtractor = remainder[64:32] - divisor; // @[Multiplier.scala 89:37]
+  wire [31:0] result = resHi ? remainder[64:33] : remainder[31:0]; // @[Multiplier.scala 90:19]
+  wire [31:0] negated_remainder = 32'h0 - result; // @[Multiplier.scala 91:27]
+  wire [65:0] _GEN_0 = remainder[31] ? {{34'd0}, negated_remainder} : remainder; // @[Multiplier.scala 94:27 Multiplier.scala 95:17 Multiplier.scala 62:22]
+  wire [65:0] _GEN_2 = state == 3'h1 ? _GEN_0 : remainder; // @[Multiplier.scala 93:57 Multiplier.scala 62:22]
+  wire [2:0] _GEN_4 = state == 3'h1 ? 3'h3 : state; // @[Multiplier.scala 93:57 Multiplier.scala 100:11 Multiplier.scala 52:22]
+  wire [2:0] _GEN_6 = state == 3'h5 ? 3'h7 : _GEN_4; // @[Multiplier.scala 102:57 Multiplier.scala 104:11]
+  wire  _GEN_7 = state == 3'h5 ? 1'h0 : resHi; // @[Multiplier.scala 102:57 Multiplier.scala 105:11 Multiplier.scala 60:18]
+  wire [32:0] mulReg_hi = remainder[65:33]; // @[Multiplier.scala 108:31]
+  wire [64:0] mulReg = {mulReg_hi,remainder[31:0]}; // @[Cat.scala 30:58]
+  wire  prod_hi = remainder[32]; // @[Multiplier.scala 109:31]
+  wire [31:0] mplier = mulReg[31:0]; // @[Multiplier.scala 110:24]
+  wire [32:0] accum = mulReg[64:32]; // @[Multiplier.scala 111:37]
+  wire [7:0] prod_lo = mplier[7:0]; // @[Multiplier.scala 113:38]
+  wire [8:0] _prod_T_1 = {prod_hi,prod_lo}; // @[Multiplier.scala 113:60]
+  wire [32:0] _GEN_35 = {{24{_prod_T_1[8]}},_prod_T_1}; // @[Multiplier.scala 113:67]
+  wire [41:0] _prod_T_2 = $signed(_GEN_35) * $signed(divisor); // @[Multiplier.scala 113:67]
+  wire [41:0] _GEN_36 = {{9{accum[32]}},accum}; // @[Multiplier.scala 113:76]
+  wire [23:0] nextMulReg_lo = mplier[31:8]; // @[Multiplier.scala 114:38]
+  wire [41:0] nextMulReg_hi = $signed(_prod_T_2) + $signed(_GEN_36); // @[Cat.scala 30:58]
+  wire [65:0] nextMulReg = {nextMulReg_hi,nextMulReg_lo}; // @[Cat.scala 30:58]
+  wire  remainder_hi_lo = count == 6'h2 & neg_out; // @[Multiplier.scala 115:57]
+  wire  _eOut_T_4 = ~isHi; // @[Multiplier.scala 119:7]
+  wire [32:0] nextMulReg1_hi = nextMulReg[64:32]; // @[Multiplier.scala 121:37]
+  wire [31:0] nextMulReg1_lo = nextMulReg[31:0]; // @[Multiplier.scala 121:82]
+  wire [64:0] nextMulReg1 = {nextMulReg1_hi,nextMulReg1_lo}; // @[Cat.scala 30:58]
+  wire [32:0] remainder_hi_hi = nextMulReg1[64:32]; // @[Multiplier.scala 122:34]
+  wire [31:0] remainder_lo = nextMulReg1[31:0]; // @[Multiplier.scala 122:67]
+  wire [65:0] _remainder_T = {remainder_hi_hi,remainder_hi_lo,remainder_lo}; // @[Cat.scala 30:58]
+  wire [5:0] _count_T_1 = count + 6'h1; // @[Multiplier.scala 124:20]
+  wire [2:0] _GEN_8 = count == 6'h3 ? 3'h6 : _GEN_6; // @[Multiplier.scala 125:51 Multiplier.scala 126:13]
+  wire  _GEN_9 = count == 6'h3 ? isHi : _GEN_7; // @[Multiplier.scala 125:51 Multiplier.scala 127:13]
+  wire [2:0] _GEN_12 = state == 3'h2 ? _GEN_8 : _GEN_6; // @[Multiplier.scala 107:50]
+  wire  _GEN_13 = state == 3'h2 ? _GEN_9 : _GEN_7; // @[Multiplier.scala 107:50]
+  wire  unrolls_less = subtractor[32]; // @[Multiplier.scala 134:28]
+  wire [31:0] unrolls_hi_hi = unrolls_less ? remainder[63:32] : subtractor[31:0]; // @[Multiplier.scala 135:14]
+  wire  unrolls_lo = ~unrolls_less; // @[Multiplier.scala 135:67]
+  wire [64:0] unrolls_0 = {unrolls_hi_hi,remainder[31:0],unrolls_lo}; // @[Cat.scala 30:58]
+  wire [2:0] _state_T = neg_out ? 3'h5 : 3'h7; // @[Multiplier.scala 140:19]
+  wire [2:0] _GEN_14 = count == 6'h20 ? _state_T : _GEN_12; // @[Multiplier.scala 139:38 Multiplier.scala 140:13]
+  wire  divby0 = count == 6'h0 & unrolls_lo; // @[Multiplier.scala 147:30]
+  wire  _T_34 = io_resp_ready & io_resp_valid; // @[Decoupled.scala 40:37]
+  wire  _T_36 = io_req_ready & io_req_valid; // @[Decoupled.scala 40:37]
+  wire [32:0] _divisor_T = {rhs_sign,hi_1,lo_1}; // @[Cat.scala 30:58]
+  wire [15:0] loOut = result[15:0]; // @[Multiplier.scala 177:82]
+  assign io_req_ready = state == 3'h0; // @[Multiplier.scala 183:25]
+  assign io_resp_valid = state == 3'h6 | state == 3'h7; // @[Multiplier.scala 182:42]
+  assign io_resp_bits_data = {result[31:16],loOut}; // @[Cat.scala 30:58]
+  assign io_resp_bits_tag = req_tag; // @[Multiplier.scala 179:20]
+  always @(posedge clock) begin
+    if (reset) begin // @[Multiplier.scala 52:22]
+      state <= 3'h0; // @[Multiplier.scala 52:22]
+    end else if (_T_36) begin // @[Multiplier.scala 165:24]
+      if (cmdMul) begin // @[Multiplier.scala 166:17]
+        state <= 3'h2;
+      end else if (lhs_sign | rhs_sign) begin // @[Multiplier.scala 166:36]
+        state <= 3'h1;
+      end else begin
+        state <= 3'h3;
+      end
+    end else if (_T_34 | io_kill) begin // @[Multiplier.scala 162:36]
+      state <= 3'h0; // @[Multiplier.scala 163:11]
+    end else if (state == 3'h3) begin // @[Multiplier.scala 130:50]
+      state <= _GEN_14;
+    end else begin
+      state <= _GEN_12;
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      req_tag <= io_req_bits_tag; // @[Multiplier.scala 173:9]
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      count <= 6'h0; // @[Multiplier.scala 169:11]
+    end else if (state == 3'h3) begin // @[Multiplier.scala 130:50]
+      count <= _count_T_1; // @[Multiplier.scala 145:11]
+    end else if (state == 3'h2) begin // @[Multiplier.scala 107:50]
+      count <= _count_T_1; // @[Multiplier.scala 124:11]
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      if (cmdHi) begin // @[Multiplier.scala 170:19]
+        neg_out <= lhs_sign;
+      end else begin
+        neg_out <= lhs_sign != rhs_sign;
+      end
+    end else if (state == 3'h3) begin // @[Multiplier.scala 130:50]
+      if (divby0 & _eOut_T_4) begin // @[Multiplier.scala 160:28]
+        neg_out <= 1'h0; // @[Multiplier.scala 160:38]
+      end
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      isHi <= cmdHi; // @[Multiplier.scala 167:10]
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      resHi <= 1'h0; // @[Multiplier.scala 168:11]
+    end else if (state == 3'h3) begin // @[Multiplier.scala 130:50]
+      if (count == 6'h20) begin // @[Multiplier.scala 139:38]
+        resHi <= isHi; // @[Multiplier.scala 141:13]
+      end else begin
+        resHi <= _GEN_13;
+      end
+    end else begin
+      resHi <= _GEN_13;
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      divisor <= _divisor_T; // @[Multiplier.scala 171:13]
+    end else if (state == 3'h1) begin // @[Multiplier.scala 93:57]
+      if (divisor[31]) begin // @[Multiplier.scala 97:25]
+        divisor <= subtractor; // @[Multiplier.scala 98:15]
+      end
+    end
+    if (_T_36) begin // @[Multiplier.scala 165:24]
+      remainder <= {{34'd0}, lhs_in}; // @[Multiplier.scala 172:15]
+    end else if (state == 3'h3) begin // @[Multiplier.scala 130:50]
+      remainder <= {{1'd0}, unrolls_0}; // @[Multiplier.scala 138:15]
+    end else if (state == 3'h2) begin // @[Multiplier.scala 107:50]
+      remainder <= _remainder_T; // @[Multiplier.scala 122:15]
+    end else if (state == 3'h5) begin // @[Multiplier.scala 102:57]
+      remainder <= {{34'd0}, negated_remainder}; // @[Multiplier.scala 103:15]
+    end else begin
+      remainder <= _GEN_2;
+    end
+  end
+// Register and memory initialization
+`ifdef RANDOMIZE_GARBAGE_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_INVALID_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_REG_INIT
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+`define RANDOMIZE
+`endif
+`ifndef RANDOM
+`define RANDOM $random
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+  integer initvar;
+`endif
+`ifndef SYNTHESIS
+`ifdef FIRRTL_BEFORE_INITIAL
+`FIRRTL_BEFORE_INITIAL
+`endif
+initial begin
+  `ifdef RANDOMIZE
+    `ifdef INIT_RANDOM
+      `INIT_RANDOM
+    `endif
+    `ifndef VERILATOR
+      `ifdef RANDOMIZE_DELAY
+        #`RANDOMIZE_DELAY begin end
+      `else
+        #0.002 begin end
+      `endif
+    `endif
+`ifdef RANDOMIZE_REG_INIT
+  _RAND_0 = {1{`RANDOM}};
+  state = _RAND_0[2:0];
+  _RAND_1 = {1{`RANDOM}};
+  req_tag = _RAND_1[4:0];
+  _RAND_2 = {1{`RANDOM}};
+  count = _RAND_2[5:0];
+  _RAND_3 = {1{`RANDOM}};
+  neg_out = _RAND_3[0:0];
+  _RAND_4 = {1{`RANDOM}};
+  isHi = _RAND_4[0:0];
+  _RAND_5 = {1{`RANDOM}};
+  resHi = _RAND_5[0:0];
+  _RAND_6 = {2{`RANDOM}};
+  divisor = _RAND_6[32:0];
+  _RAND_7 = {3{`RANDOM}};
+  remainder = _RAND_7[65:0];
+`endif // RANDOMIZE_REG_INIT
+  `endif // RANDOMIZE
+end // initial
+`ifdef FIRRTL_AFTER_INITIAL
+`FIRRTL_AFTER_INITIAL
+`endif
+`endif // SYNTHESIS
+endmodule
+module PlusArgTimeout(
+  input         clock,
+  input         reset,
+  input  [31:0] io_count
+);
+  wire [31:0] plusarg_reader_out; // @[PlusArg.scala 62:19]
+  wire  _T = plusarg_reader_out > 32'h0; // @[PlusArg.scala 63:13]
+  plusarg_reader #(.FORMAT("max_core_cycles=%d"), .DEFAULT(0), .WIDTH(32)) plusarg_reader ( // @[PlusArg.scala 62:19]
+    .out(plusarg_reader_out)
+  );
+  always @(posedge clock) begin
+    `ifndef SYNTHESIS
+    `ifdef PRINTF_COND
+      if (`PRINTF_COND) begin
+    `endif
+        if (_T & ~(io_count < plusarg_reader_out | reset)) begin
+          $fwrite(32'h80000002,
+            "Assertion failed: Timeout exceeded: Kill the emulation after INT rdtime cycles. Off if 0.\n    at PlusArg.scala:64 assert (io.count < max, s\"Timeout exceeded: $docstring\")\n"
+            ); // @[PlusArg.scala 64:12]
+        end
+    `ifdef PRINTF_COND
+      end
+    `endif
+    `endif // SYNTHESIS
+    `ifndef SYNTHESIS
+    `ifdef STOP_COND
+      if (`STOP_COND) begin
+    `endif
+        if (_T & ~(io_count < plusarg_reader_out | reset)) begin
+          $fatal; // @[PlusArg.scala 64:12]
+        end
+    `ifdef STOP_COND
+      end
+    `endif
+    `endif // SYNTHESIS
+  end
+endmodule
+
+  `endif //  `ifdef RV32
