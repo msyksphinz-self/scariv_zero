@@ -117,8 +117,8 @@ always_comb begin
       w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid);
       w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
       w_entry_next.except_tval [d_idx] = i_load_tlb_except_tval[d_idx];
-      w_entry_next.dead        [d_idx] = w_entry_next.dead[d_idx] | w_entry_next.except_valid[d_idx];
       w_entry_next.flush_valid [d_idx] = w_entry_next.dead[d_idx] ? 1'b0 : w_entry_next.except_valid[d_idx];
+      w_entry_next.dead        [d_idx] = w_entry_next.dead[d_idx] | w_entry_next.except_valid[d_idx];
     end
 
     if (br_upd_if.update) begin
