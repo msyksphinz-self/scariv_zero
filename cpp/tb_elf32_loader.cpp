@@ -21,13 +21,18 @@
 bool g_dump_hex = false;
 std::unique_ptr<Memory> g_memory;
 
-Addr_t  m_tohost_addr, m_fromhost_addr;
-bool    m_tohost_en = false, m_fromhost_en = false;
+extern "C" {
+  Addr_t  tohost_addr;
+  bool    tohost_en;
+}
+
 
 extern "C" int load_binary(
     char const* path_exec,
     char const* filename,
     bool is_load_dump);
+
+extern FILE *compare_log_fp;
 
 static void failure()
 {
@@ -80,6 +85,34 @@ load_binary(char const* path_exec,
   dump_segment (".text", fd);
   dump_segment (".text.init", fd);
   dump_segment (".data", fd);
+
+  dump_segment (".rodata", fd);
+  dump_segment (".rodata.str1.8", fd);
+
+  if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
+    failure();
+  Elf32_Shdr * shdr;
+  unsigned int cnt;
+  for (cnt = 1, scn = NULL; (scn = elf_nextscn(elf, scn))!=NULL; cnt++) {
+    if ((shdr = elf32_getshdr(scn)) == NULL)
+      failure();
+    if (!strncmp ((char *)data->d_buf + shdr->sh_name,
+                  ".tohost", strlen(".tohost")) &&
+        strlen(".tohost") == strlen((char *)data->d_buf + shdr->sh_name)) {
+      tohost_en = true;
+      tohost_addr = shdr->sh_addr;
+
+      fprintf(compare_log_fp, "Set ToHost Addr %0lx\n", tohost_addr);
+
+      break;
+    }
+  }
+  if (!tohost_en) {
+    tohost_en = 1;
+    tohost_addr = 0x80001000;
+
+    fprintf(compare_log_fp, "Not found .tohost. Set Addr %0lx\n", tohost_addr);
+  }
 
   return 0;
 }
