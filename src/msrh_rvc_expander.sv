@@ -82,7 +82,7 @@ always_comb begin
     5'b001_01 : begin
 `ifdef RV32
  	  // `c.jal      offset`             01        `jal x1, offset`
-      out_32bit = {w_j_imm[20], w_j_imm[10,1], w_j_imm[11], w_j_imm[19,12], ra, 7'b110_1111};
+      out_32bit = {w_j_imm[20], w_j_imm[10:1], w_j_imm[11], w_j_imm[19:12], ra, 7'b110_1111};
 `else // RV32
       // `c.addiw    rd, imm`            01        `addiw rd, rd, imm`
       w_opc = |rd ? 7'h1b : 7'h1f;
@@ -183,7 +183,7 @@ always_comb begin
     5'b011_10 : begin
 `ifdef RV32
       // `c.flwsp    rd, offset`         10        `flw rd, offset(x2)`
-      out_32bit = {3'b000, w_lwsp_imm, sp, 3'b010, rd, 7'b000_0111};
+      out_32bit = {4'b0000, w_lwsp_imm, sp, 3'b010, rd, 7'b000_0111};
 `else // RV32
       // `c.ldsp     rd, offset(x2)`     10        `ld rd, offset(x2)`
       out_32bit = {3'b000, w_ldsp_imm, sp, 3'b011, rd, 7'b000_0011};
