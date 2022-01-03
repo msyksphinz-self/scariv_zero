@@ -15,7 +15,7 @@ assign right_shift_mask = (i_ptr_oh - 1)    & in;
 assign left_shift_mask  = ~right_shift_mask & in;
 
 if (WIDTH == 1) begin
-  assign out = i_ptr_oh;
+  assign out = i_ptr_oh & in;
 end else begin
   logic [WIDTH-1: 0]        right_shift_mask_oh;
   logic [WIDTH-1: 0]        left_shift_mask_oh;
