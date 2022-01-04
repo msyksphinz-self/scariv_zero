@@ -469,7 +469,7 @@ assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 
 // Make Store Buffer Request
 assign st_buffer_if.valid = |w_stbuf_accepted_disp;
-assign st_buffer_if.paddr = {w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(128/8)], {$clog2(128/8){1'b0}}};
+assign st_buffer_if.paddr = {w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)], {$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}};
 generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   logic [msrh_conf_pkg::DISP_SIZE-1:0] w_strb_array;
   for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stb_disp_loop

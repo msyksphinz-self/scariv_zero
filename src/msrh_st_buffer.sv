@@ -38,6 +38,8 @@ module msrh_st_buffer
 // =========================
 // Declarations
 // =========================
+localparam multiply_dc_stbuf_width  = (msrh_conf_pkg::DCACHE_DATA_W / ST_BUF_WIDTH);
+
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_in_ptr_oh;
 logic                          w_out_valid;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_out_ptr_oh;
@@ -83,13 +85,20 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
                                                       .i_out_valid(w_out_valid), .i_out_val('h1), .o_out_ptr_oh(w_out_ptr_oh));
 
 // New Entry create
-assign w_init_load = assign_st_buffer(st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data);
+logic [ST_BUF_WIDTH/8-1: 0]             new_entry_stb;
+logic [ST_BUF_WIDTH-1: 0]               new_entry_data;
+assign new_entry_stb = st_buffer_if.strb << {st_buffer_if.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)],
+                                             {$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}};
+assign new_entry_data = st_buffer_if.data << {st_buffer_if.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)],
+                                              {{$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}, 3'b000}};
+
+assign w_init_load = assign_st_buffer(st_buffer_if.paddr, new_entry_stb, new_entry_data);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept ? ST_BUF_MERGE :
                            ST_BUF_FULL;
 
-generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop
+  generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop
   logic w_ready_to_merge;
   logic w_load;
 
@@ -139,7 +148,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
 
-end
+  end // block: entry_loop
 endgenerate
 
 // -----------------
@@ -201,8 +210,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
     r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
     r_s2_replace_paddr <= l1d_rd_if.s1_replace_paddr;
-  end
-end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
 assign l1d_lrq_stq_miss_if.req_payload.paddr               = {w_lrq_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
@@ -210,9 +219,6 @@ assign l1d_lrq_stq_miss_if.req_payload.evict_valid         = r_s2_replace_valid;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = r_s2_replace_way;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = r_s2_replace_data;
-
-
-localparam multiply_dc_stbuf_width  = msrh_conf_pkg::DCACHE_DATA_W / msrh_lsu_pkg::ST_BUF_WIDTH;
 
 
 // --------------------------------------------
@@ -236,12 +242,12 @@ always_comb begin
   l1d_wr_if.data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end
 
-generate if (multiply_dc_stbuf_width == 1) begin
+  generate if (multiply_dc_stbuf_width == 1) begin
   assign l1d_wr_if.be    = w_l1d_wr_entry.strb;
-end else begin
+  end else begin
   /* verilator lint_off WIDTH */
   assign l1d_wr_if.be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
-end
+  end
 endgenerate
 
 // --------------------------------------------
@@ -263,18 +269,18 @@ assign l1d_merge_if.paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){
 
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
-generate if (multiply_dc_stbuf_width == 1) begin
-  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
-    assign w_entries_be  [s_idx] = w_entries[s_idx].strb;
-    assign w_entries_data[s_idx] = w_entries[s_idx].data;
-  end
-end else begin
-  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
-    /* verilator lint_off WIDTH */
-    assign w_entries_be  [s_idx] = w_entries[s_idx].strb << {w_entries[s_idx].paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
-    assign w_entries_data[s_idx] = {multiply_dc_stbuf_width{w_entries[s_idx].data}};
-  end
-end
+  generate if (multiply_dc_stbuf_width == 1) begin
+    for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
+      assign w_entries_be  [s_idx] = w_entries[s_idx].strb;
+      assign w_entries_data[s_idx] = w_entries[s_idx].data;
+    end
+  end else begin
+    for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_be_loop
+      /* verilator lint_off WIDTH */
+      assign w_entries_be  [s_idx] = w_entries[s_idx].strb << {w_entries[s_idx].paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+      assign w_entries_data[s_idx] = {multiply_dc_stbuf_width{w_entries[s_idx].data}};
+    end
+  end // else: !if(multiply_dc_stbuf_width == 1)
 endgenerate
 
 generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : l1d_merge_loop
@@ -290,18 +296,18 @@ generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : l1d_me
 
   assign l1d_merge_if.data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
   assign l1d_merge_if.be[b_idx]           = |w_st_buf_byte_valid;
-end
+end // block: l1d_merge_loop
 endgenerate
 
 
 // -----------------------------------
 // Forwarding check from LSU Pipeline
 // -----------------------------------
-generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
+  generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
   logic [ST_BUF_ENTRY_SIZE-1:0] st_buf_hit_array;
-  for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : st_buf_loop
+    for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : st_buf_loop
     assign st_buf_hit_array[s_idx] = w_stbuf_fwd_hit[s_idx][p_idx];
-  end
+    end
   st_buffer_entry_t w_fwd_entry;
   bit_oh_or #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE)) fwd_select_entry (.i_data(w_entries), .i_oh(st_buf_hit_array), .o_selected(w_fwd_entry));
 
@@ -314,7 +320,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
                                                w_fwd_entry.data[riscv_pkg::XLEN_W-1: 0];
 
-end
+  end // block: lsu_fwd_loop
 endgenerate
 
 
@@ -341,7 +347,7 @@ endgenerate
 // end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 `ifdef SIMULATION
-`ifdef VERILATOR
+  `ifdef VERILATOR
 import "DPI-C" function void record_stq_store
 (
  input longint rtl_time,
@@ -353,9 +359,9 @@ import "DPI-C" function void record_stq_store
 );
 
 byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
-generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
+  generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
   assign l1d_array[idx] = l1d_wr_if.data[idx*8+:8];
-end
+  end
 endgenerate
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -386,10 +392,10 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       //     end
       //   end
       // end
-    end // if (l1d_wr_if.valid)
+    end // if (l1d_wr_if.valid & !l1d_wr_if.conflict)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
-`endif // VERILATOR
-`endif // SIMULATION
+  `endif //  `ifdef VERILATOR
+`endif //  `ifdef SIMULATION
 
 endmodule // msrh_st_buffer
