@@ -85,14 +85,7 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
                                                       .i_out_valid(w_out_valid), .i_out_val('h1), .o_out_ptr_oh(w_out_ptr_oh));
 
 // New Entry create
-logic [ST_BUF_WIDTH/8-1: 0]             new_entry_stb;
-logic [ST_BUF_WIDTH-1: 0]               new_entry_data;
-assign new_entry_stb = st_buffer_if.strb << {st_buffer_if.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)],
-                                             {$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}};
-assign new_entry_data = st_buffer_if.data << {st_buffer_if.paddr[$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)],
-                                              {{$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}, 3'b000}};
-
-assign w_init_load = assign_st_buffer(st_buffer_if.paddr, new_entry_stb, new_entry_data);
+assign w_init_load = assign_st_buffer(st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept ? ST_BUF_MERGE :
