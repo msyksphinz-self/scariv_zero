@@ -370,8 +370,7 @@ end
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit &
-        !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
       for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx] & (!w_dead_grp_id[grp_idx])) begin
           $fwrite (log_fp, "%5t %5d PC=%010x (%02d,%02d) %08x ", $time,
@@ -402,7 +401,7 @@ end
 always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
       for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx]) begin
           $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
@@ -430,7 +429,7 @@ end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
 always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit & !u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.all_dead) begin
+    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
       for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
         if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
             ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin

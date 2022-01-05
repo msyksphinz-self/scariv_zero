@@ -78,8 +78,16 @@ logic                           w_head_all_inst_issued;
 logic                           w_head_predict_taken_issued;
 logic                           w_predict_taken_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0 ] w_predict_taken_valid_array;
-logic [msrh_conf_pkg::DISP_SIZE: 0]    w_predict_taken_valid_lsb;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0]  w_predict_taken_valid_lsb;
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_pred_lsb_index;
+
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_muldiv_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disped;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disped;
 
 typedef struct packed {
   logic                           pred_taken;
@@ -428,13 +436,7 @@ assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
 // -------------------------------
 // Dispatch Inst, Resource Count
 // -------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_muldiv_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disped;
+
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::ARITH_DISP_SIZE )) u_arith_disped_pick_up   (.in(w_inst_arith_disp   & w_inst_disp_mask), .out(w_inst_arith_disped  ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MULDIV_DISP_SIZE)) u_muldiv_disped_pick_up  (.in(w_inst_muldiv_disp  & w_inst_disp_mask), .out(w_inst_muldiv_disped ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::MEM_DISP_SIZE   )) u_mem_disped_pick_up     (.in(w_inst_mem_disp     & w_inst_disp_mask), .out(w_inst_mem_disped    ));
