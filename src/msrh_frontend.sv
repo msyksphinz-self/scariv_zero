@@ -611,7 +611,7 @@ msrh_ftq u_ftq
    .br_upd_fe_if (br_upd_fe_tmp_if)
    );
 
-br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_fe_if));
+br_upd_if_buf u_br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_fe_if));
 
 // =======================
 // Predictors
