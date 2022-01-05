@@ -100,6 +100,35 @@ interface br_upd_if;
 endinterface // br_upd_if
 
 
+module br_upd_if_buf
+  (
+   br_upd_if.slave  slave_if,
+   br_upd_if.master master_if
+   );
+
+assign master_if.update         = slave_if.update         ;
+assign master_if.taken          = slave_if.taken          ;
+assign master_if.mispredict     = slave_if.mispredict     ;
+assign master_if.is_call        = slave_if.is_call        ;
+assign master_if.is_ret         = slave_if.is_ret         ;
+assign master_if.is_rvc         = slave_if.is_rvc         ;
+assign master_if.ras_index      = slave_if.ras_index      ;
+assign master_if.bim_value      = slave_if.bim_value      ;
+assign master_if.pc_vaddr       = slave_if.pc_vaddr       ;
+assign master_if.target_vaddr   = slave_if.target_vaddr   ;
+assign master_if.ras_prev_vaddr = slave_if.ras_prev_vaddr ;
+`ifdef SIMULATION
+assign master_if.pred_vaddr     = slave_if.pred_vaddr     ;
+`endif // SIMULATION
+assign master_if.dead           = slave_if.dead           ;
+assign master_if.cmt_id         = slave_if.cmt_id         ;
+assign master_if.grp_id         = slave_if.grp_id         ;
+assign master_if.brtag          = slave_if.brtag          ;
+assign master_if.br_mask        = slave_if.br_mask        ;
+
+endmodule // br_upd_if_buf
+
+
 interface cmt_brtag_if;
 
   logic          commit;

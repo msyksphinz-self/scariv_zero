@@ -27,7 +27,10 @@ set_property used_in_implementation false [get_files synth_constraints.xdc]
 # read_xdc dont_touch.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
-synth_design -top ${TOP_NAME} -part xc7z020clg484-1 -fanout_limit 10000 -flatten_hierarchy rebuilt -include_dir ../src
+synth_design -top ${TOP_NAME} -part xc7z020clg484-1 -fanout_limit 10000 \
+    -flatten_hierarchy rebuilt \
+    -include_dir ../src \
+    -verilog_define RV64
 write_checkpoint -force ${TOP_NAME}.dcp
 report_utilization -file ${TOP_NAME}_utilization_synth.rpt -pb ${TOP_NAME}_utilization_synth.pb
 report_timing -file ${TOP_NAME}_timing_synth.rpt

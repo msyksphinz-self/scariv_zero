@@ -126,6 +126,8 @@ ras_search_if w_ras_search_if ();
 logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
 `endif // SIMULATION
 
+br_upd_if  br_upd_fe_tmp_if();
+
 // ==============
 // TLB
 // ==============
@@ -606,8 +608,10 @@ msrh_ftq u_ftq
    .sc_disp (sc_disp),
    .br_upd_if (br_upd_if),
 
-   .br_upd_fe_if (br_upd_fe_if)
+   .br_upd_fe_if (br_upd_fe_tmp_if)
    );
+
+br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_fe_if));
 
 // =======================
 // Predictors
@@ -668,7 +672,7 @@ msrh_predictor u_predictor
 
    .ras_search_if (w_ras_search_if),
 
-   .br_upd_fe_if (br_upd_fe_if)
+   .br_upd_fe_if (br_upd_fe_tmp_if)
    );
 
 endmodule // msrh_frontend

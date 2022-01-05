@@ -7,50 +7,6 @@
 //
 // ------------------------------------------------------------------------
 
-typedef struct packed {
-  logic                                                valid;
-  logic                                                is_call;
-  logic                                                is_ret;
-  logic                                                is_rvc;
-  logic [msrh_pkg::CMT_ID_W-1:0]                       cmt_id;
-  logic [msrh_pkg::DISP_SIZE-1:0]                      grp_id;
-  logic [msrh_pkg::RAS_W-1: 0]                         ras_index;
-  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
-
-  logic [riscv_pkg::VADDR_W-1: 0]                      pc_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]                      target_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]                      ras_prev_vaddr;
-  logic                                                taken;
-  logic                                                mispredict;
-  logic                                                done;
-  logic                                                dead;
-} ftq_entry_t;
-
-function ftq_entry_t assign_ftq_entry(logic [msrh_pkg::CMT_ID_W-1:0]  cmt_id,
-                                      logic [msrh_pkg::DISP_SIZE-1:0] grp_id,
-                                      msrh_pkg::disp_t inst);
-  ftq_entry_t ret;
-
-  ret.valid    = 1'b1;
-  ret.pc_vaddr = inst.pc_addr;
-  ret.ras_prev_vaddr = inst.ras_prev_vaddr;
-  ret.is_call  = inst.is_call;
-  ret.is_ret   = inst.is_ret;
-  ret.is_rvc   = inst.rvc_inst_valid;
-  ret.cmt_id   = cmt_id;
-  ret.grp_id   = grp_id;
-  ret.ras_index = inst.ras_index;
-  ret.brtag     = inst.brtag;
-  ret.br_mask   = inst.br_mask;
-
-  ret.done      = 1'b0;
-  ret.dead      = 1'b0;
-
-  return ret;
-
-endfunction // assign_ftq_entry
-
 module msrh_ftq
   import msrh_pkg::*;
   (

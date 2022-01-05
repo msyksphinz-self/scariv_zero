@@ -280,7 +280,7 @@ assign w_vm_enabled = msrh_conf_pkg::USING_VM &
                       !i_tlb_req.passthrough;
 
 assign w_tlb_hit  = |w_real_hits;
-assign w_tlb_miss = w_vm_enabled & !w_bad_va & !w_tlb_hit;
+assign w_tlb_miss = w_vm_enabled & ~w_bad_va & ~w_tlb_hit;
 
 // Replacement Candidate
 logic [TLB_NORMAL_ENTRIES_NUM-1: 0]    w_sectored_candidate_oh;

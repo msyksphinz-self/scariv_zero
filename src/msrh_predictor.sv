@@ -124,7 +124,11 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   logic           is_std_jalr;
   logic           std_call_be;
   /* verilator lint_off SELRANGE */
-  assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
+  if (c_idx == (ICACHE_DATA_B_W / 2)-1) begin
+    assign w_std_inst = {16'h0000, w_s2_inst[c_idx*16 +: 16]};
+  end else begin
+    assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
+  end
   assign is_std_jal = (w_std_inst[ 6:0] == 7'b1101111) &
                       (w_std_inst[11:7] == 5'h1);
   // assign is_std_jalr = (w_std_inst[ 6: 0] == 7'b1100111) &
