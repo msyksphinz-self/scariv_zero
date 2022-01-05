@@ -4,7 +4,7 @@ module msrh_resource_alloc
    input logic i_clk,
    input logic i_reset_n,
 
-   disp_if.slave iq_disp,
+   disp_if.watch iq_disp,
 
    // -------------------------------
    // Credit Return Update interface
