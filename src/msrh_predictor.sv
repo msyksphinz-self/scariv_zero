@@ -94,13 +94,13 @@ logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_ret_valid;
 
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
-logic [ICACHE_DATA_B_W-1: 0]              w_s2_inst_be;
+// logic [ICACHE_DATA_B_W-1: 0]              w_s2_inst_be;
 assign w_s2_inst    = i_s2_ic_resp.data;
-assign w_s2_inst_be = i_s2_ic_resp.be;
+// assign w_s2_inst_be = i_s2_ic_resp.be;
 
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
-  assign w_s2_inst_be[c_idx] = &(i_s2_ic_resp.be[c_idx*2 +: 2]);
+  // assign w_s2_inst_be[c_idx] = &(i_s2_ic_resp.be[c_idx*2 +: 2]);
 
   logic [15: 0] w_rvc_inst;
   logic         is_rvc_jal;
