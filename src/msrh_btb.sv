@@ -88,9 +88,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   end
 
   assign search_btb_if.s1_target_vaddr[b_idx] = search_entry.target_vaddr;
-  assign search_btb_if.s1_hit         [b_idx] = r_s1_search_valid & search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
-  assign search_btb_if.s1_is_call     [b_idx] = r_s1_search_valid & search_entry.is_call;
-  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_search_valid & search_entry.is_ret;
+  assign search_btb_if.s1_hit         [b_idx] = r_s1_btb_valid & search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
+  assign search_btb_if.s1_is_call     [b_idx] = r_s1_btb_valid & search_entry.is_call;
+  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_btb_valid & search_entry.is_ret;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
