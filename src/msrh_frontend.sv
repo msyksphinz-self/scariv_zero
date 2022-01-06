@@ -447,6 +447,8 @@ assign w_s0_tlb_req.cmd   = msrh_lsu_pkg::M_XRD;
 assign w_s0_tlb_req.size  = 'h0;
 assign w_s0_tlb_req.passthrough  = 1'b0;
 
+logic w_s0_tlb_resp_miss;
+
 tlb u_tlb
   (
    .i_clk      (i_clk),
@@ -464,7 +466,8 @@ tlb u_tlb
    .o_tlb_ready (w_tlb_ready),
    .o_tlb_resp (w_s0_tlb_resp),
 
-   .o_tlb_update ()
+   .o_tlb_update (),
+   .o_tlb_resp_miss (w_s0_tlb_resp_miss)
    );
 
 // s0 --> s1
@@ -483,7 +486,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
-    r_s1_tlb_miss <= w_s0_tlb_resp.miss & r_s0_valid & w_s0_ic_req.valid /* & w_tlb_ready */;
+    r_s1_tlb_miss <= /* w_s0_tlb_resp.miss*/ w_s0_tlb_resp_miss & r_s0_valid & w_s0_ic_req.valid;
     r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
                              w_s0_tlb_resp.ae.inst |
                              w_s0_tlb_resp.ma.inst;

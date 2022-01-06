@@ -22,7 +22,8 @@ module tlb
 
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if,
- output logic o_tlb_update
+ output logic o_tlb_update,
+ output logic o_tlb_resp_miss
 );
 
 localparam TLB_NORMAL_ENTRIES_NUM = 8;
@@ -465,9 +466,13 @@ assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
 assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
 // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
 assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
-assign o_tlb_resp.miss         = w_do_refill | w_tlb_miss /* || multiplehits */;
+logic                            w_tlb_resp_miss;
+assign w_tlb_resp_miss = w_do_refill | w_tlb_miss;
+assign o_tlb_resp.miss         = w_tlb_resp_miss; /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
 
 assign o_tlb_update = (r_state_dly != ST_READY) & (r_state == ST_READY);
+
+assign o_tlb_resp_miss = w_tlb_resp_miss;
 
 endmodule // tlb

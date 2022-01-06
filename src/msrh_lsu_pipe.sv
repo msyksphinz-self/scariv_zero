@@ -176,6 +176,7 @@ u_tlb
  .o_tlb_resp(w_ex1_tlb_resp),
 
  .o_tlb_update(o_tlb_resolve),
+ .o_tlb_resp_miss (),
 
  .ptw_if (ptw_if)
  );
