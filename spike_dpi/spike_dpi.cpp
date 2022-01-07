@@ -496,7 +496,7 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 13) ||  // Load Page Fault
                        (rtl_exception_cause == 15) ||  // Store Page Fault
-                       (rtl_exception_cause == 12) || // Instruction Page Fault
+                       (rtl_exception_cause == 12) ||  // Instruction Page Fault
                        (rtl_exception_cause == 8 ) ||  // ECALL_U
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
                        (rtl_exception_cause == 10))) { // ECALL_M
@@ -695,6 +695,11 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(compare_log_fp, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
     }
   }
+
+  if (rtl_exception & (rtl_exception_cause == 25)) {  // SRET
+    p->step(1);  // SRET has 2-step, execute again
+  }
+
 }
 
 void record_stq_store(long long rtl_time,
