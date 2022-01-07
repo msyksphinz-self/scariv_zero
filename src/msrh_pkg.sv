@@ -397,7 +397,7 @@ function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
                    commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] > entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
                    commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] < entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & entry_grp_id));
+                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & (entry_grp_id-1)));
 
   return is_flushed_commit(commit) & entry_older;
 
