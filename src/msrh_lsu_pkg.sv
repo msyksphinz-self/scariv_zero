@@ -288,13 +288,18 @@ function logic [riscv_pkg::XLEN_W/8-1: 0] gen_dw(decoder_lsu_ctrl_pkg::size_t si
 `endif // RV64
     decoder_lsu_ctrl_pkg::SIZE_W : begin
       // if (addr[1:0] != 2'b00) $fatal(0, "gen_dw with SIZE_W, addr[1:0] should be zero");
-      return 4'b1111 << addr;
+      /* verilator lint_off WIDTH */
+      return 8'b0000_1111 << addr;
     end
     decoder_lsu_ctrl_pkg::SIZE_H  : begin
       // if (addr[0] != 1'b0) $fatal(0, "gen_dw with SIZE_H, addr[0] should be zero");
-      return 4'b0011 << addr;
+      /* verilator lint_off WIDTH */
+      return 8'b0000_0011 << addr;
     end
-    decoder_lsu_ctrl_pkg::SIZE_B  : return 4'b0001 << addr;
+    decoder_lsu_ctrl_pkg::SIZE_B  : begin
+      /* verilator lint_off WIDTH */
+      return 8'b0000_0001 << addr;
+    end
     default : return 'h0;
   endcase // case (size)
 endfunction // gen_dw
