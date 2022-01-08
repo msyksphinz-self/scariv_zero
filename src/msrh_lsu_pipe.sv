@@ -322,7 +322,7 @@ end
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       r_ex2_pipe_ctrl.is_load &
                                       ex1_l1d_rd_if.s1_miss &
-                                      (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]));
+                                      (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
 assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
@@ -382,13 +382,13 @@ assign ex2_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder
 assign ex2_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign ex2_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign ex2_fwd_check_if.paddr  = r_ex2_paddr;
-assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
+assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
 assign stbuf_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
 assign stbuf_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign stbuf_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
-assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[2:0]);
+assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
 // LDQ Speculative Load Hazard Check
 assign ldq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST);
@@ -401,9 +401,9 @@ assign ldq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
 assign lrq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
 assign lrq_haz_check_if.ex2_paddr  = r_ex2_paddr;
 
-logic [ 7: 0]                  w_ex2_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0] w_ex2_fwd_aligned_data;
-logic [riscv_pkg::XLEN_W-1: 0] w_ex2_fwd_final_data;
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_dw;
+logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_aligned_data;
+logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_final_data;
 
 always_comb begin
   case (r_ex2_pipe_ctrl.size)
@@ -412,16 +412,21 @@ always_comb begin
       w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data;
     end
     SIZE_W  : begin
-      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >> {r_ex2_paddr[2], 2'b00};
-      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[2], 2'b00, 3'b000};
+`ifdef RV32
+      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw;
+      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data;
+`else // RV32
+      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1], 2'b00};
+      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
+`endif // RV32
     end
     SIZE_H  : begin
-      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >> {r_ex2_paddr[2:1], 1'b0};
-      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[2:1], 1'b0, 3'b000};
+      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:1], 1'b0};
+      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:1], 1'b0, 3'b000};
     end
     SIZE_B  : begin
-      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >>  r_ex2_paddr[2:0];
-      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[2:0], 3'b000};
+      w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw >>  r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:0];
+      w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
     end
     default : begin
       w_ex2_fwd_dw = 'h0;
@@ -431,8 +436,8 @@ always_comb begin
 end
 
 
-logic [ 7: 0]                  w_stbuf_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0] w_stbuf_fwd_aligned_data;
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_stbuf_fwd_dw;
+logic [riscv_pkg::XLEN_W-1: 0]                    w_stbuf_fwd_aligned_data;
 
 always_comb begin
   case (r_ex2_pipe_ctrl.size)
@@ -441,16 +446,21 @@ always_comb begin
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
     end
     SIZE_W  : begin
-      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[2], 2'b00};
-      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2], 2'b00, 3'b000};
+`ifdef RV32
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
+`else // RV32
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1], 2'b00};
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
+`endif // RV32
     end
     SIZE_H  : begin
-      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[2:1], 1'b0};
-      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2:1], 1'b0, 3'b000};
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:1], 1'b0};
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:1], 1'b0, 3'b000};
     end
     SIZE_B  : begin
-      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >>  r_ex2_paddr[2:0];
-      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[2:0], 3'b000};
+      w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >>  r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:0];
+      w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
     end
     default : begin
       w_stbuf_fwd_dw = 'h0;

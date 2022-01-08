@@ -240,9 +240,9 @@ logic                           valid;
 logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
 logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
 logic [riscv_pkg::PADDR_W-1: 0] paddr;
-logic [ 7: 0]                   paddr_dw;
+logic [riscv_pkg::XLEN_W/8-1: 0] paddr_dw;
 logic                           fwd_valid;
-logic [ 7: 0]                   fwd_dw;
+logic [riscv_pkg::XLEN_W/8-1: 0] fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]  fwd_data;
 
 modport master (
