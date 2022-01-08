@@ -87,7 +87,7 @@ load_binary(char const* path_exec,
   dump_segment (".data", fd);
 
   dump_segment (".rodata", fd);
-  dump_segment (".rodata.str1.8", fd);
+  dump_segment (".rodata.str1.4", fd);
 
   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
     failure();
