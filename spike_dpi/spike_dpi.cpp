@@ -517,6 +517,11 @@ void step_spike(long long time, long long rtl_pc,
   p->step(1);
 
   auto instret  = p->get_state()->minstret;
+  static reg_t prev_instret = 1;
+  if (prev_instret == instret) {
+    p->step(1);
+  }
+  prev_instret = instret;
   fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%02d,%02d) %08x %s\n", time,
           instret,
           rtl_pc,
@@ -696,9 +701,9 @@ void step_spike(long long time, long long rtl_pc,
     }
   }
 
-  if (rtl_exception & (rtl_exception_cause == 25)) {  // SRET
-    p->step(1);  // SRET has 2-step, execute again
-  }
+  // if (rtl_exception & (rtl_exception_cause == 25)) {  // SRET
+  //   p->step(1);  // SRET has 2-step, execute again
+  // }
 
 }
 
