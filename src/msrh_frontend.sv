@@ -110,6 +110,8 @@ except_t              r_s2_tlb_except_cause;
 logic                           w_s2_predict_valid;
 logic [riscv_pkg::VADDR_W-1: 0] w_s2_predict_target_vaddr;
 
+logic                           w_s2_inst_buffer_load_valid;
+
 // =======================
 // Predictors
 // =======================
@@ -482,7 +484,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
     r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
-    r_s1_clear <= w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+    r_s1_clear <= w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
@@ -514,7 +516,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear | w_s2_predict_valid & ~r_s1_predicted |
-                  w_s2_ic_resp.valid & ~w_inst_buffer_ready;
+                  w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s2_predicted <= r_s1_predicted;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss;
@@ -560,7 +562,6 @@ msrh_icache u_msrh_icache
    .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
    );
 
-logic w_s2_inst_buffer_load_valid;
 assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                      (w_s2_inst_valid  |
                                       (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
