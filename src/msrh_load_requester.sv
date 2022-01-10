@@ -450,6 +450,7 @@ endgenerate
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_stbuf_lrq_hit_array_next;
 generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : stbuf_lrq_loop
   assign w_stbuf_lrq_hit_array_next[e_idx] = lrq_pa_search_if.s0_valid &
+                                             w_lrq_entries[e_idx].valid &
                                              !w_entry_finish[e_idx] &
                                              (w_lrq_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
                                               lrq_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
