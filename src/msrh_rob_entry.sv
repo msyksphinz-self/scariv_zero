@@ -182,6 +182,7 @@ always_comb begin
 
       if (i_kill) begin
         w_entry_next.dead        [d_idx] = 1'b1;
+        w_entry_next.except_valid[d_idx] = 1'b0;
         w_entry_next.flush_valid [d_idx] = 1'b0;
       end
     end
