@@ -27,7 +27,8 @@ File.open("riscv_decoder.json") do |file|
 end
 
 ctrl_idx = ARGV[0]
-if ARGV.size != 1 then
+xlen = ARGV[1].to_s
+if ARGV.size != 2 then
   STDERR.print "Please specify signal fields in JSON file\n"
 end
 
@@ -41,6 +42,9 @@ $arch_table.each{ |arch|
   end
 
   if not arch.key?(ctrl_idx) then
+    next
+  end
+  if not arch["xlen"].include?(xlen) then
     next
   end
   arch[ctrl_idx].each {|ctrl|
@@ -93,6 +97,9 @@ tmp_file.puts '.ob ' + ctrl_fields.map{|ct|
 
 $arch_table.each{ |arch|
   if not arch.key?(ctrl_idx) then
+    next
+  end
+  if not arch["xlen"].include?(xlen) then
     next
   end
   tmp_file.print arch["field"].join.gsub('X', '-')

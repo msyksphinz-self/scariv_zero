@@ -318,7 +318,9 @@ endfunction // is_dw_included
 function logic [DCACHE_DATA_B_W-1: 0] gen_dw_cacheline(decoder_lsu_ctrl_pkg::size_t size,
                                                        logic [$clog2(DCACHE_DATA_B_W)-1:0] addr);
   case(size)
+`ifdef RV64
     decoder_lsu_ctrl_pkg::SIZE_DW : return 'hff << addr;
+`endif // RV64
     decoder_lsu_ctrl_pkg::SIZE_W  : return 'h0f << addr;
     decoder_lsu_ctrl_pkg::SIZE_H  : return 'h03 << addr;
     decoder_lsu_ctrl_pkg::SIZE_B  : return 'h01 << addr;

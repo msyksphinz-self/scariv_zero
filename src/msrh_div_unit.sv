@@ -39,14 +39,17 @@ logic [ 3: 0]                          w_fn;
 
 always_comb begin
   case(i_op)
-    OP_SDIV,
-    OP_UDIV,
-    OP_SREM,
-    OP_UREM,
+`ifdef RV64
     OP_DIVW,
     OP_DIVUW,
     OP_REMW,
-    OP_REMUW : w_valid = 1'b1;
+    OP_REMUW,
+`endif // RV64
+    OP_SDIV,
+    OP_UDIV,
+    OP_SREM,
+    OP_UREM
+      : w_valid = 1'b1;
     default  : w_valid = 1'b0;
   endcase // case (i_op)
 
@@ -63,10 +66,12 @@ always_comb begin
     OP_UDIV  : w_fn = 'h05;
     OP_SREM  : w_fn = 'h06;
     OP_UREM  : w_fn = 'h07;
+`ifdef // RV64
     OP_DIVW  : w_fn = 'h04;
     OP_DIVUW : w_fn = 'h05;
     OP_REMW  : w_fn = 'h06;
     OP_REMUW : w_fn = 'h07;
+`endif // RV64
     default  : w_fn = 'h00;
   endcase // case (i_op)
 

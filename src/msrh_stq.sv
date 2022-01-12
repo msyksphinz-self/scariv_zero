@@ -443,7 +443,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   always_comb begin
     if (w_sq_commit_valid) begin
       case (w_stq_cmt_entry.size)
+`ifdef RV64
         decoder_lsu_ctrl_pkg::SIZE_DW : w_strb_origin = 'h0ff;
+`endif // RV64
         decoder_lsu_ctrl_pkg::SIZE_W  : w_strb_origin = 'h00f;
         decoder_lsu_ctrl_pkg::SIZE_H  : w_strb_origin = 'h003;
         decoder_lsu_ctrl_pkg::SIZE_B  : w_strb_origin = 'h001;

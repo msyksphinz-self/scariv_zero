@@ -1,7 +1,7 @@
 [
     {
         "name":"lui        r[11:7],h[31:12]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"]],
@@ -9,7 +9,7 @@
     },
     {
         "name":"auipc      r[11:7],h[31:12]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"]],
@@ -17,7 +17,7 @@
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -25,7 +25,7 @@
     },
     {
         "name":"sub        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -33,7 +33,7 @@
     },
     {
         "name":"addw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -41,7 +41,7 @@
     },
     {
         "name":"subw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -49,7 +49,7 @@
     },
     {
         "name":"addi       r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -57,7 +57,7 @@
     },
     {
         "name":"addiw      r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -66,7 +66,7 @@
     {
         "comment": "Load DoubleWord instruction",
         "name":"ld         r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -75,7 +75,7 @@
     {
         "comment": "Load Word instruction",
         "name":"lw         r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -84,7 +84,7 @@
     {
         "comment": "Load HalfWord instruction",
         "name":"lh         r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -93,7 +93,7 @@
     {
         "comment": "Load Byte instruction",
         "name":"lb         r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -102,7 +102,7 @@
     {
         "comment": "Load Unsigned Word instruction",
         "name":"lwu        r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -111,7 +111,7 @@
     {
         "comment": "Load Unsigned HalfWord instruction",
         "name":"lhu        r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -120,7 +120,7 @@
     {
         "comment": "Load Unsigned Byte instruction",
         "name":"lbu        r[11:7],h[31:20](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00000", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
@@ -129,7 +129,7 @@
     {
         "comment": "Store DoubleWord instruction",
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
@@ -138,7 +138,7 @@
     {
         "comment": "Store Word instruction",
         "name":"sw         r[24:20],h[31:25]|h[11:7](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01000", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
@@ -147,7 +147,7 @@
     {
         "comment": "Store HalfWord instruction",
         "name":"sh         r[24:20],h[31:25]|h[11:7](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "01000", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
@@ -156,7 +156,7 @@
     {
         "comment": "Store Byte instruction",
         "name":"sb         r[24:20],h[31:25]|h[11:7](r[19:15])",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "01000", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
@@ -164,7 +164,7 @@
     },
     {
         "name":"beq        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -172,7 +172,7 @@
     },
     {
         "name":"bne        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -180,7 +180,7 @@
     },
     {
         "name":"blt        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -188,7 +188,7 @@
     },
     {
         "name":"bge        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -196,7 +196,7 @@
     },
     {
         "name":"bltu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -204,7 +204,7 @@
     },
     {
         "name":"bgeu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
@@ -212,7 +212,7 @@
     },
     {
         "name":"jal        r[11:7],uj[31:12]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg" : [["rd", "r3"]],
@@ -220,7 +220,7 @@
     },
     {
         "name":"jalr       r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11001", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg" : [["rd", "r3"], ["r1", "r1"]],
@@ -228,7 +228,7 @@
     },
     {
         "name":"xor        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -237,7 +237,7 @@
 
     {
         "name":"or         r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -245,7 +245,7 @@
     },
     {
         "name":"and        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -253,7 +253,7 @@
     },
     {
         "name":"xori       r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -261,7 +261,7 @@
     },
     {
         "name":"ori        r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -269,7 +269,7 @@
     },
     {
         "name":"andi       r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -277,7 +277,31 @@
     },
     {
         "name":"slli       r[11:7],r[19:15],h[25:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32"],
+        "field": ["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sll"], ["imm", "sh"]]
+    },
+    {
+        "name":"srli       r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32"],
+        "field": ["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "srl"], ["imm", "sh"]]
+    },
+    {
+        "name":"srai       r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32"],
+        "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]],
+        "reg":[["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "sra"], ["imm", "sh"]]
+    },
+    {
+        "name":"slli       r[11:7],r[19:15],h[25:20]",
+        "length":"32", "xlen":["64"],
         "field": ["00000", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -285,7 +309,7 @@
     },
     {
         "name":"srli       r[11:7],r[19:15],h[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field": ["00000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -293,7 +317,7 @@
     },
     {
         "name":"srai       r[11:7],r[19:15],h[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field": ["01000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -301,7 +325,7 @@
     },
     {
         "name":"srl        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -309,7 +333,7 @@
     },
     {
         "name":"sll        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -317,7 +341,7 @@
     },
     {
         "name":"sra        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -325,7 +349,7 @@
     },
     {
         "name":"slliw      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -333,7 +357,7 @@
     },
     {
         "name":"srliw      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -341,7 +365,7 @@
     },
     {
         "name":"sraiw      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -349,7 +373,7 @@
     },
     {
         "name":"sllw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -357,7 +381,7 @@
     },
     {
         "name":"srlw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -365,7 +389,7 @@
     },
     {
         "name":"sraw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -373,7 +397,7 @@
     },
     {
         "name":"slti       r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -381,7 +405,7 @@
     },
     {
         "name":"sltiu      r[11:7],r[19:15],h[31:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -389,7 +413,7 @@
     },
     {
         "name":"slt        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -397,7 +421,7 @@
     },
     {
         "name":"sltu       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "arith"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -405,7 +429,7 @@
     },
     {
         "name":"csrrw      r[11:7],h[31:20],r[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -413,7 +437,7 @@
     },
     {
         "name":"csrrs      r[11:7],h[31:20],r[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -421,7 +445,7 @@
     },
     {
         "name":"csrrc      r[11:7],h[31:20],r[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"], ["r1", "r1"]],
@@ -429,7 +453,7 @@
     },
     {
         "name":"csrrwi     r[11:7],h[31:20],h[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
@@ -437,7 +461,7 @@
     },
     {
         "name":"csrrsi     r[11:7],h[31:20],h[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
@@ -445,7 +469,7 @@
     },
     {
         "name":"csrrci     r[11:7],h[31:20],h[19:15]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[["rd", "r3"]],
@@ -453,7 +477,7 @@
     },
     {
         "name":"uret",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -461,7 +485,7 @@
     },
     {
         "name":"sret",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -469,7 +493,7 @@
     },
     {
         "name":"mret",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -477,7 +501,7 @@
     },
     {
         "name":"ecall",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00000", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -485,7 +509,7 @@
     },
     {
         "name":"ebreak",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00001", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -493,7 +517,7 @@
     },
     {
         "name":"fence",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -501,7 +525,7 @@
     },
     {
         "name":"fence.i",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "00000", "00000", "001", "XXXXX", "00011", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
@@ -509,7 +533,7 @@
     },
     {
         "name":"sfence.vma r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg": [["r1", "r1"], ["r2", "r2"]],
@@ -517,7 +541,7 @@
     },
     {
         "name":"mul        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -525,7 +549,7 @@
     },
     {
         "name":"mulh       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -533,7 +557,7 @@
     },
     {
         "name":"mulhsu     r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -541,7 +565,7 @@
     },
     {
         "name":"mulhu      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -549,7 +573,7 @@
     },
     {
         "name":"div        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -557,7 +581,7 @@
     },
     {
         "name":"divu       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -565,7 +589,7 @@
     },
     {
         "name":"rem        r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -573,7 +597,7 @@
     },
     {
         "name":"remu       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -581,7 +605,7 @@
     },
     {
         "name":"mulw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -589,7 +613,7 @@
     },
     {
         "name":"divw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -597,7 +621,7 @@
     },
     {
         "name":"divuw      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -605,7 +629,7 @@
     },
     {
         "name":"remw       r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
@@ -613,7 +637,7 @@
     },
     {
         "name":"remuw      r[11:7],r[19:15],r[24:20]",
-        "length":"32", "dlength":"32",
+        "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01110", "11"],
         "inst_cat": [["inst_cat", "muldiv"]],
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],

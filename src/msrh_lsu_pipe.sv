@@ -217,7 +217,10 @@ assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
 assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.is_load ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
-assign w_ex1_tlb_req.size        = r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
+assign w_ex1_tlb_req.size        =
+`ifdef RV64
+                                   r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
+`endif // RV64
                                    r_ex1_pipe_ctrl.size == SIZE_W  ? 4 :
                                    r_ex1_pipe_ctrl.size == SIZE_H  ? 2 :
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
@@ -407,10 +410,12 @@ logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_final_data;
 
 always_comb begin
   case (r_ex2_pipe_ctrl.size)
+`ifdef RV64
     SIZE_DW : begin
       w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw;
       w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data;
     end
+`endif // RV64
     SIZE_W  : begin
 `ifdef RV32
       w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw;
@@ -441,10 +446,12 @@ logic [riscv_pkg::XLEN_W-1: 0]                    w_stbuf_fwd_aligned_data;
 
 always_comb begin
   case (r_ex2_pipe_ctrl.size)
+`ifdef RV64
     SIZE_DW : begin
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
     end
+`endif // RV64
     SIZE_W  : begin
 `ifdef RV32
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;

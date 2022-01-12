@@ -51,4 +51,5 @@ end
 
 printf("============================\n")
 printf("PASS / TOTAL = %d / %d\n", pass_num, test_num)
+printf("|%s | %d / %d (%03d)|\n", veri_sim_binary, pass_num, test_num, (pass_num / test_num) * 100)
 printf("============================\n")

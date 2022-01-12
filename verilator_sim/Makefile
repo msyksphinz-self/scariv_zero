@@ -80,17 +80,17 @@ build_decode_v: $(DECODE_FILES)
 RV_XLEN = 64
 
 ../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb inst_cat
+	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN)
 ../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb alu_ctrl
+	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN)
 ../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb lsu_ctrl
+	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN)
 ../src/decoder_bru_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb bru_ctrl
+	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN)
 ../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb csu_ctrl
+	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN)
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb reg
+	cd ../src && ./build_decoder.rb reg $(RV_XLEN)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
 	cd ../src && ../scripts/build_memory_map.rb $< $(RV_XLEN)
 
@@ -220,4 +220,4 @@ $(FILELIST): ../src/filelist.f filelist.f
 	cat $^ >> $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES)
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_*

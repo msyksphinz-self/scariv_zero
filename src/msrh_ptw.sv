@@ -208,8 +208,11 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 // L1D check Interface
 assign lsu_access.req_valid = (r_state == CHECK_L1D);
 assign lsu_access.paddr = r_ptw_addr;
-assign lsu_access.size  = riscv_pkg::XLEN_W == 64 ? decoder_lsu_ctrl_pkg::SIZE_DW :
-                          decoder_lsu_ctrl_pkg::SIZE_W;
+`ifdef RV64
+assign lsu_access.size  = decoder_lsu_ctrl_pkg::SIZE_DW;
+`else // RV64
+assign lsu_access.size  = decoder_lsu_ctrl_pkg::SIZE_W;
+`endif // RV64
 
 // PTW to L2 Interface
 assign ptw_req.valid           = (r_state == L2_REQUEST);
