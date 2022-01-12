@@ -96,53 +96,55 @@ RV_XLEN = 64
 
 FILELIST = sim_filelist.f
 
-rv32_tiny: $(FILELIST)
+.config_design_rv32:
 	make -B RV_XLEN=32 $(DECODE_FILES)
+	rm -rf .config_design_*
+	touch .config_design_rv32
+
+.config_design_rv64:
+	make -B RV_XLEN=64 $(DECODE_FILES)
+	rm -rf .config_design_*
+	touch .config_design_rv64
+
+rv32_tiny: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_tiny$(BINARY_SUFFIX) --Mdir obj_dir_rv32_tiny$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_tiny_conf_pkg.sv -f $(FILELIST)
 
-rv32_small: $(FILELIST)
-	make -B RV_XLEN=32 $(DECODE_FILES)
+rv32_small: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_small$(BINARY_SUFFIX) --Mdir obj_dir_rv32_small$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_small_conf_pkg.sv -f $(FILELIST)
 
-rv32_standard: $(FILELIST)
-	make -B RV_XLEN=32 $(DECODE_FILES)
+rv32_standard: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_standard$(BINARY_SUFFIX) --Mdir obj_dir_rv32_standard$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_standard_conf_pkg.sv -f $(FILELIST)
 
-rv32_big: $(FILELIST)
-	make -B RV_XLEN=32 $(DECODE_FILES)
+rv32_big: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_big$(BINARY_SUFFIX) --Mdir obj_dir_rv32_big$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_big_conf_pkg.sv -f $(FILELIST)
 
-rv32_giant: $(FILELIST)
-	make -B RV_XLEN=32 $(DECODE_FILES)
+rv32_giant: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_giant$(BINARY_SUFFIX) --Mdir obj_dir_rv32_giant$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
-rv64_tiny: $(FILELIST)
+rv64_tiny: $(FILELIST) .config_design_rv64
 	make -B RV_XLEN=64 $(DECODE_FILES)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_tiny$(BINARY_SUFFIX) --Mdir obj_dir_rv64_tiny$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_tiny_conf_pkg.sv  -f $(FILELIST)
 
-rv64_small: $(FILELIST)
+rv64_small: $(FILELIST) .config_design_rv64
 	make -B RV_XLEN=64 $(DECODE_FILES)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_small$(BINARY_SUFFIX) --Mdir obj_dir_rv64_small$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_small_conf_pkg.sv  -f $(FILELIST)
 
-rv64_standard: $(FILELIST)
-	make -B RV_XLEN=64 $(DECODE_FILES)
+rv64_standard: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_standard$(BINARY_SUFFIX) --Mdir obj_dir_rv64_standard$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_standard_conf_pkg.sv  -f $(FILELIST)
 
-rv64_big: $(FILELIST)
-	make -B RV_XLEN=64 $(DECODE_FILES)
+rv64_big: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_big$(BINARY_SUFFIX) --Mdir obj_dir_rv64_big$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_big_conf_pkg.sv  -f $(FILELIST)
 
-rv64_giant: $(FILELIST)
-	make -B RV_XLEN=64 $(DECODE_FILES)
+rv64_giant: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_giant$(BINARY_SUFFIX) --Mdir obj_dir_rv64_giant$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 

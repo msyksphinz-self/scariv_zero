@@ -29,6 +29,8 @@ spike_dpi/spike_main
 spike_dpi/*.o
 
 src/decoder*.sv
+src/pma_map.sv
 
 */sim_filelist.f
 */dump.json
+*/perf.json

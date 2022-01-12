@@ -1,4 +1,4 @@
-.PHONY: riscv_isa_sim riscv-isa-sim-makefile
+.PHONY: riscv_isa_sim
 
 VERILATOR_HOME = /usr/local/share/verilator
 
@@ -41,7 +41,7 @@ EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 
 all: libspike_dpi.so spike_main
 
-libspike_dpi.so: spike_dpi.cpp riscv_isa_sim
+libspike_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
 	g++ -shared -fPIC $(CFLAGS) spike_dpi.cpp -o $@
 
 # spike_main: riscv_isa_sim spike_dpi.o
@@ -51,14 +51,12 @@ spike_main: spike_dpi.o libspike_dpi.so
 spike_dpi.o: spike_dpi.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
 
-riscv_isa_sim: riscv-isa-sim-makefile
-	make -C riscv-isa-sim -j$(shell nproc)
-
 riscv-isa-sim-makefile:
-	@if [ ! -f $@ ]; then \
+	@if [ ! -e $@ ]; then \
 		cd riscv-isa-sim && ./configure --enable-commitlog; \
-		touch -f $@; \
 	fi
+	touch -f $@
+	make -C riscv-isa-sim -j$(shell nproc)
 
 clean:
 	rm -rf riscv-isa-sim-makefile
