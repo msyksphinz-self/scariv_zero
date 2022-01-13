@@ -102,7 +102,7 @@ always_comb begin
 
   if (i_load_valid) begin
     w_entry_next.valid = 1'b1;
-    w_entry_next.dead  = {msrh_conf_pkg::DISP_SIZE{i_kill}};
+    w_entry_next.dead  = i_load_grp_id & {msrh_conf_pkg::DISP_SIZE{i_kill}};
     w_entry_next.grp_id = i_load_grp_id;
     w_entry_next.pc_addr = i_load_pc_addr;
     w_entry_next.inst    = i_load_inst;
@@ -163,25 +163,25 @@ always_comb begin
 
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       if (w_done_rpt_valid[d_idx]) begin
-        w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
-        w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
-        w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
         if (!r_entry.dead[d_idx]) begin
+          w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
+          w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
+          w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
           w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
         end
       end
 
       if (w_another_tree_flush_valid[d_idx]) begin
-        w_entry_next.except_valid[d_idx] = 1'b1;
-        w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
-        w_entry_next.dead        [d_idx] = 1'b1;
         if (!r_entry.dead[d_idx]) begin
+          w_entry_next.except_valid[d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
+          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
           w_entry_next.flush_valid [d_idx] = 1'b1;
         end
       end
 
       if (i_kill) begin
-        w_entry_next.dead        [d_idx] = 1'b1;
+        w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
         w_entry_next.except_valid[d_idx] = 1'b0;
         w_entry_next.flush_valid [d_idx] = 1'b0;
       end
