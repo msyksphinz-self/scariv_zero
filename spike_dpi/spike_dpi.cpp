@@ -464,6 +464,23 @@ bool inline is_equal_vaddr(int64_t val1, int64_t val2)
   return (val1 & ((1ULL << vaddr_len)-1)) == (val2 & ((1ULL << vaddr_len)-1));
 }
 
+
+int64_t xlen_convert(int64_t val)
+{
+  int vaddr_len;
+  if (g_rv_xlen == 32) {
+    vaddr_len = 32;  // XLEN = 32
+  } else if (g_rv_xlen == 64) {
+    vaddr_len = 39;   // XLEN = 64
+  } else {
+    fprintf(compare_log_fp, "rv_xlen should be 32 or 64\n");
+    exit(-1);
+  }
+
+  return val & ((1ULL << vaddr_len)-1);
+}
+
+
 const int fail_max = 1;
 int fail_count = 0;
 
@@ -552,7 +569,7 @@ void step_spike(long long time, long long rtl_pc,
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
-            g_rv_xlen / 4, rtl_pc, g_rv_xlen / 4, iss_pc);
+            g_rv_xlen / 4, xlen_convert(rtl_pc), g_rv_xlen / 4, xlen_convert(iss_pc));
     fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
