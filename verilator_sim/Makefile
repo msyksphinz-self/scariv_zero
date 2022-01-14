@@ -127,12 +127,10 @@ rv32_giant: $(FILELIST) .config_design_rv32
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_giant$(BINARY_SUFFIX) --Mdir obj_dir_rv32_giant$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_giant_conf_pkg.sv -f $(FILELIST)
 
 rv64_tiny: $(FILELIST) .config_design_rv64
-	make -B RV_XLEN=64 $(DECODE_FILES)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_tiny$(BINARY_SUFFIX) --Mdir obj_dir_rv64_tiny$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_tiny_conf_pkg.sv  -f $(FILELIST)
 
 rv64_small: $(FILELIST) .config_design_rv64
-	make -B RV_XLEN=64 $(DECODE_FILES)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_small$(BINARY_SUFFIX) --Mdir obj_dir_rv64_small$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_small_conf_pkg.sv  -f $(FILELIST)
 
