@@ -66,7 +66,7 @@ always_comb begin
     OP_UDIV  : w_fn = 'h05;
     OP_SREM  : w_fn = 'h06;
     OP_UREM  : w_fn = 'h07;
-`ifdef // RV64
+`ifdef RV64
     OP_DIVW  : w_fn = 'h04;
     OP_DIVUW : w_fn = 'h05;
     OP_REMW  : w_fn = 'h06;
