@@ -542,10 +542,29 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hba
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIP           ) begin r_hip           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hptbr         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPTBR         ) begin r_hptbr         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mvendorid     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MVENDORID     ) begin r_mvendorid     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_marchid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MARCHID       ) begin r_marchid       <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_marchid <= 'h5;
+  end else if (write_if.valid & (write_if.addr == `SYSREG_ADDR_MARCHID)) begin
+    r_marchid <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mimpid        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIMPID        ) begin r_mimpid        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhartid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHARTID       ) begin r_mhartid       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_misa          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MISA          ) begin r_misa          <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_misa <= ('h1 << ("A" - "A")) |
+              ('h1 << ("C" - "A")) |
+              ('h1 << ("I" - "A")) |
+              ('h1 << ("M" - "A")) |
+              ('h1 << ("S" - "A")) |
+              ('h1 << ("U" - "A")) |
+              ((XLEN_W / 32) << 30);
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MISA) begin
+    r_misa <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_medeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG       ) begin r_medeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG       ) begin r_mideleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE           ) begin r_mie           <= write_if.data; end end

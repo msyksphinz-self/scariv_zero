@@ -117,9 +117,9 @@ void initial_spike (const char *filename, int rv_xlen)
 {
   argv[0] = "spike_dpi";
   if (rv_xlen == 32) {
-    argv[1] = "--isa=rv32gc";
+    argv[1] = "--isa=rv32imac";
   } else if (rv_xlen == 64) {
-    argv[1] = "--isa=rv64gc";
+    argv[1] = "--isa=rv64imac";
   } else {
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
