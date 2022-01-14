@@ -124,21 +124,21 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
     .i_pop(w_iq_fire &
            iq_disp.inst[d_idx].valid &
-           iq_disp.inst[d_idx].rd_valid &
-           (iq_disp.inst[d_idx].rd_regidx != 'h0)),
+           iq_disp.inst[d_idx].wr_reg.valid &
+           (iq_disp.inst[d_idx].wr_reg.regidx != 'h0)),
     .o_pop_id(w_rd_rnid_tmp)
   );
-  assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].rd_regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
+  assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
-  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rs1_valid;
-  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rs2_valid;
+  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid;
+  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid;
 
-  assign w_archreg [d_idx*2 + 0] = iq_disp.inst[d_idx].rs1_regidx;
-  assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rs2_regidx;
+  assign w_archreg [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].regidx;
+  assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].regidx;
 
   assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
   assign w_update_rnid   [d_idx] = w_rd_rnid[d_idx];
@@ -206,9 +206,9 @@ msrh_rename_map u_msrh_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].rd_valid;
-  assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].rd_regidx;
-  assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].rd_valid;
+  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].wr_reg.valid;
+  assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].wr_reg.regidx;
+  assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].wr_reg.valid;
 end
 endgenerate
 
@@ -264,9 +264,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   always_comb begin
 
     /* initial index of loop */
-    if (iq_disp.inst[0].rd_valid &&
-        iq_disp.inst[0].rd_type   == iq_disp.inst[d_idx].rs1_type &&
-        iq_disp.inst[0].rd_regidx == iq_disp.inst[d_idx].rs1_regidx) begin
+    if (iq_disp.inst[0].wr_reg.valid &&
+        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[0].typ &&
+        iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[0].regidx) begin
       rs1_rnid_tmp_valid[0] = 1'b1;
       rs1_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
@@ -274,57 +274,57 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       rs1_rnid_tmp      [0] = w_rnid[d_idx * 2 + 0];
     end
 
-    if (iq_disp.inst[0].rd_valid &&
-        iq_disp.inst[0].rd_type   == iq_disp.inst[d_idx].rs2_type &&
-        iq_disp.inst[0].rd_regidx == iq_disp.inst[d_idx].rs2_regidx) begin
+    if (iq_disp.inst[0].wr_reg.valid &&
+        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[1].typ &&
+        iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[1].regidx) begin
       rs2_rnid_tmp_valid[0] = 1'b1;
       rs2_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs2_rnid_tmp_valid[0] = 1'b0;
       rs2_rnid_tmp      [0] = w_rnid[d_idx * 2 + 1];
-    end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+    end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
-    if (iq_disp.inst[0].rd_valid &&
-        iq_disp.inst[0].rd_type   == iq_disp.inst[d_idx].rd_type &&
-        iq_disp.inst[0].rd_regidx == iq_disp.inst[d_idx].rd_regidx) begin
+    if (iq_disp.inst[0].wr_reg.valid &&
+        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].wr_reg.typ &&
+        iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].wr_reg.regidx) begin
       rd_old_rnid_tmp_valid[0] = 1'b1;
       rd_old_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rd_old_rnid_tmp_valid[0] = 1'b0;
       rd_old_rnid_tmp      [0] = w_rd_old_rnid[d_idx];
-    end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+    end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
     /* verilator lint_off UNSIGNED */
     for (int p_idx = 1; p_idx < d_idx; p_idx++) begin: prev_rd_loop
-      if (iq_disp.inst[p_idx].rd_valid &&
-          iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rs1_type &&
-          iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rs1_regidx) begin
+      if (iq_disp.inst[p_idx].wr_reg.valid &&
+          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[0].typ &&
+          iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[0].regidx) begin
         rs1_rnid_tmp_valid[p_idx] = 1'b1;
         rs1_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs1_rnid_tmp_valid[p_idx] = rs1_rnid_tmp_valid[p_idx-1];
         rs1_rnid_tmp      [p_idx] = rs1_rnid_tmp      [p_idx-1];
-      end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+      end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
-      if (iq_disp.inst[p_idx].rd_valid &&
-          iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rs2_type &&
-          iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rs2_regidx) begin
+      if (iq_disp.inst[p_idx].wr_reg.valid &&
+          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[1].typ &&
+          iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[1].regidx) begin
         rs2_rnid_tmp_valid[p_idx] = 1'b1;
         rs2_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs2_rnid_tmp_valid[p_idx] = rs2_rnid_tmp_valid[p_idx-1];
         rs2_rnid_tmp      [p_idx] = rs2_rnid_tmp      [p_idx-1];
-      end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+      end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
-      if (iq_disp.inst[p_idx].rd_valid &&
-          iq_disp.inst[p_idx].rd_type   == iq_disp.inst[d_idx].rd_type &&
-          iq_disp.inst[p_idx].rd_regidx == iq_disp.inst[d_idx].rd_regidx) begin
+      if (iq_disp.inst[p_idx].wr_reg.valid &&
+          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].wr_reg.typ &&
+          iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].wr_reg.regidx) begin
         rd_old_rnid_tmp_valid[p_idx] = 1'b1;
         rd_old_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rd_old_rnid_tmp_valid[p_idx] = rd_old_rnid_tmp_valid[p_idx-1];
         rd_old_rnid_tmp      [p_idx] = rd_old_rnid_tmp      [p_idx-1];
-      end // else: !if(iq_disp.inst[p_idx].rd_valid &&...
+      end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
     end // block: prev_rd_loop
 
   end // always_comb
@@ -433,22 +433,22 @@ function void dump_json(int fp);
       $fwrite(fp, "        inst  : \"%08x\",",     sc_disp.inst[d_idx].inst);
       $fwrite(fp, "        pc_addr : \"%0x\",",   sc_disp.inst[d_idx].pc_addr);
 
-      $fwrite(fp, "        rd_valid   : \"%d\",", sc_disp.inst[d_idx].rd_valid);
-      $fwrite(fp, "        rd_type    : \"%d\",", sc_disp.inst[d_idx].rd_type);
-      $fwrite(fp, "        rd_regidx  : \"%d\",", sc_disp.inst[d_idx].rd_regidx);
-      $fwrite(fp, "        rd_rnid    : \"%d\",", sc_disp.inst[d_idx].rd_rnid);
+      $fwrite(fp, "        rd_valid   : \"%d\",", sc_disp.inst[d_idx].wr_reg.valid);
+      $fwrite(fp, "        rd_type    : \"%d\",", sc_disp.inst[d_idx].wr_reg.typ);
+      $fwrite(fp, "        rd_regidx  : \"%d\",", sc_disp.inst[d_idx].wr_reg.regidx);
+      $fwrite(fp, "        rd_rnid    : \"%d\",", sc_disp.inst[d_idx].wr_reg.rnid);
 
-      $fwrite(fp, "        rs1_valid  : \"%d\",", sc_disp.inst[d_idx].rs1_valid);
-      $fwrite(fp, "        rs1_type   : \"%d\",", sc_disp.inst[d_idx].rs1_type);
-      $fwrite(fp, "        rs1_regidx : \"%d\",", sc_disp.inst[d_idx].rs1_regidx);
-      $fwrite(fp, "        rs1_rnid   : \"%d\",", sc_disp.inst[d_idx].rs1_rnid);
-      $fwrite(fp, "        rs1_ready  : \"%d\",", sc_disp.inst[d_idx].rs1_ready);
+      $fwrite(fp, "        rs1_valid  : \"%d\",", sc_disp.inst[d_idx].rd_regs[0].valid);
+      $fwrite(fp, "        rs1_type   : \"%d\",", sc_disp.inst[d_idx].rd_regs[0].typ);
+      $fwrite(fp, "        rs1_regidx : \"%d\",", sc_disp.inst[d_idx].rd_regs[0].regidx);
+      $fwrite(fp, "        rs1_rnid   : \"%d\",", sc_disp.inst[d_idx].rd_regs[0].rnid);
+      $fwrite(fp, "        rs1_ready  : \"%d\",", sc_disp.inst[d_idx].rd_regs[0].ready);
 
-      $fwrite(fp, "        rs2_valid  : \"%d\",", sc_disp.inst[d_idx].rs2_valid);
-      $fwrite(fp, "        rs2_type   : \"%d\",", sc_disp.inst[d_idx].rs2_type);
-      $fwrite(fp, "        rs2_regidx : \"%d\",", sc_disp.inst[d_idx].rs2_regidx);
-      $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rs2_rnid);
-      $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rs2_ready);
+      $fwrite(fp, "        rs2_valid  : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].valid);
+      $fwrite(fp, "        rs2_type   : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].typ);
+      $fwrite(fp, "        rs2_regidx : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].regidx);
+      $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].rnid);
+      $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].ready);
 
       $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
       $fwrite(fp, "      },\n");

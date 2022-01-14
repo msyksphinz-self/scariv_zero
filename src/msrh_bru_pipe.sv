@@ -96,11 +96,11 @@ decoder_bru_ctrl u_pipe_ctrl (
   .wr_rd (w_ex0_pipe_ctrl.wr_rd)
 );
 
-assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
-assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
+assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
+assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
-assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
+assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 // EX0 brtag flush check
 assign w_ex0_br_flush  = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag,
@@ -126,8 +126,8 @@ end
 
 select_mispred_bus rs1_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rs1_rnid),
- .i_entry_type (r_ex1_issue.rs1_type),
+ .i_entry_rnid (r_ex1_issue.rd_regs[0].rnid),
+ .i_entry_type (r_ex1_issue.rd_regs[0].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex1_rs1_lsu_mispred)
@@ -136,8 +136,8 @@ select_mispred_bus rs1_mispred_select
 
 select_mispred_bus rs2_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rs2_rnid),
- .i_entry_type (r_ex1_issue.rs2_type),
+ .i_entry_rnid (r_ex1_issue.rd_regs[1].rnid),
+ .i_entry_type (r_ex1_issue.rd_regs[1].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex1_rs2_lsu_mispred)
@@ -146,26 +146,26 @@ select_mispred_bus rs2_mispred_select
 assign w_commit_flushed = msrh_pkg::is_flushed_commit(i_commit);
 
 
-assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
-assign w_ex1_rs2_mispred = r_ex1_issue.rs2_valid & r_ex1_issue.rs2_pred_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
+assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
+assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid &
+assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
                               ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
-assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
+assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_i_phy_wr[tgt_idx].valid &
-                                          (r_ex2_issue.rs1_type == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rs1_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rs1_rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                          (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                          (r_ex2_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
 
-    assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rs2_valid & ex1_i_phy_wr[tgt_idx].valid &
-                                          (r_ex2_issue.rs2_type == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rs2_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rs2_rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[1].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                          (r_ex2_issue.rd_regs[1].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rd_regs[1].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                          (r_ex2_issue.rd_regs[1].rnid != 'h0);   // GPR[x0] always zero
     assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
 endgenerate
@@ -223,8 +223,8 @@ end
 assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 assign w_ex2_rs2_selected_data = |w_ex2_rs2_fwd_valid ? w_ex2_rs2_fwd_data : r_ex2_rs2_data;
 
-assign w_ex2_rs1_pred_hit = r_ex2_issue.rs1_valid & r_ex2_issue.rs1_pred_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
-assign w_ex2_rs2_pred_hit = r_ex2_issue.rs2_valid & r_ex2_issue.rs2_pred_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
+assign w_ex2_rs1_pred_hit = r_ex2_issue.rd_regs[0].valid & r_ex2_issue.rd_regs[0].predict_ready ? |w_ex2_rs1_fwd_valid : 1'b1;
+assign w_ex2_rs2_pred_hit = r_ex2_issue.rd_regs[1].valid & r_ex2_issue.rd_regs[1].predict_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
 // EX2 brtag flush check
 assign w_ex2_br_flush  = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag,
@@ -269,10 +269,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
-                              r_ex3_pipe_ctrl.wr_rd & (r_ex3_issue.rd_regidx != 'h0) &
+                              r_ex3_pipe_ctrl.wr_rd & (r_ex3_issue.wr_reg.regidx != 'h0) &
                               r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
+assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
                                r_ex3_issue.pc_addr} + (r_ex3_issue.is_rvc ? 'h2 : 'h4);
 

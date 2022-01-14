@@ -500,17 +500,17 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc[riscv_pkg::VADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
-      iq_disp.inst[d_idx].rd_valid   = rd_field_type[d_idx] != RD__;
-      iq_disp.inst[d_idx].rd_type    = msrh_pkg::GPR;
-      iq_disp.inst[d_idx].rd_regidx  = w_expand_inst[d_idx][11: 7];
+      iq_disp.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
+      iq_disp.inst[d_idx].wr_reg.typ    = msrh_pkg::GPR;
+      iq_disp.inst[d_idx].wr_reg.regidx  = w_expand_inst[d_idx][11: 7];
 
-      iq_disp.inst[d_idx].rs1_valid  = rs1_field_type[d_idx] != R1__;
-      iq_disp.inst[d_idx].rs1_type   = msrh_pkg::GPR;
-      iq_disp.inst[d_idx].rs1_regidx = w_expand_inst[d_idx][19:15];
+      iq_disp.inst[d_idx].rd_regs[0].valid  = rs1_field_type[d_idx] != R1__;
+      iq_disp.inst[d_idx].rd_regs[0].typ   = msrh_pkg::GPR;
+      iq_disp.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
-      iq_disp.inst[d_idx].rs2_valid  = rs2_field_type[d_idx] != R2__;
-      iq_disp.inst[d_idx].rs2_type   = msrh_pkg::GPR;
-      iq_disp.inst[d_idx].rs2_regidx = w_expand_inst[d_idx][24:20];
+      iq_disp.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
+      iq_disp.inst[d_idx].rd_regs[1].typ   = msrh_pkg::GPR;
+      iq_disp.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
@@ -552,17 +552,17 @@ function void dump_json(int fp);
       $fwrite(fp, "      inst  : \"0x%08x\",",      iq_disp.inst[d_idx].inst);
       $fwrite(fp, "      pc_addr : \"0x%0x\",",    iq_disp.inst[d_idx].pc_addr);
 
-      $fwrite(fp, "      rd_valid   : %d,", iq_disp.inst[d_idx].rd_valid);
-      $fwrite(fp, "      rd_type    : \"%d\",", iq_disp.inst[d_idx].rd_type);
-      $fwrite(fp, "      rd_regidx  : %d,", iq_disp.inst[d_idx].rd_regidx);
+      $fwrite(fp, "      rd_valid   : %d,", iq_disp.inst[d_idx].wr_reg.valid);
+      $fwrite(fp, "      rd_type    : \"%d\",", iq_disp.inst[d_idx].wr_reg.typ);
+      $fwrite(fp, "      rd_regidx  : %d,", iq_disp.inst[d_idx].wr_reg.regidx);
 
-      $fwrite(fp, "      rs1_valid  : %d,", iq_disp.inst[d_idx].rs1_valid);
-      $fwrite(fp, "      rs1_type   : \"%d\",", iq_disp.inst[d_idx].rs1_type);
-      $fwrite(fp, "      rs1_regidx : %d,", iq_disp.inst[d_idx].rs1_regidx);
+      $fwrite(fp, "      rs1_valid  : %d,", iq_disp.inst[d_idx].rd_regs[0].valid);
+      $fwrite(fp, "      rs1_type   : \"%d\",", iq_disp.inst[d_idx].rd_regs[0].typ);
+      $fwrite(fp, "      rs1_regidx : %d,", iq_disp.inst[d_idx].rd_regs[0].regidx);
 
-      $fwrite(fp, "      rs2_valid  : %d,", iq_disp.inst[d_idx].rs2_valid);
-      $fwrite(fp, "      rs2_type   : \"%d\",", iq_disp.inst[d_idx].rs2_type);
-      $fwrite(fp, "      rs2_regidx : %d,", iq_disp.inst[d_idx].rs2_regidx);
+      $fwrite(fp, "      rs2_valid  : %d,", iq_disp.inst[d_idx].rd_regs[1].valid);
+      $fwrite(fp, "      rs2_type   : \"%d\",", iq_disp.inst[d_idx].rd_regs[1].typ);
+      $fwrite(fp, "      rs2_regidx : %d,", iq_disp.inst[d_idx].rd_regs[1].regidx);
 
       $fwrite(fp, "      \"cat[d_idx]\" : \"%d\",", iq_disp.inst[d_idx].cat);
       $fwrite(fp, "    },\n");

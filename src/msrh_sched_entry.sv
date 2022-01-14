@@ -91,19 +91,19 @@ msrh_pkg::sched_state_t w_state_next;
 function logic all_operand_ready(msrh_pkg::issue_t entry);
   logic     ret;
   if (IS_STORE) begin
-    ret = (!entry.rs1_valid | entry.rs1_valid  & (entry.rs1_ready | entry.rs1_pred_ready));
+    ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready));
   end else begin
-    ret = (!entry.rs1_valid | entry.rs1_valid  & (entry.rs1_ready | entry.rs1_pred_ready)) &
-          (!entry.rs2_valid | entry.rs2_valid  & (entry.rs2_ready | entry.rs2_pred_ready));
+    ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
+          (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready));
   end
   return ret;
 endfunction // all_operand_ready
 
-assign w_rs1_rnid = i_put ? i_put_data.rs1_rnid : r_entry.rs1_rnid;
-assign w_rs2_rnid = i_put ? i_put_data.rs2_rnid : r_entry.rs2_rnid;
+assign w_rs1_rnid = i_put ? i_put_data.rd_regs[0].rnid : r_entry.rd_regs[0].rnid;
+assign w_rs2_rnid = i_put ? i_put_data.rd_regs[1].rnid : r_entry.rd_regs[1].rnid;
 
-assign w_rs1_type = i_put ? i_put_data.rs1_type : r_entry.rs1_type;
-assign w_rs2_type = i_put ? i_put_data.rs2_type : r_entry.rs2_type;
+assign w_rs1_type = i_put ? i_put_data.rd_regs[0].typ : r_entry.rd_regs[0].typ;
+assign w_rs2_type = i_put ? i_put_data.rd_regs[1].typ : r_entry.rd_regs[1].typ;
 
 select_early_wr_bus rs1_rel_select
 (
@@ -172,11 +172,11 @@ always_comb begin
   w_issued_next = r_issued;
   w_entry_next  = r_entry;
 
-  w_entry_next.rs1_ready = r_entry.rs1_ready /* | r_entry.rs1_pred_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.rs2_ready = r_entry.rs2_ready /* | r_entry.rs2_pred_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_entry_next.rd_regs[0].ready = r_entry.rd_regs[0].ready /* | r_entry.rd_regs[0].predict_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.rd_regs[1].ready = r_entry.rd_regs[1].ready /* | r_entry.rd_regs[1].predict_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
 
-  w_entry_next.rs1_pred_ready = w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry_next.rs2_pred_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+  w_entry_next.rd_regs[0].predict_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.rd_regs[1].predict_ready = w_rs2_rel_hit & w_rs2_may_mispred;
 
   case (r_state)
     msrh_pkg::INIT : begin
@@ -215,12 +215,12 @@ always_comb begin
           w_entry_next.except_valid = pipe_done_if.except_valid;
           w_entry_next.except_type  = pipe_done_if.except_type;
         end
-        if (r_entry.rs1_pred_ready & w_rs1_mispredicted ||
-            r_entry.rs2_pred_ready & w_rs2_mispredicted) begin
+        if (r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted ||
+            r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
           w_state_next = msrh_pkg::WAIT;
           w_issued_next = 1'b0;
-          w_entry_next.rs1_pred_ready = 1'b0;
-          w_entry_next.rs2_pred_ready = 1'b0;
+          w_entry_next.rd_regs[0].predict_ready = 1'b0;
+          w_entry_next.rd_regs[1].predict_ready = 1'b0;
         end
       end
     end

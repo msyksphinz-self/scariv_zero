@@ -108,11 +108,11 @@ assign w_entry_complete = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
 
-assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
-assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
+assign w_rs1_rnid = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
+assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
 
-assign w_rs1_type = i_disp_load ? i_disp.rs1_type : r_entry.inst.rs1_type;
-assign w_rs2_type = i_disp_load ? i_disp.rs2_type : r_entry.inst.rs2_type;
+assign w_rs1_type = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
+assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
 
 select_early_wr_bus rs1_rel_select
 (
@@ -190,11 +190,11 @@ end
 always_comb begin
 
   w_entry_next = r_entry;
-  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready | /* (w_rs1_rel_hit & ~w_rs1_may_mispred) | */ w_rs1_phy_hit;
-  w_entry_next.inst.rs2_ready = r_entry.inst.rs2_ready | /* (w_rs2_rel_hit & ~w_rs2_may_mispred) | */ w_rs2_phy_hit;
+  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | /* (w_rs1_rel_hit & ~w_rs1_may_mispred) | */ w_rs1_phy_hit;
+  w_entry_next.inst.rd_regs[1].ready = r_entry.inst.rd_regs[1].ready | /* (w_rs2_rel_hit & ~w_rs2_may_mispred) | */ w_rs2_phy_hit;
 
-  w_entry_next.inst.rs1_pred_ready = 1'b0; // w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry_next.inst.rs2_pred_ready = 1'b0; // w_rs2_rel_hit & w_rs2_may_mispred;
+  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0; // w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.inst.rd_regs[1].predict_ready = 1'b0; // w_rs2_rel_hit & w_rs2_may_mispred;
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
 
@@ -243,11 +243,11 @@ always_comb begin
                                                   r_entry.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)
-        if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted ||
-            r_entry.inst.rs2_pred_ready & w_rs2_mispredicted) begin
+        if (r_entry.inst.rd_regs[0].predict_ready & w_rs1_mispredicted ||
+            r_entry.inst.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
           w_entry_next.state = LDQ_ISSUE_WAIT;
-          w_entry_next.inst.rs1_pred_ready = 1'b0;
-          w_entry_next.inst.rs2_pred_ready = 1'b0;
+          w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
+          w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
         end
       end // else: !if(w_entry_flush)
     end // case: LDQ_ISSUED
@@ -379,8 +379,8 @@ endfunction // assign_ldq_disp
 
 function logic all_operand_ready(ldq_entry_t entry);
   logic     ret;
-  ret = (!entry.inst.rs1_valid | entry.inst.rs1_valid  & (entry.inst.rs1_ready | entry.inst.rs1_pred_ready)) &
-        (!entry.inst.rs2_valid | entry.inst.rs2_valid  & (entry.inst.rs2_ready | entry.inst.rs2_pred_ready));
+  ret = (!entry.inst.rd_regs[0].valid | entry.inst.rd_regs[0].valid  & (entry.inst.rd_regs[0].ready | entry.inst.rd_regs[0].predict_ready)) &
+        (!entry.inst.rd_regs[1].valid | entry.inst.rd_regs[1].valid  & (entry.inst.rd_regs[1].ready | entry.inst.rd_regs[1].predict_ready));
   return ret;
 endfunction // all_operand_ready
 

@@ -205,11 +205,11 @@ assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 // EX1 stage pipeline
 //
 
-assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
-assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
+assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
+assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rs2_valid;
-assign ex1_regread_rs2.rnid  = r_ex1_issue.rs2_rnid;
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
+assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
@@ -228,8 +228,8 @@ assign w_ex1_tlb_req.passthrough = 1'b0;
 
 select_mispred_bus rs1_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rs1_rnid),
- .i_entry_type (r_ex1_issue.rs1_type),
+ .i_entry_rnid (r_ex1_issue.rd_regs[0].rnid),
+ .i_entry_type (r_ex1_issue.rd_regs[0].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex1_rs1_lsu_mispred)
@@ -238,21 +238,21 @@ select_mispred_bus rs1_mispred_select
 
 select_mispred_bus rs2_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rs2_rnid),
- .i_entry_type (r_ex1_issue.rs2_type),
+ .i_entry_rnid (r_ex1_issue.rd_regs[1].rnid),
+ .i_entry_type (r_ex1_issue.rd_regs[1].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex1_rs2_lsu_mispred)
  );
 
-assign w_ex1_rs1_mispred = r_ex1_issue.rs1_valid & r_ex1_issue.rs1_pred_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
-assign w_ex1_rs2_mispred = r_ex1_issue.rs2_valid & r_ex1_issue.rs2_pred_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
+assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
+assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.rd_valid & !w_ex1_tlb_resp.miss &
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !w_ex1_tlb_resp.miss &
                                     ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
-assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.rd_rnid;
+assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
-assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.rd_valid;
+assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
 assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
 logic w_ld_except_valid;
@@ -283,7 +283,7 @@ assign o_ex1_q_updates.tlb_except_type  = w_tlb_except_type;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
-assign o_ex1_q_updates.st_data_valid = r_ex1_issue.rs2_ready;
+assign o_ex1_q_updates.st_data_valid = r_ex1_issue.rd_regs[1].ready;
 assign o_ex1_q_updates.st_data     = ex1_regread_rs2.data;
 assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
 
@@ -354,8 +354,8 @@ assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 // ---------------------
 always_comb begin
   o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict | lrq_haz_check_if.ex2_evict_haz_valid;
-  o_ex2_mispred.rd_type   = r_ex2_issue.rd_type;
-  o_ex2_mispred.rd_rnid   = r_ex2_issue.rd_rnid;
+  o_ex2_mispred.rd_type   = r_ex2_issue.wr_reg.typ;
+  o_ex2_mispred.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
 
 
@@ -530,10 +530,10 @@ assign ex3_done_if.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
-                              r_ex3_issue.rd_valid & (r_ex3_issue.rd_regidx != 'h0) &
+                              r_ex3_issue.wr_reg.valid & (r_ex3_issue.wr_reg.regidx != 'h0) &
                               ~r_ex3_mis_valid;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
+assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
 
 

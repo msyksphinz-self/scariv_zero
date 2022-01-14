@@ -83,6 +83,22 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
   ANOTHER_FLUSH = 28
 } except_t;
 
+typedef struct packed {
+  logic              valid;
+  reg_t              typ;
+  logic [4:0]        regidx;
+  logic [RNID_W-1:0] rnid;
+  logic              ready;
+} reg_rd_disp_t;
+
+typedef struct packed {
+    logic              valid;
+    reg_t              typ;
+    logic [4:0]        regidx;
+    logic [RNID_W-1:0] rnid;
+    logic [RNID_W-1:0] old_rnid;
+} reg_wr_disp_t;
+
   typedef struct packed {
     logic valid;
     logic illegal_valid; // decode error: illegal instruction
@@ -110,24 +126,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic                           btb_valid;
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
-    logic rd_valid;
-    reg_t rd_type;
-    logic [4:0] rd_regidx;
-    logic [RNID_W-1:0] rd_rnid;
-    logic [RNID_W-1:0] rd_old_rnid;
-
-    logic rs1_valid;
-    reg_t rs1_type;
-    logic [4:0] rs1_regidx;
-    logic [RNID_W-1:0] rs1_rnid;
-    logic rs1_ready;
-
-    logic rs2_valid;
-    logic [4:0] rs2_regidx;
-    reg_t rs2_type;
-    logic [RNID_W-1:0] rs2_rnid;
-    logic rs2_ready;
-
+    reg_wr_disp_t         wr_reg;
+    reg_rd_disp_t [ 1: 0] rd_regs;
   } disp_t;
 
 
@@ -154,12 +154,12 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     disp_t ret;
     ret = disp;
 
-    ret.rd_rnid     = rd_rnid;
-    ret.rd_old_rnid = rd_old_rnid;
-    ret.rs1_ready   = rs1_active;
-    ret.rs1_rnid    = rs1_rnid;
-    ret.rs2_ready   = rs2_active;
-    ret.rs2_rnid    = rs2_rnid;
+    ret.wr_reg.rnid     = rd_rnid;
+    ret.wr_reg.old_rnid = rd_old_rnid;
+    ret.rd_regs[0].ready   = rs1_active;
+    ret.rd_regs[0].rnid    = rs1_rnid;
+    ret.rd_regs[1].ready   = rs2_active;
+    ret.rd_regs[1].rnid    = rs2_rnid;
     ret.brtag       = brtag;
     ret.br_mask     = br_mask;
 
@@ -204,6 +204,22 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
 `endif // SIMULATION
   } rob_entry_t;
 
+typedef struct packed {
+  logic              valid;
+  reg_t              typ;
+  logic [4:0]        regidx;
+  logic [RNID_W-1:0] rnid;
+} reg_wr_issue_t;
+
+typedef struct packed {
+  logic              valid;
+  reg_t              typ;
+  logic [4:0]        regidx;
+  logic [RNID_W-1:0] rnid;
+  logic              ready;
+  logic              predict_ready;
+} reg_rd_issue_t;
+
   typedef struct packed {
     logic valid;
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
@@ -224,24 +240,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
     logic                           btb_valid;
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
-    logic rd_valid;
-    reg_t rd_type;
-    logic [4:0] rd_regidx;
-    logic [RNID_W-1:0] rd_rnid;
-
-    logic rs1_valid;
-    reg_t rs1_type;
-    logic [4:0] rs1_regidx;
-    logic [RNID_W-1:0] rs1_rnid;
-    logic rs1_ready;
-    logic rs1_pred_ready;
-
-    logic rs2_valid;
-    logic [4:0] rs2_regidx;
-    reg_t rs2_type;
-    logic [RNID_W-1:0] rs2_rnid;
-    logic rs2_ready;
-    logic rs2_pred_ready;
+    reg_wr_issue_t         wr_reg;
+    reg_rd_issue_t [ 1: 0] rd_regs;
 
     logic             except_valid;
     except_t except_type;
@@ -277,24 +277,24 @@ function issue_t assign_issue_t(disp_t in,
   ret.btb_valid        = in.btb_valid;
   ret.pred_target_vaddr = in.pred_target_vaddr;
 
-  ret.rd_valid = in.rd_valid;
-  ret.rd_type = in.rd_type;
-  ret.rd_regidx = in.rd_regidx;
-  ret.rd_rnid = in.rd_rnid;
+  ret.wr_reg.valid = in.wr_reg.valid;
+  ret.wr_reg.typ = in.wr_reg.typ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid = in.wr_reg.rnid;
 
-  ret.rs1_valid = in.rs1_valid;
-  ret.rs1_type = in.rs1_type;
-  ret.rs1_regidx = in.rs1_regidx;
-  ret.rs1_rnid = in.rs1_rnid;
-  ret.rs1_ready = in.rs1_ready | rs1_rel_hit & ~rs1_may_mispred | rs1_phy_hit;
-  ret.rs1_pred_ready = rs1_rel_hit & rs1_may_mispred;
+  ret.rd_regs[0].valid = in.rd_regs[0].valid;
+  ret.rd_regs[0].typ = in.rd_regs[0].typ;
+  ret.rd_regs[0].regidx = in.rd_regs[0].regidx;
+  ret.rd_regs[0].rnid = in.rd_regs[0].rnid;
+  ret.rd_regs[0].ready = in.rd_regs[0].ready | rs1_rel_hit & ~rs1_may_mispred | rs1_phy_hit;
+  ret.rd_regs[0].predict_ready = rs1_rel_hit & rs1_may_mispred;
 
-  ret.rs2_valid = in.rs2_valid;
-  ret.rs2_regidx = in.rs2_regidx;
-  ret.rs2_type = in.rs2_type;
-  ret.rs2_rnid = in.rs2_rnid;
-  ret.rs2_ready = in.rs2_ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
-  ret.rs2_pred_ready = rs2_rel_hit & rs2_may_mispred;
+  ret.rd_regs[1].valid = in.rd_regs[1].valid;
+  ret.rd_regs[1].regidx = in.rd_regs[1].regidx;
+  ret.rd_regs[1].typ = in.rd_regs[1].typ;
+  ret.rd_regs[1].rnid = in.rd_regs[1].rnid;
+  ret.rd_regs[1].ready = in.rd_regs[1].ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
+  ret.rd_regs[1].predict_ready = rs2_rel_hit & rs2_may_mispred;
 
   ret.except_valid = 1'b0;
   ret.except_type  = INST_ADDR_MISALIGN;

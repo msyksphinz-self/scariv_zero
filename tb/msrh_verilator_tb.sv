@@ -319,10 +319,10 @@ module msrh_tb (
                         u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
                         1 << grp_idx,
                         committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
-                        committed_rob_entry.inst[grp_idx].rd_valid,
-                        committed_rob_entry.inst[grp_idx].rd_regidx,
-                        committed_rob_entry.inst[grp_idx].rd_rnid,
-                        w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+                        committed_rob_entry.inst[grp_idx].wr_reg.valid,
+                        committed_rob_entry.inst[grp_idx].wr_reg.regidx,
+                        committed_rob_entry.inst[grp_idx].wr_reg.rnid,
+                        w_physical_gpr_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
           end
         end  // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)

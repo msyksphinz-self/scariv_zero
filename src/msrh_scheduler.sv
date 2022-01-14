@@ -237,11 +237,11 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "grp_id:%d, ", entry.entry.grp_id);
 
     // Destination Register
-    $fwrite(fp, "rd:{ valid:%1d, idx:%02d, rnid:%d },", entry.entry.rd_valid, entry.entry.rd_regidx, entry.entry.rd_rnid);
+    $fwrite(fp, "rd:{ valid:%1d, idx:%02d, rnid:%d },", entry.entry.wr_reg.valid, entry.entry.wr_reg.regidx, entry.entry.wr_reg.rnid);
     // Source 1
-    $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rs1_valid, entry.entry.rs1_regidx, entry.entry.rs1_rnid, entry.entry.rs1_ready);
+    $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[0].valid, entry.entry.rd_regs[0].regidx, entry.entry.rd_regs[0].rnid, entry.entry.rd_regs[0].ready);
     // Source 2
-    $fwrite(fp, "rs2:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rs2_valid, entry.entry.rs2_regidx, entry.entry.rs2_rnid, entry.entry.rs2_ready);
+    $fwrite(fp, "rs2:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[1].valid, entry.entry.rd_regs[1].regidx, entry.entry.rd_regs[1].rnid, entry.entry.rd_regs[1].ready);
     $fwrite(fp, "state:\"%s\", ", entry.state == msrh_pkg::INIT          ? "INIT" :
                                   entry.state == msrh_pkg::WAIT          ? "WAIT" :
                                   entry.state == msrh_pkg::ISSUED        ? "ISSUED" :

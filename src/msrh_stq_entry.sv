@@ -75,11 +75,11 @@ always_comb begin
   end
 end
 
-assign w_rs1_rnid = i_disp_load ? i_disp.rs1_rnid : r_entry.inst.rs1_rnid;
-assign w_rs2_rnid = i_disp_load ? i_disp.rs2_rnid : r_entry.inst.rs2_rnid;
+assign w_rs1_rnid = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
+assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
 
-assign w_rs1_type = i_disp_load ? i_disp.rs1_type : r_entry.inst.rs1_type;
-assign w_rs2_type = i_disp_load ? i_disp.rs2_type : r_entry.inst.rs2_type;
+assign w_rs1_type = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
+assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
 
 select_early_wr_bus rs1_rel_select
 (
@@ -135,7 +135,7 @@ assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.
 assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
-assign w_entry_rs2_ready_next = r_entry.inst.rs2_ready |
+assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
                                 w_rs2_phy_hit |
                                 i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
 
@@ -167,12 +167,12 @@ assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
 always_comb begin
   w_entry_next = r_entry;
 
-  w_entry_next.inst.rs2_ready = w_entry_rs2_ready_next | r_entry.inst.rs2_ready;
+  w_entry_next.inst.rd_regs[1].ready = w_entry_rs2_ready_next | r_entry.inst.rd_regs[1].ready;
   w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
                           i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
                           r_entry.rs2_data;
-  w_entry_next.inst.rs1_ready = r_entry.inst.rs1_ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
-  w_entry_next.inst.rs1_pred_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
+  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
+  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
 
   case (r_entry.state)
     STQ_INIT : begin
@@ -216,10 +216,10 @@ always_comb begin
         w_entry_next.size            = i_ex1_q_updates.size;
 
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
-      if (r_entry.inst.rs1_pred_ready & w_rs1_mispredicted) begin
+      if (r_entry.inst.rd_regs[0].predict_ready & w_rs1_mispredicted) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
-        w_entry_next.inst.rs1_pred_ready = 1'b0;
-        w_entry_next.inst.rs2_pred_ready = 1'b0;
+        w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
+        w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
       end
     end // case: STQ_ISSUED
     STQ_TLB_HAZ : begin
@@ -262,7 +262,7 @@ always_comb begin
     STQ_WAIT_ST_DATA : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (w_entry_next.inst.rs2_ready) begin
+      end else if (w_entry_next.inst.rd_regs[1].ready) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
@@ -348,7 +348,7 @@ endfunction // assign_stq_disp
 
 function logic all_operand_ready(stq_entry_t entry);
   logic     ret;
-  ret = (!entry.inst.rs1_valid | entry.inst.rs1_valid  & (entry.inst.rs1_ready | entry.inst.rs1_pred_ready));
+  ret = (!entry.inst.rd_regs[0].valid | entry.inst.rd_regs[0].valid  & (entry.inst.rd_regs[0].ready | entry.inst.rd_regs[0].predict_ready));
   return ret;
 endfunction // all_operand_ready
 

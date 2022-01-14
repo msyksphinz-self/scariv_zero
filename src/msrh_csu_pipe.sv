@@ -91,8 +91,8 @@ decoder_csu_ctrl u_pipe_ctrl (
 );
 assign w_ex0_pipe_ctrl.csr_update = w_ex0_csr_update == decoder_csu_ctrl_pkg::CSR_UPDATE_1 ? 1'b1 : 1'b0;
 
-assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rs1_valid;
-assign ex1_regread_rs1.rnid  = r_ex1_issue.rs1_rnid;
+assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
+assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -106,17 +106,17 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.rd_valid;
-assign o_ex1_early_wr.rd_rnid = r_ex1_issue.rd_rnid;
-assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
+assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rs1_valid & ex1_i_phy_wr[tgt_idx].valid &
-                                          (r_ex2_issue.rs1_type == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rs1_rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rs1_rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                          (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                          (r_ex2_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
 
     assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
@@ -181,8 +181,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.rd_rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.rd_type;
+assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
@@ -204,7 +204,7 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
 // CSR Update
 // ------------
 assign write_if.valid = r_ex3_issue.valid &
-                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rs1_regidx == 5'h0);
+                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rd_regs[0].regidx == 5'h0);
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 
@@ -212,8 +212,8 @@ assign write_if.data  = r_ex3_result;
 // SFENCE Update
 // ------------
 assign sfence_if.valid = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma;
-assign sfence_if.is_rs1_x0  = r_ex3_issue.rs1_regidx == 'h0;
-assign sfence_if.is_rs2_x0  = r_ex3_issue.rs2_regidx == 'h0;
+assign sfence_if.is_rs1_x0  = r_ex3_issue.rd_regs[0].regidx == 'h0;
+assign sfence_if.is_rs2_x0  = r_ex3_issue.rd_regs[1].regidx == 'h0;
 assign sfence_if.vaddr      = r_ex3_result[riscv_pkg::VADDR_W-1:0];
 
 // ---------------

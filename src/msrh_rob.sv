@@ -184,10 +184,10 @@ bit_oh_or_packed #(.T(logic[riscv_pkg::XLEN_W-1:0]), .WORDS(DISP_SIZE)) u_bit_ex
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
-  assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].rd_valid;
-  assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].rd_old_rnid;
-  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].rd_rnid;
-  assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].rd_regidx;
+  assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.valid;
+  assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.old_rnid;
+  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.rnid;
+  assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.regidx;
 end
 endgenerate
 // assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
