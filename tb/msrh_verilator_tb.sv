@@ -303,6 +303,11 @@ module msrh_tb (
 
   `include "tb_commit_mon_utils.sv"
 
+logic [63: 0]                                                  cycle_counter;
+localparam cycle_interval = 1000;
+logic [63: 0]                                                  total_commit_counter;
+logic [63: 0]                                                  int_commit_counter;
+
   always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
     if (!i_msrh_reset_n) begin
     end else begin
@@ -326,8 +331,26 @@ module msrh_tb (
           end
         end  // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)
+
+      // Counting up instruction
+      cycle_counter <= cycle_counter + 1;
+      if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
+        total_commit_counter <= total_commit_counter + $countones(u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id &
+                                                     ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id);
+        int_commit_counter <= int_commit_counter + $countones(u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id &
+                                                             ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id);
+      end
+      if (((cycle_counter % cycle_interval) == 0) && (cycle_counter != 0)) begin
+        $display ("%10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",
+                  cycle_counter,
+                  real'(int_commit_counter) / cycle_interval,
+                  real'(total_commit_counter) / real'(cycle_counter));
+        int_commit_counter <= 'h0;
+      end
     end  // else: !if(!i_msrh_reset_n)
   end  // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
+
+
 
   logic w_clk;
   logic w_msrh_reset_n;
