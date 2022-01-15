@@ -18,7 +18,7 @@ package msrh_pkg;
                             1;               // CSU
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
   localparam CMT_BUS_SIZE = ALU_INST_NUM +   // ALU
-                            2 +              // LSU
+                            LSU_INST_NUM +   // LSU
                             1 +              // BRU
                             1;               // CSU
 
