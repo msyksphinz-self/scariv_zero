@@ -198,6 +198,7 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_U) ? msrh_pkg::ECALL_U :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
+                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_M) ? msrh_pkg::ECALL_M :
                                  msrh_pkg::SILENT_FLUSH;
 
 // ------------

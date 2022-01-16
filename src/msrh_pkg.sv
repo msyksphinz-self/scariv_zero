@@ -71,7 +71,7 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
   STAMO_ACC_FAULT     = 7,
   ECALL_U             = 8,
   ECALL_S             = 9,
-  ECALL_M             = 10,
+  ECALL_M             = 11,
   INST_PAGE_FAULT     = 12,
   LOAD_PAGE_FAULT     = 13,
   STAMO_PAGE_FAULT    = 15,
