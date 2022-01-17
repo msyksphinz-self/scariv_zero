@@ -550,9 +550,10 @@ void step_spike(long long time, long long rtl_pc,
     p->step(1);
   }
   prev_instret = instret;
-  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%02d,%02d) %08x %s\n", time,
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", time,
           instret,
           rtl_pc,
+          rtl_priv == 0 ? 'U' : rtl_priv == 2 ? 'S' : 'M',
           rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
   auto iss_insn = p->get_state()->insn;
