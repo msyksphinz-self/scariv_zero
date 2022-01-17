@@ -3,17 +3,20 @@ interface csr_rd_if;
   logic valid;
   logic [11: 0] addr;
   logic [riscv_pkg::XLEN_W-1: 0] data;
+  logic                          resp_error;
 
   modport master (
     output valid,
     output addr,
-    input  data
+    input  data,
+    input  resp_error
   );
 
   modport slave (
     input  valid,
     input  addr,
-    output data
+    output data,
+    output resp_error
   );
 
 endinterface // csr_rd_if
@@ -21,20 +24,23 @@ endinterface // csr_rd_if
 
 interface csr_wr_if;
 
-  logic valid;
-  logic [11: 0] addr;
+  logic                          valid;
+  logic [11: 0]                  addr;
   logic [riscv_pkg::XLEN_W-1: 0] data;
+  logic                          resp_error;
 
   modport master (
     output valid,
     output addr,
-    output data
+    output data,
+    input  resp_error
   );
 
   modport slave (
-    input valid,
-    input addr,
-    input data
+    input  valid,
+    input  addr,
+    input  data,
+    output resp_error
   );
 
 endinterface // csr_wr_if

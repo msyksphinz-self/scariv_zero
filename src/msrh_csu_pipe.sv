@@ -70,6 +70,7 @@ msrh_pkg::issue_t                        r_ex3_issue;
 logic [riscv_pkg::XLEN_W-1: 0]           r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
 logic [riscv_pkg::XLEN_W-1: 0]           r_ex3_csr_rd_data;
+logic                                    r_ex3_csr_illegal;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -162,10 +163,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_index     <= 'h0;
     r_ex3_issue     <= 'h0;
     r_ex3_pipe_ctrl <= 'h0;
+    r_ex3_csr_illegal <= 1'b0;
   end else begin
     r_ex3_issue     <= r_ex2_issue;
     r_ex3_index     <= r_ex2_index;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
+
+    r_ex3_csr_illegal <= read_if.resp_error;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
@@ -193,13 +197,17 @@ assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                    r_ex3_pipe_ctrl.is_sret |
                                    r_ex3_pipe_ctrl.is_uret |
                                    r_ex3_pipe_ctrl.is_ecall |
-                                   r_ex3_pipe_ctrl.is_fence_i;
+                                   r_ex3_pipe_ctrl.is_fence_i |
+                                   r_ex3_csr_illegal |
+                                   (write_if.valid & write_if.resp_error);
+
 assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_U) ? msrh_pkg::ECALL_U :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_M) ? msrh_pkg::ECALL_M :
+                                 (write_if.valid & write_if.resp_error) | r_ex3_csr_illegal ? msrh_pkg::ILLEGAL_INST :
                                  msrh_pkg::SILENT_FLUSH;
 
 // ------------
