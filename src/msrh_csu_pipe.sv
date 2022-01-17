@@ -206,6 +206,7 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
 // CSR Update
 // ------------
 assign write_if.valid = r_ex3_issue.valid &
+                        r_ex3_pipe_ctrl.csr_update &
                         !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rd_regs[0].regidx == 5'h0);
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
