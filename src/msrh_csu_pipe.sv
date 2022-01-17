@@ -147,7 +147,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_ex2_rs1_selected_data = |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
+assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::XLEN_W-5){/* r_ex2_issue.inst[19] */1'b0}}, r_ex2_issue.inst[19:15]} :
+                                 |w_ex2_rs1_fwd_valid ? w_ex2_rs1_fwd_data : r_ex2_rs1_data;
 
 // ------------
 // CSR Read
