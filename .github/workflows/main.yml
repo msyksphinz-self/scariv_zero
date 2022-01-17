@@ -61,11 +61,11 @@ jobs:
           sudo make install
           verilator --version
 
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v2.4.0
-        with:
-          persist-credentials: false
-          submodules: recursive
+      # - name: Checkout repository and submodules
+      #   uses: actions/checkout@v2.4.0
+      #   with:
+      #     persist-credentials: false
+      #     submodules: recursive
 
       # # Build library
       # - name: Build Spike DPI Library
