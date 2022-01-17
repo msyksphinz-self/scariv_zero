@@ -462,7 +462,7 @@ assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_is_hit);
 assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_is_hit);
 assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_is_hit);
 assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_is_hit);
-assign o_tlb_resp.ma.inst      = 1'b0;   // this is up to the pipeline to figure out
+assign o_tlb_resp.ma.inst      = i_tlb_req.vaddr[0] != 1'b0;
 assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
 assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
 // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
