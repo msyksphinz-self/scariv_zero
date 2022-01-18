@@ -645,12 +645,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmp
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stats         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STATS         ) begin r_stats         <= write_if.data; end end
 
 assign csr_info.mstatus = w_mstatus;
-assign csr_info.mepc    = r_mepc;
-assign csr_info.mtvec   = r_mtvec;
-assign csr_info.stvec   = r_stvec;
-assign csr_info.utvec   = r_utvec;
-assign csr_info.sepc    = r_sepc;
-assign csr_info.uepc    = r_uepc;
+assign csr_info.mepc    = r_mepc  & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
+assign csr_info.mtvec   = r_mtvec & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
+assign csr_info.stvec   = r_stvec & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
+assign csr_info.utvec   = r_utvec & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
+assign csr_info.sepc    = r_sepc  & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
+assign csr_info.uepc    = r_uepc  & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
 assign csr_info.satp    = r_satp;
 // assign csr_info.priv    = r_priv;
 // Priviledge should be pass immediately when exception is valid
