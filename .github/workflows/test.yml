@@ -40,7 +40,11 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
         with:
-          submodules: true
+          submodules: recursive
+
+      - name: Update submodules
+        id: update
+        run: git submodule update --remote --recursive
 
       - name: Run Display
         run: make -C verilator_sim/ rv64_tiny LINT=on
