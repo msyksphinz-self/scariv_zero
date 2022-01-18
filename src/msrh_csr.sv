@@ -476,7 +476,7 @@ assign w_misa_mask = ('h1 << ("A" - "A")) |
               ('h1 << ("M" - "A")) |
               ('h1 << ("S" - "A")) |
               ('h1 << ("U" - "A")) |
-              ((XLEN_W / 32) << 30);
+              ((XLEN_W / 32) << (XLEN_W-2));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -486,7 +486,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               ('h1 << ("M" - "A")) |
               ('h1 << ("S" - "A")) |
               ('h1 << ("U" - "A")) |
-              ((XLEN_W / 32) << 30);
+              ((XLEN_W / 32) << (XLEN_W-2));
   end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MISA) begin
     r_misa <= write_if.data;
   end
