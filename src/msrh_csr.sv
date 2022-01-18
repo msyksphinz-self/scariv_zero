@@ -647,6 +647,9 @@ assign csr_info.satp    = r_satp;
 assign csr_info.priv    = w_priv_next;
 assign csr_info.medeleg = r_medeleg;
 assign csr_info.sedeleg = r_sedeleg;
+// assign csr_info.int_request = |(r_mip & r_mie) & (r_priv == riscv_common_pkg::PRIV_M) |
+//                               |(r_sip & r_sie) & (r_priv == riscv_common_pkg::PRIV_S) |
+//                               |(r_uip & r_uie) & (r_priv == riscv_common_pkg::PRIV_U);
 
 logic w_delegate;
 assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &

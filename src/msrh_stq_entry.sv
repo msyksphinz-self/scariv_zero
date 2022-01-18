@@ -65,6 +65,8 @@ logic                                            w_rs2_phy_hit;
 logic [riscv_pkg::XLEN_W-1: 0]                   w_rs2_phy_data;
 logic                                            w_entry_rs2_ready_next;
 
+logic                                            w_commit_finish;
+
 always_comb begin
   o_entry = r_entry;
   // When EX3, fast forwarding to another flush
@@ -143,7 +145,7 @@ assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT) & i_sq_op_accept |
+assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT) & w_commit_finish |
                                (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -163,6 +165,8 @@ end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
+
+assign w_commit_finish = i_sq_op_accept | r_entry.except_valid;
 
 always_comb begin
   w_entry_next = r_entry;
@@ -267,7 +271,7 @@ always_comb begin
       end
     end
     STQ_COMMIT : begin
-      if (i_sq_op_accept) begin
+      if (w_commit_finish) begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline

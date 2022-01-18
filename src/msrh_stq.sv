@@ -273,7 +273,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
       assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
-    assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT);
+    assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT) & ~w_stq_entries[s_idx].except_valid;
 
     // Forwarding check
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
