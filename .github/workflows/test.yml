@@ -37,5 +37,10 @@ jobs:
           sudo apt install -y tzdata
           sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
 
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
       - name: Run Display
         run: make -C verilator_sim/ rv64_tiny LINT=on
