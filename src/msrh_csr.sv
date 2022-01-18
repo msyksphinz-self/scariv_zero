@@ -468,6 +468,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mimpid        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIMPID        ) begin r_mimpid        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhartid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHARTID       ) begin r_mhartid       <= write_if.data; end end
+
+logic [XLEN_W-1: 0] w_misa_mask;
+assign w_misa_mask = ('h1 << ("A" - "A")) |
+              ('h1 << ("C" - "A")) |
+              ('h1 << ("I" - "A")) |
+              ('h1 << ("M" - "A")) |
+              ('h1 << ("S" - "A")) |
+              ('h1 << ("U" - "A")) |
+              ((XLEN_W / 32) << 30);
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_misa <= ('h1 << ("A" - "A")) |
