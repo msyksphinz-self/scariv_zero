@@ -174,18 +174,21 @@ assign w_ibuf_refill_wakeup  = (r_if_state == WAIT_IBUF_FREE ) & w_inst_buffer_r
 assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready &
                                (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
+logic                           w_valid_commit;
+assign w_valid_commit = i_commit.commit & |(i_commit.grp_id & ~i_commit.dead_id);
+
 always_comb begin
-  if (int_if.s_software_int_valid) begin
+  if (w_valid_commit & int_if.s_software_int_valid) begin
     w_s0_vaddr_flush_next = csr_info.sepc;
-  end else if (int_if.m_software_int_valid) begin
+  end else if (w_valid_commit & int_if.m_software_int_valid) begin
     w_s0_vaddr_flush_next = csr_info.mepc;
-  end else if (int_if.s_timer_int_valid   ) begin
+  end else if (w_valid_commit & int_if.s_timer_int_valid   ) begin
     w_s0_vaddr_flush_next = csr_info.sepc;
-  end else if (int_if.m_timer_int_valid   ) begin
+  end else if (w_valid_commit & int_if.m_timer_int_valid   ) begin
     w_s0_vaddr_flush_next = csr_info.mepc;
-  end else if (int_if.s_external_int_valid) begin
+  end else if (w_valid_commit & int_if.s_external_int_valid) begin
     w_s0_vaddr_flush_next = csr_info.sepc;
-  end else if (int_if.m_external_int_valid) begin
+  end else if (w_valid_commit & int_if.m_external_int_valid) begin
     w_s0_vaddr_flush_next = csr_info.mepc;
   end else if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
