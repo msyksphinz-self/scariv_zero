@@ -96,12 +96,12 @@ RV_XLEN = 64
 
 FILELIST = sim_filelist.f
 
-.config_design_rv32:
+.config_design_rv32: ../src/riscv_decoder.json
 	make -B RV_XLEN=32 $(DECODE_FILES)
 	rm -rf .config_design_*
 	touch .config_design_rv32
 
-.config_design_rv64:
+.config_design_rv64: ../src/riscv_decoder.json
 	make -B RV_XLEN=64 $(DECODE_FILES)
 	rm -rf .config_design_*
 	touch .config_design_rv64
