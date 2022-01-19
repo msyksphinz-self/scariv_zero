@@ -82,12 +82,12 @@ load_binary(char const* path_exec,
   fprintf(stderr, "elf_p_addr = %012lx\n", elf_p_addr);
   fprintf(stderr, "elf_v_addr = %012lx\n", elf_v_addr);
 
-  dump_segment (".text", fd);
-  dump_segment (".text.init", fd);
-  dump_segment (".data", fd);
-
-  dump_segment (".rodata", fd);
-  dump_segment (".rodata.str1.4", fd);
+  dump_segment (".text"          , fd);
+  dump_segment (".text.init"     , fd);
+  dump_segment (".text.startup"  , fd);
+  dump_segment (".data"          , fd);
+  dump_segment (".rodata"        , fd);
+  dump_segment (".rodata.str1.4" , fd);
 
   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
     failure();
