@@ -341,8 +341,9 @@ logic [63: 0]                                                  int_commit_counte
                                                              ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id);
       end
       if (((cycle_counter % cycle_interval) == 0) && (cycle_counter != 0)) begin
-        $display ("%10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",
+        $display ("%10d : %10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",
                   cycle_counter,
+                  total_commit_counter,
                   real'(int_commit_counter) / cycle_interval,
                   real'(total_commit_counter) / real'(cycle_counter));
         int_commit_counter <= 'h0;
