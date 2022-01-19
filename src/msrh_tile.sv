@@ -47,6 +47,7 @@ regread_if regread[msrh_pkg::REGPORT_NUM] ();
 msrh_pkg::done_rpt_t w_done_rpt[msrh_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
+interrupt_if w_int_if();
 rob_info_if w_rob_info_if();
 tlb_ptw_if  w_ptw_if[1 + msrh_conf_pkg::LSU_INST_NUM]();
 lsu_access_if w_lsu_access();
@@ -168,6 +169,7 @@ msrh_frontend u_frontend (
   .br_upd_if (w_ex3_br_upd_if),
 
   .csr_info (w_csr_info),
+  .int_if   (w_int_if),
 
   .iq_disp (w_iq_disp),
   .sc_disp (w_sc_disp),
@@ -382,6 +384,7 @@ u_msrh_csu (
     .i_mispred_lsu (w_ex2_mispred_lsu),
 
     .csr_info    (w_csr_info   ),
+    .int_if      (w_int_if),
     .rob_info_if (w_rob_info_if),
 
     .sfence_if (w_sfence_if),

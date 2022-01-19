@@ -9,6 +9,8 @@ module msrh_csr
 
    /* CSR information */
    csr_info_if.master         csr_info,
+   /* Interrupt Request information */
+   interrupt_if.master        int_if,
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
@@ -660,6 +662,13 @@ assign csr_info.sedeleg = r_sedeleg;
 // assign csr_info.int_request = |(r_mip & r_mie) & (r_priv == riscv_common_pkg::PRIV_M) |
 //                               |(r_sip & r_sie) & (r_priv == riscv_common_pkg::PRIV_S) |
 //                               |(r_uip & r_uie) & (r_priv == riscv_common_pkg::PRIV_U);
+
+assign int_if.s_software_int_valid = r_sip[ 1] & r_sie[ 1] | r_mideleg[1];
+assign int_if.m_software_int_valid = r_mip[ 3] & r_mie[ 3];
+assign int_if.s_timer_int_valid    = r_sip[ 5] & r_sie[ 5] | r_mideleg[5];
+assign int_if.m_timer_int_valid    = r_mip[ 7] & r_mie[ 7];
+assign int_if.s_external_int_valid = r_sip[ 9] & r_sie[ 9] | r_mideleg[9];
+assign int_if.m_external_int_valid = r_mip[11] & r_mie[11];
 
 logic w_delegate;
 assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &

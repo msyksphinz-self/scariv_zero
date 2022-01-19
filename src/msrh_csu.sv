@@ -20,6 +20,8 @@ module msrh_csu
 
   /* CSR information */
   csr_info_if.master          csr_info,
+  /* Interrupt Request information */
+  interrupt_if.master         int_if,
   /* ROB notification interface */
   rob_info_if.slave           rob_info_if,
 
@@ -141,6 +143,7 @@ u_msrh_csr
    .write_if (w_csr_write),
 
    .csr_info (csr_info),
+   .int_if   (int_if),
 
    .i_commit (i_commit),
 

@@ -29,6 +29,8 @@ module msrh_frontend
 
  /* CSR information */
  csr_info_if.slave           csr_info,
+ /* Interrupt Request information */
+ interrupt_if.slave          int_if,
 
  // Dispatch Info
  disp_if.master    iq_disp,
@@ -173,7 +175,19 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready 
                                (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
 always_comb begin
-  if (is_flushed_commit(i_commit)) begin
+  if (int_if.s_software_int_valid) begin
+    w_s0_vaddr_flush_next = csr_info.sepc;
+  end else if (int_if.m_software_int_valid) begin
+    w_s0_vaddr_flush_next = csr_info.mepc;
+  end else if (int_if.s_timer_int_valid   ) begin
+    w_s0_vaddr_flush_next = csr_info.sepc;
+  end else if (int_if.m_timer_int_valid   ) begin
+    w_s0_vaddr_flush_next = csr_info.mepc;
+  end else if (int_if.s_external_int_valid) begin
+    w_s0_vaddr_flush_next = csr_info.sepc;
+  end else if (int_if.m_external_int_valid) begin
+    w_s0_vaddr_flush_next = csr_info.mepc;
+  end else if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
       SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
       ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;

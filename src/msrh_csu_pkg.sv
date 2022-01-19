@@ -89,3 +89,33 @@ modport slave (
 );
 
 endinterface // csr_info_if
+
+interface interrupt_if;
+
+logic   s_software_int_valid;
+logic   s_timer_int_valid;
+logic   s_external_int_valid;
+
+logic   m_software_int_valid;
+logic   m_timer_int_valid;
+logic   m_external_int_valid;
+
+modport master (
+   output s_software_int_valid,
+   output s_timer_int_valid,
+   output s_external_int_valid,
+   output m_software_int_valid,
+   output m_timer_int_valid,
+   output m_external_int_valid
+);
+
+modport slave (
+   input s_software_int_valid,
+   input s_timer_int_valid,
+   input s_external_int_valid,
+   input m_software_int_valid,
+   input m_timer_int_valid,
+   input m_external_int_valid
+);
+
+endinterface // interrupt_if
