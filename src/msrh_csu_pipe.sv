@@ -88,6 +88,7 @@ decoder_csu_ctrl u_pipe_ctrl (
   .is_fence      (w_ex0_pipe_ctrl.is_fence     ),
   .is_fence_i    (w_ex0_pipe_ctrl.is_fence_i   ),
   .is_sfence_vma (w_ex0_pipe_ctrl.is_sfence_vma),
+  .is_wfi        (),
   .csr_update    (w_ex0_csr_update             )
 );
 assign w_ex0_pipe_ctrl.csr_update = w_ex0_csr_update == decoder_csu_ctrl_pkg::CSR_UPDATE_1 ? 1'b1 : 1'b0;

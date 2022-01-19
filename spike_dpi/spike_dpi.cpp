@@ -566,6 +566,10 @@ void step_spike(long long time, long long rtl_pc,
   //         iss_insn);
   // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
+  if (iss_insn.bits() == 0x10500073U) { // WFI
+    return; // WFI doesn't update PC -> just skip
+  }
+
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
