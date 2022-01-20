@@ -37,6 +37,10 @@ module msrh_csr
 `define MSTATUS_TW  21
 `define MSTATUS_TSR 22
 
+`define SSTATUS_SIE  1
+`define SSTATUS_SPIE 5
+`define SSTATUS_SPP  8
+
 msrh_pkg::priv_t    r_priv, w_priv_next;
 
 logic w_wr_mcsr_ill_access;
@@ -723,7 +727,38 @@ always_comb begin
   w_mcause_next  = r_mcause;
   w_mtval_next   = r_mtval ;
 
-  if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid)) begin
+
+  if (i_commit.commit & (int_if.s_software_int_valid |
+                         int_if.m_software_int_valid |
+                         int_if.s_timer_int_valid    |
+                         int_if.m_timer_int_valid    |
+                         int_if.s_external_int_valid |
+                         int_if.m_external_int_valid)) begin
+
+    if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0)) begin
+      // Delegation
+      // CSRWrite (SYSREG_ADDR_SEPC,  epc);
+      w_scause_next = 1 << (riscv_pkg::XLEN_W - 1) | r_mideleg & w_m_int_en;
+      w_stval_next = 'h0;
+      // CSRRead  (SYSREG_ADDR_STVEC,to &tvec);
+      w_priv_next = riscv_common_pkg::PRIV_S;
+
+      w_mstatus_next[`SSTATUS_SIE] = r_mstatus[`SSTATUS_SPIE];
+      w_mstatus_next[`SSTATUS_SPP] = r_priv;
+      w_mstatus_next[`SSTATUS_SIE] = 'h0;
+    end else begin
+      // CSRWrite (SYSREG_ADDR_MEPC,   epc);
+      w_mcause_next = 1 << (riscv_pkg::XLEN_W - 1) | r_mideleg & w_m_int_en;
+      w_mtval_next = 'h0;
+      // CSRRead  (SYSREG_ADDR_MTVEC, &tvec);
+
+      w_mstatus_next[`MSTATUS_MIE] = r_mstatus[`MSTATUS_MPIE];
+      w_mstatus_next[`MSTATUS_MPP] = r_priv;
+      w_mstatus_next[`MSTATUS_MIE] = 'h0;
+
+    end // else: !if(r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) 1= 'h0))
+
+  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid)) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
