@@ -663,11 +663,11 @@ assign csr_info.sedeleg = r_sedeleg;
 //                               |(r_sip & r_sie) & (r_priv == riscv_common_pkg::PRIV_S) |
 //                               |(r_uip & r_uie) & (r_priv == riscv_common_pkg::PRIV_U);
 
-assign int_if.s_software_int_valid = r_sip[ 1] & r_sie[ 1] | r_mideleg[ 3] & int_if.m_software_int_valid;
+assign int_if.s_software_int_valid = r_sip[ 1] & r_sie[ 1] | r_mideleg[1] & r_mip[1] & r_mie[1];
 assign int_if.m_software_int_valid = r_mip[ 3] & r_mie[ 3];
-assign int_if.s_timer_int_valid    = r_sip[ 5] & r_sie[ 5] | r_mideleg[ 7] & int_if.m_timer_int_valid;
+assign int_if.s_timer_int_valid    = r_sip[ 5] & r_sie[ 5] | r_mideleg[5] & r_mip[5] & r_mie[5];
 assign int_if.m_timer_int_valid    = r_mip[ 7] & r_mie[ 7];
-assign int_if.s_external_int_valid = r_sip[ 9] & r_sie[ 9] | r_mideleg[11] & int_if.m_external_int_valid;
+assign int_if.s_external_int_valid = r_sip[ 9] & r_sie[ 9] | r_mideleg[9] & r_mip[9] & r_mie[9];
 assign int_if.m_external_int_valid = r_mip[11] & r_mie[11];
 
 logic w_delegate;

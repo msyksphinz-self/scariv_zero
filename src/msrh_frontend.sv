@@ -179,17 +179,17 @@ assign w_valid_commit = i_commit.commit & |(i_commit.grp_id & ~i_commit.dead_id)
 
 always_comb begin
   if (w_valid_commit & int_if.s_software_int_valid) begin
-    w_s0_vaddr_flush_next = csr_info.sepc;
+    w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
   end else if (w_valid_commit & int_if.m_software_int_valid) begin
-    w_s0_vaddr_flush_next = csr_info.mepc;
+    w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
   end else if (w_valid_commit & int_if.s_timer_int_valid   ) begin
-    w_s0_vaddr_flush_next = csr_info.sepc;
+    w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
   end else if (w_valid_commit & int_if.m_timer_int_valid   ) begin
-    w_s0_vaddr_flush_next = csr_info.mepc;
+    w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
   end else if (w_valid_commit & int_if.s_external_int_valid) begin
-    w_s0_vaddr_flush_next = csr_info.sepc;
+    w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
   end else if (w_valid_commit & int_if.m_external_int_valid) begin
-    w_s0_vaddr_flush_next = csr_info.mepc;
+    w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
   end else if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
       SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
