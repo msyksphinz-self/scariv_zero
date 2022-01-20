@@ -20,6 +20,23 @@ module msrh_csr
 
 `include "msrh_csr_def.svh"
 
+`define MSTATUS_SIE  1
+`define MSTATUS_SPIE 5
+`define MSTATUS_SPP  8
+
+`define MSTATUS_MIE  3
+`define MSTATUS_MPIE 7
+`define MSTATUS_MPP  12:11
+`define MSTATUS_FS   14:13
+`define MSTATUS_XS   16:15
+`define MSTATUS_MPRV 17
+
+`define MSTATUS_SUM 18
+`define MSTATUS_MXR 19
+`define MSTATUS_TVM 20
+`define MSTATUS_TW  21
+`define MSTATUS_TSR 22
+
 msrh_pkg::priv_t    r_priv, w_priv_next;
 
 logic w_wr_mcsr_ill_access;
@@ -663,33 +680,33 @@ assign csr_info.sedeleg = r_sedeleg;
 //                               |(r_sip & r_sie) & (r_priv == riscv_common_pkg::PRIV_S) |
 //                               |(r_uip & r_uie) & (r_priv == riscv_common_pkg::PRIV_U);
 
-assign int_if.s_software_int_valid = r_sip[ 1] & r_sie[ 1] | r_mideleg[1] & r_mip[1] & r_mie[1];
-assign int_if.m_software_int_valid = r_mip[ 3] & r_mie[ 3];
-assign int_if.s_timer_int_valid    = r_sip[ 5] & r_sie[ 5] | r_mideleg[5] & r_mip[5] & r_mie[5];
-assign int_if.m_timer_int_valid    = r_mip[ 7] & r_mie[ 7];
-assign int_if.s_external_int_valid = r_sip[ 9] & r_sie[ 9] | r_mideleg[9] & r_mip[9] & r_mie[9];
-assign int_if.m_external_int_valid = r_mip[11] & r_mie[11];
+logic [riscv_pkg::XLEN_W-1: 0] w_m_int_en;
+logic [riscv_pkg::XLEN_W-1: 0] w_s_int_en;
+logic [riscv_pkg::XLEN_W-1: 0] w_m_pend_ints;
+logic                          w_m_csr_int_en;
+logic                          w_s_csr_int_en;
+logic [riscv_pkg::XLEN_W-1: 0] w_s_pend_ints;
+
+assign w_m_csr_int_en = (r_priv < msrh_pkg::PRV_M) |
+                        ((r_priv == msrh_pkg::PRV_M) & r_mstatus[`MSTATUS_MIE]);
+assign w_m_pend_ints = r_mip & r_mie;
+assign w_m_int_en  = w_m_pend_ints & ~r_mideleg & {riscv_pkg::XLEN_W{w_m_csr_int_en}};
+
+assign w_s_csr_int_en = (r_priv < msrh_pkg::PRV_S) |
+                        ((r_priv == msrh_pkg::PRV_S) & r_mstatus[`MSTATUS_SIE]);
+assign w_s_int_en = w_m_int_en == 'h0 ? w_m_pend_ints & r_mideleg & {riscv_pkg::XLEN_W{w_s_csr_int_en}} :
+                    'h0;
+
+assign int_if.s_software_int_valid = w_m_int_en[ 1] | w_s_int_en[ 1];
+assign int_if.m_software_int_valid = w_m_int_en[ 3] | w_s_int_en[ 3];
+assign int_if.s_timer_int_valid    = w_m_int_en[ 5] | w_s_int_en[ 5];
+assign int_if.m_timer_int_valid    = w_m_int_en[ 7] | w_s_int_en[ 7];
+assign int_if.s_external_int_valid = w_m_int_en[ 9] | w_s_int_en[ 9];
+assign int_if.m_external_int_valid = w_m_int_en[11] | w_s_int_en[11];
 
 logic w_delegate;
 assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
                     r_medeleg[int'(i_commit.except_type)];
-
-`define MSTATUS_SIE  1
-`define MSTATUS_SPIE 5
-`define MSTATUS_SPP  8
-
-`define MSTATUS_MIE  3
-`define MSTATUS_MPIE 7
-`define MSTATUS_MPP  12:11
-`define MSTATUS_FS   14:13
-`define MSTATUS_XS   16:15
-`define MSTATUS_MPRV 17
-
-`define MSTATUS_SUM 18
-`define MSTATUS_MXR 19
-`define MSTATUS_TVM 20
-`define MSTATUS_TW  21
-`define MSTATUS_TSR 22
 
 always_comb begin
   w_mstatus = r_mstatus;
