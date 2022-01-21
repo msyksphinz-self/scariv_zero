@@ -506,7 +506,16 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
                        (rtl_exception_cause == 7 ))) { // Store Access Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", time,
+            rtl_cmt_id, rtl_grp_id,
+            rtl_exception_cause == 0 ? "Instruction Access Misaligned" :
+            rtl_exception_cause == 1 ? "Instruction Access Fault" :
+            rtl_exception_cause == 2 ? "Illegal Instruction" :
+            rtl_exception_cause == 4 ? "Load Access Misaligned" :
+            rtl_exception_cause == 5 ? "Load Access Fault" :
+            rtl_exception_cause == 6 ? "Store Access Misaligned" :
+            rtl_exception_cause == 7 ? "Store Access Fault" : "",
+            rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
     return;
   }
