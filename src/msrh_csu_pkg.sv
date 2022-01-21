@@ -119,3 +119,22 @@ modport slave (
 );
 
 endinterface // interrupt_if
+
+package msrh_csu_pkg;
+
+typedef enum logic [ 1: 0] {
+  TVEC_MODE_DIRECT = 2'b00,
+  TVEC_MODE_VECTOR = 2'b01
+} tvec_mode_t;
+
+typedef struct packed {
+  logic [riscv_pkg::XLEN_W-1: 2] base;
+  tvec_mode_t                    mode;
+} tvec_field_t;
+
+typedef union packed {
+  tvec_field_t                   field;
+  logic [riscv_pkg::XLEN_W-1: 0] raw_bit;
+} tvec_t;
+
+endpackage // msrh_csu_pkg

@@ -1,5 +1,6 @@
 module msrh_csr
   import riscv_pkg::*;
+  import msrh_csu_pkg::*;
   (
    input logic                i_clk,
    input logic                i_reset_n,
@@ -58,7 +59,7 @@ logic [63: 0]                 r_hpmcounter [31: 3];
 
 logic [XLEN_W-1: 0] r_ustatus;
 logic [XLEN_W-1: 0] r_uie;
-logic [XLEN_W-1: 0] r_utvec;
+tvec_t              r_utvec;
 logic [XLEN_W-1: 0] r_vstart;
 logic [XLEN_W-1: 0] r_vxsat;
 logic [XLEN_W-1: 0] r_vxrm;
@@ -73,7 +74,7 @@ logic [XLEN_W-1: 0] r_fcsr;
 logic [XLEN_W-1: 0] r_sedeleg;
 logic [XLEN_W-1: 0] r_sideleg;
 logic [XLEN_W-1: 0] r_sie;
-logic [XLEN_W-1: 0] r_stvec;
+tvec_t              r_stvec;
 logic [XLEN_W-1: 0] r_scounteren;
 logic [XLEN_W-1: 0] r_sscratch;
 logic [XLEN_W-1: 0] r_sepc, w_sepc_next;
@@ -85,7 +86,7 @@ logic [XLEN_W-1: 0] r_hstatus;
 logic [XLEN_W-1: 0] r_hedeleg;
 logic [XLEN_W-1: 0] r_hideleg;
 logic [XLEN_W-1: 0] r_hie;
-logic [XLEN_W-1: 0] r_htvec;
+tvec_t              r_htvec;
 logic [XLEN_W-1: 0] r_hscratch;
 logic [XLEN_W-1: 0] r_hepc;
 logic [XLEN_W-1: 0] r_hcause;
@@ -102,7 +103,7 @@ logic [XLEN_W-1: 0] r_misa;
 logic [XLEN_W-1: 0] r_medeleg;
 logic [XLEN_W-1: 0] r_mideleg;
 logic [XLEN_W-1: 0] r_mie;
-logic [XLEN_W-1: 0] r_mtvec;
+tvec_t              r_mtvec;
 logic [XLEN_W-1: 0] r_mcounteren;
 logic [XLEN_W-1: 0] r_mscratch;
 logic [XLEN_W-1: 0] r_mepc,   w_mepc_next;
@@ -171,7 +172,7 @@ always_comb begin
   case (read_if.addr)
     `SYSREG_ADDR_USTATUS        : read_if.data = r_ustatus;
     `SYSREG_ADDR_UIE            : read_if.data = r_uie;
-    `SYSREG_ADDR_UTVEC          : read_if.data = r_utvec;
+    `SYSREG_ADDR_UTVEC          : read_if.data = r_utvec.raw_bit;
     `SYSREG_ADDR_VSTART         : read_if.data = r_vstart;
     `SYSREG_ADDR_VXSAT          : read_if.data = r_vxsat;
     `SYSREG_ADDR_VXRM           : read_if.data = r_vxrm;
@@ -252,7 +253,7 @@ always_comb begin
     `SYSREG_ADDR_SEDELEG        : read_if.data = r_sedeleg;
     `SYSREG_ADDR_SIDELEG        : read_if.data = r_sideleg;
     `SYSREG_ADDR_SIE            : read_if.data = r_sie;
-    `SYSREG_ADDR_STVEC          : read_if.data = r_stvec;
+    `SYSREG_ADDR_STVEC          : read_if.data = r_stvec.raw_bit;
     `SYSREG_ADDR_SCOUNTEREN     : read_if.data = r_scounteren;
     `SYSREG_ADDR_SSCRATCH       : read_if.data = r_sscratch;
     `SYSREG_ADDR_SEPC           : read_if.data = r_sepc;
@@ -264,7 +265,7 @@ always_comb begin
     `SYSREG_ADDR_HEDELEG        : read_if.data = r_hedeleg;
     `SYSREG_ADDR_HIDELEG        : read_if.data = r_hideleg;
     `SYSREG_ADDR_HIE            : read_if.data = r_hie;
-    `SYSREG_ADDR_HTVEC          : read_if.data = r_htvec;
+    `SYSREG_ADDR_HTVEC          : read_if.data = r_htvec.raw_bit;
     `SYSREG_ADDR_HSCRATCH       : read_if.data = r_hscratch;
     `SYSREG_ADDR_HEPC           : read_if.data = r_hepc;
     `SYSREG_ADDR_HCAUSE         : read_if.data = r_hcause;
@@ -280,7 +281,7 @@ always_comb begin
     `SYSREG_ADDR_MEDELEG        : read_if.data = r_medeleg;
     `SYSREG_ADDR_MIDELEG        : read_if.data = r_mideleg;
     `SYSREG_ADDR_MIE            : read_if.data = r_mie;
-    `SYSREG_ADDR_MTVEC          : read_if.data = r_mtvec;
+    `SYSREG_ADDR_MTVEC          : read_if.data = r_mtvec.raw_bit;
     `SYSREG_ADDR_MCOUNTEREN     : read_if.data = r_mcounteren;
     `SYSREG_ADDR_MSCRATCH       : read_if.data = r_mscratch;
     `SYSREG_ADDR_MEPC           : read_if.data = r_mepc;
@@ -383,7 +384,13 @@ end // always_comb
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_ustatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_USTATUS       ) begin r_ustatus       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_uie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UIE           ) begin r_uie           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_utvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UTVEC         ) begin r_utvec         <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_utvec.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UTVEC) begin
+    r_utvec.raw_bit <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vstart        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VSTART        ) begin r_vstart        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxsat         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXSAT         ) begin r_vxsat         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxrm          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXRM          ) begin r_vxrm          <= write_if.data; end end
@@ -457,7 +464,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_fcs
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SEDELEG       ) begin r_sedeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIDELEG       ) begin r_sideleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIE           ) begin r_sie           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STVEC         ) begin r_stvec         <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_stvec.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STVEC) begin
+    r_stvec.raw_bit <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SCOUNTEREN    ) begin r_scounteren    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSCRATCH      ) begin r_sscratch      <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
@@ -474,7 +487,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hst
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEDELEG       ) begin r_hedeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIDELEG       ) begin r_hideleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIE           ) begin r_hie           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_htvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HTVEC         ) begin r_htvec         <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_htvec.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HTVEC) begin
+    r_htvec.raw_bit <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSCRATCH      ) begin r_hscratch      <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEPC          ) begin r_hepc          <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hcause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HCAUSE        ) begin r_hcause        <= write_if.data; end end
@@ -518,7 +537,13 @@ end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_medeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG       ) begin r_medeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG       ) begin r_mideleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE           ) begin r_mie           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mtvec         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MTVEC         ) begin r_mtvec         <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mtvec.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MTVEC) begin
+    r_mtvec.raw_bit <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCOUNTEREN    ) begin r_mcounteren    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSCRATCH      ) begin r_mscratch      <= write_if.data; end end
 
