@@ -774,7 +774,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MPP ] = msrh_pkg::PRV_U;
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
-      w_mtval_next = 'h0;
+      // w_mtval_next = 'h0;
     end else if (i_commit.except_type == msrh_pkg::SRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */

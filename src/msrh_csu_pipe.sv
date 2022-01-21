@@ -193,7 +193,10 @@ assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
 logic w_ex3_sfence_vma_illegal;
+logic w_ex3_sret_tsr_illegal;
+
 assign w_ex3_sfence_vma_illegal = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM];
+assign w_ex3_sret_tsr_illegal   = r_ex3_pipe_ctrl.is_sret       & i_mstatus[`MSTATUS_TSR];
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
@@ -203,20 +206,19 @@ assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                    r_ex3_pipe_ctrl.is_uret |
                                    r_ex3_pipe_ctrl.is_ecall |
                                    r_ex3_pipe_ctrl.is_fence_i |
-                                   r_ex3_csr_illegal |
-                                   w_ex3_sfence_vma_illegal |
+                                   r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
                                    (write_if.valid & write_if.resp_error);
 
-assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
+assign ex3_done_if.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? msrh_pkg::ILLEGAL_INST :
+                                 r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_U) ? msrh_pkg::ECALL_U :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_M) ? msrh_pkg::ECALL_M :
-                                 (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM]) ? msrh_pkg::ILLEGAL_INST :
                                  msrh_pkg::SILENT_FLUSH;
 
-assign ex3_done_if.except_tval = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM] ? r_ex3_issue.inst :
+assign ex3_done_if.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
                                  'h0;
 
 // ------------
