@@ -784,7 +784,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SPP ] = msrh_pkg::PRV_U;
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
       w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
-      w_mtval_next = 'h0;
+      w_stval_next = i_commit.tval;
     end else if (i_commit.except_type == msrh_pkg::URET) begin // if (i_commit.except_type == msrh_pkg::SRET)
       w_mtval_next = 'h0;
     end else if (w_delegate) begin
