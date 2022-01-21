@@ -215,11 +215,11 @@ logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] r_br_tag_current_idx;
 generate for (genvar b_idx = 0; b_idx < msrh_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
   always_comb begin
     w_br_mask_valid_next[b_idx] = r_br_mask_valid[b_idx];
-    for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-      if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
-        w_br_mask_valid_next[b_idx] = 1'b0;
-      end
-    end
+    // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
+    //   if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
+    //     w_br_mask_valid_next[b_idx] = 1'b0;
+    //   end
+    // end
     if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
       w_br_mask_valid_next[b_idx] = 1'b0;
     end
