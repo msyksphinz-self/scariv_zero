@@ -243,8 +243,9 @@ typedef struct packed {
     reg_wr_issue_t         wr_reg;
     reg_rd_issue_t [ 1: 0] rd_regs;
 
-    logic             except_valid;
-    except_t except_type;
+    logic                          except_valid;
+    except_t                       except_type;
+    logic [riscv_pkg::XLEN_W-1: 0] except_tval;
   } issue_t;
 
 

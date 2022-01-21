@@ -3,6 +3,7 @@ logic                                done;
 logic [RV_ENTRY_SIZE-1: 0]           index_oh;
 logic                                except_valid;
 msrh_pkg::except_t                   except_type;
+logic [riscv_pkg::XLEN_W-1: 0]       except_tval;
 // For flushing another instruction
 logic                                another_flush_valid;
 logic [msrh_pkg::CMT_ID_W-1:0]       another_flush_cmt_id;
@@ -13,6 +14,7 @@ modport master(
   output index_oh,
   output except_valid,
   output except_type,
+  output except_tval,
   output another_flush_valid,
   output another_flush_cmt_id,
   output another_flush_grp_id
@@ -23,6 +25,7 @@ modport slave(
   input index_oh,
   input except_valid,
   input except_type,
+  input except_tval,
   input another_flush_valid,
   input another_flush_cmt_id,
   input another_flush_grp_id

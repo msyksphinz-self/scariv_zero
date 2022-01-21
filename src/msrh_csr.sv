@@ -21,33 +21,13 @@ module msrh_csr
 
 `include "msrh_csr_def.svh"
 
-`define MSTATUS_SIE  1
-`define MSTATUS_SPIE 5
-`define MSTATUS_SPP  8
-
-`define MSTATUS_MIE  3
-`define MSTATUS_MPIE 7
-`define MSTATUS_MPP  12:11
-`define MSTATUS_FS   14:13
-`define MSTATUS_XS   16:15
-`define MSTATUS_MPRV 17
-
-`define MSTATUS_SUM 18
-`define MSTATUS_MXR 19
-`define MSTATUS_TVM 20
-`define MSTATUS_TW  21
-`define MSTATUS_TSR 22
-
-`define SSTATUS_SIE  1
-`define SSTATUS_SPIE 5
-`define SSTATUS_SPP  8
-
 msrh_pkg::priv_t    r_priv, w_priv_next;
 
 logic w_wr_mcsr_ill_access;
 logic w_wr_scsr_ill_access;
 logic w_wr_mcsr_ill_write ;
 
+logic w_rd_satp_tvm_1;
 logic w_rd_mcsr_ill_access;
 logic w_rd_scsr_ill_access;
 
@@ -607,10 +587,11 @@ assign write_if.resp_error = write_if.valid & ((write_if.addr == `SYSREG_ADDR_CY
                                                w_wr_mcsr_ill_access | w_wr_scsr_ill_access | w_wr_mcsr_ill_write
                                                );
 
+assign w_rd_satp_tvm_1      = (read_if.addr == `SYSREG_ADDR_SATP) & r_mstatus[`MSTATUS_TVM] & (r_priv == riscv_common_pkg::PRIV_S);
 assign w_rd_mcsr_ill_access = (read_if.addr[9:8] == 2'b11) & ((r_priv == riscv_common_pkg::PRIV_U) | (r_priv == riscv_common_pkg::PRIV_S));
 assign w_rd_scsr_ill_access = (read_if.addr[9:8] == 2'b01) & ((r_priv == riscv_common_pkg::PRIV_U));
 
-assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_ill_access);
+assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_ill_access | w_rd_satp_tvm_1);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 3] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_hpmcounter[ 3] <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 4] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_hpmcounter[ 4] <= write_if.data; end end
@@ -810,7 +791,8 @@ always_comb begin
       w_sepc_next = i_commit.epc;
       /* verilator lint_off WIDTH */
       w_scause_next = i_commit.except_type;
-      if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+      if (i_commit.except_type == msrh_pkg::ILLEGAL_INST        ||
+          i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
           i_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
           i_commit.except_type == msrh_pkg::INST_PAGE_FAULT     ||
           i_commit.except_type == msrh_pkg::LOAD_ADDR_MISALIGN  ||
@@ -833,7 +815,8 @@ always_comb begin
       w_mepc_next = i_commit.epc;
       /* verilator lint_off WIDTH */
       w_mcause_next = i_commit.except_type;
-      if (i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
+      if (i_commit.except_type == msrh_pkg::ILLEGAL_INST        ||
+          i_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
           i_commit.except_type == msrh_pkg::INST_ACC_FAULT      ||
           i_commit.except_type == msrh_pkg::INST_PAGE_FAULT     ||
           i_commit.except_type == msrh_pkg::LOAD_ADDR_MISALIGN  ||
@@ -851,6 +834,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
       w_priv_next = msrh_pkg::PRV_M;
     end // else: !if(w_delegate)
+
   end else if (write_if.valid) begin
     case(write_if.addr)
       `SYSREG_ADDR_SEPC : begin

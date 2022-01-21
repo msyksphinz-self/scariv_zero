@@ -17,7 +17,8 @@ module msrh_csu_pipe
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
   /* CSR information */
-  input msrh_pkg::priv_t            i_status_priv,
+  input msrh_pkg::priv_t               i_status_priv,
+  input logic [riscv_pkg::XLEN_W-1: 0] i_mstatus,
 
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
@@ -191,6 +192,9 @@ assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
+logic w_ex3_sfence_vma_illegal;
+assign w_ex3_sfence_vma_illegal = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM];
+
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
 assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
@@ -200,6 +204,7 @@ assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                    r_ex3_pipe_ctrl.is_ecall |
                                    r_ex3_pipe_ctrl.is_fence_i |
                                    r_ex3_csr_illegal |
+                                   w_ex3_sfence_vma_illegal |
                                    (write_if.valid & write_if.resp_error);
 
 assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
@@ -208,8 +213,11 @@ assign ex3_done_if.except_type = r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_U) ? msrh_pkg::ECALL_U :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
                                  r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_M) ? msrh_pkg::ECALL_M :
-                                 (write_if.valid & write_if.resp_error) | r_ex3_csr_illegal ? msrh_pkg::ILLEGAL_INST :
+                                 (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM]) ? msrh_pkg::ILLEGAL_INST :
                                  msrh_pkg::SILENT_FLUSH;
+
+assign ex3_done_if.except_tval = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM] ? r_ex3_issue.inst :
+                                 'h0;
 
 // ------------
 // CSR Update
@@ -224,10 +232,10 @@ assign write_if.data  = r_ex3_result;
 // ------------
 // SFENCE Update
 // ------------
-assign sfence_if.valid = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma;
-assign sfence_if.is_rs1_x0  = r_ex3_issue.rd_regs[0].regidx == 'h0;
-assign sfence_if.is_rs2_x0  = r_ex3_issue.rd_regs[1].regidx == 'h0;
-assign sfence_if.vaddr      = r_ex3_result[riscv_pkg::VADDR_W-1:0];
+assign sfence_if.valid     = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal;
+assign sfence_if.is_rs1_x0 = r_ex3_issue.rd_regs[0].regidx == 'h0;
+assign sfence_if.is_rs2_x0 = r_ex3_issue.rd_regs[1].regidx == 'h0;
+assign sfence_if.vaddr     = r_ex3_result[riscv_pkg::VADDR_W-1:0];
 
 // ---------------
 // FENCE_I update

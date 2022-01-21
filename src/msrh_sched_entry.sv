@@ -32,7 +32,7 @@ module msrh_sched_entry
 
    // Done Interface
    input logic                                 i_pipe_done,
-                                               done_if.slave pipe_done_if,
+   done_if.slave                               pipe_done_if,
 
    // Commit notification
    input                                       msrh_pkg::commit_blk_t i_commit,
@@ -45,7 +45,8 @@ module msrh_sched_entry
    output logic [msrh_pkg::CMT_ID_W-1:0]       o_cmt_id,
    output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
    output logic                                o_except_valid,
-   output                                      msrh_pkg::except_t o_except_type
+   output msrh_pkg::except_t                   o_except_type,
+   output logic [riscv_pkg::XLEN_W-1 : 0]      o_except_tval
    );
 
 logic    r_issued;
@@ -214,6 +215,7 @@ always_comb begin
           w_state_next = msrh_pkg::DONE;
           w_entry_next.except_valid = pipe_done_if.except_valid;
           w_entry_next.except_type  = pipe_done_if.except_type;
+          w_entry_next.except_tval  = pipe_done_if.except_tval;
         end
         if (r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted ||
             r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
@@ -336,6 +338,8 @@ assign o_cmt_id = r_entry.cmt_id;
 assign o_grp_id = r_entry.grp_id;
 assign o_except_valid = r_entry.except_valid;
 assign o_except_type  = r_entry.except_type;
+assign o_except_tval  = r_entry.except_tval;
+
 assign o_entry_finish = w_entry_finish & ((r_state == msrh_pkg::DEAD) |
                                           (r_state == msrh_pkg::WAIT_COMPLETE));
 

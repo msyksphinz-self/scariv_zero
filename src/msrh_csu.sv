@@ -124,6 +124,7 @@ u_csu_pipe
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
    .i_status_priv (csr_info.priv),
+   .i_mstatus     (csr_info.mstatus),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
    .sfence_if (sfence_if),
