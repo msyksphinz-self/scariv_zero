@@ -137,4 +137,17 @@ typedef union packed {
   logic [riscv_pkg::XLEN_W-1: 0] raw_bit;
 } tvec_t;
 
+
+typedef struct packed {
+logic [31: 3]  hpm;
+logic [ 2: 0]  ir;
+logic          tm;
+logic          cy;
+} counteren_field_t;
+
+typedef union packed {
+  counteren_field_t field;
+  logic [31: 0] raw_bit;
+} counteren_t;
+
 endpackage // msrh_csu_pkg

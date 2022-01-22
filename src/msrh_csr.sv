@@ -28,6 +28,7 @@ logic w_wr_scsr_ill_access;
 logic w_wr_mcsr_ill_write ;
 
 logic w_rd_satp_tvm_1;
+logic w_rd_counter;
 logic w_rd_mcsr_ill_access;
 logic w_rd_scsr_ill_access;
 
@@ -55,7 +56,7 @@ logic [XLEN_W-1: 0] r_sedeleg;
 logic [XLEN_W-1: 0] r_sideleg;
 logic [XLEN_W-1: 0] r_sie;
 tvec_t              r_stvec;
-logic [XLEN_W-1: 0] r_scounteren;
+counteren_t         r_scounteren;
 logic [XLEN_W-1: 0] r_sscratch;
 logic [XLEN_W-1: 0] r_sepc, w_sepc_next;
 logic [XLEN_W-1: 0] r_scause, w_scause_next;
@@ -84,7 +85,7 @@ logic [XLEN_W-1: 0] r_medeleg;
 logic [XLEN_W-1: 0] r_mideleg;
 logic [XLEN_W-1: 0] r_mie;
 tvec_t              r_mtvec;
-logic [XLEN_W-1: 0] r_mcounteren;
+counteren_t         r_mcounteren;
 logic [XLEN_W-1: 0] r_mscratch;
 logic [XLEN_W-1: 0] r_mepc,   w_mepc_next;
 logic [XLEN_W-1: 0] r_mcause, w_mcause_next;
@@ -165,6 +166,7 @@ always_comb begin
     `SYSREG_ADDR_FRM            : read_if.data = r_frm;
     `SYSREG_ADDR_FCSR           : read_if.data = r_fcsr;
     `SYSREG_ADDR_CYCLE          : read_if.data = r_cycle  [riscv_pkg::XLEN_W-1: 0];
+    `SYSREG_ADDR_TIME           : read_if.data = r_time   [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_INSTRET        : read_if.data = r_instret[riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_HPMCOUNTER3    : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_HPMCOUNTER4    : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
@@ -234,7 +236,7 @@ always_comb begin
     `SYSREG_ADDR_SIDELEG        : read_if.data = r_sideleg;
     `SYSREG_ADDR_SIE            : read_if.data = r_sie;
     `SYSREG_ADDR_STVEC          : read_if.data = r_stvec.raw_bit;
-    `SYSREG_ADDR_SCOUNTEREN     : read_if.data = r_scounteren;
+    `SYSREG_ADDR_SCOUNTEREN     : read_if.data = r_scounteren.raw_bit;
     `SYSREG_ADDR_SSCRATCH       : read_if.data = r_sscratch;
     `SYSREG_ADDR_SEPC           : read_if.data = r_sepc;
     `SYSREG_ADDR_SCAUSE         : read_if.data = r_scause;
@@ -262,7 +264,7 @@ always_comb begin
     `SYSREG_ADDR_MIDELEG        : read_if.data = r_mideleg;
     `SYSREG_ADDR_MIE            : read_if.data = r_mie;
     `SYSREG_ADDR_MTVEC          : read_if.data = r_mtvec.raw_bit;
-    `SYSREG_ADDR_MCOUNTEREN     : read_if.data = r_mcounteren;
+    `SYSREG_ADDR_MCOUNTEREN     : read_if.data = r_mcounteren.raw_bit;
     `SYSREG_ADDR_MSCRATCH       : read_if.data = r_mscratch;
     `SYSREG_ADDR_MEPC           : read_if.data = r_mepc;
     `SYSREG_ADDR_MCAUSE         : read_if.data = r_mcause;
@@ -451,7 +453,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_stvec.raw_bit <= write_if.data;
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SCOUNTEREN    ) begin r_scounteren    <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_scounteren.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_SCOUNTEREN) begin
+    r_scounteren.raw_bit <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSCRATCH      ) begin r_sscratch      <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
 
@@ -524,7 +532,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_mtvec.raw_bit <= write_if.data;
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcounteren    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MCOUNTEREN    ) begin r_mcounteren    <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mcounteren.raw_bit <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MCOUNTEREN) begin
+    r_mcounteren.raw_bit <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSCRATCH      ) begin r_mscratch      <= write_if.data; end end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIP           ) begin r_mip           <= write_if.data; end end
@@ -563,7 +578,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_time <= 'h0;
@@ -580,7 +594,7 @@ assign w_wr_scsr_ill_access = (write_if.addr[9:8] == 2'b01) & ((r_priv == riscv_
 assign w_wr_mcsr_ill_write  = (write_if.addr[11:10] == 2'b11);
 
 assign write_if.resp_error = write_if.valid & ((write_if.addr == `SYSREG_ADDR_CYCLE   ) |
-                                               /* (write_if.addr == `SYSREG_ADDR_TIME    ) | */
+                                               (write_if.addr == `SYSREG_ADDR_TIME    ) |
                                                (write_if.addr == `SYSREG_ADDR_INSTRET ) |
                                                (write_if.addr == `SYSREG_ADDR_CYCLEH  ) |
                                                (write_if.addr == `SYSREG_ADDR_INSTRETH) |
@@ -588,10 +602,15 @@ assign write_if.resp_error = write_if.valid & ((write_if.addr == `SYSREG_ADDR_CY
                                                );
 
 assign w_rd_satp_tvm_1      = (read_if.addr == `SYSREG_ADDR_SATP) & r_mstatus[`MSTATUS_TVM] & (r_priv == riscv_common_pkg::PRIV_S);
+assign w_rd_counter = ((r_priv == riscv_common_pkg::PRIV_U) | (r_priv == riscv_common_pkg::PRIV_S)) &
+                      ((read_if.addr == `SYSREG_ADDR_CYCLE)   & r_mcounteren.field.cy |
+                       (read_if.addr == `SYSREG_ADDR_TIME)    & r_mcounteren.field.tm |
+                       (read_if.addr == `SYSREG_ADDR_INSTRET) & r_mcounteren.field.ir);
 assign w_rd_mcsr_ill_access = (read_if.addr[9:8] == 2'b11) & ((r_priv == riscv_common_pkg::PRIV_U) | (r_priv == riscv_common_pkg::PRIV_S));
 assign w_rd_scsr_ill_access = (read_if.addr[9:8] == 2'b01) & ((r_priv == riscv_common_pkg::PRIV_U));
 
-assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_ill_access | w_rd_satp_tvm_1);
+assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_ill_access |
+                                             w_rd_counter | w_rd_satp_tvm_1);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 3] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_hpmcounter[ 3] <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 4] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_hpmcounter[ 4] <= write_if.data; end end
