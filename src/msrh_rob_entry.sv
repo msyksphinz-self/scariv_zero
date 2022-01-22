@@ -176,7 +176,7 @@ always_comb begin
           w_entry_next.except_valid[d_idx] = r_entry.grp_id[d_idx];
           w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
           w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
-          w_entry_next.flush_valid [d_idx] = 1'b1;
+          w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
         end
       end
 
