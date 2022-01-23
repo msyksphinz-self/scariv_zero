@@ -58,6 +58,7 @@ jobs:
           ./configure
           make
       - name: Install Verilator ${{ matrix.verilator }}
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
         run: |
           cd verilator-${{ matrix.verilator }}
           sudo make install
