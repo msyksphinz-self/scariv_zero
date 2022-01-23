@@ -107,10 +107,10 @@ FILELIST = sim_filelist.f
 	rm -rf .config_design_*
 	touch .config_design_rv64
 
-rv32_build:
+rv32_build: $(FILELIST) .config_design_rv32
 	verilator --top-module $(TOP) -o ../$(TOP)_rv32_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_rv32_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv -f $(FILELIST)
 
-rv64_build:
+rv64_build: $(FILELIST) .config_design_rv64
 	verilator --top-module $(TOP) -o ../$(TOP)_rv64_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_rv64_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv  -f $(FILELIST)
 
 rv32_tiny: $(FILELIST) .config_design_rv32
