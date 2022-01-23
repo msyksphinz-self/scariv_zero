@@ -15,16 +15,15 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    name: ci_rv64_build
+  node-docker:
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:latest
+    name: ci_rv_list
     strategy:
       matrix:
         system: ["ubuntu-20.04"]
         verilator: ["4.214"]
-
-    # The type of runner that the job will run on
-    runs-on: ${{ matrix.system }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -40,33 +39,33 @@ jobs:
           sudo apt-get install verilator
           which verilator
 
-      # Build Verilator
-      - name: Cache Verilator ${{ matrix.verilator }}
-        uses: actions/cache@v2.1.6
-        id: cache-verilator
-        with:
-          path: verilator-${{ matrix.verilator }}
-          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
-
-      - name: Compile Verilator ${{ matrix.verilator }}
-        if: steps.cache-verilator.outputs.cache-hit != 'true'
-        run: |
-          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
-          tar xvf v${{ matrix.verilator }}.tar.gz
-          cd verilator-${{ matrix.verilator }}
-          autoconf
-          ./configure
-          make
-      - name: Install Verilator ${{ matrix.verilator }}
-        run: |
-          cd verilator-${{ matrix.verilator }}
-          sudo make install
-          verilator --version
-
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v2
-        with:
-          submodules: true
+      ## # Build Verilator
+      ## - name: Cache Verilator ${{ matrix.verilator }}
+      ##   uses: actions/cache@v2.1.6
+      ##   id: cache-verilator
+      ##   with:
+      ##     path: verilator-${{ matrix.verilator }}
+      ##     key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+      ##
+      ## - name: Compile Verilator ${{ matrix.verilator }}
+      ##   if: steps.cache-verilator.outputs.cache-hit != 'true'
+      ##   run: |
+      ##     wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+      ##     tar xvf v${{ matrix.verilator }}.tar.gz
+      ##     cd verilator-${{ matrix.verilator }}
+      ##     autoconf
+      ##     ./configure
+      ##     make
+      ## - name: Install Verilator ${{ matrix.verilator }}
+      ##   run: |
+      ##     cd verilator-${{ matrix.verilator }}
+      ##     sudo make install
+      ##     verilator --version
+      ##
+      ## - name: Checkout repository and submodules
+      ##   uses: actions/checkout@v2
+      ##   with:
+      ##     submodules: true
 
       # Build library
       ## - name: RV32 Tiny Build
