@@ -47,7 +47,7 @@ jobs:
           key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
 
       - name: Compile Verilator ${{ matrix.verilator }}
-        if: steps.cache-verilator.outputs.cache-hit != 'true'
+        # if: steps.cache-verilator.outputs.cache-hit != 'true'
         run: |
           wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
           tar xvf v${{ matrix.verilator }}.tar.gz
@@ -56,7 +56,7 @@ jobs:
           ./configure
           make
       - name: Install Verilator ${{ matrix.verilator }}
-        if: steps.cache-verilator.outputs.cache-hit != 'true'
+        # if: steps.cache-verilator.outputs.cache-hit != 'true'
         run: |
           cd verilator-${{ matrix.verilator }}
           sudo make install
