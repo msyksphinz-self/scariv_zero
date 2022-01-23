@@ -9,7 +9,6 @@ endif
 
 VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
-VERILATOR_OPTS += --build
 # VERILATOR_OPTS += -output-split 15000
 # VERILATOR_OPTS += -threads 4
 VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
@@ -35,6 +34,9 @@ VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../tb
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
+else
+	VERILATOR_OPTS += --build
+endif
 endif
 ifeq ($(VERI_DEBUG),on)
 	VERILATOR_OPTS += --debug
