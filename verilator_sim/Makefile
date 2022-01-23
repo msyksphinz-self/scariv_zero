@@ -37,7 +37,6 @@ ifeq ($(LINT),on)
 else
 	VERILATOR_OPTS += --build
 endif
-endif
 ifeq ($(VERI_DEBUG),on)
 	VERILATOR_OPTS += --debug
 endif
