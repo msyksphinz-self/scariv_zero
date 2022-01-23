@@ -41,27 +41,27 @@ jobs:
           which verilator
 
       # Build Verilator
-      # - name: Cache Verilator ${{ matrix.verilator }}
-      #   uses: actions/cache@v2.1.6
-      #   id: cache-verilator
-      #   with:
-      #     path: verilator-${{ matrix.verilator }}
-      #     key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
-      #
-      # - name: Compile Verilator ${{ matrix.verilator }}
-      #   if: steps.cache-verilator.outputs.cache-hit != 'true'
-      #   run: |
-      #     wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
-      #     tar xvf v${{ matrix.verilator }}.tar.gz
-      #     cd verilator-${{ matrix.verilator }}
-      #     autoconf
-      #     ./configure
-      #     make
-      # - name: Install Verilator ${{ matrix.verilator }}
-      #   run: |
-      #     cd verilator-${{ matrix.verilator }}
-      #     sudo make install
-      #     verilator --version
+      - name: Cache Verilator ${{ matrix.verilator }}
+        uses: actions/cache@v2.1.6
+        id: cache-verilator
+        with:
+          path: verilator-${{ matrix.verilator }}
+          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+
+      - name: Compile Verilator ${{ matrix.verilator }}
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+          tar xvf v${{ matrix.verilator }}.tar.gz
+          cd verilator-${{ matrix.verilator }}
+          autoconf
+          ./configure
+          make
+      - name: Install Verilator ${{ matrix.verilator }}
+        run: |
+          cd verilator-${{ matrix.verilator }}
+          sudo make install
+          verilator --version
 
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
