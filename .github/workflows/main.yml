@@ -39,27 +39,27 @@ jobs:
           sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
 
       # Build Verilator
-      - name: Cache Verilator ${{ matrix.verilator }}
-        uses: actions/cache@v2.1.6
-        id: cache-verilator
-        with:
-          path: verilator-${{ matrix.verilator }}
-          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
-
-      - name: Compile Verilator ${{ matrix.verilator }}
-        if: steps.cache-verilator.outputs.cache-hit != 'true'
-        run: |
-          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
-          tar xvf v${{ matrix.verilator }}.tar.gz
-          cd verilator-${{ matrix.verilator }}
-          autoconf
-          ./configure
-          make
-      - name: Install Verilator ${{ matrix.verilator }}
-        run: |
-          cd verilator-${{ matrix.verilator }}
-          sudo make install
-          verilator --version
+      # - name: Cache Verilator ${{ matrix.verilator }}
+      #   uses: actions/cache@v2.1.6
+      #   id: cache-verilator
+      #   with:
+      #     path: verilator-${{ matrix.verilator }}
+      #     key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+      #
+      # - name: Compile Verilator ${{ matrix.verilator }}
+      #   if: steps.cache-verilator.outputs.cache-hit != 'true'
+      #   run: |
+      #     wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+      #     tar xvf v${{ matrix.verilator }}.tar.gz
+      #     cd verilator-${{ matrix.verilator }}
+      #     autoconf
+      #     ./configure
+      #     make
+      # - name: Install Verilator ${{ matrix.verilator }}
+      #   run: |
+      #     cd verilator-${{ matrix.verilator }}
+      #     sudo make install
+      #     verilator --version
 
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
