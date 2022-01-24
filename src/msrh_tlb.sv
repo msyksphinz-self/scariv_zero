@@ -26,6 +26,8 @@ module tlb
  output logic o_tlb_resp_miss
 );
 
+`include "msrh_csr_def.svh"
+
 localparam TLB_NORMAL_ENTRIES_NUM = 8;
 localparam TLB_SUPERPAGE_ENTRIES_NUM = 4;
 localparam USE_ATOMICS_INCACHE = 1'b1;
@@ -160,7 +162,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : se
   assign new_pte_entry.ppn                  = ptw_if.resp.pte.ppn;
   assign new_pte_entry.u                    = ptw_if.resp.pte.u;
   assign new_pte_entry.g                    = ptw_if.resp.pte.g;
-  assign new_pte_entry.ae                   = ptw_if.resp.ae;
+  assign new_pte_entry.ae                   = ~w_map_hit | ptw_if.resp.ae;
   assign new_pte_entry.sw                   = w_is_leaf & (pte.w & pte.d);
   assign new_pte_entry.sx                   = w_is_leaf & pte.x;
   assign new_pte_entry.sr                   = w_is_leaf & pte.r;
@@ -355,7 +357,8 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : el
 
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
     assign w_ptw_ae_array[e_idx] = w_all_entries[e_idx].data[sector_idx].ae;
-    assign w_priv_rw_ok  [e_idx] = (!w_priv_s || ptw_if.status[18] ? w_all_entries[e_idx].data[sector_idx].u : 'h0) |
+
+    assign w_priv_rw_ok  [e_idx] = (!w_priv_s || ptw_if.status[`MSTATUS_SUM] ? w_all_entries[e_idx].data[sector_idx].u : 'h0) |
                                    (w_priv_s ? ~w_all_entries[e_idx].data[sector_idx].u : 'h0);
     assign w_priv_x_ok   [e_idx] = w_priv_s ? ~w_all_entries[e_idx].data[sector_idx].u : w_all_entries[e_idx].data[sector_idx].u;
     assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_all_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? w_all_entries[e_idx].data[sector_idx].sx : 1'b0));
@@ -374,7 +377,7 @@ generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : el
   end else if (e_idx < TLB_SUPERPAGE_ENTRIES_NUM + TLB_NORMAL_ENTRIES_NUM) begin : superpage_entries
 
     assign w_ptw_ae_array[e_idx] = w_all_entries[e_idx].data[sector_idx].ae;
-    assign w_priv_rw_ok  [e_idx] = (!w_priv_s || ptw_if.status[18] ? w_all_entries[e_idx].data[sector_idx].u : 'h0) |
+    assign w_priv_rw_ok  [e_idx] = (!w_priv_s || ptw_if.status[`MSTATUS_SUM] ? w_all_entries[e_idx].data[sector_idx].u : 'h0) |
                                    (w_priv_s ? ~w_all_entries[e_idx].data[sector_idx].u : 'h0);
     assign w_priv_x_ok   [e_idx] = w_priv_s ? ~w_all_entries[e_idx].data[sector_idx].u : w_all_entries[e_idx].data[sector_idx].u;
     assign w_r_array     [e_idx] = w_priv_rw_ok[e_idx] & (w_all_entries[e_idx].data[sector_idx].sr | (ptw_if.status[19] ? w_all_entries[e_idx].data[sector_idx].sx : 1'b0));
@@ -454,19 +457,19 @@ assign ptw_if.resp_ready = 1'b1;
 // ------------------
 // Response of TLB
 // ------------------
-assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_is_hit));
-assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_is_hit));
-assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_is_hit));
-assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_is_hit);
-assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_is_hit);
-assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_is_hit);
-assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_is_hit) | ~w_vm_enabled & w_misaligned & w_cmd_read;
-assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_is_hit) | ~w_vm_enabled & w_misaligned & w_cmd_write;
+assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_real_hits));
+assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_real_hits));
+assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_real_hits));
+assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & ~w_map_hit & w_cmd_read;;
+assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & ~w_map_hit & w_cmd_write;
+assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_real_hits);
+assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_read;
+assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_write;
 assign o_tlb_resp.ma.inst      = i_tlb_req.vaddr[0] != 1'b0;
-assign o_tlb_resp.cacheable    = |(w_c_array & w_is_hit);
-assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_is_hit);
+assign o_tlb_resp.cacheable    = |(w_c_array & w_real_hits);
+assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_real_hits);
 // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
-assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_is_hit);
+assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_real_hits);
 logic                            w_tlb_resp_miss;
 assign w_tlb_resp_miss = w_do_refill | w_tlb_miss;
 assign o_tlb_resp.miss         = w_tlb_resp_miss; /* || multiplehits */;

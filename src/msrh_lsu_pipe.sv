@@ -56,6 +56,8 @@ module msrh_lsu_pipe
  tlb_ptw_if.master ptw_if
 );
 
+`include "msrh_csr_def.svh"
+
 typedef struct packed {
   size_t  size;
   sign_t  sign;
@@ -167,7 +169,7 @@ u_tlb
  .i_kill(1'b0),
  .sfence_if(sfence_if),
 
- .i_status_prv(csr_info.priv   ),
+ .i_status_prv(csr_info.mstatus[`MSTATUS_MPRV] ? csr_info.mstatus[`MSTATUS_MPP] : csr_info.priv),
  .i_csr_status(csr_info.mstatus),
  .i_csr_satp  (csr_info.satp   ),
 
@@ -255,15 +257,15 @@ assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
 assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
-logic w_ld_except_valid;
-logic w_st_except_valid;
-msrh_pkg::except_t w_tlb_except_type;
+logic w_ex1_ld_except_valid;
+logic w_ex1_st_except_valid;
+msrh_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ld_except_valid = r_ex1_pipe_ctrl.is_load &
+assign w_ex1_ld_except_valid = r_ex1_pipe_ctrl.is_load &
                            (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_st_except_valid = r_ex1_pipe_ctrl.is_store &
+assign w_ex1_st_except_valid = r_ex1_pipe_ctrl.is_store &
                            (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
-assign w_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
+assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
                            w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
                            w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
                            w_ex1_tlb_resp.ma.st ? msrh_pkg::STAMO_ADDR_MISALIGN:
@@ -278,8 +280,8 @@ assign o_ex1_q_updates.update     = r_ex1_issue.valid;
 assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_valid = w_ex1_tlb_resp.miss;
-assign o_ex1_q_updates.tlb_except_valid = !w_ex1_tlb_resp.miss & (w_ld_except_valid | w_st_except_valid);
-assign o_ex1_q_updates.tlb_except_type  = w_tlb_except_type;
+assign o_ex1_q_updates.tlb_except_valid = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
+assign o_ex1_q_updates.tlb_except_type  = w_ex1_tlb_except_type;
 assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;

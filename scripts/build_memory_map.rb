@@ -55,7 +55,7 @@ $map_table.each_with_index{ |map, map_index|
          paddr_bitlen,
          ~(size_byte-1) & ((1 << paddr_bitlen)-1),
          paddr_bitlen,
-         base_addr & ~size_byte,
+         base_addr & ~(size_byte-1),
          base_addr,
          base_addr + size_byte -1)
   printf(out_sv, "assign w_map_attr[%2d].r = 1'b%01d;\n", map_index, map["attr"]["R"]);
