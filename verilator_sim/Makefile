@@ -127,11 +127,11 @@ rv32_standard: $(FILELIST) .config_design_rv32
 
 rv32_big: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_big CONF=standard
+	$(MAKE) rv32_build CONF=standard
 
 rv32_giant: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_giant CONF=standard
+	$(MAKE) rv32_build CONF=standard
 
 
 rv64_tiny: $(FILELIST) .config_design_rv64
