@@ -79,7 +79,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
                                        /* verilator lint_off WIDTH */
                                        (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == 'h0)) &
                                        r_ptw_accept[p_idx];
-      ptw_if[p_idx].resp.ae          = w_invalid_paddr; // if instruction region fault
+      ptw_if[p_idx].resp.ae          = (r_count != 'h0) & w_invalid_paddr; // if instruction region fault
       ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
       ptw_if[p_idx].resp.level       = r_count + 'h1;
       ptw_if[p_idx].resp.homogeneous = 'h0;   // homogeneous || pageGranularityPMPs;
@@ -109,7 +109,6 @@ assign lsu_access_bad_pte = ~lsu_access_pte.v |
 assign l2_resp_tag_match = ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};
 
 assign l2_resp_fin = lsu_access_is_leaf | (r_count == 'h0) |
-                     w_invalid_paddr |
                      lsu_access_bad_pte;
 
 assign w_invalid_paddr = (lsu_access_pte.ppn & ((1 << r_count) - 'h1)) != 'h0;
@@ -140,7 +139,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (lsu_access.resp_valid) begin
           case (lsu_access.status)
             msrh_lsu_pkg::STATUS_HIT : begin
-              if (lsu_access_is_leaf | (r_count == 'h0) | w_invalid_paddr) begin
+              if (lsu_access_is_leaf | (r_count == 'h0)) begin
                 r_state  <= IDLE;
               end else begin
                 r_count  <= r_count - 'h1;
