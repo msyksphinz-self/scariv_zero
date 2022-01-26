@@ -81,7 +81,7 @@ generate for (genvar p_idx = 0; p_idx < PTW_PORT_NUM; p_idx++) begin : ptw_resp_
                                        r_ptw_accept[p_idx];
       ptw_if[p_idx].resp.ae          = 1'b0; // if instruction region fault
       ptw_if[p_idx].resp.pte         = lsu_access_pte;   // r_pte;
-      ptw_if[p_idx].resp.level       = r_count + 'h1;
+      ptw_if[p_idx].resp.level       = r_count;
       ptw_if[p_idx].resp.homogeneous = 'h0;   // homogeneous || pageGranularityPMPs;
     end
   end // always_comb
