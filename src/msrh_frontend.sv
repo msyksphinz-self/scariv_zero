@@ -684,6 +684,7 @@ msrh_predictor u_predictor
    .o_sc_ras_vaddr (o_sc_ras_vaddr),
 
    .i_s1_valid   (w_s1_inst_valid),
+   .i_s2_valid   (w_s2_inst_valid),
 
    .i_s2_ic_resp (w_s2_ic_resp),
 

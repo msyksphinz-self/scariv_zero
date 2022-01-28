@@ -21,6 +21,7 @@ module msrh_predictor
  output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
 
  input logic i_s1_valid,
+ input logic i_s2_valid,
  input msrh_lsu_pkg::ic_resp_t i_s2_ic_resp,
 
  btb_update_if.slave update_btb_if,
@@ -76,10 +77,10 @@ logic [ICACHE_DATA_B_W / 2-1: 0]  w_s1_ret_valid;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
-logic [riscv_pkg::VADDR_W-1: 1]   w_ras_ret_vaddr;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
+logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_ret_vaddr;
 
 logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_next_pc;
 logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
@@ -165,7 +166,7 @@ logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_next;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_ras_input_index;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_output_index;
 /* verilator lint_off UNOPTFLAT */
-logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_s1_ras_index_next;
+logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_s2_ras_index_next;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
 logic                                              w_cmt_update_ras_idx;
 logic                                              w_cmt_dead_valid;
@@ -199,17 +200,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 always_comb begin
-  w_s1_ras_index_next = r_ras_input_index;
+  w_s2_ras_index_next = r_ras_input_index;
 
   if ((w_br_call_dead | w_br_ret_dead) & ~r_during_recover) begin
-    w_s1_ras_index_next = br_upd_fe_if.ras_index;
+    w_s2_ras_index_next = br_upd_fe_if.ras_index;
   end
 
-  w_ras_index_next = w_s1_ras_index_next;
-  if (w_sc_ret_valid) begin
-    w_ras_index_next = w_s1_ras_index_next - 'h1;
+  w_ras_index_next = w_s2_ras_index_next;
+  if (w_s2_ret_valid) begin
+    w_ras_index_next = w_s2_ras_index_next - 'h1;
   end else if (w_sc_call_valid) begin
-    w_ras_index_next = w_s1_ras_index_next + 'h1;
+    w_ras_index_next = w_s2_ras_index_next + 'h1;
   end
   w_ras_wr_index = w_ras_index_next;
 end
@@ -222,24 +223,31 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_ras_index_next <= 'h0;
   end else begin
     r_ras_input_index   <= w_ras_index_next;
-    r_s2_ras_index_next <= w_s1_ras_index_next;
+    r_s2_ras_index_next <= w_s2_ras_index_next;
   end
 end
+
+// RATの各ステージにおける役割
+// S0: 現在のPCからBTBを引く -> S1で結果を得る
+// S1: BTBのどこかにCALL(/RETは行わない)命令が含まれていると、まずBTBで予測して予測ジャンプを行う
+// S2: RETの場合はRASからPOPして予測アドレスとして使用する. 次のRETに備えてras_indexをdecrementする
+// 注意: Instruction Bufferに入っている命令のフラッシュはCommit Reportによっては行われない(消える可能性がある)
+//       Commit Reportか、BR Reportによってしかるべき場所までras_indexを元に戻す必要がある
 
 assign w_s1_call_valid = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_call_be & w_s1_pred_hit_oh) ? w_s1_call_be : 'h0);
 assign w_s1_ret_valid  = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_ret_be  & w_s1_pred_hit_oh) ? w_s1_ret_be  : 'h0);
 
 assign ras_search_if.s1_is_call   = w_s1_call_be_lsb;
-assign ras_search_if.s1_is_ret    = w_s1_ret_be_lsb;
-assign ras_search_if.s1_ras_vaddr = w_ras_ret_vaddr;
-assign ras_search_if.s1_ras_index = w_s1_ras_index_next;
+assign ras_search_if.s1_is_ret    = 1'b0;
+assign ras_search_if.s1_ras_vaddr = 'h0;
+assign ras_search_if.s1_ras_index = 'h0;
 
 assign ras_search_if.s2_is_call   = w_s2_call_valid;
 assign ras_search_if.s2_is_ret    = w_s2_ret_valid;
-assign ras_search_if.s2_ras_vaddr = w_ras_ret_vaddr;
+assign ras_search_if.s2_ras_vaddr = w_s2_ras_ret_vaddr;
 assign ras_search_if.s2_ras_index = r_s2_ras_index_next;
 
-assign o_sc_ras_index = w_s1_ras_index_next;
+assign o_sc_ras_index = w_s2_ras_index_next;
 assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_be_array_vld;
@@ -260,16 +268,16 @@ u_ras
    .i_reset_n (i_reset_n),
 
    .i_wr_valid (|w_sc_call_valid),
-   .i_wr_index (w_s1_ras_index_next),
+   .i_wr_index (w_s2_ras_index_next),
    .i_wr_pa    (w_sc_ras_next_pc),
 
    .i_sc_rd_valid (|(w_sc_ret_valid | w_sc_call_valid)),
    .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
    .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
 
-   .i_s1_rd_valid ((|w_s2_ret_valid) | (|w_s1_ret_valid)),
+   .i_s1_rd_valid ((|w_s2_ret_valid)),
    .i_s1_rd_index (r_ras_input_index-1),
-   .o_s1_rd_pa    (w_ras_ret_vaddr),
+   .o_s1_rd_pa    (w_s2_ras_ret_vaddr),
 
    .i_br_call_cmt_valid     (w_br_call_dead & ~r_during_recover),
    .i_br_call_cmt_ras_index (br_upd_fe_if.ras_index),
@@ -319,14 +327,11 @@ u_ras
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_pred_hit_oh;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_pred_hit_oh;
-logic                                        r_s2_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_pred_hit_oh <= 'h0;
-    r_s2_valid <= 1'b0;
   end else begin
     r_s2_pred_hit_oh <= w_s1_pred_hit_oh;
-    r_s2_valid <= i_s1_valid;
   end
 end
 
@@ -344,8 +349,8 @@ bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target
 
 bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(r_s2_pred_hit_oh | w_s2_ret_be), .out(w_s2_pred_hit_oh));
 
-assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){r_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
-assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){r_s2_valid}} & (|(w_s2_ret_be  & w_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
+assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
+assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_ret_be  & w_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
   assign w_sc_grp_valid[d_idx] = sc_disp.inst[d_idx].valid;
