@@ -49,6 +49,8 @@ logic                                            w_entry_flush;
 logic                                            w_commit_flush;
 logic                                            w_br_flush;
 logic                                            w_load_br_flush;
+logic                                            w_load_commit_flush;
+logic                                            w_load_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_complete;
 
@@ -86,8 +88,11 @@ assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
 
+
+assign w_load_commit_flush = msrh_pkg::is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id, i_commit);
 assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.brtag,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_load_flush = w_load_commit_flush | w_load_br_flush;
 
 assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 
@@ -211,7 +216,7 @@ always_comb begin
                                                  w_rs1_rel_hit, w_rs2_rel_hit,
                                                  w_rs1_phy_hit, w_rs2_phy_hit,
                                                  w_rs1_may_mispred, w_rs2_may_mispred);
-        if (w_load_br_flush) begin
+        if (w_load_flush) begin
           w_entry_next.state    = LDQ_DEAD;
         end
       end

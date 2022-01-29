@@ -64,16 +64,16 @@ assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
 // --------------------------------
 // Credit & Return Interface
 // --------------------------------
-logic                                w_ignore_disp;
+// logic                                w_ignore_disp;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_credit_return_val;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_dead_cnt;
 logic [$clog2(msrh_conf_pkg::LDQ_SIZE): 0] w_entry_complete_cnt;
 
 bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) u_entry_complete_cnt (.in(w_entry_complete), .out(w_entry_complete_cnt));
 
-assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_complete) ? w_entry_complete_cnt : 'h0) +
-                             (w_ignore_disp       ? w_disp_picked_num    : 'h0) ;
+// assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
+assign w_credit_return_val = ((|w_entry_complete) ? w_entry_complete_cnt : 'h0) /* +
+                             (w_ignore_disp       ? w_disp_picked_num    : 'h0)*/ ;
 
 msrh_credit_return_slave
   #(.MAX_CREDITS(msrh_conf_pkg::LDQ_SIZE))
@@ -82,7 +82,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_entry_complete) | w_ignore_disp),
+ .i_get_return((|w_entry_complete) /* | w_ignore_disp*/),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -139,7 +139,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
   for (genvar i_idx = 0; i_idx < msrh_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     logic [msrh_conf_pkg::LDQ_SIZE-1: 0]  w_entry_ptr_oh;
     bit_rotate_left #(.WIDTH(msrh_conf_pkg::LDQ_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_in_ptr_oh), .o_out(w_entry_ptr_oh));
-    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr_oh[l_idx]);
+    assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & (w_entry_ptr_oh[l_idx]);
   end
 
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
@@ -368,6 +368,12 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       $fatal(0, "credit and entry number different. r_credits = %d, entry_mask = %x\n",
              u_credit_return_slave.r_credits,
              w_entry_valid_cnt);
+    end
+    if (w_entry_valid_cnt == 'h0 &&
+        (w_in_ptr_oh != w_out_ptr_oh)) begin
+      $fatal(0, "When valids=0, Must in_ptr_oh == in_ptr_oh. in_ptr_oh(%x) == out_ptr_oh(%x)\n",
+             w_entry_valid_cnt,
+             w_in_ptr_oh, w_out_ptr_oh);
     end
   end
 end
