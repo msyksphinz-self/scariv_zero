@@ -1,3 +1,5 @@
+`ifdef MONITOR
+
 int json_fp;
 
 initial begin
@@ -110,3 +112,5 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     $fwrite(json_fp, "%t}},\n", $time);
   end
 end
+
+`endif // MONITOR

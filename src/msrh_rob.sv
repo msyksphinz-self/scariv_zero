@@ -258,6 +258,7 @@ endgenerate
 
 
 `ifdef SIMULATION
+`ifdef MONITOR
 logic [CMT_ENTRY_SIZE-1: 0] w_entry_valids;
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : dbg_entry_loop
   assign w_entry_valids[c_idx] = w_entries[c_idx].valid;
@@ -449,6 +450,7 @@ final begin
   end
 end
 
+`endif // MONITOR
 `endif // SIMULATION
 
 endmodule // msrh_rob

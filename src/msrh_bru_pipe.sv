@@ -346,6 +346,7 @@ assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
 assign ex3_br_upd_if.br_mask       = r_ex3_issue.br_mask;
 
 `ifdef SIMULATION
+`ifdef MONITOR
 
 integer bim_fp;
 initial begin
@@ -393,6 +394,7 @@ final begin
   $fclose(bim_fp);
 end
 
+`endif // MONITOR
 `endif // SIMULATION
 
 endmodule // msrh_bru_pipe

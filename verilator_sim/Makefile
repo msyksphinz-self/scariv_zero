@@ -47,6 +47,7 @@ ifeq ($(DEBUG),on)
 	VERILATOR_OPTS += --trace-underscore
 	VERILATOR_OPTS += -CFLAGS "-DVL_DEBUG"
 	VERILATOR_OPTS += -CFLAGS "-DDUMP_FST"
+	VERILATOR_OPTS += +define+MONITOR
 endif
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)

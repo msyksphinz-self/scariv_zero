@@ -7,6 +7,8 @@
 //
 // ------------------------------------------------------------------------
 
+`ifdef MONITOR
+
 int perf_fp;
 
 initial begin
@@ -43,3 +45,5 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     end
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+
+`endif // MONITOR
