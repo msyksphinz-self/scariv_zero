@@ -555,9 +555,11 @@ void step_spike(long long time, long long rtl_pc,
 
   auto instret  = p->get_state()->minstret;
   static reg_t prev_instret = 1;
-  if (prev_instret == instret) {
+  static bool prev_minstret_access = false;
+  if (prev_instret == instret && !prev_minstret_access) {
     p->step(1);
   }
+  prev_minstret_access = false;
   prev_instret = instret;
   fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", time,
           instret,
@@ -568,12 +570,12 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
-  // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
-  //         time,
-  //         iss_pc,
-  //         p->get_state()->prev_pc,
-  //         iss_insn);
-  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
+  fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
+          time,
+          iss_pc,
+          p->get_state()->prev_pc,
+          iss_insn);
+  fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
   if (iss_insn.bits() == 0x10500073U) { // WFI
     return; // WFI doesn't update PC -> just skip
@@ -718,6 +720,8 @@ void step_spike(long long time, long long rtl_pc,
           fprintf(compare_log_fp, "ISS MINSTRET = %0*lx\n", g_rv_xlen / 4, iss_wr_val);
           fprintf(compare_log_fp, "RTL MINSTRET = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
           fprintf(compare_log_fp, "==========================================\n");
+
+          prev_minstret_access = true;
           return;
         }
       }
