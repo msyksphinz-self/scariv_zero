@@ -570,12 +570,12 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
-  fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
-          time,
-          iss_pc,
-          p->get_state()->prev_pc,
-          iss_insn);
-  fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
+  // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
+  //         time,
+  //         iss_pc,
+  //         p->get_state()->prev_pc,
+  //         iss_insn);
+  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
 
   if (iss_insn.bits() == 0x10500073U) { // WFI
     return; // WFI doesn't update PC -> just skip

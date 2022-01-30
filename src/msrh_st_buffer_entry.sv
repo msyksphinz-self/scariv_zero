@@ -24,6 +24,8 @@ module msrh_st_buffer_entry
  input logic  i_lrq_accepted,
 
  input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_lrq_search_hit,
+ input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_lrq_evict_search_hit,
+ input logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] i_lrq_evict_sent,
 
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -105,6 +107,14 @@ always_comb begin
           w_state_next = ST_BUF_RD_L1D;
         end else begin
           w_state_next = ST_BUF_WAIT_REFILL; // Replay
+          w_entry_next.lrq_index_oh = i_lrq_search_hit;
+        end
+      end else if (i_lrq_evict_search_hit != 0) begin
+        if (|(i_lrq_evict_search_hit & i_lrq_evict_sent)) begin
+          // Already evicted
+          w_state_next = ST_BUF_LRQ_REFILL;
+        end else begin
+          w_state_next = ST_BUF_WAIT_REFILL; // Todo: Should be merge
           w_entry_next.lrq_index_oh = i_lrq_search_hit;
         end
       end else if (i_l1d_rd_miss) begin

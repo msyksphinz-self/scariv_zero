@@ -115,7 +115,9 @@ assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
      .o_lrq_req      (w_entry_lrq_req   [e_idx]),
      .i_lrq_accepted (w_entry_lrq_req_oh[e_idx]),
 
-     .i_lrq_search_hit  (lrq_pa_search_if.s1_hit_index_oh),
+     .i_lrq_search_hit       (lrq_pa_search_if.s1_hit_index_oh),
+     .i_lrq_evict_search_hit (lrq_pa_search_if.s1_evict_hit_index_oh),
+     .i_lrq_evict_sent       (lrq_pa_search_if.s1_evict_sent),
 
      // Forward check interface from LSU Pipeline
      .stbuf_fwd_check_if (stbuf_fwd_check_if    ),

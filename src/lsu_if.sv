@@ -194,17 +194,23 @@ interface lrq_pa_search_if;
 logic                                 s0_valid;
 logic [riscv_pkg::PADDR_W-1: 0]       s0_paddr;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_sent;
 
 modport master (
   output s0_valid,
   output s0_paddr,
-  input  s1_hit_index_oh
+  input  s1_hit_index_oh,
+  input  s1_evict_hit_index_oh,
+  input  s1_evict_sent
 );
 
 modport slave (
   input  s0_valid,
   input  s0_paddr,
-  output s1_hit_index_oh
+  output s1_hit_index_oh,
+  output s1_evict_hit_index_oh,
+  output s1_evict_sent
 );
 
 endinterface // lrq_pa_search_if
