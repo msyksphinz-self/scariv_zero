@@ -12,12 +12,14 @@ package msrh_conf_pkg;
 
   localparam ALU_INST_NUM = 2;
   localparam LSU_INST_NUM = 2;
+  localparam FPU_INST_NUM = 2;
 
   localparam ARITH_DISP_SIZE = 4;
   localparam MULDIV_DISP_SIZE = ARITH_DISP_SIZE / ALU_INST_NUM;
   localparam MEM_DISP_SIZE   = 4;
   localparam BRU_DISP_SIZE   = 1;
   localparam CSU_DISP_SIZE   = 1;
+  localparam FPU_DISP_SIZE   = 4;
 
   localparam RV_ALU_ENTRY_SIZE = 32;
 
@@ -27,6 +29,8 @@ package msrh_conf_pkg;
   localparam RV_CSU_ENTRY_SIZE = 8;
 
   localparam RV_BRU_ENTRY_SIZE = 16;
+
+  localparam RV_FPU_ENTRY_SIZE = 16;
 
   localparam CMT_ENTRY_SIZE = 32;
 

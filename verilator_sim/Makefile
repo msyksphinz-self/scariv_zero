@@ -31,6 +31,7 @@ VERILATOR_OPTS += -LDFLAGS "-ldl"
 VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
+VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
@@ -74,6 +75,7 @@ DECODE_FILES += ../src/decoder_alu_ctrl.sv
 DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_bru_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_ctrl.sv
+DECODE_FILES += ../src/decoder_fpu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
 
@@ -91,6 +93,8 @@ RV_XLEN = 64
 	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN)
 ../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN)
+../src/decoder_fpu_ctrl.sv: ../src/riscv_decoder.json
+	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN)
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb reg $(RV_XLEN)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
@@ -222,7 +226,7 @@ rv64_giant_benchmarks:
 	$(MAKE) -C ../spike_dpi
 	ln -sf ../spike_dpi/$@ .
 
-$(FILELIST): ../src/filelist.f filelist.f
+$(FILELIST): ../src/fpnew.vf ../src/filelist.f filelist.f
 	echo "../tb/sim_pkg.sv" > $@
 	cat $^ >> $@
 

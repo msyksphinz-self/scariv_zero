@@ -36,10 +36,12 @@ package msrh_pkg;
   localparam LRQ_ENTRY_SIZE = LRQ_NORM_ENTRY_SIZE + LRQ_ST_ENTRY_SIZE;
   localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
 
-  localparam REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
-                           msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
-                           2 +                                  // BRU port
-                           1;                                   // CSR port
+  localparam INT_REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
+                               msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
+                               2 +                                  // BRU port
+                               1;                                   // CSR port
+
+  localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
 
   typedef enum logic [1:0] {
      PRV_U = 0,
@@ -127,7 +129,7 @@ typedef struct packed {
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
     reg_wr_disp_t         wr_reg;
-    reg_rd_disp_t [ 1: 0] rd_regs;
+    reg_rd_disp_t [ 2: 0] rd_regs;
   } disp_t;
 
 
@@ -139,6 +141,7 @@ typedef struct packed {
     logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
     logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
     logic [$clog2(CSU_DISP_SIZE): 0]                      csu_inst_cnt;
+    logic [$clog2(FPU_DISP_SIZE): 0]                      fpu_inst_cnt;
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t disp,
@@ -162,6 +165,20 @@ typedef struct packed {
     ret.rd_regs[1].rnid    = rs2_rnid;
     ret.brtag       = brtag;
     ret.br_mask     = br_mask;
+
+    return ret;
+
+  endfunction  // assign_disp_rename
+
+
+  function disp_t merge_disp_if (disp_t int_disp,
+                                 disp_t fp_disp);
+    disp_t ret;
+    ret = int_disp;
+    ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
+    ret.rd_regs[0] = int_disp.rd_regs[0].typ == GPR ? int_disp.rd_regs[0] : fp_disp.rd_regs[0];
+    ret.rd_regs[1] = int_disp.rd_regs[1].typ == GPR ? int_disp.rd_regs[1] : fp_disp.rd_regs[1];
+    ret.rd_regs[2] = int_disp.rd_regs[2].typ == GPR ? int_disp.rd_regs[2] : fp_disp.rd_regs[2];
 
     return ret;
 

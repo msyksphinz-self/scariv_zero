@@ -1,6 +1,7 @@
 module msrh_rename
   import msrh_pkg::*;
-  (
+  #(parameter REG_TYPE = GPR)
+(
    input logic i_clk,
    input logic i_reset_n,
 
@@ -108,6 +109,12 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     end
   end
 
+  logic w_freelist_pop;
+  assign w_freelist_pop = iq_disp.inst[d_idx].valid &
+                          iq_disp.inst[d_idx].wr_reg.valid &
+                          (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE) &
+                          (iq_disp.inst[d_idx].wr_reg.regidx != 'h0);
+
   msrh_freelist
     #(
       .SIZE (FLIST_SIZE),
@@ -122,10 +129,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_push(w_push_freelist),
     .i_push_id(w_push_freelist_id),
 
-    .i_pop(w_iq_fire &
-           iq_disp.inst[d_idx].valid &
-           iq_disp.inst[d_idx].wr_reg.valid &
-           (iq_disp.inst[d_idx].wr_reg.regidx != 'h0)),
+    .i_pop(w_iq_fire & w_freelist_pop),
     .o_pop_id(w_rd_rnid_tmp)
   );
   assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
@@ -134,8 +138,8 @@ endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
-  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid;
-  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid;
+  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
+  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
 
   assign w_archreg [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].regidx;
   assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].regidx;
