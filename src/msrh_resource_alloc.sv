@@ -15,7 +15,7 @@ module msrh_resource_alloc
    cre_ret_if.master stq_cre_ret_if,
    cre_ret_if.master csu_cre_ret_if,
    cre_ret_if.master bru_cre_ret_if,
-   cre_ret_if.master fpu_cre_ret_if,
+   cre_ret_if.master fpu_cre_ret_if[msrh_conf_pkg::FPU_INST_NUM],
 
    // Branch Tag Update Signal
    br_upd_if.slave                br_upd_if,

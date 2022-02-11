@@ -407,7 +407,7 @@ assign w_inst_muldiv_pick_up = w_inst_is_muldiv;
 assign w_inst_mem_pick_up    = w_inst_is_ld | w_inst_is_st;
 assign w_inst_bru_pick_up    = w_inst_is_br;
 assign w_inst_csu_pick_up    = w_inst_is_csu;
-assign w_inst_csu_pick_up    = w_inst_is_fpu;
+assign w_inst_fpu_pick_up    = w_inst_is_fpu;
 assign w_inst_except_pick_up = w_inst_gen_except;
 assign w_fetch_except_pick_up = w_fetch_except;
 assign w_inst_illegal_pick_up = w_inst_illegal;
@@ -515,19 +515,19 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       iq_disp.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
-      iq_disp.inst[d_idx].wr_reg.typ     = rd_field_type[d_idx];
+      iq_disp.inst[d_idx].wr_reg.typ     = rd_field_type[d_idx] == RD_R3 ? msrh_pkg::GPR : msrh_pkg::FPR;
       iq_disp.inst[d_idx].wr_reg.regidx  = w_expand_inst[d_idx][11: 7];
 
       iq_disp.inst[d_idx].rd_regs[0].valid  = rs1_field_type[d_idx] != R1__;
-      iq_disp.inst[d_idx].rd_regs[0].typ    = rs1_field_type[d_idx];
+      iq_disp.inst[d_idx].rd_regs[0].typ    = rs1_field_type[d_idx] == R1_R1 ? msrh_pkg::GPR : msrh_pkg::FPR;
       iq_disp.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
       iq_disp.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
-      iq_disp.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx];
+      iq_disp.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? msrh_pkg::GPR : msrh_pkg::FPR;
       iq_disp.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
       iq_disp.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;
-      iq_disp.inst[d_idx].rd_regs[2].typ    = rs3_field_type[d_idx];
+      iq_disp.inst[d_idx].rd_regs[2].typ    = msrh_pkg::FPR;
       iq_disp.inst[d_idx].rd_regs[2].regidx = w_expand_inst[d_idx][31:27];
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];

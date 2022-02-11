@@ -89,7 +89,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   // even thouhg instruction is dead, newly allocated RNID should be return
   assign w_push_freelist = r_commit_rnid_update_dly.commit &
                            r_commit_rnid_update_dly.rnid_valid[d_idx] &
-                           (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0);
+                           (REG_TYPE == GPR) & (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0);
+
   // Pushed ID, normal commit inst                    => old ID
   //            dead instruction                      => new ID
   //            normal exception                      => new ID
@@ -113,7 +114,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_freelist_pop = iq_disp.inst[d_idx].valid &
                           iq_disp.inst[d_idx].wr_reg.valid &
                           (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE) &
-                          (iq_disp.inst[d_idx].wr_reg.regidx != 'h0);
+                          (REG_TYPE == GPR) & (iq_disp.inst[d_idx].wr_reg.regidx != 'h0);
 
   msrh_freelist
     #(
@@ -132,7 +133,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_pop(w_iq_fire & w_freelist_pop),
     .o_pop_id(w_rd_rnid_tmp)
   );
-  assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
+  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
 end
 endgenerate
 
@@ -210,7 +211,8 @@ msrh_rename_map u_msrh_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].wr_reg.valid;
+  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].wr_reg.valid &
+                               (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE);
   assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].wr_reg.regidx;
   assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].wr_reg.valid;
 end
@@ -421,8 +423,8 @@ assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredic
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 `ifdef SIMULATION
-function void dump_json(int fp);
-  $fwrite(fp, "  \"msrh_rename\" : {\n");
+function void dump_json(string name, int fp);
+  $fwrite(fp, "  \"msrh_%s_rename\" : {\n", name);
 
   if (sc_disp.valid) begin
     $fwrite(fp, "    \"sc_disp\" : {\n");

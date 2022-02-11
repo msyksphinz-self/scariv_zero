@@ -38,6 +38,7 @@ disp_if w_iq_disp ();
 disp_if w_id_disp ();
 disp_if w_sc_int_disp ();
 disp_if w_sc_fp_disp ();
+disp_if w_sc_disp ();
 
 msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
 msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
@@ -102,6 +103,14 @@ msrh_pkg::early_wr_t w_ex1_csu_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 msrh_pkg::done_rpt_t w_csu_done_rpt;
 
+// ----------------------------------
+// FPU Components
+// ----------------------------------
+logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_fpu_valids;
+msrh_pkg::early_wr_t w_ex1_fpu_early_wr;
+msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  ;
+msrh_pkg::done_rpt_t w_fpu_done_rpt;
+
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
@@ -118,7 +127,7 @@ cre_ret_if #(.MAX_INC(msrh_conf_pkg::LDQ_SIZE         )) ldq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
-cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if();
+cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[msrh_conf_pkg::FPU_INST_NUM]();
 
 // ----------------------------------
 // Branch Tag
@@ -272,8 +281,16 @@ msrh_resource_alloc u_msrh_resource_alloc
   .o_resource_ok (w_resource_ok)
  );
 
+msrh_disp_merge
+u_sc_merge
+  (
+   .i_int_disp (w_sc_int_disp),
+   .i_fp_disp  (w_sc_fp_disp),
+   .o_disp     (w_sc_disp)
+   );
+
   generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
-    assign w_disp_alu_valids[d_idx] = w_sc_int_disp.valid && w_sc_int_disp.inst[d_idx].valid &&
+    assign w_disp_alu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH ||
                                        w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_MULDIV);
     assign w_disp_lsu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
@@ -283,6 +300,9 @@ msrh_resource_alloc u_msrh_resource_alloc
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
     assign w_disp_csu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
                                       (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+    assign w_disp_fpu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid &&
+                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_FPU);
+
   end
   endgenerate
 
@@ -477,16 +497,16 @@ endgenerate
 // --------------------------------------
 // FPU: Floating Point Physical Register
 // --------------------------------------
-msrh_phy_registers #(
-  .RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM),
-  .REG_T (msrh_pkg::FPR)
-) u_fp_phy_registers (
-  .i_clk(i_clk),
-  .i_reset_n(i_reset_n),
+msrh_phy_registers
+  #(.RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM))
+u_fp_phy_registers
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
 
-  .i_phy_wr(w_ex3_phy_wr),
-  .regread(fp_regread)
-);
+   .i_phy_wr(w_ex3_phy_wr),
+   .regread(fp_regread)
+   );
 
 
 msrh_rob u_rob
