@@ -1067,5 +1067,54 @@
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "r1"]],
         "fpu_ctrl":[["size", "dw"], ["op", "fcvt_d_wu"]]
+    },
+    {
+        "name":"fcvt.l.d   r[11:7],f[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11000", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "r3"], ["r1", "f1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fcvt_l_d"]]
+    },
+    {
+        "name":"fcvt.lu.d  r[11:7],f[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11000", "01", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "r3"], ["r1", "f1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fcvt_lu_d"]]
+    },
+    {
+        "name":"fmv.x.d    r[11:7],f[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11100", "01", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "r3"], ["r1", "f1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fmv_x_d"]]
+    },
+
+    {
+        "name":"fcvt.d.l   f[11:7],r[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11010", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "fd"], ["r1", "r1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fcvt_d_l"]]
+    },
+    {
+        "name":"fcvt.d.lu  f[11:7],r[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11010", "01", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "fd"], ["r1", "r1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fcvt_d_lu"]]
+    },
+    {
+        "name":"fmv.d.x    f[11:7],r[19:15]",
+        "length":"32", "xlen":["64"],
+        "field":["11110", "01", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "fd"], ["r1", "r1"]],
+        "fpu_ctrl":[["size", "w"], ["op", "fmv_d_x"]]
     }
 ]

@@ -114,7 +114,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_freelist_pop = iq_disp.inst[d_idx].valid &
                           iq_disp.inst[d_idx].wr_reg.valid &
                           (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE) &
-                          (REG_TYPE == GPR) & (iq_disp.inst[d_idx].wr_reg.regidx != 'h0);
+                          ((REG_TYPE == GPR) ? (iq_disp.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
 
   msrh_freelist
     #(
@@ -133,7 +133,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_pop(w_iq_fire & w_freelist_pop),
     .o_pop_id(w_rd_rnid_tmp)
   );
-  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
+  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & (iq_disp.inst[d_idx].wr_reg.regidx == 'h0) ? 'h0 : w_rd_rnid_tmp;
 end
 endgenerate
 
@@ -409,6 +409,7 @@ u_msrh_bru_rn_snapshots
 
 // Commit Map
 msrh_commit_map
+  #(.REG_TYPE(REG_TYPE))
 u_commit_map
   (
    .i_clk (i_clk),

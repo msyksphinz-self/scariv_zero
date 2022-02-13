@@ -1,4 +1,6 @@
 module msrh_commit_map
+  import msrh_pkg::*;
+  #(parameter REG_TYPE = GPR)
 (
  input logic                    i_clk,
  input logic                    i_reset_n,
@@ -27,6 +29,7 @@ always_comb begin
   if (i_commit_rnid_update.commit) begin
     for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
       if (i_commit_rnid_update.rnid_valid[d_idx] &
+          (i_commit_rnid_update.rd_typ[d_idx] == REG_TYPE) &
           !w_dead_id_with_except[d_idx]) begin
         w_commit_map_next[i_commit_rnid_update.rd_regidx[d_idx]] = i_commit_rnid_update.rd_rnid[d_idx];
       end

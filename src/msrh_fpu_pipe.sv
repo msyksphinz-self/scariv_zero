@@ -69,6 +69,8 @@ module msrh_fpu_pipe
 logic [ 4: 0]                              w_fpnew_result_fflags;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
   logic                                    r_ex3_wr_valid;
+pipe_ctrl_t                                r_ex3_pipe_ctrl;
+logic [riscv_pkg::XLEN_W-1: 0]             r_ex3_rs1_data;
 
 // ----------------------
 // Multiplier Variables
@@ -189,19 +191,16 @@ generate
   for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::REL_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
+                                          (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
 
     assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[1].valid & ex1_i_phy_wr[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[1].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rd_regs[1].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rd_regs[1].rnid != 'h0);   // GPR[x0] always zero
+                                          (r_ex2_issue.rd_regs[1].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
     assign w_ex2_rs3_fwd_valid[tgt_idx] =  r_ex2_issue.rd_regs[2].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                          (r_ex2_issue.rd_regs[2].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rd_regs[2].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                          (r_ex2_issue.rd_regs[2].rnid != 'h0);   // GPR[x0] always zero
+                                           (r_ex2_issue.rd_regs[2].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rd_regs[2].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
     assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
@@ -280,14 +279,15 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     // r_ex3_result <= 'h0;
     r_ex3_index <= 'h0;
     r_ex3_issue <= 'h0;
-
-    r_ex3_wr_valid <= 1'b0;
+    r_ex3_wr_valid  <= 1'b0;
+    r_ex3_pipe_ctrl <= 'h0;
+    r_ex3_rs1_data  <= 'h0;
   end else begin
     r_ex3_issue <= r_ex2_issue;
     r_ex3_index <= r_ex2_index;
-    r_ex3_wr_valid <= r_ex2_wr_valid;
-    // r_ex3_muldiv_valid <= r_ex2_muldiv_valid;
-    // r_ex3_result <= w_ex2_rs1_selected_data + w_ex2_rs2_selected_data;
+    r_ex3_wr_valid  <= r_ex2_wr_valid;
+    r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
+    r_ex3_rs1_data  <= w_ex2_rs1_selected_data;
   end
 end
 
@@ -313,7 +313,19 @@ u_msrh_fpnew_wrapper
    );
 
 
+logic [riscv_pkg::XLEN_W-1: 0] w_ex3_wr_data;
+
+
 always_comb begin
+
+  case (r_ex3_pipe_ctrl.op)
+    OP_FMV_X_W,
+    OP_FMV_W_X,
+    OP_FMV_X_D,
+    OP_FMV_D_X : w_ex3_wr_data = r_ex3_rs1_data;
+    default : w_ex3_wr_data = w_fpnew_result_data;
+  endcase // case (r_ex3_pipe_ctrl.op)
+
   if (w_muldiv_res_valid) begin
     o_ex3_phy_wr.valid   = 1'b1;
     o_ex3_phy_wr.rd_rnid = w_muldiv_rd_rnid;
@@ -328,7 +340,7 @@ always_comb begin
     o_ex3_phy_wr.valid   = r_ex3_wr_valid;
     o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
     o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-    o_ex3_phy_wr.rd_data = w_fpnew_result_data;
+    o_ex3_phy_wr.rd_data = w_ex3_wr_data;
 
     ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
     ex3_done_if.index_oh     = r_ex3_index;

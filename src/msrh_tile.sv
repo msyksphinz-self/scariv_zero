@@ -22,11 +22,13 @@ localparam ALU_INST_PORT_BASE = 0;
 localparam LSU_INST_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
 localparam BRU_INST_PORT_BASE = LSU_INST_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 localparam CSU_INST_PORT_BASE = BRU_INST_PORT_BASE + 1;
+localparam FPU_INST_PORT_BASE = CSU_INST_PORT_BASE + 1;
 
 localparam ALU_DONE_PORT_BASE = 0;
 localparam LSU_DONE_PORT_BASE = msrh_conf_pkg::ALU_INST_NUM;
 localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
+localparam FPU_DONE_PORT_BASE = CSU_DONE_PORT_BASE + 1;
 
 // ----------------------------------
 // Global Components
@@ -107,9 +109,9 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // FPU Components
 // ----------------------------------
 logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_fpu_valids;
-msrh_pkg::early_wr_t w_ex1_fpu_early_wr;
-msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  ;
-msrh_pkg::done_rpt_t w_fpu_done_rpt;
+msrh_pkg::early_wr_t w_ex1_fpu_early_wr[msrh_conf_pkg::FPU_INST_NUM];
+msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
+msrh_pkg::done_rpt_t w_fpu_done_rpt    [msrh_conf_pkg::FPU_INST_NUM];
 
 // -------------------------------
 // Internal Broadcast Interface
@@ -165,6 +167,14 @@ assign w_done_rpt    [BRU_DONE_PORT_BASE] = w_bru_done_rpt;
 assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
 assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
 assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
+
+// FPU
+generate for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_loop
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx] = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx] = w_ex3_fpu_phy_wr  [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx] = w_fpu_done_rpt    [f_idx];
+end
+endgenerate
 
 
 msrh_frontend u_frontend (

@@ -15,12 +15,14 @@ package msrh_pkg;
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
                             1 +              // BRU
-                            1;               // CSU
+                            1 +              // CSU
+                            FPU_INST_NUM;    // FPU
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
   localparam CMT_BUS_SIZE = ALU_INST_NUM +   // ALU
                             LSU_INST_NUM +   // LSU
                             1 +              // BRU
-                            1;               // CSU
+                            1 +              // CSU
+                            FPU_INST_NUM;    // FPU
 
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
@@ -437,6 +439,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
+  reg_t [msrh_conf_pkg::DISP_SIZE-1:0]                       rd_typ;
   // logic                                                      is_br_included;
   // logic                                                      upd_pc_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;

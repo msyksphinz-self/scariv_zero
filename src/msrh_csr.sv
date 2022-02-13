@@ -858,6 +858,15 @@ always_comb begin
 
   end else if (write_if.valid) begin
     case(write_if.addr)
+      `SYSREG_ADDR_FFLAGS: begin
+        w_mstatus_next[`MSTATUS_FS] = 2'b11;
+      end
+      `SYSREG_ADDR_FRM: begin
+        w_mstatus_next[`MSTATUS_FS] = 2'b11;
+      end
+      `SYSREG_ADDR_FCSR: begin
+        w_mstatus_next[`MSTATUS_FS] = 2'b11;
+      end
       `SYSREG_ADDR_SEPC : begin
         w_sepc_next = write_if.data;
       end

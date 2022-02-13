@@ -117,9 +117,9 @@ void initial_spike (const char *filename, int rv_xlen)
 {
   argv[0] = "spike_dpi";
   if (rv_xlen == 32) {
-    argv[1] = "--isa=rv32imac";
+    argv[1] = "--isa=rv32imacfd";
   } else if (rv_xlen == 64) {
-    argv[1] = "--isa=rv64imac";
+    argv[1] = "--isa=rv64imacfd";
   } else {
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
@@ -489,7 +489,7 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_exception, int rtl_exception_cause,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
-                int rtl_wr_valid, int rtl_wr_gpr_addr,
+                int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                 int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
   processor_t *p = spike_core->get_core(0);
@@ -595,7 +595,7 @@ void step_spike(long long time, long long rtl_pc,
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*lx\n",
+    fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*llx\n",
             g_rv_xlen / 4, xlen_convert(rtl_pc), g_rv_xlen / 4, xlen_convert(iss_pc));
     fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
@@ -681,7 +681,7 @@ void step_spike(long long time, long long rtl_pc,
       // magic number "16" is category of register write
       if (std::get<0>(iss_rd) < 32 * 16) {
         fprintf(compare_log_fp, "==========================================\n");
-        fprintf(compare_log_fp, "ISS Writes Register but RTL NOT");
+        fprintf(compare_log_fp, "ISS Writes GPR but RTL NOT");
         int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd)];
 
         fprintf(compare_log_fp, "  GPR[%ld]<=%0*lx\n",
@@ -693,8 +693,25 @@ void step_spike(long long time, long long rtl_pc,
     }
   }
 
+  int iss_wr_type = 0;
+  for (auto &iss_rd: p->get_state()->log_reg_write) {
+    iss_wr_type = std::get<0>(iss_rd) % 16;
+  }
 
-  if (rtl_wr_valid) {
+  if (rtl_wr_valid &&
+      (iss_wr_type == 0 || iss_wr_type == 1) &&
+      (rtl_wr_type == 0 || rtl_wr_type == 1) &&
+      iss_wr_type != rtl_wr_type) {
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "RTL/ISS Write Register Type different.\n");
+    fprintf(compare_log_fp, "ISS = %s, RTL = %s\n", iss_wr_type == 0 ? "GPR" :
+            iss_wr_type == 1 ? "FPR" : "Others",
+            rtl_wr_type == 0 ? "GPR" :
+            iss_wr_type == 1 ? "FPR" : "Others");
+    fprintf(compare_log_fp, "==========================================\n");
+    stop_sim(100);
+  }
+  if (rtl_wr_valid && iss_wr_type == 0) { // GPR write
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     if ((((iss_insn.bits() & MASK_CSRRW) == MATCH_CSRRW) ||
          ((iss_insn.bits() & MASK_CSRRS) == MATCH_CSRRS) ||
@@ -745,11 +762,24 @@ void step_spike(long long time, long long rtl_pc,
     } else {
       fprintf(compare_log_fp, "GPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
     }
+  } else if (rtl_wr_valid && iss_wr_type == 1) { // FPR write
+    int64_t iss_wr_val = p->get_state()->FPR[rtl_wr_gpr_addr].v[0];
+    if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
+      fprintf(compare_log_fp, "==========================================\n");
+      fprintf(compare_log_fp, "Wrong FPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
+              rtl_wr_gpr_addr, rtl_wr_gpr_rnid,
+              g_rv_xlen / 4, rtl_wr_val,
+              g_rv_xlen / 4, iss_wr_val);
+      fprintf(compare_log_fp, "==========================================\n");
+      fail_count ++;
+      if (fail_count >= fail_max) {
+        stop_sim(100);
+      }
+      return;
+    } else {
+      fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
+    }
   }
-
-  // if (rtl_exception & (rtl_exception_cause == 25)) {  // SRET
-  //   p->step(1);  // SRET has 2-step, execute again
-  // }
 
 }
 
