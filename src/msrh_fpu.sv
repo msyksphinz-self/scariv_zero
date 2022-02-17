@@ -12,6 +12,8 @@ module msrh_fpu #(
     cre_ret_if.slave                       cre_ret_if,
 
 
+    regread_if.master ex1_regread_int_rs1,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
     regread_if.master ex1_regread_rs3,
@@ -115,6 +117,8 @@ u_fpu
    .ex1_i_phy_wr(i_phy_wr),
 
    .o_muldiv_stall(w_muldiv_stall),
+
+   .ex1_regread_int_rs1(ex1_regread_int_rs1),
 
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),

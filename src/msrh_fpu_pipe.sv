@@ -13,6 +13,8 @@ module msrh_fpu_pipe
 
     output logic o_muldiv_stall,
 
+    regread_if.master ex1_regread_int_rs1,
+
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_regread_rs2,
     regread_if.master ex1_regread_rs3,
@@ -70,7 +72,8 @@ logic [ 4: 0]                              w_fpnew_result_fflags;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
   logic                                    r_ex3_wr_valid;
 pipe_ctrl_t                                r_ex3_pipe_ctrl;
-logic [riscv_pkg::XLEN_W-1: 0]             r_ex3_rs1_data;
+logic [riscv_pkg::XLEN_W-1: 0]             w_ex2_res_data;
+logic [riscv_pkg::XLEN_W-1: 0]             r_ex3_res_data;
 
 // ----------------------
 // Multiplier Variables
@@ -121,14 +124,17 @@ assign w_ex0_div_stall = w_ex0_pipe_ctrl.op == OP_FDIV;
 // EX1
 // ---------------------
 
-assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
+assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
-assign ex1_regread_rs3.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[2].valid;
+assign ex1_regread_rs3.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[2].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
 assign ex1_regread_rs3.rnid  = r_ex1_issue.rd_regs[2].rnid;
+
+assign ex1_regread_int_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR);
+assign ex1_regread_int_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -180,7 +186,7 @@ assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
                               ~w_ex1_muldiv_valid;
 
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type = msrh_pkg::GPR;
+assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 // -----------------------------
@@ -247,7 +253,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_muldiv_valid <= 1'b0;
   end else begin
-    r_ex2_rs1_data <= ex1_regread_rs1.data;
+    r_ex2_rs1_data <= (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
     r_ex2_rs3_data <= ex1_regread_rs3.data;
 
@@ -274,6 +280,20 @@ assign tmp_ex2_result_d = 'h0;
 // Memo: I don't know why but if this sentence is integrated into above, test pattern fail.
 assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_ex2_rs2_selected_data[ 4:0];
 
+always_comb begin
+  case (r_ex2_pipe_ctrl.op)
+    OP_FMV_X_W,
+    OP_FMV_W_X,
+    OP_FMV_X_D,
+    OP_FMV_D_X : w_ex2_res_data = w_ex2_rs1_selected_data;
+    OP_FSGNJ   : w_ex2_res_data = { w_ex2_rs2_selected_data[riscv_pkg::XLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::XLEN_W-2:0]};
+    OP_FSGNJN  : w_ex2_res_data = {~w_ex2_rs2_selected_data[riscv_pkg::XLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::XLEN_W-2:0]};
+    OP_FSGNJX  : w_ex2_res_data =  {w_ex2_rs1_selected_data[riscv_pkg::XLEN_W-1] ^ w_ex2_rs2_selected_data[riscv_pkg::XLEN_W-1],
+                                    w_ex2_rs1_selected_data[riscv_pkg::XLEN_W-2:0]};
+    default    : w_ex2_res_data = 'h0;
+  endcase // case (r_ex3_pipe_ctrl.op)
+end // always_comb
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     // r_ex3_result <= 'h0;
@@ -281,13 +301,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue <= 'h0;
     r_ex3_wr_valid  <= 1'b0;
     r_ex3_pipe_ctrl <= 'h0;
-    r_ex3_rs1_data  <= 'h0;
+    r_ex3_res_data  <= 'h0;
   end else begin
     r_ex3_issue <= r_ex2_issue;
     r_ex3_index <= r_ex2_index;
     r_ex3_wr_valid  <= r_ex2_wr_valid;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
-    r_ex3_rs1_data  <= w_ex2_rs1_selected_data;
+    r_ex3_res_data  <= w_ex2_res_data;
   end
 end
 
@@ -313,18 +333,7 @@ u_msrh_fpnew_wrapper
    );
 
 
-logic [riscv_pkg::XLEN_W-1: 0] w_ex3_wr_data;
-
-
 always_comb begin
-
-  case (r_ex3_pipe_ctrl.op)
-    OP_FMV_X_W,
-    OP_FMV_W_X,
-    OP_FMV_X_D,
-    OP_FMV_D_X : w_ex3_wr_data = r_ex3_rs1_data;
-    default : w_ex3_wr_data = w_fpnew_result_data;
-  endcase // case (r_ex3_pipe_ctrl.op)
 
   if (w_muldiv_res_valid) begin
     o_ex3_phy_wr.valid   = 1'b1;
@@ -340,7 +349,7 @@ always_comb begin
     o_ex3_phy_wr.valid   = r_ex3_wr_valid;
     o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
     o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-    o_ex3_phy_wr.rd_data = w_ex3_wr_data;
+    o_ex3_phy_wr.rd_data = r_ex3_res_data;
 
     ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
     ex3_done_if.index_oh     = r_ex3_index;

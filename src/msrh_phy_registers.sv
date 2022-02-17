@@ -1,10 +1,14 @@
-module msrh_phy_registers #(
-    parameter RD_PORT_SIZE = 10
-) (
+module msrh_phy_registers
+  import msrh_pkg::*;
+#(
+  parameter REG_TYPE = GPR,
+  parameter RD_PORT_SIZE = 10
+)
+(
     input logic i_clk,
     input logic i_reset_n,
 
-    regread_if.slave  regread         [          RD_PORT_SIZE],
+    regread_if.slave         regread [          RD_PORT_SIZE],
     input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
@@ -16,7 +20,7 @@ module msrh_phy_registers #(
 
   generate
     for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
-      assign wr_valid[w_idx] = i_phy_wr[w_idx].valid;
+      assign wr_valid[w_idx] = i_phy_wr[w_idx].valid & (i_phy_wr[w_idx].rd_type == REG_TYPE);
       assign wr_rnid [w_idx] = i_phy_wr[w_idx].rd_rnid;
       assign wr_data [w_idx] = i_phy_wr[w_idx].rd_data;
     end

@@ -435,7 +435,7 @@ u_msrh_csu (
 
     .ex1_regread_rs1(int_regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
                                  msrh_conf_pkg::LSU_INST_NUM * 2 +
-                                 + 2]),
+                                 2]),
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),
@@ -458,9 +458,12 @@ u_msrh_csu (
 );
 
 
-msrh_phy_registers #(
+msrh_phy_registers
+  #(
+    .REG_TYPE(msrh_pkg::GPR),
     .RD_PORT_SIZE(msrh_pkg::INT_REGPORT_NUM)
-) u_int_phy_registers (
+    )
+u_int_phy_registers (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -485,6 +488,11 @@ generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx
     .disp(w_sc_disp),
     .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
+    .ex1_regread_int_rs1(int_regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
+                                     msrh_conf_pkg::LSU_INST_NUM * 2 +
+                                     2 + 1 +
+                                     fpu_idx]),
+
     .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
     .ex1_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
     .ex1_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
@@ -508,7 +516,10 @@ endgenerate
 // FPU: Floating Point Physical Register
 // --------------------------------------
 msrh_phy_registers
-  #(.RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM))
+  #(
+    .REG_TYPE(msrh_pkg::FPR),
+    .RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM)
+    )
 u_fp_phy_registers
   (
    .i_clk(i_clk),

@@ -41,7 +41,8 @@ package msrh_pkg;
   localparam INT_REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
                                msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
                                2 +                                  // BRU port
-                               1;                                   // CSR port
+                               1 +                                  // CSR port
+                               msrh_conf_pkg::FPU_INST_NUM;         // FPU port
 
   localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
 
