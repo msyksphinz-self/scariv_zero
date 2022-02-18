@@ -184,7 +184,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-msrh_rename_map u_msrh_rename_map
+msrh_rename_map
+  #(.REG_TYPE(REG_TYPE))
+u_msrh_rename_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),

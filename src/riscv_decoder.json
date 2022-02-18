@@ -746,7 +746,7 @@
         "field":["00100", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "w"], ["op", "fsgnj"]]
+        "fpu_ctrl":[["size", "w"], ["op", "fsgnj_s"]]
     },
     {
         "name":"fsgnjn.s   f[11:7],f[19:15],f[24:20]",
@@ -754,7 +754,7 @@
         "field":["00100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "w"], ["op", "fsgnjn"]]
+        "fpu_ctrl":[["size", "w"], ["op", "fsgnjn_s"]]
     },
     {
         "name":"fsgnjx.s   f[11:7],f[19:15],f[24:20]",
@@ -762,7 +762,7 @@
         "field":["00100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "w"], ["op", "fsgnjx"]]
+        "fpu_ctrl":[["size", "w"], ["op", "fsgnjx_s"]]
     },
     {
         "name":"fmin.s     f[11:7],f[19:15],f[24:20]",
@@ -954,7 +954,7 @@
         "field":["00100", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "dw"], ["op", "fsgnj"]]
+        "fpu_ctrl":[["size", "dw"], ["op", "fsgnj_d"]]
     },
     {
         "name":"fsgnjn.d   f[11:7],f[19:15],f[24:20]",
@@ -962,7 +962,7 @@
         "field":["00100", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "dw"], ["op", "fsgnjn"]]
+        "fpu_ctrl":[["size", "dw"], ["op", "fsgnjn_d"]]
     },
     {
         "name":"fsgnjx.d   f[11:7],f[19:15],f[24:20]",
@@ -970,7 +970,7 @@
         "field":["00100", "01", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["size", "dw"], ["op", "fsgnjx"]]
+        "fpu_ctrl":[["size", "dw"], ["op", "fsgnjx_d"]]
     },
     {
         "name":"fmin.d     f[11:7],f[19:15],f[24:20]",
