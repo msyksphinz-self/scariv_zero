@@ -290,12 +290,14 @@ always_comb begin
   case (r_ex2_pipe_ctrl.op)
     OP_FMV_X_W  : w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
     OP_FMV_W_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
+`ifdef RV64
     OP_FMV_X_D  : w_ex2_res_data = w_ex2_rs1_selected_data;
     OP_FMV_D_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
     OP_FSGNJ_D  : w_ex2_res_data = { w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
     OP_FSGNJN_D : w_ex2_res_data = {~w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
     OP_FSGNJX_D : w_ex2_res_data = { w_ex2_rs1_selected_data[63] ^ w_ex2_rs2_selected_data[63],
                                      w_ex2_rs1_selected_data[62:0]};
+`endif // RV64
     OP_FSGNJ_S  : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
     OP_FSGNJN_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
     OP_FSGNJX_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
