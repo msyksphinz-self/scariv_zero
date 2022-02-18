@@ -363,7 +363,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-msrh_inflight_list u_inflight_map
+msrh_inflight_list
+  #(.REG_TYPE(REG_TYPE))
+u_inflight_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
