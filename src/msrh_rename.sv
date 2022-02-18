@@ -90,7 +90,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_push_freelist = r_commit_rnid_update_dly.commit &
                            r_commit_rnid_update_dly.rnid_valid[d_idx] &
                            (r_commit_rnid_update_dly.rd_typ[d_idx] == REG_TYPE) &
-                           (REG_TYPE == GPR) & (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0);
+                           ((REG_TYPE == GPR) ? (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0) : 1'b1);
 
   // Pushed ID, normal commit inst                    => old ID
   //            dead instruction                      => new ID

@@ -280,21 +280,27 @@ assign tmp_ex2_result_d = 'h0;
 // Memo: I don't know why but if this sentence is integrated into above, test pattern fail.
 assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_ex2_rs2_selected_data[ 4:0];
 
+logic [ 63: 0]       w_ex2_rs1_canonical;
+logic [ 63: 0]       w_ex2_rs2_canonical;
+assign w_ex2_rs1_canonical = !(&w_ex2_rs1_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs1_selected_data;
+assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs2_selected_data;
+
+
 always_comb begin
   case (r_ex2_pipe_ctrl.op)
-    OP_FMV_X_W,
-    OP_FMV_W_X,
-    OP_FMV_X_D,
+    OP_FMV_X_W  : w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
+    OP_FMV_W_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
+    OP_FMV_X_D  : w_ex2_res_data = w_ex2_rs1_selected_data;
     OP_FMV_D_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
     OP_FSGNJ_D  : w_ex2_res_data = { w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
     OP_FSGNJN_D : w_ex2_res_data = {~w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
     OP_FSGNJX_D : w_ex2_res_data = { w_ex2_rs1_selected_data[63] ^ w_ex2_rs2_selected_data[63],
                                      w_ex2_rs1_selected_data[62:0]};
-    OP_FSGNJ_S  : w_ex2_res_data = {w_ex2_rs1_selected_data[63:32],  w_ex2_rs2_selected_data[31], w_ex2_rs1_selected_data[30:0]};
-    OP_FSGNJN_S : w_ex2_res_data = {w_ex2_rs1_selected_data[63:32], ~w_ex2_rs2_selected_data[31], w_ex2_rs1_selected_data[30:0]};
-    OP_FSGNJX_S : w_ex2_res_data = {w_ex2_rs1_selected_data[63:32],
-                                    w_ex2_rs1_selected_data[31] ^ w_ex2_rs2_selected_data[31],
-                                    w_ex2_rs1_selected_data[30: 0]};
+    OP_FSGNJ_S  : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+    OP_FSGNJN_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+    OP_FSGNJX_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
+                                    w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
+                                    w_ex2_rs1_canonical[30: 0]};
     default    : w_ex2_res_data = 'h0;
   endcase // case (r_ex3_pipe_ctrl.op)
 end // always_comb
