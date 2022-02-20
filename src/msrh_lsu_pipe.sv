@@ -61,8 +61,7 @@ module msrh_lsu_pipe
 typedef struct packed {
   size_t  size;
   sign_t  sign;
-  logic   is_load;
-  logic   is_store;
+  op_t    op;
 } lsu_pipe_ctrl_t;
 
 
@@ -122,7 +121,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.is_load ? !w_ex2_l1d_mispredicted & !ex1_l1d_rd_if.s1_conflict :
+  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_l1d_mispredicted & !ex1_l1d_rd_if.s1_conflict :
                            r_ex2_issue.valid;
 end
 
@@ -187,11 +186,10 @@ u_tlb
 decoder_lsu_ctrl
 u_decoder_ls_ctrl
   (
-   .inst     (w_ex0_issue.inst        ),
-   .size     (w_ex0_pipe_ctrl.size    ),
-   .sign     (w_ex0_pipe_ctrl.sign    ),
-   .is_load  (w_ex0_pipe_ctrl.is_load ),
-   .is_store (w_ex0_pipe_ctrl.is_store)
+   .inst (w_ex0_issue.inst    ),
+   .size (w_ex0_pipe_ctrl.size),
+   .sign (w_ex0_pipe_ctrl.sign),
+   .op   (w_ex0_pipe_ctrl.op  )
    );
 
 //
@@ -217,7 +215,7 @@ assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
-assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.is_load ? M_XRD : M_XWR;
+assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.op == OP_LOAD ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
 `ifdef RV64
@@ -261,17 +259,17 @@ logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
 msrh_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ex1_ld_except_valid = r_ex1_pipe_ctrl.is_load &
-                           (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = r_ex1_pipe_ctrl.is_store &
-                           (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
+assign w_ex1_ld_except_valid = (r_ex1_pipe_ctrl.op == OP_LOAD) &
+                               (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_ex1_st_except_valid = (r_ex1_pipe_ctrl.op == OP_STORE) &
+                               (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
 assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
-                           w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                           w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
-                           w_ex1_tlb_resp.ma.st ? msrh_pkg::STAMO_ADDR_MISALIGN:
-                           w_ex1_tlb_resp.pf.st ? msrh_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
-                           w_ex1_tlb_resp.ae.st ? msrh_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                           msrh_pkg::except_t'('h0);
+                               w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               w_ex1_tlb_resp.ae.ld ? msrh_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
+                               w_ex1_tlb_resp.ma.st ? msrh_pkg::STAMO_ADDR_MISALIGN:
+                               w_ex1_tlb_resp.pf.st ? msrh_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
+                               w_ex1_tlb_resp.ae.st ? msrh_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               msrh_pkg::except_t'('h0);
 
 // Interface to EX1 updates
 assign o_ex1_q_updates.update     = r_ex1_issue.valid;
@@ -308,7 +306,7 @@ end
 
 
 // Interface to L1D cache
-assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & r_ex1_pipe_ctrl.is_load & !w_ex1_tlb_resp.miss;
+assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & (r_ex1_pipe_ctrl.op == OP_LOAD) & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
@@ -325,7 +323,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
-                                      r_ex2_pipe_ctrl.is_load &
+                                      (r_ex2_pipe_ctrl.op == OP_LOAD) &
                                       ex1_l1d_rd_if.s1_miss &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
@@ -365,14 +363,14 @@ end
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (o_ex2_q_updates.update &
-        r_ex2_pipe_ctrl.is_load &
+        (r_ex2_pipe_ctrl.op == OP_LOAD) &
         (o_ex2_q_updates.hazard_typ == LRQ_CONFLICT) &
         !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
              o_ex2_q_updates.lrq_index_oh);
     end
     if (o_ex2_q_updates.update &
-        r_ex2_pipe_ctrl.is_load &
+        (r_ex2_pipe_ctrl.op == OP_LOAD) &
         (o_ex2_q_updates.hazard_typ == LRQ_ASSIGNED) &
         !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
