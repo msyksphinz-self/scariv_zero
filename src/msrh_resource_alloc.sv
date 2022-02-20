@@ -15,6 +15,7 @@ module msrh_resource_alloc
    cre_ret_if.master stq_cre_ret_if,
    cre_ret_if.master csu_cre_ret_if,
    cre_ret_if.master bru_cre_ret_if,
+   cre_ret_if.master fpu_cre_ret_if[msrh_conf_pkg::FPU_INST_NUM],
 
    // Branch Tag Update Signal
    br_upd_if.slave                br_upd_if,
@@ -41,6 +42,8 @@ logic                                               w_ldq_no_credits_remained;
 logic                                               w_stq_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
+logic [msrh_conf_pkg::FPU_INST_NUM-1: 0]            w_fpu_no_credits_remained;
+
 
 assign o_resource_ok = !w_rob_no_credits_remained &
                        !(|w_alu_no_credits_remained) &
@@ -48,7 +51,8 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_ldq_no_credits_remained &
                        !w_stq_no_credits_remained &
                        !w_csu_no_credits_remained &
-                       !w_bru_no_credits_remained;
+                       !w_bru_no_credits_remained &
+                       !(|w_fpu_no_credits_remained);
 
 
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
@@ -202,6 +206,32 @@ u_bru_credit_return
 
  .cre_ret_if (bru_cre_ret_if)
 );
+
+
+generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::FPU_INST_NUM; a_idx++) begin : fpu_cre_ret_loop
+  logic w_inst_fpu_valid;
+  assign w_inst_fpu_valid = iq_disp.valid & |iq_disp.resource_cnt.fpu_inst_cnt[a_idx];
+  logic [$clog2(msrh_conf_pkg::RV_FPU_ENTRY_SIZE):0] w_fpu_inst_cnt;
+  /* verilator lint_off WIDTH */
+  assign w_fpu_inst_cnt = iq_disp.resource_cnt.fpu_inst_cnt[a_idx];
+
+  msrh_credit_return_master
+    #(.MAX_CREDITS(msrh_conf_pkg::RV_FPU_ENTRY_SIZE))
+  u_fpu_credit_return
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_get_credit(~w_flush_valid & w_inst_fpu_valid & iq_disp.ready),
+   .i_credit_val(w_fpu_inst_cnt),
+
+   .o_credits(),
+   .o_no_credits(w_fpu_no_credits_remained[a_idx]),
+
+   .cre_ret_if (fpu_cre_ret_if[a_idx])
+   );
+end // block: fpu_cre_ret_loop
+endgenerate
 
 
 logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    r_br_mask_valid;

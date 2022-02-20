@@ -1,6 +1,7 @@
 module msrh_rename
   import msrh_pkg::*;
-  (
+  #(parameter REG_TYPE = GPR)
+(
    input logic i_clk,
    input logic i_reset_n,
 
@@ -88,7 +89,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   // even thouhg instruction is dead, newly allocated RNID should be return
   assign w_push_freelist = r_commit_rnid_update_dly.commit &
                            r_commit_rnid_update_dly.rnid_valid[d_idx] &
-                           (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0);
+                           (r_commit_rnid_update_dly.rd_typ[d_idx] == REG_TYPE) &
+                           ((REG_TYPE == GPR) ? (r_commit_rnid_update_dly.rd_regidx[d_idx] != 'h0) : 1'b1);
+
   // Pushed ID, normal commit inst                    => old ID
   //            dead instruction                      => new ID
   //            normal exception                      => new ID
@@ -108,6 +111,12 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     end
   end
 
+  logic w_freelist_pop;
+  assign w_freelist_pop = iq_disp.inst[d_idx].valid &
+                          iq_disp.inst[d_idx].wr_reg.valid &
+                          (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE) &
+                          ((REG_TYPE == GPR) ? (iq_disp.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
+
   msrh_freelist
     #(
       .SIZE (FLIST_SIZE),
@@ -122,20 +131,17 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_push(w_push_freelist),
     .i_push_id(w_push_freelist_id),
 
-    .i_pop(w_iq_fire &
-           iq_disp.inst[d_idx].valid &
-           iq_disp.inst[d_idx].wr_reg.valid &
-           (iq_disp.inst[d_idx].wr_reg.regidx != 'h0)),
+    .i_pop(w_iq_fire & w_freelist_pop),
     .o_pop_id(w_rd_rnid_tmp)
   );
-  assign w_rd_rnid[d_idx] = iq_disp.inst[d_idx].wr_reg.regidx != 'h0 ? w_rd_rnid_tmp : 'h0;
+  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & (iq_disp.inst[d_idx].wr_reg.regidx == 'h0) ? 'h0 : w_rd_rnid_tmp;
 end
 endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
-  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid;
-  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid;
+  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
+  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
 
   assign w_archreg [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].regidx;
   assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].regidx;
@@ -178,7 +184,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-msrh_rename_map u_msrh_rename_map
+msrh_rename_map
+  #(.REG_TYPE(REG_TYPE))
+u_msrh_rename_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
@@ -206,7 +214,8 @@ msrh_rename_map u_msrh_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].wr_reg.valid;
+  assign w_rd_valids[d_idx] =  w_iq_fire & iq_disp.inst[d_idx].wr_reg.valid &
+                               (iq_disp.inst[d_idx].wr_reg.typ == REG_TYPE);
   assign w_rd_regidx[d_idx] =  iq_disp.inst[d_idx].wr_reg.regidx;
   assign w_rd_data  [d_idx] = !iq_disp.inst[d_idx].wr_reg.valid;
 end
@@ -356,7 +365,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 end
 endgenerate
 
-msrh_inflight_list u_inflight_map
+msrh_inflight_list
+  #(.REG_TYPE(REG_TYPE))
+u_inflight_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
@@ -403,6 +414,7 @@ u_msrh_bru_rn_snapshots
 
 // Commit Map
 msrh_commit_map
+  #(.REG_TYPE(REG_TYPE))
 u_commit_map
   (
    .i_clk (i_clk),
@@ -417,8 +429,8 @@ assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredic
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 `ifdef SIMULATION
-function void dump_json(int fp);
-  $fwrite(fp, "  \"msrh_rename\" : {\n");
+function void dump_json(string name, int fp);
+  $fwrite(fp, "  \"msrh_%s_rename\" : {\n", name);
 
   if (sc_disp.valid) begin
     $fwrite(fp, "    \"sc_disp\" : {\n");

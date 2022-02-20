@@ -4,6 +4,7 @@
 ../src/decoder_lsu_ctrl.sv
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv
+../src/decoder_fpu_ctrl.sv
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
@@ -120,6 +121,10 @@
 ../src/msrh_csu.sv
 ../src/msrh_csu_pipe.sv
 ../src/msrh_csr.sv
+
+../src/msrh_fpu.sv
+../src/msrh_fpu_pipe.sv
+../src/msrh_fpnew_wrapper.sv
 
 ../src/pma_map.sv
 

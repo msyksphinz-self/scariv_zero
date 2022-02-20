@@ -18,6 +18,7 @@ import "DPI-C" function void step_spike
    input int     rtl_grp_id,
    input int     rtl_insn,
    input int     rtl_wr_valid,
+   input int     rtl_wr_typ,
    input int     rtl_wr_gpr,
    input int     rtl_wr_rnid,
    input longint rtl_wr_val
@@ -325,9 +326,12 @@ logic [63: 0]                                                  int_commit_counte
                         1 << grp_idx,
                         committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
                         committed_rob_entry.inst[grp_idx].wr_reg.valid,
+                        committed_rob_entry.inst[grp_idx].wr_reg.typ,
                         committed_rob_entry.inst[grp_idx].wr_reg.regidx,
                         committed_rob_entry.inst[grp_idx].wr_reg.rnid,
-                        w_physical_gpr_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
+                        committed_rob_entry.inst[grp_idx].wr_reg.typ == msrh_pkg::GPR ?
+                        w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
+                        w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
           end
         end  // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)

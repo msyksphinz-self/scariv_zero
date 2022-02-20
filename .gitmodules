@@ -10,3 +10,6 @@
 [submodule "tests/riscv-tests"]
 	path = tests/riscv-tests
 	url = git@github.com:msyksphinz-self/riscv-tests.git
+[submodule "src/fpnew"]
+	path = src/fpnew
+	url = https://github.com/pulp-platform/fpnew.git

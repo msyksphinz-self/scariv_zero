@@ -187,6 +187,7 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_lo
   assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.old_rnid;
   assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.rnid;
   assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.regidx;
+  assign o_commit_rnid_update.rd_typ    [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.typ;
 end
 endgenerate
 // assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;

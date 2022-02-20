@@ -15,12 +15,14 @@ package msrh_pkg;
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
                             1 +              // BRU
-                            1;               // CSU
+                            1 +              // CSU
+                            FPU_INST_NUM;    // FPU
   localparam TGT_BUS_SIZE = REL_BUS_SIZE;
   localparam CMT_BUS_SIZE = ALU_INST_NUM +   // ALU
                             LSU_INST_NUM +   // LSU
                             1 +              // BRU
-                            1;               // CSU
+                            1 +              // CSU
+                            FPU_INST_NUM;    // FPU
 
   localparam FLIST_SIZE = 32;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
@@ -36,10 +38,13 @@ package msrh_pkg;
   localparam LRQ_ENTRY_SIZE = LRQ_NORM_ENTRY_SIZE + LRQ_ST_ENTRY_SIZE;
   localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
 
-  localparam REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
-                           msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
-                           2 +                                  // BRU port
-                           1;                                   // CSR port
+  localparam INT_REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
+                               msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
+                               2 +                                  // BRU port
+                               1 +                                  // CSR port
+                               msrh_conf_pkg::FPU_INST_NUM;         // FPU port
+
+  localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
 
   typedef enum logic [1:0] {
      PRV_U = 0,
@@ -127,7 +132,7 @@ typedef struct packed {
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
     reg_wr_disp_t         wr_reg;
-    reg_rd_disp_t [ 1: 0] rd_regs;
+    reg_rd_disp_t [ 2: 0] rd_regs;
   } disp_t;
 
 
@@ -139,6 +144,7 @@ typedef struct packed {
     logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
     logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
     logic [$clog2(CSU_DISP_SIZE): 0]                      csu_inst_cnt;
+    logic [$clog2(FPU_DISP_SIZE): 0]                      fpu_inst_cnt;
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t disp,
@@ -162,6 +168,20 @@ typedef struct packed {
     ret.rd_regs[1].rnid    = rs2_rnid;
     ret.brtag       = brtag;
     ret.br_mask     = br_mask;
+
+    return ret;
+
+  endfunction  // assign_disp_rename
+
+
+  function disp_t merge_disp_if (disp_t int_disp,
+                                 disp_t fp_disp);
+    disp_t ret;
+    ret = int_disp;
+    ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
+    ret.rd_regs[0] = int_disp.rd_regs[0].typ == GPR ? int_disp.rd_regs[0] : fp_disp.rd_regs[0];
+    ret.rd_regs[1] = int_disp.rd_regs[1].typ == GPR ? int_disp.rd_regs[1] : fp_disp.rd_regs[1];
+    ret.rd_regs[2] = int_disp.rd_regs[2].typ == GPR ? int_disp.rd_regs[2] : fp_disp.rd_regs[2];
 
     return ret;
 
@@ -420,6 +440,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
+  reg_t [msrh_conf_pkg::DISP_SIZE-1:0]                       rd_typ;
   // logic                                                      is_br_included;
   // logic                                                      upd_pc_valid;
   logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;

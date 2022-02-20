@@ -1,6 +1,7 @@
 module msrh_rename_map
   import msrh_pkg::*;
-import msrh_conf_pkg::*;
+  import msrh_conf_pkg::*;
+#(parameter REG_TYPE = GPR)
 (
    input logic                     i_clk,
    input logic                     i_reset_n,
@@ -57,39 +58,41 @@ logic [RNID_W: 0]                                                        ret;
 
 endfunction // select_latest_rnid
 
-assign r_map[0] = 'h0;
-generate for (genvar i = 1; i < 32; i++) begin : map_loop
-logic w_update;
-logic [RNID_W-1: 0] w_update_rnid;
+generate for (genvar i = 0; i < 32; i++) begin : map_loop
+  if ((REG_TYPE == GPR) & (i == 0)) begin
+    assign r_map[0] = 'h0;
+  end else begin
+    logic w_update;
+    logic [RNID_W-1: 0] w_update_rnid;
 
-  logic [DISP_SIZE-1: 0] w_rd_active_valid;
-  logic [DISP_SIZE-1: 0] w_rd_active_valid_oh;
-  logic [RNID_W-1: 0]    w_commit_rd_rnid;
-  for (genvar d = 0; d < DISP_SIZE; d++) begin
-    assign w_rd_active_valid[d] = i_commit_rd_valid[d] &
-                                  (i_commit_rd_regidx[d] == i[4:0]);
-  end
-  bit_extract_msb #(.WIDTH(DISP_SIZE)) extract_latest_rd_bit(.in(w_rd_active_valid), .out(w_rd_active_valid_oh));
-  bit_oh_or #(.T(logic[RNID_W-1:0]), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
-                                                                    .i_data(i_commit_rd_rnid),
-                                                                    .o_selected(w_commit_rd_rnid));
+    logic [DISP_SIZE-1: 0] w_rd_active_valid;
+    logic [DISP_SIZE-1: 0] w_rd_active_valid_oh;
+    logic [RNID_W-1: 0]    w_commit_rd_rnid;
+    for (genvar d = 0; d < DISP_SIZE; d++) begin
+      assign w_rd_active_valid[d] = i_commit_rd_valid[d] &
+                                    (i_commit_rd_regidx[d] == i[4:0]);
+    end
+    bit_extract_msb #(.WIDTH(DISP_SIZE)) extract_latest_rd_bit(.in(w_rd_active_valid), .out(w_rd_active_valid_oh));
+    bit_oh_or #(.T(logic[RNID_W-1:0]), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
+                                                                      .i_data(i_commit_rd_rnid),
+                                                                      .o_selected(w_commit_rd_rnid));
 
-  assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :
-                                     i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
-                                     select_latest_rnid (i_update,
-                                                         i,
-                                                         i_update_arch_id,
-                                                         i_update_rnid);
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_map[i] <= i;
-    end else begin
-      if (w_update) begin
-        r_map[i] <= w_update_rnid;
+    assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :
+                                       i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
+                                       select_latest_rnid (i_update,
+                                                           i,
+                                                           i_update_arch_id,
+                                                           i_update_rnid);
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_map[i] <= i;
+      end else begin
+        if (w_update) begin
+          r_map[i] <= w_update_rnid;
+        end
       end
     end
-  end
-
+  end // else: !if((REG_TYPE == GPR) & (i == 0))
 end
 endgenerate
 
