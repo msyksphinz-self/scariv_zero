@@ -365,6 +365,7 @@ logic [63: 0]                                                  int_commit_counte
   `include "tb_json_dumper.sv"
   `include "tb_json_perf_dumper.sv"
 
+`ifdef NEVER
 // ------------------------------
 // Instruction Cache Checker
 // ------------------------------
@@ -384,5 +385,6 @@ always_ff @(negedge i_clk, negedge i_msrh_reset_n) begin
     end
   end // else: !if(!i_msrh_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
+`endif //  `ifdef NEVER
 
 endmodule  // msrh_tb

@@ -163,13 +163,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
+
 generate for (genvar w_idx = 0; w_idx < DCACHE_WORDS_PER_BANK; w_idx++) begin : tag_loop
+  logic [READ_PORT_NUM-1: 0] w_s1_dc_read_resp_miss;
+  for (genvar i = 0; i < READ_PORT_NUM; i++) begin
+    assign w_s1_dc_read_resp_miss[i] = o_dc_read_resp[i].miss;
+  end
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_replace_target[w_idx] <= 'h0;
     end else begin
       for (int i = 0; i < READ_PORT_NUM; i++) begin
-        if (w_update_tag_valid[i] & (w_idx == w_update_tag_addr[i])) begin
+        if (|r_s1_dc_read_req_valid_oh) begin
+          // Temporary : This is sequential and rando mreplace policy
           r_replace_target[w_idx] <= r_replace_target[w_idx] + 'h1;
         end
       end
