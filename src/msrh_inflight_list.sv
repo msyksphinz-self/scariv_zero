@@ -146,10 +146,9 @@ logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
      .o_data  ()
      );
 
-  logic                         w_is_x0_reg;
-  assign w_is_x0_reg = (REG_TYPE == GPR) & (i_rnid[d_idx * 2 + rs_idx] == 'h0);
-
   for(genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
+    logic                         w_is_x0_reg;
+    assign w_is_x0_reg = (REG_TYPE == GPR) & (i_rnid[d_idx * 2 + rs_idx] == 'h0);
     assign o_valids[d_idx * 2 + rs_idx] = w_is_x0_reg                  ? 1'b1 :
                                           w_update_phy_valids [rs_idx] ? 1'b1 :
                                           w_update_fetch_valid[rs_idx] ? w_update_fetch_data[rs_idx] :
