@@ -6,13 +6,12 @@ require "fileutils"
 
 veri_sim_binary = ARGV[0]
 test_json_file = ARGV[1]
-max_threads = ARGV[2].to_i
+log_dir = ARGV[2]
+max_threads = ARGV[3].to_i
 
 File.open(test_json_file) do |file|
   $test_table = JSON.load(file)
 end
-
-log_dir = 'log/'
 
 FileUtils.mkdir_p(log_dir)
 
@@ -27,7 +26,7 @@ puts_locks = Queue.new
 select_test.each_slice(max_threads) do |group|
   group.map do |test|
     Thread.new do
-      output_file = log_dir + test["name"] + "_" + File.basename(test["elf"], ".*") + ".log"
+      output_file = log_dir + "/" + test["name"] + "_" + File.basename(test["elf"], ".*") + ".log"
       command_str = "./" + ARGV[0] + " -e " + "../tests/" + test["elf"] + " -o " + output_file
       # puts "#{command_str} 2> /dev/null 1> /dev/null"
       system("#{command_str} 2> /dev/null 1> /dev/null")
