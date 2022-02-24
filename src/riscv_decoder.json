@@ -834,7 +834,7 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00001", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "lsu_ctrl":[["size", "w"], ["sign", "s"], ["is_load", "1"]]
+        "lsu_ctrl":[["size", "w"], ["sign", "s"], ["op", "load"]]
     },
     {
         "name":"fsw        f[24:20],h[31:25]|h[11:7](r[19:15])",
@@ -842,7 +842,7 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01001", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "f2"]],
-        "lsu_ctrl":[["size", "w"], ["is_store", "1"]]
+        "lsu_ctrl":[["size", "w"], ["op", "store"]]
     },
     {
         "name":"fmadd.s    f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -1042,7 +1042,7 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00001", "11"],
         "inst_cat": [["inst_cat", "ld"]],
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["is_load", "1"]]
+        "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["op", "load"]]
     },
     {
         "name":"fsd        f[24:20],h[31:25]|h[11:7](r[19:15])",
@@ -1050,7 +1050,7 @@
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01001", "11"],
         "inst_cat": [["inst_cat", "st"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "f2"]],
-        "lsu_ctrl":[["size", "dw"], ["is_store", "1"]]
+        "lsu_ctrl":[["size", "dw"], ["op", "store"]]
     },
     {
         "name":"fmadd.d    f[11:7],f[19:15],f[24:20],f[31:27]",
