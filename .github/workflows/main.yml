@@ -65,7 +65,7 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
         with:
-          submodules: true
+          submodules: recursive
 
       # Build library
       ## - name: RV32 Tiny Build
