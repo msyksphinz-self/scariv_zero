@@ -434,12 +434,23 @@ bit_oh_or #(.T(logic[$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(msrh_conf_pk
 
 logic                               w_bru_predict_disp_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_limit_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_limit_valid_oh;
 
 assign w_bru_predict_disp_valid = |((w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp | w_predict_taken_valid_array));
 
-assign w_disp_special_limit_valid = w_bru_predict_disp_valid | w_inst_csu_disp;
+assign w_disp_special_limit_valid = w_bru_predict_disp_valid | (w_inst_csu_disp & (w_inst_disp_mask_tmp - 1));
 
-assign w_inst_disp_mask = w_bru_predict_disp_valid : {w_inst_bru_disp, 1'b0} - 1
+bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_special_valid_lsb (.in(w_disp_special_limit_valid), .out(w_disp_special_limit_valid_oh));
+
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_bru_valid;
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_csu_valid;
+
+assign w_disp_special_bru_valid = w_disp_special_limit_valid_oh & w_bru_predict_disp_valid;
+assign w_disp_special_csu_valid = w_disp_special_limit_valid_oh & w_inst_csu_disp;
+
+assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_inst_bru_disp, 1'b0} - 1 :
+                          (w_disp_special_csu_valid == 'h1) ? 'h1 :
+                          |w_disp_special_csu_valid ? w_inst_csu_disp - 1 :
                           w_inst_disp_mask_tmp - 1;
 
 assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
