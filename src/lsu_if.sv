@@ -61,6 +61,8 @@ interface l1d_wr_if;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] be;
 
+  logic                                     missunit_already_evicted;
+
   modport master(
     output valid,
     output paddr,
@@ -69,7 +71,8 @@ interface l1d_wr_if;
     input conflict,
     output way,
     output data,
-    output be
+    output be,
+    input missunit_already_evicted
   );
 
   modport slave(
@@ -81,6 +84,13 @@ interface l1d_wr_if;
     input way,
     input data,
     input be
+  );
+
+
+  modport missunit_watch(
+    input valid,
+    input paddr,
+    output missunit_already_evicted
   );
 
 endinterface // l1d_wr_if

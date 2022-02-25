@@ -261,6 +261,8 @@ msrh_load_requester
  .l1d_ext_rd_req  (w_l1d_ext_req[0]),
  .l1d_ext_rd_resp (l1d_ext_resp  ),
 
+ .l1d_wr_if (w_l1d_wr_if),
+
  .l1d_evict_if  (w_l1d_evict_if),
 
  .lrq_pa_search_if (w_lrq_pa_search_if),

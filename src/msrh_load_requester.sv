@@ -25,6 +25,8 @@ module msrh_load_requester
    l2_req_if.master  l1d_ext_rd_req,
    l2_resp_if.slave  l1d_ext_rd_resp,
 
+   l1d_wr_if.missunit_watch l1d_wr_if,
+
    // Interface to L1D eviction to Store Requestor
    l1d_evict_if.master l1d_evict_if,
 
@@ -442,6 +444,22 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 
 end
 endgenerate
+
+
+// --------------------------------
+// l1d_wr_if Eviction hazard check
+// --------------------------------
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] l1d_wr_eviction_hazard_vlds;
+generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : wr_if_evicted_loop
+  assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.valid &
+                                              w_lrq_entries[e_idx].evict_valid &
+                                              (w_lrq_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                               l1d_wr_if.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
+                                              w_lrq_entries[e_idx].evict_sent;
+end
+endgenerate
+
+assign l1d_wr_if.missunit_already_evicted = |l1d_wr_eviction_hazard_vlds;
 
 
 // --------------------------

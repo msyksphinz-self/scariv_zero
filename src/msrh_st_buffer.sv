@@ -126,7 +126,7 @@ assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
      .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_rd_miss     (l1d_rd_if.s1_miss),
      .i_l1d_rd_conflict (l1d_rd_if.s1_conflict),
-     .i_l1d_wr_conflict (l1d_wr_if.conflict),
+     .i_l1d_wr_conflict (l1d_wr_if.conflict | l1d_wr_if.missunit_already_evicted),
 
      .i_st_lrq_resp  (l1d_lrq_stq_miss_if.resp_payload ),
      .i_lrq_resolve (i_lrq_resolve),
