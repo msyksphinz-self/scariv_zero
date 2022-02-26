@@ -175,7 +175,9 @@ u_msrh_div_unit
 assign o_valid = r_mul_valid_pipe[MUL_STEP] | w_div_valid;
 assign o_res   = w_div_valid ? w_div_res :
                  (op_pipe[MUL_STEP] == OP_MULH || op_pipe[MUL_STEP] == OP_MULHU || op_pipe[MUL_STEP] == OP_MULHSU) ? prod_pipe [MUL_STEP][riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
-                 w_is_mul_64 ? {{(riscv_pkg::XLEN_W-32){prod_pipe [MUL_STEP][31]}}, prod_pipe [MUL_STEP][31 : 0]}:
+`ifdef RV64
+                 (op_pipe[MUL_STEP] == OP_MULW) ? {{(riscv_pkg::XLEN_W-32){prod_pipe [MUL_STEP][31]}}, prod_pipe [MUL_STEP][31 : 0]}:
+`endif // RV64
                  prod_pipe [MUL_STEP][riscv_pkg::XLEN_W-1: 0];
 
 assign o_rd_rnid  = w_div_valid ? w_div_rd_rnid  : r_mul_rd_rnid[MUL_STEP];
