@@ -122,7 +122,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
 
   // Need to replace: line existed but not hit
   // temporary tied to way-0
-  assign o_dc_read_resp[l_idx].replace_valid = ~|(w_s1_tag_valid & w_s1_tag_hit) & w_s1_tag_valid[r_replace_target[r_s1_dc_tag_low]];
+  assign o_dc_read_resp[l_idx].replace_valid = /* ~|(w_s1_tag_valid & w_s1_tag_hit) & */w_s1_tag_valid[r_replace_target[r_s1_dc_tag_low]];
   assign o_dc_read_resp[l_idx].replace_way   = r_replace_target[r_s1_dc_tag_low];  // temporary
   assign o_dc_read_resp[l_idx].replace_data  = w_s1_data[r_replace_target[r_s1_dc_tag_low]];
   assign o_dc_read_resp[l_idx].replace_paddr = {w_s1_tag[r_replace_target[r_s1_dc_tag_low]],
