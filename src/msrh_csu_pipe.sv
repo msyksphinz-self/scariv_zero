@@ -7,6 +7,8 @@ module msrh_csu_pipe
   input logic                       i_clk,
   input logic                       i_reset_n,
 
+  input msrh_pkg::commit_blk_t      i_commit,
+
   input                             msrh_pkg::issue_t rv0_issue,
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
   input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
@@ -235,7 +237,35 @@ assign write_if.data  = r_ex3_result;
 // ------------
 // SFENCE Update
 // ------------
-assign sfence_if.valid     = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal;
+logic r_sfence_vma_commit_wait;
+logic [msrh_pkg::CMT_ID_W-1:0] r_sfence_vma_cmt_id;
+logic [msrh_conf_pkg::DISP_SIZE-1:0] r_sfence_vma_grp_id;
+logic                                r_sfence_vma_is_rs1_x0;
+logic                                r_sfence_vma_is_rs2_x0;
+logic [riscv_pkg::VADDR_W-1: 0]      r_sfence_vma_vaddr;
+
+logic                                w_sfence_vma_sfence_commit_match;
+assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &
+                                          (i_commit.cmt_id == r_sfence_vma_cmt_id) &
+                                          |(i_commit.grp_id & r_sfence_vma_grp_id);
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    r_sfence_vma_commit_wait <= 'h0;
+  end else begin
+    if (w_sfence_vma_sfence_commit_match) begin
+      r_sfence_vma_commit_wait <= 1'b0;
+    end
+    if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal) begin
+      r_sfence_vma_commit_wait <= 1'b1;
+      r_sfence_vma_is_rs1_x0 <= r_ex3_issue.rd_regs[0].regidx == 'h0;
+      r_sfence_vma_is_rs2_x0 <= r_ex3_issue.rd_regs[1].regidx == 'h0;
+      r_sfence_vma_vaddr     <= r_ex3_result[riscv_pkg::VADDR_W-1:0];
+    end
+  end // else: !if(i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign sfence_if.valid     = r_sfence_vma_commit_wait & w_sfence_vma_sfence_commit_match;
 assign sfence_if.is_rs1_x0 = r_ex3_issue.rd_regs[0].regidx == 'h0;
 assign sfence_if.is_rs2_x0 = r_ex3_issue.rd_regs[1].regidx == 'h0;
 assign sfence_if.vaddr     = r_ex3_result[riscv_pkg::VADDR_W-1:0];
