@@ -250,14 +250,15 @@ assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.co
                                           |(i_commit.grp_id & r_sfence_vma_grp_id);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
     r_sfence_vma_commit_wait <= 'h0;
   end else begin
     if (w_sfence_vma_sfence_commit_match) begin
       r_sfence_vma_commit_wait <= 1'b0;
-    end
-    if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal) begin
+    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal) begin
       r_sfence_vma_commit_wait <= 1'b1;
+      r_sfence_vma_cmt_id <= r_ex3_issue.cmt_id;
+      r_sfence_vma_grp_id <= r_ex3_issue.grp_id;
       r_sfence_vma_is_rs1_x0 <= r_ex3_issue.rd_regs[0].regidx == 'h0;
       r_sfence_vma_is_rs2_x0 <= r_ex3_issue.rd_regs[1].regidx == 'h0;
       r_sfence_vma_vaddr     <= r_ex3_result[riscv_pkg::VADDR_W-1:0];
