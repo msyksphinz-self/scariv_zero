@@ -1,10 +1,11 @@
 package riscv_common_pkg;
 
-  // Privilege Mode
-  localparam PRIV_U = 2'h0;
-  localparam PRIV_S = 2'h1;
-  localparam PRIV_H = 2'h2;
-  localparam PRIV_M = 2'h3;
+typedef enum logic [1:0] {
+   PRIV_U = 0,
+   PRIV_S = 1,
+   PRIV_H = 2,
+   PRIV_M = 3
+} priv_t;
 
 localparam SUPER_SOFT_INT       = 'h1;
 localparam MACHINE_SOFT_INT     = 'h3;

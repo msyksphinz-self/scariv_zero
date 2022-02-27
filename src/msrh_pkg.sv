@@ -46,18 +46,12 @@ package msrh_pkg;
 
   localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
 
-  typedef enum logic [1:0] {
-     PRV_U = 0,
-     PRV_S = 1,
-     PRV_M = 3
-  } priv_t;
-
   typedef struct packed {
     logic valid;
     logic [31:0] inst;
   } inst_buf_t;
 
-  typedef enum {
+  typedef enum logic {
     GPR,
     FPR
   } reg_t;

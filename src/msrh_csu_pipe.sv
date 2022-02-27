@@ -19,7 +19,7 @@ module msrh_csu_pipe
   output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
 
   /* CSR information */
-  input msrh_pkg::priv_t               i_status_priv,
+  input riscv_common_pkg::priv_t               i_status_priv,
   input logic [riscv_pkg::XLEN_W-1: 0] i_mstatus,
 
   csr_rd_if.master                  read_if,
@@ -216,9 +216,9 @@ assign ex3_done_if.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal |
                                  r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
                                  r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
                                  r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_U) ? msrh_pkg::ECALL_U :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_S) ? msrh_pkg::ECALL_S :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == msrh_pkg::PRV_M) ? msrh_pkg::ECALL_M :
+                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? msrh_pkg::ECALL_U :
+                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? msrh_pkg::ECALL_S :
+                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? msrh_pkg::ECALL_M :
                                  msrh_pkg::SILENT_FLUSH;
 
 assign ex3_done_if.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :

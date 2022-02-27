@@ -21,7 +21,7 @@ module msrh_csr
 
 `include "msrh_csr_def.svh"
 
-msrh_pkg::priv_t    r_priv, w_priv_next;
+riscv_common_pkg::priv_t    r_priv, w_priv_next;
 
 logic w_wr_mcsr_ill_access;
 logic w_wr_scsr_ill_access;
@@ -718,13 +718,13 @@ logic                          w_m_csr_int_en;
 logic                          w_s_csr_int_en;
 logic [riscv_pkg::XLEN_W-1: 0] w_s_pend_ints;
 
-assign w_m_csr_int_en = (r_priv < msrh_pkg::PRV_M) |
-                        ((r_priv == msrh_pkg::PRV_M) & r_mstatus[`MSTATUS_MIE]);
+assign w_m_csr_int_en = (r_priv < riscv_common_pkg::PRIV_M) |
+                        ((r_priv == riscv_common_pkg::PRIV_M) & r_mstatus[`MSTATUS_MIE]);
 assign w_m_pend_ints = r_mip & r_mie;
 assign w_m_int_en  = w_m_pend_ints & ~r_mideleg & {riscv_pkg::XLEN_W{w_m_csr_int_en}};
 
-assign w_s_csr_int_en = (r_priv < msrh_pkg::PRV_S) |
-                        ((r_priv == msrh_pkg::PRV_S) & r_mstatus[`MSTATUS_SIE]);
+assign w_s_csr_int_en = (r_priv < riscv_common_pkg::PRIV_S) |
+                        ((r_priv == riscv_common_pkg::PRIV_S) & r_mstatus[`MSTATUS_SIE]);
 assign w_s_int_en = w_m_int_en == 'h0 ? w_m_pend_ints & r_mideleg & {riscv_pkg::XLEN_W{w_s_csr_int_en}} :
                     'h0;
 
@@ -736,7 +736,7 @@ assign int_if.s_external_int_valid = w_m_int_en[ 9] | w_s_int_en[ 9];
 assign int_if.m_external_int_valid = w_m_int_en[11] | w_s_int_en[11];
 
 logic w_delegate;
-assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= msrh_pkg::PRV_S) &
+assign w_delegate = msrh_conf_pkg::USING_VM & (r_priv <= riscv_common_pkg::PRIV_S) &
                     r_medeleg[int'(i_commit.except_type)];
 
 always_comb begin
@@ -792,9 +792,9 @@ always_comb begin
       // r_mcause <= i_commit.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_MPIE] = 1'b1;
-      w_mstatus_next[`MSTATUS_MPP ] = msrh_pkg::PRV_U;
+      w_mstatus_next[`MSTATUS_MPP ] = riscv_common_pkg::PRIV_U;
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
-      w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
+      w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
       // w_mtval_next = 'h0;
     end else if (i_commit.except_type == msrh_pkg::SRET) begin
       // r_mepc <= epc;
@@ -802,9 +802,9 @@ always_comb begin
       // r_mcause <= i_commit.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_SPIE] = 1'b1;
-      w_mstatus_next[`MSTATUS_SPP ] = msrh_pkg::PRV_U;
+      w_mstatus_next[`MSTATUS_SPP ] = riscv_common_pkg::PRIV_U;
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
-      w_priv_next = msrh_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
+      w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
       w_stval_next = i_commit.tval;
     end else if (i_commit.except_type == msrh_pkg::URET) begin // if (i_commit.except_type == msrh_pkg::SRET)
       w_mtval_next = 'h0;
@@ -830,7 +830,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SPP ] = r_priv[0];
       w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
 
-      w_priv_next = msrh_pkg::PRV_S;
+      w_priv_next = riscv_common_pkg::PRIV_S;
     end else if (i_commit.except_type != msrh_pkg::SILENT_FLUSH &&
                  i_commit.except_type != msrh_pkg::ANOTHER_FLUSH) begin
       w_mepc_next = i_commit.epc;
@@ -853,7 +853,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
       w_mstatus_next[`MSTATUS_MPP ] = r_priv;
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
-      w_priv_next = msrh_pkg::PRV_M;
+      w_priv_next = riscv_common_pkg::PRIV_M;
     end // else: !if(w_delegate)
 
   end else if (write_if.valid) begin
@@ -926,7 +926,7 @@ end // always_comb
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_priv <= msrh_pkg::PRV_M;
+    r_priv <= riscv_common_pkg::PRIV_M;
     r_mstatus <= riscv_pkg::init_mstatus;
 
     r_sepc <= 'h0;

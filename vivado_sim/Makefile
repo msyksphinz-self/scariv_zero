@@ -80,7 +80,9 @@ sim_vivado: $(DECODE_FILES) $(FILELIST)
 	DUMP_TYPE=$(DUMP) $(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
 
 $(FILELIST): ../src/filelist.f filelist.f
-	cat $^ > $@
+	echo "../tb/sim_pkg.sv" > $@
+	echo "../src/riscv_common_pkg.sv" >> $@
+	cat $^ >> $@
 
 gui_vivado:
 	$(XSIM) -g work.tb --wdb out.wdb

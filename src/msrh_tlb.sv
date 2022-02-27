@@ -16,7 +16,7 @@ module tlb
  /* verilator lint_off UNOPTFLAT */
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
- input msrh_pkg::priv_t               i_status_prv,
+ input riscv_common_pkg::priv_t               i_status_prv,
  input logic [riscv_pkg::XLEN_W-1: 0] i_csr_status,
  input logic [riscv_pkg::XLEN_W-1: 0] i_csr_satp,
 
@@ -277,7 +277,7 @@ assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-riscv_pkg::VADDR_W){
 
 assign o_tlb_ready = (r_state === ST_READY);
 assign w_priv_s = i_status_prv[0];
-assign w_priv_uses_vm = i_status_prv <= msrh_pkg::PRV_S;
+assign w_priv_uses_vm = i_status_prv <= riscv_common_pkg::PRIV_S;
 assign w_vm_enabled = msrh_conf_pkg::USING_VM &
                       (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
                       w_priv_uses_vm &
