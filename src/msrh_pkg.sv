@@ -186,7 +186,7 @@ typedef struct packed {
 
   typedef struct packed {
     grp_id_t                         upd_valid;
-    grp_id_t[riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0]         brtag;
 
 `ifdef SIMULATION
@@ -208,7 +208,7 @@ typedef struct packed {
 
     grp_id_t   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
-    grp_id_t[riscv_pkg::XLEN_W-1:0] except_tval;
+    logic [DISP_SIZE-1: 0][riscv_pkg::XLEN_W-1:0] except_tval;
 
     grp_id_t  dead;
     grp_id_t  flush_valid;
@@ -217,7 +217,7 @@ typedef struct packed {
 
     br_upd_info_t br_upd_info;
 `ifdef SIMULATION
-    grp_id_t[31: 0] lifetime;
+    logic [DISP_SIZE-1: 0] [31: 0] lifetime;
 `endif // SIMULATION
   } rob_entry_t;
 
@@ -247,7 +247,7 @@ typedef struct packed {
     logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
     cmt_id_t cmt_id;
-    logic [DISP_SIZE-1:0] grp_id;
+    grp_id_t grp_id;
 
     logic                   is_call;
     logic                   is_ret;
@@ -268,7 +268,7 @@ typedef struct packed {
 
 function issue_t assign_issue_t(disp_t in,
                                 cmt_id_t cmt_id,
-                                logic [DISP_SIZE-1:0] grp_id,
+                                grp_id_t grp_id,
                                 logic rs1_rel_hit, logic rs2_rel_hit,
                                 logic rs1_phy_hit, logic rs2_phy_hit,
                                 logic rs1_may_mispred, logic rs2_may_mispred);
@@ -347,7 +347,7 @@ endfunction  // assign_issue_t
   typedef struct packed {
     logic                 valid;
     cmt_id_t  cmt_id;
-    logic [DISP_SIZE-1:0] grp_id;
+    grp_id_t grp_id;
     logic                 except_valid;
     except_t              except_type;
     logic [riscv_pkg::XLEN_W-1: 0] except_tval;
@@ -366,14 +366,13 @@ typedef struct packed {
 typedef struct packed {
   logic                 commit;
   cmt_id_t cmt_id;
-  logic [DISP_SIZE-1:0] grp_id;
+  grp_id_t grp_id;
   grp_id_t except_valid;
   except_t                        except_type;
   logic [riscv_pkg::VADDR_W-1: 0] epc;
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
-  logic [DISP_SIZE-1:0]           dead_id;
-  // logic                           all_dead;
-  grp_id_t flush_valid;
+  grp_id_t                        dead_id;
+  grp_id_t                        flush_valid;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
@@ -433,11 +432,11 @@ endfunction // is_br_flush_target
 // RNID Update signals
 typedef struct packed {
   logic                                                      commit;
-  grp_id_t                       rnid_valid;
-  grp_id_t[RNID_W-1:0] old_rnid;
-  grp_id_t[RNID_W-1:0] rd_rnid;
-  grp_id_t[ 4: 0]                rd_regidx;
-  reg_t [msrh_conf_pkg::DISP_SIZE-1:0]                       rd_typ;
+  grp_id_t                                         rnid_valid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
+  logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]      rd_regidx;
+  reg_t [msrh_conf_pkg::DISP_SIZE-1:0]             rd_typ;
   // logic                                                      is_br_included;
   // logic                                                      upd_pc_valid;
   grp_id_t                       except_valid;
@@ -457,7 +456,7 @@ typedef struct packed {
   logic                                                is_ret;
   logic                                                is_rvc;
   cmt_id_t                                 cmt_id;
-  logic [DISP_SIZE-1:0]                                grp_id;
+  grp_id_t                                grp_id;
   logic [RAS_W-1: 0]                                   ras_index;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
   logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
@@ -472,7 +471,7 @@ typedef struct packed {
 } ftq_entry_t;
 
 function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
-                                      logic [DISP_SIZE-1:0] grp_id,
+                                      grp_id_t grp_id,
                                       disp_t inst);
   ftq_entry_t ret;
 
