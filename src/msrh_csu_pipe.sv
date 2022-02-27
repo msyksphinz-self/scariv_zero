@@ -238,8 +238,8 @@ assign write_if.data  = r_ex3_result;
 // SFENCE Update
 // ------------
 logic r_sfence_vma_commit_wait;
-logic [msrh_pkg::CMT_ID_W-1:0] r_sfence_vma_cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] r_sfence_vma_grp_id;
+msrh_pkg::cmt_id_t r_sfence_vma_cmt_id;
+msrh_pkg::grp_id_t r_sfence_vma_grp_id;
 logic                                r_sfence_vma_is_rs1_x0;
 logic                                r_sfence_vma_is_rs2_x0;
 logic [riscv_pkg::VADDR_W-1: 0]      r_sfence_vma_vaddr;

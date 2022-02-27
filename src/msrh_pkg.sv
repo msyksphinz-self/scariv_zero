@@ -46,6 +46,9 @@ package msrh_pkg;
 
   localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
 
+typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
+typedef logic [DISP_SIZE-1: 0] grp_id_t;
+
   typedef struct packed {
     logic valid;
     logic [31:0] inst;
@@ -182,8 +185,8 @@ typedef struct packed {
   endfunction  // assign_disp_rename
 
   typedef struct packed {
-    logic [msrh_conf_pkg::DISP_SIZE-1:0]                         upd_valid;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    grp_id_t                         upd_valid;
+    grp_id_t[riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0]         brtag;
 
 `ifdef SIMULATION
@@ -197,24 +200,24 @@ typedef struct packed {
     logic          valid;
 
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+    grp_id_t grp_id;
 
     disp_t[msrh_conf_pkg::DISP_SIZE-1:0] inst;
 
-    logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
+    grp_id_t done_grp_id;
 
-    logic [msrh_conf_pkg::DISP_SIZE-1:0]   except_valid;
+    grp_id_t   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
-    logic [msrh_conf_pkg::DISP_SIZE-1:0][riscv_pkg::XLEN_W-1:0] except_tval;
+    grp_id_t[riscv_pkg::XLEN_W-1:0] except_tval;
 
-    logic [msrh_conf_pkg::DISP_SIZE-1: 0]  dead;
-    logic [msrh_conf_pkg::DISP_SIZE-1: 0]  flush_valid;
+    grp_id_t  dead;
+    grp_id_t  flush_valid;
     // Branch update info
     logic                               is_br_included;
 
     br_upd_info_t br_upd_info;
 `ifdef SIMULATION
-    logic [msrh_conf_pkg::DISP_SIZE-1:0][31: 0] lifetime;
+    grp_id_t[31: 0] lifetime;
 `endif // SIMULATION
   } rob_entry_t;
 
@@ -243,7 +246,7 @@ typedef struct packed {
     logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
     logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
-    logic [CMT_ID_W-1:0] cmt_id;
+    cmt_id_t cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
 
     logic                   is_call;
@@ -264,7 +267,7 @@ typedef struct packed {
 
 
 function issue_t assign_issue_t(disp_t in,
-                                logic [CMT_ID_W-1:0] cmt_id,
+                                cmt_id_t cmt_id,
                                 logic [DISP_SIZE-1:0] grp_id,
                                 logic rs1_rel_hit, logic rs2_rel_hit,
                                 logic rs1_phy_hit, logic rs2_phy_hit,
@@ -343,7 +346,7 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic                 valid;
-    logic [CMT_ID_W-1:0]  cmt_id;
+    cmt_id_t  cmt_id;
     logic [DISP_SIZE-1:0] grp_id;
     logic                 except_valid;
     except_t              except_type;
@@ -353,8 +356,8 @@ endfunction  // assign_issue_t
 // For flushing another instruction
 typedef struct packed {
   logic                                valid;
-  logic [CMT_ID_W-1:0]                 cmt_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+  cmt_id_t                 cmt_id;
+  grp_id_t grp_id;
 } another_flush_t;
 
 // -----------------
@@ -362,15 +365,15 @@ typedef struct packed {
 // -----------------
 typedef struct packed {
   logic                 commit;
-  logic [CMT_ID_W-1:0] cmt_id;
+  cmt_id_t cmt_id;
   logic [DISP_SIZE-1:0] grp_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
+  grp_id_t except_valid;
   except_t                        except_type;
   logic [riscv_pkg::VADDR_W-1: 0] epc;
   logic [riscv_pkg::XLEN_W-1: 0]  tval;
   logic [DISP_SIZE-1:0]           dead_id;
   // logic                           all_dead;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] flush_valid;
+  grp_id_t flush_valid;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
@@ -386,8 +389,8 @@ function logic is_flushed_commit (commit_blk_t commit);
   return commit.commit & (|commit.flush_valid);
 endfunction // is_flushed_commit
 
-function inst0_older (logic inst0_vld, logic [CMT_ID_W-1:0] inst0_cmt_id, logic [DISP_SIZE-1: 0] inst0_grp_id,
-                      logic inst1_vld, logic [CMT_ID_W-1:0] inst1_cmt_id, logic [DISP_SIZE-1: 0] inst1_grp_id);
+function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
+                      logic inst1_vld, cmt_id_t inst1_cmt_id, grp_id_t inst1_grp_id);
 
 logic                                     inst0_cmt_id_older;
 logic                                     inst0_grp_id_older;
@@ -402,8 +405,8 @@ logic                                     inst0_grp_id_older;
 
 endfunction // inst0_older
 
-function logic is_commit_flush_target(logic [CMT_ID_W-1:0] entry_cmt_id,
-                                      logic [DISP_SIZE-1: 0] entry_grp_id,
+function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
+                                      grp_id_t entry_grp_id,
                                       commit_blk_t commit);
   logic w_cmt_is_older;
   logic entry_older;
@@ -430,16 +433,16 @@ endfunction // is_br_flush_target
 // RNID Update signals
 typedef struct packed {
   logic                                                      commit;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0]                       rnid_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0][ 4: 0]                rd_regidx;
+  grp_id_t                       rnid_valid;
+  grp_id_t[RNID_W-1:0] old_rnid;
+  grp_id_t[RNID_W-1:0] rd_rnid;
+  grp_id_t[ 4: 0]                rd_regidx;
   reg_t [msrh_conf_pkg::DISP_SIZE-1:0]                       rd_typ;
   // logic                                                      is_br_included;
   // logic                                                      upd_pc_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0]                       except_valid;
+  grp_id_t                       except_valid;
   except_t                                                   except_type;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0]                       dead_id;
+  grp_id_t                       dead_id;
   // logic                                                        all_dead;
 } cmt_rnid_upd_t;
 
@@ -453,7 +456,7 @@ typedef struct packed {
   logic                                                is_call;
   logic                                                is_ret;
   logic                                                is_rvc;
-  logic [CMT_ID_W-1:0]                                 cmt_id;
+  cmt_id_t                                 cmt_id;
   logic [DISP_SIZE-1:0]                                grp_id;
   logic [RAS_W-1: 0]                                   ras_index;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
@@ -468,7 +471,7 @@ typedef struct packed {
   logic                                                dead;
 } ftq_entry_t;
 
-function ftq_entry_t assign_ftq_entry(logic [CMT_ID_W-1:0]  cmt_id,
+function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
                                       logic [DISP_SIZE-1:0] grp_id,
                                       disp_t inst);
   ftq_entry_t ret;

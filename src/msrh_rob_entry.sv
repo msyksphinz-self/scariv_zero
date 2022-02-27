@@ -9,9 +9,9 @@ module msrh_rob_entry
    input logic                                i_load_valid,
    input logic [riscv_pkg::VADDR_W-1: 1]      i_load_pc_addr,
    input disp_t[msrh_conf_pkg::DISP_SIZE-1:0] i_load_inst,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_grp_id,
+   input msrh_pkg::grp_id_t i_load_grp_id,
    input logic                                i_load_br_included,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_load_tlb_except_valid,
+   input msrh_pkg::grp_id_t i_load_tlb_except_valid,
    input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
    input logic [riscv_pkg::XLEN_W-1: 0]       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
 
@@ -30,9 +30,9 @@ module msrh_rob_entry
 rob_entry_t             r_entry;
 rob_entry_t             w_entry_next;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_finished_grp_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]   w_done_rpt_except_valid;
+msrh_pkg::grp_id_t   w_done_rpt_valid;
+msrh_pkg::grp_id_t   w_finished_grp_id;
+msrh_pkg::grp_id_t   w_done_rpt_except_valid;
 except_t                               w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
 
@@ -59,9 +59,9 @@ endgenerate
 // --------------------
 // Another Flush Match
 // --------------------
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_flush_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_another_tree_flush_valid;
+grp_id_t w_another_flush_tmp_valid[msrh_conf_pkg::LSU_INST_NUM];
+grp_id_t w_another_flush_valid;
+grp_id_t w_another_tree_flush_valid;
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
   assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
                                             (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) ? i_another_flush_report[l_idx].grp_id : 'h0;

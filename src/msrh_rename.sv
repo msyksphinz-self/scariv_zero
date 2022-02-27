@@ -6,7 +6,7 @@ module msrh_rename
    input logic i_reset_n,
 
    disp_if.slave iq_disp,
-   input logic [msrh_pkg::CMT_ID_W-1:0] i_sc_new_cmt_id,
+   input msrh_pkg::cmt_id_t i_sc_new_cmt_id,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
    disp_if.master           sc_disp,
@@ -51,13 +51,13 @@ logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
 logic                                     w_commit_except_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_commit_except_rd_valid;
+grp_id_t     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_valids;
+grp_id_t     w_rd_valids;
 logic [ 4: 0]                             w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]     w_rd_data;
+grp_id_t     w_rd_data;
 
 // Current rename map information to stack
 logic                                     w_restore_valid;
@@ -262,13 +262,13 @@ end
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
   logic [RNID_W-1: 0] rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] rs1_rnid_tmp_valid;
+  grp_id_t rs1_rnid_tmp_valid;
 
   logic [RNID_W-1: 0] rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] rs2_rnid_tmp_valid;
+  grp_id_t rs2_rnid_tmp_valid;
 
   logic [RNID_W-1: 0]         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] rd_old_rnid_tmp_valid;
+  grp_id_t rd_old_rnid_tmp_valid;
 
   always_comb begin
 
@@ -383,7 +383,7 @@ u_inflight_map
 );
 
 // Map List Queue
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_br_inst;
+grp_id_t w_is_br_inst;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : br_loop
   assign w_is_br_inst[d_idx] = w_iq_fire &
                                iq_disp.inst[d_idx].valid &

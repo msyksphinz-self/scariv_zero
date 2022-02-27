@@ -3,7 +3,7 @@ module msrh_csu
   input logic i_clk,
   input logic i_reset_n,
 
-  input logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
+  input msrh_pkg::grp_id_t disp_valid,
   disp_if.watch                              disp,
   cre_ret_if.slave                       cre_ret_if,
 
@@ -40,7 +40,7 @@ module msrh_csu
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::CSU_DISP_SIZE];
 logic [msrh_conf_pkg::CSU_DISP_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::CSU_DISP_SIZE];
+msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::CSU_DISP_SIZE];
 
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;

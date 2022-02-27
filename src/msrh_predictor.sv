@@ -88,11 +88,11 @@ logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid;
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_ret_valid;
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_grp_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_be;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_ret_be;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_ret_valid;
+msrh_pkg::grp_id_t w_sc_grp_valid;
+msrh_pkg::grp_id_t w_sc_call_be;
+msrh_pkg::grp_id_t w_sc_ret_be;
+msrh_pkg::grp_id_t w_sc_call_valid;
+msrh_pkg::grp_id_t w_sc_ret_valid;
 
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
 // logic [ICACHE_DATA_B_W-1: 0]              w_s2_inst_be;
@@ -250,7 +250,7 @@ assign ras_search_if.s2_ras_index = r_s2_ras_index_next;
 assign o_sc_ras_index = w_s2_ras_index_next;
 assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sc_call_be_array_vld;
+msrh_pkg::grp_id_t w_sc_call_be_array_vld;
 msrh_pkg::disp_t w_sc_call_entry;
 
 assign w_sc_call_be_array_vld = w_sc_call_be & w_sc_grp_valid;

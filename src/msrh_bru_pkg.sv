@@ -6,8 +6,8 @@ msrh_pkg::except_t                   except_type;
 logic [riscv_pkg::XLEN_W-1: 0]       except_tval;
 // For flushing another instruction
 logic                                another_flush_valid;
-logic [msrh_pkg::CMT_ID_W-1:0]       another_flush_cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] another_flush_grp_id;
+msrh_pkg::cmt_id_t       another_flush_cmt_id;
+msrh_pkg::grp_id_t another_flush_grp_id;
 
 modport master(
   output done,
@@ -51,8 +51,8 @@ interface br_upd_if;
   logic [riscv_pkg::VADDR_W-1: 0]      pred_vaddr;
 `endif // SIMULATION
   logic                                dead;
-  logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+  msrh_pkg::cmt_id_t       cmt_id;
+  msrh_pkg::grp_id_t grp_id;
   logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
   logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
 
@@ -135,8 +135,8 @@ endmodule // br_upd_if_buf
 interface cmt_brtag_if;
 
   logic          commit;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] is_br_inst;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0][$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
+  msrh_pkg::grp_id_t is_br_inst;
+  msrh_pkg::grp_id_t brtag[$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)];
 
   modport master (
     output commit,

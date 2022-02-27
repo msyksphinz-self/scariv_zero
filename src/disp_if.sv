@@ -1,8 +1,8 @@
 interface disp_if;
   /* verilator lint_off UNOPTFLAT */
-  logic [msrh_pkg::CMT_ID_W-1:0]                  cmt_id;
+  msrh_pkg::cmt_id_t                  cmt_id;
   logic [riscv_pkg::VADDR_W-1:1]                  pc_addr;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0]            tlb_except_valid;
+  msrh_pkg::grp_id_t            tlb_except_valid;
   msrh_pkg::except_t                              tlb_except_cause[msrh_conf_pkg::DISP_SIZE] ;
   logic [riscv_pkg::XLEN_W-1: 0]                  tlb_except_tval [msrh_conf_pkg::DISP_SIZE];
   msrh_pkg::resource_cnt_t                        resource_cnt;

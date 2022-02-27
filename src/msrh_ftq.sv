@@ -63,7 +63,7 @@ u_ptr
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
 
 disp_t w_sc_br_inst;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] sc_br_inst_array;
+grp_id_t sc_br_inst_array;
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
   assign sc_br_inst_array[d_idx] = sc_disp.inst[d_idx].valid &
                                    (sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);

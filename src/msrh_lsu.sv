@@ -69,7 +69,7 @@ module msrh_lsu
 msrh_pkg::disp_t w_disp_inst[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::disp_t disp_picked_inst[2];
 logic [1:0] disp_picked_inst_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[2];
+msrh_pkg::grp_id_t disp_picked_grp_id[2];
 
 
 msrh_pkg::issue_t w_rv0_issue;

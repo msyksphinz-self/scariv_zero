@@ -6,8 +6,8 @@ module msrh_bru_rn_snapshots
 
    input logic [RNID_W-1: 0]                                  i_rn_list[32],
 
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]                i_load,
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]                i_rd_valid,
+   input grp_id_t                i_load,
+   input grp_id_t                i_rd_valid,
    input logic [ 4: 0]                                        i_rd_archreg[msrh_conf_pkg::DISP_SIZE],
    input logic [RNID_W-1: 0]                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
    input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag [msrh_conf_pkg::DISP_SIZE],

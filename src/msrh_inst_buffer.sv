@@ -25,51 +25,51 @@ module msrh_inst_buffer
 
 logic                                       w_inst_buffer_fire;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_muldiv_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_fpu_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_except_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except_pick_up;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_pick_up;
+msrh_pkg::grp_id_t w_inst_arith_pick_up;
+msrh_pkg::grp_id_t w_inst_muldiv_pick_up;
+msrh_pkg::grp_id_t w_inst_mem_pick_up;
+msrh_pkg::grp_id_t w_inst_bru_pick_up;
+msrh_pkg::grp_id_t w_inst_csu_pick_up;
+msrh_pkg::grp_id_t w_inst_fpu_pick_up;
+msrh_pkg::grp_id_t w_inst_except_pick_up;
+msrh_pkg::grp_id_t w_fetch_except_pick_up;
+msrh_pkg::grp_id_t w_inst_illegal_pick_up;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_muldiv_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_fpu_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal_disp;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except_disp;
+msrh_pkg::grp_id_t w_inst_arith_disp;
+msrh_pkg::grp_id_t w_inst_muldiv_disp;
+msrh_pkg::grp_id_t w_inst_mem_disp;
+msrh_pkg::grp_id_t w_inst_ld_disp;
+msrh_pkg::grp_id_t w_inst_st_disp;
+msrh_pkg::grp_id_t w_inst_bru_disp;
+msrh_pkg::grp_id_t w_inst_csu_disp;
+msrh_pkg::grp_id_t w_inst_fpu_disp;
+msrh_pkg::grp_id_t w_inst_illegal_disp;
+msrh_pkg::grp_id_t w_fetch_except_disp;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_or;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_disp_mask;
+msrh_pkg::grp_id_t w_inst_disp_or;
+msrh_pkg::grp_id_t w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 2;
 decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_fetch_except;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_arith;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_muldiv;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ld;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_st;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_br;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_csu;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_fpu;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_illegal;
+msrh_pkg::grp_id_t w_inst_gen_except;
+msrh_pkg::grp_id_t w_fetch_except;
+msrh_pkg::grp_id_t w_inst_is_arith;
+msrh_pkg::grp_id_t w_inst_is_muldiv;
+msrh_pkg::grp_id_t w_inst_is_ld;
+msrh_pkg::grp_id_t w_inst_is_st;
+msrh_pkg::grp_id_t w_inst_is_br;
+msrh_pkg::grp_id_t w_inst_is_csu;
+msrh_pkg::grp_id_t w_inst_is_fpu;
+msrh_pkg::grp_id_t w_inst_illegal;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_call;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_ret;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_is_call_ret_lsb;
+msrh_pkg::grp_id_t w_inst_is_call;
+msrh_pkg::grp_id_t w_inst_is_ret;
+msrh_pkg::grp_id_t w_inst_is_call_ret_lsb;
 
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_gen_except_lsb;
+msrh_pkg::grp_id_t w_inst_gen_except_lsb;
 
 rd_t rd_field_type [msrh_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[msrh_conf_pkg::DISP_SIZE];
@@ -81,18 +81,18 @@ logic [$clog2(ic_word_num):0]   w_head_start_pos_next;
 logic                           w_head_all_inst_issued;
 logic                           w_head_predict_taken_issued;
 logic                           w_predict_taken_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0 ] w_predict_taken_valid_array;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]  w_predict_taken_valid_lsb;
+msrh_pkg::grp_id_t w_predict_taken_valid_array;
+msrh_pkg::grp_id_t                     w_predict_taken_valid_lsb;
 logic [$clog2(msrh_pkg::INST_BUF_SIZE)-1: 0] w_pred_lsb_index;
 
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_arith_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_muldiv_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_mem_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_ld_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_st_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_bru_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_csu_disped;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_inst_fpu_disped;
+msrh_pkg::grp_id_t w_inst_arith_disped;
+msrh_pkg::grp_id_t w_inst_muldiv_disped;
+msrh_pkg::grp_id_t w_inst_mem_disped;
+msrh_pkg::grp_id_t w_inst_ld_disped;
+msrh_pkg::grp_id_t w_inst_st_disped;
+msrh_pkg::grp_id_t w_inst_bru_disped;
+msrh_pkg::grp_id_t w_inst_csu_disped;
+msrh_pkg::grp_id_t w_inst_fpu_disped;
 
 typedef struct packed {
   logic                           pred_taken;
@@ -149,9 +149,9 @@ logic                                       w_flush_pipeline;
 logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx[msrh_conf_pkg::DISP_SIZE + 1];
 logic [$clog2(ic_word_num): 0]       w_rvc_buf_idx_with_offset[msrh_conf_pkg::DISP_SIZE + 1];
 logic [31: 0]                        w_expand_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_expanded_valid;
+msrh_pkg::grp_id_t w_expanded_valid;
 logic [15: 0]                        w_rvc_inst[msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_rvc_valid;
+msrh_pkg::grp_id_t w_rvc_valid;
 
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
@@ -433,8 +433,8 @@ bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_predict_valid_lsb (.in(w_i
 bit_oh_or #(.T(logic[$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(msrh_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
 
 logic                               w_bru_predict_disp_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_limit_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_limit_valid_oh;
+msrh_pkg::grp_id_t w_disp_special_limit_valid;
+msrh_pkg::grp_id_t w_disp_special_limit_valid_oh;
 
 assign w_bru_predict_disp_valid = |((w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp | w_predict_taken_valid_array));
 
@@ -442,8 +442,8 @@ assign w_disp_special_limit_valid = w_bru_predict_disp_valid | (w_inst_csu_disp 
 
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_special_valid_lsb (.in(w_disp_special_limit_valid), .out(w_disp_special_limit_valid_oh));
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_bru_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_special_csu_valid;
+msrh_pkg::grp_id_t w_disp_special_bru_valid;
+msrh_pkg::grp_id_t w_disp_special_csu_valid;
 
 assign w_disp_special_bru_valid = w_disp_special_limit_valid_oh & w_bru_predict_disp_valid;
 assign w_disp_special_csu_valid = w_disp_special_limit_valid_oh & w_inst_csu_disp;

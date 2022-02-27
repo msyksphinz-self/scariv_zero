@@ -5,11 +5,11 @@
 //
 interface rob_info_if;
 
-  logic [msrh_pkg::CMT_ID_W-1:0]       cmt_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] done_grp_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] upd_pc_valid;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] except_valid;
+  msrh_pkg::cmt_id_t       cmt_id;
+  msrh_pkg::grp_id_t grp_id;
+  msrh_pkg::grp_id_t done_grp_id;
+  msrh_pkg::grp_id_t upd_pc_valid;
+  msrh_pkg::grp_id_t except_valid;
 
   modport master(
     output cmt_id,

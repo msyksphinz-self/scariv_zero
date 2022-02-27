@@ -9,7 +9,7 @@ module msrh_rob
 
    cre_ret_if.slave              cre_ret_if,
 
-   output logic [CMT_ID_W-1: 0] o_sc_new_cmt_id,
+   output cmt_id_t o_sc_new_cmt_id,
 
    input done_rpt_t      i_done_rpt             [CMT_BUS_SIZE],
    input another_flush_t i_another_flush_report [LSU_INST_NUM],
@@ -27,7 +27,7 @@ module msrh_rob
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
-logic [CMT_ID_W-1:0]     w_in_cmt_id, w_out_cmt_id;
+cmt_id_t     w_in_cmt_id, w_out_cmt_id;
 logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
@@ -201,8 +201,8 @@ assign o_commit_rnid_update.except_type    = o_commit.except_type;
 // --------------------------------------------------
 // Notification of RAS Recovery by dead instruction
 // --------------------------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_call_array;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_is_ret_array;
+grp_id_t w_is_call_array;
+grp_id_t w_is_ret_array;
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_array[msrh_conf_pkg::DISP_SIZE];
 
 
@@ -402,7 +402,7 @@ endfunction // dump_perfto
 
 typedef struct packed {
 logic [31: 0]        lifetime;
-logic [CMT_ID_W-1:0] cmt_id;
+cmt_id_t cmt_id;
 logic [DISP_SIZE-1:0] grp_id;
 logic [riscv_pkg::VADDR_W-1:0] pc_addr;
 logic [31: 0]                  inst;

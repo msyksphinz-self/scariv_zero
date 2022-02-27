@@ -13,7 +13,7 @@ module msrh_commit_map
 
 logic [msrh_pkg::RNID_W-1:0]         r_commit_map[32];
 logic [msrh_pkg::RNID_W-1:0]         w_commit_map_next[32];
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_dead_id_with_except;
+grp_id_t w_dead_id_with_except;
 
 always_comb begin
   for (int r_idx = 0; r_idx < 32; r_idx++) begin : r_loop

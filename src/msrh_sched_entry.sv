@@ -15,8 +15,8 @@ module msrh_sched_entry
    rob_info_if.slave                           rob_info_if,
 
    input logic                                 i_put,
-   input logic [msrh_pkg::CMT_ID_W-1:0]        i_cmt_id,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0]  i_grp_id,
+   input msrh_pkg::cmt_id_t        i_cmt_id,
+   input msrh_pkg::grp_id_t  i_grp_id,
    input                                       msrh_pkg::disp_t i_put_data,
 
    output logic                                o_entry_valid,
@@ -42,8 +42,8 @@ module msrh_sched_entry
    output logic                                o_entry_done,
    output logic                                o_entry_wait_complete,
    output logic                                o_entry_finish,
-   output logic [msrh_pkg::CMT_ID_W-1:0]       o_cmt_id,
-   output logic [msrh_conf_pkg::DISP_SIZE-1:0] o_grp_id,
+   output msrh_pkg::cmt_id_t       o_cmt_id,
+   output msrh_pkg::grp_id_t o_grp_id,
    output logic                                o_except_valid,
    output msrh_pkg::except_t                   o_except_type,
    output logic [riscv_pkg::XLEN_W-1 : 0]      o_except_tval

@@ -4,7 +4,7 @@ module msrh_ldq
    input logic                           i_clk,
    input logic                           i_reset_n,
 
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
+   input msrh_pkg::grp_id_t i_disp_valid,
    disp_if.watch                              disp,
    cre_ret_if.slave                           cre_ret_if,
 
@@ -42,7 +42,7 @@ logic [msrh_conf_pkg::LDQ_SIZE-1:0] w_entry_ready;
 
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
+msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_run_request[msrh_conf_pkg::LSU_INST_NUM];
 logic [msrh_conf_pkg::LDQ_SIZE-1: 0] w_run_request_oh[msrh_conf_pkg::LSU_INST_NUM];
@@ -132,7 +132,7 @@ endgenerate
 generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  msrh_pkg::grp_id_t         w_disp_grp_id;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_ldq_entries_recv;
 
@@ -432,8 +432,8 @@ module ex1_update_select
   import msrh_lsu_pkg::*;
   (
    input ex1_q_update_t i_ex1_q_updates[msrh_conf_pkg::LSU_INST_NUM],
-   input logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id,
+   input msrh_pkg::cmt_id_t cmt_id,
+   input msrh_pkg::grp_id_t grp_id,
    output [msrh_conf_pkg::LSU_INST_NUM-1: 0]   o_ex1_q_valid,
    output                                 ex1_q_update_t o_ex1_q_updates
    );
@@ -493,8 +493,8 @@ typedef struct packed {
   msrh_pkg::except_t                   except_type;
   // For flushing another instruction
   logic                                another_flush_valid;
-  logic [msrh_pkg::CMT_ID_W-1:0]       another_flush_cmt_id;
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] another_flush_grp_id;
+  msrh_pkg::cmt_id_t       another_flush_cmt_id;
+  msrh_pkg::grp_id_t another_flush_grp_id;
 } done_if_t;
 
 done_if_t w_done_array [msrh_conf_pkg::LSU_INST_NUM];

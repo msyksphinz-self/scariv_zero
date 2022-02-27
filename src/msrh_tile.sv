@@ -44,7 +44,7 @@ disp_if w_sc_disp ();
 
 msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
 msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
-logic [msrh_pkg::CMT_ID_W-1:0] w_sc_new_cmt_id;
+msrh_pkg::cmt_id_t w_sc_new_cmt_id;
 
 regread_if int_regread[msrh_pkg::INT_REGPORT_NUM] ();
 regread_if fp_regread [msrh_pkg::FP_REGPORT_NUM] ();
@@ -72,7 +72,7 @@ msrh_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
 // ----------------------------------
 // ALU Components
 // ----------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_alu_valids;
+msrh_pkg::grp_id_t w_disp_alu_valids;
 msrh_pkg::early_wr_t w_ex1_alu_early_wr[msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_alu_phy_wr  [msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
@@ -81,7 +81,7 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 // ----------------------------------
 // LSU Components
 // ----------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_lsu_valids;
+msrh_pkg::grp_id_t w_disp_lsu_valids;
 msrh_pkg::early_wr_t      w_ex1_lsu_early_wr      [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t      w_lsu_done_rpt          [msrh_conf_pkg::LSU_INST_NUM];
@@ -90,7 +90,7 @@ msrh_pkg::another_flush_t w_lsu_another_flush_rpt [msrh_conf_pkg::LSU_INST_NUM];
 // ----------------------------------
 // BRU Components
 // ----------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_bru_valids;
+msrh_pkg::grp_id_t w_disp_bru_valids;
 msrh_pkg::early_wr_t w_ex1_bru_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 msrh_pkg::done_rpt_t w_bru_done_rpt;
@@ -100,7 +100,7 @@ br_upd_if br_upd_fe_if ();
 // ----------------------------------
 // CSU Components
 // ----------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_csu_valids;
+msrh_pkg::grp_id_t w_disp_csu_valids;
 msrh_pkg::early_wr_t w_ex1_csu_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 msrh_pkg::done_rpt_t w_csu_done_rpt;
@@ -108,7 +108,7 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 // FPU Components
 // ----------------------------------
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_disp_fpu_valids;
+msrh_pkg::grp_id_t w_disp_fpu_valids;
 msrh_pkg::early_wr_t w_ex1_fpu_early_wr[msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::done_rpt_t w_fpu_done_rpt    [msrh_conf_pkg::FPU_INST_NUM];

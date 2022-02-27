@@ -5,8 +5,8 @@ module msrh_stq_entry
    input logic                                i_reset_n,
 
    input logic                                i_disp_load,
-   input logic [msrh_pkg::CMT_ID_W-1:0]       i_disp_cmt_id,
-   input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_grp_id,
+   input msrh_pkg::cmt_id_t       i_disp_cmt_id,
+   input msrh_pkg::grp_id_t i_disp_grp_id,
    input msrh_pkg::disp_t                     i_disp,
    input logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] i_disp_pipe_sel_oh,
 
@@ -326,8 +326,8 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
-                                      logic [msrh_pkg::CMT_ID_W-1: 0] cmt_id,
-                                      logic [msrh_conf_pkg::DISP_SIZE-1: 0] grp_id,
+                                      msrh_pkg::cmt_id_t cmt_id,
+                                      msrh_pkg::grp_id_t grp_id,
                                       logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
   stq_entry_t ret;
 

@@ -46,7 +46,7 @@ module msrh_stq
 // =========================
 msrh_pkg::disp_t disp_picked_inst[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [msrh_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
+msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::MEM_DISP_SIZE];
 logic [$clog2(msrh_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 stq_entry_t w_stq_entries[msrh_conf_pkg::STQ_SIZE];
@@ -67,7 +67,7 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
 
 // Store Buffer Selection
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]            w_stbuf_accepted_disp;
+msrh_pkg::grp_id_t            w_stbuf_accepted_disp;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_req_accepted[msrh_conf_pkg::DISP_SIZE];
 
 logic                                w_flush_valid;
@@ -165,10 +165,10 @@ bit_or #(.WIDTH(msrh_lsu_pkg::DCACHE_DATA_B_W), .WORDS(msrh_conf_pkg::STQ_SIZE))
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [msrh_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   msrh_pkg::disp_t           w_disp_entry;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  msrh_pkg::grp_id_t w_disp_grp_id;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_stbuf_accept_array;
+  msrh_pkg::grp_id_t w_stbuf_accept_array;
 
   stq_snoop_if stq_entry_snoop_if();
 
@@ -401,7 +401,7 @@ endgenerate
 // After commit, store operation
 // ==============================
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sq_commit_ready_issue;
+msrh_pkg::grp_id_t w_sq_commit_ready_issue;
 bit_oh_or
   #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE))
 select_cmt_oh
@@ -465,7 +465,7 @@ endgenerate
 
 // ready to store_buffer
 // 0010111 --> inv -> 1101000 --> lower lsb --> 1111000 --> inv --> 0000111
-logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_sq_stb_ready_inv;
+msrh_pkg::grp_id_t w_sq_stb_ready_inv;
 bit_tree_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) select_stb_bit (.in(~w_sq_commit_ready_issue), .out(w_sq_stb_ready_inv));
 assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 
@@ -473,13 +473,13 @@ assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 assign st_buffer_if.valid = |w_stbuf_accepted_disp;
 assign st_buffer_if.paddr = {w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)], {$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8){1'b0}}};
 generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] w_strb_array;
+  msrh_pkg::grp_id_t w_strb_array;
   for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stb_disp_loop
     assign w_strb_array[d_idx] = w_st_buffer_strb[d_idx][b_idx] & w_stbuf_accepted_disp[d_idx];
   end
   assign st_buffer_if.strb[b_idx] = |w_strb_array;
 
-  logic [msrh_conf_pkg::DISP_SIZE-1:0] w_strb_array_msb;
+  msrh_pkg::grp_id_t w_strb_array_msb;
   bit_extract_msb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) extract_msb_strb (.in(w_strb_array), .out(w_strb_array_msb));
 
   /* verilator lint_off UNOPTFLAT */

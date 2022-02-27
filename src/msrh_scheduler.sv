@@ -14,8 +14,8 @@ module msrh_scheduler
  rob_info_if.slave                     rob_info_if,
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input logic [msrh_pkg::CMT_ID_W-1:0]  i_cmt_id,
- input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_grp_id[IN_PORT_SIZE],
+ input msrh_pkg::cmt_id_t  i_cmt_id,
+ input msrh_pkg::grp_id_t i_grp_id[IN_PORT_SIZE],
  msrh_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
  cre_ret_if.slave                      cre_ret_if,
@@ -57,8 +57,8 @@ logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
-logic [msrh_pkg::CMT_ID_W-1:0] w_entry_cmt_id [ENTRY_SIZE];
-logic [msrh_conf_pkg::DISP_SIZE-1:0] w_entry_grp_id [ENTRY_SIZE];
+msrh_pkg::cmt_id_t w_entry_cmt_id [ENTRY_SIZE];
+msrh_pkg::grp_id_t w_entry_grp_id [ENTRY_SIZE];
 logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
 msrh_pkg::except_t                   w_entry_except_type [ENTRY_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]       w_entry_except_tval [ENTRY_SIZE];
@@ -149,8 +149,8 @@ u_inst_selector
 
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
-  msrh_pkg::disp_t           w_disp_entry;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_disp_grp_id;
+  msrh_pkg::disp_t          w_disp_entry;
+  msrh_pkg::grp_id_t        w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     logic [ENTRY_SIZE-1: 0] target_idx_oh;
     bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));

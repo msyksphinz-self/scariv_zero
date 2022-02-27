@@ -85,8 +85,8 @@ lsu_replay_if w_stq_replay[msrh_conf_pkg::LSU_INST_NUM]();
 
 done_if w_ex3_done_if[msrh_conf_pkg::LSU_INST_NUM]();
 
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_ldq_disp_valid;
-logic [msrh_conf_pkg::DISP_SIZE-1: 0]      w_stq_disp_valid;
+msrh_pkg::grp_id_t      w_ldq_disp_valid;
+msrh_pkg::grp_id_t      w_stq_disp_valid;
 
 msrh_pkg::done_rpt_t w_ld_done_report[msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];

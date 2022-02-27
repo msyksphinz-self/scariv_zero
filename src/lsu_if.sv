@@ -253,8 +253,8 @@ endinterface // lsu_replay_if
 interface fwd_check_if;
 
 logic                           valid;
-logic [msrh_pkg::CMT_ID_W-1:0] cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0] grp_id;
+msrh_pkg::cmt_id_t cmt_id;
+msrh_pkg::grp_id_t grp_id;
 logic [riscv_pkg::PADDR_W-1: 0] paddr;
 logic [riscv_pkg::XLEN_W/8-1: 0] paddr_dw;
 logic                           fwd_valid;
@@ -313,12 +313,12 @@ endinterface // lrq_haz_check_if
 interface ldq_haz_check_if;
 logic                                 ex2_valid;
 logic [riscv_pkg::PADDR_W-1: 0]       ex2_paddr;
-logic [msrh_pkg::CMT_ID_W-1:0]        ex2_cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]  ex2_grp_id;
+msrh_pkg::cmt_id_t        ex2_cmt_id;
+msrh_pkg::grp_id_t  ex2_grp_id;
 decoder_lsu_ctrl_pkg::size_t          ex2_size;
 logic                                 ex3_haz_valid;
-logic [msrh_pkg::CMT_ID_W-1:0]        ex3_haz_cmt_id;
-logic [msrh_conf_pkg::DISP_SIZE-1:0]  ex3_haz_grp_id;
+msrh_pkg::cmt_id_t        ex3_haz_cmt_id;
+msrh_pkg::grp_id_t  ex3_haz_grp_id;
 
 modport master
   (

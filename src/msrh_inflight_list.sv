@@ -8,9 +8,9 @@ module msrh_inflight_list
    input logic [msrh_pkg::RNID_W-1:0]        i_rnid[msrh_conf_pkg::DISP_SIZE*2],
    output logic [msrh_conf_pkg::DISP_SIZE*2-1: 0] o_valids,
 
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_valid,
+   input grp_id_t    i_update_fetch_valid,
    input logic [msrh_pkg::RNID_W-1:0]             i_update_fetch_rnid[msrh_conf_pkg::DISP_SIZE],
-   input logic [msrh_conf_pkg::DISP_SIZE-1: 0]    i_update_fetch_data,
+   input grp_id_t    i_update_fetch_data,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
    );
@@ -26,8 +26,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 generate for (genvar rn_idx = 1; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_valid_tmp;
-  logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_update_fetch_data_tmp;
+  grp_id_t w_update_fetch_valid_tmp;
+  grp_id_t w_update_fetch_data_tmp;
   logic w_update_fetch_valid;
   logic w_update_fetch_data;
   for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin

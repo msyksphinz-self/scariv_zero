@@ -2,8 +2,8 @@ module msrh_addr_check
   import decoder_lsu_ctrl_pkg::*;
   import msrh_lsu_pkg::*;
 (
- input logic [msrh_pkg::CMT_ID_W-1:0]      i_entry_cmt_id,
- input logic [msrh_conf_pkg::DISP_SIZE-1:0] i_entry_grp_id,
+ input msrh_pkg::cmt_id_t      i_entry_cmt_id,
+ input msrh_pkg::grp_id_t i_entry_grp_id,
  input logic [riscv_pkg::PADDR_W-1: 0]      i_entry_paddr,
  input decoder_lsu_ctrl_pkg::size_t         i_entry_size,
 
