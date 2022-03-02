@@ -47,37 +47,39 @@ assign w_op2 = (i_op == OP_SMUL || i_op == OP_MULH                      || w_is_
 
 parameter MUL_STEP = (riscv_pkg::XLEN_W + MUL_UNROLL - 1) / MUL_UNROLL;
 logic [MUL_STEP: 0]                    r_mul_valid_pipe;
-logic [riscv_pkg::XLEN_W: 0]           multiplicand_pipe  [MUL_STEP + 1];
-logic [riscv_pkg::XLEN_W: 0]           multiplier_pipe[MUL_STEP + 1];
-logic [riscv_pkg::XLEN_W*2:0]          prod_pipe        [MUL_STEP + 1];
-logic [MUL_STEP: 0]                    neg_out_pipe;
-op_t  op_pipe                                  [MUL_STEP + 1];
+logic [riscv_pkg::XLEN_W: 0]           multiplicand_pipe [MUL_STEP: 1];
+logic [riscv_pkg::XLEN_W: 0]           multiplier_pipe   [MUL_STEP: 1];
+logic [riscv_pkg::XLEN_W*2:0]          prod_pipe         [MUL_STEP: 1];
+logic                                  neg_out_pipe      [MUL_STEP: 1];
+op_t  op_pipe                                            [MUL_STEP: 1];
 
-logic [msrh_pkg::RNID_W-1: 0]             r_mul_rd_rnid [MUL_STEP];
-msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP];
-logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP];
+logic [msrh_pkg::RNID_W-1: 0]             r_mul_rd_rnid [MUL_STEP: 1];
+msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
+logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP: 1];
 
 generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
-  logic [MUL_UNROLL: 0]                                   w_step_multiplier;
+  logic [MUL_UNROLL-1: 0]                                 w_multiplicand_part;
+  logic [MUL_UNROLL: 0]                                   w_step_multiplicand;
   logic [riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): 0]   w_prod;
   logic [riscv_pkg::XLEN_W + MUL_UNROLL + 2 - 1: 0]       w_prod_part;
   logic                                                   w_is_s_mul;
 
   if (s_idx == 0) begin
-    assign w_step_multiplier = {1'b0, w_op1[MUL_UNROLL-1: 0]};
+    assign w_step_multiplicand = {1'b0, w_op2[MUL_UNROLL-1: 0]};
     /* verilator lint_off WIDTH */
-    assign w_prod = w_step_multiplier * w_op2;
+    assign w_prod = $signed(w_op1) * $signed(w_step_multiplicand);
     assign w_is_s_mul = (i_op == OP_MULH) | (i_op == OP_SMUL) | w_is_mul_64;
   end else begin
+    assign w_multiplicand_part = multiplicand_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL];
     if (s_idx == MUL_STEP - 1) begin
-      assign w_step_multiplier = {neg_out_pipe[s_idx], multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
+      assign w_step_multiplicand = neg_out_pipe[s_idx] ? $signed({neg_out_pipe[s_idx], w_multiplicand_part}) : {1'b0, w_multiplicand_part};
     end else begin
-      assign w_step_multiplier = {1'b0, multiplier_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL]};
+      assign w_step_multiplicand = {1'b0, w_multiplicand_part};
     end
-    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL || w_is_mul_64;
+    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL || op_pipe[s_idx] == OP_MULHSU || w_is_mul_64;
 
     /* verilator lint_off WIDTH */
-    assign w_prod_part = $signed(w_step_multiplier) * $signed(multiplicand_pipe[s_idx]);
+    assign w_prod_part = $signed(multiplier_pipe[s_idx]) * $signed(w_step_multiplicand);
     assign w_prod[MUL_UNROLL * s_idx -1: 0] = prod_pipe[s_idx][MUL_UNROLL * s_idx -1: 0];
     assign w_prod[riscv_pkg::XLEN_W + MUL_UNROLL * (s_idx+1): MUL_UNROLL * s_idx] = $signed(w_prod_part) +
                                                                                       (w_is_s_mul ? $signed({prod_pipe[s_idx][MUL_UNROLL * s_idx + riscv_pkg::XLEN_W-1], prod_pipe[s_idx][MUL_UNROLL * s_idx +: riscv_pkg::XLEN_W]}) :
@@ -97,11 +99,11 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
       if (s_idx == 0) begin
         /* verilator lint_off WIDTH */
         prod_pipe        [s_idx+1] <= w_prod;
-        multiplier_pipe  [s_idx+1] <= {1'b0, i_rs1};
+        multiplier_pipe  [s_idx+1] <= w_op1;
         multiplicand_pipe[s_idx+1] <= w_op2;
         r_mul_valid_pipe [s_idx+1] <= i_valid & w_is_mul;
         op_pipe          [s_idx+1] <= i_op;
-        neg_out_pipe     [s_idx+1] <= (i_op == OP_MULH || i_op == OP_MULHSU) ? i_rs1[riscv_pkg::XLEN_W-1] : 1'b0;
+        neg_out_pipe     [s_idx+1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
 
         r_mul_rd_rnid [s_idx+1] <= i_rd_rnid;
         r_mul_rd_type [s_idx+1] <= i_rd_type;
