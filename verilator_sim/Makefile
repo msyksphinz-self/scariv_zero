@@ -224,6 +224,10 @@ rv64_giant_benchmarks:
 	$(MAKE) rv64_giant DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_giant rv64-bench.json log_rv64_giant $(shell nproc) 2>&1 | tee rv64_giant.log
 
+rv64_torture_test:
+	$(MAKE) rv64_tiny DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_tiny ../tests/torture.json log_rv64_torture $(shell nproc) 2>&1 | tee rv64_torture.log
+
 ../spike_dpi/libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
 	ln -sf ../spike_dpi/$@ .
