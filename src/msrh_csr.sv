@@ -514,6 +514,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_misa <= ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
+              ('h1 << ("D" - "A")) |
+              ('h1 << ("F" - "A")) |
               ('h1 << ("I" - "A")) |
               ('h1 << ("M" - "A")) |
               ('h1 << ("S" - "A")) |
