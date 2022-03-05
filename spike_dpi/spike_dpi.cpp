@@ -513,8 +513,9 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {
-    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %d\n",
-            time, rtl_cmt_id, rtl_grp_id, rtl_exception_cause);
+    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %d PC=%012x, Inst=%08x, %s\n",
+            time, rtl_cmt_id, rtl_grp_id, rtl_exception_cause,
+            rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   }
   if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
                        (rtl_exception_cause == 1 ) ||  // Instruction Access Fault
