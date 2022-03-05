@@ -57,6 +57,10 @@ logic         w_l1d_rd_req_next;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 
+logic                                    w_lrq_resolve_vld;
+assign w_lrq_resolve_vld = i_lrq_resolve.valid &
+                           (i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh);
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
@@ -150,13 +154,12 @@ always_comb begin
       end
     end // case: ST_BUF_LRQ_REFILL
     ST_BUF_WAIT_EVICT : begin
-      if (i_lrq_resolve.valid &&
-          i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh) begin
+      if (w_lrq_resolve_vld | |(~i_lrq_resolve.lrq_entry_valids & r_entry.lrq_index_oh)) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end
     ST_BUF_WAIT_REFILL: begin
-      if (i_lrq_resolve.valid & (i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh)) begin
+      if (w_lrq_resolve_vld) begin
           w_state_next = ST_BUF_L1D_MERGE;
       end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_index_oh)) begin
         // cleared dependent entry
