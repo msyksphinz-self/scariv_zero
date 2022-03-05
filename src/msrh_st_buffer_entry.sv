@@ -205,4 +205,12 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 end
 endgenerate
 
+`ifdef SIMULATION
+final begin
+  if (r_state != ST_BUF_INIT) begin
+    $display("%m\nCaution: ST-Buffer doesn't go back to Initial state");
+  end
+end
+`endif // SIMULATION
+
 endmodule // msrh_st_buffer_entry
