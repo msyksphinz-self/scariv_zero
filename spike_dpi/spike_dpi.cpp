@@ -484,6 +484,24 @@ int64_t xlen_convert(int64_t val)
 const int fail_max = 1;
 int fail_count = 0;
 
+std::map<int, const char *> riscv_excpt_map {
+  { 0, "Instruction Access Misaligned"},
+  { 1, "Instruction Access Fault"},
+  { 2, "Illegal Instruction"},
+  { 3, "Breakpoint"},
+  { 4, "Load Access Misaligned"},
+  { 5, "Load Access Fault"},
+  { 6, "Store Access Misaligned"},
+  { 7, "Store Access Fault"},
+  { 8, "Environment Call from U-mode"},
+  { 9, "Environment Call from S-mode"},
+  {11,"Environment Call from M-mode"},
+  {12, "Instruction Page Fault"},
+  {13, "Load Page Fault"},
+  {15, "Store Page Fault"},
+  {28, "Another Flush"}
+};
+
 void step_spike(long long time, long long rtl_pc,
                 int rtl_priv, long long rtl_mstatus,
                 int rtl_exception, int rtl_exception_cause,
@@ -508,13 +526,7 @@ void step_spike(long long time, long long rtl_pc,
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", time,
             rtl_cmt_id, rtl_grp_id,
-            rtl_exception_cause == 0 ? "Instruction Access Misaligned" :
-            rtl_exception_cause == 1 ? "Instruction Access Fault" :
-            rtl_exception_cause == 2 ? "Illegal Instruction" :
-            rtl_exception_cause == 4 ? "Load Access Misaligned" :
-            rtl_exception_cause == 5 ? "Load Access Fault" :
-            rtl_exception_cause == 6 ? "Store Access Misaligned" :
-            rtl_exception_cause == 7 ? "Store Access Fault" : "",
+            riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
     return;
@@ -524,7 +536,9 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 15) ||  // Store Page Fault
                        (rtl_exception_cause == 12))) {  // Instruction Page Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+            riscv_excpt_map[rtl_exception_cause],
+            rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
     p->step(1);
     return;
@@ -532,7 +546,9 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 28))) {  // Another Flush
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %d\n", time, rtl_exception_cause),
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+            riscv_excpt_map[rtl_exception_cause],
+            rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
     return;
   }
@@ -542,9 +558,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 11))) { // ECALL_M
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
-            rtl_exception_cause == 8  ? "ECALL_U" :
-            rtl_exception_cause == 9  ? "ECALL_S" :
-            rtl_exception_cause == 11 ? "ECALL_M" : "",
+            riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
     return;
