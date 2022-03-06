@@ -153,10 +153,11 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   logic             w_is_std_ret;
   if (c_idx != 0) begin
     assign w_is_rvc_ret = !w_is_32bit_inst[c_idx-1] & (w_rvc_inst == 16'h8082);
+    assign w_is_std_ret = !w_is_32bit_inst[c_idx-1] & (w_std_inst == 32'h00008067);
   end else begin
     assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
+    assign w_is_std_ret = w_std_inst == 32'h00008067;
   end
-  assign w_is_std_ret = w_std_inst == 32'h00008067;
   assign w_s2_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
                               i_s2_ic_resp.be[c_idx * 2];
 end // block: rvc_jal_loop
