@@ -94,6 +94,8 @@ msrh_pkg::grp_id_t w_sc_ret_be;
 msrh_pkg::grp_id_t w_sc_call_valid;
 msrh_pkg::grp_id_t w_sc_ret_valid;
 
+logic [ICACHE_DATA_B_W / 2 -1: 0] w_is_32bit_inst;
+
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
 // logic [ICACHE_DATA_B_W-1: 0]              w_s2_inst_be;
 assign w_s2_inst    = i_s2_ic_resp.data;
@@ -114,6 +116,7 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
 `else // RV32
   assign is_rvc_jal = 'b0;
 `endif // RV32
+  assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11);
   // assign is_rvc_jalr = (w_rvc_inst[1:0] == 2'b10) &
   //                      (w_rvc_inst[15:12] == 4'b1001) &
   //                      (w_rvc_inst[11: 7] != 5'h0) &
@@ -148,7 +151,11 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   // --------------------------
   logic             w_is_rvc_ret;
   logic             w_is_std_ret;
-  assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
+  if (c_idx != 0) begin
+    assign w_is_rvc_ret = !w_is_32bit_inst[c_idx-1] & (w_rvc_inst == 16'h8082);
+  end else begin
+    assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
+  end
   assign w_is_std_ret = w_std_inst == 32'h00008067;
   assign w_s2_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
                               i_s2_ic_resp.be[c_idx * 2];
