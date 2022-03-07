@@ -274,6 +274,7 @@ always_comb begin
                              w_lrq_evict_is_hazard ? LDQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? LDQ_ISSUE_WAIT : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                              LDQ_EX3_DONE;
+        w_entry_next.is_get_data = (w_entry_next.state == LDQ_EX3_DONE);
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
         w_ex2_ldq_entries_recv_next = 'h0;
       end
@@ -374,6 +375,7 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.br_mask = in.br_mask;
 
   ret.state     = LDQ_ISSUE_WAIT;
+  ret.is_get_data = 1'b0;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;
   ret.except_valid = 1'b0;

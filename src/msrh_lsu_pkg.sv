@@ -455,6 +455,7 @@ typedef struct packed {
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
   ldq_state_t                     state;
+  logic                           is_get_data;
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
