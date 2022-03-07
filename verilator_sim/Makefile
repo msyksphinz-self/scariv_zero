@@ -231,7 +231,15 @@ rv64_torture_test:
 rv64_aapg_test:
 	cd ../tests/aapg/ && aapg gen --num_programs 100 && $(MAKE) -C work XLEN=64 ISA=rv64i ABI=lp64 -j$(NPROCS)
 	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny ../tests/aapg.json log_rv64_aapg $(NPROCS) 2>&1 | tee rv64_aapg.log
+	../scripts/runtest.rb msrh_tb_rv64_tiny     ../tests/aapg.json log_rv64_tiny_aapg  	  $(NPROCS) 2>&1 | tee rv64_tiny_aapg.log
+	$(MAKE) rv64_small DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_small    ../tests/aapg.json log_rv64_small_aapg 	  $(NPROCS) 2>&1 | tee rv64_small_aapg.log
+	$(MAKE) rv64_standard DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_standard ../tests/aapg.json log_rv64_standard_aapg $(NPROCS) 2>&1 | tee rv64_standard_aapg.log
+	$(MAKE) rv64_big DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_big      ../tests/aapg.json log_rv64_big_aapg      $(NPROCS) 2>&1 | tee rv64_big_aapg.log
+	$(MAKE) rv64_giant DEBUG=off
+	../scripts/runtest.rb msrh_tb_rv64_giant    ../tests/aapg.json log_rv64_giant_aapg    $(NPROCS) 2>&1 | tee rv64_giant_aapg.log
 
 ../spike_dpi/libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
