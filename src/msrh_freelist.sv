@@ -26,7 +26,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_tail_ptr <= 'h0;
     for (int i = 0; i < SIZE; i++) begin
       /* verilator lint_off WIDTH */
-      r_freelist[i] <= INIT + i;
+      r_freelist[i] = INIT + i;
     end
   end else begin
     if (i_push) begin

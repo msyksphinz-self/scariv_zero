@@ -24,7 +24,7 @@ package msrh_pkg;
                             1 +              // CSU
                             FPU_INST_NUM;    // FPU
 
-  localparam FLIST_SIZE = 32;
+  localparam FLIST_SIZE = CMT_ENTRY_SIZE;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
   localparam RNID_W = $clog2(RNID_SIZE);
 
