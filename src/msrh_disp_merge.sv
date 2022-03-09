@@ -6,7 +6,7 @@ module msrh_disp_merge
  disp_if.master o_disp
  );
 
-assign o_disp.valid            = i_int_disp.valid | i_fp_disp.valid;
+assign o_disp.valid            = i_int_disp.valid & i_fp_disp.valid;
 assign o_disp.pc_addr          = i_int_disp.pc_addr;
 assign o_disp.tlb_except_valid = i_int_disp.tlb_except_valid;
 assign o_disp.tlb_except_cause = i_int_disp.tlb_except_cause;

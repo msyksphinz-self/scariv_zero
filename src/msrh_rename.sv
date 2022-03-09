@@ -29,6 +29,9 @@ module msrh_rename
 
 logic    w_iq_fire;
 
+logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
+logic                                 w_all_freelist_ready;
+
 logic [RNID_W-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 logic [RNID_W-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
@@ -70,7 +73,10 @@ logic                                     w_commit_flush;
 logic                                     w_br_flush;
 logic                                     w_flush_valid;
 
-assign iq_disp.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) & i_resource_ok;
+assign w_all_freelist_ready = ~(|w_freelist_empty);
+
+assign iq_disp.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
+                       i_resource_ok & w_all_freelist_ready;
 
 //                                          Freelist      RenameMap
 // normal commit inst                    => old ID push / no update
@@ -132,7 +138,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     .i_push_id(w_push_freelist_id),
 
     .i_pop(w_iq_fire & w_freelist_pop),
-    .o_pop_id(w_rd_rnid_tmp)
+    .o_pop_id(w_rd_rnid_tmp),
+
+     .o_is_empty (w_freelist_empty[d_idx])
   );
   assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & (iq_disp.inst[d_idx].wr_reg.regidx == 'h0) ? 'h0 : w_rd_rnid_tmp;
 end

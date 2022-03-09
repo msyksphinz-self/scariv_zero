@@ -37,6 +37,7 @@ l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
 disp_if w_iq_disp ();
+disp_if w_iq_dist_disp[2]();  // Int/FP
 disp_if w_id_disp ();
 disp_if w_sc_int_disp ();
 disp_if w_sc_fp_disp ();
@@ -204,14 +205,13 @@ msrh_frontend u_frontend (
   .ptw_if (w_ptw_if[0])
 );
 
-  // msrh_decoder u_decoder (
-  //     .i_clk(i_clk),
-  //     .i_reset_n(i_reset_n),
-  //
-  //     .iq_disp(w_iq_disp),
-  //     .id_disp(w_id_disp)
-  // );
 
+msrh_disp_distribute
+u_iq_dist
+(
+ .i_disp (w_iq_disp),
+ .o_disp (w_iq_dist_disp),
+ );
 
 msrh_rename
   #(.REG_TYPE(msrh_pkg::GPR))
@@ -219,7 +219,7 @@ u_msrh_int_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .iq_disp(w_iq_disp),
+  .iq_disp(w_iq_dist_disp[0]),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
   .i_commit             (w_commit),
@@ -244,7 +244,7 @@ u_msrh_fp_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .iq_disp(w_iq_disp),
+  .iq_disp(w_iq_dist_disp[1]),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
   .i_commit             (w_commit),
