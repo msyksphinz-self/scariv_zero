@@ -81,6 +81,7 @@
 ../src/msrh_bru_rn_snapshots.sv
 ../src/msrh_commit_map.sv
 ../src/msrh_entry_selector.sv
+../src/msrh_disp_distribute.sv
 
 ../src/msrh_scheduler.sv
 ../src/msrh_sched_entry.sv
