@@ -29,8 +29,10 @@ logic [WORDS-1:0]            r_tag_valids;
     end else begin
       if (i_tag_clear) begin
         r_tag_valids <= 'h0;
+        o_tag_valid <= 1'b0;
       end else if (i_wr) begin
         r_tag_valids[i_addr] <= i_tag_valid;
+        o_tag_valid <= 1'b0;
       end else begin
         o_tag_valid <= r_tag_valids[i_addr];
       end
