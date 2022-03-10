@@ -161,6 +161,7 @@ u_msrh_div_unit
    .i_rs1 (i_rs1),
    .i_rs2 (i_rs2),
 
+   .i_resp_ready (~r_mul_valid_pipe[MUL_STEP]),
    .o_valid (w_div_valid),
    .o_res   (w_div_res),
 
@@ -174,16 +175,19 @@ u_msrh_div_unit
 // Response
 // ================
 
+logic                         w_div_out_fire;
+assign w_div_out_fire = w_div_valid & ~r_mul_valid_pipe[MUL_STEP];
+
 assign o_valid = r_mul_valid_pipe[MUL_STEP] | w_div_valid;
-assign o_res   = w_div_valid ? w_div_res :
+assign o_res   = w_div_out_fire ? w_div_res :
                  (op_pipe[MUL_STEP] == OP_MULH || op_pipe[MUL_STEP] == OP_MULHU || op_pipe[MUL_STEP] == OP_MULHSU) ? prod_pipe [MUL_STEP][riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
 `ifdef RV64
                  (op_pipe[MUL_STEP] == OP_MULW) ? {{(riscv_pkg::XLEN_W-32){prod_pipe [MUL_STEP][31]}}, prod_pipe [MUL_STEP][31 : 0]}:
 `endif // RV64
                  prod_pipe [MUL_STEP][riscv_pkg::XLEN_W-1: 0];
 
-assign o_rd_rnid  = w_div_valid ? w_div_rd_rnid  : r_mul_rd_rnid[MUL_STEP];
-assign o_rd_type  = w_div_valid ? w_div_rd_type  : r_mul_rd_type[MUL_STEP];
-assign o_index_oh = w_div_valid ? w_div_index_oh : r_mul_index_oh[MUL_STEP];
+assign o_rd_rnid  = w_div_out_fire ? w_div_rd_rnid  : r_mul_rd_rnid[MUL_STEP];
+assign o_rd_type  = w_div_out_fire ? w_div_rd_type  : r_mul_rd_type[MUL_STEP];
+assign o_index_oh = w_div_out_fire ? w_div_index_oh : r_mul_index_oh[MUL_STEP];
 
 endmodule // msrh_muldiv_pipe

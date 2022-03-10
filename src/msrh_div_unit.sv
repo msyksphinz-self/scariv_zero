@@ -25,6 +25,7 @@ module msrh_div_unit
  input logic [riscv_pkg::XLEN_W-1: 0]  i_rs1,
  input logic [riscv_pkg::XLEN_W-1: 0]  i_rs2,
 
+ input logic                           i_resp_ready,
  output logic                          o_valid,
  output logic [riscv_pkg::XLEN_W-1: 0] o_res,
 
@@ -49,7 +50,7 @@ always_comb begin
     OP_UDIV,
     OP_SREM,
     OP_UREM
-      : w_valid = 1'b1;
+      : w_valid = i_valid;
     default  : w_valid = 1'b0;
   endcase // case (i_op)
 
@@ -103,7 +104,7 @@ MulDiv u_MulDiv
    .io_req_bits_in1 (i_rs1),
    .io_req_bits_in2 (i_rs2),
    .io_kill (1'b0),
-   .io_resp_ready (1'b1),
+   .io_resp_ready (i_resp_ready),
    .io_resp_valid (o_valid),
    .io_resp_bits_data (o_res)
    );
