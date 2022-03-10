@@ -229,7 +229,7 @@ rv64_torture_test:
 	../scripts/runtest.rb msrh_tb_rv64_tiny ../tests/torture.json log_rv64_torture $(NPROCS) 2>&1 | tee rv64_torture.log
 
 rv64_aapg_test:
-	cd ../tests/aapg/ && aapg gen --num_programs 100 && $(MAKE) -C work XLEN=64 ISA=rv64im ABI=lp64 -j$(NPROCS)
+	cd ../tests/aapg/ && aapg gen --num_programs 100 && $(MAKE) -C work build objdump XLEN=64 ISA=rv64imfd ABI=lp64d -j$(NPROCS)
 	$(MAKE) rv64_tiny DEBUG=off
 	../scripts/runtest.rb msrh_tb_rv64_tiny     ../tests/aapg.json log_rv64_tiny_aapg  	  $(NPROCS) 2>&1 | tee rv64_tiny_aapg.log
 
