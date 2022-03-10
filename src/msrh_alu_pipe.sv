@@ -7,6 +7,10 @@ module msrh_alu_pipe
     input logic i_clk,
     input logic i_reset_n,
 
+    // Commit notification
+    input msrh_pkg::commit_blk_t i_commit,
+    br_upd_if.slave              br_upd_if,
+
     input msrh_pkg::issue_t rv0_issue,
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
     input msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
@@ -339,9 +343,15 @@ u_msrh_muldiv_pipe
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
+   .i_commit   (i_commit),
+   .br_upd_if  (br_upd_if),
+
    .i_valid  (r_ex2_muldiv_valid),
    .i_op     (r_ex2_pipe_ctrl.op),
 
+   .i_cmt_id   (r_ex2_issue.cmt_id),
+   .i_grp_id   (r_ex2_issue.grp_id),
+   .i_br_mask  (r_ex2_issue.br_mask),
    .i_rd_rnid  (r_ex2_issue.wr_reg.rnid),
    .i_rd_type  (r_ex2_issue.wr_reg.typ),
    .i_index_oh (r_ex2_index        ),

@@ -14,10 +14,15 @@ module msrh_div_unit
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ input logic                           i_flush_valid,
+
  input logic                           i_valid,
  output logic                          o_ready,
  input op_t                            i_op,
 
+ input msrh_pkg::cmt_id_t              i_cmt_id,
+ input msrh_pkg::grp_id_t              i_grp_id,
+ input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] i_br_mask,
  input logic [msrh_pkg::RNID_W-1: 0]   i_rd_rnid,
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
@@ -29,6 +34,9 @@ module msrh_div_unit
  output logic                          o_valid,
  output logic [riscv_pkg::XLEN_W-1: 0] o_res,
 
+ output msrh_pkg::cmt_id_t              o_cmt_id,
+ output msrh_pkg::grp_id_t              o_grp_id,
+ output logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] o_br_mask,
  output logic [msrh_pkg::RNID_W-1: 0]   o_rd_rnid,
  output msrh_pkg::reg_t                 o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]      o_index_oh
@@ -83,6 +91,9 @@ always_ff @ (posedge i_clk) begin
     o_rd_rnid  <= i_rd_rnid;
     o_rd_type  <= i_rd_type;
     o_index_oh <= i_index_oh;
+    o_cmt_id   <= i_cmt_id;
+    o_grp_id   <= i_grp_id;
+    o_br_mask  <= i_br_mask;
   end
 end
 
@@ -103,7 +114,7 @@ MulDiv u_MulDiv
 `endif // RV32
    .io_req_bits_in1 (i_rs1),
    .io_req_bits_in2 (i_rs2),
-   .io_kill (1'b0),
+   .io_kill (i_flush_valid),
    .io_resp_ready (i_resp_ready),
    .io_resp_valid (o_valid),
    .io_resp_bits_data (o_res)

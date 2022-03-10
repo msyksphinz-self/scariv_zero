@@ -8,9 +8,16 @@ module msrh_muldiv_pipe
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ // Commit notification
+ input msrh_pkg::commit_blk_t          i_commit,
+ br_upd_if.slave                       br_upd_if,
+
  input logic                           i_valid,
  input                                 op_t i_op,
 
+ input msrh_pkg::cmt_id_t              i_cmt_id,
+ input msrh_pkg::grp_id_t              i_grp_id,
+ input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] i_br_mask,
  input logic [msrh_pkg::RNID_W-1: 0]   i_rd_rnid,
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
@@ -27,6 +34,7 @@ module msrh_muldiv_pipe
  output msrh_pkg::reg_t                o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]     o_index_oh
  );
+
 
 logic [riscv_pkg::XLEN_W: 0]           w_op1;
 logic [riscv_pkg::XLEN_W: 0]           w_op2;
@@ -135,9 +143,21 @@ logic         w_div_ready;
 logic         w_div_valid;
 logic [63: 0] w_div_res;
 
+msrh_pkg::cmt_id_t            w_div_cmt_id;
+msrh_pkg::grp_id_t            w_div_grp_id;
 logic [msrh_pkg::RNID_W-1: 0] w_div_rd_rnid;
 msrh_pkg::reg_t               w_div_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
+logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_div_br_mask;
+
+logic                         w_flush_valid;
+logic                         w_commit_flush;
+logic                         w_br_flush;
+
+assign w_commit_flush = msrh_pkg::is_commit_flush_target(w_div_cmt_id, w_div_grp_id, i_commit);
+assign w_br_flush     = msrh_pkg::is_br_flush_target(w_div_br_mask, br_upd_if.brtag,
+                                                     br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 assign o_stall = !w_div_ready | r_mul_valid_pipe[MUL_STEP-1-2];
 
@@ -150,10 +170,15 @@ u_msrh_div_unit
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
+   .i_flush_valid (w_flush_valid),
+
    .i_valid (i_valid),
    .o_ready (w_div_ready),
    .i_op (i_op),
 
+   .i_cmt_id   (i_cmt_id  ),
+   .i_grp_id   (i_grp_id  ),
+   .i_br_mask  (i_br_mask ),
    .i_rd_rnid  (i_rd_rnid ),
    .i_rd_type  (i_rd_type ),
    .i_index_oh (i_index_oh),
@@ -165,6 +190,9 @@ u_msrh_div_unit
    .o_valid (w_div_valid),
    .o_res   (w_div_res),
 
+   .o_cmt_id   (w_div_cmt_id  ),
+   .o_grp_id   (w_div_grp_id  ),
+   .o_br_mask  (w_div_br_mask ),
    .o_rd_rnid  (w_div_rd_rnid ),
    .o_rd_type  (w_div_rd_type ),
    .o_index_oh (w_div_index_oh)

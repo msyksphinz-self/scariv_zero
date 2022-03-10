@@ -109,6 +109,9 @@ u_alu
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
+   .i_commit  (i_commit),
+   .br_upd_if (br_upd_if),
+
    .rv0_issue(w_rv0_issue),
    .rv0_index(w_rv0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
