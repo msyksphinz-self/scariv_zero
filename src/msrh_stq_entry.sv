@@ -172,9 +172,15 @@ always_comb begin
   w_entry_next = r_entry;
 
   w_entry_next.inst.rd_regs[1].ready = w_entry_rs2_ready_next | r_entry.inst.rd_regs[1].ready;
-  w_entry_next.rs2_data = w_rs2_phy_hit ? w_rs2_phy_data :
-                          i_ex1_q_valid & i_ex1_q_updates.st_data_valid ? i_ex1_q_updates.st_data :
-                          r_entry.rs2_data;
+  if (~w_entry_next.is_rs2_get) begin
+    if (w_rs2_phy_hit) begin
+      w_entry_next.rs2_data   = w_rs2_phy_data;
+      w_entry_next.is_rs2_get = 1'b1;
+    end else if (i_ex1_q_valid & i_ex1_q_updates.st_data_valid) begin
+      w_entry_next.rs2_data   = i_ex1_q_updates.st_data;
+      w_entry_next.is_rs2_get = 1'b1;
+    end
+  end
   w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
   w_entry_next.inst.rd_regs[0].predict_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
 
@@ -343,6 +349,8 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.pipe_sel_idx_oh = pipe_sel_oh;
   ret.vaddr     = 'h0;
   ret.paddr_valid = 1'b0;
+
+  ret.is_rs2_get  = 1'b0;
 
   ret.except_valid = 1'b0;
 
