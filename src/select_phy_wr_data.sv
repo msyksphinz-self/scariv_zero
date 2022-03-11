@@ -13,6 +13,7 @@ logic [riscv_pkg::XLEN_W-1: 0]     w_data[msrh_pkg::TGT_BUS_SIZE];
 
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::TGT_BUS_SIZE; r_idx++) begin : phy_wr_loop
   assign w_hit[r_idx] = i_phy_wr[r_idx].valid &&
+                        ((i_phy_wr[r_idx].rd_type == msrh_pkg::GPR) ? (i_phy_wr[r_idx].rd_rnid != 'h0) : 1'b1) &
                         (i_entry_rnid == i_phy_wr[r_idx].rd_rnid) &&
                         (i_entry_type == i_phy_wr[r_idx].rd_type);
   assign w_data[r_idx] = i_phy_wr[r_idx].rd_data;
