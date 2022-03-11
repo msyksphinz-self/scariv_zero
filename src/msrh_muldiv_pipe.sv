@@ -42,14 +42,14 @@ logic [riscv_pkg::XLEN_W: 0]           w_op2;
 logic                                  w_is_mul;
 logic                                  w_is_mul_64;
 `ifdef RV64
-assign w_is_mul_64 = (i_op == OP_MULW);
+assign w_is_mulw_64 = (i_op == OP_MULW);
 `else // RV64
-assign w_is_mul_64 = 1'b0;
+assign w_is_mulw_64 = 1'b0;
 `endif // RV64
-assign w_is_mul = (i_op == OP_SMUL) | (i_op == OP_MULH) | (i_op == OP_MULHU) | (i_op == OP_MULHSU) | w_is_mul_64;
+assign w_is_mul = (i_op == OP_SMUL) | (i_op == OP_MULH) | (i_op == OP_MULHU) | (i_op == OP_MULHSU) | w_is_mulw_64;
 
-assign w_op1 = (i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHSU || w_is_mul_64) ? {i_rs1[riscv_pkg::XLEN_W-1], i_rs1} : {1'b0, i_rs1};
-assign w_op2 = (i_op == OP_SMUL || i_op == OP_MULH                      || w_is_mul_64) ? {i_rs2[riscv_pkg::XLEN_W-1], i_rs2} : {1'b0, i_rs2};
+assign w_op1 = (i_op == OP_SMUL || i_op == OP_MULH || i_op == OP_MULHSU || w_is_mulw_64) ? {i_rs1[riscv_pkg::XLEN_W-1], i_rs1} : {1'b0, i_rs1};
+assign w_op2 = (i_op == OP_SMUL || i_op == OP_MULH                      || w_is_mulw_64) ? {i_rs2[riscv_pkg::XLEN_W-1], i_rs2} : {1'b0, i_rs2};
 
 
 
@@ -76,7 +76,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     assign w_step_multiplicand = {1'b0, w_op2[MUL_UNROLL-1: 0]};
     /* verilator lint_off WIDTH */
     assign w_prod = $signed(w_op1) * $signed(w_step_multiplicand);
-    assign w_is_s_mul = (i_op == OP_MULH) | (i_op == OP_SMUL) | w_is_mul_64;
+    assign w_is_s_mul = (i_op == OP_MULH) | (i_op == OP_SMUL) | w_is_mulw_64;
   end else begin
     assign w_multiplicand_part = multiplicand_pipe[s_idx][MUL_UNROLL*s_idx +: MUL_UNROLL];
     if (s_idx == MUL_STEP - 1) begin
@@ -84,7 +84,13 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
     end else begin
       assign w_step_multiplicand = {1'b0, w_multiplicand_part};
     end
-    assign w_is_s_mul = op_pipe[s_idx] == OP_MULH || op_pipe[s_idx] == OP_SMUL || op_pipe[s_idx] == OP_MULHSU || w_is_mul_64;
+    assign w_is_s_mul = (op_pipe[s_idx] == OP_MULH) | (op_pipe[s_idx] == OP_SMUL) | (op_pipe[s_idx] == OP_MULHSU) |
+`ifdef RV64
+                        (op_pipe[s_idx] == OP_MULW)
+`else // RV64
+                        1'b0
+`endif  // RV64
+                        ;
 
     /* verilator lint_off WIDTH */
     assign w_prod_part = $signed(multiplier_pipe[s_idx]) * $signed(w_step_multiplicand);
