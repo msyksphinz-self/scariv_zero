@@ -40,7 +40,9 @@ generate for (genvar rn_idx = 1; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin :
   logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_valid_tmp;
   logic w_target_valid;
   for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
-    assign w_target_valid_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid & i_phy_wr[d_cmt_idx].rd_rnid == rn_idx;
+    assign w_target_valid_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid &
+                                            (i_phy_wr[d_cmt_idx].rd_rnid == rn_idx) &
+                                            (i_phy_wr[d_cmt_idx].rd_type == REG_TYPE);
   end
   assign w_target_valid   = |w_target_valid_tmp;
 
