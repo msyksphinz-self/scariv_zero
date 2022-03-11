@@ -156,9 +156,18 @@ msrh_pkg::reg_t               w_div_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
 logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_div_br_mask;
 
+logic                         w_flush_valid_load;
+logic                         w_commit_flush_load;
+logic                         w_br_flush_load;
+
 logic                         w_flush_valid;
 logic                         w_commit_flush;
 logic                         w_br_flush;
+
+assign w_commit_flush_load = msrh_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit);
+assign w_br_flush_load     = msrh_pkg::is_br_flush_target(i_br_mask, br_upd_if.brtag,
+                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_flush_valid_load = w_commit_flush_load | w_br_flush_load;
 
 assign w_commit_flush = msrh_pkg::is_commit_flush_target(w_div_cmt_id, w_div_grp_id, i_commit);
 assign w_br_flush     = msrh_pkg::is_br_flush_target(w_div_br_mask, br_upd_if.brtag,
@@ -178,7 +187,7 @@ u_msrh_div_unit
 
    .i_flush_valid (w_flush_valid),
 
-   .i_valid (i_valid),
+   .i_valid (i_valid & ~w_flush_valid_load),
    .o_ready (w_div_ready),
    .i_op (i_op),
 
