@@ -24,6 +24,7 @@
 ../src/bit_oh_or_packed.sv
 ../src/bit_ff_lsb.sv
 ../src/bit_extract_msb.sv
+../src/bit_extract_msb_ptr_oh.sv
 ../src/bit_tree_msb.sv
 ../src/bit_extract_lsb.sv
 ../src/bit_extract_lsb_ptr.sv
