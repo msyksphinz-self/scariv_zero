@@ -18,6 +18,7 @@ assign alu_idx1 = i_early_wr[1];
 
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::REL_BUS_SIZE; r_idx++) begin : early_wr_loop
   assign w_rel_hit[r_idx] = i_early_wr[r_idx].valid &&
+                            ((i_early_wr[r_idx].rd_type == msrh_pkg::GPR) ? (i_early_wr[r_idx].rd_rnid != 'h0) : 1'b1) &
                             (i_entry_rnid == i_early_wr[r_idx].rd_rnid) &&
                             (i_entry_type == i_early_wr[r_idx].rd_type);
   assign w_rel_hit_may_mispred[r_idx] = w_rel_hit[r_idx] & i_early_wr[r_idx].may_mispred;
