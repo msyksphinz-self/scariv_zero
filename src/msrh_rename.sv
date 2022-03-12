@@ -32,22 +32,22 @@ logic    w_iq_fire;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                 w_all_freelist_ready;
 
-logic [RNID_W-1: 0]        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
-logic [RNID_W-1: 0]        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
+rnid_t        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+rnid_t        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_archreg_valid;
 logic [ 4: 0]                             w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
-logic [RNID_W-1: 0]                       w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
+rnid_t                       w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
 
 logic [ 4: 0]                             w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
-logic [RNID_W-1: 0]                       w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
+rnid_t                       w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
 
 disp_t [msrh_conf_pkg::DISP_SIZE-1:0]     w_disp_inst;
 disp_t [msrh_conf_pkg::DISP_SIZE-1:0]     r_disp_inst;
 
-logic [RNID_W-1: 0]                       rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
-logic [RNID_W-1: 0]                       rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
-logic [RNID_W-1: 0]                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+rnid_t                       rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+rnid_t                       rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+rnid_t                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
 logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
 
@@ -56,7 +56,7 @@ logic                                     w_commit_flush_rnid_restore_valid;
 logic                                     w_commit_except_valid;
 grp_id_t     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[msrh_conf_pkg::DISP_SIZE];
-logic [RNID_W-1: 0]                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
+rnid_t                       w_commit_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 
 grp_id_t     w_rd_valids;
 logic [ 4: 0]                             w_rd_regidx[msrh_conf_pkg::DISP_SIZE];
@@ -64,10 +64,10 @@ grp_id_t     w_rd_data;
 
 // Current rename map information to stack
 logic                                     w_restore_valid;
-logic [RNID_W-1: 0]                       w_rn_list[32];
-logic [RNID_W-1: 0]                       w_restore_rn_list[32];
-logic [RNID_W-1: 0]                       w_restore_queue_list[32];
-logic [RNID_W-1: 0]                       w_restore_commit_map_list[32];
+rnid_t                       w_rn_list[32];
+rnid_t                       w_restore_rn_list[32];
+rnid_t                       w_restore_queue_list[32];
+rnid_t                       w_restore_commit_map_list[32];
 
 logic                                     w_commit_flush;
 logic                                     w_br_flush;
@@ -85,11 +85,11 @@ assign iq_disp.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid))
 // silent flush (actually normally exit) => old ID push / no update
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : free_loop
-  logic [RNID_W-1: 0] w_rd_rnid_tmp;
+  rnid_t w_rd_rnid_tmp;
 
   logic                 w_push_freelist;
   logic                 except_flush_valid;
-  logic [RNID_W-1: 0]   w_push_freelist_id;
+  rnid_t   w_push_freelist_id;
 
   // When instruction commit normally, return old RNID
   // even thouhg instruction is dead, newly allocated RNID should be return
@@ -269,13 +269,13 @@ end
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
-  logic [RNID_W-1: 0] rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rs1_rnid_tmp_valid;
 
-  logic [RNID_W-1: 0] rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rs2_rnid_tmp_valid;
 
-  logic [RNID_W-1: 0]         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rd_old_rnid_tmp_valid;
 
   always_comb begin
@@ -366,7 +366,7 @@ end // block: src_rn_loop
 endgenerate
 
 
-logic [RNID_W-1: 0] w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE*2];
+rnid_t w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE*2];
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
   assign w_rs1_rs2_rnid[d_idx*2+0] = rs1_rnid_fwd[d_idx];
   assign w_rs1_rs2_rnid[d_idx*2+1] = rs2_rnid_fwd[d_idx];
@@ -487,7 +487,7 @@ function void dump_json(string name, int fp);
 
 endfunction // dump
 
-logic [RNID_W-1: 0] w_rnid_list[RNID_SIZE];
+rnid_t w_rnid_list[RNID_SIZE];
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : rn_loop
   for (genvar f_idx = 0; f_idx < msrh_pkg::FLIST_SIZE; f_idx++) begin : flist_loop
     assign w_rnid_list[d_idx * FLIST_SIZE + f_idx] = free_loop[d_idx].u_freelist.r_freelist[f_idx];

@@ -8,11 +8,11 @@ module msrh_commit_map
  // Commit notification
  input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update,
 
- output logic [msrh_pkg::RNID_W-1:0] o_rnid_map[32]
+ output msrh_pkg::rnid_t o_rnid_map[32]
  );
 
-logic [msrh_pkg::RNID_W-1:0]         r_commit_map[32];
-logic [msrh_pkg::RNID_W-1:0]         w_commit_map_next[32];
+msrh_pkg::rnid_t         r_commit_map[32];
+msrh_pkg::rnid_t         w_commit_map_next[32];
 grp_id_t w_dead_id_with_except;
 
 always_comb begin

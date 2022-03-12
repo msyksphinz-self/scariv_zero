@@ -60,8 +60,8 @@ msrh_pkg::issue_t w_init_entry;
 
 logic    w_oldest_ready;
 
-logic [msrh_pkg::RNID_W-1:0] w_rs1_rnid;
-logic [msrh_pkg::RNID_W-1:0] w_rs2_rnid;
+msrh_pkg::rnid_t w_rs1_rnid;
+msrh_pkg::rnid_t w_rs2_rnid;
 msrh_pkg::reg_t w_rs1_type;
 msrh_pkg::reg_t w_rs2_type;
 

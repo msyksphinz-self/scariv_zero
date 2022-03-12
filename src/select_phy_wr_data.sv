@@ -1,6 +1,6 @@
 module select_phy_wr_data
   (
-   input [msrh_pkg::RNID_W-1:0] i_entry_rnid,
+   input msrh_pkg::rnid_t i_entry_rnid,
    input msrh_pkg::reg_t        i_entry_type,
    input msrh_pkg::phy_wr_t     i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 

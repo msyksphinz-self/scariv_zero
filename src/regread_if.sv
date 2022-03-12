@@ -1,7 +1,7 @@
 interface regread_if;
 
   logic valid;
-  logic [msrh_pkg::RNID_W-1:0] rnid;
+  msrh_pkg::rnid_t rnid;
   msrh_pkg::reg_t reg_type;
   logic resp;
   logic [riscv_pkg::XLEN_W-1:0] data;

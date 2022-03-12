@@ -15,7 +15,7 @@ module msrh_phy_registers
   logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE];
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
-  logic [msrh_pkg::RNID_W-1:0] wr_rnid[msrh_pkg::TGT_BUS_SIZE];
+  msrh_pkg::rnid_t wr_rnid[msrh_pkg::TGT_BUS_SIZE];
   logic [riscv_pkg::XLEN_W-1:0] wr_data[msrh_pkg::TGT_BUS_SIZE];
 
   generate

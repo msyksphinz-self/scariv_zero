@@ -8,33 +8,33 @@ module msrh_rename_map
 
    input logic [DISP_SIZE * 2-1:0] i_arch_valid,
    input logic [ 4: 0]             i_arch_id[DISP_SIZE * 2],
-   output logic [RNID_W-1: 0]      o_rnid[DISP_SIZE * 2],
+   output rnid_t      o_rnid[DISP_SIZE * 2],
 
    input logic [ 4: 0]             i_rd_regidx[DISP_SIZE],
-   output logic [RNID_W-1: 0]      o_rd_old_rnid[DISP_SIZE],
+   output rnid_t      o_rd_old_rnid[DISP_SIZE],
 
    input logic [DISP_SIZE-1:0]     i_update,
    input logic [ 4: 0]             i_update_arch_id [DISP_SIZE],
-   input logic [RNID_W-1: 0]       i_update_rnid [DISP_SIZE],
+   input rnid_t       i_update_rnid [DISP_SIZE],
 
    input logic                     i_restore_from_queue,
-   input logic [RNID_W-1: 0]       i_restore_rn_list[32],
+   input rnid_t       i_restore_rn_list[32],
 
    input logic [DISP_SIZE-1: 0]    i_commit_rd_valid,
    input logic [ 4: 0]             i_commit_rd_regidx[DISP_SIZE],
-   input logic [RNID_W-1: 0]       i_commit_rd_rnid[DISP_SIZE],
+   input rnid_t       i_commit_rd_rnid[DISP_SIZE],
 
-   output logic [RNID_W-1: 0]      o_rn_list[32]
+   output rnid_t      o_rn_list[32]
    );
 
-logic [RNID_W-1: 0]                r_map[32];
+rnid_t                r_map[32];
 
 function logic [RNID_W: 0] select_latest_rnid (input logic [DISP_SIZE-1:0] i_update,
                                                input logic [ 4: 0]       tgt_arch_id,
                                                input logic [ 4: 0]       i_update_arch_id [DISP_SIZE],
-                                               input logic [RNID_W-1: 0] i_update_rnid [DISP_SIZE]);
+                                               input rnid_t i_update_rnid [DISP_SIZE]);
 
-logic [RNID_W-1: 0]                                                      rnid_tmp[DISP_SIZE];
+rnid_t                                                      rnid_tmp[DISP_SIZE];
 logic [DISP_SIZE-1: 0]                                                   valid_tmp;
 logic [RNID_W: 0]                                                        ret;
 
@@ -63,11 +63,11 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
     assign r_map[0] = 'h0;
   end else begin
     logic w_update;
-    logic [RNID_W-1: 0] w_update_rnid;
+    rnid_t w_update_rnid;
 
     logic [DISP_SIZE-1: 0] w_rd_active_valid;
     logic [DISP_SIZE-1: 0] w_rd_active_valid_oh;
-    logic [RNID_W-1: 0]    w_commit_rd_rnid;
+    rnid_t    w_commit_rd_rnid;
     for (genvar d = 0; d < DISP_SIZE; d++) begin
       assign w_rd_active_valid[d] = i_commit_rd_valid[d] &
                                     (i_commit_rd_regidx[d] == i[4:0]);

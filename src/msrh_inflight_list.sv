@@ -5,18 +5,18 @@ module msrh_inflight_list
    input logic                               i_clk,
    input logic                               i_reset_n,
 
-   input logic [msrh_pkg::RNID_W-1:0]        i_rnid[msrh_conf_pkg::DISP_SIZE*2],
+   input msrh_pkg::rnid_t        i_rnid[msrh_conf_pkg::DISP_SIZE*2],
    output logic [msrh_conf_pkg::DISP_SIZE*2-1: 0] o_valids,
 
    input grp_id_t    i_update_fetch_valid,
-   input logic [msrh_pkg::RNID_W-1:0]             i_update_fetch_rnid[msrh_conf_pkg::DISP_SIZE],
+   input msrh_pkg::rnid_t             i_update_fetch_rnid[msrh_conf_pkg::DISP_SIZE],
    input grp_id_t    i_update_fetch_data,
 
    input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
    );
 
 logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_phy_valids;
-logic [msrh_pkg::RNID_W-1: 0]       w_phy_rnids[msrh_pkg::TGT_BUS_SIZE];
+msrh_pkg::rnid_t       w_phy_rnids[msrh_pkg::TGT_BUS_SIZE];
 
 logic [msrh_pkg::RNID_SIZE-1: 0]             r_inflight_list;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -73,7 +73,7 @@ logic [ 1: 0] w_update_fetch_valid;
 logic [ 1: 0] w_update_fetch_data;
 
 logic [ 1: 0]                 w_update_phy_valids;
-logic [msrh_pkg::RNID_W-1: 0] w_update_phy_rnids[2];
+msrh_pkg::rnid_t w_update_phy_rnids[2];
 
   // RS1 register file
   // Forwarding information from update_fetch path

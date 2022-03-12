@@ -1,6 +1,6 @@
 module select_early_wr_bus
   (
-   input [msrh_pkg::RNID_W-1:0] i_entry_rnid,
+   input msrh_pkg::rnid_t i_entry_rnid,
    input msrh_pkg::reg_t        i_entry_type,
    input msrh_pkg::early_wr_t   i_early_wr[msrh_pkg::REL_BUS_SIZE],
 

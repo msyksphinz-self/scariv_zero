@@ -48,6 +48,7 @@ package msrh_pkg;
 
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
+typedef logic [RNID_W-1: 0]    rnid_t;
 
   typedef struct packed {
     logic valid;
@@ -89,7 +90,7 @@ typedef struct packed {
   logic              valid;
   reg_t              typ;
   logic [4:0]        regidx;
-  logic [RNID_W-1:0] rnid;
+  rnid_t rnid;
   logic              ready;
 } reg_rd_disp_t;
 
@@ -97,8 +98,8 @@ typedef struct packed {
     logic              valid;
     reg_t              typ;
     logic [4:0]        regidx;
-    logic [RNID_W-1:0] rnid;
-    logic [RNID_W-1:0] old_rnid;
+    rnid_t rnid;
+    rnid_t old_rnid;
 } reg_wr_disp_t;
 
   typedef struct packed {
@@ -145,12 +146,12 @@ typedef struct packed {
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t disp,
-                                      logic [RNID_W-1: 0] rd_rnid,
-                                      logic [RNID_W-1: 0] rd_old_rnid,
+                                      rnid_t rd_rnid,
+                                      rnid_t rd_old_rnid,
                                       logic               rs1_active,
-                                      logic [RNID_W-1: 0] rs1_rnid,
+                                      rnid_t rs1_rnid,
                                       logic               rs2_active,
-                                      logic [RNID_W-1: 0] rs2_rnid,
+                                      rnid_t rs2_rnid,
                                       logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag,
                                       logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask
                                       );
@@ -225,14 +226,14 @@ typedef struct packed {
   logic              valid;
   reg_t              typ;
   logic [4:0]        regidx;
-  logic [RNID_W-1:0] rnid;
+  rnid_t rnid;
 } reg_wr_issue_t;
 
 typedef struct packed {
   logic              valid;
   reg_t              typ;
   logic [4:0]        regidx;
-  logic [RNID_W-1:0] rnid;
+  rnid_t rnid;
   logic              ready;
   logic              predict_ready;
 } reg_rd_issue_t;
@@ -324,7 +325,7 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic valid;
-    logic [RNID_W-1:0] rd_rnid;
+    rnid_t rd_rnid;
     reg_t rd_type;
 
     logic                        may_mispred;
@@ -332,7 +333,7 @@ endfunction  // assign_issue_t
 
   typedef struct packed {
     logic valid;
-    logic [RNID_W-1:0] rd_rnid;
+    rnid_t rd_rnid;
     reg_t rd_type;
     logic [riscv_pkg::XLEN_W-1:0] rd_data;
   } phy_wr_t;
@@ -340,7 +341,7 @@ endfunction  // assign_issue_t
   typedef struct packed {
     logic               mis_valid;     // Mispredict
     reg_t               rd_type;
-    logic [RNID_W-1: 0] rd_rnid;
+    rnid_t rd_rnid;
   } mispred_t;
 
 
@@ -355,8 +356,8 @@ endfunction  // assign_issue_t
 
 // For flushing another instruction
 typedef struct packed {
-  logic                                valid;
-  cmt_id_t                 cmt_id;
+  logic    valid;
+  cmt_id_t cmt_id;
   grp_id_t grp_id;
 } another_flush_t;
 
@@ -364,7 +365,7 @@ typedef struct packed {
 // Commit Signals
 // -----------------
 typedef struct packed {
-  logic                 commit;
+  logic    commit;
   cmt_id_t cmt_id;
   grp_id_t grp_id;
   grp_id_t except_valid;

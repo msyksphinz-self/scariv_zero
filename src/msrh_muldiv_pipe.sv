@@ -18,7 +18,7 @@ module msrh_muldiv_pipe
  input msrh_pkg::cmt_id_t              i_cmt_id,
  input msrh_pkg::grp_id_t              i_grp_id,
  input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] i_br_mask,
- input logic [msrh_pkg::RNID_W-1: 0]   i_rd_rnid,
+ input msrh_pkg::rnid_t   i_rd_rnid,
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
 
@@ -30,7 +30,7 @@ module msrh_muldiv_pipe
  output logic                          o_valid,
  output logic [riscv_pkg::XLEN_W-1: 0] o_res,
 
- output logic [msrh_pkg::RNID_W-1: 0]  o_rd_rnid,
+ output msrh_pkg::rnid_t  o_rd_rnid,
  output msrh_pkg::reg_t                o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]     o_index_oh
  );
@@ -61,7 +61,7 @@ logic [riscv_pkg::XLEN_W*2:0]          prod_pipe         [MUL_STEP: 1];
 logic                                  neg_out_pipe      [MUL_STEP: 1];
 op_t  op_pipe                                            [MUL_STEP: 1];
 
-logic [msrh_pkg::RNID_W-1: 0]             r_mul_rd_rnid [MUL_STEP: 1];
+msrh_pkg::rnid_t             r_mul_rd_rnid [MUL_STEP: 1];
 msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
 logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP: 1];
 
@@ -151,7 +151,7 @@ logic [63: 0] w_div_res;
 
 msrh_pkg::cmt_id_t            w_div_cmt_id;
 msrh_pkg::grp_id_t            w_div_grp_id;
-logic [msrh_pkg::RNID_W-1: 0] w_div_rd_rnid;
+msrh_pkg::rnid_t w_div_rd_rnid;
 msrh_pkg::reg_t               w_div_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
 logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_div_br_mask;

@@ -4,18 +4,18 @@ module msrh_bru_rn_snapshots
    input logic                                                i_clk,
    input logic                                                i_reset_n,
 
-   input logic [RNID_W-1: 0]                                  i_rn_list[32],
+   input rnid_t                                  i_rn_list[32],
 
    input grp_id_t                i_load,
    input grp_id_t                i_rd_valid,
    input logic [ 4: 0]                                        i_rd_archreg[msrh_conf_pkg::DISP_SIZE],
-   input logic [RNID_W-1: 0]                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
+   input rnid_t                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
    input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag [msrh_conf_pkg::DISP_SIZE],
 
    // Branch Tag Update Signal
    br_upd_if.slave                                            br_upd_if,
 
-   output logic [RNID_W-1: 0]                                 o_rn_list[32]
+   output rnid_t                                 o_rn_list[32]
    );
 
 logic [31: 0][RNID_W-1: 0]                                    r_snapshots[msrh_conf_pkg::RV_BRU_ENTRY_SIZE];

@@ -63,8 +63,8 @@ logic                                            w_lrq_evict_is_hazard;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         w_ex2_ldq_entries_recv_next;
 
-logic [msrh_pkg::RNID_W-1:0]                     w_rs1_rnid;
-logic [msrh_pkg::RNID_W-1:0]                     w_rs2_rnid;
+msrh_pkg::rnid_t                     w_rs1_rnid;
+msrh_pkg::rnid_t                     w_rs2_rnid;
 msrh_pkg::reg_t                                  w_rs1_type;
 msrh_pkg::reg_t                                  w_rs2_type;
 

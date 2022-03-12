@@ -1,6 +1,6 @@
 module select_mispred_bus
   (
-   input [msrh_pkg::RNID_W-1:0] i_entry_rnid,
+   input msrh_pkg::rnid_t i_entry_rnid,
    input msrh_pkg::reg_t        i_entry_type,
    input msrh_pkg::mispred_t    i_mispred[msrh_conf_pkg::LSU_INST_NUM],
 

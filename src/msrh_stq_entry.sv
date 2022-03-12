@@ -53,8 +53,8 @@ logic                                              w_load_br_flush;
 logic                                              w_dead_state_clear;
 logic                                              w_cmt_id_match;
 
-logic [msrh_pkg::RNID_W-1:0]                     w_rs1_rnid;
-logic [msrh_pkg::RNID_W-1:0]                     w_rs2_rnid;
+msrh_pkg::rnid_t                     w_rs1_rnid;
+msrh_pkg::rnid_t                     w_rs2_rnid;
 msrh_pkg::reg_t                                  w_rs1_type;
 msrh_pkg::reg_t                                  w_rs2_type;
 logic                                            w_rs1_rel_hit;

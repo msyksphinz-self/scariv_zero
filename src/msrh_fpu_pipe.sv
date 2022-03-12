@@ -91,7 +91,7 @@ logic                                      r_ex2_muldiv_valid;
 
 logic                                      r_ex3_muldiv_valid;
 
-logic [msrh_pkg::RNID_W-1: 0]              w_muldiv_rd_rnid;
+msrh_pkg::rnid_t              w_muldiv_rd_rnid;
 msrh_pkg::reg_t                            w_muldiv_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]                 w_muldiv_index_oh;
 
