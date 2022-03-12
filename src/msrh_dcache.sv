@@ -20,7 +20,7 @@ module msrh_dcache
    );
 
 dc_read_resp_t[msrh_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
-dc_update_t                                      w_rp2_dc_update;
+dc_wr_req_t                                      w_rp2_dc_wr_req;
 
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_dc_read_val[RD_PORT_NUM];
 
@@ -29,16 +29,16 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
   dc_read_req_t  w_dc_read_req [RD_PORT_NUM];
   dc_read_resp_t w_dc_read_resp_bank[RD_PORT_NUM];
 
-  dc_update_t w_rp2_dc_update_bank;
+  dc_wr_req_t w_rp2_dc_wr_req_bank;
 
   logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] w_wr_paddr_bank;
   logic                                            w_wr_bank_valid;
-  assign w_wr_paddr_bank = w_rp2_dc_update.paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
+  assign w_wr_paddr_bank = w_rp2_dc_wr_req.paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
   assign w_wr_bank_valid = (w_wr_paddr_bank == bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]);
 
   always_comb begin
-    w_rp2_dc_update_bank = w_rp2_dc_update;
-    w_rp2_dc_update_bank.valid = w_rp2_dc_update.valid & w_wr_bank_valid;
+    w_rp2_dc_wr_req_bank = w_rp2_dc_wr_req;
+    w_rp2_dc_wr_req_bank.valid = w_rp2_dc_wr_req.valid & w_wr_bank_valid;
   end
 
   msrh_dcache_array
@@ -48,7 +48,7 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
-     .i_dc_update    (w_rp2_dc_update_bank),
+     .i_dc_wr_req    (w_rp2_dc_wr_req_bank),
      .i_dc_read_req  (w_dc_read_req       ),
      .o_dc_read_resp (w_dc_read_resp_bank )
      );
@@ -163,14 +163,14 @@ generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : merge_
 end
 endgenerate
 
-assign w_rp2_dc_update.valid = w_rp2_merge_valid | l1d_wr_if.valid;
-assign w_rp2_dc_update.paddr = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
+assign w_rp2_dc_wr_req.valid = w_rp2_merge_valid | l1d_wr_if.valid;
+assign w_rp2_dc_wr_req.paddr = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
                                l1d_wr_if.paddr;
-assign w_rp2_dc_update.data  = r_rp2_valid ? w_rp2_merge_data :
+assign w_rp2_dc_wr_req.data  = r_rp2_valid ? w_rp2_merge_data :
                                l1d_wr_if.data;
-assign w_rp2_dc_update.be    = r_rp2_valid ? r_rp2_be :
+assign w_rp2_dc_wr_req.be    = r_rp2_valid ? r_rp2_be :
                                l1d_wr_if.be;
-assign w_rp2_dc_update.way   = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
+assign w_rp2_dc_wr_req.way   = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
                                l1d_wr_if.way;
 assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
 
