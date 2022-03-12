@@ -63,7 +63,7 @@ end // block: list_loop
 endgenerate
 
 generate for (genvar p_idx = 0; p_idx < msrh_pkg::TGT_BUS_SIZE; p_idx++) begin : phy_loop
-  assign w_phy_valids[p_idx] = i_phy_wr[p_idx].valid;
+  assign w_phy_valids[p_idx] = i_phy_wr[p_idx].valid & (i_phy_wr[p_idx].rd_type == REG_TYPE);
   assign w_phy_rnids [p_idx] = i_phy_wr[p_idx].rd_rnid;
 end
 endgenerate
