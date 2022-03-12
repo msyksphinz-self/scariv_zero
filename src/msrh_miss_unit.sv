@@ -7,7 +7,7 @@
 //
 // ------------------------------------------------------------------------
 
-module msrh_load_requester
+module msrh_miss_unit
   (
    input logic  i_clk,
    input logic  i_reset_n,
@@ -328,7 +328,7 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
   assign w_evict_sent   = l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[e_idx];
   assign w_ext_req_sent = l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh [e_idx];
 
-  msrh_lrq_entry
+  msrh_miss_entry
     u_entry
       (
        .i_clk     (i_clk    ),
@@ -538,4 +538,4 @@ endfunction // dump_json
 `endif // SIMULATION
 
 
-endmodule // msrh_load_requester
+endmodule // msrh_miss_unit

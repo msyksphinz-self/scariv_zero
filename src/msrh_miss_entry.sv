@@ -1,4 +1,4 @@
-module msrh_lrq_entry
+module msrh_miss_entry
   (
    input logic i_clk,
    input logic i_reset_n,
@@ -101,4 +101,4 @@ end
 
 assign o_entry = r_entry;
 
-endmodule // msrh_lrq_entry
+endmodule // msrh_miss_entry

@@ -246,8 +246,8 @@ msrh_stq
 
 assign w_l1d_rd_if [L1D_LRQ_PORT].s0_valid = 'h0;
 
-msrh_load_requester
-  u_load_requester
+msrh_miss_unit
+u_miss_unit
 (
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
