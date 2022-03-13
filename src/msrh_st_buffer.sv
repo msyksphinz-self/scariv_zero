@@ -88,7 +88,7 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
 assign w_init_load = assign_st_buffer(st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
-                           |w_merge_accept ? ST_BUF_MERGE :
+                           |w_merge_accept       ? ST_BUF_MERGE :
                            ST_BUF_FULL;
 
   generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop

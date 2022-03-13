@@ -8,6 +8,7 @@ module msrh_dcache_array
    input logic i_reset_n,
 
    input msrh_lsu_pkg::dc_wr_req_t     i_dc_wr_req,
+   output msrh_lsu_pkg::dc_wr_resp_t   o_dc_wr_resp,
    input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [READ_PORT_NUM],
    output msrh_lsu_pkg::dc_read_resp_t o_dc_read_resp[READ_PORT_NUM]
    );
@@ -40,9 +41,12 @@ logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_norm_valid_oh;
 logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_h_pri_oh;
 
 logic                              w_s0_dc_tag_valid;
-logic                              w_s0_dc_tag_wr;
+logic                              w_s0_dc_tag_wr_valid;
+logic                              r_s1_dc_tag_wr_valid;
 logic [riscv_pkg::PADDR_W-1: 0]    w_s0_dc_tag_addr;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] w_s0_dc_tag_way;
+
+logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s1_dc_tag_way;
 
 logic [READ_PORT_NUM-1:0]       r_s1_dc_read_req_valid;
 logic [READ_PORT_NUM-1:0]       r_s1_dc_read_req_valid_oh;
@@ -52,7 +56,13 @@ logic [TAG_SIZE-1:0]                      w_s1_tag[msrh_conf_pkg::DCACHE_WAYS];
 
 logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
 
-logic                                    r_s1_dc_wr_req_valid;
+logic [msrh_conf_pkg::DCACHE_WAYS-1 : 0]  w_s1_wr_tag_hit;
+logic                                     r_s1_wr_req_valid;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]  r_s1_wr_data;
+logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] r_s1_wr_be;
+logic                                     r_s1_wr_data_valid;
+logic                                     w_s1_wr_data_valid;
+
 
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[DCACHE_WORDS_PER_BANK];
 logic [READ_PORT_NUM-1: 0]                       w_update_tag_valid;
@@ -107,7 +117,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   // 2. Read Request
   // 3. Read Request Selected
   // 4. Read Request not selected, but same as selected address line.
-  assign w_s1_read_req_valid = !r_s1_dc_wr_req_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same);
+  assign w_s1_read_req_valid = !r_s1_wr_req_valid & r_s1_dc_read_req_valid[l_idx] & (r_s1_dc_read_req_valid_oh[l_idx] | r_s1_dc_read_tag_same);
 
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] w_s1_tag_hit_idx;
   encoder #(.SIZE(msrh_conf_pkg::DCACHE_WAYS)) hit_encoder (.i_in(w_s1_tag_hit), .o_out(w_s1_tag_hit_idx));
@@ -115,7 +125,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   assign o_dc_read_resp[l_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
   assign o_dc_read_resp[l_idx].hit_way  = w_s1_tag_hit_idx;
   assign o_dc_read_resp[l_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
-  assign o_dc_read_resp[l_idx].conflict =  r_s1_dc_wr_req_valid |
+  assign o_dc_read_resp[l_idx].conflict =  r_s1_wr_req_valid |
                                            r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
 
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
@@ -141,8 +151,9 @@ bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_val
 assign w_s0_dc_read_req_valid_oh = |w_s0_dc_read_req_h_pri_oh ? w_s0_dc_read_req_h_pri_oh : w_s0_dc_read_req_norm_valid_oh;
 bit_oh_or #(.T(msrh_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 
-assign w_s0_dc_tag_valid = i_dc_wr_req.valid | (|w_s0_dc_read_req_valid);
-assign w_s0_dc_tag_wr    = i_dc_wr_req.valid;
+assign w_s0_dc_tag_valid    = i_dc_wr_req.valid | (|w_s0_dc_read_req_valid);
+assign w_s0_dc_tag_wr_valid = i_dc_wr_req.valid & i_dc_wr_req.tag_update_valid;
+
 assign w_s0_dc_tag_addr  = i_dc_wr_req.valid ? i_dc_wr_req.paddr : w_s0_dc_selected_read_req.paddr;
 assign w_s0_dc_tag_way   = i_dc_wr_req.way;
 
@@ -152,17 +163,32 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_dc_read_req_valid    <= 'h0;
     r_s1_dc_tag_addr          <= 'h0;
 
-    r_s1_dc_wr_req_valid <= 1'b0;
+    r_s1_wr_req_valid <= 1'b0;
   end else begin
     r_s1_dc_read_req_valid_oh <= w_s0_dc_read_req_valid_oh;
     r_s1_dc_read_req_valid    <= w_s0_dc_read_req_valid;
     r_s1_dc_tag_addr          <= w_s0_dc_tag_addr;
 
-    r_s1_dc_wr_req_valid <= i_dc_wr_req.valid;
+    r_s1_wr_req_valid <= i_dc_wr_req.valid;
+    r_s1_wr_be        <= i_dc_wr_req.be;
+    r_s1_wr_data      <= i_dc_wr_req.data;
+
+    r_s1_wr_data_valid <= i_dc_wr_req.valid & ~i_dc_wr_req.tag_update_valid;
+    r_s1_dc_tag_wr_valid  <= w_s0_dc_tag_wr_valid;
+
+    r_s1_dc_tag_way <= w_s0_dc_tag_way;
+
   end
 end
 
+assign w_s1_wr_data_valid = r_s1_wr_data_valid & (|w_s1_wr_tag_hit) | r_s1_dc_tag_wr_valid;
+for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : icache_way_loop
+  assign w_s1_wr_tag_hit[way] = (r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW] == w_s1_tag[way]) &
+                                w_s1_tag_valid[way];
+end
 
+assign o_dc_wr_resp.hit  = |w_s1_wr_tag_hit;
+assign o_dc_wr_resp.miss = ~(|w_s1_wr_tag_hit);
 
 generate for (genvar w_idx = 0; w_idx < DCACHE_WORDS_PER_BANK; w_idx++) begin : tag_loop
   logic [READ_PORT_NUM-1: 0] w_s1_dc_read_resp_miss;
@@ -197,13 +223,18 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
        .i_reset_n(i_reset_n),
 
        .i_tag_clear (1'b0),
-       .i_wr  (w_s0_dc_tag_wr & (w_s0_dc_tag_way == way)),
+       .i_wr  (w_s0_dc_tag_wr_valid & (w_s0_dc_tag_way == way)),
        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)]),
        .i_tag_valid  (1'b1),
        .i_tag (i_dc_wr_req.paddr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]),
        .o_tag(w_s1_tag[way]),
        .o_tag_valid(w_s1_tag_valid[way])
        );
+
+  logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0] w_data_addr;
+  assign w_data_addr = w_s1_wr_data_valid ?
+                       r_s1_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)] :  // For Data Write
+                       w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)];   // For Data Read
 
   data_array
     #(
@@ -213,10 +244,10 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
   data (
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
-        .i_wr  (i_dc_wr_req.valid & (w_s0_dc_tag_way == way)),
-        .i_addr(w_s0_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)]),
-        .i_be  (i_dc_wr_req.be),
-        .i_data(i_dc_wr_req.data),
+        .i_wr  (w_s1_wr_data_valid),
+        .i_addr(w_data_addr),
+        .i_be  (r_s1_wr_be),
+        .i_data(r_s1_wr_data),
         .o_data(w_s1_data[way])
         );
 

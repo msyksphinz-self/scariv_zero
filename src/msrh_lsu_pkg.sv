@@ -254,11 +254,17 @@ typedef struct packed {
 // L1D interface
 typedef struct packed {
   logic          valid;
+  logic          tag_update_valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
   logic [DCACHE_DATA_B_W-1: 0] be;
 } dc_wr_req_t;
+
+typedef struct packed {
+  logic            hit;
+  logic            miss;
+} dc_wr_resp_t;
 
 typedef struct packed {
   logic          valid;
