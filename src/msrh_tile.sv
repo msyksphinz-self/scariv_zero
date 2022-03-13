@@ -210,7 +210,7 @@ msrh_disp_distribute
 u_iq_dist
 (
  .i_disp (w_iq_disp),
- .o_disp (w_iq_dist_disp),
+ .o_disp (w_iq_dist_disp)
  );
 
 msrh_rename

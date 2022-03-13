@@ -451,15 +451,21 @@ endgenerate
 // --------------------------------
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] l1d_wr_eviction_hazard_vlds;
 generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : wr_if_evicted_loop
-  assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.valid &
+  assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.s0_valid &
                                               w_lrq_entries[e_idx].evict_valid &
                                               (w_lrq_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                               l1d_wr_if.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
+                                               l1d_wr_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
                                               w_lrq_entries[e_idx].evict_sent;
 end
 endgenerate
 
-assign l1d_wr_if.missunit_already_evicted = |l1d_wr_eviction_hazard_vlds;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    l1d_wr_if.s1_missunit_already_evicted <= 1'b0;
+  end else begin
+    l1d_wr_if.s1_missunit_already_evicted <= |l1d_wr_eviction_hazard_vlds;
+  end
+end
 
 
 // --------------------------

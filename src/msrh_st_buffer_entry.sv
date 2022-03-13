@@ -31,11 +31,10 @@ module msrh_st_buffer_entry
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
  output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_fwd_lsu_hit,
 
- input logic  i_l1d_rd_miss,
- input logic  i_l1d_rd_conflict,
+ l1d_rd_if.watch l1d_rd_watch_if,
 
- output logic o_l1d_wr_req,
- input logic  i_l1d_wr_conflict,
+ output logic    o_l1d_wr_req,
+ l1d_wr_if.watch l1d_wr_watch_if,
 
  input lrq_resp_t    i_st_lrq_resp,
  input lrq_resolve_t i_lrq_resolve,
@@ -121,16 +120,19 @@ always_comb begin
           w_state_next = ST_BUF_WAIT_REFILL; // Todo: Should be merge
           w_entry_next.lrq_index_oh = i_lrq_search_hit;
         end
-      end else if (i_l1d_rd_miss) begin
+      end else if (l1d_rd_watch_if.s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
-      end else if (i_l1d_rd_conflict) begin
+      end else if (l1d_wr_watch_if.s1_missunit_already_evicted) begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_L1D_UPDATE;
       end
     end
     ST_BUF_L1D_UPDATE: begin
-      if (i_l1d_wr_conflict) begin
+      w_state_next = ST_BUF_L1D_UPD_RESP;
+    end
+    ST_BUF_L1D_UPD_RESP : begin
+      if (!l1d_wr_watch_if.s1_hit) begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_WAIT_FINISH;

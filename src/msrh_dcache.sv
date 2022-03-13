@@ -156,23 +156,31 @@ end
 // -------------
 logic                                     w_rp2_merge_valid;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_rp2_merge_data;
-assign w_rp2_merge_valid = r_rp2_valid | l1d_merge_if.valid;
+assign w_rp2_merge_valid = r_rp2_valid | l1d_merge_if.s0_valid;
 generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : merge_byte_loop
-  assign w_rp2_merge_data[b_idx*8 +: 8] = l1d_merge_if.be[b_idx] ? l1d_merge_if.data[b_idx*8 +: 8] :
+  assign w_rp2_merge_data[b_idx*8 +: 8] = l1d_merge_if.s0_be[b_idx] ? l1d_merge_if.s0_data[b_idx*8 +: 8] :
                                           r_rp2_resp_data[b_idx*8 +: 8];
 end
 endgenerate
 
-assign w_rp2_dc_wr_req.valid = w_rp2_merge_valid | l1d_wr_if.valid;
+assign w_rp2_dc_wr_req.valid = w_rp2_merge_valid | l1d_wr_if.s0_valid;
 assign w_rp2_dc_wr_req.paddr = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
-                               l1d_wr_if.paddr;
+                               l1d_wr_if.s0_paddr;
 assign w_rp2_dc_wr_req.data  = r_rp2_valid ? w_rp2_merge_data :
-                               l1d_wr_if.data;
+                               l1d_wr_if.s0_data;
 assign w_rp2_dc_wr_req.be    = r_rp2_valid ? r_rp2_be :
-                               l1d_wr_if.be;
+                               l1d_wr_if.s0_be;
 assign w_rp2_dc_wr_req.way   = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
-                               l1d_wr_if.way;
-assign l1d_wr_if.conflict = r_rp2_valid & l1d_wr_if.valid;
+                               l1d_wr_if.s0_way;
+logic w_s0_st_wr_confilct;
+assign w_s0_st_wr_confilct = r_rp2_valid & l1d_wr_if.s0_valid;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    l1d_wr_if.s1_conflict <= 1'b0;
+  end else begin
+    l1d_wr_if.s1_conflict <= w_s0_st_wr_confilct;
+  end
+end
 
 
 `ifdef SIMULATION
@@ -204,7 +212,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                       r_rp2_searched_lrq_entry.paddr,
                       r_rp2_searched_lrq_entry.paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW],
                       l1d_array,
-                      l1d_merge_if.valid,
+                      l1d_merge_if.s0_valid,
                       merged_l1d_array,
                       DCACHE_DATA_B_W);
       // $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",

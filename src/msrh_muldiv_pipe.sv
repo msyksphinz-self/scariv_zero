@@ -40,7 +40,7 @@ logic [riscv_pkg::XLEN_W: 0]           w_op1;
 logic [riscv_pkg::XLEN_W: 0]           w_op2;
 
 logic                                  w_is_mul;
-logic                                  w_is_mul_64;
+logic                                  w_is_mulw_64;
 `ifdef RV64
 assign w_is_mulw_64 = (i_op == OP_MULW);
 `else // RV64

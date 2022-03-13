@@ -47,50 +47,79 @@ interface l1d_rd_if;
     output s1_replace_paddr
   );
 
+
+  modport watch (
+    input  s1_hit,
+    input  s1_hit_way,
+    input  s1_miss,
+    input  s1_conflict,
+    input  s1_data,
+
+    input  s1_replace_valid,
+    input  s1_replace_way,
+    input  s1_replace_data,
+    input  s1_replace_paddr
+  );
+
 endinterface // l1d_rd_if
 
 
 interface l1d_wr_if;
 
-  logic valid;
-  logic [riscv_pkg::PADDR_W-1:0] paddr;
-  logic hit;
-  logic miss;
-  logic conflict;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] be;
+  logic                                           s0_valid;
+  logic [riscv_pkg::PADDR_W-1:0]                  s0_paddr;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        s0_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       s0_be;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
 
-  logic                                     missunit_already_evicted;
+  logic                                           s1_resp_valid;
+  logic                                           s1_hit;
+  logic                                           s1_miss;
+  logic                                           s1_conflict;
+  logic                                           s1_missunit_already_evicted;
+
+  logic                                           s2_done;
 
   modport master(
-    output valid,
-    output paddr,
-    input hit,
-    input miss,
-    input conflict,
-    output way,
-    output data,
-    output be,
-    input missunit_already_evicted
+    output s0_valid,
+    output s0_paddr,
+    output s0_data,
+    output s0_be,
+    output s0_way,
+    input  s1_resp_valid,
+    input  s1_hit,
+    input  s1_miss,
+    input  s1_conflict,
+    input  s1_missunit_already_evicted,
+    input  s2_done
   );
 
   modport slave(
-    input valid,
-    input paddr,
-    output hit,
-    output miss,
-    output conflict,
-    input way,
-    input data,
-    input be
+    input  s0_valid,
+    input  s0_paddr,
+    input  s0_data,
+    input  s0_be,
+    input  s0_way,
+    output s1_resp_valid,
+    output s1_hit,
+    output s1_miss,
+    output s1_conflict,
+    output s2_done
   );
 
+  modport watch (
+    input  s1_resp_valid,
+    input  s1_hit,
+    input  s1_miss,
+    input  s1_conflict,
+    input  s1_missunit_already_evicted,
+    input  s2_done
+  );
 
   modport missunit_watch(
-    input valid,
-    input paddr,
-    output missunit_already_evicted
+    input  s0_valid,
+    input  s0_paddr,
+    output s1_missunit_already_evicted
   );
 
 endinterface // l1d_wr_if

@@ -2,7 +2,7 @@ module msrh_disp_distribute
   import msrh_pkg::*;
 (
  disp_if.slave  i_disp,
- disp_if.master o_disp[2],
+ disp_if.master o_disp[2]
  );
 
 generate for (genvar p_idx = 0; p_idx < 2; p_idx++) begin : port_loop
