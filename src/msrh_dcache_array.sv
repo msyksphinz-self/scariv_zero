@@ -63,6 +63,8 @@ logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] r_s1_wr_be;
 logic                                     r_s1_wr_data_valid;
 logic                                     w_s1_wr_data_valid;
 
+logic [READ_PORT_NUM-1: 0]                        w_s0_dc_rd_wr_conflict;
+logic [READ_PORT_NUM-1: 0]                        r_s1_dc_rd_wr_conflict;
 
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[DCACHE_WORDS_PER_BANK];
 logic [READ_PORT_NUM-1: 0]                       w_update_tag_valid;
@@ -126,6 +128,7 @@ generate for (genvar l_idx = 0; l_idx < READ_PORT_NUM; l_idx++) begin : lsu_loop
   assign o_dc_read_resp[l_idx].hit_way  = w_s1_tag_hit_idx;
   assign o_dc_read_resp[l_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[l_idx].conflict =  r_s1_wr_req_valid |
+                                           r_s1_dc_rd_wr_conflict[l_idx] |
                                            r_s1_dc_read_req_valid[l_idx] & !r_s1_dc_read_req_valid_oh[l_idx] & !r_s1_dc_read_tag_same;
 
   assign o_dc_read_resp[l_idx].data     =  w_s1_selected_data;
@@ -157,6 +160,8 @@ assign w_s0_dc_tag_wr_valid = i_dc_wr_req.valid & i_dc_wr_req.tag_update_valid;
 assign w_s0_dc_tag_addr  = i_dc_wr_req.valid ? i_dc_wr_req.paddr : w_s0_dc_selected_read_req.paddr;
 assign w_s0_dc_tag_way   = i_dc_wr_req.way;
 
+assign w_s0_dc_rd_wr_conflict = w_s0_dc_read_req_valid & {READ_PORT_NUM{w_s1_wr_data_valid}};
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s1_dc_read_req_valid_oh <= 'h0;
@@ -165,6 +170,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_s1_wr_req_valid <= 1'b0;
   end else begin
+    r_s1_dc_rd_wr_conflict    <= w_s0_dc_rd_wr_conflict;
     r_s1_dc_read_req_valid_oh <= w_s0_dc_read_req_valid_oh;
     r_s1_dc_read_req_valid    <= w_s0_dc_read_req_valid;
     r_s1_dc_tag_addr          <= w_s0_dc_tag_addr;
