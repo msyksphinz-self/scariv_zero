@@ -257,6 +257,7 @@ assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
 logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
+logic r_ex2_except_valid;
 msrh_pkg::except_t w_ex1_tlb_except_type;
 
 assign w_ex1_ld_except_valid = (r_ex1_pipe_ctrl.op == OP_LOAD) &
@@ -319,6 +320,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_paddr <= 'h0;
   end else begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
+    r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
   end
 end
 
@@ -328,7 +330,7 @@ assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       ~ex1_l1d_rd_if.s1_conflict &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
+assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 // L1D replace information
 assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
@@ -340,7 +342,7 @@ assign l1d_lrq_if.req_payload.evict_payload.paddr = ex1_l1d_rd_if.s1_replace_pad
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
-                                    w_ex2_l1d_mispredicted ?
+                                    l1d_lrq_if.load ?
                                     (l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT :
                                      l1d_lrq_if.resp_payload.full         ? LRQ_FULL     :
                                      LRQ_ASSIGNED) :
