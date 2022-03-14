@@ -332,7 +332,7 @@ import "DPI-C" function void record_stq_store
 
 byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
   generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
-  assign l1d_array[idx] = l1d_wr_if.s0_data[idx*8+:8];
+    assign l1d_array[idx] = l1d_wr_if.s0_data[idx*8+:8];
   end
 endgenerate
 
@@ -341,6 +341,7 @@ logic [riscv_pkg::PADDR_W-1:0]                  sim_s1_paddr;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        sim_s1_data ;
 logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       sim_s1_be   ;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] sim_s1_way  ;
+byte sim_s1_l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
@@ -350,13 +351,13 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     sim_s1_data  <= l1d_wr_if.s0_data;
     sim_s1_be    <= l1d_wr_if.s0_be;
     sim_s1_way   <= l1d_wr_if.s0_way;
-
+    sim_s1_l1d_array <= l1d_array;
     if (l1d_wr_if.s1_resp_valid & !l1d_wr_if.s1_conflict) begin
       /* verilator lint_off WIDTH */
       record_stq_store($time,
                        sim_s1_paddr,
                        sim_s1_paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
-                       l1d_array,
+                       sim_s1_l1d_array,
                        sim_s1_be,
                        msrh_lsu_pkg::DCACHE_DATA_B_W);
     end // if (sim_s1_valid & !sim_s1_conflict)
