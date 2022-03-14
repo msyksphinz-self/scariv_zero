@@ -325,6 +325,7 @@ end
 assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
                                       (r_ex2_pipe_ctrl.op == OP_LOAD) &
                                       ex1_l1d_rd_if.s1_miss &
+                                      ~ex1_l1d_rd_if.s1_conflict &
                                       (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
                                       /* !ex2_fwd_check_if.fwd_valid; */
 assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);

@@ -250,7 +250,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::DCACHE_WAYS; way++) begin : dc
   data (
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
-        .i_wr  (w_s1_wr_data_valid),
+        .i_wr  (w_s1_wr_data_valid & (r_s1_dc_tag_way == way)),
         .i_addr(w_data_addr),
         .i_be  (r_s1_wr_be),
         .i_data(r_s1_wr_data),
