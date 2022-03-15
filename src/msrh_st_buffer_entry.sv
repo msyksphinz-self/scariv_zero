@@ -120,6 +120,8 @@ always_comb begin
           w_state_next = ST_BUF_WAIT_REFILL; // Todo: Should be merge
           w_entry_next.lrq_index_oh = i_lrq_search_hit;
         end
+      end else if (l1d_rd_watch_if.s1_conflict) begin
+        w_state_next = ST_BUF_RD_L1D;
       end else if (l1d_rd_watch_if.s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else if (l1d_wr_watch_if.s1_missunit_already_evicted) begin

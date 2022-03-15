@@ -342,11 +342,11 @@ assign l1d_lrq_if.req_payload.evict_payload.paddr = ex1_l1d_rd_if.s1_replace_pad
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
+                                    ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
                                     l1d_lrq_if.load ?
-                                    (l1d_lrq_if.resp_payload.conflict     ? LRQ_CONFLICT :
-                                     l1d_lrq_if.resp_payload.full         ? LRQ_FULL     :
+                                    (l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT :
+                                     l1d_lrq_if.resp_payload.full        ? LRQ_FULL     :
                                      LRQ_ASSIGNED) :
-                                    ex1_l1d_rd_if.s1_conflict             ? L1D_CONFLICT :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = lrq_haz_check_if.ex2_evict_haz_valid ? lrq_haz_check_if.ex2_evict_entry_idx :
                                       l1d_lrq_if.resp_payload.lrq_index_oh;
