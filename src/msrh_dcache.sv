@@ -37,12 +37,12 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
   dc_wr_req_t  w_rp2_dc_wr_req_bank;
 
   logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] w_wr_paddr_bank;
-  assign w_wr_paddr_bank = w_rp2_dc_wr_req.paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
+  assign w_wr_paddr_bank = w_rp2_dc_wr_req.s0_paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
   assign w_s0_wr_bank_valid[bank_idx] = (w_wr_paddr_bank == bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]);
 
   always_comb begin
     w_rp2_dc_wr_req_bank = w_rp2_dc_wr_req;
-    w_rp2_dc_wr_req_bank.valid = w_rp2_dc_wr_req.valid & w_s0_wr_bank_valid[bank_idx];
+    w_rp2_dc_wr_req_bank.s0_valid = w_rp2_dc_wr_req.s0_valid & w_s0_wr_bank_valid[bank_idx];
   end
 
   msrh_dcache_array
@@ -107,8 +107,6 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : rd_resp_lo
 
   assign l1d_rd_if[p_idx].s1_replace_valid = w_dc_read_resp_port.replace_valid;
   assign l1d_rd_if[p_idx].s1_replace_way   = w_dc_read_resp_port.replace_way;
-  assign l1d_rd_if[p_idx].s1_replace_data  = w_dc_read_resp_port.replace_data;
-  assign l1d_rd_if[p_idx].s1_replace_paddr = w_dc_read_resp_port.replace_paddr;
 
 end // block: rd_resp_loop
 endgenerate
@@ -183,16 +181,16 @@ bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(msrh_conf_pkg::DCACHE_BANKS))
 resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s1_wr_bank_valid), .o_selected(w_s1_wr_selected_resp));
 
 
-assign w_rp2_dc_wr_req.valid            = w_rp2_merge_valid | l1d_wr_if.s0_valid;
-assign w_rp2_dc_wr_req.tag_update_valid = w_rp2_merge_valid;
-assign w_rp2_dc_wr_req.paddr            = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
-                                          l1d_wr_if.s0_paddr;
-assign w_rp2_dc_wr_req.data             = r_rp2_valid ? w_rp2_merge_data :
-                                          l1d_wr_if.s0_data;
-assign w_rp2_dc_wr_req.be               = r_rp2_valid ? r_rp2_be :
-                                          l1d_wr_if.s0_be;
-assign w_rp2_dc_wr_req.way              = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
-                                          l1d_wr_if.s0_way;
+assign w_rp2_dc_wr_req.s0_valid            = w_rp2_merge_valid | l1d_wr_if.s0_valid;
+assign w_rp2_dc_wr_req.s0_tag_update_valid = w_rp2_merge_valid;
+assign w_rp2_dc_wr_req.s0_paddr            = r_rp2_valid ? r_rp2_searched_lrq_entry.paddr :
+                                             l1d_wr_if.s0_paddr;
+assign w_rp2_dc_wr_req.s0_data             = r_rp2_valid ? w_rp2_merge_data :
+                                             l1d_wr_if.s0_data;
+assign w_rp2_dc_wr_req.s0_be               = r_rp2_valid ? r_rp2_be :
+                                             l1d_wr_if.s0_be;
+assign w_rp2_dc_wr_req.s0_way              = r_rp2_valid ? r_rp2_searched_lrq_entry.evict.way :
+                                             l1d_wr_if.s0_way;
 logic w_s0_st_wr_confilct;
 assign w_s0_st_wr_confilct = r_rp2_valid & l1d_wr_if.s0_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -204,9 +202,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     l1d_wr_if.s1_conflict   <= w_s0_st_wr_confilct;
   end
 end
-assign l1d_wr_if.s1_hit  = w_s1_wr_selected_resp.hit;
-assign l1d_wr_if.s1_miss = w_s1_wr_selected_resp.miss;
-
+assign l1d_wr_if.s1_hit  = w_s1_wr_selected_resp.s1_hit;
+assign l1d_wr_if.s1_miss = w_s1_wr_selected_resp.s1_miss;
+assign l1d_wr_if.s2_done          = 1'b0;
+assign l1d_wr_if.s2_evicted_valid = w_s1_wr_selected_resp.s2_evicted_valid;
+assign l1d_wr_if.s2_evicted_data  = w_s1_wr_selected_resp.s2_evicted_data;
+assign l1d_wr_if.s2_evicted_paddr = w_s1_wr_selected_resp.s2_evicted_paddr;
 
 `ifdef SIMULATION
 `ifdef VERILATOR

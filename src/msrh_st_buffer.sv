@@ -202,8 +202,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_s2_replace_valid <= l1d_rd_if.s1_replace_valid;
     r_s2_replace_way   <= l1d_rd_if.s1_replace_way;
-    r_s2_replace_data  <= l1d_rd_if.s1_replace_data;
-    r_s2_replace_paddr <= l1d_rd_if.s1_replace_paddr;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 

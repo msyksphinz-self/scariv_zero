@@ -12,8 +12,6 @@ interface l1d_rd_if;
   // Eviction: Replaced Address
   logic                                           s1_replace_valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s1_replace_data;
-  logic [riscv_pkg::PADDR_W-1: 0]                 s1_replace_paddr;
 
   modport master(
     output s0_valid,
@@ -26,9 +24,7 @@ interface l1d_rd_if;
     input  s1_data,
 
     input  s1_replace_valid,
-    input  s1_replace_way,
-    input  s1_replace_data,
-    input  s1_replace_paddr
+    input  s1_replace_way
   );
 
   modport slave(
@@ -42,9 +38,7 @@ interface l1d_rd_if;
     output s1_data,
 
     output s1_replace_valid,
-    output s1_replace_way,
-    output s1_replace_data,
-    output s1_replace_paddr
+    output s1_replace_way
   );
 
 
@@ -56,9 +50,7 @@ interface l1d_rd_if;
     input  s1_data,
 
     input  s1_replace_valid,
-    input  s1_replace_way,
-    input  s1_replace_data,
-    input  s1_replace_paddr
+    input  s1_replace_way
   );
 
 endinterface // l1d_rd_if
@@ -79,6 +71,9 @@ interface l1d_wr_if;
   logic                                           s1_missunit_already_evicted;
 
   logic                                           s2_done;
+  logic                                           s2_evicted_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s2_evicted_data;
+  logic [riscv_pkg::PADDR_W-1: 0]                 s2_evicted_paddr;
 
   modport master(
     output s0_valid,
@@ -91,7 +86,10 @@ interface l1d_wr_if;
     input  s1_miss,
     input  s1_conflict,
     input  s1_missunit_already_evicted,
-    input  s2_done
+    input  s2_done,
+    input  s2_evicted_valid,
+    input  s2_evicted_data,
+    input  s2_evicted_paddr
   );
 
   modport slave(
@@ -104,7 +102,10 @@ interface l1d_wr_if;
     output s1_hit,
     output s1_miss,
     output s1_conflict,
-    output s2_done
+    output s2_done,
+    output s2_evicted_valid,
+    output s2_evicted_data,
+    output s2_evicted_paddr
   );
 
   modport watch (
@@ -113,7 +114,10 @@ interface l1d_wr_if;
     input  s1_miss,
     input  s1_conflict,
     input  s1_missunit_already_evicted,
-    input  s2_done
+    input  s2_done,
+    input  s2_evicted_valid,
+    input  s2_evicted_data,
+    input  s2_evicted_paddr
   );
 
   modport missunit_watch(
