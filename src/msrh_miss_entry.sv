@@ -6,21 +6,25 @@ module msrh_miss_entry
    input logic i_load,
    input       msrh_lsu_pkg::lrq_entry_t i_load_entry,
 
-   input logic i_ext_load_fin,
+   input logic                   i_ext_load_fin,
+   input msrh_lsu_pkg::l2_resp_t l2_resp,  // Response from L2
 
    input logic i_sent,
    input logic i_evict_sent,
 
-   output      msrh_lsu_pkg::lrq_entry_t o_entry,
+   input msrh_lsu_pkg::l1d_wr_req_t l1d_wr_payload,
+
+   output msrh_lsu_pkg::lrq_entry_t o_entry,
    output logic o_evict_ready,
    output logic o_entry_finish
    );
 
-typedef enum logic [1:0] {
-  INIT = 0,
-  READY_REQ = 1,
-  WAIT_RESP = 2,
-  WAIT_FINISH = 3
+typedef enum logic [2:0] {
+  INIT        = 0,
+  READY_REQ   = 1,
+  WAIT_RESP   = 2,
+  WRITE_L1D   = 3,
+  WAIT_FINISH = 4
 } state_t;
 
 
@@ -55,9 +59,31 @@ always_comb begin
     end
     WAIT_RESP : begin
       if (i_ext_load_fin) begin
-        w_state_next = WAIT_FINISH;
+        w_entry_next.data = l2_resp.data;
+        w_state_next = WRITE_L1D;
         w_count_fin_next = 'h0;
       end
+    end
+    WRITE_L1D : begin
+      if (i_wr_accepted) begin
+        w_state_next = WRITE_L1D_TEMP;
+      end
+    end
+    WRITE_L1D_TEMP : begin
+      if (i_wr_conflicted) begin
+        w_state_next = WRITE_L1D;
+      end
+    end
+    WRITE_L1D_TEMP2 : begin
+      if (l1d_wr_payload.s2_done) begin
+        if (l1d_wr_payload.evict_valid) begin
+          w_state_next = EVICT_REQ;
+        end else begin
+          w_state_next = WAIT_FINISH;
+        end
+      end
+    end
+    EVICT_REQ : begin
     end
     WAIT_FINISH : begin
       if (r_count_fin == 'h1) begin
@@ -71,9 +97,9 @@ always_comb begin
     default : begin end
   endcase // case (r_state)
 
-  if (o_evict_ready & i_evict_sent) begin
-    w_entry_next.evict_sent = 1'b1;
-  end
+  // if (o_evict_ready & i_evict_sent) begin
+  //   w_entry_next.evict_sent = 1'b1;
+  // end
 
 end // always_comb
 

@@ -7,6 +7,8 @@ module msrh_dcache_array
    input logic i_clk,
    input logic i_reset_n,
 
+   input logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] i_bank,   // static
+
    input msrh_lsu_pkg::dc_wr_req_t     i_dc_wr_req,
    output msrh_lsu_pkg::dc_wr_resp_t   o_dc_wr_resp,
    input msrh_lsu_pkg::dc_read_req_t   i_dc_read_req [READ_PORT_NUM],
@@ -201,11 +203,13 @@ assign o_dc_wr_resp.s1_miss = ~(|w_s1_wr_tag_hit);
 
 logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  w_s1_dc_tag_way_oh;
 logic [TAG_SIZE-1:0]                     w_s1_evicted_sel_tag;
+logic                                    w_s1_evicted_sel_tag_valid;
 logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  r_s2_dc_tag_way_oh;
 logic [TAG_SIZE-1:0]                     r_s2_tag[msrh_conf_pkg::DCACHE_WAYS];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] w_s2_evicted_sel_data;
-logic [TAG_SIZE-1:0]                     w_s2_evicted_sel_tag;
+logic [TAG_SIZE-1:0]                     r_s2_evicted_sel_tag;
 logic                                    r_s2_evicted_valid;
+logic [riscv_pkg::PADDR_W-1: 0]          r_s2_dc_tag_addr;
 
 assign w_s1_dc_tag_way_oh = 'h1 << r_s1_dc_tag_way;
 
@@ -215,19 +219,32 @@ cache_evicted_data_sel (.i_oh (r_s2_dc_tag_way_oh), .i_data(w_s2_evicted_data), 
 bit_oh_or #(.T(logic[TAG_SIZE-1:0]), .WORDS(msrh_conf_pkg::DCACHE_WAYS))
 cache_evicted_tag_sel (.i_oh (w_s1_dc_tag_way_oh), .i_data(w_s1_tag), .o_selected(w_s1_evicted_sel_tag));
 
+assign w_s1_evicted_sel_tag_valid = w_s1_tag_valid[r_s1_dc_tag_way];
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_s2_dc_tag_way_oh <= 'h0;
-    r_s2_evicted_valid <= 1'b0;
+    r_s2_dc_tag_way_oh   <= 'h0;
+    r_s2_evicted_valid   <= 1'b0;
+    r_s2_evicted_sel_tag <= 'h0;
+    r_s2_dc_tag_addr     <= 'h0;
   end else begin
     r_s2_dc_tag_way_oh <= w_s1_dc_tag_way_oh;
     r_s2_tag <= w_s1_tag;
-    r_s2_evicted_valid <= (w_s1_evicted_sel_tag != r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]) & r_s1_dc_tag_wr_valid;
+    r_s2_evicted_valid         <= (w_s1_evicted_sel_tag != r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:msrh_lsu_pkg::DCACHE_TAG_LOW]) &
+                                  r_s1_dc_tag_wr_valid &
+                                  w_s1_evicted_sel_tag_valid;
+    r_s2_evicted_sel_tag       <= w_s1_evicted_sel_tag;
+
+    r_s2_dc_tag_addr     <= r_s1_dc_tag_addr;
   end
 end
 
 assign o_dc_wr_resp.s2_evicted_valid = r_s2_evicted_valid;
-assign o_dc_wr_resp.s2_evicted_paddr = {w_s2_evicted_sel_tag, {msrh_lsu_pkg::DCACHE_TAG_LOW{1'b0}}};
+assign o_dc_wr_resp.s2_evicted_paddr = {r_s2_evicted_sel_tag,
+                                        r_s2_dc_tag_addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_BANKS) +: $clog2(DCACHE_WORDS_PER_BANK)],
+                                        i_bank,
+                                        {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
 assign o_dc_wr_resp.s2_evicted_data  = w_s2_evicted_sel_data;
 
 

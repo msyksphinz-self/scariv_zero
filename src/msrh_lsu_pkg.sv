@@ -176,15 +176,17 @@ typedef struct packed {
   logic          valid;
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   logic                          sent;
-  logic                          l1drd_ready;
-  logic                          l1dwr_ready;
+  // logic                          l1drd_ready;
+  // logic                          l1dwr_ready;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
+
   logic                          evict_valid;
   logic                          evict_sent;
   evict_payload_t                evict;
-} lrq_entry_t;
+} miss_entry_t;
 
-function lrq_entry_t assign_lrq_entry (logic valid, lrq_req_t req);
-  lrq_entry_t ret;
+function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
+  miss_entry_t ret;
 
   ret = 'h0;
 

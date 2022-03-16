@@ -25,7 +25,7 @@ module msrh_miss_unit
    l2_req_if.master  l1d_ext_rd_req,
    l2_resp_if.slave  l1d_ext_rd_resp,
 
-   l1d_wr_if.missunit_watch l1d_wr_if,
+   l1d_wr_if.master  l1d_wr_if,
 
    // Interface to L1D eviction to Store Requestor
    l1d_evict_if.master l1d_evict_if,
@@ -337,7 +337,10 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
        .i_load       (w_load_entry_valid[e_idx]),
        .i_load_entry (w_load_entry),
 
-       .i_ext_load_fin (lrq_dc_search_if.valid & (lrq_dc_search_if.index == e_idx)),
+       .i_ext_load_fin (l1d_ext_rd_resp.valid &
+                        (l1d_ext_rd_resp.payload.tag[L2_CMD_TAG_W -: 2] == L2_UPPER_TAG_RD_L1D) &
+                        (l1d_ext_rd_resp.payload.tag[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] == e_idx)),
+       .l2_resp        (l1d_ext_rd_resp.payload),
 
        .i_sent         (w_ext_req_sent),
        .i_evict_sent   (w_evict_sent),

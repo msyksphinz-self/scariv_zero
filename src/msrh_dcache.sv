@@ -12,9 +12,6 @@ module msrh_dcache
    l1d_wr_if.slave l1d_wr_if,
    l1d_wr_if.slave l1d_merge_if,
 
-   // L2 cache response
-   l2_resp_if.slave  l1d_ext_resp,
-
    // LRQ search interface
    lrq_dc_search_if.master lrq_dc_search_if
    );
@@ -51,6 +48,8 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
+
+     .i_bank    (bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]),
 
      .i_dc_wr_req    (w_rp2_dc_wr_req_bank ),
      .o_dc_wr_resp   (w_rp2_dc_wr_resp_bank[bank_idx]),
@@ -119,18 +118,6 @@ endgenerate
 logic r_rp1_l1d_exp_resp_valid;
 logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_rp1_l1d_exp_resp_valid <= 1'b0;
-    r_rp1_lrq_resp_tag <= 'h0;
-    r_rp1_lrq_resp_data <= 'h0;
-  end else begin
-    r_rp1_l1d_exp_resp_valid <= l1d_ext_resp.valid &
-                                (l1d_ext_resp.payload.tag[L2_CMD_TAG_W-1:L2_CMD_TAG_W-2] == L2_UPPER_TAG_RD_L1D);
-    r_rp1_lrq_resp_tag       <= l1d_ext_resp.payload.tag[msrh_pkg::LRQ_ENTRY_W-1:0];
-    r_rp1_lrq_resp_data      <= l1d_ext_resp.payload.data;
-  end
-end
 
 
 // --------------------------------------------------

@@ -376,8 +376,6 @@ u_msrh_dcache
    .l1d_wr_if (w_l1d_wr_if),
    .l1d_merge_if (w_l1d_merge_if),
 
-   .l1d_ext_resp (l1d_ext_resp),
-
    .lrq_dc_search_if (w_lrq_dc_search_if)
    );
 
