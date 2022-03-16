@@ -4,7 +4,7 @@ module msrh_miss_entry
    input logic i_reset_n,
 
    input logic i_load,
-   input       msrh_lsu_pkg::lrq_entry_t i_load_entry,
+   input msrh_lsu_pkg::miss_entry_t i_load_entry,
 
    input logic                   i_ext_load_fin,
    input msrh_lsu_pkg::l2_resp_t l2_resp,  // Response from L2
@@ -12,24 +12,30 @@ module msrh_miss_entry
    input logic i_sent,
    input logic i_evict_sent,
 
-   input msrh_lsu_pkg::l1d_wr_req_t l1d_wr_payload,
+   output logic o_wr_req_valid,
+   input logic i_wr_accepted,
+   input logic i_wr_conflicted,
+   input msrh_lsu_pkg::s2_l1d_wr_resp_t s2_l1d_wr_resp_payload,
 
-   output msrh_lsu_pkg::lrq_entry_t o_entry,
+   output msrh_lsu_pkg::miss_entry_t o_entry,
    output logic o_evict_ready,
    output logic o_entry_finish
    );
 
 typedef enum logic [2:0] {
-  INIT        = 0,
-  READY_REQ   = 1,
-  WAIT_RESP   = 2,
-  WRITE_L1D   = 3,
-  WAIT_FINISH = 4
+  INIT            = 0,
+  READY_REQ       = 1,
+  WAIT_RESP       = 2,
+  WRITE_L1D       = 3,
+  WRITE_L1D_TEMP  = 4,
+  WRITE_L1D_TEMP2 = 5,
+  EVICT_REQ       = 6,
+  WAIT_FINISH     = 7
 } state_t;
 
 
-msrh_lsu_pkg::lrq_entry_t r_entry;
-msrh_lsu_pkg::lrq_entry_t w_entry_next;
+msrh_lsu_pkg::miss_entry_t r_entry;
+msrh_lsu_pkg::miss_entry_t w_entry_next;
 
 state_t r_state;
 state_t w_state_next;
@@ -75,13 +81,13 @@ always_comb begin
       end
     end
     WRITE_L1D_TEMP2 : begin
-      if (l1d_wr_payload.s2_done) begin
-        if (l1d_wr_payload.evict_valid) begin
-          w_state_next = EVICT_REQ;
-        end else begin
-          w_state_next = WAIT_FINISH;
-        end
+      // if (s2_l1d_wr_resp_payload.s2_done) begin
+      if (s2_l1d_wr_resp_payload.s2_evicted_valid) begin
+        w_state_next = EVICT_REQ;
+      end else begin
+        w_state_next = WAIT_FINISH;
       end
+      // end
     end
     EVICT_REQ : begin
     end
@@ -103,6 +109,7 @@ always_comb begin
 
 end // always_comb
 
+assign o_wr_req_valid = r_state == WRITE_L1D;
 assign o_evict_ready = r_entry.valid & r_entry.evict_valid & ~r_entry.evict_sent;
 
 

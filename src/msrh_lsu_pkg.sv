@@ -272,6 +272,28 @@ typedef struct packed {
 } dc_wr_resp_t;
 
 typedef struct packed {
+  logic [riscv_pkg::PADDR_W-1:0]                  s0_paddr;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        s0_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       s0_be;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
+} s0_l1d_wr_req_t;
+
+
+typedef struct packed {
+  logic                                           s1_hit;
+  logic                                           s1_miss;
+  logic                                           s1_conflict;
+} s1_l1d_wr_resp_t;
+
+
+typedef struct packed {
+  logic                                           s2_evicted_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s2_evicted_data;
+  logic [riscv_pkg::PADDR_W-1: 0]                 s2_evicted_paddr;
+} s2_l1d_wr_resp_t;
+
+
+typedef struct packed {
   logic          valid;
   logic          h_pri;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;

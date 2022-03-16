@@ -124,8 +124,6 @@ always_comb begin
         w_state_next = ST_BUF_RD_L1D;
       end else if (l1d_rd_watch_if.s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
-      end else if (l1d_wr_watch_if.s1_missunit_already_evicted) begin
-        w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_L1D_UPDATE;
       end
@@ -134,7 +132,7 @@ always_comb begin
       w_state_next = ST_BUF_L1D_UPD_RESP;
     end
     ST_BUF_L1D_UPD_RESP : begin
-      if (!l1d_wr_watch_if.s1_hit) begin
+      if (!l1d_wr_watch_if.s1_wr_resp.s1_hit) begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_WAIT_FINISH;

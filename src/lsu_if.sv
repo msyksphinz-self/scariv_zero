@@ -58,72 +58,41 @@ endinterface // l1d_rd_if
 
 interface l1d_wr_if;
 
-  logic                                           s0_valid;
-  logic [riscv_pkg::PADDR_W-1:0]                  s0_paddr;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        s0_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       s0_be;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
-
-  logic                                           s1_resp_valid;
-  logic                                           s1_hit;
-  logic                                           s1_miss;
-  logic                                           s1_conflict;
-  logic                                           s1_missunit_already_evicted;
-
-  logic                                           s2_done;
-  logic                                           s2_evicted_valid;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s2_evicted_data;
-  logic [riscv_pkg::PADDR_W-1: 0]                 s2_evicted_paddr;
+  logic                          s0_valid;
+  msrh_lsu_pkg::s0_l1d_wr_req_t  s0_wr_req;
+  logic                          s1_resp_valid;
+  msrh_lsu_pkg::s1_l1d_wr_resp_t s1_wr_resp;
+  logic                          s2_done;
+  msrh_lsu_pkg::s2_l1d_wr_resp_t s2_wr_resp;
 
   modport master(
     output s0_valid,
-    output s0_paddr,
-    output s0_data,
-    output s0_be,
-    output s0_way,
+    output s0_wr_req,
     input  s1_resp_valid,
-    input  s1_hit,
-    input  s1_miss,
-    input  s1_conflict,
-    input  s1_missunit_already_evicted,
+    input  s1_wr_resp,
     input  s2_done,
-    input  s2_evicted_valid,
-    input  s2_evicted_data,
-    input  s2_evicted_paddr
+    input  s2_wr_resp
   );
 
   modport slave(
     input  s0_valid,
-    input  s0_paddr,
-    input  s0_data,
-    input  s0_be,
-    input  s0_way,
+    input  s0_wr_req,
     output s1_resp_valid,
-    output s1_hit,
-    output s1_miss,
-    output s1_conflict,
+    output s1_wr_resp,
     output s2_done,
-    output s2_evicted_valid,
-    output s2_evicted_data,
-    output s2_evicted_paddr
+    output s2_wr_resp
   );
 
   modport watch (
-    input  s1_resp_valid,
-    input  s1_hit,
-    input  s1_miss,
-    input  s1_conflict,
-    input  s1_missunit_already_evicted,
-    input  s2_done,
-    input  s2_evicted_valid,
-    input  s2_evicted_data,
-    input  s2_evicted_paddr
+    input s1_resp_valid,
+    input s1_wr_resp,
+    input s2_done,
+    input s2_wr_resp
   );
 
   modport missunit_watch(
     input  s0_valid,
-    input  s0_paddr,
-    output s1_missunit_already_evicted
+    input  s0_wr_req
   );
 
 endinterface // l1d_wr_if
@@ -215,7 +184,7 @@ interface lrq_dc_search_if;
 
 logic valid;
 logic [msrh_pkg::LRQ_ENTRY_W-1: 0] index;
-msrh_lsu_pkg::lrq_entry_t lrq_entry;
+msrh_lsu_pkg::miss_entry_t lrq_entry;
 
 modport master (
   output valid,

@@ -61,7 +61,7 @@ msrh_lsu_pkg::lrq_req_t               w_l1d_picked_req_payloads [REQ_PORT_NUM];
 logic [REQ_PORT_NUM-1: 0]             w_l1d_lrq_loads_no_conflicts;
 
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_load_entry_valid;
-msrh_lsu_pkg::lrq_entry_t w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE];
+msrh_lsu_pkg::miss_entry_t w_lrq_entries[msrh_pkg::LRQ_ENTRY_SIZE];
 
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_lrq_valid_load_cnt;
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_lrq_loads_cnt;
@@ -70,15 +70,23 @@ logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE):0] r_lrq_remained_size;
 //
 // LRQ Request selection
 //
-msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_send_entry;
+msrh_lsu_pkg::miss_entry_t             w_lrq_ready_to_send_entry;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_send_tag;
 
+
+//
+// Write L1D
+//
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         w_wr_req_valid;
+logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]         w_wr_req_valid_oh;
+msrh_lsu_pkg::miss_entry_t                    w_wr_lrq_entry_sel;
+
 //
 // Evict Information
 //
-msrh_lsu_pkg::lrq_entry_t             w_lrq_ready_to_evict_entry;
+msrh_lsu_pkg::miss_entry_t             w_lrq_ready_to_evict_entry;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_entry_evict_ready;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_evict_oh;
@@ -146,7 +154,7 @@ encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in(w_out_pt
 // Conflict Check of Normal LRQ Entries
 // -------------------------------------
 function automatic logic hit_lrq_same_pa (logic valid, logic [riscv_pkg::PADDR_W-1: 0] req_paddr,
-                                          msrh_lsu_pkg::lrq_entry_t lrq_entry,
+                                          msrh_lsu_pkg::miss_entry_t lrq_entry,
                                           logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
   return valid & lrq_entry.valid & ~w_entry_finish[entry_idx] &
@@ -156,7 +164,7 @@ function automatic logic hit_lrq_same_pa (logic valid, logic [riscv_pkg::PADDR_W
 endfunction // hit_lrq_same_pa
 
 function automatic logic hit_lrq_same_evict_pa (logic valid, logic [riscv_pkg::PADDR_W-1: 0] req_evict_paddr,
-                                                msrh_lsu_pkg::lrq_entry_t lrq_entry,
+                                                msrh_lsu_pkg::miss_entry_t lrq_entry,
                                                 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
   return valid & lrq_entry.valid & lrq_entry.evict_valid & ~w_entry_finish[entry_idx] &
@@ -321,9 +329,9 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
   msrh_lsu_pkg::lrq_req_t w_l1d_picked_req_payloads_oh;
   bit_oh_or #(.T(msrh_lsu_pkg::lrq_req_t), .WORDS(REQ_PORT_NUM)) pick_entry (.i_oh(w_sel_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
 
-  msrh_lsu_pkg::lrq_entry_t w_load_entry;
-  assign w_load_entry = msrh_lsu_pkg::assign_lrq_entry(w_load_entry_valid[e_idx],
-                                                       w_l1d_picked_req_payloads_oh);
+  msrh_lsu_pkg::miss_entry_t w_load_entry;
+  assign w_load_entry = msrh_lsu_pkg::assign_miss_entry(w_load_entry_valid[e_idx],
+                                                        w_l1d_picked_req_payloads_oh);
 
   assign w_evict_sent   = l1d_evict_if.valid   & l1d_evict_if.ready   & w_lrq_ready_to_evict_oh[e_idx];
   assign w_ext_req_sent = l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_lrq_ready_to_send_oh [e_idx];
@@ -338,12 +346,18 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
        .i_load_entry (w_load_entry),
 
        .i_ext_load_fin (l1d_ext_rd_resp.valid &
-                        (l1d_ext_rd_resp.payload.tag[L2_CMD_TAG_W -: 2] == L2_UPPER_TAG_RD_L1D) &
+                        (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) &
                         (l1d_ext_rd_resp.payload.tag[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] == e_idx)),
        .l2_resp        (l1d_ext_rd_resp.payload),
 
        .i_sent         (w_ext_req_sent),
        .i_evict_sent   (w_evict_sent),
+
+       .o_wr_req_valid         (w_wr_req_valid   [e_idx]),
+       .i_wr_accepted          (w_wr_req_valid_oh[e_idx]),
+       .i_wr_conflicted        (1'b0),
+       .s2_l1d_wr_resp_payload (1'b1),
+
        .o_entry        (w_lrq_entries[e_idx]),
        .o_evict_ready  (w_lrq_entry_evict_ready[e_idx]),
        .o_entry_finish (w_entry_finish[e_idx])
@@ -368,11 +382,11 @@ end
 endgenerate
 bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_sel (.in(w_lrq_ready_to_send), .i_ptr(w_out_ptr), .out(w_lrq_ready_to_send_oh));
 encoder#(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_send_tag_encoder (.i_in(w_lrq_ready_to_send_oh), .o_out(w_lrq_send_tag));
-bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
+bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_send_entry  (.i_oh(w_lrq_ready_to_send_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_send_entry));
 
 bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_sel (.in(w_lrq_ready_to_evict), .i_ptr(w_out_ptr), .out(w_lrq_ready_to_evict_oh));
 encoder#(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_evict_tag_encoder (.i_in(w_lrq_ready_to_evict_oh), .o_out(w_lrq_evict_tag));
-bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_evict_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
+bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_ready_to_evict_oh), .i_data(w_lrq_entries), .o_selected(w_lrq_ready_to_evict_entry));
 
 
 assign l1d_ext_rd_req.valid = w_lrq_ready_to_send_entry.valid & !w_lrq_ready_to_send_entry.sent;
@@ -381,6 +395,23 @@ assign l1d_ext_rd_req.payload.addr    = w_lrq_ready_to_send_entry.paddr;
 assign l1d_ext_rd_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_send_tag};
 assign l1d_ext_rd_req.payload.data    = 'h0;
 assign l1d_ext_rd_req.payload.byte_en = 'h0;
+
+
+// ------------------------
+// L1D Write Request
+// ------------------------
+
+assign l1d_wr_if.s0_valid = |w_wr_req_valid;
+bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_wr_req_select (.in(w_wr_req_valid), .i_ptr(w_out_ptr), .out(w_wr_req_valid_oh));
+bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE))
+select_l1d_wr_req_entry (.i_oh(w_wr_req_valid_oh), .i_data(w_lrq_entries), .o_selected(w_wr_lrq_entry_sel));
+
+assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_lrq_entry_sel.paddr;
+assign l1d_wr_if.s0_wr_req.s0_data  = w_wr_lrq_entry_sel.data;
+assign l1d_wr_if.s0_wr_req.s0_be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_lrq_entry_sel.evict.way;
+
+
 
 // -----------------
 // Eviction Request
@@ -429,8 +460,8 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
                                      lrq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
-  msrh_lsu_pkg::lrq_entry_t w_lrq_evict_entry;
-  bit_oh_or #(.T(msrh_lsu_pkg::lrq_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
+  msrh_lsu_pkg::miss_entry_t w_lrq_evict_entry;
+  bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
 
   assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
   assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_hit;
@@ -457,18 +488,18 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
   assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.s0_valid &
                                               w_lrq_entries[e_idx].evict_valid &
                                               (w_lrq_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                               l1d_wr_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
+                                               l1d_wr_if.s0_wr_req.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
                                               w_lrq_entries[e_idx].evict_sent;
 end
 endgenerate
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    l1d_wr_if.s1_missunit_already_evicted <= 1'b0;
-  end else begin
-    l1d_wr_if.s1_missunit_already_evicted <= |l1d_wr_eviction_hazard_vlds;
-  end
-end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//     l1d_wr_if.s1_missunit_already_evicted <= 1'b0;
+//   end else begin
+//     l1d_wr_if.s1_missunit_already_evicted <= |l1d_wr_eviction_hazard_vlds;
+//   end
+// end
 
 
 // --------------------------
@@ -516,7 +547,7 @@ initial begin
 end
 
 `ifdef SIMULATION
-function void dump_entry_json(int fp, msrh_lsu_pkg::lrq_entry_t entry, int index);
+function void dump_entry_json(int fp, msrh_lsu_pkg::miss_entry_t entry, int index);
 
   if (entry.valid) begin
     $fwrite(fp, "    \"lrq_entry[%02d]\" : {", index[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1:0]);

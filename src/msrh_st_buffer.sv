@@ -228,17 +228,17 @@ select_l1d_wr_entry_oh
    );
 
 always_comb begin
-  l1d_wr_if.s0_valid = |w_entry_l1d_wr_req_oh;
-  l1d_wr_if.s0_way   = r_s2_hit_way;
-  l1d_wr_if.s0_paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
-  l1d_wr_if.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+  l1d_wr_if.s0_valid           = |w_entry_l1d_wr_req_oh;
+  l1d_wr_if.s0_wr_req.s0_way   = r_s2_hit_way;
+  l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+  l1d_wr_if.s0_wr_req.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end
 
 generate if (multiply_dc_stbuf_width == 1) begin
-  assign l1d_wr_if.s0_be    = w_l1d_wr_entry.strb;
+  assign l1d_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb;
   end else begin
   /* verilator lint_off WIDTH */
-  assign l1d_wr_if.s0_be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+  assign l1d_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
   end
 endgenerate
 
@@ -257,7 +257,7 @@ select_l1d_merge_entry_oh
    );
 
 assign l1d_merge_if.s0_valid = |w_entry_l1d_merge_req;
-assign l1d_merge_if.s0_paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_merge_if.s0_wr_req.s0_paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
 
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
@@ -286,8 +286,8 @@ generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : l1d_me
 
   bit_oh_or #(.T(logic[7:0]), .WORDS(ST_BUF_ENTRY_SIZE)) select_be_data(.i_oh(w_st_buf_byte_valid), .i_data(w_st_buf_byte_data), .o_selected(w_st_buf_byte_sel_data));
 
-  assign l1d_merge_if.s0_data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
-  assign l1d_merge_if.s0_be[b_idx]           = |w_st_buf_byte_valid;
+  assign l1d_merge_if.s0_wr_req.s0_data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
+  assign l1d_merge_if.s0_wr_req.s0_be[b_idx]           = |w_st_buf_byte_valid;
 end // block: l1d_merge_loop
 endgenerate
 
@@ -330,7 +330,7 @@ import "DPI-C" function void record_stq_store
 
 byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
   generate for (genvar idx = 0; idx < msrh_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
-    assign l1d_array[idx] = l1d_wr_if.s0_data[idx*8+:8];
+    assign l1d_array[idx] = l1d_wr_if.s0_wr_req.s0_data[idx*8+:8];
   end
 endgenerate
 
@@ -345,12 +345,12 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
 
     sim_s1_valid <= l1d_wr_if.s0_valid;
-    sim_s1_paddr <= l1d_wr_if.s0_paddr;
-    sim_s1_data  <= l1d_wr_if.s0_data;
-    sim_s1_be    <= l1d_wr_if.s0_be;
-    sim_s1_way   <= l1d_wr_if.s0_way;
+    sim_s1_paddr <= l1d_wr_if.s0_wr_req.s0_paddr;
+    sim_s1_data  <= l1d_wr_if.s0_wr_req.s0_data;
+    sim_s1_be    <= l1d_wr_if.s0_wr_req.s0_be;
+    sim_s1_way   <= l1d_wr_if.s0_wr_req.s0_way;
     sim_s1_l1d_array <= l1d_array;
-    if (l1d_wr_if.s1_resp_valid & !l1d_wr_if.s1_conflict) begin
+    if (l1d_wr_if.s1_resp_valid & !l1d_wr_if.s1_wr_resp.s1_conflict) begin
       /* verilator lint_off WIDTH */
       record_stq_store($time,
                        sim_s1_paddr,
