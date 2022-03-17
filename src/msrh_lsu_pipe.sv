@@ -443,7 +443,7 @@ always_comb begin
     end
   endcase // case (r_ex2_pipe_ctrl.size)
 
-  w_ex2_lrq_fwd_dw           = {8{1'b1}};
+  w_ex2_lrq_fwd_dw           = {8{lrq_fwd_if.ex2_fwd_valid}};
   w_ex2_lrq_fwd_aligned_data = lrq_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
 end
 
