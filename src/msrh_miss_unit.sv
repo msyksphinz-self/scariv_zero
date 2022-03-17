@@ -456,13 +456,13 @@ end
 
 // Eviction Hazard Check
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_data_hit;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_fwd_hit;
   for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : buffer_loop
-    assign w_lrq_data_hit[e_idx] = w_lrq_entries[e_idx].valid &
-                                   w_lrq_entries[e_idx].get_data &
-                                   lrq_fwd_if[p_idx].ex2_valid &
-                                   (w_lrq_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                    lrq_fwd_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+    assign w_lrq_fwd_hit[e_idx] = w_lrq_entries[e_idx].valid &
+                                  w_lrq_entries[e_idx].get_data &
+                                  lrq_fwd_if[p_idx].ex2_valid &
+                                  (w_lrq_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                   lrq_fwd_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   end
 
   msrh_lsu_pkg::miss_entry_t w_lrq_fwd_entry;

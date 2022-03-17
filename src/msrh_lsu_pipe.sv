@@ -121,7 +121,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_l1d_mispredicted & !ex1_l1d_rd_if.s1_conflict :
+  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_l1d_mispredicted & !((ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success))) :
                            r_ex2_issue.valid;
 end
 
@@ -339,7 +339,8 @@ assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.hazard_typ = ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
+assign o_ex2_q_updates.hazard_typ = &w_ex2_fwd_success                   ? NONE         :
+                                    ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
                                     l1d_lrq_if.load ?
                                     (l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT :
                                      l1d_lrq_if.resp_payload.full        ? LRQ_FULL     :
@@ -352,7 +353,7 @@ assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 // Misprediction Update
 // ---------------------
 always_comb begin
-  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
+  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | (ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success));
   o_ex2_mispred.rd_type   = r_ex2_issue.wr_reg.typ;
   o_ex2_mispred.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
@@ -417,7 +418,6 @@ always_comb begin
     SIZE_DW : begin
       w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw;
       w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data;
-
     end
 `endif // RV64
     SIZE_W  : begin
@@ -443,42 +443,50 @@ always_comb begin
     end
   endcase // case (r_ex2_pipe_ctrl.size)
 
+  w_ex2_lrq_fwd_aligned_data = lrq_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
   w_ex2_lrq_fwd_dw           = {8{lrq_fwd_if.ex2_fwd_valid}};
-  w_ex2_lrq_fwd_aligned_data = lrq_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
 end
 
 
 logic [riscv_pkg::XLEN_W/8-1: 0]                  w_stbuf_fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]                    w_stbuf_fwd_aligned_data;
 
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_expected_fwd_valid;
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_success;
 always_comb begin
   case (r_ex2_pipe_ctrl.size)
 `ifdef RV64
     SIZE_DW : begin
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
+      w_expected_fwd_valid     = {8{1'b1}};
     end
 `endif // RV64
     SIZE_W  : begin
 `ifdef RV32
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw;
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data;
+      w_expected_fwd_valid     = {4{1'b1}};
 `else // RV32
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00};
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
+      w_expected_fwd_valid     = 8'h0f;
 `endif // RV32
     end
     SIZE_H  : begin
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0};
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0, 3'b000};
+      w_expected_fwd_valid     = 8'h03;
     end
     SIZE_B  : begin
       w_stbuf_fwd_dw           = stbuf_fwd_check_if.fwd_dw >>  r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0];
       w_stbuf_fwd_aligned_data = stbuf_fwd_check_if.fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
+      w_expected_fwd_valid     = 8'h01;
     end
     default : begin
       w_stbuf_fwd_dw = 'h0;
       w_stbuf_fwd_aligned_data = 'h0;
+      w_expected_fwd_valid     = 8'h00;
     end
   endcase // case (r_ex2_pipe_ctrl.size)
 end
@@ -491,6 +499,7 @@ generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin
                                               w_stbuf_fwd_dw  [b_idx] ? w_stbuf_fwd_aligned_data  [b_idx*8 +: 8] :
                                               w_ex2_lrq_fwd_dw[b_idx] ? w_ex2_lrq_fwd_aligned_data[b_idx*8 +: 8] :
                                                                         w_ex2_l1d_data            [b_idx*8 +: 8];
+  assign w_ex2_fwd_success[b_idx] = w_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw[b_idx] | w_stbuf_fwd_dw[b_idx] | w_ex2_lrq_fwd_dw[b_idx]) : 1'b1;
 end
 endgenerate
 
