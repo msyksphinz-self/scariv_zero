@@ -68,6 +68,7 @@ always_comb begin
     WAIT_RESP : begin
       if (i_ext_load_fin) begin
         w_entry_next.data = l2_resp.data;
+        w_entry_next.get_data = 1'b1;
         w_state_next = WRITE_L1D;
         w_count_fin_next = 'h0;
       end
@@ -88,6 +89,7 @@ always_comb begin
       // if (s2_l1d_wr_resp_payload.s2_done) begin
       if (s2_l1d_wr_resp_payload.s2_evicted_valid) begin
         w_state_next = EVICT_REQ;
+        w_entry_next.get_data = 1'b0;
         w_entry_next.paddr = s2_l1d_wr_resp_payload.s2_evicted_paddr;
         w_entry_next.data  = s2_l1d_wr_resp_payload.s2_evicted_data;
       end else begin

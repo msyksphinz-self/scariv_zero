@@ -42,8 +42,8 @@ module msrh_lsu
 
     /* Load Requester Interface */
     l1d_lrq_if.master          l1d_lrq_if,
-    // LRQ Hazard Check
-    lrq_haz_check_if.master    lrq_haz_check_if,
+    // LRQ Forward Check
+    lrq_fwd_if.master    lrq_fwd_if,
     // STQ -> LDQ check
     ldq_haz_check_if.master    ldq_haz_check_if,
 
@@ -145,7 +145,7 @@ u_lsu_pipe
 
    .ptw_if(ptw_if),
    .l1d_lrq_if (l1d_lrq_if),
-   .lrq_haz_check_if (lrq_haz_check_if),
+   .lrq_fwd_if (lrq_fwd_if),
    .ldq_haz_check_if (ldq_haz_check_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),

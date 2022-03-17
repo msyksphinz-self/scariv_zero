@@ -287,29 +287,29 @@ modport slave (
 
 endinterface // fwd_check_if
 
-interface lrq_haz_check_if;
-logic                                 ex2_valid;
-logic [riscv_pkg::PADDR_W-1: 0]       ex2_paddr;
-logic                                 ex2_evict_haz_valid;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] ex2_evict_entry_idx;
+interface lrq_fwd_if;
+logic                                     ex2_valid;
+logic [riscv_pkg::PADDR_W-1: 0]           ex2_paddr;
+logic                                     ex2_fwd_valid;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] ex2_fwd_data;
 
 modport master
   (
    output ex2_valid,
    output ex2_paddr,
-   input  ex2_evict_haz_valid,
-   input  ex2_evict_entry_idx
+   input  ex2_fwd_valid,
+   input  ex2_fwd_data
    );
 
 modport slave
   (
    input  ex2_valid,
    input  ex2_paddr,
-   output ex2_evict_haz_valid,
-   output ex2_evict_entry_idx
+   output ex2_fwd_valid,
+   output ex2_fwd_data
    );
 
-endinterface // lrq_haz_check_if
+endinterface // lrq_fwd_if
 
 
 interface ldq_haz_check_if;

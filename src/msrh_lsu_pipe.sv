@@ -41,7 +41,7 @@ module msrh_lsu_pipe
  fwd_check_if.master                   ex2_fwd_check_if,
  fwd_check_if.master                   stbuf_fwd_check_if,
  ldq_haz_check_if.master               ldq_haz_check_if,
- lrq_haz_check_if.master               lrq_haz_check_if,
+ lrq_fwd_if.master                     lrq_fwd_if,
 
  l1d_lrq_if.master                     l1d_lrq_if,
 
@@ -339,22 +339,20 @@ assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.hazard_typ = lrq_haz_check_if.ex2_evict_haz_valid ? LRQ_EVICT_CONFLICT :
-                                    ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
+assign o_ex2_q_updates.hazard_typ = ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
                                     l1d_lrq_if.load ?
                                     (l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT :
                                      l1d_lrq_if.resp_payload.full        ? LRQ_FULL     :
                                      LRQ_ASSIGNED) :
                                     NONE;
-assign o_ex2_q_updates.lrq_index_oh = lrq_haz_check_if.ex2_evict_haz_valid ? lrq_haz_check_if.ex2_evict_entry_idx :
-                                      l1d_lrq_if.resp_payload.lrq_index_oh;
+assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 
 // ---------------------
 // Misprediction Update
 // ---------------------
 always_comb begin
-  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict | lrq_haz_check_if.ex2_evict_haz_valid;
+  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss | ex1_l1d_rd_if.s1_conflict;
   o_ex2_mispred.rd_type   = r_ex2_issue.wr_reg.typ;
   o_ex2_mispred.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
@@ -402,11 +400,15 @@ assign ldq_haz_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 assign ldq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
 
 // LRQ Hazard Check
-assign lrq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
-assign lrq_haz_check_if.ex2_paddr  = r_ex2_paddr;
+assign lrq_fwd_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign lrq_fwd_if.ex2_paddr  = r_ex2_paddr;
 
 logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_aligned_data;
+
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_lrq_fwd_dw;
+logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_lrq_fwd_aligned_data;
+
 logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_final_data;
 
 always_comb begin
@@ -415,6 +417,7 @@ always_comb begin
     SIZE_DW : begin
       w_ex2_fwd_dw           = ex2_fwd_check_if.fwd_dw;
       w_ex2_fwd_aligned_data = ex2_fwd_check_if.fwd_data;
+
     end
 `endif // RV64
     SIZE_W  : begin
@@ -439,6 +442,9 @@ always_comb begin
       w_ex2_fwd_aligned_data = 'h0;
     end
   endcase // case (r_ex2_pipe_ctrl.size)
+
+  w_ex2_lrq_fwd_dw           = {8{1'b1}};
+  w_ex2_lrq_fwd_aligned_data = lrq_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
 end
 
 
@@ -481,9 +487,10 @@ logic [riscv_pkg::XLEN_W-1: 0] w_ex2_l1d_data;
 assign w_ex2_l1d_data = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0], 3'b000} +: riscv_pkg::XLEN_W];
 
 generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin
-  assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_ex2_fwd_dw  [b_idx] ? w_ex2_fwd_aligned_data  [b_idx*8 +: 8] :
-                                              w_stbuf_fwd_dw[b_idx] ? w_stbuf_fwd_aligned_data[b_idx*8 +: 8] :
-                                                                      w_ex2_l1d_data          [b_idx*8 +: 8];
+  assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_ex2_fwd_dw    [b_idx] ? w_ex2_fwd_aligned_data    [b_idx*8 +: 8] :
+                                              w_stbuf_fwd_dw  [b_idx] ? w_stbuf_fwd_aligned_data  [b_idx*8 +: 8] :
+                                              w_ex2_lrq_fwd_dw[b_idx] ? w_ex2_lrq_fwd_aligned_data[b_idx*8 +: 8] :
+                                                                        w_ex2_l1d_data            [b_idx*8 +: 8];
 end
 endgenerate
 
