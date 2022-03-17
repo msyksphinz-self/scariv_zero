@@ -346,7 +346,7 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
        .i_load_entry (w_load_entry),
 
        .i_ext_load_fin (l1d_ext_rd_resp.valid &
-                        (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) &
+                        (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) &
                         (l1d_ext_rd_resp.payload.tag[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] == e_idx)),
        .l2_resp        (l1d_ext_rd_resp.payload),
 

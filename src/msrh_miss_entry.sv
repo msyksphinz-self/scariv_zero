@@ -78,6 +78,8 @@ always_comb begin
     WRITE_L1D_TEMP : begin
       if (i_wr_conflicted) begin
         w_state_next = WRITE_L1D;
+      end else begin
+        w_state_next = WRITE_L1D_TEMP2;
       end
     end
     WRITE_L1D_TEMP2 : begin
