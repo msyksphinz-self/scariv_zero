@@ -19,6 +19,8 @@ module msrh_miss_entry
 
    output msrh_lsu_pkg::miss_entry_t o_entry,
    output logic o_evict_ready,
+   input logic  i_evict_accepted,
+
    output logic o_entry_finish
    );
 
@@ -86,12 +88,17 @@ always_comb begin
       // if (s2_l1d_wr_resp_payload.s2_done) begin
       if (s2_l1d_wr_resp_payload.s2_evicted_valid) begin
         w_state_next = EVICT_REQ;
+        w_entry_next.paddr = s2_l1d_wr_resp_payload.s2_evicted_paddr;
+        w_entry_next.data  = s2_l1d_wr_resp_payload.s2_evicted_data;
       end else begin
         w_state_next = WAIT_FINISH;
       end
       // end
     end
     EVICT_REQ : begin
+      if (i_evict_accepted) begin
+        w_state_next = WAIT_FINISH;
+      end
     end
     WAIT_FINISH : begin
       if (r_count_fin == 'h1) begin
@@ -112,7 +119,7 @@ always_comb begin
 end // always_comb
 
 assign o_wr_req_valid = r_state == WRITE_L1D;
-assign o_evict_ready = r_entry.valid & r_entry.evict_valid & ~r_entry.evict_sent;
+assign o_evict_ready  = r_state == EVICT_REQ;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

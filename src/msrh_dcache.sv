@@ -25,6 +25,7 @@ logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_dc_read_val[RD_PORT_NUM];
 
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] w_s0_wr_bank_valid;
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_s1_wr_bank_valid;
+logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_s2_wr_bank_valid;
 dc_wr_resp_t [msrh_conf_pkg::DCACHE_BANKS-1: 0] w_rp2_dc_wr_resp_bank;
 
 
@@ -83,8 +84,10 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
         r_s1_wr_bank_valid[bank_idx] <= 1'b0;
+        r_s2_wr_bank_valid[bank_idx] <= 1'b0;
       end else begin
         r_s1_wr_bank_valid[bank_idx] <= w_s0_wr_bank_valid[bank_idx];
+        r_s2_wr_bank_valid[bank_idx] <= r_s1_wr_bank_valid[bank_idx];
       end
     end
 
@@ -166,8 +169,11 @@ endgenerate
 
 
 dc_wr_resp_t w_s1_wr_selected_resp;
+dc_wr_resp_t w_s2_wr_selected_resp;
 bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(msrh_conf_pkg::DCACHE_BANKS))
-resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s1_wr_bank_valid), .o_selected(w_s1_wr_selected_resp));
+s1_resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s1_wr_bank_valid), .o_selected(w_s1_wr_selected_resp));
+bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(msrh_conf_pkg::DCACHE_BANKS))
+s2_resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s2_wr_bank_valid), .o_selected(w_s2_wr_selected_resp));
 
 
 assign w_rp2_dc_wr_req.s0_valid            = w_rp2_merge_valid | l1d_wr_if.s0_valid;
@@ -194,9 +200,14 @@ end
 assign l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
 assign l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
 assign l1d_wr_if.s2_done            = 1'b0;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s1_wr_selected_resp.s2_evicted_valid;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s1_wr_selected_resp.s2_evicted_data;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s1_wr_selected_resp.s2_evicted_paddr;
+assign l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s2_wr_selected_resp.s2_evicted_valid;
+assign l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_evicted_data;
+assign l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
+
+
+assign miss_l1d_wr_if.s1_wr_resp = l1d_wr_if.s1_wr_resp;
+assign miss_l1d_wr_if.s2_done    = l1d_wr_if.s2_done;
+assign miss_l1d_wr_if.s2_wr_resp = l1d_wr_if.s2_wr_resp;
 
 `ifdef SIMULATION
 `ifdef VERILATOR

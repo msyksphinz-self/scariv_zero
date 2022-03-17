@@ -167,9 +167,10 @@ function automatic logic hit_lrq_same_evict_pa (logic valid, logic [riscv_pkg::P
                                                 msrh_lsu_pkg::miss_entry_t lrq_entry,
                                                 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
-  return valid & lrq_entry.valid & lrq_entry.evict_valid & ~w_entry_finish[entry_idx] &
-    (lrq_entry.evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-     req_evict_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  // return valid & lrq_entry.valid & lrq_entry.evict_valid & ~w_entry_finish[entry_idx] &
+  //   (lrq_entry.evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+  //    req_evict_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  return 1'b0;
 
 endfunction // hit_lrq_same_pa
 
@@ -220,25 +221,27 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   bit_oh_or #(.T(logic[msrh_pkg::LRQ_ENTRY_SIZE-1:0]), .WORDS(REQ_PORT_NUM)) select_port_pa_entry  (.i_oh(w_hit_port_same_pa_lsb), .i_data(w_lrq_index_oh), .o_selected(hit_port_same_pa_entry_idx_oh));
 
   // 3. check the evicted address with existed evict LRQ
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_lrq_same_evict_pa;
-  for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : entry_evict_loop
-    assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load & l1d_lrq[p_idx].req_payload.evict_valid,
-                                                                   l1d_lrq[p_idx].req_payload.evict_payload.paddr,
-                                                                   w_lrq_entries[e_idx], e_idx);
-  end
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]   w_hit_lrq_same_evict_pa;
+  // for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : entry_evict_loop
+  //   assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load & l1d_lrq[p_idx].req_payload.evict_valid,
+  //                                                                  l1d_lrq[p_idx].req_payload.evict_payload.paddr,
+  //                                                                  w_lrq_entries[e_idx], e_idx);
+  // end
+  assign w_hit_lrq_same_evict_pa = 'h0;
 
   // 4. check the evicted address with different pipeline
   logic [REQ_PORT_NUM-1: 0]             w_hit_port_same_evict_pa;
-  for (genvar p2_idx = 0; p2_idx < REQ_PORT_NUM; p2_idx++) begin : adj_evict_port_loop
-    if (p_idx <= p2_idx) begin
-      assign w_hit_port_same_evict_pa[p2_idx] = 1'b0;
-    end else begin
-      assign w_hit_port_same_evict_pa[p2_idx] = hit_port_pa (l1d_lrq[p_idx ].load & l1d_lrq[p_idx ].req_payload.evict_valid,
-                                                             l1d_lrq[p2_idx].load & l1d_lrq[p2_idx].req_payload.evict_valid,
-                                                             l1d_lrq[p_idx ].req_payload.evict_payload.paddr,
-                                                             l1d_lrq[p2_idx].req_payload.evict_payload.paddr);
-    end
-  end
+  // for (genvar p2_idx = 0; p2_idx < REQ_PORT_NUM; p2_idx++) begin : adj_evict_port_loop
+  //   if (p_idx <= p2_idx) begin
+  //     assign w_hit_port_same_evict_pa[p2_idx] = 1'b0;
+  //   end else begin
+  //     assign w_hit_port_same_evict_pa[p2_idx] = hit_port_pa (l1d_lrq[p_idx ].load & l1d_lrq[p_idx ].req_payload.evict_valid,
+  //                                                            l1d_lrq[p2_idx].load & l1d_lrq[p2_idx].req_payload.evict_valid,
+  //                                                            l1d_lrq[p_idx ].req_payload.evict_payload.paddr,
+  //                                                            l1d_lrq[p2_idx].req_payload.evict_payload.paddr);
+  //   end
+  // end
+  assign w_hit_port_same_evict_pa = 'h0;
 
   logic [REQ_PORT_NUM-1: 0] w_hit_port_same_evict_pa_lsb;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_hit_port_same_evict_pa_idx_oh;
@@ -356,10 +359,12 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
        .o_wr_req_valid         (w_wr_req_valid   [e_idx]),
        .i_wr_accepted          (w_wr_req_valid_oh[e_idx]),
        .i_wr_conflicted        (1'b0),
-       .s2_l1d_wr_resp_payload (1'b1),
+       .s2_l1d_wr_resp_payload (l1d_wr_if.s2_wr_resp),
 
        .o_entry        (w_lrq_entries[e_idx]),
        .o_evict_ready  (w_lrq_entry_evict_ready[e_idx]),
+       .i_evict_accepted (w_lrq_ready_to_evict_oh[e_idx]),
+
        .o_entry_finish (w_entry_finish[e_idx])
        );
 
@@ -372,11 +377,9 @@ localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::LRQ_
 
 // selection of external memory request
 generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : lrq_sel_loop
-  assign w_lrq_ready_to_send[e_idx] = w_lrq_entries[e_idx].valid &
-                                      !w_lrq_entries[e_idx].sent;
+  assign w_lrq_ready_to_send[e_idx] = w_lrq_entries[e_idx].valid;
 
   assign w_lrq_ready_to_evict[e_idx] = w_lrq_entries[e_idx].valid &
-                                       w_lrq_entries[e_idx].evict_valid &
                                        w_lrq_entry_evict_ready[e_idx];
 end
 endgenerate
@@ -409,7 +412,7 @@ select_l1d_wr_req_entry (.i_oh(w_wr_req_valid_oh), .i_data(w_lrq_entries), .o_se
 assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_lrq_entry_sel.paddr;
 assign l1d_wr_if.s0_wr_req.s0_data  = w_wr_lrq_entry_sel.data;
 assign l1d_wr_if.s0_wr_req.s0_be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
-assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_lrq_entry_sel.evict.way;
+assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_lrq_entry_sel.way;
 
 
 
@@ -419,8 +422,8 @@ assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_lrq_entry_sel.evict.way;
 assign l1d_evict_if.valid = |w_lrq_ready_to_evict;
 // assign l1d_evict_if.payload.cmd     = msrh_lsu_pkg::M_XWR;
 // assign l1d_evict_if.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_lrq_evict_tag};
-assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.evict.paddr;
-assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.evict.data;
+assign l1d_evict_if.payload.paddr = w_lrq_ready_to_evict_entry.paddr;
+assign l1d_evict_if.payload.data  = w_lrq_ready_to_evict_entry.data;
 
 // Searching LRQ Interface from DCache
 assign lrq_dc_search_if.lrq_entry = w_lrq_entries[lrq_dc_search_if.index];
@@ -450,31 +453,34 @@ end
 
 // Eviction Hazard Check
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_evict_hit;
-  for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : buffer_loop
-    assign w_lrq_evict_hit[e_idx] = w_lrq_entries[e_idx].valid &
-                                    w_lrq_entries[e_idx].evict_valid &
-                                    ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[e_idx]) &
-                                    lrq_haz_check_if[p_idx].ex2_valid &
-                                    (w_lrq_entries[e_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                     lrq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
-  end
+  // logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_evict_hit;
+  // for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : buffer_loop
+  //   assign w_lrq_evict_hit[e_idx] = w_lrq_entries[e_idx].valid &
+  //                                   w_lrq_entries[e_idx].evict_valid &
+  //                                   ~(o_lrq_resolve.valid & o_lrq_resolve.resolve_index_oh[e_idx]) &
+  //                                   lrq_haz_check_if[p_idx].ex2_valid &
+  //                                   (w_lrq_entries[e_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+  //                                    lrq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  // end
+  //
+  // msrh_lsu_pkg::miss_entry_t w_lrq_evict_entry;
+  // bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
+  //
+  // assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
+  // assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_hit;
 
-  msrh_lsu_pkg::miss_entry_t w_lrq_evict_entry;
-  bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::LRQ_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_lrq_evict_hit), .i_data(w_lrq_entries), .o_selected(w_lrq_evict_entry));
+  assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = 1'b0;
+  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = 'h0;
 
-  assign lrq_haz_check_if[p_idx].ex2_evict_haz_valid = |w_lrq_evict_hit;
-  assign lrq_haz_check_if[p_idx].ex2_evict_entry_idx = w_lrq_evict_hit;
-
-`ifdef SIMULATION
-  always_ff @ (negedge i_clk, negedge i_reset_n) begin
-    if (i_reset_n) begin
-      if (!$onehot0(w_lrq_evict_hit)) begin
-        $fatal(0, "LRQ Hazard Check : lrq_evict_hit should be one-hot. Value=%x\n", w_lrq_evict_hit);
-      end
-    end
-  end
-`endif // SIMULATION
+// `ifdef SIMULATION
+//   always_ff @ (negedge i_clk, negedge i_reset_n) begin
+//     if (i_reset_n) begin
+//       if (!$onehot0(w_lrq_evict_hit)) begin
+//         $fatal(0, "LRQ Hazard Check : lrq_evict_hit should be one-hot. Value=%x\n", w_lrq_evict_hit);
+//       end
+//     end
+//   end
+// `endif // SIMULATION
 
 end
 endgenerate
@@ -483,16 +489,16 @@ endgenerate
 // --------------------------------
 // l1d_wr_if Eviction hazard check
 // --------------------------------
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] l1d_wr_eviction_hazard_vlds;
-generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : wr_if_evicted_loop
-  assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.s0_valid &
-                                              w_lrq_entries[e_idx].evict_valid &
-                                              (w_lrq_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                               l1d_wr_if.s0_wr_req.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
-                                              w_lrq_entries[e_idx].evict_sent;
-end
-endgenerate
-
+// logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] l1d_wr_eviction_hazard_vlds;
+// generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : wr_if_evicted_loop
+//   assign l1d_wr_eviction_hazard_vlds[e_idx] = w_lrq_entries[e_idx].valid & l1d_wr_if.s0_valid &
+//                                               w_lrq_entries[e_idx].evict_valid &
+//                                               (w_lrq_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+//                                                l1d_wr_if.s0_wr_req.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
+//                                               w_lrq_entries[e_idx].evict_sent;
+// end
+// endgenerate
+//
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
 //     l1d_wr_if.s1_missunit_already_evicted <= 1'b0;
@@ -522,20 +528,20 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
   end
 
 
-  assign w_stbuf_lrq_evict_hit_array_next[e_idx] = lrq_pa_search_if.s0_valid &
-                                                   w_lrq_entries[e_idx].valid &
-                                                   w_lrq_entries[e_idx].evict_valid &
-                                                   (w_lrq_entries[e_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                                    lrq_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= 1'b0;
-      lrq_pa_search_if.s1_evict_sent        [e_idx] <= 1'b0;
-    end else begin
-      lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= w_stbuf_lrq_evict_hit_array_next[e_idx];
-      lrq_pa_search_if.s1_evict_sent        [e_idx] <= w_lrq_entries[e_idx].evict_sent;
-    end
-  end
+  // assign w_stbuf_lrq_evict_hit_array_next[e_idx] = lrq_pa_search_if.s0_valid &
+  //                                                  w_lrq_entries[e_idx].valid &
+  //                                                  w_lrq_entries[e_idx].evict_valid &
+  //                                                  (w_lrq_entries[e_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+  //                                                   lrq_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  //   if (!i_reset_n) begin
+  //     lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= 1'b0;
+  //     lrq_pa_search_if.s1_evict_sent        [e_idx] <= 1'b0;
+  //   end else begin
+  //     lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= w_stbuf_lrq_evict_hit_array_next[e_idx];
+  //     lrq_pa_search_if.s1_evict_sent        [e_idx] <= w_lrq_entries[e_idx].evict_sent;
+  //   end
+  // end
 
 end
 endgenerate
@@ -554,12 +560,12 @@ function void dump_entry_json(int fp, msrh_lsu_pkg::miss_entry_t entry, int inde
     $fwrite(fp, "valid:%d, ", entry.valid);
     $fwrite(fp, "paddr:\"0x%0x\", ", entry.paddr);
     $fwrite(fp, "sent:\"%01d\", ", entry.sent);
-    $fwrite(fp, "evict_valid:\"%01d\", ", entry.evict_valid);
-    $fwrite(fp, "evict_sent:\"%01d\", ", entry.evict_sent);
-    if (entry.evict_valid) begin
-      $fwrite(fp, "evict_way :\"0x%d\", ", entry.evict.way);
-      $fwrite(fp, "evict_paddr :\"0x%08x\"", entry.evict.paddr);
-    end
+    // $fwrite(fp, "evict_valid:\"%01d\", ", entry.evict_valid);
+    // $fwrite(fp, "evict_sent:\"%01d\", ", entry.evict_sent);
+    // if (entry.evict_valid) begin
+    //   $fwrite(fp, "evict_way :\"0x%d\", ", entry.evict.way);
+    //   $fwrite(fp, "evict_paddr :\"0x%08x\"", entry.evict.paddr);
+    // end
     $fwrite(fp, " },\n");
   end // if (entry.valid)
 

@@ -179,10 +179,7 @@ typedef struct packed {
   // logic                          l1drd_ready;
   // logic                          l1dwr_ready;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
-
-  logic                          evict_valid;
-  logic                          evict_sent;
-  evict_payload_t                evict;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
 } miss_entry_t;
 
 function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
@@ -193,8 +190,7 @@ function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
   ret.valid = valid;
   ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-  ret.evict_valid = req.evict_valid;
-  ret.evict       = req.evict_payload;
+  ret.way = req.evict_payload.way;
 
   return ret;
 
