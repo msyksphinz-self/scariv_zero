@@ -115,7 +115,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         prod_pipe        [s_idx+1] <= w_prod;
         multiplier_pipe  [s_idx+1] <= w_op1;
         multiplicand_pipe[s_idx+1] <= w_op2;
-        r_mul_valid_pipe [s_idx+1] <= i_valid & w_is_mul;
+        r_mul_valid_pipe [s_idx+1] <= i_valid & ~w_flush_valid_load & w_is_mul;
         op_pipe          [s_idx+1] <= i_op;
         neg_out_pipe     [s_idx+1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
 
