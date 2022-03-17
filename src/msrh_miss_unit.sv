@@ -75,6 +75,8 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] w_lrq_ready_to_send_oh;
 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_lrq_send_tag;
 
+logic                                         w_ext_rd_resp_valid;
+logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] w_ext_rd_resp_tag;
 
 //
 // Write L1D
@@ -348,9 +350,7 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
        .i_load       (w_load_entry_valid[e_idx]),
        .i_load_entry (w_load_entry),
 
-       .i_ext_load_fin (l1d_ext_rd_resp.valid &
-                        (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) &
-                        (l1d_ext_rd_resp.payload.tag[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] == e_idx)),
+       .i_ext_load_fin (w_ext_rd_resp_valid & (w_ext_rd_resp_tag == e_idx)),
        .l2_resp        (l1d_ext_rd_resp.payload),
 
        .i_sent         (w_ext_req_sent),
@@ -399,6 +399,9 @@ assign l1d_ext_rd_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG
 assign l1d_ext_rd_req.payload.data    = 'h0;
 assign l1d_ext_rd_req.payload.byte_en = 'h0;
 
+assign w_ext_rd_resp_valid = l1d_ext_rd_resp.valid &
+                             (l1d_ext_rd_resp.payload.tag[msrh_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D);
+assign w_ext_rd_resp_tag = l1d_ext_rd_resp.payload.tag[$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0];
 
 // ------------------------
 // L1D Write Request
@@ -430,8 +433,8 @@ assign lrq_dc_search_if.lrq_entry = w_lrq_entries[lrq_dc_search_if.index];
 
 // Notification to LRQ resolve to LDQ
 // Note: Now searching from LRQ means L1D will be written and resolve confliction
-assign o_lrq_resolve.valid            = lrq_dc_search_if.valid;
-assign o_lrq_resolve.resolve_index_oh = 1 << lrq_dc_search_if.index;
+assign o_lrq_resolve.valid            = w_ext_rd_resp_valid;
+assign o_lrq_resolve.resolve_index_oh = 1 << w_ext_rd_resp_tag;
 assign o_lrq_resolve.lrq_entry_valids = w_lrq_valids;
 assign o_lrq_is_full = &w_lrq_valids;
 
