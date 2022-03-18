@@ -322,8 +322,8 @@ assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_h_pri = 1'b0;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
-assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :
-                           w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+                           w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].s1_miss     ? STATUS_MISS :
                            STATUS_NONE;
 // assign lsu_access.lrq_conflicted_idx_oh   = r_ptw_lrq_resp_lrq_index_oh;
