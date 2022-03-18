@@ -101,7 +101,7 @@ logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
 lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
 logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_tmp;
 logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_sign_ext;
-logic                                 w_ex2_l1d_mispredicted;
+logic                                 w_ex2_load_mispredicted;
 logic                                 r_ex2_tlb_miss;
 
 //
@@ -121,7 +121,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_l1d_mispredicted & !((ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success))) :
+  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_load_mispredicted & !((ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success))) :
                            r_ex2_issue.valid;
 end
 
@@ -324,14 +324,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_ex2_l1d_mispredicted       = r_ex2_issue.valid &
-                                      (r_ex2_pipe_ctrl.op == OP_LOAD) &
-                                      ex1_l1d_rd_if.s1_miss &
-                                      ~ex1_l1d_rd_if.s1_conflict &
-                                      ~(&w_ex2_fwd_success) &
-                                      (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
-                                      /* !ex2_fwd_check_if.fwd_valid; */
-assign l1d_lrq_if.load              = w_ex2_l1d_mispredicted & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
+assign w_ex2_load_mispredicted = r_ex2_issue.valid &
+                                 (r_ex2_pipe_ctrl.op == OP_LOAD) &
+                                 (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) &
+                                 ~(&w_ex2_fwd_success) &
+                                 (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
+assign w_ex2_l1d_missed = r_ex2_issue.valid &
+                          (r_ex2_pipe_ctrl.op == OP_LOAD) &
+                          ex1_l1d_rd_if.s1_miss &
+                          ~ex1_l1d_rd_if.s1_conflict &
+                          ~(&w_ex2_fwd_success) &
+                          (ex2_fwd_check_if.fwd_dw != gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]));
+
+assign l1d_lrq_if.load              = w_ex2_l1d_missed & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 // L1D replace information
 assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
@@ -354,7 +359,7 @@ assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 // Misprediction Update
 // ---------------------
 always_comb begin
-  o_ex2_mispred.mis_valid = w_ex2_l1d_mispredicted | r_ex2_tlb_miss;
+  o_ex2_mispred.mis_valid = w_ex2_load_mispredicted | r_ex2_tlb_miss;
   o_ex2_mispred.rd_type   = r_ex2_issue.wr_reg.typ;
   o_ex2_mispred.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
