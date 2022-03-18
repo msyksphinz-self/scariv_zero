@@ -33,12 +33,13 @@ module msrh_alu_pipe
     imm_t imm;
   } pipe_ctrl_t;
 
-  msrh_pkg::issue_t                         r_ex0_issue;
+  msrh_pkg::issue_t                        r_ex0_issue;
   logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
   pipe_ctrl_t                              w_ex0_pipe_ctrl;
 
   pipe_ctrl_t                              r_ex1_pipe_ctrl;
-  msrh_pkg::issue_t                         r_ex1_issue;
+  msrh_pkg::issue_t                        r_ex1_issue;
+  msrh_pkg::issue_t                        w_ex1_issue_next;
   logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
@@ -56,13 +57,15 @@ module msrh_alu_pipe
   logic                                    w_ex1_rs2_mispred;
 
   pipe_ctrl_t                              r_ex2_pipe_ctrl;
-  msrh_pkg::issue_t                         r_ex2_issue;
+  msrh_pkg::issue_t                        r_ex2_issue;
+  msrh_pkg::issue_t                        w_ex2_issue_next;
   logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
   logic                                    r_ex2_wr_valid;
 
   msrh_pkg::issue_t                        r_ex3_issue;
+  msrh_pkg::issue_t                        w_ex3_issue_next;
   logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
   logic                                    r_ex3_wr_valid;
@@ -94,6 +97,14 @@ logic                                      w_ex3_muldiv_stall;
 
 assign o_muldiv_stall = w_ex3_muldiv_stall | r_ex2_div_stall | r_ex1_div_stall;
 
+
+logic                                      w_ex0_commit_flush;
+logic                                      w_ex0_br_flush;
+logic                                      w_ex0_flush;
+assign w_ex0_commit_flush = msrh_pkg::is_commit_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, i_commit);
+assign w_ex0_br_flush     = msrh_pkg::is_br_flush_target(r_ex0_issue.br_mask, br_upd_if.brtag,
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -132,6 +143,11 @@ assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
+always_comb begin
+  w_ex1_issue_next = r_ex0_issue;
+  w_ex1_issue_next.valid = r_ex0_issue.valid & !w_ex0_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex1_issue <= 'h0;
@@ -139,7 +155,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= 'h0;
     r_ex1_div_stall <= 1'b0;
   end else begin
-    r_ex1_issue <= r_ex0_issue;
+    r_ex1_issue <= w_ex1_issue_next;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_div_stall <= w_ex0_div_stall;
@@ -186,7 +202,7 @@ assign w_ex1_muldiv_type_valid = (r_ex1_pipe_ctrl.op == OP_SMUL  ) |
 `endif // RV64
                                  1'b0;
 
-assign w_ex1_muldiv_valid = r_ex1_issue.valid & w_ex1_muldiv_type_valid;
+assign w_ex1_muldiv_valid = r_ex1_issue.valid & w_ex1_muldiv_type_valid & !w_ex1_flush;
 
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
@@ -237,6 +253,19 @@ bit_oh_or #(
     .o_selected(w_ex2_rs2_fwd_data)
 );
 
+logic                                      w_ex1_commit_flush;
+logic                                      w_ex1_br_flush;
+logic                                      w_ex1_flush;
+assign w_ex1_commit_flush = msrh_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit);
+assign w_ex1_br_flush     = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, br_upd_if.brtag,
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
+
+always_comb begin
+  w_ex2_issue_next = r_ex1_issue;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_rs1_data <= 'h0;
@@ -257,13 +286,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
                       r_ex1_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
                       r_ex1_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, r_ex1_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
                       ex1_regread_rs2.data;
-    r_ex2_issue <= r_ex1_issue;
+    r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
     r_ex2_wr_valid <= o_ex1_early_wr.valid;
 
-    r_ex2_muldiv_valid <= w_ex1_muldiv_valid & (~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred);
+    r_ex2_muldiv_valid <= w_ex1_muldiv_valid & (~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred) & !w_ex1_flush;
 
     r_ex2_div_stall <= r_ex1_div_stall;
   end
@@ -290,6 +319,19 @@ assign tmp_ex2_result_d = 'h0;
 // Memo: I don't know why but if this sentence is integrated into above, test pattern fail.
 assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_ex2_rs2_selected_data[ 4:0];
 
+logic                                      w_ex2_commit_flush;
+logic                                      w_ex2_br_flush;
+logic                                      w_ex2_flush;
+assign w_ex2_commit_flush = msrh_pkg::is_commit_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, i_commit);
+assign w_ex2_br_flush     = msrh_pkg::is_br_flush_target(r_ex2_issue.br_mask, br_upd_if.brtag,
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
+
+always_comb begin
+  w_ex3_issue_next = r_ex2_issue;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_result <= 'h0;
@@ -298,12 +340,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex3_wr_valid <= 1'b0;
   end else begin
-    r_ex3_issue <= r_ex2_issue;
+    r_ex3_issue <= w_ex3_issue_next;
     r_ex3_index <= r_ex2_index;
 
     r_ex3_wr_valid <= r_ex2_wr_valid;
 
-    r_ex3_muldiv_valid <= r_ex2_muldiv_valid;
+    r_ex3_muldiv_valid <= r_ex2_muldiv_valid & !w_ex2_flush;
 
     case (r_ex2_pipe_ctrl.op)
       OP_SIGN_LUI: r_ex3_result <= {{(riscv_pkg::XLEN_W-32){r_ex2_issue.inst[31]}}, r_ex2_issue.inst[31:12], 12'h000};
