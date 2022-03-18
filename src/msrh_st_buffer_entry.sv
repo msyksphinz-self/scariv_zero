@@ -174,6 +174,9 @@ always_comb begin
       end
     end
     ST_BUF_L1D_MERGE : begin
+      w_state_next = ST_BUF_L1D_MERGE2;
+    end
+    ST_BUF_L1D_MERGE2 : begin
       w_state_next = ST_BUF_WAIT_FINISH;
     end
     ST_BUF_WAIT_FINISH : begin
@@ -193,6 +196,7 @@ assign o_ready_to_merge = r_entry.valid &
                           (r_state != ST_BUF_L1D_UPDATE) &
                           (r_state != ST_BUF_L1D_UPD_RESP) &
                           (r_state != ST_BUF_L1D_MERGE) &
+                          (r_state != ST_BUF_L1D_MERGE2) &
                           (r_state != ST_BUF_WAIT_FINISH);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
