@@ -142,7 +142,7 @@ typedef struct packed {
     logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
     logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
     logic [$clog2(CSU_DISP_SIZE): 0]                      csu_inst_cnt;
-    logic [$clog2(FPU_DISP_SIZE): 0]                      fpu_inst_cnt;
+    logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]   fpu_inst_cnt;
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t disp,
