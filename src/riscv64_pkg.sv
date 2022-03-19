@@ -3,7 +3,8 @@
 package riscv_pkg;
 
   parameter XLEN_W = 64;
-  parameter VADDR_W = 39;
+  parameter VADDR_W = 64;
+  parameter VADDR_MSB = 38;
   parameter PADDR_W = 56;
 
   localparam PG_IDX_BITS = 12;
