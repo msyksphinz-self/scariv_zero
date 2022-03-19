@@ -1,8 +1,9 @@
 # Random Assembly Program Generated using aapg
-# Generated at: 2022-03-11 16:13 GMT
-# Seed: 13863580155342831218
+# Generated at: 2022-03-12 00:41 GMT
+# Seed: 7575992263669126622
 
-#include "templates.S"
+#include "out_config_00023_template.S"
+#define TEST_NAME out_config_00023
 
 #aapg version: 2.2.6
 
@@ -133,353 +134,19543 @@ main:
 				test_entry_macro              
 				123:                          
 				la                  sp, begin_signature
-				li                  t1, 8648  
+				li                  t1, 9112  
 				add                 sp, sp, t1
-i0000000000:	li                  x16, 10   
-i0000000001:	sd                  s3, 48(sp)          
-i0000000002:	fence.i                       
-i0000000003:	fence                         
-i0000000004:	fence                         
-i0000000005:	lw                  s8, 92(sp)          
-i0000000006:	srl                 t4, a1, s3
-i0000000007:	fence                         
-i0000000008:	lh                  a3, -894(sp)        
-i0000000009:	lwu                 a7, 44(sp)          
-i000000000a:	sh                  gp, -1808(sp)       
-i000000000b:	fence.i                       
-i000000000c:	srai                a1, a1, 4 
-i000000000d:	srai                t4, t2, 14
+i0000000000:	li                  x29, 10   
+i0000000001:	srl                 a3, t1, tp
 				la                  sp, begin_signature
-				li                  t1, 9952  
+				li                  t1, 8712  
 				add                 sp, sp, t1
-i000000000e:	ld                  t5, 496(sp)         
-i000000000f:	addi                a1, a1, -24
-i0000000010:	lui                 gp, 43110 
-i0000000011:	lw                  a1, 28(sp)          
-i0000000012:	andi                a1, a1, 8 
-i0000000013:	slt                 t1, a4, a4
-i0000000014:	slli                s0, s0, 30
+i0000000002:	sw                  s0, 32(sp)          
+i0000000003:	srlw                s0, s3, a6
+i0000000004:	srai                s0, s0, 6 
+i0000000005:	mulhu               zero, s1, a1
+i0000000006:	addi                sp, sp, -256
+i0000000007:	ld                  zero, -1144(sp)     
+i0000000008:	lw                  t0, 20(sp)          
+i0000000009:	srai                s0, s0, 14
+i000000000a:	add                 s3, s3, t0
+i000000000b:	addw                s7, s0, s3
+i000000000c:	lw                  s0, 68(sp)          
+i000000000d:	srai                a5, a5, 15
+i000000000e:	sd                  a5, 80(sp)          
+i000000000f:	ld                  s0, 128(sp)         
+i0000000010:	fsrmi               x0, 5     
+i0000000011:	sd                  a4, 72(sp)          
+i0000000012:	addw                t3, a3, s3
+i0000000013:	fence                         
+i0000000014:	addi                sp, sp, -304
+i0000000015:	sraw                s10, s3, s3
+i0000000016:	add                 a3, s9, s1
+i0000000017:	sd                  a3, 48(sp)          
+i0000000018:	lw                  a1, 60(sp)          
 				la                  sp, begin_signature
-				li                  t1, 12792 
+				li                  t1, 14080 
 				add                 sp, sp, t1
-i0000000015:	lw                  a3, 52(sp)          
-				la                  sp, begin_signature
-				li                  t1, 3976  
-				add                 sp, sp, t1
-i0000000016:	lhu                 t3, 230(sp)         
-i0000000017:	fence.i                       
-i0000000018:	sltiu               a1, t4, 1280
-i0000000019:	andi                s1, s1, 4 
-i000000001a:	divuw               a4, s6, gp
+i0000000019:	sd                  s5, 8(sp)           
+i000000001a:	addi                s0, sp, 52
 i000000001b:	fence.i                       
-i000000001c:	remw                a4, s5, s1
-i000000001d:	sw                  a4, -1644(sp)       
-i000000001e:	fence                         
-i000000001f:	sub                 a1, a1, a3
-i0000000020:	ld                  s1, 120(sp)         
-i0000000021:	divuw               s1, a4, s1
-i0000000022:	mul                 s1, s6, a2
-i0000000023:	subw                a4, zero, t5
-i0000000024:	sd                  gp, 184(sp)         
+i000000001c:	srli                s0, zero, 40
 				la                  sp, begin_signature
-				li                  t1, 7824  
+				li                  t1, 8288  
 				add                 sp, sp, t1
-i0000000025:	lw                  a3, 20(sp)          
-i0000000026:	sd                  a1, 144(sp)         
-i0000000027:	addiw               s10, s9, -1661
-i0000000028:	addi                sp, sp, -480
+i000000001d:	lwu                 s3, -2020(sp)       
+i000000001e:	sd                  s0, 24(sp)          
+i000000001f:	fence                         
+i0000000020:	fence.i                       
 				la                  sp, begin_signature
-				li                  t1, 7736  
+				li                  t1, 12112 
 				add                 sp, sp, t1
-				sw                  a5, 72(sp)          
-				lhu                 gp, 1802(sp)        
-				sw                  s1, -580(sp)        
-				srli                a4, a4, 29
-				sd                  s1, 144(sp)         
-				sllw                a4, s7, s2
-				srai                s0, s0, 3 
+i0000000021:	ld                  s0, 88(sp)          
+i0000000022:	xor                 a4, a4, a1
+i0000000023:	srai                a0, a0, 7 
+i0000000024:	sb                  s8, -1652(sp)       
+i0000000025:	sraw                s1, t5, s8
+i0000000026:	add                 s1, a1, a0
+i0000000027:	sd                  a4, 96(sp)          
+i0000000028:	srli                a1, t6, 38
+i0000000029:	srai                a5, a5, 25
+				la                  sp, begin_signature
+				li                  t1, 10872 
+				add                 sp, sp, t1
+				remuw               a4, a5, s0
+				lw                  s0, 28(sp)          
+				mulhsu              s3, s9, t6
+				srli                s0, s0, 5 
+				ld                  a5, -1968(sp)       
+				lw                  s1, 28(sp)          
+				srli                a4, a4, 3 
 	
-b0000000029:
-				jal                 x1, i0000000048     
+b000000002a:
+				jal                 x1, i0000000033     
 	
-				sw                  a5, -1112(sp)       
-				fence                         
-				lui                 tp, 23    
-				sltu                t2, s0, a4
-				sw                  s1, 40(sp)          
-				srai                s0, s0, 1 
-				sllw                s6, a4, s0
-i0000000029:	srli                a3, a3, 11
+				lui                 a4, 506336
+				lw                  s1, 12(sp)          
+				srliw               a4, s5, 6 
+				sh                  s1, 2002(sp)        
+				lw                  a4, 48(sp)          
+				lh                  s9, -366(sp)        
+				addi                s1, sp, 0 
+i000000002a:	srai                a5, a5, 14
+i000000002b:	sd                  s1, -1824(sp)       
+i000000002c:	addi                sp, sp, 16
+i000000002d:	ori                 s0, a3, -968
+i000000002e:	sw                  a5, 44(sp)          
+i000000002f:	sh                  s6, 318(sp)         
+i0000000030:	ld                  a5, 80(sp)          
 				la                  sp, begin_signature
-				li                  t1, 12272 
+				li                  t1, 13024 
 				add                 sp, sp, t1
-i000000002a:	lwu                 s1, -1236(sp)       
+i0000000031:	sw                  a1, 88(sp)          
+i0000000032:	addi                a0, sp, 28
+i0000000033:	ld                  a2, 80(sp)          
+i0000000034:	sb                  s9, 183(sp)         
+i0000000035:	srai                a4, a4, 1 
+i0000000036:	ld                  a5, 112(sp)         
+i0000000037:	srli                s6, s11, 60
+i0000000038:	mulw                s3, a4, a0
 				la                  sp, begin_signature
-				li                  t1, 11176 
+				li                  t1, 6768  
 				add                 sp, sp, t1
-i000000002b:	ld                  t1, 152(sp)         
-i000000002c:	slliw               t1, a3, 19
-i000000002d:	andi                a3, a3, -31
-i000000002e:	subw                a4, a4, a1
-i000000002f:	fence.i                       
-i0000000030:	lw                  a3, 32(sp)          
-i0000000031:	addi                sp, sp, -400
-i0000000032:	addi                sp, sp, 176
-i0000000033:	mul                 a4, a1, s1
-i0000000034:	lw                  a4, 36(sp)          
-i0000000035:	srai                s1, s1, 3 
-i0000000036:	subw                s1, s1, a3
+i0000000039:	lw                  s10, 84(sp)         
+i000000003a:	addiw               s0, s0, -10
+i000000003b:	srli                s1, s1, 10
+i000000003c:	addi                s1, sp, 356
+i000000003d:	remw                s5, s1, a5
+i000000003e:	rem                 zero, a5, a5
+i000000003f:	remuw               s0, a5, s1
 				la                  sp, begin_signature
-				li                  t1, 6376  
+				li                  t1, 9576  
 				add                 sp, sp, t1
-i0000000037:	ld                  s2, 96(sp)          
-i0000000038:	srli                a0, a0, 1 
-i0000000039:	sh                  s2, 604(sp)         
-i000000003a:	sllw                a0, t0, zero
-i000000003b:	and                 a3, a1, s1
-i000000003c:	divw                s10, s1, a3
-i000000003d:	remw                a0, t3, t5
-i000000003e:	fence.i                       
-i000000003f:	addi                a5, sp, 156
-i0000000040:	sraw                a4, a4, a4
-i0000000041:	ld                  a0, 16(sp)          
-i0000000042:	sub                 a2, a2, a2
-i0000000043:	srli                a1, a1, 5 
-i0000000044:	sd                  gp, 152(sp)         
-i0000000045:	mulw                s1, a5, s3
-i0000000046:	rem                 s1, a4, a3
-i0000000047:	mulhsu              s2, a1, a3
-i0000000048:	srai                a1, a1, 16
-i0000000049:	addi                sp, sp, 48
-i000000004a:	sub                 a3, a3, a4
+i0000000040:	lw                  s1, 40(sp)          
+i0000000041:	srai                s1, s1, 16
+i0000000042:	lwu                 s1, 1952(sp)        
+i0000000043:	fence                         
 				la                  sp, begin_signature
-				li                  t1, 6000  
+				li                  t1, 9728  
 				add                 sp, sp, t1
-i000000004b:	ld                  a1, -8(sp)          
-i000000004c:	divuw               s6, a3, a1
+i0000000044:	lb                  a5, 1286(sp)        
+i0000000045:	sll                 a0, s0, a5
+i0000000046:	slli                a5, a5, 34
+i0000000047:	andi                a5, tp, 29
+i0000000048:	srli                a5, a5, 10
+i0000000049:	lhu                 a5, 1650(sp)        
+i000000004a:	divu                a1, s0, a5
+i000000004b:	divw                s6, a5, s1
 				la                  sp, begin_signature
-				li                  t1, 6656  
+				li                  t1, 12416 
 				add                 sp, sp, t1
-i000000004d:	lwu                 s3, -1832(sp)       
-i000000004e:	subw                s0, s0, a4
-				la                  sp, begin_signature
-				li                  t1, 10896 
-				add                 sp, sp, t1
-i000000004f:	sb                  a3, -1564(sp)       
-i0000000050:	div                 a4, s7, tp
-				li                  x17, 10   
-				la                  sp, begin_signature
-				li                  t1, 14320 
-				add                 sp, sp, t1
-				la                  sp, begin_signature
-				li                  t1, 10568 
-				add                 sp, sp, t1
-				divu                s8, zero, s11
-				addi                sp, sp, -496
-				srli                a4, a4, 7 
-				ld                  a5, 120(sp)         
-				addw                s1, s1, a4
-				div                 a4, a5, s2
-				mulhsu              gp, a4, s2
+i000000004c:	lw                  s0, 0(sp)           
+i000000004d:	remuw               s1, a5, s0
+i000000004e:	addi                a2, a2, -15
+i000000004f:	lb                  s1, -1923(sp)       
+i0000000050:	lwu                 a5, -96(sp)         
+i0000000051:	sd                  s10, 160(sp)        
+				divuw               s6, tp, s7
+				mulhu               a5, s1, s0
+				divw                s1, a5, s0
+				slli                s0, s0, 11
+				sd                  s1, 56(sp)          
+				rem                 gp, s0, s1
+				srai                a4, a4, 4 
 	
-b0000000051:
-				pre_branch_macro                        
-				bne                 x16, x17, i0000000043
-				post_branch_macro                       
+b0000000052:
+				jal                 x1, i0000000068     
 	
-				lw                  a5, 4(sp)           
-				ld                  s1, 120(sp)         
-				srai                s0, s0, 15
-				sd                  s5, 1504(sp)        
-				sd                  s0, -56(sp)         
-				lwu                 s5, -1376(sp)       
-				ld                  gp, 136(sp)         
-				li                  x16, 10   
-i0000000051:	addi                a3, sp, 28
-i0000000052:	divuw               a4, a3, a1
-i0000000053:	mulhu               a0, a2, a5
-i0000000054:	lw                  s11, 80(sp)         
-i0000000055:	lbu                 s3, 1002(sp)        
-i0000000056:	srai                a4, a4, 14
-i0000000057:	lhu                 s5, -1528(sp)       
-				la                  sp, begin_signature
-				li                  t1, 7368  
-				add                 sp, sp, t1
-i0000000058:	ld                  a4, 64(sp)          
-i0000000059:	fence                         
-i000000005a:	andi                a4, s1, -237
-				la                  sp, begin_signature
-				li                  t1, 2456  
-				add                 sp, sp, t1
-i000000005b:	ld                  a0, 56(sp)          
-i000000005c:	slt                 a2, s7, s4
-i000000005d:	sd                  a2, 1200(sp)        
-i000000005e:	addi                a1, sp, 488
-i000000005f:	mulw                zero, a1, s1
-i0000000060:	addi                s1, sp, 412
-i0000000061:	lw                  a2, 124(sp)         
-i0000000062:	sub                 a4, a4, a1
-i0000000063:	srai                a1, a1, 5 
-i0000000064:	remw                a1, a4, s1
-i0000000065:	srli                a0, a0, 8 
-i0000000066:	rem                 s9, s1, a1
-i0000000067:	addi                sp, sp, -144
-i0000000068:	srai                a3, a3, 8 
-i0000000069:	subw                a4, a4, a5
-i000000006a:	sllw                tp, a4, a4
-i000000006b:	divu                tp, s1, a4
-i000000006c:	addi                a0, sp, 292
-i000000006d:	sd                  a3, 96(sp)          
-i000000006e:	srli                a1, a1, 6 
-i000000006f:	fence.i                       
-				la                  sp, begin_signature
-				li                  t1, 2872  
-				add                 sp, sp, t1
-i0000000070:	lw                  a1, 8(sp)           
-i0000000071:	fence                         
-i0000000072:	sd                  s1, 1624(sp)        
-i0000000073:	ori                 t1, a1, -74
-i0000000074:	andi                s1, s11, -931
-i0000000075:	ori                 a5, a4, 895
-i0000000076:	srai                s0, s0, 6 
-				la                  sp, begin_signature
-				li                  t1, 11136 
-				add                 sp, sp, t1
-i0000000077:	sd                  t5, 400(sp)         
-i0000000078:	sub                 s1, s1, a0
-				li                  x19, 9    
-				la                  sp, begin_signature
-				li                  t1, 3568  
-				add                 sp, sp, t1
-				addi                sp, sp, 160
-				srli                a5, a5, 20
-				or                  s1, s1, a4
-				sllw                gp, s5, s11
-				slt                 t6, s4, a7
-				srai                s1, s1, 3 
-				mulw                a5, t6, s10
-	
-b0000000079:
-				pre_branch_macro                        
-				blt                 x16, x19, i000000006d
-				post_branch_macro                       
-	
-				lwu                 a4, 1080(sp)        
-				rem                 s5, t6, s4
-				subw                a4, s10, gp
-				sraiw               s8, s1, 5 
-				lw                  a5, 36(sp)          
-				ld                  a4, 0(sp)           
-				srai                s0, s0, 12
-				li                  x16, 10   
-i0000000079:	divuw               s10, s8, s3
-i000000007a:	sw                  a4, 12(sp)          
-i000000007b:	sd                  t6, 896(sp)         
-i000000007c:	addi                s7, a4, -180
-i000000007d:	sw                  a1, 48(sp)          
-i000000007e:	fence.i                       
-i000000007f:	srli                a2, a2, 5 
-i0000000080:	addi                a5, sp, 360
-i0000000081:	sw                  s9, -652(sp)        
-i0000000082:	lw                  tp, 692(sp)         
-				la                  sp, begin_signature
-				li                  t1, 4464  
-				add                 sp, sp, t1
-i0000000083:	sd                  a3, 32(sp)          
-i0000000084:	fence.i                       
-i0000000085:	slli                a0, a0, 18
-i0000000086:	mulh                tp, s1, a4
-i0000000087:	fence.i                       
-i0000000088:	sd                  a2, 64(sp)          
-i0000000089:	mulh                s3, s11, s7
-i000000008a:	fence                         
-i000000008b:	mulhsu              a4, a0, t1
-i000000008c:	lw                  a3, 48(sp)          
-i000000008d:	mulh                s4, s6, t1
-i000000008e:	subw                a3, a3, a4
-i000000008f:	srliw               a0, a1, 4 
-i0000000090:	ld                  s1, 152(sp)         
-i0000000091:	ld                  a5, 48(sp)          
-i0000000092:	xor                 a0, a0, a0
-i0000000093:	addi                a0, sp, 220
-i0000000094:	srli                a5, a5, 4 
-				la                  sp, begin_signature
-				li                  t1, 8352  
-				add                 sp, sp, t1
-i0000000095:	sd                  s10, 200(sp)        
-i0000000096:	sd                  s11, 144(sp)        
-i0000000097:	remuw               a3, a1, a4
-i0000000098:	remw                a1, a1, a4
-i0000000099:	sw                  a4, 44(sp)          
-i000000009a:	sd                  a2, 120(sp)         
-i000000009b:	srliw               a3, a4, 2 
-i000000009c:	srai                a2, a2, 14
-i000000009d:	remu                t2, a0, a7
-i000000009e:	sltiu               a5, a1, -1799
-i000000009f:	addi                sp, sp, -48
-i00000000a0:	srli                a1, a1, 30
-				li                  x25, 0    
+				remuw               gp, gp, zero
+				addi                sp, sp, 208
 				fence.i                       
-				addi                s0, sp, 472
-				ld                  s10, -2016(sp)      
-				divw                a7, a4, s1
+				lwu                 a5, 1376(sp)        
+				addw                s0, s4, tp
+				addi                sp, sp, 112
 				fence                         
-				addw                s0, s0, a4
-				mulw                a4, t4, s7
+i0000000052:	fence                         
+i0000000053:	sw                  a5, 32(sp)          
+i0000000054:	sh                  s1, 1958(sp)        
+i0000000055:	addi                sp, sp, -272
+i0000000056:	rem                 s0, a0, s4
+				la                  sp, begin_signature
+				li                  t1, 12464 
+				add                 sp, sp, t1
+i0000000057:	sb                  a5, -978(sp)        
+i0000000058:	srai                a0, a0, 13
+i0000000059:	mulhsu              s5, a2, s10
+i000000005a:	divuw               t2, tp, s9
+i000000005b:	sllw                zero, s0, s0
+i000000005c:	addw                s6, s0, s0
+i000000005d:	srli                a3, a3, 11
+i000000005e:	fence.i                       
+i000000005f:	divw                zero, t3, t6
+i0000000060:	addw                a4, a4, s0
+i0000000061:	sub                 s1, s8, tp
+i0000000062:	sd                  a4, 448(sp)         
+i0000000063:	addi                a1, a1, 0 
+i0000000064:	mulh                s2, a5, s1
+i0000000065:	subw                s0, s0, a4
+i0000000066:	srli                s0, s0, 14
+i0000000067:	sb                  a7, 1748(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2608  
+				add                 sp, sp, t1
+i0000000068:	sw                  s0, 60(sp)          
+i0000000069:	srai                s1, s1, 9 
+i000000006a:	or                  gp, s0, s0
+i000000006b:	remuw               s0, s8, a6
+i000000006c:	xor                 s0, s0, a2
+i000000006d:	mulhu               s1, a1, t1
+i000000006e:	ori                 s0, t6, 117
+i000000006f:	sllw                zero, s0, s1
+i0000000070:	lw                  s0, -1324(sp)       
+i0000000071:	xor                 a1, a1, a0
+i0000000072:	lbu                 a5, -224(sp)        
+i0000000073:	lbu                 t2, 381(sp)         
+i0000000074:	srli                a3, a3, 7 
+i0000000075:	fence.i                       
+i0000000076:	sh                  s1, 1610(sp)        
+i0000000077:	lhu                 a5, 1282(sp)        
+i0000000078:	addi                sp, sp, -240
+i0000000079:	divu                t0, s1, a5
+				li                  x17, 9    
+				fence                         
+				srai                a4, a4, 8 
+				sw                  a4, 20(sp)          
+				subw                s4, s0, a5
+				mul                 tp, s1, s1
+				srai                a5, a5, 14
+				addw                s0, s0, s1
 	
-b00000000a1:
+b000000007a:
 				pre_branch_macro                        
-				beq                 x16, x25, i00000000c0
+				bge                 x17, x29, i0000000058
 				post_branch_macro                       
 	
-				remw                t6, s1, s1
-				srai                s0, s0, 1 
-				add                 s1, zero, s7
-				srli                s10, a4, 61
-				rem                 s0, a4, s1
-				mulw                s7, t3, t4
-				addi                sp, sp, -176
+				mulhu               t3, s1, s1
+				addw                a4, a4, a5
+				srai                s0, s0, 13
+				addiw               s9, s4, -37
+				sraiw               a6, a5, 8 
+				remuw               zero, a6, s6
+				ld                  s1, 24(sp)          
+				li                  x29, 10   
+i000000007a:	fence                         
+i000000007b:	subw                a4, a4, a1
+i000000007c:	addi                a0, a0, -16
+i000000007d:	divw                t6, s1, s1
+i000000007e:	srai                a2, a2, 20
+				la                  sp, begin_signature
+				li                  t1, 3784  
+				add                 sp, sp, t1
+i000000007f:	sw                  s0, 100(sp)         
+i0000000080:	xor                 a0, t3, s3
+i0000000081:	sub                 a1, a1, a2
+i0000000082:	and                 s0, s0, a4
+i0000000083:	addw                s0, s0, a3
+i0000000084:	addiw               a4, a4, -22
+i0000000085:	lwu                 s1, 340(sp)         
+				la                  sp, begin_signature
+				li                  t1, 13072 
+				add                 sp, sp, t1
+i0000000086:	lw                  a5, 8(sp)           
+i0000000087:	srlw                s10, t2, s11
+i0000000088:	ld                  t2, -328(sp)        
+i0000000089:	divw                a5, s0, s1
+i000000008a:	lhu                 s4, -90(sp)         
+i000000008b:	srli                a5, a5, 12
+i000000008c:	div                 a7, s7, s4
+i000000008d:	sltiu               s8, s0, 1991
+i000000008e:	and                 s1, s1, s0
+i000000008f:	sw                  t5, 100(sp)         
+i0000000090:	addiw               s7, t0, -640
+i0000000091:	srai                a4, a4, 2 
+i0000000092:	addi                a5, sp, 44
+i0000000093:	srli                s1, s1, 27
+i0000000094:	divuw               s10, a0, t6
+i0000000095:	addi                a3, sp, 100
+i0000000096:	divuw               a5, a5, a5
+i0000000097:	srl                 s0, a5, a5
+i0000000098:	lw                  a1, 44(sp)          
+i0000000099:	srli                a5, a5, 10
+i000000009a:	ld                  a5, 184(sp)         
+i000000009b:	mulhu               t2, a3, s6
+i000000009c:	sub                 a0, a0, s1
+i000000009d:	add                 s1, zero, t3
+i000000009e:	mulhsu              a1, a5, s1
+i000000009f:	remuw               s1, s0, s1
+i00000000a0:	lw                  t2, 76(sp)          
+i00000000a1:	ld                  s0, 120(sp)         
+				li                  x22, 10   
+				addi                a5, sp, 288
+				addi                a5, sp, 412
+				sltu                a4, a5, s0
+				srai                a5, a5, 14
+				addi                s1, sp, 192
+				fence.i                       
+				addw                a4, a4, s0
+	
+b00000000a2:
+				beq                 x29, x22, 1f        
+				jal                 x1, i000000009c     
+				1: li x29, 10                           
+	
+				subw                s1, s1, a4
+				mulh                a5, s2, tp
+				ld                  s1, 112(sp)         
+				ld                  a5, 48(sp)          
+				sw                  s0, 24(sp)          
+				mulw                s1, a5, a5
+				lw                  s11, 8(sp)          
+i00000000a2:	or                  a2, a2, a2
+i00000000a3:	or                  a4, a4, a5
+i00000000a4:	sw                  s0, -436(sp)        
+i00000000a5:	addiw               a5, a5, -16
+i00000000a6:	lw                  a5, 52(sp)          
+i00000000a7:	remuw               gp, s6, s8
+				la                  sp, begin_signature
+				li                  t1, 9176  
+				add                 sp, sp, t1
+i00000000a8:	lw                  a0, 56(sp)          
+i00000000a9:	sd                  a1, -456(sp)        
+i00000000aa:	addiw               s1, s1, -27
+i00000000ab:	div                 s1, s2, s7
+i00000000ac:	sltu                s7, s1, s0
+i00000000ad:	lw                  a6, 280(sp)         
+i00000000ae:	fence.i                       
+i00000000af:	srai                a2, a2, 15
+i00000000b0:	fence                         
+i00000000b1:	divuw               tp, a1, gp
+i00000000b2:	addi                sp, sp, 0 
+i00000000b3:	fence                         
+i00000000b4:	sw                  s6, -748(sp)        
+i00000000b5:	srli                a5, a5, 15
+i00000000b6:	and                 a1, a1, a1
+i00000000b7:	srli                t3, s11, 8
+i00000000b8:	slli                s5, zero, 62
+i00000000b9:	slliw               a5, gp, 24
+				la                  sp, begin_signature
+				li                  t1, 13408 
+				add                 sp, sp, t1
+i00000000ba:	lwu                 a4, -1224(sp)       
+i00000000bb:	addi                a3, sp, 52
+i00000000bc:	srai                a5, a5, 9 
+i00000000bd:	slt                 a5, a3, zero
+i00000000be:	slti                a5, zero, -655
+i00000000bf:	fence                         
+i00000000c0:	fence.i                       
+i00000000c1:	fence.i                       
+i00000000c2:	sd                  a4, 104(sp)         
+i00000000c3:	add                 t1, zero, s9
+i00000000c4:	addiw               s0, s0, -5
+i00000000c5:	lwu                 s0, -1348(sp)       
+i00000000c6:	sraiw               tp, s7, 16
+i00000000c7:	divu                s1, s0, s1
+i00000000c8:	lw                  s0, 16(sp)          
+i00000000c9:	srli                s0, s0, 14
+				remu                a5, s6, s11
+				remw                a5, a4, a4
+				lw                  s11, 40(sp)         
+				remuw               s0, s1, s0
+				subw                a4, a4, s0
+				addi                a4, a4, 7 
+				sraiw               s0, s0, 25
+	
+b00000000ca:
+				la                  x21, i00000000e8    
+				jalr                x1, x21, 0          
+	
+				divuw               a5, a5, a5
+				andi                a5, a5, -12
+				slli                a5, a5, 5 
+				sd                  a6, 168(sp)         
+				sraiw               s11, t6, 21
+				fence.i                       
+				fence.i                       
+i00000000ca:	srai                a1, a1, 14
+i00000000cb:	lw                  a0, -1152(sp)       
+i00000000cc:	addi                a0, a0, -31
+i00000000cd:	srai                s1, s1, 14
+i00000000ce:	lwu                 s0, 424(sp)         
+i00000000cf:	addw                a5, s11, a1
+i00000000d0:	ld                  s1, 8(sp)           
+i00000000d1:	sllw                s3, tp, s11
+i00000000d2:	andi                a0, a0, -17
+i00000000d3:	sw                  s1, 84(sp)          
+i00000000d4:	rem                 a5, s1, s1
+i00000000d5:	addw                t2, a5, s1
+i00000000d6:	addw                a5, s5, s11
+i00000000d7:	sd                  a0, 88(sp)          
+i00000000d8:	addi                a5, sp, 320
+i00000000d9:	sd                  s0, -1352(sp)       
+i00000000da:	fence                         
+i00000000db:	fence                         
+i00000000dc:	addi                sp, sp, -384
+i00000000dd:	sd                  t5, 792(sp)         
+i00000000de:	sb                  zero, -305(sp)      
+i00000000df:	addi                s1, zero, -24
+i00000000e0:	srai                a2, a2, 16
+i00000000e1:	lwu                 a0, -1104(sp)       
+i00000000e2:	sd                  a5, 40(sp)          
+i00000000e3:	sllw                a7, a5, a5
+i00000000e4:	addi                a1, sp, 52
+i00000000e5:	srli                s6, a5, 6 
+i00000000e6:	ld                  t6, 136(sp)         
+i00000000e7:	srli                a5, a5, 16
+i00000000e8:	lw                  s0, 124(sp)         
+i00000000e9:	mulw                a5, s1, s1
+i00000000ea:	addi                sp, sp, -512
+i00000000eb:	sw                  a5, 1244(sp)        
+i00000000ec:	divw                s0, s6, t2
+i00000000ed:	addiw               s1, a5, -339
+i00000000ee:	ld                  a4, 40(sp)          
+i00000000ef:	rem                 s1, a4, s9
+i00000000f0:	fence                         
+i00000000f1:	sd                  s0, 112(sp)         
 				li                  x16, 10   
-i00000000a1:	srai                a2, a2, 10
-i00000000a2:	addi                a3, sp, 280
-i00000000a3:	mulhu               a4, a3, a4
+				srliw               t6, zero, 25
+				slliw               s1, a5, 28
+				ld                  t3, -168(sp)        
+				sd                  s10, -1512(sp)      
+				lw                  t6, 80(sp)          
+				lw                  a4, 32(sp)          
+				remuw               s0, s11, s7
+	
+b00000000f2:
+				beq                 x29, x16, 1f        
+				jal                 x0, i00000000e0     
+				1: li x29, 10                           
+	
+				mulhsu              s2, s1, s1
+				divuw               a5, s0, s1
+				div                 a5, t3, s4
+				addi                s0, sp, 252
+				addiw               s9, t6, -1358
+				lb                  s11, 1324(sp)       
+				sd                  a4, 16(sp)          
+i00000000f2:	srlw                a5, zero, t3
+i00000000f3:	srai                a5, a5, 1 
+i00000000f4:	lw                  a4, 60(sp)          
+i00000000f5:	divw                s0, tp, a1
+i00000000f6:	sra                 a5, t0, t2
+i00000000f7:	addiw               a3, a3, 10
+i00000000f8:	sd                  a5, 104(sp)         
+i00000000f9:	addi                s1, sp, 12
 				la                  sp, begin_signature
-				li                  t1, 10008 
+				li                  t1, 10856 
 				add                 sp, sp, t1
-i00000000a4:	ld                  t0, 104(sp)         
-i00000000a5:	srli                a4, a4, 23
-i00000000a6:	sub                 a2, a2, a5
-i00000000a7:	andi                a0, s4, -1572
-				la                  sp, begin_signature
-				li                  t1, 7912  
-				add                 sp, sp, t1
-i00000000a8:	sd                  a3, 88(sp)          
-i00000000a9:	add                 a1, a1, a1
-				la                  sp, begin_signature
-				li                  t1, 7296  
-				add                 sp, sp, t1
-i00000000aa:	lbu                 s3, -339(sp)        
-i00000000ab:	srai                a5, a5, 1 
-i00000000ac:	fence                         
-i00000000ad:	subw                s1, s1, s1
-i00000000ae:	srli                s0, s0, 5 
-i00000000af:	lwu                 a4, -172(sp)        
-i00000000b0:	sltiu               s11, a1, 694
-i00000000b1:	mulw                a3, zero, s3
-i00000000b2:	addi                sp, sp, -336
-i00000000b3:	add                 a3, zero, a3
-i00000000b4:	rem                 a3, a4, a4
-i00000000b5:	divw                a1, s8, s5
-i00000000b6:	srai                a1, a1, 8 
-i00000000b7:	lui                 zero, 195789
-i00000000b8:	andi                a1, a1, 16
-i00000000b9:	addi                s1, zero, 12
-i00000000ba:	sllw                t3, a3, a3
-i00000000bb:	lhu                 gp, 1682(sp)        
-i00000000bc:	mul                 t1, t3, t3
-i00000000bd:	remu                a4, a4, a1
-i00000000be:	and                 gp, a7, a2
+i00000000fa:	sw                  s1, 16(sp)          
+i00000000fb:	addi                sp, sp, -496
+i00000000fc:	ori                 s1, s5, 802
+i00000000fd:	sw                  a2, -1404(sp)       
+i00000000fe:	mulh                tp, s1, s1
+i00000000ff:	sw                  a0, 0(sp)           
+i0000000100:	sd                  s0, 176(sp)         
+i0000000101:	fence.i                       
 				la                  sp, begin_signature
 				li                  t1, 6880  
 				add                 sp, sp, t1
-i00000000bf:	sb                  a4, -175(sp)        
+i0000000102:	ld                  s1, 1144(sp)        
+i0000000103:	addi                sp, sp, 176
+i0000000104:	addi                sp, sp, -176
+i0000000105:	fence.i                       
+i0000000106:	srli                s1, s1, 8 
+i0000000107:	remuw               s8, tp, s6
+i0000000108:	fence                         
+i0000000109:	sd                  a4, 1600(sp)        
+i000000010a:	sh                  s0, -2048(sp)       
+i000000010b:	fence                         
+i000000010c:	sh                  s0, -1960(sp)       
+i000000010d:	addi                a1, sp, 304
+i000000010e:	mulw                a0, s10, t3
+i000000010f:	slli                s0, t2, 35
+i0000000110:	addi                sp, sp, -336
+i0000000111:	fence.i                       
+i0000000112:	addi                a5, a5, 16
+i0000000113:	mulhsu              s0, a5, s1
+i0000000114:	srliw               t5, a5, 2 
+i0000000115:	mulhsu              s5, s1, a5
+i0000000116:	fence                         
+i0000000117:	divu                a6, a5, s0
+i0000000118:	divw                s9, a3, gp
+i0000000119:	mulh                t5, s7, t6
+				li                  x22, 12   
+				addi                x29, x29, 1
+				slti                t3, s8, 479
+				sub                 s0, t2, s5
+				srli                a4, a4, 12
+				addi                a4, sp, 276
+				auipc               s3, 338515
+				srli                s0, s0, 14
+				srli                a4, a4, 13
+	
+b000000011a:
+				beq                 x29, x22, 1f        
+				jal                 x0, i0000000104     
+				1: li x29, 10                           
+	
+				divuw               s1, s1, s1
+				div                 s1, s1, s1
+				andi                s1, s7, 508
+				ld                  t2, -216(sp)        
+				sw                  s0, 88(sp)          
+				lh                  a5, -1646(sp)       
+				addw                a4, a4, s0
+i000000011a:	rem                 a5, s2, a7
+i000000011b:	divw                s8, s1, s0
+i000000011c:	sd                  s0, 0(sp)           
+i000000011d:	sw                  s4, 32(sp)          
+i000000011e:	addi                a5, sp, 428
+i000000011f:	sd                  a5, 480(sp)         
+i0000000120:	remu                s9, s9, s7
+i0000000121:	srliw               s3, a5, 25
+i0000000122:	lw                  a4, 16(sp)          
+i0000000123:	remuw               a5, s9, a6
+i0000000124:	sd                  a4, 48(sp)          
+i0000000125:	remu                s1, a5, s1
+i0000000126:	srli                a3, a3, 10
+i0000000127:	mulhu               s1, a1, s10
+i0000000128:	addw                a6, s1, a5
+i0000000129:	ld                  a0, 224(sp)         
+i000000012a:	mulh                t3, s9, a6
+i000000012b:	sw                  t6, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 11136 
+				add                 sp, sp, t1
+i000000012c:	sd                  a2, 88(sp)          
+i000000012d:	addi                s1, s1, 11
+i000000012e:	sw                  s9, 24(sp)          
+i000000012f:	sd                  s1, -160(sp)        
+i0000000130:	ld                  a3, 128(sp)         
+i0000000131:	srai                s1, s1, 13
+i0000000132:	srli                s0, s0, 22
+i0000000133:	slliw               s0, s0, 23
+i0000000134:	remuw               s7, a2, t5
+i0000000135:	mulhu               a4, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 12456 
+				add                 sp, sp, t1
+i0000000136:	sb                  a7, -132(sp)        
+i0000000137:	srai                a2, a2, 9 
+i0000000138:	sb                  a5, -230(sp)        
+i0000000139:	subw                t3, s7, t5
+i000000013a:	sd                  s6, 968(sp)         
+i000000013b:	addiw               a0, a0, 7 
+i000000013c:	add                 s0, s0, s1
+i000000013d:	addiw               s0, a5, 253
+i000000013e:	addw                a2, a2, s1
+i000000013f:	mulhsu              t0, s0, s0
+i0000000140:	ld                  a5, 104(sp)         
+i0000000141:	sraiw               a2, a5, 26
+				li                  x19, 10   
+				remuw               gp, zero, s8
+				fence.i                       
+				sd                  s1, 104(sp)         
+				remuw               s0, s0, a5
+				remuw               tp, s0, s1
+				srai                a4, a4, 2 
+				addi                sp, sp, 128
+	
+b0000000142:
+				beq                 x29, x19, 1f        
+				la                  x19, i000000013d    
+				jalr                x0, x19, 0          
+				1: li x29, 10                           
+	
+				subw                a5, a5, a4
+				mulh                a7, s10, s7
+				addi                a4, sp, 508
+				lw                  a4, 48(sp)          
+				srli                a5, a5, 3 
+				div                 a5, s2, t6
+				srai                a4, a4, 11
+i0000000142:	fence.i                       
+i0000000143:	fence                         
+i0000000144:	sraiw               a4, t2, 31
+i0000000145:	srai                a1, a1, 10
+i0000000146:	ld                  a0, 104(sp)         
+i0000000147:	addw                a4, s1, a5
+i0000000148:	lw                  a5, 56(sp)          
+i0000000149:	addi                a1, sp, 504
+i000000014a:	lw                  zero, 128(sp)       
+				la                  sp, begin_signature
+				li                  t1, 7360  
+				add                 sp, sp, t1
+i000000014b:	sw                  a4, 28(sp)          
+i000000014c:	remw                s6, t6, a2
+i000000014d:	remu                a2, s1, s0
+i000000014e:	div                 a5, s4, s8
+i000000014f:	addi                a1, a1, 10
+i0000000150:	lui                 a1, 25    
+i0000000151:	ori                 s2, s1, 1689
+				la                  sp, begin_signature
+				li                  t1, 6920  
+				add                 sp, sp, t1
+i0000000152:	lw                  t5, 124(sp)         
+				la                  sp, begin_signature
+				li                  t1, 12960 
+				add                 sp, sp, t1
+i0000000153:	lwu                 s3, 1768(sp)        
+i0000000154:	add                 s0, zero, s5
+i0000000155:	divw                a5, t1, a7
+				la                  sp, begin_signature
+				li                  t1, 10408 
+				add                 sp, sp, t1
+i0000000156:	lwu                 s9, -1620(sp)       
+i0000000157:	fsrmi               x0, 4     
+				la                  sp, begin_signature
+				li                  t1, 5664  
+				add                 sp, sp, t1
+i0000000158:	sd                  s1, 152(sp)         
+i0000000159:	lw                  s1, 8(sp)           
+i000000015a:	sraiw               t5, s1, 31
+i000000015b:	divw                s0, t6, s4
+i000000015c:	srli                a4, a4, 15
+i000000015d:	mul                 a5, t3, s2
+i000000015e:	remw                a2, s5, s6
+i000000015f:	srli                s1, s1, 14
+i0000000160:	lw                  s1, 16(sp)          
+i0000000161:	andi                s0, s8, -1105
+i0000000162:	addw                s0, s0, a2
+i0000000163:	mulw                a3, tp, s8
+i0000000164:	div                 s10, a5, a5
+i0000000165:	addw                s0, s0, a5
+i0000000166:	lw                  t3, 60(sp)          
+i0000000167:	addiw               a1, a1, -32
+i0000000168:	addi                s0, zero, -30
+i0000000169:	lwu                 a2, 804(sp)         
+i000000016a:	addi                t6, s6, -1910
+				li                  x24, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 14216 
+				add                 sp, sp, t1
+				remw                s6, a5, s1
+				srli                s0, s0, 15
+				lw                  t2, 488(sp)         
+				mulh                s1, s6, s6
+				srliw               a5, s1, 20
+				ld                  s11, 392(sp)        
+				addw                a4, a4, a5
+	
+b000000016b:
+				beq                 x29, x24, 1f        
+				la                  x24, i000000014a    
+				jalr                x0, x24, 0          
+				1: li x29, 10                           
+	
+				xor                 a4, a4, s0
+				fence                         
+				mulhsu              s0, s0, s1
+				slti                t2, a6, -1860
+				subw                a4, a4, a4
+				sw                  s1, 60(sp)          
+				ld                  a5, -1536(sp)       
+				la                  sp, begin_signature
+				li                  t1, 5592  
+				add                 sp, sp, t1
+i000000016b:	lw                  a5, 88(sp)          
+i000000016c:	div                 t1, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 7920  
+				add                 sp, sp, t1
+i000000016d:	sw                  a4, 108(sp)         
+i000000016e:	sw                  s1, 44(sp)          
+i000000016f:	lh                  s0, -1888(sp)       
+i0000000170:	sd                  s9, -1896(sp)       
+i0000000171:	and                 s1, s1, s0
+i0000000172:	srai                a5, a5, 1 
+i0000000173:	divw                s9, s0, a5
+i0000000174:	remw                s0, a2, a3
+i0000000175:	div                 s0, a5, s1
+i0000000176:	addi                s0, zero, 7
+i0000000177:	lui                 a5, 18    
+i0000000178:	lw                  a4, 4(sp)           
+i0000000179:	sd                  a2, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 14016 
+				add                 sp, sp, t1
+i000000017a:	ld                  a0, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13488 
+				add                 sp, sp, t1
+i000000017b:	sd                  a2, 80(sp)          
+i000000017c:	srai                a5, a5, 9 
+i000000017d:	slli                s1, s0, 17
+i000000017e:	fence.i                       
+i000000017f:	srli                a5, a5, 14
+i0000000180:	andi                t6, zero, -132
+i0000000181:	rem                 t1, a2, a7
+i0000000182:	srlw                s0, s0, a5
+i0000000183:	srai                a2, a2, 10
+i0000000184:	addi                a3, sp, 360
+i0000000185:	slliw               zero, s1, 28
+i0000000186:	slli                s0, s0, 18
+i0000000187:	lhu                 a5, 1642(sp)        
+				la                  sp, begin_signature
+				li                  t1, 14280 
+				add                 sp, sp, t1
+i0000000188:	sd                  s0, 120(sp)         
+i0000000189:	lb                  s0, 648(sp)         
+i000000018a:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 7248  
+				add                 sp, sp, t1
+i000000018b:	lbu                 a7, -421(sp)        
+i000000018c:	mul                 s5, a5, a5
+i000000018d:	fence                         
+i000000018e:	rem                 s1, s1, s0
+i000000018f:	sd                  a5, 40(sp)          
+i0000000190:	lb                  s5, -815(sp)        
+i0000000191:	sd                  a4, 40(sp)          
+i0000000192:	mulw                a1, s3, s2
+				li                  x26, 12   
+				addi                x29, x29, 1
+				mul                 s0, s9, gp
+				srli                a4, a4, 12
+				sw                  a4, 48(sp)          
+				sw                  a4, 52(sp)          
+				sw                  a7, 364(sp)         
+				sd                  a4, 112(sp)         
+				sd                  s0, -440(sp)        
+	
+b0000000193:
+				pre_branch_macro                        
+				bne                 x29, x26, i0000000174
+				post_branch_macro                       
+	
+				lw                  a5, 92(sp)          
+				sb                  a5, 727(sp)         
+				sd                  s7, 64(sp)          
+				addiw               t2, t2, 526
+				srai                a4, a4, 1 
+				srai                s1, s1, 4 
+				srliw               tp, s0, 0 
+				li                  x29, 10   
+i0000000193:	srai                s1, s1, 4 
+i0000000194:	srli                a0, a0, 9 
+i0000000195:	fence.i                       
+i0000000196:	ld                  s0, 80(sp)          
+i0000000197:	srai                a5, a5, 6 
+i0000000198:	addiw               tp, s1, -383
+i0000000199:	fence.i                       
+i000000019a:	mulw                s1, s0, s0
+i000000019b:	addi                sp, sp, -384
+i000000019c:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 12960 
+				add                 sp, sp, t1
+i000000019d:	sb                  a0, -1367(sp)       
+i000000019e:	sd                  s9, 40(sp)          
+i000000019f:	addiw               a5, a5, -8
+i00000001a0:	andi                s1, s2, 754
+i00000001a1:	mulhsu              a5, a5, s1
+i00000001a2:	addi                sp, sp, 112
+i00000001a3:	lhu                 t5, -1276(sp)       
+i00000001a4:	mulhsu              s0, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 9736  
+				add                 sp, sp, t1
+i00000001a5:	ld                  a4, 1936(sp)        
+i00000001a6:	lw                  a5, 28(sp)          
+i00000001a7:	fence                         
+i00000001a8:	addi                a2, sp, 12
+				la                  sp, begin_signature
+				li                  t1, 10408 
+				add                 sp, sp, t1
+i00000001a9:	ld                  a3, 1840(sp)        
+i00000001aa:	lw                  s1, 80(sp)          
+i00000001ab:	lw                  s0, 24(sp)          
+i00000001ac:	sd                  s0, 1488(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7152  
+				add                 sp, sp, t1
+i00000001ad:	sd                  s4, -1056(sp)       
+i00000001ae:	divuw               a5, s0, s1
+i00000001af:	sw                  a0, 4(sp)           
+i00000001b0:	lw                  a5, 40(sp)          
+i00000001b1:	sd                  s0, -752(sp)        
+i00000001b2:	srai                a5, a5, 7 
+i00000001b3:	addi                a5, sp, 72
+i00000001b4:	sw                  s1, 44(sp)          
+i00000001b5:	lw                  s1, 68(sp)          
+i00000001b6:	addi                s1, sp, 368
+i00000001b7:	sw                  a1, 128(sp)         
+i00000001b8:	lw                  zero, 92(sp)        
+i00000001b9:	srlw                a6, gp, s4
+i00000001ba:	addi                s0, sp, 12
+				li                  x31, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 12512 
+				add                 sp, sp, t1
+				or                  a4, a4, a5
+				srai                s0, s0, 13
+				xor                 s0, s1, a5
+				sw                  a4, 0(sp)           
+				addi                a7, a5, -335
+				fence.i                       
+				addi                sp, sp, 224
+	
+b00000001bb:
+				pre_branch_macro                        
+				bge                 x31, x29, i00000001de
+				post_branch_macro                       
+	
+				divw                s0, s0, a5
+				sw                  a5, 72(sp)          
+				lh                  zero, 344(sp)       
+				addi                a4, sp, 380
+				addi                sp, sp, 160
+				lb                  a6, -1271(sp)       
+				sllw                a5, s1, s0
+				li                  x29, 10   
+i00000001bb:	srli                s1, s1, 2 
+i00000001bc:	fence                         
+i00000001bd:	sltu                zero, a7, tp
+i00000001be:	sw                  s9, 52(sp)          
+				la                  sp, begin_signature
+				li                  t1, 6640  
+				add                 sp, sp, t1
+i00000001bf:	sd                  a3, 8(sp)           
+i00000001c0:	slli                s2, s8, 23
+i00000001c1:	lw                  t1, 68(sp)          
+i00000001c2:	ld                  s0, 64(sp)          
+i00000001c3:	xor                 a1, a1, a0
+i00000001c4:	addi                sp, sp, -352
+i00000001c5:	xor                 a3, a3, a3
+i00000001c6:	sd                  s3, 96(sp)          
+i00000001c7:	remw                s0, s1, s1
+i00000001c8:	and                 a3, a3, a0
+i00000001c9:	divw                s1, s1, a5
+i00000001ca:	remw                a6, a5, a5
+i00000001cb:	addi                s1, sp, 508
+i00000001cc:	sd                  s2, 712(sp)         
+i00000001cd:	lw                  s1, 60(sp)          
+i00000001ce:	srai                a2, a2, 13
+i00000001cf:	fence.i                       
+i00000001d0:	subw                a4, a4, a2
+i00000001d1:	lbu                 tp, 1918(sp)        
+i00000001d2:	sltu                s2, s0, s0
+i00000001d3:	sllw                t5, a4, zero
+i00000001d4:	sd                  a5, 136(sp)         
+i00000001d5:	sllw                s7, s1, s0
+i00000001d6:	mulh                t0, gp, t1
+i00000001d7:	ld                  s11, 2016(sp)       
+i00000001d8:	addi                sp, sp, -48
+i00000001d9:	ld                  a3, 112(sp)         
+i00000001da:	addi                sp, sp, 128
+				la                  sp, begin_signature
+				li                  t1, 3120  
+				add                 sp, sp, t1
+i00000001db:	sw                  s0, 16(sp)          
+i00000001dc:	mul                 s1, s8, t5
+i00000001dd:	addi                a4, sp, 464
+i00000001de:	sh                  a7, -1512(sp)       
+i00000001df:	addw                a4, a5, s1
+i00000001e0:	ld                  s1, 72(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10656 
+				add                 sp, sp, t1
+i00000001e1:	lb                  s1, 1307(sp)        
+i00000001e2:	fence                         
+				li                  x17, 10   
+				srli                s1, s1, 17
+				divw                s3, a5, s1
+				slt                 s4, t2, zero
+				divw                s10, gp, zero
+				srai                a4, a4, 16
+				ld                  s0, 80(sp)          
+				addi                a4, sp, 348
+	
+b00000001e3:
+				beq                 x29, x17, 1f        
+				la                  x17, i00000001d5    
+				jalr                x0, x17, 0          
+				1: li x29, 10                           
+	
+				xor                 a5, t3, s3
+				fence                         
+				divu                t3, t6, s11
+				sd                  s1, 112(sp)         
+				sd                  s1, 56(sp)          
+				lui                 s1, 100549
+				srliw               zero, s1, 25
+i00000001e3:	fence.i                       
+i00000001e4:	sra                 s1, t6, s11
+i00000001e5:	divu                a5, t5, s6
+i00000001e6:	addw                a4, a4, a0
+i00000001e7:	mulhsu              s3, a0, s11
+i00000001e8:	srli                a0, a0, 9 
+i00000001e9:	div                 a5, s4, a2
+i00000001ea:	ld                  s8, 320(sp)         
+i00000001eb:	fence                         
+i00000001ec:	srli                a3, a3, 11
+i00000001ed:	srli                a0, a0, 9 
+i00000001ee:	divw                s0, a5, s0
+i00000001ef:	sw                  a2, 64(sp)          
+i00000001f0:	sd                  s10, 24(sp)         
+i00000001f1:	mulh                s1, s0, s1
+i00000001f2:	addi                sp, sp, -352
+i00000001f3:	div                 s0, a5, s0
+i00000001f4:	srai                s1, s1, 12
+i00000001f5:	srli                s1, s1, 7 
+i00000001f6:	lh                  a5, 562(sp)         
+i00000001f7:	subw                a2, a2, a5
+i00000001f8:	fence                         
+i00000001f9:	sw                  a5, 4(sp)           
+i00000001fa:	lwu                 t5, -784(sp)        
+i00000001fb:	lwu                 a5, 1320(sp)        
+i00000001fc:	sw                  s0, 16(sp)          
+i00000001fd:	and                 a5, a5, a1
+i00000001fe:	ld                  s0, 0(sp)           
+i00000001ff:	subw                a2, a2, a4
+i0000000200:	sw                  a1, 24(sp)          
+i0000000201:	remuw               a0, s1, s0
+i0000000202:	sw                  s0, 16(sp)          
+i0000000203:	remu                a2, s10, a6
+i0000000204:	sb                  s0, 1656(sp)        
+i0000000205:	sw                  a1, 48(sp)          
+i0000000206:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 5064  
+				add                 sp, sp, t1
+i0000000207:	ld                  t1, -1712(sp)       
+i0000000208:	add                 s0, zero, s0
+i0000000209:	ld                  a6, 104(sp)         
+i000000020a:	sd                  gp, 128(sp)         
+				li                  x22, 12   
+				addi                x29, x29, 1
+				sd                  s0, 216(sp)         
+				sltu                s4, s0, s0
+				add                 s1, zero, s0
+				sub                 zero, a4, a7
+				sh                  a5, -890(sp)        
+				lw                  s1, 56(sp)          
+				sra                 s0, s1, s1
+	
+b000000020b:
+				beq                 x29, x22, 1f        
+				jal                 x1, i00000001ec     
+				1: li x29, 10                           
+	
+				add                 a6, zero, tp
+				ori                 s8, tp, -890
+				ld                  s0, 56(sp)          
+				sw                  gp, 12(sp)          
+				fence.i                       
+				addi                sp, sp, 0 
+				srai                s0, s0, 7 
+i000000020b:	sllw                s0, t0, s6
+i000000020c:	remuw               a5, a4, s4
+i000000020d:	srai                a0, a0, 14
+				la                  sp, begin_signature
+				li                  t1, 2792  
+				add                 sp, sp, t1
+i000000020e:	lw                  s6, 92(sp)          
+i000000020f:	div                 a7, tp, t6
+i0000000210:	ld                  s1, 104(sp)         
+i0000000211:	lwu                 s1, -2036(sp)       
+i0000000212:	divw                zero, a7, a3
+i0000000213:	ld                  a5, 40(sp)          
+i0000000214:	sd                  s1, 240(sp)         
+i0000000215:	ld                  t5, 232(sp)         
+i0000000216:	sub                 a5, a5, a5
+i0000000217:	fence                         
+i0000000218:	ld                  s10, -1984(sp)      
+i0000000219:	srai                a0, a0, 9 
+i000000021a:	srai                s0, s0, 5 
+i000000021b:	srli                a0, a0, 10
+i000000021c:	slli                s0, s0, 18
+i000000021d:	addiw               a4, s6, 1655
+i000000021e:	addw                a1, a1, a1
+i000000021f:	fence.i                       
+i0000000220:	remu                t0, a1, t2
+i0000000221:	fence.i                       
+i0000000222:	srli                s1, s1, 8 
+i0000000223:	addi                a5, a5, 14
+i0000000224:	lw                  a5, 64(sp)          
+i0000000225:	subw                s1, s1, a5
+i0000000226:	add                 s0, s0, a5
+i0000000227:	add                 s0, zero, gp
+i0000000228:	ld                  gp, -784(sp)        
+i0000000229:	remw                a7, a5, s0
+i000000022a:	ld                  a0, 32(sp)          
+i000000022b:	srai                a0, a0, 18
+i000000022c:	srai                a3, a3, 6 
+i000000022d:	mulw                s0, s0, s1
+i000000022e:	andi                a1, a1, -18
+i000000022f:	addw                t2, a5, s0
+i0000000230:	div                 zero, a4, t5
+i0000000231:	mulw                a5, s6, a1
+i0000000232:	addi                a5, sp, 396
+				li                  x18, 11   
+				li                  x29, 10   
+				addi                sp, sp, 208
+				fence                         
+				andi                s0, s0, 7 
+				addi                a4, sp, 36
+				srai                a4, a4, 16
+				divw                s1, s0, a5
+				mul                 s1, a7, s4
+	
+b0000000233:
+				pre_branch_macro                        
+				bge                 x18, x29, i0000000255
+				post_branch_macro                       
+	
+				fence.i                       
+				or                  s1, s1, s1
+				addi                a5, sp, 216
+				sb                  a5, -1597(sp)       
+				xor                 s1, s1, s1
+				sd                  a5, -1448(sp)       
+				fence                         
+				li                  x29, 10   
+i0000000233:	addi                s0, sp, 240
+i0000000234:	sd                  tp, -432(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13360 
+				add                 sp, sp, t1
+i0000000235:	sh                  s7, 848(sp)         
+i0000000236:	remw                s0, t0, t0
+i0000000237:	subw                s1, s1, a5
+i0000000238:	or                  a3, a3, a0
+i0000000239:	divw                s0, t6, t2
+i000000023a:	sll                 s1, t6, s9
+i000000023b:	addw                a0, a0, a4
+i000000023c:	sw                  s1, 124(sp)         
+i000000023d:	or                  a5, a5, a5
+i000000023e:	sb                  a5, 83(sp)          
+				la                  sp, begin_signature
+				li                  t1, 3880  
+				add                 sp, sp, t1
+i000000023f:	sw                  s3, 16(sp)          
+i0000000240:	lwu                 t6, -524(sp)        
+i0000000241:	slli                a4, a4, 18
+				la                  sp, begin_signature
+				li                  t1, 8320  
+				add                 sp, sp, t1
+i0000000242:	ld                  s1, -680(sp)        
+i0000000243:	slli                s1, a2, 17
+i0000000244:	sd                  s1, -328(sp)        
+i0000000245:	mulw                t1, a5, s0
+i0000000246:	srai                a0, a0, 3 
+i0000000247:	fence.i                       
+i0000000248:	addi                sp, sp, 16
+i0000000249:	srai                s0, t2, 56
+i000000024a:	srli                a5, a5, 5 
+i000000024b:	srli                s0, s0, 4 
+i000000024c:	lw                  s1, -948(sp)        
+i000000024d:	mulhu               s10, s11, s4
+i000000024e:	addi                a2, sp, 48
+i000000024f:	addi                s0, zero, 15
+i0000000250:	addi                sp, sp, -48
+i0000000251:	sd                  s11, 168(sp)        
+i0000000252:	fence                         
+i0000000253:	addi                s1, sp, 448
+i0000000254:	sd                  a5, 24(sp)          
+i0000000255:	fsrmi               x0, 4     
+i0000000256:	sd                  a4, 72(sp)          
+i0000000257:	andi                a5, a5, 0 
+i0000000258:	and                 a1, a1, a3
+i0000000259:	srai                s1, s1, 16
+i000000025a:	addi                a0, sp, 492
+i000000025b:	srlw                s1, zero, a2
+				li                  x19, 10   
+				add                 s9, s6, tp
+				fence                         
+				add                 s1, a5, a5
+				srai                s1, s1, 11
+				lw                  s11, 36(sp)         
+				addiw               s0, s0, 9 
+				addiw               gp, a5, 691
+	
+b000000025c:
+				beq                 x29, x19, 1f        
+				jal                 x1, i0000000256     
+				1: li x29, 10                           
+	
+				addw                a4, a4, a5
+				addw                s0, s0, a5
+				sll                 s8, s5, a4
+				divw                s1, s0, a5
+				srlw                s1, tp, s6
+				addiw               a4, a4, -6
+				addi                a5, sp, 144
+i000000025c:	sd                  a2, 72(sp)          
+i000000025d:	addi                s1, sp, 140
+i000000025e:	divuw               t5, t2, a4
+i000000025f:	ld                  s1, 384(sp)         
+i0000000260:	divw                s1, s4, zero
+i0000000261:	lbu                 a5, 469(sp)         
+i0000000262:	fence.i                       
+i0000000263:	srli                a4, a4, 8 
+i0000000264:	sw                  a4, 4(sp)           
+i0000000265:	srai                a2, a2, 14
+i0000000266:	sb                  s3, 45(sp)          
+i0000000267:	addi                a5, sp, 352
+i0000000268:	divw                a5, s1, s1
+i0000000269:	fence.i                       
+i000000026a:	sd                  a5, 128(sp)         
+i000000026b:	addi                sp, sp, -304
+i000000026c:	srai                a4, a4, 8 
+i000000026d:	fence                         
+i000000026e:	addw                a5, a5, a3
+i000000026f:	mulhu               s1, s5, s8
+i0000000270:	sraiw               a5, s1, 5 
+i0000000271:	sw                  a5, 56(sp)          
+i0000000272:	srai                s1, s1, 2 
+i0000000273:	addi                a0, sp, 292
+i0000000274:	xor                 s0, s0, a3
+i0000000275:	lw                  s0, 1772(sp)        
+i0000000276:	mulhu               s0, s1, a5
+i0000000277:	remuw               s8, a7, t0
+i0000000278:	sw                  a2, 64(sp)          
+i0000000279:	srai                a3, a3, 11
+i000000027a:	addiw               t3, s6, 154
+i000000027b:	srai                a1, a1, 2 
+i000000027c:	slli                a2, a2, 29
+i000000027d:	ld                  s1, 144(sp)         
+i000000027e:	mulh                s8, t5, s6
+i000000027f:	fence                         
+i0000000280:	ori                 a5, a3, -1675
+i0000000281:	fence.i                       
+i0000000282:	addw                a5, a5, a5
+i0000000283:	addw                s0, s0, a1
+				li                  x21, 0    
+				la                  sp, begin_signature
+				li                  t1, 10432 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6928  
+				add                 sp, sp, t1
+				lw                  s11, 92(sp)         
+				fence                         
+				sh                  s2, 1806(sp)        
+				sw                  a4, 24(sp)          
+				ori                 a4, a5, 1600
+				addw                a5, a5, a5
+				slliw               s1, s0, 23
+	
+b0000000284:
+				pre_branch_macro                        
+				beq                 x29, x21, i0000000299
+				post_branch_macro                       
+	
+				addi                a4, a4, -9
+				sw                  a5, 104(sp)         
+				sd                  s4, 96(sp)          
+				sw                  s1, -148(sp)        
+				addi                s0, sp, 336
+				srai                a4, a4, 5 
+				lw                  a7, 20(sp)          
+				li                  x29, 10   
+i0000000284:	srli                a5, a5, 25
+i0000000285:	sd                  s0, 96(sp)          
+i0000000286:	srli                a1, a1, 2 
+i0000000287:	lh                  a7, 1780(sp)        
+i0000000288:	srai                a3, a3, 7 
+i0000000289:	divu                s1, s0, s1
+i000000028a:	fence.i                       
+i000000028b:	addi                sp, sp, -384
+i000000028c:	fence.i                       
+i000000028d:	remuw               s9, t0, a7
+i000000028e:	div                 s2, s4, t0
+i000000028f:	ld                  a5, 88(sp)          
+i0000000290:	add                 s0, s9, t6
+i0000000291:	subw                s1, t1, tp
+i0000000292:	sd                  a0, 40(sp)          
+i0000000293:	srli                a1, a1, 15
+i0000000294:	sub                 a1, a1, s0
+i0000000295:	srai                a0, a0, 15
+i0000000296:	srai                s0, s0, 1 
+i0000000297:	sd                  a3, 48(sp)          
+i0000000298:	remuw               s4, t5, a2
+i0000000299:	remuw               tp, s0, s1
+i000000029a:	mulhsu              s0, s1, s0
+i000000029b:	addi                a5, sp, 0 
+i000000029c:	remw                s0, s0, s1
+i000000029d:	divw                t1, s11, a6
+i000000029e:	sraw                s0, a5, a5
+i000000029f:	addi                sp, sp, -432
+i00000002a0:	subw                a5, a5, s0
+i00000002a1:	lhu                 s8, -152(sp)        
+i00000002a2:	addw                a1, a1, s0
+i00000002a3:	ld                  s0, -672(sp)        
+i00000002a4:	fence                         
+i00000002a5:	sw                  s1, 4(sp)           
+i00000002a6:	slt                 s0, s0, a5
+i00000002a7:	ld                  a3, 1560(sp)        
+i00000002a8:	srai                s1, s1, 7 
+i00000002a9:	sraw                a6, t0, t0
+i00000002aa:	srai                s1, s1, 13
+i00000002ab:	remuw               s1, s8, t6
+				li                  x26, 11   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 4224  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9256  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 8576  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6016  
+				add                 sp, sp, t1
+				lh                  s1, -972(sp)        
+				srli                a4, a4, 15
+				remu                s0, t6, a7
+				subw                a4, a4, s1
+				addi                a4, sp, 220
+				remu                s0, a5, s0
+				srli                a4, a4, 11
+	
+b00000002ac:
+				pre_branch_macro                        
+				beq                 x29, x26, i0000000294
+				post_branch_macro                       
+	
+				addi                a4, sp, 348
+				mulh                a6, a5, s1
+				lwu                 t2, 1996(sp)        
+				addi                a4, sp, 212
+				lb                  a4, 1905(sp)        
+				ld                  a5, -1496(sp)       
+				lw                  s1, 724(sp)         
+				li                  x29, 10   
+i00000002ac:	ld                  a5, 96(sp)          
+i00000002ad:	divu                a5, a5, a5
+i00000002ae:	auipc               s1, 212342
+i00000002af:	ld                  a5, 192(sp)         
+i00000002b0:	subw                s0, s0, s1
+i00000002b1:	addi                sp, sp, -400
+i00000002b2:	mul                 s1, t2, s6
+i00000002b3:	addw                s0, s0, a2
+i00000002b4:	slt                 s11, s1, s1
+i00000002b5:	sltu                t6, s0, s1
+i00000002b6:	lb                  a5, -1040(sp)       
+i00000002b7:	remuw               t3, a5, s0
+i00000002b8:	divuw               a2, a5, s1
+i00000002b9:	sub                 s0, a6, t3
+i00000002ba:	srli                a5, a5, 12
+i00000002bb:	lw                  a5, -1768(sp)       
+i00000002bc:	ori                 s1, s0, -484
+i00000002bd:	divuw               s1, a5, s0
+i00000002be:	ld                  t2, 56(sp)          
+i00000002bf:	fence                         
+i00000002c0:	srli                a2, a2, 31
+i00000002c1:	rem                 s4, t0, gp
+i00000002c2:	add                 a5, zero, a5
+i00000002c3:	addi                sp, sp, 128
+i00000002c4:	srai                s0, s0, 6 
+i00000002c5:	divu                s3, s1, s0
+i00000002c6:	sd                  a5, 112(sp)         
+i00000002c7:	slliw               s1, t2, 27
+i00000002c8:	or                  a5, s0, s0
+i00000002c9:	remu                t1, s1, s1
+i00000002ca:	addi                a5, sp, 396
+i00000002cb:	rem                 a5, t0, s3
+i00000002cc:	add                 t0, zero, s8
+i00000002cd:	addw                s0, a5, s1
+i00000002ce:	sraw                a1, s3, s8
+i00000002cf:	sd                  a6, 216(sp)         
+				la                  sp, begin_signature
+				li                  t1, 3464  
+				add                 sp, sp, t1
+i00000002d0:	lb                  s0, 1750(sp)        
+i00000002d1:	fence.i                       
+i00000002d2:	fence                         
+i00000002d3:	fence                         
+				li                  x27, 12   
+				li                  x29, 10   
+				addiw               s8, s1, 203
+				remw                s1, s10, t2
+				ld                  s8, 120(sp)         
+				rem                 s1, a5, s0
+				sd                  gp, 112(sp)         
+				srli                s0, s0, 3 
+				srli                a4, a4, 13
+	
+b00000002d4:
+				pre_branch_macro                        
+				blt                 x29, x27, i00000002ea
+				post_branch_macro                       
+	
+				subw                s1, s1, a4
+				addiw               s0, s0, 9 
+				srai                a5, a5, 1 
+				sub                 a4, a4, a4
+				sd                  s10, 600(sp)        
+				remu                gp, s4, a6
+				addi                sp, sp, 64
+				li                  x29, 10   
+i00000002d4:	addi                sp, sp, -304
+i00000002d5:	sw                  a4, 44(sp)          
+i00000002d6:	fence.i                       
+i00000002d7:	divw                s1, a0, s6
+i00000002d8:	addi                sp, sp, -416
+i00000002d9:	srai                s1, s1, 9 
+				la                  sp, begin_signature
+				li                  t1, 3208  
+				add                 sp, sp, t1
+i00000002da:	ld                  t6, 48(sp)          
+i00000002db:	sb                  a5, -447(sp)        
+i00000002dc:	sraw                s0, a5, s1
+i00000002dd:	srli                a2, a2, 4 
+i00000002de:	addi                sp, sp, 96
+i00000002df:	sd                  a3, 16(sp)          
+i00000002e0:	sraiw               s8, a5, 23
+i00000002e1:	srai                a1, a1, 6 
+i00000002e2:	sd                  a3, 32(sp)          
+i00000002e3:	lwu                 s7, 1372(sp)        
+i00000002e4:	add                 s0, s3, t5
+i00000002e5:	remu                a0, t2, s10
+i00000002e6:	addi                sp, sp, -80
+i00000002e7:	addi                a5, sp, 324
+i00000002e8:	lui                 s1, 518523
+i00000002e9:	fence.i                       
+i00000002ea:	subw                a5, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 11696 
+				add                 sp, sp, t1
+i00000002eb:	sd                  s1, 208(sp)         
+i00000002ec:	ld                  s0, 200(sp)         
+i00000002ed:	subw                tp, tp, gp
+i00000002ee:	fence.i                       
+i00000002ef:	remuw               t0, s0, s0
+i00000002f0:	remw                gp, s4, tp
+i00000002f1:	srli                a0, a0, 10
+i00000002f2:	sw                  s5, 104(sp)         
+i00000002f3:	divuw               a4, s0, s1
+i00000002f4:	and                 s1, s1, s1
+i00000002f5:	mul                 t6, a5, s0
+i00000002f6:	and                 a5, t6, a1
+i00000002f7:	rem                 s6, tp, t3
+i00000002f8:	remuw               zero, s0, s0
+i00000002f9:	fence                         
+i00000002fa:	fence                         
+i00000002fb:	addiw               a7, s1, 469
+				li                  x16, 10   
+				la                  sp, begin_signature
+				li                  t1, 2536  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3840  
+				add                 sp, sp, t1
+				srl                 a5, t3, tp
+				remuw               s1, a5, a5
+				sw                  s0, 72(sp)          
+				sw                  a5, 64(sp)          
+				addi                sp, sp, -368
+				sw                  s5, 60(sp)          
+				ld                  t6, 192(sp)         
+	
+b00000002fc:
+				beq                 x29, x16, 1f        
+				jal                 x1, i00000002f0     
+				1: li x29, 10                           
+	
+				sraiw               a4, gp, 11
+				sw                  a5, -1320(sp)       
+				lw                  a4, 0(sp)           
+				sw                  s10, 1224(sp)       
+				lw                  a5, 40(sp)          
+				sraiw               s8, s11, 6
+				ld                  gp, -376(sp)        
+i00000002fc:	sd                  a6, -304(sp)        
+i00000002fd:	slli                a5, s1, 20
+i00000002fe:	addi                a5, sp, 28
+i00000002ff:	sd                  s1, -584(sp)        
+i0000000300:	rem                 s1, s1, s0
+i0000000301:	andi                a6, s1, 1558
+i0000000302:	sw                  s4, -1980(sp)       
+i0000000303:	srai                a5, a5, 11
+i0000000304:	lui                 a5, 159031
+i0000000305:	srai                a2, a2, 4 
+i0000000306:	mul                 tp, zero, s6
+i0000000307:	srai                a3, a3, 8 
+i0000000308:	divw                s1, s11, s3
+i0000000309:	sraw                s0, s1, s0
+i000000030a:	sraiw               a5, a7, 12
+				la                  sp, begin_signature
+				li                  t1, 13960 
+				add                 sp, sp, t1
+i000000030b:	sw                  a3, 16(sp)          
+i000000030c:	fence                         
+i000000030d:	srai                s1, s1, 9 
+				la                  sp, begin_signature
+				li                  t1, 10096 
+				add                 sp, sp, t1
+i000000030e:	ld                  zero, 1696(sp)      
+i000000030f:	remu                t6, s7, t1
+i0000000310:	fence                         
+i0000000311:	and                 s0, s0, a1
+i0000000312:	mulhu               tp, t5, s5
+i0000000313:	srlw                s1, s6, a1
+i0000000314:	addi                a5, zero, -18
+				la                  sp, begin_signature
+				li                  t1, 12576 
+				add                 sp, sp, t1
+i0000000315:	lwu                 s0, -988(sp)        
+i0000000316:	lw                  a3, 56(sp)          
+i0000000317:	srl                 s1, s1, s0
+i0000000318:	lw                  a3, 24(sp)          
+i0000000319:	divw                a4, a5, s1
+i000000031a:	remw                zero, zero, tp
+i000000031b:	remw                t2, s4, t2
+i000000031c:	ld                  s0, 1168(sp)        
+i000000031d:	srai                a3, a3, 5 
+i000000031e:	sd                  s1, 1688(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8336  
+				add                 sp, sp, t1
+i000000031f:	lb                  s7, -1822(sp)       
+i0000000320:	slli                a2, a2, 28
+i0000000321:	xori                s2, t2, -906
+i0000000322:	srai                a5, a5, 2 
+i0000000323:	fence.i                       
+				li                  x27, 12   
+				addi                x29, x29, 1
+				mulw                s1, s1, s0
+				divw                s0, s9, s4
+				addw                a5, s1, s0
+				fence.i                       
+				xori                a5, s1, 52
+				fence.i                       
+				lbu                 s1, 1730(sp)        
+	
+b0000000324:
+				beq                 x29, x27, 1f        
+				jal                 x0, i0000000309     
+				1: li x29, 10                           
+	
+				add                 s10, zero, s1
+				divw                s0, a5, s0
+				srai                a4, a4, 4 
+				lb                  a5, -1257(sp)       
+				add                 a4, zero, t6
+				sd                  a4, 48(sp)          
+				subw                s0, s0, a4
+i0000000324:	div                 s4, s1, a5
+i0000000325:	ld                  t1, -1568(sp)       
+i0000000326:	srai                a4, a4, 3 
+				la                  sp, begin_signature
+				li                  t1, 7880  
+				add                 sp, sp, t1
+i0000000327:	lw                  a4, 48(sp)          
+i0000000328:	xor                 s0, s0, a5
+i0000000329:	lwu                 a5, -924(sp)        
+i000000032a:	srai                s1, s1, 11
+i000000032b:	sd                  a2, 16(sp)          
+i000000032c:	add                 a2, s0, s0
+i000000032d:	sraw                a5, s8, s7
+i000000032e:	remu                s9, t6, a0
+i000000032f:	addi                s1, sp, 216
+i0000000330:	divuw               s5, s1, s0
+i0000000331:	fence.i                       
+i0000000332:	fence                         
+i0000000333:	lbu                 gp, -1578(sp)       
+i0000000334:	addi                a4, sp, 112
+i0000000335:	sd                  tp, 80(sp)          
+i0000000336:	srli                a0, a0, 7 
+i0000000337:	fence.i                       
+i0000000338:	fence.i                       
+i0000000339:	mulw                s1, s0, s0
+i000000033a:	ld                  s1, 48(sp)          
+i000000033b:	srai                a5, a5, 6 
+i000000033c:	lw                  t6, -1648(sp)       
+i000000033d:	lw                  a5, 40(sp)          
+i000000033e:	remu                s11, s1, s0
+i000000033f:	add                 s10, zero, s2
+i0000000340:	srai                s1, s0, 43
+i0000000341:	lw                  s0, 4(sp)           
+i0000000342:	rem                 s9, a4, s4
+i0000000343:	fsrmi               x0, 3     
+i0000000344:	ld                  s0, 56(sp)          
+i0000000345:	addi                sp, sp, 0 
+i0000000346:	addiw               a1, a1, -27
+i0000000347:	mul                 s5, a2, s8
+i0000000348:	lhu                 a5, 508(sp)         
+i0000000349:	srai                a2, a2, 6 
+i000000034a:	addiw               a1, a1, 12
+i000000034b:	addi                a2, sp, 164
+i000000034c:	srli                a2, a2, 8 
+				li                  x24, 10   
+				remw                s0, s2, s9
+				andi                a5, a5, -14
+				xor                 a4, a4, s0
+				sw                  a5, 28(sp)          
+				ld                  a4, 104(sp)         
+				slliw               s0, s0, 1 
+				lui                 s7, 17    
+	
+b000000034d:
+				beq                 x29, x24, 1f        
+				jal                 x1, i0000000345     
+				1: li x29, 10                           
+	
+				lui                 s1, 11    
+				addi                a4, sp, 232
+				lui                 s9, 27    
+				addw                a5, a5, a4
+				fence                         
+				slli                s0, tp, 15
+				addi                t6, zero, -12
+i000000034d:	addi                s1, sp, 248
+i000000034e:	sw                  a0, 120(sp)         
+i000000034f:	fence                         
+i0000000350:	auipc               s1, 354895
+				la                  sp, begin_signature
+				li                  t1, 10112 
+				add                 sp, sp, t1
+i0000000351:	lw                  a0, -1452(sp)       
+i0000000352:	srai                a5, a5, 26
+i0000000353:	remw                s1, s0, s1
+i0000000354:	remw                s6, s0, a5
+i0000000355:	srli                a3, a3, 15
+i0000000356:	lw                  a1, 60(sp)          
+i0000000357:	srli                a3, a3, 13
+i0000000358:	srai                a3, a3, 14
+				la                  sp, begin_signature
+				li                  t1, 9944  
+				add                 sp, sp, t1
+i0000000359:	sw                  a5, 20(sp)          
+i000000035a:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 6120  
+				add                 sp, sp, t1
+i000000035b:	sd                  a5, 56(sp)          
+i000000035c:	lwu                 s0, 1640(sp)        
+i000000035d:	ld                  t0, 104(sp)         
+i000000035e:	fence                         
+i000000035f:	srli                s1, s1, 6 
+i0000000360:	fence                         
+i0000000361:	lw                  s9, 60(sp)          
+i0000000362:	srai                a4, a4, 2 
+i0000000363:	srlw                t2, a5, s1
+i0000000364:	addi                a3, sp, 60
+i0000000365:	srai                a4, a4, 16
+i0000000366:	slliw               s11, s1, 23
+i0000000367:	divw                s7, a4, tp
+i0000000368:	srli                s5, t3, 4 
+i0000000369:	addi                a4, a4, -23
+i000000036a:	sd                  s0, 952(sp)         
+i000000036b:	sd                  a5, 1552(sp)        
+i000000036c:	srli                s0, s0, 32
+i000000036d:	or                  a1, a1, a5
+i000000036e:	remw                s1, s1, s0
+i000000036f:	sra                 s4, a5, s0
+i0000000370:	addiw               a4, a5, 150
+i0000000371:	div                 t5, a6, s7
+i0000000372:	sll                 s6, gp, s3
+i0000000373:	addi                a0, sp, 308
+i0000000374:	lb                  s7, -278(sp)        
+				li                  x22, 0    
+				la                  sp, begin_signature
+				li                  t1, 5128  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 13000 
+				add                 sp, sp, t1
+				sw                  a5, 20(sp)          
+				mulh                s3, a4, s9
+				addi                sp, sp, -304
+				remuw               s0, a5, s0
+				addi                sp, sp, -160
+				ld                  s0, 56(sp)          
+				ori                 s8, s1, -462
+	
+b0000000375:
+				pre_branch_macro                        
+				beq                 x29, x22, i0000000381
+				post_branch_macro                       
+	
+				fence.i                       
+				lw                  a6, 20(sp)          
+				sd                  s1, 192(sp)         
+				lb                  s0, 1160(sp)        
+				remuw               s1, s0, s0
+				fence                         
+				sh                  s11, -64(sp)        
+				li                  x29, 10   
+i0000000375:	mulw                a7, s9, s4
+i0000000376:	lw                  a1, 1172(sp)        
+i0000000377:	lw                  s5, 100(sp)         
+i0000000378:	divu                a5, s0, s0
+i0000000379:	subw                a4, a4, a4
+i000000037a:	srlw                s5, a7, a3
+i000000037b:	addi                sp, sp, 64
+i000000037c:	addi                s0, gp, 233
+i000000037d:	srli                s1, s1, 16
+i000000037e:	sraiw               s6, s0, 27
+i000000037f:	addiw               a4, a4, 0 
+i0000000380:	fence                         
+i0000000381:	div                 a5, s5, zero
+i0000000382:	mulh                a6, s8, gp
+i0000000383:	mulhu               a5, a5, s1
+i0000000384:	addw                s1, a5, s1
+i0000000385:	srai                s1, s1, 7 
+i0000000386:	lwu                 a5, 244(sp)         
+				la                  sp, begin_signature
+				li                  t1, 5752  
+				add                 sp, sp, t1
+i0000000387:	lwu                 s0, 1996(sp)        
+				la                  sp, begin_signature
+				li                  t1, 4232  
+				add                 sp, sp, t1
+i0000000388:	lwu                 t3, -1336(sp)       
+i0000000389:	and                 a5, a5, a5
+i000000038a:	sd                  s1, 112(sp)         
+i000000038b:	div                 s1, s1, a5
+i000000038c:	addiw               a3, a3, 5 
+i000000038d:	fence                         
+i000000038e:	sw                  s1, 204(sp)         
+i000000038f:	srai                a0, a0, 9 
+i0000000390:	andi                s0, gp, -1546
+i0000000391:	sw                  a5, 88(sp)          
+i0000000392:	mulw                s0, s0, a5
+i0000000393:	rem                 t5, s2, t2
+i0000000394:	lhu                 s1, -1848(sp)       
+i0000000395:	sd                  a1, 72(sp)          
+i0000000396:	addi                sp, sp, 128
+				la                  sp, begin_signature
+				li                  t1, 8168  
+				add                 sp, sp, t1
+i0000000397:	sh                  s1, -44(sp)         
+i0000000398:	srli                a2, a2, 9 
+i0000000399:	lw                  a4, 20(sp)          
+i000000039a:	and                 a0, a0, s0
+				la                  sp, begin_signature
+				li                  t1, 7120  
+				add                 sp, sp, t1
+i000000039b:	sd                  a2, 0(sp)           
+i000000039c:	srlw                zero, s10, a6
+				li                  x22, 11   
+				li                  x29, 10   
+				fence                         
+				srli                a5, a5, 5 
+				srai                a4, a4, 3 
+				ld                  s1, 56(sp)          
+				andi                s0, s0, 1 
+				srli                a4, a4, 4 
+				addi                sp, sp, 128
+	
+b000000039d:
+				pre_branch_macro                        
+				bne                 x29, x22, i00000003b4
+				post_branch_macro                       
+	
+				lw                  s0, 56(sp)          
+				srliw               s5, s1, 5 
+				srai                s0, s0, 32
+				srli                a4, a4, 10
+				srai                s1, t2, 4 
+				lwu                 s1, -852(sp)        
+				ld                  t2, 1672(sp)        
+				li                  x29, 10   
+i000000039d:	rem                 t6, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 5112  
+				add                 sp, sp, t1
+i000000039e:	lw                  s9, 116(sp)         
+i000000039f:	lw                  s1, 112(sp)         
+i00000003a0:	lw                  s0, 0(sp)           
+i00000003a1:	add                 s1, s1, s1
+i00000003a2:	srli                s1, t3, 17
+i00000003a3:	srlw                s3, a1, a0
+i00000003a4:	sraiw               a5, s0, 7 
+i00000003a5:	sw                  t0, 36(sp)          
+i00000003a6:	ld                  a5, -704(sp)        
+i00000003a7:	lwu                 a3, -868(sp)        
+i00000003a8:	sd                  s0, 8(sp)           
+i00000003a9:	xor                 s1, s1, s1
+i00000003aa:	mulhsu              gp, s9, t2
+i00000003ab:	ori                 s2, t6, -112
+i00000003ac:	remuw               s3, s2, a7
+i00000003ad:	ld                  t3, 256(sp)         
+i00000003ae:	div                 t6, t0, tp
+i00000003af:	ld                  t2, -1256(sp)       
+i00000003b0:	mulw                a5, a6, a6
+i00000003b1:	addw                a5, a5, a1
+				la                  sp, begin_signature
+				li                  t1, 11952 
+				add                 sp, sp, t1
+i00000003b2:	lb                  s0, 940(sp)         
+				la                  sp, begin_signature
+				li                  t1, 4824  
+				add                 sp, sp, t1
+i00000003b3:	lhu                 zero, -806(sp)      
+i00000003b4:	mulw                a2, s8, a3
+i00000003b5:	addi                s1, s1, 5 
+i00000003b6:	addw                s0, s0, s1
+i00000003b7:	sw                  tp, 40(sp)          
+i00000003b8:	lui                 s0, 13    
+i00000003b9:	addw                a5, a4, zero
+i00000003ba:	ld                  s1, 104(sp)         
+i00000003bb:	addi                sp, sp, -144
+i00000003bc:	sd                  s1, 0(sp)           
+i00000003bd:	lw                  s0, 36(sp)          
+i00000003be:	fence.i                       
+i00000003bf:	addi                a4, a4, -26
+i00000003c0:	mulhsu              t5, s10, s11
+i00000003c1:	sd                  s10, 248(sp)        
+i00000003c2:	sub                 a3, s11, s6
+i00000003c3:	fence                         
+i00000003c4:	srli                a4, a4, 15
+				li                  x20, 12   
+				addi                x29, x29, 1
+				addi                sp, sp, -176
+				fence                         
+				addi                a5, zero, 6
+				div                 s1, a7, s10
+				ori                 s2, s9, -1647
+				addiw               s11, s0, -637
+				div                 s2, s1, a5
+	
+b00000003c5:
+				pre_branch_macro                        
+				bne                 x29, x20, i00000003c0
+				post_branch_macro                       
+	
+				sd                  a5, -336(sp)        
+				srai                a4, a4, 9 
+				addiw               a5, a5, 16
+				addi                a4, sp, 408
+				lui                 s8, 9     
+				sw                  a5, 28(sp)          
+				mulhsu              a6, s0, s1
+				li                  x29, 10   
+i00000003c5:	addi                sp, sp, 16
+i00000003c6:	srl                 t1, a3, a6
+i00000003c7:	divu                s4, s8, t5
+i00000003c8:	divw                s5, s1, s1
+i00000003c9:	lh                  s10, 560(sp)        
+i00000003ca:	addiw               a2, a2, -19
+i00000003cb:	addi                sp, sp, -496
+i00000003cc:	sraiw               a1, a6, 0 
+i00000003cd:	sw                  a5, 128(sp)         
+i00000003ce:	divw                s2, a5, s0
+				la                  sp, begin_signature
+				li                  t1, 5344  
+				add                 sp, sp, t1
+i00000003cf:	lwu                 a7, -1096(sp)       
+i00000003d0:	addw                a3, a3, a5
+i00000003d1:	srli                a4, a4, 5 
+i00000003d2:	sllw                s0, s1, a5
+i00000003d3:	addi                a5, sp, 396
+i00000003d4:	addi                s5, zero, -19
+i00000003d5:	sb                  s0, -1412(sp)       
+i00000003d6:	mul                 s6, t6, s7
+i00000003d7:	srliw               s5, a5, 21
+i00000003d8:	remw                s4, a5, s0
+i00000003d9:	mulw                a5, tp, gp
+i00000003da:	lw                  a5, 40(sp)          
+i00000003db:	mulw                a5, a5, s0
+i00000003dc:	div                 s3, a3, s3
+i00000003dd:	rem                 s0, s0, s1
+i00000003de:	mulw                a5, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 9472  
+				add                 sp, sp, t1
+i00000003df:	ld                  s0, 80(sp)          
+i00000003e0:	remw                s1, s0, s1
+i00000003e1:	div                 s9, s1, s1
+i00000003e2:	sw                  s1, 128(sp)         
+i00000003e3:	lwu                 s1, 100(sp)         
+i00000003e4:	slli                s1, s1, 13
+i00000003e5:	lw                  a4, -1732(sp)       
+i00000003e6:	srli                a0, a0, 11
+i00000003e7:	addi                s0, sp, 204
+i00000003e8:	addi                sp, sp, -112
+i00000003e9:	remuw               s0, a4, gp
+i00000003ea:	remuw               a5, s11, s5
+i00000003eb:	lw                  s1, 48(sp)          
+i00000003ec:	addiw               s7, s2, -2011
+				li                  x24, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 14008 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3216  
+				add                 sp, sp, t1
+				addw                a4, a4, a4
+				fence.i                       
+				lbu                 s0, -314(sp)        
+				remu                s2, a5, s1
+				ld                  s5, 88(sp)          
+				sd                  s0, 80(sp)          
+				remw                s4, zero, s11
+	
+b00000003ed:
+				pre_branch_macro                        
+				bne                 x29, x24, i00000003e5
+				post_branch_macro                       
+	
+				srai                a4, a4, 9 
+				mulh                s1, s2, s2
+				lbu                 tp, 2039(sp)        
+				sw                  gp, 932(sp)         
+				lbu                 s0, -1542(sp)       
+				lwu                 s4, -412(sp)        
+				sb                  s1, 360(sp)         
+				li                  x29, 10   
+i00000003ed:	addiw               s0, s0, -25
+i00000003ee:	srli                s0, s0, 6 
+i00000003ef:	addw                a2, s4, t5
+i00000003f0:	addi                a0, s1, 767
+i00000003f1:	addi                sp, sp, -272
+i00000003f2:	or                  s1, s9, s3
+				la                  sp, begin_signature
+				li                  t1, 11216 
+				add                 sp, sp, t1
+i00000003f3:	sd                  t1, 168(sp)         
+i00000003f4:	subw                a2, a2, s1
+i00000003f5:	addi                sp, sp, 240
+i00000003f6:	sraw                zero, a3, a6
+i00000003f7:	srai                s1, s1, 6 
+i00000003f8:	addi                sp, sp, -464
+i00000003f9:	sb                  a5, 572(sp)         
+i00000003fa:	fence                         
+i00000003fb:	lwu                 tp, -564(sp)        
+i00000003fc:	ld                  s10, -1768(sp)      
+i00000003fd:	srliw               a5, gp, 4 
+i00000003fe:	lbu                 gp, -1363(sp)       
+i00000003ff:	fence                         
+i0000000400:	srli                s1, s0, 30
+i0000000401:	srlw                s1, s2, a4
+i0000000402:	addi                s0, sp, 248
+i0000000403:	sh                  s1, 934(sp)         
+i0000000404:	addi                a3, sp, 412
+i0000000405:	divuw               a5, a5, a5
+i0000000406:	srli                a3, a3, 4 
+i0000000407:	mulhu               t0, s0, s1
+i0000000408:	fence.i                       
+i0000000409:	subw                s1, s1, a2
+i000000040a:	slliw               s0, a5, 11
+				la                  sp, begin_signature
+				li                  t1, 6672  
+				add                 sp, sp, t1
+i000000040b:	lw                  s1, 104(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7120  
+				add                 sp, sp, t1
+i000000040c:	lw                  s11, 576(sp)        
+i000000040d:	addi                s0, sp, 176
+i000000040e:	srli                a5, a5, 10
+i000000040f:	sd                  a5, 784(sp)         
+i0000000410:	addi                a2, sp, 40
+i0000000411:	rem                 a5, s0, s0
+i0000000412:	addi                sp, sp, 160
+i0000000413:	lhu                 a5, -1890(sp)       
+i0000000414:	addi                sp, sp, 208
+				ld                  s1, -880(sp)        
+				lb                  a6, -190(sp)        
+				remw                s10, s6, s3
+				srli                a4, a4, 30
+				remw                a5, s5, s9
+				div                 s0, a5, a5
+				sraw                s1, s0, s0
+	
+b0000000415:
+				jal                 x1, i0000000423     
+	
+				add                 t6, s0, s1
+				addw                a4, a4, a4
+				sd                  s1, 8(sp)           
+				lw                  a6, 1204(sp)        
+				slt                 s3, s1, a5
+				fence                         
+				fence                         
+i0000000415:	sb                  s1, -1013(sp)       
+i0000000416:	lw                  s0, 4(sp)           
+i0000000417:	fence.i                       
+i0000000418:	addw                s0, s0, a2
+i0000000419:	mul                 a4, a5, a5
+i000000041a:	ld                  a5, -1688(sp)       
+i000000041b:	sd                  t0, 168(sp)         
+i000000041c:	divw                a2, t1, t2
+i000000041d:	addi                sp, sp, -448
+i000000041e:	fence.i                       
+i000000041f:	addi                sp, sp, -176
+i0000000420:	subw                a5, a5, a0
+i0000000421:	sllw                s0, a2, t1
+				la                  sp, begin_signature
+				li                  t1, 10112 
+				add                 sp, sp, t1
+i0000000422:	sd                  s0, 64(sp)          
+i0000000423:	addw                a1, a1, a0
+i0000000424:	remw                t2, t2, s6
+i0000000425:	divuw               t3, s6, s11
+i0000000426:	addiw               a7, a1, -1046
+i0000000427:	slliw               a5, s1, 18
+i0000000428:	sw                  s11, -1724(sp)      
+i0000000429:	fence.i                       
+i000000042a:	srli                a4, a4, 16
+i000000042b:	lw                  a4, 48(sp)          
+i000000042c:	mulhsu              a5, s10, s10
+i000000042d:	srai                t5, s1, 31
+i000000042e:	fence.i                       
+i000000042f:	lui                 t6, 28    
+i0000000430:	andi                a5, a5, 5 
+i0000000431:	addw                s0, s0, s0
+i0000000432:	fence                         
+i0000000433:	srai                a3, a3, 12
+i0000000434:	xor                 a4, a4, a3
+i0000000435:	slli                a0, a0, 11
+i0000000436:	fence.i                       
+i0000000437:	srai                s0, s0, 14
+i0000000438:	lh                  s9, -100(sp)        
+i0000000439:	mulhu               s2, s7, s2
+i000000043a:	mulhu               s0, s1, s0
+i000000043b:	subw                s1, s5, s6
+				la                  sp, begin_signature
+				li                  t1, 7544  
+				add                 sp, sp, t1
+i000000043c:	sw                  s1, 36(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11448 
+				add                 sp, sp, t1
+				addw                a5, a5, s0
+				remw                s0, s10, s2
+				fence.i                       
+				lwu                 s7, -2032(sp)       
+				addi                s1, sp, 492
+				addi                sp, sp, -224
+				ld                  s3, 152(sp)         
+	
+b000000043d:
+				jal                 x1, i0000000457     
+	
+				sw                  s0, 32(sp)          
+				sh                  s0, 268(sp)         
+				lw                  a5, 56(sp)          
+				addi                sp, sp, 48
+				ld                  t2, 736(sp)         
+				sw                  s1, 8(sp)           
+				or                  s1, s7, t6
+i000000043d:	srli                a2, a2, 12
+i000000043e:	divw                s1, s1, s1
+i000000043f:	or                  s1, t1, s4
+i0000000440:	srli                s4, s11, 48
+i0000000441:	andi                s1, s1, 7 
+i0000000442:	addi                s0, sp, 184
+i0000000443:	srai                a5, a5, 26
+i0000000444:	xori                a5, s6, 1107
+i0000000445:	sw                  a0, 24(sp)          
+i0000000446:	lw                  a2, 56(sp)          
+i0000000447:	mulhu               s2, s1, s1
+i0000000448:	lw                  a5, 668(sp)         
+i0000000449:	remuw               a5, s0, a5
+i000000044a:	subw                a3, a3, a5
+i000000044b:	addi                sp, sp, -496
+i000000044c:	slli                a2, a2, 18
+i000000044d:	remuw               t2, tp, a0
+i000000044e:	slliw               a5, gp, 17
+i000000044f:	subw                a2, a2, a3
+i0000000450:	srli                a4, a4, 13
+i0000000451:	srli                a2, a2, 9 
+i0000000452:	lhu                 s1, 1240(sp)        
+i0000000453:	srai                a4, a4, 11
+i0000000454:	divuw               s0, s0, s1
+i0000000455:	sd                  a5, -1664(sp)       
+i0000000456:	mulhu               a5, s4, s5
+i0000000457:	lb                  t6, 351(sp)         
+i0000000458:	sd                  s0, 1392(sp)        
+i0000000459:	sltiu               s1, s7, 1312
+i000000045a:	auipc               s4, 258581
+i000000045b:	srai                s1, s1, 12
+i000000045c:	and                 a7, s1, s1
+i000000045d:	lw                  s0, 1396(sp)        
+i000000045e:	subw                a5, a5, a1
+i000000045f:	remuw               a6, a5, a5
+i0000000460:	and                 a1, a1, a4
+i0000000461:	sd                  a5, -2024(sp)       
+i0000000462:	sd                  s0, -1000(sp)       
+i0000000463:	srai                a5, a5, 3 
+i0000000464:	div                 s1, s0, s1
+				andi                a4, a4, -11
+				addi                a4, sp, 440
+				sw                  a4, 20(sp)          
+				fence                         
+				sw                  s8, -1932(sp)       
+				sd                  a5, 1824(sp)        
+				fence.i                       
+	
+b0000000465:
+				jal                 x0, i000000046d     
+	
+				lw                  gp, 88(sp)          
+				srai                s1, s1, 15
+				addiw               s0, s0, -23
+				xor                 a5, s1, s0
+				srai                s0, s0, 16
+				addi                sp, sp, -464
+				addw                s1, s1, s0
+i0000000465:	addi                sp, sp, -176
+i0000000466:	sll                 s9, a5, s1
+i0000000467:	fence.i                       
+i0000000468:	srli                s0, s0, 6 
+i0000000469:	sub                 s1, a5, a5
+i000000046a:	addi                sp, sp, -208
+i000000046b:	subw                a3, a3, a1
+i000000046c:	srli                a4, a4, 4 
+i000000046d:	srli                s0, s0, 14
+i000000046e:	addi                a5, sp, 424
+i000000046f:	addi                s0, sp, 116
+i0000000470:	add                 t1, zero, s0
+i0000000471:	sw                  a0, -312(sp)        
+i0000000472:	add                 s2, s2, s0
+				la                  sp, begin_signature
+				li                  t1, 9632  
+				add                 sp, sp, t1
+i0000000473:	sh                  a5, -1532(sp)       
+i0000000474:	addi                s0, sp, 480
+i0000000475:	srli                s0, s0, 5 
+i0000000476:	srli                a1, a1, 30
+i0000000477:	addi                sp, sp, -480
+i0000000478:	fence                         
+i0000000479:	srai                a0, a0, 2 
+i000000047a:	addiw               s0, s0, 15
+i000000047b:	rem                 s3, s5, s6
+i000000047c:	xor                 a2, s2, s10
+i000000047d:	slli                a3, a3, 4 
+i000000047e:	lb                  s1, -1116(sp)       
+i000000047f:	sraw                t2, a5, s1
+i0000000480:	mulhu               a5, a5, s1
+i0000000481:	sra                 s0, s1, a5
+i0000000482:	mulw                tp, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 9952  
+				add                 sp, sp, t1
+i0000000483:	ld                  a5, 176(sp)         
+i0000000484:	sllw                s0, s4, a1
+i0000000485:	mulw                s1, s7, t2
+i0000000486:	sraiw               t5, t6, 17
+i0000000487:	sw                  s9, 84(sp)          
+i0000000488:	lw                  s7, 76(sp)          
+i0000000489:	ld                  s1, 120(sp)         
+i000000048a:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 14224 
+				add                 sp, sp, t1
+i000000048b:	lw                  s3, 0(sp)           
+i000000048c:	addi                sp, sp, -384
+				li                  x20, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 14016 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 5072  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 12736 
+				add                 sp, sp, t1
+				mulw                s3, t2, gp
+				srliw               t6, s10, 9
+				srai                s0, s0, 6 
+				divuw               a5, a7, t2
+				and                 s3, a5, s0
+				lw                  a5, 1424(sp)        
+				and                 a4, a4, a4
+	
+b000000048d:
+				beq                 x29, x20, 1f        
+				la                  x20, i0000000471    
+				jalr                x1, x20, 0          
+				1: li x29, 10                           
+	
+				slti                s1, t2, -178
+				srli                a5, a5, 26
+				sw                  a4, 236(sp)         
+				addiw               zero, s0, -1112
+				fence                         
+				sd                  a5, 8(sp)           
+				sd                  a5, -1320(sp)       
+i000000048d:	slli                s1, s1, 17
+i000000048e:	srai                s0, s0, 14
+i000000048f:	addw                s1, s1, a3
+i0000000490:	fence.i                       
+i0000000491:	fence                         
+i0000000492:	fsrmi               x0, 6     
+				la                  sp, begin_signature
+				li                  t1, 6184  
+				add                 sp, sp, t1
+i0000000493:	sd                  a5, 8(sp)           
+i0000000494:	fence                         
+i0000000495:	sd                  a4, 32(sp)          
+i0000000496:	ld                  gp, 256(sp)         
+i0000000497:	addi                s1, sp, 344
+i0000000498:	slliw               a5, s1, 29
+i0000000499:	srai                s1, s1, 2 
+i000000049a:	add                 s4, s4, a5
+i000000049b:	subw                a5, a0, s5
+i000000049c:	fence                         
+i000000049d:	fence.i                       
+i000000049e:	sllw                s0, s1, s0
+i000000049f:	addi                s0, sp, 188
+i00000004a0:	add                 a6, zero, s1
+i00000004a1:	lw                  s0, -1168(sp)       
+i00000004a2:	mul                 s4, s10, t6
+i00000004a3:	xori                a5, s0, -1471
+i00000004a4:	srli                a3, a3, 11
+i00000004a5:	srai                a3, a3, 14
+i00000004a6:	remw                s0, a2, a1
+i00000004a7:	addi                sp, sp, 160
+i00000004a8:	srai                a2, a2, 4 
+i00000004a9:	sltu                a3, a1, gp
+i00000004aa:	sub                 s1, s1, a5
+i00000004ab:	srliw               s5, s2, 6 
+i00000004ac:	ld                  s1, -232(sp)        
+i00000004ad:	sub                 s0, s0, s0
+i00000004ae:	srai                a1, a1, 14
+i00000004af:	addw                s5, t3, gp
+i00000004b0:	addw                a5, a5, a5
+i00000004b1:	or                  a5, s1, a5
+i00000004b2:	srliw               a5, a5, 16
+i00000004b3:	lui                 s1, 24    
+i00000004b4:	lwu                 s8, -996(sp)        
+i00000004b5:	lh                  zero, 956(sp)       
+				and                 a5, s7, s7
+				div                 a5, s5, t3
+				fence                         
+				sw                  a5, 116(sp)         
+				srliw               a5, s0, 21
+				fence.i                       
+				sraiw               s1, s1, 2 
+	
+b00000004b6:
+				jal                 x1, i00000004bd     
+	
+				ori                 s3, a5, -1549
+				ld                  s2, 136(sp)         
+				remu                s0, s8, a7
+				srai                a4, a4, 3 
+				add                 s0, zero, s1
+				srli                a5, a5, 2 
+				addiw               s1, s9, 1743
+i00000004b6:	srai                a5, a5, 15
+i00000004b7:	lui                 a5, 504761
+i00000004b8:	lb                  s8, -455(sp)        
+i00000004b9:	fence                         
+i00000004ba:	slti                s3, s1, 543
+i00000004bb:	divw                s6, s10, s6
+i00000004bc:	srai                a5, a5, 3 
+				la                  sp, begin_signature
+				li                  t1, 12616 
+				add                 sp, sp, t1
+i00000004bd:	lw                  s1, 28(sp)          
+i00000004be:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 7152  
+				add                 sp, sp, t1
+i00000004bf:	ld                  a5, 144(sp)         
+i00000004c0:	andi                a3, a3, 11
+i00000004c1:	fence                         
+i00000004c2:	fence.i                       
+i00000004c3:	mulw                s2, a5, s1
+i00000004c4:	divuw               s11, t6, zero
+i00000004c5:	fence                         
+i00000004c6:	fsrmi               x0, 5     
+i00000004c7:	sd                  a5, 176(sp)         
+i00000004c8:	addi                a7, zero, -28
+i00000004c9:	mulhu               s0, s4, a6
+				la                  sp, begin_signature
+				li                  t1, 12624 
+				add                 sp, sp, t1
+i00000004ca:	ld                  s9, 1664(sp)        
+i00000004cb:	addw                a3, a3, a5
+i00000004cc:	addi                a2, a2, 15
+i00000004cd:	srli                s0, t6, 35
+				la                  sp, begin_signature
+				li                  t1, 8672  
+				add                 sp, sp, t1
+i00000004ce:	lbu                 tp, -1712(sp)       
+i00000004cf:	divw                s1, tp, t1
+i00000004d0:	remw                a5, a3, a4
+i00000004d1:	mulhsu              s1, s0, a5
+i00000004d2:	srai                s0, s0, 2 
+i00000004d3:	srai                a1, a1, 26
+i00000004d4:	srai                a3, a3, 15
+i00000004d5:	remuw               s4, s1, s1
+i00000004d6:	sd                  s11, 120(sp)        
+i00000004d7:	ori                 a5, s0, 679
+i00000004d8:	and                 s1, s1, a3
+				la                  sp, begin_signature
+				li                  t1, 9496  
+				add                 sp, sp, t1
+i00000004d9:	sd                  a5, 0(sp)           
+i00000004da:	mulhu               gp, zero, a6
+i00000004db:	divw                s5, s5, a6
+i00000004dc:	remu                s1, s5, t6
+i00000004dd:	srai                s1, s1, 2 
+i00000004de:	subw                a2, a2, s1
+				li                  x25, 10   
+				la                  sp, begin_signature
+				li                  t1, 13696 
+				add                 sp, sp, t1
+				sd                  s3, 368(sp)         
+				mulhsu              a4, tp, tp
+				sw                  s7, 32(sp)          
+				divuw               a5, s5, tp
+				ld                  s0, -1336(sp)       
+				lwu                 a5, 1792(sp)        
+				lw                  a5, 4(sp)           
+	
+b00000004df:
+				beq                 x29, x25, 1f        
+				jal                 x10, i00000004bc    
+				1: li x29, 10                           
+	
+				lwu                 s1, 576(sp)         
+				remu                s7, s10, s7
+				addi                a4, sp, 116
+				ori                 a5, a5, 972
+				srai                a4, a4, 4 
+				fence                         
+				fence.i                       
+i00000004df:	addi                a1, sp, 400
+i00000004e0:	addi                sp, sp, 80
+i00000004e1:	srai                a1, a1, 7 
+				la                  sp, begin_signature
+				li                  t1, 4960  
+				add                 sp, sp, t1
+i00000004e2:	sw                  s0, 0(sp)           
+i00000004e3:	fence                         
+i00000004e4:	remw                t5, gp, t2
+i00000004e5:	ld                  t3, 24(sp)          
+i00000004e6:	mulw                s11, gp, t2
+i00000004e7:	mulw                s0, a0, a3
+i00000004e8:	ld                  zero, 176(sp)       
+i00000004e9:	addiw               s0, s0, -29
+i00000004ea:	fence                         
+i00000004eb:	addiw               a1, s0, 1948
+i00000004ec:	srai                t3, s0, 47
+i00000004ed:	fence                         
+i00000004ee:	slt                 s7, s5, t5
+i00000004ef:	sub                 s7, t2, a1
+i00000004f0:	mulw                a5, a5, s0
+i00000004f1:	srlw                s1, a2, a6
+i00000004f2:	lui                 s1, 404900
+i00000004f3:	fence                         
+i00000004f4:	div                 s1, t5, s5
+i00000004f5:	addi                s1, s1, -25
+i00000004f6:	remw                a5, a3, t0
+i00000004f7:	slli                s0, s0, 24
+i00000004f8:	sd                  s0, 104(sp)         
+i00000004f9:	remw                s3, s0, a5
+i00000004fa:	sd                  a5, -56(sp)         
+i00000004fb:	srai                s1, s1, 3 
+i00000004fc:	addi                sp, sp, 160
+i00000004fd:	fence                         
+i00000004fe:	div                 a5, a7, a2
+i00000004ff:	ld                  s0, 80(sp)          
+i0000000500:	mulhu               s1, t3, a3
+i0000000501:	addi                sp, sp, -288
+i0000000502:	lui                 a2, 32    
+i0000000503:	sd                  a5, -928(sp)        
+i0000000504:	sw                  a0, 40(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12584 
+				add                 sp, sp, t1
+i0000000505:	ld                  t1, 48(sp)          
+i0000000506:	remuw               s7, gp, a0
+				li                  x27, 12   
+				addi                x29, x29, 1
+				srli                a4, a4, 6 
+				addiw               a4, a4, -11
+				divuw               a7, a7, gp
+				srai                s1, s1, 6 
+				remuw               gp, t2, a4
+				addi                sp, sp, -480
+				addi                sp, sp, -384
+	
+b0000000507:
+				beq                 x29, x27, 1f        
+				la                  x27, i00000004f2    
+				jalr                x1, x27, 0          
+				1: li x29, 10                           
+	
+				mulhsu              s8, a7, s8
+				fence                         
+				mulw                s0, s1, a5
+				addi                a5, zero, 13
+				addi                a4, a4, 11
+				srli                a4, a4, 15
+				mulw                s9, s0, s1
+i0000000507:	lw                  t3, 100(sp)         
+i0000000508:	mulhu               s0, a6, a7
+i0000000509:	lw                  s9, 64(sp)          
+i000000050a:	sltu                s11, a1, t3
+i000000050b:	ld                  s0, 184(sp)         
+i000000050c:	subw                a1, a1, a1
+i000000050d:	xor                 s1, s1, s1
+i000000050e:	srai                s1, s1, 7 
+i000000050f:	sw                  s0, 24(sp)          
+i0000000510:	sd                  s0, 0(sp)           
+i0000000511:	sd                  s1, 96(sp)          
+i0000000512:	fence                         
+i0000000513:	addw                a0, a0, a2
+i0000000514:	addw                a1, a1, a0
+				la                  sp, begin_signature
+				li                  t1, 12656 
+				add                 sp, sp, t1
+i0000000515:	sw                  t5, 596(sp)         
+i0000000516:	lw                  s4, 12(sp)          
+i0000000517:	srli                a3, a3, 10
+i0000000518:	addw                a0, a0, a5
+i0000000519:	srli                a3, a3, 31
+i000000051a:	sw                  s8, 96(sp)          
+i000000051b:	addw                s1, s1, a3
+i000000051c:	sd                  s1, 160(sp)         
+i000000051d:	remuw               s1, a5, s0
+i000000051e:	rem                 s4, s0, a5
+i000000051f:	lw                  tp, 1908(sp)        
+i0000000520:	lwu                 s0, 1800(sp)        
+i0000000521:	sw                  s1, 52(sp)          
+i0000000522:	addi                a3, a3, -27
+i0000000523:	lw                  a2, 8(sp)           
+i0000000524:	addiw               a5, s1, 1201
+i0000000525:	addi                a1, sp, 244
+i0000000526:	srli                a3, a3, 14
+i0000000527:	addw                a5, a5, a1
+i0000000528:	mulh                a5, s0, a5
+i0000000529:	or                  a5, a5, a5
+i000000052a:	addi                sp, sp, -352
+i000000052b:	divuw               s1, s10, a4
+				la                  sp, begin_signature
+				li                  t1, 13352 
+				add                 sp, sp, t1
+i000000052c:	ld                  a5, 112(sp)         
+i000000052d:	sd                  t6, 16(sp)          
+i000000052e:	srai                a5, a5, 3 
+				li                  x31, 12   
+				addi                x29, x29, 1
+				srai                a4, a4, 4 
+				lb                  s11, -134(sp)       
+				ld                  s1, 1360(sp)        
+				subw                a4, a4, a4
+				lh                  s1, 1722(sp)        
+				lw                  s0, 88(sp)          
+				subw                a4, a4, s1
+	
+b000000052f:
+				beq                 x29, x31, 1f        
+				jal                 x0, i0000000514     
+				1: li x29, 10                           
+	
+				sd                  s2, 256(sp)         
+				slt                 s0, gp, s3
+				ori                 s5, a5, -1208
+				remw                s0, s1, a5
+				sra                 s1, t3, gp
+				subw                a4, a4, a5
+				sd                  s0, 88(sp)          
+i000000052f:	addi                s4, zero, 12
+i0000000530:	addi                sp, sp, 240
+i0000000531:	addi                a3, sp, 348
+i0000000532:	sltu                s1, a5, a5
+i0000000533:	srai                a3, a3, 6 
+i0000000534:	addw                s1, s1, s0
+i0000000535:	lhu                 a5, -1436(sp)       
+i0000000536:	mulhu               a5, a5, a5
+i0000000537:	rem                 s6, t1, t1
+i0000000538:	and                 a5, a5, s1
+i0000000539:	divuw               a5, s0, a5
+i000000053a:	ld                  a6, 216(sp)         
+i000000053b:	lw                  s7, 40(sp)          
+i000000053c:	mulhsu              t1, s1, a5
+i000000053d:	lh                  s7, 48(sp)          
+i000000053e:	fence                         
+i000000053f:	sd                  a5, 120(sp)         
+i0000000540:	and                 a5, a5, a4
+i0000000541:	sd                  a5, 168(sp)         
+				la                  sp, begin_signature
+				li                  t1, 13024 
+				add                 sp, sp, t1
+i0000000542:	lb                  a7, 1721(sp)        
+i0000000543:	sw                  s1, 108(sp)         
+i0000000544:	mulw                s0, s3, a0
+i0000000545:	srli                a5, a5, 16
+i0000000546:	slti                s0, s8, 253
+i0000000547:	andi                tp, s11, 27
+				la                  sp, begin_signature
+				li                  t1, 5296  
+				add                 sp, sp, t1
+i0000000548:	ld                  a4, 72(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12976 
+				add                 sp, sp, t1
+i0000000549:	ld                  a0, 56(sp)          
+i000000054a:	divw                s0, a6, a3
+i000000054b:	sraw                t1, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 9616  
+				add                 sp, sp, t1
+i000000054c:	ld                  a4, -1416(sp)       
+i000000054d:	fence                         
+i000000054e:	sw                  a5, 76(sp)          
+i000000054f:	ld                  a2, 112(sp)         
+i0000000550:	lw                  s2, 12(sp)          
+i0000000551:	lw                  t5, 112(sp)         
+i0000000552:	addi                sp, sp, 64
+i0000000553:	remw                tp, s0, s0
+i0000000554:	srai                s0, s1, 33
+i0000000555:	srli                s1, s1, 2 
+i0000000556:	addiw               tp, gp, 1123
+				li                  x28, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 11952 
+				add                 sp, sp, t1
+				sd                  tp, -528(sp)        
+				sw                  s1, 96(sp)          
+				sd                  s1, 0(sp)           
+				lhu                 a5, -1038(sp)       
+				add                 s1, s9, gp
+				srliw               s6, s1, 7 
+				fence                         
+	
+b0000000557:
+				pre_branch_macro                        
+				blt                 x29, x28, i0000000551
+				post_branch_macro                       
+	
+				addiw               s0, s0, -14
+				fence                         
+				srli                a5, a5, 14
+				mul                 s0, s2, s8
+				srli                s0, s0, 15
+				ld                  a5, 320(sp)         
+				lhu                 s1, -388(sp)        
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 8896  
+				add                 sp, sp, t1
+i0000000557:	sd                  a5, -1096(sp)       
+i0000000558:	sw                  a4, -956(sp)        
+i0000000559:	remw                a5, s1, s1
+i000000055a:	lbu                 s1, 1979(sp)        
+i000000055b:	srai                a1, a1, 6 
+i000000055c:	lw                  s7, 116(sp)         
+i000000055d:	or                  a5, a5, a3
+i000000055e:	ld                  s1, 208(sp)         
+i000000055f:	srai                s1, s1, 12
+i0000000560:	lbu                 a5, -1537(sp)       
+i0000000561:	sw                  t2, 96(sp)          
+i0000000562:	srl                 s1, s0, s0
+i0000000563:	and                 a3, a3, a3
+				la                  sp, begin_signature
+				li                  t1, 10976 
+				add                 sp, sp, t1
+i0000000564:	ld                  s6, 24(sp)          
+i0000000565:	ld                  a7, 416(sp)         
+i0000000566:	auipc               t5, 30667 
+i0000000567:	srliw               a5, s0, 30
+i0000000568:	mul                 s0, t2, s7
+i0000000569:	sra                 s0, s1, s1
+i000000056a:	lw                  s0, 68(sp)          
+i000000056b:	sraiw               a5, a4, 15
+i000000056c:	srli                a3, a3, 2 
+i000000056d:	srl                 a5, a5, s0
+i000000056e:	addi                a5, sp, 504
+i000000056f:	srli                s0, s0, 15
+				la                  sp, begin_signature
+				li                  t1, 2312  
+				add                 sp, sp, t1
+i0000000570:	sw                  a2, -576(sp)        
+i0000000571:	addi                a2, sp, 380
+i0000000572:	lui                 s8, 28    
+i0000000573:	fence                         
+i0000000574:	addi                s1, sp, 292
+i0000000575:	sub                 a2, a2, s0
+i0000000576:	subw                a4, a4, a5
+i0000000577:	lb                  a1, 1322(sp)        
+i0000000578:	addiw               s1, s1, -16
+i0000000579:	andi                s1, s1, -11
+i000000057a:	ld                  s1, -896(sp)        
+i000000057b:	sub                 tp, s1, s1
+i000000057c:	srli                s1, s1, 28
+i000000057d:	remuw               a5, s1, s1
+i000000057e:	addi                s5, s1, 191
+				li                  x23, 10   
+				la                  sp, begin_signature
+				li                  t1, 6936  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4128  
+				add                 sp, sp, t1
+				srai                a4, a4, 10
+				ld                  a4, 120(sp)         
+				srlw                s6, s3, gp
+				xor                 a5, a5, a4
+				sh                  gp, 1444(sp)        
+				srai                a4, a4, 4 
+				srai                a4, a4, 11
+	
+b000000057f:
+				beq                 x29, x23, 1f        
+				jal                 x1, i0000000565     
+				1: li x29, 10                           
+	
+				lwu                 s1, -20(sp)         
+				ld                  t6, -744(sp)        
+				divu                s8, s0, s1
+				lw                  s8, 36(sp)          
+				ld                  a5, 8(sp)           
+				lw                  a4, 16(sp)          
+				srli                a5, a5, 16
+i000000057f:	mul                 s0, s0, a5
+i0000000580:	auipc               a5, 289716
+i0000000581:	subw                a0, s5, a2
+i0000000582:	srli                a1, a1, 7 
+i0000000583:	sd                  a0, 88(sp)          
+i0000000584:	sub                 s0, a5, a5
+i0000000585:	addiw               s0, s7, 1223
+i0000000586:	and                 a1, a1, a2
+i0000000587:	srli                a0, a0, 19
+i0000000588:	sd                  s8, 520(sp)         
+i0000000589:	srai                s0, s0, 11
+i000000058a:	sb                  s3, -729(sp)        
+i000000058b:	lw                  a3, 32(sp)          
+i000000058c:	fence.i                       
+i000000058d:	addiw               s4, s3, 131
+i000000058e:	addi                sp, sp, -96
+i000000058f:	ld                  t3, 8(sp)           
+i0000000590:	lb                  s0, -1466(sp)       
+i0000000591:	lw                  s0, 96(sp)          
+i0000000592:	srlw                s10, t2, s4
+i0000000593:	lb                  a5, 865(sp)         
+i0000000594:	andi                a5, s7, 1213
+i0000000595:	fsrmi               x0, 0     
+i0000000596:	ld                  a2, 0(sp)           
+i0000000597:	or                  s0, s0, a3
+i0000000598:	sw                  a2, 0(sp)           
+i0000000599:	remuw               s3, t0, s8
+i000000059a:	sra                 s10, a6, a6
+i000000059b:	addw                s0, s0, a0
+i000000059c:	sd                  a3, 144(sp)         
+i000000059d:	addi                s1, sp, 208
+i000000059e:	srli                s1, s1, 3 
+i000000059f:	srli                s1, s1, 7 
+i00000005a0:	fence                         
+i00000005a1:	mulw                a6, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 2944  
+				add                 sp, sp, t1
+i00000005a2:	lbu                 s1, -1491(sp)       
+i00000005a3:	sltiu               t5, s1, 1943
+i00000005a4:	sw                  a1, 40(sp)          
+i00000005a5:	sub                 a3, a3, s1
+i00000005a6:	addi                sp, sp, 240
+i00000005a7:	srli                a2, a2, 12
+				li                  x18, 10   
+				la                  sp, begin_signature
+				li                  t1, 7168  
+				add                 sp, sp, t1
+				ld                  s6, 1728(sp)        
+				sd                  a5, 144(sp)         
+				remu                s0, s0, a5
+				or                  a4, a4, s1
+				lw                  a5, 0(sp)           
+				mulhsu              s9, s0, a5
+				addw                a4, a4, s0
+	
+b00000005a8:
+				beq                 x29, x18, 1f        
+				la                  x18, i0000000593    
+				jalr                x10, x18, 0         
+				1: li x29, 10                           
+	
+				addw                a4, a4, s1
+				sd                  a5, 0(sp)           
+				mul                 s0, s0, a5
+				mulhsu              a6, s0, s1
+				and                 a5, a5, a4
+				srai                a4, a4, 10
+				srli                s0, s0, 7 
+i00000005a8:	srlw                a4, a1, s5
+i00000005a9:	lwu                 s0, 1128(sp)        
+i00000005aa:	srlw                a2, s1, s1
+i00000005ab:	lw                  t0, 104(sp)         
+i00000005ac:	sd                  t6, 1368(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7248  
+				add                 sp, sp, t1
+i00000005ad:	lw                  t2, 1004(sp)        
+i00000005ae:	slli                s1, s1, 30
+i00000005af:	addw                a5, a5, a3
+i00000005b0:	remuw               a4, s4, t0
+i00000005b1:	ld                  s1, 192(sp)         
+i00000005b2:	mulhsu              s0, a5, s1
+i00000005b3:	remw                s0, a5, s1
+				la                  sp, begin_signature
+				li                  t1, 6192  
+				add                 sp, sp, t1
+i00000005b4:	lw                  s1, 80(sp)          
+i00000005b5:	ld                  s1, -856(sp)        
+i00000005b6:	srlw                a0, a5, s1
+i00000005b7:	lh                  a5, 1332(sp)        
+i00000005b8:	remuw               s8, s5, gp
+i00000005b9:	lui                 s10, 393717
+i00000005ba:	sd                  s6, -1704(sp)       
+i00000005bb:	andi                a2, s0, -219
+i00000005bc:	lw                  a0, 64(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10328 
+				add                 sp, sp, t1
+i00000005bd:	sd                  s0, 56(sp)          
+i00000005be:	and                 t5, s4, gp
+i00000005bf:	slli                s0, s0, 5 
+i00000005c0:	addi                a1, sp, 500
+i00000005c1:	srli                s1, s1, 7 
+i00000005c2:	sw                  a5, 52(sp)          
+i00000005c3:	fence                         
+i00000005c4:	divuw               t3, a5, a5
+i00000005c5:	remuw               t1, t6, t3
+i00000005c6:	lw                  a4, 24(sp)          
+i00000005c7:	srli                a4, a4, 15
+i00000005c8:	and                 a4, a4, a1
+i00000005c9:	xor                 a2, a2, a2
+i00000005ca:	ld                  s1, -56(sp)         
+i00000005cb:	ld                  a3, 120(sp)         
+i00000005cc:	fence.i                       
+i00000005cd:	srai                a0, a0, 9 
+i00000005ce:	sraiw               a0, s1, 15
+i00000005cf:	mulw                s3, t5, s2
+				li                  x25, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 2280  
+				add                 sp, sp, t1
+				fence.i                       
+				ld                  s1, 88(sp)          
+				slliw               zero, s1, 18
+				mulhsu              s10, t2, s6
+				subw                s1, a5, s0
+				sraw                s0, a6, s5
+				srai                a5, a5, 2 
+	
+b00000005d0:
+				pre_branch_macro                        
+				bne                 x29, x25, i00000005dd
+				post_branch_macro                       
+	
+				lw                  s0, 44(sp)          
+				and                 s10, s0, s0
+				and                 s0, s10, s6
+				srli                a4, a4, 12
+				sd                  s8, 48(sp)          
+				sd                  a4, 112(sp)         
+				add                 s0, zero, zero
+				li                  x29, 10   
+i00000005d0:	srl                 s10, s0, a5
+i00000005d1:	sw                  s0, 40(sp)          
+i00000005d2:	fence.i                       
+i00000005d3:	addi                a0, a0, -9
+i00000005d4:	auipc               s5, 83043 
+i00000005d5:	remu                s2, s0, a5
+i00000005d6:	sd                  s0, 128(sp)         
+i00000005d7:	sd                  a4, -1880(sp)       
+i00000005d8:	lhu                 s1, -668(sp)        
+i00000005d9:	lw                  s1, 84(sp)          
+i00000005da:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 4360  
+				add                 sp, sp, t1
+i00000005db:	sw                  s1, 12(sp)          
+i00000005dc:	sd                  s1, 184(sp)         
+i00000005dd:	sraw                t6, a5, s0
+i00000005de:	lwu                 s1, 1072(sp)        
+i00000005df:	addiw               s0, s0, -2
+				la                  sp, begin_signature
+				li                  t1, 11016 
+				add                 sp, sp, t1
+i00000005e0:	sw                  s0, 64(sp)          
+i00000005e1:	sd                  s1, 1224(sp)        
+i00000005e2:	sll                 t1, s1, s1
+i00000005e3:	ld                  s0, 64(sp)          
+i00000005e4:	sd                  zero, 224(sp)       
+i00000005e5:	sw                  a5, 8(sp)           
+i00000005e6:	fence.i                       
+i00000005e7:	addiw               s1, a5, -453
+i00000005e8:	addi                a5, a5, -4
+i00000005e9:	rem                 s1, a5, s0
+i00000005ea:	lwu                 t5, 1404(sp)        
+i00000005eb:	sd                  a5, 1560(sp)        
+i00000005ec:	sw                  t6, 108(sp)         
+i00000005ed:	sra                 zero, s3, a2
+i00000005ee:	addi                a5, a3, 221
+i00000005ef:	srli                a3, a3, 4 
+i00000005f0:	srli                s0, s0, 28
+i00000005f1:	sraiw               s0, t2, 29
+i00000005f2:	ld                  s1, 88(sp)          
+i00000005f3:	srai                a5, a5, 14
+i00000005f4:	addw                s1, s1, a2
+i00000005f5:	addi                a1, sp, 376
+i00000005f6:	addiw               s1, s1, 3 
+i00000005f7:	fence                         
+				li                  x25, 11   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 6928  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4664  
+				add                 sp, sp, t1
+				sw                  s3, 20(sp)          
+				rem                 s0, gp, t3
+				xori                s1, a5, -367
+				sd                  s1, 200(sp)         
+				fence                         
+				xori                t2, s2, -509
+				sb                  s11, -431(sp)       
+	
+b00000005f8:
+				pre_branch_macro                        
+				beq                 x29, x25, i00000005da
+				post_branch_macro                       
+	
+				lb                  s0, 1524(sp)        
+				sh                  s0, -414(sp)        
+				lui                 s1, 22    
+				lw                  s2, 32(sp)          
+				lhu                 a4, 860(sp)         
+				fence.i                       
+				srli                a5, a5, 12
+				li                  x29, 10   
+i00000005f8:	sw                  t6, -936(sp)        
+i00000005f9:	remuw               s0, s9, s10
+				la                  sp, begin_signature
+				li                  t1, 8968  
+				add                 sp, sp, t1
+i00000005fa:	lbu                 s1, 52(sp)          
+i00000005fb:	addiw               a5, s4, -408
+i00000005fc:	srli                a4, a4, 1 
+i00000005fd:	sb                  t3, 47(sp)          
+i00000005fe:	sw                  s0, 40(sp)          
+i00000005ff:	subw                a5, a5, a3
+i0000000600:	sltu                a5, a5, s1
+i0000000601:	srai                s0, s0, 9 
+i0000000602:	and                 t5, a5, s1
+i0000000603:	slliw               s0, t0, 14
+i0000000604:	mulhsu              s6, t3, a4
+i0000000605:	subw                s0, s0, a2
+i0000000606:	lw                  gp, 476(sp)         
+i0000000607:	divw                a7, s1, a5
+i0000000608:	srai                s1, s0, 14
+i0000000609:	srli                a2, a2, 12
+i000000060a:	remw                tp, s5, t6
+i000000060b:	sb                  a5, 1355(sp)        
+i000000060c:	sw                  s9, 1648(sp)        
+i000000060d:	slliw               s1, a5, 28
+i000000060e:	addi                s1, s1, -15
+i000000060f:	lw                  s1, 24(sp)          
+i0000000610:	fence                         
+i0000000611:	sh                  s8, 1672(sp)        
+i0000000612:	srl                 a4, s6, s6
+i0000000613:	srlw                tp, s8, a1
+i0000000614:	fence                         
+i0000000615:	fence.i                       
+i0000000616:	srli                s0, s0, 13
+i0000000617:	fence                         
+i0000000618:	mulh                s0, s1, s1
+i0000000619:	sw                  a7, 8(sp)           
+i000000061a:	srai                a2, a2, 15
+i000000061b:	xor                 a5, a5, a2
+i000000061c:	ld                  s7, -504(sp)        
+i000000061d:	ld                  s0, 72(sp)          
+i000000061e:	srli                a2, a2, 15
+i000000061f:	mulw                a5, s0, s1
+				li                  x21, 11   
+				li                  x29, 10   
+				lw                  a5, 120(sp)         
+				fence                         
+				addi                a5, a5, -11
+				srliw               s2, s0, 18
+				addi                s3, zero, -14
+				sd                  a5, 536(sp)         
+				srai                s1, a5, 27
+	
+b0000000620:
+				pre_branch_macro                        
+				bne                 x29, x21, i000000062f
+				post_branch_macro                       
+	
+				sh                  s1, -444(sp)        
+				addi                a4, sp, 68
+				and                 a4, a4, a4
+				ld                  s1, -872(sp)        
+				addw                a4, a4, a4
+				mulw                a5, s4, tp
+				sd                  s9, 56(sp)          
+				li                  x29, 10   
+i0000000620:	lwu                 s1, 1784(sp)        
+i0000000621:	divw                s0, t0, tp
+i0000000622:	div                 s0, s10, s9
+i0000000623:	subw                a2, a2, s1
+i0000000624:	addi                a0, a0, -29
+i0000000625:	remu                a0, t3, t6
+i0000000626:	sd                  a2, 16(sp)          
+i0000000627:	sraiw               s0, s0, 5 
+i0000000628:	addi                sp, sp, -160
+i0000000629:	fence.i                       
+i000000062a:	fence.i                       
+i000000062b:	rem                 a5, s5, a0
+i000000062c:	sb                  a1, -1030(sp)       
+i000000062d:	addi                a0, sp, 264
+i000000062e:	fence                         
+i000000062f:	lui                 a5, 6     
+i0000000630:	addi                s0, sp, 280
+				la                  sp, begin_signature
+				li                  t1, 5440  
+				add                 sp, sp, t1
+i0000000631:	ld                  s1, 1952(sp)        
+i0000000632:	sd                  a2, 32(sp)          
+				la                  sp, begin_signature
+				li                  t1, 14016 
+				add                 sp, sp, t1
+i0000000633:	lw                  a1, -1328(sp)       
+i0000000634:	and                 s0, a5, s0
+i0000000635:	sw                  a5, 56(sp)          
+i0000000636:	sw                  tp, 1292(sp)        
+i0000000637:	srai                a5, a5, 1 
+i0000000638:	srli                a5, a5, 4 
+i0000000639:	sb                  zero, 399(sp)       
+i000000063a:	srai                a5, a5, 11
+i000000063b:	addiw               s1, s0, -836
+i000000063c:	remuw               s5, t0, a4
+i000000063d:	sraiw               s8, a4, 13
+i000000063e:	addi                sp, sp, -240
+i000000063f:	addi                a5, sp, 420
+i0000000640:	div                 t0, zero, a4
+i0000000641:	divuw               a5, tp, t6
+i0000000642:	lbu                 s0, -454(sp)        
+i0000000643:	ld                  s5, 272(sp)         
+i0000000644:	sw                  a5, 52(sp)          
+i0000000645:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 8680  
+				add                 sp, sp, t1
+i0000000646:	ld                  s9, 40(sp)          
+i0000000647:	ld                  a7, -1008(sp)       
+				andi                s1, s9, 1333
+				mulh                s0, s11, s10
+				addi                a4, sp, 320
+				fence                         
+				lwu                 zero, 252(sp)       
+				addiw               a4, a4, -32
+				divw                s5, a4, a7
+	
+b0000000648:
+				la                  x22, i0000000661    
+				jalr                x0, x22, 0          
+	
+				remw                s1, s4, a7
+				or                  a6, t2, s3
+				addi                a4, sp, 404
+				srli                s0, s0, 8 
+				div                 s0, t6, t6
+				fence                         
+				sltiu               s1, s9, -1985
+i0000000648:	addi                a5, sp, 56
+i0000000649:	sd                  s6, -488(sp)        
+i000000064a:	sw                  tp, 64(sp)          
+i000000064b:	sllw                gp, s5, s7
+i000000064c:	ld                  a5, -1152(sp)       
+i000000064d:	mulh                s0, s1, s1
+i000000064e:	remuw               s3, s0, a5
+i000000064f:	rem                 s1, s0, a5
+i0000000650:	ld                  t3, -208(sp)        
+i0000000651:	ld                  a3, 16(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10600 
+				add                 sp, sp, t1
+i0000000652:	lwu                 a7, -1392(sp)       
+i0000000653:	lw                  a4, 16(sp)          
+i0000000654:	xori                t2, t0, 1742
+i0000000655:	sraw                s1, a6, zero
+i0000000656:	fence.i                       
+i0000000657:	slli                a0, a0, 8 
+i0000000658:	divu                s1, s2, s10
+i0000000659:	addw                s1, s1, a5
+i000000065a:	fence.i                       
+i000000065b:	fence.i                       
+i000000065c:	sd                  a5, 72(sp)          
+i000000065d:	fence.i                       
+i000000065e:	mulw                a2, s9, a6
+i000000065f:	xor                 gp, s3, s4
+i0000000660:	rem                 a5, a5, s1
+i0000000661:	mulhsu              s5, s1, s0
+i0000000662:	lui                 s4, 404295
+i0000000663:	remu                a5, s0, s1
+i0000000664:	addw                s1, s1, s1
+i0000000665:	mul                 a4, t2, t1
+i0000000666:	remu                a3, s0, a5
+i0000000667:	addi                a5, a5, -23
+i0000000668:	addw                a4, a4, a3
+i0000000669:	lw                  a5, 240(sp)         
+i000000066a:	srai                s1, s1, 11
+i000000066b:	lw                  a5, 12(sp)          
+i000000066c:	remuw               a6, s1, a5
+i000000066d:	addi                a5, sp, 116
+i000000066e:	subw                tp, a5, a5
+i000000066f:	fence                         
+				li                  x21, 12   
+				addi                x29, x29, 1
+				lh                  a7, -1538(sp)       
+				srli                a4, a4, 16
+				divw                s4, a5, s0
+				addi                a4, sp, 8 
+				sd                  s7, -536(sp)        
+				sd                  s0, 96(sp)          
+				lui                 s3, 169563
+	
+b0000000670:
+				beq                 x29, x21, 1f        
+				la                  x21, i000000065f    
+				jalr                x0, x21, 0          
+				1: li x29, 10                           
+	
+				or                  s1, s1, s1
+				sw                  a4, 52(sp)          
+				subw                s1, a5, s0
+				srli                a4, a4, 11
+				fence                         
+				add                 s11, s11, s11
+				lw                  s1, 64(sp)          
+i0000000670:	sraw                a1, s8, s10
+i0000000671:	srai                a2, a2, 12
+i0000000672:	srli                a5, a5, 1 
+				la                  sp, begin_signature
+				li                  t1, 2488  
+				add                 sp, sp, t1
+i0000000673:	sd                  s2, 1936(sp)        
+i0000000674:	ld                  s1, -216(sp)        
+i0000000675:	rem                 s0, s1, s0
+i0000000676:	srai                a5, a5, 13
+				la                  sp, begin_signature
+				li                  t1, 9168  
+				add                 sp, sp, t1
+i0000000677:	lw                  a5, 1396(sp)        
+i0000000678:	addi                s1, zero, 9
+i0000000679:	addi                a3, sp, 268
+i000000067a:	mulhsu              s0, t0, s8
+i000000067b:	lh                  s0, -728(sp)        
+i000000067c:	mul                 s0, s0, s0
+i000000067d:	sw                  a5, 24(sp)          
+i000000067e:	fence                         
+i000000067f:	lui                 a5, 15615 
+i0000000680:	lw                  s1, 24(sp)          
+i0000000681:	srli                a2, a2, 21
+i0000000682:	srli                s1, s1, 12
+i0000000683:	and                 s1, s1, a5
+i0000000684:	lw                  s0, -112(sp)        
+i0000000685:	fence                         
+i0000000686:	sw                  s0, 24(sp)          
+i0000000687:	sd                  s5, 40(sp)          
+i0000000688:	srli                a5, a5, 11
+i0000000689:	div                 s0, s6, a0
+i000000068a:	sd                  s0, -768(sp)        
+i000000068b:	srli                s1, s1, 13
+i000000068c:	fence.i                       
+i000000068d:	lwu                 a5, -1396(sp)       
+i000000068e:	lw                  s0, -1692(sp)       
+i000000068f:	subw                a2, a2, a4
+				la                  sp, begin_signature
+				li                  t1, 10920 
+				add                 sp, sp, t1
+i0000000690:	lw                  s1, 64(sp)          
+i0000000691:	div                 s1, a5, a5
+i0000000692:	srli                a2, a2, 10
+i0000000693:	mulhu               a5, t5, t2
+i0000000694:	subw                a3, a3, s1
+i0000000695:	andi                a3, a3, -14
+i0000000696:	addiw               s0, a5, 806
+i0000000697:	sd                  s1, 144(sp)         
+				li                  x26, 10   
+				la                  sp, begin_signature
+				li                  t1, 8592  
+				add                 sp, sp, t1
+				mulh                zero, s0, s1
+				rem                 s8, s4, gp
+				andi                a4, gp, -1260
+				srli                a5, a5, 13
+				lwu                 a5, -1424(sp)       
+				divu                a4, a5, s0
+				addiw               a4, a4, -15
+	
+b0000000698:
+				beq                 x29, x26, 1f        
+				la                  x26, i0000000685    
+				jalr                x0, x26, 0          
+				1: li x29, 10                           
+	
+				mul                 a5, s0, s0
+				fence.i                       
+				ld                  gp, -384(sp)        
+				addi                a4, a4, -25
+				lw                  a4, 16(sp)          
+				srliw               a5, s7, 24
+				div                 a5, s1, s1
+i0000000698:	srli                a4, a4, 11
+i0000000699:	or                  a5, a5, a4
+i000000069a:	addi                s0, sp, 192
+i000000069b:	sub                 a5, a5, a3
+i000000069c:	remu                s0, a0, t6
+i000000069d:	ld                  s0, 16(sp)          
+i000000069e:	fence.i                       
+i000000069f:	sub                 a2, a2, a2
+i00000006a0:	remw                s0, s4, s5
+i00000006a1:	sltiu               s1, s8, -931
+i00000006a2:	srliw               s0, s3, 11
+i00000006a3:	sw                  s1, 52(sp)          
+i00000006a4:	addi                sp, sp, 128
+i00000006a5:	slli                a5, s9, 39
+i00000006a6:	sraiw               s1, s0, 13
+i00000006a7:	srli                a3, a3, 2 
+i00000006a8:	sltiu               s0, s0, 277
+i00000006a9:	srai                s0, s0, 16
+i00000006aa:	addi                s0, sp, 436
+i00000006ab:	srai                a2, a2, 10
+i00000006ac:	sh                  t5, 1874(sp)        
+i00000006ad:	xori                s9, a5, 1922
+i00000006ae:	sd                  a2, 32(sp)          
+i00000006af:	srai                s1, s1, 17
+i00000006b0:	mulh                s1, a5, s0
+i00000006b1:	lwu                 s0, 1624(sp)        
+				la                  sp, begin_signature
+				li                  t1, 14256 
+				add                 sp, sp, t1
+i00000006b2:	ld                  s0, 264(sp)         
+i00000006b3:	fence.i                       
+i00000006b4:	sraw                a4, s0, s0
+i00000006b5:	srai                s1, s1, 13
+i00000006b6:	addi                a5, sp, 60
+i00000006b7:	slt                 zero, a6, a0
+i00000006b8:	fsrmi               x0, 0     
+i00000006b9:	sd                  s0, 64(sp)          
+i00000006ba:	sw                  s5, 84(sp)          
+i00000006bb:	sltiu               a5, t0, 1780
+i00000006bc:	ld                  tp, 8(sp)           
+i00000006bd:	lh                  t6, -1860(sp)       
+i00000006be:	sd                  tp, -2000(sp)       
+i00000006bf:	srai                a0, a0, 6 
+i00000006c0:	andi                a5, a5, -5
+				la                  sp, begin_signature
+				li                  t1, 9112  
+				add                 sp, sp, t1
+				mul                 a5, gp, a4
+				sw                  zero, 32(sp)        
+				addi                a4, a4, -16
+				fence.i                       
+				mulw                zero, t3, tp
+				sh                  a7, -2002(sp)       
+				or                  a4, a4, s1
+	
+b00000006c1:
+				jal                 x1, i00000006d7     
+	
+				srai                a5, a5, 13
+				ld                  s2, 120(sp)         
+				remw                s0, tp, s5
+				sh                  a5, -1482(sp)       
+				fence.i                       
+				fence.i                       
+				add                 s10, zero, s9
+i00000006c1:	sra                 s1, s2, t2
+i00000006c2:	add                 s5, s5, s0
+i00000006c3:	remw                s1, s0, a5
+i00000006c4:	srli                s1, s1, 7 
+i00000006c5:	fence.i                       
+i00000006c6:	div                 a0, t1, t0
+i00000006c7:	addi                sp, sp, 0 
+i00000006c8:	ld                  a4, 936(sp)         
+i00000006c9:	srli                a4, a4, 2 
+i00000006ca:	mulw                a2, a0, t0
+i00000006cb:	fence                         
+i00000006cc:	ld                  s5, 32(sp)          
+i00000006cd:	mulhsu              s2, s0, a5
+i00000006ce:	xor                 s2, a2, a1
+				la                  sp, begin_signature
+				li                  t1, 7032  
+				add                 sp, sp, t1
+i00000006cf:	sh                  s5, -604(sp)        
+i00000006d0:	addw                s1, s1, s1
+i00000006d1:	and                 a4, a4, s0
+i00000006d2:	sb                  s1, 1508(sp)        
+i00000006d3:	srai                a0, a0, 28
+i00000006d4:	rem                 a5, zero, s11
+i00000006d5:	lbu                 s7, -1218(sp)       
+i00000006d6:	fence                         
+i00000006d7:	xor                 s1, s1, a1
+i00000006d8:	xor                 s10, a5, s1
+i00000006d9:	sraiw               t5, s1, 16
+i00000006da:	addi                sp, sp, 80
+i00000006db:	srai                a0, a0, 16
+i00000006dc:	lwu                 t5, -1300(sp)       
+i00000006dd:	srai                a4, a4, 5 
+i00000006de:	or                  s0, s0, s1
+i00000006df:	srli                a1, a1, 7 
+i00000006e0:	addi                a4, sp, 168
+i00000006e1:	slli                a3, a3, 4 
+i00000006e2:	slt                 zero, s0, s1
+i00000006e3:	addi                sp, sp, -32
+i00000006e4:	srai                a1, a1, 12
+i00000006e5:	add                 s1, s1, s0
+i00000006e6:	srli                a4, a4, 15
+i00000006e7:	ld                  t1, 96(sp)          
+i00000006e8:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 9024  
+				add                 sp, sp, t1
+				addiw               s1, s7, -1651
+				add                 s1, zero, s0
+				ld                  s0, 976(sp)         
+				lh                  s8, 1884(sp)        
+				remu                s1, a5, a5
+				sw                  s1, 640(sp)         
+				fence                         
+	
+b00000006e9:
+				jal                 x1, i0000000709     
+	
+				xor                 t3, s0, s1
+				srli                a5, a5, 1 
+				srai                s0, s1, 57
+				mulh                s1, a4, s11
+				addi                s0, sp, 416
+				lhu                 s6, -1456(sp)       
+				srliw               s11, a7, 17
+i00000006e9:	lb                  s5, 637(sp)         
+i00000006ea:	add                 s0, zero, s0
+i00000006eb:	addiw               a3, a3, -4
+i00000006ec:	srliw               s1, s1, 25
+i00000006ed:	fence                         
+i00000006ee:	addi                a1, a1, -9
+i00000006ef:	sd                  a4, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13856 
+				add                 sp, sp, t1
+i00000006f0:	lw                  t6, 1272(sp)        
+i00000006f1:	lw                  s0, -1092(sp)       
+i00000006f2:	addi                a4, sp, 344
+i00000006f3:	remw                a2, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 13456 
+				add                 sp, sp, t1
+i00000006f4:	lwu                 s11, -104(sp)       
+i00000006f5:	addi                sp, sp, -16
+i00000006f6:	fence.i                       
+i00000006f7:	slli                a5, a5, 13
+i00000006f8:	divuw               s1, t3, a2
+				la                  sp, begin_signature
+				li                  t1, 2976  
+				add                 sp, sp, t1
+i00000006f9:	sw                  s6, 1744(sp)        
+i00000006fa:	srai                a5, a5, 16
+i00000006fb:	divu                s1, s1, s1
+i00000006fc:	div                 a5, t3, zero
+i00000006fd:	sd                  s0, 72(sp)          
+i00000006fe:	sh                  a5, -1828(sp)       
+i00000006ff:	ori                 a0, s1, -1458
+i0000000700:	fence.i                       
+i0000000701:	remu                a4, s7, t5
+i0000000702:	sd                  a6, 312(sp)         
+i0000000703:	xori                s9, s6, 1465
+i0000000704:	mulhsu              zero, a5, a5
+i0000000705:	rem                 a5, a6, s9
+i0000000706:	mul                 a1, s10, s7
+i0000000707:	sw                  a4, 52(sp)          
+i0000000708:	srai                a1, a1, 2 
+i0000000709:	mulw                s1, a5, a5
+i000000070a:	add                 s1, zero, s6
+i000000070b:	sub                 s1, s1, a2
+i000000070c:	sd                  s1, 24(sp)          
+i000000070d:	sllw                t5, s1, s0
+i000000070e:	addi                a4, sp, 104
+i000000070f:	remuw               s1, a5, a5
+i0000000710:	lw                  a5, 124(sp)         
+				li                  x28, 9    
+				la                  sp, begin_signature
+				li                  t1, 3584  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 2904  
+				add                 sp, sp, t1
+				sw                  s5, 36(sp)          
+				sub                 s0, s0, a4
+				fence                         
+				ori                 a5, s11, -69
+				fence                         
+				lw                  a5, 48(sp)          
+				srai                s0, s0, 9 
+	
+b0000000711:
+				pre_branch_macro                        
+				bge                 x28, x29, i00000006ee
+				post_branch_macro                       
+	
+				ld                  tp, 16(sp)          
+				ld                  s0, 1352(sp)        
+				sltiu               s1, tp, 1373
+				fence.i                       
+				fence.i                       
+				fence.i                       
+				sraw                a7, s0, s1
+				li                  x29, 10   
+i0000000711:	sd                  a2, 24(sp)          
+i0000000712:	srli                s0, s0, 16
+i0000000713:	srli                s1, s1, 14
+i0000000714:	lw                  a5, 36(sp)          
+i0000000715:	fence.i                       
+i0000000716:	srai                s1, s1, 15
+i0000000717:	sd                  a5, 40(sp)          
+i0000000718:	addi                s0, s0, 8 
+				la                  sp, begin_signature
+				li                  t1, 3776  
+				add                 sp, sp, t1
+i0000000719:	ld                  a5, 120(sp)         
+i000000071a:	addiw               a2, a2, -12
+i000000071b:	addw                a4, a4, s0
+i000000071c:	srli                a2, a2, 13
+i000000071d:	srliw               s3, s0, 10
+i000000071e:	subw                a3, a3, a3
+i000000071f:	ld                  a6, 8(sp)           
+i0000000720:	subw                zero, s0, s1
+i0000000721:	add                 a2, a2, a5
+i0000000722:	ld                  s1, 272(sp)         
+i0000000723:	fence                         
+i0000000724:	and                 a3, a3, a0
+i0000000725:	srai                a1, a1, 2 
+i0000000726:	add                 a7, zero, gp
+i0000000727:	lw                  s0, 64(sp)          
+i0000000728:	addi                sp, sp, 32
+i0000000729:	sb                  s5, 658(sp)         
+i000000072a:	addw                a0, a0, a4
+i000000072b:	divuw               a5, s1, s0
+i000000072c:	ld                  s0, 112(sp)         
+i000000072d:	srli                s1, s1, 11
+i000000072e:	lw                  a4, 52(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13744 
+				add                 sp, sp, t1
+i000000072f:	sw                  a5, 68(sp)          
+i0000000730:	sh                  a2, -1208(sp)       
+i0000000731:	srl                 s0, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 14176 
+				add                 sp, sp, t1
+i0000000732:	lw                  s0, 24(sp)          
+i0000000733:	sd                  t2, -176(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13088 
+				add                 sp, sp, t1
+i0000000734:	lw                  s7, 44(sp)          
+i0000000735:	addiw               a2, a2, -19
+i0000000736:	srli                s0, s0, 15
+i0000000737:	mulhu               s0, s1, s0
+i0000000738:	mulw                s1, a4, t1
+				li                  x17, 10   
+				la                  sp, begin_signature
+				li                  t1, 11248 
+				add                 sp, sp, t1
+				srai                s0, s0, 9 
+				remuw               a5, s1, a5
+				srli                a4, a4, 1 
+				addiw               s0, s0, 5 
+				fence                         
+				srli                s0, s0, 28
+				ld                  s0, 40(sp)          
+	
+b0000000739:
+				beq                 x29, x17, 1f        
+				la                  x17, i0000000722    
+				jalr                x10, x17, 0         
+				1: li x29, 10                           
+	
+				subw                a4, a4, a4
+				srai                a4, a4, 13
+				remuw               a5, a5, a5
+				add                 t6, t6, a5
+				and                 s4, a5, s0
+				addi                a4, sp, 368
+				xor                 s1, s1, a4
+i0000000739:	fence.i                       
+i000000073a:	sd                  s0, 144(sp)         
+i000000073b:	sw                  a5, 120(sp)         
+i000000073c:	addiw               a5, s9, -600
+i000000073d:	sw                  s2, 1700(sp)        
+i000000073e:	srli                a2, a2, 16
+i000000073f:	ld                  s0, -1224(sp)       
+i0000000740:	srl                 a6, tp, t6
+i0000000741:	ld                  t3, 1752(sp)        
+i0000000742:	fsrmi               x0, 7     
+				la                  sp, begin_signature
+				li                  t1, 3472  
+				add                 sp, sp, t1
+i0000000743:	ld                  s1, 168(sp)         
+i0000000744:	addi                sp, sp, -176
+i0000000745:	mulw                gp, a5, a5
+i0000000746:	auipc               s1, 353331
+				la                  sp, begin_signature
+				li                  t1, 12272 
+				add                 sp, sp, t1
+i0000000747:	sw                  s11, 20(sp)         
+i0000000748:	srai                a4, a4, 7 
+i0000000749:	srliw               s4, t6, 17
+				la                  sp, begin_signature
+				li                  t1, 10920 
+				add                 sp, sp, t1
+i000000074a:	sw                  s1, -1904(sp)       
+i000000074b:	fence                         
+i000000074c:	sraw                a5, s9, s10
+i000000074d:	lw                  a5, 60(sp)          
+i000000074e:	ld                  s6, 80(sp)          
+i000000074f:	addiw               s0, s0, -14
+i0000000750:	srai                a5, a5, 16
+				la                  sp, begin_signature
+				li                  t1, 9024  
+				add                 sp, sp, t1
+i0000000751:	sd                  s0, -2008(sp)       
+i0000000752:	srai                s1, s1, 1 
+i0000000753:	sh                  t3, 200(sp)         
+i0000000754:	mulw                s3, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 7856  
+				add                 sp, sp, t1
+i0000000755:	lb                  t6, -1053(sp)       
+i0000000756:	lui                 s4, 30    
+i0000000757:	div                 s2, a5, a5
+i0000000758:	remuw               s0, s0, s1
+i0000000759:	sltu                s3, a4, a0
+i000000075a:	mulw                a6, a5, s0
+i000000075b:	addi                sp, sp, 0 
+i000000075c:	srli                a5, a5, 16
+i000000075d:	srli                s0, s0, 10
+i000000075e:	srli                a0, s3, 39
+i000000075f:	mulw                s0, s4, s11
+i0000000760:	ori                 s0, s0, 1903
+i0000000761:	fence                         
+				ld                  a4, 120(sp)         
+				divuw               tp, a5, a5
+				addi                a4, sp, 84
+				and                 s0, a5, a5
+				mulhu               s0, t3, a6
+				lw                  a5, 12(sp)          
+				sd                  s11, 56(sp)         
+	
+b0000000762:
+				jal                 x1, i0000000770     
+	
+				sw                  a5, 92(sp)          
+				addi                a4, sp, 284
+				subw                a4, a4, s1
+				remuw               a5, s3, s2
+				fence.i                       
+				divuw               s6, a5, s0
+				addi                s9, t3, 1920
+i0000000762:	sw                  gp, 112(sp)         
+i0000000763:	srli                a1, a1, 10
+i0000000764:	sd                  a5, 16(sp)          
+i0000000765:	andi                a1, a1, 6 
+i0000000766:	addi                a5, sp, 204
+i0000000767:	srai                a4, a4, 16
+i0000000768:	lb                  s3, -424(sp)        
+i0000000769:	or                  a2, a2, s0
+i000000076a:	sh                  a5, -954(sp)        
+i000000076b:	lw                  s1, 40(sp)          
+i000000076c:	lhu                 s1, -1540(sp)       
+i000000076d:	srliw               a4, t1, 27
+i000000076e:	fence                         
+i000000076f:	fence                         
+i0000000770:	add                 s0, s0, a5
+i0000000771:	lwu                 tp, -1380(sp)       
+i0000000772:	addi                s11, zero, 14
+i0000000773:	andi                t3, gp, -2010
+i0000000774:	divu                s0, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 10960 
+				add                 sp, sp, t1
+i0000000775:	lw                  t2, 1976(sp)        
+i0000000776:	or                  a0, a0, a3
+i0000000777:	addi                sp, sp, -416
+i0000000778:	sltiu               t2, a6, 951
+i0000000779:	sllw                s0, a5, a5
+i000000077a:	srai                a1, a1, 14
+i000000077b:	sraw                s1, s0, s1
+i000000077c:	sw                  s1, 104(sp)         
+i000000077d:	srliw               a7, s8, 10
+i000000077e:	divw                s1, zero, t6
+i000000077f:	remuw               a7, s0, s0
+i0000000780:	add                 s1, t1, s4
+i0000000781:	addi                s1, s1, 14
+				la                  sp, begin_signature
+				li                  t1, 12504 
+				add                 sp, sp, t1
+i0000000782:	sw                  s0, -1400(sp)       
+i0000000783:	fence                         
+i0000000784:	sd                  gp, 1392(sp)        
+i0000000785:	mulh                s1, s1, s1
+i0000000786:	srlw                t5, s1, s1
+i0000000787:	addw                a2, a2, a5
+				la                  sp, begin_signature
+				li                  t1, 7744  
+				add                 sp, sp, t1
+i0000000788:	ld                  s6, 144(sp)         
+i0000000789:	addi                sp, sp, -224
+				addi                s0, sp, 480
+				srai                a5, a5, 5 
+				ld                  gp, 1456(sp)        
+				srai                gp, t6, 27
+				ld                  s0, 1288(sp)        
+				addi                a4, a4, 7 
+				sraiw               t3, tp, 0 
+	
+b000000078a:
+				jal                 x1, i00000007a8     
+	
+				srli                s0, s0, 5 
+				lw                  a5, -1656(sp)       
+				lhu                 s1, -1044(sp)       
+				ld                  s1, 56(sp)          
+				divw                s1, s1, s1
+				fence.i                       
+				srli                s0, s0, 12
+i000000078a:	or                  a5, a5, a4
+i000000078b:	fence                         
+i000000078c:	lw                  a1, 76(sp)          
+i000000078d:	srai                s1, s1, 3 
+i000000078e:	andi                s1, a3, -1070
+i000000078f:	div                 s0, a0, s3
+i0000000790:	fence.i                       
+i0000000791:	fence                         
+i0000000792:	srliw               s1, a5, 2 
+i0000000793:	lwu                 a4, 1664(sp)        
+i0000000794:	srli                a0, a0, 29
+i0000000795:	sub                 s1, s0, s1
+i0000000796:	srlw                s0, a2, s5
+i0000000797:	srliw               t6, s2, 18
+i0000000798:	remw                s8, s11, a6
+i0000000799:	lw                  s0, -1424(sp)       
+i000000079a:	srli                a4, a4, 26
+i000000079b:	mulhsu              s2, s9, zero
+i000000079c:	div                 s5, s0, s1
+i000000079d:	sd                  a5, 16(sp)          
+i000000079e:	mulhu               s0, s1, a5
+i000000079f:	lw                  a0, 44(sp)          
+i00000007a0:	srli                s1, s1, 5 
+i00000007a1:	slt                 a6, gp, s3
+i00000007a2:	addi                s0, sp, 244
+i00000007a3:	addi                sp, sp, -272
+i00000007a4:	fsrmi               x0, 0     
+				la                  sp, begin_signature
+				li                  t1, 4472  
+				add                 sp, sp, t1
+i00000007a5:	sd                  s1, 0(sp)           
+i00000007a6:	sraiw               a5, s5, 21
+				la                  sp, begin_signature
+				li                  t1, 4632  
+				add                 sp, sp, t1
+i00000007a7:	lw                  a3, 64(sp)          
+i00000007a8:	subw                s0, t6, s7
+				la                  sp, begin_signature
+				li                  t1, 3552  
+				add                 sp, sp, t1
+i00000007a9:	lw                  s0, 40(sp)          
+i00000007aa:	rem                 a5, t2, a6
+i00000007ab:	fence.i                       
+i00000007ac:	remw                t5, zero, a7
+i00000007ad:	lh                  s0, -1074(sp)       
+i00000007ae:	ld                  s0, 704(sp)         
+i00000007af:	sd                  t2, 0(sp)           
+				la                  sp, begin_signature
+				li                  t1, 2224  
+				add                 sp, sp, t1
+i00000007b0:	sw                  a4, 36(sp)          
+i00000007b1:	addi                s0, s0, -17
+i00000007b2:	fence.i                       
+				li                  x21, 12   
+				addi                x29, x29, 1
+				add                 s8, s8, a7
+				sh                  s4, 1756(sp)        
+				addi                sp, sp, 176
+				sub                 t6, t6, a4
+				slliw               t3, a5, 29
+				srli                a4, a4, 10
+				lui                 s0, 276966
+	
+b00000007b3:
+				pre_branch_macro                        
+				bge                 x21, x29, i0000000793
+				post_branch_macro                       
+	
+				remw                t2, a5, s0
+				ori                 s1, a5, -93
+				sd                  s0, 0(sp)           
+				divu                t6, s1, s0
+				and                 a4, a4, a4
+				remw                tp, a5, a5
+				sraw                t2, s0, s1
+				li                  x29, 10   
+i00000007b3:	fence.i                       
+i00000007b4:	addiw               gp, t6, 867
+				la                  sp, begin_signature
+				li                  t1, 11248 
+				add                 sp, sp, t1
+i00000007b5:	ld                  s1, 80(sp)          
+i00000007b6:	lw                  s1, 0(sp)           
+i00000007b7:	srl                 s0, s1, s0
+i00000007b8:	addi                sp, sp, 208
+i00000007b9:	sd                  s1, 736(sp)         
+i00000007ba:	sd                  a4, 96(sp)          
+i00000007bb:	sub                 s0, s0, s1
+i00000007bc:	sd                  a1, 16(sp)          
+i00000007bd:	sw                  s0, -464(sp)        
+i00000007be:	ld                  s0, -1928(sp)       
+i00000007bf:	addi                sp, sp, -112
+i00000007c0:	auipc               a5, 513555
+i00000007c1:	lw                  a5, -1468(sp)       
+i00000007c2:	addi                sp, sp, -288
+i00000007c3:	sw                  s0, 8(sp)           
+i00000007c4:	addi                a5, sp, 252
+i00000007c5:	mulhu               s0, a5, s1
+i00000007c6:	addiw               s0, s1, 256
+i00000007c7:	or                  s2, a5, s0
+i00000007c8:	srli                a3, a3, 11
+i00000007c9:	addw                s1, s6, tp
+i00000007ca:	sw                  s0, 100(sp)         
+i00000007cb:	sd                  s0, 688(sp)         
+i00000007cc:	srai                s1, s1, 14
+i00000007cd:	srai                s0, s0, 10
+i00000007ce:	srai                a2, a2, 15
+i00000007cf:	sh                  t3, -294(sp)        
+i00000007d0:	sd                  a5, -232(sp)        
+i00000007d1:	sh                  s1, -2020(sp)       
+i00000007d2:	sd                  a2, 8(sp)           
+i00000007d3:	lw                  s0, -1812(sp)       
+i00000007d4:	sd                  s1, 1824(sp)        
+i00000007d5:	addw                a5, a5, s0
+i00000007d6:	sw                  s4, -1180(sp)       
+i00000007d7:	sh                  s0, 46(sp)          
+i00000007d8:	sraw                a7, s1, a5
+i00000007d9:	divu                s11, a5, s1
+i00000007da:	auipc               a5, 401749
+				la                  sp, begin_signature
+				li                  t1, 8944  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4984  
+				add                 sp, sp, t1
+				sd                  s1, 160(sp)         
+				ld                  s0, 64(sp)          
+				addw                tp, s2, s4
+				lbu                 s0, -953(sp)        
+				add                 s1, zero, s6
+				lwu                 s0, -996(sp)        
+				srliw               a5, zero, 1
+	
+b00000007db:
+				jal                 x1, i00000007e0     
+	
+				addi                sp, sp, -32
+				xor                 t3, s1, s1
+				andi                a5, a5, -1
+				addi                sp, sp, 16
+				ld                  t2, 40(sp)          
+				fence.i                       
+				fence.i                       
+i00000007db:	srli                a5, a5, 14
+i00000007dc:	addi                a5, zero, -20
+i00000007dd:	rem                 s0, a5, a5
+i00000007de:	addw                a3, a3, a4
+i00000007df:	ld                  a0, 120(sp)         
+i00000007e0:	fence.i                       
+i00000007e1:	lb                  a6, -851(sp)        
+i00000007e2:	srliw               s0, s0, 16
+i00000007e3:	sb                  a5, 1725(sp)        
+i00000007e4:	sd                  s0, 1688(sp)        
+i00000007e5:	sllw                s1, a3, s8
+i00000007e6:	ld                  s1, 48(sp)          
+i00000007e7:	sd                  t6, -1536(sp)       
+i00000007e8:	ld                  s9, 584(sp)         
+i00000007e9:	ld                  s1, 880(sp)         
+i00000007ea:	srli                a3, a3, 7 
+i00000007eb:	sw                  s0, 8(sp)           
+i00000007ec:	fence                         
+i00000007ed:	sh                  a5, 1298(sp)        
+i00000007ee:	add                 tp, a5, s1
+i00000007ef:	srli                s0, s0, 5 
+i00000007f0:	sd                  s1, -520(sp)        
+				la                  sp, begin_signature
+				li                  t1, 4056  
+				add                 sp, sp, t1
+i00000007f1:	lwu                 s7, -500(sp)        
+i00000007f2:	divuw               a5, t2, a2
+				la                  sp, begin_signature
+				li                  t1, 12608 
+				add                 sp, sp, t1
+i00000007f3:	sw                  s1, 8(sp)           
+i00000007f4:	ld                  a3, -352(sp)        
+i00000007f5:	mulh                t6, s3, a0
+i00000007f6:	remw                a5, s0, s0
+i00000007f7:	addw                s4, s1, s1
+i00000007f8:	lw                  s0, -824(sp)        
+i00000007f9:	lwu                 s0, -480(sp)        
+i00000007fa:	addiw               a2, a2, -16
+i00000007fb:	mulhu               s1, t5, s2
+i00000007fc:	ld                  a5, -288(sp)        
+i00000007fd:	srai                s1, s1, 24
+i00000007fe:	addi                a4, sp, 488
+i00000007ff:	addi                sp, sp, -272
+i0000000800:	lwu                 a0, 1632(sp)        
+i0000000801:	add                 gp, zero, s0
+i0000000802:	srai                a2, a2, 5 
+				la                  sp, begin_signature
+				li                  t1, 10528 
+				add                 sp, sp, t1
+				srai                a5, a5, 9 
+				fence                         
+				addi                a5, sp, 324
+				lb                  s0, 1931(sp)        
+				sd                  s1, 1312(sp)        
+				addiw               s1, s1, 9 
+				lwu                 t6, 68(sp)          
+	
+b0000000803:
+				jal                 x1, i000000080f     
+	
+				srli                s0, s0, 11
+				sw                  s1, -72(sp)         
+				fence                         
+				subw                a4, a4, s0
+				lw                  s0, -824(sp)        
+				mulh                s1, s1, s1
+				divuw               s0, a5, s0
+i0000000803:	addi                s1, sp, 240
+i0000000804:	sll                 s1, s5, gp
+i0000000805:	slliw               a7, s1, 30
+i0000000806:	subw                s10, gp, a1
+i0000000807:	addiw               zero, a5, -1158
+i0000000808:	slt                 s4, t6, t5
+i0000000809:	slt                 t6, s10, s7
+i000000080a:	mulhu               s0, t3, a0
+i000000080b:	sd                  s1, 392(sp)         
+				la                  sp, begin_signature
+				li                  t1, 3584  
+				add                 sp, sp, t1
+i000000080c:	sb                  a2, -408(sp)        
+i000000080d:	and                 s0, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 9200  
+				add                 sp, sp, t1
+i000000080e:	sd                  a0, -1704(sp)       
+i000000080f:	sw                  s11, 8(sp)          
+i0000000810:	srli                a1, a1, 18
+i0000000811:	sw                  s0, 76(sp)          
+i0000000812:	ld                  zero, -648(sp)      
+i0000000813:	sb                  s1, 1586(sp)        
+i0000000814:	srai                a3, a3, 14
+i0000000815:	addw                t0, s1, a5
+i0000000816:	ld                  s0, 128(sp)         
+i0000000817:	srliw               s8, s0, 14
+i0000000818:	srli                s1, s1, 16
+i0000000819:	and                 s3, a3, s9
+i000000081a:	sw                  s2, 1172(sp)        
+i000000081b:	lh                  t5, -22(sp)         
+i000000081c:	slli                a4, a4, 23
+i000000081d:	addi                sp, sp, 240
+i000000081e:	srli                a4, a4, 6 
+i000000081f:	lhu                 s3, -912(sp)        
+i0000000820:	or                  s1, s1, a1
+i0000000821:	ld                  a5, -1440(sp)       
+i0000000822:	srli                s9, s1, 2 
+i0000000823:	ld                  a4, 64(sp)          
+i0000000824:	mulhsu              s1, s10, s9
+i0000000825:	remw                a5, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 11584 
+				add                 sp, sp, t1
+i0000000826:	lhu                 s1, 1766(sp)        
+i0000000827:	srai                a5, a5, 7 
+i0000000828:	lwu                 s5, 124(sp)         
+i0000000829:	ld                  s11, 512(sp)        
+i000000082a:	mulh                s11, a5, a5
+				li                  x24, 12   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 2112  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 5392  
+				add                 sp, sp, t1
+				divu                a4, s1, a5
+				sw                  t3, 124(sp)         
+				slliw               s0, a5, 3 
+				srli                s1, s1, 17
+				srlw                s4, a5, s1
+				sllw                s10, s0, s1
+				ld                  a7, 32(sp)          
+	
+b000000082b:
+				pre_branch_macro                        
+				blt                 x29, x24, i000000083d
+				post_branch_macro                       
+	
+				fence.i                       
+				add                 a4, a4, s1
+				lw                  s5, 12(sp)          
+				lh                  s11, 1736(sp)       
+				fence.i                       
+				ld                  s0, 64(sp)          
+				sw                  s7, -1720(sp)       
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 4432  
+				add                 sp, sp, t1
+i000000082b:	lw                  s1, 60(sp)          
+i000000082c:	lbu                 s1, 58(sp)          
+i000000082d:	add                 a2, s0, s1
+i000000082e:	fence.i                       
+i000000082f:	addi                a2, sp, 436
+i0000000830:	divw                a1, s1, s0
+i0000000831:	rem                 a5, tp, gp
+i0000000832:	srai                s0, s0, 6 
+i0000000833:	fence                         
+i0000000834:	or                  s11, s10, t3
+i0000000835:	addw                s1, s1, a1
+i0000000836:	sw                  s10, 44(sp)         
+i0000000837:	divu                a0, s1, a5
+i0000000838:	divu                s1, a5, s0
+i0000000839:	fence                         
+i000000083a:	remuw               t6, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 10080 
+				add                 sp, sp, t1
+i000000083b:	sw                  a5, 48(sp)          
+i000000083c:	addi                sp, sp, -288
+i000000083d:	sllw                t3, t2, t2
+i000000083e:	andi                a3, a3, -32
+i000000083f:	addw                s0, s0, a4
+i0000000840:	lwu                 s4, -1708(sp)       
+i0000000841:	lb                  t1, 1650(sp)        
+i0000000842:	remuw               s1, a5, s1
+				la                  sp, begin_signature
+				li                  t1, 10528 
+				add                 sp, sp, t1
+i0000000843:	lbu                 s1, 791(sp)         
+i0000000844:	addi                sp, sp, 208
+i0000000845:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 4304  
+				add                 sp, sp, t1
+i0000000846:	lb                  t6, -627(sp)        
+i0000000847:	addw                s11, t1, t5
+i0000000848:	srlw                s4, a2, s2
+i0000000849:	fence.i                       
+i000000084a:	srai                a5, tp, 4 
+i000000084b:	sh                  s0, -148(sp)        
+i000000084c:	xori                s7, a4, 340
+i000000084d:	srli                tp, s1, 39
+i000000084e:	divuw               a5, s9, t6
+i000000084f:	lw                  a0, 64(sp)          
+i0000000850:	addi                a5, a5, 13
+i0000000851:	mulh                a5, s10, gp
+i0000000852:	srlw                s1, t3, s10
+				li                  x22, 0    
+				la                  sp, begin_signature
+				li                  t1, 9776  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9208  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 12544 
+				add                 sp, sp, t1
+				sllw                s9, s1, s1
+				sd                  a5, 80(sp)          
+				subw                s1, a5, a5
+				sw                  s1, 1772(sp)        
+				addi                a4, sp, 192
+				sub                 a4, a4, a5
+				lwu                 s5, 364(sp)         
+	
+b0000000853:
+				pre_branch_macro                        
+				beq                 x29, x22, i000000084c
+				post_branch_macro                       
+	
+				mulw                a4, t3, s11
+				mulhsu              s1, a6, s10
+				lw                  a6, 1208(sp)        
+				sd                  tp, 1240(sp)        
+				lwu                 a5, 1968(sp)        
+				slt                 s8, gp, t6
+				addi                sp, sp, -496
+				li                  x29, 10   
+i0000000853:	remw                a2, t1, a1
+i0000000854:	mulh                s0, s0, a5
+i0000000855:	sd                  t5, 1168(sp)        
+i0000000856:	ori                 s3, s1, -936
+i0000000857:	srai                a1, a6, 35
+i0000000858:	sd                  a5, 48(sp)          
+i0000000859:	ld                  s1, -640(sp)        
+i000000085a:	fence.i                       
+i000000085b:	divuw               tp, s11, s6
+i000000085c:	lui                 a1, 134064
+i000000085d:	remu                a5, s10, tp
+i000000085e:	divw                tp, s3, s11
+i000000085f:	srai                a5, a5, 5 
+i0000000860:	srai                a3, a3, 27
+i0000000861:	sw                  t2, 836(sp)         
+i0000000862:	auipc               s1, 456830
+i0000000863:	fsrmi               x0, 4     
+i0000000864:	sd                  a1, 56(sp)          
+				la                  sp, begin_signature
+				li                  t1, 5480  
+				add                 sp, sp, t1
+i0000000865:	ld                  a3, -200(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7664  
+				add                 sp, sp, t1
+i0000000866:	lw                  s1, 0(sp)           
+i0000000867:	remu                a5, t1, s6
+i0000000868:	sd                  a6, 0(sp)           
+i0000000869:	fence                         
+i000000086a:	auipc               a6, 449068
+i000000086b:	remu                s10, a5, s0
+i000000086c:	lwu                 t2, -1404(sp)       
+i000000086d:	fence.i                       
+i000000086e:	fence.i                       
+i000000086f:	lbu                 s0, 581(sp)         
+i0000000870:	lw                  s11, 4(sp)          
+i0000000871:	lwu                 s1, -1812(sp)       
+i0000000872:	sraiw               a5, s0, 31
+i0000000873:	lw                  s1, 56(sp)          
+i0000000874:	fence                         
+i0000000875:	div                 s10, t2, a7
+i0000000876:	srlw                s1, a5, a5
+i0000000877:	srli                a5, a5, 14
+i0000000878:	lw                  s9, 388(sp)         
+i0000000879:	fence                         
+i000000087a:	sd                  t3, -816(sp)        
+i000000087b:	srai                s0, s0, 8 
+				li                  x18, 0    
+				remw                s0, s5, s8
+				fence.i                       
+				fence.i                       
+				sraiw               s5, s1, 20
+				srai                a4, a4, 5 
+				lwu                 a5, -140(sp)        
+				addi                sp, sp, -224
+	
+b000000087c:
+				pre_branch_macro                        
+				beq                 x29, x18, i000000089e
+				post_branch_macro                       
+	
+				srai                s0, s0, 4 
+				sh                  a6, -1844(sp)       
+				add                 s10, s10, s0
+				ld                  a5, 8(sp)           
+				ld                  a5, 40(sp)          
+				fence.i                       
+				srai                a4, a4, 9 
+				li                  x29, 10   
+i000000087c:	addi                sp, sp, 64
+i000000087d:	lui                 a1, 21    
+i000000087e:	divw                t1, s1, a5
+i000000087f:	sw                  s1, 2036(sp)        
+				la                  sp, begin_signature
+				li                  t1, 11288 
+				add                 sp, sp, t1
+i0000000880:	lwu                 s0, 1592(sp)        
+i0000000881:	add                 s1, s1, s0
+i0000000882:	srai                a3, a3, 15
+i0000000883:	srli                a3, a3, 16
+i0000000884:	divu                s1, a2, a3
+i0000000885:	srli                s0, s0, 8 
+i0000000886:	sd                  a1, 48(sp)          
+i0000000887:	addw                a1, a1, s1
+i0000000888:	fence                         
+i0000000889:	lw                  s1, -1484(sp)       
+i000000088a:	sw                  zero, 24(sp)        
+i000000088b:	mulhu               a1, a1, s9
+i000000088c:	addi                s1, zero, -17
+i000000088d:	lhu                 s2, -402(sp)        
+i000000088e:	or                  s1, s1, a3
+i000000088f:	rem                 s1, s1, s1
+i0000000890:	ld                  s0, 24(sp)          
+i0000000891:	subw                s0, s11, s11
+i0000000892:	addw                a5, a5, s1
+i0000000893:	lh                  s1, -514(sp)        
+i0000000894:	xori                a1, s0, -941
+				la                  sp, begin_signature
+				li                  t1, 11048 
+				add                 sp, sp, t1
+i0000000895:	sw                  s0, 16(sp)          
+i0000000896:	fence                         
+i0000000897:	sh                  a5, 1572(sp)        
+i0000000898:	addi                sp, sp, 0 
+i0000000899:	sw                  a0, 60(sp)          
+i000000089a:	mulh                a5, s10, s7
+i000000089b:	lw                  a5, 36(sp)          
+i000000089c:	and                 a4, a4, s1
+i000000089d:	mulw                t1, s0, s1
+i000000089e:	fence                         
+i000000089f:	addi                a5, sp, 384
+i00000008a0:	sd                  a3, 64(sp)          
+i00000008a1:	addw                a5, a2, s5
+i00000008a2:	ld                  a5, 104(sp)         
+i00000008a3:	divw                s0, s2, t6
+				li                  x26, 10   
+				la                  sp, begin_signature
+				li                  t1, 2664  
+				add                 sp, sp, t1
+				sd                  s0, 664(sp)         
+				sraw                gp, a5, s1
+				sd                  s1, 0(sp)           
+				or                  a4, a4, a5
+				divw                s2, a5, s0
+				srai                s0, s0, 14
+				rem                 a5, s0, a5
+	
+b00000008a4:
+				pre_branch_macro                        
+				beq                 x29, x26, i00000008ac
+				post_branch_macro                       
+	
+				ld                  tp, 144(sp)         
+				addiw               a4, a4, -3
+				ld                  s0, 232(sp)         
+				and                 s0, s0, a4
+				addi                sp, sp, 192
+				sw                  s2, -1708(sp)       
+				sd                  s4, 208(sp)         
+				li                  x29, 10   
+i00000008a4:	ld                  s0, -752(sp)        
+i00000008a5:	fence                         
+i00000008a6:	xori                s1, t1, -799
+i00000008a7:	xor                 a4, a4, a3
+i00000008a8:	sd                  a1, 528(sp)         
+i00000008a9:	lwu                 s2, 1056(sp)        
+i00000008aa:	sraw                a6, s10, s2
+i00000008ab:	fence.i                       
+i00000008ac:	sltu                s10, s5, a2
+i00000008ad:	srliw               a7, s1, 5 
+i00000008ae:	fence                         
+i00000008af:	and                 a2, a2, s0
+i00000008b0:	divuw               s1, s0, a5
+i00000008b1:	lui                 t2, 22    
+i00000008b2:	sd                  t1, 1808(sp)        
+i00000008b3:	subw                s1, s9, s10
+i00000008b4:	sraiw               a5, s1, 3 
+i00000008b5:	addw                a2, a2, s1
+i00000008b6:	lbu                 a4, 602(sp)         
+i00000008b7:	srlw                s9, s0, a5
+i00000008b8:	srlw                s0, t3, zero
+i00000008b9:	srai                s1, s1, 2 
+i00000008ba:	subw                a5, s1, s0
+i00000008bb:	srli                a2, a2, 8 
+i00000008bc:	sraiw               a5, s1, 23
+i00000008bd:	addi                s1, sp, 200
+i00000008be:	srliw               a5, s0, 11
+i00000008bf:	fence                         
+i00000008c0:	addiw               s0, s0, 3 
+i00000008c1:	remu                a1, s5, s9
+i00000008c2:	sw                  a5, 1208(sp)        
+i00000008c3:	fence.i                       
+i00000008c4:	subw                a1, a1, s1
+i00000008c5:	sd                  a1, 184(sp)         
+i00000008c6:	srli                s1, s1, 16
+i00000008c7:	sw                  a5, 40(sp)          
+i00000008c8:	lh                  tp, 744(sp)         
+i00000008c9:	remw                tp, s0, a5
+i00000008ca:	addi                s1, sp, 268
+i00000008cb:	srai                a2, a2, 19
+				li                  x26, 12   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 3912  
+				add                 sp, sp, t1
+				lui                 s0, 10    
+				or                  s0, s0, s0
+				sw                  a4, 44(sp)          
+				lw                  s6, -1748(sp)       
+				mul                 s2, s1, s1
+				srlw                a5, s3, s11
+				div                 s1, gp, t3
+	
+b00000008cc:
+				pre_branch_macro                        
+				blt                 x29, x26, i00000008db
+				post_branch_macro                       
+	
+				addw                a6, s3, zero
+				addi                s1, sp, 384
+				remw                gp, s0, s1
+				mul                 t2, a5, a5
+				addw                a4, a4, a5
+				divu                s5, s0, s1
+				slliw               s7, gp, 28
+				li                  x29, 10   
+i00000008cc:	sll                 s3, t1, a2
+i00000008cd:	sd                  a2, 40(sp)          
+i00000008ce:	lw                  a4, 12(sp)          
+i00000008cf:	ld                  s1, 96(sp)          
+i00000008d0:	srai                a2, a2, 11
+i00000008d1:	lh                  s9, 464(sp)         
+i00000008d2:	addi                s0, sp, 276
+i00000008d3:	lui                 a6, 26    
+i00000008d4:	sd                  a0, -480(sp)        
+				la                  sp, begin_signature
+				li                  t1, 3544  
+				add                 sp, sp, t1
+i00000008d5:	sd                  a5, 56(sp)          
+i00000008d6:	srlw                a5, t1, s9
+i00000008d7:	srai                s0, s0, 17
+i00000008d8:	addi                sp, sp, -336
+i00000008d9:	remuw               s7, a5, s0
+i00000008da:	fence.i                       
+i00000008db:	divw                a5, a5, s0
+i00000008dc:	lw                  s0, 40(sp)          
+i00000008dd:	fence.i                       
+i00000008de:	lui                 s1, 332912
+i00000008df:	subw                a1, a1, a1
+i00000008e0:	addi                a1, s3, -1896
+i00000008e1:	remw                s1, s1, a5
+i00000008e2:	mul                 s1, s1, s1
+i00000008e3:	ld                  s9, 120(sp)         
+i00000008e4:	lw                  a0, 12(sp)          
+i00000008e5:	srai                a5, a5, 20
+i00000008e6:	subw                a1, a1, s1
+i00000008e7:	or                  s0, a5, s0
+i00000008e8:	srli                a3, a3, 2 
+i00000008e9:	sw                  s1, 60(sp)          
+i00000008ea:	ld                  s1, -1440(sp)       
+i00000008eb:	addiw               a2, a5, 1955
+				la                  sp, begin_signature
+				li                  t1, 8504  
+				add                 sp, sp, t1
+i00000008ec:	lhu                 s7, -462(sp)        
+i00000008ed:	mulhsu              t5, s1, s0
+i00000008ee:	lw                  s7, 88(sp)          
+i00000008ef:	subw                s1, s0, s1
+i00000008f0:	srai                s0, s0, 8 
+i00000008f1:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 7912  
+				add                 sp, sp, t1
+i00000008f2:	sd                  a7, 424(sp)         
+i00000008f3:	lw                  a0, 28(sp)          
+				auipc               gp, 319433
+				divu                zero, a5, s1
+				lhu                 a6, 1064(sp)        
+				srai                s1, s1, 4 
+				addi                a4, sp, 148
+				sw                  s0, 8(sp)           
+				sb                  a4, -1455(sp)       
+	
+b00000008f4:
+				jal                 x1, i00000008fd     
+	
+				sd                  s1, 888(sp)         
+				fence                         
+				srli                a4, a4, 4 
+				fence.i                       
+				subw                s2, s3, s6
+				rem                 t3, a5, s0
+				addw                s0, s0, a4
+i00000008f4:	sw                  s10, 56(sp)         
+i00000008f5:	remu                t0, s1, s0
+i00000008f6:	srai                a0, a0, 3 
+i00000008f7:	sd                  s1, 912(sp)         
+i00000008f8:	or                  a5, a5, s0
+i00000008f9:	sw                  a5, 52(sp)          
+i00000008fa:	ld                  s7, -616(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9376  
+				add                 sp, sp, t1
+i00000008fb:	sd                  a0, 96(sp)          
+i00000008fc:	mul                 t5, s3, s10
+i00000008fd:	fence.i                       
+i00000008fe:	srai                a1, a1, 2 
+i00000008ff:	remw                a5, s1, s0
+i0000000900:	lh                  s0, -1740(sp)       
+i0000000901:	sraiw               gp, s6, 14
+i0000000902:	mul                 a0, a5, s1
+i0000000903:	srai                a0, a0, 15
+i0000000904:	lw                  a3, 8(sp)           
+i0000000905:	srli                a0, a0, 3 
+i0000000906:	lb                  s6, -340(sp)        
+i0000000907:	add                 s0, t5, t3
+i0000000908:	addi                a3, sp, 372
+i0000000909:	addiw               s9, s1, 1090
+i000000090a:	sw                  tp, 108(sp)         
+i000000090b:	srli                a5, a5, 8 
+i000000090c:	sw                  s2, 88(sp)          
+i000000090d:	addw                a1, a1, s1
+i000000090e:	srai                a4, a4, 2 
+i000000090f:	addw                a5, a5, s0
+				la                  sp, begin_signature
+				li                  t1, 11936 
+				add                 sp, sp, t1
+i0000000910:	lwu                 s10, -1128(sp)      
+				la                  sp, begin_signature
+				li                  t1, 5160  
+				add                 sp, sp, t1
+i0000000911:	sd                  s3, 40(sp)          
+i0000000912:	lhu                 s0, -710(sp)        
+i0000000913:	lw                  a1, 8(sp)           
+i0000000914:	slli                a4, a4, 22
+i0000000915:	remu                a5, s6, t1
+i0000000916:	subw                s1, s1, a2
+i0000000917:	mulw                s2, a7, a0
+i0000000918:	add                 s0, zero, s1
+i0000000919:	divu                s1, s0, s1
+i000000091a:	addiw               s0, s0, 2 
+i000000091b:	lb                  a5, -61(sp)         
+				li                  x19, 9    
+				srai                s0, s0, 6 
+				srli                a5, a5, 1 
+				subw                a4, a4, a5
+				lwu                 s0, -1976(sp)       
+				divu                s6, t6, s2
+				lw                  s1, 32(sp)          
+				srli                a4, a4, 5 
+	
+b000000091c:
+				pre_branch_macro                        
+				blt                 x29, x19, i0000000909
+				post_branch_macro                       
+	
+				fence.i                       
+				sltiu               s0, s10, -1923
+				sw                  s1, 60(sp)          
+				srai                a4, a4, 10
+				sd                  s5, -768(sp)        
+				add                 s1, zero, s0
+				lbu                 s2, -1666(sp)       
+				li                  x29, 10   
+i000000091c:	slt                 s6, a5, s0
+i000000091d:	sraw                s1, s11, t2
+i000000091e:	fence                         
+i000000091f:	slliw               t6, a7, 1 
+i0000000920:	sub                 s0, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 12824 
+				add                 sp, sp, t1
+i0000000921:	sd                  s4, 96(sp)          
+i0000000922:	addi                s1, s1, -8
+i0000000923:	subw                a3, a3, a0
+i0000000924:	sw                  a5, 104(sp)         
+i0000000925:	addi                a5, sp, 244
+i0000000926:	addi                sp, sp, -112
+i0000000927:	srli                s1, s1, 14
+i0000000928:	addiw               a4, a4, -18
+i0000000929:	sub                 a0, a0, s0
+i000000092a:	and                 t0, s0, s0
+i000000092b:	fence.i                       
+i000000092c:	addw                a0, a0, a2
+i000000092d:	divu                a3, a4, t0
+i000000092e:	sw                  a2, 52(sp)          
+i000000092f:	addi                s1, sp, 464
+i0000000930:	lbu                 s1, -671(sp)        
+i0000000931:	slliw               s1, a1, 7 
+i0000000932:	sll                 s9, s8, a0
+i0000000933:	mulw                a5, a7, t1
+i0000000934:	divw                a5, a5, s1
+i0000000935:	ld                  zero, -1888(sp)     
+i0000000936:	fence                         
+i0000000937:	remw                s10, s1, s0
+i0000000938:	fence                         
+i0000000939:	sb                  a6, 1963(sp)        
+i000000093a:	and                 a5, s8, t3
+i000000093b:	andi                a1, a1, -30
+i000000093c:	srai                s1, s1, 14
+i000000093d:	srai                a2, a2, 6 
+i000000093e:	remw                a5, s0, s0
+i000000093f:	lw                  s8, 4(sp)           
+i0000000940:	remu                s1, a5, s0
+i0000000941:	lh                  s1, 784(sp)         
+i0000000942:	fsrmi               x0, 2     
+i0000000943:	sd                  t3, 88(sp)          
+i0000000944:	sd                  a2, 24(sp)          
+				li                  x18, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 4768  
+				add                 sp, sp, t1
+				sd                  a4, 88(sp)          
+				srai                s5, s1, 52
+				slli                s1, s1, 14
+				lh                  t3, 1026(sp)        
+				lw                  s0, 64(sp)          
+				addi                sp, sp, -96
+				slli                a5, t6, 46
+	
+b0000000945:
+				pre_branch_macro                        
+				bge                 x18, x29, i0000000937
+				post_branch_macro                       
+	
+				fence                         
+				srai                a5, a5, 5 
+				addi                s0, sp, 304
+				lw                  s1, 20(sp)          
+				sd                  s5, -1080(sp)       
+				or                  s1, s1, a5
+				or                  s0, s0, a4
+				li                  x29, 10   
+i0000000945:	srli                s1, a7, 39
+i0000000946:	sd                  a3, 88(sp)          
+i0000000947:	srli                a1, a1, 7 
+i0000000948:	sd                  s0, 80(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12536 
+				add                 sp, sp, t1
+i0000000949:	lb                  s9, 720(sp)         
+i000000094a:	or                  s11, a5, a5
+i000000094b:	ld                  s1, 136(sp)         
+i000000094c:	lw                  a2, 32(sp)          
+i000000094d:	remuw               s8, a5, s1
+i000000094e:	addi                sp, sp, 176
+i000000094f:	lbu                 a2, -261(sp)        
+i0000000950:	div                 s1, s1, a5
+i0000000951:	addi                sp, sp, 224
+i0000000952:	lb                  s2, -114(sp)        
+i0000000953:	lw                  t0, 1532(sp)        
+i0000000954:	srli                a0, s1, 53
+i0000000955:	srai                s0, s0, 2 
+i0000000956:	addi                a5, sp, 40
+				la                  sp, begin_signature
+				li                  t1, 3432  
+				add                 sp, sp, t1
+i0000000957:	sd                  s1, -1824(sp)       
+i0000000958:	mulw                t5, s1, a5
+i0000000959:	remuw               s1, s0, s0
+i000000095a:	slliw               s11, s0, 4
+i000000095b:	srai                s0, s1, 54
+i000000095c:	slliw               s1, s1, 28
+i000000095d:	sw                  gp, 28(sp)          
+i000000095e:	srlw                t0, s6, tp
+i000000095f:	mulhsu              s1, s0, s0
+i0000000960:	addiw               s1, t3, -1536
+i0000000961:	addi                sp, sp, 0 
+				la                  sp, begin_signature
+				li                  t1, 2920  
+				add                 sp, sp, t1
+i0000000962:	lw                  s1, 52(sp)          
+i0000000963:	addw                a0, a0, a2
+i0000000964:	sraiw               a5, s6, 17
+i0000000965:	add                 s1, s1, s1
+i0000000966:	remw                t5, s0, s0
+i0000000967:	addi                sp, sp, 240
+i0000000968:	subw                s1, s1, a2
+i0000000969:	lw                  gp, -492(sp)        
+i000000096a:	lw                  gp, 728(sp)         
+i000000096b:	add                 s1, s1, s9
+i000000096c:	sd                  a5, 896(sp)         
+				la                  sp, begin_signature
+				li                  t1, 3016  
+				add                 sp, sp, t1
+				divw                s4, s1, s0
+				sraw                a4, s6, t6
+				lw                  a5, 64(sp)          
+				sw                  s1, 48(sp)          
+				lbu                 s1, 1432(sp)        
+				ori                 a7, s4, -227
+				xori                a5, a5, -1034
+	
+b000000096d:
+				la                  x23, i000000098d    
+				jalr                x1, x23, 0          
+	
+				mulhsu              s5, zero, zero
+				addi                s0, sp, 432
+				addw                s1, s11, s3
+				addi                sp, sp, 80
+				lhu                 s1, -1088(sp)       
+				slli                a5, a5, 19
+				sw                  a5, 4(sp)           
+i000000096d:	srli                a2, a2, 11
+i000000096e:	fence                         
+i000000096f:	slliw               a5, a1, 19
+i0000000970:	srai                s1, s1, 2 
+i0000000971:	sd                  a5, 128(sp)         
+i0000000972:	srai                s1, s1, 20
+i0000000973:	subw                s1, s0, s0
+i0000000974:	srai                a5, a5, 13
+i0000000975:	addw                a3, a3, s1
+i0000000976:	or                  s1, s1, s1
+i0000000977:	sw                  a3, -792(sp)        
+i0000000978:	srli                a4, a4, 4 
+				la                  sp, begin_signature
+				li                  t1, 7176  
+				add                 sp, sp, t1
+i0000000979:	lw                  a0, 60(sp)          
+i000000097a:	divuw               a5, a6, a4
+i000000097b:	sw                  a2, 12(sp)          
+i000000097c:	srli                a0, a0, 12
+i000000097d:	fence                         
+i000000097e:	addi                sp, sp, -368
+i000000097f:	lw                  s1, 76(sp)          
+i0000000980:	subw                s1, t2, s2
+i0000000981:	srai                s0, s0, 16
+i0000000982:	subw                s0, s1, s1
+i0000000983:	ld                  s0, 240(sp)         
+i0000000984:	fence                         
+i0000000985:	sd                  s0, 88(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8624  
+				add                 sp, sp, t1
+i0000000986:	sd                  a5, -2024(sp)       
+i0000000987:	addi                a5, a5, 14
+i0000000988:	sw                  s4, 8(sp)           
+i0000000989:	sw                  s8, 48(sp)          
+i000000098a:	div                 tp, s1, s1
+i000000098b:	fence                         
+i000000098c:	sd                  a4, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12424 
+				add                 sp, sp, t1
+i000000098d:	sw                  a5, -1292(sp)       
+i000000098e:	lui                 s8, 3     
+i000000098f:	lhu                 a4, -920(sp)        
+i0000000990:	addw                s0, a1, s7
+i0000000991:	subw                t3, t5, a0
+i0000000992:	addw                s0, t0, tp
+				la                  sp, begin_signature
+				li                  t1, 5696  
+				add                 sp, sp, t1
+i0000000993:	sd                  s0, 1600(sp)        
+i0000000994:	mulw                zero, s1, s0
+				li                  x31, 10   
+				la                  sp, begin_signature
+				li                  t1, 12544 
+				add                 sp, sp, t1
+				sw                  a7, 56(sp)          
+				srli                s0, s0, 3 
+				addw                a4, a4, a4
+				srli                a4, a4, 21
+				fence                         
+				divuw               s1, s1, s0
+				addi                sp, sp, -48
+	
+b0000000995:
+				beq                 x29, x31, 1f        
+				jal                 x1, i0000000987     
+				1: li x29, 10                           
+	
+				divw                s4, a5, s1
+				sw                  s1, 44(sp)          
+				srli                s0, s0, 13
+				addi                s1, sp, 412
+				subw                s1, zero, s2
+				sllw                gp, s9, s8
+				lw                  s7, -276(sp)        
+i0000000995:	slti                s6, a1, -1152
+i0000000996:	sd                  s4, 168(sp)         
+i0000000997:	fence.i                       
+i0000000998:	div                 a4, s11, t2
+i0000000999:	or                  a2, a2, s0
+i000000099a:	lw                  s0, 40(sp)          
+i000000099b:	sltiu               a5, s1, 236
+i000000099c:	lbu                 a5, 291(sp)         
+i000000099d:	sraw                a4, s1, s0
+i000000099e:	mul                 s0, s3, s8
+i000000099f:	lwu                 s10, 856(sp)        
+i00000009a0:	lhu                 a5, -1902(sp)       
+i00000009a1:	addiw               a1, a1, -21
+i00000009a2:	srai                a5, a5, 25
+i00000009a3:	sw                  a5, -344(sp)        
+i00000009a4:	sb                  a5, 265(sp)         
+i00000009a5:	or                  t3, t3, a2
+i00000009a6:	fence                         
+i00000009a7:	add                 zero, a4, t2
+i00000009a8:	rem                 s0, s1, s1
+i00000009a9:	srli                a0, a0, 9 
+i00000009aa:	xor                 a3, a3, a0
+i00000009ab:	ld                  s11, 1720(sp)       
+i00000009ac:	srai                a1, a1, 7 
+i00000009ad:	divu                a3, s1, a5
+i00000009ae:	srli                a2, a2, 10
+i00000009af:	ld                  a0, 64(sp)          
+i00000009b0:	srai                s1, s1, 6 
+i00000009b1:	srai                a1, a1, 13
+i00000009b2:	xor                 s1, a5, a5
+i00000009b3:	addi                a0, sp, 256
+				la                  sp, begin_signature
+				li                  t1, 6568  
+				add                 sp, sp, t1
+i00000009b4:	ld                  a7, 88(sp)          
+i00000009b5:	srlw                zero, s9, s3
+i00000009b6:	ld                  a1, -664(sp)        
+i00000009b7:	sll                 a7, a5, s1
+i00000009b8:	sd                  a3, 24(sp)          
+i00000009b9:	sh                  a5, 1532(sp)        
+i00000009ba:	addi                s0, sp, 252
+				la                  sp, begin_signature
+				li                  t1, 5504  
+				add                 sp, sp, t1
+i00000009bb:	ld                  a5, 120(sp)         
+i00000009bc:	addi                s0, sp, 116
+				li                  x22, 9    
+				la                  sp, begin_signature
+				li                  t1, 5664  
+				add                 sp, sp, t1
+				lwu                 a5, -1512(sp)       
+				rem                 a5, t2, t6
+				addi                a5, sp, 360
+				ld                  s3, 0(sp)           
+				srai                a4, a4, 8 
+				lw                  a5, 84(sp)          
+				xori                s0, s8, -1670
+	
+b00000009bd:
+				pre_branch_macro                        
+				bge                 x22, x29, i000000099f
+				post_branch_macro                       
+	
+				srlw                s3, a5, s0
+				sltu                s11, a5, a5
+				remu                a6, s7, zero
+				addw                a4, a4, a4
+				sd                  t6, 528(sp)         
+				ld                  s1, 728(sp)         
+				lwu                 s3, 936(sp)         
+				li                  x29, 10   
+i00000009bd:	mulhsu              s1, s11, s8
+i00000009be:	lwu                 a5, 800(sp)         
+i00000009bf:	sw                  gp, 600(sp)         
+i00000009c0:	addi                a2, sp, 140
+i00000009c1:	srli                s1, s1, 4 
+i00000009c2:	mulh                a4, s0, a5
+i00000009c3:	divuw               gp, s0, s0
+i00000009c4:	remu                a4, t1, a1
+i00000009c5:	sub                 a5, a7, s10
+i00000009c6:	addi                sp, sp, -352
+i00000009c7:	addi                a3, sp, 44
+i00000009c8:	div                 tp, s1, s0
+i00000009c9:	lw                  s1, 1420(sp)        
+i00000009ca:	mulhu               s9, s1, s1
+i00000009cb:	sd                  s0, -1224(sp)       
+i00000009cc:	sd                  s0, 88(sp)          
+i00000009cd:	addiw               a0, a0, 8 
+i00000009ce:	slliw               gp, s0, 1 
+i00000009cf:	fence.i                       
+i00000009d0:	addi                a1, sp, 72
+i00000009d1:	srai                a4, a4, 15
+i00000009d2:	srlw                s1, s0, a5
+i00000009d3:	ld                  s3, 1880(sp)        
+i00000009d4:	sraiw               s5, s0, 28
+i00000009d5:	ld                  s5, -856(sp)        
+i00000009d6:	sd                  s1, -112(sp)        
+i00000009d7:	ld                  a1, 112(sp)         
+i00000009d8:	addw                s5, s1, s1
+i00000009d9:	fence                         
+i00000009da:	addiw               a5, a5, 12
+i00000009db:	sd                  s2, -1080(sp)       
+i00000009dc:	addi                a2, sp, 244
+i00000009dd:	sd                  s1, 104(sp)         
+i00000009de:	subw                s1, s1, a1
+				la                  sp, begin_signature
+				li                  t1, 9856  
+				add                 sp, sp, t1
+i00000009df:	sw                  s0, 36(sp)          
+i00000009e0:	srai                a0, a0, 12
+i00000009e1:	sw                  s1, 8(sp)           
+i00000009e2:	fence.i                       
+i00000009e3:	divuw               s10, s8, a1
+				la                  sp, begin_signature
+				li                  t1, 11888 
+				add                 sp, sp, t1
+i00000009e4:	sw                  a5, -284(sp)        
+				addi                sp, sp, -416
+				addi                sp, sp, -272
+				mulw                s1, a5, s0
+				sd                  s6, 24(sp)          
+				or                  a4, a4, a5
+				divuw               a5, s0, s0
+				slt                 s0, s7, s3
+	
+b00000009e5:
+				jal                 x1, i0000000a06     
+	
+				ld                  a4, 88(sp)          
+				fence                         
+				fence.i                       
+				addi                a4, sp, 152
+				lwu                 s0, 1248(sp)        
+				or                  a4, a4, a4
+				ld                  s8, 1240(sp)        
+i00000009e5:	addi                a4, sp, 444
+i00000009e6:	rem                 s3, s9, t5
+i00000009e7:	sd                  a3, 112(sp)         
+i00000009e8:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 2384  
+				add                 sp, sp, t1
+i00000009e9:	lh                  s5, -1258(sp)       
+i00000009ea:	fence.i                       
+i00000009eb:	mulhu               t6, s0, s1
+i00000009ec:	sd                  s0, 0(sp)           
+i00000009ed:	sd                  a5, 128(sp)         
+i00000009ee:	sllw                s1, s2, s3
+i00000009ef:	sraw                s1, s0, a5
+i00000009f0:	xor                 a0, a0, s1
+i00000009f1:	mulw                s0, s1, s1
+i00000009f2:	fence.i                       
+i00000009f3:	srai                a3, a3, 5 
+i00000009f4:	slt                 s1, s1, s1
+i00000009f5:	add                 s1, s0, s0
+i00000009f6:	addi                s1, sp, 12
+				la                  sp, begin_signature
+				li                  t1, 12024 
+				add                 sp, sp, t1
+i00000009f7:	lw                  a5, 32(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7528  
+				add                 sp, sp, t1
+i00000009f8:	sh                  s1, -2024(sp)       
+				la                  sp, begin_signature
+				li                  t1, 11424 
+				add                 sp, sp, t1
+i00000009f9:	sd                  s9, -552(sp)        
+i00000009fa:	div                 s7, s0, s0
+i00000009fb:	lw                  s1, 40(sp)          
+i00000009fc:	lui                 s1, 156206
+i00000009fd:	srli                a1, a1, 13
+i00000009fe:	ld                  s1, 48(sp)          
+i00000009ff:	sw                  a5, 120(sp)         
+i0000000a00:	lw                  a4, 56(sp)          
+i0000000a01:	sub                 a2, a0, t1
+i0000000a02:	mul                 s5, s1, s1
+i0000000a03:	addw                s0, s6, s2
+i0000000a04:	lui                 a5, 387630
+i0000000a05:	sh                  a7, -716(sp)        
+i0000000a06:	and                 a4, a4, s1
+i0000000a07:	remuw               zero, s0, s1
+i0000000a08:	lw                  t1, -992(sp)        
+i0000000a09:	srai                a2, a2, 17
+i0000000a0a:	srai                a0, a0, 10
+i0000000a0b:	xor                 s0, s0, a0
+i0000000a0c:	ld                  a5, 24(sp)          
+				li                  x26, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 13168 
+				add                 sp, sp, t1
+				sllw                a5, t3, s4
+				xori                s3, t3, -467
+				lbu                 a5, -1109(sp)       
+				sw                  a4, 12(sp)          
+				xor                 s1, s1, s1
+				or                  a4, a4, s1
+				sd                  t6, 168(sp)         
+	
+b0000000a0d:
+				beq                 x29, x26, 1f        
+				jal                 x1, i00000009f8     
+				1: li x29, 10                           
+	
+				srli                a4, a4, 16
+				mulw                s0, s1, s1
+				subw                a5, gp, s5
+				mulw                s0, s11, t2
+				sw                  a4, 64(sp)          
+				lwu                 t6, 1292(sp)        
+				fence                         
+i0000000a0d:	srai                a5, a5, 11
+i0000000a0e:	srliw               s5, s1, 29
+i0000000a0f:	addi                a1, a1, 4 
+i0000000a10:	divu                s7, a0, t6
+i0000000a11:	srli                a2, a2, 14
+i0000000a12:	srlw                a5, s1, s0
+i0000000a13:	addi                sp, sp, -16
+i0000000a14:	srliw               t6, s1, 4 
+i0000000a15:	lw                  a5, 112(sp)         
+i0000000a16:	fence                         
+i0000000a17:	slliw               a0, s8, 8 
+i0000000a18:	addw                s0, s0, a0
+i0000000a19:	sll                 zero, s0, s0
+i0000000a1a:	mulw                s0, a5, s1
+i0000000a1b:	srli                s1, s1, 17
+i0000000a1c:	srai                a0, a0, 12
+i0000000a1d:	srli                a1, a1, 6 
+i0000000a1e:	divu                s5, a5, a5
+i0000000a1f:	fence                         
+i0000000a20:	srli                a3, a3, 13
+i0000000a21:	mulhsu              a5, a4, s11
+i0000000a22:	sd                  a5, -1624(sp)       
+i0000000a23:	fence.i                       
+i0000000a24:	lw                  a0, 28(sp)          
+i0000000a25:	lw                  s1, 964(sp)         
+i0000000a26:	subw                s0, s0, s1
+i0000000a27:	addw                s0, s0, a2
+i0000000a28:	remuw               tp, s0, s0
+i0000000a29:	ld                  a6, -464(sp)        
+i0000000a2a:	srai                a4, a4, 7 
+i0000000a2b:	lw                  a7, -1104(sp)       
+i0000000a2c:	sd                  a4, 48(sp)          
+i0000000a2d:	addiw               a4, a4, -17
+i0000000a2e:	srai                a1, a1, 11
+i0000000a2f:	lh                  s4, 50(sp)          
+i0000000a30:	sll                 a7, t3, s4
+i0000000a31:	srai                s1, s1, 14
+i0000000a32:	mulw                s1, s4, s7
+i0000000a33:	lbu                 s3, 1745(sp)        
+i0000000a34:	mulw                s9, s10, t6
+				la                  sp, begin_signature
+				li                  t1, 5328  
+				add                 sp, sp, t1
+				ld                  s4, 0(sp)           
+				sltiu               s0, a5, -1997
+				srai                a4, a4, 5 
+				lw                  a4, 0(sp)           
+				fence.i                       
+				srli                a4, a4, 8 
+				divuw               a5, a5, s0
+	
+b0000000a35:
+				la                  x23, i0000000a48    
+				jalr                x0, x23, 0          
+	
+				sllw                s1, s0, s1
+				fence                         
+				rem                 a5, a5, s0
+				slliw               t3, s1, 11
+				divw                s1, s1, s0
+				ori                 s9, a5, 1567
+				mulw                a5, s9, s5
+i0000000a35:	slli                a1, a1, 17
+i0000000a36:	sraiw               s0, zero, 7
+i0000000a37:	ld                  s1, 48(sp)          
+i0000000a38:	sw                  a1, 60(sp)          
+i0000000a39:	remw                s8, a5, a5
+i0000000a3a:	sw                  a1, 0(sp)           
+i0000000a3b:	sd                  a1, 24(sp)          
+i0000000a3c:	addi                a4, a4, -14
+i0000000a3d:	addw                a5, a5, a3
+i0000000a3e:	fence                         
+i0000000a3f:	xor                 a4, a4, a3
+				la                  sp, begin_signature
+				li                  t1, 4944  
+				add                 sp, sp, t1
+i0000000a40:	sd                  a5, 64(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7944  
+				add                 sp, sp, t1
+i0000000a41:	sd                  t2, 112(sp)         
+i0000000a42:	addi                sp, sp, 224
+i0000000a43:	slliw               a5, s0, 12
+i0000000a44:	divuw               s0, s1, a5
+i0000000a45:	fence                         
+i0000000a46:	subw                a0, a0, a2
+i0000000a47:	addi                a5, sp, 116
+i0000000a48:	sd                  a4, 72(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12088 
+				add                 sp, sp, t1
+i0000000a49:	lh                  a0, 1316(sp)        
+i0000000a4a:	mul                 s3, s6, a4
+i0000000a4b:	ld                  a6, -408(sp)        
+i0000000a4c:	addi                s1, sp, 52
+i0000000a4d:	sd                  a5, -200(sp)        
+i0000000a4e:	lwu                 s1, 2004(sp)        
+i0000000a4f:	lw                  s8, 4(sp)           
+i0000000a50:	mulw                a3, t6, t3
+				la                  sp, begin_signature
+				li                  t1, 10888 
+				add                 sp, sp, t1
+i0000000a51:	lwu                 s3, 672(sp)         
+i0000000a52:	sd                  s5, 0(sp)           
+i0000000a53:	sw                  a0, 0(sp)           
+i0000000a54:	sll                 s7, s10, tp
+				la                  sp, begin_signature
+				li                  t1, 9440  
+				add                 sp, sp, t1
+i0000000a55:	ld                  s1, 72(sp)          
+i0000000a56:	srli                a5, a5, 15
+i0000000a57:	addw                s0, s0, a3
+i0000000a58:	slti                s1, t6, 1158
+i0000000a59:	srai                a3, a3, 9 
+i0000000a5a:	addi                s0, zero, 4
+i0000000a5b:	sd                  s1, -384(sp)        
+i0000000a5c:	srli                s1, s1, 3 
+				la                  sp, begin_signature
+				li                  t1, 10144 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11704 
+				add                 sp, sp, t1
+				addi                a4, sp, 256
+				mulhu               a6, s0, a5
+				lwu                 a5, 272(sp)         
+				ld                  gp, -184(sp)        
+				srli                a4, a4, 5 
+				rem                 tp, s0, s1
+				srlw                a5, a7, s10
+	
+b0000000a5d:
+				la                  x24, i0000000a70    
+				jalr                x10, x24, 0         
+	
+				ld                  a4, 40(sp)          
+				srli                s0, s0, 18
+				addw                a4, a4, a4
+				mulw                a5, gp, t6
+				addw                s1, a5, s1
+				slt                 s0, s0, s0
+				lhu                 s5, 1838(sp)        
+i0000000a5d:	fence                         
+i0000000a5e:	and                 a3, a3, a2
+i0000000a5f:	addi                s1, sp, 240
+i0000000a60:	andi                a5, a5, -6
+i0000000a61:	sd                  a5, 120(sp)         
+i0000000a62:	divu                t1, t1, zero
+i0000000a63:	mulw                a5, t3, t1
+i0000000a64:	slli                a1, a1, 8 
+i0000000a65:	fence.i                       
+i0000000a66:	fence                         
+i0000000a67:	fence.i                       
+i0000000a68:	sb                  a5, -720(sp)        
+i0000000a69:	sd                  s0, 192(sp)         
+i0000000a6a:	lw                  s1, 28(sp)          
+i0000000a6b:	divuw               a1, s3, s8
+i0000000a6c:	sw                  a5, 112(sp)         
+i0000000a6d:	mulh                s1, s0, s0
+i0000000a6e:	srai                a4, a4, 1 
+				la                  sp, begin_signature
+				li                  t1, 10504 
+				add                 sp, sp, t1
+i0000000a6f:	lw                  s1, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 7672  
+				add                 sp, sp, t1
+i0000000a70:	ld                  s0, 176(sp)         
+i0000000a71:	lhu                 a5, -2010(sp)       
+i0000000a72:	ld                  s0, 1928(sp)        
+i0000000a73:	lbu                 s0, -667(sp)        
+i0000000a74:	lh                  a0, 1548(sp)        
+i0000000a75:	fsrmi               x0, 2     
+i0000000a76:	sd                  t0, 160(sp)         
+i0000000a77:	srli                a0, a0, 10
+i0000000a78:	ld                  zero, 168(sp)       
+i0000000a79:	sub                 a3, a3, a3
+i0000000a7a:	sd                  t0, 240(sp)         
+i0000000a7b:	sw                  s1, 1516(sp)        
+i0000000a7c:	remuw               s2, a5, s1
+i0000000a7d:	srli                a0, a0, 12
+i0000000a7e:	divu                s1, a2, a6
+i0000000a7f:	add                 t6, s3, a0
+i0000000a80:	div                 s1, zero, tp
+i0000000a81:	addi                a5, a5, 6 
+i0000000a82:	lui                 s1, 9     
+i0000000a83:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 12528 
+				add                 sp, sp, t1
+i0000000a84:	sw                  s0, 60(sp)          
+i0000000a85:	ld                  gp, -104(sp)        
+				li                  x22, 10   
+				la                  sp, begin_signature
+				li                  t1, 6664  
+				add                 sp, sp, t1
+				addiw               a5, a5, 3 
+				sraiw               a5, s8, 16
+				lw                  a7, 864(sp)         
+				sd                  s1, 128(sp)         
+				rem                 t6, s1, s1
+				lh                  s0, 472(sp)         
+				sw                  s0, 64(sp)          
+	
+b0000000a86:
+				beq                 x29, x22, 1f        
+				jal                 x1, i0000000a7e     
+				1: li x29, 10                           
+	
+				srai                a4, a4, 11
+				addw                s0, s0, a5
+				sd                  a4, 112(sp)         
+				sh                  a4, -1752(sp)       
+				addi                sp, sp, -208
+				fence.i                       
+				subw                s0, a5, s1
+i0000000a86:	add                 a4, a4, t1
+i0000000a87:	addw                a5, a0, s5
+i0000000a88:	lw                  s7, 104(sp)         
+				la                  sp, begin_signature
+				li                  t1, 6248  
+				add                 sp, sp, t1
+i0000000a89:	sh                  gp, 504(sp)         
+i0000000a8a:	fence.i                       
+i0000000a8b:	mulhsu              t6, a5, s1
+i0000000a8c:	lw                  a6, 84(sp)          
+i0000000a8d:	srli                s0, s0, 3 
+i0000000a8e:	addiw               a4, a4, -6
+i0000000a8f:	sraw                s1, a5, s0
+i0000000a90:	addi                a3, a3, -28
+i0000000a91:	ld                  t6, 112(sp)         
+i0000000a92:	remu                a5, s1, s0
+i0000000a93:	addw                a5, a5, s1
+i0000000a94:	srli                s0, s0, 3 
+i0000000a95:	lh                  t1, -542(sp)        
+i0000000a96:	addi                sp, sp, -112
+i0000000a97:	ld                  a5, 0(sp)           
+i0000000a98:	lhu                 s10, 840(sp)        
+i0000000a99:	add                 a5, zero, s2
+i0000000a9a:	fence                         
+i0000000a9b:	and                 s1, s1, s1
+i0000000a9c:	lwu                 a6, 1260(sp)        
+i0000000a9d:	sd                  s1, 456(sp)         
+i0000000a9e:	mulhsu              s11, a6, a1
+i0000000a9f:	lwu                 a5, -1584(sp)       
+i0000000aa0:	srai                a2, a2, 10
+i0000000aa1:	lui                 a3, 190255
+i0000000aa2:	remuw               a7, s1, s1
+i0000000aa3:	srai                a4, a4, 9 
+i0000000aa4:	srai                a4, a4, 6 
+i0000000aa5:	fence                         
+i0000000aa6:	addi                a2, sp, 384
+i0000000aa7:	addw                a1, a1, a0
+i0000000aa8:	sllw                a5, s0, s1
+i0000000aa9:	fence                         
+i0000000aaa:	lwu                 gp, 1216(sp)        
+i0000000aab:	fence                         
+i0000000aac:	addw                a0, a0, a4
+i0000000aad:	addiw               s0, s0, 9 
+				li                  x25, 10   
+				la                  sp, begin_signature
+				li                  t1, 3320  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 5880  
+				add                 sp, sp, t1
+				lw                  a4, 48(sp)          
+				sw                  s0, 128(sp)         
+				lbu                 s7, -1129(sp)       
+				lwu                 s0, 1384(sp)        
+				sraw                s0, a6, tp
+				sub                 a4, a4, a4
+				divuw               tp, zero, t3
+	
+b0000000aae:
+				pre_branch_macro                        
+				bne                 x29, x25, i0000000a97
+				post_branch_macro                       
+	
+				sh                  s8, 2004(sp)        
+				srai                a4, a4, 6 
+				or                  a4, a4, a4
+				add                 tp, tp, s3
+				lw                  a5, 20(sp)          
+				mul                 s0, s1, a5
+				sw                  s1, 92(sp)          
+				li                  x29, 10   
+i0000000aae:	remu                a5, t3, tp
+i0000000aaf:	addiw               a4, a4, -24
+i0000000ab0:	divw                a6, s0, s1
+i0000000ab1:	addi                a1, sp, 80
+i0000000ab2:	add                 s0, s0, t0
+i0000000ab3:	remw                t6, a5, s1
+i0000000ab4:	sh                  s8, 1158(sp)        
+i0000000ab5:	xor                 a0, s8, a3
+i0000000ab6:	addw                s0, t0, a0
+i0000000ab7:	divuw               t6, a5, s0
+i0000000ab8:	addi                a3, sp, 384
+i0000000ab9:	sub                 a1, a1, a5
+i0000000aba:	divuw               a2, s4, a0
+i0000000abb:	sb                  a5, 1682(sp)        
+i0000000abc:	sltu                a5, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 5824  
+				add                 sp, sp, t1
+i0000000abd:	sb                  s1, 1422(sp)        
+i0000000abe:	lwu                 s0, 1420(sp)        
+i0000000abf:	lb                  s1, -934(sp)        
+i0000000ac0:	lw                  s1, 168(sp)         
+i0000000ac1:	addi                sp, sp, 128
+i0000000ac2:	addi                a0, sp, 468
+i0000000ac3:	fence                         
+i0000000ac4:	add                 s1, zero, a6
+i0000000ac5:	divuw               zero, s11, t3
+i0000000ac6:	fence                         
+i0000000ac7:	srli                a0, a0, 11
+i0000000ac8:	sub                 s1, s1, a2
+i0000000ac9:	andi                a1, a1, 1 
+i0000000aca:	addi                a1, sp, 468
+i0000000acb:	srai                a1, a1, 1 
+i0000000acc:	sw                  a0, 28(sp)          
+i0000000acd:	addiw               s1, s1, -26
+i0000000ace:	remuw               t2, s0, s1
+i0000000acf:	lw                  s1, 64(sp)          
+i0000000ad0:	ld                  a2, 40(sp)          
+i0000000ad1:	lui                 tp, 108589
+i0000000ad2:	fence.i                       
+i0000000ad3:	lw                  a5, 112(sp)         
+i0000000ad4:	subw                a1, a1, a3
+				la                  sp, begin_signature
+				li                  t1, 14008 
+				add                 sp, sp, t1
+i0000000ad5:	lw                  a1, 16(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8728  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3240  
+				add                 sp, sp, t1
+				sb                  a5, 1000(sp)        
+				ld                  s0, -1768(sp)       
+				addw                a4, a4, a4
+				lb                  s1, -1147(sp)       
+				srai                a4, a4, 13
+				sd                  s0, 256(sp)         
+				sw                  s0, 28(sp)          
+	
+b0000000ad6:
+				jal                 x1, i0000000aee     
+	
+				ld                  a5, 104(sp)         
+				rem                 s0, s0, s1
+				divu                s6, s8, s3
+				addi                sp, sp, -480
+				fence                         
+				lbu                 s10, 1005(sp)       
+				fence                         
+i0000000ad6:	mulw                a0, t0, s3
+				la                  sp, begin_signature
+				li                  t1, 4800  
+				add                 sp, sp, t1
+i0000000ad7:	ld                  a5, 48(sp)          
+i0000000ad8:	subw                s0, s0, a0
+i0000000ad9:	subw                a1, a1, s0
+i0000000ada:	sraw                t5, a5, a5
+i0000000adb:	addw                a5, a5, s0
+i0000000adc:	srli                a2, a2, 11
+i0000000add:	and                 tp, s1, s1
+i0000000ade:	fence                         
+i0000000adf:	srli                s0, s0, 9 
+i0000000ae0:	sd                  a5, -152(sp)        
+i0000000ae1:	sw                  a5, 32(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10784 
+				add                 sp, sp, t1
+i0000000ae2:	lw                  s0, 40(sp)          
+i0000000ae3:	fence.i                       
+i0000000ae4:	addi                sp, sp, 16
+i0000000ae5:	divuw               s1, s5, a6
+i0000000ae6:	andi                a5, s1, 1766
+i0000000ae7:	fence.i                       
+i0000000ae8:	rem                 s7, s1, s1
+i0000000ae9:	mulhsu              s6, a5, a5
+i0000000aea:	addi                s0, s0, -4
+i0000000aeb:	sub                 a5, a5, s1
+i0000000aec:	div                 t5, t6, tp
+i0000000aed:	addi                a0, sp, 448
+				la                  sp, begin_signature
+				li                  t1, 6224  
+				add                 sp, sp, t1
+i0000000aee:	lw                  s0, 36(sp)          
+i0000000aef:	addiw               s0, s0, -27
+i0000000af0:	srliw               s1, a0, 11
+i0000000af1:	srli                a3, a3, 7 
+i0000000af2:	sraiw               a5, a1, 13
+i0000000af3:	sub                 s0, s0, a0
+i0000000af4:	mulhu               s1, s0, s1
+i0000000af5:	rem                 t3, a0, s10
+i0000000af6:	sd                  s0, -416(sp)        
+i0000000af7:	sd                  a0, 0(sp)           
+i0000000af8:	subw                a0, a0, a5
+				la                  sp, begin_signature
+				li                  t1, 8848  
+				add                 sp, sp, t1
+i0000000af9:	sw                  a5, 12(sp)          
+i0000000afa:	lbu                 s0, 1432(sp)        
+i0000000afb:	srai                a3, a3, 10
+i0000000afc:	subw                s1, s1, a5
+i0000000afd:	srai                s0, s0, 8 
+				li                  x28, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 9984  
+				add                 sp, sp, t1
+				divu                a5, s1, s1
+				lw                  tp, 64(sp)          
+				add                 a5, s1, s0
+				sd                  s4, 32(sp)          
+				divu                s7, s7, t2
+				srai                a4, a4, 18
+				lw                  a4, 28(sp)          
+	
+b0000000afe:
+				beq                 x29, x28, 1f        
+				jal                 x1, i0000000aeb     
+				1: li x29, 10                           
+	
+				addi                sp, sp, -192
+				sw                  a5, -1020(sp)       
+				fence                         
+				lw                  a4, 36(sp)          
+				fence                         
+				fence.i                       
+				slliw               s0, s0, 9 
+i0000000afe:	sw                  a4, 32(sp)          
+i0000000aff:	addiw               a5, a5, 1 
+i0000000b00:	sd                  s10, 248(sp)        
+i0000000b01:	sd                  s0, 48(sp)          
+i0000000b02:	ld                  s6, -1392(sp)       
+i0000000b03:	mulhsu              a1, t5, zero
+i0000000b04:	addw                a2, a2, a4
+i0000000b05:	sd                  s1, 8(sp)           
+i0000000b06:	srli                s1, s1, 23
+i0000000b07:	mul                 s11, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 11920 
+				add                 sp, sp, t1
+i0000000b08:	ld                  s11, 568(sp)        
+i0000000b09:	fence                         
+i0000000b0a:	srli                a3, a3, 8 
+i0000000b0b:	lh                  a5, -1904(sp)       
+i0000000b0c:	auipc               s0, 319657
+i0000000b0d:	addw                a4, a4, s1
+i0000000b0e:	sw                  s6, -2032(sp)       
+i0000000b0f:	subw                a4, a4, a3
+i0000000b10:	mulw                s8, s5, t3
+i0000000b11:	srai                s1, s1, 19
+				la                  sp, begin_signature
+				li                  t1, 8560  
+				add                 sp, sp, t1
+i0000000b12:	lwu                 s0, 1108(sp)        
+i0000000b13:	mul                 s1, s0, s0
+i0000000b14:	sw                  a3, 52(sp)          
+i0000000b15:	addi                s0, sp, 164
+i0000000b16:	slli                s1, s1, 49
+i0000000b17:	sltu                a1, s0, s1
+i0000000b18:	ld                  a0, 40(sp)          
+i0000000b19:	srlw                a1, s10, s11
+i0000000b1a:	addi                a4, sp, 12
+i0000000b1b:	or                  a4, a4, a2
+				la                  sp, begin_signature
+				li                  t1, 8256  
+				add                 sp, sp, t1
+i0000000b1c:	lwu                 s1, 1456(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13240 
+				add                 sp, sp, t1
+i0000000b1d:	sh                  t0, -1916(sp)       
+i0000000b1e:	sw                  s1, 32(sp)          
+i0000000b1f:	srai                a1, a1, 8 
+i0000000b20:	fence                         
+i0000000b21:	addiw               s1, s1, -14
+i0000000b22:	addi                sp, sp, -320
+i0000000b23:	srai                s1, s1, 54
+i0000000b24:	mulh                t0, a1, t0
+i0000000b25:	sh                  s3, -1548(sp)       
+				li                  x18, 12   
+				addi                x29, x29, 1
+				ori                 s10, s0, 1294
+				remuw               t2, t6, tp
+				sb                  s11, 867(sp)        
+				srai                a4, a4, 3 
+				srli                a4, a4, 2 
+				srai                a4, a4, 7 
+				addi                a4, sp, 24
+	
+b0000000b26:
+				pre_branch_macro                        
+				blt                 x29, x18, i0000000b10
+				post_branch_macro                       
+	
+				rem                 s4, s5, s10
+				lui                 a5, 28    
+				sb                  s0, -783(sp)        
+				lwu                 s7, -828(sp)        
+				subw                s5, s0, s0
+				xori                s8, t2, -1968
+				fence                         
+				li                  x29, 10   
+i0000000b26:	srlw                s1, s0, s1
+i0000000b27:	xori                s1, a3, 598
+i0000000b28:	lw                  a5, 112(sp)         
+i0000000b29:	srl                 a3, s1, s1
+i0000000b2a:	fence                         
+i0000000b2b:	addi                a5, sp, 88
+i0000000b2c:	srlw                s1, s1, s0
+i0000000b2d:	lw                  a0, 56(sp)          
+i0000000b2e:	ld                  s11, 128(sp)        
+i0000000b2f:	sllw                a6, a1, tp
+i0000000b30:	remw                a3, s1, a5
+i0000000b31:	srli                a2, a2, 8 
+i0000000b32:	lwu                 t1, -1068(sp)       
+				la                  sp, begin_signature
+				li                  t1, 2832  
+				add                 sp, sp, t1
+i0000000b33:	sd                  s1, -1640(sp)       
+i0000000b34:	fence.i                       
+i0000000b35:	lh                  zero, -1926(sp)     
+				la                  sp, begin_signature
+				li                  t1, 12664 
+				add                 sp, sp, t1
+i0000000b36:	lw                  a3, 56(sp)          
+i0000000b37:	srli                a5, a5, 2 
+i0000000b38:	sltu                a1, gp, a3
+i0000000b39:	addi                sp, sp, 224
+i0000000b3a:	remw                a5, a0, t6
+i0000000b3b:	fence                         
+i0000000b3c:	mulhu               t3, a5, s0
+i0000000b3d:	fence                         
+i0000000b3e:	or                  a3, a3, a1
+i0000000b3f:	and                 a4, a4, s1
+i0000000b40:	fence                         
+i0000000b41:	lw                  a5, 4(sp)           
+i0000000b42:	sd                  s4, 1744(sp)        
+i0000000b43:	sllw                a7, s1, s1
+i0000000b44:	srai                s1, s1, 3 
+i0000000b45:	ld                  s1, -624(sp)        
+i0000000b46:	sd                  t1, -728(sp)        
+i0000000b47:	sllw                a5, s0, s0
+i0000000b48:	sd                  s8, 1600(sp)        
+i0000000b49:	lw                  s7, 824(sp)         
+i0000000b4a:	fence.i                       
+i0000000b4b:	fence                         
+i0000000b4c:	sw                  a1, 52(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7232  
+				add                 sp, sp, t1
+i0000000b4d:	sb                  t6, -943(sp)        
+				li                  x28, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 2440  
+				add                 sp, sp, t1
+				addi                sp, sp, -272
+				addi                sp, sp, -16
+				sd                  s5, -968(sp)        
+				sltiu               s4, s10, -1134
+				sraw                a5, s0, s1
+				mulw                s0, s9, t2
+				fence                         
+	
+b0000000b4e:
+				pre_branch_macro                        
+				blt                 x29, x28, i0000000b3b
+				post_branch_macro                       
+	
+				sraw                zero, a7, s3
+				divuw               gp, s0, s0
+				fence.i                       
+				slliw               a5, s1, 9 
+				sw                  a5, 108(sp)         
+				or                  s0, s0, s1
+				srli                a5, a5, 15
+				li                  x29, 10   
+i0000000b4e:	lw                  s1, 24(sp)          
+i0000000b4f:	addiw               a2, a2, -21
+i0000000b50:	divuw               s0, a5, a5
+i0000000b51:	and                 a3, a5, s1
+				la                  sp, begin_signature
+				li                  t1, 8736  
+				add                 sp, sp, t1
+i0000000b52:	lh                  a5, 1202(sp)        
+i0000000b53:	sb                  a7, -1420(sp)       
+i0000000b54:	lwu                 s6, 1344(sp)        
+i0000000b55:	addi                sp, sp, -336
+i0000000b56:	rem                 a7, s0, s1
+i0000000b57:	add                 a5, a5, t5
+i0000000b58:	addi                a1, zero, 16
+i0000000b59:	slliw               s0, t6, 10
+i0000000b5a:	slti                s1, s0, 1521
+i0000000b5b:	addi                sp, sp, 256
+				la                  sp, begin_signature
+				li                  t1, 12432 
+				add                 sp, sp, t1
+i0000000b5c:	ld                  a2, 120(sp)         
+i0000000b5d:	addw                a0, a0, a3
+i0000000b5e:	lw                  s0, 24(sp)          
+i0000000b5f:	sw                  s1, 28(sp)          
+i0000000b60:	srai                s0, s0, 4 
+i0000000b61:	or                  s0, s0, a5
+i0000000b62:	fence                         
+i0000000b63:	lw                  a2, 36(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13648 
+				add                 sp, sp, t1
+i0000000b64:	lw                  a1, 32(sp)          
+i0000000b65:	fence                         
+i0000000b66:	slliw               s3, s1, 24
+i0000000b67:	fence.i                       
+i0000000b68:	xor                 s1, s1, s1
+i0000000b69:	xor                 s2, a5, a5
+i0000000b6a:	sd                  s9, -840(sp)        
+i0000000b6b:	srli                a3, a3, 16
+i0000000b6c:	addi                sp, sp, -192
+i0000000b6d:	srli                s0, s0, 8 
+i0000000b6e:	sd                  a5, 384(sp)         
+i0000000b6f:	or                  a5, a5, s1
+i0000000b70:	addw                s7, t1, t3
+i0000000b71:	div                 s7, a5, s1
+i0000000b72:	or                  a3, a3, a5
+i0000000b73:	sh                  s9, 702(sp)         
+i0000000b74:	divu                a3, s1, s0
+i0000000b75:	sh                  a5, -944(sp)        
+				la                  sp, begin_signature
+				li                  t1, 14104 
+				add                 sp, sp, t1
+				fence                         
+				sub                 a4, a4, a4
+				xor                 s0, s0, a4
+				srli                a4, a4, 7 
+				srai                s1, s1, 9 
+				mulhu               s0, gp, s8
+				srl                 s1, s1, a5
+	
+b0000000b76:
+				jal                 x0, i0000000b82     
+	
+				srlw                a6, s1, s0
+				addi                a4, a4, -11
+				fence                         
+				srli                s1, s1, 5 
+				fence                         
+				ld                  tp, 1608(sp)        
+				addw                a5, a5, s0
+i0000000b76:	sllw                s3, t5, s9
+i0000000b77:	srliw               zero, tp, 28
+i0000000b78:	subw                s1, s1, a5
+i0000000b79:	srli                s0, s0, 12
+i0000000b7a:	srli                s5, t3, 60
+i0000000b7b:	srliw               t6, s1, 9 
+i0000000b7c:	lb                  a5, -111(sp)        
+				la                  sp, begin_signature
+				li                  t1, 11208 
+				add                 sp, sp, t1
+i0000000b7d:	lw                  a4, 28(sp)          
+i0000000b7e:	remuw               t1, s8, a2
+i0000000b7f:	sd                  a4, 32(sp)          
+i0000000b80:	addi                a4, sp, 104
+i0000000b81:	ld                  s1, 1104(sp)        
+i0000000b82:	divu                s3, a5, s0
+i0000000b83:	slli                a7, s10, 2
+i0000000b84:	div                 s1, s1, s1
+i0000000b85:	remu                gp, s0, a5
+i0000000b86:	srai                a3, a3, 5 
+i0000000b87:	and                 s2, s0, a5
+i0000000b88:	add                 zero, zero, s1
+i0000000b89:	addi                a3, sp, 432
+i0000000b8a:	ld                  s10, 176(sp)        
+i0000000b8b:	fence                         
+i0000000b8c:	divuw               a5, s11, a0
+i0000000b8d:	srai                gp, s0, 13
+i0000000b8e:	fence.i                       
+i0000000b8f:	fence                         
+i0000000b90:	mulw                s1, t1, tp
+i0000000b91:	fence.i                       
+i0000000b92:	srli                a2, a2, 6 
+i0000000b93:	divw                s0, a1, gp
+i0000000b94:	mul                 t3, t2, s9
+i0000000b95:	fence                         
+i0000000b96:	remu                a3, s2, s3
+i0000000b97:	srai                s0, s0, 8 
+i0000000b98:	srliw               a0, s1, 31
+i0000000b99:	addi                sp, sp, -352
+i0000000b9a:	srl                 s1, s2, a4
+i0000000b9b:	addi                sp, sp, 224
+i0000000b9c:	ld                  a3, 104(sp)         
+i0000000b9d:	srai                s0, a5, 38
+				li                  x19, 10   
+				la                  sp, begin_signature
+				li                  t1, 7672  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4136  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 10928 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3728  
+				add                 sp, sp, t1
+				srai                s0, s0, 8 
+				sd                  gp, 200(sp)         
+				srai                s1, s1, 14
+				sllw                tp, s11, s10
+				sd                  s0, 96(sp)          
+				sw                  a4, 60(sp)          
+				sw                  a4, 24(sp)          
+	
+b0000000b9e:
+				beq                 x29, x19, 1f        
+				jal                 x0, i0000000b88     
+				1: li x29, 10                           
+	
+				slli                t2, s1, 33
+				add                 a5, zero, s0
+				lw                  s1, 728(sp)         
+				subw                a7, s8, s2
+				ld                  s7, 0(sp)           
+				ld                  a4, 0(sp)           
+				srli                s1, s1, 1 
+i0000000b9e:	and                 s1, s1, a3
+i0000000b9f:	lui                 t1, 1     
+i0000000ba0:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 9672  
+				add                 sp, sp, t1
+i0000000ba1:	sd                  a5, -1952(sp)       
+i0000000ba2:	mulhsu              a4, s0, s0
+i0000000ba3:	sd                  s1, -1048(sp)       
+i0000000ba4:	sraiw               s5, s1, 8 
+i0000000ba5:	srli                a1, a1, 14
+i0000000ba6:	remu                s4, s0, s1
+i0000000ba7:	ld                  a5, 96(sp)          
+i0000000ba8:	srai                a1, a1, 3 
+i0000000ba9:	andi                a3, a3, -12
+i0000000baa:	addw                s0, s0, s1
+i0000000bab:	slti                s0, t5, -1922
+i0000000bac:	ld                  t2, -896(sp)        
+i0000000bad:	mulh                a5, a2, zero
+i0000000bae:	srai                a5, a5, 9 
+i0000000baf:	sw                  a7, 104(sp)         
+i0000000bb0:	mulh                gp, a5, s1
+i0000000bb1:	mulw                s1, gp, s7
+i0000000bb2:	srli                s1, s1, 4 
+i0000000bb3:	mulhu               zero, s1, s1
+i0000000bb4:	or                  a5, s0, a5
+i0000000bb5:	sb                  s1, -1194(sp)       
+				la                  sp, begin_signature
+				li                  t1, 8904  
+				add                 sp, sp, t1
+i0000000bb6:	lw                  a1, 52(sp)          
+i0000000bb7:	srlw                a3, s11, a4
+i0000000bb8:	sw                  s1, 128(sp)         
+i0000000bb9:	sd                  s0, 120(sp)         
+i0000000bba:	srli                a3, a3, 3 
+i0000000bbb:	addi                s0, sp, 88
+i0000000bbc:	srai                a1, a1, 4 
+i0000000bbd:	xor                 a4, a4, a0
+i0000000bbe:	srli                s0, s0, 20
+i0000000bbf:	sd                  a5, 176(sp)         
+i0000000bc0:	sd                  s1, -920(sp)        
+i0000000bc1:	srlw                s0, a2, s3
+i0000000bc2:	mulhu               s1, s1, a5
+i0000000bc3:	sra                 s0, tp, t3
+i0000000bc4:	addi                sp, sp, -480
+i0000000bc5:	remu                s1, a4, a7
+				li                  x27, 11   
+				addi                x29, x29, 1
+				addi                a4, a4, -30
+				srai                a4, a4, 16
+				addiw               zero, s1, -731
+				addi                s0, sp, 412
+				lhu                 s1, -1290(sp)       
+				remw                s3, s1, s1
+				slliw               a5, s7, 5 
+	
+b0000000bc6:
+				pre_branch_macro                        
+				beq                 x29, x27, i0000000bbf
+				post_branch_macro                       
+	
+				sw                  s9, 32(sp)          
+				srai                a5, s0, 33
+				mulw                s1, a6, a7
+				add                 t6, zero, a5
+				addiw               s0, s2, -1615
+				srli                a4, a4, 15
+				addi                a5, sp, 48
+				li                  x29, 10   
+i0000000bc6:	srai                s0, s0, 12
+i0000000bc7:	fence.i                       
+i0000000bc8:	add                 s1, s1, a3
+i0000000bc9:	srai                a3, a3, 16
+i0000000bca:	fence                         
+i0000000bcb:	remu                s6, a3, a2
+				la                  sp, begin_signature
+				li                  t1, 10088 
+				add                 sp, sp, t1
+i0000000bcc:	lw                  s1, 80(sp)          
+i0000000bcd:	fsrmi               x0, 2     
+i0000000bce:	sd                  s0, 0(sp)           
+i0000000bcf:	ori                 s6, s1, -1630
+i0000000bd0:	sd                  s1, 128(sp)         
+i0000000bd1:	ld                  s11, -1784(sp)      
+i0000000bd2:	lui                 s1, 27    
+i0000000bd3:	slliw               s2, a3, 28
+i0000000bd4:	srai                a1, a1, 14
+i0000000bd5:	remu                s1, t3, tp
+i0000000bd6:	srai                s1, s1, 20
+i0000000bd7:	sd                  a0, 56(sp)          
+i0000000bd8:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 14200 
+				add                 sp, sp, t1
+i0000000bd9:	lb                  a1, -1275(sp)       
+i0000000bda:	add                 s2, s2, a2
+i0000000bdb:	sd                  a0, 296(sp)         
+i0000000bdc:	ld                  a7, 168(sp)         
+i0000000bdd:	sllw                a5, a5, a5
+i0000000bde:	sd                  t1, 64(sp)          
+i0000000bdf:	addi                s1, sp, 100
+i0000000be0:	sllw                a5, s4, gp
+i0000000be1:	fence                         
+i0000000be2:	srli                s1, s1, 17
+i0000000be3:	sb                  s1, -1098(sp)       
+i0000000be4:	srai                s0, s0, 23
+i0000000be5:	divw                s1, a5, s0
+i0000000be6:	subw                a4, s1, a5
+i0000000be7:	subw                a5, s0, s0
+i0000000be8:	fence.i                       
+i0000000be9:	srli                a0, a0, 13
+i0000000bea:	addi                s1, sp, 288
+i0000000beb:	andi                a3, a3, -12
+i0000000bec:	sw                  s0, 16(sp)          
+i0000000bed:	fence                         
+i0000000bee:	sllw                a5, a4, tp
+				la                  sp, begin_signature
+				li                  t1, 5240  
+				add                 sp, sp, t1
+				addi                a5, sp, 484
+				fence                         
+				sd                  t3, 1376(sp)        
+				divw                a4, s3, s11
+				sd                  t2, 40(sp)          
+				ld                  s0, 72(sp)          
+				srai                s1, s1, 30
+	
+b0000000bef:
+				jal                 x10, i0000000c02    
+	
+				fence.i                       
+				rem                 s3, t2, a6
+				remuw               a5, s1, a5
+				sd                  s0, 120(sp)         
+				fence                         
+				fence.i                       
+				fence                         
+i0000000bef:	lb                  a5, -938(sp)        
+i0000000bf0:	lh                  s1, 2022(sp)        
+i0000000bf1:	remw                s7, s0, s0
+i0000000bf2:	sraw                a5, a5, s0
+i0000000bf3:	addi                a0, sp, 304
+i0000000bf4:	sd                  a5, 1856(sp)        
+i0000000bf5:	sw                  a5, 16(sp)          
+i0000000bf6:	remuw               s3, s1, s0
+i0000000bf7:	fence.i                       
+i0000000bf8:	addi                s0, zero, -16
+i0000000bf9:	sraiw               a5, s0, 1 
+i0000000bfa:	addw                a4, a4, a0
+i0000000bfb:	addi                s0, sp, 268
+i0000000bfc:	lwu                 s1, 172(sp)         
+i0000000bfd:	sraw                s0, s0, a5
+i0000000bfe:	rem                 s6, a0, t6
+i0000000bff:	sd                  t2, -1760(sp)       
+i0000000c00:	sraw                s0, a5, a5
+i0000000c01:	fence.i                       
+i0000000c02:	fence                         
+i0000000c03:	lw                  a6, 28(sp)          
+i0000000c04:	sw                  a4, 12(sp)          
+i0000000c05:	srli                a2, a2, 31
+i0000000c06:	lwu                 s6, -480(sp)        
+i0000000c07:	lwu                 a6, -1048(sp)       
+i0000000c08:	sw                  s2, 20(sp)          
+i0000000c09:	remw                a7, s3, a2
+i0000000c0a:	andi                s6, s8, -856
+i0000000c0b:	slti                a5, s11, -780
+i0000000c0c:	fence                         
+i0000000c0d:	addw                a5, s1, s0
+i0000000c0e:	srai                s1, s1, 15
+i0000000c0f:	mulh                a0, s0, a5
+i0000000c10:	sll                 s5, s4, t0
+i0000000c11:	addiw               s0, s0, 16
+i0000000c12:	divw                a6, s0, s0
+i0000000c13:	remuw               zero, s0, s0
+i0000000c14:	xori                s11, s9, 945
+i0000000c15:	slliw               s8, s1, 15
+i0000000c16:	lh                  s1, -1770(sp)       
+				li                  x17, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 7912  
+				add                 sp, sp, t1
+				addi                sp, sp, 256
+				lwu                 s2, 424(sp)         
+				sw                  s0, 4(sp)           
+				ori                 s0, s10, 1250
+				addw                a4, a4, s0
+				ld                  s1, 512(sp)         
+				div                 a5, s1, s1
+	
+b0000000c17:
+				pre_branch_macro                        
+				blt                 x29, x17, i0000000c09
+				post_branch_macro                       
+	
+				lwu                 a5, -1876(sp)       
+				div                 a5, a5, s0
+				sraiw               a4, s1, 13
+				addi                sp, sp, 32
+				subw                s0, s0, s1
+				addiw               a5, a5, 13
+				lw                  s1, 12(sp)          
+				li                  x29, 10   
+i0000000c17:	sw                  a1, 4(sp)           
+i0000000c18:	srli                a0, a0, 1 
+i0000000c19:	addiw               s0, s0, -26
+i0000000c1a:	fence                         
+i0000000c1b:	sd                  a7, -1968(sp)       
+i0000000c1c:	lw                  t3, 36(sp)          
+i0000000c1d:	andi                s1, s1, 7 
+i0000000c1e:	srli                s1, s1, 13
+i0000000c1f:	div                 a1, s0, s0
+i0000000c20:	mulhu               s4, s5, tp
+i0000000c21:	mulhu               a5, a4, s2
+i0000000c22:	fence.i                       
+i0000000c23:	ld                  s7, -64(sp)         
+i0000000c24:	addiw               s3, t6, 598
+				la                  sp, begin_signature
+				li                  t1, 9016  
+				add                 sp, sp, t1
+i0000000c25:	lw                  s0, -1284(sp)       
+i0000000c26:	rem                 t0, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 13736 
+				add                 sp, sp, t1
+i0000000c27:	ld                  s10, 216(sp)        
+i0000000c28:	divu                s0, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 14328 
+				add                 sp, sp, t1
+i0000000c29:	sh                  gp, 506(sp)         
+i0000000c2a:	remuw               s2, t3, s8
+				la                  sp, begin_signature
+				li                  t1, 9808  
+				add                 sp, sp, t1
+i0000000c2b:	lw                  s10, 364(sp)        
+i0000000c2c:	div                 s0, a5, s1
+i0000000c2d:	slli                a0, a0, 4 
+i0000000c2e:	remw                t2, a1, a0
+i0000000c2f:	sd                  tp, 208(sp)         
+i0000000c30:	remu                gp, s0, a5
+i0000000c31:	lb                  a5, 46(sp)          
+i0000000c32:	sltiu               s0, t5, 202
+i0000000c33:	sub                 a5, a5, s1
+i0000000c34:	srai                a5, a5, 2 
+i0000000c35:	addi                a2, sp, 20
+i0000000c36:	srliw               t2, s1, 0 
+i0000000c37:	sw                  s0, 12(sp)          
+i0000000c38:	subw                s0, s0, a4
+i0000000c39:	ld                  s0, 1416(sp)        
+i0000000c3a:	sw                  a0, 48(sp)          
+i0000000c3b:	addi                a5, sp, 316
+i0000000c3c:	auipc               t5, 159285
+i0000000c3d:	sub                 a7, s0, a5
+i0000000c3e:	ld                  a5, 184(sp)         
+				la                  sp, begin_signature
+				li                  t1, 5344  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3480  
+				add                 sp, sp, t1
+				sd                  a4, 32(sp)          
+				sw                  s0, 84(sp)          
+				lhu                 s3, -1906(sp)       
+				srai                s1, s1, 10
+				lw                  a4, 52(sp)          
+				sd                  s1, 112(sp)         
+				sd                  s5, 88(sp)          
+	
+b0000000c3f:
+				la                  x31, i0000000c50    
+				jalr                x10, x31, 0         
+	
+				xor                 a4, a4, a5
+				srliw               s11, s2, 6
+				srli                a5, a5, 15
+				addi                sp, sp, 144
+				add                 t3, t3, s0
+				ld                  s0, 216(sp)         
+				srlw                a5, t2, s6
+i0000000c3f:	add                 t0, t0, gp
+i0000000c40:	remw                s0, a5, s1
+i0000000c41:	sllw                a3, tp, s4
+i0000000c42:	lw                  s1, 68(sp)          
+i0000000c43:	remw                s1, s10, gp
+i0000000c44:	sraw                s1, s6, s6
+i0000000c45:	srai                a3, a3, 5 
+i0000000c46:	addiw               a5, s9, -332
+i0000000c47:	fence                         
+i0000000c48:	lwu                 s1, 1196(sp)        
+i0000000c49:	srai                a3, a3, 13
+i0000000c4a:	sw                  a5, 40(sp)          
+i0000000c4b:	divuw               s0, s3, s2
+i0000000c4c:	divuw               a6, s0, s0
+i0000000c4d:	fence                         
+i0000000c4e:	addi                s1, sp, 484
+i0000000c4f:	sraw                s1, a5, a5
+i0000000c50:	srai                s0, s0, 30
+i0000000c51:	sll                 t2, s1, s1
+i0000000c52:	divw                t1, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 5704  
+				add                 sp, sp, t1
+i0000000c53:	sw                  a3, 12(sp)          
+i0000000c54:	sb                  s1, 512(sp)         
+i0000000c55:	ori                 a3, s0, -131
+i0000000c56:	fence.i                       
+i0000000c57:	srai                s0, s0, 7 
+i0000000c58:	fence                         
+i0000000c59:	srli                s1, s1, 5 
+i0000000c5a:	addi                sp, sp, -176
+i0000000c5b:	addi                a0, sp, 372
+i0000000c5c:	addi                sp, sp, 16
+i0000000c5d:	mulw                s1, tp, t6
+i0000000c5e:	addi                s11, zero, -22
+i0000000c5f:	srli                a0, a0, 4 
+i0000000c60:	addw                s0, s0, a1
+i0000000c61:	addi                sp, sp, 144
+i0000000c62:	mulhsu              tp, s0, s1
+i0000000c63:	srliw               a5, s6, 9 
+i0000000c64:	div                 s1, a5, s0
+i0000000c65:	sw                  s1, 80(sp)          
+i0000000c66:	fence.i                       
+				li                  x31, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 12808 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3600  
+				add                 sp, sp, t1
+				sw                  s0, 48(sp)          
+				sll                 a6, a6, s6
+				srli                a5, a5, 10
+				fence                         
+				sh                  s0, -1820(sp)       
+				sllw                a5, s10, s3
+				lw                  s11, -1008(sp)      
+	
+b0000000c67:
+				beq                 x29, x31, 1f        
+				la                  x31, i0000000c55    
+				jalr                x0, x31, 0          
+				1: li x29, 10                           
+	
+				sll                 s2, s0, s0
+				slli                a5, a5, 19
+				or                  s1, s1, a4
+				srli                a4, a4, 29
+				srai                s0, s0, 6 
+				addi                a5, sp, 28
+				lwu                 s4, -1924(sp)       
+i0000000c67:	remw                s1, s1, s1
+i0000000c68:	ld                  s10, 208(sp)        
+i0000000c69:	mulw                s1, t1, s6
+i0000000c6a:	sd                  a5, 16(sp)          
+i0000000c6b:	or                  a5, a5, a5
+i0000000c6c:	srli                s1, s1, 24
+i0000000c6d:	sub                 s1, s1, s1
+i0000000c6e:	srli                s1, s1, 31
+i0000000c6f:	lbu                 t6, -1871(sp)       
+i0000000c70:	srli                a4, a4, 32
+i0000000c71:	sraw                s1, a5, a5
+i0000000c72:	lwu                 a5, -1640(sp)       
+i0000000c73:	mulhu               a5, s0, s1
+i0000000c74:	div                 s5, s0, a5
+i0000000c75:	lhu                 a1, -968(sp)        
+i0000000c76:	addi                s1, sp, 340
+i0000000c77:	addi                sp, sp, -512
+i0000000c78:	slti                t3, t2, -1366
+i0000000c79:	sw                  s0, 60(sp)          
+i0000000c7a:	divw                t3, t2, s7
+i0000000c7b:	ld                  t2, 48(sp)          
+i0000000c7c:	mul                 zero, s8, a4
+i0000000c7d:	srai                s0, s0, 12
+i0000000c7e:	remw                a5, a1, s8
+i0000000c7f:	srai                a5, a5, 2 
+				la                  sp, begin_signature
+				li                  t1, 2936  
+				add                 sp, sp, t1
+i0000000c80:	sd                  a5, 32(sp)          
+i0000000c81:	srliw               s1, a2, 16
+i0000000c82:	srai                a4, a4, 5 
+i0000000c83:	sw                  t5, 1132(sp)        
+i0000000c84:	addi                a1, sp, 496
+i0000000c85:	srai                a1, a1, 1 
+i0000000c86:	subw                s11, tp, a7
+i0000000c87:	srliw               s1, t0, 26
+i0000000c88:	addi                sp, sp, -272
+i0000000c89:	lw                  t5, -424(sp)        
+i0000000c8a:	remw                s8, a5, s1
+i0000000c8b:	sd                  s0, -2048(sp)       
+i0000000c8c:	lw                  t3, -1068(sp)       
+i0000000c8d:	slti                s0, s0, 1734
+i0000000c8e:	sll                 s1, s1, s1
+				sw                  a5, 12(sp)          
+				srlw                s1, a4, s6
+				addi                sp, sp, 208
+				ld                  s1, 40(sp)          
+				andi                a5, s0, 1551
+				lwu                 s9, -360(sp)        
+				subw                a4, a4, s1
+	
+b0000000c8f:
+				jal                 x1, i0000000ca0     
+	
+				srai                a5, a5, 13
+				lw                  s1, 44(sp)          
+				addi                sp, sp, -64
+				lbu                 s1, -719(sp)        
+				sd                  s0, 64(sp)          
+				ld                  s1, -1200(sp)       
+				addi                s1, sp, 104
+i0000000c8f:	lb                  a5, 966(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7744  
+				add                 sp, sp, t1
+i0000000c90:	sd                  a0, 40(sp)          
+i0000000c91:	srli                a5, s10, 57
+i0000000c92:	slli                a4, s6, 23
+i0000000c93:	sb                  a5, 733(sp)         
+i0000000c94:	sw                  a2, 52(sp)          
+i0000000c95:	sraw                s1, t0, a3
+i0000000c96:	or                  t5, a1, a6
+i0000000c97:	srli                s1, s1, 11
+i0000000c98:	srl                 a3, s0, s0
+i0000000c99:	lw                  a4, 40(sp)          
+i0000000c9a:	lw                  a5, 40(sp)          
+i0000000c9b:	subw                s0, s5, a0
+i0000000c9c:	addiw               a5, s0, -1632
+i0000000c9d:	addi                a2, sp, 164
+i0000000c9e:	subw                a5, a5, a5
+i0000000c9f:	mulhsu              a5, s7, t2
+i0000000ca0:	srli                s0, s0, 13
+				la                  sp, begin_signature
+				li                  t1, 10792 
+				add                 sp, sp, t1
+i0000000ca1:	lwu                 s1, 1256(sp)        
+i0000000ca2:	remw                s0, a5, s1
+i0000000ca3:	sd                  a3, 32(sp)          
+i0000000ca4:	sraw                s4, s10, gp
+i0000000ca5:	fence.i                       
+i0000000ca6:	lbu                 t5, -1425(sp)       
+i0000000ca7:	lwu                 s0, 436(sp)         
+i0000000ca8:	lbu                 a7, -2006(sp)       
+i0000000ca9:	slt                 s10, t5, tp
+i0000000caa:	addi                sp, sp, -32
+i0000000cab:	mulh                t2, t3, s10
+i0000000cac:	srli                a2, a2, 4 
+i0000000cad:	ld                  a5, 128(sp)         
+i0000000cae:	divw                s0, s1, s0
+i0000000caf:	lw                  a5, 104(sp)         
+i0000000cb0:	addw                a2, a2, a2
+i0000000cb1:	sraiw               a5, a5, 0 
+i0000000cb2:	fence.i                       
+i0000000cb3:	subw                a1, a1, a3
+i0000000cb4:	sllw                a5, a5, s1
+i0000000cb5:	divw                s7, a1, t1
+i0000000cb6:	andi                a4, a4, -22
+				li                  x24, 10   
+				srai                s0, s0, 6 
+				sh                  s9, 770(sp)         
+				srai                a5, a5, 17
+				sra                 s3, t2, s4
+				divuw               s9, s2, s10
+				mulw                a5, s2, s11
+				divuw               s1, s1, a5
+	
+b0000000cb7:
+				beq                 x29, x24, 1f        
+				jal                 x1, i0000000c9c     
+				1: li x29, 10                           
+	
+				slliw               s1, s0, 19
+				addiw               a4, a4, 11
+				srli                a4, a4, 19
+				remw                s1, s0, a5
+				sw                  a5, 36(sp)          
+				subw                s0, gp, t6
+				sw                  a4, 36(sp)          
+				la                  sp, begin_signature
+				li                  t1, 5472  
+				add                 sp, sp, t1
+i0000000cb7:	sd                  s1, 32(sp)          
+i0000000cb8:	sd                  s0, -584(sp)        
+i0000000cb9:	divu                s0, t6, a2
+i0000000cba:	or                  s1, s1, a0
+i0000000cbb:	auipc               a5, 196889
+i0000000cbc:	srai                a4, a4, 9 
+i0000000cbd:	fsrmi               x0, 3     
+i0000000cbe:	sd                  a3, 40(sp)          
+i0000000cbf:	fence.i                       
+i0000000cc0:	ld                  t2, 384(sp)         
+i0000000cc1:	addi                s0, s1, -865
+i0000000cc2:	fence                         
+i0000000cc3:	fence                         
+i0000000cc4:	xor                 a1, a1, a5
+i0000000cc5:	divuw               s0, a5, s1
+i0000000cc6:	addiw               a3, a3, -32
+i0000000cc7:	ld                  s10, 1144(sp)       
+i0000000cc8:	srli                a4, a4, 14
+i0000000cc9:	lui                 zero, 15  
+i0000000cca:	addiw               s1, s1, -17
+				la                  sp, begin_signature
+				li                  t1, 7296  
+				add                 sp, sp, t1
+i0000000ccb:	sh                  s3, -1490(sp)       
+i0000000ccc:	lhu                 s11, -1654(sp)      
+i0000000ccd:	lbu                 s9, -2039(sp)       
+i0000000cce:	sraiw               a7, s8, 0 
+i0000000ccf:	sraiw               t2, a1, 30
+i0000000cd0:	sw                  a2, 64(sp)          
+i0000000cd1:	sraiw               s5, a5, 15
+i0000000cd2:	addiw               s2, s11, 1117
+i0000000cd3:	remw                a3, s0, s0
+i0000000cd4:	divuw               s5, a5, s0
+i0000000cd5:	srli                a3, a3, 30
+i0000000cd6:	sd                  t3, 80(sp)          
+i0000000cd7:	srli                s3, t5, 47
+i0000000cd8:	srlw                s1, zero, a1
+i0000000cd9:	sw                  a7, 12(sp)          
+i0000000cda:	sllw                s1, s0, s1
+i0000000cdb:	fence                         
+i0000000cdc:	sraiw               a5, s1, 3 
+i0000000cdd:	srliw               a6, s9, 17
+i0000000cde:	addi                s0, sp, 40
+i0000000cdf:	mulhu               t1, t1, tp
+				la                  sp, begin_signature
+				li                  t1, 8056  
+				add                 sp, sp, t1
+				sllw                s11, a7, t2
+				remu                a5, a7, a6
+				sd                  a5, -256(sp)        
+				slliw               s1, s0, 25
+				lhu                 s7, -1772(sp)       
+				ld                  s1, 656(sp)         
+				auipc               gp, 399669
+	
+b0000000ce0:
+				jal                 x1, i0000000cf4     
+	
+				addi                sp, sp, -160
+				srai                a4, a4, 4 
+				fence                         
+				srai                a4, a4, 14
+				sh                  s4, -720(sp)        
+				lw                  s0, -844(sp)        
+				fence.i                       
+i0000000ce0:	fence                         
+i0000000ce1:	addw                s5, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 9032  
+				add                 sp, sp, t1
+i0000000ce2:	ld                  a5, 64(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7704  
+				add                 sp, sp, t1
+i0000000ce3:	sw                  s1, 64(sp)          
+i0000000ce4:	sw                  s2, 52(sp)          
+i0000000ce5:	or                  a5, a5, a3
+i0000000ce6:	addi                sp, sp, 160
+i0000000ce7:	lh                  a7, -1574(sp)       
+i0000000ce8:	srai                a0, a0, 9 
+i0000000ce9:	lhu                 t2, -1980(sp)       
+i0000000cea:	lhu                 s1, -256(sp)        
+i0000000ceb:	sd                  a4, 96(sp)          
+i0000000cec:	srl                 gp, s1, s1
+i0000000ced:	fence.i                       
+i0000000cee:	sd                  a3, 128(sp)         
+i0000000cef:	slti                t6, s1, 1955
+i0000000cf0:	addw                a5, a5, a5
+i0000000cf1:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 9496  
+				add                 sp, sp, t1
+i0000000cf2:	sw                  a3, 64(sp)          
+i0000000cf3:	addi                a4, sp, 324
+i0000000cf4:	srai                s1, s1, 2 
+i0000000cf5:	andi                s1, s1, -24
+i0000000cf6:	addi                t1, s0, -23
+i0000000cf7:	addi                sp, sp, -480
+i0000000cf8:	lw                  a0, 60(sp)          
+i0000000cf9:	or                  a4, a4, s0
+i0000000cfa:	srai                a3, a3, 8 
+i0000000cfb:	srliw               s1, zero, 28
+i0000000cfc:	sb                  t0, -394(sp)        
+i0000000cfd:	addw                a5, a5, s1
+i0000000cfe:	mul                 t3, a5, s0
+i0000000cff:	fence                         
+i0000000d00:	subw                s0, s0, a5
+i0000000d01:	addi                sp, sp, 224
+i0000000d02:	srai                s1, s1, 22
+i0000000d03:	mul                 a5, s1, a5
+i0000000d04:	addiw               s0, s1, -1985
+i0000000d05:	addi                a2, a2, -10
+i0000000d06:	srai                a5, a5, 28
+i0000000d07:	sd                  s1, 2040(sp)        
+				li                  x23, 12   
+				addi                x29, x29, 1
+				srai                a5, a5, 17
+				addi                sp, sp, 208
+				sra                 t2, s11, t2
+				addi                a4, sp, 264
+				lw                  a4, 48(sp)          
+				sd                  s1, -1112(sp)       
+				srai                a4, a4, 18
+	
+b0000000d08:
+				pre_branch_macro                        
+				bge                 x23, x29, i0000000d03
+				post_branch_macro                       
+	
+				sd                  s4, 200(sp)         
+				ld                  a4, 88(sp)          
+				divw                s1, a7, s10
+				remu                a5, s11, tp
+				sraw                s2, s1, s1
+				srai                a5, a5, 7 
+				remu                a6, s2, s4
+				li                  x29, 10   
+i0000000d08:	slli                s0, t2, 54
+i0000000d09:	fence.i                       
+i0000000d0a:	divw                s1, s1, a5
+i0000000d0b:	srai                a2, a2, 3 
+i0000000d0c:	sraw                s0, s1, s1
+i0000000d0d:	lw                  a3, 8(sp)           
+i0000000d0e:	lb                  s0, -961(sp)        
+i0000000d0f:	andi                s1, tp, 1735
+i0000000d10:	fence                         
+i0000000d11:	srai                a2, a2, 6 
+i0000000d12:	divuw               s0, s2, t1
+i0000000d13:	divu                t1, s7, s2
+i0000000d14:	addiw               tp, t3, -902
+i0000000d15:	subw                a4, a4, a5
+i0000000d16:	slliw               s0, t3, 26
+i0000000d17:	ld                  a1, 216(sp)         
+i0000000d18:	fence.i                       
+i0000000d19:	subw                s0, s0, s0
+i0000000d1a:	mulhsu              s6, s0, s1
+i0000000d1b:	sd                  s1, 128(sp)         
+i0000000d1c:	divw                a4, tp, a1
+				la                  sp, begin_signature
+				li                  t1, 6984  
+				add                 sp, sp, t1
+i0000000d1d:	sw                  s0, 1344(sp)        
+i0000000d1e:	addiw               s0, a6, -227
+i0000000d1f:	sraw                t5, a5, s1
+i0000000d20:	mulhsu              a4, s8, s9
+i0000000d21:	divu                s1, s1, s1
+i0000000d22:	andi                a5, a5, 6 
+i0000000d23:	slliw               t5, a6, 24
+i0000000d24:	srai                a5, a5, 10
+i0000000d25:	srli                a2, a2, 7 
+i0000000d26:	sw                  s0, 0(sp)           
+i0000000d27:	mulhsu              s10, a5, a5
+i0000000d28:	addi                a0, sp, 320
+				la                  sp, begin_signature
+				li                  t1, 11112 
+				add                 sp, sp, t1
+i0000000d29:	ld                  a0, 96(sp)          
+i0000000d2a:	sltiu               a5, tp, 386
+i0000000d2b:	fence.i                       
+i0000000d2c:	srlw                a5, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 2648  
+				add                 sp, sp, t1
+i0000000d2d:	lb                  s1, 149(sp)         
+i0000000d2e:	addi                sp, sp, 48
+i0000000d2f:	divu                s9, a2, tp
+				sll                 a5, s2, a4
+				fence.i                       
+				sb                  s1, -1608(sp)       
+				addi                sp, sp, -16
+				subw                a5, zero, s10
+				ld                  a4, 96(sp)          
+				sb                  s1, 170(sp)         
+	
+b0000000d30:
+				jal                 x10, i0000000d3f    
+	
+				lwu                 s3, 536(sp)         
+				sub                 a5, a5, s0
+				sw                  s1, 0(sp)           
+				addiw               s0, s0, 3 
+				sraiw               a5, a5, 12
+				remu                t6, gp, tp
+				srlw                a6, a7, a7
+i0000000d30:	sw                  a5, 4(sp)           
+i0000000d31:	sd                  s1, 72(sp)          
+i0000000d32:	ld                  s0, 80(sp)          
+i0000000d33:	lh                  s8, 206(sp)         
+i0000000d34:	subw                s0, s0, a5
+i0000000d35:	ld                  s7, 200(sp)         
+i0000000d36:	srli                s1, s1, 9 
+i0000000d37:	divuw               s3, s0, s1
+i0000000d38:	remw                s7, s1, s0
+i0000000d39:	fsrmi               x0, 7     
+i0000000d3a:	ld                  t3, 168(sp)         
+i0000000d3b:	lw                  s1, -524(sp)        
+i0000000d3c:	addi                sp, sp, -432
+i0000000d3d:	lw                  gp, -1504(sp)       
+i0000000d3e:	addi                a2, sp, 260
+i0000000d3f:	sd                  tp, 200(sp)         
+i0000000d40:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 6976  
+				add                 sp, sp, t1
+i0000000d41:	sd                  a4, 1200(sp)        
+i0000000d42:	lw                  a5, 24(sp)          
+i0000000d43:	divu                a5, a5, s0
+i0000000d44:	subw                s7, t2, s8
+i0000000d45:	srli                a3, a3, 13
+i0000000d46:	fsrmi               x0, 2     
+i0000000d47:	sd                  a5, 56(sp)          
+i0000000d48:	srliw               s1, s4, 28
+i0000000d49:	addi                a3, sp, 92
+i0000000d4a:	ld                  s0, 120(sp)         
+i0000000d4b:	fence                         
+i0000000d4c:	sw                  s1, 28(sp)          
+i0000000d4d:	fence.i                       
+i0000000d4e:	sw                  a0, 56(sp)          
+i0000000d4f:	addiw               a3, a3, -4
+i0000000d50:	divu                s5, a2, s8
+i0000000d51:	sll                 s0, a5, s0
+i0000000d52:	divu                s1, a4, a6
+i0000000d53:	addi                a3, sp, 200
+i0000000d54:	lui                 a5, 26    
+i0000000d55:	addw                a5, a5, s1
+i0000000d56:	sd                  a1, 208(sp)         
+i0000000d57:	divuw               s0, s1, s1
+i0000000d58:	sd                  s0, 112(sp)         
+i0000000d59:	mulw                s0, a1, s3
+				srai                s1, s1, 16
+				remuw               a5, a5, s0
+				fence                         
+				xor                 a4, a4, a4
+				sb                  a5, 247(sp)         
+				rem                 s5, t6, s11
+				mulhu               s1, s7, a4
+	
+b0000000d5a:
+				jal                 x1, i0000000d7a     
+	
+				fence                         
+				lwu                 a5, 1012(sp)        
+				lwu                 s5, -996(sp)        
+				sd                  a5, 104(sp)         
+				sd                  s1, 16(sp)          
+				fence.i                       
+				fence.i                       
+i0000000d5a:	divw                s1, a4, a0
+i0000000d5b:	mulh                s0, t0, tp
+i0000000d5c:	fence.i                       
+i0000000d5d:	andi                s1, s1, -3
+i0000000d5e:	sd                  s0, -1600(sp)       
+i0000000d5f:	srai                s0, s0, 11
+i0000000d60:	and                 s1, s1, s0
+i0000000d61:	sh                  a5, -52(sp)         
+i0000000d62:	lw                  t0, 60(sp)          
+i0000000d63:	lwu                 s1, 1740(sp)        
+i0000000d64:	remw                a5, s1, s1
+i0000000d65:	remu                s0, a0, s4
+i0000000d66:	fence.i                       
+i0000000d67:	divw                a1, a5, s0
+i0000000d68:	fence.i                       
+i0000000d69:	sraiw               s9, s0, 14
+i0000000d6a:	andi                a4, a4, 0 
+i0000000d6b:	fence                         
+i0000000d6c:	addi                a5, sp, 304
+i0000000d6d:	remuw               s1, a5, a5
+i0000000d6e:	srli                a5, a5, 15
+i0000000d6f:	addiw               a2, a2, 0 
+i0000000d70:	slt                 s1, s1, s1
+i0000000d71:	ld                  s0, 128(sp)         
+i0000000d72:	slli                a3, a3, 23
+i0000000d73:	srli                a4, a4, 7 
+i0000000d74:	mulh                a5, s3, a2
+i0000000d75:	remuw               s9, a5, s0
+i0000000d76:	srli                a1, a1, 7 
+i0000000d77:	lb                  t0, 855(sp)         
+i0000000d78:	addw                s1, s0, a5
+i0000000d79:	lw                  s2, -36(sp)         
+i0000000d7a:	srai                a0, a0, 7 
+i0000000d7b:	srlw                s10, tp, t0
+i0000000d7c:	lui                 t0, 20    
+i0000000d7d:	divu                s1, a5, s0
+i0000000d7e:	add                 s1, s1, s1
+i0000000d7f:	ld                  s0, 64(sp)          
+i0000000d80:	sw                  s2, 96(sp)          
+i0000000d81:	lwu                 s1, 1856(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2168  
+				add                 sp, sp, t1
+				sd                  s1, 224(sp)         
+				sh                  a5, -362(sp)        
+				lui                 s0, 250110
+				or                  s1, s10, zero
+				addw                s1, s1, s0
+				lw                  s8, 508(sp)         
+				mulw                a6, s3, a7
+	
+b0000000d82:
+				jal                 x10, i0000000d93    
+	
+				sd                  a7, 168(sp)         
+				sd                  s0, 56(sp)          
+				srai                a4, a4, 31
+				addi                sp, sp, -432
+				sw                  s1, 12(sp)          
+				slliw               s1, s9, 3 
+				remu                s11, a4, s6
+i0000000d82:	addiw               s4, a6, 638
+i0000000d83:	addw                a2, a2, a2
+				la                  sp, begin_signature
+				li                  t1, 6440  
+				add                 sp, sp, t1
+i0000000d84:	sw                  a2, 4(sp)           
+i0000000d85:	add                 a5, zero, t6
+i0000000d86:	srai                a3, a3, 13
+i0000000d87:	sw                  a3, 64(sp)          
+i0000000d88:	addw                s1, s1, a1
+i0000000d89:	divuw               s11, s0, a5
+i0000000d8a:	lw                  a4, 20(sp)          
+				la                  sp, begin_signature
+				li                  t1, 4944  
+				add                 sp, sp, t1
+i0000000d8b:	sw                  t2, 96(sp)          
+i0000000d8c:	ld                  a2, 184(sp)         
+i0000000d8d:	mulw                s1, s9, a2
+i0000000d8e:	addi                a2, sp, 380
+i0000000d8f:	addi                sp, sp, -320
+i0000000d90:	fence.i                       
+i0000000d91:	sw                  a0, 124(sp)         
+i0000000d92:	divuw               s1, a5, a5
+i0000000d93:	addw                s0, s0, a1
+i0000000d94:	lw                  a1, 0(sp)           
+i0000000d95:	srai                a3, a3, 26
+i0000000d96:	sltu                a5, a1, s11
+i0000000d97:	addw                s1, s1, a5
+i0000000d98:	addi                a5, sp, 484
+i0000000d99:	sraw                s5, s10, tp
+i0000000d9a:	lbu                 a5, 1575(sp)        
+i0000000d9b:	srli                a2, s2, 49
+i0000000d9c:	sw                  a0, 60(sp)          
+i0000000d9d:	srlw                zero, s1, s0
+i0000000d9e:	addi                sp, sp, -448
+i0000000d9f:	fence.i                       
+i0000000da0:	addi                sp, sp, -304
+i0000000da1:	add                 s6, s0, a5
+i0000000da2:	sh                  s0, -1930(sp)       
+i0000000da3:	sw                  s4, 704(sp)         
+i0000000da4:	sllw                tp, a5, a5
+i0000000da5:	lh                  a5, 810(sp)         
+i0000000da6:	divuw               s11, zero, s4
+i0000000da7:	remw                s9, s0, s1
+i0000000da8:	and                 a4, a4, a5
+i0000000da9:	addi                sp, sp, -512
+				li                  x20, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 10144 
+				add                 sp, sp, t1
+				auipc               s3, 141231
+				lhu                 s7, -1908(sp)       
+				slt                 a5, s8, a7
+				xor                 a4, a4, a4
+				slliw               s3, a6, 24
+				lh                  t3, -274(sp)        
+				addw                s0, s0, a4
+	
+b0000000daa:
+				beq                 x29, x20, 1f        
+				jal                 x0, i0000000da2     
+				1: li x29, 10                           
+	
+				lbu                 s1, 564(sp)         
+				srliw               s1, s1, 20
+				remw                s0, s1, a5
+				divuw               s1, s11, a4
+				lw                  a4, 60(sp)          
+				sw                  s0, 8(sp)           
+				lui                 s8, 15    
+i0000000daa:	lbu                 s0, 1241(sp)        
+i0000000dab:	srli                a0, a0, 1 
+i0000000dac:	srli                s1, s1, 18
+				la                  sp, begin_signature
+				li                  t1, 11120 
+				add                 sp, sp, t1
+i0000000dad:	ld                  a7, -2024(sp)       
+i0000000dae:	div                 a5, s0, s0
+i0000000daf:	lwu                 a5, -264(sp)        
+i0000000db0:	sraw                a5, a5, s1
+i0000000db1:	lhu                 a5, 1392(sp)        
+i0000000db2:	subw                a5, a5, a2
+i0000000db3:	mulhu               s0, t0, s9
+i0000000db4:	lw                  t3, 8(sp)           
+i0000000db5:	fence                         
+i0000000db6:	add                 s0, s1, s1
+i0000000db7:	lwu                 s1, 1524(sp)        
+i0000000db8:	srli                a5, a5, 11
+i0000000db9:	slliw               a5, s2, 18
+i0000000dba:	addi                sp, sp, 96
+i0000000dbb:	fence                         
+i0000000dbc:	and                 s1, tp, t6
+i0000000dbd:	addi                a5, zero, -3
+i0000000dbe:	slli                a3, a3, 2 
+i0000000dbf:	addi                a1, a1, -15
+i0000000dc0:	sraw                s11, s0, s0
+i0000000dc1:	and                 a2, a2, a5
+i0000000dc2:	addiw               a1, a1, -23
+i0000000dc3:	addiw               a0, a0, -22
+i0000000dc4:	srai                a5, a5, 24
+i0000000dc5:	sw                  tp, 16(sp)          
+i0000000dc6:	lwu                 a2, -1604(sp)       
+i0000000dc7:	addiw               s0, s0, -19
+i0000000dc8:	sltiu               s9, a6, -808
+i0000000dc9:	lb                  s0, 1008(sp)        
+i0000000dca:	srai                s0, s0, 8 
+i0000000dcb:	srai                s0, s0, 2 
+i0000000dcc:	fence                         
+i0000000dcd:	subw                a0, a0, a4
+i0000000dce:	srli                s1, s1, 11
+i0000000dcf:	lw                  a5, 32(sp)          
+i0000000dd0:	remw                a7, s0, a5
+i0000000dd1:	mulh                s1, s0, s1
+				li                  x18, 10   
+				srai                a4, a4, 8 
+				addi                s0, sp, 64
+				subw                a5, a5, a4
+				srlw                s1, s1, s1
+				mulh                tp, s7, s7
+				slli                a7, s0, 28
+				or                  s0, s0, a4
+	
+b0000000dd2:
+				pre_branch_macro                        
+				bne                 x29, x18, i0000000dbc
+				post_branch_macro                       
+	
+				ld                  s1, 72(sp)          
+				add                 t3, t3, a5
+				sub                 a4, a4, s1
+				andi                s1, s1, -12
+				sraiw               gp, s0, 18
+				fence                         
+				addi                s6, zero, 4
+				li                  x29, 10   
+i0000000dd2:	addi                sp, sp, 112
+i0000000dd3:	div                 a5, s1, a5
+i0000000dd4:	addi                s6, zero, 12
+i0000000dd5:	sw                  a3, 116(sp)         
+i0000000dd6:	addi                s0, zero, -9
+i0000000dd7:	or                  a5, a5, a1
+i0000000dd8:	auipc               s10, 112697
+				la                  sp, begin_signature
+				li                  t1, 6920  
+				add                 sp, sp, t1
+i0000000dd9:	sd                  a1, 120(sp)         
+i0000000dda:	lw                  s1, 56(sp)          
+i0000000ddb:	mulw                s1, t1, a1
+i0000000ddc:	xor                 a2, a2, a2
+i0000000ddd:	mulhsu              a5, s1, a5
+i0000000dde:	sh                  s1, -894(sp)        
+i0000000ddf:	slliw               s9, s3, 30
+i0000000de0:	addi                sp, sp, 240
+i0000000de1:	sraiw               s1, a5, 7 
+i0000000de2:	addi                sp, sp, 48
+i0000000de3:	subw                a4, a4, a4
+i0000000de4:	srliw               s1, s2, 24
+				la                  sp, begin_signature
+				li                  t1, 3312  
+				add                 sp, sp, t1
+i0000000de5:	sw                  a3, 92(sp)          
+i0000000de6:	addiw               a3, a3, 5 
+				la                  sp, begin_signature
+				li                  t1, 12216 
+				add                 sp, sp, t1
+i0000000de7:	sd                  a2, 40(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12952 
+				add                 sp, sp, t1
+i0000000de8:	ld                  a5, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11104 
+				add                 sp, sp, t1
+i0000000de9:	ld                  s1, 120(sp)         
+i0000000dea:	sd                  a3, 128(sp)         
+i0000000deb:	sub                 a0, a0, a2
+i0000000dec:	srai                a5, a5, 13
+i0000000ded:	addi                a3, sp, 476
+				la                  sp, begin_signature
+				li                  t1, 5680  
+				add                 sp, sp, t1
+i0000000dee:	lbu                 t0, 550(sp)         
+i0000000def:	lwu                 a0, -1924(sp)       
+i0000000df0:	sd                  s1, 928(sp)         
+i0000000df1:	remw                a0, a5, a5
+i0000000df2:	srlw                s0, a5, s1
+i0000000df3:	srli                a5, a5, 8 
+i0000000df4:	sw                  s0, 112(sp)         
+i0000000df5:	srliw               a5, s1, 1 
+i0000000df6:	sw                  a3, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 7656  
+				add                 sp, sp, t1
+i0000000df7:	ld                  t2, -432(sp)        
+i0000000df8:	srai                a4, a4, 13
+i0000000df9:	srai                a2, a2, 15
+				li                  x18, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7416  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11808 
+				add                 sp, sp, t1
+				addw                s1, s1, a5
+				subw                s1, t2, s11
+				srli                s0, s0, 2 
+				sll                 a5, s1, s1
+				lwu                 s0, 140(sp)         
+				div                 zero, t2, t2
+				or                  a4, a4, s1
+	
+b0000000dfa:
+				pre_branch_macro                        
+				blt                 x29, x18, i0000000e1b
+				post_branch_macro                       
+	
+				srai                s0, s0, 8 
+				mulhu               a7, tp, t3
+				srli                a5, a5, 14
+				sb                  s1, 407(sp)         
+				or                  s1, s1, a4
+				fence.i                       
+				sd                  t3, 48(sp)          
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 6880  
+				add                 sp, sp, t1
+i0000000dfa:	sw                  s1, 104(sp)         
+i0000000dfb:	lw                  a5, 0(sp)           
+i0000000dfc:	lw                  s0, -272(sp)        
+i0000000dfd:	xor                 s0, s0, s0
+i0000000dfe:	sd                  a3, 8(sp)           
+i0000000dff:	fence                         
+i0000000e00:	addi                a1, sp, 288
+i0000000e01:	lwu                 a5, -784(sp)        
+i0000000e02:	fence                         
+i0000000e03:	srli                a4, a4, 9 
+i0000000e04:	addi                a2, sp, 308
+i0000000e05:	srai                a3, a3, 14
+i0000000e06:	sw                  t5, 32(sp)          
+i0000000e07:	lui                 t0, 19    
+i0000000e08:	fence.i                       
+i0000000e09:	fence                         
+i0000000e0a:	sra                 a0, s2, t2
+i0000000e0b:	addw                a5, a5, a4
+i0000000e0c:	srli                s1, s1, 3 
+i0000000e0d:	ld                  s7, 1880(sp)        
+i0000000e0e:	addw                s0, a5, s0
+i0000000e0f:	fence.i                       
+i0000000e10:	addi                a0, sp, 464
+i0000000e11:	srai                s1, s1, 2 
+i0000000e12:	and                 a1, a1, a5
+i0000000e13:	lwu                 s0, 764(sp)         
+i0000000e14:	srli                a2, a2, 4 
+i0000000e15:	mul                 s1, zero, s4
+i0000000e16:	sraiw               t6, s8, 27
+i0000000e17:	fence                         
+i0000000e18:	sllw                s1, s1, s0
+i0000000e19:	fence.i                       
+i0000000e1a:	addi                a5, sp, 424
+i0000000e1b:	mulw                s0, a5, s1
+i0000000e1c:	srai                a1, a1, 7 
+i0000000e1d:	xor                 t5, zero, a1
+i0000000e1e:	fence.i                       
+i0000000e1f:	srli                s1, s1, 7 
+i0000000e20:	fence.i                       
+i0000000e21:	srli                a3, a3, 10
+				li                  x19, 0    
+				la                  sp, begin_signature
+				li                  t1, 10464 
+				add                 sp, sp, t1
+				srl                 t2, a5, a5
+				srlw                s11, zero, s4
+				slliw               a7, t3, 8 
+				addi                sp, sp, -432
+				lh                  s0, -110(sp)        
+				andi                s0, s0, -8
+				remuw               s1, s1, s0
+	
+b0000000e22:
+				pre_branch_macro                        
+				beq                 x29, x19, i0000000e45
+				post_branch_macro                       
+	
+				div                 a4, s0, a5
+				slliw               a5, s11, 6
+				fence                         
+				lwu                 s5, -1956(sp)       
+				subw                s0, s0, a4
+				sltu                a5, s1, s0
+				ld                  s0, 48(sp)          
+				li                  x29, 10   
+i0000000e22:	slli                s0, s0, 4 
+i0000000e23:	srli                s0, s0, 15
+i0000000e24:	divuw               s10, s8, s7
+i0000000e25:	addw                a4, a4, a1
+i0000000e26:	xori                s2, s0, -624
+i0000000e27:	ld                  s9, -1000(sp)       
+i0000000e28:	srli                a5, s3, 29
+i0000000e29:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 6400  
+				add                 sp, sp, t1
+i0000000e2a:	ld                  a4, 128(sp)         
+i0000000e2b:	fence.i                       
+i0000000e2c:	addi                sp, sp, 48
+i0000000e2d:	ld                  s0, 72(sp)          
+i0000000e2e:	addi                a4, sp, 240
+i0000000e2f:	addi                a5, sp, 468
+i0000000e30:	xori                s0, a3, -1438
+i0000000e31:	sw                  a2, 20(sp)          
+i0000000e32:	srai                s0, s0, 13
+i0000000e33:	addi                s0, sp, 220
+i0000000e34:	subw                a1, a1, s1
+i0000000e35:	fence.i                       
+i0000000e36:	lwu                 a4, -152(sp)        
+i0000000e37:	sd                  s0, 40(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7048  
+				add                 sp, sp, t1
+i0000000e38:	sh                  a5, -1734(sp)       
+				la                  sp, begin_signature
+				li                  t1, 2408  
+				add                 sp, sp, t1
+i0000000e39:	sw                  s1, 16(sp)          
+i0000000e3a:	divu                s1, s0, s0
+i0000000e3b:	fence                         
+i0000000e3c:	auipc               s4, 36031 
+i0000000e3d:	slt                 tp, s7, a3
+i0000000e3e:	sw                  s0, 4(sp)           
+i0000000e3f:	mulh                a5, t2, s9
+i0000000e40:	divw                s4, a3, gp
+i0000000e41:	srai                a5, a5, 10
+i0000000e42:	srai                s1, s1, 13
+i0000000e43:	lh                  a3, 756(sp)         
+i0000000e44:	ld                  t6, 784(sp)         
+i0000000e45:	srai                s0, s0, 16
+i0000000e46:	lb                  a0, 1544(sp)        
+i0000000e47:	sd                  a5, 152(sp)         
+i0000000e48:	srai                s9, a6, 61
+i0000000e49:	subw                a4, a4, a2
+				la                  sp, begin_signature
+				li                  t1, 2416  
+				add                 sp, sp, t1
+				sd                  s1, -1224(sp)       
+				remw                tp, s0, s0
+				fence.i                       
+				lb                  s0, -1663(sp)       
+				addi                a4, sp, 332
+				mul                 a5, s3, t3
+				sw                  a4, 64(sp)          
+	
+b0000000e4a:
+				la                  x21, i0000000e56    
+				jalr                x1, x21, 0          
+	
+				addi                s0, sp, 212
+				srli                a4, a4, 9 
+				sltu                s11, s3, s2
+				addi                sp, sp, 192
+				xor                 a4, a4, s0
+				srai                a4, a4, 11
+				lb                  t6, 443(sp)         
+i0000000e4a:	fence.i                       
+i0000000e4b:	remw                s1, gp, a4
+i0000000e4c:	sd                  t1, 24(sp)          
+i0000000e4d:	srai                s0, s0, 6 
+i0000000e4e:	slliw               a5, t3, 3 
+i0000000e4f:	addiw               a3, a3, -2
+i0000000e50:	remuw               gp, s0, s1
+i0000000e51:	addiw               a5, a6, -2028
+i0000000e52:	fence                         
+i0000000e53:	addw                a5, a5, a3
+i0000000e54:	subw                s4, s1, s1
+i0000000e55:	addi                a5, sp, 416
+i0000000e56:	lui                 s10, 468786
+i0000000e57:	sd                  s2, 472(sp)         
+i0000000e58:	lbu                 s0, -151(sp)        
+i0000000e59:	fence                         
+i0000000e5a:	slt                 a7, t6, s11
+i0000000e5b:	mulh                s6, a5, a5
+i0000000e5c:	srai                s1, s1, 5 
+				la                  sp, begin_signature
+				li                  t1, 6560  
+				add                 sp, sp, t1
+i0000000e5d:	ld                  a1, 56(sp)          
+i0000000e5e:	sub                 s0, t0, gp
+i0000000e5f:	mulhsu              tp, s0, a5
+i0000000e60:	srai                a1, a1, 12
+i0000000e61:	lui                 a5, 24    
+i0000000e62:	ld                  s1, 64(sp)          
+i0000000e63:	sraw                a2, s6, s9
+i0000000e64:	andi                s1, s1, 6 
+				la                  sp, begin_signature
+				li                  t1, 10336 
+				add                 sp, sp, t1
+i0000000e65:	lwu                 a5, 1096(sp)        
+i0000000e66:	div                 s0, s2, s8
+i0000000e67:	fence                         
+i0000000e68:	fence.i                       
+i0000000e69:	srl                 s7, s6, s11
+i0000000e6a:	ld                  t0, 56(sp)          
+i0000000e6b:	mulh                zero, a3, a2
+i0000000e6c:	remu                s1, a2, a7
+i0000000e6d:	mulw                a5, s1, s1
+i0000000e6e:	fence                         
+i0000000e6f:	srlw                zero, t0, t3
+i0000000e70:	fence                         
+i0000000e71:	srl                 s0, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 9464  
+				add                 sp, sp, t1
+				srliw               s8, a5, 27
+				sw                  a7, 124(sp)         
+				addi                s1, s1, -16
+				remw                s10, a6, s8
+				fence.i                       
+				addiw               s0, s0, 14
+				mul                 s0, s1, a5
+	
+b0000000e72:
+				la                  x27, i0000000e7d    
+				jalr                x0, x27, 0          
+	
+				srai                a4, a4, 3 
+				addi                sp, sp, -384
+				remuw               s1, s9, s7
+				lw                  a4, 52(sp)          
+				sw                  a7, 44(sp)          
+				sd                  a7, 144(sp)         
+				lui                 s4, 18    
+i0000000e72:	slliw               s9, a2, 31
+i0000000e73:	addi                a4, sp, 68
+i0000000e74:	addiw               s2, t0, 1382
+i0000000e75:	remuw               s10, s2, s4
+i0000000e76:	sb                  a1, -950(sp)        
+i0000000e77:	srai                a5, a5, 2 
+i0000000e78:	slli                a2, a2, 6 
+i0000000e79:	sub                 a3, a3, a2
+i0000000e7a:	sd                  tp, 152(sp)         
+i0000000e7b:	lw                  s1, 36(sp)          
+i0000000e7c:	sraiw               s0, s0, 22
+i0000000e7d:	sd                  a5, 16(sp)          
+i0000000e7e:	sd                  s0, 80(sp)          
+i0000000e7f:	srli                a5, a5, 29
+i0000000e80:	srli                a2, a2, 11
+i0000000e81:	mulhu               s0, a3, s6
+i0000000e82:	andi                a5, a6, -2018
+i0000000e83:	add                 zero, zero, a5
+i0000000e84:	mulhsu              s6, t0, t5
+i0000000e85:	sw                  s4, 124(sp)         
+i0000000e86:	rem                 zero, a5, a5
+i0000000e87:	addi                sp, sp, -304
+i0000000e88:	addiw               s1, s1, -14
+i0000000e89:	mulw                a3, gp, a0
+i0000000e8a:	addi                sp, sp, -496
+i0000000e8b:	lb                  s5, 1018(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9776  
+				add                 sp, sp, t1
+i0000000e8c:	ld                  t6, 1136(sp)        
+i0000000e8d:	fence.i                       
+i0000000e8e:	addi                s1, sp, 224
+i0000000e8f:	sub                 s1, s1, a2
+i0000000e90:	sw                  s0, 40(sp)          
+i0000000e91:	mul                 a0, s8, a2
+				la                  sp, begin_signature
+				li                  t1, 7000  
+				add                 sp, sp, t1
+i0000000e92:	sd                  s1, 8(sp)           
+i0000000e93:	remuw               s10, s5, t3
+i0000000e94:	srliw               a5, s0, 14
+i0000000e95:	sw                  s8, 36(sp)          
+i0000000e96:	sw                  s1, 48(sp)          
+i0000000e97:	fsrmi               x0, 4     
+i0000000e98:	ld                  a5, 64(sp)          
+i0000000e99:	srliw               a4, tp, 17
+i0000000e9a:	fence.i                       
+				li                  x25, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 4736  
+				add                 sp, sp, t1
+				ld                  s7, 216(sp)         
+				sd                  t3, -1952(sp)       
+				remuw               a5, s1, s1
+				addi                sp, sp, 32
+				subw                a7, s3, s11
+				or                  s0, s0, a5
+				mulhsu              s8, a5, a5
+	
+b0000000e9b:
+				pre_branch_macro                        
+				bge                 x25, x29, i0000000ea8
+				post_branch_macro                       
+	
+				slli                s1, s1, 14
+				rem                 s10, s3, t6
+				mul                 s5, s0, s1
+				lw                  s1, 24(sp)          
+				sw                  a5, 128(sp)         
+				sb                  s4, -1934(sp)       
+				srli                s0, s0, 7 
+				li                  x29, 10   
+i0000000e9b:	divw                a5, s1, s0
+i0000000e9c:	andi                a1, a1, -27
+i0000000e9d:	mulw                s1, s1, a5
+i0000000e9e:	addi                a2, sp, 364
+i0000000e9f:	remuw               s0, a4, s8
+i0000000ea0:	addiw               s9, s3, 1123
+i0000000ea1:	sltu                zero, s6, a3
+i0000000ea2:	addiw               a4, a4, -24
+i0000000ea3:	fence                         
+i0000000ea4:	subw                a5, a5, a3
+i0000000ea5:	slli                s1, s1, 4 
+i0000000ea6:	subw                a5, a5, a4
+i0000000ea7:	srai                a3, a3, 16
+i0000000ea8:	sd                  s0, -1080(sp)       
+i0000000ea9:	sd                  a2, 120(sp)         
+i0000000eaa:	ld                  a0, 104(sp)         
+i0000000eab:	fence                         
+i0000000eac:	sllw                a3, s1, s1
+i0000000ead:	srlw                a3, s0, a5
+i0000000eae:	addiw               a5, a5, -2
+i0000000eaf:	addi                s0, sp, 256
+i0000000eb0:	lw                  a5, 4(sp)           
+i0000000eb1:	lw                  a4, -432(sp)        
+				la                  sp, begin_signature
+				li                  t1, 4856  
+				add                 sp, sp, t1
+i0000000eb2:	lhu                 a5, 1654(sp)        
+i0000000eb3:	addi                a5, sp, 388
+i0000000eb4:	lwu                 s5, -540(sp)        
+i0000000eb5:	sltu                s11, s7, s9
+i0000000eb6:	srli                a4, a4, 2 
+i0000000eb7:	lwu                 t0, -560(sp)        
+i0000000eb8:	sraiw               a3, a3, 31
+i0000000eb9:	ld                  a2, 104(sp)         
+i0000000eba:	addi                a3, sp, 4 
+i0000000ebb:	sw                  a5, 60(sp)          
+i0000000ebc:	mulw                s1, t3, gp
+i0000000ebd:	ld                  s11, 136(sp)        
+i0000000ebe:	srli                a4, a4, 22
+i0000000ebf:	sd                  s1, 144(sp)         
+i0000000ec0:	xor                 a5, a5, a0
+i0000000ec1:	lwu                 s1, -1436(sp)       
+i0000000ec2:	sh                  s6, 1940(sp)        
+				li                  x21, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 3160  
+				add                 sp, sp, t1
+				lwu                 s8, 108(sp)         
+				sh                  s7, -1278(sp)       
+				sllw                t3, s0, s1
+				ld                  a4, 16(sp)          
+				lb                  s0, 515(sp)         
+				srliw               s4, s1, 5 
+				sd                  s1, -1136(sp)       
+	
+b0000000ec3:
+				beq                 x29, x21, 1f        
+				jal                 x1, i0000000eb3     
+				1: li x29, 10                           
+	
+				srai                a5, a5, 30
+				sllw                zero, a6, s6
+				lw                  s11, 60(sp)         
+				srli                a5, a5, 24
+				lh                  gp, -1328(sp)       
+				addi                a4, a4, -5
+				lw                  t3, -1844(sp)       
+i0000000ec3:	fence                         
+i0000000ec4:	and                 s1, s1, a3
+i0000000ec5:	sd                  s0, 24(sp)          
+i0000000ec6:	addw                s0, s0, a0
+i0000000ec7:	lw                  s1, 36(sp)          
+i0000000ec8:	srliw               a5, t5, 9 
+i0000000ec9:	sd                  s0, 256(sp)         
+i0000000eca:	srai                a3, a3, 15
+i0000000ecb:	srai                a3, a3, 7 
+i0000000ecc:	srli                a0, a0, 5 
+i0000000ecd:	xor                 a3, a3, s0
+i0000000ece:	srai                a0, a0, 8 
+i0000000ecf:	srai                s11, s1, 51
+i0000000ed0:	fence                         
+i0000000ed1:	mul                 a2, s0, a5
+i0000000ed2:	add                 a7, a5, a5
+i0000000ed3:	sd                  s0, 88(sp)          
+i0000000ed4:	ld                  a1, 32(sp)          
+i0000000ed5:	remuw               a7, s0, a5
+i0000000ed6:	divuw               s10, s0, a5
+i0000000ed7:	div                 s0, a5, s0
+i0000000ed8:	divuw               zero, a5, s0
+i0000000ed9:	lw                  a5, -556(sp)        
+i0000000eda:	mulhu               s1, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 5920  
+				add                 sp, sp, t1
+i0000000edb:	sd                  a5, -1128(sp)       
+i0000000edc:	divu                s7, s11, gp
+i0000000edd:	rem                 s2, a5, s1
+i0000000ede:	srli                a5, a5, 16
+i0000000edf:	auipc               a0, 406854
+i0000000ee0:	fence.i                       
+i0000000ee1:	sraw                s1, s1, a5
+i0000000ee2:	div                 s0, a5, s0
+i0000000ee3:	addi                s0, zero, -2
+i0000000ee4:	srai                a3, a3, 26
+i0000000ee5:	fence                         
+i0000000ee6:	addw                s1, s1, s0
+i0000000ee7:	ld                  a5, 368(sp)         
+i0000000ee8:	srli                a1, a1, 5 
+i0000000ee9:	mulhu               a2, a3, a0
+i0000000eea:	ld                  s9, 0(sp)           
+				and                 a4, a4, a5
+				addi                s0, sp, 468
+				mulhu               s4, a5, a5
+				lw                  s0, 44(sp)          
+				xori                s1, s0, -1879
+				ld                  s0, 432(sp)         
+				lui                 a5, 9     
+	
+b0000000eeb:
+				jal                 x1, i0000000ef6     
+	
+				srai                a4, a4, 4 
+				remuw               a4, a4, gp
+				sub                 a5, a5, a4
+				divu                s0, a5, s1
+				addiw               t2, s3, 41
+				xori                gp, s1, 1444
+				ld                  s0, -1000(sp)       
+i0000000eeb:	andi                s0, s0, 1 
+i0000000eec:	fence                         
+i0000000eed:	lwu                 t5, 2040(sp)        
+i0000000eee:	fsrmi               x0, 5     
+i0000000eef:	ld                  s4, 120(sp)         
+i0000000ef0:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 2896  
+				add                 sp, sp, t1
+i0000000ef1:	lwu                 a5, -1384(sp)       
+i0000000ef2:	srlw                a5, s0, a5
+i0000000ef3:	addw                a4, a4, s1
+i0000000ef4:	lh                  s9, 996(sp)         
+i0000000ef5:	or                  s1, a5, s1
+i0000000ef6:	addi                s1, sp, 128
+				la                  sp, begin_signature
+				li                  t1, 2312  
+				add                 sp, sp, t1
+i0000000ef7:	sw                  s0, 0(sp)           
+i0000000ef8:	lw                  s1, 12(sp)          
+i0000000ef9:	remuw               s1, a5, s0
+i0000000efa:	sraw                s0, s1, s0
+i0000000efb:	slliw               a5, a5, 29
+i0000000efc:	ld                  a7, 32(sp)          
+i0000000efd:	or                  a5, gp, a3
+i0000000efe:	rem                 s1, s2, t0
+i0000000eff:	and                 s0, s0, a5
+i0000000f00:	div                 s1, a1, t5
+i0000000f01:	addi                s1, sp, 360
+i0000000f02:	divw                a5, s0, s0
+i0000000f03:	srli                s1, s1, 10
+i0000000f04:	ld                  a5, 248(sp)         
+i0000000f05:	sra                 s10, s7, a3
+i0000000f06:	mulw                a6, s7, a1
+i0000000f07:	ori                 s0, s1, -115
+i0000000f08:	remuw               a0, a1, a1
+i0000000f09:	add                 s0, s0, t6
+i0000000f0a:	addi                a5, sp, 412
+i0000000f0b:	lb                  s1, 41(sp)          
+i0000000f0c:	lhu                 s1, 190(sp)         
+i0000000f0d:	xori                a6, s1, 1096
+i0000000f0e:	addw                a1, a1, s0
+i0000000f0f:	sd                  s0, 48(sp)          
+i0000000f10:	and                 t5, a5, a5
+i0000000f11:	fence                         
+i0000000f12:	lhu                 s8, -750(sp)        
+i0000000f13:	add                 s5, s5, s0
+				li                  x24, 10   
+				remuw               a4, a5, a5
+				lb                  s0, 2027(sp)        
+				div                 s9, s1, s1
+				sraw                t6, a7, t3
+				sw                  s1, 48(sp)          
+				andi                s1, s1, 13
+				sd                  s0, 88(sp)          
+	
+b0000000f14:
+				beq                 x29, x24, 1f        
+				jal                 x10, i0000000f08    
+				1: li x29, 10                           
+	
+				sraiw               s1, s1, 21
+				fence.i                       
+				divuw               s0, s4, gp
+				lw                  s0, 40(sp)          
+				ld                  a7, 1912(sp)        
+				sllw                s7, a5, s0
+				remw                s4, s11, tp
+i0000000f14:	srai                a2, a2, 1 
+i0000000f15:	mulw                s1, s0, s0
+i0000000f16:	ld                  a2, 24(sp)          
+i0000000f17:	mulh                a5, a5, s0
+i0000000f18:	sltu                gp, a7, t2
+i0000000f19:	ld                  s1, 208(sp)         
+i0000000f1a:	sb                  s7, -615(sp)        
+i0000000f1b:	div                 zero, a5, s1
+i0000000f1c:	slt                 s3, a5, a5
+i0000000f1d:	divuw               a3, a3, s3
+i0000000f1e:	sraiw               a2, s1, 15
+i0000000f1f:	lh                  s8, -326(sp)        
+i0000000f20:	addi                s1, sp, 396
+i0000000f21:	mulh                t6, a0, a1
+i0000000f22:	divuw               s1, s1, s1
+i0000000f23:	lw                  s1, 80(sp)          
+i0000000f24:	addiw               a2, a2, -28
+i0000000f25:	remuw               gp, t5, a6
+i0000000f26:	sllw                t1, t1, t6
+i0000000f27:	srli                a3, a3, 10
+i0000000f28:	remu                t0, s1, a5
+i0000000f29:	lb                  s0, 255(sp)         
+i0000000f2a:	lw                  s0, 0(sp)           
+i0000000f2b:	subw                a0, a0, s1
+i0000000f2c:	remu                s0, zero, s5
+				la                  sp, begin_signature
+				li                  t1, 10088 
+				add                 sp, sp, t1
+i0000000f2d:	lw                  a5, 116(sp)         
+i0000000f2e:	subw                a3, a7, gp
+i0000000f2f:	ld                  a6, 232(sp)         
+i0000000f30:	or                  a1, s1, s1
+i0000000f31:	addi                sp, sp, 176
+i0000000f32:	sw                  s1, 4(sp)           
+i0000000f33:	srai                a3, a3, 8 
+i0000000f34:	sw                  t2, 24(sp)          
+i0000000f35:	lwu                 s0, -1232(sp)       
+i0000000f36:	addi                s0, s1, -588
+i0000000f37:	divuw               t5, a5, s0
+i0000000f38:	ld                  s0, -1280(sp)       
+i0000000f39:	addi                sp, sp, -176
+				la                  sp, begin_signature
+				li                  t1, 2080  
+				add                 sp, sp, t1
+i0000000f3a:	sw                  a0, -1204(sp)       
+i0000000f3b:	srai                a4, a4, 14
+				la                  sp, begin_signature
+				li                  t1, 7280  
+				add                 sp, sp, t1
+				sd                  s0, 400(sp)         
+				fence                         
+				srlw                s9, s1, s1
+				lw                  a4, 28(sp)          
+				addiw               a4, a4, 14
+				sd                  a5, 224(sp)         
+				addi                sp, sp, -272
+	
+b0000000f3c:
+				jal                 x0, i0000000f5b     
+	
+				lwu                 a4, 44(sp)          
+				sd                  s1, 48(sp)          
+				or                  a4, a4, s0
+				sw                  s0, 48(sp)          
+				addi                s1, s1, -31
+				or                  s0, s5, t3
+				sllw                s4, s10, s4
+i0000000f3c:	srli                a5, a5, 7 
+i0000000f3d:	lbu                 s1, 880(sp)         
+i0000000f3e:	divu                s11, s0, s0
+i0000000f3f:	addi                sp, sp, -400
+i0000000f40:	fence                         
+i0000000f41:	sd                  a4, 72(sp)          
+i0000000f42:	ld                  s1, -768(sp)        
+i0000000f43:	srai                a2, a2, 15
+i0000000f44:	divu                s1, a3, zero
+i0000000f45:	addi                sp, sp, -464
+i0000000f46:	fence                         
+i0000000f47:	divw                s0, s1, s0
+i0000000f48:	addi                sp, sp, -368
+i0000000f49:	srai                a0, a0, 10
+				la                  sp, begin_signature
+				li                  t1, 13696 
+				add                 sp, sp, t1
+i0000000f4a:	sd                  t2, 1944(sp)        
+i0000000f4b:	and                 a0, a0, a5
+i0000000f4c:	srlw                s11, s0, s0
+i0000000f4d:	lwu                 s8, -84(sp)         
+i0000000f4e:	lw                  a1, 4(sp)           
+i0000000f4f:	addi                s1, sp, 324
+i0000000f50:	srli                a1, a1, 16
+i0000000f51:	srliw               s1, s1, 12
+i0000000f52:	or                  a3, a2, tp
+i0000000f53:	slli                s2, s7, 18
+i0000000f54:	mulhsu              s6, a7, s2
+i0000000f55:	sd                  s0, -1360(sp)       
+i0000000f56:	srai                a3, a3, 14
+i0000000f57:	ld                  s7, 104(sp)         
+i0000000f58:	sraw                s1, s0, s0
+i0000000f59:	divuw               s0, a2, a2
+i0000000f5a:	lw                  s1, 36(sp)          
+i0000000f5b:	fence.i                       
+i0000000f5c:	fence                         
+i0000000f5d:	addi                a4, a4, 0 
+i0000000f5e:	divw                s0, a5, s0
+i0000000f5f:	addi                s0, s0, 9 
+i0000000f60:	fence.i                       
+i0000000f61:	addw                a7, s10, a3
+i0000000f62:	mulhsu              s1, t2, s5
+i0000000f63:	srai                s1, s1, 16
+				sraw                s5, s1, s1
+				ld                  a4, 0(sp)           
+				slli                s0, zero, 12
+				xor                 s8, gp, s7
+				fence.i                       
+				addi                a5, a5, -31
+				lwu                 s8, -448(sp)        
+	
+b0000000f64:
+				jal                 x1, i0000000f85     
+	
+				xori                a7, gp, -601
+				srl                 s0, s0, s0
+				slt                 s1, s2, t3
+				lh                  s0, -476(sp)        
+				divw                s7, a5, a5
+				divu                s10, s0, s0
+				sh                  s0, -846(sp)        
+i0000000f64:	sw                  a0, 20(sp)          
+i0000000f65:	ld                  s0, 16(sp)          
+i0000000f66:	srli                s1, s1, 8 
+i0000000f67:	srlw                s11, s1, s0
+i0000000f68:	srai                a0, a0, 7 
+i0000000f69:	remw                t0, a5, s0
+i0000000f6a:	mulh                a5, s11, t2
+i0000000f6b:	mulhu               s1, s0, a5
+i0000000f6c:	addi                sp, sp, 48
+i0000000f6d:	or                  s0, s0, a4
+i0000000f6e:	ld                  a0, 32(sp)          
+i0000000f6f:	slli                a3, a3, 9 
+i0000000f70:	slliw               s8, s1, 5 
+i0000000f71:	sd                  s11, 256(sp)        
+i0000000f72:	srliw               a5, s7, 15
+i0000000f73:	fence.i                       
+i0000000f74:	addi                s0, s0, -23
+i0000000f75:	divw                a6, t6, s10
+i0000000f76:	addw                a5, a5, a5
+i0000000f77:	fence.i                       
+i0000000f78:	addiw               s1, s1, 14
+i0000000f79:	srai                a0, a0, 4 
+i0000000f7a:	subw                a2, a2, a2
+i0000000f7b:	sraw                s0, gp, t0
+i0000000f7c:	sd                  a5, 1816(sp)        
+i0000000f7d:	sd                  s1, -984(sp)        
+i0000000f7e:	and                 s1, s1, a3
+i0000000f7f:	addi                a5, zero, 7
+i0000000f80:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 6168  
+				add                 sp, sp, t1
+i0000000f81:	sd                  t6, 232(sp)         
+i0000000f82:	addi                sp, sp, -384
+i0000000f83:	slli                a1, a1, 29
+i0000000f84:	srli                a1, a1, 7 
+i0000000f85:	rem                 s0, zero, gp
+i0000000f86:	fence.i                       
+i0000000f87:	mulh                a5, s1, s1
+i0000000f88:	sd                  a5, -296(sp)        
+i0000000f89:	divuw               s1, s0, s0
+i0000000f8a:	addi                sp, sp, 240
+i0000000f8b:	slliw               s0, s11, 0
+				li                  x22, 10   
+				la                  sp, begin_signature
+				li                  t1, 7416  
+				add                 sp, sp, t1
+				sd                  s0, 184(sp)         
+				srli                a4, a4, 9 
+				fence                         
+				rem                 s10, s4, s3
+				lw                  s0, 108(sp)         
+				lwu                 a5, 1892(sp)        
+				divu                s1, s2, t3
+	
+b0000000f8c:
+				beq                 x29, x22, 1f        
+				la                  x22, i0000000f83    
+				jalr                x1, x22, 0          
+				1: li x29, 10                           
+	
+				mulw                s10, s10, s7
+				srai                s0, s0, 23
+				rem                 a4, a5, a5
+				addi                a4, sp, 344
+				addi                s1, zero, -16
+				remuw               a5, s0, s1
+				addi                a4, sp, 424
+i0000000f8c:	srai                s1, s1, 21
+i0000000f8d:	addw                t5, t0, gp
+i0000000f8e:	lw                  s1, 8(sp)           
+i0000000f8f:	sltu                a5, s1, s1
+i0000000f90:	mulw                a0, s0, s0
+i0000000f91:	sd                  s8, 240(sp)         
+i0000000f92:	fsrmi               x0, 5     
+i0000000f93:	ld                  s1, 80(sp)          
+i0000000f94:	lw                  s3, -884(sp)        
+i0000000f95:	lw                  a3, 52(sp)          
+i0000000f96:	add                 s0, s0, s7
+i0000000f97:	ld                  a5, 64(sp)          
+i0000000f98:	sltiu               s1, a7, 1491
+i0000000f99:	div                 t6, a7, t3
+i0000000f9a:	srli                s0, s0, 13
+i0000000f9b:	srli                a0, a0, 8 
+i0000000f9c:	and                 a3, a3, s0
+i0000000f9d:	fence.i                       
+i0000000f9e:	addiw               s7, s0, -2000
+i0000000f9f:	addi                s0, sp, 132
+i0000000fa0:	divuw               s1, s6, s2
+i0000000fa1:	xor                 a3, s8, t6
+i0000000fa2:	slliw               gp, s5, 0 
+				la                  sp, begin_signature
+				li                  t1, 3528  
+				add                 sp, sp, t1
+i0000000fa3:	lbu                 s11, 701(sp)        
+i0000000fa4:	lh                  s1, 1872(sp)        
+i0000000fa5:	sd                  a4, 120(sp)         
+i0000000fa6:	mulhu               s1, s3, s5
+i0000000fa7:	sltu                t0, a5, a5
+i0000000fa8:	addi                a0, sp, 420
+i0000000fa9:	srai                s0, s0, 15
+i0000000faa:	srli                a4, a4, 5 
+i0000000fab:	addiw               a3, a3, 16
+i0000000fac:	addi                s1, s1, 15
+i0000000fad:	sw                  zero, 8(sp)         
+i0000000fae:	sw                  tp, 44(sp)          
+i0000000faf:	lbu                 a5, 1819(sp)        
+i0000000fb0:	sh                  a5, -274(sp)        
+i0000000fb1:	lw                  a3, 16(sp)          
+i0000000fb2:	sw                  s0, 16(sp)          
+i0000000fb3:	mulw                s1, a5, a5
+i0000000fb4:	sd                  a1, 88(sp)          
+				li                  x20, 12   
+				addi                x29, x29, 1
+				lwu                 s6, -1372(sp)       
+				remw                s10, s3, s8
+				ld                  s1, 72(sp)          
+				fence                         
+				lw                  a4, 52(sp)          
+				lbu                 s0, -1(sp)          
+				lwu                 s0, 464(sp)         
+	
+b0000000fb5:
+				beq                 x29, x20, 1f        
+				la                  x20, i0000000f92    
+				jalr                x1, x20, 0          
+				1: li x29, 10                           
+	
+				slti                a5, s0, -1982
+				sw                  s1, 84(sp)          
+				lui                 s0, 6988  
+				sub                 t6, s9, s5
+				srai                a4, a4, 3 
+				subw                s1, a6, t2
+				sltiu               s1, tp, -44
+i0000000fb5:	addw                s11, s7, s2
+i0000000fb6:	slliw               a5, s11, 21
+i0000000fb7:	addi                a2, sp, 244
+i0000000fb8:	slliw               a5, s6, 16
+i0000000fb9:	ld                  s1, 152(sp)         
+i0000000fba:	addi                sp, sp, 176
+i0000000fbb:	sw                  zero, -1404(sp)     
+i0000000fbc:	srli                a5, a5, 8 
+i0000000fbd:	and                 s1, s1, a4
+i0000000fbe:	srai                s1, s1, 2 
+i0000000fbf:	addi                s6, a7, -417
+i0000000fc0:	lh                  t0, -1540(sp)       
+i0000000fc1:	mulh                a6, s0, s1
+i0000000fc2:	sd                  a0, 16(sp)          
+i0000000fc3:	fence.i                       
+i0000000fc4:	mulh                a3, s1, s0
+i0000000fc5:	lw                  a2, 64(sp)          
+i0000000fc6:	slli                a3, a3, 5 
+i0000000fc7:	fence                         
+i0000000fc8:	mul                 s9, t0, s7
+i0000000fc9:	srli                a0, a0, 8 
+i0000000fca:	sd                  a5, 128(sp)         
+i0000000fcb:	addi                sp, sp, -432
+i0000000fcc:	addw                s1, s1, a2
+i0000000fcd:	addi                s5, zero, -11
+i0000000fce:	mulhsu              tp, s4, s6
+i0000000fcf:	fence                         
+i0000000fd0:	and                 t3, s1, s1
+i0000000fd1:	fence.i                       
+i0000000fd2:	sraiw               a5, gp, 23
+i0000000fd3:	addi                s1, sp, 256
+i0000000fd4:	sd                  s1, 8(sp)           
+i0000000fd5:	srai                a2, a2, 15
+i0000000fd6:	srli                a5, a5, 1 
+i0000000fd7:	lui                 a5, 11    
+i0000000fd8:	lb                  s0, 205(sp)         
+i0000000fd9:	fence.i                       
+i0000000fda:	fence                         
+i0000000fdb:	addi                a2, sp, 492
+i0000000fdc:	addi                sp, sp, -128
+				li                  x16, 9    
+				addi                a4, a4, -13
+				lwu                 a5, 1516(sp)        
+				srlw                s0, s2, tp
+				addiw               t3, s11, -577
+				srai                a4, a4, 2 
+				addi                a5, sp, 512
+				srai                a4, a4, 21
+	
+b0000000fdd:
+				pre_branch_macro                        
+				blt                 x29, x16, i0000000fce
+				post_branch_macro                       
+	
+				and                 s1, s1, a5
+				slliw               a5, t2, 17
+				sb                  a5, 1424(sp)        
+				ld                  s1, 64(sp)          
+				addi                sp, sp, 240
+				srl                 s1, s8, s6
+				sltu                s0, a5, s1
+				li                  x29, 10   
+i0000000fdd:	divuw               s0, a5, s1
+i0000000fde:	lw                  s8, 56(sp)          
+i0000000fdf:	addw                s0, s0, a0
+i0000000fe0:	addw                s1, a5, s1
+i0000000fe1:	lw                  a2, 20(sp)          
+i0000000fe2:	slli                a2, a2, 13
+i0000000fe3:	sd                  a2, 16(sp)          
+i0000000fe4:	addw                a5, a5, s0
+i0000000fe5:	sw                  a5, 28(sp)          
+i0000000fe6:	sd                  s1, 56(sp)          
+i0000000fe7:	lh                  a5, -1174(sp)       
+i0000000fe8:	srli                s0, s0, 9 
+i0000000fe9:	srai                a0, a0, 4 
+i0000000fea:	sd                  s10, 56(sp)         
+i0000000feb:	lh                  a5, 624(sp)         
+i0000000fec:	srl                 s1, s1, s1
+i0000000fed:	ld                  s1, 0(sp)           
+i0000000fee:	divuw               t5, s1, a5
+i0000000fef:	divw                s6, a5, a5
+i0000000ff0:	rem                 s10, s10, s3
+i0000000ff1:	subw                s11, s7, t1
+i0000000ff2:	addi                sp, sp, -32
+i0000000ff3:	lbu                 s0, -542(sp)        
+i0000000ff4:	fence                         
+i0000000ff5:	lwu                 zero, -1932(sp)     
+i0000000ff6:	slliw               s0, a5, 13
+i0000000ff7:	divw                s5, s0, s1
+i0000000ff8:	fence                         
+i0000000ff9:	slt                 a0, s0, s1
+i0000000ffa:	srli                a3, a3, 13
+i0000000ffb:	remuw               s6, s5, tp
+i0000000ffc:	srlw                a5, a4, t6
+i0000000ffd:	addi                a4, sp, 140
+i0000000ffe:	fence                         
+i0000000fff:	addw                a5, a5, a0
+i0000001000:	addi                sp, sp, -336
+				la                  sp, begin_signature
+				li                  t1, 10976 
+				add                 sp, sp, t1
+i0000001001:	sd                  a3, -816(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9744  
+				add                 sp, sp, t1
+i0000001002:	lwu                 s1, 300(sp)         
+i0000001003:	srli                a0, a0, 4 
+i0000001004:	mulh                a5, t2, s6
+				li                  x28, 10   
+				la                  sp, begin_signature
+				li                  t1, 9640  
+				add                 sp, sp, t1
+				ld                  s2, -240(sp)        
+				divw                s0, s7, t6
+				slti                gp, a4, 1984
+				addi                s0, sp, 472
+				slliw               t2, s0, 29
+				srai                a4, a4, 14
+				sd                  s2, -280(sp)        
+	
+b0000001005:
+				beq                 x29, x28, 1f        
+				jal                 x1, i0000000fe6     
+				1: li x29, 10                           
+	
+				lwu                 s10, 1240(sp)       
+				srli                a4, a4, 9 
+				fence                         
+				addiw               s10, a5, -347
+				addi                s0, sp, 88
+				remuw               a5, a7, s9
+				lbu                 s2, -264(sp)        
+i0000001005:	srai                a1, a1, 9 
+i0000001006:	addi                a4, sp, 148
+i0000001007:	sw                  zero, 100(sp)       
+i0000001008:	addw                s8, s1, s1
+i0000001009:	addi                s1, sp, 164
+i000000100a:	lh                  a5, -312(sp)        
+i000000100b:	add                 s1, s1, a5
+i000000100c:	srli                a2, a2, 3 
+i000000100d:	srli                a5, a5, 1 
+i000000100e:	lhu                 s0, 1582(sp)        
+i000000100f:	fence.i                       
+i0000001010:	addi                a5, sp, 428
+i0000001011:	fence                         
+i0000001012:	sw                  a4, 0(sp)           
+i0000001013:	add                 a5, zero, s6
+i0000001014:	srli                a5, a5, 15
+				la                  sp, begin_signature
+				li                  t1, 12896 
+				add                 sp, sp, t1
+i0000001015:	sd                  a7, 392(sp)         
+i0000001016:	srai                a4, a4, 30
+i0000001017:	lw                  tp, 1328(sp)        
+i0000001018:	lui                 a1, 29    
+i0000001019:	addi                sp, sp, 192
+i000000101a:	srai                a1, a1, 6 
+i000000101b:	ld                  s1, 1248(sp)        
+i000000101c:	fence.i                       
+i000000101d:	lw                  a5, 60(sp)          
+i000000101e:	addi                s0, s0, -23
+i000000101f:	lw                  s1, 120(sp)         
+i0000001020:	ld                  s0, 128(sp)         
+i0000001021:	sb                  t0, -505(sp)        
+i0000001022:	srli                a5, a5, 4 
+i0000001023:	addi                a1, sp, 484
+i0000001024:	fence                         
+i0000001025:	addiw               s1, s1, -21
+i0000001026:	and                 s0, s1, s1
+i0000001027:	lw                  a4, 16(sp)          
+i0000001028:	srai                a3, a3, 8 
+i0000001029:	or                  a1, a1, a1
+i000000102a:	subw                s0, s0, a4
+i000000102b:	lb                  a5, -851(sp)        
+i000000102c:	lui                 tp, 336570
+				li                  x28, 10   
+				li                  x29, 10   
+				srliw               s1, s0, 11
+				divu                a6, s0, s1
+				addw                s0, s1, a5
+				srai                s1, s1, 5 
+				remw                s1, s8, s8
+				srli                s1, a7, 24
+				add                 s6, zero, a5
+	
+b000000102d:
+				pre_branch_macro                        
+				bne                 x29, x28, i000000104b
+				post_branch_macro                       
+	
+				srli                a4, a4, 15
+				divw                a4, s6, t6
+				divuw               a5, a5, s1
+				mul                 s1, s7, s11
+				srli                a4, a4, 12
+				ld                  a5, 1320(sp)        
+				fence.i                       
+				li                  x29, 10   
+i000000102d:	srli                a0, a0, 8 
+i000000102e:	mulh                s1, a5, s1
+i000000102f:	lhu                 s10, -2006(sp)      
+				la                  sp, begin_signature
+				li                  t1, 12800 
+				add                 sp, sp, t1
+i0000001030:	sd                  a2, 104(sp)         
+i0000001031:	srai                s1, s1, 9 
+i0000001032:	fence.i                       
+i0000001033:	remuw               a1, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 2656  
+				add                 sp, sp, t1
+i0000001034:	sd                  a5, 184(sp)         
+i0000001035:	andi                a5, a5, -7
+i0000001036:	addi                s1, s1, -2
+i0000001037:	sd                  a3, 200(sp)         
+i0000001038:	mulhu               s1, s0, s0
+i0000001039:	fence.i                       
+i000000103a:	addi                a5, sp, 120
+				la                  sp, begin_signature
+				li                  t1, 6680  
+				add                 sp, sp, t1
+i000000103b:	lw                  a5, 48(sp)          
+i000000103c:	ld                  s7, -792(sp)        
+i000000103d:	lw                  s1, 28(sp)          
+i000000103e:	addw                a4, a4, a1
+i000000103f:	remuw               s1, tp, t2
+i0000001040:	divuw               a3, a7, a4
+i0000001041:	addiw               a0, a0, -11
+				la                  sp, begin_signature
+				li                  t1, 12048 
+				add                 sp, sp, t1
+i0000001042:	sw                  a0, 20(sp)          
+i0000001043:	lwu                 s2, 964(sp)         
+i0000001044:	subw                s1, s1, a1
+i0000001045:	srli                a3, a3, 25
+i0000001046:	addw                t0, tp, s8
+i0000001047:	addw                s1, s1, a4
+i0000001048:	addi                a1, sp, 328
+i0000001049:	ld                  t0, -1240(sp)       
+i000000104a:	mulw                a1, s1, a5
+i000000104b:	slt                 a4, s11, a2
+i000000104c:	lb                  s1, -842(sp)        
+i000000104d:	subw                t6, s0, a5
+i000000104e:	sd                  s0, 984(sp)         
+i000000104f:	sra                 s9, t5, s6
+i0000001050:	addi                a5, sp, 460
+i0000001051:	sub                 s0, a5, s0
+i0000001052:	subw                a4, a4, a5
+i0000001053:	addi                sp, sp, -240
+				la                  sp, begin_signature
+				li                  t1, 9424  
+				add                 sp, sp, t1
+i0000001054:	ld                  s0, 128(sp)         
+				li                  x17, 10   
+				la                  sp, begin_signature
+				li                  t1, 7176  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6736  
+				add                 sp, sp, t1
+				sd                  s1, 16(sp)          
+				fence                         
+				addw                a6, s1, s1
+				addi                sp, sp, -464
+				ori                 zero, s0, -1121
+				lb                  s11, 1747(sp)       
+				slti                s8, zero, 403
+	
+b0000001055:
+				beq                 x29, x17, 1f        
+				la                  x17, i000000104a    
+				jalr                x10, x17, 0         
+				1: li x29, 10                           
+	
+				lbu                 a5, 219(sp)         
+				ld                  gp, -16(sp)         
+				srai                a4, a4, 1 
+				addi                sp, sp, -320
+				divuw               gp, a5, s0
+				rem                 t2, s1, s1
+				lwu                 s1, -836(sp)        
+i0000001055:	xor                 a1, a1, s0
+i0000001056:	srai                s0, s0, 47
+i0000001057:	ld                  s1, -296(sp)        
+i0000001058:	lwu                 s2, 832(sp)         
+i0000001059:	slliw               s1, s0, 21
+i000000105a:	srlw                a5, s1, a5
+i000000105b:	srai                a0, a0, 6 
+i000000105c:	srli                a3, a3, 28
+i000000105d:	rem                 s1, s7, t3
+i000000105e:	addi                sp, sp, 176
+i000000105f:	add                 a5, a5, s11
+				la                  sp, begin_signature
+				li                  t1, 9640  
+				add                 sp, sp, t1
+i0000001060:	lwu                 s0, -128(sp)        
+i0000001061:	fence.i                       
+i0000001062:	srli                a2, a2, 7 
+i0000001063:	sw                  a5, 48(sp)          
+i0000001064:	addi                a5, sp, 36
+i0000001065:	srliw               s1, s0, 16
+i0000001066:	or                  a2, a2, a1
+i0000001067:	lb                  s0, 1181(sp)        
+i0000001068:	addi                s2, t3, 12
+i0000001069:	fence.i                       
+i000000106a:	sltiu               a5, a5, 1780
+i000000106b:	sllw                s7, s1, s0
+i000000106c:	addi                a4, sp, 40
+i000000106d:	mulhu               s1, a0, s5
+i000000106e:	subw                s1, s1, a3
+				la                  sp, begin_signature
+				li                  t1, 5552  
+				add                 sp, sp, t1
+i000000106f:	sd                  a5, 88(sp)          
+i0000001070:	lwu                 t1, -2048(sp)       
+i0000001071:	srai                s1, s1, 8 
+i0000001072:	fence.i                       
+i0000001073:	add                 s7, zero, s1
+i0000001074:	srli                s1, s1, 20
+i0000001075:	lbu                 a5, -1786(sp)       
+i0000001076:	lwu                 s9, -632(sp)        
+i0000001077:	addiw               a5, a5, 0 
+i0000001078:	addi                a2, sp, 64
+i0000001079:	ld                  s6, 48(sp)          
+i000000107a:	fence.i                       
+i000000107b:	sb                  s0, 1791(sp)        
+i000000107c:	srlw                a3, s1, a5
+				li                  x23, 0    
+				srai                a4, a4, 7 
+				ori                 a5, s0, 444
+				sb                  t2, -1548(sp)       
+				divuw               s1, s1, s0
+				addw                a4, a4, a5
+				ld                  a5, 104(sp)         
+				srai                a5, a5, 14
+	
+b000000107d:
+				pre_branch_macro                        
+				beq                 x29, x23, i000000106e
+				post_branch_macro                       
+	
+				srlw                s0, a5, s1
+				addi                a5, a5, 4 
+				mulhu               t2, s9, gp
+				slli                gp, tp, 29
+				remuw               s11, s6, s4
+				srli                a4, a4, 25
+				srli                s0, s6, 49
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 14160 
+				add                 sp, sp, t1
+i000000107d:	lh                  s1, 1928(sp)        
+i000000107e:	sd                  a5, 776(sp)         
+i000000107f:	mulhu               tp, s5, s6
+i0000001080:	srai                s0, s0, 9 
+i0000001081:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 12720 
+				add                 sp, sp, t1
+i0000001082:	ld                  s3, 80(sp)          
+i0000001083:	ld                  a5, 224(sp)         
+i0000001084:	fence.i                       
+i0000001085:	addiw               a0, a0, -10
+i0000001086:	lbu                 t1, 341(sp)         
+i0000001087:	ld                  a1, 120(sp)         
+i0000001088:	srliw               s0, a5, 7 
+i0000001089:	and                 a5, a5, a5
+i000000108a:	sllw                s10, t0, s7
+i000000108b:	lw                  a5, 16(sp)          
+i000000108c:	srli                a4, a4, 4 
+i000000108d:	srai                s0, s0, 4 
+i000000108e:	fence.i                       
+i000000108f:	sw                  s1, 40(sp)          
+i0000001090:	sll                 s8, a5, a5
+i0000001091:	sd                  a5, -1832(sp)       
+i0000001092:	lbu                 a7, 514(sp)         
+i0000001093:	addi                a0, sp, 112
+i0000001094:	ld                  s4, 232(sp)         
+i0000001095:	subw                a4, a4, a1
+i0000001096:	srli                a0, a0, 16
+i0000001097:	divuw               gp, a5, a5
+i0000001098:	srai                a3, a3, 13
+i0000001099:	and                 s0, s0, s0
+i000000109a:	srai                a5, a5, 2 
+i000000109b:	srai                s0, s0, 5 
+i000000109c:	addi                a3, sp, 320
+i000000109d:	srai                a5, s1, 16
+i000000109e:	ld                  s1, 112(sp)         
+i000000109f:	addiw               a2, a2, -9
+i00000010a0:	lwu                 s0, 1856(sp)        
+i00000010a1:	fence.i                       
+i00000010a2:	addi                sp, sp, -416
+i00000010a3:	addi                a2, sp, 172
+i00000010a4:	sd                  tp, 192(sp)         
+				li                  x28, 10   
+				la                  sp, begin_signature
+				li                  t1, 5088  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9672  
+				add                 sp, sp, t1
+				divw                s1, s5, tp
+				srai                s0, s0, 12
+				sw                  a4, 0(sp)           
+				sw                  s3, 40(sp)          
+				lw                  a4, 28(sp)          
+				sd                  a4, 192(sp)         
+				divu                s1, s1, s0
+	
+b00000010a5:
+				beq                 x29, x28, 1f        
+				la                  x28, i0000001082    
+				jalr                x1, x28, 0          
+				1: li x29, 10                           
+	
+				xori                s1, s2, 625
+				lwu                 tp, -2012(sp)       
+				add                 a5, a5, s0
+				ld                  zero, 784(sp)       
+				sd                  s0, 1496(sp)        
+				addi                sp, sp, -240
+				lh                  s8, -1704(sp)       
+i00000010a5:	lw                  s1, 140(sp)         
+i00000010a6:	sd                  s4, -888(sp)        
+i00000010a7:	srliw               s10, a5, 30
+i00000010a8:	slliw               t3, a5, 28
+i00000010a9:	auipc               a4, 139782
+i00000010aa:	ld                  a4, -600(sp)        
+i00000010ab:	lwu                 a4, -1660(sp)       
+i00000010ac:	sraiw               a5, a5, 28
+i00000010ad:	remu                t6, t3, s5
+i00000010ae:	addi                a2, sp, 124
+i00000010af:	addi                a4, sp, 228
+i00000010b0:	ld                  a4, 24(sp)          
+i00000010b1:	srli                s1, s1, 3 
+i00000010b2:	subw                a4, a4, a4
+i00000010b3:	srli                a5, a5, 11
+i00000010b4:	fsrmi               x0, 7     
+i00000010b5:	ld                  a1, 56(sp)          
+i00000010b6:	fence                         
+i00000010b7:	lw                  a3, 8(sp)           
+i00000010b8:	ld                  t5, 224(sp)         
+				la                  sp, begin_signature
+				li                  t1, 14208 
+				add                 sp, sp, t1
+i00000010b9:	sw                  a3, 64(sp)          
+i00000010ba:	sw                  a2, 64(sp)          
+i00000010bb:	divuw               s1, a3, t1
+i00000010bc:	srli                s0, s0, 2 
+i00000010bd:	divuw               a1, s0, s0
+i00000010be:	ld                  a6, 48(sp)          
+i00000010bf:	fence                         
+i00000010c0:	srli                a1, a1, 11
+i00000010c1:	subw                a4, a4, s0
+i00000010c2:	addi                s0, sp, 380
+i00000010c3:	srli                a1, a1, 16
+i00000010c4:	subw                a4, s1, s1
+i00000010c5:	addi                sp, sp, 0 
+i00000010c6:	fence.i                       
+i00000010c7:	sb                  s0, -1124(sp)       
+i00000010c8:	mulhsu              a5, t5, gp
+i00000010c9:	xor                 a3, a3, s1
+				la                  sp, begin_signature
+				li                  t1, 6840  
+				add                 sp, sp, t1
+i00000010ca:	sh                  s0, 1768(sp)        
+i00000010cb:	sd                  s1, 88(sp)          
+i00000010cc:	addi                sp, sp, -512
+i00000010cd:	fence.i                       
+				divu                s10, s7, a7
+				mulh                s1, zero, a6
+				add                 s1, s1, s1
+				addi                a4, sp, 324
+				lbu                 s3, 623(sp)         
+				slti                a7, t6, -8
+				lui                 a5, 31    
+	
+b00000010ce:
+				jal                 x1, i00000010e4     
+	
+				fence.i                       
+				ld                  s10, 216(sp)        
+				addi                a5, sp, 224
+				lw                  s1, 88(sp)          
+				fence                         
+				addi                a4, sp, 300
+				fence.i                       
+i00000010ce:	fsrmi               x0, 5     
+				la                  sp, begin_signature
+				li                  t1, 4464  
+				add                 sp, sp, t1
+i00000010cf:	sd                  a0, 72(sp)          
+i00000010d0:	addi                a2, a2, -1
+i00000010d1:	srai                a1, a1, 12
+i00000010d2:	sw                  a5, 88(sp)          
+i00000010d3:	slli                s1, a1, 35
+i00000010d4:	sw                  a2, 36(sp)          
+i00000010d5:	and                 a2, a2, a5
+i00000010d6:	sllw                a5, a5, s1
+i00000010d7:	addw                s1, s1, s0
+i00000010d8:	slliw               s1, s0, 0 
+i00000010d9:	lw                  s9, 128(sp)         
+i00000010da:	sb                  s0, -1357(sp)       
+i00000010db:	xor                 s0, s0, s0
+i00000010dc:	addi                sp, sp, -432
+i00000010dd:	subw                a5, a5, a0
+				la                  sp, begin_signature
+				li                  t1, 4688  
+				add                 sp, sp, t1
+i00000010de:	sb                  t5, 734(sp)         
+i00000010df:	sw                  a6, 124(sp)         
+i00000010e0:	mul                 s0, a4, a0
+i00000010e1:	fence                         
+i00000010e2:	mul                 a5, gp, a3
+i00000010e3:	addw                s0, s0, s0
+i00000010e4:	and                 s0, s0, a3
+i00000010e5:	remw                s0, t3, s2
+i00000010e6:	divuw               s5, zero, t3
+i00000010e7:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 13816 
+				add                 sp, sp, t1
+i00000010e8:	lb                  s0, 111(sp)         
+i00000010e9:	or                  a5, a5, a5
+i00000010ea:	sraiw               a5, s6, 21
+i00000010eb:	srai                a4, a4, 1 
+				la                  sp, begin_signature
+				li                  t1, 2688  
+				add                 sp, sp, t1
+i00000010ec:	lb                  a4, -1754(sp)       
+i00000010ed:	srli                s1, s1, 8 
+i00000010ee:	sub                 a5, a5, a0
+i00000010ef:	xor                 a0, a0, a4
+i00000010f0:	fence                         
+i00000010f1:	srai                s1, s1, 31
+i00000010f2:	slli                a0, a0, 29
+i00000010f3:	lbu                 a5, 1341(sp)        
+i00000010f4:	addi                t5, s1, 1493
+i00000010f5:	remu                t0, a3, s9
+i00000010f6:	divu                a6, s9, a3
+				li                  x28, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 9224  
+				add                 sp, sp, t1
+				ld                  a5, 16(sp)          
+				sub                 s1, s1, a4
+				sh                  s1, 1418(sp)        
+				slliw               s1, s4, 13
+				fence.i                       
+				sw                  s7, 20(sp)          
+				sw                  s0, 108(sp)         
+	
+b00000010f7:
+				beq                 x29, x28, 1f        
+				jal                 x1, i00000010e8     
+				1: li x29, 10                           
+	
+				addi                a4, sp, 200
+				divuw               a7, a5, s1
+				sw                  s11, 944(sp)        
+				srli                a4, a4, 15
+				slti                gp, s6, 913
+				addiw               a4, a4, -9
+				remw                t2, s0, a5
+i00000010f7:	mulw                s1, a5, a5
+i00000010f8:	lh                  a5, 938(sp)         
+i00000010f9:	sd                  a5, 112(sp)         
+i00000010fa:	lw                  a3, 52(sp)          
+i00000010fb:	srli                a0, a0, 29
+i00000010fc:	addi                sp, sp, -32
+i00000010fd:	remw                a0, a5, s0
+i00000010fe:	and                 a1, a1, a1
+i00000010ff:	addiw               s8, a5, -551
+i0000001100:	srli                a0, a0, 16
+i0000001101:	fence.i                       
+i0000001102:	sw                  a0, 36(sp)          
+i0000001103:	sra                 a2, s5, s4
+i0000001104:	addi                sp, sp, 176
+i0000001105:	sd                  a5, -1112(sp)       
+i0000001106:	and                 a4, a4, s1
+i0000001107:	lui                 s0, 16    
+i0000001108:	divw                s1, s10, s4
+i0000001109:	ld                  a5, 1040(sp)        
+i000000110a:	addw                a5, a5, s1
+i000000110b:	remw                s0, tp, s11
+i000000110c:	sw                  s1, 36(sp)          
+i000000110d:	sw                  a2, 36(sp)          
+i000000110e:	ld                  s0, 48(sp)          
+i000000110f:	addiw               a3, a1, -940
+i0000001110:	addw                a5, a5, a1
+				la                  sp, begin_signature
+				li                  t1, 13672 
+				add                 sp, sp, t1
+i0000001111:	lwu                 s0, -356(sp)        
+i0000001112:	lw                  a3, 48(sp)          
+i0000001113:	srli                a1, a1, 20
+i0000001114:	fsrmi               x0, 5     
+i0000001115:	sd                  s1, 96(sp)          
+i0000001116:	sub                 a5, a5, s1
+i0000001117:	ld                  s8, 1664(sp)        
+i0000001118:	lw                  a4, 24(sp)          
+i0000001119:	divuw               s0, a5, s1
+i000000111a:	sd                  s0, -1272(sp)       
+				la                  sp, begin_signature
+				li                  t1, 9800  
+				add                 sp, sp, t1
+i000000111b:	sd                  s0, 208(sp)         
+i000000111c:	fence.i                       
+i000000111d:	sra                 s1, s1, s1
+i000000111e:	sltu                a7, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 2128  
+				add                 sp, sp, t1
+i000000111f:	lw                  s1, 52(sp)          
+				li                  x16, 0    
+				mulh                s11, zero, s3
+				fence                         
+				addi                sp, sp, -224
+				sb                  zero, -284(sp)      
+				srli                s5, gp, 48
+				subw                a4, a4, a5
+				ld                  a4, 72(sp)          
+	
+b0000001120:
+				pre_branch_macro                        
+				beq                 x29, x16, i000000110f
+				post_branch_macro                       
+	
+				div                 s0, s11, a7
+				fence.i                       
+				fence                         
+				xori                s0, s0, 143
+				sw                  s0, 76(sp)          
+				addw                a4, a4, s1
+				xor                 a4, a4, a4
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 6184  
+				add                 sp, sp, t1
+i0000001120:	ld                  zero, 120(sp)       
+i0000001121:	srai                a5, a5, 11
+i0000001122:	fence                         
+i0000001123:	addi                a5, sp, 256
+i0000001124:	lhu                 a5, 148(sp)         
+i0000001125:	slliw               a5, a7, 22
+i0000001126:	divuw               s1, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 4160  
+				add                 sp, sp, t1
+i0000001127:	ld                  a5, 112(sp)         
+i0000001128:	fence.i                       
+i0000001129:	srli                a3, a3, 15
+i000000112a:	addi                sp, sp, -80
+i000000112b:	add                 s0, zero, a5
+i000000112c:	sd                  s0, -1736(sp)       
+i000000112d:	fence.i                       
+i000000112e:	remuw               a1, a5, s0
+i000000112f:	fence                         
+i0000001130:	andi                s9, a5, 1521
+i0000001131:	lwu                 s7, -1336(sp)       
+i0000001132:	srliw               a7, a5, 30
+i0000001133:	fence                         
+i0000001134:	mulw                s10, s0, s1
+i0000001135:	addi                sp, sp, -416
+i0000001136:	lwu                 a5, 300(sp)         
+i0000001137:	lw                  s1, -504(sp)        
+i0000001138:	sw                  s1, 40(sp)          
+i0000001139:	sll                 s9, a6, t3
+i000000113a:	sraiw               a2, s0, 0 
+i000000113b:	remw                s1, t3, t2
+i000000113c:	subw                a5, a5, a1
+i000000113d:	fence.i                       
+i000000113e:	slt                 a5, a5, s0
+i000000113f:	divw                s4, s1, a5
+i0000001140:	xor                 a5, a5, a3
+i0000001141:	fence.i                       
+i0000001142:	srli                a1, s4, 48
+i0000001143:	rem                 s10, zero, a6
+i0000001144:	addi                s0, sp, 136
+i0000001145:	srai                a3, a3, 13
+i0000001146:	addw                t1, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 5776  
+				add                 sp, sp, t1
+i0000001147:	lw                  a5, 80(sp)          
+				li                  x19, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 9136  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9712  
+				add                 sp, sp, t1
+				add                 gp, gp, a5
+				sra                 s4, a5, s1
+				fence                         
+				sb                  s1, 140(sp)         
+				addi                s0, s7, 1422
+				ld                  s1, 2024(sp)        
+				sw                  a4, 48(sp)          
+	
+b0000001148:
+				pre_branch_macro                        
+				bge                 x19, x29, i0000001132
+				post_branch_macro                       
+	
+				srli                s0, s0, 7 
+				add                 s10, s10, a5
+				divw                s1, s0, s1
+				addi                a4, sp, 12
+				divuw               tp, tp, gp
+				fence.i                       
+				sw                  a6, 4(sp)           
+				li                  x29, 10   
+i0000001148:	srliw               a6, a5, 29
+i0000001149:	ld                  s1, 1432(sp)        
+				la                  sp, begin_signature
+				li                  t1, 6976  
+				add                 sp, sp, t1
+i000000114a:	ld                  a5, 240(sp)         
+i000000114b:	srai                a0, a0, 15
+i000000114c:	addiw               gp, a0, -1637
+i000000114d:	add                 a7, a7, s0
+i000000114e:	subw                s1, a5, s0
+i000000114f:	mulhu               s1, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 3648  
+				add                 sp, sp, t1
+i0000001150:	lw                  s0, 40(sp)          
+i0000001151:	subw                a4, a4, a1
+i0000001152:	fence.i                       
+i0000001153:	sw                  t1, -816(sp)        
+i0000001154:	add                 t3, zero, s0
+i0000001155:	lui                 s1, 338559
+i0000001156:	addi                s0, sp, 60
+i0000001157:	sd                  a2, 16(sp)          
+i0000001158:	fence.i                       
+i0000001159:	ld                  s1, 1288(sp)        
+i000000115a:	addi                sp, sp, 80
+i000000115b:	addiw               s1, s1, -23
+i000000115c:	mulhsu              gp, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 13488 
+				add                 sp, sp, t1
+i000000115d:	sd                  s0, 176(sp)         
+i000000115e:	xori                t3, s11, -64
+i000000115f:	sw                  t5, 1564(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13056 
+				add                 sp, sp, t1
+i0000001160:	lw                  a2, 8(sp)           
+i0000001161:	addiw               a0, a0, 1 
+i0000001162:	xori                a5, a5, -350
+i0000001163:	ori                 a2, t5, 293
+i0000001164:	sub                 gp, s3, t6
+i0000001165:	addi                s3, zero, -15
+i0000001166:	sb                  a5, -252(sp)        
+i0000001167:	lh                  s1, 1266(sp)        
+i0000001168:	sd                  a3, 1840(sp)        
+i0000001169:	fence.i                       
+i000000116a:	srli                a2, a2, 1 
+				la                  sp, begin_signature
+				li                  t1, 6144  
+				add                 sp, sp, t1
+i000000116b:	lw                  a5, 56(sp)          
+i000000116c:	divuw               s0, s1, s1
+i000000116d:	srai                s0, s0, 6 
+i000000116e:	remw                s1, a5, s0
+i000000116f:	slliw               a5, s0, 23
+				la                  sp, begin_signature
+				li                  t1, 7056  
+				add                 sp, sp, t1
+				sb                  a4, 1211(sp)        
+				or                  a4, a4, a4
+				sw                  a4, 24(sp)          
+				srlw                s1, a5, s0
+				divu                s6, s6, a4
+				lwu                 gp, -1052(sp)       
+				slti                s1, t6, 359
+	
+b0000001170:
+				jal                 x1, i000000117b     
+	
+				sub                 s0, s0, a4
+				addi                s0, sp, 496
+				divuw               a7, s1, s0
+				sw                  s1, 1792(sp)        
+				fence.i                       
+				fence.i                       
+				ld                  a4, 16(sp)          
+i0000001170:	slli                a3, a3, 21
+				la                  sp, begin_signature
+				li                  t1, 6040  
+				add                 sp, sp, t1
+i0000001171:	sh                  a5, 1896(sp)        
+i0000001172:	addw                a2, a2, a2
+i0000001173:	divuw               t0, a3, t3
+i0000001174:	srai                s1, s1, 43
+i0000001175:	fence.i                       
+i0000001176:	add                 t3, zero, a5
+i0000001177:	lw                  t3, 120(sp)         
+i0000001178:	lw                  a1, 64(sp)          
+i0000001179:	mulhsu              s1, a5, a5
+i000000117a:	divw                s3, s11, zero
+i000000117b:	sw                  a1, 0(sp)           
+				la                  sp, begin_signature
+				li                  t1, 5088  
+				add                 sp, sp, t1
+i000000117c:	sw                  a0, 56(sp)          
+				la                  sp, begin_signature
+				li                  t1, 5304  
+				add                 sp, sp, t1
+i000000117d:	sd                  s1, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 2688  
+				add                 sp, sp, t1
+i000000117e:	lh                  s0, -1674(sp)       
+i000000117f:	sd                  a3, 48(sp)          
+i0000001180:	addi                a4, sp, 232
+i0000001181:	remu                a3, a5, s0
+i0000001182:	srai                a3, a3, 8 
+i0000001183:	ld                  a4, 8(sp)           
+i0000001184:	lw                  s0, 60(sp)          
+i0000001185:	addi                a4, sp, 80
+i0000001186:	mulhsu              a5, t3, tp
+i0000001187:	srai                a2, a2, 31
+i0000001188:	lw                  s0, 48(sp)          
+i0000001189:	div                 t2, s0, a5
+i000000118a:	divw                s0, s0, s0
+i000000118b:	mulhsu              s0, s0, s0
+i000000118c:	add                 t6, zero, s0
+i000000118d:	mulh                s1, a5, s1
+i000000118e:	srai                a1, a1, 15
+i000000118f:	mulhsu              s1, s2, s4
+i0000001190:	fence.i                       
+i0000001191:	addiw               s0, s0, 1387
+i0000001192:	lhu                 s4, -1608(sp)       
+i0000001193:	mulw                t0, s0, a5
+i0000001194:	srli                a0, a0, 7 
+i0000001195:	lw                  a4, 60(sp)          
+i0000001196:	addi                sp, sp, 144
+i0000001197:	mulw                s10, s0, s1
+				li                  x23, 10   
+				la                  sp, begin_signature
+				li                  t1, 11568 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 10200 
+				add                 sp, sp, t1
+				srai                s0, s0, 14
+				fence.i                       
+				srli                s0, s0, 28
+				and                 s0, s0, s0
+				ld                  a4, 112(sp)         
+				xori                t3, a5, 1170
+				ld                  s3, -1920(sp)       
+	
+b0000001198:
+				beq                 x29, x23, 1f        
+				la                  x23, i0000001176    
+				jalr                x10, x23, 0         
+				1: li x29, 10                           
+	
+				srai                a4, a4, 13
+				mulw                s2, a5, s0
+				fence.i                       
+				sd                  s0, -1728(sp)       
+				sraiw               s2, a5, 16
+				lwu                 a7, -540(sp)        
+				ld                  a5, -1152(sp)       
+i0000001198:	sraiw               a5, t0, 12
+i0000001199:	srai                a0, a0, 16
+				la                  sp, begin_signature
+				li                  t1, 6776  
+				add                 sp, sp, t1
+i000000119a:	ld                  a2, 88(sp)          
+i000000119b:	addi                sp, sp, -128
+i000000119c:	addi                gp, zero, 10
+i000000119d:	addw                tp, gp, s7
+i000000119e:	addi                sp, sp, -432
+i000000119f:	divuw               t6, s0, s0
+i00000011a0:	sd                  s1, 16(sp)          
+i00000011a1:	addi                sp, sp, -304
+i00000011a2:	srai                a0, a0, 2 
+i00000011a3:	srai                s1, s1, 29
+i00000011a4:	addiw               t5, a5, -1003
+i00000011a5:	addi                a3, sp, 80
+i00000011a6:	sraiw               a5, a5, 23
+i00000011a7:	lwu                 s0, 676(sp)         
+i00000011a8:	fsrmi               x0, 6     
+i00000011a9:	ld                  s0, 104(sp)         
+i00000011aa:	mulw                a5, s11, s8
+i00000011ab:	srlw                s6, s1, s0
+i00000011ac:	mulhu               s4, a5, s1
+i00000011ad:	lw                  a5, 1036(sp)        
+i00000011ae:	addw                a4, a4, s0
+i00000011af:	sub                 s1, s1, s1
+i00000011b0:	ld                  s11, -528(sp)       
+i00000011b1:	mulh                s3, a5, s0
+i00000011b2:	srli                s1, s1, 9 
+i00000011b3:	fence.i                       
+i00000011b4:	or                  t1, a5, s1
+i00000011b5:	srlw                t6, a5, a5
+i00000011b6:	addi                a4, a4, -26
+i00000011b7:	xori                s0, s0, 855
+i00000011b8:	addi                a5, sp, 48
+i00000011b9:	div                 s1, a5, a5
+i00000011ba:	sd                  a4, 96(sp)          
+i00000011bb:	sw                  s1, 56(sp)          
+i00000011bc:	srli                a2, a2, 31
+i00000011bd:	srli                a3, a3, 11
+i00000011be:	mulhu               a6, a3, t5
+i00000011bf:	srai                s1, s5, 42
+i00000011c0:	remw                s0, s9, a6
+				li                  x23, 10   
+				la                  sp, begin_signature
+				li                  t1, 3168  
+				add                 sp, sp, t1
+				lw                  s0, 96(sp)          
+				remw                s0, s0, a5
+				addw                s1, s0, s1
+				sb                  gp, 307(sp)         
+				addi                s0, sp, 160
+				sub                 t6, a6, a6
+				sd                  t6, 104(sp)         
+	
+b00000011c1:
+				beq                 x29, x23, 1f        
+				jal                 x1, i00000011ab     
+				1: li x29, 10                           
+	
+				srli                a5, a5, 11
+				fence                         
+				sd                  a6, 0(sp)           
+				addi                sp, sp, 192
+				sw                  a4, 28(sp)          
+				subw                s1, s4, gp
+				srli                gp, s6, 48
+i00000011c1:	srli                s0, s0, 10
+i00000011c2:	remuw               s5, gp, t2
+i00000011c3:	sd                  t5, -1312(sp)       
+i00000011c4:	xor                 s1, a5, a5
+i00000011c5:	srli                a5, a5, 9 
+i00000011c6:	ld                  s1, 256(sp)         
+i00000011c7:	lw                  s0, 0(sp)           
+i00000011c8:	addw                a5, a5, a0
+i00000011c9:	srai                s1, s1, 11
+i00000011ca:	lw                  a4, 104(sp)         
+i00000011cb:	fence                         
+i00000011cc:	srli                a0, a0, 3 
+i00000011cd:	srliw               t0, a5, 18
+i00000011ce:	mul                 t5, s3, t1
+i00000011cf:	mulhu               s0, s0, a5
+i00000011d0:	xor                 a1, a1, s0
+i00000011d1:	addw                zero, s0, s0
+i00000011d2:	divuw               s1, t2, s6
+i00000011d3:	sb                  s7, 1422(sp)        
+i00000011d4:	srliw               a2, s11, 7
+i00000011d5:	addi                sp, sp, 80
+i00000011d6:	srai                t3, a6, 27
+i00000011d7:	slliw               a3, t1, 13
+i00000011d8:	subw                s9, a5, s1
+				la                  sp, begin_signature
+				li                  t1, 14224 
+				add                 sp, sp, t1
+i00000011d9:	lw                  a5, 100(sp)         
+i00000011da:	srli                s1, s1, 4 
+i00000011db:	srai                a5, a5, 9 
+i00000011dc:	srlw                a5, s8, s9
+i00000011dd:	xori                s0, s0, 689
+i00000011de:	sd                  s0, 1848(sp)        
+i00000011df:	ld                  a2, 24(sp)          
+i00000011e0:	xor                 a3, a3, a4
+i00000011e1:	fence                         
+i00000011e2:	srai                a1, a1, 13
+i00000011e3:	remu                s10, a5, a5
+i00000011e4:	sub                 s1, s1, s1
+i00000011e5:	mulw                a5, a0, s9
+i00000011e6:	ld                  a0, 80(sp)          
+i00000011e7:	srli                a1, a1, 14
+i00000011e8:	srli                a1, a1, 21
+				li                  x16, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 4048  
+				add                 sp, sp, t1
+				ld                  zero, 200(sp)       
+				lwu                 a7, -136(sp)        
+				lw                  a4, 8(sp)           
+				fence.i                       
+				lw                  a5, 1784(sp)        
+				addiw               a4, a4, -12
+				srai                s0, s0, 17
+	
+b00000011e9:
+				beq                 x29, x16, 1f        
+				jal                 x1, i00000011ca     
+				1: li x29, 10                           
+	
+				lw                  s0, 0(sp)           
+				srai                s0, s0, 11
+				or                  s3, a5, s1
+				mulhu               a5, s10, s10
+				sw                  s7, 960(sp)         
+				addiw               s0, s0, -29
+				fence.i                       
+i00000011e9:	srli                a5, a5, 9 
+i00000011ea:	srai                a1, a1, 3 
+i00000011eb:	or                  s1, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 6688  
+				add                 sp, sp, t1
+i00000011ec:	ld                  a1, 8(sp)           
+i00000011ed:	srai                s0, s0, 8 
+i00000011ee:	addi                a4, a4, -2
+i00000011ef:	mulh                t0, t1, s5
+i00000011f0:	srai                a2, a2, 16
+i00000011f1:	slli                s0, s0, 13
+i00000011f2:	srai                s1, s1, 15
+i00000011f3:	or                  a3, a3, a5
+i00000011f4:	sd                  a5, 176(sp)         
+i00000011f5:	lw                  s0, 20(sp)          
+i00000011f6:	srli                a2, a2, 16
+i00000011f7:	fence.i                       
+i00000011f8:	divu                zero, s0, s0
+i00000011f9:	addi                sp, sp, -256
+i00000011fa:	divw                s6, t3, t0
+i00000011fb:	sraw                a6, a6, s10
+i00000011fc:	srai                s0, s0, 12
+i00000011fd:	addi                sp, sp, 144
+i00000011fe:	xor                 a5, a5, a4
+				la                  sp, begin_signature
+				li                  t1, 10472 
+				add                 sp, sp, t1
+i00000011ff:	ld                  s1, 24(sp)          
+i0000001200:	srli                s1, s1, 9 
+i0000001201:	srli                a3, a3, 12
+i0000001202:	fence                         
+i0000001203:	addw                s1, s1, s1
+i0000001204:	srli                a5, a2, 28
+i0000001205:	sraw                s1, s1, a5
+i0000001206:	sd                  s1, -1736(sp)       
+i0000001207:	srli                a0, a0, 13
+i0000001208:	srli                a5, a5, 10
+				la                  sp, begin_signature
+				li                  t1, 11888 
+				add                 sp, sp, t1
+i0000001209:	sd                  s4, 144(sp)         
+i000000120a:	divuw               s3, s1, s0
+i000000120b:	addi                sp, sp, -16
+i000000120c:	sd                  t6, 152(sp)         
+i000000120d:	fence                         
+i000000120e:	rem                 a6, a5, a5
+i000000120f:	fence                         
+i0000001210:	add                 s9, a5, a5
+				li                  x19, 12   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7088  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 13856 
+				add                 sp, sp, t1
+				sw                  t6, 1552(sp)        
+				sllw                s1, s0, a5
+				ld                  a4, 96(sp)          
+				ld                  a4, 120(sp)         
+				addi                sp, sp, -464
+				lwu                 s2, -1880(sp)       
+				lw                  s7, 72(sp)          
+	
+b0000001211:
+				pre_branch_macro                        
+				blt                 x29, x19, i0000001233
+				post_branch_macro                       
+	
+				sb                  a7, 1557(sp)        
+				addi                s1, sp, 104
+				sd                  gp, 0(sp)           
+				addiw               s0, s11, -1775
+				ori                 a4, t3, -755
+				addi                sp, sp, -112
+				subw                a4, a4, s0
+				li                  x29, 10   
+i0000001211:	addw                a4, a4, a1
+i0000001212:	andi                s4, s10, -706
+i0000001213:	sd                  t0, 200(sp)         
+i0000001214:	addiw               a2, s1, -1211
+i0000001215:	lui                 s5, 12133 
+i0000001216:	sw                  s1, 100(sp)         
+				la                  sp, begin_signature
+				li                  t1, 13544 
+				add                 sp, sp, t1
+i0000001217:	sw                  a0, 48(sp)          
+i0000001218:	addi                s1, sp, 352
+i0000001219:	ld                  s0, 32(sp)          
+i000000121a:	addi                a2, sp, 264
+i000000121b:	srli                a5, a5, 10
+i000000121c:	mulh                s11, s0, s0
+i000000121d:	sraiw               a5, zero, 29
+				la                  sp, begin_signature
+				li                  t1, 11032 
+				add                 sp, sp, t1
+i000000121e:	ld                  a2, 112(sp)         
+i000000121f:	sw                  a2, 44(sp)          
+i0000001220:	sw                  s5, 100(sp)         
+i0000001221:	mulw                s1, s0, s1
+i0000001222:	srai                s1, s1, 10
+i0000001223:	divuw               a2, t2, t2
+i0000001224:	sd                  s1, 216(sp)         
+i0000001225:	srli                a4, a4, 31
+i0000001226:	lui                 a0, 368531
+i0000001227:	sw                  s0, 4(sp)           
+i0000001228:	sll                 a2, tp, t6
+i0000001229:	lb                  s0, 1971(sp)        
+i000000122a:	srli                t3, s1, 3 
+				la                  sp, begin_signature
+				li                  t1, 5144  
+				add                 sp, sp, t1
+i000000122b:	sw                  s5, 112(sp)         
+i000000122c:	slli                a5, a7, 15
+i000000122d:	divw                tp, a5, a5
+i000000122e:	add                 s9, zero, s0
+i000000122f:	addw                s1, s10, s7
+i0000001230:	addw                a0, s1, s0
+i0000001231:	addiw               a0, s2, -445
+i0000001232:	mulw                s0, a6, a1
+i0000001233:	divw                t1, t2, a4
+i0000001234:	ori                 tp, t1, -175
+i0000001235:	sub                 a5, s10, s4
+i0000001236:	slli                a5, a5, 4 
+i0000001237:	mulhu               t3, s0, a5
+i0000001238:	addi                sp, sp, -256
+				li                  x28, 10   
+				srai                a4, a4, 5 
+				addw                a4, a4, a5
+				ld                  s9, -960(sp)        
+				addi                s0, sp, 112
+				sw                  s1, 36(sp)          
+				sh                  s0, -420(sp)        
+				sraiw               a6, s8, 13
+	
+b0000001239:
+				pre_branch_macro                        
+				bne                 x29, x28, i0000001219
+				post_branch_macro                       
+	
+				addi                sp, sp, -336
+				srai                a4, a4, 6 
+				fence.i                       
+				sw                  s2, -636(sp)        
+				div                 s0, a6, tp
+				remu                tp, gp, a4
+				add                 s9, s1, s1
+				li                  x29, 10   
+i0000001239:	sw                  t1, 80(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11464 
+				add                 sp, sp, t1
+i000000123a:	sw                  s1, 0(sp)           
+i000000123b:	lb                  a3, -260(sp)        
+i000000123c:	slli                s0, a0, 43
+i000000123d:	ld                  s0, 24(sp)          
+i000000123e:	fence                         
+i000000123f:	srai                a4, a4, 11
+i0000001240:	divuw               s0, s0, a5
+i0000001241:	mul                 zero, s0, a5
+i0000001242:	sll                 a4, t1, zero
+i0000001243:	lui                 s0, 8     
+i0000001244:	ld                  s1, 1304(sp)        
+i0000001245:	srai                s1, s1, 4 
+i0000001246:	ld                  a5, 128(sp)         
+i0000001247:	fence                         
+i0000001248:	addi                sp, sp, 32
+i0000001249:	addiw               a2, a2, 15
+i000000124a:	addi                a4, sp, 512
+i000000124b:	addi                sp, sp, -48
+i000000124c:	sw                  a3, 24(sp)          
+i000000124d:	ld                  s1, 144(sp)         
+i000000124e:	addw                a2, a2, a5
+i000000124f:	remu                a2, s0, s0
+i0000001250:	addi                a5, sp, 36
+i0000001251:	srli                a5, a5, 2 
+i0000001252:	srli                s0, s0, 5 
+i0000001253:	fence.i                       
+i0000001254:	srlw                s0, s8, t6
+i0000001255:	lw                  s0, 28(sp)          
+i0000001256:	addiw               a5, a5, -25
+i0000001257:	ld                  a2, 48(sp)          
+i0000001258:	lui                 a5, 1     
+i0000001259:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 7672  
+				add                 sp, sp, t1
+i000000125a:	sd                  a2, 112(sp)         
+i000000125b:	mulw                s0, s1, a5
+i000000125c:	lwu                 t2, -48(sp)         
+i000000125d:	ld                  s0, 1896(sp)        
+i000000125e:	xori                a5, s0, -535
+i000000125f:	slt                 a5, s7, t2
+i0000001260:	lwu                 s1, -1980(sp)       
+				la                  sp, begin_signature
+				li                  t1, 3952  
+				add                 sp, sp, t1
+				lh                  zero, -1490(sp)     
+				add                 s9, zero, s2
+				srli                a4, a4, 26
+				fence                         
+				sw                  a5, 64(sp)          
+				andi                a4, a4, -6
+				subw                a4, a4, a4
+	
+b0000001261:
+				jal                 x1, i000000127f     
+	
+				sw                  a7, 832(sp)         
+				addi                s0, sp, 384
+				div                 a5, a5, s1
+				fence.i                       
+				divw                s1, s7, s10
+				sub                 a4, a4, a4
+				addw                s0, t6, s2
+i0000001261:	srlw                a5, t5, a0
+i0000001262:	addiw               a5, s8, 1860
+i0000001263:	sra                 s0, t3, s9
+i0000001264:	addi                a1, sp, 324
+i0000001265:	subw                a5, a5, a3
+				la                  sp, begin_signature
+				li                  t1, 6000  
+				add                 sp, sp, t1
+i0000001266:	sw                  s1, 124(sp)         
+i0000001267:	srli                a4, a4, 27
+i0000001268:	sd                  a5, 1496(sp)        
+i0000001269:	subw                s0, s0, s1
+i000000126a:	addi                a2, a2, 6 
+				la                  sp, begin_signature
+				li                  t1, 4944  
+				add                 sp, sp, t1
+i000000126b:	ld                  a3, 80(sp)          
+i000000126c:	fence                         
+i000000126d:	lwu                 s6, -1968(sp)       
+i000000126e:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 3544  
+				add                 sp, sp, t1
+i000000126f:	sd                  a1, -1392(sp)       
+i0000001270:	sd                  s3, 240(sp)         
+i0000001271:	remw                s2, s3, t0
+i0000001272:	sd                  s7, 408(sp)         
+i0000001273:	sd                  a7, 128(sp)         
+i0000001274:	remuw               s0, s0, s0
+i0000001275:	fence                         
+i0000001276:	divuw               t1, a2, a7
+i0000001277:	sub                 a5, a5, a0
+i0000001278:	lbu                 a2, 356(sp)         
+i0000001279:	fence.i                       
+i000000127a:	srli                a4, a4, 31
+i000000127b:	mulw                a5, a5, s0
+i000000127c:	and                 a3, a3, a1
+i000000127d:	sd                  a1, 64(sp)          
+i000000127e:	srli                a0, a0, 6 
+i000000127f:	auipc               s1, 483439
+				la                  sp, begin_signature
+				li                  t1, 3624  
+				add                 sp, sp, t1
+i0000001280:	sd                  gp, -1032(sp)       
+i0000001281:	addi                sp, sp, 240
+				la                  sp, begin_signature
+				li                  t1, 2616  
+				add                 sp, sp, t1
+i0000001282:	sd                  s7, 208(sp)         
+i0000001283:	mulh                s9, s0, a5
+i0000001284:	sra                 s1, a0, a3
+i0000001285:	addiw               s0, s0, 0 
+i0000001286:	srli                a1, a1, 3 
+i0000001287:	lwu                 a5, 608(sp)         
+i0000001288:	lui                 s1, 269168
+				la                  sp, begin_signature
+				li                  t1, 14032 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 2168  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 13352 
+				add                 sp, sp, t1
+				addi                s1, sp, 240
+				addi                s0, s0, -7
+				lw                  a5, 104(sp)         
+				addi                sp, sp, -96
+				sd                  s1, 8(sp)           
+				srli                a5, a5, 12
+				sltu                s1, s6, s6
+	
+b0000001289:
+				jal                 x1, i0000001298     
+	
+				sw                  s1, 96(sp)          
+				lhu                 zero, -1944(sp)     
+				add                 t2, t2, s1
+				fence                         
+				srli                a4, a4, 17
+				subw                a4, a4, a4
+				div                 s8, a6, t6
+i0000001289:	srai                s0, s0, 16
+i000000128a:	sraiw               a1, a1, 17
+				la                  sp, begin_signature
+				li                  t1, 8344  
+				add                 sp, sp, t1
+i000000128b:	ld                  a5, 112(sp)         
+i000000128c:	sw                  s1, -1060(sp)       
+i000000128d:	sd                  zero, 224(sp)       
+i000000128e:	srai                s1, s1, 37
+i000000128f:	fence                         
+i0000001290:	sraiw               zero, s1, 21
+i0000001291:	sub                 s1, s0, s0
+i0000001292:	addw                a4, a4, s0
+i0000001293:	addi                s0, sp, 228
+i0000001294:	addi                sp, sp, -272
+i0000001295:	mulh                s0, s10, a7
+i0000001296:	srai                a3, a3, 4 
+i0000001297:	srli                s0, s0, 1 
+				la                  sp, begin_signature
+				li                  t1, 2048  
+				add                 sp, sp, t1
+i0000001298:	sw                  s1, 60(sp)          
+i0000001299:	ld                  s1, 208(sp)         
+i000000129a:	lb                  s7, -865(sp)        
+i000000129b:	slt                 s0, s1, s0
+i000000129c:	divuw               a7, s0, s0
+i000000129d:	lw                  a1, 56(sp)          
+i000000129e:	ori                 s0, s0, -1211
+i000000129f:	ld                  a1, 48(sp)          
+i00000012a0:	srai                s0, s0, 17
+i00000012a1:	fence                         
+i00000012a2:	ld                  a5, 128(sp)         
+i00000012a3:	sh                  a5, -70(sp)         
+i00000012a4:	remw                s1, t2, zero
+i00000012a5:	lwu                 a1, -792(sp)        
+i00000012a6:	subw                a5, s3, s11
+i00000012a7:	fence                         
+i00000012a8:	addiw               t6, a5, 1791
+i00000012a9:	srli                s0, s0, 17
+i00000012aa:	lbu                 a6, 530(sp)         
+i00000012ab:	addi                sp, sp, -336
+i00000012ac:	addi                s1, sp, 272
+i00000012ad:	lui                 a5, 9     
+i00000012ae:	add                 s1, s1, s1
+i00000012af:	srai                a5, a5, 15
+i00000012b0:	ld                  s3, 112(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7344  
+				add                 sp, sp, t1
+				divu                zero, s11, s5
+				addi                s0, sp, 456
+				lh                  s0, -840(sp)        
+				lw                  t2, 56(sp)          
+				slliw               s10, a5, 13
+				srai                s0, s0, 1 
+				lui                 s0, 333839
+	
+b00000012b1:
+				jal                 x1, i00000012c8     
+	
+				sub                 a4, a4, a4
+				ld                  s0, -856(sp)        
+				sub                 a4, a4, s0
+				srli                s1, s1, 4 
+				or                  s7, tp, s11
+				sllw                s6, a5, s0
+				sraw                t6, a5, s1
+i00000012b1:	slli                a4, a6, 47
+i00000012b2:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 2680  
+				add                 sp, sp, t1
+i00000012b3:	lwu                 zero, -984(sp)      
+i00000012b4:	slli                s1, s1, 24
+i00000012b5:	addi                sp, sp, -496
+i00000012b6:	sw                  a5, 72(sp)          
+i00000012b7:	slliw               s7, s1, 17
+i00000012b8:	divu                t6, a7, a2
+i00000012b9:	lwu                 s0, -188(sp)        
+i00000012ba:	lh                  a3, 962(sp)         
+i00000012bb:	addw                s1, t6, a0
+i00000012bc:	lhu                 s3, 1452(sp)        
+i00000012bd:	ld                  a2, 112(sp)         
+i00000012be:	srli                s1, s1, 14
+i00000012bf:	mulhu               a4, s11, s4
+i00000012c0:	sw                  a0, -1376(sp)       
+i00000012c1:	addw                a4, a4, s0
+i00000012c2:	srai                a1, a1, 3 
+i00000012c3:	lw                  s0, 32(sp)          
+i00000012c4:	mulh                a5, a5, a5
+i00000012c5:	sd                  a5, -8(sp)          
+i00000012c6:	mulw                a5, a7, t0
+i00000012c7:	lbu                 s0, 1861(sp)        
+i00000012c8:	ori                 a3, s0, -1091
+i00000012c9:	fence                         
+i00000012ca:	addiw               t1, t5, 26
+i00000012cb:	sw                  s1, 24(sp)          
+i00000012cc:	divu                s1, t6, gp
+i00000012cd:	ld                  a5, 1336(sp)        
+i00000012ce:	lui                 a7, 31    
+i00000012cf:	add                 s1, zero, s0
+i00000012d0:	srai                a3, a3, 13
+i00000012d1:	divu                gp, a5, a5
+i00000012d2:	divuw               a0, s1, s0
+i00000012d3:	sd                  t1, 104(sp)         
+i00000012d4:	sw                  s0, 24(sp)          
+i00000012d5:	remuw               a5, s0, s0
+i00000012d6:	slti                a5, gp, -1204
+i00000012d7:	lw                  a5, 24(sp)          
+i00000012d8:	addi                sp, sp, -496
+				li                  x27, 0    
+				la                  sp, begin_signature
+				li                  t1, 3544  
+				add                 sp, sp, t1
+				lw                  a4, 64(sp)          
+				subw                a5, a5, a5
+				lw                  s1, 36(sp)          
+				slli                s0, s0, 17
+				sub                 a4, a4, s1
+				subw                a4, a4, s1
+				lwu                 a5, 392(sp)         
+	
+b00000012d9:
+				pre_branch_macro                        
+				beq                 x29, x27, i00000012e2
+				post_branch_macro                       
+	
+				lbu                 s1, 713(sp)         
+				ld                  a4, 128(sp)         
+				sd                  s2, 0(sp)           
+				addi                sp, sp, 240
+				auipc               s0, 460683
+				srli                s10, a7, 12
+				slliw               a5, s2, 20
+				li                  x29, 10   
+i00000012d9:	sw                  t2, 40(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8296  
+				add                 sp, sp, t1
+i00000012da:	lbu                 a1, 615(sp)         
+i00000012db:	remw                s0, a5, s0
+i00000012dc:	sub                 a1, a1, a0
+i00000012dd:	srai                a5, a5, 32
+i00000012de:	remuw               a0, a5, s1
+i00000012df:	srai                a0, a0, 32
+i00000012e0:	slt                 a5, s4, s5
+i00000012e1:	divw                a5, t5, s2
+i00000012e2:	srli                t1, a5, 18
+i00000012e3:	addi                a5, sp, 192
+i00000012e4:	divw                s8, s4, a1
+i00000012e5:	lw                  s6, 112(sp)         
+i00000012e6:	srliw               a4, s0, 28
+i00000012e7:	addi                sp, sp, 0 
+i00000012e8:	andi                a5, s5, 1366
+i00000012e9:	add                 s0, zero, s1
+i00000012ea:	mulw                a5, a5, s1
+i00000012eb:	addi                sp, sp, -320
+i00000012ec:	fence                         
+i00000012ed:	sraw                a5, s0, s1
+i00000012ee:	remw                s0, a5, a5
+i00000012ef:	fence.i                       
+i00000012f0:	lhu                 a5, 1916(sp)        
+i00000012f1:	lhu                 s1, 1674(sp)        
+i00000012f2:	srl                 a5, s0, s1
+i00000012f3:	lwu                 a5, 1712(sp)        
+i00000012f4:	xor                 s0, s0, a0
+i00000012f5:	sw                  s1, 32(sp)          
+i00000012f6:	and                 a5, s1, s0
+i00000012f7:	sraiw               t3, s0, 8 
+i00000012f8:	srai                a4, a4, 4 
+i00000012f9:	sra                 a5, s0, s0
+i00000012fa:	lwu                 s6, -876(sp)        
+i00000012fb:	sh                  s3, 1272(sp)        
+i00000012fc:	sd                  s0, 120(sp)         
+i00000012fd:	ld                  a5, -272(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2912  
+				add                 sp, sp, t1
+i00000012fe:	sw                  s7, -1920(sp)       
+i00000012ff:	add                 a5, zero, a6
+i0000001300:	ld                  a3, 112(sp)         
+				la                  sp, begin_signature
+				li                  t1, 4808  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6192  
+				add                 sp, sp, t1
+				divw                a5, s6, s10
+				srai                a4, a4, 24
+				sw                  s6, -1648(sp)       
+				addi                a4, sp, 48
+				divw                s0, s7, a4
+				sw                  s0, 4(sp)           
+				lwu                 a5, -1476(sp)       
+	
+b0000001301:
+				jal                 x1, i0000001319     
+	
+				lh                  a5, 1356(sp)        
+				lhu                 a5, -2006(sp)       
+				sll                 a5, t2, s6
+				ld                  s0, 112(sp)         
+				and                 a6, a5, s0
+				sd                  s10, 1160(sp)       
+				sd                  a4, 40(sp)          
+i0000001301:	mulw                s1, a3, a6
+i0000001302:	srliw               s0, a5, 10
+i0000001303:	addw                s1, t5, s6
+i0000001304:	fence                         
+i0000001305:	srli                s1, s1, 2 
+i0000001306:	addi                gp, zero, -7
+i0000001307:	sra                 s0, s5, a2
+i0000001308:	divw                s0, t5, a4
+i0000001309:	addi                a1, sp, 152
+i000000130a:	ld                  s7, 80(sp)          
+				la                  sp, begin_signature
+				li                  t1, 9136  
+				add                 sp, sp, t1
+i000000130b:	ld                  a5, 1384(sp)        
+i000000130c:	sub                 s8, s1, s1
+i000000130d:	lwu                 a5, -1360(sp)       
+i000000130e:	or                  a5, a5, a5
+i000000130f:	sd                  a1, 8(sp)           
+i0000001310:	srai                a0, a0, 5 
+				la                  sp, begin_signature
+				li                  t1, 4104  
+				add                 sp, sp, t1
+i0000001311:	lw                  s3, 24(sp)          
+i0000001312:	div                 t3, a5, s0
+i0000001313:	add                 s0, zero, a5
+i0000001314:	lbu                 s3, 1664(sp)        
+i0000001315:	sltu                a5, s4, tp
+i0000001316:	xor                 s0, a5, a5
+i0000001317:	lw                  t2, 28(sp)          
+i0000001318:	mulw                a4, s1, s1
+i0000001319:	mulhu               a1, s1, a5
+i000000131a:	sd                  s7, -1592(sp)       
+i000000131b:	addi                a3, sp, 328
+i000000131c:	lui                 a6, 16    
+i000000131d:	sw                  a5, 708(sp)         
+i000000131e:	srai                s0, s0, 14
+i000000131f:	fence                         
+i0000001320:	lbu                 s0, -290(sp)        
+i0000001321:	divu                t2, s3, zero
+i0000001322:	addi                sp, sp, -48
+i0000001323:	srli                s1, s1, 1 
+				la                  sp, begin_signature
+				li                  t1, 11528 
+				add                 sp, sp, t1
+i0000001324:	sd                  a5, 232(sp)         
+i0000001325:	lw                  a0, 24(sp)          
+i0000001326:	slliw               s1, t2, 20
+i0000001327:	srli                s0, s0, 10
+i0000001328:	remu                t6, a5, a5
+				li                  x28, 10   
+				mulhsu              s3, gp, s3
+				remuw               a5, s2, t6
+				addiw               s0, s0, -12
+				divuw               gp, a6, gp
+				auipc               zero, 25933
+				addi                sp, sp, -256
+				sw                  a5, 360(sp)         
+	
+b0000001329:
+				beq                 x29, x28, 1f        
+				jal                 x1, i0000001315     
+				1: li x29, 10                           
+	
+				fence                         
+				srliw               a7, s3, 25
+				lhu                 s1, -990(sp)        
+				mulw                s1, a4, s2
+				add                 gp, zero, s0
+				ld                  a5, 280(sp)         
+				addi                sp, sp, -112
+i0000001329:	fence                         
+i000000132a:	sw                  s1, 12(sp)          
+i000000132b:	addi                s0, s0, -29
+i000000132c:	srai                a5, a5, 3 
+i000000132d:	addi                a3, sp, 0 
+i000000132e:	sw                  a5, 1304(sp)        
+i000000132f:	srlw                s0, s0, a5
+i0000001330:	and                 a1, a1, a1
+				la                  sp, begin_signature
+				li                  t1, 4976  
+				add                 sp, sp, t1
+i0000001331:	lw                  s0, 912(sp)         
+i0000001332:	sh                  s0, -1284(sp)       
+i0000001333:	srai                s0, s0, 5 
+i0000001334:	ld                  s7, 1312(sp)        
+i0000001335:	and                 a1, a1, s1
+				la                  sp, begin_signature
+				li                  t1, 8776  
+				add                 sp, sp, t1
+i0000001336:	lw                  s1, 20(sp)          
+i0000001337:	lwu                 s6, 780(sp)         
+i0000001338:	srai                a0, a0, 12
+i0000001339:	and                 a0, s1, s1
+i000000133a:	addi                sp, sp, -496
+i000000133b:	remw                s0, t6, s9
+i000000133c:	slli                s0, s9, 20
+i000000133d:	lbu                 s7, -1071(sp)       
+i000000133e:	addiw               a5, s6, 615
+i000000133f:	lw                  a5, 4(sp)           
+i0000001340:	lw                  a5, -648(sp)        
+				la                  sp, begin_signature
+				li                  t1, 3080  
+				add                 sp, sp, t1
+i0000001341:	sw                  a4, 104(sp)         
+i0000001342:	sd                  a1, 56(sp)          
+i0000001343:	ld                  s1, 776(sp)         
+i0000001344:	sd                  s1, 1032(sp)        
+i0000001345:	sub                 a4, a4, a5
+i0000001346:	auipc               s4, 508328
+i0000001347:	lh                  s6, 1514(sp)        
+i0000001348:	srli                a2, a2, 10
+i0000001349:	sd                  a4, 32(sp)          
+i000000134a:	lw                  s1, 8(sp)           
+i000000134b:	addiw               s2, s1, -607
+i000000134c:	sltiu               t2, t1, -66
+i000000134d:	lbu                 s10, -1078(sp)      
+i000000134e:	sw                  s0, 64(sp)          
+i000000134f:	lb                  s0, 1504(sp)        
+i0000001350:	ld                  a1, 48(sp)          
+				addi                a5, zero, -23
+				subw                a4, a4, s1
+				addw                s0, s0, s0
+				addi                sp, sp, -320
+				xori                s0, a6, 192
+				addiw               s0, s0, -17
+				lh                  s7, 1832(sp)        
+	
+b0000001351:
+				la                  x22, i0000001358    
+				jalr                x0, x22, 0          
+	
+				sw                  s8, 64(sp)          
+				subw                s10, s1, a5
+				fence.i                       
+				fence                         
+				ld                  s1, -936(sp)        
+				srai                a4, a4, 3 
+				fence                         
+i0000001351:	fence                         
+i0000001352:	ld                  s4, 120(sp)         
+i0000001353:	fence.i                       
+i0000001354:	slti                a5, t0, 1425
+i0000001355:	divw                s0, gp, s10
+i0000001356:	sw                  a4, 48(sp)          
+i0000001357:	sraiw               s2, s11, 1
+i0000001358:	lwu                 s1, 1224(sp)        
+i0000001359:	slli                a5, a5, 24
+i000000135a:	addiw               s0, a2, -129
+i000000135b:	sd                  t5, 808(sp)         
+i000000135c:	or                  a4, a4, a5
+i000000135d:	addiw               a5, tp, -96
+i000000135e:	mul                 s1, s1, a5
+i000000135f:	srliw               a5, a3, 18
+i0000001360:	srli                a1, a1, 9 
+i0000001361:	lh                  a5, 1020(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8448  
+				add                 sp, sp, t1
+i0000001362:	sb                  s1, -960(sp)        
+i0000001363:	lui                 s1, 12    
+i0000001364:	slli                tp, a5, 40
+i0000001365:	lh                  t1, 1082(sp)        
+i0000001366:	mulw                a3, s6, t0
+				la                  sp, begin_signature
+				li                  t1, 10384 
+				add                 sp, sp, t1
+i0000001367:	sd                  s1, 200(sp)         
+i0000001368:	fence                         
+i0000001369:	remuw               t6, s0, s0
+i000000136a:	ld                  s0, 96(sp)          
+i000000136b:	sd                  s0, 56(sp)          
+i000000136c:	srai                a4, a4, 4 
+i000000136d:	sd                  a4, 8(sp)           
+i000000136e:	ld                  s6, 1056(sp)        
+i000000136f:	lwu                 tp, -960(sp)        
+				la                  sp, begin_signature
+				li                  t1, 12616 
+				add                 sp, sp, t1
+i0000001370:	sh                  s1, -826(sp)        
+i0000001371:	addiw               a6, s7, -165
+i0000001372:	sd                  a5, 8(sp)           
+i0000001373:	addi                a4, sp, 108
+i0000001374:	slt                 s3, zero, s10
+i0000001375:	srai                a5, a5, 14
+i0000001376:	srlw                s0, zero, s6
+i0000001377:	addi                sp, sp, 32
+i0000001378:	srli                s1, a3, 14
+				li                  x25, 10   
+				mul                 s0, s7, a7
+				lhu                 s1, -1568(sp)       
+				fence                         
+				lh                  t2, -1376(sp)       
+				subw                a5, a5, s1
+				sraiw               a6, s0, 14
+				ld                  a4, 0(sp)           
+	
+b0000001379:
+				beq                 x29, x25, 1f        
+				jal                 x1, i0000001365     
+				1: li x29, 10                           
+	
+				lbu                 a5, -1445(sp)       
+				sd                  s1, -1664(sp)       
+				addi                a4, sp, 236
+				addi                s0, s0, -30
+				srli                a5, a5, 12
+				fence.i                       
+				sw                  a5, 100(sp)         
+i0000001379:	lwu                 s0, 1884(sp)        
+i000000137a:	srli                a1, a1, 2 
+i000000137b:	subw                a4, a4, a3
+i000000137c:	addi                sp, sp, -288
+i000000137d:	srai                a5, a5, 12
+i000000137e:	srli                a2, a2, 12
+i000000137f:	addiw               a5, a5, -32
+i0000001380:	addi                sp, sp, -32
+				la                  sp, begin_signature
+				li                  t1, 4344  
+				add                 sp, sp, t1
+i0000001381:	ld                  a5, 72(sp)          
+i0000001382:	addw                a5, a5, a0
+i0000001383:	remuw               s0, s0, s0
+i0000001384:	addi                a5, sp, 268
+i0000001385:	srlw                s1, s0, a5
+i0000001386:	slliw               s1, s1, 31
+i0000001387:	srai                a0, a0, 15
+i0000001388:	slti                s1, s1, 1578
+i0000001389:	fence                         
+i000000138a:	sd                  s0, 168(sp)         
+i000000138b:	srli                a5, a5, 6 
+i000000138c:	mulw                a5, s6, gp
+i000000138d:	addi                sp, sp, -176
+i000000138e:	srlw                a4, t3, t2
+i000000138f:	fence.i                       
+i0000001390:	srli                a4, a4, 9 
+i0000001391:	lb                  s1, -1076(sp)       
+i0000001392:	sraw                s1, s6, t5
+i0000001393:	addi                s1, sp, 504
+i0000001394:	sb                  a6, 766(sp)         
+i0000001395:	sllw                a5, s0, s1
+i0000001396:	andi                s1, s1, -25
+i0000001397:	mulw                s0, gp, a7
+i0000001398:	addi                s1, t1, 1943
+i0000001399:	slliw               s0, t3, 17
+				la                  sp, begin_signature
+				li                  t1, 9240  
+				add                 sp, sp, t1
+i000000139a:	lbu                 s4, -1127(sp)       
+i000000139b:	lh                  a5, 1390(sp)        
+i000000139c:	sd                  s0, 0(sp)           
+i000000139d:	rem                 s4, s1, a5
+i000000139e:	sub                 s0, s0, a2
+i000000139f:	xor                 a5, a5, a4
+i00000013a0:	mulhu               s3, s9, a3
+				li                  x24, 12   
+				addi                x29, x29, 1
+				addiw               s0, s0, -2
+				slt                 s3, s0, s1
+				remw                a7, s1, a5
+				srai                a4, a4, 6 
+				addiw               s1, s1, -17
+				divw                t2, tp, s5
+				addi                s1, sp, 52
+	
+b00000013a1:
+				pre_branch_macro                        
+				bge                 x24, x29, i000000137f
+				post_branch_macro                       
+	
+				sd                  a4, 112(sp)         
+				srli                a5, a5, 4 
+				sd                  a5, 144(sp)         
+				sub                 s0, s5, a7
+				remuw               s6, s4, a6
+				subw                s0, s0, a4
+				fence                         
+				li                  x29, 10   
+i00000013a1:	sw                  t3, 1328(sp)        
+i00000013a2:	sd                  t2, -1184(sp)       
+				la                  sp, begin_signature
+				li                  t1, 3848  
+				add                 sp, sp, t1
+i00000013a3:	lbu                 s0, 1549(sp)        
+i00000013a4:	fence.i                       
+i00000013a5:	lb                  s0, 1874(sp)        
+i00000013a6:	ld                  s3, 1968(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8576  
+				add                 sp, sp, t1
+i00000013a7:	ld                  a5, 16(sp)          
+i00000013a8:	srai                a4, a4, 3 
+i00000013a9:	addi                s0, s0, 184
+i00000013aa:	srli                a1, a1, 3 
+i00000013ab:	sw                  s6, 84(sp)          
+i00000013ac:	ld                  s0, 744(sp)         
+i00000013ad:	fence.i                       
+i00000013ae:	addi                a5, a5, -10
+i00000013af:	slli                s0, a3, 57
+i00000013b0:	ld                  s0, 64(sp)          
+i00000013b1:	fence.i                       
+i00000013b2:	slliw               s1, a0, 10
+i00000013b3:	fence                         
+i00000013b4:	addw                s9, s0, a5
+i00000013b5:	sd                  s0, 1632(sp)        
+i00000013b6:	sh                  s5, 1822(sp)        
+i00000013b7:	andi                s1, s1, 6 
+i00000013b8:	sd                  a4, 88(sp)          
+i00000013b9:	sd                  a5, 24(sp)          
+i00000013ba:	sltiu               t3, s0, 729
+i00000013bb:	slliw               s1, s3, 22
+i00000013bc:	addi                s0, sp, 104
+i00000013bd:	lui                 s0, 7     
+i00000013be:	srai                s1, s1, 7 
+i00000013bf:	sh                  zero, -1154(sp)     
+i00000013c0:	sw                  t3, 124(sp)         
+i00000013c1:	fence.i                       
+i00000013c2:	lw                  s1, 40(sp)          
+i00000013c3:	srai                s1, s1, 3 
+i00000013c4:	add                 a5, a5, s11
+i00000013c5:	sw                  a5, 36(sp)          
+				la                  sp, begin_signature
+				li                  t1, 4856  
+				add                 sp, sp, t1
+i00000013c6:	lb                  a5, -1067(sp)       
+i00000013c7:	sd                  s3, 328(sp)         
+i00000013c8:	srliw               s4, s0, 16
+				li                  x23, 9    
+				la                  sp, begin_signature
+				li                  t1, 10472 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6192  
+				add                 sp, sp, t1
+				xor                 a4, a4, s0
+				sd                  s1, 128(sp)         
+				lbu                 s0, -547(sp)        
+				lhu                 a7, -1204(sp)       
+				sraiw               a5, s1, 15
+				sd                  s0, 120(sp)         
+				lb                  a4, -620(sp)        
+	
+b00000013c9:
+				pre_branch_macro                        
+				bge                 x23, x29, i00000013c2
+				post_branch_macro                       
+	
+				sraw                s0, s6, s6
+				and                 a4, a4, a4
+				sraiw               s1, s2, 5 
+				fence.i                       
+				lb                  s3, -514(sp)        
+				remuw               s0, tp, tp
+				addi                s1, sp, 52
+				li                  x29, 10   
+i00000013c9:	divuw               a7, s5, t1
+i00000013ca:	fence                         
+i00000013cb:	ld                  a4, 8(sp)           
+i00000013cc:	lwu                 tp, -12(sp)         
+i00000013cd:	addi                sp, sp, 112
+i00000013ce:	addiw               s0, gp, 1829
+i00000013cf:	remuw               a5, zero, t0
+i00000013d0:	rem                 a5, s0, s0
+i00000013d1:	srli                a3, a3, 14
+i00000013d2:	lw                  s1, 2044(sp)        
+i00000013d3:	lhu                 a2, -2000(sp)       
+i00000013d4:	lwu                 a5, 160(sp)         
+i00000013d5:	ld                  zero, 232(sp)       
+				la                  sp, begin_signature
+				li                  t1, 12672 
+				add                 sp, sp, t1
+i00000013d6:	sd                  s6, 72(sp)          
+i00000013d7:	div                 s2, s4, s11
+i00000013d8:	srai                a2, a2, 15
+i00000013d9:	mulh                s0, s11, a3
+i00000013da:	sd                  s0, 40(sp)          
+i00000013db:	mulw                s1, s3, a4
+i00000013dc:	fence                         
+i00000013dd:	or                  a4, a4, a5
+i00000013de:	srli                a5, a5, 14
+i00000013df:	srai                a1, a1, 3 
+i00000013e0:	or                  s1, s3, s8
+i00000013e1:	sub                 a3, a3, a2
+i00000013e2:	sw                  s1, 76(sp)          
+i00000013e3:	addi                s2, s4, 1709
+i00000013e4:	srai                a3, a3, 13
+i00000013e5:	lui                 s0, 21    
+i00000013e6:	addi                s0, sp, 216
+i00000013e7:	xor                 gp, s1, a5
+i00000013e8:	subw                s1, a3, a6
+				la                  sp, begin_signature
+				li                  t1, 4688  
+				add                 sp, sp, t1
+i00000013e9:	sw                  s0, 8(sp)           
+i00000013ea:	srli                a5, a5, 32
+i00000013eb:	srli                a3, a3, 23
+i00000013ec:	sd                  s1, 96(sp)          
+i00000013ed:	srai                a3, a3, 4 
+i00000013ee:	ld                  a5, 16(sp)          
+i00000013ef:	addiw               a3, a3, 2 
+i00000013f0:	subw                a5, a5, s1
+				li                  x20, 10   
+				la                  sp, begin_signature
+				li                  t1, 5256  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 8480  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 12504 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7176  
+				add                 sp, sp, t1
+				addi                s0, zero, 7
+				mul                 a7, s0, s1
+				srai                a4, a4, 21
+				srli                a4, a4, 3 
+				addiw               t2, s0, -1370
+				fence                         
+				ld                  s7, -704(sp)        
+	
+b00000013f1:
+				pre_branch_macro                        
+				bne                 x29, x20, i00000013ce
+				post_branch_macro                       
+	
+				remuw               s0, t6, zero
+				addi                sp, sp, -496
+				lb                  s1, -1721(sp)       
+				ld                  a4, 232(sp)         
+				divuw               s3, s0, a5
+				sd                  s1, -224(sp)        
+				mulhsu              s1, t3, s5
+				li                  x29, 10   
+i00000013f1:	mulh                a5, s0, s1
+i00000013f2:	div                 t3, tp, a6
+i00000013f3:	srai                s0, s0, 1 
+i00000013f4:	sub                 s1, s1, s0
+i00000013f5:	sllw                t0, t0, s3
+i00000013f6:	divuw               s0, s1, s0
+i00000013f7:	sw                  s0, 12(sp)          
+i00000013f8:	slti                s1, s0, 364
+				la                  sp, begin_signature
+				li                  t1, 13040 
+				add                 sp, sp, t1
+i00000013f9:	sd                  s0, 248(sp)         
+i00000013fa:	fence.i                       
+i00000013fb:	div                 a5, s0, s0
+i00000013fc:	sltu                a6, s1, a5
+i00000013fd:	srli                a1, a1, 12
+i00000013fe:	sw                  tp, 76(sp)          
+i00000013ff:	ld                  a5, 88(sp)          
+i0000001400:	addi                s1, sp, 8 
+i0000001401:	mulw                zero, a5, s0
+i0000001402:	lb                  a5, 1821(sp)        
+i0000001403:	fence.i                       
+i0000001404:	addiw               a6, t2, 915
+i0000001405:	fence                         
+i0000001406:	lw                  a2, 8(sp)           
+i0000001407:	auipc               a5, 312965
+i0000001408:	addiw               s1, s1, -12
+i0000001409:	lh                  t3, -140(sp)        
+i000000140a:	remuw               zero, a5, a5
+i000000140b:	lwu                 a5, 880(sp)         
+i000000140c:	addi                sp, sp, 0 
+i000000140d:	lb                  a5, -1052(sp)       
+i000000140e:	mul                 a0, s1, s1
+i000000140f:	addw                s0, s0, a2
+i0000001410:	addiw               s0, s9, -1834
+i0000001411:	mulw                a5, s1, s0
+i0000001412:	sh                  s0, 736(sp)         
+i0000001413:	addw                s8, s1, s1
+i0000001414:	fence                         
+i0000001415:	lbu                 s1, 645(sp)         
+i0000001416:	lbu                 s5, 1910(sp)        
+i0000001417:	slliw               s11, s1, 3
+i0000001418:	mulw                s0, t0, a4
+				mulhsu              zero, tp, a7
+				fence.i                       
+				srli                a4, a4, 16
+				andi                s1, s1, -21
+				ld                  a4, 128(sp)         
+				divuw               s0, s7, s7
+				rem                 s0, s6, tp
+	
+b0000001419:
+				la                  x16, i000000142d    
+				jalr                x1, x16, 0          
+	
+				sh                  a5, -546(sp)        
+				divw                s2, s0, a5
+				sw                  s0, 68(sp)          
+				lwu                 s1, -1612(sp)       
+				sd                  a7, 200(sp)         
+				sw                  a4, 48(sp)          
+				addi                s1, s1, -23
+i0000001419:	fsrmi               x0, 1     
+i000000141a:	sd                  a5, 104(sp)         
+i000000141b:	fence                         
+i000000141c:	mul                 t6, a7, s2
+i000000141d:	sd                  s0, -1936(sp)       
+				la                  sp, begin_signature
+				li                  t1, 6664  
+				add                 sp, sp, t1
+i000000141e:	sd                  a5, 112(sp)         
+i000000141f:	remuw               s0, s0, s0
+i0000001420:	mulh                a5, s3, s8
+i0000001421:	fence                         
+i0000001422:	slti                s1, t5, -1608
+i0000001423:	lwu                 s1, -524(sp)        
+i0000001424:	lw                  t0, 88(sp)          
+i0000001425:	divw                zero, s0, s1
+i0000001426:	lbu                 tp, -1460(sp)       
+i0000001427:	lw                  a5, 64(sp)          
+i0000001428:	mulh                a1, s10, t0
+i0000001429:	add                 t3, zero, t5
+i000000142a:	addi                a2, sp, 408
+i000000142b:	mulh                a5, s6, s11
+i000000142c:	sd                  s0, 88(sp)          
+i000000142d:	addi                a5, sp, 44
+i000000142e:	sw                  s9, 128(sp)         
+i000000142f:	srai                a5, a5, 4 
+i0000001430:	srlw                t3, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 8256  
+				add                 sp, sp, t1
+i0000001431:	sd                  s1, 40(sp)          
+i0000001432:	xori                t5, a4, 400
+i0000001433:	srai                a2, a2, 17
+i0000001434:	srliw               a5, a3, 25
+i0000001435:	fence.i                       
+i0000001436:	slliw               a7, s1, 27
+i0000001437:	srliw               s4, s0, 31
+i0000001438:	sh                  s6, 576(sp)         
+i0000001439:	lw                  s0, 432(sp)         
+i000000143a:	fence.i                       
+i000000143b:	addi                t2, zero, -24
+i000000143c:	subw                a1, a1, a0
+				la                  sp, begin_signature
+				li                  t1, 11256 
+				add                 sp, sp, t1
+i000000143d:	ld                  a3, 104(sp)         
+i000000143e:	lwu                 s2, 1748(sp)        
+i000000143f:	addiw               a5, a0, 1296
+i0000001440:	div                 a1, s0, a5
+i0000001441:	addiw               a0, a0, -26
+				li                  x25, 11   
+				li                  x29, 10   
+				srlw                s1, s5, s2
+				lh                  s1, 136(sp)         
+				addi                sp, sp, -352
+				srliw               a5, a4, 24
+				srai                a4, a4, 27
+				addi                sp, sp, -96
+				subw                s0, a7, s2
+	
+b0000001442:
+				pre_branch_macro                        
+				bne                 x29, x25, i0000001449
+				post_branch_macro                       
+	
+				ld                  a4, 1384(sp)        
+				mul                 s1, s3, s11
+				add                 a5, a5, tp
+				remu                t6, s3, s3
+				fence.i                       
+				subw                zero, a5, a5
+				srli                s1, s1, 13
+				li                  x29, 10   
+i0000001442:	sw                  a5, 8(sp)           
+i0000001443:	mulw                a5, a2, a7
+i0000001444:	lw                  a3, 84(sp)          
+i0000001445:	remw                s1, s6, t1
+i0000001446:	ld                  s1, 64(sp)          
+i0000001447:	sd                  s1, 120(sp)         
+i0000001448:	lw                  a4, 60(sp)          
+i0000001449:	srli                s0, s0, 6 
+i000000144a:	addi                a2, sp, 372
+i000000144b:	remu                s0, a4, a3
+i000000144c:	addi                s0, sp, 364
+i000000144d:	and                 a4, a4, a4
+i000000144e:	remuw               t5, a5, s0
+i000000144f:	srai                a3, a3, 7 
+i0000001450:	sllw                s1, a5, a5
+i0000001451:	or                  a1, a1, a5
+i0000001452:	srlw                a2, s0, s1
+i0000001453:	mulw                a3, s1, a5
+i0000001454:	addiw               s4, s0, -426
+i0000001455:	addw                a5, s0, s0
+i0000001456:	mul                 a5, a5, a5
+i0000001457:	fence.i                       
+i0000001458:	xori                s10, a2, 129
+				la                  sp, begin_signature
+				li                  t1, 6904  
+				add                 sp, sp, t1
+i0000001459:	lbu                 a5, 1929(sp)        
+i000000145a:	fence                         
+i000000145b:	divw                s10, a5, s1
+i000000145c:	fence                         
+i000000145d:	srli                s1, s1, 8 
+i000000145e:	andi                s1, s1, -4
+i000000145f:	sll                 s11, a3, a6
+i0000001460:	lw                  s1, 48(sp)          
+i0000001461:	add                 s8, zero, s0
+i0000001462:	addi                a0, sp, 372
+i0000001463:	fence.i                       
+i0000001464:	ld                  t1, 120(sp)         
+i0000001465:	addw                s1, s6, s6
+i0000001466:	sw                  t2, 8(sp)           
+i0000001467:	addi                a5, zero, -3
+i0000001468:	lh                  s1, -28(sp)         
+i0000001469:	lw                  s1, -840(sp)        
+				li                  x21, 0    
+				subw                a4, a4, a5
+				ld                  s0, 104(sp)         
+				sb                  s6, 1654(sp)        
+				addi                sp, sp, -496
+				xor                 zero, a5, s1
+				divw                s1, a5, s0
+				ori                 s2, s0, 1295
+	
+b000000146a:
+				pre_branch_macro                        
+				beq                 x29, x21, i0000001484
+				post_branch_macro                       
+	
+				sw                  a5, 0(sp)           
+				lw                  gp, -1716(sp)       
+				divuw               s1, s6, a6
+				mulhu               s0, tp, zero
+				fence                         
+				lhu                 s11, 638(sp)        
+				divu                zero, zero, s4
+				li                  x29, 10   
+i000000146a:	addi                sp, sp, -448
+i000000146b:	addi                a2, sp, 152
+i000000146c:	sraiw               s1, s0, 18
+i000000146d:	addw                a4, a4, a4
+i000000146e:	addw                s2, s8, t1
+i000000146f:	sraiw               s0, a5, 26
+i0000001470:	srl                 a0, t6, s2
+i0000001471:	fence.i                       
+i0000001472:	lhu                 s0, -942(sp)        
+i0000001473:	divw                s1, s1, s1
+i0000001474:	auipc               s11, 109618
+i0000001475:	mul                 a1, a5, s1
+i0000001476:	srai                s0, s0, 5 
+				la                  sp, begin_signature
+				li                  t1, 3288  
+				add                 sp, sp, t1
+i0000001477:	sw                  s0, 44(sp)          
+i0000001478:	mulhsu              s4, t6, a1
+i0000001479:	addw                s1, s1, a1
+i000000147a:	addiw               s1, s1, 3 
+i000000147b:	addi                a4, sp, 296
+i000000147c:	ld                  a1, 40(sp)          
+i000000147d:	ld                  s1, -104(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8024  
+				add                 sp, sp, t1
+i000000147e:	lw                  s1, 44(sp)          
+i000000147f:	srai                a1, a1, 12
+				la                  sp, begin_signature
+				li                  t1, 13080 
+				add                 sp, sp, t1
+i0000001480:	lwu                 s8, 1504(sp)        
+i0000001481:	srai                a1, a1, 21
+i0000001482:	addi                sp, sp, -384
+i0000001483:	ld                  s1, 112(sp)         
+i0000001484:	lwu                 a5, 1620(sp)        
+i0000001485:	subw                t3, a5, s1
+i0000001486:	sd                  a4, 80(sp)          
+i0000001487:	sd                  a3, 112(sp)         
+i0000001488:	sd                  a5, 96(sp)          
+i0000001489:	fence                         
+i000000148a:	addiw               a5, a5, -5
+i000000148b:	lw                  a5, 64(sp)          
+i000000148c:	divuw               s1, s0, a5
+i000000148d:	remu                t1, s9, s9
+i000000148e:	lw                  s5, 32(sp)          
+i000000148f:	srai                a5, s1, 12
+i0000001490:	lw                  a3, 4(sp)           
+i0000001491:	sw                  a5, 52(sp)          
+				li                  x21, 10   
+				la                  sp, begin_signature
+				li                  t1, 13376 
+				add                 sp, sp, t1
+				sd                  s8, -1560(sp)       
+				srai                a4, a4, 5 
+				sb                  s0, 554(sp)         
+				fence                         
+				fence                         
+				rem                 s2, tp, t6
+				sw                  zero, 112(sp)       
+	
+b0000001492:
+				pre_branch_macro                        
+				bne                 x29, x21, i0000001472
+				post_branch_macro                       
+	
+				sw                  a4, 16(sp)          
+				srai                s1, s1, 1 
+				slliw               a5, s1, 0 
+				sub                 a4, a4, s1
+				lh                  a6, -1562(sp)       
+				add                 s1, zero, s10
+				divu                s11, s1, s0
+				li                  x29, 10   
+i0000001492:	sraiw               s1, a5, 19
+				la                  sp, begin_signature
+				li                  t1, 4408  
+				add                 sp, sp, t1
+i0000001493:	lw                  s0, 40(sp)          
+i0000001494:	srai                a5, a5, 15
+i0000001495:	addiw               a1, a1, -8
+i0000001496:	mulw                s0, s1, a5
+i0000001497:	srliw               s0, a1, 8 
+i0000001498:	sw                  s9, 44(sp)          
+i0000001499:	srai                a5, a5, 6 
+i000000149a:	ld                  a0, 128(sp)         
+i000000149b:	fence.i                       
+i000000149c:	fence.i                       
+i000000149d:	addiw               s1, s1, -11
+i000000149e:	srli                s1, s1, 12
+i000000149f:	lw                  s8, -1596(sp)       
+i00000014a0:	mulw                s11, s11, s6
+i00000014a1:	fence                         
+i00000014a2:	and                 s1, s1, a5
+i00000014a3:	lbu                 a6, -2048(sp)       
+i00000014a4:	slt                 t2, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 13256 
+				add                 sp, sp, t1
+i00000014a5:	lw                  a4, 20(sp)          
+i00000014a6:	addiw               s1, a5, 1494
+i00000014a7:	fence.i                       
+i00000014a8:	divw                s0, a0, s11
+i00000014a9:	addi                sp, sp, 32
+				la                  sp, begin_signature
+				li                  t1, 10712 
+				add                 sp, sp, t1
+i00000014aa:	ld                  s8, 256(sp)         
+i00000014ab:	divuw               s1, a5, a5
+i00000014ac:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 2904  
+				add                 sp, sp, t1
+i00000014ad:	sb                  t1, 533(sp)         
+i00000014ae:	ld                  a0, 96(sp)          
+i00000014af:	auipc               tp, 192468
+				la                  sp, begin_signature
+				li                  t1, 5848  
+				add                 sp, sp, t1
+i00000014b0:	lw                  s1, 52(sp)          
+i00000014b1:	lw                  a5, 80(sp)          
+i00000014b2:	sw                  s1, 52(sp)          
+i00000014b3:	sd                  zero, 664(sp)       
+i00000014b4:	srli                a5, a5, 14
+i00000014b5:	addi                a3, sp, 52
+i00000014b6:	sh                  t3, 1706(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9208  
+				add                 sp, sp, t1
+i00000014b7:	lhu                 s5, -1034(sp)       
+i00000014b8:	sd                  s1, 128(sp)         
+i00000014b9:	xori                s0, s1, 955
+				li                  x20, 9    
+				li                  x29, 10   
+				addi                a4, a4, 12
+				remuw               t2, s10, t3
+				sraiw               gp, s1, 20
+				xor                 a4, a4, a4
+				addiw               a4, a4, -9
+				srli                a4, a4, 7 
+				fence                         
+	
+b00000014ba:
+				pre_branch_macro                        
+				blt                 x29, x20, i00000014d3
+				post_branch_macro                       
+	
+				sd                  a5, 80(sp)          
+				divw                a4, s1, a5
+				lui                 s11, 16   
+				addi                s0, s0, -13
+				ld                  s1, -1528(sp)       
+				subw                a4, a4, a4
+				sw                  a4, 8(sp)           
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 10784 
+				add                 sp, sp, t1
+i00000014ba:	lw                  s1, 1764(sp)        
+i00000014bb:	and                 a4, a4, a1
+i00000014bc:	divw                a6, s1, a5
+i00000014bd:	lhu                 s1, 1400(sp)        
+i00000014be:	srli                a5, a5, 1 
+i00000014bf:	sw                  s3, 88(sp)          
+i00000014c0:	sw                  t1, 56(sp)          
+i00000014c1:	srai                a0, a0, 29
+				la                  sp, begin_signature
+				li                  t1, 7864  
+				add                 sp, sp, t1
+i00000014c2:	lw                  s0, 32(sp)          
+i00000014c3:	xor                 s8, s1, a5
+i00000014c4:	mulw                a3, s0, a5
+i00000014c5:	sb                  a3, -951(sp)        
+i00000014c6:	srai                a3, a3, 7 
+				la                  sp, begin_signature
+				li                  t1, 3816  
+				add                 sp, sp, t1
+i00000014c7:	lhu                 s0, 878(sp)         
+i00000014c8:	addw                a5, s9, s7
+i00000014c9:	mulh                s0, a4, t3
+i00000014ca:	addi                sp, sp, -464
+i00000014cb:	fence.i                       
+i00000014cc:	fence.i                       
+i00000014cd:	fence.i                       
+i00000014ce:	srlw                s1, a1, s10
+i00000014cf:	addi                s1, sp, 408
+i00000014d0:	lw                  s10, 92(sp)         
+i00000014d1:	mulhu               a5, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 9784  
+				add                 sp, sp, t1
+i00000014d2:	lw                  a5, 28(sp)          
+i00000014d3:	addw                a4, a4, a3
+i00000014d4:	srai                a4, a4, 1 
+i00000014d5:	lhu                 s3, -1814(sp)       
+i00000014d6:	ld                  s1, 56(sp)          
+i00000014d7:	fence.i                       
+i00000014d8:	sltiu               s1, s1, 1683
+i00000014d9:	srli                a3, a3, 14
+i00000014da:	lw                  t2, 60(sp)          
+i00000014db:	fsrmi               x0, 6     
+				la                  sp, begin_signature
+				li                  t1, 5024  
+				add                 sp, sp, t1
+i00000014dc:	sd                  t1, 24(sp)          
+i00000014dd:	sllw                s0, s1, s0
+i00000014de:	srli                a1, a1, 11
+i00000014df:	srai                a5, a5, 17
+i00000014e0:	addi                a0, sp, 76
+i00000014e1:	subw                s1, s1, s1
+i00000014e2:	addi                s1, sp, 104
+				li                  x27, 10   
+				sd                  s3, -664(sp)        
+				addi                sp, sp, -400
+				addi                sp, sp, -176
+				ld                  a4, 40(sp)          
+				sub                 s4, s1, s1
+				srli                a4, a4, 10
+				lui                 s9, 221332
+	
+b00000014e3:
+				beq                 x29, x27, 1f        
+				jal                 x10, i00000014c7    
+				1: li x29, 10                           
+	
+				mulhsu              a5, s8, s7
+				addw                s1, s1, s0
+				ld                  a5, 672(sp)         
+				fence.i                       
+				mulhsu              s5, a5, s1
+				divuw               s0, t6, s5
+				addi                a4, sp, 200
+i00000014e3:	sw                  t6, 1232(sp)        
+i00000014e4:	mulw                s1, s1, a5
+i00000014e5:	mulw                a4, a5, a5
+i00000014e6:	srli                s1, s1, 4 
+i00000014e7:	sllw                s1, t3, t0
+i00000014e8:	slliw               s11, s0, 24
+i00000014e9:	lwu                 s1, 252(sp)         
+i00000014ea:	xori                s4, a5, 362
+				la                  sp, begin_signature
+				li                  t1, 6256  
+				add                 sp, sp, t1
+i00000014eb:	sd                  s1, 216(sp)         
+i00000014ec:	fence.i                       
+i00000014ed:	addi                a5, sp, 200
+i00000014ee:	srli                s5, zero, 42
+i00000014ef:	sw                  a5, 48(sp)          
+i00000014f0:	sh                  s1, 888(sp)         
+				la                  sp, begin_signature
+				li                  t1, 5408  
+				add                 sp, sp, t1
+i00000014f1:	ld                  s2, -464(sp)        
+i00000014f2:	lui                 zero, 53780
+i00000014f3:	fsrmi               x0, 4     
+i00000014f4:	ld                  t2, 232(sp)         
+i00000014f5:	and                 a1, a1, a5
+i00000014f6:	fence.i                       
+i00000014f7:	remu                a5, a5, a5
+i00000014f8:	remu                s3, a5, s0
+i00000014f9:	remuw               t1, s5, zero
+i00000014fa:	divuw               t5, t0, s7
+i00000014fb:	fence.i                       
+i00000014fc:	sw                  a2, 20(sp)          
+i00000014fd:	sd                  s9, 472(sp)         
+i00000014fe:	addi                sp, sp, 64
+i00000014ff:	xor                 s0, gp, s6
+i0000001500:	divu                t2, gp, t5
+i0000001501:	divuw               s1, gp, t0
+i0000001502:	fence.i                       
+i0000001503:	lw                  s1, 100(sp)         
+i0000001504:	fence.i                       
+i0000001505:	divw                zero, s0, s1
+i0000001506:	ld                  s1, 248(sp)         
+i0000001507:	lb                  t0, 763(sp)         
+i0000001508:	srli                a2, a2, 9 
+i0000001509:	mulh                s10, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 9088  
+				add                 sp, sp, t1
+i000000150a:	sd                  s1, 88(sp)          
+i000000150b:	srliw               s11, s8, 4
+				la                  sp, begin_signature
+				li                  t1, 8320  
+				add                 sp, sp, t1
+				sd                  s11, 192(sp)        
+				addi                sp, sp, -384
+				fence.i                       
+				or                  tp, s9, s5
+				lw                  s0, 40(sp)          
+				fence                         
+				lw                  t2, 128(sp)         
+	
+b000000150c:
+				jal                 x1, i000000152d     
+	
+				lw                  s0, -116(sp)        
+				divu                t6, s1, s1
+				addw                a4, a4, s1
+				slli                a5, a5, 2 
+				subw                a5, a5, a5
+				lbu                 a6, -272(sp)        
+				rem                 s1, a5, s1
+i000000150c:	sw                  s0, 228(sp)         
+i000000150d:	fence                         
+i000000150e:	addi                a3, a3, 8 
+i000000150f:	or                  a5, a5, s1
+i0000001510:	srai                a5, a5, 2 
+i0000001511:	slli                t2, s5, 46
+i0000001512:	sraiw               s1, s0, 13
+				la                  sp, begin_signature
+				li                  t1, 2272  
+				add                 sp, sp, t1
+i0000001513:	ld                  a5, 64(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12032 
+				add                 sp, sp, t1
+i0000001514:	sd                  a5, 224(sp)         
+i0000001515:	addi                sp, sp, 224
+i0000001516:	sw                  a4, 8(sp)           
+i0000001517:	srli                s0, zero, 44
+i0000001518:	srlw                s7, s1, s1
+i0000001519:	sraiw               s0, t1, 2 
+i000000151a:	subw                a2, a2, a2
+i000000151b:	mulhu               s5, s7, s3
+				la                  sp, begin_signature
+				li                  t1, 3896  
+				add                 sp, sp, t1
+i000000151c:	ld                  a5, 176(sp)         
+i000000151d:	divuw               tp, s11, s10
+i000000151e:	mulh                t5, s0, a5
+i000000151f:	lui                 s1, 9     
+i0000001520:	remuw               s0, s0, s0
+i0000001521:	lw                  a5, 12(sp)          
+i0000001522:	addiw               a5, gp, 676
+i0000001523:	sltu                s0, s2, a6
+i0000001524:	sd                  a5, -1848(sp)       
+i0000001525:	ld                  a6, 1352(sp)        
+i0000001526:	ld                  a4, 80(sp)          
+i0000001527:	srai                a1, a1, 26
+i0000001528:	addi                s1, sp, 404
+i0000001529:	mulw                s2, a5, s1
+i000000152a:	fence.i                       
+i000000152b:	srli                a5, a5, 11
+				la                  sp, begin_signature
+				li                  t1, 4744  
+				add                 sp, sp, t1
+i000000152c:	sw                  a5, 1796(sp)        
+i000000152d:	sd                  a3, 936(sp)         
+i000000152e:	sd                  s1, 104(sp)         
+i000000152f:	sh                  a5, -1276(sp)       
+i0000001530:	addiw               a0, a0, 15
+i0000001531:	lbu                 t0, 174(sp)         
+i0000001532:	addi                s1, sp, 332
+				la                  sp, begin_signature
+				li                  t1, 10896 
+				add                 sp, sp, t1
+i0000001533:	lw                  a5, 4(sp)           
+				li                  x25, 10   
+				la                  sp, begin_signature
+				li                  t1, 3552  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9472  
+				add                 sp, sp, t1
+				lw                  s6, -336(sp)        
+				sb                  t2, -174(sp)        
+				remu                a4, t3, s2
+				andi                a4, a4, -5
+				lwu                 s2, -1444(sp)       
+				sd                  s7, 8(sp)           
+				slliw               s0, s1, 18
+	
+b0000001534:
+				beq                 x29, x25, 1f        
+				jal                 x1, i000000151d     
+				1: li x29, 10                           
+	
+				srli                a4, a4, 18
+				lw                  s4, 112(sp)         
+				srli                s0, s0, 5 
+				addw                s1, s1, s1
+				mulw                s6, gp, s5
+				ori                 s7, s1, -1100
+				sraiw               s1, s6, 9 
+i0000001534:	auipc               s0, 149655
+i0000001535:	addi                sp, sp, 32
+i0000001536:	ori                 a5, s0, -1256
+i0000001537:	add                 s0, s0, s0
+i0000001538:	srli                a5, a5, 4 
+i0000001539:	slliw               s5, s1, 10
+i000000153a:	fence                         
+i000000153b:	mulh                a5, s1, a5
+i000000153c:	and                 a4, a4, a0
+i000000153d:	srai                a4, a4, 12
+i000000153e:	xori                a5, t1, 62
+i000000153f:	srli                a3, a3, 16
+i0000001540:	ld                  s11, 248(sp)        
+i0000001541:	addi                sp, sp, -144
+i0000001542:	addw                a2, a2, s1
+i0000001543:	or                  s0, gp, s4
+i0000001544:	lui                 a5, 19    
+i0000001545:	srai                a0, a0, 2 
+i0000001546:	srli                s1, s1, 11
+i0000001547:	sw                  t1, -576(sp)        
+i0000001548:	srli                s1, s1, 9 
+i0000001549:	lw                  s0, 36(sp)          
+				la                  sp, begin_signature
+				li                  t1, 3920  
+				add                 sp, sp, t1
+i000000154a:	ld                  t6, 1736(sp)        
+i000000154b:	lh                  a5, -1178(sp)       
+i000000154c:	lwu                 s1, 1172(sp)        
+i000000154d:	srli                a1, a1, 8 
+i000000154e:	lui                 s0, 348851
+i000000154f:	srli                a0, a0, 14
+i0000001550:	sd                  s1, 856(sp)         
+i0000001551:	xor                 a5, s3, t1
+i0000001552:	addi                s0, sp, 432
+i0000001553:	srai                s1, s1, 8 
+i0000001554:	addi                a5, sp, 336
+i0000001555:	remw                s0, gp, a2
+i0000001556:	lw                  s1, 16(sp)          
+i0000001557:	sd                  a2, -1392(sp)       
+i0000001558:	srli                a4, a4, 12
+i0000001559:	ld                  gp, -1104(sp)       
+i000000155a:	lui                 t2, 15    
+i000000155b:	addi                a5, zero, -28
+				la                  sp, begin_signature
+				li                  t1, 11128 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6512  
+				add                 sp, sp, t1
+				xori                s0, s1, 2001
+				rem                 s5, a6, s10
+				lw                  s1, 52(sp)          
+				xor                 s7, a5, a5
+				fence.i                       
+				srlw                s1, s0, s1
+				srlw                a5, s2, s3
+	
+b000000155c:
+				jal                 x1, i0000001574     
+	
+				addw                a4, a4, s1
+				lwu                 a5, 12(sp)          
+				ld                  s0, 64(sp)          
+				fence                         
+				sd                  s1, 80(sp)          
+				addi                a4, sp, 512
+				subw                gp, s5, s6
+				la                  sp, begin_signature
+				li                  t1, 9216  
+				add                 sp, sp, t1
+i000000155c:	sw                  s1, 256(sp)         
+i000000155d:	addi                sp, sp, -80
+i000000155e:	srli                s1, s1, 3 
+i000000155f:	lhu                 zero, -1980(sp)     
+i0000001560:	lb                  s0, -720(sp)        
+i0000001561:	srli                s1, s1, 13
+i0000001562:	mulw                s1, s2, s11
+i0000001563:	divuw               a5, a5, a5
+i0000001564:	fence                         
+i0000001565:	sraiw               s1, s1, 23
+i0000001566:	addi                a3, sp, 424
+i0000001567:	subw                s0, s0, a2
+i0000001568:	srai                a0, a0, 13
+i0000001569:	srli                a5, a5, 9 
+i000000156a:	addi                a3, sp, 124
+				la                  sp, begin_signature
+				li                  t1, 10624 
+				add                 sp, sp, t1
+i000000156b:	lw                  a5, 8(sp)           
+i000000156c:	lwu                 s0, -2024(sp)       
+i000000156d:	slliw               a3, a2, 21
+i000000156e:	sd                  s1, 64(sp)          
+i000000156f:	addiw               a0, a0, -21
+i0000001570:	mulhu               a5, s1, s0
+i0000001571:	ld                  a3, 56(sp)          
+i0000001572:	lwu                 s1, -1720(sp)       
+i0000001573:	srliw               s0, a7, 8 
+i0000001574:	srai                s1, s1, 3 
+i0000001575:	addi                sp, sp, -240
+i0000001576:	sw                  s1, 80(sp)          
+i0000001577:	srli                s0, s0, 16
+i0000001578:	addiw               a1, a1, -28
+i0000001579:	addi                s1, zero, -18
+i000000157a:	xor                 a5, a5, s0
+i000000157b:	lh                  s0, -184(sp)        
+i000000157c:	sd                  a4, 72(sp)          
+i000000157d:	sd                  tp, -888(sp)        
+i000000157e:	sd                  s0, -944(sp)        
+i000000157f:	and                 a5, s1, s1
+i0000001580:	subw                s0, a5, s1
+i0000001581:	mulhsu              tp, gp, s3
+i0000001582:	srli                s0, s0, 8 
+i0000001583:	and                 a4, a4, a1
+				la                  sp, begin_signature
+				li                  t1, 14112 
+				add                 sp, sp, t1
+				remw                s7, a5, s1
+				addiw               t6, s1, 770
+				lhu                 s1, -1138(sp)       
+				addi                sp, sp, -48
+				ld                  a4, 80(sp)          
+				fence                         
+				fence.i                       
+	
+b0000001584:
+				jal                 x1, i000000159d     
+	
+				lh                  s0, 1184(sp)        
+				srli                a4, a4, 5 
+				div                 a5, s0, a5
+				sd                  s1, -1840(sp)       
+				mulw                s11, s1, a5
+				divuw               t2, a4, s6
+				addi                a5, sp, 28
+i0000001584:	sllw                s0, a5, s1
+i0000001585:	srli                a4, a4, 31
+i0000001586:	srli                s0, s0, 12
+i0000001587:	fence                         
+i0000001588:	xori                a6, t5, -801
+i0000001589:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 6376  
+				add                 sp, sp, t1
+i000000158a:	lwu                 a5, -196(sp)        
+i000000158b:	sraw                s7, a3, t6
+i000000158c:	mul                 s0, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 13304 
+				add                 sp, sp, t1
+i000000158d:	sh                  a0, -1960(sp)       
+i000000158e:	andi                s8, t0, 395
+i000000158f:	fence                         
+i0000001590:	slli                s0, s0, 53
+i0000001591:	mulhsu              s1, s1, s0
+i0000001592:	srai                a0, a0, 3 
+i0000001593:	mul                 s1, s11, zero
+i0000001594:	sraw                a2, s1, s1
+i0000001595:	ld                  s1, 1864(sp)        
+i0000001596:	sw                  s0, 72(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8744  
+				add                 sp, sp, t1
+i0000001597:	sd                  s8, 920(sp)         
+i0000001598:	sraw                t6, a5, a5
+i0000001599:	srai                a4, a4, 14
+				la                  sp, begin_signature
+				li                  t1, 8072  
+				add                 sp, sp, t1
+i000000159a:	lbu                 t3, -1139(sp)       
+i000000159b:	ld                  a6, 224(sp)         
+i000000159c:	srli                a4, a4, 15
+i000000159d:	addi                sp, sp, -304
+i000000159e:	lwu                 a7, -152(sp)        
+i000000159f:	fence                         
+i00000015a0:	ld                  a5, 8(sp)           
+i00000015a1:	lhu                 a5, -322(sp)        
+i00000015a2:	sd                  t2, 1408(sp)        
+i00000015a3:	addi                a5, sp, 384
+i00000015a4:	ld                  s10, 144(sp)        
+i00000015a5:	sd                  s6, 56(sp)          
+i00000015a6:	sw                  a4, 44(sp)          
+i00000015a7:	subw                a5, a5, a2
+i00000015a8:	addiw               s1, s1, 6 
+i00000015a9:	sw                  a5, 100(sp)         
+i00000015aa:	ld                  s1, 40(sp)          
+i00000015ab:	srai                a5, a5, 8 
+				li                  x19, 10   
+				la                  sp, begin_signature
+				li                  t1, 4592  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11264 
+				add                 sp, sp, t1
+				sll                 a5, s9, t2
+				lwu                 a5, -300(sp)        
+				remw                a6, t2, a7
+				add                 t3, s10, t2
+				rem                 a5, a7, a4
+				sd                  a4, 64(sp)          
+				remuw               s0, s7, s2
+	
+b00000015ac:
+				beq                 x29, x19, 1f        
+				la                  x19, i000000159a    
+				jalr                x10, x19, 0         
+				1: li x29, 10                           
+	
+				sb                  s0, -1471(sp)       
+				slliw               t6, a7, 13
+				ld                  s1, -736(sp)        
+				ld                  s1, 80(sp)          
+				addi                s1, sp, 132
+				lwu                 s6, 1040(sp)        
+				addw                s1, s1, a4
+i00000015ac:	sh                  s8, -1486(sp)       
+i00000015ad:	sd                  a4, -664(sp)        
+i00000015ae:	or                  s9, a2, a2
+i00000015af:	lwu                 s1, -8(sp)          
+i00000015b0:	sw                  s3, -1016(sp)       
+i00000015b1:	lw                  a5, 12(sp)          
+i00000015b2:	addi                s1, sp, 84
+				la                  sp, begin_signature
+				li                  t1, 2808  
+				add                 sp, sp, t1
+i00000015b3:	ld                  a2, 80(sp)          
+i00000015b4:	addi                s1, sp, 192
+i00000015b5:	addi                sp, sp, 128
+i00000015b6:	lh                  a5, 736(sp)         
+i00000015b7:	srli                a5, a5, 16
+i00000015b8:	sd                  a5, 88(sp)          
+i00000015b9:	addiw               a0, a0, -11
+i00000015ba:	lui                 a7, 12    
+i00000015bb:	srai                a1, a1, 29
+i00000015bc:	subw                a4, a4, a3
+i00000015bd:	lw                  a1, -1008(sp)       
+i00000015be:	sb                  s0, 1745(sp)        
+i00000015bf:	andi                s1, a4, -1363
+				la                  sp, begin_signature
+				li                  t1, 12592 
+				add                 sp, sp, t1
+i00000015c0:	lw                  s0, 28(sp)          
+i00000015c1:	ld                  t3, 1608(sp)        
+i00000015c2:	or                  s1, s1, a3
+i00000015c3:	sw                  t1, 56(sp)          
+i00000015c4:	add                 s1, s1, s0
+i00000015c5:	fence                         
+i00000015c6:	srai                a5, a5, 12
+i00000015c7:	addi                a2, sp, 404
+i00000015c8:	ld                  s1, 64(sp)          
+i00000015c9:	srai                a1, a1, 8 
+i00000015ca:	addw                a6, s6, a2
+i00000015cb:	sd                  s0, 144(sp)         
+i00000015cc:	srai                a4, a4, 31
+i00000015cd:	fence                         
+i00000015ce:	addi                sp, sp, -480
+i00000015cf:	ld                  a6, 112(sp)         
+i00000015d0:	ld                  t3, 696(sp)         
+i00000015d1:	fence                         
+i00000015d2:	fence.i                       
+i00000015d3:	addi                a5, a5, -13
+				la                  sp, begin_signature
+				li                  t1, 2128  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 10200 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 2736  
+				add                 sp, sp, t1
+				sw                  a5, 0(sp)           
+				sd                  s0, 24(sp)          
+				sw                  s0, 12(sp)          
+				addiw               a6, s8, -367
+				ld                  a5, -8(sp)          
+				sd                  t3, 168(sp)         
+				ld                  s0, 80(sp)          
+	
+b00000015d4:
+				jal                 x1, i00000015d9     
+	
+				sw                  s1, 128(sp)         
+				lh                  a5, -1288(sp)       
+				sh                  s1, -478(sp)        
+				addi                sp, sp, 32
+				srai                a4, a4, 13
+				subw                s1, s0, a5
+				divw                s5, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 3864  
+				add                 sp, sp, t1
+i00000015d4:	lwu                 t6, -1084(sp)       
+i00000015d5:	fence                         
+i00000015d6:	lw                  a5, 60(sp)          
+i00000015d7:	sllw                s9, zero, s6
+i00000015d8:	fence.i                       
+i00000015d9:	sd                  s0, 1896(sp)        
+i00000015da:	add                 s11, zero, a5
+i00000015db:	fence                         
+i00000015dc:	srlw                s7, a5, a5
+i00000015dd:	addi                sp, sp, 128
+i00000015de:	lwu                 a0, -312(sp)        
+				la                  sp, begin_signature
+				li                  t1, 3832  
+				add                 sp, sp, t1
+i00000015df:	lw                  a5, 72(sp)          
+i00000015e0:	fence.i                       
+i00000015e1:	xor                 a0, a5, a5
+i00000015e2:	fence.i                       
+i00000015e3:	sd                  s3, 64(sp)          
+i00000015e4:	sd                  a7, 72(sp)          
+i00000015e5:	addiw               a0, a0, 2 
+i00000015e6:	addw                a2, a2, a2
+i00000015e7:	sd                  a5, 1328(sp)        
+i00000015e8:	addw                a5, a5, a5
+i00000015e9:	fence                         
+i00000015ea:	sd                  s1, 152(sp)         
+i00000015eb:	ld                  t2, 192(sp)         
+i00000015ec:	fence.i                       
+i00000015ed:	slli                s1, a6, 8 
+i00000015ee:	lw                  s1, 40(sp)          
+i00000015ef:	lwu                 s1, 1392(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2496  
+				add                 sp, sp, t1
+i00000015f0:	sd                  s3, -1056(sp)       
+i00000015f1:	fence                         
+i00000015f2:	addw                s1, s1, a0
+i00000015f3:	srli                a0, a0, 9 
+i00000015f4:	lw                  s1, 76(sp)          
+i00000015f5:	sw                  s0, 128(sp)         
+i00000015f6:	fence.i                       
+i00000015f7:	lw                  a3, 20(sp)          
+i00000015f8:	fence.i                       
+i00000015f9:	sll                 s4, s1, a5
+i00000015fa:	sd                  s0, 24(sp)          
+i00000015fb:	srli                s11, s1, 59
+				li                  x24, 12   
+				addi                x29, x29, 1
+				srlw                t2, s0, s0
+				sra                 a5, s1, a5
+				fence.i                       
+				sb                  s11, 151(sp)        
+				lui                 a5, 322223
+				lw                  a5, 48(sp)          
+				addiw               a4, a4, 15
+	
+b00000015fc:
+				beq                 x29, x24, 1f        
+				jal                 x1, i00000015f5     
+				1: li x29, 10                           
+	
+				lw                  a5, 8(sp)           
+				xor                 s0, s0, a5
+				sd                  s0, 72(sp)          
+				addiw               s1, s1, 5 
+				srli                a4, a4, 5 
+				sw                  a4, 16(sp)          
+				remu                a5, a5, s0
+i00000015fc:	addi                a3, sp, 296
+i00000015fd:	sw                  s8, -168(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7640  
+				add                 sp, sp, t1
+i00000015fe:	sw                  s0, 48(sp)          
+i00000015ff:	sd                  s1, -1376(sp)       
+i0000001600:	srli                a4, a4, 1 
+				la                  sp, begin_signature
+				li                  t1, 4712  
+				add                 sp, sp, t1
+i0000001601:	ld                  a2, 184(sp)         
+i0000001602:	sraw                a5, s0, s1
+i0000001603:	addi                a5, sp, 472
+i0000001604:	subw                a3, a3, a2
+i0000001605:	fence.i                       
+i0000001606:	lb                  a6, 1073(sp)        
+i0000001607:	and                 a0, a0, a5
+i0000001608:	ld                  a4, 16(sp)          
+i0000001609:	or                  a5, a5, a5
+i000000160a:	sh                  s2, -842(sp)        
+i000000160b:	lh                  s1, -6(sp)          
+i000000160c:	ld                  a5, 112(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7104  
+				add                 sp, sp, t1
+i000000160d:	sh                  a1, -342(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9168  
+				add                 sp, sp, t1
+i000000160e:	sw                  a5, 124(sp)         
+i000000160f:	auipc               tp, 237272
+i0000001610:	sltu                a5, s7, s9
+i0000001611:	lwu                 a4, 1172(sp)        
+i0000001612:	addiw               s0, s0, 14
+i0000001613:	lbu                 s1, -353(sp)        
+i0000001614:	lbu                 s0, 124(sp)         
+i0000001615:	fence.i                       
+i0000001616:	lw                  s0, 52(sp)          
+i0000001617:	lwu                 a5, 640(sp)         
+i0000001618:	srai                a5, a5, 3 
+i0000001619:	subw                a2, a2, a2
+				la                  sp, begin_signature
+				li                  t1, 3712  
+				add                 sp, sp, t1
+i000000161a:	sw                  s1, 76(sp)          
+i000000161b:	addiw               s1, s1, -17
+i000000161c:	addi                sp, sp, -320
+i000000161d:	lwu                 s1, 1464(sp)        
+i000000161e:	addi                sp, sp, -304
+i000000161f:	srli                a5, a5, 8 
+i0000001620:	sub                 a5, s5, tp
+i0000001621:	lbu                 t3, 255(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7744  
+				add                 sp, sp, t1
+i0000001622:	lw                  s0, 0(sp)           
+i0000001623:	add                 a3, a5, a5
+				li                  x31, 11   
+				li                  x29, 10   
+				remw                s0, a7, s9
+				sll                 a5, s4, s8
+				mulhu               s0, a4, t3
+				lbu                 s10, 1686(sp)       
+				fence                         
+				divuw               s0, s1, s1
+				divuw               zero, s2, s3
+	
+b0000001624:
+				pre_branch_macro                        
+				bne                 x29, x31, i0000001638
+				post_branch_macro                       
+	
+				divw                a5, s1, s0
+				addi                sp, sp, -32
+				andi                a4, a4, -6
+				lw                  s6, 48(sp)          
+				srai                a4, a4, 12
+				addi                a4, sp, 136
+				sw                  s0, 24(sp)          
+				li                  x29, 10   
+i0000001624:	srli                s0, a5, 27
+				la                  sp, begin_signature
+				li                  t1, 10536 
+				add                 sp, sp, t1
+i0000001625:	sd                  a5, 152(sp)         
+i0000001626:	sraiw               s9, s1, 21
+i0000001627:	addi                s1, s1, -19
+i0000001628:	sw                  s0, -884(sp)        
+i0000001629:	srli                a3, a3, 8 
+i000000162a:	srli                a4, a4, 23
+i000000162b:	addw                a4, a4, s0
+i000000162c:	addi                a4, sp, 340
+i000000162d:	addi                s1, sp, 436
+i000000162e:	xor                 a5, a5, a2
+i000000162f:	srl                 a5, s0, s0
+i0000001630:	slli                s1, s1, 14
+				la                  sp, begin_signature
+				li                  t1, 5736  
+				add                 sp, sp, t1
+i0000001631:	sh                  s0, -1960(sp)       
+i0000001632:	srliw               s8, s3, 8 
+i0000001633:	srli                a2, a2, 13
+i0000001634:	sw                  a5, 112(sp)         
+i0000001635:	addi                sp, sp, -144
+i0000001636:	addi                sp, sp, 160
+i0000001637:	add                 a4, zero, s1
+i0000001638:	ld                  t2, 136(sp)         
+i0000001639:	fence.i                       
+i000000163a:	sllw                s1, s1, a5
+i000000163b:	addiw               a5, a5, -1
+i000000163c:	sd                  s1, 104(sp)         
+i000000163d:	andi                s3, s7, -1856
+i000000163e:	slt                 s0, s11, a0
+i000000163f:	lhu                 s0, -1970(sp)       
+i0000001640:	sraw                a6, s1, s1
+i0000001641:	addiw               s0, s1, -1861
+i0000001642:	sd                  s1, 56(sp)          
+i0000001643:	add                 s0, s0, s1
+i0000001644:	addi                s1, sp, 264
+i0000001645:	lui                 s0, 6     
+i0000001646:	fence                         
+i0000001647:	lw                  a5, 16(sp)          
+i0000001648:	srai                a0, a0, 16
+i0000001649:	sd                  a4, 1944(sp)        
+				la                  sp, begin_signature
+				li                  t1, 4536  
+				add                 sp, sp, t1
+i000000164a:	lwu                 a5, -664(sp)        
+i000000164b:	sllw                a5, s8, a3
+				li                  x25, 10   
+				sd                  zero, 904(sp)       
+				or                  a4, a4, a4
+				srli                a4, a4, 9 
+				srli                a5, s1, 61
+				fence                         
+				fence                         
+				lw                  s1, 112(sp)         
+	
+b000000164c:
+				beq                 x29, x25, 1f        
+				jal                 x1, i0000001638     
+				1: li x29, 10                           
+	
+				slliw               a5, s8, 25
+				ld                  a6, 1024(sp)        
+				srli                a4, a4, 14
+				srli                s1, s1, 3 
+				divw                a5, s4, t2
+				subw                s7, s8, s5
+				lui                 gp, 12    
+i000000164c:	addw                s1, s1, a4
+i000000164d:	fence                         
+i000000164e:	sw                  a4, 48(sp)          
+i000000164f:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 6072  
+				add                 sp, sp, t1
+i0000001650:	ld                  s3, 184(sp)         
+i0000001651:	srliw               a7, s7, 20
+i0000001652:	sw                  s0, 64(sp)          
+i0000001653:	fence                         
+i0000001654:	srl                 s1, s0, s0
+i0000001655:	srl                 s11, a6, a4
+i0000001656:	sh                  s8, -1412(sp)       
+				la                  sp, begin_signature
+				li                  t1, 9984  
+				add                 sp, sp, t1
+i0000001657:	sd                  s0, 312(sp)         
+i0000001658:	lui                 s4, 36586 
+i0000001659:	srai                s0, s0, 4 
+i000000165a:	addw                a4, a0, s4
+i000000165b:	lhu                 a0, 1758(sp)        
+i000000165c:	srlw                tp, a7, a3
+				la                  sp, begin_signature
+				li                  t1, 2256  
+				add                 sp, sp, t1
+i000000165d:	lw                  a4, 808(sp)         
+i000000165e:	addiw               a1, a1, -19
+i000000165f:	andi                s1, s1, 3 
+				la                  sp, begin_signature
+				li                  t1, 5032  
+				add                 sp, sp, t1
+i0000001660:	sw                  s0, 44(sp)          
+i0000001661:	lh                  a0, -456(sp)        
+i0000001662:	addi                a3, a3, -9
+i0000001663:	addi                s1, sp, 128
+i0000001664:	fence.i                       
+i0000001665:	xor                 s1, s1, a1
+i0000001666:	srliw               s5, s1, 9 
+i0000001667:	ld                  s1, 40(sp)          
+i0000001668:	slliw               a5, s11, 28
+i0000001669:	or                  s6, t1, s2
+i000000166a:	lb                  s0, 855(sp)         
+i000000166b:	fence.i                       
+i000000166c:	andi                a3, a3, -6
+i000000166d:	sd                  t2, 40(sp)          
+i000000166e:	srlw                s0, s7, a3
+i000000166f:	srai                a2, a2, 4 
+i0000001670:	fence.i                       
+i0000001671:	sd                  s6, 984(sp)         
+i0000001672:	addi                a3, sp, 264
+i0000001673:	fence                         
+				li                  x26, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 4712  
+				add                 sp, sp, t1
+				sraiw               s2, a5, 2 
+				ld                  s8, 224(sp)         
+				divw                a5, gp, gp
+				lwu                 s5, -460(sp)        
+				ld                  s4, 1496(sp)        
+				sd                  s5, 48(sp)          
+				fence.i                       
+	
+b0000001674:
+				beq                 x29, x26, 1f        
+				la                  x26, i000000165f    
+				jalr                x10, x26, 0         
+				1: li x29, 10                           
+	
+				sd                  s1, 8(sp)           
+				srli                s1, s1, 23
+				sllw                s1, t3, s11
+				lw                  a5, 1952(sp)        
+				sraiw               s11, s1, 27
+				rem                 a5, s11, s5
+				divuw               s2, s1, a5
+i0000001674:	addi                sp, sp, 96
+i0000001675:	srli                a3, a3, 9 
+i0000001676:	srai                a0, a0, 12
+i0000001677:	subw                a1, a1, a5
+i0000001678:	lh                  a5, 1906(sp)        
+i0000001679:	sw                  s1, 40(sp)          
+i000000167a:	sw                  s0, 24(sp)          
+i000000167b:	lwu                 gp, -420(sp)        
+i000000167c:	sraw                a5, s1, s1
+i000000167d:	lb                  s1, -1333(sp)       
+i000000167e:	sraw                s0, a5, s0
+i000000167f:	fence.i                       
+i0000001680:	srli                s0, s0, 8 
+i0000001681:	xor                 s11, t3, a1
+i0000001682:	sw                  a2, 12(sp)          
+i0000001683:	sb                  s0, 41(sp)          
+i0000001684:	subw                a4, a4, a5
+i0000001685:	addi                sp, sp, 160
+				la                  sp, begin_signature
+				li                  t1, 12008 
+				add                 sp, sp, t1
+i0000001686:	lw                  t3, 120(sp)         
+i0000001687:	lh                  a5, 362(sp)         
+i0000001688:	ld                  s0, 48(sp)          
+i0000001689:	addi                s1, s0, 593
+i000000168a:	ori                 s8, t0, 733
+i000000168b:	ld                  s1, 120(sp)         
+i000000168c:	and                 a2, a2, a5
+i000000168d:	sw                  s9, 100(sp)         
+i000000168e:	fence.i                       
+i000000168f:	srl                 tp, a0, s9
+i0000001690:	lw                  s1, 20(sp)          
+i0000001691:	lwu                 t6, -1112(sp)       
+i0000001692:	fence                         
+i0000001693:	fence.i                       
+i0000001694:	lw                  a0, 8(sp)           
+i0000001695:	sllw                t0, s0, s0
+i0000001696:	srlw                s9, s2, s11
+i0000001697:	lw                  s0, 112(sp)         
+i0000001698:	lwu                 s0, 516(sp)         
+i0000001699:	fence.i                       
+i000000169a:	sltu                s0, s1, s0
+i000000169b:	sw                  a5, 44(sp)          
+				li                  x25, 10   
+				la                  sp, begin_signature
+				li                  t1, 14136 
+				add                 sp, sp, t1
+				srli                a4, a4, 20
+				addi                a5, sp, 180
+				lw                  s1, 124(sp)         
+				mulw                s1, tp, t6
+				div                 s0, a5, s1
+				srai                a4, a4, 14
+				lb                  s0, 1412(sp)        
+	
+b000000169c:
+				beq                 x29, x25, 1f        
+				la                  x25, i000000168b    
+				jalr                x1, x25, 0          
+				1: li x29, 10                           
+	
+				lh                  a5, 1810(sp)        
+				sw                  a4, 24(sp)          
+				lwu                 s0, -1680(sp)       
+				remw                s1, s3, s2
+				sd                  a5, 248(sp)         
+				ld                  s1, 32(sp)          
+				srli                a4, a4, 5 
+i000000169c:	srai                a5, a5, 13
+i000000169d:	slliw               s1, t5, 30
+				la                  sp, begin_signature
+				li                  t1, 4888  
+				add                 sp, sp, t1
+i000000169e:	sd                  zero, 56(sp)        
+i000000169f:	addi                a4, sp, 40
+i00000016a0:	ld                  s0, -200(sp)        
+i00000016a1:	fence.i                       
+i00000016a2:	srai                a1, a1, 16
+i00000016a3:	slli                a5, a5, 37
+i00000016a4:	srli                s1, s1, 15
+i00000016a5:	or                  zero, a7, a2
+i00000016a6:	fsrmi               x0, 6     
+i00000016a7:	ld                  a7, 16(sp)          
+i00000016a8:	fence                         
+i00000016a9:	srlw                a3, s2, t5
+i00000016aa:	ld                  a5, 48(sp)          
+i00000016ab:	lw                  s5, 4(sp)           
+i00000016ac:	lwu                 s0, 492(sp)         
+i00000016ad:	srli                a2, a2, 15
+i00000016ae:	lw                  a5, 76(sp)          
+i00000016af:	subw                a7, a4, tp
+i00000016b0:	lw                  s1, -1684(sp)       
+				la                  sp, begin_signature
+				li                  t1, 13376 
+				add                 sp, sp, t1
+i00000016b1:	lw                  a0, 44(sp)          
+i00000016b2:	addi                sp, sp, -192
+i00000016b3:	sllw                s0, t0, s6
+i00000016b4:	srli                a7, s3, 51
+i00000016b5:	sw                  s0, 0(sp)           
+i00000016b6:	srai                a2, a2, 18
+i00000016b7:	fence.i                       
+i00000016b8:	addi                sp, sp, -160
+				la                  sp, begin_signature
+				li                  t1, 13296 
+				add                 sp, sp, t1
+i00000016b9:	sd                  a0, 112(sp)         
+i00000016ba:	addi                a2, sp, 340
+i00000016bb:	slli                s0, s0, 7 
+i00000016bc:	srai                a0, a0, 4 
+i00000016bd:	lhu                 t0, -1468(sp)       
+				la                  sp, begin_signature
+				li                  t1, 7384  
+				add                 sp, sp, t1
+i00000016be:	sd                  s1, -1744(sp)       
+i00000016bf:	sraiw               s0, s1, 22
+i00000016c0:	slli                a0, a0, 29
+i00000016c1:	slli                a4, a4, 10
+i00000016c2:	ld                  s1, 56(sp)          
+i00000016c3:	sd                  s0, 216(sp)         
+i00000016c4:	sw                  t1, 20(sp)          
+				li                  x22, 10   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 8824  
+				add                 sp, sp, t1
+				fence.i                       
+				srli                s1, s1, 2 
+				remuw               a5, a5, s1
+				remuw               s9, a5, s0
+				auipc               s1, 181348
+				sra                 s10, s10, s4
+				div                 s1, s0, a5
+	
+b00000016c5:
+				pre_branch_macro                        
+				bne                 x29, x22, i00000016db
+				post_branch_macro                       
+	
+				ld                  a4, 32(sp)          
+				lw                  s1, 4(sp)           
+				addi                sp, sp, -400
+				lwu                 s1, -204(sp)        
+				ld                  s0, 48(sp)          
+				srai                s0, s0, 31
+				addi                s1, sp, 512
+				li                  x29, 10   
+i00000016c5:	addiw               a0, s0, -1808
+i00000016c6:	lwu                 a5, 292(sp)         
+i00000016c7:	sw                  a3, 20(sp)          
+i00000016c8:	lh                  s0, 1078(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7544  
+				add                 sp, sp, t1
+i00000016c9:	ld                  gp, -1824(sp)       
+i00000016ca:	addw                a5, a5, a3
+				la                  sp, begin_signature
+				li                  t1, 10816 
+				add                 sp, sp, t1
+i00000016cb:	sb                  s2, -1041(sp)       
+i00000016cc:	srl                 t3, a7, t1
+i00000016cd:	srlw                a4, t2, s3
+i00000016ce:	srli                a5, a5, 7 
+i00000016cf:	slli                a1, a1, 26
+i00000016d0:	lw                  a1, 32(sp)          
+i00000016d1:	addw                a5, a5, a4
+i00000016d2:	lw                  s0, 8(sp)           
+i00000016d3:	ld                  s1, 928(sp)         
+i00000016d4:	add                 s1, s0, a5
+i00000016d5:	add                 t2, s9, s9
+i00000016d6:	xori                s1, a5, 98
+				la                  sp, begin_signature
+				li                  t1, 7400  
+				add                 sp, sp, t1
+i00000016d7:	ld                  t3, 984(sp)         
+i00000016d8:	sll                 a5, s9, a1
+i00000016d9:	sw                  s1, 96(sp)          
+				la                  sp, begin_signature
+				li                  t1, 4936  
+				add                 sp, sp, t1
+i00000016da:	sh                  a5, 1722(sp)        
+i00000016db:	slliw               s0, a5, 9 
+i00000016dc:	sw                  a5, -1980(sp)       
+i00000016dd:	srli                a3, a3, 13
+i00000016de:	or                  a5, a5, a1
+i00000016df:	subw                a3, a3, s0
+i00000016e0:	sd                  s0, 56(sp)          
+i00000016e1:	addiw               s0, t1, -284
+i00000016e2:	addiw               s0, s1, -1394
+i00000016e3:	srai                a1, a1, 1 
+i00000016e4:	fence                         
+i00000016e5:	fence.i                       
+i00000016e6:	srli                a3, a3, 17
+i00000016e7:	add                 a5, a5, s7
+i00000016e8:	andi                s2, a4, 906
+i00000016e9:	addi                sp, sp, 64
+i00000016ea:	sw                  s8, 48(sp)          
+i00000016eb:	slliw               s0, s1, 10
+i00000016ec:	srli                s1, s1, 1 
+				li                  x28, 11   
+				li                  x29, 10   
+				div                 t6, s10, s5
+				remu                s4, s0, s0
+				fence                         
+				fence.i                       
+				addi                sp, sp, 64
+				ld                  s11, 216(sp)        
+				remw                s1, s1, s0
+	
+b00000016ed:
+				pre_branch_macro                        
+				bge                 x28, x29, i00000016f5
+				post_branch_macro                       
+	
+				addi                sp, sp, -160
+				ld                  a4, 40(sp)          
+				srli                a5, a5, 12
+				fence                         
+				add                 s1, s1, a4
+				addi                a4, sp, 88
+				remw                t6, s6, s6
+				li                  x29, 10   
+i00000016ed:	srai                a1, a1, 9 
+i00000016ee:	srai                a1, a1, 10
+i00000016ef:	addi                s0, zero, -23
+i00000016f0:	sraiw               a5, s4, 5 
+i00000016f1:	addw                t5, a5, a5
+i00000016f2:	fence                         
+i00000016f3:	auipc               s5, 35099 
+i00000016f4:	addi                s0, sp, 32
+i00000016f5:	srlw                s3, a5, s0
+i00000016f6:	fsrmi               x0, 1     
+i00000016f7:	sd                  a5, 144(sp)         
+i00000016f8:	addi                sp, sp, 48
+i00000016f9:	fence                         
+i00000016fa:	srli                s1, s1, 7 
+i00000016fb:	sub                 s0, s0, a2
+i00000016fc:	addi                sp, sp, 64
+i00000016fd:	add                 s1, zero, t1
+				la                  sp, begin_signature
+				li                  t1, 5984  
+				add                 sp, sp, t1
+i00000016fe:	sh                  s1, 938(sp)         
+i00000016ff:	sllw                s5, s0, a5
+i0000001700:	addi                sp, sp, -272
+i0000001701:	subw                a5, a5, a1
+i0000001702:	sd                  a2, 88(sp)          
+i0000001703:	sw                  gp, 104(sp)         
+i0000001704:	srl                 s1, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 13160 
+				add                 sp, sp, t1
+i0000001705:	sd                  s1, 1928(sp)        
+i0000001706:	addi                s0, zero, -28
+i0000001707:	addw                t5, a6, s9
+i0000001708:	slliw               t2, a5, 29
+i0000001709:	lh                  a6, 1260(sp)        
+i000000170a:	srli                a4, a4, 27
+				la                  sp, begin_signature
+				li                  t1, 13424 
+				add                 sp, sp, t1
+i000000170b:	lwu                 s1, 484(sp)         
+i000000170c:	or                  a5, a5, s1
+i000000170d:	sw                  t6, 96(sp)          
+i000000170e:	lhu                 t5, 1074(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7216  
+				add                 sp, sp, t1
+i000000170f:	lw                  s1, 28(sp)          
+i0000001710:	add                 s11, zero, a5
+i0000001711:	slli                a1, a1, 23
+i0000001712:	fence.i                       
+i0000001713:	addi                zero, zero, -25
+i0000001714:	lbu                 a5, 434(sp)         
+i0000001715:	lwu                 a5, -1884(sp)       
+				li                  x19, 12   
+				addi                x29, x29, 1
+				remuw               s1, s1, a5
+				sw                  zero, 108(sp)       
+				srlw                a5, s2, zero
+				addi                sp, sp, -464
+				mulw                s0, a5, s1
+				addi                sp, sp, 256
+				lb                  s1, -851(sp)        
+	
+b0000001716:
+				beq                 x29, x19, 1f        
+				jal                 x1, i00000016f8     
+				1: li x29, 10                           
+	
+				srai                s0, s0, 15
+				lui                 a5, 10    
+				fence                         
+				addi                sp, sp, -480
+				remu                s8, s7, zero
+				mul                 s0, s1, a5
+				lwu                 s1, 400(sp)         
+i0000001716:	slti                a5, s1, 2046
+i0000001717:	addw                a3, a3, s0
+i0000001718:	and                 s0, s0, a5
+i0000001719:	fence.i                       
+i000000171a:	addi                s1, sp, 228
+i000000171b:	xor                 s0, s0, a5
+i000000171c:	srai                s0, s0, 4 
+i000000171d:	sd                  s0, 56(sp)          
+i000000171e:	lb                  s7, 1670(sp)        
+i000000171f:	addi                a1, s6, -802
+i0000001720:	addw                s1, s1, s1
+i0000001721:	srai                a3, a3, 7 
+i0000001722:	srlw                s5, s5, a7
+i0000001723:	sd                  s1, 112(sp)         
+i0000001724:	and                 a1, zero, a2
+i0000001725:	xor                 a4, a4, a2
+i0000001726:	fence.i                       
+i0000001727:	sh                  t3, -234(sp)        
+				la                  sp, begin_signature
+				li                  t1, 12736 
+				add                 sp, sp, t1
+i0000001728:	ld                  a5, 88(sp)          
+i0000001729:	sd                  s1, 976(sp)         
+i000000172a:	sb                  s1, 113(sp)         
+i000000172b:	fence                         
+i000000172c:	lwu                 s7, 896(sp)         
+i000000172d:	fence.i                       
+i000000172e:	fence                         
+i000000172f:	addi                a4, a4, -17
+i0000001730:	sd                  a5, 88(sp)          
+i0000001731:	sb                  s0, -38(sp)         
+i0000001732:	sb                  a3, -1249(sp)       
+i0000001733:	addw                s0, s0, a1
+i0000001734:	sw                  a5, 48(sp)          
+i0000001735:	ld                  s1, 160(sp)         
+i0000001736:	ld                  a6, -304(sp)        
+i0000001737:	lb                  s1, 961(sp)         
+i0000001738:	fence.i                       
+i0000001739:	addi                sp, sp, 128
+i000000173a:	addw                a4, a4, s1
+i000000173b:	add                 s11, s11, s0
+i000000173c:	fence                         
+i000000173d:	srai                a1, a1, 3 
+				li                  x20, 11   
+				addi                x29, x29, 1
+				sw                  a5, 0(sp)           
+				srlw                a6, a5, a5
+				sllw                s1, s2, s3
+				addw                a5, a5, s1
+				lbu                 s6, 152(sp)         
+				srli                s0, s0, 4 
+				andi                a5, a5, -21
+	
+b000000173e:
+				pre_branch_macro                        
+				beq                 x29, x20, i0000001739
+				post_branch_macro                       
+	
+				divuw               s0, s8, s3
+				sd                  s1, -88(sp)         
+				fence.i                       
+				sll                 s7, s6, s5
+				fence                         
+				addiw               a4, a4, -14
+				divu                a5, s1, s0
+				li                  x29, 10   
+i000000173e:	srli                s0, s0, 1 
+i000000173f:	sh                  a5, -682(sp)        
+i0000001740:	sb                  a6, -1641(sp)       
+i0000001741:	addiw               a5, a5, -30
+i0000001742:	addi                a4, sp, 220
+i0000001743:	srai                a0, a0, 15
+i0000001744:	addi                sp, sp, -160
+i0000001745:	slli                a1, a1, 23
+i0000001746:	srli                a5, a5, 21
+i0000001747:	lbu                 a5, -1071(sp)       
+i0000001748:	sh                  t5, -1234(sp)       
+i0000001749:	sra                 s1, a4, a1
+i000000174a:	lui                 s4, 109083
+i000000174b:	addi                a2, sp, 92
+i000000174c:	sb                  s0, -1556(sp)       
+i000000174d:	srai                s7, s0, 50
+i000000174e:	srai                s0, s0, 10
+i000000174f:	sw                  a2, 24(sp)          
+i0000001750:	srli                a0, a0, 6 
+i0000001751:	fence.i                       
+i0000001752:	srli                s1, s1, 9 
+i0000001753:	addi                s0, zero, -7
+				la                  sp, begin_signature
+				li                  t1, 5904  
+				add                 sp, sp, t1
+i0000001754:	sd                  a2, 80(sp)          
+i0000001755:	add                 s1, s0, s1
+i0000001756:	subw                s9, a2, s3
+i0000001757:	andi                a0, a0, -17
+i0000001758:	ld                  a5, 208(sp)         
+i0000001759:	lhu                 t1, -2048(sp)       
+i000000175a:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 11336 
+				add                 sp, sp, t1
+i000000175b:	sd                  s0, 208(sp)         
+i000000175c:	add                 t5, s2, a2
+i000000175d:	srai                a4, a4, 25
+i000000175e:	sraiw               s0, zero, 3
+i000000175f:	lhu                 s1, 124(sp)         
+i0000001760:	addi                sp, sp, 96
+i0000001761:	sd                  a5, -2024(sp)       
+i0000001762:	addi                sp, sp, 128
+i0000001763:	ld                  s1, 80(sp)          
+i0000001764:	fence                         
+i0000001765:	addiw               a1, a1, -26
+				li                  x31, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 5200  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6376  
+				add                 sp, sp, t1
+				ld                  a5, 96(sp)          
+				sd                  t3, -704(sp)        
+				slt                 s1, s1, s0
+				srai                a4, a4, 26
+				srli                a5, a5, 20
+				ld                  a7, 192(sp)         
+				sd                  s0, 96(sp)          
+	
+b0000001766:
+				beq                 x29, x31, 1f        
+				jal                 x0, i000000174c     
+				1: li x29, 10                           
+	
+				srai                s0, s0, 18
+				lhu                 s0, 74(sp)          
+				addi                a4, sp, 116
+				add                 s0, s0, s9
+				ld                  s9, -1912(sp)       
+				fence.i                       
+				subw                s1, t3, gp
+i0000001766:	lb                  a6, 1466(sp)        
+i0000001767:	lw                  s0, 120(sp)         
+i0000001768:	or                  a0, s0, s1
+i0000001769:	fence.i                       
+i000000176a:	addw                a5, zero, s5
+i000000176b:	ld                  a5, 48(sp)          
+i000000176c:	srai                s0, s0, 9 
+i000000176d:	sw                  a4, 44(sp)          
+				la                  sp, begin_signature
+				li                  t1, 2096  
+				add                 sp, sp, t1
+i000000176e:	lhu                 a5, -1172(sp)       
+i000000176f:	fence.i                       
+i0000001770:	srai                a1, a1, 17
+i0000001771:	fence.i                       
+i0000001772:	subw                a5, a5, a4
+i0000001773:	srl                 t2, s0, s0
+				la                  sp, begin_signature
+				li                  t1, 5160  
+				add                 sp, sp, t1
+i0000001774:	ld                  s0, 120(sp)         
+i0000001775:	srai                a1, a1, 11
+i0000001776:	fence.i                       
+i0000001777:	fence.i                       
+i0000001778:	addi                sp, sp, -256
+i0000001779:	sub                 s1, s1, s0
+i000000177a:	srlw                s11, t0, s6
+i000000177b:	sw                  a5, 80(sp)          
+				la                  sp, begin_signature
+				li                  t1, 6360  
+				add                 sp, sp, t1
+i000000177c:	sw                  t0, 64(sp)          
+i000000177d:	srai                s1, s1, 8 
+i000000177e:	ld                  s0, 968(sp)         
+i000000177f:	sd                  s0, 48(sp)          
+i0000001780:	addi                s0, s1, 695
+i0000001781:	sd                  a5, 584(sp)         
+i0000001782:	lw                  s1, 60(sp)          
+i0000001783:	sraiw               s0, a5, 8 
+i0000001784:	sd                  s1, 128(sp)         
+i0000001785:	sllw                a0, a5, s1
+i0000001786:	addi                sp, sp, -464
+i0000001787:	sltu                t6, a5, s1
+i0000001788:	addi                sp, sp, 48
+i0000001789:	addi                sp, sp, 48
+i000000178a:	sraiw               s4, gp, 26
+i000000178b:	ld                  s1, 48(sp)          
+i000000178c:	fence                         
+i000000178d:	ld                  t5, 1072(sp)        
+				li                  x16, 10   
+				la                  sp, begin_signature
+				li                  t1, 9648  
+				add                 sp, sp, t1
+				sraiw               t3, a5, 27
+				remuw               s0, a5, a5
+				addi                s1, zero, -27
+				addi                a5, zero, -24
+				lwu                 s1, 1552(sp)        
+				ld                  a5, 120(sp)         
+				sw                  a4, 36(sp)          
+	
+b000000178e:
+				beq                 x29, x16, 1f        
+				jal                 x1, i0000001780     
+				1: li x29, 10                           
+	
+				sd                  gp, 152(sp)         
+				rem                 a5, s7, t6
+				srli                a4, a4, 16
+				lh                  t2, 1694(sp)        
+				divw                s1, s3, s11
+				addi                sp, sp, -224
+				fence.i                       
+i000000178e:	addi                a0, sp, 292
+i000000178f:	slli                gp, s6, 13
+				la                  sp, begin_signature
+				li                  t1, 3824  
+				add                 sp, sp, t1
+i0000001790:	ld                  a2, 128(sp)         
+i0000001791:	lwu                 gp, -1468(sp)       
+i0000001792:	sw                  a5, 12(sp)          
+i0000001793:	srai                s0, s0, 11
+i0000001794:	sw                  s1, -1616(sp)       
+i0000001795:	addiw               t2, s0, 1889
+i0000001796:	slliw               a4, s1, 31
+i0000001797:	addi                s0, zero, 0
+i0000001798:	srli                a1, a1, 10
+i0000001799:	lwu                 s0, -532(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13336 
+				add                 sp, sp, t1
+i000000179a:	ld                  s1, 1272(sp)        
+i000000179b:	andi                a3, a7, -1625
+i000000179c:	sw                  gp, 1684(sp)        
+i000000179d:	fence                         
+i000000179e:	sw                  a5, 44(sp)          
+i000000179f:	sd                  zero, 256(sp)       
+i00000017a0:	srai                a0, a0, 2 
+i00000017a1:	srai                a3, a3, 10
+i00000017a2:	addw                s1, s1, a0
+i00000017a3:	lwu                 a2, -836(sp)        
+i00000017a4:	srai                s1, s1, 8 
+i00000017a5:	lwu                 tp, 1696(sp)        
+i00000017a6:	addi                sp, sp, 176
+i00000017a7:	srai                s0, s0, 10
+i00000017a8:	lwu                 a5, -1816(sp)       
+i00000017a9:	ld                  a4, 8(sp)           
+i00000017aa:	lwu                 s0, -840(sp)        
+i00000017ab:	srli                a1, a1, 13
+i00000017ac:	ld                  s0, -608(sp)        
+i00000017ad:	srli                a2, a2, 15
+i00000017ae:	lwu                 t0, 1012(sp)        
+i00000017af:	xor                 a2, a2, a5
+i00000017b0:	srli                a1, a1, 13
+i00000017b1:	subw                a4, a4, a2
+i00000017b2:	ld                  a5, 1256(sp)        
+i00000017b3:	srlw                s2, s0, a5
+i00000017b4:	or                  s1, a5, s0
+i00000017b5:	slliw               s1, s0, 4 
+				li                  x20, 11   
+				li                  x29, 10   
+				remu                a7, s1, s1
+				divu                s0, s0, s0
+				mulw                a5, s9, a7
+				slli                s11, a5, 35
+				divu                s1, s6, tp
+				fence.i                       
+				addiw               s1, s1, -14
+	
+b00000017b6:
+				pre_branch_macro                        
+				bge                 x20, x29, i00000017c7
+				post_branch_macro                       
+	
+				sw                  a4, 60(sp)          
+				mulhu               a4, s0, a5
+				srl                 a5, a5, s1
+				sltiu               a7, s0, 466
+				srli                s0, s0, 9 
+				ld                  a4, 1728(sp)        
+				lhu                 s10, 18(sp)         
+				li                  x29, 10   
+i00000017b6:	lwu                 t0, -1072(sp)       
+i00000017b7:	lbu                 a1, 1664(sp)        
+i00000017b8:	lwu                 s6, -132(sp)        
+				la                  sp, begin_signature
+				li                  t1, 6960  
+				add                 sp, sp, t1
+i00000017b9:	sw                  a5, 100(sp)         
+i00000017ba:	addi                sp, sp, 192
+i00000017bb:	lw                  zero, -1396(sp)     
+i00000017bc:	sra                 a7, s7, zero
+i00000017bd:	addi                sp, sp, 144
+i00000017be:	srai                s3, a5, 27
+i00000017bf:	lw                  s1, -1940(sp)       
+i00000017c0:	ld                  s1, 120(sp)         
+i00000017c1:	lwu                 a5, -248(sp)        
+i00000017c2:	slliw               a5, s1, 10
+i00000017c3:	slli                a5, a3, 27
+i00000017c4:	sw                  s1, 40(sp)          
+i00000017c5:	sw                  s1, 0(sp)           
+i00000017c6:	srai                a0, a0, 9 
+i00000017c7:	fence                         
+i00000017c8:	addiw               a5, a5, -1320
+i00000017c9:	subw                s0, s0, s1
+i00000017ca:	sllw                a7, s1, a5
+i00000017cb:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 4472  
+				add                 sp, sp, t1
+i00000017cc:	ld                  a1, 128(sp)         
+i00000017cd:	add                 s0, s0, a7
+i00000017ce:	sd                  s5, 80(sp)          
+i00000017cf:	ld                  zero, -1472(sp)     
+i00000017d0:	ld                  t0, -952(sp)        
+i00000017d1:	sw                  a2, 8(sp)           
+i00000017d2:	sw                  a5, 96(sp)          
+i00000017d3:	addiw               a1, a1, 9 
+i00000017d4:	srliw               a3, s0, 30
+i00000017d5:	fence                         
+i00000017d6:	addw                a1, a1, s1
+i00000017d7:	fence                         
+i00000017d8:	addi                a5, a5, 11
+i00000017d9:	subw                a5, a5, a5
+i00000017da:	ori                 a5, a0, 843
+				la                  sp, begin_signature
+				li                  t1, 6432  
+				add                 sp, sp, t1
+i00000017db:	sd                  a0, -752(sp)        
+i00000017dc:	srai                a0, a0, 8 
+i00000017dd:	sw                  s6, -80(sp)         
+				li                  x17, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7440  
+				add                 sp, sp, t1
+				fence                         
+				lui                 s7, 36288 
+				addiw               a4, a4, 0 
+				slliw               s0, s2, 31
+				addi                s1, sp, 452
+				fence                         
+				lhu                 a5, 334(sp)         
+	
+b00000017de:
+				pre_branch_macro                        
+				bge                 x17, x29, i0000001801
+				post_branch_macro                       
+	
+				sllw                s0, s1, s1
+				addi                s1, sp, 160
+				ld                  a5, 88(sp)          
+				srliw               s1, s3, 2 
+				sw                  a4, 20(sp)          
+				mul                 s1, s9, s2
+				addw                s4, a5, s0
+				li                  x29, 10   
+i00000017de:	slli                s3, t0, 17
+i00000017df:	ld                  a5, 120(sp)         
+i00000017e0:	addi                a5, sp, 120
+i00000017e1:	fence                         
+i00000017e2:	subw                tp, gp, zero
+i00000017e3:	lw                  a3, 12(sp)          
+i00000017e4:	xor                 s0, s0, s0
+i00000017e5:	addw                a4, a4, a4
+i00000017e6:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 13440 
+				add                 sp, sp, t1
+i00000017e7:	sw                  s0, 128(sp)         
+i00000017e8:	addi                a5, sp, 260
+i00000017e9:	srlw                s3, s1, s1
+i00000017ea:	sltiu               a4, s0, 1005
+i00000017eb:	sd                  t5, 200(sp)         
+i00000017ec:	addi                a0, sp, 416
+i00000017ed:	srli                a4, a4, 3 
+i00000017ee:	sltu                s0, s0, s0
+i00000017ef:	sllw                s1, a6, s8
+				la                  sp, begin_signature
+				li                  t1, 6064  
+				add                 sp, sp, t1
+i00000017f0:	sd                  t6, 456(sp)         
+i00000017f1:	subw                a3, a3, s1
+i00000017f2:	sub                 a3, a3, s0
+i00000017f3:	sd                  a5, 1920(sp)        
+i00000017f4:	srai                a4, a4, 13
+				la                  sp, begin_signature
+				li                  t1, 2600  
+				add                 sp, sp, t1
+i00000017f5:	sd                  t6, 184(sp)         
+i00000017f6:	addi                sp, sp, -304
+i00000017f7:	addi                a3, sp, 168
+i00000017f8:	ld                  t3, 928(sp)         
+i00000017f9:	sd                  a1, 64(sp)          
+i00000017fa:	addi                s0, sp, 108
+i00000017fb:	fence                         
+i00000017fc:	sw                  a5, 0(sp)           
+i00000017fd:	ld                  s1, 1904(sp)        
+i00000017fe:	srai                s1, s1, 29
+i00000017ff:	sd                  s2, -1032(sp)       
+				la                  sp, begin_signature
+				li                  t1, 2192  
+				add                 sp, sp, t1
+i0000001800:	sw                  s0, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 12848 
+				add                 sp, sp, t1
+i0000001801:	lb                  t6, 290(sp)         
+i0000001802:	srli                a5, a5, 23
+i0000001803:	lwu                 s0, 128(sp)         
+i0000001804:	addi                sp, sp, -96
+i0000001805:	lwu                 tp, -304(sp)        
+				li                  x24, 11   
+				addi                x29, x29, 1
+				remuw               s7, s0, a5
+				and                 s1, s1, s0
+				andi                s6, s5, -1611
+				addi                sp, sp, -256
+				addiw               s0, s0, -12
+				mulw                s7, a5, s0
+				sub                 tp, s0, s0
+	
+b0000001806:
+				pre_branch_macro                        
+				beq                 x29, x24, i00000017f1
+				post_branch_macro                       
+	
+				and                 a5, a5, s1
+				subw                s1, gp, t3
+				srai                s1, s1, 1 
+				sw                  a4, -728(sp)        
+				ld                  a4, 120(sp)         
+				sw                  a4, 44(sp)          
+				mul                 t3, gp, t6
+				li                  x29, 10   
+i0000001806:	ld                  a6, 664(sp)         
+i0000001807:	addi                s0, sp, 252
+i0000001808:	addi                sp, sp, -480
+				la                  sp, begin_signature
+				li                  t1, 13024 
+				add                 sp, sp, t1
+i0000001809:	sd                  a5, -1968(sp)       
+i000000180a:	lwu                 s1, 1044(sp)        
+i000000180b:	sd                  s7, -2032(sp)       
+i000000180c:	sraiw               a5, s3, 22
+i000000180d:	andi                a3, a3, 16
+i000000180e:	and                 a5, a2, s8
+i000000180f:	lwu                 a5, 416(sp)         
+i0000001810:	ori                 s0, gp, 943
+i0000001811:	sd                  s0, 232(sp)         
+				la                  sp, begin_signature
+				li                  t1, 9960  
+				add                 sp, sp, t1
+i0000001812:	sd                  a5, 176(sp)         
+i0000001813:	sd                  s1, 248(sp)         
+i0000001814:	srai                a2, a2, 9 
+i0000001815:	sw                  a1, 44(sp)          
+i0000001816:	xor                 s0, t2, s10
+i0000001817:	addw                tp, s1, s0
+i0000001818:	lw                  s1, 52(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7976  
+				add                 sp, sp, t1
+i0000001819:	sw                  s6, 44(sp)          
+i000000181a:	lw                  a2, 88(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13528 
+				add                 sp, sp, t1
+i000000181b:	lwu                 a6, 1504(sp)        
+i000000181c:	sllw                a5, s1, a5
+i000000181d:	sraw                t3, s1, a5
+i000000181e:	ld                  s0, 64(sp)          
+i000000181f:	srlw                s0, s1, s0
+i0000001820:	addi                sp, sp, 128
+i0000001821:	srlw                s2, s0, s0
+i0000001822:	addi                sp, sp, -432
+i0000001823:	sw                  a1, 48(sp)          
+i0000001824:	sw                  a3, 12(sp)          
+i0000001825:	ld                  gp, -104(sp)        
+i0000001826:	fence                         
+i0000001827:	lh                  a3, 1180(sp)        
+i0000001828:	sw                  s0, 108(sp)         
+i0000001829:	sub                 a0, a0, a4
+i000000182a:	srai                a0, a0, 7 
+				la                  sp, begin_signature
+				li                  t1, 10688 
+				add                 sp, sp, t1
+i000000182b:	sw                  s0, 32(sp)          
+i000000182c:	sd                  t0, 232(sp)         
+i000000182d:	sh                  s0, 976(sp)         
+				li                  x26, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 9496  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7096  
+				add                 sp, sp, t1
+				addi                sp, sp, 176
+				lw                  s1, 836(sp)         
+				slti                s1, zero, 887
+				add                 s3, a5, a5
+				mulw                s0, t6, s4
+				srli                a4, a4, 2 
+				ld                  s7, 176(sp)         
+	
+b000000182e:
+				beq                 x29, x26, 1f        
+				jal                 x1, i000000180b     
+				1: li x29, 10                           
+	
+				srli                s1, s1, 14
+				lw                  s3, 1628(sp)        
+				addi                sp, sp, -272
+				sd                  a5, -1984(sp)       
+				ld                  a4, 32(sp)          
+				add                 a5, a5, s1
+				divuw               s1, a5, s1
+i000000182e:	sd                  s2, 48(sp)          
+i000000182f:	sd                  a1, 40(sp)          
+i0000001830:	addi                a5, sp, 280
+i0000001831:	lui                 a6, 25    
+				la                  sp, begin_signature
+				li                  t1, 12184 
+				add                 sp, sp, t1
+i0000001832:	lwu                 s0, 1644(sp)        
+i0000001833:	fence.i                       
+i0000001834:	srli                a3, a3, 20
+i0000001835:	fence                         
+i0000001836:	add                 s0, s1, s1
+i0000001837:	srai                a0, a0, 15
+i0000001838:	sd                  t0, -1392(sp)       
+i0000001839:	sw                  s2, 92(sp)          
+i000000183a:	addi                s0, s0, 12
+i000000183b:	srai                a5, a5, 32
+i000000183c:	addi                sp, sp, -192
+i000000183d:	lw                  s0, 120(sp)         
+i000000183e:	sub                 a2, a2, a2
+i000000183f:	lwu                 s7, -1368(sp)       
+i0000001840:	fence.i                       
+i0000001841:	addi                a5, a5, 16
+i0000001842:	srai                s0, s0, 17
+i0000001843:	srai                s1, s1, 8 
+i0000001844:	addiw               a5, a5, -4
+i0000001845:	addi                s5, a5, 92
+i0000001846:	add                 s1, zero, a6
+i0000001847:	sllw                a5, a7, a2
+i0000001848:	addi                a1, zero, 4
+i0000001849:	sraw                s1, a0, gp
+i000000184a:	addiw               a1, a1, 14
+i000000184b:	fence.i                       
+i000000184c:	srai                a1, a1, 9 
+i000000184d:	sd                  s0, 24(sp)          
+i000000184e:	srli                a0, a0, 14
+i000000184f:	addw                a5, a5, s1
+i0000001850:	srl                 zero, s5, a4
+i0000001851:	ld                  s0, 1424(sp)        
+i0000001852:	fence                         
+i0000001853:	addi                sp, sp, 16
+i0000001854:	andi                a3, a3, -14
+				la                  sp, begin_signature
+				li                  t1, 9640  
+				add                 sp, sp, t1
+i0000001855:	ld                  s0, 672(sp)         
+				li                  x20, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 5896  
+				add                 sp, sp, t1
+				lui                 t3, 20665 
+				srli                s0, s0, 2 
+				srli                a5, a5, 9 
+				lb                  s10, 222(sp)        
+				addiw               a4, a4, 15
+				div                 s2, s7, s5
+				lw                  a5, 8(sp)           
+	
+b0000001856:
+				beq                 x29, x20, 1f        
+				jal                 x1, i0000001835     
+				1: li x29, 10                           
+	
+				addi                s0, sp, 400
+				sd                  a4, 88(sp)          
+				ld                  s0, -1024(sp)       
+				sd                  tp, 312(sp)         
+				sd                  t3, 2032(sp)        
+				sraw                s3, a5, s1
+				subw                s1, s1, a4
+i0000001856:	subw                a5, a5, a2
+i0000001857:	srai                s1, a0, 40
+i0000001858:	addi                a4, a4, -30
+				la                  sp, begin_signature
+				li                  t1, 12272 
+				add                 sp, sp, t1
+i0000001859:	sw                  s1, -912(sp)        
+i000000185a:	srai                a1, a1, 4 
+i000000185b:	sd                  t2, 2008(sp)        
+i000000185c:	srli                a5, a5, 17
+i000000185d:	lb                  s3, -1392(sp)       
+i000000185e:	lw                  s0, 92(sp)          
+i000000185f:	addi                a1, sp, 472
+i0000001860:	ori                 s4, a5, -1691
+i0000001861:	fence                         
+i0000001862:	lbu                 a4, -1567(sp)       
+i0000001863:	andi                s0, s1, 983
+				la                  sp, begin_signature
+				li                  t1, 4600  
+				add                 sp, sp, t1
+i0000001864:	sd                  a2, 48(sp)          
+				la                  sp, begin_signature
+				li                  t1, 5328  
+				add                 sp, sp, t1
+i0000001865:	sb                  s4, 641(sp)         
+i0000001866:	sd                  a5, 104(sp)         
+i0000001867:	addi                a1, a1, -23
+i0000001868:	andi                a0, a0, -12
+i0000001869:	sw                  s0, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 5016  
+				add                 sp, sp, t1
+i000000186a:	lhu                 a5, -1840(sp)       
+i000000186b:	sll                 s0, t1, s9
+i000000186c:	ld                  a5, 304(sp)         
+i000000186d:	addi                sp, sp, 0 
+i000000186e:	slliw               s0, s1, 26
+i000000186f:	addi                s0, s0, -23
+i0000001870:	sd                  s1, 64(sp)          
+i0000001871:	slti                s1, s4, -221
+i0000001872:	sh                  a4, -788(sp)        
+i0000001873:	or                  a3, a3, a0
+i0000001874:	srli                a4, a4, 14
+i0000001875:	sd                  a6, 1552(sp)        
+i0000001876:	addw                s1, s1, a0
+i0000001877:	add                 s1, zero, a4
+				la                  sp, begin_signature
+				li                  t1, 4088  
+				add                 sp, sp, t1
+i0000001878:	sw                  s0, 60(sp)          
+i0000001879:	xor                 s1, s7, tp
+i000000187a:	sw                  s11, -760(sp)       
+				la                  sp, begin_signature
+				li                  t1, 9224  
+				add                 sp, sp, t1
+i000000187b:	sw                  a5, 32(sp)          
+i000000187c:	fence.i                       
+i000000187d:	srli                a4, a4, 6 
+				li                  x18, 12   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 10640 
+				add                 sp, sp, t1
+				sw                  a4, 44(sp)          
+				ld                  a4, 80(sp)          
+				mulw                s1, s7, s5
+				auipc               s0, 150145
+				sb                  s5, -827(sp)        
+				subw                s1, s1, a4
+				xor                 s0, s0, a4
+	
+b000000187e:
+				pre_branch_macro                        
+				blt                 x29, x18, i000000189f
+				post_branch_macro                       
+	
+				addi                a4, sp, 316
+				mul                 a7, s1, s0
+				addiw               a4, a4, 14
+				srli                s0, s0, 7 
+				srli                a4, a4, 4 
+				sw                  s0, 4(sp)           
+				srli                s1, s1, 10
+				li                  x29, 10   
+i000000187e:	sd                  s1, 2040(sp)        
+i000000187f:	sd                  t0, 192(sp)         
+i0000001880:	sd                  a4, 48(sp)          
+i0000001881:	addi                s1, sp, 176
+i0000001882:	sw                  a5, 24(sp)          
+i0000001883:	and                 a1, a1, a5
+i0000001884:	srli                a2, a2, 17
+i0000001885:	sllw                tp, t0, s11
+i0000001886:	ld                  a3, 0(sp)           
+i0000001887:	sltu                a5, t6, s6
+i0000001888:	sb                  a5, -79(sp)         
+i0000001889:	fence                         
+i000000188a:	sd                  s1, 64(sp)          
+i000000188b:	slti                a5, s0, -696
+i000000188c:	sh                  s6, -184(sp)        
+i000000188d:	slliw               s8, s0, 27
+i000000188e:	addw                a5, a5, a2
+i000000188f:	lw                  a5, 84(sp)          
+i0000001890:	sub                 zero, s11, a2
+i0000001891:	fence.i                       
+i0000001892:	lw                  s0, -420(sp)        
+i0000001893:	srli                a1, a1, 6 
+i0000001894:	slliw               t3, s0, 31
+i0000001895:	sd                  a2, 16(sp)          
+i0000001896:	sraiw               a2, a6, 22
+i0000001897:	and                 s1, a3, s11
+i0000001898:	fence.i                       
+i0000001899:	sw                  a5, 1316(sp)        
+i000000189a:	addi                s0, sp, 48
+i000000189b:	fence.i                       
+i000000189c:	sb                  s0, -277(sp)        
+i000000189d:	srai                a1, a1, 8 
+i000000189e:	addi                sp, sp, -400
+i000000189f:	add                 s0, zero, s5
+i00000018a0:	ori                 s0, t6, 1653
+i00000018a1:	srai                a5, a5, 5 
+i00000018a2:	fence                         
+i00000018a3:	addi                s0, a3, 1235
+i00000018a4:	ld                  t6, 888(sp)         
+i00000018a5:	fence.i                       
+				li                  x20, 12   
+				addi                x29, x29, 1
+				sd                  t6, 1440(sp)        
+				lb                  s1, 1004(sp)        
+				srai                s0, s0, 1 
+				addi                a4, sp, 84
+				and                 a4, a4, a4
+				subw                a4, a4, a4
+				srai                s1, s1, 12
+	
+b00000018a6:
+				beq                 x29, x20, 1f        
+				jal                 x1, i0000001883     
+				1: li x29, 10                           
+	
+				srliw               s5, s5, 23
+				lwu                 tp, -440(sp)        
+				sh                  a7, -410(sp)        
+				sd                  s1, 72(sp)          
+				addw                a4, a4, a4
+				ld                  s0, 32(sp)          
+				addi                sp, sp, -256
+i00000018a6:	ld                  s1, 120(sp)         
+i00000018a7:	lwu                 s1, -1992(sp)       
+i00000018a8:	addi                a2, sp, 156
+i00000018a9:	sd                  a5, 72(sp)          
+i00000018aa:	addiw               a5, a5, -21
+i00000018ab:	and                 s1, s1, a5
+i00000018ac:	addi                a0, a0, -6
+i00000018ad:	addi                a5, sp, 20
+				la                  sp, begin_signature
+				li                  t1, 6840  
+				add                 sp, sp, t1
+i00000018ae:	sw                  s0, 36(sp)          
+i00000018af:	or                  a2, a2, s0
+i00000018b0:	sw                  t0, 1984(sp)        
+i00000018b1:	sd                  s8, -1024(sp)       
+i00000018b2:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 2832  
+				add                 sp, sp, t1
+i00000018b3:	lw                  a2, 4(sp)           
+i00000018b4:	lbu                 s11, -1799(sp)      
+i00000018b5:	lw                  a2, 32(sp)          
+i00000018b6:	sw                  s1, 72(sp)          
+i00000018b7:	srai                a1, a1, 14
+i00000018b8:	subw                s0, s0, s1
+i00000018b9:	ld                  a5, 48(sp)          
+i00000018ba:	subw                s0, s0, s1
+i00000018bb:	sw                  a5, 28(sp)          
+i00000018bc:	addiw               a0, a0, -11
+i00000018bd:	srai                a2, a2, 14
+i00000018be:	lwu                 s1, 784(sp)         
+i00000018bf:	fence.i                       
+i00000018c0:	sd                  a0, -1704(sp)       
+i00000018c1:	addi                s6, zero, 16
+i00000018c2:	fence.i                       
+i00000018c3:	addi                a4, sp, 308
+i00000018c4:	srai                a1, a1, 2 
+i00000018c5:	and                 a5, a5, a1
+i00000018c6:	fence                         
+i00000018c7:	addi                sp, sp, -64
+i00000018c8:	addi                s1, sp, 268
+i00000018c9:	and                 a5, a7, s10
+i00000018ca:	sd                  a6, -920(sp)        
+i00000018cb:	ld                  a2, 96(sp)          
+i00000018cc:	sd                  s3, 752(sp)         
+i00000018cd:	addi                a3, a3, -25
+				li                  x25, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 12000 
+				add                 sp, sp, t1
+				srliw               s2, s1, 30
+				srai                s1, s1, 6 
+				srli                a4, a4, 1 
+				addi                s6, s10, 1833
+				xori                a5, s11, 2013
+				lwu                 s0, 880(sp)         
+				addi                sp, sp, -80
+	
+b00000018ce:
+				pre_branch_macro                        
+				bge                 x25, x29, i00000018dc
+				post_branch_macro                       
+	
+				srl                 s2, s5, s10
+				srli                a4, a4, 14
+				ld                  a4, 56(sp)          
+				sub                 s1, s1, a4
+				subw                a5, a5, a4
+				addi                sp, sp, -96
+				sd                  a5, -2000(sp)       
+				li                  x29, 10   
+i00000018ce:	lui                 s1, 172330
+i00000018cf:	ld                  a5, -408(sp)        
+i00000018d0:	lw                  s0, 1960(sp)        
+i00000018d1:	lui                 a7, 10    
+i00000018d2:	addi                a3, sp, 180
+i00000018d3:	ld                  s6, -1152(sp)       
+i00000018d4:	sltu                s1, t2, t6
+i00000018d5:	and                 s4, s8, gp
+i00000018d6:	sb                  a5, 1253(sp)        
+i00000018d7:	addi                sp, sp, -80
+i00000018d8:	subw                s1, s1, a4
+i00000018d9:	addi                sp, sp, 112
+i00000018da:	lw                  s1, 116(sp)         
+i00000018db:	andi                a1, a1, -26
+i00000018dc:	lw                  s1, 20(sp)          
+i00000018dd:	lbu                 tp, -81(sp)         
+i00000018de:	lbu                 s4, -385(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2624  
+				add                 sp, sp, t1
+i00000018df:	sd                  s8, -1768(sp)       
+i00000018e0:	sw                  s2, 216(sp)         
+i00000018e1:	sd                  a5, 120(sp)         
+i00000018e2:	lw                  t2, 80(sp)          
+i00000018e3:	addi                sp, sp, -464
+i00000018e4:	fence                         
+i00000018e5:	fence.i                       
+i00000018e6:	addi                a0, sp, 244
+i00000018e7:	addi                a1, a1, -28
+i00000018e8:	fence                         
+i00000018e9:	fence.i                       
+i00000018ea:	lh                  t1, 1652(sp)        
+i00000018eb:	slliw               s2, s0, 7 
+i00000018ec:	and                 a2, a2, a3
+i00000018ed:	lbu                 a5, 743(sp)         
+i00000018ee:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 11224 
+				add                 sp, sp, t1
+i00000018ef:	lw                  s0, 88(sp)          
+i00000018f0:	add                 s1, s1, s0
+i00000018f1:	fence.i                       
+i00000018f2:	andi                s1, s1, -18
+i00000018f3:	fsrmi               x0, 0     
+i00000018f4:	sd                  s2, 248(sp)         
+i00000018f5:	subw                a5, s0, a5
+i00000018f6:	fence.i                       
+				li                  x28, 10   
+				la                  sp, begin_signature
+				li                  t1, 12104 
+				add                 sp, sp, t1
+				sd                  s5, -2040(sp)       
+				srlw                t2, tp, s5
+				mulw                a4, s7, s9
+				srli                s0, s0, 15
+				lh                  a5, 1412(sp)        
+				andi                s5, s4, 1270
+				lw                  s1, 4(sp)           
+	
+b00000018f7:
+				beq                 x29, x28, 1f        
+				la                  x28, i00000018e8    
+				jalr                x0, x28, 0          
+				1: li x29, 10                           
+	
+				addi                a5, sp, 248
+				fence.i                       
+				addi                s0, sp, 444
+				srai                s1, s1, 15
+				addi                sp, sp, -208
+				remuw               s1, s5, a6
+				addiw               a4, a4, -28
+i00000018f7:	lw                  s0, 52(sp)          
+i00000018f8:	fence                         
+i00000018f9:	srai                a4, a4, 12
+i00000018fa:	sd                  s3, 24(sp)          
+i00000018fb:	subw                s1, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 5440  
+				add                 sp, sp, t1
+i00000018fc:	lw                  s2, 24(sp)          
+i00000018fd:	srliw               s1, s1, 28
+i00000018fe:	srli                a4, a4, 8 
+i00000018ff:	slti                s0, s0, -1888
+i0000001900:	addi                sp, sp, 256
+i0000001901:	ld                  s1, -1304(sp)       
+				la                  sp, begin_signature
+				li                  t1, 7976  
+				add                 sp, sp, t1
+i0000001902:	sw                  a5, 72(sp)          
+i0000001903:	sd                  a4, -376(sp)        
+i0000001904:	addi                s0, sp, 52
+i0000001905:	fence.i                       
+i0000001906:	addi                s1, s1, -9
+i0000001907:	fence.i                       
+i0000001908:	fence                         
+i0000001909:	andi                a1, a1, 12
+i000000190a:	add                 s7, s7, s0
+i000000190b:	addi                sp, sp, 96
+				la                  sp, begin_signature
+				li                  t1, 3552  
+				add                 sp, sp, t1
+i000000190c:	lw                  a5, 76(sp)          
+i000000190d:	srli                s1, s1, 18
+i000000190e:	lw                  a1, 48(sp)          
+i000000190f:	sw                  a5, 8(sp)           
+i0000001910:	srli                a1, a1, 29
+i0000001911:	ld                  s1, 528(sp)         
+i0000001912:	srli                a3, s1, 43
+				la                  sp, begin_signature
+				li                  t1, 7104  
+				add                 sp, sp, t1
+i0000001913:	ld                  a0, 16(sp)          
+i0000001914:	fence                         
+i0000001915:	addw                a3, a3, a2
+				la                  sp, begin_signature
+				li                  t1, 8624  
+				add                 sp, sp, t1
+i0000001916:	sd                  s1, 48(sp)          
+i0000001917:	lwu                 s0, 1828(sp)        
+i0000001918:	sw                  a2, -264(sp)        
+i0000001919:	srai                a3, a3, 6 
+i000000191a:	and                 a3, a3, a2
+i000000191b:	sh                  a7, 1942(sp)        
+i000000191c:	subw                a1, a1, s1
+i000000191d:	ld                  s0, 72(sp)          
+i000000191e:	addi                s1, sp, 20
+				addi                a4, sp, 124
+				sw                  s4, 1344(sp)        
+				lw                  s3, -1836(sp)       
+				ld                  s11, 536(sp)        
+				sw                  s3, 120(sp)         
+				sd                  t3, 1896(sp)        
+				andi                a4, a4, -13
+	
+b000000191f:
+				jal                 x1, i0000001926     
+	
+				fence                         
+				ld                  s5, 984(sp)         
+				andi                s0, a5, -1252
+				slli                a5, a5, 32
+				addw                s0, s0, a5
+				lui                 s1, 251828
+				addi                s0, zero, -25
+i000000191f:	lbu                 t0, -644(sp)        
+i0000001920:	sh                  s11, 818(sp)        
+i0000001921:	srai                s1, s1, 5 
+i0000001922:	lw                  a6, 652(sp)         
+i0000001923:	sd                  a0, 24(sp)          
+i0000001924:	sw                  s8, 20(sp)          
+i0000001925:	srli                s1, s1, 4 
+i0000001926:	xori                s1, t1, 49
+i0000001927:	or                  s0, s0, a4
+i0000001928:	sb                  s0, -833(sp)        
+i0000001929:	addi                a3, a3, -12
+i000000192a:	fence                         
+i000000192b:	lwu                 s0, 1976(sp)        
+i000000192c:	sd                  s0, 1584(sp)        
+i000000192d:	srli                a4, a4, 7 
+i000000192e:	sw                  a0, 16(sp)          
+i000000192f:	srli                s0, s0, 7 
+i0000001930:	fence                         
+i0000001931:	sraiw               s1, a1, 1 
+i0000001932:	addiw               a5, a5, -8
+i0000001933:	addi                sp, sp, -240
+i0000001934:	lwu                 s7, -660(sp)        
+i0000001935:	sh                  a5, -760(sp)        
+i0000001936:	fence                         
+i0000001937:	slliw               s6, s7, 18
+i0000001938:	sd                  t5, 208(sp)         
+i0000001939:	srli                a0, a0, 22
+i000000193a:	slliw               s2, tp, 30
+i000000193b:	ld                  s1, 320(sp)         
+i000000193c:	addi                sp, sp, -112
+i000000193d:	add                 s0, zero, a5
+i000000193e:	fence                         
+i000000193f:	lw                  a0, 32(sp)          
+i0000001940:	sw                  s0, -248(sp)        
+i0000001941:	srli                s1, s1, 8 
+i0000001942:	fence.i                       
+i0000001943:	addw                s6, s0, a5
+i0000001944:	andi                s8, s0, -1923
+i0000001945:	srli                a5, a5, 12
+i0000001946:	addi                s0, sp, 40
+				la                  sp, begin_signature
+				li                  t1, 2320  
+				add                 sp, sp, t1
+				mulw                s3, s0, s1
+				divu                s1, s0, a5
+				lw                  zero, 44(sp)        
+				lh                  s3, -1992(sp)       
+				subw                s0, zero, a7
+				lui                 a6, 364244
+				divu                s1, s0, s1
+	
+b0000001947:
+				jal                 x0, i000000196a     
+	
+				srai                a5, a5, 10
+				fence                         
+				sw                  a4, 24(sp)          
+				addi                sp, sp, -224
+				fence                         
+				lui                 s1, 21    
+				srli                s0, s0, 19
+i0000001947:	sraiw               s0, s1, 5 
+i0000001948:	srli                a5, s1, 19
+				la                  sp, begin_signature
+				li                  t1, 13352 
+				add                 sp, sp, t1
+i0000001949:	lwu                 t3, -1588(sp)       
+i000000194a:	addw                a1, a1, s0
+i000000194b:	addw                s11, gp, tp
+i000000194c:	slli                a1, a1, 13
+i000000194d:	ld                  s10, 656(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13816 
+				add                 sp, sp, t1
+i000000194e:	lwu                 t6, 1704(sp)        
+i000000194f:	addi                a3, sp, 44
+i0000001950:	addi                t1, zero, -2
+i0000001951:	fence.i                       
+i0000001952:	ld                  s0, 680(sp)         
+i0000001953:	srlw                s0, a5, s0
+i0000001954:	fence                         
+i0000001955:	sd                  s6, -1176(sp)       
+i0000001956:	andi                s0, s0, -1
+i0000001957:	lwu                 zero, -1724(sp)     
+i0000001958:	slt                 s0, tp, a4
+i0000001959:	sw                  t1, 68(sp)          
+i000000195a:	sd                  a3, 120(sp)         
+i000000195b:	lw                  a2, 40(sp)          
+i000000195c:	ld                  t5, 40(sp)          
+i000000195d:	lwu                 a5, 168(sp)         
+i000000195e:	lhu                 s1, -1042(sp)       
+i000000195f:	subw                a5, a5, s1
+i0000001960:	lw                  s1, -1904(sp)       
+i0000001961:	sb                  a3, -881(sp)        
+i0000001962:	addi                s1, sp, 228
+i0000001963:	addw                s0, s0, a4
+i0000001964:	addi                a1, sp, 400
+i0000001965:	sd                  a5, -1504(sp)       
+i0000001966:	ld                  s0, 80(sp)          
+i0000001967:	lui                 s8, 266706
+i0000001968:	srli                a2, a2, 4 
+i0000001969:	ld                  s4, 168(sp)         
+i000000196a:	ld                  s1, 64(sp)          
+i000000196b:	addw                a1, a1, a5
+i000000196c:	slli                s1, s1, 21
+i000000196d:	srli                s0, s0, 21
+i000000196e:	add                 s0, s7, s5
+				li                  x21, 10   
+				la                  sp, begin_signature
+				li                  t1, 4736  
+				add                 sp, sp, t1
+				lw                  a5, 24(sp)          
+				addiw               zero, a5, 960
+				srai                a4, a4, 15
+				divuw               s0, s0, s1
+				lw                  s1, 32(sp)          
+				sra                 s7, s4, t2
+				auipc               s2, 488556
+	
+b000000196f:
+				pre_branch_macro                        
+				bne                 x29, x21, i0000001964
+				post_branch_macro                       
+	
+				divu                a5, s0, a5
+				addi                a4, sp, 120
+				srai                s1, s1, 20
+				remu                a4, a5, a5
+				sw                  a4, 24(sp)          
+				addi                a4, sp, 248
+				srai                s8, s1, 10
+				li                  x29, 10   
+i000000196f:	lwu                 a5, 196(sp)         
+i0000001970:	and                 a2, a2, a5
+i0000001971:	lw                  a5, 52(sp)          
+i0000001972:	fence.i                       
+i0000001973:	ld                  a5, -1728(sp)       
+i0000001974:	addi                sp, sp, 208
+i0000001975:	sltiu               s11, a4, 535
+i0000001976:	addi                a3, sp, 52
+i0000001977:	srli                a1, a1, 4 
+i0000001978:	sllw                t2, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 11792 
+				add                 sp, sp, t1
+i0000001979:	lw                  s5, 100(sp)         
+i000000197a:	sd                  a2, 120(sp)         
+i000000197b:	srli                a4, a4, 14
+i000000197c:	srai                s0, s0, 2 
+i000000197d:	srlw                s9, a6, tp
+i000000197e:	srai                tp, a5, 14
+i000000197f:	srai                a2, a2, 3 
+i0000001980:	fence.i                       
+i0000001981:	addi                sp, sp, -176
+i0000001982:	lw                  a5, 48(sp)          
+i0000001983:	fence                         
+i0000001984:	sraw                a5, a4, s9
+i0000001985:	srai                a0, a0, 5 
+i0000001986:	srai                s0, s0, 17
+				la                  sp, begin_signature
+				li                  t1, 3536  
+				add                 sp, sp, t1
+i0000001987:	lb                  a3, -243(sp)        
+i0000001988:	fence.i                       
+i0000001989:	srliw               a5, s0, 20
+i000000198a:	addi                a0, a0, -21
+i000000198b:	sw                  s11, 4(sp)          
+i000000198c:	lh                  t5, 316(sp)         
+i000000198d:	lb                  a5, -1993(sp)       
+				la                  sp, begin_signature
+				li                  t1, 4464  
+				add                 sp, sp, t1
+i000000198e:	sd                  s0, 216(sp)         
+i000000198f:	ld                  s8, -1376(sp)       
+i0000001990:	lwu                 a5, 1016(sp)        
+i0000001991:	sraw                s1, s3, s4
+i0000001992:	srli                s0, s0, 1 
+i0000001993:	lh                  s0, -1060(sp)       
+i0000001994:	slli                s1, s1, 4 
+i0000001995:	sraiw               t3, a6, 29
+i0000001996:	fence.i                       
+				li                  x16, 10   
+				mulhu               s10, s2, zero
+				srli                s1, s1, 6 
+				or                  s1, s1, s1
+				or                  a4, a4, s0
+				ld                  a4, 112(sp)         
+				srli                t6, s9, 59
+				lw                  s1, 40(sp)          
+	
+b0000001997:
+				beq                 x29, x16, 1f        
+				jal                 x1, i000000197c     
+				1: li x29, 10                           
+	
+				div                 gp, s1, s1
+				lbu                 t2, -1921(sp)       
+				divuw               s4, a4, s8
+				addi                s0, zero, -29
+				remu                s0, s6, a7
+				addw                s0, s0, a5
+				fence.i                       
+i0000001997:	fence.i                       
+i0000001998:	lhu                 a6, 1098(sp)        
+i0000001999:	srai                s1, s1, 8 
+i000000199a:	ld                  a7, 1784(sp)        
+i000000199b:	addi                a5, sp, 4 
+i000000199c:	srli                s0, s0, 12
+i000000199d:	srli                a2, a2, 31
+i000000199e:	ld                  a5, 1400(sp)        
+i000000199f:	andi                a4, s1, 441
+i00000019a0:	lw                  s1, 0(sp)           
+i00000019a1:	fence                         
+i00000019a2:	addiw               a5, a5, -732
+				la                  sp, begin_signature
+				li                  t1, 12496 
+				add                 sp, sp, t1
+i00000019a3:	ld                  a3, 8(sp)           
+i00000019a4:	srli                a3, a3, 5 
+i00000019a5:	or                  s1, s1, s0
+i00000019a6:	addiw               s1, s1, -5
+				la                  sp, begin_signature
+				li                  t1, 13576 
+				add                 sp, sp, t1
+i00000019a7:	lw                  s0, 20(sp)          
+i00000019a8:	sw                  a0, 8(sp)           
+i00000019a9:	addiw               a5, s0, -633
+i00000019aa:	fence                         
+i00000019ab:	sraiw               a5, a5, 23
+i00000019ac:	sh                  a1, -362(sp)        
+i00000019ad:	addiw               a5, s1, 1231
+i00000019ae:	srli                a0, a0, 7 
+i00000019af:	srli                s0, s0, 10
+i00000019b0:	addiw               s0, s2, -1597
+i00000019b1:	or                  a5, a5, a1
+i00000019b2:	addi                s0, zero, -9
+i00000019b3:	sd                  s6, 8(sp)           
+i00000019b4:	addi                a0, sp, 108
+i00000019b5:	srai                s0, s0, 14
+i00000019b6:	srli                s1, s1, 14
+i00000019b7:	sd                  a2, -24(sp)         
+i00000019b8:	sb                  s0, 1588(sp)        
+i00000019b9:	addi                s5, zero, -29
+i00000019ba:	lw                  a3, 44(sp)          
+i00000019bb:	addi                sp, sp, -160
+i00000019bc:	slti                s1, a5, -1171
+i00000019bd:	sh                  zero, -1686(sp)     
+i00000019be:	lwu                 zero, -1044(sp)     
+				li                  x22, 10   
+				la                  sp, begin_signature
+				li                  t1, 4896  
+				add                 sp, sp, t1
+				remw                zero, s2, gp
+				sw                  s2, 88(sp)          
+				addw                a5, a5, a4
+				lwu                 zero, -1656(sp)     
+				sd                  s0, 104(sp)         
+				sw                  s9, 92(sp)          
+				subw                a4, a4, a4
+	
+b00000019bf:
+				beq                 x29, x22, 1f        
+				jal                 x1, i00000019aa     
+				1: li x29, 10                           
+	
+				sd                  a4, 88(sp)          
+				srli                s1, s1, 13
+				ld                  a6, -720(sp)        
+				div                 s1, a5, a5
+				fence                         
+				mulw                a5, s1, a5
+				addi                s1, sp, 492
+i00000019bf:	slliw               t5, s1, 26
+i00000019c0:	addi                a1, sp, 340
+i00000019c1:	fence                         
+i00000019c2:	addi                sp, sp, -80
+i00000019c3:	fence                         
+i00000019c4:	addw                a5, a5, a0
+i00000019c5:	srliw               s11, a5, 5
+i00000019c6:	sraw                s11, s5, zero
+i00000019c7:	addw                s0, s0, a3
+i00000019c8:	sw                  a5, 40(sp)          
+i00000019c9:	lwu                 s1, 708(sp)         
+i00000019ca:	sllw                s4, a0, s5
+i00000019cb:	addi                sp, sp, -304
+i00000019cc:	sraiw               a5, a7, 0 
+i00000019cd:	sllw                a5, s1, s0
+i00000019ce:	add                 s1, s9, a0
+i00000019cf:	or                  s0, s0, s1
+i00000019d0:	lwu                 s1, -1436(sp)       
+i00000019d1:	sw                  t6, 1772(sp)        
+i00000019d2:	or                  a4, a4, s0
+i00000019d3:	lbu                 a3, -1090(sp)       
+i00000019d4:	addi                s0, t1, -1453
+i00000019d5:	addw                a4, a4, a2
+i00000019d6:	sd                  s7, 1512(sp)        
+i00000019d7:	srai                s7, a5, 8 
+i00000019d8:	sh                  t5, 832(sp)         
+i00000019d9:	sh                  s0, 962(sp)         
+				la                  sp, begin_signature
+				li                  t1, 12768 
+				add                 sp, sp, t1
+i00000019da:	ld                  s5, 104(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7784  
+				add                 sp, sp, t1
+i00000019db:	ld                  s1, 96(sp)          
+i00000019dc:	sd                  s0, -64(sp)         
+i00000019dd:	sd                  a5, -344(sp)        
+i00000019de:	slliw               a6, s9, 21
+i00000019df:	fence                         
+i00000019e0:	lwu                 a0, 2000(sp)        
+i00000019e1:	srai                a4, a4, 32
+i00000019e2:	sltu                s11, s0, a5
+i00000019e3:	sra                 s0, s1, a5
+i00000019e4:	and                 a3, a3, a0
+i00000019e5:	xor                 s0, a5, s1
+i00000019e6:	subw                a3, a3, s1
+				li                  x20, 10   
+				sb                  a5, -1924(sp)       
+				mul                 s0, s0, a5
+				ld                  a5, 8(sp)           
+				ld                  a4, 8(sp)           
+				ld                  tp, -576(sp)        
+				lb                  gp, 1607(sp)        
+				sraiw               s1, a5, 28
+	
+b00000019e7:
+				beq                 x29, x20, 1f        
+				la                  x20, i00000019ce    
+				jalr                x0, x20, 0          
+				1: li x29, 10                           
+	
+				srli                a5, a5, 13
+				mulw                s6, t6, t3
+				addiw               s1, s1, -2
+				srli                a4, a4, 14
+				addi                a4, sp, 348
+				lui                 s1, 10    
+				fence                         
+i00000019e7:	slliw               s1, a2, 5 
+i00000019e8:	sd                  s0, -336(sp)        
+i00000019e9:	fence.i                       
+i00000019ea:	addw                a5, s8, s9
+i00000019eb:	lw                  a1, 32(sp)          
+i00000019ec:	add                 s0, s0, a2
+i00000019ed:	ld                  s0, 0(sp)           
+i00000019ee:	srlw                t3, s0, s1
+i00000019ef:	lh                  s1, -962(sp)        
+i00000019f0:	fence.i                       
+i00000019f1:	sraiw               a5, a5, 4 
+i00000019f2:	lhu                 s0, -240(sp)        
+i00000019f3:	ld                  a5, 72(sp)          
+i00000019f4:	lw                  a2, 4(sp)           
+i00000019f5:	addi                s11, zero, 13
+i00000019f6:	subw                a5, a5, a5
+i00000019f7:	srli                s0, s0, 15
+i00000019f8:	addi                sp, sp, -352
+i00000019f9:	lui                 s1, 1     
+i00000019fa:	addi                sp, sp, -64
+i00000019fb:	slli                s0, a0, 10
+i00000019fc:	addi                s1, sp, 364
+i00000019fd:	addi                sp, sp, -352
+i00000019fe:	srli                a0, a0, 10
+i00000019ff:	addiw               a4, a4, 10
+i0000001a00:	sd                  a2, 168(sp)         
+i0000001a01:	ld                  t3, 56(sp)          
+i0000001a02:	srai                a3, a3, 3 
+i0000001a03:	addi                sp, sp, 192
+				la                  sp, begin_signature
+				li                  t1, 5400  
+				add                 sp, sp, t1
+i0000001a04:	sd                  s0, -1536(sp)       
+i0000001a05:	addi                sp, sp, -224
+i0000001a06:	lw                  s1, -1888(sp)       
+i0000001a07:	addw                s0, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 7848  
+				add                 sp, sp, t1
+i0000001a08:	sd                  s0, 56(sp)          
+i0000001a09:	slliw               a5, s3, 28
+i0000001a0a:	sw                  a7, 44(sp)          
+i0000001a0b:	srli                s1, s1, 18
+i0000001a0c:	srlw                s0, s9, t3
+i0000001a0d:	lwu                 s0, -1192(sp)       
+i0000001a0e:	ld                  s1, 96(sp)          
+				li                  x16, 12   
+				addi                x29, x29, 1
+				lw                  s1, 44(sp)          
+				sb                  t3, 343(sp)         
+				remw                s8, s6, tp
+				sltiu               s11, t6, 1857
+				fence                         
+				divu                t2, s4, zero
+				fence                         
+	
+b0000001a0f:
+				beq                 x29, x16, 1f        
+				jal                 x1, i00000019f5     
+				1: li x29, 10                           
+	
+				srli                a4, a4, 31
+				mulh                a5, a5, a5
+				slti                gp, s4, 1068
+				add                 s8, a5, s1
+				slliw               a5, s1, 30
+				addi                sp, sp, 112
+				sd                  s8, -768(sp)        
+i0000001a0f:	subw                a1, a1, s1
+i0000001a10:	fence                         
+i0000001a11:	subw                a0, a0, s0
+i0000001a12:	sd                  a5, 1504(sp)        
+i0000001a13:	subw                s0, s0, s0
+i0000001a14:	addi                sp, sp, -352
+i0000001a15:	addi                a5, a5, -13
+i0000001a16:	fence.i                       
+i0000001a17:	addiw               s1, t1, 286
+i0000001a18:	lwu                 s1, -1776(sp)       
+i0000001a19:	addw                s9, a5, a5
+i0000001a1a:	addi                a5, sp, 256
+i0000001a1b:	srai                a5, a5, 1 
+i0000001a1c:	sh                  s0, 606(sp)         
+i0000001a1d:	addi                s1, sp, 44
+i0000001a1e:	srliw               s0, a6, 11
+i0000001a1f:	subw                a3, a3, s1
+i0000001a20:	or                  a0, a0, s1
+i0000001a21:	srai                a2, a2, 14
+i0000001a22:	sw                  s7, 692(sp)         
+i0000001a23:	and                 a5, s4, t1
+i0000001a24:	and                 a1, a1, a0
+				la                  sp, begin_signature
+				li                  t1, 8520  
+				add                 sp, sp, t1
+i0000001a25:	lw                  a3, 64(sp)          
+i0000001a26:	sb                  s0, 1805(sp)        
+i0000001a27:	lw                  a0, 48(sp)          
+i0000001a28:	ld                  s0, 40(sp)          
+i0000001a29:	srl                 s1, s0, a5
+i0000001a2a:	slli                s10, a5, 52
+i0000001a2b:	fence.i                       
+i0000001a2c:	slli                t0, t3, 46
+i0000001a2d:	sub                 s0, s11, a3
+				la                  sp, begin_signature
+				li                  t1, 4800  
+				add                 sp, sp, t1
+i0000001a2e:	ld                  a3, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 7536  
+				add                 sp, sp, t1
+i0000001a2f:	sw                  a5, 48(sp)          
+i0000001a30:	srai                a0, a0, 26
+i0000001a31:	fence.i                       
+i0000001a32:	sllw                a5, a1, s9
+				la                  sp, begin_signature
+				li                  t1, 4872  
+				add                 sp, sp, t1
+i0000001a33:	lb                  s1, 460(sp)         
+i0000001a34:	sw                  gp, 84(sp)          
+i0000001a35:	lw                  a5, -1564(sp)       
+i0000001a36:	sllw                zero, a5, s1
+				fence                         
+				divuw               s0, s1, s0
+				srai                s0, s0, 19
+				srli                a4, a4, 8 
+				sd                  a4, 72(sp)          
+				mulh                s0, s10, s4
+				ld                  s10, -1728(sp)      
+	
+b0000001a37:
+				la                  x23, i0000001a3e    
+				jalr                x1, x23, 0          
+	
+				srai                a4, a4, 8 
+				lw                  s2, -232(sp)        
+				ld                  a5, 184(sp)         
+				ori                 zero, s0, -1981
+				ld                  a5, 1992(sp)        
+				ld                  s11, 24(sp)         
+				ld                  a5, -872(sp)        
+i0000001a37:	addw                s0, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 3464  
+				add                 sp, sp, t1
+i0000001a38:	sd                  s0, 48(sp)          
+i0000001a39:	srli                a4, a4, 9 
+i0000001a3a:	slliw               a4, s0, 9 
+i0000001a3b:	fence.i                       
+i0000001a3c:	ld                  s11, 1160(sp)       
+i0000001a3d:	srai                a5, a5, 5 
+i0000001a3e:	fence.i                       
+i0000001a3f:	slliw               s6, s1, 11
+				la                  sp, begin_signature
+				li                  t1, 4712  
+				add                 sp, sp, t1
+i0000001a40:	lw                  a5, 160(sp)         
+i0000001a41:	sllw                a4, s5, s10
+i0000001a42:	lw                  a0, 60(sp)          
+i0000001a43:	addi                a1, sp, 492
+				la                  sp, begin_signature
+				li                  t1, 6152  
+				add                 sp, sp, t1
+i0000001a44:	sw                  s1, 116(sp)         
+i0000001a45:	fence.i                       
+i0000001a46:	addw                a5, a5, a2
+i0000001a47:	xor                 a5, a5, a5
+i0000001a48:	or                  s1, a5, a5
+i0000001a49:	addiw               s1, s1, -8
+i0000001a4a:	srai                a2, a2, 6 
+i0000001a4b:	xori                t5, t1, 1356
+i0000001a4c:	lw                  a2, 84(sp)          
+i0000001a4d:	srai                a1, a1, 26
+i0000001a4e:	ld                  s1, 0(sp)           
+i0000001a4f:	xori                tp, t0, 1570
+				la                  sp, begin_signature
+				li                  t1, 8400  
+				add                 sp, sp, t1
+i0000001a50:	sd                  a5, 72(sp)          
+i0000001a51:	lw                  a4, 20(sp)          
+i0000001a52:	srli                a3, a3, 14
+i0000001a53:	sw                  s0, 36(sp)          
+i0000001a54:	srli                s1, s1, 2 
+i0000001a55:	lwu                 s4, -1988(sp)       
+i0000001a56:	ld                  s1, 112(sp)         
+i0000001a57:	addi                s0, s0, -30
+i0000001a58:	srli                s1, s1, 6 
+i0000001a59:	srli                a5, a5, 4 
+				la                  sp, begin_signature
+				li                  t1, 10864 
+				add                 sp, sp, t1
+i0000001a5a:	lw                  s1, 24(sp)          
+				la                  sp, begin_signature
+				li                  t1, 7288  
+				add                 sp, sp, t1
+i0000001a5b:	ld                  s1, 808(sp)         
+i0000001a5c:	ld                  gp, -560(sp)        
+i0000001a5d:	sw                  s9, 120(sp)         
+i0000001a5e:	lbu                 s1, -1554(sp)       
+				li                  x19, 10   
+				addiw               a5, s8, 1463
+				sb                  s1, -42(sp)         
+				slliw               s5, t3, 28
+				fence                         
+				subw                a5, a5, a4
+				addi                s1, zero, -26
+				srai                a4, a4, 15
+	
+b0000001a5f:
+				beq                 x29, x19, 1f        
+				jal                 x1, i0000001a4d     
+				1: li x29, 10                           
+	
+				mulhsu              s1, a5, a5
+				ld                  s0, 1568(sp)        
+				remw                s1, zero, t6
+				ld                  t2, 192(sp)         
+				srai                s0, s0, 8 
+				fence                         
+				slli                a4, a4, 20
+i0000001a5f:	fence                         
+i0000001a60:	ld                  a6, 1752(sp)        
+i0000001a61:	lw                  tp, 0(sp)           
+i0000001a62:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 4448  
+				add                 sp, sp, t1
+i0000001a63:	sd                  s1, 1384(sp)        
+i0000001a64:	srliw               s5, s3, 30
+i0000001a65:	srlw                s6, t2, t3
+i0000001a66:	addiw               a3, a3, -1
+i0000001a67:	addw                s1, s1, a3
+				la                  sp, begin_signature
+				li                  t1, 10848 
+				add                 sp, sp, t1
+i0000001a68:	sd                  a5, 1088(sp)        
+i0000001a69:	addw                a5, a5, a1
+i0000001a6a:	fence                         
+i0000001a6b:	fence.i                       
+i0000001a6c:	add                 a5, a5, s10
+i0000001a6d:	sw                  a5, 36(sp)          
+i0000001a6e:	add                 s0, s0, s1
+i0000001a6f:	addw                a1, a1, a0
+				la                  sp, begin_signature
+				li                  t1, 5624  
+				add                 sp, sp, t1
+i0000001a70:	sd                  s0, 64(sp)          
+i0000001a71:	fence                         
+i0000001a72:	addi                a4, sp, 272
+i0000001a73:	ld                  s0, -1888(sp)       
+i0000001a74:	ld                  a3, 128(sp)         
+i0000001a75:	addi                s1, sp, 176
+i0000001a76:	sh                  s4, -1762(sp)       
+i0000001a77:	slli                s1, s1, 8 
+i0000001a78:	addi                a0, sp, 276
+i0000001a79:	srliw               s1, a5, 19
+i0000001a7a:	fence.i                       
+i0000001a7b:	srli                s0, s0, 3 
+i0000001a7c:	addi                sp, sp, -512
+i0000001a7d:	subw                gp, a0, a1
+i0000001a7e:	srl                 s2, a5, s1
+i0000001a7f:	lwu                 zero, 828(sp)       
+i0000001a80:	subw                a1, a1, a3
+i0000001a81:	srli                a5, a5, 5 
+i0000001a82:	add                 a7, a7, a2
+i0000001a83:	addiw               s1, s1, 2 
+i0000001a84:	ld                  s2, 168(sp)         
+				la                  sp, begin_signature
+				li                  t1, 5552  
+				add                 sp, sp, t1
+i0000001a85:	ld                  a0, 56(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11400 
+				add                 sp, sp, t1
+i0000001a86:	lbu                 s4, -1696(sp)       
+				div                 a7, zero, t2
+				divu                t6, a5, s1
+				ld                  t3, 1200(sp)        
+				lw                  s7, -484(sp)        
+				xori                s0, a7, 1414
+				slti                a5, a5, 583
+				srlw                s0, s5, s4
+	
+b0000001a87:
+				jal                 x1, i0000001aa6     
+	
+				xori                a5, s10, -914
+				add                 s0, s1, s1
+				remuw               s5, s1, s0
+				srai                t3, s1, 48
+				ld                  a4, 24(sp)          
+				remuw               tp, s4, a4
+				addi                sp, sp, -64
+i0000001a87:	sraiw               t0, s1, 24
+i0000001a88:	sw                  s0, 60(sp)          
+i0000001a89:	sllw                s5, s1, a5
+i0000001a8a:	addi                a4, a4, 14
+i0000001a8b:	addi                a0, sp, 28
+i0000001a8c:	subw                s2, a5, s0
+i0000001a8d:	lw                  s1, 104(sp)         
+i0000001a8e:	fence                         
+i0000001a8f:	sh                  tp, 90(sp)          
+i0000001a90:	fsrmi               x0, 1     
+				la                  sp, begin_signature
+				li                  t1, 3496  
+				add                 sp, sp, t1
+i0000001a91:	sd                  a2, 248(sp)         
+i0000001a92:	sraiw               a5, s0, 0 
+i0000001a93:	slliw               s1, s0, 29
+				la                  sp, begin_signature
+				li                  t1, 13024 
+				add                 sp, sp, t1
+i0000001a94:	lwu                 s0, 1688(sp)        
+i0000001a95:	and                 t0, tp, zero
+i0000001a96:	srli                a0, s1, 53
+i0000001a97:	ld                  a5, 72(sp)          
+i0000001a98:	addiw               s1, s7, 1653
+i0000001a99:	fence.i                       
+i0000001a9a:	fence                         
+i0000001a9b:	sub                 a4, a4, a1
+i0000001a9c:	addi                s0, sp, 300
+i0000001a9d:	srli                a2, a2, 19
+i0000001a9e:	addi                sp, sp, 64
+i0000001a9f:	addi                t3, s4, 1783
+i0000001aa0:	addi                sp, sp, 32
+i0000001aa1:	srli                a3, a3, 9 
+i0000001aa2:	srai                s1, s1, 27
+				la                  sp, begin_signature
+				li                  t1, 8216  
+				add                 sp, sp, t1
+i0000001aa3:	sd                  t2, -1520(sp)       
+i0000001aa4:	srai                a2, a2, 1 
+i0000001aa5:	sd                  s0, -1680(sp)       
+i0000001aa6:	addi                s0, zero, -28
+i0000001aa7:	sd                  a4, 88(sp)          
+i0000001aa8:	and                 a2, a2, a1
+i0000001aa9:	addi                s0, sp, 160
+i0000001aaa:	sllw                t3, zero, tp
+i0000001aab:	addi                sp, sp, -96
+i0000001aac:	sraw                s5, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 14128 
+				add                 sp, sp, t1
+i0000001aad:	sd                  a3, 96(sp)          
+i0000001aae:	sraw                s2, a3, s9
+i0000001aaf:	lui                 s4, 31    
+				la                  sp, begin_signature
+				li                  t1, 4392  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4944  
+				add                 sp, sp, t1
+				divu                s2, a4, s8
+				mulhu               tp, s11, t6
+				lhu                 s0, -1482(sp)       
+				fence.i                       
+				srli                a4, a4, 12
+				fence.i                       
+				add                 s1, s1, s0
+	
+b0000001ab0:
+				jal                 x1, i0000001ac5     
+	
+				add                 a5, a5, s0
+				divu                s1, a5, s0
+				srli                s1, s1, 6 
+				sd                  a4, 64(sp)          
+				lb                  s0, 584(sp)         
+				sw                  s0, 60(sp)          
+				lw                  a5, 0(sp)           
+i0000001ab0:	sub                 s8, t6, a1
+i0000001ab1:	slli                s0, s0, 33
+				la                  sp, begin_signature
+				li                  t1, 5280  
+				add                 sp, sp, t1
+i0000001ab2:	ld                  a5, -40(sp)         
+i0000001ab3:	srli                a3, a3, 6 
+i0000001ab4:	subw                a5, a5, a5
+i0000001ab5:	addw                s1, s1, s1
+i0000001ab6:	sw                  s1, 404(sp)         
+i0000001ab7:	sd                  a5, 232(sp)         
+i0000001ab8:	sd                  s11, 1768(sp)       
+i0000001ab9:	fence.i                       
+i0000001aba:	srai                a1, a1, 10
+i0000001abb:	sltiu               a5, t3, 655
+i0000001abc:	srai                s0, s0, 3 
+i0000001abd:	sub                 a5, a5, s0
+i0000001abe:	slliw               s5, s1, 14
+i0000001abf:	fence                         
+i0000001ac0:	lw                  s1, 40(sp)          
+				la                  sp, begin_signature
+				li                  t1, 6864  
+				add                 sp, sp, t1
+i0000001ac1:	lw                  s1, -1228(sp)       
+i0000001ac2:	lhu                 a5, -430(sp)        
+i0000001ac3:	addi                a1, sp, 272
+i0000001ac4:	ld                  s10, 2024(sp)       
+i0000001ac5:	ori                 s0, a2, 1287
+i0000001ac6:	lw                  a2, 12(sp)          
+i0000001ac7:	addi                s0, s0, -30
+i0000001ac8:	addi                sp, sp, 160
+i0000001ac9:	auipc               s1, 372691
+i0000001aca:	xori                s1, s9, -720
+i0000001acb:	sw                  a2, 64(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11056 
+				add                 sp, sp, t1
+i0000001acc:	sw                  a5, 120(sp)         
+i0000001acd:	lwu                 s1, -1860(sp)       
+i0000001ace:	addi                s1, sp, 72
+i0000001acf:	srli                zero, t6, 20
+i0000001ad0:	ld                  t1, 2016(sp)        
+i0000001ad1:	lw                  t3, 48(sp)          
+i0000001ad2:	sra                 s10, s0, a5
+i0000001ad3:	and                 t1, a5, a5
+i0000001ad4:	srli                a5, a5, 10
+i0000001ad5:	add                 s0, s0, s3
+i0000001ad6:	fence                         
+i0000001ad7:	srli                a0, a0, 11
+				li                  x20, 10   
+				la                  sp, begin_signature
+				li                  t1, 10336 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7216  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4448  
+				add                 sp, sp, t1
+				addi                sp, sp, 16
+				sd                  a4, 40(sp)          
+				fence                         
+				subw                s0, s0, s1
+				lh                  s0, -1304(sp)       
+				sh                  tp, 670(sp)         
+				srai                s1, s1, 3 
+	
+b0000001ad8:
+				pre_branch_macro                        
+				bne                 x29, x20, i0000001ac7
+				post_branch_macro                       
+	
+				addi                t3, a4, -1233
+				sd                  a4, 1872(sp)        
+				sd                  a4, 0(sp)           
+				lw                  a7, 120(sp)         
+				lw                  a5, 56(sp)          
+				sh                  s0, -94(sp)         
+				srli                a4, a4, 2 
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 2128  
+				add                 sp, sp, t1
+i0000001ad8:	ld                  a3, 64(sp)          
+i0000001ad9:	addi                sp, sp, -336
+i0000001ada:	lui                 zero, 8   
+i0000001adb:	lw                  a5, 4(sp)           
+i0000001adc:	xor                 s0, s0, a0
+i0000001add:	srli                s1, s1, 14
+i0000001ade:	addi                sp, sp, -512
+i0000001adf:	fence.i                       
+i0000001ae0:	addi                a2, sp, 156
+i0000001ae1:	ld                  gp, 144(sp)         
+i0000001ae2:	lw                  a3, 40(sp)          
+i0000001ae3:	srai                a2, a2, 5 
+i0000001ae4:	ld                  s1, 184(sp)         
+i0000001ae5:	sd                  a0, 112(sp)         
+i0000001ae6:	andi                a5, t1, 49
+				la                  sp, begin_signature
+				li                  t1, 9784  
+				add                 sp, sp, t1
+i0000001ae7:	sw                  a5, 128(sp)         
+i0000001ae8:	srli                a4, a4, 7 
+i0000001ae9:	sd                  a4, 88(sp)          
+i0000001aea:	sub                 a2, a2, s0
+				la                  sp, begin_signature
+				li                  t1, 7096  
+				add                 sp, sp, t1
+i0000001aeb:	sd                  a4, 32(sp)          
+i0000001aec:	lui                 s8, 32    
+i0000001aed:	sw                  s1, -12(sp)         
+i0000001aee:	srli                a5, a5, 10
+i0000001aef:	srli                s1, s1, 7 
+i0000001af0:	sb                  s1, 489(sp)         
+i0000001af1:	lw                  a5, 92(sp)          
+i0000001af2:	slli                s1, s3, 49
+i0000001af3:	sd                  a6, -648(sp)        
+i0000001af4:	srli                a1, a1, 15
+i0000001af5:	srai                a5, a5, 7 
+i0000001af6:	sw                  a5, 112(sp)         
+i0000001af7:	subw                a6, s9, t2
+i0000001af8:	add                 s0, zero, a2
+				la                  sp, begin_signature
+				li                  t1, 5896  
+				add                 sp, sp, t1
+i0000001af9:	sw                  a1, 64(sp)          
+i0000001afa:	sd                  a3, 224(sp)         
+i0000001afb:	addi                a2, sp, 240
+i0000001afc:	sw                  t5, -1660(sp)       
+i0000001afd:	sllw                a5, a4, zero
+i0000001afe:	lh                  s1, 554(sp)         
+i0000001aff:	srai                s0, s0, 10
+				li                  x16, 0    
+				la                  sp, begin_signature
+				li                  t1, 2848  
+				add                 sp, sp, t1
+				addi                sp, sp, -112
+				addi                a4, sp, 168
+				mulhu               s3, s1, s0
+				divw                a5, a5, s1
+				srliw               s7, s5, 5 
+				sll                 s3, s0, a5
+				mul                 a4, s0, s1
+	
+b0000001b00:
+				pre_branch_macro                        
+				beq                 x29, x16, i0000001afb
+				post_branch_macro                       
+	
+				srli                a4, a4, 11
+				srliw               zero, a5, 9
+				srai                a4, a4, 1 
+				sd                  t3, 144(sp)         
+				ld                  a4, 104(sp)         
+				ld                  s1, -816(sp)        
+				sd                  s0, 208(sp)         
+				li                  x29, 10   
+i0000001b00:	slliw               s8, s1, 26
+i0000001b01:	srlw                s7, t2, s10
+i0000001b02:	lh                  t5, -290(sp)        
+i0000001b03:	addw                a2, a2, s1
+i0000001b04:	lh                  s1, 906(sp)         
+i0000001b05:	sw                  a4, 44(sp)          
+i0000001b06:	ld                  s2, -1232(sp)       
+i0000001b07:	sd                  s1, 64(sp)          
+i0000001b08:	slliw               s1, tp, 23
+i0000001b09:	ld                  a5, 48(sp)          
+i0000001b0a:	lw                  s1, 1640(sp)        
+i0000001b0b:	addi                sp, sp, 32
+i0000001b0c:	or                  s1, s1, s1
+i0000001b0d:	lb                  a5, -1912(sp)       
+i0000001b0e:	fence.i                       
+i0000001b0f:	srli                a2, a2, 18
+i0000001b10:	sw                  t1, -1676(sp)       
+i0000001b11:	subw                s0, a5, s0
+				la                  sp, begin_signature
+				li                  t1, 13320 
+				add                 sp, sp, t1
+i0000001b12:	ld                  s1, 1304(sp)        
+i0000001b13:	lhu                 a5, 2032(sp)        
+i0000001b14:	fence.i                       
+i0000001b15:	lh                  s0, 1258(sp)        
+i0000001b16:	sh                  s6, 1870(sp)        
+i0000001b17:	xori                t1, s1, 362
+i0000001b18:	fence                         
+i0000001b19:	fence                         
+i0000001b1a:	slli                a5, a5, 30
+i0000001b1b:	slt                 s1, s1, s1
+i0000001b1c:	sw                  s1, 20(sp)          
+i0000001b1d:	sllw                s0, s0, a5
+i0000001b1e:	sub                 a7, s1, s0
+i0000001b1f:	srai                a3, a3, 3 
+i0000001b20:	addi                a2, sp, 260
+i0000001b21:	sraiw               t3, t6, 28
+i0000001b22:	srli                s1, s1, 2 
+				la                  sp, begin_signature
+				li                  t1, 10008 
+				add                 sp, sp, t1
+i0000001b23:	sw                  s0, 56(sp)          
+i0000001b24:	lb                  s2, 1725(sp)        
+i0000001b25:	addi                sp, sp, -80
+i0000001b26:	slli                s10, s0, 35
+i0000001b27:	srai                a5, a5, 15
+				la                  sp, begin_signature
+				li                  t1, 11056 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9792  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7272  
+				add                 sp, sp, t1
+				lhu                 s9, -602(sp)        
+				addw                s4, s0, a5
+				add                 a5, a5, s1
+				subw                s0, s0, s1
+				mulw                a4, s1, s0
+				addiw               a5, a5, -20
+				addi                a4, sp, 408
+	
+b0000001b28:
+				la                  x24, i0000001b32    
+				jalr                x1, x24, 0          
+	
+				srai                s5, a5, 21
+				divuw               gp, s0, s1
+				sb                  s1, 1553(sp)        
+				lb                  tp, -1031(sp)       
+				sd                  s0, 536(sp)         
+				lh                  a6, 1164(sp)        
+				mulh                s0, s11, a4
+i0000001b28:	srli                a2, a2, 7 
+				la                  sp, begin_signature
+				li                  t1, 14160 
+				add                 sp, sp, t1
+i0000001b29:	sh                  s3, 642(sp)         
+i0000001b2a:	srai                a0, a0, 10
+i0000001b2b:	lw                  a0, 24(sp)          
+i0000001b2c:	srai                s0, s0, 13
+i0000001b2d:	xori                t6, s1, -2016
+i0000001b2e:	fence                         
+i0000001b2f:	lui                 a2, 3     
+i0000001b30:	addiw               a5, a5, -10
+i0000001b31:	srli                a0, a0, 13
+i0000001b32:	addi                s1, s1, 1961
+i0000001b33:	sd                  a4, -2008(sp)       
+i0000001b34:	ld                  a5, -536(sp)        
+i0000001b35:	addi                sp, sp, -320
+i0000001b36:	addi                sp, sp, 16
+i0000001b37:	fence                         
+i0000001b38:	add                 a5, s7, zero
+i0000001b39:	slli                s8, a5, 9 
+i0000001b3a:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 10432 
+				add                 sp, sp, t1
+i0000001b3b:	sw                  s1, 4(sp)           
+i0000001b3c:	srli                a1, a1, 7 
+i0000001b3d:	sraw                t3, a1, t2
+i0000001b3e:	srai                a4, a4, 11
+i0000001b3f:	lh                  s0, 750(sp)         
+i0000001b40:	ld                  s4, -352(sp)        
+i0000001b41:	srli                a4, a4, 8 
+i0000001b42:	addw                a5, a5, a5
+i0000001b43:	addiw               a5, a5, 12
+i0000001b44:	addi                sp, sp, -416
+i0000001b45:	sw                  s0, 1052(sp)        
+i0000001b46:	lwu                 a4, -504(sp)        
+i0000001b47:	and                 a5, s0, a5
+i0000001b48:	srli                a4, a4, 7 
+i0000001b49:	sd                  s1, 80(sp)          
+i0000001b4a:	srli                s1, s1, 14
+i0000001b4b:	xor                 a4, a4, s0
+i0000001b4c:	ld                  a5, -432(sp)        
+i0000001b4d:	srai                s1, s1, 8 
+i0000001b4e:	sd                  a1, 120(sp)         
+i0000001b4f:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 9968  
+				add                 sp, sp, t1
+				remu                s1, s9, gp
+				subw                t2, s1, a5
+				divu                s0, a4, s11
+				addi                sp, sp, -160
+				add                 a5, a5, gp
+				remu                a7, t6, s4
+				subw                a4, a4, s0
+	
+b0000001b50:
+				jal                 x1, i0000001b5e     
+	
+				sh                  s1, -1402(sp)       
+				sb                  a5, 1799(sp)        
+				lhu                 a5, -520(sp)        
+				ld                  s11, 192(sp)        
+				fence                         
+				srli                a4, a4, 9 
+				addw                a4, a4, a5
+i0000001b50:	srai                a0, a0, 9 
+i0000001b51:	addiw               a0, a0, -19
+i0000001b52:	fence.i                       
+i0000001b53:	sd                  s3, 256(sp)         
+i0000001b54:	ld                  a2, 0(sp)           
+i0000001b55:	sb                  a5, 2018(sp)        
+i0000001b56:	srai                s1, s1, 8 
+i0000001b57:	lui                 a5, 387064
+i0000001b58:	sd                  s1, 104(sp)         
+i0000001b59:	lw                  s4, 120(sp)         
+i0000001b5a:	xor                 s1, a5, s1
+i0000001b5b:	sd                  s1, 856(sp)         
+i0000001b5c:	srlw                a2, s1, s0
+i0000001b5d:	ld                  a2, -1448(sp)       
+i0000001b5e:	sw                  a2, 44(sp)          
+i0000001b5f:	lhu                 s0, -314(sp)        
+				la                  sp, begin_signature
+				li                  t1, 5672  
+				add                 sp, sp, t1
+i0000001b60:	ld                  s0, 136(sp)         
+i0000001b61:	sh                  gp, 60(sp)          
+i0000001b62:	addi                a0, sp, 24
+i0000001b63:	sd                  zero, -688(sp)      
+i0000001b64:	slliw               a0, a5, 7 
+i0000001b65:	addi                a5, a5, -20
+i0000001b66:	sraw                a1, s1, s0
+i0000001b67:	lui                 t1, 162285
+i0000001b68:	subw                a2, s0, a5
+i0000001b69:	ld                  s9, -1088(sp)       
+i0000001b6a:	lwu                 a5, 1992(sp)        
+i0000001b6b:	fence.i                       
+i0000001b6c:	lw                  a7, 360(sp)         
+i0000001b6d:	srli                s0, s0, 14
+i0000001b6e:	fence                         
+i0000001b6f:	ld                  s0, 8(sp)           
+i0000001b70:	addiw               s0, s0, -14
+i0000001b71:	addw                s1, s1, s1
+i0000001b72:	slliw               s0, s0, 28
+i0000001b73:	srli                s1, s1, 5 
+i0000001b74:	srai                a2, a2, 5 
+i0000001b75:	addi                a4, sp, 488
+				la                  sp, begin_signature
+				li                  t1, 12328 
+				add                 sp, sp, t1
+i0000001b76:	lwu                 a5, 816(sp)         
+i0000001b77:	subw                a4, a4, a5
+				li                  x17, 11   
+				li                  x29, 10   
+				addi                a5, a5, -10
+				addiw               s0, s0, -6
+				fence                         
+				lwu                 a5, -1524(sp)       
+				srli                a5, a5, 14
+				remw                a4, s11, s5
+				remu                s3, s0, a5
+	
+b0000001b78:
+				pre_branch_macro                        
+				bge                 x17, x29, i0000001b95
+				post_branch_macro                       
+	
+				fence                         
+				fence.i                       
+				addi                sp, sp, -480
+				fence                         
+				slliw               s1, t6, 0 
+				ld                  s1, 1768(sp)        
+				addi                a5, a5, -16
+				li                  x29, 10   
+i0000001b78:	ld                  s1, -928(sp)        
+i0000001b79:	srai                s0, s0, 21
+i0000001b7a:	fence.i                       
+i0000001b7b:	sd                  s0, 56(sp)          
+i0000001b7c:	subw                s0, s0, a4
+				la                  sp, begin_signature
+				li                  t1, 7496  
+				add                 sp, sp, t1
+i0000001b7d:	sb                  s1, -486(sp)        
+i0000001b7e:	sd                  s0, 48(sp)          
+i0000001b7f:	srai                s0, s0, 9 
+i0000001b80:	sd                  a3, 192(sp)         
+i0000001b81:	addi                a3, zero, 4
+i0000001b82:	or                  a2, a2, a1
+i0000001b83:	srli                t0, s4, 26
+i0000001b84:	sd                  s1, 128(sp)         
+i0000001b85:	srli                a5, a5, 3 
+i0000001b86:	ld                  a2, 96(sp)          
+i0000001b87:	fence                         
+i0000001b88:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 12888 
+				add                 sp, sp, t1
+i0000001b89:	sd                  a4, 88(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13008 
+				add                 sp, sp, t1
+i0000001b8a:	sb                  t5, 486(sp)         
+i0000001b8b:	sd                  a5, 160(sp)         
+i0000001b8c:	srl                 s11, s1, s1
+i0000001b8d:	sub                 a5, a5, a5
+i0000001b8e:	addi                sp, sp, -320
+i0000001b8f:	slt                 s1, s1, s1
+i0000001b90:	sd                  a5, 32(sp)          
+i0000001b91:	ld                  a0, 112(sp)         
+i0000001b92:	lbu                 t0, -1280(sp)       
+i0000001b93:	sd                  s0, 112(sp)         
+i0000001b94:	fence                         
+i0000001b95:	addi                sp, sp, -464
+i0000001b96:	ld                  a3, 128(sp)         
+				la                  sp, begin_signature
+				li                  t1, 8536  
+				add                 sp, sp, t1
+i0000001b97:	ld                  t1, 384(sp)         
+i0000001b98:	ld                  a3, 88(sp)          
+i0000001b99:	lwu                 a5, 1940(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8600  
+				add                 sp, sp, t1
+i0000001b9a:	lwu                 s3, 1816(sp)        
+i0000001b9b:	and                 a3, a3, s0
+i0000001b9c:	add                 a4, a4, a5
+i0000001b9d:	andi                a3, a3, -24
+i0000001b9e:	srli                a5, a5, 10
+i0000001b9f:	addi                sp, sp, -496
+				li                  x20, 12   
+				addi                x29, x29, 1
+				lw                  tp, -1540(sp)       
+				addw                a4, a4, s0
+				subw                a5, a5, a4
+				lw                  t3, 72(sp)          
+				addi                sp, sp, 112
+				srli                a5, a5, 15
+				addi                a4, sp, 88
+	
+b0000001ba0:
+				beq                 x29, x20, 1f        
+				la                  x20, i0000001b88    
+				jalr                x0, x20, 0          
+				1: li x29, 10                           
+	
+				fence                         
+				sw                  s11, 16(sp)         
+				fence.i                       
+				sd                  s1, 80(sp)          
+				sraiw               a7, s5, 28
+				srai                a4, a4, 5 
+				sllw                zero, zero, a6
+i0000001ba0:	lw                  a2, 8(sp)           
+i0000001ba1:	ld                  a0, -1496(sp)       
+				la                  sp, begin_signature
+				li                  t1, 4248  
+				add                 sp, sp, t1
+i0000001ba2:	ld                  s7, 1000(sp)        
+i0000001ba3:	addi                a5, sp, 500
+i0000001ba4:	srli                s0, s0, 7 
+i0000001ba5:	fence.i                       
+i0000001ba6:	addi                sp, sp, -384
+i0000001ba7:	add                 a4, zero, s1
+i0000001ba8:	srai                s1, s1, 26
+i0000001ba9:	lwu                 s1, -1340(sp)       
+i0000001baa:	addiw               s1, s1, -26
+				la                  sp, begin_signature
+				li                  t1, 6968  
+				add                 sp, sp, t1
+i0000001bab:	ld                  s6, 1384(sp)        
+i0000001bac:	lw                  a0, 40(sp)          
+i0000001bad:	lh                  s0, -642(sp)        
+i0000001bae:	lw                  a1, 0(sp)           
+i0000001baf:	fence                         
+i0000001bb0:	sw                  a2, 52(sp)          
+i0000001bb1:	srliw               s1, a3, 8 
+i0000001bb2:	ld                  a2, 8(sp)           
+i0000001bb3:	addi                sp, sp, -48
+i0000001bb4:	fsrmi               x0, 0     
+i0000001bb5:	ld                  s1, 176(sp)         
+i0000001bb6:	sd                  s11, 192(sp)        
+i0000001bb7:	sw                  a5, 28(sp)          
+i0000001bb8:	addw                a4, a4, s0
+i0000001bb9:	sb                  a0, 74(sp)          
+i0000001bba:	sd                  s2, 1304(sp)        
+i0000001bbb:	addi                sp, sp, -160
+i0000001bbc:	subw                a5, a5, s0
+i0000001bbd:	sllw                tp, s0, a5
+i0000001bbe:	lw                  a2, 0(sp)           
+i0000001bbf:	sltiu               s4, a5, 1363
+i0000001bc0:	sw                  a1, 20(sp)          
+i0000001bc1:	sd                  a0, 88(sp)          
+i0000001bc2:	addi                a5, a5, -27
+i0000001bc3:	sb                  s0, -1820(sp)       
+i0000001bc4:	srli                a4, a4, 11
+				la                  sp, begin_signature
+				li                  t1, 8744  
+				add                 sp, sp, t1
+i0000001bc5:	ld                  s3, 248(sp)         
+i0000001bc6:	slli                a5, a5, 22
+i0000001bc7:	srai                a2, a2, 12
+i0000001bc8:	srli                a5, a5, 11
+				li                  x20, 0    
+				la                  sp, begin_signature
+				li                  t1, 4792  
+				add                 sp, sp, t1
+				divw                s7, a6, s6
+				addi                a4, sp, 140
+				sh                  zero, 1802(sp)      
+				ld                  a4, 128(sp)         
+				fence.i                       
+				slli                a4, a4, 24
+				addw                s1, a5, s0
+	
+b0000001bc9:
+				pre_branch_macro                        
+				beq                 x29, x20, i0000001bcf
+				post_branch_macro                       
+	
+				slli                a5, a5, 52
+				fence.i                       
+				remw                s3, a5, a5
+				addi                a4, sp, 196
+				sw                  s0, -1612(sp)       
+				lbu                 t3, 884(sp)         
+				ld                  tp, 488(sp)         
+				li                  x29, 10   
+i0000001bc9:	addiw               a0, a0, -4
+i0000001bca:	addi                sp, sp, -192
+i0000001bcb:	fence.i                       
+i0000001bcc:	sw                  t6, 4(sp)           
+i0000001bcd:	addi                s1, zero, -15
+i0000001bce:	sllw                t0, t1, t6
+i0000001bcf:	srli                s1, s1, 27
+i0000001bd0:	srai                s0, s0, 1 
+i0000001bd1:	srai                a4, a4, 8 
+i0000001bd2:	lh                  s0, 1528(sp)        
+i0000001bd3:	sub                 a2, a2, a1
+i0000001bd4:	sw                  a5, -64(sp)         
+i0000001bd5:	fence.i                       
+i0000001bd6:	sw                  a5, 40(sp)          
+i0000001bd7:	lw                  a4, 40(sp)          
+i0000001bd8:	fence.i                       
+i0000001bd9:	fence                         
+i0000001bda:	add                 s1, s1, zero
+i0000001bdb:	addw                gp, a3, s6
+i0000001bdc:	sra                 s1, s3, t1
+i0000001bdd:	add                 a7, s0, s0
+i0000001bde:	xor                 a4, a4, s1
+i0000001bdf:	slt                 t1, s0, s1
+i0000001be0:	addi                a3, sp, 460
+i0000001be1:	fence.i                       
+i0000001be2:	lb                  s1, 947(sp)         
+				la                  sp, begin_signature
+				li                  t1, 10496 
+				add                 sp, sp, t1
+i0000001be3:	ld                  s0, 96(sp)          
+i0000001be4:	lwu                 a5, 604(sp)         
+i0000001be5:	srai                s1, s1, 8 
+i0000001be6:	sw                  s0, 64(sp)          
+i0000001be7:	srliw               a2, s1, 15
+				la                  sp, begin_signature
+				li                  t1, 3680  
+				add                 sp, sp, t1
+i0000001be8:	lw                  a5, 16(sp)          
+i0000001be9:	srliw               a4, s8, 7 
+i0000001bea:	slli                a0, a0, 16
+i0000001beb:	or                  a5, a5, a0
+i0000001bec:	fence                         
+i0000001bed:	lw                  a5, 0(sp)           
+i0000001bee:	sw                  s0, 60(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10592 
+				add                 sp, sp, t1
+i0000001bef:	sd                  a2, 40(sp)          
+i0000001bf0:	ld                  s1, 96(sp)          
+				li                  x19, 0    
+				addw                a5, a5, a5
+				lwu                 t3, 1548(sp)        
+				srli                a5, a5, 1 
+				remuw               a7, tp, s7
+				addi                a4, sp, 172
+				addi                sp, sp, 144
+				xor                 a4, a4, s0
+	
+b0000001bf1:
+				pre_branch_macro                        
+				beq                 x29, x19, i0000001bd3
+				post_branch_macro                       
+	
+				sw                  a4, 56(sp)          
+				fence                         
+				addi                a5, sp, 444
+				slli                a4, a4, 31
+				ld                  s0, 112(sp)         
+				add                 s0, a5, s1
+				sraw                t2, a5, a5
+				li                  x29, 10   
+i0000001bf1:	lw                  s1, 8(sp)           
+i0000001bf2:	sw                  s1, 68(sp)          
+i0000001bf3:	addi                s0, sp, 88
+i0000001bf4:	fence.i                       
+i0000001bf5:	sd                  s8, -1280(sp)       
+i0000001bf6:	ld                  s0, 880(sp)         
+i0000001bf7:	sd                  a4, -48(sp)         
+i0000001bf8:	lw                  a3, 88(sp)          
+i0000001bf9:	srli                s1, s1, 8 
+i0000001bfa:	ld                  t5, 1832(sp)        
+i0000001bfb:	sraw                s3, s1, a5
+i0000001bfc:	ld                  s0, 552(sp)         
+i0000001bfd:	slliw               s0, s1, 6 
+i0000001bfe:	sra                 s1, s1, s0
+i0000001bff:	sub                 a5, s0, s1
+i0000001c00:	and                 a6, t3, zero
+i0000001c01:	srai                s1, s1, 12
+i0000001c02:	addiw               a4, a4, -16
+i0000001c03:	sd                  t2, 216(sp)         
+i0000001c04:	sd                  s2, -2032(sp)       
+i0000001c05:	sw                  a2, 4(sp)           
+i0000001c06:	lb                  a5, 1839(sp)        
+i0000001c07:	sd                  tp, 736(sp)         
+i0000001c08:	and                 s8, s8, s11
+				la                  sp, begin_signature
+				li                  t1, 8904  
+				add                 sp, sp, t1
+i0000001c09:	sd                  s8, -400(sp)        
+i0000001c0a:	srai                s1, s1, 16
+				la                  sp, begin_signature
+				li                  t1, 2232  
+				add                 sp, sp, t1
+i0000001c0b:	lw                  a5, 12(sp)          
+i0000001c0c:	srlw                a4, a5, s1
+i0000001c0d:	sw                  a5, 124(sp)         
+i0000001c0e:	srli                a0, a0, 9 
+i0000001c0f:	addi                a5, a5, 16
+				la                  sp, begin_signature
+				li                  t1, 10480 
+				add                 sp, sp, t1
+i0000001c10:	lbu                 t3, 1703(sp)        
+i0000001c11:	ld                  s11, 248(sp)        
+i0000001c12:	subw                s0, s0, a3
+i0000001c13:	subw                s0, s0, a2
+i0000001c14:	fence.i                       
+i0000001c15:	addiw               s1, a5, 1866
+i0000001c16:	fence.i                       
+i0000001c17:	addw                s0, a5, s0
+i0000001c18:	srli                a1, a1, 6 
+				la                  sp, begin_signature
+				li                  t1, 3208  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 12888 
+				add                 sp, sp, t1
+				sd                  a5, 48(sp)          
+				ld                  a4, 40(sp)          
+				lw                  a6, 128(sp)         
+				addi                a4, sp, 196
+				xor                 s6, a5, s1
+				lwu                 s0, -124(sp)        
+				ld                  s5, 1048(sp)        
+	
+b0000001c19:
+				jal                 x1, i0000001c25     
+	
+				srli                s0, s0, 21
+				andi                s1, s1, -20
+				mulhsu              a5, s5, t6
+				divu                t6, a6, a6
+				lw                  s0, 28(sp)          
+				divu                a7, s1, a5
+				subw                a4, a4, a4
+i0000001c19:	xor                 a5, gp, s7
+i0000001c1a:	add                 t3, t3, s1
+i0000001c1b:	addiw               a0, a0, 2 
+i0000001c1c:	sllw                gp, s0, s1
+i0000001c1d:	ld                  a2, 48(sp)          
+i0000001c1e:	sd                  a3, 1584(sp)        
+i0000001c1f:	addi                s1, sp, 460
+i0000001c20:	lw                  s0, 4(sp)           
+i0000001c21:	andi                a4, a4, -15
+i0000001c22:	lwu                 s0, 48(sp)          
+i0000001c23:	addi                sp, sp, 240
+i0000001c24:	addi                a0, sp, 132
+i0000001c25:	srai                a2, a2, 15
+				la                  sp, begin_signature
+				li                  t1, 9264  
+				add                 sp, sp, t1
+i0000001c26:	ld                  t6, -112(sp)        
+i0000001c27:	fence                         
+i0000001c28:	lwu                 a6, -628(sp)        
+i0000001c29:	addiw               a0, a0, -30
+i0000001c2a:	sub                 a2, a2, a2
+i0000001c2b:	addi                sp, sp, -480
+i0000001c2c:	ld                  zero, 232(sp)       
+i0000001c2d:	fence.i                       
+i0000001c2e:	fence                         
+i0000001c2f:	lh                  a5, 430(sp)         
+i0000001c30:	addi                s1, zero, -9
+i0000001c31:	sb                  s6, 1046(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2088  
+				add                 sp, sp, t1
+i0000001c32:	sb                  a5, 1923(sp)        
+i0000001c33:	lhu                 s1, 1898(sp)        
+i0000001c34:	addi                s1, sp, 356
+i0000001c35:	addi                sp, sp, -32
+i0000001c36:	lb                  a6, 1229(sp)        
+i0000001c37:	lw                  s0, 20(sp)          
+i0000001c38:	lb                  a5, -67(sp)         
+i0000001c39:	subw                s0, s0, a4
+i0000001c3a:	ld                  t6, 1504(sp)        
+i0000001c3b:	sltu                t5, a0, s11
+i0000001c3c:	srli                a3, a3, 13
+i0000001c3d:	lw                  s1, -684(sp)        
+i0000001c3e:	ld                  gp, 216(sp)         
+i0000001c3f:	fence                         
+i0000001c40:	addi                s1, sp, 328
+				li                  x19, 9    
+				divuw               s5, s0, s1
+				lwu                 s1, 732(sp)         
+				andi                s1, s1, 15
+				addi                sp, sp, -80
+				sraw                s8, gp, s6
+				srai                a4, a4, 4 
+				ori                 s1, s0, -1815
+	
+b0000001c41:
+				pre_branch_macro                        
+				blt                 x29, x19, i0000001c21
+				post_branch_macro                       
+	
+				rem                 a5, s1, s1
+				addi                a4, a4, -29
+				mulw                s1, a5, s1
+				srai                a4, a4, 6 
+				mulhsu              zero, s5, gp
+				mulw                s1, a5, s1
+				srli                a4, a4, 27
+				li                  x29, 10   
+i0000001c41:	addi                s1, sp, 16
+i0000001c42:	srli                a2, a2, 14
+i0000001c43:	addi                s0, sp, 268
+i0000001c44:	ld                  s0, 48(sp)          
+i0000001c45:	ld                  s1, 112(sp)         
+i0000001c46:	srai                s0, s0, 16
+i0000001c47:	fence                         
+i0000001c48:	srli                s1, s1, 13
+i0000001c49:	ld                  s11, 1312(sp)       
+i0000001c4a:	sw                  a4, 4(sp)           
+i0000001c4b:	addi                a5, a5, 1 
+i0000001c4c:	addw                a3, a3, a2
+i0000001c4d:	addi                s1, sp, 224
+i0000001c4e:	ld                  a5, 880(sp)         
+				la                  sp, begin_signature
+				li                  t1, 2464  
+				add                 sp, sp, t1
+i0000001c4f:	lh                  a5, -124(sp)        
+i0000001c50:	sraw                s7, s1, s0
+i0000001c51:	addi                a3, sp, 20
+i0000001c52:	lh                  t0, 294(sp)         
+i0000001c53:	addw                a3, a3, a4
+i0000001c54:	lbu                 a5, 1235(sp)        
+i0000001c55:	ld                  a5, 32(sp)          
+i0000001c56:	addiw               s0, a7, -272
+i0000001c57:	ld                  a0, 88(sp)          
+i0000001c58:	sd                  s7, -80(sp)         
+i0000001c59:	lw                  s7, -20(sp)         
+i0000001c5a:	addi                sp, sp, 16
+i0000001c5b:	sb                  s5, -1945(sp)       
+i0000001c5c:	sub                 a1, a1, a5
+i0000001c5d:	addiw               a1, a1, 1 
+i0000001c5e:	fence                         
+i0000001c5f:	srai                s0, s0, 8 
+i0000001c60:	fence.i                       
+i0000001c61:	sd                  a2, 128(sp)         
+i0000001c62:	lui                 s9, 14    
+i0000001c63:	subw                a2, a2, a4
+i0000001c64:	lw                  a2, 12(sp)          
+i0000001c65:	and                 s1, s1, a5
+i0000001c66:	fence.i                       
+i0000001c67:	srai                s1, s1, 6 
+i0000001c68:	srai                a0, a0, 12
+				li                  x23, 9    
+				la                  sp, begin_signature
+				li                  t1, 7808  
+				add                 sp, sp, t1
+				subw                a5, a5, a4
+				srli                a5, a5, 27
+				ld                  s10, 152(sp)        
+				addi                a4, sp, 380
+				sd                  a5, -1424(sp)       
+				srai                s1, s0, 51
+				sd                  s0, 88(sp)          
+	
+b0000001c69:
+				pre_branch_macro                        
+				blt                 x29, x23, i0000001c60
+				post_branch_macro                       
+	
+				addi                s0, sp, 248
+				sw                  t6, 24(sp)          
+				xor                 a4, a4, a4
+				addi                s8, zero, -21
+				srai                a4, a4, 8 
+				addw                s0, t6, s5
+				sra                 t2, a5, s1
+				li                  x29, 10   
+i0000001c69:	addi                a4, sp, 364
+i0000001c6a:	fence                         
+i0000001c6b:	sw                  s0, 40(sp)          
+i0000001c6c:	srai                s1, s1, 6 
+i0000001c6d:	fence.i                       
+i0000001c6e:	sd                  a5, 0(sp)           
+i0000001c6f:	sraiw               s0, s1, 8 
+i0000001c70:	addi                a5, zero, -6
+				la                  sp, begin_signature
+				li                  t1, 8432  
+				add                 sp, sp, t1
+i0000001c71:	sb                  s1, 607(sp)         
+i0000001c72:	sltiu               s11, s1, -56
+i0000001c73:	add                 t5, zero, a6
+i0000001c74:	subw                s1, t5, t3
+i0000001c75:	sd                  s0, 176(sp)         
+i0000001c76:	add                 s0, s0, s0
+i0000001c77:	ld                  a5, 32(sp)          
+i0000001c78:	addi                a2, a2, 6 
+i0000001c79:	sd                  s0, 128(sp)         
+i0000001c7a:	lwu                 s1, 776(sp)         
+i0000001c7b:	sw                  t3, 0(sp)           
+i0000001c7c:	fence                         
+i0000001c7d:	subw                s0, s0, a2
+i0000001c7e:	addi                sp, sp, 80
+i0000001c7f:	sd                  a5, 104(sp)         
+i0000001c80:	addw                a1, a1, a0
+i0000001c81:	subw                a2, a2, s0
+i0000001c82:	ld                  s1, 232(sp)         
+i0000001c83:	addi                a5, sp, 444
+i0000001c84:	or                  a3, s1, s1
+i0000001c85:	lw                  a4, 28(sp)          
+i0000001c86:	addi                sp, sp, -240
+i0000001c87:	or                  s11, gp, t5
+i0000001c88:	srli                a5, a5, 3 
+i0000001c89:	srlw                a2, s8, s2
+i0000001c8a:	srli                a5, a5, 10
+i0000001c8b:	sd                  a5, 1192(sp)        
+i0000001c8c:	srlw                s0, a5, s1
+i0000001c8d:	addiw               a4, a4, 8 
+i0000001c8e:	sw                  a1, 20(sp)          
+i0000001c8f:	addi                sp, sp, 160
+i0000001c90:	addw                s2, s2, a7
+				la                  sp, begin_signature
+				li                  t1, 6504  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4168  
+				add                 sp, sp, t1
+				andi                s1, s1, -11
+				remuw               s8, a4, tp
+				addiw               a4, a4, -18
+				ld                  s1, 216(sp)         
+				andi                s8, t6, 946
+				divw                t6, s2, s10
+				sd                  s9, 1224(sp)        
+	
+b0000001c91:
+				jal                 x1, i0000001ca3     
+	
+				lwu                 s9, 904(sp)         
+				addw                a4, a4, a4
+				sw                  s0, 108(sp)         
+				ld                  s0, -1376(sp)       
+				lui                 s0, 18    
+				addw                a4, a4, s1
+				sd                  a6, 240(sp)         
+i0000001c91:	sd                  s0, 424(sp)         
+				la                  sp, begin_signature
+				li                  t1, 8016  
+				add                 sp, sp, t1
+i0000001c92:	sw                  s1, 0(sp)           
+i0000001c93:	addi                a1, sp, 352
+i0000001c94:	fence.i                       
+i0000001c95:	srliw               zero, t6, 14
+i0000001c96:	addiw               a0, a0, 9 
+i0000001c97:	and                 a4, s4, tp
+i0000001c98:	addiw               s1, s1, 8 
+i0000001c99:	sw                  s2, 64(sp)          
+i0000001c9a:	srli                s0, s0, 6 
+i0000001c9b:	addi                sp, sp, -496
+i0000001c9c:	ld                  s1, 216(sp)         
+				la                  sp, begin_signature
+				li                  t1, 2880  
+				add                 sp, sp, t1
+i0000001c9d:	sw                  a5, 28(sp)          
+i0000001c9e:	sw                  s0, -144(sp)        
+i0000001c9f:	lwu                 s0, 12(sp)          
+i0000001ca0:	auipc               a2, 147041
+i0000001ca1:	addi                s2, zero, -21
+i0000001ca2:	addi                sp, sp, -80
+i0000001ca3:	sw                  a5, 24(sp)          
+i0000001ca4:	lwu                 t1, -728(sp)        
+i0000001ca5:	addw                a3, a3, a3
+i0000001ca6:	fence                         
+i0000001ca7:	lw                  tp, 120(sp)         
+i0000001ca8:	fence                         
+i0000001ca9:	lh                  t5, 1812(sp)        
+i0000001caa:	sd                  a5, 184(sp)         
+i0000001cab:	sra                 s1, s4, a2
+i0000001cac:	sd                  a5, 72(sp)          
+i0000001cad:	sd                  a6, 96(sp)          
+i0000001cae:	lw                  s7, 64(sp)          
+i0000001caf:	srai                a2, a2, 13
+				la                  sp, begin_signature
+				li                  t1, 4776  
+				add                 sp, sp, t1
+i0000001cb0:	ld                  a3, 40(sp)          
+i0000001cb1:	addi                a5, sp, 88
+i0000001cb2:	lw                  s1, 28(sp)          
+i0000001cb3:	subw                s0, s1, a5
+i0000001cb4:	lw                  a5, 100(sp)         
+i0000001cb5:	lw                  s8, 44(sp)          
+i0000001cb6:	addi                sp, sp, 224
+i0000001cb7:	sllw                t0, t0, s10
+i0000001cb8:	lh                  s1, 656(sp)         
+				li                  x25, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 4552  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9544  
+				add                 sp, sp, t1
+				lwu                 a5, -1808(sp)       
+				div                 t2, s1, s0
+				sd                  s1, -1872(sp)       
+				srliw               a7, s5, 25
+				sltu                a7, s2, s6
+				srli                a4, a4, 16
+				lui                 s3, 9     
+	
+b0000001cb9:
+				pre_branch_macro                        
+				bne                 x29, x25, i0000001ca9
+				post_branch_macro                       
+	
+				subw                gp, s0, s0
+				add                 s1, zero, a5
+				divu                a6, s1, s1
+				slli                s1, s1, 60
+				fence.i                       
+				srai                a4, a4, 22
+				lh                  a5, -1680(sp)       
+				li                  x29, 10   
+i0000001cb9:	sraw                s0, s6, a2
+i0000001cba:	addiw               s1, s1, -1
+i0000001cbb:	subw                a1, a1, a5
+i0000001cbc:	srai                a3, a3, 3 
+i0000001cbd:	srai                a5, a5, 10
+i0000001cbe:	srli                s0, a5, 19
+i0000001cbf:	sh                  s0, 1652(sp)        
+i0000001cc0:	andi                s6, a5, 460
+i0000001cc1:	lh                  t0, -1084(sp)       
+i0000001cc2:	addi                sp, sp, -496
+i0000001cc3:	fence.i                       
+i0000001cc4:	srli                s1, s1, 6 
+i0000001cc5:	sw                  a5, 112(sp)         
+i0000001cc6:	lh                  s0, -236(sp)        
+i0000001cc7:	lb                  s0, -1787(sp)       
+i0000001cc8:	sltu                s1, s0, s0
+i0000001cc9:	srli                a3, a3, 13
+i0000001cca:	sw                  s1, 108(sp)         
+i0000001ccb:	fence.i                       
+i0000001ccc:	sd                  a1, 264(sp)         
+i0000001ccd:	ld                  s2, 1968(sp)        
+i0000001cce:	lwu                 tp, 868(sp)         
+i0000001ccf:	ld                  a5, 1072(sp)        
+i0000001cd0:	sw                  a7, 1048(sp)        
+i0000001cd1:	srai                a5, s1, 48
+i0000001cd2:	slli                s1, s1, 31
+i0000001cd3:	or                  a1, a1, s1
+i0000001cd4:	lw                  s1, 48(sp)          
+i0000001cd5:	srli                a4, a0, 34
+i0000001cd6:	srli                s0, s0, 7 
+i0000001cd7:	lui                 s6, 22    
+i0000001cd8:	sd                  a5, 64(sp)          
+i0000001cd9:	fence                         
+i0000001cda:	fence                         
+i0000001cdb:	sllw                s1, s0, a5
+i0000001cdc:	slli                a3, a3, 16
+i0000001cdd:	fence.i                       
+i0000001cde:	srli                a2, a2, 7 
+i0000001cdf:	addi                s1, sp, 100
+i0000001ce0:	slli                a5, a1, 3 
+				li                  x16, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 8504  
+				add                 sp, sp, t1
+				add                 t6, t6, s0
+				sd                  a4, 104(sp)         
+				sw                  a5, 8(sp)           
+				addiw               s0, s0, 0 
+				srai                a4, a4, 25
+				addiw               a4, a4, -19
+				srli                a4, a4, 19
+	
+b0000001ce1:
+				beq                 x29, x16, 1f        
+				jal                 x1, i0000001cd9     
+				1: li x29, 10                           
+	
+				lhu                 s3, -198(sp)        
+				mulh                s1, s9, t2
+				sraw                s10, s11, a4
+				sraw                s1, s0, s1
+				subw                a4, a4, a4
+				srli                a5, a5, 12
+				sb                  t2, -1965(sp)       
+i0000001ce1:	srli                s0, s0, 15
+i0000001ce2:	subw                s5, s2, s4
+i0000001ce3:	srli                a2, a2, 10
+i0000001ce4:	srai                a1, a1, 14
+i0000001ce5:	addw                s0, s6, s3
+i0000001ce6:	addi                a5, zero, -3
+i0000001ce7:	addi                a1, sp, 48
+i0000001ce8:	srai                a0, a0, 16
+i0000001ce9:	addi                a3, sp, 168
+i0000001cea:	sd                  a7, 368(sp)         
+i0000001ceb:	xor                 a0, a0, a3
+i0000001cec:	srli                a2, a2, 24
+i0000001ced:	lw                  t3, 4(sp)           
+i0000001cee:	addw                s9, a4, a4
+i0000001cef:	lui                 s1, 142679
+i0000001cf0:	sub                 a3, a3, a2
+i0000001cf1:	addi                sp, sp, -512
+i0000001cf2:	sb                  s1, -205(sp)        
+i0000001cf3:	subw                a3, a3, a4
+i0000001cf4:	sd                  a5, 48(sp)          
+i0000001cf5:	lw                  a1, 56(sp)          
+i0000001cf6:	srai                s0, s0, 12
+i0000001cf7:	add                 a5, zero, a5
+i0000001cf8:	addiw               a1, a1, -17
+i0000001cf9:	srai                s0, s0, 14
+i0000001cfa:	sd                  s1, 160(sp)         
+i0000001cfb:	addi                sp, sp, -304
+i0000001cfc:	addi                a5, sp, 148
+i0000001cfd:	sd                  a7, -1224(sp)       
+i0000001cfe:	srai                s0, s0, 18
+i0000001cff:	lh                  s5, 1778(sp)        
+i0000001d00:	slti                tp, s11, -1243
+i0000001d01:	ld                  a3, 256(sp)         
+i0000001d02:	addi                a2, sp, 320
+i0000001d03:	fence                         
+i0000001d04:	sraw                s0, s1, s0
+i0000001d05:	lui                 a5, 12    
+i0000001d06:	srli                a2, a2, 26
+i0000001d07:	srli                s0, s0, 14
+i0000001d08:	subw                s1, s1, a3
+				la                  sp, begin_signature
+				li                  t1, 7200  
+				add                 sp, sp, t1
+				mulw                a5, a7, tp
+				or                  s1, s1, a4
+				ld                  a5, 168(sp)         
+				slli                a5, a5, 12
+				fence.i                       
+				addi                sp, sp, -368
+				lw                  a4, 44(sp)          
+	
+b0000001d09:
+				jal                 x1, i0000001d20     
+	
+				lui                 gp, 1     
+				and                 s0, s0, s0
+				remuw               s1, s9, a7
+				srai                s10, s1, 57
+				div                 s0, s11, s11
+				divuw               s7, s9, t3
+				addi                sp, sp, -256
+i0000001d09:	sd                  t5, 696(sp)         
+i0000001d0a:	srai                s0, s1, 3 
+i0000001d0b:	srai                a2, a2, 1 
+i0000001d0c:	addi                sp, sp, -256
+i0000001d0d:	srl                 a7, a5, s1
+i0000001d0e:	addw                s1, s1, s1
+i0000001d0f:	or                  a3, a3, a0
+i0000001d10:	fence.i                       
+i0000001d11:	srai                s0, s0, 5 
+i0000001d12:	srai                a0, a0, 2 
+i0000001d13:	addi                s10, zero, -19
+i0000001d14:	srli                a5, a5, 13
+i0000001d15:	srli                a5, a5, 20
+				la                  sp, begin_signature
+				li                  t1, 7992  
+				add                 sp, sp, t1
+i0000001d16:	lw                  s0, 80(sp)          
+i0000001d17:	addi                sp, sp, 96
+i0000001d18:	fence.i                       
+i0000001d19:	xor                 a4, a4, a2
+i0000001d1a:	addiw               a5, t1, 37
+i0000001d1b:	sra                 s5, a1, s7
+i0000001d1c:	addiw               t1, s1, 1435
+i0000001d1d:	sd                  a3, -1520(sp)       
+i0000001d1e:	addiw               s1, s1, -28
+				la                  sp, begin_signature
+				li                  t1, 3848  
+				add                 sp, sp, t1
+i0000001d1f:	lwu                 s1, -64(sp)         
+i0000001d20:	sw                  a5, 52(sp)          
+i0000001d21:	fence.i                       
+i0000001d22:	subw                a5, a5, a2
+i0000001d23:	addi                s1, sp, 24
+				la                  sp, begin_signature
+				li                  t1, 2352  
+				add                 sp, sp, t1
+i0000001d24:	lw                  t5, 28(sp)          
+i0000001d25:	slliw               t3, s1, 23
+i0000001d26:	fence                         
+i0000001d27:	addi                sp, sp, 176
+i0000001d28:	fence                         
+i0000001d29:	addiw               a1, a0, 863
+				la                  sp, begin_signature
+				li                  t1, 7880  
+				add                 sp, sp, t1
+i0000001d2a:	lw                  a5, 12(sp)          
+i0000001d2b:	ld                  a1, 48(sp)          
+i0000001d2c:	srai                a1, a1, 13
+i0000001d2d:	sd                  s1, 96(sp)          
+i0000001d2e:	sw                  a4, 0(sp)           
+i0000001d2f:	srl                 gp, t0, gp
+i0000001d30:	lw                  s1, 44(sp)          
+				li                  x28, 12   
+				li                  x29, 10   
+				sb                  s1, 1144(sp)        
+				lw                  tp, 8(sp)           
+				lh                  s9, -1512(sp)       
+				lw                  s0, 40(sp)          
+				srai                a4, a4, 23
+				sd                  s4, 80(sp)          
+				remw                s0, a5, a5
+	
+b0000001d31:
+				pre_branch_macro                        
+				blt                 x29, x28, i0000001d38
+				post_branch_macro                       
+	
+				lh                  s2, -872(sp)        
+				lh                  s1, -700(sp)        
+				fence                         
+				lw                  a4, 16(sp)          
+				sd                  s10, 152(sp)        
+				addi                sp, sp, -112
+				ld                  a7, 144(sp)         
+				li                  x29, 10   
+i0000001d31:	addi                sp, sp, -272
+i0000001d32:	xor                 a1, a1, a1
+i0000001d33:	fence.i                       
+i0000001d34:	srli                s0, s0, 5 
+i0000001d35:	fsrmi               x0, 5     
+i0000001d36:	sd                  a5, 120(sp)         
+i0000001d37:	sd                  a5, 1520(sp)        
+i0000001d38:	lw                  s1, 20(sp)          
+i0000001d39:	sw                  s0, 64(sp)          
+i0000001d3a:	lw                  a5, 108(sp)         
+i0000001d3b:	srli                a5, a5, 9 
+i0000001d3c:	sd                  a0, 240(sp)         
+i0000001d3d:	sd                  t1, 1240(sp)        
+i0000001d3e:	fence                         
+i0000001d3f:	addi                s0, sp, 24
+i0000001d40:	fence.i                       
+i0000001d41:	subw                a0, a0, s0
+i0000001d42:	addiw               s1, a1, -881
+i0000001d43:	sw                  s11, 104(sp)        
+i0000001d44:	subw                s0, s0, s1
+i0000001d45:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 13800 
+				add                 sp, sp, t1
+i0000001d46:	sw                  a5, 12(sp)          
+i0000001d47:	lw                  s0, 36(sp)          
+i0000001d48:	srli                a5, a5, 7 
+i0000001d49:	lwu                 s1, -1328(sp)       
+i0000001d4a:	srlw                s0, s0, s1
+i0000001d4b:	addw                t2, a5, s0
+i0000001d4c:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 11472 
+				add                 sp, sp, t1
+i0000001d4d:	sw                  s1, 44(sp)          
+i0000001d4e:	sraiw               s4, tp, 6 
+i0000001d4f:	addi                s1, sp, 436
+i0000001d50:	xori                s1, s1, 1311
+i0000001d51:	ld                  a1, 112(sp)         
+i0000001d52:	srai                a5, a5, 15
+i0000001d53:	addiw               a5, s4, 359
+i0000001d54:	fence.i                       
+i0000001d55:	addiw               a3, a3, -1
+i0000001d56:	andi                a7, a3, 1028
+				la                  sp, begin_signature
+				li                  t1, 4648  
+				add                 sp, sp, t1
+i0000001d57:	sh                  s0, -874(sp)        
+i0000001d58:	sub                 s10, a5, s0
+i0000001d59:	andi                a4, a4, -1
+				li                  x25, 12   
+				addi                x29, x29, 1
+				sd                  s1, 256(sp)         
+				sltu                t6, s1, a5
+				subw                t3, s0, s0
+				srlw                s1, a5, s0
+				and                 a4, a4, a4
+				remu                tp, s5, t2
+				srai                s0, s0, 14
+	
+b0000001d5a:
+				pre_branch_macro                        
+				blt                 x29, x25, i0000001d4b
+				post_branch_macro                       
+	
+				ld                  a4, 32(sp)          
+				subw                s0, s0, a4
+				srli                a5, a5, 11
+				addiw               s1, s1, -5
+				lh                  a5, 1942(sp)        
+				div                 s7, s0, s1
+				lui                 s2, 15    
+				li                  x29, 10   
+i0000001d5a:	sltu                t0, s2, s6
+i0000001d5b:	slli                a1, s10, 40
+i0000001d5c:	sw                  s1, 112(sp)         
+i0000001d5d:	srai                a5, a5, 8 
+i0000001d5e:	sllw                a6, s0, a5
+i0000001d5f:	ori                 s1, s6, 211
+i0000001d60:	fence                         
+i0000001d61:	addi                sp, sp, -336
+i0000001d62:	lbu                 s4, -699(sp)        
+i0000001d63:	srai                a2, a2, 17
+i0000001d64:	andi                s0, s0, 0 
+i0000001d65:	addiw               a5, a5, 8 
+i0000001d66:	xori                a7, a4, 528
+i0000001d67:	fence.i                       
+i0000001d68:	or                  a4, a4, s1
+i0000001d69:	addw                s1, s0, s1
+i0000001d6a:	addiw               s10, s4, -1773
+i0000001d6b:	addi                s0, sp, 8 
+i0000001d6c:	sltiu               s0, a5, -1735
+i0000001d6d:	lwu                 s6, -1240(sp)       
+i0000001d6e:	sd                  s1, 72(sp)          
+i0000001d6f:	addi                a3, sp, 372
+i0000001d70:	addiw               a1, a1, 16
+i0000001d71:	addw                a0, a0, s0
+i0000001d72:	srli                s1, s1, 1 
+i0000001d73:	fence.i                       
+i0000001d74:	fence.i                       
+i0000001d75:	sll                 s0, a3, s2
+i0000001d76:	srai                a2, a2, 27
+i0000001d77:	lbu                 s0, 1859(sp)        
+i0000001d78:	sd                  tp, 336(sp)         
+i0000001d79:	slli                a5, a5, 25
+i0000001d7a:	xor                 s1, a5, s0
+i0000001d7b:	srli                zero, s1, 20
+i0000001d7c:	fence                         
+i0000001d7d:	addi                sp, sp, -224
+i0000001d7e:	srli                a4, a4, 1 
+i0000001d7f:	slliw               s6, a6, 16
+i0000001d80:	lh                  t6, -744(sp)        
+i0000001d81:	ld                  a5, 136(sp)         
+				li                  x17, 12   
+				addi                x29, x29, 1
+				addi                sp, sp, 192
+				remw                zero, a5, s0
+				sd                  s0, 576(sp)         
+				divu                a4, zero, t3
+				lhu                 a5, 638(sp)         
+				lh                  a6, 1020(sp)        
+				sraw                t2, s11, s7
+	
+b0000001d82:
+				beq                 x29, x17, 1f        
+				jal                 x10, i0000001d63    
+				1: li x29, 10                           
+	
+				mulw                s1, a6, s9
+				srli                s1, s1, 32
+				sltu                t6, s2, t2
+				sra                 s0, gp, s6
+				mulhu               s8, t6, s3
+				addi                a4, sp, 236
+				sb                  s11, -1804(sp)      
+i0000001d82:	lw                  t5, 84(sp)          
+i0000001d83:	srli                a3, a3, 15
+i0000001d84:	sraiw               a5, s6, 15
+i0000001d85:	lw                  a1, 60(sp)          
+i0000001d86:	addw                a3, a3, a5
+				la                  sp, begin_signature
+				li                  t1, 13920 
+				add                 sp, sp, t1
+i0000001d87:	sd                  a4, 0(sp)           
+i0000001d88:	addi                s0, sp, 200
+i0000001d89:	sraw                s0, a1, a0
+i0000001d8a:	sw                  a5, 1016(sp)        
+i0000001d8b:	sw                  tp, -808(sp)        
+				la                  sp, begin_signature
+				li                  t1, 3520  
+				add                 sp, sp, t1
+i0000001d8c:	lw                  s0, 0(sp)           
+i0000001d8d:	lwu                 s0, -1052(sp)       
+i0000001d8e:	srli                a1, a1, 2 
+i0000001d8f:	sraiw               a7, s1, 22
+i0000001d90:	srli                s1, s1, 15
+i0000001d91:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 4280  
+				add                 sp, sp, t1
+i0000001d92:	sb                  t0, 1348(sp)        
+i0000001d93:	lui                 t3, 508057
+i0000001d94:	srai                s0, s0, 8 
+i0000001d95:	lw                  a1, 44(sp)          
+i0000001d96:	addiw               s6, s4, -1215
+i0000001d97:	addiw               s0, s0, 774
+i0000001d98:	sraiw               a5, a1, 15
+i0000001d99:	addw                s1, s1, s1
+i0000001d9a:	addw                a5, s1, s1
+i0000001d9b:	addi                sp, sp, 224
+i0000001d9c:	ld                  s1, 144(sp)         
+i0000001d9d:	slliw               s1, gp, 15
+i0000001d9e:	srli                a1, a1, 5 
+i0000001d9f:	slli                a0, a0, 31
+i0000001da0:	or                  s0, s1, a5
+i0000001da1:	addi                s0, sp, 140
+i0000001da2:	xor                 s1, s3, a4
+i0000001da3:	sraiw               s1, gp, 28
+i0000001da4:	xor                 s0, s0, a3
+i0000001da5:	sra                 s1, t5, a1
+i0000001da6:	addi                sp, sp, 160
+i0000001da7:	sltiu               a1, a3, -633
+i0000001da8:	srai                a0, a0, 32
+i0000001da9:	sw                  s1, 8(sp)           
+				li                  x22, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 7048  
+				add                 sp, sp, t1
+				sh                  s0, 606(sp)         
+				sd                  s7, 88(sp)          
+				srli                a5, a5, 13
+				rem                 a6, s11, a7
+				addi                s1, a5, -1217
+				fence.i                       
+				ld                  gp, 256(sp)         
+	
+b0000001daa:
+				beq                 x29, x22, 1f        
+				la                  x22, i0000001d96    
+				jalr                x1, x22, 0          
+				1: li x29, 10                           
+	
+				slli                a4, a4, 20
+				fence.i                       
+				fence.i                       
+				mulhu               s0, s0, a5
+				sw                  a4, 16(sp)          
+				fence.i                       
+				srai                a4, a4, 1 
+i0000001daa:	addw                s4, t2, zero
+i0000001dab:	ld                  s10, 96(sp)         
+i0000001dac:	or                  s0, s1, s0
+i0000001dad:	srli                a5, a5, 3 
+i0000001dae:	lb                  t0, 1801(sp)        
+i0000001daf:	sw                  s1, 60(sp)          
+i0000001db0:	or                  s0, s0, s0
+i0000001db1:	srli                s1, s1, 11
+i0000001db2:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 8648  
+				add                 sp, sp, t1
+i0000001db3:	sd                  a1, 120(sp)         
+				la                  sp, begin_signature
+				li                  t1, 11680 
+				add                 sp, sp, t1
+i0000001db4:	lw                  a1, 52(sp)          
+i0000001db5:	srli                a4, a4, 17
+i0000001db6:	fence                         
+i0000001db7:	srai                a2, a2, 3 
+i0000001db8:	srai                s0, s0, 13
+i0000001db9:	fsrmi               x0, 1     
+i0000001dba:	sd                  s1, 120(sp)         
+i0000001dbb:	andi                a5, a5, 8 
+i0000001dbc:	subw                a2, a2, a4
+i0000001dbd:	fence                         
+i0000001dbe:	addw                a3, a3, a2
+i0000001dbf:	addi                sp, sp, -288
+i0000001dc0:	subw                a5, t5, s5
+i0000001dc1:	sd                  s6, 224(sp)         
+i0000001dc2:	lw                  s0, -856(sp)        
+i0000001dc3:	srliw               s0, s0, 0 
+i0000001dc4:	sraiw               s5, s0, 5 
+i0000001dc5:	sltiu               s7, s0, 785
+i0000001dc6:	addiw               a5, a5, -31
+				la                  sp, begin_signature
+				li                  t1, 7904  
+				add                 sp, sp, t1
+i0000001dc7:	ld                  s1, 88(sp)          
+i0000001dc8:	ld                  s11, 160(sp)        
+				la                  sp, begin_signature
+				li                  t1, 10672 
+				add                 sp, sp, t1
+i0000001dc9:	lbu                 a5, -883(sp)        
+i0000001dca:	ld                  s9, -1656(sp)       
+i0000001dcb:	sw                  s10, 92(sp)         
+i0000001dcc:	addi                a5, sp, 236
+i0000001dcd:	sd                  s0, 48(sp)          
+i0000001dce:	add                 a5, zero, t2
+i0000001dcf:	fence                         
+i0000001dd0:	fence.i                       
+i0000001dd1:	srli                s0, s0, 16
+i0000001dd2:	fsrmi               x0, 3     
+i0000001dd3:	ld                  s4, 120(sp)         
+				li                  x21, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 6448  
+				add                 sp, sp, t1
+				lhu                 a5, 1092(sp)        
+				addi                a4, sp, 332
+				sw                  s0, 4(sp)           
+				slli                s3, t6, 27
+				add                 s4, s4, s0
+				addi                sp, sp, -96
+				subw                a4, a4, a4
+	
+b0000001dd4:
+				beq                 x29, x21, 1f        
+				jal                 x1, i0000001dca     
+				1: li x29, 10                           
+	
+				addi                a4, sp, 480
+				sd                  s1, -752(sp)        
+				sraiw               t6, s1, 26
+				addw                a4, a4, a4
+				fence.i                       
+				fence.i                       
+				slli                a4, a5, 61
+i0000001dd4:	sd                  s0, 224(sp)         
+i0000001dd5:	subw                s3, s1, a5
+i0000001dd6:	sd                  s1, 40(sp)          
+i0000001dd7:	srai                a3, a3, 13
+i0000001dd8:	srai                s0, s0, 8 
+i0000001dd9:	addi                sp, sp, -48
+i0000001dda:	fence                         
+i0000001ddb:	sw                  a0, 4(sp)           
+i0000001ddc:	srli                a5, a5, 10
+i0000001ddd:	slliw               zero, a5, 21
+i0000001dde:	sw                  a5, 0(sp)           
+i0000001ddf:	fence.i                       
+i0000001de0:	fence                         
+i0000001de1:	slli                a5, a5, 18
+i0000001de2:	sw                  s0, 36(sp)          
+i0000001de3:	srli                a0, a0, 8 
+i0000001de4:	fence.i                       
+i0000001de5:	sra                 s1, t2, s4
+i0000001de6:	ld                  s10, 8(sp)          
+i0000001de7:	lhu                 s1, -46(sp)         
+i0000001de8:	lw                  a3, 1840(sp)        
+i0000001de9:	fence.i                       
+i0000001dea:	subw                s1, s1, a5
+i0000001deb:	sll                 s1, s6, t6
+i0000001dec:	srli                a5, a5, 3 
+i0000001ded:	addi                s1, zero, -9
+i0000001dee:	srl                 a5, a6, s7
+i0000001def:	srai                a4, a4, 13
+i0000001df0:	sraiw               tp, a5, 31
+i0000001df1:	addi                s0, sp, 156
+i0000001df2:	addi                sp, sp, 64
+i0000001df3:	sd                  s1, 384(sp)         
+i0000001df4:	sw                  a2, 32(sp)          
+i0000001df5:	srai                a2, a2, 16
+i0000001df6:	sltiu               s1, a5, -714
+				la                  sp, begin_signature
+				li                  t1, 13600 
+				add                 sp, sp, t1
+i0000001df7:	lw                  a0, 60(sp)          
+i0000001df8:	addi                s1, sp, 124
+i0000001df9:	addi                sp, sp, -16
+i0000001dfa:	slliw               gp, s0, 28
+i0000001dfb:	fence                         
+				li                  x16, 10   
+				la                  sp, begin_signature
+				li                  t1, 6728  
+				add                 sp, sp, t1
+				or                  a4, a4, a4
+				sw                  s1, 68(sp)          
+				fence.i                       
+				addi                a4, sp, 208
+				srai                a4, a4, 14
+				fence.i                       
+				srai                a5, a5, 25
+	
+b0000001dfc:
+				beq                 x29, x16, 1f        
+				jal                 x0, i0000001df5     
+				1: li x29, 10                           
+	
+				lw                  s1, 56(sp)          
+				slliw               t6, zero, 14
+				addi                a4, sp, 236
+				srai                s0, s0, 13
+				sb                  s7, -1737(sp)       
+				addi                a4, sp, 100
+				srliw               s1, t2, 15
+i0000001dfc:	addiw               a5, a5, 11
+i0000001dfd:	subw                a0, a0, a1
+i0000001dfe:	addi                a5, zero, 4
+i0000001dff:	sd                  s1, 80(sp)          
+i0000001e00:	sw                  a5, 32(sp)          
+i0000001e01:	or                  t3, s1, s0
+i0000001e02:	srli                s1, s1, 26
+i0000001e03:	addi                s1, s1, -23
+i0000001e04:	lwu                 t5, -412(sp)        
+i0000001e05:	ld                  a4, 336(sp)         
+i0000001e06:	addi                a5, sp, 212
+				la                  sp, begin_signature
+				li                  t1, 2440  
+				add                 sp, sp, t1
+i0000001e07:	sd                  a5, 0(sp)           
+i0000001e08:	srl                 s1, s9, zero
+i0000001e09:	addi                s4, s0, -2014
+				la                  sp, begin_signature
+				li                  t1, 13944 
+				add                 sp, sp, t1
+i0000001e0a:	sd                  s0, 16(sp)          
+i0000001e0b:	addw                a4, a4, a4
+i0000001e0c:	lbu                 t5, -451(sp)        
+i0000001e0d:	lhu                 a5, -176(sp)        
+i0000001e0e:	addi                s0, sp, 332
+i0000001e0f:	srli                a1, a1, 13
+i0000001e10:	srai                a5, a5, 5 
+i0000001e11:	ld                  a5, 112(sp)         
+i0000001e12:	lwu                 s1, 792(sp)         
+i0000001e13:	addi                a3, sp, 56
+i0000001e14:	lw                  s8, 852(sp)         
+i0000001e15:	addi                a5, sp, 384
+i0000001e16:	addi                a5, sp, 448
+i0000001e17:	lw                  s0, 100(sp)         
+i0000001e18:	addi                sp, sp, -144
+i0000001e19:	lw                  a5, -4(sp)          
+i0000001e1a:	lbu                 t5, -1732(sp)       
+				la                  sp, begin_signature
+				li                  t1, 2072  
+				add                 sp, sp, t1
+i0000001e1b:	lwu                 s1, 236(sp)         
+i0000001e1c:	addi                s0, sp, 384
+i0000001e1d:	srliw               s4, s0, 27
+i0000001e1e:	srai                a1, a1, 1 
+i0000001e1f:	srai                a4, a4, 4 
+				la                  sp, begin_signature
+				li                  t1, 6888  
+				add                 sp, sp, t1
+i0000001e20:	lw                  a5, 32(sp)          
+i0000001e21:	lh                  s1, -682(sp)        
+i0000001e22:	fence.i                       
+i0000001e23:	srli                s0, s0, 11
+				li                  x22, 10   
+				la                  sp, begin_signature
+				li                  t1, 9248  
+				add                 sp, sp, t1
+				srli                a4, a4, 16
+				sraiw               a7, s11, 22
+				remw                s1, s0, s1
+				sd                  a5, 1056(sp)        
+				lw                  a7, 40(sp)          
+				divw                s1, s1, s1
+				sra                 a6, s7, a4
+	
+b0000001e24:
+				beq                 x29, x22, 1f        
+				la                  x22, i0000001e10    
+				jalr                x0, x22, 0          
+				1: li x29, 10                           
+	
+				lwu                 s10, -1356(sp)      
+				subw                s0, a6, a7
+				remuw               t3, s7, a4
+				fence                         
+				srliw               s4, s4, 0 
+				slliw               a5, s1, 13
+				fence                         
+i0000001e24:	ld                  gp, 48(sp)          
+i0000001e25:	lwu                 tp, 464(sp)         
+				la                  sp, begin_signature
+				li                  t1, 13896 
+				add                 sp, sp, t1
+i0000001e26:	lh                  s0, 1730(sp)        
+i0000001e27:	srai                a4, a4, 6 
+i0000001e28:	srli                a5, a5, 11
+i0000001e29:	addw                a2, a2, a3
+i0000001e2a:	addi                sp, sp, -384
+i0000001e2b:	addi                s1, sp, 388
+i0000001e2c:	addi                sp, sp, -320
+i0000001e2d:	slli                a1, a1, 4 
+i0000001e2e:	addi                a4, zero, 6
+i0000001e2f:	addi                a2, sp, 216
+i0000001e30:	addw                s1, s0, a5
+i0000001e31:	fence.i                       
+i0000001e32:	slli                t3, s10, 20
+i0000001e33:	addi                s0, sp, 224
+i0000001e34:	fence                         
+i0000001e35:	sllw                a5, s0, s1
+i0000001e36:	srlw                s0, tp, t1
+i0000001e37:	lh                  s0, 1816(sp)        
+i0000001e38:	ld                  s0, -336(sp)        
+i0000001e39:	slliw               s0, t1, 20
+i0000001e3a:	srli                s0, s0, 10
+i0000001e3b:	subw                s0, s0, s1
+i0000001e3c:	slt                 s7, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 4968  
+				add                 sp, sp, t1
+i0000001e3d:	sd                  s1, 88(sp)          
+i0000001e3e:	srli                s0, s0, 25
+i0000001e3f:	fence.i                       
+i0000001e40:	sw                  s0, 4(sp)           
+i0000001e41:	addw                t3, a5, a5
+i0000001e42:	srlw                s0, s4, tp
+i0000001e43:	ld                  a5, 160(sp)         
+i0000001e44:	ld                  a2, 128(sp)         
+i0000001e45:	srai                a5, a5, 14
+i0000001e46:	srai                a4, a4, 10
+i0000001e47:	slti                s0, s6, 1519
+i0000001e48:	addi                sp, sp, -496
+i0000001e49:	fence.i                       
+i0000001e4a:	fence                         
+i0000001e4b:	lui                 s1, 361926
+				la                  sp, begin_signature
+				li                  t1, 6088  
+				add                 sp, sp, t1
+				lwu                 s7, 20(sp)          
+				ori                 s1, t6, 1336
+				sw                  a5, 0(sp)           
+				srai                s1, s1, 15
+				addi                s1, s1, -404
+				subw                a5, a5, a4
+				sw                  s9, 120(sp)         
+	
+b0000001e4c:
+				jal                 x1, i0000001e62     
+	
+				sw                  a6, 16(sp)          
+				fence.i                       
+				and                 s8, s0, s1
+				sw                  s1, 4(sp)           
+				sb                  s2, -955(sp)        
+				srlw                s0, s9, t6
+				sw                  a5, 52(sp)          
+i0000001e4c:	addi                s5, zero, -32
+i0000001e4d:	slliw               s8, s1, 4 
+i0000001e4e:	ld                  a5, 2040(sp)        
+i0000001e4f:	addi                sp, sp, -368
+i0000001e50:	fence.i                       
+i0000001e51:	add                 t3, zero, s1
+i0000001e52:	sw                  s1, 56(sp)          
+i0000001e53:	fence                         
+i0000001e54:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 11280 
+				add                 sp, sp, t1
+i0000001e55:	lw                  s0, 120(sp)         
+i0000001e56:	xor                 s1, s1, a3
+i0000001e57:	addi                sp, sp, 48
+i0000001e58:	sd                  s0, 1160(sp)        
+i0000001e59:	ld                  s1, 48(sp)          
+i0000001e5a:	addw                a3, a3, s0
+i0000001e5b:	srli                a3, a3, 11
+i0000001e5c:	sw                  t2, -416(sp)        
+i0000001e5d:	addi                sp, sp, -224
+i0000001e5e:	srli                a1, a1, 12
+i0000001e5f:	fence                         
+i0000001e60:	srlw                a5, t1, gp
+i0000001e61:	sllw                a5, s6, a6
+i0000001e62:	lb                  a5, -1131(sp)       
+i0000001e63:	xor                 s0, s0, a4
+i0000001e64:	sw                  a5, 36(sp)          
+i0000001e65:	fsrmi               x0, 0     
+i0000001e66:	ld                  a1, 72(sp)          
+i0000001e67:	addi                a0, sp, 296
+i0000001e68:	sh                  s0, 1440(sp)        
+i0000001e69:	ld                  a5, 80(sp)          
+i0000001e6a:	srai                s0, s0, 10
+i0000001e6b:	and                 a2, a2, a5
+i0000001e6c:	sd                  s0, 56(sp)          
+i0000001e6d:	srai                s0, s0, 9 
+i0000001e6e:	fence                         
+i0000001e6f:	ld                  a0, 88(sp)          
+i0000001e70:	sraiw               t2, s1, 26
+i0000001e71:	addi                a2, a2, 7 
+i0000001e72:	addi                a2, sp, 296
+i0000001e73:	sw                  s3, 8(sp)           
+i0000001e74:	ld                  s1, 240(sp)         
+				li                  x31, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 11184 
+				add                 sp, sp, t1
+				ld                  s11, -408(sp)       
+				sd                  s8, 248(sp)         
+				lwu                 s0, -1152(sp)       
+				remw                s1, s1, s0
+				lw                  a5, 1560(sp)        
+				sh                  s0, -598(sp)        
+				mul                 s0, a5, a5
+	
+b0000001e75:
+				pre_branch_macro                        
+				blt                 x29, x31, i0000001e82
+				post_branch_macro                       
+	
+				mul                 a7, a5, a5
+				lwu                 s0, -1388(sp)       
+				sraiw               s9, s1, 28
+				lwu                 t3, -708(sp)        
+				lbu                 a7, 1886(sp)        
+				fence                         
+				sd                  gp, 0(sp)           
+				li                  x29, 10   
+i0000001e75:	fence                         
+i0000001e76:	addi                a4, sp, 412
+				la                  sp, begin_signature
+				li                  t1, 7456  
+				add                 sp, sp, t1
+i0000001e77:	lw                  a5, 108(sp)         
+i0000001e78:	lui                 a7, 258120
+i0000001e79:	andi                a5, t6, -659
+i0000001e7a:	addi                sp, sp, 32
+i0000001e7b:	sb                  a1, 1931(sp)        
+i0000001e7c:	andi                a5, a5, -4
+i0000001e7d:	lw                  tp, 1416(sp)        
+i0000001e7e:	ld                  a5, -824(sp)        
+i0000001e7f:	fence                         
+i0000001e80:	srai                a3, a5, 11
+i0000001e81:	lbu                 s7, 743(sp)         
+i0000001e82:	srlw                a5, s9, s8
+i0000001e83:	addi                sp, sp, -16
+i0000001e84:	sd                  s11, 176(sp)        
+i0000001e85:	ld                  s5, -600(sp)        
+i0000001e86:	addi                a4, sp, 344
+i0000001e87:	sw                  s0, 8(sp)           
+i0000001e88:	srai                s1, s1, 10
+i0000001e89:	addi                sp, sp, -480
+i0000001e8a:	fence.i                       
+i0000001e8b:	fence.i                       
+i0000001e8c:	addw                a1, a1, s1
+i0000001e8d:	srli                a2, a2, 3 
+i0000001e8e:	subw                s11, a7, a4
+i0000001e8f:	srli                a2, a2, 12
+i0000001e90:	lb                  t1, 972(sp)         
+i0000001e91:	lw                  a5, 36(sp)          
+i0000001e92:	sh                  a1, -1032(sp)       
+i0000001e93:	sd                  a1, 40(sp)          
+i0000001e94:	andi                s0, s0, 314
+i0000001e95:	slliw               a5, s1, 31
+i0000001e96:	ld                  a5, 32(sp)          
+i0000001e97:	sw                  s0, -316(sp)        
+i0000001e98:	fence.i                       
+i0000001e99:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 9576  
+				add                 sp, sp, t1
+i0000001e9a:	sb                  a0, 1657(sp)        
+i0000001e9b:	auipc               s0, 459744
+i0000001e9c:	sraw                s0, a2, s3
+				li                  x31, 12   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7680  
+				add                 sp, sp, t1
+				sd                  s0, 104(sp)         
+				lui                 a5, 76903 
+				addi                sp, sp, -256
+				srli                a5, a5, 14
+				fence                         
+				lhu                 s0, -1876(sp)       
+				srai                a4, a4, 11
+	
+b0000001e9d:
+				pre_branch_macro                        
+				blt                 x29, x31, i0000001eb9
+				post_branch_macro                       
+	
+				addi                sp, sp, -16
+				fence                         
+				sw                  a4, 0(sp)           
+				srai                a4, a4, 15
+				srai                a4, a4, 14
+				sw                  a5, -348(sp)        
+				lw                  s1, 32(sp)          
+				li                  x29, 10   
+i0000001e9d:	lwu                 t2, 1492(sp)        
+				la                  sp, begin_signature
+				li                  t1, 14104 
+				add                 sp, sp, t1
+i0000001e9e:	sw                  a1, 64(sp)          
+i0000001e9f:	srli                a0, a0, 11
+i0000001ea0:	addi                s1, sp, 20
+i0000001ea1:	addi                s1, s0, 1385
+i0000001ea2:	addw                a0, a0, s0
+i0000001ea3:	fence.i                       
+i0000001ea4:	srai                a4, a4, 5 
+i0000001ea5:	ori                 a5, a5, 571
+i0000001ea6:	sw                  s1, 48(sp)          
+i0000001ea7:	addi                t5, zero, 8
+i0000001ea8:	ld                  zero, -816(sp)      
+i0000001ea9:	lw                  a4, -1808(sp)       
+i0000001eaa:	srl                 s0, tp, t2
+i0000001eab:	addi                sp, sp, -432
+i0000001eac:	addiw               s1, tp, 203
+i0000001ead:	addi                s1, sp, 364
+i0000001eae:	sub                 s1, a2, a0
+i0000001eaf:	addi                sp, sp, 96
+i0000001eb0:	fence.i                       
+i0000001eb1:	sub                 a1, a1, s1
+i0000001eb2:	addi                a3, sp, 236
+i0000001eb3:	slt                 a7, s3, a4
+i0000001eb4:	add                 a7, a1, a1
+i0000001eb5:	andi                s1, s1, -20
+i0000001eb6:	srai                a4, a4, 7 
+i0000001eb7:	srli                s1, s1, 30
+i0000001eb8:	srli                a1, a1, 11
+i0000001eb9:	sd                  s11, 1832(sp)       
+i0000001eba:	fence.i                       
+i0000001ebb:	srai                a2, a2, 8 
+i0000001ebc:	addi                a2, sp, 364
+i0000001ebd:	addw                s1, s1, a4
+i0000001ebe:	ld                  s0, 80(sp)          
+i0000001ebf:	sub                 a5, a5, s1
+i0000001ec0:	ld                  s5, 1448(sp)        
+i0000001ec1:	srai                a2, a2, 16
+i0000001ec2:	addi                sp, sp, 32
+i0000001ec3:	sra                 a5, t6, s5
+i0000001ec4:	addi                sp, sp, 32
+				li                  x20, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 10976 
+				add                 sp, sp, t1
+				rem                 s1, s0, s1
+				divu                s6, s7, s9
+				addi                s1, sp, 196
+				ld                  a5, 184(sp)         
+				sub                 a4, a4, s1
+				divw                s11, s1, a5
+				fence                         
+	
+b0000001ec5:
+				pre_branch_macro                        
+				blt                 x29, x20, i0000001ed8
+				post_branch_macro                       
+	
+				addi                sp, sp, -192
+				addi                s1, sp, 424
+				rem                 s0, s0, a5
+				sraw                t6, s2, s3
+				lwu                 tp, -1132(sp)       
+				remu                a7, s2, a7
+				sw                  s1, 24(sp)          
+				li                  x29, 10   
+i0000001ec5:	addi                t3, zero, -1
+i0000001ec6:	fence.i                       
+i0000001ec7:	sd                  tp, 1264(sp)        
+				la                  sp, begin_signature
+				li                  t1, 12104 
+				add                 sp, sp, t1
+i0000001ec8:	sw                  s1, 44(sp)          
+i0000001ec9:	ld                  s6, 240(sp)         
+i0000001eca:	addi                a2, sp, 420
+i0000001ecb:	and                 a4, a4, a5
+i0000001ecc:	sll                 s1, gp, t5
+i0000001ecd:	lhu                 s0, -608(sp)        
+i0000001ece:	ld                  s1, -192(sp)        
+i0000001ecf:	slt                 t1, s0, s1
+i0000001ed0:	srai                a4, a4, 13
+i0000001ed1:	ld                  a0, 48(sp)          
+i0000001ed2:	addiw               gp, s7, 680
+i0000001ed3:	addi                t1, zero, -10
+				la                  sp, begin_signature
+				li                  t1, 13976 
+				add                 sp, sp, t1
+i0000001ed4:	sh                  a5, -1846(sp)       
+i0000001ed5:	slli                a5, s7, 7 
+i0000001ed6:	srli                a2, a2, 3 
+i0000001ed7:	slli                s5, gp, 16
+i0000001ed8:	srai                s1, s1, 9 
+i0000001ed9:	ld                  s0, 32(sp)          
+i0000001eda:	sub                 s0, s0, s0
+i0000001edb:	sw                  s1, 40(sp)          
+i0000001edc:	srlw                t6, gp, s10
+i0000001edd:	addi                a2, sp, 268
+i0000001ede:	ld                  t1, 24(sp)          
+i0000001edf:	addi                t1, zero, -25
+i0000001ee0:	slt                 tp, s1, a5
+i0000001ee1:	srai                a4, a4, 10
+i0000001ee2:	fence                         
+i0000001ee3:	xor                 a2, a2, a1
+i0000001ee4:	ld                  a5, 256(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7728  
+				add                 sp, sp, t1
+i0000001ee5:	sw                  s0, 36(sp)          
+i0000001ee6:	fence.i                       
+i0000001ee7:	srliw               a5, a5, 0 
+i0000001ee8:	srli                s1, s1, 7 
+i0000001ee9:	lw                  a0, 20(sp)          
+i0000001eea:	srli                a4, a4, 9 
+i0000001eeb:	subw                a5, a5, s0
+i0000001eec:	sraw                a1, s11, s9
+				la                  sp, begin_signature
+				li                  t1, 4464  
+				add                 sp, sp, t1
+				sw                  s1, 52(sp)          
+				sw                  a5, -428(sp)        
+				srli                a4, a4, 6 
+				sw                  s0, -1228(sp)       
+				addiw               s0, s0, 11
+				sb                  s0, -1476(sp)       
+				sd                  tp, -1904(sp)       
+	
+b0000001eed:
+				jal                 x1, i0000001f0d     
+	
+				ld                  a5, -552(sp)        
+				addw                s0, s0, a4
+				sd                  a4, 32(sp)          
+				lbu                 s6, -1671(sp)       
+				auipc               a5, 88842 
+				subw                s0, s0, a4
+				addiw               s0, s0, -27
+i0000001eed:	sllw                s1, a5, s0
+i0000001eee:	fence                         
+i0000001eef:	sltiu               s0, s1, -637
+i0000001ef0:	srai                s0, s0, 7 
+i0000001ef1:	xori                a7, s0, -940
+i0000001ef2:	sd                  s0, 680(sp)         
+i0000001ef3:	lwu                 s0, 2000(sp)        
+i0000001ef4:	sraw                a5, s0, a5
+i0000001ef5:	addi                sp, sp, 0 
+i0000001ef6:	addi                a3, sp, 364
+i0000001ef7:	sraw                s1, s0, a5
+i0000001ef8:	srai                a4, a4, 9 
+i0000001ef9:	fence                         
+i0000001efa:	addi                sp, sp, 16
+i0000001efb:	sw                  tp, 40(sp)          
+i0000001efc:	sw                  s6, 48(sp)          
+i0000001efd:	srli                a5, a5, 11
+i0000001efe:	lui                 s0, 338386
+i0000001eff:	addi                s1, sp, 124
+i0000001f00:	subw                a1, a1, a0
+i0000001f01:	lhu                 a5, 820(sp)         
+i0000001f02:	lw                  s0, 60(sp)          
+i0000001f03:	subw                s1, s1, a5
+i0000001f04:	ld                  s4, -1208(sp)       
+i0000001f05:	sd                  s1, 1728(sp)        
+i0000001f06:	addiw               a2, a2, -15
+i0000001f07:	fence                         
+i0000001f08:	fence.i                       
+i0000001f09:	srai                s1, s1, 8 
+i0000001f0a:	addiw               a3, a3, -21
+i0000001f0b:	auipc               a5, 143358
+i0000001f0c:	srai                a1, a1, 11
+i0000001f0d:	addi                a0, sp, 384
+i0000001f0e:	sw                  a5, -964(sp)        
+i0000001f0f:	fence                         
+i0000001f10:	fsrmi               x0, 2     
+i0000001f11:	ld                  s1, 104(sp)         
+i0000001f12:	sh                  a5, 1284(sp)        
+i0000001f13:	lbu                 tp, 1560(sp)        
+i0000001f14:	and                 a5, s3, s7
+i0000001f15:	slliw               a3, s1, 30
+				li                  x21, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 5592  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7336  
+				add                 sp, sp, t1
+				lbu                 a5, 1197(sp)        
+				addi                s2, zero, -13
+				lwu                 s10, 1644(sp)       
+				lw                  a4, 20(sp)          
+				sd                  gp, -360(sp)        
+				sllw                a5, s4, tp
+				slti                s11, s0, -130
+	
+b0000001f16:
+				pre_branch_macro                        
+				bne                 x29, x21, i0000001ef9
+				post_branch_macro                       
+	
+				mulhu               s1, s1, a5
+				ld                  t3, -1144(sp)       
+				lw                  a4, 4(sp)           
+				slli                tp, a5, 14
+				lwu                 s1, -148(sp)        
+				lbu                 s0, -1830(sp)       
+				addiw               s10, a5, 1812
+				li                  x29, 10   
+i0000001f16:	fence                         
+i0000001f17:	sw                  a3, 28(sp)          
+i0000001f18:	addw                s1, s1, a3
+i0000001f19:	fence                         
+i0000001f1a:	ld                  s11, 176(sp)        
+i0000001f1b:	srai                a3, a3, 4 
+i0000001f1c:	lui                 t5, 6     
+i0000001f1d:	ld                  s1, 8(sp)           
+i0000001f1e:	addi                s0, sp, 120
+i0000001f1f:	lw                  s0, 80(sp)          
+i0000001f20:	subw                t0, a7, s7
+i0000001f21:	addiw               s1, s1, -5
+i0000001f22:	subw                a0, a0, a1
+				la                  sp, begin_signature
+				li                  t1, 5760  
+				add                 sp, sp, t1
+i0000001f23:	lhu                 s10, 134(sp)        
+i0000001f24:	sw                  a5, 32(sp)          
+i0000001f25:	addiw               s1, t3, 946
+i0000001f26:	addi                sp, sp, -48
+i0000001f27:	or                  a1, s0, s0
+i0000001f28:	fence.i                       
+i0000001f29:	srlw                s9, s6, s5
+				la                  sp, begin_signature
+				li                  t1, 9576  
+				add                 sp, sp, t1
+i0000001f2a:	sw                  s1, -960(sp)        
+i0000001f2b:	addi                s1, sp, 164
+i0000001f2c:	srliw               s1, a5, 2 
+				la                  sp, begin_signature
+				li                  t1, 5976  
+				add                 sp, sp, t1
+i0000001f2d:	lwu                 s1, -248(sp)        
+i0000001f2e:	srli                a1, a1, 23
+i0000001f2f:	and                 a5, a5, s0
+i0000001f30:	ld                  a5, 40(sp)          
+i0000001f31:	srliw               a3, a4, 23
+i0000001f32:	sh                  s1, -622(sp)        
+i0000001f33:	srl                 a5, t2, zero
+i0000001f34:	srai                a0, a0, 5 
+i0000001f35:	sw                  tp, 36(sp)          
+i0000001f36:	srli                s6, a5, 14
+i0000001f37:	sd                  s0, 1936(sp)        
+i0000001f38:	fence.i                       
+i0000001f39:	ld                  a1, 72(sp)          
+i0000001f3a:	srli                a3, a3, 19
+i0000001f3b:	sd                  t1, -16(sp)         
+i0000001f3c:	ld                  tp, 160(sp)         
+i0000001f3d:	addi                s1, sp, 304
+				li                  x28, 0    
+				la                  sp, begin_signature
+				li                  t1, 9096  
+				add                 sp, sp, t1
+				div                 s10, a5, a5
+				addi                sp, sp, 240
+				or                  a4, a4, a4
+				div                 a5, s5, a4
+				lh                  s1, -1570(sp)       
+				divw                s6, s0, s0
+				lb                  s6, 1858(sp)        
+	
+b0000001f3e:
+				pre_branch_macro                        
+				beq                 x29, x28, i0000001f5b
+				post_branch_macro                       
+	
+				rem                 s1, t6, tp
+				slliw               s0, s1, 6 
+				fence                         
+				fence.i                       
+				addw                s11, a5, a5
+				remw                a5, s0, s1
+				sw                  a5, 76(sp)          
+				li                  x29, 10   
+i0000001f3e:	add                 a5, a5, t2
+i0000001f3f:	srli                a4, a4, 7 
+				la                  sp, begin_signature
+				li                  t1, 10696 
+				add                 sp, sp, t1
+i0000001f40:	ld                  s10, 1120(sp)       
+i0000001f41:	addw                zero, a0, a0
+i0000001f42:	sraw                a1, t3, t5
+i0000001f43:	fence                         
+i0000001f44:	or                  a0, a0, s1
+i0000001f45:	srai                a3, a3, 7 
+i0000001f46:	srli                a5, a5, 10
+				la                  sp, begin_signature
+				li                  t1, 10928 
+				add                 sp, sp, t1
+i0000001f47:	sh                  s2, -40(sp)         
+				la                  sp, begin_signature
+				li                  t1, 14128 
+				add                 sp, sp, t1
+i0000001f48:	sd                  a5, 112(sp)         
+i0000001f49:	fence                         
+i0000001f4a:	sllw                s1, s1, s1
+i0000001f4b:	lw                  s0, 44(sp)          
+i0000001f4c:	sw                  a5, 32(sp)          
+i0000001f4d:	sd                  tp, 608(sp)         
+i0000001f4e:	srliw               s1, s1, 18
+i0000001f4f:	sh                  zero, -840(sp)      
+i0000001f50:	addw                a2, a2, a0
+i0000001f51:	lui                 zero, 14  
+i0000001f52:	slti                s1, a5, -1614
+i0000001f53:	srai                a2, a2, 11
+i0000001f54:	srai                a3, a3, 11
+i0000001f55:	fence.i                       
+i0000001f56:	srai                tp, t0, 34
+i0000001f57:	addw                a2, a2, s1
+				la                  sp, begin_signature
+				li                  t1, 14136 
+				add                 sp, sp, t1
+i0000001f58:	ld                  a5, 144(sp)         
+i0000001f59:	add                 s1, s0, s1
+i0000001f5a:	sd                  s1, -552(sp)        
+i0000001f5b:	sltu                s11, s0, a5
+i0000001f5c:	sra                 s6, zero, t1
+i0000001f5d:	slliw               a5, s1, 22
+i0000001f5e:	srliw               a5, s0, 29
+i0000001f5f:	ld                  s0, 864(sp)         
+i0000001f60:	srli                a2, a2, 12
+i0000001f61:	srli                a1, a1, 24
+i0000001f62:	andi                a3, a3, -17
+i0000001f63:	addi                sp, sp, 16
+i0000001f64:	sllw                s0, s8, s5
+i0000001f65:	addi                s0, zero, 7
+				li                  x24, 10   
+				la                  sp, begin_signature
+				li                  t1, 7272  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3248  
+				add                 sp, sp, t1
+				remuw               s1, s0, s0
+				remuw               a5, s1, a5
+				mul                 s0, s1, a5
+				lw                  a4, 60(sp)          
+				sd                  a5, 64(sp)          
+				remuw               s10, s4, s6
+				divuw               t2, s10, gp
+	
+b0000001f66:
+				beq                 x29, x24, 1f        
+				jal                 x1, i0000001f4a     
+				1: li x29, 10                           
+	
+				ld                  a4, 16(sp)          
+				fence.i                       
+				add                 s10, s10, a5
+				lb                  a5, -1284(sp)       
+				subw                s11, s7, t2
+				srlw                t6, s1, s0
+				sraiw               s9, s1, 16
+i0000001f66:	srli                s1, a0, 22
+i0000001f67:	lw                  t2, 72(sp)          
+i0000001f68:	srai                s0, s0, 11
+i0000001f69:	sltiu               s1, s0, 587
+i0000001f6a:	addi                sp, sp, -128
+i0000001f6b:	addw                s0, s0, a0
+i0000001f6c:	fence                         
+i0000001f6d:	srliw               s1, s8, 2 
+i0000001f6e:	sd                  s0, 48(sp)          
+i0000001f6f:	lui                 t6, 152734
+				la                  sp, begin_signature
+				li                  t1, 2800  
+				add                 sp, sp, t1
+i0000001f70:	ld                  s1, 144(sp)         
+i0000001f71:	lb                  t2, 587(sp)         
+i0000001f72:	lw                  a0, 40(sp)          
+i0000001f73:	fence.i                       
+i0000001f74:	addi                sp, sp, -112
+i0000001f75:	lb                  gp, 840(sp)         
+i0000001f76:	srliw               s1, a5, 17
+i0000001f77:	sh                  s7, 1312(sp)        
+i0000001f78:	slli                a0, a0, 28
+i0000001f79:	srli                a4, a4, 7 
+i0000001f7a:	lw                  zero, -1216(sp)     
+				la                  sp, begin_signature
+				li                  t1, 5056  
+				add                 sp, sp, t1
+i0000001f7b:	sh                  a5, -802(sp)        
+i0000001f7c:	auipc               a4, 499329
+i0000001f7d:	lw                  a3, 52(sp)          
+i0000001f7e:	addw                a1, a1, a0
+i0000001f7f:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 12528 
+				add                 sp, sp, t1
+i0000001f80:	lwu                 t3, 1508(sp)        
+i0000001f81:	or                  a4, a4, a5
+i0000001f82:	srli                a3, a3, 2 
+i0000001f83:	lwu                 a5, -164(sp)        
+i0000001f84:	addi                sp, sp, -448
+i0000001f85:	and                 t2, a5, a5
+i0000001f86:	subw                a3, a3, s0
+i0000001f87:	srai                s0, s0, 15
+i0000001f88:	addi                sp, sp, -224
+i0000001f89:	sraiw               a5, a5, 19
+i0000001f8a:	fence.i                       
+i0000001f8b:	sra                 s1, s1, a5
+i0000001f8c:	sw                  s0, 52(sp)          
+i0000001f8d:	lw                  s1, 1160(sp)        
+				li                  x19, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 6808  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11216 
+				add                 sp, sp, t1
+				lb                  a5, -1337(sp)       
+				xor                 s2, a5, s0
+				lw                  a5, 40(sp)          
+				sh                  s9, 712(sp)         
+				sd                  a4, 56(sp)          
+				srai                s1, s1, 12
+				lw                  s9, 120(sp)         
+	
+b0000001f8e:
+				beq                 x29, x19, 1f        
+				jal                 x1, i0000001f6f     
+				1: li x29, 10                           
+	
+				rem                 zero, s4, s10
+				addw                a4, a4, a5
+				lw                  a4, 16(sp)          
+				addi                sp, sp, -144
+				and                 s2, s0, s0
+				addw                s8, s0, a5
+				sllw                s1, a5, s0
+i0000001f8e:	sh                  s0, -1380(sp)       
+i0000001f8f:	ld                  a5, 320(sp)         
+i0000001f90:	sd                  a5, 80(sp)          
+i0000001f91:	srli                s1, s1, 12
+i0000001f92:	addiw               a2, a2, 1683
+i0000001f93:	ld                  s11, 120(sp)        
+i0000001f94:	lh                  s0, -536(sp)        
+i0000001f95:	lw                  a5, 1936(sp)        
+i0000001f96:	ld                  a7, 0(sp)           
+i0000001f97:	lw                  s5, -1004(sp)       
+i0000001f98:	or                  tp, a5, s0
+i0000001f99:	fence.i                       
+i0000001f9a:	lw                  a5, -1092(sp)       
+i0000001f9b:	slli                a3, a3, 23
+i0000001f9c:	fence                         
+i0000001f9d:	srli                s0, s0, 9 
+i0000001f9e:	sw                  a1, 32(sp)          
+i0000001f9f:	srli                a5, a5, 1 
+i0000001fa0:	sb                  a5, -324(sp)        
+i0000001fa1:	ld                  tp, 88(sp)          
+i0000001fa2:	srai                a5, a5, 2 
+i0000001fa3:	srli                a4, a4, 2 
+i0000001fa4:	sd                  a7, 616(sp)         
+i0000001fa5:	auipc               s11, 377274
+i0000001fa6:	srli                s1, s1, 5 
+i0000001fa7:	srli                a3, a3, 6 
+i0000001fa8:	srliw               s11, a4, 28
+i0000001fa9:	addw                zero, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 12600 
+				add                 sp, sp, t1
+i0000001faa:	sw                  s0, 48(sp)          
+i0000001fab:	sw                  a3, 60(sp)          
+i0000001fac:	andi                s0, s0, -20
+i0000001fad:	subw                a5, s1, s1
+i0000001fae:	srai                a2, a2, 2 
+i0000001faf:	fence.i                       
+i0000001fb0:	slti                tp, a6, -128
+i0000001fb1:	subw                a5, a5, s0
+i0000001fb2:	sw                  a5, 252(sp)         
+i0000001fb3:	ld                  a4, 64(sp)          
+i0000001fb4:	sd                  a5, -1232(sp)       
+				la                  sp, begin_signature
+				li                  t1, 6888  
+				add                 sp, sp, t1
+i0000001fb5:	sb                  a6, -654(sp)        
+				fence.i                       
+				add                 s1, t6, t3
+				addiw               a4, a4, -29
+				srai                a4, a4, 9 
+				xor                 s0, s0, s1
+				sraiw               a5, s6, 0 
+				addw                s0, s0, a4
+	
+b0000001fb6:
+				la                  x24, i0000001fbe    
+				jalr                x0, x24, 0          
+	
+				sd                  t2, 1840(sp)        
+				srli                s1, s1, 5 
+				addi                s0, sp, 168
+				subw                s0, s0, a4
+				srli                a5, a5, 19
+				fence                         
+				addi                sp, sp, -272
+i0000001fb6:	andi                a5, s0, -1120
+i0000001fb7:	sraw                s1, s1, s0
+i0000001fb8:	fence.i                       
+i0000001fb9:	ld                  s0, -864(sp)        
+i0000001fba:	addw                s0, s9, s8
+i0000001fbb:	addi                sp, sp, -192
+i0000001fbc:	add                 s0, zero, s0
+i0000001fbd:	srli                a5, a5, 30
+i0000001fbe:	addw                a4, a4, a3
+i0000001fbf:	slli                s0, a4, 4 
+i0000001fc0:	lw                  t1, -528(sp)        
+i0000001fc1:	ld                  s0, 1240(sp)        
+				la                  sp, begin_signature
+				li                  t1, 11720 
+				add                 sp, sp, t1
+i0000001fc2:	ld                  s0, 160(sp)         
+				la                  sp, begin_signature
+				li                  t1, 7328  
+				add                 sp, sp, t1
+i0000001fc3:	ld                  s4, -864(sp)        
+i0000001fc4:	sllw                a5, s3, t3
+i0000001fc5:	xor                 a5, a5, s1
+i0000001fc6:	addi                a1, sp, 380
+				la                  sp, begin_signature
+				li                  t1, 7704  
+				add                 sp, sp, t1
+i0000001fc7:	sd                  a4, 80(sp)          
+i0000001fc8:	srlw                s6, a5, s0
+i0000001fc9:	lw                  a5, 60(sp)          
+i0000001fca:	lui                 a5, 24    
+i0000001fcb:	ld                  a0, 40(sp)          
+i0000001fcc:	slli                s0, s0, 30
+i0000001fcd:	auipc               a5, 496318
+i0000001fce:	or                  a1, a1, s0
+i0000001fcf:	srai                s0, s0, 8 
+i0000001fd0:	fence                         
+i0000001fd1:	slli                s1, s1, 10
+i0000001fd2:	slliw               a5, zero, 8
+i0000001fd3:	sw                  a1, 44(sp)          
+i0000001fd4:	subw                t0, s1, a5
+i0000001fd5:	subw                a2, a2, a3
+i0000001fd6:	ld                  zero, -1136(sp)     
+i0000001fd7:	srai                s0, s0, 19
+i0000001fd8:	ld                  a3, 80(sp)          
+i0000001fd9:	srlw                a3, a5, a5
+i0000001fda:	sd                  a1, -24(sp)         
+i0000001fdb:	sub                 a3, a3, a1
+i0000001fdc:	fence                         
+i0000001fdd:	sd                  s10, 0(sp)          
+				li                  x31, 10   
+				la                  sp, begin_signature
+				li                  t1, 10448 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3816  
+				add                 sp, sp, t1
+				xor                 s0, s0, s1
+				ld                  a5, -1304(sp)       
+				divw                s2, zero, zero
+				ld                  tp, 328(sp)         
+				slli                a4, a4, 19
+				sb                  a5, 1930(sp)        
+				sh                  s8, 744(sp)         
+	
+b0000001fde:
+				beq                 x29, x31, 1f        
+				jal                 x10, i0000001fc4    
+				1: li x29, 10                           
+	
+				remuw               s2, s7, s11
+				mulw                s8, a7, s4
+				sw                  s11, 0(sp)          
+				addi                s1, zero, -25
+				fence                         
+				sllw                a5, a7, s4
+				mulhu               s10, a4, tp
+i0000001fde:	srai                a5, a5, 5 
+i0000001fdf:	sd                  s0, 56(sp)          
+i0000001fe0:	srli                a2, a2, 11
+i0000001fe1:	srli                a1, a1, 15
+i0000001fe2:	sraw                s7, tp, a0
+i0000001fe3:	sraiw               s1, s0, 30
+i0000001fe4:	srai                a0, a0, 4 
+i0000001fe5:	addiw               a3, a3, -32
+i0000001fe6:	fence.i                       
+i0000001fe7:	srai                a0, a0, 6 
+i0000001fe8:	addiw               s0, a1, -1392
+i0000001fe9:	sw                  a6, 1960(sp)        
+i0000001fea:	addw                s0, s0, s0
+i0000001feb:	srai                s0, s0, 8 
+i0000001fec:	srai                s0, s0, 15
+i0000001fed:	ld                  s6, -2016(sp)       
+i0000001fee:	slti                s1, t6, 1647
+i0000001fef:	lbu                 t5, 1657(sp)        
+i0000001ff0:	srli                a2, a2, 14
+i0000001ff1:	fence.i                       
+i0000001ff2:	ld                  a5, 1104(sp)        
+i0000001ff3:	addi                s1, sp, 484
+i0000001ff4:	srli                s0, s0, 16
+i0000001ff5:	fence                         
+i0000001ff6:	xor                 a2, a2, a4
+i0000001ff7:	sraw                s11, a0, zero
+i0000001ff8:	lw                  s8, 108(sp)         
+i0000001ff9:	or                  a1, a1, a4
+i0000001ffa:	ld                  a3, -1928(sp)       
+i0000001ffb:	addw                a5, a5, a5
+i0000001ffc:	add                 s0, s0, s4
+i0000001ffd:	lw                  s8, 60(sp)          
+i0000001ffe:	addi                a5, sp, 176
+i0000001fff:	lw                  a3, 48(sp)          
+i0000002000:	fence.i                       
+i0000002001:	srli                s0, s0, 10
+i0000002002:	addiw               s1, s1, -2
+i0000002003:	fence.i                       
+i0000002004:	fence.i                       
+i0000002005:	addw                s10, a5, s1
+				li                  x24, 10   
+				la                  sp, begin_signature
+				li                  t1, 4192  
+				add                 sp, sp, t1
+				ld                  a4, 112(sp)         
+				ld                  s0, 176(sp)         
+				fence.i                       
+				sw                  tp, 80(sp)          
+				fence.i                       
+				slliw               s2, s0, 0 
+				andi                s0, s0, -4
+	
+b0000002006:
+				beq                 x29, x24, 1f        
+				jal                 x0, i0000001feb     
+				1: li x29, 10                           
+	
+				sw                  a5, 28(sp)          
+				ld                  a5, 96(sp)          
+				mul                 s0, s1, s1
+				srai                a4, a4, 3 
+				and                 a4, a4, a4
+				fence.i                       
+				fence                         
+i0000002006:	lw                  s1, 104(sp)         
+i0000002007:	fence.i                       
+i0000002008:	or                  a3, a3, s0
+i0000002009:	srli                a2, a2, 2 
+i000000200a:	sd                  s1, 32(sp)          
+i000000200b:	sd                  t1, 128(sp)         
+i000000200c:	subw                a0, a0, a2
+i000000200d:	sllw                s1, a3, a6
+i000000200e:	addi                a4, a4, -19
+i000000200f:	slli                s1, s1, 19
+i0000002010:	addw                a1, a1, a3
+i0000002011:	addi                sp, sp, 176
+i0000002012:	lwu                 a5, 1476(sp)        
+i0000002013:	lw                  s1, 52(sp)          
+i0000002014:	or                  a2, a2, a3
+i0000002015:	sw                  a3, -148(sp)        
+i0000002016:	add                 t3, t3, a0
+i0000002017:	subw                s0, s10, a4
+				la                  sp, begin_signature
+				li                  t1, 5312  
+				add                 sp, sp, t1
+i0000002018:	lwu                 s1, -1520(sp)       
+i0000002019:	fence.i                       
+i000000201a:	lw                  s1, 28(sp)          
+i000000201b:	fence                         
+i000000201c:	sub                 s0, s0, a2
+i000000201d:	addi                s1, s6, 1702
+i000000201e:	sw                  a2, 12(sp)          
+				la                  sp, begin_signature
+				li                  t1, 4200  
+				add                 sp, sp, t1
+i000000201f:	ld                  t6, -1784(sp)       
+i0000002020:	add                 s0, zero, a5
+i0000002021:	srli                a4, a4, 12
+i0000002022:	lwu                 s0, 220(sp)         
+i0000002023:	ld                  zero, -1056(sp)     
+i0000002024:	lhu                 t6, -254(sp)        
+				la                  sp, begin_signature
+				li                  t1, 8376  
+				add                 sp, sp, t1
+i0000002025:	sw                  a4, 8(sp)           
+i0000002026:	andi                t3, zero, 109
+				la                  sp, begin_signature
+				li                  t1, 12408 
+				add                 sp, sp, t1
+i0000002027:	lw                  s1, 80(sp)          
+i0000002028:	lb                  t1, -972(sp)        
+i0000002029:	addw                a2, a2, a0
+i000000202a:	addi                a4, zero, 12
+i000000202b:	srliw               s0, a2, 22
+i000000202c:	srli                s1, s1, 13
+i000000202d:	addi                s10, t6, 79
+				li                  x26, 10   
+				la                  sp, begin_signature
+				li                  t1, 5184  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9912  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 12360 
+				add                 sp, sp, t1
+				ld                  s5, -576(sp)        
+				xor                 a4, a4, a5
+				slli                a6, t3, 22
+				fence                         
+				div                 s3, tp, tp
+				lw                  s0, 108(sp)         
+				sd                  s3, 424(sp)         
+	
+b000000202e:
+				beq                 x29, x26, 1f        
+				jal                 x1, i0000002012     
+				1: li x29, 10                           
+	
+				lui                 s7, 25    
+				sraiw               s5, a5, 18
+				divw                s3, s0, s0
+				srli                s1, s1, 2 
+				addi                s1, sp, 132
+				divuw               s11, gp, s2
+				sll                 a5, s1, a5
+i000000202e:	sw                  gp, 44(sp)          
+i000000202f:	ld                  a5, 56(sp)          
+i0000002030:	ld                  a3, -1136(sp)       
+i0000002031:	sw                  a5, -964(sp)        
+i0000002032:	fence.i                       
+i0000002033:	srai                a2, a2, 5 
+i0000002034:	sraw                s1, s0, s0
+i0000002035:	lw                  s1, 96(sp)          
+i0000002036:	ld                  s0, 136(sp)         
+i0000002037:	srli                a0, a0, 4 
+i0000002038:	slti                s0, t5, -1783
+i0000002039:	sw                  a3, 44(sp)          
+i000000203a:	lbu                 s0, -1367(sp)       
+i000000203b:	srlw                s10, t3, s8
+i000000203c:	subw                s0, s0, a2
+i000000203d:	srli                a1, a1, 7 
+i000000203e:	ld                  s0, 648(sp)         
+i000000203f:	or                  s1, s1, a0
+i0000002040:	ld                  a1, 48(sp)          
+i0000002041:	addw                s0, s1, s1
+				la                  sp, begin_signature
+				li                  t1, 7312  
+				add                 sp, sp, t1
+i0000002042:	sh                  s0, -958(sp)        
+i0000002043:	sub                 a5, a5, a3
+i0000002044:	fence.i                       
+i0000002045:	sd                  s1, 72(sp)          
+i0000002046:	sw                  s1, 24(sp)          
+i0000002047:	fence.i                       
+i0000002048:	sh                  a0, -1440(sp)       
+i0000002049:	slli                s0, s0, 10
+i000000204a:	fence.i                       
+i000000204b:	addi                sp, sp, -304
+i000000204c:	addi                a3, sp, 32
+i000000204d:	srli                a5, a5, 12
+i000000204e:	sd                  s5, 328(sp)         
+i000000204f:	addi                s0, sp, 184
+i0000002050:	srai                t6, s1, 57
+i0000002051:	sw                  s1, 124(sp)         
+i0000002052:	sd                  a6, -744(sp)        
+i0000002053:	sll                 s0, a5, s0
+i0000002054:	ld                  s0, 16(sp)          
+i0000002055:	lw                  a5, -384(sp)        
+				la                  sp, begin_signature
+				li                  t1, 6760  
+				add                 sp, sp, t1
+				sw                  s0, 8(sp)           
+				srai                a4, a4, 2 
+				remu                s9, s10, zero
+				subw                a5, t6, s9
+				lwu                 s0, -1844(sp)       
+				addiw               a5, t6, 1694
+				sw                  s1, 44(sp)          
+	
+b0000002056:
+				jal                 x1, i0000002072     
+	
+				addi                sp, sp, 256
+				sb                  zero, -820(sp)      
+				sd                  s1, -1776(sp)       
+				lbu                 a5, 868(sp)         
+				addw                s0, s0, a4
+				add                 t6, t6, zero
+				srai                a4, a4, 14
+i0000002056:	srai                s8, s2, 62
+i0000002057:	xor                 a5, a1, a1
+i0000002058:	ori                 s0, s9, -1150
+i0000002059:	andi                s1, t5, -1222
+i000000205a:	lui                 s1, 236839
+i000000205b:	addi                sp, sp, 96
+i000000205c:	add                 s0, zero, s10
+i000000205d:	lwu                 s7, -1740(sp)       
+i000000205e:	lw                  s1, 1496(sp)        
+i000000205f:	srli                a2, a2, 13
+i0000002060:	srliw               s0, s0, 5 
+i0000002061:	or                  s1, s1, s1
+i0000002062:	sd                  s0, 0(sp)           
+i0000002063:	slliw               s0, a5, 16
+i0000002064:	fence                         
+i0000002065:	slliw               s1, a5, 25
+i0000002066:	sraiw               a4, a5, 24
+i0000002067:	addi                sp, sp, -16
+i0000002068:	sw                  s0, 16(sp)          
+i0000002069:	sd                  a4, 80(sp)          
+i000000206a:	ld                  s1, 128(sp)         
+i000000206b:	andi                tp, t6, -543
+i000000206c:	srai                a5, a5, 5 
+i000000206d:	sd                  s0, 1200(sp)        
+i000000206e:	sd                  t5, 104(sp)         
+				la                  sp, begin_signature
+				li                  t1, 8024  
+				add                 sp, sp, t1
+i000000206f:	sw                  a3, 8(sp)           
+i0000002070:	sd                  a7, 840(sp)         
+i0000002071:	sw                  s9, 236(sp)         
+i0000002072:	srai                a3, a3, 2 
+i0000002073:	addi                sp, sp, -208
+i0000002074:	srli                a2, a2, 16
+				la                  sp, begin_signature
+				li                  t1, 9448  
+				add                 sp, sp, t1
+i0000002075:	sb                  a5, -693(sp)        
+i0000002076:	srai                a2, a2, 5 
+i0000002077:	sb                  s11, -1563(sp)      
+i0000002078:	srli                a2, a2, 12
+i0000002079:	srai                a3, a3, 4 
+i000000207a:	slt                 a5, s1, s1
+i000000207b:	addiw               s2, s6, 2013
+				la                  sp, begin_signature
+				li                  t1, 10832 
+				add                 sp, sp, t1
+i000000207c:	lwu                 s11, 624(sp)        
+i000000207d:	sd                  a3, 1056(sp)        
+				li                  x16, 10   
+				la                  sp, begin_signature
+				li                  t1, 10424 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9560  
+				add                 sp, sp, t1
+				lui                 s0, 15    
+				lw                  s0, 16(sp)          
+				div                 s2, s1, a5
+				srai                a4, a4, 20
+				addi                sp, sp, -160
+				addi                s0, sp, 148
+				sd                  s1, 56(sp)          
+	
+b000000207e:
+				beq                 x29, x16, 1f        
+				jal                 x1, i0000002064     
+				1: li x29, 10                           
+	
+				mulw                t2, a5, s1
+				srai                a4, a4, 1 
+				andi                tp, s0, 200
+				srliw               a5, s0, 2 
+				srai                a5, a5, 11
+				mulhsu              s9, s7, s3
+				div                 s1, gp, s6
+i000000207e:	lh                  t3, 1666(sp)        
+i000000207f:	srai                a5, a5, 3 
+i0000002080:	srli                s1, s1, 8 
+i0000002081:	fence                         
+i0000002082:	subw                s9, s1, s0
+i0000002083:	sd                  s1, 16(sp)          
+i0000002084:	srli                a1, a1, 15
+i0000002085:	sllw                a5, a5, s1
+i0000002086:	addi                sp, sp, 160
+i0000002087:	sraw                s0, a5, a5
+i0000002088:	addw                a5, a5, a4
+				la                  sp, begin_signature
+				li                  t1, 10616 
+				add                 sp, sp, t1
+i0000002089:	lw                  a2, 8(sp)           
+i000000208a:	addi                s1, sp, 420
+i000000208b:	sw                  a7, 48(sp)          
+i000000208c:	fence                         
+i000000208d:	lui                 a5, 14    
+i000000208e:	sw                  a5, 40(sp)          
+i000000208f:	sraiw               a1, a5, 3 
+i0000002090:	addi                sp, sp, -128
+i0000002091:	addi                a5, a5, -1
+				la                  sp, begin_signature
+				li                  t1, 4560  
+				add                 sp, sp, t1
+i0000002092:	lw                  t2, 1492(sp)        
+i0000002093:	or                  a5, a5, a3
+				la                  sp, begin_signature
+				li                  t1, 8120  
+				add                 sp, sp, t1
+i0000002094:	sw                  a5, 104(sp)         
+i0000002095:	srli                a0, a0, 15
+i0000002096:	lw                  a5, -64(sp)         
+i0000002097:	lh                  a5, 212(sp)         
+i0000002098:	sw                  gp, -1084(sp)       
+i0000002099:	fence.i                       
+i000000209a:	slli                a4, a4, 5 
+i000000209b:	ori                 s4, s0, -1456
+i000000209c:	sd                  a3, 96(sp)          
+i000000209d:	srai                a7, a3, 37
+i000000209e:	lw                  s1, 48(sp)          
+i000000209f:	fence.i                       
+i00000020a0:	addi                s0, sp, 436
+i00000020a1:	addiw               s1, s1, -6
+i00000020a2:	andi                s1, s1, -1
+i00000020a3:	sw                  a1, 16(sp)          
+i00000020a4:	addi                a2, sp, 492
+i00000020a5:	srli                s0, s0, 8 
+				li                  x27, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 7624  
+				add                 sp, sp, t1
+				add                 t2, t2, s7
+				srai                a4, a4, 5 
+				sw                  a4, 12(sp)          
+				slliw               a5, zero, 21
+				mulhu               s4, s0, a5
+				lw                  s0, 28(sp)          
+				ld                  s8, 8(sp)           
+	
+b00000020a6:
+				pre_branch_macro                        
+				bge                 x27, x29, i0000002085
+				post_branch_macro                       
+	
+				remw                s5, a6, s4
+				xor                 s1, s1, s1
+				fence                         
+				addw                s6, s1, s1
+				fence.i                       
+				subw                a5, a5, s1
+				add                 s1, s1, s9
+				li                  x29, 10   
+i00000020a6:	srl                 s1, s0, a5
+i00000020a7:	or                  a0, gp, s8
+				la                  sp, begin_signature
+				li                  t1, 5360  
+				add                 sp, sp, t1
+i00000020a8:	sd                  a5, 64(sp)          
+i00000020a9:	fence                         
+i00000020aa:	lwu                 t1, -1624(sp)       
+i00000020ab:	addw                a1, a1, s1
+				la                  sp, begin_signature
+				li                  t1, 3688  
+				add                 sp, sp, t1
+i00000020ac:	lhu                 t3, 1066(sp)        
+i00000020ad:	srl                 a5, a5, s0
+i00000020ae:	subw                a4, a4, a5
+i00000020af:	srli                a1, a1, 10
+i00000020b0:	sltu                s0, t0, t6
+i00000020b1:	sllw                a3, s11, t1
+i00000020b2:	srli                a2, a2, 2 
+i00000020b3:	add                 s4, s4, s0
+				la                  sp, begin_signature
+				li                  t1, 9032  
+				add                 sp, sp, t1
+i00000020b4:	lw                  a2, 8(sp)           
+i00000020b5:	xori                s7, s3, 1673
+				la                  sp, begin_signature
+				li                  t1, 10664 
+				add                 sp, sp, t1
+i00000020b6:	sd                  s6, 808(sp)         
+i00000020b7:	srli                a0, a0, 1 
+i00000020b8:	lbu                 s1, -715(sp)        
+i00000020b9:	sb                  s0, -1296(sp)       
+				la                  sp, begin_signature
+				li                  t1, 7936  
+				add                 sp, sp, t1
+i00000020ba:	sw                  s1, 580(sp)         
+i00000020bb:	srai                a5, a5, 2 
+i00000020bc:	or                  s1, s1, a2
+i00000020bd:	sd                  s3, 240(sp)         
+i00000020be:	lw                  a0, 60(sp)          
+i00000020bf:	addiw               a6, a0, 1037
+				la                  sp, begin_signature
+				li                  t1, 8424  
+				add                 sp, sp, t1
+i00000020c0:	sw                  s0, 28(sp)          
+i00000020c1:	srai                a5, a5, 32
+i00000020c2:	fence                         
+i00000020c3:	lw                  s0, 52(sp)          
+i00000020c4:	srai                a5, a5, 12
+i00000020c5:	sd                  a5, -368(sp)        
+i00000020c6:	addw                s0, s0, a0
+i00000020c7:	addiw               a3, a3, -27
+i00000020c8:	sw                  zero, -1104(sp)     
+i00000020c9:	sw                  a0, 28(sp)          
+i00000020ca:	sw                  s1, 0(sp)           
+i00000020cb:	srai                a0, a0, 5 
+i00000020cc:	srli                a1, a1, 27
+i00000020cd:	slli                s1, a6, 27
+				li                  x19, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 13192 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9720  
+				add                 sp, sp, t1
+				and                 tp, s0, s0
+				lw                  a5, -1772(sp)       
+				sb                  a7, -851(sp)        
+				lb                  s8, 1945(sp)        
+				srliw               s1, t3, 21
+				ld                  s5, 248(sp)         
+				fence                         
+	
+b00000020ce:
+				pre_branch_macro                        
+				bne                 x29, x19, i00000020c5
+				post_branch_macro                       
+	
+				sd                  a5, 96(sp)          
+				mulhsu              t6, a5, a5
+				mulw                s6, a5, a5
+				xor                 a5, tp, s2
+				slliw               s0, gp, 16
+				fence                         
+				addi                a5, sp, 56
+				li                  x29, 10   
+i00000020ce:	lw                  a0, 36(sp)          
+i00000020cf:	sd                  s1, 112(sp)         
+				la                  sp, begin_signature
+				li                  t1, 12288 
+				add                 sp, sp, t1
+i00000020d0:	lhu                 s0, 1854(sp)        
+i00000020d1:	ld                  s1, 208(sp)         
+i00000020d2:	addw                s2, a4, a4
+i00000020d3:	srai                a0, a0, 5 
+i00000020d4:	srai                a4, a4, 2 
+i00000020d5:	add                 t2, zero, a3
+i00000020d6:	addi                s1, sp, 496
+i00000020d7:	addiw               a4, a4, -22
+i00000020d8:	sd                  s1, 40(sp)          
+i00000020d9:	sub                 s0, s0, a5
+i00000020da:	srai                s0, s0, 5 
+i00000020db:	addi                sp, sp, 192
+i00000020dc:	ld                  a5, 0(sp)           
+i00000020dd:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 13704 
+				add                 sp, sp, t1
+i00000020de:	sd                  a5, 1600(sp)        
+i00000020df:	srli                a2, a2, 2 
+i00000020e0:	sraiw               a4, s0, 31
+i00000020e1:	sh                  t1, 250(sp)         
+				la                  sp, begin_signature
+				li                  t1, 11232 
+				add                 sp, sp, t1
+i00000020e2:	sb                  a6, -94(sp)         
+i00000020e3:	addw                zero, a3, s8
+i00000020e4:	fence                         
+i00000020e5:	srai                a3, a3, 8 
+i00000020e6:	addi                a2, sp, 124
+i00000020e7:	addi                sp, sp, -464
+				la                  sp, begin_signature
+				li                  t1, 13600 
+				add                 sp, sp, t1
+i00000020e8:	sd                  s6, 40(sp)          
+i00000020e9:	xor                 s1, s1, s0
+i00000020ea:	ori                 a5, s3, -930
+i00000020eb:	sw                  s6, 72(sp)          
+i00000020ec:	addw                tp, t5, s2
+i00000020ed:	srai                a4, a4, 13
+i00000020ee:	addi                s0, sp, 64
+i00000020ef:	srai                a5, a5, 12
+i00000020f0:	add                 s5, s4, s2
+i00000020f1:	fence                         
+i00000020f2:	or                  a5, a1, s3
+				la                  sp, begin_signature
+				li                  t1, 9600  
+				add                 sp, sp, t1
+i00000020f3:	lbu                 t1, 634(sp)         
+i00000020f4:	ld                  s1, 40(sp)          
+i00000020f5:	sub                 a3, a3, s0
+				li                  x23, 11   
+				addi                x29, x29, 1
+				sltiu               s0, s1, 609
+				fence                         
+				sw                  s1, 40(sp)          
+				sub                 s0, a5, s1
+				sltiu               s2, zero, -117
+				addi                s0, sp, 200
+				ld                  a5, -720(sp)        
+	
+b00000020f6:
+				pre_branch_macro                        
+				beq                 x29, x23, i00000020e0
+				post_branch_macro                       
+	
+				srli                a4, a4, 9 
+				srai                s0, s0, 3 
+				or                  a4, a4, a4
+				mulw                s1, s1, a5
+				mulhu               a6, a5, s0
+				subw                s1, s1, a5
+				sd                  a4, 8(sp)           
+				li                  x29, 10   
+i00000020f6:	ori                 s0, a6, -345
+i00000020f7:	sd                  a0, 64(sp)          
+i00000020f8:	fsrmi               x0, 1     
+i00000020f9:	ld                  s0, 128(sp)         
+i00000020fa:	sraiw               t2, s1, 19
+i00000020fb:	sw                  s1, 1976(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9064  
+				add                 sp, sp, t1
+i00000020fc:	lhu                 t0, 1928(sp)        
+i00000020fd:	srli                a4, a4, 3 
+i00000020fe:	srli                s1, s1, 9 
+i00000020ff:	addw                a5, a5, a4
+i0000002100:	fence.i                       
+i0000002101:	or                  a4, a4, a0
+i0000002102:	srli                a0, a0, 26
+				la                  sp, begin_signature
+				li                  t1, 10984 
+				add                 sp, sp, t1
+i0000002103:	lw                  s1, 32(sp)          
+				la                  sp, begin_signature
+				li                  t1, 2712  
+				add                 sp, sp, t1
+i0000002104:	sd                  s0, -312(sp)        
+i0000002105:	addi                s0, sp, 272
+i0000002106:	lw                  s1, 4(sp)           
+i0000002107:	sd                  t5, 1376(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9392  
+				add                 sp, sp, t1
+i0000002108:	sd                  s10, 136(sp)        
+i0000002109:	andi                s1, s1, -7
+i000000210a:	srai                a5, a5, 11
+i000000210b:	subw                s1, s1, s0
+i000000210c:	fence                         
+i000000210d:	fence.i                       
+i000000210e:	srli                s1, s1, 8 
+i000000210f:	sltiu               a4, a7, -168
+i0000002110:	xori                a5, a1, 923
+i0000002111:	srli                a1, a1, 14
+i0000002112:	addw                t2, t0, s4
+i0000002113:	srai                a2, a2, 19
+i0000002114:	srli                s1, s1, 3 
+i0000002115:	sraiw               s0, s0, 4 
+i0000002116:	lw                  a0, 20(sp)          
+i0000002117:	srai                a3, a3, 3 
+i0000002118:	sb                  s2, -1262(sp)       
+i0000002119:	ld                  a5, 64(sp)          
+i000000211a:	lw                  a5, 12(sp)          
+i000000211b:	sd                  a5, 928(sp)         
+i000000211c:	srli                a1, a1, 13
+i000000211d:	lh                  s8, 1186(sp)        
+i000000211e:	sw                  s1, 44(sp)          
+				li                  x18, 10   
+				la                  sp, begin_signature
+				li                  t1, 5648  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11776 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11400 
+				add                 sp, sp, t1
+				ld                  a4, 96(sp)          
+				addiw               s0, a5, 1075
+				lw                  zero, -1420(sp)     
+				lwu                 s0, -1852(sp)       
+				ld                  a5, 144(sp)         
+				sd                  s0, 96(sp)          
+				fence                         
+	
+b000000211f:
+				beq                 x29, x18, 1f        
+				jal                 x0, i000000210c     
+				1: li x29, 10                           
+	
+				rem                 s5, a5, s1
+				fence                         
+				addw                a5, t2, a6
+				and                 s1, s0, s1
+				addi                a4, sp, 256
+				addi                a5, sp, 176
+				sw                  a4, 824(sp)         
+i000000211f:	addi                a0, sp, 340
+i0000002120:	sll                 t0, a5, s1
+i0000002121:	sw                  zero, 104(sp)       
+i0000002122:	sw                  s8, 88(sp)          
+i0000002123:	srai                a3, a3, 2 
+i0000002124:	lui                 a5, 483438
+i0000002125:	sd                  s0, 200(sp)         
+i0000002126:	srli                a0, a0, 11
+i0000002127:	lw                  t6, 24(sp)          
+i0000002128:	lw                  s11, -1376(sp)      
+i0000002129:	addiw               t6, a1, 1819
+i000000212a:	lwu                 s1, 1416(sp)        
+i000000212b:	srli                a3, a3, 12
+				la                  sp, begin_signature
+				li                  t1, 8928  
+				add                 sp, sp, t1
+i000000212c:	sw                  t5, 40(sp)          
+i000000212d:	srli                a5, a5, 23
+i000000212e:	subw                a4, a4, a2
+i000000212f:	srli                zero, a2, 35
+i0000002130:	ld                  a3, 64(sp)          
+i0000002131:	addw                s0, s0, a2
+i0000002132:	srai                s1, s1, 26
+i0000002133:	sub                 s1, s1, a3
+i0000002134:	lwu                 s7, -1776(sp)       
+i0000002135:	lhu                 a5, -964(sp)        
+i0000002136:	sra                 s6, gp, t0
+i0000002137:	lwu                 a5, 1892(sp)        
+i0000002138:	lhu                 a5, -1582(sp)       
+i0000002139:	lw                  a0, 12(sp)          
+i000000213a:	srai                a0, a0, 10
+i000000213b:	srai                s0, s0, 7 
+i000000213c:	srli                a0, a0, 3 
+i000000213d:	sw                  s1, 24(sp)          
+i000000213e:	srli                a3, a3, 15
+i000000213f:	sb                  a5, -446(sp)        
+i0000002140:	ld                  s0, 72(sp)          
+i0000002141:	fence.i                       
+i0000002142:	lbu                 a5, -1268(sp)       
+i0000002143:	srai                a1, a1, 6 
+i0000002144:	srli                a0, a0, 15
+i0000002145:	addiw               a6, gp, 630
+i0000002146:	and                 a2, a2, a5
+				addw                s11, s0, s0
+				srli                a4, a4, 8 
+				subw                t6, a5, a5
+				ld                  s10, 144(sp)        
+				srli                a5, a5, 12
+				ld                  s1, 920(sp)         
+				fence.i                       
+	
+b0000002147:
+				jal                 x1, i0000002151     
+	
+				fence.i                       
+				sllw                s0, s0, s1
+				divw                s1, a7, a7
+				divuw               s8, tp, a4
+				sllw                a5, a5, s1
+				addi                a4, sp, 376
+				lui                 tp, 270556
+i0000002147:	fence                         
+i0000002148:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 12408 
+				add                 sp, sp, t1
+i0000002149:	lbu                 s4, -1407(sp)       
+i000000214a:	fence.i                       
+i000000214b:	fence                         
+i000000214c:	addw                s0, s4, a3
+i000000214d:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 5664  
+				add                 sp, sp, t1
+i000000214e:	sw                  a1, 8(sp)           
+i000000214f:	sltiu               s1, gp, -1112
+i0000002150:	lui                 t5, 15    
+i0000002151:	addi                s1, sp, 72
+i0000002152:	srliw               s1, s0, 0 
+i0000002153:	lw                  s1, 28(sp)          
+i0000002154:	fence                         
+i0000002155:	sllw                s10, a5, s1
+i0000002156:	srai                s1, s1, 13
+i0000002157:	sra                 s1, t5, a0
+i0000002158:	sh                  s3, -992(sp)        
+i0000002159:	lw                  zero, 0(sp)         
+i000000215a:	sub                 s1, s1, s0
+i000000215b:	sltu                s5, s1, s1
+i000000215c:	ld                  s6, 840(sp)         
+i000000215d:	srli                a2, a2, 3 
+i000000215e:	andi                t2, s0, -271
+i000000215f:	addi                sp, sp, 208
+i0000002160:	addw                a4, a4, a5
+i0000002161:	srai                a0, a0, 19
+i0000002162:	addi                a5, zero, -3
+i0000002163:	addi                a5, sp, 116
+i0000002164:	srai                s0, s0, 16
+i0000002165:	srai                s0, s0, 6 
+				la                  sp, begin_signature
+				li                  t1, 3368  
+				add                 sp, sp, t1
+i0000002166:	lw                  a5, 2040(sp)        
+i0000002167:	sd                  s9, 120(sp)         
+i0000002168:	lwu                 s11, 640(sp)        
+i0000002169:	sh                  s1, 816(sp)         
+i000000216a:	addi                sp, sp, 176
+i000000216b:	addi                sp, sp, -128
+i000000216c:	sd                  t1, 24(sp)          
+i000000216d:	addw                s0, s0, a4
+i000000216e:	sw                  a1, 112(sp)         
+				li                  x31, 10   
+				addi                sp, sp, -288
+				lwu                 s0, -1620(sp)       
+				srli                a4, a4, 5 
+				addi                sp, sp, -32
+				addi                t2, zero, -29
+				addi                a5, sp, 344
+				sw                  s9, 120(sp)         
+	
+b000000216f:
+				beq                 x29, x31, 1f        
+				jal                 x1, i0000002163     
+				1: li x29, 10                           
+	
+				addi                sp, sp, -496
+				lb                  s1, 593(sp)         
+				sw                  s2, 24(sp)          
+				or                  s1, s1, s1
+				srli                a4, a4, 8 
+				or                  a5, s11, a6
+				fence.i                       
+i000000216f:	addi                s0, sp, 64
+i0000002170:	add                 tp, s0, a5
+				la                  sp, begin_signature
+				li                  t1, 8208  
+				add                 sp, sp, t1
+i0000002171:	ld                  a0, 56(sp)          
+i0000002172:	addw                s0, s0, a5
+i0000002173:	lwu                 s0, -2044(sp)       
+i0000002174:	srai                a4, a4, 13
+i0000002175:	addw                s8, a5, a5
+				la                  sp, begin_signature
+				li                  t1, 4200  
+				add                 sp, sp, t1
+i0000002176:	lw                  s0, 96(sp)          
+i0000002177:	sd                  s1, 128(sp)         
+i0000002178:	srlw                s0, s6, s7
+i0000002179:	and                 a0, a0, a0
+i000000217a:	sd                  a5, 152(sp)         
+i000000217b:	lw                  a5, 48(sp)          
+i000000217c:	addiw               s0, s0, -27
+i000000217d:	slliw               s1, s0, 8 
+				la                  sp, begin_signature
+				li                  t1, 11032 
+				add                 sp, sp, t1
+i000000217e:	lbu                 t6, -430(sp)        
+i000000217f:	slliw               t6, a4, 20
+i0000002180:	sd                  t3, 232(sp)         
+i0000002181:	xor                 s6, s1, s1
+i0000002182:	srli                s1, s1, 14
+i0000002183:	lbu                 a5, 80(sp)          
+i0000002184:	fence.i                       
+i0000002185:	srliw               s1, s0, 29
+i0000002186:	sllw                t6, s4, gp
+i0000002187:	sub                 s1, a3, s2
+i0000002188:	addiw               a5, a5, 15
+i0000002189:	srai                a2, a2, 10
+i000000218a:	addiw               a3, a3, -12
+i000000218b:	srl                 s0, a5, a5
+i000000218c:	slli                s10, a6, 33
+i000000218d:	sd                  s1, 0(sp)           
+i000000218e:	fence.i                       
+i000000218f:	sb                  t1, -1141(sp)       
+i0000002190:	srai                s1, s1, 20
+i0000002191:	lh                  s0, 1024(sp)        
+i0000002192:	fsrmi               x0, 3     
+i0000002193:	sd                  s0, 96(sp)          
+i0000002194:	addi                a5, sp, 152
+i0000002195:	ld                  a1, 112(sp)         
+i0000002196:	addw                s1, a1, a2
+i0000002197:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 13160 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 9088  
+				add                 sp, sp, t1
+				sw                  a5, 108(sp)         
+				lwu                 zero, -572(sp)      
+				lwu                 a5, -260(sp)        
+				srli                s2, s0, 37
+				slliw               s0, s2, 12
+				add                 t3, zero, a4
+				sw                  a4, 16(sp)          
+	
+b0000002198:
+				jal                 x10, i00000021a3    
+	
+				srai                a4, a4, 31
+				fence.i                       
+				div                 t2, a5, a5
+				sd                  s1, 24(sp)          
+				mulhsu              s1, t6, s7
+				addi                sp, sp, -16
+				lb                  s1, 1080(sp)        
+i0000002198:	slli                s1, s1, 25
+i0000002199:	sw                  s10, 904(sp)        
+i000000219a:	lwu                 s11, -1112(sp)      
+i000000219b:	andi                a1, a1, 5 
+i000000219c:	lh                  a2, 1978(sp)        
+i000000219d:	srli                a5, a5, 4 
+i000000219e:	lb                  a7, -75(sp)         
+i000000219f:	ld                  s1, 256(sp)         
+				la                  sp, begin_signature
+				li                  t1, 10616 
+				add                 sp, sp, t1
+i00000021a0:	sd                  a2, 96(sp)          
+i00000021a1:	sll                 s1, a6, a1
+i00000021a2:	lwu                 s1, -328(sp)        
+i00000021a3:	subw                s1, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 10296 
+				add                 sp, sp, t1
+i00000021a4:	sh                  t6, 1118(sp)        
+i00000021a5:	slt                 a5, a5, s1
+i00000021a6:	ld                  a5, -360(sp)        
+i00000021a7:	andi                a1, a1, 1 
+i00000021a8:	srai                a2, a2, 5 
+i00000021a9:	srai                a3, a3, 4 
+i00000021aa:	ori                 s0, t0, 1226
+i00000021ab:	sd                  s0, 40(sp)          
+i00000021ac:	sw                  a3, 20(sp)          
+i00000021ad:	xor                 a3, a3, a5
+				la                  sp, begin_signature
+				li                  t1, 8144  
+				add                 sp, sp, t1
+i00000021ae:	ld                  a5, 64(sp)          
+i00000021af:	lhu                 s1, -434(sp)        
+i00000021b0:	fence                         
+i00000021b1:	lw                  s0, 52(sp)          
+i00000021b2:	lw                  a5, -1884(sp)       
+i00000021b3:	fence                         
+i00000021b4:	ld                  a5, 0(sp)           
+i00000021b5:	addi                s0, sp, 64
+i00000021b6:	sub                 a0, a0, s1
+i00000021b7:	sw                  a2, 16(sp)          
+i00000021b8:	fence                         
+i00000021b9:	sd                  s0, -32(sp)         
+i00000021ba:	srli                a3, a3, 7 
+i00000021bb:	ld                  a2, 96(sp)          
+i00000021bc:	slt                 t1, a1, s2
+i00000021bd:	ld                  a2, 1448(sp)        
+i00000021be:	ld                  a2, 120(sp)         
+i00000021bf:	sll                 s0, s3, s10
+				li                  x27, 0    
+				addi                s7, a5, 1019
+				slliw               s7, a5, 1 
+				fence.i                       
+				sw                  a5, 64(sp)          
+				ld                  s1, -952(sp)        
+				mul                 s1, s0, a5
+				addw                a4, a4, s1
+	
+b00000021c0:
+				pre_branch_macro                        
+				beq                 x29, x27, i00000021ac
+				post_branch_macro                       
+	
+				lwu                 s4, 1780(sp)        
+				srli                a5, a5, 3 
+				add                 t6, a4, t6
+				remw                s0, a4, s9
+				divuw               t3, s0, a5
+				fence                         
+				and                 a5, a5, s1
+				li                  x29, 10   
+i00000021c0:	ld                  s0, 88(sp)          
+i00000021c1:	fsrmi               x0, 6     
+				la                  sp, begin_signature
+				li                  t1, 5168  
+				add                 sp, sp, t1
+i00000021c2:	sd                  s11, 72(sp)         
+i00000021c3:	fence.i                       
+i00000021c4:	srai                a5, a5, 8 
+i00000021c5:	srli                a0, a0, 23
+i00000021c6:	srli                s0, s0, 2 
+				la                  sp, begin_signature
+				li                  t1, 10216 
+				add                 sp, sp, t1
+i00000021c7:	sd                  a5, -1464(sp)       
+i00000021c8:	ld                  tp, 208(sp)         
+i00000021c9:	fence                         
+i00000021ca:	fence                         
+i00000021cb:	sw                  s7, 60(sp)          
+i00000021cc:	lb                  s1, 928(sp)         
+i00000021cd:	subw                s1, a6, a4
+i00000021ce:	addiw               a5, a5, -25
+i00000021cf:	fence                         
+i00000021d0:	subw                a3, a3, a3
+i00000021d1:	lw                  a0, 24(sp)          
+				la                  sp, begin_signature
+				li                  t1, 2112  
+				add                 sp, sp, t1
+i00000021d2:	sd                  s0, 1800(sp)        
+i00000021d3:	and                 a5, a5, a0
+i00000021d4:	lw                  gp, 520(sp)         
+i00000021d5:	srai                a2, a2, 21
+				la                  sp, begin_signature
+				li                  t1, 3544  
+				add                 sp, sp, t1
+i00000021d6:	sh                  tp, 1938(sp)        
+i00000021d7:	sub                 a5, s0, s1
+				la                  sp, begin_signature
+				li                  t1, 9248  
+				add                 sp, sp, t1
+i00000021d8:	ld                  a1, 88(sp)          
+i00000021d9:	sd                  s1, 40(sp)          
+i00000021da:	sw                  s1, 80(sp)          
+i00000021db:	srli                s1, t2, 49
+i00000021dc:	xor                 a5, gp, s8
+i00000021dd:	fence                         
+i00000021de:	addi                s1, zero, -29
+i00000021df:	ld                  s0, 936(sp)         
+i00000021e0:	addi                sp, sp, -416
+i00000021e1:	addi                sp, sp, -432
+i00000021e2:	srli                a0, a0, 11
+i00000021e3:	srai                a2, a2, 15
+i00000021e4:	addw                a4, a4, a3
+i00000021e5:	fence                         
+i00000021e6:	addi                s1, sp, 428
+				la                  sp, begin_signature
+				li                  t1, 6208  
+				add                 sp, sp, t1
+i00000021e7:	sw                  s10, 44(sp)         
+i00000021e8:	lw                  s0, 900(sp)         
+				li                  x17, 12   
+				addi                x29, x29, 1
+				sd                  s2, -1160(sp)       
+				remw                s9, a6, a6
+				sh                  s0, 2006(sp)        
+				srli                a5, a5, 21
+				lw                  s1, 24(sp)          
+				subw                a5, a5, s0
+				and                 a5, a5, a4
+	
+b00000021e9:
+				pre_branch_macro                        
+				bge                 x17, x29, i00000021e2
+				post_branch_macro                       
+	
+				addi                s1, sp, 164
+				slliw               s8, s0, 18
+				rem                 s0, a6, t6
+				sw                  zero, 1120(sp)      
+				andi                a4, s1, 250
+				and                 a4, a4, a5
+				andi                a4, s1, 1523
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7584  
+				add                 sp, sp, t1
+i00000021e9:	sd                  s9, 40(sp)          
+i00000021ea:	addiw               a0, a0, 4 
+i00000021eb:	lw                  a3, 40(sp)          
+i00000021ec:	lui                 a5, 24    
+i00000021ed:	sw                  a5, -1860(sp)       
+i00000021ee:	fence.i                       
+i00000021ef:	auipc               s0, 407363
+				la                  sp, begin_signature
+				li                  t1, 7336  
+				add                 sp, sp, t1
+i00000021f0:	sw                  a1, 32(sp)          
+i00000021f1:	addiw               s0, s0, -30
+i00000021f2:	srai                s0, s0, 17
+i00000021f3:	srli                s1, s1, 3 
+i00000021f4:	fence.i                       
+i00000021f5:	addi                s1, sp, 456
+i00000021f6:	addiw               a2, a2, 14
+i00000021f7:	fence.i                       
+i00000021f8:	addi                sp, sp, -112
+i00000021f9:	addi                sp, sp, -256
+				la                  sp, begin_signature
+				li                  t1, 11488 
+				add                 sp, sp, t1
+i00000021fa:	lw                  t0, -2024(sp)       
+i00000021fb:	srai                a1, a1, 6 
+i00000021fc:	srli                a0, a0, 32
+i00000021fd:	andi                s0, tp, -457
+i00000021fe:	andi                a2, a2, -11
+i00000021ff:	lw                  s8, 836(sp)         
+i0000002200:	srl                 s1, t0, a3
+i0000002201:	xor                 a4, a4, a5
+i0000002202:	slliw               a3, s1, 16
+i0000002203:	sw                  s1, 56(sp)          
+i0000002204:	srli                a5, a5, 16
+i0000002205:	addi                a5, sp, 364
+i0000002206:	addiw               s0, s7, -435
+i0000002207:	add                 s5, a5, a5
+i0000002208:	sraw                s2, t3, s4
+i0000002209:	sw                  a5, 52(sp)          
+i000000220a:	slt                 s0, a5, a5
+i000000220b:	addi                sp, sp, -256
+i000000220c:	addi                s1, sp, 248
+i000000220d:	ld                  a5, 40(sp)          
+i000000220e:	sw                  s1, 56(sp)          
+i000000220f:	ld                  s0, 120(sp)         
+i0000002210:	sraw                s1, gp, t6
+				li                  x20, 10   
+				la                  sp, begin_signature
+				li                  t1, 8736  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3024  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 13184 
+				add                 sp, sp, t1
+				sw                  s0, 20(sp)          
+				sraiw               s2, s5, 29
+				addiw               a4, a4, -2
+				lw                  a5, 20(sp)          
+				lbu                 s3, 930(sp)         
+				sw                  s1, 60(sp)          
+				srai                a4, a4, 10
+	
+b0000002211:
+				beq                 x29, x20, 1f        
+				jal                 x1, i0000002206     
+				1: li x29, 10                           
+	
+				ld                  s10, 48(sp)         
+				fence                         
+				fence.i                       
+				addw                s1, s1, a4
+				srai                a4, a4, 5 
+				sd                  s0, 48(sp)          
+				sw                  a7, -1084(sp)       
+i0000002211:	addi                sp, sp, -496
+i0000002212:	srli                a1, a1, 4 
+				la                  sp, begin_signature
+				li                  t1, 8880  
+				add                 sp, sp, t1
+i0000002213:	lw                  s0, 84(sp)          
+i0000002214:	sd                  a5, 744(sp)         
+i0000002215:	srlw                zero, s1, a5
+i0000002216:	sd                  t6, -1640(sp)       
+i0000002217:	srai                a1, a1, 12
+i0000002218:	andi                t5, s6, -741
+i0000002219:	slli                a1, a1, 12
+i000000221a:	srli                a4, a4, 31
+i000000221b:	addi                s1, sp, 36
+i000000221c:	addi                s0, sp, 480
+i000000221d:	srai                a5, a5, 5 
+i000000221e:	slliw               s0, gp, 19
+i000000221f:	addw                a5, a5, s0
+				la                  sp, begin_signature
+				li                  t1, 3256  
+				add                 sp, sp, t1
+i0000002220:	sw                  t5, 24(sp)          
+i0000002221:	lw                  s0, 1872(sp)        
+i0000002222:	lw                  a1, 8(sp)           
+i0000002223:	ld                  a5, 8(sp)           
+i0000002224:	fence                         
+i0000002225:	lw                  a2, 64(sp)          
+i0000002226:	fence                         
+i0000002227:	ld                  a5, 8(sp)           
+i0000002228:	addi                s1, s6, 238
+i0000002229:	lw                  a4, 48(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8112  
+				add                 sp, sp, t1
+i000000222a:	sd                  a5, 200(sp)         
+i000000222b:	addi                sp, sp, -224
+				la                  sp, begin_signature
+				li                  t1, 10320 
+				add                 sp, sp, t1
+i000000222c:	lw                  gp, 96(sp)          
+i000000222d:	addi                sp, sp, 176
+i000000222e:	addi                s5, s8, 1364
+i000000222f:	lb                  t2, 237(sp)         
+i0000002230:	srli                s0, s0, 13
+i0000002231:	xor                 a3, a3, s0
+i0000002232:	addi                a1, sp, 364
+i0000002233:	addi                sp, sp, -368
+i0000002234:	addi                sp, sp, -368
+i0000002235:	sd                  s1, 720(sp)         
+i0000002236:	lwu                 zero, -228(sp)      
+i0000002237:	addw                a5, a5, s1
+i0000002238:	lhu                 a5, 1442(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13520 
+				add                 sp, sp, t1
+				fence.i                       
+				mulhu               s0, s1, s1
+				addi                a5, zero, -1
+				fence                         
+				sw                  a4, 36(sp)          
+				fence                         
+				xor                 s0, s0, a4
+	
+b0000002239:
+				jal                 x1, i0000002252     
+	
+				lb                  gp, 2029(sp)        
+				slli                s0, s0, 19
+				sd                  a7, 24(sp)          
+				sra                 s10, s1, s1
+				fence                         
+				fence.i                       
+				lb                  a5, -1756(sp)       
+i0000002239:	addw                s1, zero, a1
+i000000223a:	addi                a3, sp, 36
+i000000223b:	lwu                 s10, 932(sp)        
+i000000223c:	addi                sp, sp, 128
+i000000223d:	addi                s1, sp, 484
+i000000223e:	sh                  s8, 1032(sp)        
+i000000223f:	srliw               s10, s3, 19
+i0000002240:	srl                 a2, t0, s6
+i0000002241:	ld                  s8, 536(sp)         
+i0000002242:	srai                a0, a0, 11
+i0000002243:	lw                  a5, 0(sp)           
+i0000002244:	srai                a2, a2, 12
+i0000002245:	srli                s0, s0, 4 
+i0000002246:	addi                sp, sp, -64
+i0000002247:	srai                a5, a5, 15
+				la                  sp, begin_signature
+				li                  t1, 2856  
+				add                 sp, sp, t1
+i0000002248:	lw                  gp, -588(sp)        
+i0000002249:	addiw               s3, s4, -1951
+i000000224a:	or                  s7, s1, a5
+i000000224b:	addiw               s0, s0, 8 
+				la                  sp, begin_signature
+				li                  t1, 3072  
+				add                 sp, sp, t1
+i000000224c:	sw                  s1, 76(sp)          
+i000000224d:	srai                s0, s0, 13
+i000000224e:	srli                a5, a5, 4 
+i000000224f:	lw                  s1, 1728(sp)        
+i0000002250:	fence.i                       
+i0000002251:	fence                         
+i0000002252:	ld                  s0, 88(sp)          
+i0000002253:	srl                 t0, s1, s1
+i0000002254:	lwu                 a7, -1832(sp)       
+i0000002255:	lwu                 a2, -892(sp)        
+i0000002256:	ld                  a1, 8(sp)           
+				la                  sp, begin_signature
+				li                  t1, 8072  
+				add                 sp, sp, t1
+i0000002257:	sw                  a5, 48(sp)          
+i0000002258:	srai                a2, a2, 22
+i0000002259:	ld                  a4, 120(sp)         
+i000000225a:	srli                a1, a1, 12
+i000000225b:	srai                s0, s0, 30
+i000000225c:	sraw                a0, s0, s0
+i000000225d:	srli                s1, s1, 8 
+i000000225e:	srai                a4, a4, 10
+i000000225f:	srai                a2, a2, 17
+i0000002260:	srli                s1, s1, 12
+				li                  x31, 10   
+				la                  sp, begin_signature
+				li                  t1, 8480  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 3408  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 4688  
+				add                 sp, sp, t1
+				lw                  a4, 44(sp)          
+				srli                s0, s0, 4 
+				lb                  s1, -1943(sp)       
+				sd                  a5, 72(sp)          
+				addiw               a5, a5, 12
+				sw                  tp, 1456(sp)        
+				lw                  s0, 60(sp)          
+	
+b0000002261:
+				pre_branch_macro                        
+				bne                 x29, x31, i0000002244
+				post_branch_macro                       
+	
+				sd                  a5, -632(sp)        
+				lui                 s10, 6    
+				remuw               s1, s0, s1
+				sw                  s0, 52(sp)          
+				sd                  a5, -1088(sp)       
+				sh                  s1, -1074(sp)       
+				ld                  a5, 240(sp)         
+				li                  x29, 10   
+i0000002261:	ld                  s0, -536(sp)        
+i0000002262:	addiw               s1, s1, -29
+i0000002263:	andi                t1, a5, 1228
+i0000002264:	slli                s10, a1, 37
+i0000002265:	lbu                 a5, 1539(sp)        
+i0000002266:	and                 a5, s5, t0
+i0000002267:	addi                sp, sp, -240
+i0000002268:	sd                  a1, 1024(sp)        
+i0000002269:	sb                  s9, -1903(sp)       
+i000000226a:	lwu                 a3, -856(sp)        
+i000000226b:	subw                a5, a5, a4
+i000000226c:	xor                 s1, s1, s1
+i000000226d:	fence                         
+i000000226e:	lw                  a2, 0(sp)           
+i000000226f:	sd                  s0, -968(sp)        
+i0000002270:	sd                  s11, 1808(sp)       
+i0000002271:	addw                s1, s1, a1
+i0000002272:	lwu                 s5, -1592(sp)       
+i0000002273:	lui                 a3, 19    
+i0000002274:	srai                a2, a2, 6 
+i0000002275:	fence.i                       
+i0000002276:	sll                 s7, a2, s10
+i0000002277:	ld                  s1, -104(sp)        
+i0000002278:	slt                 a7, t0, s10
+i0000002279:	ld                  s0, 104(sp)         
+i000000227a:	addiw               a1, a1, -4
+i000000227b:	sb                  s2, -1825(sp)       
+i000000227c:	lbu                 s0, -683(sp)        
+i000000227d:	lw                  s1, 1084(sp)        
+i000000227e:	subw                s1, s1, a2
+i000000227f:	sll                 s10, t0, t0
+i0000002280:	sraiw               a5, s0, 3 
+				la                  sp, begin_signature
+				li                  t1, 13608 
+				add                 sp, sp, t1
+i0000002281:	sd                  s1, 376(sp)         
+i0000002282:	srai                s1, s1, 14
+i0000002283:	fence                         
+i0000002284:	sd                  t3, -760(sp)        
+i0000002285:	srliw               s0, a2, 1 
+i0000002286:	ld                  t1, 80(sp)          
+i0000002287:	lui                 s0, 32    
+i0000002288:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 6816  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 5152  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 13632 
+				add                 sp, sp, t1
+				srli                s1, s1, 1 
+				addiw               a4, a4, 3 
+				sd                  a6, 64(sp)          
+				divw                a7, s6, s8
+				addw                s1, s1, a5
+				ld                  s5, -1392(sp)       
+				auipc               s10, 111902
+	
+b0000002289:
+				la                  x20, i00000022a0    
+				jalr                x10, x20, 0         
+	
+				remuw               a5, t3, a4
+				sra                 a5, a5, s0
+				div                 a7, a4, s11
+				lwu                 s1, -1444(sp)       
+				lw                  zero, -1704(sp)     
+				ld                  s9, -1128(sp)       
+				lw                  a6, -1184(sp)       
+i0000002289:	or                  a5, a5, a5
+i000000228a:	sh                  s0, -356(sp)        
+i000000228b:	add                 s0, s0, s11
+i000000228c:	sraw                a4, s0, s1
+i000000228d:	sh                  t6, -1566(sp)       
+i000000228e:	lh                  zero, -1816(sp)     
+i000000228f:	slliw               a4, s0, 31
+i0000002290:	ld                  s9, -1904(sp)       
+i0000002291:	sh                  s0, -286(sp)        
+i0000002292:	fence.i                       
+i0000002293:	subw                s0, s0, s1
+i0000002294:	addi                s1, sp, 80
+i0000002295:	addw                a3, a3, a2
+				la                  sp, begin_signature
+				li                  t1, 12624 
+				add                 sp, sp, t1
+i0000002296:	sd                  a1, 40(sp)          
+i0000002297:	sltu                gp, s0, s0
+i0000002298:	addi                sp, sp, -240
+i0000002299:	fence                         
+i000000229a:	srliw               s1, s1, 14
+				la                  sp, begin_signature
+				li                  t1, 11432 
+				add                 sp, sp, t1
+i000000229b:	sd                  s0, 32(sp)          
+i000000229c:	lb                  s8, 181(sp)         
+i000000229d:	srli                s0, s0, 23
+i000000229e:	xori                a7, t1, -1518
+i000000229f:	xor                 s0, s0, a5
+i00000022a0:	addi                a5, zero, -2
+i00000022a1:	sd                  a3, 104(sp)         
+i00000022a2:	ld                  a2, 208(sp)         
+i00000022a3:	sub                 s0, a5, s0
+i00000022a4:	srli                s0, s0, 2 
+i00000022a5:	srai                s0, s0, 1 
+i00000022a6:	and                 a5, tp, a1
+i00000022a7:	lb                  s0, 1967(sp)        
+i00000022a8:	sb                  a5, -670(sp)        
+i00000022a9:	lh                  s1, 372(sp)         
+i00000022aa:	fence                         
+i00000022ab:	addw                a3, a3, a4
+i00000022ac:	fence.i                       
+i00000022ad:	sltu                a5, s0, s1
+i00000022ae:	subw                s0, s0, a3
+i00000022af:	srli                s1, s1, 8 
+i00000022b0:	or                  a5, a5, s1
+				li                  x22, 9    
+				la                  sp, begin_signature
+				li                  t1, 10208 
+				add                 sp, sp, t1
+				sraw                s5, s1, s0
+				addiw               a5, a5, -687
+				srli                s0, s0, 5 
+				fence                         
+				ld                  a5, -1120(sp)       
+				addi                sp, sp, 32
+				srai                a4, a4, 16
+	
+b00000022b1:
+				pre_branch_macro                        
+				blt                 x29, x22, i00000022a8
+				post_branch_macro                       
+	
+				sraw                tp, s1, s0
+				addiw               a4, a4, 11
+				ld                  tp, 1344(sp)        
+				lui                 s1, 7     
+				srli                s1, s1, 3 
+				sw                  s8, 120(sp)         
+				sb                  a7, -1587(sp)       
+				li                  x29, 10   
+i00000022b1:	srai                a3, a3, 6 
+i00000022b2:	addi                sp, sp, 160
+i00000022b3:	or                  s1, s1, a5
+i00000022b4:	fsrmi               x0, 7     
+i00000022b5:	sd                  s7, 152(sp)         
+i00000022b6:	ld                  s6, 1760(sp)        
+i00000022b7:	addw                s11, s1, s0
+i00000022b8:	fence.i                       
+i00000022b9:	fence                         
+i00000022ba:	subw                a5, a5, a1
+i00000022bb:	sd                  a5, 64(sp)          
+i00000022bc:	addiw               a0, a0, -28
+i00000022bd:	srli                s0, s0, 14
+i00000022be:	sw                  a4, 0(sp)           
+i00000022bf:	addi                sp, sp, -208
+i00000022c0:	addi                s2, s1, 1202
+i00000022c1:	srai                a1, a1, 16
+i00000022c2:	lbu                 s1, -929(sp)        
+i00000022c3:	ori                 s1, s0, 612
+i00000022c4:	slliw               s1, s1, 16
+i00000022c5:	sllw                t0, s1, a5
+				la                  sp, begin_signature
+				li                  t1, 9088  
+				add                 sp, sp, t1
+i00000022c6:	ld                  zero, -960(sp)      
+i00000022c7:	sw                  s1, -1580(sp)       
+i00000022c8:	fence                         
+i00000022c9:	ld                  s0, 40(sp)          
+i00000022ca:	ld                  a5, 40(sp)          
+i00000022cb:	ld                  a1, 16(sp)          
+i00000022cc:	lh                  s8, 582(sp)         
+i00000022cd:	lb                  s1, 420(sp)         
+i00000022ce:	ld                  t1, 224(sp)         
+				la                  sp, begin_signature
+				li                  t1, 9960  
+				add                 sp, sp, t1
+i00000022cf:	lbu                 a0, -1409(sp)       
+i00000022d0:	sd                  a5, 152(sp)         
+i00000022d1:	sd                  a5, 16(sp)          
+				la                  sp, begin_signature
+				li                  t1, 8960  
+				add                 sp, sp, t1
+i00000022d2:	ld                  a1, 136(sp)         
+i00000022d3:	fence.i                       
+i00000022d4:	sd                  s6, 152(sp)         
+i00000022d5:	lbu                 tp, -1889(sp)       
+i00000022d6:	lwu                 t1, 436(sp)         
+i00000022d7:	lw                  s2, -1856(sp)       
+i00000022d8:	sd                  a5, 232(sp)         
+i00000022d9:	addi                a5, sp, 424
+				li                  x27, 10   
+				la                  sp, begin_signature
+				li                  t1, 8224  
+				add                 sp, sp, t1
+				addw                a5, a5, a4
+				srliw               s2, s2, 20
+				srai                a4, a4, 4 
+				remu                s0, s1, a5
+				addw                a5, a5, a4
+				ld                  a4, 48(sp)          
+				remuw               s7, s1, s1
+	
+b00000022da:
+				beq                 x29, x27, 1f        
+				la                  x27, i00000022c6    
+				jalr                x1, x27, 0          
+				1: li x29, 10                           
+	
+				addi                sp, sp, -48
+				and                 s6, tp, s3
+				lwu                 a5, -264(sp)        
+				lui                 s9, 11    
+				addiw               a4, a4, 10
+				srai                a4, a4, 10
+				lw                  t6, 12(sp)          
+i00000022da:	or                  a3, a3, a3
+i00000022db:	addi                sp, sp, -192
+i00000022dc:	ld                  a0, 1960(sp)        
+				la                  sp, begin_signature
+				li                  t1, 3232  
+				add                 sp, sp, t1
+i00000022dd:	ld                  a0, 1504(sp)        
+i00000022de:	sraw                a5, a7, t6
+i00000022df:	srli                a0, a0, 7 
+i00000022e0:	srli                a3, a3, 7 
+i00000022e1:	fence.i                       
+i00000022e2:	sub                 s0, s0, s0
+i00000022e3:	sw                  a5, 44(sp)          
+i00000022e4:	addi                sp, sp, -400
+i00000022e5:	sll                 s0, s3, t6
+i00000022e6:	addiw               a3, s5, 649
+i00000022e7:	ld                  a7, -992(sp)        
+i00000022e8:	fence                         
+i00000022e9:	sd                  a5, 88(sp)          
+				la                  sp, begin_signature
+				li                  t1, 6632  
+				add                 sp, sp, t1
+i00000022ea:	sd                  s1, -1568(sp)       
+i00000022eb:	lwu                 a5, -560(sp)        
+i00000022ec:	srli                a2, a2, 32
+i00000022ed:	srai                s1, s1, 22
+i00000022ee:	subw                s0, s0, a3
+i00000022ef:	srai                a0, a0, 22
+i00000022f0:	lw                  s9, -968(sp)        
+				la                  sp, begin_signature
+				li                  t1, 13152 
+				add                 sp, sp, t1
+i00000022f1:	sd                  s1, 8(sp)           
+i00000022f2:	addiw               tp, a4, -1881
+i00000022f3:	srai                a0, a0, 7 
+i00000022f4:	subw                a4, a4, s0
+i00000022f5:	srlw                s0, t0, a7
+i00000022f6:	srli                a4, a4, 3 
+i00000022f7:	sraiw               a2, a5, 13
+i00000022f8:	addi                a2, sp, 240
+i00000022f9:	subw                a5, a7, s5
+i00000022fa:	addi                a4, zero, -6
+i00000022fb:	lw                  gp, 0(sp)           
+i00000022fc:	sub                 a3, a3, s0
+i00000022fd:	srli                a2, a2, 5 
+i00000022fe:	sd                  a5, 72(sp)          
+i00000022ff:	slliw               gp, s0, 16
+i0000002300:	addi                sp, sp, -176
+i0000002301:	sb                  zero, -696(sp)      
+				li                  x16, 10   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 6288  
+				add                 sp, sp, t1
+				srli                a4, a4, 8 
+				remw                a5, zero, t3
+				sw                  t6, 128(sp)         
+				xor                 s1, s1, a4
+				sw                  s1, 12(sp)          
+				srai                a5, a5, 16
+				remuw               s8, s0, a5
+	
+b0000002302:
+				pre_branch_macro                        
+				bne                 x29, x16, i000000231e
+				post_branch_macro                       
+	
+				srli                a5, a5, 9 
+				remw                s1, s0, s0
+				addi                t2, a5, 1243
+				ld                  t6, 208(sp)         
+				div                 s0, a5, s1
+				ld                  a5, 816(sp)         
+				ld                  a5, 112(sp)         
+				li                  x29, 10   
+i0000002302:	lbu                 a5, 594(sp)         
+i0000002303:	xor                 a1, a1, s1
+i0000002304:	addi                s0, sp, 188
+i0000002305:	sw                  s4, 120(sp)         
+i0000002306:	addw                s0, s0, a5
+i0000002307:	sb                  t1, 325(sp)         
+i0000002308:	slliw               t2, s6, 13
+i0000002309:	addw                a4, a4, a3
+i000000230a:	and                 a5, a5, a3
+i000000230b:	srli                a0, a0, 14
+i000000230c:	srai                a2, a2, 1 
+i000000230d:	addi                a1, sp, 172
+i000000230e:	lw                  a4, 0(sp)           
+i000000230f:	sd                  a3, 104(sp)         
+i0000002310:	srai                a5, a5, 11
+i0000002311:	addw                s1, s1, s1
+i0000002312:	andi                s10, s0, 163
+i0000002313:	auipc               s7, 26865 
+i0000002314:	sh                  s0, -294(sp)        
+i0000002315:	addi                sp, sp, -224
+i0000002316:	xor                 a5, a5, a2
+i0000002317:	xor                 a5, s0, s1
+i0000002318:	srai                s1, s1, 11
+i0000002319:	lh                  s2, 1300(sp)        
+i000000231a:	addi                sp, sp, -96
+i000000231b:	slti                s7, a5, 757
+i000000231c:	sd                  t6, -600(sp)        
+i000000231d:	add                 s1, zero, a5
+i000000231e:	ld                  s4, 56(sp)          
+i000000231f:	srai                s0, s0, 1 
+i0000002320:	sw                  a0, 8(sp)           
+i0000002321:	ld                  a5, 0(sp)           
+i0000002322:	addi                sp, sp, 112
+i0000002323:	fence.i                       
+i0000002324:	srl                 s1, s1, s0
+				la                  sp, begin_signature
+				li                  t1, 8128  
+				add                 sp, sp, t1
+i0000002325:	lw                  s5, 1016(sp)        
+i0000002326:	srlw                t2, s11, a2
+i0000002327:	addi                a4, sp, 160
+				la                  sp, begin_signature
+				li                  t1, 13616 
+				add                 sp, sp, t1
+i0000002328:	sd                  s1, 192(sp)         
+i0000002329:	slli                a5, a5, 25
+				li                  x27, 11   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 9528  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 7408  
+				add                 sp, sp, t1
+				sd                  s1, -392(sp)        
+				sllw                s5, a5, s0
+				div                 t6, a4, s5
+				addi                s0, sp, 40
+				divu                s7, s2, s2
+				fence                         
+				andi                s0, s0, 5 
+	
+b000000232a:
+				pre_branch_macro                        
+				beq                 x29, x27, i0000002307
+				post_branch_macro                       
+	
+				divuw               a4, gp, s10
+				lw                  s4, 56(sp)          
+				lbu                 gp, 314(sp)         
+				fence                         
+				remw                a5, s1, s1
+				lw                  s1, 8(sp)           
+				subw                s0, s2, t3
+				li                  x29, 10   
+i000000232a:	srai                s0, s0, 12
+i000000232b:	sb                  a5, -208(sp)        
+i000000232c:	addi                sp, sp, -192
+i000000232d:	fence                         
+i000000232e:	addi                a3, a3, 6 
+i000000232f:	ld                  a3, 112(sp)         
+i0000002330:	ld                  a2, 40(sp)          
+i0000002331:	srai                a4, a4, 30
+i0000002332:	addw                s2, s5, t6
+i0000002333:	fence                         
+i0000002334:	fence.i                       
+i0000002335:	lbu                 a5, 1682(sp)        
+i0000002336:	addi                s0, sp, 248
+i0000002337:	fence.i                       
+i0000002338:	lbu                 a5, 544(sp)         
+i0000002339:	lw                  a7, 0(sp)           
+i000000233a:	lb                  s1, 922(sp)         
+i000000233b:	srai                a5, a5, 15
+				la                  sp, begin_signature
+				li                  t1, 6520  
+				add                 sp, sp, t1
+i000000233c:	lw                  t5, 52(sp)          
+i000000233d:	ld                  a1, 96(sp)          
+i000000233e:	fence.i                       
+i000000233f:	subw                s3, a2, s3
+i0000002340:	srli                a1, a1, 14
+i0000002341:	ld                  a3, 0(sp)           
+i0000002342:	subw                a2, a2, a1
+i0000002343:	ld                  a0, 1304(sp)        
+				la                  sp, begin_signature
+				li                  t1, 9264  
+				add                 sp, sp, t1
+i0000002344:	ld                  a0, 1776(sp)        
+i0000002345:	or                  a3, a3, s0
+i0000002346:	addw                s1, s1, s1
+i0000002347:	sd                  a5, 1280(sp)        
+i0000002348:	fence.i                       
+i0000002349:	sd                  a3, 72(sp)          
+i000000234a:	lh                  s0, 26(sp)          
+i000000234b:	srli                a0, a0, 2 
+i000000234c:	ld                  s4, 32(sp)          
+i000000234d:	addiw               s1, s1, -29
+i000000234e:	addi                a2, sp, 68
+i000000234f:	and                 s1, a5, s0
+i0000002350:	lw                  s5, 28(sp)          
+i0000002351:	addi                sp, sp, -512
+				li                  x16, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 11072 
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6320  
+				add                 sp, sp, t1
+				slt                 a5, s3, t6
+				ld                  a4, 16(sp)          
+				sw                  s8, -1748(sp)       
+				addi                a5, sp, 28
+				fence                         
+				sub                 a5, a5, s0
+				sraiw               s5, s5, 20
+	
+b0000002352:
+				pre_branch_macro                        
+				bne                 x29, x16, i0000002375
+				post_branch_macro                       
+	
+				rem                 a5, s1, a5
+				addi                a4, sp, 104
+				srai                s7, a5, 1 
+				divu                a5, s1, s1
+				ld                  s1, 1376(sp)        
+				sllw                s0, s8, s10
+				sd                  a5, -1512(sp)       
+				li                  x29, 10   
+i0000002352:	or                  s0, s0, s1
+i0000002353:	lh                  s0, -1208(sp)       
+i0000002354:	fence                         
+i0000002355:	andi                s7, s1, -1851
+i0000002356:	fence                         
+i0000002357:	add                 tp, zero, a5
+i0000002358:	lwu                 a3, -1688(sp)       
+i0000002359:	srai                a4, a4, 4 
+i000000235a:	addiw               s1, s1, 1 
+i000000235b:	sltiu               s10, s6, -1218
+i000000235c:	addi                s1, sp, 512
+i000000235d:	addiw               s0, s0, -11
+i000000235e:	ld                  a6, 1296(sp)        
+i000000235f:	ld                  a5, 192(sp)         
+i0000002360:	addi                s1, a5, -769
+i0000002361:	sd                  s0, 1128(sp)        
+i0000002362:	fence                         
+i0000002363:	srli                s1, s1, 5 
+i0000002364:	sd                  a5, -40(sp)         
+i0000002365:	srai                a3, a3, 7 
+i0000002366:	lw                  t3, 76(sp)          
+i0000002367:	slliw               zero, s7, 7
+i0000002368:	slli                a4, a4, 24
+i0000002369:	srli                a5, a5, 4 
+i000000236a:	ld                  a7, 80(sp)          
+i000000236b:	lw                  a1, 20(sp)          
+i000000236c:	sltu                a5, s1, a5
+i000000236d:	lb                  s0, 1268(sp)        
+i000000236e:	sll                 s0, gp, a3
+i000000236f:	addi                sp, sp, 240
+i0000002370:	addi                a5, sp, 100
+i0000002371:	fsrmi               x0, 5     
+i0000002372:	ld                  s1, 216(sp)         
+i0000002373:	srai                a4, a4, 31
+i0000002374:	srli                s1, s1, 28
+i0000002375:	fence.i                       
+i0000002376:	sw                  s0, 24(sp)          
+i0000002377:	addi                s0, zero, -4
+				la                  sp, begin_signature
+				li                  t1, 2400  
+				add                 sp, sp, t1
+i0000002378:	sd                  s0, -2048(sp)       
+				la                  sp, begin_signature
+				li                  t1, 12224 
+				add                 sp, sp, t1
+i0000002379:	lw                  a3, 1952(sp)        
+i000000237a:	sd                  a5, 104(sp)         
+				li                  x24, 10   
+				lw                  a4, 48(sp)          
+				srai                a4, a4, 11
+				srli                s0, s0, 7 
+				fence.i                       
+				add                 s11, s11, s2
+				fence                         
+				addw                s6, s0, a5
+	
+b000000237b:
+				beq                 x29, x24, 1f        
+				jal                 x1, i000000236d     
+				1: li x29, 10                           
+	
+				fence.i                       
+				remu                s3, s1, a5
+				srai                s0, s0, 19
+				slli                a4, a4, 16
+				addw                a4, a4, s0
+				lw                  a7, 92(sp)          
+				ld                  s5, -1856(sp)       
+				la                  sp, begin_signature
+				li                  t1, 10256 
+				add                 sp, sp, t1
+i000000237b:	sd                  a5, -872(sp)        
+i000000237c:	srai                s1, s1, 5 
+i000000237d:	addiw               s0, s0, 7 
+i000000237e:	and                 zero, t3, t5
+i000000237f:	sd                  s0, 80(sp)          
+i0000002380:	addi                sp, sp, -160
+i0000002381:	addi                s0, s1, 21
+i0000002382:	ld                  a6, 216(sp)         
+i0000002383:	fence.i                       
+i0000002384:	addi                a2, sp, 164
+i0000002385:	srai                a5, zero, 53
+i0000002386:	srl                 s1, t2, t2
+i0000002387:	addw                t1, t5, s7
+i0000002388:	sh                  s0, -264(sp)        
+i0000002389:	lwu                 s0, -20(sp)         
+i000000238a:	sw                  a5, 40(sp)          
+i000000238b:	srli                a3, a3, 7 
+i000000238c:	srai                s1, s1, 5 
+i000000238d:	add                 a5, a5, s6
+i000000238e:	sw                  gp, 8(sp)           
+i000000238f:	subw                s0, s0, a4
+i0000002390:	lw                  s6, 72(sp)          
+i0000002391:	sll                 s10, a5, s0
+i0000002392:	fence                         
+i0000002393:	srli                s0, s0, 7 
+i0000002394:	ld                  t3, 128(sp)         
+i0000002395:	addi                sp, sp, 176
+i0000002396:	add                 s0, a5, s1
+i0000002397:	ld                  t0, 664(sp)         
+i0000002398:	addiw               a0, a0, 16
+i0000002399:	srlw                s2, zero, a3
+i000000239a:	sw                  a3, 52(sp)          
+				la                  sp, begin_signature
+				li                  t1, 10768 
+				add                 sp, sp, t1
+i000000239b:	sd                  a5, 1600(sp)        
+i000000239c:	andi                s5, s1, -1370
+i000000239d:	lwu                 a1, -68(sp)         
+i000000239e:	ld                  t2, 224(sp)         
+i000000239f:	addw                s1, t5, s8
+i00000023a0:	lw                  s1, 48(sp)          
+i00000023a1:	addw                s3, a5, s0
+i00000023a2:	sub                 s1, s1, a1
+				li                  x31, 9    
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 3240  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6888  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 6104  
+				add                 sp, sp, t1
+				sh                  zero, -1174(sp)     
+				srli                a5, a5, 5 
+				fence                         
+				sd                  s0, -840(sp)        
+				lw                  a5, 32(sp)          
+				lh                  s1, -636(sp)        
+				remuw               s8, a5, a5
+	
+b00000023a3:
+				pre_branch_macro                        
+				bge                 x31, x29, i00000023c6
+				post_branch_macro                       
+	
+				sllw                tp, zero, gp
+				sd                  a4, 120(sp)         
+				xor                 s0, t2, s3
+				ld                  t3, -1816(sp)       
+				sw                  s0, 36(sp)          
+				addw                s0, s0, s0
+				addi                sp, sp, -48
+				li                  x29, 10   
+i00000023a3:	subw                t5, s11, s6
+				la                  sp, begin_signature
+				li                  t1, 11616 
+				add                 sp, sp, t1
+i00000023a4:	lwu                 s1, 176(sp)         
+i00000023a5:	addi                a5, sp, 68
+i00000023a6:	andi                a4, a4, 7 
+i00000023a7:	fence                         
+i00000023a8:	sh                  s1, -1530(sp)       
+i00000023a9:	addw                a4, a4, a0
+i00000023aa:	fence                         
+i00000023ab:	ld                  s0, 192(sp)         
+i00000023ac:	addi                sp, sp, -96
+i00000023ad:	xor                 a4, a4, s1
+i00000023ae:	lw                  t2, 40(sp)          
+i00000023af:	fsrmi               x0, 2     
+i00000023b0:	sd                  s0, 0(sp)           
+				la                  sp, begin_signature
+				li                  t1, 5736  
+				add                 sp, sp, t1
+i00000023b1:	sd                  a5, 176(sp)         
+i00000023b2:	ld                  t0, 144(sp)         
+i00000023b3:	sraw                t3, a5, s0
+i00000023b4:	ld                  s7, 112(sp)         
+i00000023b5:	lbu                 zero, -116(sp)      
+i00000023b6:	addi                sp, sp, 160
+i00000023b7:	add                 s0, zero, s1
+i00000023b8:	addi                s1, sp, 100
+i00000023b9:	lui                 t6, 14    
+				la                  sp, begin_signature
+				li                  t1, 7208  
+				add                 sp, sp, t1
+i00000023ba:	sd                  a5, 160(sp)         
+i00000023bb:	addi                sp, sp, 240
+i00000023bc:	andi                tp, a7, 505
+i00000023bd:	lw                  a5, 1056(sp)        
+i00000023be:	sw                  s1, 12(sp)          
+i00000023bf:	sd                  a4, 1984(sp)        
+i00000023c0:	ld                  a3, 8(sp)           
+i00000023c1:	sllw                s0, a5, s0
+i00000023c2:	addiw               s1, s1, -24
+i00000023c3:	subw                a3, a3, a2
+i00000023c4:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 12176 
+				add                 sp, sp, t1
+i00000023c5:	sw                  s4, 68(sp)          
+i00000023c6:	sd                  a3, 200(sp)         
+i00000023c7:	subw                s1, gp, s10
+i00000023c8:	sub                 s1, s0, s1
+i00000023c9:	srli                a5, a5, 14
+i00000023ca:	addi                s1, sp, 360
+i00000023cb:	ld                  a5, 40(sp)          
+				srli                a4, a4, 12
+				lh                  s1, 630(sp)         
+				sllw                s1, s0, a5
+				divuw               a5, s5, a7
+				andi                a5, a5, -19
+				srai                a4, a4, 14
+				fence                         
+	
+b00000023cc:
+				jal                 x1, i00000023de     
+	
+				sw                  t6, -516(sp)        
+				andi                s1, s0, 1786
+				fence                         
+				divuw               t2, tp, s11
+				sraiw               s8, s0, 25
+				mulh                s11, s2, s11
+				sd                  s4, 840(sp)         
+i00000023cc:	fence                         
+i00000023cd:	sd                  a5, 16(sp)          
+i00000023ce:	sw                  a1, 24(sp)          
+i00000023cf:	fence                         
+i00000023d0:	srlw                s0, t5, s8
+i00000023d1:	ld                  a2, 72(sp)          
+i00000023d2:	or                  a4, a4, a4
+i00000023d3:	srli                s1, a2, 15
+i00000023d4:	srli                a4, a4, 30
+i00000023d5:	sw                  s0, 52(sp)          
+i00000023d6:	srai                a0, a0, 8 
+i00000023d7:	ld                  s1, 960(sp)         
+i00000023d8:	srli                a3, a3, 13
+i00000023d9:	addi                sp, sp, -496
+i00000023da:	srli                s6, s0, 6 
+i00000023db:	ld                  t3, 72(sp)          
+i00000023dc:	srliw               s0, s1, 4 
+				la                  sp, begin_signature
+				li                  t1, 7040  
+				add                 sp, sp, t1
+i00000023dd:	lw                  s1, -1216(sp)       
+i00000023de:	sd                  zero, 240(sp)       
+i00000023df:	addi                a5, sp, 372
+				la                  sp, begin_signature
+				li                  t1, 8312  
+				add                 sp, sp, t1
+i00000023e0:	lh                  s1, -1316(sp)       
+i00000023e1:	xor                 a4, a4, s0
+i00000023e2:	sb                  s0, -741(sp)        
+i00000023e3:	addi                sp, sp, 224
+i00000023e4:	ld                  s1, 24(sp)          
+i00000023e5:	ld                  s0, 104(sp)         
+i00000023e6:	srai                a5, a5, 17
+i00000023e7:	auipc               s0, 260091
+i00000023e8:	sd                  t1, 248(sp)         
+i00000023e9:	fence                         
+i00000023ea:	srli                a3, a3, 10
+i00000023eb:	lhu                 a6, -2046(sp)       
+i00000023ec:	fence                         
+i00000023ed:	lw                  a5, 28(sp)          
+i00000023ee:	srlw                s0, a0, a2
+i00000023ef:	sraiw               a5, t3, 7 
+i00000023f0:	fence.i                       
+i00000023f1:	srai                s1, s1, 31
+i00000023f2:	fence.i                       
+i00000023f3:	slli                s1, s1, 21
+				li                  x22, 10   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 13448 
+				add                 sp, sp, t1
+				sd                  a4, 0(sp)           
+				mulhu               s0, s10, s3
+				sd                  s1, 40(sp)          
+				srli                s1, s1, 1 
+				ld                  a6, 112(sp)         
+				addiw               s1, s1, 3 
+				addi                s0, sp, 272
+	
+b00000023f4:
+				pre_branch_macro                        
+				bne                 x29, x22, i0000002411
+				post_branch_macro                       
+	
+				mulw                t6, a5, s0
+				lhu                 s1, 1722(sp)        
+				lwu                 s1, 1928(sp)        
+				srli                a5, a5, 7 
+				lwu                 s1, 1020(sp)        
+				addi                a4, sp, 360
+				div                 s1, s7, t6
+				li                  x29, 10   
+i00000023f4:	addi                sp, sp, -288
+i00000023f5:	xori                t0, a6, 1169
+i00000023f6:	fence.i                       
+i00000023f7:	srai                a4, a4, 5 
+				la                  sp, begin_signature
+				li                  t1, 13632 
+				add                 sp, sp, t1
+i00000023f8:	lwu                 t5, -808(sp)        
+i00000023f9:	srai                a1, a1, 15
+i00000023fa:	lwu                 s0, -800(sp)        
+i00000023fb:	lh                  a5, 1158(sp)        
+i00000023fc:	subw                s1, s3, t0
+i00000023fd:	ld                  s0, 136(sp)         
+i00000023fe:	xor                 t6, s1, s0
+i00000023ff:	lwu                 s0, -1164(sp)       
+i0000002400:	ld                  s11, -1656(sp)      
+i0000002401:	subw                s0, s0, s0
+i0000002402:	slliw               t1, s0, 27
+i0000002403:	addi                sp, sp, -48
+i0000002404:	srli                a5, a5, 12
+i0000002405:	lw                  a5, 20(sp)          
+i0000002406:	xor                 a2, a2, s1
+i0000002407:	addi                sp, sp, 128
+i0000002408:	sd                  a5, 56(sp)          
+i0000002409:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 2640  
+				add                 sp, sp, t1
+i000000240a:	sb                  a0, -1661(sp)       
+i000000240b:	addiw               a3, a3, -8
+i000000240c:	auipc               s5, 345301
+i000000240d:	fence                         
+i000000240e:	subw                s4, s0, s1
+i000000240f:	fence                         
+i0000002410:	sd                  t2, -1656(sp)       
+i0000002411:	addi                a3, sp, 220
+				la                  sp, begin_signature
+				li                  t1, 10208 
+				add                 sp, sp, t1
+i0000002412:	lwu                 a5, -172(sp)        
+				la                  sp, begin_signature
+				li                  t1, 7792  
+				add                 sp, sp, t1
+i0000002413:	sb                  s4, 608(sp)         
+i0000002414:	sd                  tp, 864(sp)         
+i0000002415:	lbu                 gp, -1979(sp)       
+i0000002416:	ld                  s0, 784(sp)         
+i0000002417:	sw                  a2, 48(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12464 
+				add                 sp, sp, t1
+i0000002418:	ld                  a2, 96(sp)          
+i0000002419:	addi                a4, sp, 152
+i000000241a:	srai                a1, a1, 13
+i000000241b:	sd                  s0, 168(sp)         
+				li                  x31, 11   
+				li                  x29, 10   
+				srliw               zero, s11, 23
+				divw                s6, a5, a5
+				mulhu               s1, s0, s1
+				fence                         
+				addw                a4, a4, s0
+				fence.i                       
+				addiw               s7, s0, 335
+	
+b000000241c:
+				pre_branch_macro                        
+				bne                 x29, x31, i0000002428
+				post_branch_macro                       
+	
+				sraiw               zero, s0, 9
+				lw                  s1, 4(sp)           
+				addw                a5, s11, s5
+				fence.i                       
+				remu                s0, zero, tp
+				mul                 s0, s4, tp
+				lwu                 s4, 1860(sp)        
+				li                  x29, 10   
+i000000241c:	addi                sp, sp, -272
+				la                  sp, begin_signature
+				li                  t1, 10216 
+				add                 sp, sp, t1
+i000000241d:	lwu                 a0, -1992(sp)       
+i000000241e:	sllw                a1, s1, a5
+i000000241f:	fence                         
+i0000002420:	andi                a3, a3, -12
+i0000002421:	lw                  a4, 56(sp)          
+i0000002422:	srli                a5, a5, 9 
+i0000002423:	srliw               s9, s0, 4 
+i0000002424:	sd                  a6, -1104(sp)       
+				la                  sp, begin_signature
+				li                  t1, 10864 
+				add                 sp, sp, t1
+i0000002425:	sw                  a5, 4(sp)           
+i0000002426:	srlw                s1, s8, a0
+i0000002427:	addi                sp, sp, 64
+i0000002428:	addw                a4, a4, a2
+i0000002429:	srai                a5, a5, 2 
+i000000242a:	addiw               t0, s11, 1219
+i000000242b:	lh                  t2, -818(sp)        
+i000000242c:	sd                  a2, 120(sp)         
+i000000242d:	sd                  s0, 1128(sp)        
+i000000242e:	srli                a4, a4, 28
+i000000242f:	ld                  s0, 8(sp)           
+i0000002430:	lwu                 s1, 1608(sp)        
+i0000002431:	sd                  s0, 56(sp)          
+i0000002432:	lw                  s7, 52(sp)          
+i0000002433:	srai                s0, s0, 5 
+i0000002434:	srli                a3, a3, 10
+i0000002435:	add                 s6, zero, a5
+i0000002436:	lw                  t5, 0(sp)           
+i0000002437:	addiw               a0, a0, 1 
+				la                  sp, begin_signature
+				li                  t1, 4976  
+				add                 sp, sp, t1
+i0000002438:	ld                  tp, 224(sp)         
+i0000002439:	ld                  a3, 16(sp)          
+i000000243a:	lh                  a5, 1070(sp)        
+i000000243b:	addi                s0, a3, -1868
+i000000243c:	andi                a5, a5, -8
+i000000243d:	fence.i                       
+i000000243e:	addi                s1, sp, 116
+i000000243f:	fence                         
+i0000002440:	lw                  t5, 84(sp)          
+i0000002441:	fence.i                       
+i0000002442:	addi                s1, sp, 116
+i0000002443:	sw                  a5, 1960(sp)        
+				li                  x25, 10   
+				la                  sp, begin_signature
+				li                  t1, 6888  
+				add                 sp, sp, t1
+				la                  sp, begin_signature
+				li                  t1, 11648 
+				add                 sp, sp, t1
+				srli                a4, a4, 4 
+				slti                t2, s0, -1934
+				sd                  s6, -1616(sp)       
+				sw                  a4, 44(sp)          
+				sw                  s7, 104(sp)         
+				ori                 s6, a5, -1197
+				sw                  s0, 28(sp)          
+	
+b0000002444:
+				beq                 x29, x25, 1f        
+				la                  x25, i000000243d    
+				jalr                x1, x25, 0          
+				1: li x29, 10                           
+	
+				mulh                zero, a5, s0
+				lb                  s8, -1298(sp)       
+				lw                  a4, 28(sp)          
+				subw                a4, a4, a4
+				mulw                a5, s5, s4
+				sw                  s1, 1140(sp)        
+				lw                  a4, 0(sp)           
+i0000002444:	fence                         
+i0000002445:	srai                t5, a6, 19
+				la                  sp, begin_signature
+				li                  t1, 11952 
+				add                 sp, sp, t1
+i0000002446:	lwu                 s0, 1600(sp)        
+i0000002447:	sraw                a5, t2, a7
+i0000002448:	add                 s1, a5, s0
+				la                  sp, begin_signature
+				li                  t1, 2064  
+				add                 sp, sp, t1
+i0000002449:	sd                  tp, 104(sp)         
+i000000244a:	srliw               s8, s6, 20
+i000000244b:	srai                s1, s1, 16
+i000000244c:	sw                  s1, 56(sp)          
+i000000244d:	addi                a1, sp, 232
+				la                  sp, begin_signature
+				li                  t1, 8656  
+				add                 sp, sp, t1
+i000000244e:	sh                  a5, 1540(sp)        
+i000000244f:	sh                  s9, -810(sp)        
+i0000002450:	lwu                 t1, -1600(sp)       
+i0000002451:	ld                  a5, -656(sp)        
+i0000002452:	addiw               a4, a4, -2
+				la                  sp, begin_signature
+				li                  t1, 11904 
+				add                 sp, sp, t1
+i0000002453:	sd                  a4, 112(sp)         
+i0000002454:	srli                a0, a0, 1 
+i0000002455:	lwu                 a5, 1932(sp)        
+i0000002456:	srli                a4, a4, 13
+i0000002457:	addiw               zero, t3, -1055
+i0000002458:	lb                  a0, -1036(sp)       
+i0000002459:	addi                a5, sp, 388
+i000000245a:	sllw                a5, s0, s0
+i000000245b:	fence.i                       
+i000000245c:	fence.i                       
+i000000245d:	lw                  a0, 16(sp)          
+i000000245e:	sll                 a5, a5, s0
+i000000245f:	addi                a2, sp, 204
+i0000002460:	sraw                a4, a5, s0
+i0000002461:	sd                  s1, -1736(sp)       
+i0000002462:	addi                a4, sp, 180
+i0000002463:	fence.i                       
+i0000002464:	addi                a3, sp, 436
+				la                  sp, begin_signature
+				li                  t1, 8696  
+				add                 sp, sp, t1
+i0000002465:	sd                  a2, 88(sp)          
+				la                  sp, begin_signature
+				li                  t1, 11880 
+				add                 sp, sp, t1
+i0000002466:	sw                  s0, 80(sp)          
+i0000002467:	sub                 s1, s0, s1
+i0000002468:	fsrmi               x0, 2     
+i0000002469:	ld                  s2, 216(sp)         
+i000000246a:	fence.i                       
+i000000246b:	subw                s0, s0, a0
+i000000246c:	lw                  a5, 32(sp)          
+				li                  x28, 12   
+				addi                x29, x29, 1
+				addiw               a4, a4, -10
+				sw                  a5, 64(sp)          
+				mul                 a4, s0, s1
+				lw                  a4, 4(sp)           
+				sh                  tp, 712(sp)         
+				addw                a4, a4, a4
+				sb                  s9, 749(sp)         
+	
+b000000246d:
+				pre_branch_macro                        
+				bne                 x29, x28, i000000245a
+				post_branch_macro                       
+	
+				addi                s11, s5, 1104
+				addw                a4, a4, a5
+				lwu                 s2, 1324(sp)        
+				sd                  s7, 1440(sp)        
+				divw                s1, a5, a5
+				sd                  a7, 232(sp)         
+				lwu                 s4, -552(sp)        
+				li                  x29, 10   
+i000000246d:	srai                a4, a4, 4 
+i000000246e:	srli                a5, a5, 6 
+				la                  sp, begin_signature
+				li                  t1, 13936 
+				add                 sp, sp, t1
+i000000246f:	ld                  s2, -1632(sp)       
+i0000002470:	srai                s0, s0, 8 
+i0000002471:	lui                 a1, 8     
+i0000002472:	ld                  t3, 8(sp)           
+i0000002473:	addi                s1, s1, -4
+i0000002474:	subw                s0, s0, s1
+i0000002475:	add                 s0, s0, a4
+i0000002476:	lw                  a5, 120(sp)         
+i0000002477:	lh                  s2, -1176(sp)       
+i0000002478:	srai                s0, a5, 19
+i0000002479:	srli                s2, a5, 15
+i000000247a:	ld                  t5, 80(sp)          
+i000000247b:	slti                gp, s6, 1260
+i000000247c:	lw                  a5, 40(sp)          
+i000000247d:	fence                         
+i000000247e:	srai                a2, a2, 16
+i000000247f:	subw                a3, a3, a1
+i0000002480:	srai                s0, s0, 12
+i0000002481:	srli                s1, s1, 12
+i0000002482:	srli                a1, a1, 31
+i0000002483:	sra                 s1, s10, s8
+i0000002484:	sub                 a4, a4, s1
+i0000002485:	sw                  s1, 24(sp)          
+i0000002486:	sltiu               t6, s0, 139
+i0000002487:	addiw               a5, a5, -27
+i0000002488:	fence                         
+i0000002489:	sw                  t0, 108(sp)         
+i000000248a:	xori                a1, s1, 770
+i000000248b:	or                  a3, a3, a1
+i000000248c:	fence.i                       
+i000000248d:	fsrmi               x0, 7     
+i000000248e:	ld                  a4, 32(sp)          
+i000000248f:	lh                  s1, 276(sp)         
+i0000002490:	sw                  a4, 44(sp)          
+i0000002491:	addi                a2, a2, -7
+i0000002492:	srai                a0, a0, 4 
+i0000002493:	sh                  a6, -512(sp)        
+i0000002494:	lw                  s1, 28(sp)          
+i0000002495:	sd                  gp, -1096(sp)       
+				li                  x27, 9    
+				la                  sp, begin_signature
+				li                  t1, 12488 
+				add                 sp, sp, t1
+				ld                  s7, 272(sp)         
+				lui                 s10, 18   
+				srli                a4, a4, 18
+				ld                  a7, 80(sp)          
+				lwu                 a5, -900(sp)        
+				srai                a4, a4, 13
+				ld                  s1, -1848(sp)       
+	
+b0000002496:
+				pre_branch_macro                        
+				bge                 x27, x29, i0000002486
+				post_branch_macro                       
+	
+				srli                s1, s1, 6 
+				remu                a5, a7, a4
+				fence                         
+				ld                  s0, 224(sp)         
+				slti                s6, s1, 1824
+				sw                  a4, 0(sp)           
+				addi                a4, sp, 364
+				li                  x29, 10   
+i0000002496:	ld                  a1, 72(sp)          
+i0000002497:	fence                         
+				la                  sp, begin_signature
+				li                  t1, 13936 
+				add                 sp, sp, t1
+i0000002498:	ld                  s8, 8(sp)           
+i0000002499:	lbu                 s0, -1057(sp)       
+i000000249a:	addi                a3, sp, 180
+i000000249b:	lw                  a1, 56(sp)          
+i000000249c:	sd                  a1, 592(sp)         
+				la                  sp, begin_signature
+				li                  t1, 11000 
+				add                 sp, sp, t1
+i000000249d:	lw                  a5, -1860(sp)       
+i000000249e:	addi                a0, sp, 292
+i000000249f:	sd                  s5, 240(sp)         
+i00000024a0:	fence                         
+i00000024a1:	lw                  a0, 36(sp)          
+i00000024a2:	addw                a4, a4, s1
+i00000024a3:	srai                s0, s0, 2 
+i00000024a4:	addi                a3, sp, 408
+i00000024a5:	fence.i                       
+i00000024a6:	addi                a4, sp, 340
+i00000024a7:	ld                  a5, 32(sp)          
+i00000024a8:	slli                s0, s0, 20
+i00000024a9:	srli                a4, a4, 8 
+i00000024aa:	andi                a1, a1, -27
+i00000024ab:	sd                  t5, 80(sp)          
+i00000024ac:	srai                s0, s0, 11
+i00000024ad:	ld                  t2, 1000(sp)        
+i00000024ae:	srli                a2, a2, 31
+i00000024af:	addi                s0, s0, -25
+				la                  sp, begin_signature
+				li                  t1, 5296  
+				add                 sp, sp, t1
+i00000024b0:	sd                  a2, 48(sp)          
+i00000024b1:	lbu                 t3, 1284(sp)        
+i00000024b2:	ld                  a4, 16(sp)          
+i00000024b3:	fence                         
+i00000024b4:	ld                  s0, -192(sp)        
+i00000024b5:	srli                a3, a3, 7 
+i00000024b6:	addi                a2, sp, 104
+i00000024b7:	srai                a5, a5, 11
+i00000024b8:	srli                a1, a1, 6 
+i00000024b9:	sra                 s0, a7, s7
+				la                  sp, begin_signature
+				li                  t1, 10120 
+				add                 sp, sp, t1
+i00000024ba:	lb                  s1, -491(sp)        
+i00000024bb:	addi                sp, sp, -304
+i00000024bc:	sh                  a5, -924(sp)        
+i00000024bd:	or                  a2, a2, a3
+				li                  x28, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 13784 
+				add                 sp, sp, t1
+				or                  s0, s0, s0
+				mulw                zero, s0, s1
+				subw                a4, a4, a4
+				sub                 a4, a4, a4
+				addi                sp, sp, 80
+				srai                a4, a4, 5 
+				sll                 s1, s10, s5
+	
+b00000024be:
+				pre_branch_macro                        
+				bne                 x29, x28, i00000024d4
+				post_branch_macro                       
+	
+				addi                a4, sp, 108
+				addw                a4, a4, a4
+				addi                sp, sp, -384
+				remw                s11, s9, gp
+				mulhsu              t2, a7, s5
+				lw                  s0, 368(sp)         
+				sd                  a5, 360(sp)         
+				li                  x29, 10   
+i00000024be:	fence.i                       
+i00000024bf:	sd                  s8, 1784(sp)        
+i00000024c0:	ld                  a2, -1624(sp)       
+i00000024c1:	srli                a3, a3, 5 
+i00000024c2:	subw                a4, a4, s1
+i00000024c3:	slt                 a5, a3, a6
+i00000024c4:	ori                 s2, s0, 1543
+i00000024c5:	sw                  s1, 68(sp)          
+i00000024c6:	sltiu               s1, a0, 681
+i00000024c7:	slli                a3, a3, 31
+i00000024c8:	add                 a5, zero, s11
+i00000024c9:	sll                 s5, a2, s11
+i00000024ca:	fence.i                       
+i00000024cb:	addw                a2, a2, a0
+i00000024cc:	slt                 s0, t1, t2
+i00000024cd:	fence                         
+i00000024ce:	srli                a5, a5, 2 
+i00000024cf:	ld                  s0, 88(sp)          
+i00000024d0:	lw                  a2, 32(sp)          
+i00000024d1:	andi                a1, a1, -29
+i00000024d2:	lwu                 s8, -1064(sp)       
+i00000024d3:	srli                a5, a5, 1 
+i00000024d4:	fence.i                       
+i00000024d5:	ld                  s1, -1752(sp)       
+				la                  sp, begin_signature
+				li                  t1, 7704  
+				add                 sp, sp, t1
+i00000024d6:	lw                  s3, 48(sp)          
+i00000024d7:	slli                s0, a5, 57
+i00000024d8:	sltiu               a3, a5, 1320
+i00000024d9:	srai                a3, a3, 1 
+i00000024da:	srli                a0, a0, 11
+i00000024db:	lw                  a3, 0(sp)           
+i00000024dc:	lbu                 a5, -1253(sp)       
+i00000024dd:	or                  s0, s0, s0
+i00000024de:	sd                  s4, 112(sp)         
+i00000024df:	sb                  s1, 792(sp)         
+i00000024e0:	sh                  s9, 1964(sp)        
+i00000024e1:	and                 s6, a3, s11
+i00000024e2:	sra                 s8, t2, a7
+i00000024e3:	lwu                 a5, -1248(sp)       
+i00000024e4:	sw                  t6, 52(sp)          
+i00000024e5:	addi                a5, sp, 20
+				la                  sp, begin_signature
+				li                  t1, 7008  
+				add                 sp, sp, t1
+				fence                         
+				addi                gp, zero, 15
+				lhu                 a5, -786(sp)        
+				addi                s0, sp, 372
+				sd                  a4, 72(sp)          
+				subw                s6, s1, s1
+				slliw               s0, s10, 31
+	
+b00000024e6:
+				jal                 x10, i00000024f7    
+	
+				addi                s1, sp, 284
+				lw                  a5, 84(sp)          
+				lwu                 s6, -888(sp)        
+				divw                s3, a5, s1
+				srli                s1, s1, 4 
+				srli                a4, a4, 12
+				sub                 a4, a4, s1
+i00000024e6:	srai                a4, a4, 17
+i00000024e7:	sd                  s0, 64(sp)          
+i00000024e8:	srai                s1, s1, 12
+				la                  sp, begin_signature
+				li                  t1, 12112 
+				add                 sp, sp, t1
+i00000024e9:	lw                  s0, 892(sp)         
+i00000024ea:	sw                  t1, 24(sp)          
+i00000024eb:	ld                  a1, 96(sp)          
+i00000024ec:	addi                sp, sp, -64
+i00000024ed:	srli                a3, a3, 9 
+i00000024ee:	lh                  s1, -342(sp)        
+i00000024ef:	ld                  a6, -1000(sp)       
+i00000024f0:	srai                a3, a3, 3 
+i00000024f1:	ld                  a0, 0(sp)           
+				la                  sp, begin_signature
+				li                  t1, 5712  
+				add                 sp, sp, t1
+i00000024f2:	sd                  s1, 64(sp)          
+i00000024f3:	sw                  s9, 4(sp)           
+i00000024f4:	srai                tp, s1, 38
+i00000024f5:	srli                s0, s0, 12
+i00000024f6:	sb                  s0, -127(sp)        
+i00000024f7:	srai                s0, s0, 8 
+i00000024f8:	addiw               s1, s1, -31
+i00000024f9:	fence.i                       
+i00000024fa:	lh                  s1, 228(sp)         
+				la                  sp, begin_signature
+				li                  t1, 10568 
+				add                 sp, sp, t1
+i00000024fb:	sd                  s1, 48(sp)          
+i00000024fc:	srli                s0, s0, 7 
+i00000024fd:	addi                s1, zero, 12
+i00000024fe:	sd                  s1, 128(sp)         
+				la                  sp, begin_signature
+				li                  t1, 2760  
+				add                 sp, sp, t1
+i00000024ff:	ld                  s0, -200(sp)        
+i0000002500:	andi                s1, s1, -29
+i0000002501:	srai                t6, a2, 6 
+i0000002502:	sd                  s1, -1416(sp)       
+i0000002503:	fence                         
+i0000002504:	srli                a5, a5, 7 
+i0000002505:	sw                  s0, 24(sp)          
+				la                  sp, begin_signature
+				li                  t1, 13848 
+				add                 sp, sp, t1
+i0000002506:	ld                  s2, 1432(sp)        
+i0000002507:	ld                  a0, 88(sp)          
+i0000002508:	and                 s0, s1, s0
+i0000002509:	ld                  gp, 192(sp)         
+i000000250a:	sd                  t1, 16(sp)          
+i000000250b:	srai                a3, a3, 14
+i000000250c:	lw                  s1, 104(sp)         
+i000000250d:	lhu                 s1, 222(sp)         
+				li                  x18, 10   
+				la                  sp, begin_signature
+				li                  t1, 6288  
+				add                 sp, sp, t1
+				sw                  a5, 36(sp)          
+				fence                         
+				lw                  a4, 64(sp)          
+				xor                 a4, a4, a4
+				rem                 a5, s5, t3
+				sh                  a5, -584(sp)        
+				sub                 a4, a4, a4
+	
+b000000250e:
+				beq                 x29, x18, 1f        
+				jal                 x0, i00000024ff     
+				1: li x29, 10                           
+	
+				srai                a4, a4, 14
+				andi                s7, s4, 1565
+				mulw                s0, s0, a5
+				lw                  tp, 112(sp)         
+				addi                a5, sp, 296
+				addiw               t6, s7, 737
+				addi                a5, s0, 1815
+i000000250e:	sh                  s1, 490(sp)         
+i000000250f:	lw                  a2, 44(sp)          
+i0000002510:	addi                a2, sp, 152
+i0000002511:	srai                s1, s1, 23
+i0000002512:	fence.i                       
+i0000002513:	lbu                 zero, -695(sp)      
+				la                  sp, begin_signature
+				li                  t1, 12488 
+				add                 sp, sp, t1
+i0000002514:	sw                  a2, 40(sp)          
+i0000002515:	xor                 s9, s1, a5
+i0000002516:	sll                 t5, t0, gp
+i0000002517:	addi                sp, sp, 48
+i0000002518:	fence.i                       
+i0000002519:	lbu                 s3, 261(sp)         
+i000000251a:	auipc               t2, 481019
+i000000251b:	lw                  s1, 28(sp)          
+				la                  sp, begin_signature
+				li                  t1, 12504 
+				add                 sp, sp, t1
+i000000251c:	sd                  a0, 128(sp)         
+i000000251d:	addw                a4, a4, a2
+i000000251e:	srli                a5, a5, 14
+i000000251f:	sh                  s7, -210(sp)        
+i0000002520:	srli                a0, a0, 16
+i0000002521:	ori                 s0, t0, -1409
+				la                  sp, begin_signature
+				li                  t1, 2096  
+				add                 sp, sp, t1
+i0000002522:	sb                  s3, -96(sp)         
+i0000002523:	subw                a0, a0, a0
+i0000002524:	sd                  a5, -1448(sp)       
+				la                  sp, begin_signature
+				li                  t1, 9088  
+				add                 sp, sp, t1
+i0000002525:	ld                  a6, -720(sp)        
+				la                  sp, begin_signature
+				li                  t1, 2328  
+				add                 sp, sp, t1
+i0000002526:	sw                  s5, -1680(sp)       
+i0000002527:	subw                s0, s0, s0
+i0000002528:	lh                  s5, -614(sp)        
+i0000002529:	lui                 t3, 29    
+i000000252a:	lh                  s0, 1186(sp)        
+				la                  sp, begin_signature
+				li                  t1, 6960  
+				add                 sp, sp, t1
+i000000252b:	lh                  s3, 1420(sp)        
+i000000252c:	addi                a1, sp, 372
+i000000252d:	sltu                a5, s7, t5
+i000000252e:	srai                a4, a4, 2 
+i000000252f:	fence                         
+i0000002530:	fence                         
+i0000002531:	srli                a1, a1, 12
+i0000002532:	addi                sp, sp, 144
+i0000002533:	ld                  s5, -1344(sp)       
+i0000002534:	fence                         
+i0000002535:	slli                a6, s11, 33
+				li                  x16, 11   
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 3488  
+				add                 sp, sp, t1
+				srai                a4, a4, 6 
+				lwu                 s1, 584(sp)         
+				lw                  a4, 44(sp)          
+				lwu                 s0, 1932(sp)        
+				fence.i                       
+				ld                  s1, 1048(sp)        
+				mul                 s0, s1, a5
+	
+b0000002536:
+				pre_branch_macro                        
+				bne                 x29, x16, i000000253c
+				post_branch_macro                       
+	
+				srai                s0, s0, 12
+				sh                  s2, -368(sp)        
+				sltu                s5, s1, s0
+				addi                s0, zero, -10
+				addiw               s0, s0, 2 
+				lwu                 s7, -1264(sp)       
+				fence                         
+				li                  x29, 10   
+				la                  sp, begin_signature
+				li                  t1, 7264  
+				add                 sp, sp, t1
+i0000002536:	sh                  s1, -1530(sp)       
+i0000002537:	fence                         
+i0000002538:	or                  a2, a2, a2
+i0000002539:	addi                sp, sp, -288
+i000000253a:	sub                 a2, a2, s1
+i000000253b:	sd                  s10, 280(sp)        
+i000000253c:	ld                  s1, 752(sp)         
+i000000253d:	fence                         
+i000000253e:	sub                 tp, s8, s5
+i000000253f:	srl                 s1, s9, a1
+i0000002540:	srl                 s0, s0, a5
+i0000002541:	sd                  s0, -824(sp)        
+i0000002542:	srli                a3, a3, 9 
+i0000002543:	ld                  s1, -1528(sp)       
+i0000002544:	srai                a1, a1, 4 
+i0000002545:	addi                a5, sp, 132
+i0000002546:	addi                sp, sp, -416
+i0000002547:	lui                 a5, 388161
+i0000002548:	xor                 a1, a1, a5
+i0000002549:	addw                a1, a1, a0
+i000000254a:	fence.i                       
+i000000254b:	srai                s0, s0, 8 
+i000000254c:	addi                sp, sp, -352
+i000000254d:	xor                 s0, s1, a5
+i000000254e:	lwu                 a5, 1968(sp)        
+i000000254f:	fence.i                       
+i0000002550:	sh                  a5, 974(sp)         
+i0000002551:	fence                         
+i0000002552:	srli                a0, a0, 12
+i0000002553:	lwu                 a1, 48(sp)          
+i0000002554:	fence.i                       
+				la                  sp, begin_signature
+				li                  t1, 9496  
+				add                 sp, sp, t1
+i0000002555:	sd                  a5, 1896(sp)        
+i0000002556:	srli                s0, s0, 8 
+i0000002557:	addi                a0, sp, 420
+i0000002558:	ld                  s0, -1192(sp)       
+i0000002559:	and                 t5, a5, a5
+i000000255a:	lwu                 s4, 1588(sp)        
+i000000255b:	addi                s0, sp, 448
+i000000255c:	lb                  s7, -791(sp)        
+i000000255d:	srli                a3, a3, 20
+				li                  x22, 10   
+				li                  x29, 10   
+				divw                a5, t6, tp
+				sw                  s10, 16(sp)         
+				srlw                s3, a5, s0
+				addi                a4, sp, 100
+				slti                s1, s1, 993
+				srli                s0, s0, 4 
+				fence                         
+	
+b000000255e:
+				pre_branch_macro                        
+				bne                 x29, x22, i0000002564
+				post_branch_macro                       
+	
+				addiw               zero, s10, 397
+				or                  s9, gp, zero
+				subw                a4, a4, a5
+				sllw                s1, a5, a5
+				sub                 a4, a4, a4
+				addiw               s1, s1, -12
+				lw                  a4, 64(sp)          
+				li                  x29, 10   
+i000000255e:	srai                a2, a2, 6 
+i000000255f:	xor                 a5, a5, a5
+i0000002560:	addi                sp, sp, -32
+i0000002561:	fence.i                       
+i0000002562:	addi                a3, sp, 388
+				la                  sp, begin_signature
+				li                  t1, 3320  
+				add                 sp, sp, t1
+i0000002563:	ld                  s9, 1048(sp)        
+i0000002564:	sd                  a6, 1112(sp)        
+i0000002565:	lhu                 s0, 586(sp)         
+i0000002566:	sd                  a5, -736(sp)        
+i0000002567:	srli                a4, a4, 13
+i0000002568:	srai                a5, a5, 12
+i0000002569:	sltiu               s2, t6, 1299
+i000000256a:	addi                s1, sp, 84
+i000000256b:	xor                 a5, a5, s0
+i000000256c:	addi                sp, sp, -128
+i000000256d:	lhu                 a5, 1250(sp)        
+i000000256e:	srai                a2, a2, 12
+i000000256f:	ld                  a5, -824(sp)        
+i0000002570:	add                 s4, zero, t2
+				la                  sp, begin_signature
+				li                  t1, 5048  
+				add                 sp, sp, t1
+i0000002571:	sd                  t6, -408(sp)        
+i0000002572:	add                 s0, zero, t0
+i0000002573:	or                  a2, a2, s0
+i0000002574:	addi                s1, sp, 68
+i0000002575:	add                 s2, s11, a0
+i0000002576:	ld                  a0, -1496(sp)       
+i0000002577:	srai                a1, a1, 5 
+i0000002578:	ld                  s1, 904(sp)         
+i0000002579:	ld                  s1, 1224(sp)        
+i000000257a:	addi                s0, sp, 244
+i000000257b:	ld                  s4, -1624(sp)       
+i000000257c:	xor                 a4, a4, a2
+i000000257d:	addi                sp, sp, -272
+i000000257e:	addi                t6, s5, -1103
+i000000257f:	lwu                 a1, 56(sp)          
+i0000002580:	or                  a4, a4, a2
+i0000002581:	sd                  a3, 1240(sp)        
+i0000002582:	lwu                 s1, 1892(sp)        
+i0000002583:	addi                a5, sp, 220
+i0000002584:	xori                t1, s0, 1151
+i0000002585:	or                  s0, a1, a2
+				li                  x20, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 6456  
+				add                 sp, sp, t1
+				lb                  a5, 1086(sp)        
+				srli                a4, a4, 29
+				add                 s1, s1, s8
+				srlw                zero, a4, s9
+				mulhu               tp, a5, s0
+				div                 s7, t2, t2
+				lw                  s0, 84(sp)          
+	
+b0000002586:
+				beq                 x29, x20, 1f        
+				la                  x20, i000000256d    
+				jalr                x0, x20, 0          
+				1: li x29, 10                           
+	
+				andi                a4, a4, -2
+				sllw                s1, s6, s7
+				srli                a4, a4, 30
+				srai                s0, s0, 3 
+				xor                 a4, a4, s1
+				addw                a4, a4, s1
+				srli                s1, s1, 9 
+i0000002586:	sd                  s1, -976(sp)        
+i0000002587:	addi                sp, sp, 96
+				la                  sp, begin_signature
+				li                  t1, 4552  
+				add                 sp, sp, t1
+i0000002588:	lwu                 s1, 1196(sp)        
+i0000002589:	lui                 s2, 23    
+i000000258a:	addi                sp, sp, -368
+i000000258b:	addi                sp, sp, 176
+i000000258c:	addi                sp, sp, 224
+i000000258d:	and                 a5, a5, a5
+i000000258e:	sll                 t1, s7, zero
+i000000258f:	or                  a0, a0, s0
+i0000002590:	lui                 s1, 23    
+i0000002591:	sd                  s7, -1640(sp)       
+i0000002592:	srli                t3, s0, 16
+i0000002593:	lwu                 a5, 1248(sp)        
+i0000002594:	lwu                 s1, 1264(sp)        
+i0000002595:	slli                a5, s0, 18
+i0000002596:	addi                sp, sp, -464
+i0000002597:	addi                a0, sp, 512
+i0000002598:	ld                  s11, 1784(sp)       
+i0000002599:	lwu                 s1, 20(sp)          
+i000000259a:	slli                a5, a5, 8 
+i000000259b:	or                  s1, s1, a3
+i000000259c:	sd                  s7, 832(sp)         
+i000000259d:	ld                  s7, -632(sp)        
+i000000259e:	slli                a1, a1, 22
+i000000259f:	lwu                 s0, -368(sp)        
+i00000025a0:	add                 s0, zero, t6
+i00000025a1:	and                 s0, s0, s0
+i00000025a2:	addi                sp, sp, 128
+i00000025a3:	andi                a4, a4, -24
+				la                  sp, begin_signature
+				li                  t1, 4128  
+				add                 sp, sp, t1
+i00000025a4:	lwu                 s0, 748(sp)         
+				la                  sp, begin_signature
+				li                  t1, 11304 
+				add                 sp, sp, t1
+i00000025a5:	lwu                 s0, -1048(sp)       
+i00000025a6:	ld                  s1, 1256(sp)        
+i00000025a7:	ld                  t6, 264(sp)         
+i00000025a8:	lwu                 s11, 1268(sp)       
+i00000025a9:	addi                a4, a4, -7
+i00000025aa:	lwu                 a5, -1884(sp)       
+i00000025ab:	addi                a4, sp, 284
+i00000025ac:	sd                  a5, -424(sp)        
+i00000025ad:	ld                  s1, 1000(sp)        
+				li                  x22, 12   
+				addi                x29, x29, 1
+				la                  sp, begin_signature
+				li                  t1, 2368  
+				add                 sp, sp, t1
+				ld                  s1, 64(sp)          
+				fence                         
+				srli                s1, s1, 9 
+				ld                  a5, 128(sp)         
+				remuw               s1, a5, a5
+				ld                  a5, 96(sp)          
+				addi                a4, sp, 40
+	
+b00000025ae:
+				pre_branch_macro                        
+				bge                 x22, x29, i00000025a8
+				post_branch_macro                       
+	
+				addi                sp, sp, -272
+				sh                  gp, 1690(sp)        
+				srai                s0, s0, 15
+				addi                s0, sp, 48
+				srai                a5, a5, 24
+				or                  a4, a4, s0
+				lhu                 s11, -532(sp)       
+				li                  x29, 10   
+i00000025ae:	sub                 a5, a5, a5
+i00000025af:	addi                sp, sp, 32
+				la                  sp, begin_signature
+				li                  t1, 7168  
+				add                 sp, sp, t1
+i00000025b0:	lwu                 s0, -1004(sp)       
+i00000025b1:	lwu                 a5, 448(sp)         
+i00000025b2:	sd                  s1, 592(sp)         
+i00000025b3:	addi                s0, sp, 496
+i00000025b4:	lui                 s1, 16    
+i00000025b5:	addi                a5, zero, 15
+i00000025b6:	andi                a0, a0, -25
+i00000025b7:	ld                  s0, -952(sp)        
+i00000025b8:	ld                  a7, 1112(sp)        
+i00000025b9:	addi                sp, sp, 64
+i00000025ba:	sub                 a5, a5, a5
+i00000025bb:	lui                 t3, 7     
+i00000025bc:	lwu                 s1, 2040(sp)        
+i00000025bd:	sub                 s0, s0, a2
+i00000025be:	lui                 s1, 8     
+i00000025bf:	add                 s10, s10, s5
+i00000025c0:	addi                a5, sp, 20
+i00000025c1:	or                  s1, s1, a5
+i00000025c2:	sd                  a5, -776(sp)        
+i00000025c3:	xor                 s0, s0, a0
+i00000025c4:	ld                  s9, 744(sp)         
+i00000025c5:	sd                  t0, 248(sp)         
+i00000025c6:	lwu                 s0, -1464(sp)       
+i00000025c7:	xor                 a3, a3, a1
+i00000025c8:	sub                 a5, a5, s1
+i00000025c9:	sd                  s0, -1432(sp)       
+i00000025ca:	sd                  s0, 960(sp)         
+i00000025cb:	addi                sp, sp, -16
+i00000025cc:	sd                  s3, 680(sp)         
+				la                  sp, begin_signature
+				li                  t1, 2448  
+				add                 sp, sp, t1
+i00000025cd:	sd                  s0, -1784(sp)       
+i00000025ce:	andi                a4, a4, 6 
+i00000025cf:	add                 s0, s0, s0
+i00000025d0:	ld                  s1, 1320(sp)        
+i00000025d1:	addi                a1, sp, 112
+i00000025d2:	addi                sp, sp, -32
+i00000025d3:	addi                s1, sp, 472
+i00000025d4:	add                 s0, zero, tp
+i00000025d5:	xor                 s1, s1, a3
+				li                  x20, 9    
+				li                  x29, 10   
+				divw                a7, a5, s1
+				lwu                 s1, 836(sp)         
+				remu                a5, s11, a7
+				div                 tp, s6, a4
+				sw                  a4, 16(sp)          
+				rem                 s9, a4, s6
+				addi                a5, sp, 356
+	
+b00000025d6:
+				pre_branch_macro                        
+				blt                 x29, x20, i00000025e5
+				post_branch_macro                       
+	
+				lw                  s10, 380(sp)        
+				srli                a5, a5, 20
+				addw                a4, a4, a5
+				srli                a4, a4, 14
+				addi                sp, sp, -336
+				srl                 s7, s1, a5
+				remuw               t6, t2, s8
+				li                  x29, 10   
+i00000025d6:	addi                sp, sp, -48
+i00000025d7:	sd                  s1, 1536(sp)        
+i00000025d8:	sub                 a4, a4, a3
+i00000025d9:	sd                  s6, 1568(sp)        
+i00000025da:	addi                a1, zero, -7
+i00000025db:	addi                a1, sp, 452
+i00000025dc:	sub                 a4, a4, a4
+i00000025dd:	sd                  a7, 760(sp)         
+i00000025de:	and                 a3, a3, a5
+i00000025df:	addi                s1, sp, 104
+i00000025e0:	lwu                 s1, -1176(sp)       
+i00000025e1:	addi                a1, sp, 48
+i00000025e2:	addi                s0, zero, -32
+i00000025e3:	and                 a5, a5, a5
+i00000025e4:	addi                sp, sp, 160
+i00000025e5:	or                  s0, s0, a2
+i00000025e6:	addi                a1, sp, 348
+i00000025e7:	addi                a0, sp, 484
+i00000025e8:	lui                 s1, 12    
+i00000025e9:	andi                a3, a3, 8 
+i00000025ea:	addi                s1, sp, 384
+i00000025eb:	addi                sp, sp, -224
+i00000025ec:	and                 s0, s0, a1
+i00000025ed:	addi                sp, sp, -80
+i00000025ee:	addi                s0, sp, 308
+i00000025ef:	addi                sp, sp, -400
+i00000025f0:	add                 a1, a1, s4
+i00000025f1:	add                 s1, s1, t0
+i00000025f2:	addi                a5, sp, 0 
+i00000025f3:	addi                sp, sp, -432
+i00000025f4:	xor                 a3, a3, a5
+i00000025f5:	addi                s1, sp, 492
+i00000025f6:	andi                s0, s0, -7
+i00000025f7:	addi                a1, a1, -6
+i00000025f8:	andi                a5, a5, -30
+i00000025f9:	andi                s0, s0, -6
+i00000025fa:	andi                s0, s0, 11
+i00000025fb:	andi                a5, a5, -19
+i00000025fc:	addi                sp, sp, -160
+i00000025fd:	addi                a3, sp, 504
+				andi                a4, a4, -13
+				divw                s3, s0, a5
+				sltiu               s7, s9, -925
+				sw                  a4, 16(sp)          
+				fence                         
+				addi                s1, sp, 508
+				slliw               t6, tp, 11
+	
+b00000025fe:
+				jal                 x0, i0000002620     
+	
+				sraw                s10, tp, s9
+				lw                  s1, 84(sp)          
+				remw                a5, s8, t6
+				sw                  a4, 48(sp)          
+				srai                a4, a4, 14
+				srai                s0, s0, 11
+				sd                  s0, 104(sp)         
+i00000025fe:	addi                s0, zero, -20
+i00000025ff:	lui                 t5, 17    
+i0000002600:	addi                s1, sp, 356
+i0000002601:	or                  a3, a3, s0
+i0000002602:	addi                sp, sp, 80
+i0000002603:	addi                a3, sp, 364
+i0000002604:	xor                 a0, a0, s0
+i0000002605:	addi                sp, sp, -16
+i0000002606:	addi                a1, sp, 44
+i0000002607:	addi                sp, sp, 32
+i0000002608:	add                 a5, a5, t5
+i0000002609:	addi                sp, sp, -432
+i000000260a:	xor                 a0, a0, s1
+i000000260b:	addi                a2, sp, 168
+i000000260c:	and                 a2, a2, s1
+i000000260d:	add                 s1, s1, a5
+i000000260e:	addi                s0, sp, 404
+i000000260f:	addi                sp, sp, 64
+i0000002610:	xor                 a3, a3, s1
+i0000002611:	addi                a3, sp, 496
+i0000002612:	addi                sp, sp, -480
+i0000002613:	lui                 s1, 20    
+i0000002614:	addi                sp, sp, -16
+i0000002615:	slli                s1, s1, 23
+i0000002616:	or                  a2, a2, a0
+i0000002617:	addi                sp, sp, -208
+i0000002618:	addi                a5, sp, 140
+i0000002619:	addi                a4, sp, 312
+i000000261a:	addi                a5, sp, 180
+i000000261b:	addi                a4, sp, 340
+i000000261c:	addi                sp, sp, -256
+i000000261d:	addi                sp, sp, -80
+i000000261e:	slli                s1, s1, 11
+i000000261f:	addi                sp, sp, -48
+i0000002620:	or                  a5, a5, a4
+i0000002621:	and                 a3, a3, s1
+i0000002622:	lui                 s0, 15    
+i0000002623:	xor                 a5, a5, a1
+i0000002624:	lui                 t3, 19    
+i0000002625:	or                  a2, a2, a1
+				la                  sp, begin_signature
+				li                  t1, 6008  
+				add                 sp, sp, t1
+				ld                  a7, 152(sp)         
+				divuw               s6, s0, s1
+				sltiu               a5, gp, -1027
+				sll                 s0, s9, gp
+				subw                a5, a5, s1
+				rem                 a6, a7, s9
+				srl                 tp, a6, s10
+	
+b0000002626:
+				jal                 x0, i0000002636     
+	
+				andi                s1, s7, -1887
+				sb                  s2, 839(sp)         
+				sw                  zero, 48(sp)        
+				lw                  s1, 0(sp)           
+				lwu                 s0, -1068(sp)       
+				addw                tp, a4, zero
+				divw                a5, s0, s1
+i0000002626:	addi                a4, a4, -3
+i0000002627:	xor                 s1, s1, a3
+i0000002628:	sub                 a0, a0, a2
+i0000002629:	add                 s1, zero, a5
+i000000262a:	slli                s0, s0, 6 
+i000000262b:	lui                 s0, 25    
+i000000262c:	xor                 a5, a5, a5
+i000000262d:	add                 a7, a7, gp
+i000000262e:	add                 a7, zero, tp
+i000000262f:	add                 s0, s0, s0
+i0000002630:	and                 a2, a2, s1
+i0000002631:	add                 a4, zero, zero
+i0000002632:	andi                s0, s0, 0 
+i0000002633:	add                 s2, zero, t2
+i0000002634:	or                  a0, a0, a0
+i0000002635:	or                  a4, a4, a4
+i0000002636:	andi                s1, s1, -31
+i0000002637:	addi                t1, zero, -9
+i0000002638:	add                 s6, s6, s0
+i0000002639:	or                  a0, a0, a5
+i000000263a:	sub                 a0, a0, a1
+i000000263b:	add                 s1, s1, t0
+i000000263c:	addi                a1, a1, -8
+i000000263d:	lui                 zero, 3   
+i000000263e:	addi                s1, zero, -28
+i000000263f:	lui                 s5, 19    
+i0000002640:	addi                s1, s1, -21
+i0000002641:	and                 a4, a4, a1
+i0000002642:	add                 s0, s0, a1
+i0000002643:	slli                s1, s1, 9 
+i0000002644:	addi                s7, zero, -20
+i0000002645:	addi                a1, zero, -32
+i0000002646:	add                 a5, zero, s0
+i0000002647:	add                 zero, zero, s0
+i0000002648:	addi                s1, s1, -28
+				post_program_macro            
+				j                   write_tohost        
+
+write_tohost:
+				li                  t5, 1               
+				sw                  t5, tohost, t4      
+				label: j label
+
+
+	.data
+	.align 1
+	.globl begin_signature
+begin_signature:
+	.dword              0x59808e322d03efa7
+	.dword              0x6106ed8a6bfe5156
+	.dword              0x2b43219119200ce5
+	.dword              0x4d3a29e8ebf5b93c
+	.dword              0x7e111923cb8a6aa8
+	.dword              0x61f48b88f368ebb6
+	.dword              0x79c1345371c68922
+	.dword              0x14e2f9f6d1894f85
+	.dword              0x7ed90ea36c39f234
+	.dword              0x6d8ce033b12179b6
+	.dword              0x46897ac98238d8b6
+	.dword              0x4b5d0f7e902c50a6
+	.dword              0x7ab6e5ee1b8897ec
+	.dword              0x5aa1e56fc9c049a8
+	.dword              0x78b3e34fe878fccf
+	.dword              0x70bd34c266ba49db
+	.dword              0x22ea9b626b0aa04d
+	.dword              0x6099cb765c6129c9
+	.dword              0x29126b2ea0abc838
+	.dword              0x4a5d2807d03e3d6f
+	.dword              0x398b4ab443a2df1b
+	.dword              0x611d42976e5b5c36
+	.dword              0x76dfd9a41134e76f
+	.dword              0x52fb0c520d2f348c
+	.dword              0x34244b8e83a7c92d
+	.dword              0x6f576ced60789669
+	.dword              0x6304a99029b8e505
+	.dword              0x29c6ea8ebd4fe54c
+	.dword              0x54275a24d1f5831b
+	.dword              0x7d0699b13e7ba622
+	.dword              0x21803ad873cd06f4
+	.dword              0x02f8099bad8c5c1b
+	.dword              0x20ad142816fa1851
+	.dword              0x2546a6623e9f6cff
+	.dword              0x1dea9b68fdd03c3b
+	.dword              0x484703962f8ff4c6
+	.dword              0x7fef667c9911eaaf
+	.dword              0x5805501b750cdc0d
+	.dword              0x72fad6282d4bf4e5
+	.dword              0x402347d43bfb612e
+	.dword              0x18abc8b428243b78
+	.dword              0x7cc6489afda973b3
+	.dword              0x06b846dfd9e71d88
+	.dword              0x2248c0bbed020dec
+	.dword              0x3b696940fdfae71c
+	.dword              0x07773b4bd81fd078
+	.dword              0x1ee42dd709bac21b
+	.dword              0x3e76ad46630cdc23
+	.dword              0x3b536d4fea6ca20f
+	.dword              0x1b5c128ff975b760
+	.dword              0x05dfcfa061e2fa27
+	.dword              0x7c06e965ec371468
+	.dword              0x0440d7345382e3f9
+	.dword              0x14c5a185692ab8d7
+	.dword              0x3aa9940d4247a606
+	.dword              0x0bc837557dc78211
+	.dword              0x597404de1faf6260
+	.dword              0x5d254a0c4db9f27c
+	.dword              0x486f55388d69393b
+	.dword              0x2d48f3125da49959
+	.dword              0x6a47a9dfd22a0d6d
+	.dword              0x3c2d755f96e92aa1
+	.dword              0x5bda65a470b66205
+	.dword              0x460e056bd5db1ee1
+	.dword              0x4bf0f43231c321cc
+	.dword              0x6af3562e85aeff31
+	.dword              0x504a8e223b0be484
+	.dword              0x2be67cf3832b5807
+	.dword              0x3782a1fcbb13efe4
+	.dword              0x459d5f494a99fdec
+	.dword              0x1139dfa2bf18e88a
+	.dword              0x66a9fe00257e93c9
+	.dword              0x06e079b0ef406a8a
+	.dword              0x7076c471cecbcc6d
+	.dword              0x67050efd5d9fd6b1
+	.dword              0x24fe6db8229113b8
+	.dword              0x14c95cccf3f51b64
+	.dword              0x44fd6297a4180324
+	.dword              0x48b33a32ed79fca2
+	.dword              0x62843e7dff6d616b
+	.dword              0x72ac812d4d06a86e
+	.dword              0x623308d41f55b3f8
+	.dword              0x1a4b4a99b3bdc3c5
+	.dword              0x3ce321b43ed2662b
+	.dword              0x374dc386a18dad37
+	.dword              0x0e01278855cc26a5
+	.dword              0x3a7db817066b3e4a
+	.dword              0x36240fe7ab90c07b
+	.dword              0x2b55e1979bd2c4a4
+	.dword              0x6bb53f70a1da8173
+	.dword              0x67c05dfb269574f5
+	.dword              0x656bda7a99d06d26
+	.dword              0x73b017aae6a7874e
+	.dword              0x487d16fc2290462c
+	.dword              0x5d878a371763b996
+	.dword              0x3712dab0d79d077f
+	.dword              0x1e2bfbfd54f27bc4
+	.dword              0x76590d80381ac58e
+	.dword              0x2f644740329a8346
+	.dword              0x517a35b26f5ef3c1
+	.dword              0x34865bc6efebdb8b
+	.dword              0x1821ee6dd198e645
+	.dword              0x1c677278780777a9
+	.dword              0x4e595a7cecd49817
+	.dword              0x0609b5697c4be2dc
+	.dword              0x6cf1faa3b323a69a
+	.dword              0x1eff7483705fc812
+	.dword              0x539bfb38b8ac5bdf
+	.dword              0x46774eadcbaa5c72
+	.dword              0x2c172adb30b0f827
+	.dword              0x0e86f1f945837da0
+	.dword              0x637e806bcae3d072
+	.dword              0x3712f1df4cf8852a
+	.dword              0x5c8735562c911ce9
+	.dword              0x0f214045761f472b
+	.dword              0x78d04bf628e9e65c
+	.dword              0x37bd3143a5321bde
+	.dword              0x4c9c510db85d5893
+	.dword              0x1bdedde37ae419a0
+	.dword              0x68387da4edbccbb1
+	.dword              0x51e662a772db54a2
+	.dword              0x3e2d906dd896ddba
+	.dword              0x5f7b2e856734dd7e
+	.dword              0x7a7ce5e5da77727c
+	.dword              0x5401d67957dcabb8
+	.dword              0x2c0bc55e7d5dfb83
+	.dword              0x795ba5f3dfd1d4e0
+	.dword              0x393d8ca310ec23eb
+	.dword              0x33aa357633f0ddf6
+	.dword              0x7af18bfc0fe978db
+	.dword              0x4c695fb023fe9658
+	.dword              0x60d7604309e145b4
+	.dword              0x33ebf204766f2a6b
+	.dword              0x1bddaf73a8d4f39d
+	.dword              0x615a5df0aa346f88
+	.dword              0x06928ee241582636
+	.dword              0x7bbb8135a33ca9c1
+	.dword              0x2b381e9e4713e079
+	.dword              0x34b774ac2fb0c6fa
+	.dword              0x3ea31ac769a7ecb6
+	.dword              0x71f8e0173ad05332
+	.dword              0x45ec2cde6a423487
+	.dword              0x08701948d7578693
+	.dword              0x7f37bd4f5148426e
+	.dword              0x43e7637ac04de7b9
+	.dword              0x035744fd140e5168
+	.dword              0x1cfed726aedf6602
+	.dword              0x4167db45aad11480
+	.dword              0x53f6b312e79b886e
+	.dword              0x74433efb1d6b729b
+	.dword              0x1ac02a2fdcc31932
+	.dword              0x3241b253738f7aad
+	.dword              0x6b038d800bb3e4f5
+	.dword              0x1243cbd3444c529d
+	.dword              0x1894a1eac5154109
+	.dword              0x0e6ac5453021871d
+	.dword              0x0a92b7aadf212499
+	.dword              0x28df6940051823a3
+	.dword              0x3a7f2e496d23f865
+	.dword              0x2cdd868b10cfd8a0
+	.dword              0x51c64d4d9341ef56
+	.dword              0x2b02beb83ef249b6
+	.dword              0x07ec19552149742f
+	.dword              0x30403d1da01b64d8
+	.dword              0x51496e43380a5be0
+	.dword              0x2b060cec0c28410c
+	.dword              0x6686ee5dac8097c8
+	.dword              0x4f46594886a51eb3
+	.dword              0x05ce00276602ad4e
+	.dword              0x49e8423c58d5ce48
+	.dword              0x60e269d335a6ea32
+	.dword              0x64d2dfa86a1cd109
+	.dword              0x5636ff9cd75cdd19
+	.dword              0x2f93cdc810efab1c
+	.dword              0x6e4961e0d6f04bf6
+	.dword              0x5d5500010c87da26
+	.dword              0x702ec44f2c214b67
+	.dword              0x416b0c7475754e04
+	.dword              0x2c122fe31db24264
+	.dword              0x27ed1e0ffdcc3072
+	.dword              0x7600725a7637f1ed
+	.dword              0x602940cebd2bab16
+	.dword              0x59f401237a6d8168
+	.dword              0x64d479308249439c
+	.dword              0x05850f805a7ff781
+	.dword              0x5ba20563c9600a6f
+	.dword              0x0b6cc23c4284d91a
+	.dword              0x2b57e5bead9c1df9
+	.dword              0x4038c67afc3308bc
+	.dword              0x0b7a6d40e2236985
+	.dword              0x517d8e215f332cee
+	.dword              0x0831a3e4be4fee89
+	.dword              0x113dc70feaaf8105
+	.dword              0x5b6a54a943d3b0a6
+	.dword              0x101471a2239192bb
+	.dword              0x38564375cb1d24fe
+	.dword              0x60a2be53dc7efa42
+	.dword              0x795da242f8a8c0e0
+	.dword              0x557f6b05f16b411a
+	.dword              0x58e407730be9eaa8
+	.dword              0x1cef092b509be080
+	.dword              0x53e706f68056fa5e
+	.dword              0x60aaeb84e4457015
+	.dword              0x3c24a9380eae6269
+	.dword              0x4059fee246f13194
+	.dword              0x5ec4a73feb864e29
+	.dword              0x6aa2bd4af3c18bf4
+	.dword              0x77501ab5bc5ae9e7
+	.dword              0x450dbfb1cc730ef4
+	.dword              0x1ead75eb8caa72ad
+	.dword              0x7f1074728b040e51
+	.dword              0x634c4cfb6fc07a38
+	.dword              0x6432a3d7074f7fcb
+	.dword              0x49cce692b5312ceb
+	.dword              0x7e2892cd9c55bb73
+	.dword              0x78bbce945a6f40b6
+	.dword              0x6800fec03a103ca6
+	.dword              0x1fb1dc9a41264a11
+	.dword              0x6d17ede8d55b1899
+	.dword              0x1863c38023d655d8
+	.dword              0x33de524259986d28
+	.dword              0x1614f36f01c42cec
+	.dword              0x6ef98633f086cd82
+	.dword              0x0e179cb17e8928bd
+	.dword              0x76fa9dac415e8f70
+	.dword              0x2c522f31c224fa59
+	.dword              0x2b86206d817fa413
+	.dword              0x452d72550110e1ec
+	.dword              0x22e573198f236313
+	.dword              0x05505373464c4d93
+	.dword              0x7f6a607fe15117db
+	.dword              0x7f5ae9c364a3c1f6
+	.dword              0x6eb0f76bc7706c28
+	.dword              0x28848c512707cbdb
+	.dword              0x3721bb5a2952e16c
+	.dword              0x79c7d606321fa721
+	.dword              0x0aeaf9341e8b81d5
+	.dword              0x413657b418594ee6
+	.dword              0x5d3c33c42dc62012
+	.dword              0x52c265efa8b620ef
+	.dword              0x1343f475cead1df3
+	.dword              0x1a27d2891159bd34
+	.dword              0x18bdf37c9b7e7697
+	.dword              0x70a88ff0487429d6
+	.dword              0x0c3d17a5cde1c452
+	.dword              0x03f21ef657fc90a5
+	.dword              0x6349de1a8d9c0c39
+	.dword              0x451f2c5f3fbc26d2
+	.dword              0x1ca1df94eeb6d39a
+	.dword              0x622c07dd79ccdc51
+	.dword              0x6ad35b86fbaf6ad9
+	.dword              0x25ac053937988dcd
+	.dword              0x3b2c4c3c0bc6e0ba
+	.dword              0x0e593ff0a576c7a9
+	.dword              0x4662c5932d0d9c11
+	.dword              0x4e8d1688791b6ea6
+	.dword              0x6e35b8778f8b1af8
+	.dword              0x6efff6aa0dd338a5
+	.dword              0x0f2e816a63e76a75
+	.dword              0x2b0128de42e9667a
+	.dword              0x001d9ae112e67a5c
+	.dword              0x385044abf38733df
+	.dword              0x56cef558f6e8a65e
+	.dword              0x4271c2c12f5e7adb
+	.dword              0x22dd190b94cf2594
+	.dword              0x39d81f7f4e940781
+	.dword              0x23a9d35d0a9a317e
+	.dword              0x6d6706ef2da07aa9
+	.dword              0x492b7b63a37a3be5
+	.dword              0x6f32be68c3182e92
+	.dword              0x1a92dd64d685e196
+	.dword              0x49cc55ed735d1d65
+	.dword              0x61112b30b201ad0f
+	.dword              0x28b299d70aba184f
+	.dword              0x116a7b2056cf22c7
+	.dword              0x3eec1c412128fa02
+	.dword              0x3dbc45fc152780c6
+	.dword              0x75e2017dc9147f08
+	.dword              0x01ef3128f1ee8f09
+	.dword              0x5483e5a0a577090c
+	.dword              0x5a00a8db98cdab60
+	.dword              0x2e9db50af820e92e
+	.dword              0x3b1fa6a7b85649f9
+	.dword              0x4020eb525e16dad0
+	.dword              0x0f2ac1343c43f107
+	.dword              0x29a986af903b472e
+	.dword              0x5eea6795d7348492
+	.dword              0x5ad25f5221580564
+	.dword              0x5d9ad78655d5404a
+	.dword              0x15ccc8a0a38434f9
+	.dword              0x024825969f1a28f8
+	.dword              0x5dc4813acabc60be
+	.dword              0x1a1caff114e9b588
+	.dword              0x4541733b59ebc606
+	.dword              0x0794135ad59d5eab
+	.dword              0x162ca2b0f8c2cb96
+	.dword              0x026b90bd4de42bfb
+	.dword              0x5b8c202452f7afc6
+	.dword              0x750d02b3629853b2
+	.dword              0x41de9c2ff499323d
+	.dword              0x3ec147af19da9012
+	.dword              0x00bb701b6257ceca
+	.dword              0x65819a4e2f2c73fe
+	.dword              0x037f18b4ac3bdd46
+	.dword              0x632a1076441f9ae5
+	.dword              0x0b17b50ff1c0dbc9
+	.dword              0x754160a3b1026040
+	.dword              0x63c4f013e3660a9b
+	.dword              0x5457863d1ae5bf2c
+	.dword              0x6e64059602139d12
+	.dword              0x6097b1ad9b42d7dd
+	.dword              0x5bc090ba6ee2329c
+	.dword              0x7f3d741401a3230b
+	.dword              0x645507ba73e4624a
+	.dword              0x38657bd3f3ed482a
+	.dword              0x0def962caf484d6c
+	.dword              0x4d9e761b2823a0ab
+	.dword              0x53a579cb2b2607b4
+	.dword              0x4b967f3490134e1e
+	.dword              0x034836441cabe94f
+	.dword              0x11fa45bb14e82dbb
+	.dword              0x4883417dd920a834
+	.dword              0x0b68851aa87da733
+	.dword              0x595b9a6ed05ca076
+	.dword              0x15f4eda9fcc64062
+	.dword              0x15a3e17e6ce190d9
+	.dword              0x4e9c14d7a8be6304
+	.dword              0x610b947f0d2750d6
+	.dword              0x42c0e404663f6079
+	.dword              0x7a6b5f49f717191a
+	.dword              0x0f57b01c8f6d7faa
+	.dword              0x65db9dbfc2b2b2ac
+	.dword              0x670da93c121c2172
+	.dword              0x52d8200e213ea987
+	.dword              0x07a1a625685cf81a
+	.dword              0x2ee1c69f4d10fe24
+	.dword              0x1b14d1eb5b824f28
+	.dword              0x5399cb2a549ac980
+	.dword              0x161022c46dd97da5
+	.dword              0x103cc18cac90fab2
+	.dword              0x15f8850fc6d084b9
+	.dword              0x47cc619cb7e26ffd
+	.dword              0x0363880b733eb127
+	.dword              0x0ec87f3d1f2e61a2
+	.dword              0x352ebfe6f87ec116
+	.dword              0x5564e007f80c125e
+	.dword              0x3ffa916352d3e60c
+	.dword              0x328bb2fa2895b442
+	.dword              0x079e0fd8af928722
+	.dword              0x6c7c5d30d0bf25b6
+	.dword              0x79165acabdfcb542
+	.dword              0x3ea7fd96188c30ed
+	.dword              0x4c259e173fb428e3
+	.dword              0x7e86cdecd900e2d4
+	.dword              0x6b7ae5f61079a0c6
+	.dword              0x07396216682dad76
+	.dword              0x30a145b00e56634f
+	.dword              0x07add47b25c8d290
+	.dword              0x6d904fa2e2c8476b
+	.dword              0x53752c8f220463f9
+	.dword              0x6ca3f5cca92339a7
+	.dword              0x768b8e0c7518a33a
+	.dword              0x224d8213faa1d33a
+	.dword              0x6861fd32199c2e6b
+	.dword              0x08d9b459d3548f13
+	.dword              0x1f3474fb7887fdee
+	.dword              0x5fc806560705b463
+	.dword              0x72211c93883206e8
+	.dword              0x57d7a36d516d957f
+	.dword              0x519e4fb3ea98d88c
+	.dword              0x37b64952ddf22b5e
+	.dword              0x69c5fb88c55eeae6
+	.dword              0x0d4c6b5e6fe67906
+	.dword              0x218ce518fbefd9f3
+	.dword              0x4f22f15d4dca336d
+	.dword              0x4e897e0f12151257
+	.dword              0x5381c040059c62d3
+	.dword              0x4fc6d77d6938c4be
+	.dword              0x71ce4cf1e37bf8a8
+	.dword              0x242fb633ceed0ace
+	.dword              0x48e2183d2783edf0
+	.dword              0x088cb35b589be09a
+	.dword              0x451494b50c66954d
+	.dword              0x3a54bf3fafb13dec
+	.dword              0x02ec4a05a6cc718c
+	.dword              0x12d9f4bdd9e7888c
+	.dword              0x6add1aed06609e27
+	.dword              0x7e291ce16f6dda36
+	.dword              0x312807bff4e34b83
+	.dword              0x39fd79b0e5ec8957
+	.dword              0x3d82d01b9e743ca6
+	.dword              0x12b9ec7213806124
+	.dword              0x7a0a2f982928ebc8
+	.dword              0x68a69977b4250b42
+	.dword              0x6a1c2cbb8b7e5aa7
+	.dword              0x0d4c6e964745a5ab
+	.dword              0x6f3906c09eafee9a
+	.dword              0x2b4df2ef9f9bc297
+	.dword              0x6d900eb4b59e4bb7
+	.dword              0x234d7a45f795a7b3
+	.dword              0x1c5f68802d883289
+	.dword              0x12dada8e0cb66770
+	.dword              0x33c061bc98e84610
+	.dword              0x60e8fa62e38b28fe
+	.dword              0x5f96e6ced06ba295
+	.dword              0x5f8963b388b978a7
+	.dword              0x1109eb7bcccd4860
+	.dword              0x1854c1acee4cf3cc
+	.dword              0x4426e414811591d8
+	.dword              0x3ef529581db47ba6
+	.dword              0x5dbdbdb0918def0c
+	.dword              0x1bba77234dc1f075
+	.dword              0x2344dcf5b691a151
+	.dword              0x47e36e38c7e742ec
+	.dword              0x28da31ddaecee801
+	.dword              0x32a965ddff15475e
+	.dword              0x4c5cd984975ab415
+	.dword              0x6f7b8c27057c5b35
+	.dword              0x133d97819235902f
+	.dword              0x19b17fb6f3cd5bf9
+	.dword              0x3abf1004b117960b
+	.dword              0x1e26a5da275e1452
+	.dword              0x51fb61aa669b88d9
+	.dword              0x005c0e298df92f04
+	.dword              0x35cfa9e3f63c2e56
+	.dword              0x3fb910de35ce6b23
+	.dword              0x31b5b6eb031ed72c
+	.dword              0x7d68f18f26dbc947
+	.dword              0x7be18710f8c3c6b8
+	.dword              0x019cfb661f103132
+	.dword              0x1abd4660d3102abf
+	.dword              0x0bfe98155fa9b330
+	.dword              0x46d39f7d07856257
+	.dword              0x70b7a65fc6c4144e
+	.dword              0x3e02bc76c4107afc
+	.dword              0x0f4666722d4049b8
+	.dword              0x256cd9ecc82c4211
+	.dword              0x521c851b2b8833f9
+	.dword              0x6ddf6e9021fad2eb
+	.dword              0x06680961e6aea522
+	.dword              0x14a22ff2c99b28e6
+	.dword              0x40ec757ed0a8bb16
+	.dword              0x4adc3d5f51ef5ad6
+	.dword              0x13bca4f681f60fe7
+	.dword              0x1599f72be65e2933
+	.dword              0x08d363a0957dfb03
+	.dword              0x1f1fddd8d67dbb9c
+	.dword              0x779213a91eeb1edb
+	.dword              0x0fbbc783341da602
+	.dword              0x5e1a0b61cb99ca09
+	.dword              0x403dfa0f0ba70ddc
+	.dword              0x319d98b87e02a738
+	.dword              0x253f21a40eed961c
+	.dword              0x457efe084fb01ddd
+	.dword              0x046ef96d35135f13
+	.dword              0x2600cec2855f7396
+	.dword              0x45f37785d5b8ebfd
+	.dword              0x406ef35ad9ba53f2
+	.dword              0x3222c981d186413c
+	.dword              0x76e5ced1b831b3cb
+	.dword              0x0f1b8cbfcfd8287f
+	.dword              0x61719a116d9b783c
+	.dword              0x4eb6385327d4e021
+	.dword              0x2a9f25a7b8b4f658
+	.dword              0x1bd5ceeebc49b08e
+	.dword              0x2b0a294124cf59ea
+	.dword              0x4496524874aaf912
+	.dword              0x4de447a20ed2a4de
+	.dword              0x1ebb219d2c861396
+	.dword              0x2dc9ddd55ad81825
+	.dword              0x044ef6c6f4e29d31
+	.dword              0x528ff5a2d4f0910f
+	.dword              0x13ba0c9a500546b2
+	.dword              0x0f4f34dde9b98fcb
+	.dword              0x408bfec5169f2952
+	.dword              0x397382cfb809ae38
+	.dword              0x6e5ab08bc9e3241c
+	.dword              0x20d4cc3a07eafb61
+	.dword              0x0d35d6c505b9bfea
+	.dword              0x561057ee457243ba
+	.dword              0x63d33c73a5d7ee70
+	.dword              0x51a7369a2d71d362
+	.dword              0x5607d789cbf4a86a
+	.dword              0x539918a6386bf047
+	.dword              0x063448304356d357
+	.dword              0x0617456e18fc0ed1
+	.dword              0x32b37f7f0648f6c7
+	.dword              0x271be94d712aad27
+	.dword              0x2efc5904319801b8
+	.dword              0x3837f3452e7bd083
+	.dword              0x7adbf74fdb8302d6
+	.dword              0x510b0aa352cc39c9
+	.dword              0x493394e0015188d9
+	.dword              0x36e4ce8b345db3f5
+	.dword              0x74ff169ad8290127
+	.dword              0x4ad733d9a0c53b0b
+	.dword              0x1906730d0e008dd6
+	.dword              0x64154456427ac5fb
+	.dword              0x6323c05bd56d8167
+	.dword              0x09e83e373325b458
+	.dword              0x3949ce1821dc643f
+	.dword              0x768558e8bb13f776
+	.dword              0x4e0dcd9de99406f5
+	.dword              0x3b3a123069747a3e
+	.dword              0x137a4a2dd98a6fa1
+	.dword              0x0f5d1059c9bfe5fb
+	.dword              0x1de4a6650a72434d
+	.dword              0x72bbf1ccca11eaae
+	.dword              0x24933b460e81c5ad
+	.dword              0x74e06b6f1e0c4b72
+	.dword              0x3c18d05db0b61aed
+	.dword              0x3aeeb59d534836ee
+	.dword              0x5345dc1342d96131
+	.dword              0x1536d64b3d754530
+	.dword              0x06b2d5b8835a5c53
+	.dword              0x3f3a0924318fb57e
+	.dword              0x5d9f281a6e05ce2d
+	.dword              0x53c9adfbdd17e057
+	.dword              0x5caec9c082b37936
+	.dword              0x18f4ece865735c33
+	.dword              0x379c902fb4db30f4
+	.dword              0x07c9bcd94d6e8f09
+	.dword              0x04ebb25715ff3643
+	.dword              0x28b8beeb90ab6815
+	.dword              0x38804122c8d641ec
+	.dword              0x72d1de24843affeb
+	.dword              0x4ff7f4f406a91220
+	.dword              0x5f0222c92e4c5124
+	.dword              0x11dcdc8fc4eee193
+	.dword              0x2889037c3b6446b6
+	.dword              0x6073bb24f609b2a3
+	.dword              0x3e5697b1241cbe72
+	.dword              0x7cc4c297a3312055
+	.dword              0x197af84c50e7add2
+	.dword              0x2d7fea78a8627102
+	.dword              0x58019888add35af5
+	.dword              0x255c7970ebfc8118
+	.dword              0x32ed6e0be878770d
+	.dword              0x52770a7d149f5cc2
+	.dword              0x1c243c21a221c0f8
+	.dword              0x4da0a72977fd1cf6
+	.dword              0x73c2d421523f3085
+	.dword              0x52c523a6153ceb9f
+	.dword              0x5cf2d451657a1872
+	.dword              0x4d4078f190894004
+	.dword              0x273cf4856d03d0b0
+	.dword              0x6efd6ab605a0284a
+	.dword              0x537338a39c9c2f27
+	.dword              0x704ad3888c0bc732
+	.dword              0x6822e6856fc04ac2
+	.dword              0x1a5e655143d09fa3
+	.dword              0x4a4c61db4cec3c73
+	.dword              0x3ce1f2e7492adfb4
+	.dword              0x4f95eace70bf47fa
+	.dword              0x13e06b9c3696f0fc
+	.dword              0x710d60f7d4998cb2
+	.dword              0x1207d4461e1e8924
+	.dword              0x6e8c0685bd0b6f95
+	.dword              0x7d5e2a650fccf4d1
+	.dword              0x3e826791f597005a
+	.dword              0x5e7c69a9cbbbc4bf
+	.dword              0x3ac52af28e4fa332
+	.dword              0x426de785077778b7
+	.dword              0x5526647de1424ee3
+	.dword              0x57f8dbc335ea89e4
+	.dword              0x61fd540b575e3db5
+	.dword              0x1c34c71dc442e744
+	.dword              0x317ab559de57d35c
+	.dword              0x76e48f8f2a14bed2
+	.dword              0x14b0510d4f59a489
+	.dword              0x320c36cb0f82668b
+	.dword              0x5d11495b1ad165e0
+	.dword              0x07693b13b4584916
+	.dword              0x23d08d63b3b7019b
+	.dword              0x33244b8f2a6f5b56
+	.dword              0x0c52d9a6aec136b6
+	.dword              0x123d87dc1b350920
+	.dword              0x0c39a840b103415d
+	.dword              0x607fc1cf509e30a1
+	.dword              0x097ff2395c2af357
+	.dword              0x45ad5575fb299fae
+	.dword              0x3de4dba0f03dad2e
+	.dword              0x3b21e1b52be7540d
+	.dword              0x126dae573f47e39f
+	.dword              0x12577cd8a780f0cb
+	.dword              0x1e0e3dd9dbcd826d
+	.dword              0x5741e48b6b7f6f99
+	.dword              0x7a8757afb9435592
+	.dword              0x2f981e7a8b0d49ab
+	.dword              0x5c545d000a5eb84d
+	.dword              0x52c37ab39d4884b1
+	.dword              0x64ac1a8cfc6d4bea
+	.dword              0x06844315edc0a0da
+	.dword              0x77f5b7aa6e6584d2
+	.dword              0x102336fc2e3f4aea
+	.dword              0x4671f68358adf4d3
+	.dword              0x34916dd282b02561
+	.dword              0x603600233042bfce
+	.dword              0x6870cdcbb25a7c72
+	.dword              0x314f4675100c6b9e
+	.dword              0x4871c393a89164b0
+	.dword              0x293cec6f7b246020
+	.dword              0x5fbba123981fab03
+	.dword              0x6df87ec4fed4d0c8
+	.dword              0x23c6b2ad2e02a59d
+	.dword              0x4936e658215deef6
+	.dword              0x22e0018ed75a32f3
+	.dword              0x27c9ac0bcab56393
+	.dword              0x4e0d159a98fc2d7e
+	.dword              0x571b3898d467fac4
+	.dword              0x4fd25bbc4e1a041b
+	.dword              0x69aee0dc5d99e081
+	.dword              0x759e9d00168ca162
+	.dword              0x71b78d68e1154fce
+	.dword              0x722d29f1cbbd048f
+	.dword              0x1b46dda50233388c
+	.dword              0x282b29fe818d284b
+	.dword              0x7b1c33b2083a2fd8
+	.dword              0x003463c869441456
+	.dword              0x70330a5981b8e682
+	.dword              0x7820283f229a28b8
+	.dword              0x1044c4d5949f32c6
+	.dword              0x46d5e82becb4f818
+	.dword              0x29903859a465506e
+	.dword              0x2b061532e0035115
+	.dword              0x384ee2f6278af1fb
+	.dword              0x2fe3f9a9c5e3844f
+	.dword              0x545e424a23efa3ea
+	.dword              0x6b98abc64ac4fd30
+	.dword              0x28d7aead19f28383
+	.dword              0x422f3c1620c91d0c
+	.dword              0x6888df4dea27f0bd
+	.dword              0x467259b298e61a55
+	.dword              0x2446c736126452e6
+	.dword              0x52a97b9bdec40c5b
+	.dword              0x458a4903657398b5
+	.dword              0x0ebe2313113ca2c5
+	.dword              0x58c81b10d0342c38
+	.dword              0x4696a83ead0d1fa6
+	.dword              0x7a1356c565d0ed3b
+	.dword              0x15d92ab9694bc407
+	.dword              0x55d9c8ba87cd4873
+	.dword              0x5a010319a9d15827
+	.dword              0x50682edf738069f3
+	.dword              0x31278a12e5e006b9
+	.dword              0x7e5e4d247e9b41ad
+	.dword              0x6b0f781fe2a8d2bd
+	.dword              0x5975455edb3786c4
+	.dword              0x2215c54800e4e8c3
+	.dword              0x016bfeeae730f799
+	.dword              0x708cffb090e1c5b5
+	.dword              0x091bb85cbbb370ef
+	.dword              0x1c466e17dc3cd962
+	.dword              0x487101b55ecca739
+	.dword              0x0930fc64d50fd674
+	.dword              0x6d098ed0267a6353
+	.dword              0x2eb0dcd1da265954
+	.dword              0x0daa7d75df4279e7
+	.dword              0x6da5f5755362538e
+	.dword              0x16af056fc797dba3
+	.dword              0x2626f085eaec6fdb
+	.dword              0x2e99295ec68a23f9
+	.dword              0x41f9c1ce0b2132d6
+	.dword              0x383d0d5901332638
+	.dword              0x6ddb1d3a2409f30e
+	.dword              0x65564af8b671a306
+	.dword              0x278648e3da6994d5
+	.dword              0x382e31a191d13a83
+	.dword              0x428b7610ebfbdab3
+	.dword              0x7d4b1c1fc0fed4c9
+	.dword              0x6df86d22c9db416e
+	.dword              0x07b1c42a61a89f58
+	.dword              0x3eb85c0f52a598d0
+	.dword              0x24893f2b79883771
+	.dword              0x5c9222a74d24d2ce
+	.dword              0x78bf1e3d3d67f802
+	.dword              0x3f73511cdb4b3d6b
+	.dword              0x64ff7f3c7b6b5364
+	.dword              0x00e42c282149e0aa
+	.dword              0x290f4a147bbe0eb5
+	.dword              0x0bc541769c5ec2ac
+	.dword              0x72d7ff7b3118ade5
+	.dword              0x6b9c5ad45ace38f7
+	.dword              0x4e9d933cf89270ec
+	.dword              0x0c7d8fcef67440ad
+	.dword              0x6a9330d9aedb0db6
+	.dword              0x69bdc6f4ff31de74
+	.dword              0x3774e1b95c12197a
+	.dword              0x672239a00d01cdea
+	.dword              0x6b24a880d3ab067f
+	.dword              0x1eb9e63ba26b38e9
+	.dword              0x754c0f105fc2fb68
+	.dword              0x25022615ac5627d8
+	.dword              0x4ac6b05b7a862db9
+	.dword              0x0ea06c76f40ea329
+	.dword              0x3d47e87e9189ccab
+	.dword              0x65a4dd2a80e7dbf8
+	.dword              0x23770ae167b03e73
+	.dword              0x24962574c2abb8c3
+	.dword              0x168358553a17bd63
+	.dword              0x51fa395eeeb098ab
+	.dword              0x1d9e6acc5ad4c8e8
+	.dword              0x2d28b1c187e7eae8
+	.dword              0x704dbad700dd06bc
+	.dword              0x7f7c5eda191784e1
+	.dword              0x1474fa53bdde8604
+	.dword              0x398883ba6f583cff
+	.dword              0x1300548e2394e0dc
+	.dword              0x05c8dee5c5008b2e
+	.dword              0x1fa1b54abdc40ab6
+	.dword              0x636828421aa51008
+	.dword              0x545a3aa0a6b4d89a
+	.dword              0x36c8dc912ae2c17c
+	.dword              0x6a1bb9d8b18b8ae9
+	.dword              0x394fd7b498b0d532
+	.dword              0x0cea8594085262f0
+	.dword              0x293832b27cc6b753
+	.dword              0x4600c7145ffa9653
+	.dword              0x401ca45475d78164
+	.dword              0x7b2907e285ec16d7
+	.dword              0x5db265bbb975ee7a
+	.dword              0x7549f0d748593b3f
+	.dword              0x0851e60c7b465048
+	.dword              0x7eb1f524463bd69e
+	.dword              0x5a5076c01032106e
+	.dword              0x2babb52593fa9a35
+	.dword              0x4a18d3abda396a25
+	.dword              0x176aff18ce637188
+	.dword              0x6d8a087aae044181
+	.dword              0x158ca87d4956bb79
+	.dword              0x28fa8e140696f339
+	.dword              0x4e703c57ff8877e3
+	.dword              0x2fb577bb574074be
+	.dword              0x37715be21036cc90
+	.dword              0x61d22c20541c05ee
+	.dword              0x2924d30f5f08e329
+	.dword              0x01c363b3401360fc
+	.dword              0x6a0e48b4e5c5ef1d
+	.dword              0x0ec7214e4f410cb8
+	.dword              0x354e690e8faf12eb
+	.dword              0x6d874c740ac5151a
+	.dword              0x2eee6bf49585a4fd
+	.dword              0x6bfce372fe072f7c
+	.dword              0x71028ed2a5e063ac
+	.dword              0x33fb22abf98bf467
+	.dword              0x11aebfc6a08da017
+	.dword              0x421e447656bb3a4c
+	.dword              0x7272c1551946f6d6
+	.dword              0x16693e0428e76829
+	.dword              0x65f14d6444755243
+	.dword              0x778b68b6dee82d8e
+	.dword              0x23a1c94060095efa
+	.dword              0x44fec188d2c7216a
+	.dword              0x29f5fa7900273e24
+	.dword              0x2ddb6c1e7f2c6bd5
+	.dword              0x6808b6e2d8b0d565
+	.dword              0x111313536bec595f
+	.dword              0x5083ca536ebbf01d
+	.dword              0x66f8a4fc51bdc1f0
+	.dword              0x0c5680e669a6e18b
+	.dword              0x1b303aae5f61af5f
+	.dword              0x758f5e305a231157
+	.dword              0x7c40d6e833ef701d
+	.dword              0x3518912b678cc4f6
+	.dword              0x5d220458e9df74de
+	.dword              0x3f76d6c8fa24fd0b
+	.dword              0x520dcd09d173337e
+	.dword              0x5aef8e6727235a17
+	.dword              0x036a73f48e5d7988
+	.dword              0x124cb512a4aa2d43
+	.dword              0x55fa87c88d70cb5a
+	.dword              0x2d3e02538568cd5c
+	.dword              0x574c633c085ef1fd
+	.dword              0x3ddba91905f33668
+	.dword              0x1e6dc86ba96eb2ea
+	.dword              0x2f0c8dbc376a560d
+	.dword              0x56facaa1ec29062f
+	.dword              0x54a9134ec2a49eb6
+	.dword              0x05248aa7e37504dd
+	.dword              0x4d940a7db66e2e13
+	.dword              0x399fa506fb8d0f84
+	.dword              0x2acc47cd7e4c4527
+	.dword              0x7e5fae1c5b7ce022
+	.dword              0x58c61aa63e4296c3
+	.dword              0x34c9d8eed05f48ea
+	.dword              0x44a37d34c6bad66b
+	.dword              0x4efcb7ae00792899
+	.dword              0x0c9d58832559f9d3
+	.dword              0x3ef5978b76a9a196
+	.dword              0x72798841cc01432d
+	.dword              0x6d19e12629614450
+	.dword              0x3b88ae24d5b64750
+	.dword              0x731074fe995dcbe9
+	.dword              0x52ef1ca83d85f0cc
+	.dword              0x172e250a2382054f
+	.dword              0x1a15f78b6e918972
+	.dword              0x1e5125437aa38d80
+	.dword              0x4a470bfb1601a025
+	.dword              0x4197538f8db4caae
+	.dword              0x475bfe0138161809
+	.dword              0x2715f40883ce7167
+	.dword              0x34137bdf85e5d145
+	.dword              0x5749242f45947290
+	.dword              0x0c0fda5d7f1f2c74
+	.dword              0x422c95042bae1117
+	.dword              0x0d325ba7edbad7eb
+	.dword              0x7e3f44e071f84303
+	.dword              0x68f691ceb8a07a3f
+	.dword              0x398939bba28757ab
+	.dword              0x2339d6e5b9ef3089
+	.dword              0x19056d34443f89b9
+	.dword              0x478b9b78d2b1f943
+	.dword              0x4969cd03c4e4212e
+	.dword              0x71218f20b3bbb80f
+	.dword              0x563252a8b7566a9f
+	.dword              0x57ae57455d68de39
+	.dword              0x1ff9c3e870bbaf9b
+	.dword              0x3b674f6943ed4a94
+	.dword              0x166659c54c244633
+	.dword              0x71480cbce9051139
+	.dword              0x5d09047e9d0de650
+	.dword              0x7f4969ef73c18f8d
+	.dword              0x394a9db4da79d4a9
+	.dword              0x6e02dc8f8c62ba71
+	.dword              0x3798bd7b1474b1a9
+	.dword              0x253e86bf808fa7aa
+	.dword              0x45e871ea3094fddd
+	.dword              0x10f925917657dbdc
+	.dword              0x0f040493101dbeb9
+	.dword              0x4ab27744a73a1598
+	.dword              0x65706ea53638860e
+	.dword              0x3e173eb36300b4a1
+	.dword              0x40100d9a4519e862
+	.dword              0x3caf54568f7393f1
+	.dword              0x066e605143c7874b
+	.dword              0x100da40924b8077e
+	.dword              0x34d9d14dd895618c
+	.dword              0x5b021f685f4b0e02
+	.dword              0x201271e4b65f3a42
+	.dword              0x2f8b0cdaf43fa861
+	.dword              0x0012f479097726d6
+	.dword              0x77750c7164f34945
+	.dword              0x601e5597b9f16084
+	.dword              0x2b94925d84836eab
+	.dword              0x5d8fd6d49170eba6
+	.dword              0x592850125db0cb60
+	.dword              0x5b4e569b9e56bb2b
+	.dword              0x2ab4c4d3f972c16d
+	.dword              0x7b8b0767ae175511
+	.dword              0x167ececba5e1af4d
+	.dword              0x3343c14cd8af8af3
+	.dword              0x6b27d5f67d0792c9
+	.dword              0x2c5632408de9467d
+	.dword              0x469fa89884518a5b
+	.dword              0x44d544c7c751d122
+	.dword              0x491aa43f9dff345c
+	.dword              0x53e9e793ea7342b1
+	.dword              0x37af81c6aa0df83f
+	.dword              0x05f271512de2892c
+	.dword              0x5b0e40778b438a02
+	.dword              0x40ae5de92eee259a
+	.dword              0x0757a07dd0305740
+	.dword              0x1cb5d95c6933f236
+	.dword              0x508a1d0fa3b3cc13
+	.dword              0x1ffafaabcaa91e74
+	.dword              0x61bd80b88a936833
+	.dword              0x4542f8f3cd2b2360
+	.dword              0x3c80fe7f9ddafbb2
+	.dword              0x00ec41939d3b2d32
+	.dword              0x4a0e2138ef5adaf2
+	.dword              0x68f0f05cee943a80
+	.dword              0x04e899e3f98d4f9b
+	.dword              0x551aa83a9e96b33b
+	.dword              0x5f87316d709e38cd
+	.dword              0x340a666601247c86
+	.dword              0x3155982a31781df9
+	.dword              0x478217c4ea79235f
+	.dword              0x7e8a7c6556d1eee7
+	.dword              0x7cfc479b2efa4b70
+	.dword              0x58fc8aba9bfaea8f
+	.dword              0x122503c903cb83e6
+	.dword              0x4dedee25ef321954
+	.dword              0x212535fa6a93da72
+	.dword              0x319c3fa9c707a1af
+	.dword              0x7dca38940744fdf7
+	.dword              0x0671d7e102bede14
+	.dword              0x249514c44a02e94c
+	.dword              0x29e0dfcf16c56212
+	.dword              0x092fe9c082821524
+	.dword              0x11b929f4018a3358
+	.dword              0x78a265fd7b25b8a2
+	.dword              0x4f99b49947067901
+	.dword              0x2d7bc21ce05cac41
+	.dword              0x43599975f3f6b6ff
+	.dword              0x3f7cb4e0d5ae2912
+	.dword              0x18ba6791e6b273ff
+	.dword              0x0fd6c9e79df2e115
+	.dword              0x24ef22aba2f0ff95
+	.dword              0x023ab8567dbc97fc
+	.dword              0x7967d6f2d862dc5b
+	.dword              0x43efe62c2eb6e936
+	.dword              0x670234717dfb4818
+	.dword              0x1ecea4f5ffce6b15
+	.dword              0x0ec67c59f9b64a92
+	.dword              0x0d7a35dccf3f8d31
+	.dword              0x482e1adb695823e6
+	.dword              0x63cbc4e4de662703
+	.dword              0x463293d4d71fabe0
+	.dword              0x61318d2ffaa2c2fc
+	.dword              0x50137bf1e66ffe7d
+	.dword              0x15270fc79b4b5d54
+	.dword              0x2007cb14161fe450
+	.dword              0x4736a223dc8d0be7
+	.dword              0x2692d6dd872bb443
+	.dword              0x7e18d808c9375942
+	.dword              0x2cd1bf7182e13605
+	.dword              0x7b538fa47e75420b
+	.dword              0x238e184955f683f2
+	.dword              0x0e6c8027308b7998
+	.dword              0x70aeb7ce7906e38a
+	.dword              0x480624d77430f8c3
+	.dword              0x67d784b315c01fdd
+	.dword              0x231b5ca76167b0a1
+	.dword              0x6b80d53023e32d27
+	.dword              0x68b55aa3a2a2e716
+	.dword              0x6f578722afb71571
+	.dword              0x46319438d2b33e10
+	.dword              0x3b1816eba40b5a0e
+	.dword              0x0478b0716b6afb59
+	.dword              0x61a89303556ff8e7
+	.dword              0x5910d1d0c0e9435c
+	.dword              0x3966369378137953
+	.dword              0x7d34ddd1ab34c94e
+	.dword              0x2a9234422a3a9c93
+	.dword              0x7f0edda9d46615d6
+	.dword              0x2c14cd6eab576787
+	.dword              0x034eea5b574a95ce
+	.dword              0x106258bb94078fc8
+	.dword              0x23d0760f23a8336a
+	.dword              0x23eca59988af0bac
+	.dword              0x5155f548d848771c
+	.dword              0x7d594c3f3f3ad669
+	.dword              0x399365d0cc96dff6
+	.dword              0x67b5c8b07f9d7f82
+	.dword              0x23b93e47ecfa3db4
+	.dword              0x6563378bcf00878a
+	.dword              0x1906e2af39dfc4bb
+	.dword              0x75371001eae02e87
+	.dword              0x35dfb3c98527b717
+	.dword              0x287b170a7ea9191d
+	.dword              0x3b91a36cefe400ce
+	.dword              0x4b3a046ca25a7408
+	.dword              0x72b9da9bb5987dc8
+	.dword              0x003fcb7c97a5f687
+	.dword              0x222a9bf23ce95666
+	.dword              0x44785e4f14144a27
+	.dword              0x170140c145f49372
+	.dword              0x0ddda3702bb1b91c
+	.dword              0x31a01319376d9018
+	.dword              0x72c9bc8e028cc3a1
+	.dword              0x10bd8bc431bfb621
+	.dword              0x38d5eed6e53de847
+	.dword              0x30f63f6fbdb1e98d
+	.dword              0x79375558f25ac5ad
+	.dword              0x5e050957f65b009f
+	.dword              0x4d8eaaf568442725
+	.dword              0x6bb6ae1b9a92e456
+	.dword              0x4de0d0995e0daf7b
+	.dword              0x0f52f37c4a1c632b
+	.dword              0x741752eb5080c60d
+	.dword              0x27e20a21e3e3f9b3
+	.dword              0x1d34bf58fea858ca
+	.dword              0x0bf4c8dbae9bc498
+	.dword              0x6c3ae9a65a5cbc6c
+	.dword              0x3768723b0a1a1964
+	.dword              0x655dcabad99e8638
+	.dword              0x3efd733c4c3cebb8
+	.dword              0x3184985e8224b04a
+	.dword              0x3ae18813c3a4b616
+	.dword              0x0c433530e40cfcca
+	.dword              0x45cb27a66ee7861f
+	.dword              0x107430d3567b2b75
+	.dword              0x30e54003a76886a9
+	.dword              0x2a3fbfd1a3ab2243
+	.dword              0x288d9b29bcf10b69
+	.dword              0x41f8acbde3eeb0b2
+	.dword              0x4a9d2699c86eed1d
+	.dword              0x7c13bca8e941e61c
+	.dword              0x064395f1d2bc02a9
+	.dword              0x44928691b2e967fc
+	.dword              0x0cccaf386f7f9702
+	.dword              0x09d0b528f1aefe14
+	.dword              0x21f715f35f8d9696
+	.dword              0x21b980ae390ddf79
+	.dword              0x3b56f082e6fd8c96
+	.dword              0x5701d8057ce07387
+	.dword              0x69139c4faef5d804
+	.dword              0x5a852e38b5733854
+	.dword              0x745edb950ece8df9
+	.dword              0x50cb26eaf627c03f
+	.dword              0x46cb601a177cfeee
+	.dword              0x31b92074b8160c47
+	.dword              0x0576143d0836684f
+	.dword              0x496b589c66ef6106
+	.dword              0x1358ba2dd06b257f
+	.dword              0x5270f83a0c24a58e
+	.dword              0x516fac5f6f2f525e
+	.dword              0x0c76fb2f0bd147f7
+	.dword              0x15b65f6259de107a
+	.dword              0x38cd629a15970125
+	.dword              0x44a71cd8f88c9c04
+	.dword              0x2f82850c1e5cc08e
+	.dword              0x3dc0bf5165dd60b4
+	.dword              0x54fc16803ede3ba7
+	.dword              0x4210218748e1ab73
+	.dword              0x5b64d60f0008fed9
+	.dword              0x7d88ef742a15c714
+	.dword              0x46db90ebd7ec6920
+	.dword              0x3f8d54ae078e9e33
+	.dword              0x63d1f9fb871aa303
+	.dword              0x435b508fbfded88c
+	.dword              0x161cca181ffba979
+	.dword              0x21d875b291d50128
+	.dword              0x37a05eefab73727f
+	.dword              0x08bd15b67d3877f1
+	.dword              0x6b448a514981433b
+	.dword              0x40f1fe4bac497e0f
+	.dword              0x6190ef3095ad205e
+	.dword              0x23bd2b4c74089444
+	.dword              0x5d0044bf6ad5898c
+	.dword              0x66346d3aef81e1d9
+	.dword              0x31ea43c4dbfc7b91
+	.dword              0x7ea974bf7eef7117
+	.dword              0x7f035500a202fe4e
+	.dword              0x1141710b12656ab4
+	.dword              0x66f91fd4658a81bf
+	.dword              0x42b815bc2207e9a9
+	.dword              0x787ded9e7f8d729b
+	.dword              0x505ae5c1fcf6ebf5
+	.dword              0x6afcee7f20e24014
+	.dword              0x1b311c8e9edaa105
+	.dword              0x6616c4105813ffda
+	.dword              0x0380363840a5b908
+	.dword              0x3c70858124d84d7d
+	.dword              0x44857f06fd0e6526
+	.dword              0x7a37a7a666cfc759
+	.dword              0x13d9443dcc53faf7
+	.dword              0x4e3754e39c28663b
+	.dword              0x5f8b5825e854d5da
+	.dword              0x5ae66b18ee577c39
+	.dword              0x0e23ab878aac4fcc
+	.dword              0x3a9f7868697ddfa3
+	.dword              0x1eacef618e76d5d3
+	.dword              0x72a83895bbd4d7d6
+	.dword              0x2bb07eecfda988d0
+	.dword              0x02d9f1d6885680c2
+	.dword              0x60dbda3152d90162
+	.dword              0x354e1b22017f6dff
+	.dword              0x1765e127f94d8e5c
+	.dword              0x67221636966ab7db
+	.dword              0x549f2c603c083f76
+	.dword              0x79f982e518c48a50
+	.dword              0x797ddd26e7de89e5
+	.dword              0x194337d311a4f1b3
+	.dword              0x05012598807f669a
+	.dword              0x368a12349e242f23
+	.dword              0x4559b4f9dd16a5a5
+	.dword              0x5a45d8d45a71b7c3
+	.dword              0x2878e48225c03d15
+	.dword              0x05f8d1ba95f00fd5
+	.dword              0x098fe30bbfba7284
+	.dword              0x41cfcfe272dbb841
+	.dword              0x1349f707d0ea46be
+	.dword              0x0cf1b2d6806a1b89
+	.dword              0x2958575778b40938
+	.dword              0x161fc5e98d7e31b5
+	.dword              0x439390d41812274e
+	.dword              0x0e4f22c6f1a5f4a2
+	.dword              0x09ed09aa90778951
+	.dword              0x70369fa58187b492
+	.dword              0x79e2d2d3c3bd6b49
+	.dword              0x104f18f57049d41a
+	.dword              0x5be468698b0e2e43
+	.dword              0x36ee0a62129134f7
+	.dword              0x233f7c5c872b9baa
+	.dword              0x56604a6a12e584bc
+	.dword              0x00407d5b6e53b437
+	.dword              0x565ce79d1efeabde
+	.dword              0x692714592366f467
+	.dword              0x703242201dac88cf
+	.dword              0x0a9750f82a4ed8a0
+	.dword              0x5c846eb8f498d708
+	.dword              0x42e24e1cc2ac6d33
+	.dword              0x45ce4555651b075b
+	.dword              0x6144de5625bba562
+	.dword              0x05bb7c8cfae66a04
+	.dword              0x386e3be7996f02bf
+	.dword              0x179b3ec57c03b13d
+	.dword              0x1b8a2d58de4e2392
+	.dword              0x41a159fa03f7a76b
+	.dword              0x62e15d24e4c14164
+	.dword              0x37df64e2ded9275a
+	.dword              0x0f18bb47a6107126
+	.dword              0x00f5cae2df172dfb
+	.dword              0x71036011b0de2539
+	.dword              0x71e3dd320f230430
+	.dword              0x6a6e201d3135d559
+	.dword              0x57e233fea2f0f790
+	.dword              0x752b21b3a99c57e0
+	.dword              0x0188bf10b8f4a3a3
+	.dword              0x50d99ba2f5ad895a
+	.dword              0x3733aac3de22b032
+	.dword              0x63f8ed5b00b02992
+	.dword              0x4475b8e1a52fbd87
+	.dword              0x5702489e36fe84ba
+	.dword              0x03ea44b5ece63742
+	.dword              0x5768b095adfd9d62
+	.dword              0x2978eb2e7e91a0a0
+	.dword              0x222c6f2bc885a9e1
+	.dword              0x6b2c6554c6d44d42
+	.dword              0x78e8018a3313590c
+	.dword              0x08c85859f1c365d8
+	.dword              0x243d3b6cf0e5655a
+	.dword              0x281102dbc73261ed
+	.dword              0x465eaa5ebf72ce3c
+	.dword              0x090ab194fd87816c
+	.dword              0x7f4dd22ec3b6c09e
+	.dword              0x74660d5f8b7d263e
+	.dword              0x3dfd6a53783e5def
+	.dword              0x7a185d43a8568523
+	.dword              0x0d45c51d170c8cdf
+	.dword              0x2820353ba910f5d3
+	.dword              0x4200b027df46d908
+	.dword              0x20903defb7b0eeaa
+	.dword              0x14070105223940e5
+	.dword              0x1293172b3f179b6c
+	.dword              0x50bf1bcf13bd24cb
+	.dword              0x5b18c4d67bafd194
+	.dword              0x0973025a55c4a1ed
+	.dword              0x53b4abc0a7fd54c0
+	.dword              0x3d0f759f96abd479
+	.dword              0x709e17eb38f0b70e
+	.dword              0x223ca0704b956278
+	.dword              0x00a34b1d78b53ee4
+	.dword              0x519104402cff85c7
+	.dword              0x0463e01fe6bc691e
+	.dword              0x41b7c9b232ee4ab7
+	.dword              0x18095ed5be3d51a7
+	.dword              0x2fcf92044d1dc910
+	.dword              0x63191e64f7390fa1
+	.dword              0x0c24546521763166
+	.dword              0x7ac02b10a1112605
+	.dword              0x1b6900ad293d087a
+	.dword              0x0259a79c81d8ebd8
+	.dword              0x382e6dc2d73b1450
+	.dword              0x52cc834c0666a693
+	.dword              0x724c75535465c9d3
+	.dword              0x7edaf2c40610c599
+	.dword              0x216c51e2473d0a9e
+	.dword              0x18b44b2265da4cd3
+	.dword              0x6fc1c20c72efb77a
+	.dword              0x47a6208625e62e64
+	.dword              0x68bab39e600f8fb2
+	.dword              0x69e6d9e9401f68d5
+	.dword              0x2cb3d31e3964931d
+	.dword              0x0f1385f0c1d6a3c9
+	.dword              0x788a7bf152ee4693
+	.dword              0x55c10e88a178ba8c
+	.dword              0x426a9c46890115d3
+	.dword              0x478ef39cb64492bf
+	.dword              0x20b4677b49dde289
+	.dword              0x42b2bacefd1554ca
+	.dword              0x66af327cd9c22429
+	.dword              0x3c31fccf08a7752c
+	.dword              0x3afb3f07f2b0af4e
+	.dword              0x46df746f35df4fb5
+	.dword              0x3d2ace700c2aa564
+	.dword              0x18f73e3d1d872ba1
+	.dword              0x5ac4e47ab8bb8dcf
+	.dword              0x63e9672785984d67
+	.dword              0x7c9fc1d8096e5ac6
+	.dword              0x1ce39d4e29387374
+	.dword              0x6909cb6ecc12a96f
+	.dword              0x4615166ec4f7fc94
+	.dword              0x510fc6f8e165c7b9
+	.dword              0x622eccb16c4a57fe
+	.dword              0x75773524322c7a99
+	.dword              0x0374887a450a1838
+	.dword              0x5c659b0ce621724a
+	.dword              0x303f82d2331bbb3a
+	.dword              0x37080b921a187085
+	.dword              0x7d513820d457861b
+	.dword              0x66b8e63c3ac2b253
+	.dword              0x3f065b5ca5b0ed2b
+	.dword              0x45aa53b7ba4d831e
+	.dword              0x5c9856475545eb1c
+	.dword              0x778e6179969fef53
+	.dword              0x5a90b5939aaa967c
+	.dword              0x39ff7b68c4d05a7a
+	.dword              0x0ddccd3b659bfc93
+	.dword              0x7bb845d28f9cae82
+	.dword              0x2d7ca6d46b5469c3
+	.dword              0x465731df221e306f
+	.dword              0x77da9ec0194fdabb
+	.dword              0x126969c8a422ed2f
+	.dword              0x0f9463c11afe0534
+	.dword              0x558d8882c266fc78
+	.dword              0x4addd24969102d4f
+	.dword              0x365cec969c2fa590
+	.dword              0x74dd32991b69e762
+	.dword              0x6ecaa102204fce20
+	.dword              0x301e84b4dadaba9b
+	.dword              0x253c33469d6579a2
+	.dword              0x52d385db99534e59
+	.dword              0x33103b9041e4da7f
+	.dword              0x450bc6073aca7d08
+	.dword              0x5af34cb07d1cbac4
+	.dword              0x064c4a00dce718be
+	.dword              0x263a43e4b8520838
+	.dword              0x502752c5fda42359
+	.dword              0x62da762c483f2ccc
+	.dword              0x0a502803614a34fb
+	.dword              0x74a596bfbe1b1974
+	.dword              0x619c1116d400b051
+	.dword              0x4a5e65dea4a84ba9
+	.dword              0x1148641df67aca22
+	.dword              0x586e8545e59446e7
+	.dword              0x0f68d57bc6d88da5
+	.dword              0x3ad5bb51f6cca32f
+	.dword              0x79b2aced67b3104f
+	.dword              0x700b4e7e61720cf2
+	.dword              0x27005fe542984dd0
+	.dword              0x287042dbd0c39c42
+	.dword              0x28d66385b524deae
+	.dword              0x32628a090e81d87c
+	.dword              0x0f0e044628f40170
+	.dword              0x2185c25cd3fa45ad
+	.dword              0x76a270f0ec9bb5c4
+	.dword              0x52ad5eea228798d0
+	.dword              0x3ae52f84ecaa8af6
+	.dword              0x58d4eab0d069f82d
+	.dword              0x76091b22e5cca563
+	.dword              0x345431cb5508f779
+	.dword              0x08ea41deff32c4ae
+	.dword              0x27e302cdee5bebba
+	.dword              0x4c9b072636bfc7cb
+	.dword              0x01feaa5edc013fd8
+	.dword              0x40d90b7590153105
+	.dword              0x27c1bcb215084dee
+	.dword              0x4cf86ca09d726387
+	.dword              0x77e907ff81fe54c4
+	.dword              0x222e3cb1dd6a0216
+	.dword              0x699cea56535dd131
+	.dword              0x7e163e40b178fe4b
+	.dword              0x30c3962838b89afa
+	.dword              0x15166d720c55454b
+	.dword              0x608e0d4250be8c13
+	.dword              0x439ebb7c73e3df6d
+	.dword              0x1b955aad19284c93
+	.dword              0x1308a2d16bce242f
+	.dword              0x40f309a0ad7cffeb
+	.dword              0x38f71c2c79d10511
+	.dword              0x373ec0e90c8590ed
+	.dword              0x5bcd4bca9d6772d5
+	.dword              0x474496df486b21b7
+	.dword              0x158c27c5a9d01319
+	.dword              0x3f3db7fd9e7eb33c
+	.dword              0x40a6ae426bc5eb08
+	.dword              0x2033f1918d3dcdf2
+	.dword              0x337be384fd6bb2d8
+	.dword              0x25ae31cd31fb3ed9
+	.dword              0x29bdfa4a0c43113a
+	.dword              0x595aa2478464ce0b
+	.dword              0x5ace050d85a396fc
+	.dword              0x707d910a05eb01bc
+	.dword              0x10ddb9237f401cf6
+	.dword              0x1557adbf2623dc01
+	.dword              0x6625895525101264
+	.dword              0x7846e4ad309c72b3
+	.dword              0x2aee6a45da42d722
+	.dword              0x02fa2da59d21a031
+	.dword              0x2717bbbf99e390ba
+	.dword              0x786852e6e417e9e7
+	.dword              0x1f487dc12ceabd4a
+	.dword              0x1da11bc621ec68a8
+	.dword              0x45fd9775f2300d0f
+	.dword              0x692779f632e6e1d4
+	.dword              0x1a452a9f4d126992
+	.dword              0x40af9f433328bb32
+	.dword              0x506a737c69b1cb1c
+	.dword              0x0cb1428f3c3b994e
+	.dword              0x443f9e76f64b661c
+	.dword              0x74609dcb9f85e86a
+	.dword              0x40ede7713d115a9f
+	.dword              0x64559732c290ba14
+	.dword              0x7728c18a45b9b151
+	.dword              0x53bc70865f8db1d9
+	.dword              0x46baa38b690a2e1d
+	.dword              0x4db1c5ebdac0b102
+	.dword              0x4d9995f89812aa1e
+	.dword              0x159dcad972651976
+	.dword              0x2538ff67c01ff799
+	.dword              0x1e4b0bbfc57ab868
+	.dword              0x6b9afc46fb79115c
+	.dword              0x3ba9e8c93f2772e0
+	.dword              0x67389ef7f3fad757
+	.dword              0x6e866cfcc116f126
+	.dword              0x208960483d3578ec
+	.dword              0x7369825f7b4bab51
+	.dword              0x75b5920bfcaaf4f0
+	.dword              0x1f397f1ad2792800
+	.dword              0x780c3f8207daac7a
+	.dword              0x76b55e57837aa121
+	.dword              0x7ba2fb08a6fd5bc9
+	.dword              0x1b5b002505a2e3db
+	.dword              0x3a5b98400c25ef4f
+	.dword              0x0c3139e9cc3bc095
+	.dword              0x66e7cde0ef8bb6b0
+	.dword              0x1765500b3f798d85
+	.dword              0x492867049c66b1cf
+	.dword              0x2a45b3d531201a53
+	.dword              0x147791bed8cba8f9
+	.dword              0x0b955eb89b61fd8f
+	.dword              0x2a1486eb8a1556a1
+	.dword              0x6969079a0806faf7
+	.dword              0x7f260ac997a9c35e
+	.dword              0x1c0096108ed44968
+	.dword              0x043907e48101954c
+	.dword              0x0b912d9e90710535
+	.dword              0x09c04a0dcdbb3dbe
+	.dword              0x56959403abe172c0
+	.dword              0x046e563a0c2e13ee
+	.dword              0x2daa836c251a1476
+	.dword              0x7e89dea2ef8783aa
+	.dword              0x60da71449f4fd694
+	.dword              0x227b0fa8ae3e5ef6
+	.dword              0x1a87f9b9271a2f58
+	.dword              0x7ed6f03ee863ab11
+	.dword              0x0691cb2bb03c24fe
+	.dword              0x6aedc24f582331c9
+	.dword              0x7bea115aeabf5c13
+	.dword              0x1d1feb25e51fe1ea
+	.dword              0x2f6363515ee0bbf4
+	.dword              0x278f5de0c088dcf1
+	.dword              0x0c87dc5d7c4a6309
+	.dword              0x0a35de9ce416d992
+	.dword              0x0e46a995da54e82d
+	.dword              0x7bcee9519527680d
+	.dword              0x3431aaa196f074d9
+	.dword              0x1b559efbe55dc59a
+	.dword              0x5cbd99ff11579dd6
+	.dword              0x7acfe89b2ae6dbea
+	.dword              0x2cc5cccf144ea7fb
+	.dword              0x3fc63ff28f2ccd5d
+	.dword              0x4ffc9f7a5d61f3b4
+	.dword              0x1cb7a912540f7244
+	.dword              0x5822d90bb8e66197
+	.dword              0x5648e7486460fb41
+	.dword              0x063b287516aa45f1
+	.dword              0x0f47729a6d215258
+	.dword              0x6ae5111d4c352fbf
+	.dword              0x3fc573d8f1c9638f
+	.dword              0x474c8e5041eb9a82
+	.dword              0x7a8b07bc4ccd2150
+	.dword              0x5e3e3bd8c84d994a
+	.dword              0x42b543f66c4e933e
+	.dword              0x14ddbfb96ecb218e
+	.dword              0x2dc5979c2865eaf8
+	.dword              0x7be0a12ca01993bc
+	.dword              0x3d57b075dda094f9
+	.dword              0x6c87b68ab2e80e8f
+	.dword              0x47ca50f549d2401f
+	.dword              0x1667f12c31187f87
+	.dword              0x4c44afcfd4c48c37
+	.dword              0x0e2239fcef50cbcd
+	.dword              0x2f5fc27705d63e84
+	.dword              0x52e6dbde53232ea8
+	.dword              0x0a8f2918367b96fa
+	.dword              0x4b3eb39f559be6da
+	.dword              0x6128fbdff7ee795d
+	.dword              0x13b1b92cab4ad6ee
+	.dword              0x4bb8413b5ffc6a35
+	.dword              0x33bcd4df877c230e
+	.dword              0x3fe82cee19bd697e
+	.dword              0x457fe8c3d385c1f3
+	.dword              0x1ddeeaf2ec2d0e69
+	.dword              0x582e26955186c195
+	.dword              0x613d8b6abdf5a427
+	.dword              0x16592975bce01a15
+	.dword              0x6adbbe7ada351239
+	.dword              0x31816572467a8d7d
+	.dword              0x2f8db658cb8e6c59
+	.dword              0x209585693115f5cd
+	.dword              0x5523436416150f65
+	.dword              0x183bf68fef8c6f41
+	.dword              0x60cf50d56737d3fc
+	.dword              0x39f295999519894e
+	.dword              0x1c2f89e09398ab63
+	.dword              0x266ae721d3fcfa18
+	.dword              0x4b05491b431737b7
+	.dword              0x518dc736df5d14c6
+	.dword              0x3db98e0b2c0ff7b5
+	.dword              0x24aa610175bf57f4
+	.dword              0x2b878bcf9739fcee
+	.dword              0x31ed307c92dcd48f
+	.dword              0x00800e87b516fc26
+	.dword              0x73530414107ed031
+	.dword              0x552aeed168bf0b79
+	.dword              0x619b03bd26b1f554
+	.dword              0x26d2cf59d676cdc3
+	.dword              0x31ab3e10c5147e3e
+	.dword              0x446e8c8405720b91
+	.dword              0x5e2c97ee1936bdad
+	.dword              0x035cb91c20ddc5be
+	.dword              0x26a4865f5c8df1b1
+	.dword              0x66dd3b0ec7b3396c
+	.dword              0x556e9a6a1dc1109d
+	.dword              0x592d7a8870aa13f0
+	.dword              0x734243409f0f7b61
+	.dword              0x0ac211796468823f
+	.dword              0x7345e57e94e2e9e9
+	.dword              0x45596254ada6bcff
+	.dword              0x71a45fff008b2c19
+	.dword              0x0a1142c7016d3604
+	.dword              0x64c6f7b2484d1843
+	.dword              0x79008e3fa9bd9055
+	.dword              0x62c7936e0111d76d
+	.dword              0x1db49b646f64754b
+	.dword              0x5e0d1be579c8cb24
+	.dword              0x73a9a62eaa228ea4
+	.dword              0x58029050ff80a9ce
+	.dword              0x503dbe2b83c2d1e0
+	.dword              0x31f0669e0fdede5a
+	.dword              0x5fb28870215ec55a
+	.dword              0x1b51bbc12d047233
+	.dword              0x32fe731ba6f64624
+	.dword              0x1108d691102c8867
+	.dword              0x0f5347fbcca45861
+	.dword              0x16f326d7086c13bc
+	.dword              0x214f5e73e20a7b5d
+	.dword              0x0cd31902c4a82f4c
+	.dword              0x2399c5239426dc33
+	.dword              0x24f117ccd565d77f
+	.dword              0x4279229f7bf1ae88
+	.dword              0x3603586165c21bca
+	.dword              0x1a68af33f59393f3
+	.dword              0x551e149fb89a8dc6
+	.dword              0x6cec6d249bf507b7
+	.dword              0x078a86bc32419478
+	.dword              0x62dc05058b9c5a9b
+	.dword              0x5fd9dcb99df700e5
+	.dword              0x407fed3623479b38
+	.dword              0x4da3f16a71c5d57f
+	.dword              0x5ba3b6828a68a510
+	.dword              0x3a0fb1ecb2be7824
+	.dword              0x178841843cfe179f
+	.dword              0x1607ddd3c23a4ef3
+	.dword              0x28f3b0f26a9f0922
+	.dword              0x684843f4f7f8f07e
+	.dword              0x7ec6413ab912a4da
+	.dword              0x203a741b80ab2068
+	.dword              0x146a8ef50d5cec04
+	.dword              0x70ee6474bbe5070b
+	.dword              0x517921cb022e8991
+	.dword              0x59aab6fbf9ba60c0
+	.dword              0x420dab1b7c86b5c1
+	.dword              0x24ed51e29a4ce324
+	.dword              0x07d4bb63d9bf7e5b
+	.dword              0x2fe87d2cca991183
+	.dword              0x4fc992339fe62806
+	.dword              0x7d917b21abf5a3d5
+	.dword              0x358b0e88005d5d5b
+	.dword              0x0be4063092fe4d22
+	.dword              0x6ff47c1b1b3309f9
+	.dword              0x7ac2cea0e85cddcc
+	.dword              0x567e5177b23512dc
+	.dword              0x00d21b5112379552
+	.dword              0x6842374f4732ca92
+	.dword              0x7a0e9bb4caa40c11
+	.dword              0x0ba40a5f8242b209
+	.dword              0x11b5274ad6a329eb
+	.dword              0x242924e1caef3a00
+	.dword              0x3120378496a9251f
+	.dword              0x0c0d466dabbb01b1
+	.dword              0x263a9bd75fbdc522
+	.dword              0x3fd413fbab123439
+	.dword              0x0d8066c23b1625cf
+	.dword              0x56857cfc70bf2407
+	.dword              0x34d96e9d376f3197
+	.dword              0x340bab73e7391634
+	.dword              0x15def85cbce09290
+	.dword              0x67a59e05099c3b2f
+	.dword              0x153b93cfbf9ee3f3
+	.dword              0x24754c6a7f6898c4
+	.dword              0x6739164797a8d823
+	.dword              0x3289c23050b93fb6
+	.dword              0x221d34de67c1fb6d
+	.dword              0x49f0a6259a7d90bf
+	.dword              0x3c8e3d8f3f83d6c7
+	.dword              0x3aeb03c119efd605
+	.dword              0x42bb43e60ad3ec78
+	.dword              0x13ed64e033f7a69c
+	.dword              0x5512bb5597d1029b
+	.dword              0x6445fc1cf913c0f2
+	.dword              0x5a5101c1238c749e
+	.dword              0x2934c175917ee653
+	.dword              0x1f2fe78632fb830f
+	.dword              0x67ebb63672aeff42
+	.dword              0x5f6b683bed08cb2f
+	.dword              0x1b6d204e212db7cd
+	.dword              0x307e0bcfb945b38e
+	.dword              0x10346c104ba781e6
+	.dword              0x30db4100a490bb18
+	.dword              0x5578b096ad3d93e7
+	.dword              0x14bd8431057b80a1
+	.dword              0x2169bc95dc12139f
+	.dword              0x4d49513b95e56bc3
+	.dword              0x420743325193bfd7
+	.dword              0x3510df9c35665b43
+	.dword              0x06a36ac7e2d69066
+	.dword              0x0db8087fa69a8afc
+	.dword              0x7638211ff51d7c2b
+	.dword              0x05aab17f3a1b81af
+	.dword              0x11f48469fd5b80e2
+	.dword              0x657baa65e11e68b4
+	.dword              0x5795b76516425ac8
+	.dword              0x1240b0c1e69a2496
+	.dword              0x6730503bbca31fc0
+	.dword              0x013b391ca69febb7
+	.dword              0x55372e0da5d50fef
+	.dword              0x3eda8b74c3686bc2
+	.dword              0x7c782721a778a057
+	.dword              0x3ba22b423180a379
+	.dword              0x4484b716d867181f
+	.dword              0x337373f3e8741b16
+	.dword              0x62a762cf3a358f12
+	.dword              0x6726aada5ed983d7
+	.dword              0x34a78e7929a5003e
+	.dword              0x7008d2c58d3a2de8
+	.dword              0x29d378c4b3e0e1fe
+	.dword              0x7f61c73642690992
+	.dword              0x7f55e520d7d98598
+	.dword              0x46b95403b0a53d7e
+	.dword              0x4c3d18e94e016992
+	.dword              0x25d591dcc5ca632d
+	.dword              0x24ee063cacf94273
+	.dword              0x58d211d28f39bc1d
+	.dword              0x7682fd31be0fef8d
+	.dword              0x2694890090f1b525
+	.dword              0x51b1d82d3c84662e
+	.dword              0x74e2f0b956aa771a
+	.dword              0x1342186c37c94a08
+	.dword              0x651caf89737204af
+	.dword              0x1d0541a909527719
+	.dword              0x5f9c34c26f91be66
+	.dword              0x635ebd823e99261e
+	.dword              0x7b0a530d905a5c44
+	.dword              0x3a70b7d94548dba2
+	.dword              0x1350bda7f7edf174
+	.dword              0x67f8386ba33d247f
+	.dword              0x040dfd32175fa67f
+	.dword              0x34b7839e6ab0fde7
+	.dword              0x0806b8aaa3f7442e
+	.dword              0x1baeda530f15ad07
+	.dword              0x4fe305bac9a20e98
+	.dword              0x0a1507dfe85ed32e
+	.dword              0x38515efc1b5de2c3
+	.dword              0x4ca74440491c2520
+	.dword              0x4a490cbe5aa31692
+	.dword              0x7710387b457f6f9b
+	.dword              0x414433351768cc91
+	.dword              0x30416ddfc7f77ba3
+	.dword              0x4ef6b43c5fcba56d
+	.dword              0x76faf8f843976462
+	.dword              0x6b9d0b4f719e5275
+	.dword              0x72ec49996c908137
+	.dword              0x78093431a7148e19
+	.dword              0x33d2f8463915e409
+	.dword              0x28701bf84504fa5d
+	.dword              0x1e74bcfddfca747c
+	.dword              0x031e25917ebde412
+	.dword              0x10addea13a1e87a0
+	.dword              0x4eefe141e8497374
+	.dword              0x700b4262a0d7167e
+	.dword              0x5c1a9d4f163ddd4e
+	.dword              0x7367ad5241da8b6a
+	.dword              0x53d6bf8101238eaf
+	.dword              0x151f494fce86f6eb
+	.dword              0x2c63be52a359c8fc
+	.dword              0x1002ddeb898b1872
+	.dword              0x3e272cf29573e66f
+	.dword              0x36ee41fd88ed4c1f
+	.dword              0x542bf0bbfe90ed68
+	.dword              0x0b26ab3357c56cba
+	.dword              0x3dea11fb99afa1b7
+	.dword              0x546de18863daa2a1
+	.dword              0x759915907b786409
+	.dword              0x02c88ea54be442e5
+	.dword              0x2f9192e15864c246
+	.dword              0x27a0e3631170df55
+	.dword              0x367834a326068b63
+	.dword              0x091669340eacc9d0
+	.dword              0x6048f200fcd3de95
+	.dword              0x3ca527a93a8da085
+	.dword              0x72317a3a87482750
+	.dword              0x728b20ba4bd6ad2c
+	.dword              0x37cc38d1887c36fa
+	.dword              0x41c939159fe14613
+	.dword              0x1a25b27859f44785
+	.dword              0x6da372ce551148ed
+	.dword              0x0901bb1edf9330e9
+	.dword              0x1d203381ca21dfc5
+	.dword              0x66819e58e07c965b
+	.dword              0x4fec723b747ebef0
+	.dword              0x53bb4d14bde0b721
+	.dword              0x23201848dbcb2888
+	.dword              0x03572f5ab724b5fa
+	.dword              0x121435d0c5c141d1
+	.dword              0x4f3fe3a01bc142b2
+	.dword              0x3ff94040719862a9
+	.dword              0x7949a07912fac9ef
+	.dword              0x6326fc791494c37e
+	.dword              0x339ef37b57bf00aa
+	.dword              0x6e5326b453eb26ea
+	.dword              0x0d4dea5a42b9e44f
+	.dword              0x018089a320f220b7
+	.dword              0x733f271f256e65d6
+	.dword              0x213a6bb183048663
+	.dword              0x76ca011671181bb6
+	.dword              0x3cb72331d849d7ab
+	.dword              0x0e4a6043623a1313
+	.dword              0x689aff5cb9edcfe4
+	.dword              0x0969752fcae2f1e5
+	.dword              0x20e33e386ecec21b
+	.dword              0x41e7bdc1469db1bb
+	.dword              0x4addd1cc04826ba8
+	.dword              0x20c232ecc30086a0
+	.dword              0x5d7a14c505baf69e
+	.dword              0x44ca8341e520b43b
+	.dword              0x37a84fba06925436
+	.dword              0x338b4d0b2c071c24
+	.dword              0x3712dd4f0163870c
+	.dword              0x51389c4639b39329
+	.dword              0x6273131b2a169fe5
+	.dword              0x7dca1882676d4ce9
+	.dword              0x3354efe8669faf74
+	.dword              0x2369427fcc8684dd
+	.dword              0x11adcec589b0b5cd
+	.dword              0x3d93e3064cff8320
+	.dword              0x66c2df101a17263b
+	.dword              0x5f768b695c1882d4
+	.dword              0x00237972839431c0
+	.dword              0x7a0ece9f521bf337
+	.dword              0x1c96b07f9404e742
+	.dword              0x39b7cc09ad84d44f
+	.dword              0x72a95f4d3a956b3d
+	.dword              0x0285356ada80e0dd
+	.dword              0x791975f5355a8a8d
+	.dword              0x75087e81e3789ffd
+	.dword              0x28a9f69e6a0e47e4
+	.dword              0x2e06a2023c9582ea
+	.dword              0x11b16b3efd5d18a6
+	.dword              0x559e4b2318889605
+	.dword              0x67fbfd349511a985
+	.dword              0x5ae36b634a1d90ea
+	.dword              0x3579e1cad1560cbf
+	.dword              0x0730d2e4999c252b
+	.dword              0x145ba6a4298497b2
+	.dword              0x7d2755aeb176b741
+	.dword              0x2123e71486323b30
+	.dword              0x065a4a1b147ffe32
+	.dword              0x5f9b4b750f02ddf4
+	.dword              0x0f33fcd547164128
+	.dword              0x7358795e2ade2bce
+	.dword              0x3a891f5bbe36052d
+	.dword              0x7b63e3112f5c8768
+	.dword              0x1079ae9ba012197f
+	.dword              0x3aedd7d052544446
+	.dword              0x06dfa775f059c6a3
+	.dword              0x77a52e9aea7aa344
+	.dword              0x1d54e0991941ece9
+	.dword              0x22152e52fd85e0a0
+	.dword              0x3876d1685fac4913
+	.dword              0x2f18ba90a186a7a2
+	.dword              0x34c62f784772c5ba
+	.dword              0x3b9a62820011be00
+	.dword              0x637e9a0f490a6db0
+	.dword              0x66c979ca6e88012b
+	.dword              0x5dc170e697ee7615
+	.dword              0x004211f91fc6c4d8
+	.dword              0x0f9383bc1481f149
+	.dword              0x1f9a1689d58323ee
+	.dword              0x69103af8d6ede245
+	.dword              0x65e381d0fdab88ed
+	.dword              0x42635c6814b19e3c
+	.dword              0x4f1bc19556b692ea
+	.dword              0x6cf286633424476f
+	.dword              0x03c2e8557edb44d7
+	.dword              0x02ef93fad1901de7
+	.dword              0x1310348bf6275348
+	.dword              0x35dbd99a68bcddc1
+	.dword              0x698398a0ce634f00
+	.dword              0x598d10e8d836095b
+	.dword              0x59abbc1ad4b2955d
+	.dword              0x2ef8642feacc785d
+	.dword              0x139e649c4d52e40e
+	.dword              0x50ea93f63384d931
+	.dword              0x218eb521388d6611
+	.dword              0x3cfc85fce016d814
+	.dword              0x7500f64286f3293e
+	.dword              0x6528e6567698d783
+	.dword              0x6877bc61c5025c52
+	.dword              0x75848aa12d675b6e
+	.dword              0x58330a066158084b
+	.dword              0x69bb15c9f3fbb2c1
+	.dword              0x6eb9d94894663211
+	.dword              0x20b454e33cd1b059
+	.dword              0x3135d9318d98951b
+	.dword              0x4662143a7dedf9e7
+	.dword              0x08f425ce2252d88f
+	.dword              0x4aa4a661c4de39c3
+	.dword              0x21e92d7447829db9
+	.dword              0x73b85ed3725044e9
+	.dword              0x7b3e45d6107d2c8d
+	.dword              0x156f6a8a4b208640
+	.dword              0x47190468087f57db
+	.dword              0x006e1d2831abd357
+	.dword              0x648daa166ce012bc
+	.dword              0x7980cca37095a2d6
+	.dword              0x43c86abdb0ffc3ae
+	.dword              0x121c2aefa59469f1
+	.dword              0x19c563fd00a5643f
+	.dword              0x631e321572d7bec9
+	.dword              0x089a5260405f5095
+	.dword              0x7f7ab258ebb4c50c
+	.dword              0x38e27988c567d8b8
+	.dword              0x078984fd3e213a8f
+	.dword              0x468f96858338ca53
+	.dword              0x77987260902b973f
+	.dword              0x31eb8903fb211c79
+	.dword              0x7f76f0b46c58c606
+	.dword              0x55f605b29d60b579
+	.dword              0x5b107f055f2fa943
+	.dword              0x266bf42a04ff8b95
+	.dword              0x5e44fc91a4f737d3
+	.dword              0x1a4d60f1039351ac
+	.dword              0x3c8eb41c74dbcf0c
+	.dword              0x78efc72ac07f9e98
+	.dword              0x70c1a7c891450fb0
+	.dword              0x7e1a761aeab98721
+	.dword              0x1f0634e92fdda64a
+	.dword              0x3ecadc23d77bba8c
+	.dword              0x618f7c55224d2fba
+	.dword              0x77692428724ffd37
+	.dword              0x147ddd5b5a4fde95
+	.dword              0x2fc3a6a28ff79c1b
+	.dword              0x12b9e6aff4187fc3
+	.dword              0x314d609a4d6f300b
+	.dword              0x673ff58fad06bcb3
+	.dword              0x188d945c4522f252
+	.dword              0x6c9148cba8b7918b
+	.dword              0x204307001495c17b
+	.dword              0x09cc58dcb1c766be
+	.dword              0x23b5057f6882d147
+	.dword              0x7539416db6c5f01d
+	.dword              0x763d1e05138ce5f4
+	.dword              0x3efd5a68c5f707f5
+	.dword              0x6195f2191eb54041
+	.dword              0x3951b823af531466
+	.dword              0x7a75359d4bb59a21
+	.dword              0x3bc3b76c85c52cc3
+	.dword              0x2a0ce605f45c9f6c
+	.dword              0x5a7a83cb0e278098
+	.dword              0x0d380c9606f31042
+	.dword              0x0758f2683d2eb38d
+	.dword              0x01bf22e875c53b40
+	.dword              0x4c565de0b4078631
+	.dword              0x258488d4df0c70b5
+	.dword              0x221fc10f958abe23
+	.dword              0x2c09420d758cf7d2
+	.dword              0x0ad61201eb39cd55
+	.dword              0x624bb6f2d6a42f66
+	.dword              0x00bb037627fdbbf4
+	.dword              0x0a3f91138622c6b0
+	.dword              0x3f05a8949bf18446
+	.dword              0x6d7eb87459695f92
+	.dword              0x1c588baa3dca6634
+	.dword              0x283a0a2c3dc09e75
+	.dword              0x0ca6419d6a23d7c1
+	.dword              0x6eb4631602fbaa8c
+	.dword              0x50bfc70663ba1c57
+	.dword              0x04b0d3a72f2bd8ab
+	.dword              0x0b5e5d89d10855ef
+	.dword              0x62a8b8739b54b68e
+	.dword              0x6305811548974364
+	.dword              0x2559bb685b9e59b7
+	.dword              0x41b57577973bbe0d
+	.dword              0x79bed92579fa38e9
+	.dword              0x7c9b9afc0aa26fd6
+	.dword              0x5d6dc06c60de08a4
+	.dword              0x01ed1772d09af0b4
+	.dword              0x4a34cf1601abb003
+	.dword              0x746e00b649a67ca7
+	.dword              0x2f9a303804f00285
+	.dword              0x7d7fbca62e1cb295
+	.dword              0x53755c0ac8380725
+	.dword              0x75726a0ef2706314
+	.dword              0x2f889bdd03dfa23a
+	.dword              0x1b606a7d3ba9a1d1
+	.dword              0x09e1c8827fde1fca
+	.dword              0x75bd7dffc8e0c74e
+	.dword              0x43e4305019338b5d
+	.dword              0x5fa6294c19500b9a
+	.dword              0x566f18ce0e717f9c
+	.dword              0x135ccf0f4fa14e3a
+	.dword              0x7a74eef50cb5f8f6
+	.dword              0x32e73a0429d99490
+	.dword              0x58617e35a3bf87a9
+	.dword              0x3b42d8ef0f672cea
+	.dword              0x789d1e239692cb04
+	.dword              0x0cb35359ffe203e7
+	.dword              0x6352185a25141a74
+	.dword              0x7a33d81f79102700
+	.dword              0x6f7383b7f4d2b35f
+	.dword              0x4a5c557f4dbb3dad
+	.dword              0x19cb7f15fe685ecd
+	.dword              0x7fb066e6e8ad3439
+	.dword              0x7324c8f91d153e98
+	.dword              0x2c8962153b9be9b1
+	.dword              0x55d93b673969670d
+	.dword              0x7214dfe5e8d80ee1
+	.dword              0x10d9d1e0ac4d9d07
+	.dword              0x4210c2c0799fb382
+	.dword              0x47471a2a1c84c251
+	.dword              0x3daa6f758c75efd8
+	.dword              0x0acdd2dbc769f10c
+	.dword              0x369d63d7d2219d13
+	.dword              0x799aff38ac1b0fb4
+	.dword              0x5e33b1bb4dcffe9b
+	.dword              0x29f95c0b0641c44e
+	.dword              0x08a468607a0cad71
+	.dword              0x664a029f3343a823
+	.dword              0x725483e6d12d7b47
+	.dword              0x36f601e6548a8911
+	.dword              0x2f89af3f6b674572
+	.dword              0x430a2a53d818e8b3
+	.dword              0x07d84805b52d4a95
+	.dword              0x1a2cf03e5775eee1
+	.dword              0x2d10dd4ade45ea16
+	.dword              0x5423edf47393d00b
+	.dword              0x73039c66258ecc3a
+	.dword              0x7304e16448a55aa2
+	.dword              0x4164a9d12e1cda48
+	.dword              0x4438ba65c2df6497
+	.dword              0x5d2b2c508856a404
+	.dword              0x09ca5041ef7d6eaa
+	.dword              0x66f939225749b820
+	.dword              0x08a19ecd605a32fc
+	.dword              0x600be6d85d0e865e
+	.dword              0x4d950a226c1e4896
+	.dword              0x126726c80d80c045
+	.dword              0x4e0102c0dc1528b8
+	.dword              0x35b6e00c6f60608b
+	.dword              0x5c2542f0f2879434
+	.dword              0x4e4dab315da93c71
+	.dword              0x2f6923faf1f2d151
+	.dword              0x18527d2f67afccae
+	.dword              0x070313a2849ac01f
+	.dword              0x1c5045df8688d27d
+	.dword              0x6fd85b32380379de
+	.dword              0x31b1c9abcd3ed0bc
+	.dword              0x1a7d53bda7eca492
+	.dword              0x1b7d1908fdfd8ee6
+	.dword              0x772b14c47c60baea
+	.dword              0x4b6b26acfc093c00
+	.dword              0x036d51140f985eb6
+	.dword              0x4a00d9ceda37d64b
+	.dword              0x126d5a987b624bd4
+	.dword              0x3c7c0465bfa8182e
+	.dword              0x2a790cd5b5cf202d
+	.dword              0x42f42c1f690645ad
+	.dword              0x1d65c20b4b080504
+	.dword              0x72f60c1bfd302fb4
+	.dword              0x2cf84f53aaf9bf6f
+	.dword              0x250fe03aa10dbc5d
+	.dword              0x786163b51f251476
+	.dword              0x474d63c2859b1a1e
+	.dword              0x2bc0eb6002c8ae77
+	.dword              0x4056816d315b777b
+	.dword              0x55e80b4f6603f079
+	.dword              0x3e0255a79a73931f
+	.dword              0x08994be9d332e0c6
+	.dword              0x36c3244f03029dbe
+	.dword              0x0e13e1dd6162c940
+	.dword              0x2053a39dc40492a7
+	.dword              0x046272d0ac8b02da
+	.dword              0x3eff148b03ab835d
+	.dword              0x7e5334d160a7fe5f
+	.dword              0x11411afcbcebf65a
+	.dword              0x18e1370cd7cc082d
+	.dword              0x66a06ffe244f21b0
+	.dword              0x2fe57e64f9ed775d
+	.dword              0x650b1d3b053a5344
+	.dword              0x342aedd87867a796
+	.dword              0x64a2b36664c348d8
+	.dword              0x4b4dcf17572dab51
+	.dword              0x38b7354907efdeca
+	.dword              0x6d397825fc2b12c9
+	.dword              0x3347209d9cda5341
+	.dword              0x7ac9db61da2b92c6
+	.dword              0x1106f2c511868e53
+	.dword              0x4072ac085c8a6b84
+	.dword              0x7fc52f64fdb7bf20
+	.dword              0x3ad1e045bc4fb70b
+	.dword              0x4feb1fab32471f59
+	.dword              0x0f707ec0eb5f425b
+	.dword              0x4f1a4d86e014c66c
+	.dword              0x0a5bae4622bdf99e
+	.dword              0x5e800b270276ad6c
+	.dword              0x319f7c7041228a69
+	.dword              0x0b0bb0b32720b3fc
+	.dword              0x04f0e14eb6d9f825
+	.dword              0x22a2583a8a6eeaed
+	.dword              0x32ebeadc396568c2
+	.dword              0x7dc97f30b3c0ae67
+	.dword              0x7b0cce850653616b
+	.dword              0x125c2ad8c8361bac
+	.dword              0x2345a1cfdafbd738
+	.dword              0x37c9f7cc76320aed
+	.dword              0x2896dd7ec804de63
+	.dword              0x59d29214fc3e7ba6
+	.dword              0x46cc7a01b1a8abd3
+	.dword              0x614f52f6effe7a11
+	.dword              0x56857fad30e9952e
+	.dword              0x1661e20132965ee6
+	.dword              0x7592c32665f4164c
+	.dword              0x0ea55d1bd2381b82
+	.dword              0x1d964f76d45d0e7e
+	.dword              0x5da8fe56605e2721
+	.dword              0x1ecb452cf3993bba
+	.dword              0x7d46b0de45177910
+	.dword              0x3d0d716d5e5b4a7a
+	.dword              0x04a151bcc390dcf8
+	.dword              0x23ca385f048a59d3
+	.dword              0x1bab142b98282006
+	.dword              0x572cd77041ed7192
+	.dword              0x4dba83b1c6de4921
+	.dword              0x3a574e02cc621984
+	.dword              0x75d6f750c53e7d20
+	.dword              0x5707189582c8c451
+	.dword              0x0d9d77739c269fe3
+	.dword              0x4f794b717d2d5076
+	.dword              0x3e462927b1089c09
+	.dword              0x423e3fee89c9d43d
+	.dword              0x7ccb49c6281d615e
+	.dword              0x11f5483b6880dd18
+	.dword              0x3aa99290b1879684
+	.dword              0x2827de2cc2499c70
+	.dword              0x6ed961c0064a01f9
+	.dword              0x34f658b884ff37e2
+	.dword              0x18485f56ae4da4b0
+	.dword              0x5f9450dfb72097b7
+	.dword              0x4ed7896077e07fe7
+	.dword              0x26b3db34eb15a32d
+	.dword              0x74eb7891e2510ada
+	.dword              0x07625d28f3b7a98b
+	.dword              0x513a0e74e8fc7c2d
+	.dword              0x589245d6c3c79606
+	.dword              0x0daeda411edd7768
+	.dword              0x667995194f907920
+	.dword              0x20741085dde6ccfb
+	.dword              0x30f828eea7675661
+	.dword              0x5adaf4b79ea80da9
+	.dword              0x2318938def8afc9e
+	.dword              0x5f4cf38de5af288c
+	.dword              0x1a2953130b8de246
+	.dword              0x76f427b975c13511
+	.dword              0x5242d0c3afc73a62
+	.dword              0x2d842bd823a623d2
+	.dword              0x6fcb0890b0268f10
+	.dword              0x0a71dc63449e5655
+	.dword              0x3336c371963bd36b
+	.dword              0x69814eb1d2f4cca9
+	.dword              0x59c7aca522f96e48
+	.dword              0x5758a73a66976b64
+	.dword              0x5b8554c53fe9eefb
+	.dword              0x4cc93570d76229f0
+	.dword              0x38fd15c682586034
+	.dword              0x712be79ef0c95f80
+	.dword              0x2b2fe03ae62e3e8b
+	.dword              0x2e0344ec91156272
+	.dword              0x178acf4a11c73d92
+	.dword              0x448f130ceda43b79
+	.dword              0x06ae28184281e8f4
+	.dword              0x3c918cc26db00317
+	.dword              0x75f31409b54f97d0
+	.dword              0x43e278b3fb597099
+	.dword              0x673a32dab095bd6d
+	.dword              0x05792a4f7dd416d2
+	.dword              0x2643a5b3958890b1
+	.dword              0x0a898759fda6a7cb
+	.dword              0x552c5fe9062b13a2
+	.dword              0x70e6ce9d46046723
+	.dword              0x1aa3a97b49de137f
+	.dword              0x73cebfd9b4999a99
+	.dword              0x2ee1b0566f747666
+	.dword              0x30b81f2829c7d735
+	.dword              0x55b45d9a008ab5d2
+	.dword              0x5c0397b4b40f13e7
+	.dword              0x2eea4320602ea377
+	.dword              0x326f39b4208ee762
+	.dword              0x79349568e84b3c73
+	.dword              0x731982f32ee8cf86
+	.dword              0x40ba9c12be0abe58
+	.dword              0x17bf99421403558c
+	.dword              0x61e11e577e81b18a
+	.dword              0x68fe0fd9698c92f0
+	.dword              0x2774405388a1cc67
+	.dword              0x0357344393c212e9
+	.dword              0x44f5f45bdbac5553
+	.dword              0x36db288d954c2da7
+	.dword              0x5b32bc079f0a878d
+	.dword              0x2b31d666ff3d5ba8
+	.dword              0x009effd17ff893f5
+	.dword              0x52ea7b134f85ba40
+	.dword              0x289fc194ca4082d9
+	.dword              0x30d214137092b9c5
+	.dword              0x386314bd63afe7d5
+	.dword              0x0b60d9f6fbbcd383
+	.dword              0x207f0d48d025e416
+	.dword              0x4550e3ee30139a95
+	.dword              0x1d70e18402d2c71a
+	.dword              0x3f6a75e85cf270ea
+	.dword              0x26b488727712edfb
+	.dword              0x567cdee045fa7580
+	.dword              0x2000e13a90038a91
+	.dword              0x41e6a7265fdabb82
+	.dword              0x60de7bbc30baaecf
+	.dword              0x6706e1f540c760c2
+	.dword              0x3e6ab6721c892d02
+	.dword              0x3bed497281858d89
+	.dword              0x1274347269ac7462
+	.dword              0x41242502bc10949c
+	.dword              0x3a62c77f90bf328f
+	.dword              0x07b706f902c1997d
+	.dword              0x47f5d67342d3d3ac
+	.dword              0x72b88c931efbd960
+	.dword              0x3a2bc7f4c122fc78
+
+.align 4; .global end_signature; end_signature:
