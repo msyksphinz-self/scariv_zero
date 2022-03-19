@@ -499,6 +499,7 @@ std::map<int, const char *> riscv_excpt_map {
   {12, "Instruction Page Fault"},
   {13, "Load Page Fault"},
   {15, "Store Page Fault"},
+  {27, "CSR Update Flush"},
   {28, "Another Flush"}
 };
 
