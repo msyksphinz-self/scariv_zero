@@ -55,7 +55,7 @@ typedef struct packed {
 typedef struct packed {
   logic [SECTOR_NUM-1:0]                 valid;
   logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] level;
-  logic [riscv_pkg::VADDR_W-1: PG_IDX_W] tag;
+  logic [riscv_pkg::VADDR_MSB: PG_IDX_W] tag;
   tlb_entry_data_t [SECTOR_NUM-1:0]      data;
 } tlb_entry_t;
 
@@ -78,7 +78,7 @@ logic [TLB_NORMAL_ENTRIES_NUM-1: 0]    w_sectored_valids;
 logic [TLB_SUPERPAGE_ENTRIES_NUM-1: 0] w_superpage_valids;
 
 
-logic [riscv_pkg::VADDR_W-1: PG_IDX_W] w_vpn;
+logic [riscv_pkg::VADDR_MSB: PG_IDX_W] w_vpn;
 logic                                  w_priv_s;
 logic                                  w_priv_uses_vm;
 logic                                  w_vm_enabled;
@@ -128,7 +128,7 @@ pma_map
  );
 
 
-logic [riscv_pkg::VADDR_W-1: PG_IDX_W] r_refill_tag;
+logic [riscv_pkg::VADDR_MSB: PG_IDX_W] r_refill_tag;
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : all_entries
   if (e_idx < TLB_NORMAL_ENTRIES_NUM) begin : normal_entries
@@ -245,8 +245,8 @@ generate for (genvar t_idx = 0; t_idx < TLB_ALL_ENTRIES_NUM; t_idx++) begin : tl
   localparam SUPER_PAGE      = (t_idx >= TLB_NORMAL_ENTRIES_NUM);
   localparam SUPER_PAGE_ONLY = (t_idx >= TLB_NORMAL_ENTRIES_NUM) && (t_idx < TLB_NORMAL_ENTRIES_NUM + TLB_SUPERPAGE_ENTRIES_NUM);
 
-  assign sector_tag_match = (w_all_entries[t_idx].tag[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)] ==
-                             w_vpn[riscv_pkg::VADDR_W-1: PG_IDX_W+$clog2(SECTOR_NUM)]);
+  assign sector_tag_match = (w_all_entries[t_idx].tag[riscv_pkg::VADDR_MSB: PG_IDX_W+$clog2(SECTOR_NUM)] ==
+                             w_vpn[riscv_pkg::VADDR_MSB: PG_IDX_W+$clog2(SECTOR_NUM)]);
 
   for (genvar lvl_idx = 0; lvl_idx < riscv_pkg::PG_LEVELS; lvl_idx++) begin : lvl_loop
     localparam base = VPN_W - (lvl_idx + 1) * VPN_FIELD_W;
@@ -272,8 +272,8 @@ endgenerate
 
 bit_oh_or #(.T(logic[riscv_pkg::PPN_W-1:0]), .WORDS(TLB_ALL_ENTRIES_NUM)) bit_ppn (.i_data(w_entry_ppn), .i_oh(w_hits_vec), .o_selected(w_selected_ppn));
 
-assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_W-1: PG_IDX_W];
-assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-riscv_pkg::VADDR_W){1'b0}}, w_vpn} : w_selected_ppn;
+assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_MSB: PG_IDX_W];
+assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-(riscv_pkg::VADDR_MSB+1)){1'b0}}, w_vpn} : w_selected_ppn;
 
 assign o_tlb_ready = (r_state === ST_READY);
 assign w_priv_s = i_status_prv[0];
@@ -349,7 +349,9 @@ end
 endgenerate
 
 
-assign w_bad_va     = 1'b0;
+assign w_bad_va     = i_tlb_req.valid &
+                      !(~|(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]) |  // extended bits all zero
+                         &(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]));   // extended bits all one
 /* verilator lint_off WIDTH */
 assign w_misaligned = ((i_tlb_req.vaddr & (i_tlb_req.size - 1)) != 'h0);
 
@@ -457,12 +459,12 @@ assign ptw_if.resp_ready = 1'b1;
 // ------------------
 // Response of TLB
 // ------------------
-assign o_tlb_resp.pf.ld        = (w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_real_hits));
-assign o_tlb_resp.pf.st        = (w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_real_hits));
-assign o_tlb_resp.pf.inst      = w_bad_va || (|(w_pf_inst_array & w_real_hits));
-assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & ~w_map_hit & w_cmd_read;;
-assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & ~w_map_hit & w_cmd_write;
-assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_real_hits);
+assign o_tlb_resp.pf.ld        = (w_vm_enabled & w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_real_hits));
+assign o_tlb_resp.pf.st        = (w_vm_enabled & w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_real_hits));
+assign o_tlb_resp.pf.inst      = w_vm_enabled & w_bad_va || (|(w_pf_inst_array & w_real_hits));
+assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
+assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_write;
+assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
 assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_read;
 assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_write;
 assign o_tlb_resp.ma.inst      = i_tlb_req.vaddr[0] != 1'b0;
