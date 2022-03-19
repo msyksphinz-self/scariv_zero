@@ -4,6 +4,7 @@ package riscv_pkg;
 
   localparam XLEN_W = 32;
   localparam VADDR_W = 32;
+  localparam VADDR_MSB = 31;
   localparam PADDR_W = 34;
 
   localparam PG_IDX_BITS = 12;
