@@ -349,9 +349,14 @@ end
 endgenerate
 
 
+`ifdef RV64
 assign w_bad_va     = i_tlb_req.valid &
                       !(~|(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]) |  // extended bits all zero
                          &(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]));   // extended bits all one
+`else // RV64
+assign w_bad_va     = 1'b0;
+`endif // RV64
+
 /* verilator lint_off WIDTH */
 assign w_misaligned = ((i_tlb_req.vaddr & (i_tlb_req.size - 1)) != 'h0);
 
