@@ -5,6 +5,9 @@ module msrh_inst_buffer
  input logic                                     i_reset_n,
  input logic                                     i_flush_valid,
 
+ /* CSR information */
+ csr_info_if.slave                               csr_info,
+
  input logic                                     i_s2_inst_valid,
  btb_search_if.monitor                           btb_search_if,
  bim_search_if.monitor                           bim_search_if,
@@ -50,7 +53,8 @@ msrh_pkg::grp_id_t w_inst_disp_or;
 msrh_pkg::grp_id_t w_inst_disp_mask;
 
 localparam ic_word_num = msrh_lsu_pkg::ICACHE_DATA_B_W / 2;
-decoder_inst_cat_pkg::inst_cat_t w_inst_cat[msrh_conf_pkg::DISP_SIZE];
+decoder_inst_cat_pkg::inst_cat_t    w_inst_cat   [msrh_conf_pkg::DISP_SIZE];
+decoder_inst_cat_pkg::inst_subcat_t w_inst_subcat[msrh_conf_pkg::DISP_SIZE];
 msrh_pkg::grp_id_t w_inst_gen_except;
 msrh_pkg::grp_id_t w_fetch_except;
 msrh_pkg::grp_id_t w_inst_is_arith;
@@ -358,15 +362,18 @@ endgenerate
 
 generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic[ 3: 0] w_raw_cat;
+  logic [ 1: 0] w_raw_subcat;
   logic        w_raw_gen_except;
   decoder_inst_cat
   u_decoder_inst_cat
     (
      .inst(w_expand_inst[w_idx]),
      .inst_cat(w_raw_cat),
+     .inst_subcat(w_raw_subcat),
      .gen_except(w_raw_gen_except)
      );
-  assign w_inst_cat[w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
+  assign w_inst_cat   [w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
+  assign w_inst_subcat[w_idx] = decoder_inst_cat_pkg::inst_subcat_t'(w_raw_subcat);
 
   decoder_reg
   u_decoder_reg
@@ -378,14 +385,30 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
      .r3(rs3_field_type[w_idx])
      );
 
+logic          w_inst_ld_fpu_illegal;
+logic          w_inst_st_fpu_illegal;
+logic          w_inst_arith_fpu_illegal;
+logic          w_inst_fpu_illegal;
+
+  assign w_inst_ld_fpu_illegal = (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD) &
+                                 (w_inst_subcat[w_idx] == decoder_inst_cat_pkg::INST_SUBCAT_FPU) &
+                                 (csr_info.mstatus[`MSTATUS_FS] == 2'b00);
+  assign w_inst_st_fpu_illegal = (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST) &
+                                 (w_inst_subcat[w_idx] == decoder_inst_cat_pkg::INST_SUBCAT_FPU) &
+                                 (csr_info.mstatus[`MSTATUS_FS] == 2'b00);
+  assign w_inst_arith_fpu_illegal = (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU) &
+                                    (csr_info.mstatus[`MSTATUS_FS] == 2'b00);
+  assign w_inst_fpu_illegal = w_inst_ld_fpu_illegal |
+                              w_inst_st_fpu_illegal |
+                              w_inst_arith_fpu_illegal;
 
   assign w_inst_is_arith [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH );
   assign w_inst_is_muldiv[w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_MULDIV);
-  assign w_inst_is_ld    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
-  assign w_inst_is_st    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
+  assign w_inst_is_ld    [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
+  assign w_inst_is_st    [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
   assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
   assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
-  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU   );
+  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU   );
 
   logic          w_is_std_call;
   logic          w_is_std_ret;
@@ -396,7 +419,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
   assign w_inst_is_call  [w_idx] = w_expanded_valid[w_idx] & w_is_std_call;
   assign w_inst_is_ret   [w_idx] = w_expanded_valid[w_idx] & w_is_std_ret;
 
-  assign w_inst_illegal  [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ );
+  assign w_inst_illegal  [w_idx] = w_expanded_valid[w_idx] &
+                                   ((w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ ) | w_inst_fpu_illegal);
 
   assign w_inst_gen_except[w_idx]  = w_expanded_valid[w_idx] & w_raw_gen_except;
 end // block: word_loop

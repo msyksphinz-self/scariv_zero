@@ -599,6 +599,8 @@ u_msrh_inst_buffer
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_flush_valid),
 
+   .csr_info      (csr_info),
+
    .i_s2_inst_valid       (w_s2_inst_buffer_load_valid),
    .bim_search_if         (w_bim_search_if),
    .btb_search_if         (w_btb_search_if),

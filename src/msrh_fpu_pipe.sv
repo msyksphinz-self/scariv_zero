@@ -289,7 +289,11 @@ assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7
 always_comb begin
   case (r_ex2_pipe_ctrl.op)
     OP_FMV_X_W  : w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
+`ifdef RV64
+    OP_FMV_W_X  : w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
+`else  // RV64
     OP_FMV_W_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
+`endif // RV64
 `ifdef RV64
     OP_FMV_X_D  : w_ex2_res_data = w_ex2_rs1_selected_data;
     OP_FMV_D_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
