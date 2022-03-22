@@ -68,11 +68,24 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LSU_INST_NUM; l_idx++) be
 end
 endgenerate
 
+
 bit_or #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .WORDS(msrh_conf_pkg::LSU_INST_NUM))
 another_flush_select (.i_data(w_another_flush_tmp_valid), .o_selected(w_another_flush_valid));
 
 bit_tree_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
 bit_tree_another_flush (.in(w_another_flush_valid), .out(w_another_tree_flush_valid));
+
+
+// ------------------------------------
+// Make dead to following instructions
+// ------------------------------------
+grp_id_t w_flush_tmp_valid;
+grp_id_t w_tree_flush_valid;
+assign w_flush_tmp_valid = w_done_rpt_except_valid & w_done_rpt_valid;
+
+bit_tree_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
+bit_tree_done_flush (.in(w_another_flush_valid), .out(w_done_tree_flush_valid));
+
 
 `ifdef SIMULATION
 logic [riscv_pkg::XLEN_W-1:0]   r_mstatus[msrh_conf_pkg::DISP_SIZE];
@@ -170,6 +183,11 @@ always_comb begin
           w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
         end
       end
+      if (w_tree_flush_valid[d_idx]) begin
+        if (!r_entry.dead[d_idx]) begin
+          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+        end
+      end
 
       if (w_another_tree_flush_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
@@ -179,6 +197,8 @@ always_comb begin
           w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
         end
       end
+
+
 
       if (i_kill) begin
         w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
