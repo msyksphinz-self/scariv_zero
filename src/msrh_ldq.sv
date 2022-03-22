@@ -218,6 +218,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .ex3_done_if    (w_ex3_done_sel_if),
 
+     .i_ldq_outptr_valid (w_out_ptr_oh[l_idx]),
      .o_entry_finish (w_entry_complete[l_idx])
      );
 

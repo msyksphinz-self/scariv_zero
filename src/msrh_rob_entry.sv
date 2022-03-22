@@ -81,10 +81,10 @@ bit_tree_another_flush (.in(w_another_flush_valid), .out(w_another_tree_flush_va
 // ------------------------------------
 grp_id_t w_flush_tmp_valid;
 grp_id_t w_tree_flush_valid;
-assign w_flush_tmp_valid = w_done_rpt_except_valid & w_done_rpt_valid;
+assign w_flush_tmp_valid = (w_done_rpt_except_valid & w_done_rpt_valid) << 1;
 
 bit_tree_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE))
-bit_tree_done_flush (.in(w_another_flush_valid), .out(w_done_tree_flush_valid));
+bit_tree_done_flush (.in(w_flush_tmp_valid), .out(w_tree_flush_valid));
 
 
 `ifdef SIMULATION
@@ -185,7 +185,7 @@ always_comb begin
       end
       if (w_tree_flush_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
-          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.dead [d_idx] = r_entry.grp_id[d_idx];
         end
       end
 

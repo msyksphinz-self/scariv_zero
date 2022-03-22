@@ -35,6 +35,7 @@ module msrh_ldq_entry
  input                                           msrh_pkg::commit_blk_t i_commit,
  br_upd_if.slave                                 br_upd_if,
 
+ input logic                                     i_ldq_outptr_valid,
  output logic                                    o_entry_finish,
 
  done_if.slave   ex3_done_if
@@ -105,7 +106,7 @@ assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT &
                              i_lrq_resolve.valid &
                              (i_lrq_resolve.resolve_index_oh == i_ex2_q_updates.lrq_index_oh);
 
-assign o_entry_finish = (r_entry.state == LDQ_DEAD) & w_dead_state_clear |
+assign o_entry_finish = (r_entry.state == LDQ_DEAD) & i_ldq_outptr_valid |
                         (r_entry.state == LDQ_WAIT_COMPLETE) & w_entry_complete;
 
 assign w_entry_complete = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
@@ -323,7 +324,7 @@ always_comb begin
       end
     end
     LDQ_DEAD : begin
-      if (w_dead_state_clear) begin
+      if (i_ldq_outptr_valid) begin
         w_entry_next.state = LDQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
