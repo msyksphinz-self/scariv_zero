@@ -464,9 +464,9 @@ assign ptw_if.resp_ready = 1'b1;
 // ------------------
 // Response of TLB
 // ------------------
-assign o_tlb_resp.pf.ld        = (w_vm_enabled & w_bad_va && w_cmd_read) || (|(w_pf_ld_array & w_real_hits));
-assign o_tlb_resp.pf.st        = (w_vm_enabled & w_bad_va && w_cmd_write_perms) || (|(w_pf_st_array & w_real_hits));
-assign o_tlb_resp.pf.inst      = w_vm_enabled & w_bad_va || (|(w_pf_inst_array & w_real_hits));
+assign o_tlb_resp.pf.ld        = w_vm_enabled & ((w_bad_va & w_cmd_read) | (|(w_pf_ld_array & w_real_hits)));
+assign o_tlb_resp.pf.st        = w_vm_enabled & ((w_bad_va & w_cmd_write_perms) | (|(w_pf_st_array & w_real_hits)));
+assign o_tlb_resp.pf.inst      = w_vm_enabled & ( w_bad_va | (|(w_pf_inst_array & w_real_hits)));
 assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
 assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_write;
 assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
