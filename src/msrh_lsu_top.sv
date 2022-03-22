@@ -352,8 +352,8 @@ assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_h_pri = 1'b0;
 
 assign l1d_snoop_if.resp_s1_valid  = r_snoop_resp_valid;
-assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit      ? STATUS_HIT :
-                                     w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
+                                     w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit      ? STATUS_HIT :
                                      w_l1d_rd_if[L1D_SNOOP_PORT].s1_miss     ? STATUS_MISS :
                                      STATUS_NONE;
 assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
