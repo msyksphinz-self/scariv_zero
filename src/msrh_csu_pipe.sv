@@ -113,7 +113,7 @@ end
 
 assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
+assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate

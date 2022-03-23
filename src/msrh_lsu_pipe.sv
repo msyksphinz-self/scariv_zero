@@ -251,7 +251,7 @@ assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1]
 assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !w_ex1_tlb_resp.miss &
                                     ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type     = msrh_pkg::GPR;
+assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
 assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
