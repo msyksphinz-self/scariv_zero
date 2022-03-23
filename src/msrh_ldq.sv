@@ -119,10 +119,12 @@ assign w_out_valid = |w_entry_complete;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(msrh_conf_pkg::LDQ_SIZE)) cnt_disp_valid(.in({{(msrh_conf_pkg::LDQ_SIZE-msrh_conf_pkg::MEM_DISP_SIZE){1'b0}}, disp_picked_inst_valid}), .out(w_disp_picked_num));
-inoutptr_var_oh #(.SIZE(msrh_conf_pkg::LDQ_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
-                                                            .i_rollback(1'b0),
-                                                            .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE): 0]), .o_in_ptr_oh (w_in_ptr_oh ),
-                                                            .i_out_valid(w_out_valid), .i_out_val(w_entry_complete_cnt), .o_out_ptr_oh(w_out_ptr_oh));
+inoutptr_var_oh #(.SIZE(msrh_conf_pkg::LDQ_SIZE))
+u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
+          .i_rollback(1'b0),
+          .i_in_valid (w_in_valid ), .i_in_val (w_disp_picked_num[$clog2(msrh_conf_pkg::LDQ_SIZE): 0]), .o_in_ptr_oh (w_in_ptr_oh ),
+          .i_out_valid(w_out_valid), .i_out_val(w_entry_complete_cnt), .o_out_ptr_oh(w_out_ptr_oh));
+
 
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::MEM_DISP_SIZE; s_idx++) begin : disp_idx_loop
   assign w_pipe_sel_idx_oh[s_idx] = 1 << (s_idx % msrh_conf_pkg::LSU_INST_NUM);
@@ -396,14 +398,14 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
       LDQ_INIT            : $fwrite(fp, "LDQ_INIT");
       LDQ_EX2_RUN         : $fwrite(fp, "LDQ_EX2_RUN");
       LDQ_LRQ_CONFLICT    : $fwrite(fp, "LDQ_LRQ_CONFLICT");
-      LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
       LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
       LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
       LDQ_EX3_DONE        : $fwrite(fp, "LDQ_EX3_DONE");
-      LDQ_WAIT_COMPLETE   : $fwrite(fp, "LDQ_WAIT_COMPLETE");
-      LDQ_DEAD            : $fwrite(fp, "LDQ_DEAD");
+      LDQ_WAIT_COMMIT     : $fwrite(fp, "LDQ_WAIT_COMMIT");
+      LDQ_WAIT_ENTRY_CLR  : $fwrite(fp, "LDQ_WAIT_ENTRY_CLR");
       LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
       LDQ_LRQ_EVICT_HAZ   : $fwrite(fp, "LDQ_LRQ_EVICT_HAZ");
+      LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
       default             : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

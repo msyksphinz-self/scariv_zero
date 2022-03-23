@@ -53,7 +53,7 @@ logic                                            w_load_br_flush;
 logic                                            w_load_commit_flush;
 logic                                            w_load_flush;
 logic                                            w_dead_state_clear;
-logic                                            w_entry_complete;
+logic                                            w_entry_commit;
 
 logic                                            w_lrq_is_conflict;
 logic                                            w_lrq_is_full;
@@ -106,10 +106,9 @@ assign w_lrq_resolve_match = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT &
                              i_lrq_resolve.valid &
                              (i_lrq_resolve.resolve_index_oh == i_ex2_q_updates.lrq_index_oh);
 
-assign o_entry_finish = (r_entry.state == LDQ_DEAD) & i_ldq_outptr_valid |
-                        (r_entry.state == LDQ_WAIT_COMPLETE) & w_entry_complete;
+assign o_entry_finish = (r_entry.state == LDQ_WAIT_ENTRY_CLR) & i_ldq_outptr_valid;
 
-assign w_entry_complete = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
+assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
@@ -207,7 +206,7 @@ always_comb begin
   case (r_entry.state)
     LDQ_INIT :
       if (w_entry_flush & r_entry.is_valid) begin
-        w_entry_next.state    = LDQ_DEAD;
+        w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         // w_entry_next.is_valid = 1'b0;
         // w_entry_next.cmt_id = 'h0;
         // w_entry_next.grp_id = 'h0;
@@ -218,19 +217,19 @@ always_comb begin
                                                  w_rs1_phy_hit, w_rs2_phy_hit,
                                                  w_rs1_may_mispred, w_rs2_may_mispred);
         if (w_load_flush) begin
-          w_entry_next.state    = LDQ_DEAD;
+          w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         end
       end
     LDQ_ISSUE_WAIT : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (o_entry_ready & i_entry_picked) begin
         w_entry_next.state = LDQ_ISSUED;
       end
     end
     LDQ_ISSUED : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else begin
         if (w_entry_next.is_valid & i_ex1_q_valid) begin
           w_entry_next.state           = i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
@@ -259,14 +258,14 @@ always_comb begin
     end // case: LDQ_ISSUED
     LDQ_TLB_HAZ : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (|i_tlb_resolve) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
     LDQ_EX2_RUN : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
                              w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
@@ -282,7 +281,7 @@ always_comb begin
     end
     LDQ_LRQ_CONFLICT : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
@@ -291,14 +290,14 @@ always_comb begin
     end
     LDQ_LRQ_FULL : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (!i_lrq_is_full) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
     LDQ_LRQ_EVICT_HAZ : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
@@ -307,23 +306,17 @@ always_comb begin
     end
     LDQ_EX3_DONE : begin
       if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else begin
-        w_entry_next.state = LDQ_WAIT_COMPLETE;
+        w_entry_next.state = LDQ_WAIT_COMMIT;
       end
     end
-    LDQ_WAIT_COMPLETE : begin
-      if (w_entry_complete) begin
-        w_entry_next.state = LDQ_INIT;
-        w_entry_next.is_valid = 1'b0;
-        // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
-      end else if (w_entry_flush) begin
-        w_entry_next.state = LDQ_DEAD;
+    LDQ_WAIT_COMMIT : begin
+      if (w_entry_commit | w_entry_flush) begin
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end
     end
-    LDQ_DEAD : begin
+    LDQ_WAIT_ENTRY_CLR : begin
       if (i_ldq_outptr_valid) begin
         w_entry_next.state = LDQ_INIT;
         w_entry_next.is_valid = 1'b0;
@@ -331,7 +324,7 @@ always_comb begin
         w_entry_next.cmt_id = 'h0;
         w_entry_next.grp_id = 'h0;
       end
-    end // case: LDQ_DEAD
+    end // case: LDQ_WAIT_ENTRY_CLR
     default : begin
       w_entry_next.state = LDQ_INIT;
 // `ifdef SIMULATION
