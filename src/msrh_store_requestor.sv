@@ -1,7 +1,11 @@
 module msrh_store_requestor
+  import msrh_lsu_pkg::*;
   (
    input logic  i_clk,
    input logic  i_reset_n,
+
+   // Forward check interface from LSU Pipeline
+   fwd_check_if.slave  fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
    l1d_evict_if.slave l1d_evict_if,
 
@@ -9,7 +13,7 @@ module msrh_store_requestor
    );
 
 logic           r_ext_wr_req_valid;
-msrh_lsu_pkg::evict_payload_t r_ext_evict_payload;
+evict_payload_t r_ext_evict_payload;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -27,21 +31,39 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 always_comb begin
   l1d_ext_wr_req.valid           = l1d_evict_if.valid | r_ext_wr_req_valid;
-  l1d_ext_wr_req.payload.cmd     = msrh_lsu_pkg::M_XWR;
+  l1d_ext_wr_req.payload.cmd     = M_XWR;
   if (r_ext_wr_req_valid) begin
     l1d_ext_wr_req.payload.addr    = r_ext_evict_payload.paddr;
-    l1d_ext_wr_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_WR_L1D, {(msrh_lsu_pkg::L2_CMD_TAG_W-2){1'b0}}};
+    l1d_ext_wr_req.payload.tag     = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
     l1d_ext_wr_req.payload.data    = r_ext_evict_payload.data;
-    l1d_ext_wr_req.payload.byte_en = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+    l1d_ext_wr_req.payload.byte_en = {DCACHE_DATA_B_W{1'b1}};
   end else begin
     l1d_ext_wr_req.payload.addr    = l1d_evict_if.payload.paddr;
-    l1d_ext_wr_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_WR_L1D, {(msrh_lsu_pkg::L2_CMD_TAG_W-2){1'b0}}};
+    l1d_ext_wr_req.payload.tag     = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
     l1d_ext_wr_req.payload.data    = l1d_evict_if.payload.data;
-    l1d_ext_wr_req.payload.byte_en = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+    l1d_ext_wr_req.payload.byte_en = {DCACHE_DATA_B_W{1'b1}};
   end // else: !if(r_ext_wr_req_valid)
 end // always_comb
 
 assign l1d_evict_if.ready = !r_ext_wr_req_valid;
+
+// ----------------
+// Forward checker
+// ----------------
+
+// -----------------------------------
+// Forwarding check from LSU Pipeline
+// -----------------------------------
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
+  assign fwd_check_if[p_idx].fwd_valid = r_ext_wr_req_valid & fwd_check_if[p_idx].valid &
+                                         (r_ext_evict_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] ==
+                                          fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)]);
+  assign fwd_check_if[p_idx].fwd_dw    = fwd_check_if[p_idx].fwd_valid ? {(riscv_pkg::XLEN_W/8){1'b1}} : {(riscv_pkg::XLEN_W/8){1'b0}};
+  assign fwd_check_if[p_idx].fwd_data  = r_ext_evict_payload.data >> {fwd_check_if[p_idx].paddr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
+end // block: lsu_fwd_loop
+endgenerate
+
+
 
 `ifdef SIMULATION
 `ifdef VERILATOR
@@ -66,14 +88,14 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       /* verilator lint_off WIDTH */
       record_l1d_evict ($time,
                         l1d_ext_wr_req.payload.addr,
-                        l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW],
+                        l1d_ext_wr_req.payload.addr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW],
                         l1d_array,
-                        msrh_lsu_pkg::DCACHE_DATA_B_W);
+                        DCACHE_DATA_B_W);
       // $fwrite(msrh_pkg::STDERR, "%t : L1D Store-Out : %0x(%x) <= ",
       //         $time,
       //         l1d_ext_wr_req.payload.addr,
-      //         l1d_ext_wr_req.payload.addr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W) +: msrh_lsu_pkg::DCACHE_TAG_LOW]);
-      // for (int i = msrh_lsu_pkg::DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
+      //         l1d_ext_wr_req.payload.addr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW]);
+      // for (int i = DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
       //   $fwrite(msrh_pkg::STDERR, "%08x", l1d_ext_wr_req.payload.data[i*32 +: 32]);
       //   if (i != 0) begin
       //     $fwrite(msrh_pkg::STDERR, "_");

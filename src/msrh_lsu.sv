@@ -36,6 +36,8 @@ module msrh_lsu
     fwd_check_if.master           ex2_fwd_check_if,
     // STBuf Forward checker
     fwd_check_if.master           stbuf_fwd_check_if,
+    // Store Requestor Forward checker
+    fwd_check_if.master           streq_fwd_check_if,
 
     /* L1D Interface */
     l1d_rd_if.master              l1d_rd_if,
@@ -150,6 +152,7 @@ u_lsu_pipe
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),
+   .streq_fwd_check_if (streq_fwd_check_if),
 
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),

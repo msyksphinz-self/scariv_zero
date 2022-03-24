@@ -295,7 +295,7 @@ endgenerate
 // -----------------------------------
 // Forwarding check from LSU Pipeline
 // -----------------------------------
-  generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
   logic [ST_BUF_ENTRY_SIZE-1:0] st_buf_hit_array;
     for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : st_buf_loop
     assign st_buf_hit_array[s_idx] = w_stbuf_fwd_hit[s_idx][p_idx];

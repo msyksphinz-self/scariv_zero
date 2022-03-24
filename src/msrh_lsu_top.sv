@@ -68,6 +68,7 @@ l1d_wr_if  w_miss_l1d_wr_if();
 l1d_lrq_if w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM + 1] ();
 fwd_check_if w_ex2_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
+fwd_check_if w_streq_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 
 lrq_dc_search_if w_lrq_dc_search_if ();
 lrq_resolve_t w_lrq_resolve;
@@ -127,6 +128,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
+    .streq_fwd_check_if (w_streq_fwd_check[lsu_idx]),
 
     .ptw_if(ptw_if[lsu_idx]),
     .l1d_rd_if (w_l1d_rd_if[L1D_LS_PORT_BASE + lsu_idx]),
@@ -276,6 +278,8 @@ u_msrh_store_requester
   (
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
+
+   .fwd_check_if  (w_streq_fwd_check),
 
    .l1d_evict_if  (w_l1d_evict_if),
    .l1d_ext_wr_req(w_l1d_ext_req[1])

@@ -40,7 +40,7 @@ module msrh_lsu_pipe
  // Forwarding checker
  fwd_check_if.master                   ex2_fwd_check_if,     // STQ
  fwd_check_if.master                   stbuf_fwd_check_if,   // ST-Buffer
- // fwd_check_if.master                   streq_fwd_check_if,   // Store Requestor
+ fwd_check_if.master                   streq_fwd_check_if,   // Store Requestor
  ldq_haz_check_if.master               ldq_haz_check_if,
  lrq_fwd_if.master                     lrq_fwd_if,
 
@@ -400,11 +400,11 @@ assign stbuf_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
 assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
-// assign streq_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
-// assign streq_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
-// assign streq_fwd_check_if.grp_id = r_ex2_issue.grp_id;
-// assign streq_fwd_check_if.paddr  = r_ex2_paddr;
-// assign streq_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
+assign streq_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign streq_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
+assign streq_fwd_check_if.grp_id = r_ex2_issue.grp_id;
+assign streq_fwd_check_if.paddr  = r_ex2_paddr;
+assign streq_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
 // LDQ Speculative Load Hazard Check
 assign ldq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST);
@@ -437,11 +437,17 @@ end
 logic [riscv_pkg::XLEN_W/8-1: 0]                  w_stbuf_fwd_dw;
 logic [riscv_pkg::XLEN_W-1: 0]                    w_stbuf_fwd_aligned_data;
 
+logic [riscv_pkg::XLEN_W/8-1: 0]                  w_streq_fwd_dw;
+logic [riscv_pkg::XLEN_W-1: 0]                    w_streq_fwd_aligned_data;
+
 logic [riscv_pkg::XLEN_W/8-1: 0]                  w_expected_fwd_valid;
 logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_success;
 always_comb begin
   {w_stbuf_fwd_dw, w_stbuf_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                           stbuf_fwd_check_if.fwd_dw, stbuf_fwd_check_if.fwd_data,
+                                                          r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
+  {w_streq_fwd_dw, w_streq_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
+                                                          streq_fwd_check_if.fwd_dw, streq_fwd_check_if.fwd_data,
                                                           r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
   case (r_ex2_pipe_ctrl.size)
@@ -476,8 +482,12 @@ generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin
   assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_ex2_fwd_dw    [b_idx] ? w_ex2_fwd_aligned_data    [b_idx*8 +: 8] :
                                               w_stbuf_fwd_dw  [b_idx] ? w_stbuf_fwd_aligned_data  [b_idx*8 +: 8] :
                                               w_ex2_lrq_fwd_dw[b_idx] ? w_ex2_lrq_fwd_aligned_data[b_idx*8 +: 8] :
+                                              w_streq_fwd_dw  [b_idx] ? w_streq_fwd_aligned_data  [b_idx*8 +: 8] :
                                                                         w_ex2_l1d_data            [b_idx*8 +: 8];
-  assign w_ex2_fwd_success[b_idx] = w_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw[b_idx] | w_stbuf_fwd_dw[b_idx] | w_ex2_lrq_fwd_dw[b_idx]) : 1'b1;
+  assign w_ex2_fwd_success[b_idx] = w_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw     [b_idx] |
+                                                                   w_stbuf_fwd_dw   [b_idx] |
+                                                                   w_ex2_lrq_fwd_dw [b_idx] |
+                                                                   w_streq_fwd_dw   [b_idx]) : 1'b1;
 end
 endgenerate
 
