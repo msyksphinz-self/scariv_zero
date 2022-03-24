@@ -153,7 +153,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         if (lsu_access.resp_valid) begin
           case (lsu_access.status)
             msrh_lsu_pkg::STATUS_HIT : begin
-              if (lsu_access_is_leaf | (r_count == 'h0)) begin
+              if (lsu_access_is_leaf | lsu_access_bad_pte | (r_count == 'h0)) begin
                 r_state  <= IDLE;
               end else begin
                 r_count  <= r_count - 'h1;
