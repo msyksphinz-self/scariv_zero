@@ -310,7 +310,7 @@ typedef struct packed {
 } dc_read_resp_t;
 
 function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
-  fwd_align (size_t size, logic [riscv_pkg::XLEN_W/8-1: 0] fwd_dw, logic [riscv_pkg::XLEN_W-1: 0] fwd_data,
+  fwd_align (decoder_lsu_ctrl_pkg::size_t size, logic [riscv_pkg::XLEN_W/8-1: 0] fwd_dw, logic [riscv_pkg::XLEN_W-1: 0] fwd_data,
              logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] paddr);
 
   logic [riscv_pkg::XLEN_W/8-1: 0]                  w_aligned_fwd_dw;
@@ -318,12 +318,12 @@ function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
 
   case (size)
 `ifdef RV64
-    SIZE_DW : begin
+    decoder_lsu_ctrl_pkg::SIZE_DW : begin
       w_aligned_fwd_dw   = fwd_dw;
       w_aligned_fwd_data = fwd_data;
     end
 `endif // RV64
-    SIZE_W  : begin
+    decoder_lsu_ctrl_pkg::SIZE_W  : begin
 `ifdef RV32
       w_aligned_fwd_dw   = fwd_dw;
       w_aligned_fwd_data = fwd_data;
@@ -332,11 +332,11 @@ function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
       w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
 `endif // RV32
     end
-    SIZE_H  : begin
+    decoder_lsu_ctrl_pkg::SIZE_H  : begin
       w_aligned_fwd_dw   = fwd_dw   >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0};
       w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0, 3'b000};
     end
-    SIZE_B  : begin
+    decoder_lsu_ctrl_pkg::SIZE_B  : begin
       w_aligned_fwd_dw   = fwd_dw   >>  paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0];
       w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
     end
