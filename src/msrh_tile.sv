@@ -319,7 +319,7 @@ u_sc_merge
   generate
     for (genvar alu_idx = 0; alu_idx < msrh_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
       msrh_alu #(
-          .PORT_BASE(alu_idx * 2)
+          .PORT_BASE(alu_idx * msrh_conf_pkg::ALU_INST_NUM)
       ) u_msrh_alu (
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),
