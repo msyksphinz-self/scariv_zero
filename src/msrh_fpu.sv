@@ -33,12 +33,12 @@ module msrh_fpu #(
     br_upd_if.slave              br_upd_if
 );
 
-localparam FPU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
+localparam FPU_PORT_SIZE = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
 
 `ifdef SIMULATION
 initial begin
-  if (msrh_conf_pkg::ARITH_DISP_SIZE != (msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM) * msrh_conf_pkg::FPU_INST_NUM ) begin
-    $fatal(0, "ARITH_DISP_SIZE must be multiple of FPU_INST_NUM");
+  if (msrh_conf_pkg::FPU_DISP_SIZE != (msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM) * msrh_conf_pkg::FPU_INST_NUM ) begin
+    $fatal(0, "FPU_DISP_SIZE must be multiple of FPU_INST_NUM");
   end
 end
 `endif // SIMULATION
@@ -133,4 +133,4 @@ u_fpu
    );
 
 
-endmodule  // msrh_alu
+endmodule // msrh_fpu

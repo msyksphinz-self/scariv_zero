@@ -477,7 +477,7 @@ u_int_phy_registers (
 // =========================
 generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
   msrh_fpu #(
-    .PORT_BASE(fpu_idx * 2)
+    .PORT_BASE(fpu_idx * msrh_conf_pkg::FPU_INST_NUM)
   ) u_msrh_fpu (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),

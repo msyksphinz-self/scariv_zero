@@ -544,7 +544,7 @@ assign iq_disp.resource_cnt.csu_inst_cnt = w_inst_csu_cnt;
 bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_fpu_inst_cnt (.in(w_inst_fpu_disped), .out(w_inst_fpu_cnt));
 generate for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_rsrc_loop
   logic [$clog2(msrh_conf_pkg::FPU_DISP_SIZE): 0]  fpu_lane_width;
-  assign fpu_lane_width = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
+  assign fpu_lane_width = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
   assign iq_disp.resource_cnt.fpu_inst_cnt[f_idx] = (w_inst_fpu_cnt >= fpu_lane_width * (f_idx+1)) ? fpu_lane_width :
                                                     /* verilator lint_off UNSIGNED */
                                                     (w_inst_fpu_cnt <  fpu_lane_width * f_idx) ? 'h0 :

@@ -208,12 +208,12 @@ u_bru_credit_return
 );
 
 
-generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::FPU_INST_NUM; a_idx++) begin : fpu_cre_ret_loop
+generate for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_cre_ret_loop
   logic w_inst_fpu_valid;
-  assign w_inst_fpu_valid = iq_disp.valid & |iq_disp.resource_cnt.fpu_inst_cnt[a_idx];
+  assign w_inst_fpu_valid = iq_disp.valid & |iq_disp.resource_cnt.fpu_inst_cnt[f_idx];
   logic [$clog2(msrh_conf_pkg::RV_FPU_ENTRY_SIZE):0] w_fpu_inst_cnt;
   /* verilator lint_off WIDTH */
-  assign w_fpu_inst_cnt = iq_disp.resource_cnt.fpu_inst_cnt[a_idx];
+  assign w_fpu_inst_cnt = iq_disp.resource_cnt.fpu_inst_cnt[f_idx];
 
   msrh_credit_return_master
     #(.MAX_CREDITS(msrh_conf_pkg::RV_FPU_ENTRY_SIZE))
@@ -226,9 +226,9 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::FPU_INST_NUM; a_idx++) be
    .i_credit_val(w_fpu_inst_cnt),
 
    .o_credits(),
-   .o_no_credits(w_fpu_no_credits_remained[a_idx]),
+   .o_no_credits(w_fpu_no_credits_remained[f_idx]),
 
-   .cre_ret_if (fpu_cre_ret_if[a_idx])
+   .cre_ret_if (fpu_cre_ret_if[f_idx])
    );
 end // block: fpu_cre_ret_loop
 endgenerate
