@@ -497,7 +497,6 @@ bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::BRU_DISP_SIZ
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::CSU_DISP_SIZE   )) u_csu_disped_pick_up     (.in(w_inst_csu_disp     & w_inst_disp_mask), .out(w_inst_csu_disped    ));
 bit_pick_up #(.WIDTH(msrh_conf_pkg::DISP_SIZE), .NUM(msrh_conf_pkg::FPU_DISP_SIZE   )) u_fpu_disped_pick_up     (.in(w_inst_fpu_disp     & w_inst_disp_mask), .out(w_inst_fpu_disped    ));
 
-logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_arith_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_muldiv_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_mem_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_ld_cnt;
@@ -506,14 +505,15 @@ logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_bru_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_csu_cnt;
 logic [$clog2(msrh_conf_pkg::DISP_SIZE): 0] w_inst_fpu_cnt;
 
-bit_cnt #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_alu_inst_cnt (.in(w_inst_arith_disped), .out(w_inst_arith_cnt));
 generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_rsrc_loop
-  logic [$clog2(msrh_conf_pkg::ARITH_DISP_SIZE): 0]  alu_lane_width;
-  assign alu_lane_width = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
-  assign iq_disp.resource_cnt.alu_inst_cnt[a_idx] = (w_inst_arith_cnt >= alu_lane_width * (a_idx+1)) ? alu_lane_width :
-                                                    /* verilator lint_off UNSIGNED */
-                                                    (w_inst_arith_cnt <  alu_lane_width * a_idx) ? 'h0 :
-                                                    w_inst_arith_cnt - alu_lane_width * a_idx;
+  localparam alu_lane_width = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
+  logic [alu_lane_width: 0] w_lane_disped_valid;
+  logic [$clog2(alu_lane_width): 0] w_lane_disp_cnt;
+  for (genvar i = 0; i <= alu_lane_width; i++) begin: cnt_loop
+    assign w_lane_disped_valid[i] = w_inst_arith_disped[i * alu_lane_width + a_idx];
+  end
+  bit_cnt #(.WIDTH(alu_lane_width)) u_alu_inst_cnt (.in(w_lane_disped_valid), .out(w_lane_disp_cnt));
+  assign iq_disp.resource_cnt.alu_inst_cnt[a_idx] = w_lane_disp_cnt;
 end
 endgenerate
 

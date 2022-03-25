@@ -118,9 +118,10 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       $display("%m credit and entry number different. r_credits = %d, entry_mask = %x\n",
                u_credit_return_slave.r_credits,
                w_entry_valid_cnt);
-      $fatal(0, "%m credit and entry number different. r_credits = %d, entry_mask = %x\n",
-             u_credit_return_slave.r_credits,
-             w_entry_valid_cnt);
+      $finish;
+      // $fatal(0, "%m credit and entry number different. r_credits = %d, entry_mask = %x\n",
+      //        u_credit_return_slave.r_credits,
+      //        w_entry_valid_cnt);
     end
   end
 end
