@@ -316,10 +316,13 @@ u_sc_merge
   end
   endgenerate
 
+
+localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
+
   generate
     for (genvar alu_idx = 0; alu_idx < msrh_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
       msrh_alu #(
-          .PORT_BASE(alu_idx * msrh_conf_pkg::ALU_INST_NUM)
+          .PORT_BASE(alu_idx * ALU_PORT_SIZE)
       ) u_msrh_alu (
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),
@@ -475,9 +478,10 @@ u_int_phy_registers (
 // =========================
 // FPU: Flaoting Point Unit
 // =========================
+localparam FPU_PORT_SIZE = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
 generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
   msrh_fpu #(
-    .PORT_BASE(fpu_idx * msrh_conf_pkg::FPU_INST_NUM)
+    .PORT_BASE(fpu_idx * FPU_PORT_SIZE)
   ) u_msrh_fpu (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
