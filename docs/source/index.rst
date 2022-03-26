@@ -25,6 +25,7 @@ MSRH RISC-V CPUコアのドキュメントにようこそ！
    sections/l2
    sections/branch
    sections/memory_map
+   sections/parameters
    sections/terminology
 
 Indices and tables
