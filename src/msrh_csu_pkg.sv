@@ -140,7 +140,7 @@ typedef union packed {
 
 typedef struct packed {
 logic [31: 3]  hpm;
-logic [ 2: 0]  ir;
+logic          ir;
 logic          tm;
 logic          cy;
 } counteren_field_t;
