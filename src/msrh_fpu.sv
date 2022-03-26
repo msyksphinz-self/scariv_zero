@@ -57,6 +57,7 @@ done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) w_ex3_done_if();
 msrh_disp_pickup
   #(
     .PORT_BASE(PORT_BASE),
+    .STRIDE   (msrh_conf_pkg::FPU_INST_NUM),
     .PORT_SIZE(FPU_PORT_SIZE)
     )
 u_msrh_disp_pickup

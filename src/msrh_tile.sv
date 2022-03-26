@@ -322,7 +322,7 @@ localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_I
   generate
     for (genvar alu_idx = 0; alu_idx < msrh_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
       msrh_alu #(
-          .PORT_BASE(alu_idx * ALU_PORT_SIZE)
+          .PORT_BASE(alu_idx)
       ) u_msrh_alu (
           .i_clk(i_clk),
           .i_reset_n(i_reset_n),

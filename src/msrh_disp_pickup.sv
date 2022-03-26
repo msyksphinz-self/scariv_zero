@@ -1,6 +1,7 @@
 module msrh_disp_pickup
   #(
     parameter PORT_BASE = 0,
+    parameter STRIDE    = 1,
     parameter PORT_SIZE = 2
     )
 (
@@ -21,7 +22,7 @@ endgenerate
 generate
   for (genvar p_idx = 0; p_idx < PORT_SIZE; p_idx++) begin : pick_loop
     bit_pick_1_index #(
-        .NUM(PORT_BASE + p_idx),
+        .NUM(PORT_BASE + STRIDE * p_idx),
         .SEL_WIDTH(msrh_conf_pkg::DISP_SIZE),
         .DATA_WIDTH($size(msrh_pkg::disp_t))
     ) u_bit_pick_1_index (
