@@ -123,9 +123,10 @@ assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
      .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
      .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
-     .l1d_rd_watch_if   (l1d_rd_if),
-     .o_l1d_wr_req      (w_entry_l1d_wr_req[e_idx]),
-     .l1d_wr_watch_if   (l1d_wr_if),
+     .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
+     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss),
+     .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
+     .i_l1d_wr_s1_resp_hit (l1d_wr_if.s1_wr_resp.s1_hit),
 
      .i_st_lrq_resp  (l1d_lrq_stq_miss_if.resp_payload ),
      .i_lrq_resolve (i_lrq_resolve),

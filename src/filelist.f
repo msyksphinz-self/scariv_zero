@@ -32,6 +32,7 @@
 ../src/bit_tree_lsb.sv
 ../src/bit_pick_up.sv
 ../src/bit_pick_1_index.sv
+../src/bit_pick_1_pos.sv
 ../src/bit_brshift.sv
 ../src/bit_blshift.sv
 ../src/bit_reverse.sv
@@ -69,6 +70,7 @@
 ../src/msrh_tile_wrapper.sv
 ../src/msrh_inst_buffer.sv
 ../src/msrh_disp_pickup.sv
+../src/msrh_disp_merge.sv
 ../src/msrh_ptw.sv
 ../src/msrh_rvc_expander.sv
 
