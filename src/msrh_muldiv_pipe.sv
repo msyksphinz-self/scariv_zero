@@ -60,8 +60,11 @@ logic [riscv_pkg::XLEN_W: 0]           multiplier_pipe   [MUL_STEP: 1];
 logic [riscv_pkg::XLEN_W*2:0]          prod_pipe         [MUL_STEP: 1];
 logic                                  neg_out_pipe      [MUL_STEP: 1];
 op_t  op_pipe                                            [MUL_STEP: 1];
+msrh_pkg::cmt_id_t                     r_cmt_id          [MUL_STEP: 1];
+msrh_pkg::grp_id_t                     r_grp_id          [MUL_STEP: 1];
+logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] r_br_mask   [MUL_STEP: 1];
 
-msrh_pkg::rnid_t             r_mul_rd_rnid [MUL_STEP: 1];
+msrh_pkg::rnid_t                          r_mul_rd_rnid [MUL_STEP: 1];
 msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
 logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP: 1];
 
@@ -101,6 +104,14 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
 
   end // else: !if(s_idx == 0)
 
+  logic w_mul_commit_flush;
+  logic w_mul_br_flush;
+  logic w_mul_flush_valid;
+  assign w_mul_commit_flush = msrh_pkg::is_commit_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], i_commit);
+  assign w_mul_br_flush     = msrh_pkg::is_br_flush_target(r_br_mask[s_idx], br_upd_if.brtag,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+  assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
+
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       prod_pipe        [s_idx+1] <= 'h0;
@@ -118,6 +129,9 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         r_mul_valid_pipe [s_idx+1] <= i_valid & ~w_flush_valid_load & w_is_mul;
         op_pipe          [s_idx+1] <= i_op;
         neg_out_pipe     [s_idx+1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
+        r_cmt_id         [s_idx+1] <= i_cmt_id;
+        r_grp_id         [s_idx+1] <= i_grp_id;
+        r_br_mask        [s_idx+1] <= i_br_mask;
 
         r_mul_rd_rnid [s_idx+1] <= i_rd_rnid;
         r_mul_rd_type [s_idx+1] <= i_rd_type;
@@ -127,9 +141,12 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         prod_pipe        [s_idx+1] <= $signed(w_prod);
         multiplier_pipe  [s_idx+1] <= multiplier_pipe  [s_idx];
         multiplicand_pipe[s_idx+1] <= multiplicand_pipe[s_idx];
-        r_mul_valid_pipe [s_idx+1] <= r_mul_valid_pipe [s_idx];
+        r_mul_valid_pipe [s_idx+1] <= r_mul_valid_pipe [s_idx] & ~w_mul_flush_valid;
         op_pipe          [s_idx+1] <= op_pipe          [s_idx];
         neg_out_pipe     [s_idx+1] <= neg_out_pipe     [s_idx];
+        r_cmt_id         [s_idx+1] <= r_cmt_id         [s_idx];
+        r_grp_id         [s_idx+1] <= r_grp_id         [s_idx];
+        r_br_mask        [s_idx+1] <= r_br_mask        [s_idx];
 
         r_mul_rd_rnid [s_idx+1] <= r_mul_rd_rnid [s_idx];
         r_mul_rd_type [s_idx+1] <= r_mul_rd_type [s_idx];
