@@ -73,7 +73,7 @@ msrh_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
 // ----------------------------------
 // ALU Components
 // ----------------------------------
-msrh_pkg::grp_id_t w_disp_alu_valids;
+msrh_pkg::grp_id_t   w_disp_alu_valids [msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::early_wr_t w_ex1_alu_early_wr[msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_alu_phy_wr  [msrh_conf_pkg::ALU_INST_NUM];
 msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
@@ -82,7 +82,7 @@ msrh_pkg::done_rpt_t w_alu_done_rpt    [msrh_conf_pkg::ALU_INST_NUM];
 // ----------------------------------
 // LSU Components
 // ----------------------------------
-msrh_pkg::grp_id_t w_disp_lsu_valids;
+msrh_pkg::grp_id_t        w_disp_lsu_valids;
 msrh_pkg::early_wr_t      w_ex1_lsu_early_wr      [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [msrh_conf_pkg::LSU_INST_NUM];
 msrh_pkg::done_rpt_t      w_lsu_done_rpt          [msrh_conf_pkg::LSU_INST_NUM];
@@ -91,7 +91,7 @@ msrh_pkg::another_flush_t w_lsu_another_flush_rpt [msrh_conf_pkg::LSU_INST_NUM];
 // ----------------------------------
 // BRU Components
 // ----------------------------------
-msrh_pkg::grp_id_t w_disp_bru_valids;
+msrh_pkg::grp_id_t   w_disp_bru_valids;
 msrh_pkg::early_wr_t w_ex1_bru_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 msrh_pkg::done_rpt_t w_bru_done_rpt;
@@ -101,7 +101,7 @@ br_upd_if br_upd_fe_if ();
 // ----------------------------------
 // CSU Components
 // ----------------------------------
-msrh_pkg::grp_id_t w_disp_csu_valids;
+msrh_pkg::grp_id_t   w_disp_csu_valids;
 msrh_pkg::early_wr_t w_ex1_csu_early_wr;
 msrh_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 msrh_pkg::done_rpt_t w_csu_done_rpt;
@@ -109,7 +109,7 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 // FPU Components
 // ----------------------------------
-msrh_pkg::grp_id_t w_disp_fpu_valids;
+msrh_pkg::grp_id_t   w_disp_fpu_valids [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::early_wr_t w_ex1_fpu_early_wr[msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::done_rpt_t w_fpu_done_rpt    [msrh_conf_pkg::FPU_INST_NUM];
@@ -299,57 +299,60 @@ u_sc_merge
    .o_disp     (w_sc_disp)
    );
 
-  generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
-    assign w_disp_alu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ARITH ||
-                                       w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_MULDIV);
-    assign w_disp_lsu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
-                                       w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
-    assign w_disp_bru_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
-    assign w_disp_csu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
-    assign w_disp_fpu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                      (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_FPU);
-
-  end
-  endgenerate
-
-
 localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_INST_NUM;
+localparam FPU_PORT_SIZE = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
 
-  generate
-    for (genvar alu_idx = 0; alu_idx < msrh_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
-      msrh_alu #(
-          .PORT_BASE(alu_idx)
-      ) u_msrh_alu (
-          .i_clk(i_clk),
-          .i_reset_n(i_reset_n),
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
+  for (genvar a_idx = 0; a_idx < msrh_conf_pkg::FPU_INST_NUM; a_idx++) begin: fpu_disp_valid_loop
+    assign w_disp_alu_valids[a_idx][d_idx] = w_sc_disp.valid & w_sc_disp.inst[d_idx].valid & !w_sc_disp.inst[d_idx].illegal_valid &
+                                             w_sc_disp.resource_cnt.alu_inst_valid[a_idx][d_idx];
+  end
 
-          .rob_info_if   (w_rob_info_if),
+  assign w_disp_lsu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
+                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
+                                     w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
+  assign w_disp_bru_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
+                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+  assign w_disp_csu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
+                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+  for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) begin: fpu_disp_valid_loop
+    assign w_disp_fpu_valids[f_idx][d_idx] = w_sc_disp.valid & w_sc_disp.inst[d_idx].valid & !w_sc_disp.inst[d_idx].illegal_valid &&
+                                             w_sc_disp.resource_cnt.fpu_inst_valid[f_idx][d_idx];
+  end
+end
+endgenerate
 
-          .disp_valid(w_disp_alu_valids),
-          .disp(w_sc_disp),
-          .cre_ret_if (alu_cre_ret_if[alu_idx]),
 
-          .ex1_regread_rs1(int_regread[alu_idx * 2 + 0]),
-          .ex1_regread_rs2(int_regread[alu_idx * 2 + 1]),
+generate for (genvar alu_idx = 0; alu_idx < msrh_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
+  msrh_alu #(
+      .PORT_BASE(alu_idx)
+  ) u_msrh_alu (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
 
-          .i_early_wr(w_ex1_early_wr),
-          .i_phy_wr  (w_ex3_phy_wr),
-          .i_mispred_lsu (w_ex2_mispred_lsu),
+      .rob_info_if   (w_rob_info_if),
 
-          .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
-          .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
+      .disp_valid(w_disp_alu_valids[alu_idx]),
+      .disp(w_sc_disp),
+      .cre_ret_if (alu_cre_ret_if[alu_idx]),
 
-          .i_commit  (w_commit),
-          .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+      .ex1_regread_rs1(int_regread[alu_idx * 2 + 0]),
+      .ex1_regread_rs2(int_regread[alu_idx * 2 + 1]),
 
-          .o_done_report (w_alu_done_rpt[alu_idx])
-      );
-    end
-  endgenerate
+      .i_early_wr(w_ex1_early_wr),
+      .i_phy_wr  (w_ex3_phy_wr),
+      .i_mispred_lsu (w_ex2_mispred_lsu),
+
+      .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
+      .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
+
+      .i_commit  (w_commit),
+      .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+
+      .o_done_report (w_alu_done_rpt[alu_idx])
+  );
+end
+endgenerate
 
 
 msrh_lsu_top
@@ -478,17 +481,16 @@ u_int_phy_registers (
 // =========================
 // FPU: Flaoting Point Unit
 // =========================
-localparam FPU_PORT_SIZE = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
 generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
   msrh_fpu #(
-    .PORT_BASE(fpu_idx * FPU_PORT_SIZE)
+    .PORT_BASE(fpu_idx)
   ) u_msrh_fpu (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
     .rob_info_if   (w_rob_info_if),
 
-    .disp_valid(w_disp_fpu_valids),
+    .disp_valid(w_disp_fpu_valids[fpu_idx]),
     .disp(w_sc_disp),
     .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
