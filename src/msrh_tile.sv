@@ -303,7 +303,7 @@ localparam ALU_PORT_SIZE = msrh_conf_pkg::ARITH_DISP_SIZE / msrh_conf_pkg::ALU_I
 localparam FPU_PORT_SIZE = msrh_conf_pkg::FPU_DISP_SIZE / msrh_conf_pkg::FPU_INST_NUM;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
-  for (genvar a_idx = 0; a_idx < msrh_conf_pkg::FPU_INST_NUM; a_idx++) begin: fpu_disp_valid_loop
+  for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin: alu_disp_valid_loop
     assign w_disp_alu_valids[a_idx][d_idx] = w_sc_disp.valid & w_sc_disp.inst[d_idx].valid & !w_sc_disp.inst[d_idx].illegal_valid &
                                              w_sc_disp.resource_cnt.alu_inst_valid[a_idx][d_idx];
   end
