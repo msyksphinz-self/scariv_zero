@@ -53,8 +53,7 @@ done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if();
 
 msrh_disp_pickup
   #(
-    .PORT_BASE(PORT_BASE),
-    .STRIDE   (msrh_conf_pkg::ALU_INST_NUM),
+    .PORT_BASE(0),
     .PORT_SIZE(ALU_PORT_SIZE)
     )
 u_msrh_disp_pickup
