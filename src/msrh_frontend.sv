@@ -564,7 +564,7 @@ msrh_icache u_msrh_icache
    // flushing is first entry is enough, other killing time, no need to flush
    .i_flush_valid (w_flush_valid),
 
-   .i_fence_i (i_fence_i | w_sfence_if.valid),
+   .i_fence_i (i_fence_i | sfence_if.valid),
 
    .i_s0_req (w_s0_ic_req),
    .o_s0_ready(w_s0_ic_ready),
