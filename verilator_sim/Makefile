@@ -161,9 +161,12 @@ rv64_giant: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv64_build CONF=giant
 
-regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
-	rv64_tiny_test rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test \
-	rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
+regression:
+	$(MAKE) .config_design_rv32
+	$(MAKE) -j5 rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test
+	$(MAKE) .config_design_rv64
+	$(MAKE) -j5 rv64_tiny_test rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test
+	$(MAKE) -j5 rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
 
 #	rv64_tiny_benchmarks rv64_small_benchmarks rv64_standard_benchmarks rv64_big_benchmarks rv64_giant_benchmarks
 
