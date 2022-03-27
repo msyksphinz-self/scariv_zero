@@ -28,8 +28,8 @@ module msrh_lsu_pipe
  output logic                          o_ex1_tlb_miss_hazard,
  output logic                          o_ex2_l1d_miss_hazard,
 
- regread_if.                           master ex1_regread_rs1,
- regread_if.                           master ex1_regread_rs2,
+ regread_if.master                     ex1_regread_rs1,
+ regread_if.master                     ex1_regread_rs2,
 
  output                                msrh_pkg::early_wr_t o_ex1_early_wr,
  output                                msrh_pkg::phy_wr_t   o_ex3_phy_wr,
@@ -501,7 +501,13 @@ always_comb begin
     SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, w_ex2_fwd_final_data[ 7: 0]};
     default : w_ex2_data_tmp = 'h0;
   endcase // case (r_ex2_pipe_ctrl.size)
-  if (r_ex2_pipe_ctrl.sign == SIGN_S) begin
+  if (r_ex1_issue.wr_reg.typ == msrh_pkg::FPR) begin
+    if (r_ex2_pipe_ctrl.size == SIZE_W) begin
+      w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){1'b1}}, w_ex2_data_tmp[31: 0]};
+    end else begin // r_ex2_pipe_ctrl.size == SIZE_DW
+      w_ex2_data_sign_ext = w_ex2_data_tmp;
+    end
+  end else if (r_ex2_pipe_ctrl.sign == SIGN_S) begin  // INT Register
     case(r_ex2_pipe_ctrl.size)
       SIZE_W  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){w_ex2_data_tmp[31]}}, w_ex2_data_tmp[31: 0]};
       SIZE_H  : w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-16){w_ex2_data_tmp[15]}}, w_ex2_data_tmp[15: 0]};
