@@ -7,9 +7,9 @@ MSRHはRISC-V互換のアウトオブオーダ実行可能なCPUです。
 
 - RISC-V RV32 / RV64の両方をサポート
   - RV32GC (RV32IMAFDC)をサポート
-    - Memo: AFDは不完全
+  - Memo: AFDは不完全
   - RV64GC (RV64IMAFDC)をサポート
-    - Memo: AFDは不完全
+  - Memo: AFDは不完全
 - アウトオブオーダ実行可能なパイプライン
 
 実装の特徴は以下の通りです。
