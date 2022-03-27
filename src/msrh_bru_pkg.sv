@@ -51,10 +51,10 @@ interface br_upd_if;
   logic [riscv_pkg::VADDR_W-1: 0]      pred_vaddr;
 `endif // SIMULATION
   logic                                dead;
-  msrh_pkg::cmt_id_t       cmt_id;
+  msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
-  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+  msrh_pkg::brtag_t  brtag;
+  msrh_pkg::brmask_t br_mask;
 
   modport master (
     output update,

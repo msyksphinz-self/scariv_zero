@@ -26,8 +26,8 @@ module msrh_resource_alloc
 
    output logic o_resource_ok,
 
-   output logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] o_brtag  [msrh_conf_pkg::DISP_SIZE],
-   output logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         o_brmask [msrh_conf_pkg::DISP_SIZE]
+   output brtag_t o_brtag  [msrh_conf_pkg::DISP_SIZE],
+   output brmask_t         o_brmask [msrh_conf_pkg::DISP_SIZE]
    );
 
 logic                                     w_commit_flush;
@@ -234,13 +234,13 @@ end // block: fpu_cre_ret_loop
 endgenerate
 
 
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    r_br_mask_valid;
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    w_br_mask_valid_next;
+brmask_t    r_br_mask_valid;
+brmask_t    w_br_mask_valid_next;
 /* verilator lint_off UNOPTFLAT */
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]    w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE+1];
+brmask_t    w_br_mask_temp_valid[msrh_conf_pkg::DISP_SIZE+1];
 
-logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE+1];
-logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] r_br_tag_current_idx;
+brtag_t w_br_tag_temp_idx[msrh_conf_pkg::DISP_SIZE+1];
+brtag_t r_br_tag_current_idx;
 
 generate for (genvar b_idx = 0; b_idx < msrh_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
   always_comb begin

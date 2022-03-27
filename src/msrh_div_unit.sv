@@ -22,8 +22,8 @@ module msrh_div_unit
 
  input msrh_pkg::cmt_id_t              i_cmt_id,
  input msrh_pkg::grp_id_t              i_grp_id,
- input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] i_br_mask,
- input msrh_pkg::rnid_t   i_rd_rnid,
+ input msrh_pkg::brmask_t              i_br_mask,
+ input msrh_pkg::rnid_t                i_rd_rnid,
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
 
@@ -36,8 +36,8 @@ module msrh_div_unit
 
  output msrh_pkg::cmt_id_t              o_cmt_id,
  output msrh_pkg::grp_id_t              o_grp_id,
- output logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] o_br_mask,
- output msrh_pkg::rnid_t   o_rd_rnid,
+ output msrh_pkg::brmask_t              o_br_mask,
+ output msrh_pkg::rnid_t                o_rd_rnid,
  output msrh_pkg::reg_t                 o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]      o_index_oh
  );

@@ -12,8 +12,8 @@ module msrh_rename
    disp_if.master           sc_disp,
 
    // from Resource Allocator
-   input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag  [msrh_conf_pkg::DISP_SIZE],
-   input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         i_brmask [msrh_conf_pkg::DISP_SIZE],
+   input brtag_t i_brtag  [msrh_conf_pkg::DISP_SIZE],
+   input brmask_t         i_brmask [msrh_conf_pkg::DISP_SIZE],
    input logic                                                i_resource_ok,
 
    // Branch Tag Update Signal

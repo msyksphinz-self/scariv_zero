@@ -49,6 +49,9 @@ package msrh_pkg;
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
 typedef logic [RNID_W-1: 0]    rnid_t;
+typedef logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
+typedef logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask_t;
+
 
   typedef struct packed {
     logic valid;
@@ -112,8 +115,8 @@ typedef struct packed {
 
     logic [riscv_pkg::VADDR_W-1:0] pc_addr;
     inst_cat_t   cat;
-    logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-    logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+    brtag_t brtag;
+    brmask_t         br_mask;
 
     // logic [2:0] op;
     // logic imm;
@@ -157,8 +160,8 @@ typedef struct packed {
                                       rnid_t rs1_rnid,
                                       logic               rs2_active,
                                       rnid_t rs2_rnid,
-                                      logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag,
-                                      logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask
+                                      brtag_t brtag,
+                                      brmask_t         br_mask
                                       );
     disp_t ret;
     ret = disp;
@@ -193,7 +196,7 @@ typedef struct packed {
   typedef struct packed {
     grp_id_t                         upd_valid;
     logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
-    logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0]         brtag;
+    brtag_t        brtag;
 
 `ifdef SIMULATION
   logic                                                          mispredicted;
@@ -249,8 +252,8 @@ typedef struct packed {
     logic [31:0] inst;
     inst_cat_t   cat;
     logic        is_rvc;
-    logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-    logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+    brtag_t brtag;
+    brmask_t         br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
@@ -427,8 +430,8 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
 endfunction // is_commit_flush_target
 
 
-function logic is_br_flush_target(logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] entry_br_mask,
-                                  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag,
+function logic is_br_flush_target(brmask_t entry_br_mask,
+                                  brtag_t brtag,
                                   logic br_dead,
                                   logic br_mispredicted);
   return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
@@ -462,10 +465,10 @@ typedef struct packed {
   logic                                                is_ret;
   logic                                                is_rvc;
   cmt_id_t                                 cmt_id;
-  grp_id_t                                grp_id;
+  grp_id_t                                 grp_id;
   logic [RAS_W-1: 0]                                   ras_index;
-  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+  brtag_t         brtag;
+  brmask_t        br_mask;
 
   logic [riscv_pkg::VADDR_W-1: 0]                      pc_vaddr;
   logic [riscv_pkg::VADDR_W-1: 0]                      target_vaddr;

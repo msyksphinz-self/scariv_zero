@@ -10,7 +10,7 @@ module msrh_bru_rn_snapshots
    input grp_id_t                i_rd_valid,
    input logic [ 4: 0]                                        i_rd_archreg[msrh_conf_pkg::DISP_SIZE],
    input rnid_t                                  i_rd_rnid[msrh_conf_pkg::DISP_SIZE],
-   input logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] i_brtag [msrh_conf_pkg::DISP_SIZE],
+   input brtag_t i_brtag [msrh_conf_pkg::DISP_SIZE],
 
    // Branch Tag Update Signal
    br_upd_if.slave                                            br_upd_if,

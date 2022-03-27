@@ -136,8 +136,8 @@ cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[msrh_con
 // Branch Tag
 // ----------------------------------
 
-logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_iq_brtag  [msrh_conf_pkg::DISP_SIZE];
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0]         w_iq_brmask [msrh_conf_pkg::DISP_SIZE];
+msrh_pkg::brtag_t  w_iq_brtag  [msrh_conf_pkg::DISP_SIZE];
+msrh_pkg::brmask_t w_iq_brmask [msrh_conf_pkg::DISP_SIZE];
 cmt_brtag_if w_cmt_brtag_if();
 
 // ----------------------------------

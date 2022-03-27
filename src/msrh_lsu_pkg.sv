@@ -417,8 +417,8 @@ typedef enum logic[3:0] {
 
 typedef struct packed {
   logic          is_valid;
-  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+  brtag_t brtag;
+  brmask_t         br_mask;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
@@ -518,8 +518,8 @@ typedef enum logic[3:0] {
 
 typedef struct packed {
   logic          is_valid;
-  logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag;
-  logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         br_mask;
+  brtag_t brtag;
+  brmask_t         br_mask;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size

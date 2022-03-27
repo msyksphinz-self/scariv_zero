@@ -17,8 +17,8 @@ module msrh_muldiv_pipe
 
  input msrh_pkg::cmt_id_t              i_cmt_id,
  input msrh_pkg::grp_id_t              i_grp_id,
- input logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] i_br_mask,
- input msrh_pkg::rnid_t   i_rd_rnid,
+ input msrh_pkg::brmask_t              i_br_mask,
+ input msrh_pkg::rnid_t                i_rd_rnid,
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
 
@@ -62,7 +62,7 @@ logic                                  neg_out_pipe      [MUL_STEP: 1];
 op_t  op_pipe                                            [MUL_STEP: 1];
 msrh_pkg::cmt_id_t                     r_cmt_id          [MUL_STEP: 1];
 msrh_pkg::grp_id_t                     r_grp_id          [MUL_STEP: 1];
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] r_br_mask   [MUL_STEP: 1];
+msrh_pkg::brmask_t                     r_br_mask         [MUL_STEP: 1];
 
 msrh_pkg::rnid_t                          r_mul_rd_rnid [MUL_STEP: 1];
 msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
@@ -171,7 +171,7 @@ msrh_pkg::grp_id_t            w_div_grp_id;
 msrh_pkg::rnid_t w_div_rd_rnid;
 msrh_pkg::reg_t               w_div_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_div_br_mask;
+msrh_pkg::brmask_t            w_div_br_mask;
 
 logic                         w_flush_valid_load;
 logic                         w_commit_flush_load;

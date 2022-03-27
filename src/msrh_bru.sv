@@ -37,12 +37,12 @@ logic [msrh_conf_pkg::BRU_DISP_SIZE-1:0] disp_picked_inst_valid;
 msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::BRU_DISP_SIZE];
 
 msrh_pkg::issue_t w_rv0_issue;
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_rv0_index_oh;
+msrh_pkg::brmask_t w_rv0_index_oh;
 
 done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) w_ex3_done_if();
 
-logic         w_ex3_done;
-logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0] w_ex3_index;
+logic              w_ex3_done;
+msrh_pkg::brmask_t w_ex3_index;
 
 msrh_disp_pickup
   #(
