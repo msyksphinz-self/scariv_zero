@@ -65,8 +65,10 @@ always_comb begin
     OP_FCVT_WU_D : w_fpnew_op = fpnew_pkg::F2I;
     OP_FCVT_D_W  : w_fpnew_op = fpnew_pkg::I2F;
     OP_FCVT_D_WU : w_fpnew_op = fpnew_pkg::I2F;
+`ifdef RV64
     OP_FCVT_L_D  : w_fpnew_op = fpnew_pkg::F2I;
     OP_FCVT_LU_D : w_fpnew_op = fpnew_pkg::F2I;
+`endif // RV64
     default      : w_fpnew_op = fpnew_pkg::FMADD;
   endcase // case (i_op)
 end // always_comb
