@@ -1,5 +1,6 @@
 module msrh_fpu_pipe
   import decoder_fpu_ctrl_pkg::*;
+  import msrh_fpu_pkg::*;
 #(
   parameter RV_ENTRY_SIZE = 32
   )
@@ -26,11 +27,6 @@ module msrh_fpu_pipe
 
     done_if.master ex3_done_if
 );
-
-  typedef struct packed {
-    size_t size;
-    op_t   op;
-  } pipe_ctrl_t;
 
   msrh_pkg::issue_t                         r_ex0_issue;
   logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
@@ -127,10 +123,10 @@ assign w_ex0_div_stall = w_ex0_pipe_ctrl.op == OP_FDIV;
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid & (r_ex1_issue.rd_regs[1].typ == msrh_pkg::FPR);
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
-assign ex1_regread_rs3.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[2].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::FPR);
+assign ex1_regread_rs3.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[2].valid & (r_ex1_issue.rd_regs[2].typ == msrh_pkg::FPR);
 assign ex1_regread_rs3.rnid  = r_ex1_issue.rd_regs[2].rnid;
 
 assign ex1_regread_int_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR);
@@ -285,29 +281,66 @@ logic [ 63: 0]       w_ex2_rs2_canonical;
 assign w_ex2_rs1_canonical = !(&w_ex2_rs1_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs1_selected_data;
 assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs2_selected_data;
 
+logic                w_ex2_fpnew_valid;
 
 always_comb begin
   case (r_ex2_pipe_ctrl.op)
-    OP_FMV_X_W  : w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
+    OP_FMV_X_W  : begin
+      w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
 `ifdef RV64
-    OP_FMV_W_X  : w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
+    OP_FMV_W_X  : begin
+      w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
 `else  // RV64
-    OP_FMV_W_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
+    OP_FMV_W_X  : begin
+      w_ex2_res_data = w_ex2_rs1_selected_data;
+      w_ex2_fpnew_valid = 1'b0;
+    end
 `endif // RV64
 `ifdef RV64
-    OP_FMV_X_D  : w_ex2_res_data = w_ex2_rs1_selected_data;
-    OP_FMV_D_X  : w_ex2_res_data = w_ex2_rs1_selected_data;
-    OP_FSGNJ_D  : w_ex2_res_data = { w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
-    OP_FSGNJN_D : w_ex2_res_data = {~w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
-    OP_FSGNJX_D : w_ex2_res_data = { w_ex2_rs1_selected_data[63] ^ w_ex2_rs2_selected_data[63],
-                                     w_ex2_rs1_selected_data[62:0]};
+    OP_FMV_X_D  : begin
+      w_ex2_res_data = w_ex2_rs1_selected_data;
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FMV_D_X  : begin
+      w_ex2_res_data = w_ex2_rs1_selected_data;
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FSGNJ_D  : begin
+      w_ex2_res_data = { w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FSGNJN_D : begin
+      w_ex2_res_data = {~w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FSGNJX_D : begin
+      w_ex2_res_data = { w_ex2_rs1_selected_data[63] ^ w_ex2_rs2_selected_data[63],
+                         w_ex2_rs1_selected_data[62:0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
 `endif // RV64
-    OP_FSGNJ_S  : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-    OP_FSGNJN_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-    OP_FSGNJX_S : w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
-                                    w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
-                                    w_ex2_rs1_canonical[30: 0]};
-    default    : w_ex2_res_data = 'h0;
+    OP_FSGNJ_S  : begin
+      w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FSGNJN_S : begin
+      w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    OP_FSGNJX_S : begin
+      w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
+                        w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
+                        w_ex2_rs1_canonical[30: 0]};
+      w_ex2_fpnew_valid = 1'b0;
+    end
+    default    : begin
+      w_ex2_res_data = 'h0;
+      w_ex2_fpnew_valid = 1'b1;
+    end
   endcase // case (r_ex3_pipe_ctrl.op)
 end // always_comb
 
@@ -337,8 +370,9 @@ u_msrh_fpnew_wrapper
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_valid (r_ex2_issue.valid),
+   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid),
    .o_ready (),
+   .i_pipe_ctrl (r_ex2_pipe_ctrl),
 
    .i_rs1 (r_ex2_rs1_data),
    .i_rs2 (r_ex2_rs2_data),
@@ -366,7 +400,7 @@ always_comb begin
     o_ex3_phy_wr.valid   = r_ex3_wr_valid;
     o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
     o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-    o_ex3_phy_wr.rd_data = r_ex3_res_data;
+    o_ex3_phy_wr.rd_data = w_fpnew_result_valid ? w_fpnew_result_data : r_ex3_res_data;
 
     ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
     ex3_done_if.index_oh     = r_ex3_index;

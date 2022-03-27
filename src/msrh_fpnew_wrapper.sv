@@ -1,10 +1,13 @@
 module msrh_fpnew_wrapper
+  import decoder_fpu_ctrl_pkg::*;
+  import msrh_fpu_pkg::*;
   (
    input logic                           i_clk,
    input logic                           i_reset_n,
 
    input logic                           i_valid,
    output logic                          o_ready,
+   input pipe_ctrl_t                     i_pipe_ctrl,
 
    input logic [riscv_pkg::XLEN_W-1: 0]  i_rs1,
    input logic [riscv_pkg::XLEN_W-1: 0]  i_rs2,
@@ -16,20 +19,65 @@ module msrh_fpnew_wrapper
    );
 
 
+logic                                    w_fma32_in_valid;
+
 logic [2:0][31:0]                       w_fma32_rs;
 logic [2: 0]                            w_fma32_boxed;
 logic [31: 0]                           w_fma32_result;
 fpnew_pkg::status_t                     w_fma32_fflags;
-logic                                   w_fma32_valid;
-assign w_fma32_rs[0] = i_rs1[31: 0];
-assign w_fma32_rs[1] = i_rs2[31: 0];
-assign w_fma32_rs[2] = i_rs3[31: 0];
-assign w_fma32_boxed[2:0] = 3'b000;
+logic                                   w_fma32_out_valid;
+assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? 'h0          : i_rs1[31: 0];
+assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs1[31: 0] : i_rs2[31: 0];
+assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs2[31: 0] : i_rs3[31: 0];
+assign w_fma32_boxed[2:0] = 3'b111;
+fpnew_pkg::operation_e w_fpnew_op;
+
+always_comb begin
+  case (i_pipe_ctrl.op)
+    OP_FMADD     : w_fpnew_op = fpnew_pkg::FMADD;
+    OP_FMSUB     : w_fpnew_op = fpnew_pkg::FMADD;
+    OP_FNMSUB    : w_fpnew_op = fpnew_pkg::FNMSUB;
+    OP_FNMADD    : w_fpnew_op = fpnew_pkg::FNMSUB;
+    OP_FADD      : w_fpnew_op = fpnew_pkg::ADD;
+    OP_FSUB      : w_fpnew_op = fpnew_pkg::ADD;
+    OP_FMUL      : w_fpnew_op = fpnew_pkg::MUL;
+    OP_FDIV      : w_fpnew_op = fpnew_pkg::DIV;
+    OP_FSQRT     : w_fpnew_op = fpnew_pkg::SQRT;
+    OP_FSGNJ_S   : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FSGNJN_S  : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FSGNJX_S  : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FMIN      : w_fpnew_op = fpnew_pkg::MINMAX;
+    OP_FMAX      : w_fpnew_op = fpnew_pkg::MINMAX;
+    OP_FCVT_W_S  : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FCVT_WU_S : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FEQ       : w_fpnew_op = fpnew_pkg::CMP;
+    OP_FLT       : w_fpnew_op = fpnew_pkg::CMP;
+    OP_FLE       : w_fpnew_op = fpnew_pkg::CMP;
+    OP_FCLASS    : w_fpnew_op = fpnew_pkg::CLASSIFY;
+    OP_FCVT_S_W  : w_fpnew_op = fpnew_pkg::I2F;
+    OP_FCVT_S_WU : w_fpnew_op = fpnew_pkg::I2F;
+    OP_FSGNJ_D   : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FSGNJN_D  : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FSGNJX_D  : w_fpnew_op = fpnew_pkg::SGNJ;
+    OP_FCVT_S_D  : w_fpnew_op = fpnew_pkg::F2F;
+    OP_FCVT_D_S  : w_fpnew_op = fpnew_pkg::F2F;
+    OP_FCVT_W_D  : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FCVT_WU_D : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FCVT_D_W  : w_fpnew_op = fpnew_pkg::I2F;
+    OP_FCVT_D_WU : w_fpnew_op = fpnew_pkg::I2F;
+    OP_FCVT_L_D  : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FCVT_LU_D : w_fpnew_op = fpnew_pkg::F2I;
+    default      : w_fpnew_op = fpnew_pkg::FMADD;
+  endcase // case (i_op)
+end // always_comb
+
+
+assign w_fma32_in_valid = i_valid & (i_pipe_ctrl.size == SIZE_W);
 
 fpnew_fma
   #(
     .FpFormat   (fpnew_pkg::FP32),
-    .NumPipeRegs(4),
+    .NumPipeRegs(1),
     .PipeConfig (fpnew_pkg::BEFORE),
     .TagType    (logic),
     .AuxType    (logic)
@@ -42,12 +90,12 @@ fpnew_32
  .operands_i      (w_fma32_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
  .is_boxed_i      (w_fma32_boxed    ),  // input logic [2:0]                 // 3 operands
  .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
- .op_i            (fpnew_pkg::FMADD ),  // input fpnew_pkg::operation_e
+ .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
  .op_mod_i        (1'b0             ),  // input logic
  .tag_i           (1'b0             ),  // input TagType
  .aux_i           (1'b0             ),  // input AuxType
  // Input Handshake
- .in_valid_i      (i_valid          ),  // input  logic
+ .in_valid_i      (w_fma32_in_valid ),  // input  logic
  .in_ready_o      (o_ready          ),  // output logic
  .flush_i         (1'b0             ),  // input  logic
  // Output signals
@@ -57,7 +105,7 @@ fpnew_32
  .tag_o           (                 ),  // output TagType
  .aux_o           (                 ),  // output AuxType
  // Output handshake
- .out_valid_o     (w_fma32_valid    ),  // output logic
+ .out_valid_o     (w_fma32_out_valid),  // output logic
  .out_ready_i     (1'b1             ),  // input  logic
  // Indication of valid data in flight
  .busy_o          (                 )   // output logic
@@ -68,16 +116,21 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
   logic [2: 0]                            w_fma64_boxed;
   logic [63: 0]                           w_fma64_result;
   fpnew_pkg::status_t                     w_fma64_fflags;
-  logic                                   w_fma64_valid;
-  assign w_fma64_rs[0] = i_rs1[63: 0];
-  assign w_fma64_rs[1] = i_rs2[63: 0];
-  assign w_fma64_rs[2] = i_rs3[63: 0];
-  assign w_fma64_boxed[2:0] = 3'b000;
+  logic                                   w_fma64_out_valid;
+  logic                                   w_fma64_in_valid;
+
+  assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? 'h0          : i_rs1[63: 0];
+  assign w_fma64_rs[1] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs1[63: 0] : i_rs2[63: 0];
+  assign w_fma64_rs[2] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs2[63: 0] : i_rs3[63: 0];
+  assign w_fma64_boxed[2:0] = 3'b111;
+
+  assign w_fma64_in_valid = i_valid & (i_pipe_ctrl.size == SIZE_DW);
+
 
   fpnew_fma
     #(
       .FpFormat   (fpnew_pkg::FP64),
-      .NumPipeRegs(4),
+      .NumPipeRegs(1),
       .PipeConfig (fpnew_pkg::BEFORE),
       .TagType    (logic),
       .AuxType    (logic)
@@ -90,12 +143,12 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
    .operands_i      (w_fma64_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
    .is_boxed_i      (w_fma64_boxed    ),  // input logic [2:0]                 // 3 operands
    .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
-   .op_i            (fpnew_pkg::FMADD ),  // input fpnew_pkg::operation_e
+   .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
    .op_mod_i        (1'b0             ),  // input logic
    .tag_i           (1'b0             ),  // input TagType
    .aux_i           (1'b0             ),  // input AuxType
    // Input Handshake
-   .in_valid_i      (i_valid          ),  // input  logic
+   .in_valid_i      (w_fma64_in_valid ),  // input  logic
    .in_ready_o      (o_ready          ),  // output logic
    .flush_i         (1'b0             ),  // input  logic
    // Output signals
@@ -105,18 +158,18 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
    .tag_o           (                 ),  // output TagType
    .aux_o           (                 ),  // output AuxType
    // Output handshake
-   .out_valid_o     (w_fma64_valid    ),  // output logic
+   .out_valid_o     (w_fma64_out_valid),  // output logic
    .out_ready_i     (1'b1             ),  // input  logic
    // Indication of valid data in flight
    .busy_o          (                 )   // output logic
    );
 
-  assign o_valid  = w_fma32_valid | w_fma64_valid;
-  assign o_result = w_fma32_valid ? {{32{w_fma32_result[31]}}, w_fma32_result} : w_fma64_result;
-  assign o_fflags = w_fma32_valid ? w_fma32_fflags : w_fma64_fflags;
+  assign o_valid  = w_fma32_out_valid | w_fma64_out_valid;
+  assign o_result = w_fma32_out_valid ? {{32{w_fma32_result[31]}}, w_fma32_result} : w_fma64_result;
+  assign o_fflags = w_fma32_out_valid ? w_fma32_fflags : w_fma64_fflags;
 
 end else if (riscv_pkg::XLEN_W==32) begin : block_32 // block: fma64
-  assign o_valid  = w_fma32_valid;
+  assign o_valid  = w_fma32_out_valid;
   assign o_result = w_fma32_result;
   assign o_fflags = w_fma32_fflags;
 end
