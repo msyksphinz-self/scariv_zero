@@ -541,7 +541,10 @@ assign ex3_done_if.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
-                              r_ex3_issue.wr_reg.valid & (r_ex3_issue.wr_reg.regidx != 'h0) &
+                              r_ex3_issue.wr_reg.valid &
+                              (r_ex3_issue.wr_reg.typ == msrh_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
+                               r_ex3_issue.wr_reg.typ == msrh_pkg::FPR ? 1'b1 :
+                               1'b1) &
                               ~r_ex3_mis_valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
