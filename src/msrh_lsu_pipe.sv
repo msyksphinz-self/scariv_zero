@@ -29,7 +29,8 @@ module msrh_lsu_pipe
  output logic                          o_ex2_l1d_miss_hazard,
 
  regread_if.master                     ex1_regread_rs1,
- regread_if.master                     ex1_regread_rs2,
+ regread_if.master                     ex1_int_regread_rs2,
+ regread_if.master                     ex1_fp_regread_rs2,
 
  output                                msrh_pkg::early_wr_t o_ex1_early_wr,
  output                                msrh_pkg::phy_wr_t   o_ex3_phy_wr,
@@ -209,8 +210,15 @@ assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
-assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
+assign ex1_int_regread_rs2.valid = r_ex1_issue.valid &
+                                   (r_ex1_issue.rd_regs[1].typ == msrh_pkg::GPR) &
+                                   r_ex1_issue.rd_regs[1].valid;
+assign ex1_int_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
+
+assign ex1_fp_regread_rs2.valid = r_ex1_issue.valid &
+                                  (r_ex1_issue.rd_regs[1].typ == msrh_pkg::FPR) &
+                                  r_ex1_issue.rd_regs[1].valid;
+assign ex1_fp_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
                                                                      {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
@@ -286,7 +294,7 @@ assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
 assign o_ex1_q_updates.st_data_valid = r_ex1_issue.rd_regs[1].ready;
-assign o_ex1_q_updates.st_data     = ex1_regread_rs2.data;
+assign o_ex1_q_updates.st_data     = ex1_fp_regread_rs2.valid ? ex1_fp_regread_rs2.data : ex1_int_regread_rs2.data ;
 assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
 
 `ifdef SIMULATION

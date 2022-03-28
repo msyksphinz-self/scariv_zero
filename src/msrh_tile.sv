@@ -372,7 +372,8 @@ u_msrh_lsu_top
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 
-    .ex1_regread (int_regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
+    .ex1_int_regread (int_regread[(msrh_conf_pkg::ALU_INST_NUM * 2) +: (msrh_conf_pkg::LSU_INST_NUM * 2)]),
+    .ex1_fp_regread  (fp_regread[(msrh_conf_pkg::FPU_INST_NUM * 3) +: msrh_conf_pkg::LSU_INST_NUM]),
 
     .ptw_if       (w_ptw_if[1 +: msrh_conf_pkg::LSU_INST_NUM]),
     .lsu_access   (w_lsu_access),

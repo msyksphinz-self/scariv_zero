@@ -25,7 +25,8 @@ module msrh_lsu
     lsu_replay_if.slave stq_replay_if,
 
     regread_if.master ex1_regread_rs1,
-    regread_if.master ex1_regread_rs2,
+    regread_if.master ex1_int_regread_rs2,
+    regread_if.master ex1_fp_regread_rs2,
 
     /* Forwarding path */
     input msrh_pkg::early_wr_t i_early_wr[msrh_pkg::REL_BUS_SIZE],
@@ -135,7 +136,8 @@ u_lsu_pipe
    .o_ex2_l1d_miss_hazard(),
 
    .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_regread_rs2(ex1_regread_rs2),
+   .ex1_int_regread_rs2(ex1_int_regread_rs2),
+   .ex1_fp_regread_rs2 (ex1_fp_regread_rs2),
 
    .i_mispred_lsu (i_mispred_lsu),
 

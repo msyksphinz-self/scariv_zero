@@ -44,7 +44,8 @@ package msrh_pkg;
                                1 +                                  // CSR port
                                msrh_conf_pkg::FPU_INST_NUM;         // FPU port
 
-  localparam FP_REGPORT_NUM = 3 * msrh_conf_pkg::FPU_INST_NUM;
+  localparam FP_REGPORT_NUM = msrh_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
+                              msrh_conf_pkg::LSU_INST_NUM;          // LSU port
 
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;

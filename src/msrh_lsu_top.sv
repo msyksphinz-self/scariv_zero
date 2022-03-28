@@ -19,7 +19,8 @@ module msrh_lsu_top
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
-    regread_if.master   ex1_regread[msrh_conf_pkg::LSU_INST_NUM * 2-1:0],
+    regread_if.master   ex1_int_regread[msrh_conf_pkg::LSU_INST_NUM * 2-1:0],
+    regread_if.master   ex1_fp_regread [msrh_conf_pkg::LSU_INST_NUM-1: 0],
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -119,8 +120,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     // .disp (disp),
     // .cre_ret_if  (sch_cre_ret_if[lsu_idx]),
 
-    .ex1_regread_rs1 (ex1_regread[lsu_idx * 2 + 0]),
-    .ex1_regread_rs2 (ex1_regread[lsu_idx * 2 + 1]),
+    .ex1_regread_rs1     (ex1_int_regread[lsu_idx * 2 + 0]),
+    .ex1_int_regread_rs2 (ex1_int_regread[lsu_idx * 2 + 1]),
+    .ex1_fp_regread_rs2  (ex1_fp_regread[lsu_idx]),
 
     .i_early_wr(i_early_wr),
     .i_phy_wr  (i_phy_wr),
