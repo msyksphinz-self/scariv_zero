@@ -12,6 +12,8 @@ module msrh_csr
    csr_info_if.master         csr_info,
    /* Interrupt Request information */
    interrupt_if.master        int_if,
+   /* FFlags update for FPU */
+   fflags_update_if.slave     fflags_update_if,
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
@@ -383,7 +385,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_uep
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_ucause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UCAUSE        ) begin r_ucause        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_ubadaddr      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UBADADDR      ) begin r_ubadaddr      <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_uip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UIP           ) begin r_uip           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_fflags        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_FFLAGS        ) begin r_fflags        <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fflags  <= 'h0;
+  end else begin
+    if (fflags_update_if.valid) begin
+      r_fflags <= fflags_update_if.fflags;
+    end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_FFLAGS)) begin
+      r_fflags <= write_if.data;
+    end
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_frm           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_FRM           ) begin r_frm           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_fcsr          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_FCSR          ) begin r_fcsr          <= write_if.data; end end
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter3   <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTER3   ) begin r_hpmcounter3   <= write_if.data; end end

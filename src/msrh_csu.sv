@@ -27,6 +27,8 @@ module msrh_csu
 
   output msrh_pkg::done_rpt_t o_done_report,
 
+  fflags_update_if.slave      fflags_update_if,
+
   /* SFENCE update information */
   sfence_if.master            sfence_if,
   /* FENCE.I update */
@@ -147,6 +149,7 @@ u_msrh_csr
 
    .csr_info (csr_info),
    .int_if   (int_if),
+   .fflags_update_if (fflags_update_if),
 
    .i_commit (i_commit),
 

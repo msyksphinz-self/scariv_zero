@@ -457,6 +457,8 @@ u_msrh_csu (
     .int_if      (w_int_if),
     .rob_info_if (w_rob_info_if),
 
+    .fflags_update_if (w_fflags_update_if),
+
     .sfence_if (w_sfence_if),
     .o_fence_i (w_fence_i),
 

@@ -190,7 +190,7 @@ bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w
 // --------------------------
 // FFLAGS update when commit
 // --------------------------
-assign fflags_update_if.valid  = o_commit.commit & w_entries[w_out_cmt_entry_id].fflags_update_valid;
+assign fflags_update_if.valid  = o_commit.commit & (|w_entries[w_out_cmt_entry_id].fflags_update_valid);
 assign fflags_update_if.fflags = w_fflags_sel;
 
 // --------------------------------------------------
