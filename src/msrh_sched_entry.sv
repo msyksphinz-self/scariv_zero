@@ -42,11 +42,8 @@ module msrh_sched_entry
    output logic                                o_entry_done,
    output logic                                o_entry_wait_complete,
    output logic                                o_entry_finish,
-   output msrh_pkg::cmt_id_t       o_cmt_id,
-   output msrh_pkg::grp_id_t o_grp_id,
-   output logic                                o_except_valid,
-   output msrh_pkg::except_t                   o_except_type,
-   output logic [riscv_pkg::XLEN_W-1 : 0]      o_except_tval
+
+   output msrh_pkg::done_rpt_t                 o_done_report
    );
 
 logic    r_issued;
@@ -216,6 +213,8 @@ always_comb begin
           w_entry_next.except_valid = pipe_done_if.except_valid;
           w_entry_next.except_type  = pipe_done_if.except_type;
           w_entry_next.except_tval  = pipe_done_if.except_tval;
+          w_entry_next.fflags_update_valid = pipe_done_if.fflags_update_valid;
+          w_entry_next.fflags              = pipe_done_if.fflags;
         end
         if (r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted ||
             r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
@@ -332,13 +331,16 @@ assign o_entry_ready = r_entry.valid & (r_state == msrh_pkg::WAIT) & !w_entry_fl
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
 assign o_entry       = w_entry_next;
 
-assign o_entry_done          = (r_state == msrh_pkg::DONE) & !w_entry_flush;
 assign o_entry_wait_complete = (r_state == msrh_pkg::WAIT_COMPLETE);
-assign o_cmt_id = r_entry.cmt_id;
-assign o_grp_id = r_entry.grp_id;
-assign o_except_valid = r_entry.except_valid;
-assign o_except_type  = r_entry.except_type;
-assign o_except_tval  = r_entry.except_tval;
+
+assign o_done_report.valid        = (r_state == msrh_pkg::DONE) & !w_entry_flush;
+assign o_done_report.cmt_id       = r_entry.cmt_id;
+assign o_done_report.grp_id       = r_entry.grp_id;
+assign o_done_report.except_valid = r_entry.except_valid;
+assign o_done_report.except_type  = r_entry.except_type;
+assign o_done_report.except_tval  = r_entry.except_tval;
+assign o_done_report.fflags_update_valid = r_entry.fflags_update_valid;
+assign o_done_report.fflags       = r_entry.fflags;
 
 assign o_entry_finish = w_entry_finish & ((r_state == msrh_pkg::DEAD) |
                                           (r_state == msrh_pkg::WAIT_COMPLETE));

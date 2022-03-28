@@ -33,7 +33,7 @@ module msrh_scheduler
 
  done_if.slave                         pipe_done_if,
 
- output                                msrh_pkg::done_rpt_t o_done_report,
+ output msrh_pkg::done_rpt_t           o_done_report,
 
  // Commit notification
  input msrh_pkg::commit_blk_t          i_commit,
@@ -53,15 +53,11 @@ logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
 
-logic [ENTRY_SIZE-1:0]          w_entry_done;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
-msrh_pkg::cmt_id_t w_entry_cmt_id [ENTRY_SIZE];
-msrh_pkg::grp_id_t w_entry_grp_id [ENTRY_SIZE];
-logic [ENTRY_SIZE-1:0]               w_entry_except_valid;
-msrh_pkg::except_t                   w_entry_except_type [ENTRY_SIZE];
-logic [riscv_pkg::XLEN_W-1: 0]       w_entry_except_tval [ENTRY_SIZE];
+logic [ENTRY_SIZE-1: 0]         w_entry_done;
+msrh_pkg::done_rpt_t            w_entry_done_report[ENTRY_SIZE];
 
 logic                                w_flush_valid;
 assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
@@ -195,15 +191,12 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .br_upd_if (br_upd_if),
 
     .i_entry_picked    (w_picked_inst_oh[s_idx]),
-    .o_entry_done      (w_entry_done[s_idx]),
     .o_entry_wait_complete (w_entry_wait_complete[s_idx]),
     .o_entry_finish    (w_entry_finish[s_idx]),
-    .o_cmt_id          (w_entry_cmt_id[s_idx]),
-    .o_grp_id          (w_entry_grp_id[s_idx]),
-    .o_except_valid    (w_entry_except_valid[s_idx]),
-    .o_except_type     (w_entry_except_type [s_idx]),
-    .o_except_tval     (w_entry_except_tval [s_idx])
+    .o_done_report     (w_entry_done_report[s_idx])
   );
+
+  assign w_entry_done[s_idx] = w_entry_done_report[s_idx].valid;
 
 end
 endgenerate
@@ -214,13 +207,7 @@ assign o_iss_index_oh = w_picked_inst_oh;
 // --------------
 // Done signals
 // --------------
-bit_oh_or #(.T(logic[msrh_pkg::CMT_ID_W-1:0]),       .WORDS(ENTRY_SIZE)) bit_oh_entry       (.i_oh(w_entry_done), .i_data(w_entry_cmt_id    ), .o_selected(o_done_report.cmt_id  ));
-bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(ENTRY_SIZE)) bit_oh_grp_id      (.i_oh(w_entry_done), .i_data(w_entry_grp_id    ), .o_selected(o_done_report.grp_id  ));
-bit_oh_or #(.T(msrh_pkg::except_t),                  .WORDS(ENTRY_SIZE)) bit_oh_except_type (.i_oh(w_entry_done), .i_data(w_entry_except_type), .o_selected(o_done_report.except_type));
-bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]),       .WORDS(ENTRY_SIZE)) bit_oh_except_tval (.i_oh(w_entry_done), .i_data(w_entry_except_tval), .o_selected(o_done_report.except_tval));
-
-assign o_done_report.valid = |w_entry_done;
-assign o_done_report.except_valid = |(w_entry_except_valid & w_entry_done);
+bit_oh_or #(.T(msrh_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  (.i_oh(w_entry_done), .i_data(w_entry_done_report), .o_selected(o_done_report ));
 
 `ifdef SIMULATION
 typedef struct packed {

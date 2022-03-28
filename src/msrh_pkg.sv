@@ -64,6 +64,14 @@ typedef logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask_t;
     FPR
   } reg_t;
 
+typedef struct packed {
+  logic          nx;  // Inexact
+  logic          uf;  // Underflow
+  logic          of;  // Overflow
+  logic          dz;  // Divide by Zero
+  logic          nv;  // Invalid Operation
+} fflags_t;
+
 // ------------------------
 // Exception Control
 // ------------------------
@@ -226,6 +234,10 @@ typedef struct packed {
     logic                               is_br_included;
 
     br_upd_info_t br_upd_info;
+
+    grp_id_t                  fflags_update_valid;
+    fflags_t [DISP_SIZE-1: 0] fflags;
+
 `ifdef SIMULATION
     logic [DISP_SIZE-1: 0] [31: 0] lifetime;
 `endif // SIMULATION
@@ -273,6 +285,9 @@ typedef struct packed {
     logic                          except_valid;
     except_t                       except_type;
     logic [riscv_pkg::XLEN_W-1: 0] except_tval;
+
+    logic      fflags_update_valid;
+    fflags_t   fflags;
   } issue_t;
 
 
@@ -326,6 +341,9 @@ function issue_t assign_issue_t(disp_t in,
 
   ret.except_valid = 1'b0;
   ret.except_type  = INST_ADDR_MISALIGN;
+
+  ret.fflags_update_valid = 1'b0;
+  ret.fflags = 'h0;
   return ret;
 
 endfunction  // assign_issue_t
@@ -357,10 +375,12 @@ endfunction  // assign_issue_t
   typedef struct packed {
     logic                 valid;
     cmt_id_t  cmt_id;
-    grp_id_t grp_id;
+    grp_id_t  grp_id;
     logic                 except_valid;
     except_t              except_type;
     logic [riscv_pkg::XLEN_W-1: 0] except_tval;
+    logic                          fflags_update_valid;
+    fflags_t                       fflags;
   } done_rpt_t;
 
 // For flushing another instruction

@@ -1,13 +1,18 @@
-interface done_if #(parameter RV_ENTRY_SIZE=32);
+interface done_if #(parameter RV_ENTRY_SIZE=32,
+                    parameter FPU_PIPE=1'b0);
 logic                                done;
 logic [RV_ENTRY_SIZE-1: 0]           index_oh;
 logic                                except_valid;
 msrh_pkg::except_t                   except_type;
 logic [riscv_pkg::XLEN_W-1: 0]       except_tval;
+
+// For FPU update
+logic                                fflags_update_valid;
+msrh_pkg::fflags_t                   fflags;
 // For flushing another instruction
 logic                                another_flush_valid;
-msrh_pkg::cmt_id_t       another_flush_cmt_id;
-msrh_pkg::grp_id_t another_flush_grp_id;
+msrh_pkg::cmt_id_t                   another_flush_cmt_id;
+msrh_pkg::grp_id_t                   another_flush_grp_id;
 
 modport master(
   output done,
@@ -15,6 +20,8 @@ modport master(
   output except_valid,
   output except_type,
   output except_tval,
+  output fflags_update_valid,
+  output fflags,
   output another_flush_valid,
   output another_flush_cmt_id,
   output another_flush_grp_id
@@ -26,6 +33,8 @@ modport slave(
   input except_valid,
   input except_type,
   input except_tval,
+  input fflags_update_valid,
+  input fflags,
   input another_flush_valid,
   input another_flush_cmt_id,
   input another_flush_grp_id

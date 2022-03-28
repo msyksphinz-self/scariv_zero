@@ -35,6 +35,8 @@ msrh_pkg::grp_id_t   w_finished_grp_id;
 msrh_pkg::grp_id_t   w_done_rpt_except_valid;
 except_t                               w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
 logic [riscv_pkg::XLEN_W-1: 0]         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
+grp_id_t                               w_done_rpt_fflags_update_valid;
+msrh_pkg::fflags_t                     w_done_rpt_fflags     [msrh_conf_pkg::DISP_SIZE];
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
   logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_valid;
@@ -52,6 +54,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.except_valid;
   assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.except_type;
   assign w_done_rpt_except_tval [d_idx] = w_done_rpt_selected.except_tval;
+
+  assign w_done_rpt_fflags_update_valid[d_idx] = w_done_rpt_selected.fflags_update_valid;
+  assign w_done_rpt_fflags             [d_idx] = w_done_rpt_selected.fflags;
 end
 endgenerate
 
@@ -181,6 +186,9 @@ always_comb begin
           w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
           w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
           w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
+
+          w_entry_next.fflags_update_valid [d_idx] = w_done_rpt_fflags_update_valid [d_idx];
+          w_entry_next.fflags              [d_idx] = w_done_rpt_fflags              [d_idx];
         end
       end
       if (w_tree_flush_valid[d_idx]) begin

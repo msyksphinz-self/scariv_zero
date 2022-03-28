@@ -114,6 +114,8 @@ msrh_pkg::early_wr_t w_ex1_fpu_early_wr[msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::done_rpt_t w_fpu_done_rpt    [msrh_conf_pkg::FPU_INST_NUM];
 
+fflags_update_if w_fflags_update_if();
+
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
@@ -551,6 +553,7 @@ msrh_rob u_rob
    .i_another_flush_report(w_lsu_another_flush_rpt),
 
    .o_commit (w_commit),
+   .fflags_update_if (w_fflags_update_if),
    .o_commit_rnid_update (w_commit_rnid_update),
    .cmt_brtag_if (w_cmt_brtag_if),
 

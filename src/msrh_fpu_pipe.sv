@@ -12,8 +12,6 @@ module msrh_fpu_pipe
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
     input msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
-    output logic o_muldiv_stall,
-
     regread_if.master ex1_regread_int_rs1,
 
     regread_if.master ex1_regread_rs1,
@@ -71,34 +69,6 @@ pipe_ctrl_t                                r_ex3_pipe_ctrl;
 logic [riscv_pkg::XLEN_W-1: 0]             w_ex2_res_data;
 logic [riscv_pkg::XLEN_W-1: 0]             r_ex3_res_data;
 
-// ----------------------
-// Multiplier Variables
-// ----------------------
-localparam MUL_UNROLL = 8;
-localparam MUL_PIPE_MAX = riscv_pkg::XLEN_W/MUL_UNROLL;
-
-logic                                      w_mul_stall_pipe;
-logic                                      w_ex1_muldiv_valid;
-logic                                      w_ex1_muldiv_type_valid;
-logic                                      w_muldiv_res_valid;
-logic [riscv_pkg::XLEN_W-1: 0]             w_muldiv_res;
-
-logic                                      r_ex2_muldiv_valid;
-
-logic                                      r_ex3_muldiv_valid;
-
-msrh_pkg::rnid_t              w_muldiv_rd_rnid;
-msrh_pkg::reg_t                            w_muldiv_rd_type;
-logic [RV_ENTRY_SIZE-1: 0]                 w_muldiv_index_oh;
-
-logic                                      w_ex0_div_stall;
-logic                                      r_ex1_div_stall;
-
-logic                                      w_ex2_muldiv_stall;
-
-assign o_muldiv_stall = w_ex2_muldiv_stall | r_ex1_div_stall /* | w_ex0_div_stall*/;
-
-
 always_comb begin
   r_ex0_issue = rv0_issue;
   w_ex0_index = rv0_index;
@@ -137,12 +107,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= 'h0;
     r_ex1_index <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
-    r_ex1_div_stall <= 1'b0;
   end else begin
     r_ex1_issue <= r_ex0_issue;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
-    r_ex1_div_stall <= w_ex0_div_stall;
   end
 end
 
@@ -167,19 +135,14 @@ select_mispred_bus rs2_mispred_select
  );
 
 // -----------------------------
-// EX1 : Multiplier Control
+// EX1 :
 // -----------------------------
-assign w_ex1_muldiv_type_valid = (r_ex1_pipe_ctrl.op == OP_FDIV) |
-                                 (r_ex1_pipe_ctrl.op == OP_FSQRT);
-
-assign w_ex1_muldiv_valid = r_ex1_issue.valid & w_ex1_muldiv_type_valid;
 
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
 assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
-                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred &
-                              ~w_ex1_muldiv_valid;
+                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
@@ -246,8 +209,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= 'h0;
 
     r_ex2_wr_valid <= 1'b0;
-
-    r_ex2_muldiv_valid <= 1'b0;
   end else begin
     r_ex2_rs1_data <= (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
@@ -258,8 +219,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
     r_ex2_wr_valid <= o_ex1_early_wr.valid;
-
-    r_ex2_muldiv_valid <= w_ex1_muldiv_valid;
   end
 end
 
@@ -385,39 +344,18 @@ u_msrh_fpnew_wrapper
 
 
 always_comb begin
+  o_ex3_phy_wr.valid   = r_ex3_wr_valid;
+  o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+  o_ex3_phy_wr.rd_data = w_fpnew_result_valid ? w_fpnew_result_data : r_ex3_res_data;
 
-  if (w_muldiv_res_valid) begin
-    o_ex3_phy_wr.valid   = 1'b1;
-    o_ex3_phy_wr.rd_rnid = w_muldiv_rd_rnid;
-    o_ex3_phy_wr.rd_type = w_muldiv_rd_type;
-    o_ex3_phy_wr.rd_data = w_muldiv_res;
-
-    ex3_done_if.done          = w_muldiv_res_valid;
-    ex3_done_if.index_oh      = w_muldiv_index_oh;
-    ex3_done_if.except_valid  = 1'b0;
-    ex3_done_if.except_type   = msrh_pkg::except_t'('h0);
-  end else begin
-    o_ex3_phy_wr.valid   = r_ex3_wr_valid;
-    o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-    o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-    o_ex3_phy_wr.rd_data = w_fpnew_result_valid ? w_fpnew_result_data : r_ex3_res_data;
-
-    ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
-    ex3_done_if.index_oh     = r_ex3_index;
-    ex3_done_if.except_valid = 1'b0;
-    ex3_done_if.except_type  = msrh_pkg::except_t'('h0);
-  end // else: !if(w_muldiv_res_valid)
+  ex3_done_if.done                = r_ex3_issue.valid;
+  ex3_done_if.index_oh            = r_ex3_index;
+  ex3_done_if.except_valid        = 1'b0;
+  ex3_done_if.except_type         = msrh_pkg::except_t'('h0);
+  ex3_done_if.fflags_update_valid = w_fpnew_result_valid;
+  ex3_done_if.fflags              = w_fpnew_result_valid ? w_fpnew_result_fflags : 'h0;
 end // always_comb
 
-
-`ifdef SIMULATION
-always_ff @(negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
-    if (w_muldiv_res_valid & r_ex3_issue.valid) begin
-      $fatal(0, "Mul/Div Pipeline and ALU integer output valid signal must not be asserted in same time.");
-    end
-  end
-end
-`endif // SIMULATION
 
 endmodule // msrh_fpu_pipe

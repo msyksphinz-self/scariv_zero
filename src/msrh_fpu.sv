@@ -50,8 +50,6 @@ msrh_pkg::grp_id_t disp_picked_grp_id[FPU_PORT_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-logic                                        w_muldiv_stall;
-
 done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) w_ex3_done_if();
 
 msrh_disp_pickup
@@ -87,7 +85,7 @@ u_msrh_scheduler
    .i_disp_info (disp_picked_inst),
    .cre_ret_if  (cre_ret_if),
 
-   .i_stall    (w_muldiv_stall),
+   .i_stall    (1'b0),
 
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
@@ -115,8 +113,6 @@ u_fpu
    .rv0_issue(w_rv0_issue),
    .rv0_index(w_rv0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
-
-   .o_muldiv_stall(w_muldiv_stall),
 
    .ex1_regread_int_rs1(ex1_regread_int_rs1),
 

@@ -17,6 +17,7 @@ module msrh_rob
    br_upd_if.slave  ex3_br_upd_if,
 
    output commit_blk_t     o_commit,
+   fflags_update_if.master fflags_update_if,
    output cmt_rnid_upd_t   o_commit_rnid_update,
 
    // Branch Tag Update Signal
@@ -156,7 +157,6 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_entries[w_out_cmt_entry_id].flush_valid;
-// assign o_commit.all_dead     = (w_entries[w_out_cmt_entry_id].grp_id & w_entries[w_out_cmt_entry_id].dead) == w_entries[w_out_cmt_entry_id].grp_id;
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
@@ -166,20 +166,7 @@ bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_
 // Select Exception Instruction
 assign w_valid_except_grp_id = w_entries[w_out_cmt_entry_id].except_valid & w_cmt_pc_upd_valid_oh;
 bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(w_except_type_selected));
-// logic [riscv_pkg::XLEN_W-1: 0] except_tval_packed[DISP_SIZE];
-// generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : except_tval_loop
-//   assign except_tval_packed[d_idx] = w_entries[w_out_cmt_entry_id].except_tval[d_idx];
-// end
-// endgenerate
 bit_oh_or_packed #(.T(logic[riscv_pkg::XLEN_W-1:0]), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_tval), .o_selected(w_except_tval_selected));
-
-
-// Select Branch Target Address
-// assign w_valid_branch_grp_id = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid & w_cmt_pc_upd_valid_oh;
-// bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(DISP_SIZE))
-// br_sel_addr (.i_oh(w_valid_branch_grp_id),
-//              .i_data(w_entries[w_out_cmt_entry_id].br_upd_info.upd_br_vaddr),
-//              .o_selected(w_upd_br_vaddr));
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
@@ -190,13 +177,21 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_lo
   assign o_commit_rnid_update.rd_typ    [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.typ;
 end
 endgenerate
-// assign o_commit_rnid_update.is_br_included = w_entries[w_out_cmt_entry_id].is_br_included;
-// assign o_commit_rnid_update.upd_pc_valid   = o_commit.upd_pc_valid & !o_commit.all_dead;
 assign o_commit_rnid_update.dead_id        = o_commit.dead_id;
-// assign o_commit_rnid_update.all_dead       = o_commit.all_dead;
 assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
 assign o_commit_rnid_update.except_type    = o_commit.except_type;
 
+
+grp_id_t w_fflags_update_valid_oh;
+fflags_t w_fflags_sel;
+bit_extract_msb  #(.WIDTH(DISP_SIZE)) u_bit_fflags_extract (.in(w_entries[w_out_cmt_entry_id].fflags_update_valid), .out(w_fflags_update_valid_oh));
+bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w_fflags_update_valid_oh), .i_data(w_entries[w_out_cmt_entry_id].fflags), .o_selected(w_fflags_sel));
+
+// --------------------------
+// FFLAGS update when commit
+// --------------------------
+assign fflags_update_if.valid  = o_commit.commit & w_entries[w_out_cmt_entry_id].fflags_update_valid;
+assign fflags_update_if.fflags = w_fflags_sel;
 
 // --------------------------------------------------
 // Notification of RAS Recovery by dead instruction
