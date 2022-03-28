@@ -509,7 +509,7 @@ always_comb begin
     SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, w_ex2_fwd_final_data[ 7: 0]};
     default : w_ex2_data_tmp = 'h0;
   endcase // case (r_ex2_pipe_ctrl.size)
-  if (r_ex1_issue.wr_reg.typ == msrh_pkg::FPR) begin
+  if (r_ex2_issue.wr_reg.typ == msrh_pkg::FPR) begin
     if (r_ex2_pipe_ctrl.size == SIZE_W) begin
       w_ex2_data_sign_ext = {{(riscv_pkg::XLEN_W-32){1'b1}}, w_ex2_data_tmp[31: 0]};
     end else begin // r_ex2_pipe_ctrl.size == SIZE_DW

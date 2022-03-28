@@ -358,15 +358,7 @@ assign w_bad_va     = 1'b0;
 `endif // RV64
 
 /* verilator lint_off WIDTH */
-logic [ 2: 0] w_size_byte;
-assign w_size_byte = i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_B  ? 3'b000 :
-                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_H  ? 3'b001 :
-                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_W  ? 3'b011 :
-`ifdef RV64
-                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_DW ? 3'b111 :
-`endif // RV64
-                     3'b000;
-assign w_misaligned = ((i_tlb_req.vaddr & w_size_byte) != 'h0);
+assign w_misaligned = ((i_tlb_req.vaddr & (i_tlb_req.size-1)) != 'h0);
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : elem_loop
 
