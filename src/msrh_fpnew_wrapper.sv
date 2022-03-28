@@ -26,50 +26,52 @@ logic [2: 0]                            w_fma32_boxed;
 logic [31: 0]                           w_fma32_result;
 fpnew_pkg::status_t                     w_fma32_fflags;
 logic                                   w_fma32_out_valid;
-assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? 'h0          : i_rs1[31: 0];
-assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs1[31: 0] : i_rs2[31: 0];
-assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs2[31: 0] : i_rs3[31: 0];
+fpnew_pkg::operation_e                  w_fpnew_op;
+logic                                   w_fpnew_op_mod;
+
+assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
+assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
+assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[31: 0] : i_rs3[31: 0];
 assign w_fma32_boxed[2:0] = 3'b111;
-fpnew_pkg::operation_e w_fpnew_op;
 
 always_comb begin
   case (i_pipe_ctrl.op)
-    OP_FMADD     : w_fpnew_op = fpnew_pkg::FMADD;
-    OP_FMSUB     : w_fpnew_op = fpnew_pkg::FMADD;
-    OP_FNMSUB    : w_fpnew_op = fpnew_pkg::FNMSUB;
-    OP_FNMADD    : w_fpnew_op = fpnew_pkg::FNMSUB;
-    OP_FADD      : w_fpnew_op = fpnew_pkg::ADD;
-    OP_FSUB      : w_fpnew_op = fpnew_pkg::ADD;
-    OP_FMUL      : w_fpnew_op = fpnew_pkg::MUL;
-    OP_FDIV      : w_fpnew_op = fpnew_pkg::DIV;
-    OP_FSQRT     : w_fpnew_op = fpnew_pkg::SQRT;
-    OP_FSGNJ_S   : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FSGNJN_S  : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FSGNJX_S  : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FMIN      : w_fpnew_op = fpnew_pkg::MINMAX;
-    OP_FMAX      : w_fpnew_op = fpnew_pkg::MINMAX;
-    OP_FCVT_W_S  : w_fpnew_op = fpnew_pkg::F2I;
-    OP_FCVT_WU_S : w_fpnew_op = fpnew_pkg::F2I;
-    OP_FEQ       : w_fpnew_op = fpnew_pkg::CMP;
-    OP_FLT       : w_fpnew_op = fpnew_pkg::CMP;
-    OP_FLE       : w_fpnew_op = fpnew_pkg::CMP;
-    OP_FCLASS    : w_fpnew_op = fpnew_pkg::CLASSIFY;
-    OP_FCVT_S_W  : w_fpnew_op = fpnew_pkg::I2F;
-    OP_FCVT_S_WU : w_fpnew_op = fpnew_pkg::I2F;
-    OP_FSGNJ_D   : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FSGNJN_D  : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FSGNJX_D  : w_fpnew_op = fpnew_pkg::SGNJ;
-    OP_FCVT_S_D  : w_fpnew_op = fpnew_pkg::F2F;
-    OP_FCVT_D_S  : w_fpnew_op = fpnew_pkg::F2F;
-    OP_FCVT_W_D  : w_fpnew_op = fpnew_pkg::F2I;
-    OP_FCVT_WU_D : w_fpnew_op = fpnew_pkg::F2I;
-    OP_FCVT_D_W  : w_fpnew_op = fpnew_pkg::I2F;
-    OP_FCVT_D_WU : w_fpnew_op = fpnew_pkg::I2F;
+    OP_FMADD     : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::FMADD   };
+    OP_FMSUB     : {w_fpnew_op_mod, w_fpnew_op} = {1'b1, fpnew_pkg::FMADD   };
+    OP_FNMSUB    : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::FNMSUB  };
+    OP_FNMADD    : {w_fpnew_op_mod, w_fpnew_op} = {1'b1, fpnew_pkg::FNMSUB  };
+    OP_FADD      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::ADD     };
+    OP_FSUB      : {w_fpnew_op_mod, w_fpnew_op} = {1'b1, fpnew_pkg::ADD     };
+    OP_FMUL      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::MUL     };
+    OP_FDIV      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::DIV     };
+    OP_FSQRT     : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SQRT    };
+    OP_FSGNJ_S   : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FSGNJN_S  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FSGNJX_S  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FMIN      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::MINMAX  };
+    OP_FMAX      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::MINMAX  };
+    OP_FCVT_W_S  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
+    OP_FCVT_WU_S : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
+    OP_FEQ       : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::CMP     };
+    OP_FLT       : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::CMP     };
+    OP_FLE       : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::CMP     };
+    OP_FCLASS    : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::CLASSIFY};
+    OP_FCVT_S_W  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::I2F     };
+    OP_FCVT_S_WU : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::I2F     };
+    OP_FSGNJ_D   : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FSGNJN_D  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FSGNJX_D  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::SGNJ    };
+    OP_FCVT_S_D  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2F     };
+    OP_FCVT_D_S  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2F     };
+    OP_FCVT_W_D  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
+    OP_FCVT_WU_D : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
+    OP_FCVT_D_W  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::I2F     };
+    OP_FCVT_D_WU : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::I2F     };
 `ifdef RV64
-    OP_FCVT_L_D  : w_fpnew_op = fpnew_pkg::F2I;
-    OP_FCVT_LU_D : w_fpnew_op = fpnew_pkg::F2I;
+    OP_FCVT_L_D  : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
+    OP_FCVT_LU_D : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::F2I     };
 `endif // RV64
-    default      : w_fpnew_op = fpnew_pkg::FMADD;
+    default      : {w_fpnew_op_mod, w_fpnew_op} = {1'b0, fpnew_pkg::FMADD   };
   endcase // case (i_op)
 end // always_comb
 
@@ -93,7 +95,7 @@ fpnew_32
  .is_boxed_i      (w_fma32_boxed    ),  // input logic [2:0]                 // 3 operands
  .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
  .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
- .op_mod_i        (1'b0             ),  // input logic
+ .op_mod_i        (w_fpnew_op_mod   ),  // input logic
  .tag_i           (1'b0             ),  // input TagType
  .aux_i           (1'b0             ),  // input AuxType
  // Input Handshake
@@ -121,9 +123,9 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
   logic                                   w_fma64_out_valid;
   logic                                   w_fma64_in_valid;
 
-  assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? 'h0          : i_rs1[63: 0];
-  assign w_fma64_rs[1] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs1[63: 0] : i_rs2[63: 0];
-  assign w_fma64_rs[2] = (w_fpnew_op == fpnew_pkg::ADD | w_fpnew_op == fpnew_pkg::MUL) ? i_rs2[63: 0] : i_rs3[63: 0];
+  assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[63: 0];
+  assign w_fma64_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[63: 0] : i_rs2[63: 0];
+  assign w_fma64_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[63: 0] : i_rs3[63: 0];
   assign w_fma64_boxed[2:0] = 3'b111;
 
   assign w_fma64_in_valid = i_valid & (i_pipe_ctrl.size == SIZE_DW);
@@ -146,7 +148,7 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
    .is_boxed_i      (w_fma64_boxed    ),  // input logic [2:0]                 // 3 operands
    .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
    .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
-   .op_mod_i        (1'b0             ),  // input logic
+   .op_mod_i        (w_fpnew_op_mod   ),  // input logic
    .tag_i           (1'b0             ),  // input TagType
    .aux_i           (1'b0             ),  // input AuxType
    // Input Handshake

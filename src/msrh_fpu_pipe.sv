@@ -333,9 +333,9 @@ u_msrh_fpnew_wrapper
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
 
-   .i_rs1 (r_ex2_rs1_data),
-   .i_rs2 (r_ex2_rs2_data),
-   .i_rs3 (r_ex2_rs3_data),
+   .i_rs1 (w_ex2_rs1_selected_data),
+   .i_rs2 (w_ex2_rs2_selected_data),
+   .i_rs3 (w_ex2_rs3_selected_data),
 
    .o_valid (w_fpnew_result_valid ),
    .o_result(w_fpnew_result_data  ),
