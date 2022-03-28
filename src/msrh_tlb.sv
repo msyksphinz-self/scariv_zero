@@ -358,7 +358,15 @@ assign w_bad_va     = 1'b0;
 `endif // RV64
 
 /* verilator lint_off WIDTH */
-assign w_misaligned = ((i_tlb_req.vaddr & (i_tlb_req.size - 1)) != 'h0);
+logic [ 2: 0] w_size_byte;
+assign w_size_byte = i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_B  ? 3'b000 :
+                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_H  ? 3'b001 :
+                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_W  ? 3'b011 :
+`ifdef RV64
+                     i_tlb_req.size == decoder_lsu_ctrl_pkg::SIZE_DW ? 3'b111 :
+`endif // RV64
+                     3'b000;
+assign w_misaligned = ((i_tlb_req.vaddr & w_size_byte) != 'h0);
 
 generate for (genvar e_idx = 0; e_idx < TLB_ALL_ENTRIES_NUM; e_idx++) begin : elem_loop
 
@@ -467,11 +475,11 @@ assign ptw_if.resp_ready = 1'b1;
 assign o_tlb_resp.pf.ld        = w_vm_enabled & ((w_bad_va & w_cmd_read) | (|(w_pf_ld_array & w_real_hits)));
 assign o_tlb_resp.pf.st        = w_vm_enabled & ((w_bad_va & w_cmd_write_perms) | (|(w_pf_st_array & w_real_hits)));
 assign o_tlb_resp.pf.inst      = w_vm_enabled & ( w_bad_va | (|(w_pf_inst_array & w_real_hits)));
-assign o_tlb_resp.ae.ld        = |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
-assign o_tlb_resp.ae.st        = |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_write;
-assign o_tlb_resp.ae.inst      = |(~w_px_array   & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
-assign o_tlb_resp.ma.ld        = |(w_ma_ld_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_read;
-assign o_tlb_resp.ma.st        = |(w_ma_st_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_write;
+assign o_tlb_resp.ae.ld        = w_vm_enabled & |(w_ae_ld_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
+assign o_tlb_resp.ae.st        = w_vm_enabled & |(w_ae_st_array & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_write;
+assign o_tlb_resp.ae.inst      = w_vm_enabled & |(~w_px_array   & w_real_hits) | ~w_vm_enabled & (~w_map_hit | w_bad_va) & w_cmd_read;;
+assign o_tlb_resp.ma.ld        = w_vm_enabled & |(w_ma_ld_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_read;
+assign o_tlb_resp.ma.st        = w_vm_enabled & |(w_ma_st_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_write;
 assign o_tlb_resp.ma.inst      = i_tlb_req.vaddr[0] != 1'b0;
 assign o_tlb_resp.cacheable    = |(w_c_array & w_real_hits);
 assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_real_hits);
