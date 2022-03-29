@@ -71,7 +71,7 @@ msrh_pkg::grp_id_t w_inst_is_ret;
 msrh_pkg::grp_id_t w_inst_is_call_ret_lsb;
 
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
-logic [riscv_pkg::XLEN_W-1: 0]       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
+riscv_pkg::xlen_t       w_fetch_except_tval[msrh_conf_pkg::DISP_SIZE];
 
 msrh_pkg::grp_id_t w_inst_gen_except_lsb;
 

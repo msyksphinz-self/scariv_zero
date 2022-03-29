@@ -226,7 +226,7 @@ typedef struct packed {
 
     grp_id_t   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
-    logic [DISP_SIZE-1: 0][riscv_pkg::XLEN_W-1:0] except_tval;
+    riscv_pkg::xlen_t except_tval;
 
     grp_id_t  dead;
     grp_id_t  flush_valid;
@@ -284,7 +284,7 @@ typedef struct packed {
 
     logic                          except_valid;
     except_t                       except_type;
-    logic [riscv_pkg::XLEN_W-1: 0] except_tval;
+    riscv_pkg::xlen_t except_tval;
 
     logic      fflags_update_valid;
     fflags_t   fflags;
@@ -362,7 +362,7 @@ endfunction  // assign_issue_t
     logic valid;
     rnid_t rd_rnid;
     reg_t rd_type;
-    logic [riscv_pkg::XLEN_W-1:0] rd_data;
+    riscv_pkg::xlen_t rd_data;
   } phy_wr_t;
 
   typedef struct packed {
@@ -378,7 +378,7 @@ endfunction  // assign_issue_t
     grp_id_t  grp_id;
     logic                 except_valid;
     except_t              except_type;
-    logic [riscv_pkg::XLEN_W-1: 0] except_tval;
+    riscv_pkg::xlen_t except_tval;
     logic                          fflags_update_valid;
     fflags_t                       fflags;
   } done_rpt_t;
@@ -400,7 +400,7 @@ typedef struct packed {
   grp_id_t except_valid;
   except_t                        except_type;
   logic [riscv_pkg::VADDR_W-1: 0] epc;
-  logic [riscv_pkg::XLEN_W-1: 0]  tval;
+  riscv_pkg::xlen_t  tval;
   grp_id_t                        dead_id;
   grp_id_t                        flush_valid;
 } commit_blk_t;

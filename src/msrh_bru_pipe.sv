@@ -48,12 +48,12 @@ logic                      r_ex1_dead;
 
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_fwd_data;
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_fwd_data;
+riscv_pkg::xlen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
+riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
 
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
-logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
+riscv_pkg::xlen_t w_ex2_rs1_selected_data;
+riscv_pkg::xlen_t w_ex2_rs2_selected_data;
 
 logic                                    w_ex2_rs1_pred_hit;
 logic                                    w_ex2_rs2_pred_hit;
@@ -67,8 +67,8 @@ pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                        r_ex2_issue;
 msrh_pkg::issue_t                        w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
-logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs1_data;
-logic [riscv_pkg::XLEN_W-1:0]            r_ex2_rs2_data;
+riscv_pkg::xlen_t            r_ex2_rs1_data;
+riscv_pkg::xlen_t            r_ex2_rs2_data;
 logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
 logic                                    r_ex2_wr_valid;
 logic                                    w_ex2_br_flush;
@@ -171,7 +171,7 @@ generate
 endgenerate
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
@@ -180,7 +180,7 @@ bit_oh_or #(
 );
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),

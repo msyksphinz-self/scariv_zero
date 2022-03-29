@@ -40,7 +40,7 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id;
 logic [DISP_SIZE-1: 0] w_cmt_except_valid_oh;
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 except_t                            w_except_type_selected;
-logic [riscv_pkg::XLEN_W-1: 0]      w_except_tval_selected;
+riscv_pkg::xlen_t      w_except_tval_selected;
 
 logic                                w_ignore_disp;
 logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
@@ -96,7 +96,7 @@ end
 endgenerate
 
 `ifdef SIMULATION
-logic [riscv_pkg::XLEN_W-1: 0] w_sim_mstatus[CMT_ENTRY_SIZE][msrh_conf_pkg::DISP_SIZE];
+riscv_pkg::xlen_t w_sim_mstatus[CMT_ENTRY_SIZE][msrh_conf_pkg::DISP_SIZE];
 `endif // SIMULATION
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
@@ -166,7 +166,7 @@ bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_
 // Select Exception Instruction
 assign w_valid_except_grp_id = w_entries[w_out_cmt_entry_id].except_valid & w_cmt_pc_upd_valid_oh;
 bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(w_except_type_selected));
-bit_oh_or_packed #(.T(logic[riscv_pkg::XLEN_W-1:0]), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_tval), .o_selected(w_except_tval_selected));
+bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_tval), .o_selected(w_except_tval_selected));
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop

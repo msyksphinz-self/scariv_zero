@@ -101,8 +101,8 @@ msrh_pkg::issue_t                     r_ex2_issue, w_ex2_issue_next;
 logic [MEM_Q_SIZE-1: 0]               r_ex2_index_oh;
 logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
 lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
-logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_tmp;
-logic [riscv_pkg::XLEN_W-1: 0]        w_ex2_data_sign_ext;
+riscv_pkg::xlen_t        w_ex2_data_tmp;
+riscv_pkg::xlen_t        w_ex2_data_sign_ext;
 logic                                 w_ex2_load_mispredicted;
 logic                                 r_ex2_tlb_miss;
 
@@ -110,7 +110,7 @@ logic                                 r_ex2_tlb_miss;
 // EX3 stage
 //
 msrh_pkg::issue_t                  r_ex3_issue, w_ex3_issue_next;
-logic [riscv_pkg::XLEN_W-1: 0]     r_ex3_aligned_data;
+riscv_pkg::xlen_t     r_ex3_aligned_data;
 logic                              r_ex3_mis_valid;
 
 //
@@ -425,13 +425,13 @@ assign ldq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
 assign lrq_fwd_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
 assign lrq_fwd_if.ex2_paddr  = r_ex2_paddr;
 
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_aligned_data;
+riscv_pkg::xlenb_t                  w_ex2_fwd_dw;
+riscv_pkg::xlen_t                    w_ex2_fwd_aligned_data;
 
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_lrq_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_lrq_fwd_aligned_data;
+riscv_pkg::xlenb_t                  w_ex2_lrq_fwd_dw;
+riscv_pkg::xlen_t                    w_ex2_lrq_fwd_aligned_data;
 
-logic [riscv_pkg::XLEN_W-1: 0]                    w_ex2_fwd_final_data;
+riscv_pkg::xlen_t                    w_ex2_fwd_final_data;
 
 always_comb begin
   {w_ex2_fwd_dw, w_ex2_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
@@ -442,14 +442,14 @@ always_comb begin
 end
 
 
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_stbuf_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0]                    w_stbuf_fwd_aligned_data;
+riscv_pkg::xlenb_t                  w_stbuf_fwd_dw;
+riscv_pkg::xlen_t                    w_stbuf_fwd_aligned_data;
 
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_streq_fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0]                    w_streq_fwd_aligned_data;
+riscv_pkg::xlenb_t                  w_streq_fwd_dw;
+riscv_pkg::xlen_t                    w_streq_fwd_aligned_data;
 
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_expected_fwd_valid;
-logic [riscv_pkg::XLEN_W/8-1: 0]                  w_ex2_fwd_success;
+riscv_pkg::xlenb_t                  w_expected_fwd_valid;
+riscv_pkg::xlenb_t                  w_ex2_fwd_success;
 always_comb begin
   {w_stbuf_fwd_dw, w_stbuf_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                           stbuf_fwd_check_if.fwd_dw, stbuf_fwd_check_if.fwd_data,
@@ -483,7 +483,7 @@ always_comb begin
   endcase // case (r_ex2_pipe_ctrl.size)
 end
 
-logic [riscv_pkg::XLEN_W-1: 0] w_ex2_l1d_data;
+riscv_pkg::xlen_t w_ex2_l1d_data;
 assign w_ex2_l1d_data = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1:0], 3'b000} +: riscv_pkg::XLEN_W];
 
 generate for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W / 8; b_idx++) begin

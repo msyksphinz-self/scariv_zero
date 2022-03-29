@@ -33,16 +33,16 @@ logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] r_wait_conflicted_lrq_oh;
 logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
 logic [PTW_PORT_NUM-1: 0]             w_ptw_accept;
 logic [PTW_PORT_NUM-1: 0]             r_ptw_accept;
-logic [riscv_pkg::XLEN_W-1: 0] w_ptw_satp  [PTW_PORT_NUM];
-logic [riscv_pkg::XLEN_W-1: 0] w_ptw_status[PTW_PORT_NUM];
+riscv_pkg::xlen_t w_ptw_satp  [PTW_PORT_NUM];
+riscv_pkg::xlen_t w_ptw_status[PTW_PORT_NUM];
 ptw_req_t   w_ptw_req [PTW_PORT_NUM];
 
 ptw_req_t   w_ptw_accepted_req;
-logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_satp;
-logic [riscv_pkg::XLEN_W-1: 0] w_ptw_accepted_status;
+riscv_pkg::xlen_t w_ptw_accepted_satp;
+riscv_pkg::xlen_t w_ptw_accepted_status;
 logic [msrh_lsu_pkg::VPN_W-1: 0] r_ptw_vpn;
 logic [riscv_pkg::PADDR_W-1: 0] r_ptw_addr;
-logic [riscv_pkg::XLEN_W-1: 0]  w_ptw_resp_payload_align_data;
+riscv_pkg::xlen_t  w_ptw_resp_payload_align_data;
 
 logic                          lsu_access_is_leaf;
 logic                          lsu_access_bad_pte;

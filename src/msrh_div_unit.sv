@@ -27,12 +27,12 @@ module msrh_div_unit
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
 
- input logic [riscv_pkg::XLEN_W-1: 0]  i_rs1,
- input logic [riscv_pkg::XLEN_W-1: 0]  i_rs2,
+ input riscv_pkg::xlen_t  i_rs1,
+ input riscv_pkg::xlen_t  i_rs2,
 
  input logic                           i_resp_ready,
  output logic                          o_valid,
- output logic [riscv_pkg::XLEN_W-1: 0] o_res,
+ output riscv_pkg::xlen_t o_res,
 
  output msrh_pkg::cmt_id_t              o_cmt_id,
  output msrh_pkg::grp_id_t              o_grp_id,

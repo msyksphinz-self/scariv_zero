@@ -9,12 +9,12 @@ module msrh_fpnew_wrapper
    output logic                          o_ready,
    input pipe_ctrl_t                     i_pipe_ctrl,
 
-   input logic [riscv_pkg::XLEN_W-1: 0]  i_rs1,
-   input logic [riscv_pkg::XLEN_W-1: 0]  i_rs2,
-   input logic [riscv_pkg::XLEN_W-1: 0]  i_rs3,
+   input riscv_pkg::xlen_t  i_rs1,
+   input riscv_pkg::xlen_t  i_rs2,
+   input riscv_pkg::xlen_t  i_rs3,
 
    output logic                          o_valid,
-   output logic [riscv_pkg::XLEN_W-1: 0] o_result,
+   output riscv_pkg::xlen_t o_result,
    output logic [ 4: 0]                  o_fflags
    );
 

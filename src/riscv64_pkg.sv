@@ -12,7 +12,10 @@ package riscv_pkg;
   localparam PPN_W = PADDR_W - PG_IDX_BITS;
   localparam PG_LEVELS = 3;
 
-  function logic [XLEN_W-1: 0] map_sstatus (logic [XLEN_W-1: 0] mstatus);
+  typedef logic [XLEN_W-1: 0]   xlen_t;
+  typedef logic [XLEN_W/8-1: 0] xlenb_t;
+
+  function xlen_t map_sstatus (xlen_t mstatus);
     return {mstatus [XLEN_W-1],
             25'b0,
             1'b0, 1'b0, 2'b00, mstatus[33:32],

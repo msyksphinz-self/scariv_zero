@@ -37,14 +37,14 @@ module msrh_fpu_pipe
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs3_fwd_valid;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_fwd_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_fwd_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs3_fwd_data;
+  riscv_pkg::xlen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+  riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
+  riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
+  riscv_pkg::xlen_t w_ex2_rs3_fwd_data;
 
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs3_selected_data;
+  riscv_pkg::xlen_t w_ex2_rs1_selected_data;
+  riscv_pkg::xlen_t w_ex2_rs2_selected_data;
+  riscv_pkg::xlen_t w_ex2_rs3_selected_data;
 
   logic                                    w_ex1_rs1_lsu_mispred;
   logic                                    w_ex1_rs2_lsu_mispred;
@@ -54,20 +54,20 @@ module msrh_fpu_pipe
   pipe_ctrl_t                              r_ex2_pipe_ctrl;
   msrh_pkg::issue_t                         r_ex2_issue;
   logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs3_data;
+  riscv_pkg::xlen_t r_ex2_rs1_data;
+  riscv_pkg::xlen_t r_ex2_rs2_data;
+  riscv_pkg::xlen_t r_ex2_rs3_data;
   logic                                    r_ex2_wr_valid;
 
   msrh_pkg::issue_t                        r_ex3_issue;
   logic                                    w_fpnew_result_valid;
-  logic [riscv_pkg::XLEN_W-1:0]            w_fpnew_result_data;
+  riscv_pkg::xlen_t            w_fpnew_result_data;
 logic [ 4: 0]                              w_fpnew_result_fflags;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
   logic                                    r_ex3_wr_valid;
 pipe_ctrl_t                                r_ex3_pipe_ctrl;
-logic [riscv_pkg::XLEN_W-1: 0]             w_ex2_res_data;
-logic [riscv_pkg::XLEN_W-1: 0]             r_ex3_res_data;
+riscv_pkg::xlen_t             w_ex2_res_data;
+riscv_pkg::xlen_t             r_ex3_res_data;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -172,7 +172,7 @@ generate
 endgenerate
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
@@ -181,7 +181,7 @@ bit_oh_or #(
 );
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),
@@ -190,7 +190,7 @@ bit_oh_or #(
 );
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs3_data_select (
     .i_oh(w_ex2_rs3_fwd_valid),

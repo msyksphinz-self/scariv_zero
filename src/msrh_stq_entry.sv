@@ -62,7 +62,7 @@ logic                                            w_rs1_phy_hit;
 logic                                            w_rs1_may_mispred;
 logic                                            w_rs1_mispredicted;
 logic                                            w_rs2_phy_hit;
-logic [riscv_pkg::XLEN_W-1: 0]                   w_rs2_phy_data;
+riscv_pkg::xlen_t                   w_rs2_phy_data;
 logic                                            w_entry_rs2_ready_next;
 
 logic                                            w_commit_finish;

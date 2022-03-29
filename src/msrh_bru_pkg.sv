@@ -4,7 +4,7 @@ logic                                done;
 logic [RV_ENTRY_SIZE-1: 0]           index_oh;
 logic                                except_valid;
 msrh_pkg::except_t                   except_type;
-logic [riscv_pkg::XLEN_W-1: 0]       except_tval;
+riscv_pkg::xlen_t       except_tval;
 
 // For FPU update
 logic                                fflags_update_valid;

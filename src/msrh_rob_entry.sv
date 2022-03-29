@@ -13,7 +13,7 @@ module msrh_rob_entry
    input logic                                i_load_br_included,
    input msrh_pkg::grp_id_t i_load_tlb_except_valid,
    input msrh_pkg::except_t                   i_load_tlb_except_cause[msrh_conf_pkg::DISP_SIZE],
-   input logic [riscv_pkg::XLEN_W-1: 0]       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
+   input riscv_pkg::xlen_t       i_load_tlb_except_tval[msrh_conf_pkg::DISP_SIZE],
 
    input done_rpt_t      i_done_rpt [CMT_BUS_SIZE],
    input another_flush_t i_another_flush_report [msrh_conf_pkg::LSU_INST_NUM],
@@ -34,7 +34,7 @@ msrh_pkg::grp_id_t   w_done_rpt_valid;
 msrh_pkg::grp_id_t   w_finished_grp_id;
 msrh_pkg::grp_id_t   w_done_rpt_except_valid;
 except_t                               w_done_rpt_except_type[msrh_conf_pkg::DISP_SIZE];
-logic [riscv_pkg::XLEN_W-1: 0]         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
+riscv_pkg::xlen_t         w_done_rpt_except_tval[msrh_conf_pkg::DISP_SIZE];
 grp_id_t                               w_done_rpt_fflags_update_valid;
 msrh_pkg::fflags_t                     w_done_rpt_fflags     [msrh_conf_pkg::DISP_SIZE];
 
@@ -93,7 +93,7 @@ bit_tree_done_flush (.in(w_flush_tmp_valid), .out(w_tree_flush_valid));
 
 
 `ifdef SIMULATION
-logic [riscv_pkg::XLEN_W-1:0]   r_mstatus[msrh_conf_pkg::DISP_SIZE];
+riscv_pkg::xlen_t   r_mstatus[msrh_conf_pkg::DISP_SIZE];
 `endif // SIMULATION
 
 

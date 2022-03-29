@@ -12,11 +12,11 @@ module msrh_phy_registers
     input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
-  logic [riscv_pkg::XLEN_W-1:0] r_phy_regs[msrh_pkg::RNID_SIZE];
+  riscv_pkg::xlen_t r_phy_regs[msrh_pkg::RNID_SIZE];
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
   msrh_pkg::rnid_t wr_rnid[msrh_pkg::TGT_BUS_SIZE];
-  logic [riscv_pkg::XLEN_W-1:0] wr_data[msrh_pkg::TGT_BUS_SIZE];
+  riscv_pkg::xlen_t wr_data[msrh_pkg::TGT_BUS_SIZE];
 
   generate
     for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
@@ -33,7 +33,7 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : re
     assign r_phy_regs[r_idx] = {riscv_pkg::XLEN_W{1'b0}};
   end else begin
     logic w_wr_valid;
-    logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
+    riscv_pkg::xlen_t w_wr_data;
     select_oh #(
         .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
         .KEY_WIDTH (msrh_pkg::RNID_W),
@@ -63,7 +63,7 @@ endgenerate
     for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
 
       logic w_wr_valid;
-      logic [riscv_pkg::XLEN_W-1:0] w_wr_data;
+      riscv_pkg::xlen_t w_wr_data;
 
       select_oh #(
           .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
@@ -88,7 +88,7 @@ endgenerate
   endgenerate
 
 `ifdef SIMULATION
-logic [msrh_pkg::RNID_SIZE-1: 0][riscv_pkg::XLEN_W-1:0] w_sim_phy_regs;
+riscv_pkg::xlen_t w_sim_phy_regs;
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : sim_reg_loop
   assign w_sim_phy_regs[r_idx] = r_phy_regs[r_idx];
 end

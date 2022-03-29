@@ -17,8 +17,8 @@ module tlb
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
  input riscv_common_pkg::priv_t               i_status_prv,
- input logic [riscv_pkg::XLEN_W-1: 0] i_csr_status,
- input logic [riscv_pkg::XLEN_W-1: 0] i_csr_satp,
+ input riscv_pkg::xlen_t i_csr_status,
+ input riscv_pkg::xlen_t i_csr_satp,
 
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if,

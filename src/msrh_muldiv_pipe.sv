@@ -22,13 +22,13 @@ module msrh_muldiv_pipe
  input msrh_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
 
- input logic [riscv_pkg::XLEN_W-1: 0]  i_rs1,
- input logic [riscv_pkg::XLEN_W-1: 0]  i_rs2,
+ input riscv_pkg::xlen_t  i_rs1,
+ input riscv_pkg::xlen_t  i_rs2,
 
  output logic                          o_stall,
 
  output logic                          o_valid,
- output logic [riscv_pkg::XLEN_W-1: 0] o_res,
+ output riscv_pkg::xlen_t o_res,
 
  output msrh_pkg::rnid_t  o_rd_rnid,
  output msrh_pkg::reg_t                o_rd_type,

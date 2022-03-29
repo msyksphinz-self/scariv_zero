@@ -197,7 +197,7 @@ endfunction // assign_lrq_entry
 
 typedef struct packed {
   logic                                      valid;
-  logic [riscv_pkg::XLEN_W-1: 0]             data;
+  riscv_pkg::xlen_t             data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
 } evict_merge_t;
 
@@ -230,7 +230,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 0] vaddr;
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic                           st_data_valid;
-  logic [riscv_pkg::XLEN_W-1: 0]  st_data;
+  riscv_pkg::xlen_t  st_data;
 } ex1_q_update_t;
 
 typedef struct packed {
@@ -310,11 +310,11 @@ typedef struct packed {
 } dc_read_resp_t;
 
 function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
-  fwd_align (decoder_lsu_ctrl_pkg::size_t size, logic [riscv_pkg::XLEN_W/8-1: 0] fwd_dw, logic [riscv_pkg::XLEN_W-1: 0] fwd_data,
+  fwd_align (decoder_lsu_ctrl_pkg::size_t size, riscv_pkg::xlenb_t fwd_dw, riscv_pkg::xlen_t fwd_data,
              logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] paddr);
 
-  logic [riscv_pkg::XLEN_W/8-1: 0]                  w_aligned_fwd_dw;
-  logic [riscv_pkg::XLEN_W-1: 0]                    w_aligned_fwd_data;
+  riscv_pkg::xlenb_t                  w_aligned_fwd_dw;
+  riscv_pkg::xlen_t                    w_aligned_fwd_data;
 
   case (size)
 `ifdef RV64
@@ -351,7 +351,7 @@ function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
 endfunction // fwd_align
 
 
-function logic [riscv_pkg::XLEN_W/8-1: 0] gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] addr);
+function riscv_pkg::xlenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] addr);
   case(size)
 `ifdef RV64
     decoder_lsu_ctrl_pkg::SIZE_DW : return 8'b1111_1111;
@@ -378,7 +378,7 @@ endfunction // gen_dw
 // addr1/size1 includes addr2_dw ?
 function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] addr1,
                               logic [riscv_pkg::XLEN_W/8-1:0] addr2_dw);
-  logic [riscv_pkg::XLEN_W/8-1: 0] addr1_dw;
+  riscv_pkg::xlenb_t addr1_dw;
   addr1_dw = gen_dw(size1, addr1);
 
   return (addr1_dw & addr2_dw) == addr2_dw;
@@ -429,7 +429,7 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0] paddr;
   logic                           paddr_valid;
   logic                           is_rs2_get;
-  logic [riscv_pkg::XLEN_W-1: 0]  rs2_data;
+  riscv_pkg::xlen_t  rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 
   logic                                 except_valid;
@@ -450,7 +450,7 @@ typedef struct packed {
 typedef struct packed {
   logic [riscv_pkg::PADDR_W-1:0] paddr;
   decoder_lsu_ctrl_pkg::size_t   acc_size;
-  logic [riscv_pkg::XLEN_W-1: 0] data;
+  riscv_pkg::xlen_t data;
 } srq_req_t;
 
 typedef struct packed {

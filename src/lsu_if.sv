@@ -258,10 +258,10 @@ logic                           valid;
 msrh_pkg::cmt_id_t cmt_id;
 msrh_pkg::grp_id_t grp_id;
 logic [riscv_pkg::PADDR_W-1: 0] paddr;
-logic [riscv_pkg::XLEN_W/8-1: 0] paddr_dw;
+riscv_pkg::xlenb_t paddr_dw;
 logic                           fwd_valid;
-logic [riscv_pkg::XLEN_W/8-1: 0] fwd_dw;
-logic [riscv_pkg::XLEN_W-1: 0]  fwd_data;
+riscv_pkg::xlenb_t fwd_dw;
+riscv_pkg::xlen_t  fwd_data;
 
 modport master (
   output valid,
@@ -355,8 +355,8 @@ interface tlb_ptw_if;
   logic    req_ready;
   msrh_lsu_pkg::ptw_resp_t       resp;
   logic    resp_ready;
-  logic [riscv_pkg::XLEN_W-1: 0] satp;
-  logic [riscv_pkg::XLEN_W-1: 0] status;
+  riscv_pkg::xlen_t satp;
+  riscv_pkg::xlen_t status;
   // msrh_lsu_pkg::pmp_t            pmp[msrh_lsu_pkg::PMP_NUM];
 
   modport master (
@@ -383,9 +383,9 @@ endinterface // tlb_ptw_if
 
 
 interface datapath_ptw_if;
-  logic [riscv_pkg::XLEN_W-1: 0] satp;
+  riscv_pkg::xlen_t satp;
   // sfence_req_t sfence;
-  logic [riscv_pkg::XLEN_W-1: 0] status;
+  riscv_pkg::xlen_t status;
   // logic [PMP_NUM-1: 0]           pmp;
   // ptw_perf_events_t              perf;
 
@@ -419,7 +419,7 @@ interface lsu_access_if;
   msrh_lsu_pkg::lsu_status_t      status;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_conflicted_idx_oh;
 
-  logic [riscv_pkg::XLEN_W-1: 0]  data;
+  riscv_pkg::xlen_t  data;
 
   logic                                 conflict_resolve_vld;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;

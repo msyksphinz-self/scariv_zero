@@ -44,12 +44,12 @@ module msrh_alu_pipe
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_fwd_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_fwd_data;
+  riscv_pkg::xlen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+  riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
+  riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
 
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs1_selected_data;
-  logic            [riscv_pkg::XLEN_W-1:0] w_ex2_rs2_selected_data;
+  riscv_pkg::xlen_t w_ex2_rs1_selected_data;
+  riscv_pkg::xlen_t w_ex2_rs2_selected_data;
 
   logic                                    w_ex1_rs1_lsu_mispred;
   logic                                    w_ex1_rs2_lsu_mispred;
@@ -60,13 +60,13 @@ module msrh_alu_pipe
   msrh_pkg::issue_t                        r_ex2_issue;
   msrh_pkg::issue_t                        w_ex2_issue_next;
   logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs1_data;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex2_rs2_data;
+  riscv_pkg::xlen_t r_ex2_rs1_data;
+  riscv_pkg::xlen_t r_ex2_rs2_data;
   logic                                    r_ex2_wr_valid;
 
   msrh_pkg::issue_t                        r_ex3_issue;
   msrh_pkg::issue_t                        w_ex3_issue_next;
-  logic            [riscv_pkg::XLEN_W-1:0] r_ex3_result;
+  riscv_pkg::xlen_t r_ex3_result;
   logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
   logic                                    r_ex3_wr_valid;
 
@@ -80,7 +80,7 @@ logic                                      w_mul_stall_pipe;
 logic                                      w_ex1_muldiv_valid;
 logic                                      w_ex1_muldiv_type_valid;
 logic                                      w_muldiv_res_valid;
-logic [riscv_pkg::XLEN_W-1: 0]             w_muldiv_res;
+riscv_pkg::xlen_t             w_muldiv_res;
 
 logic                                      r_ex2_muldiv_valid;
 
@@ -236,7 +236,7 @@ generate
 endgenerate
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
@@ -245,7 +245,7 @@ bit_oh_or #(
 );
 
 bit_oh_or #(
-    .T(logic[riscv_pkg::XLEN_W-1:0]),
+    .T(riscv_pkg::xlen_t),
     .WORDS(msrh_pkg::TGT_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),

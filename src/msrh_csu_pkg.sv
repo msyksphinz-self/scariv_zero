@@ -2,7 +2,7 @@ interface csr_rd_if;
 
   logic valid;
   logic [11: 0] addr;
-  logic [riscv_pkg::XLEN_W-1: 0] data;
+  riscv_pkg::xlen_t data;
   logic                          resp_error;
 
   modport master (
@@ -26,7 +26,7 @@ interface csr_wr_if;
 
   logic                          valid;
   logic [11: 0]                  addr;
-  logic [riscv_pkg::XLEN_W-1: 0] data;
+  riscv_pkg::xlen_t data;
   logic                          resp_error;
 
   modport master (
@@ -49,16 +49,16 @@ endinterface // csr_wr_if
 interface csr_info_if;
 
 riscv_common_pkg::priv_t       priv;
-logic [riscv_pkg::XLEN_W-1: 0] mstatus;
-logic [riscv_pkg::XLEN_W-1: 0] mepc;
-logic [riscv_pkg::XLEN_W-1: 0] mtvec;
-logic [riscv_pkg::XLEN_W-1: 0] stvec;
-logic [riscv_pkg::XLEN_W-1: 0] utvec;
-logic [riscv_pkg::XLEN_W-1: 0] sepc;
-logic [riscv_pkg::XLEN_W-1: 0] uepc;
-logic [riscv_pkg::XLEN_W-1: 0] satp;
-logic [riscv_pkg::XLEN_W-1: 0] medeleg;
-logic [riscv_pkg::XLEN_W-1: 0] sedeleg;
+riscv_pkg::xlen_t mstatus;
+riscv_pkg::xlen_t mepc;
+riscv_pkg::xlen_t mtvec;
+riscv_pkg::xlen_t stvec;
+riscv_pkg::xlen_t utvec;
+riscv_pkg::xlen_t sepc;
+riscv_pkg::xlen_t uepc;
+riscv_pkg::xlen_t satp;
+riscv_pkg::xlen_t medeleg;
+riscv_pkg::xlen_t sedeleg;
 
 modport master (
   output priv,
@@ -134,7 +134,7 @@ typedef struct packed {
 
 typedef union packed {
   tvec_field_t                   field;
-  logic [riscv_pkg::XLEN_W-1: 0] raw_bit;
+  riscv_pkg::xlen_t raw_bit;
 } tvec_t;
 
 

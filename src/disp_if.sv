@@ -4,7 +4,7 @@ interface disp_if;
   logic [riscv_pkg::VADDR_W-1:1]                  pc_addr;
   msrh_pkg::grp_id_t            tlb_except_valid;
   msrh_pkg::except_t                              tlb_except_cause[msrh_conf_pkg::DISP_SIZE] ;
-  logic [riscv_pkg::XLEN_W-1: 0]                  tlb_except_tval [msrh_conf_pkg::DISP_SIZE];
+  riscv_pkg::xlen_t                  tlb_except_tval [msrh_conf_pkg::DISP_SIZE];
   msrh_pkg::resource_cnt_t                        resource_cnt;
   // Counter for each dispatch Resources
   msrh_pkg::disp_t [msrh_conf_pkg::DISP_SIZE-1:0] inst;

@@ -4,7 +4,7 @@ interface regread_if;
   msrh_pkg::rnid_t rnid;
   msrh_pkg::reg_t reg_type;
   logic resp;
-  logic [riscv_pkg::XLEN_W-1:0] data;
+  riscv_pkg::xlen_t data;
 
   modport master(output valid, output rnid, input resp, input data);
 
