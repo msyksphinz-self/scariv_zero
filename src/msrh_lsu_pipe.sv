@@ -357,8 +357,8 @@ assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = &w_ex2_fwd_success                   ? NONE         :
                                     ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT :
                                     l1d_lrq_if.load ?
-                                    (l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT :
-                                     l1d_lrq_if.resp_payload.full        ? LRQ_FULL     :
+                                    (l1d_lrq_if.resp_payload.full        ? LRQ_FULL     :
+                                     l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT :
                                      LRQ_ASSIGNED) :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
