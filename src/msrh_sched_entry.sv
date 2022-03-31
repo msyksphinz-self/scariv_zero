@@ -77,7 +77,10 @@ logic     w_rs2_mispredicted;
 logic     w_entry_flush;
 logic     w_commit_flush;
 logic     w_br_flush;
+logic     w_load_commit_flush;
 logic     w_load_br_flush;
+
+logic     w_load_entry_flush;
 logic     w_entry_finish;
 
 // When previous instruction generates exception or jump
@@ -182,7 +185,7 @@ always_comb begin
         w_state_next = msrh_pkg::INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
-        if (w_load_br_flush) begin
+        if (w_load_entry_flush) begin
           w_state_next = msrh_pkg::DEAD;
           w_dead_next  = 1'b1;
         end else begin
@@ -294,8 +297,10 @@ assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
+assign w_load_commit_flush = msrh_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
 assign w_load_br_flush = msrh_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush;
 
 assign w_entry_finish = i_out_ptr_valid;
 

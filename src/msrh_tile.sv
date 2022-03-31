@@ -516,7 +516,7 @@ generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx
     .o_ex3_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
 
     .i_commit  (w_commit),
-    .br_upd_if (w_ex3_br_upd_if),
+    .br_upd_if (br_upd_fe_if),
 
     .o_done_report (w_fpu_done_rpt[fpu_idx])
   );
