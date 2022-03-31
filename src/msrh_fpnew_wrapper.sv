@@ -57,9 +57,9 @@ always_comb begin
     OP_FMAX      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::MINMAX  };
     OP_FCVT_W_S  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::F2I     };
     OP_FCVT_WU_S : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::F2I     };
-    OP_FEQ       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::CMP     };
-    OP_FLT       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::CMP     };
-    OP_FLE       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::CMP     };
+    OP_FEQ       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FLT       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FLE       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::CMP     };
     OP_FCLASS    : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::CLASSIFY};
     OP_FCVT_S_W  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::I2F     };
     OP_FCVT_S_WU : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::I2F     };
@@ -79,6 +79,17 @@ always_comb begin
     default      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::FMADD   };
   endcase // case (i_op)
 end // always_comb
+
+fpnew_pkg::operation_e                   r_fpnew_op[1];
+logic [ 0: 0]                            r_fpnew_op_mod;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fpnew_op[0] <= 'h0;
+  end else begin
+    r_fpnew_op    [0] <= w_fpnew_op;
+    r_fpnew_op_mod[0] <= w_fpnew_op;
+  end
+end
 
 
 assign w_fma32_in_valid    = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
@@ -132,9 +143,9 @@ fpnew_noncomp #(
   .rst_ni (i_reset_n),
   .operands_i      ( w_fma32_rs             ),
   .is_boxed_i      ( w_fma32_boxed          ),
-  .rnd_mode_i      ( w_fpnew_op             ),
-  .op_i            ( w_fpnew_op_mod         ),
-  .op_mod_i        ( 1'b0                   ),
+  .rnd_mode_i      ( fpnew_pkg::RNE         ),
+  .op_i            ( w_fpnew_op             ),
+  .op_mod_i        ( w_fpnew_op_mod         ),
   .tag_i           ( 1'b0                   ),
   .aux_i           (                        ), // Remember whether operation was vectorial
   .in_valid_i      ( w_noncomp32_in_valid   ),
@@ -210,6 +221,13 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
    .busy_o          (                 )   // output logic
    );
 
+
+  logic [ 1: 0][63: 0]                    w_noncomp64_rs;
+  logic [ 1: 0]                           w_noncomp64_boxed;
+  assign w_noncomp64_rs[0] = i_rs1[63: 0];
+  assign w_noncomp64_rs[1] = i_rs2[63: 0];
+  assign w_noncomp64_boxed = 2'b11;
+
   fpnew_noncomp #(
       .FpFormat   (fpnew_pkg::FP64),
       .NumPipeRegs(1),
@@ -219,11 +237,14 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
   ) fpnew_noncomp64 (
     .clk_i  (i_clk    ),
     .rst_ni (i_reset_n),
-    .operands_i      ( w_fma64_rs             ),
-    .is_boxed_i      ( w_fma64_boxed          ),
-    .rnd_mode_i      ( w_fpnew_op             ),
-    .op_i            ( w_fpnew_op_mod         ),
-    .op_mod_i        ( 1'b0                   ),
+    .operands_i      ( w_noncomp64_rs         ),
+    .is_boxed_i      ( w_noncomp64_boxed      ),
+    .rnd_mode_i      ( i_pipe_ctrl.op == OP_FEQ ? fpnew_pkg::RDN :
+                       i_pipe_ctrl.op == OP_FLT ? fpnew_pkg::RTZ :
+                       i_pipe_ctrl.op == OP_FLE ? fpnew_pkg::RNE :
+                       fpnew_pkg::RNE         ),
+    .op_i            ( w_fpnew_op             ),
+    .op_mod_i        ( w_fpnew_op_mod         ),
     .tag_i           ( 1'b0                   ),
     .aux_i           (                        ), // Remember whether operation was vectorial
     .in_valid_i      ( w_noncomp64_in_valid   ),
@@ -243,10 +264,15 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
 
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid;
   assign o_result = w_fma32_out_valid     ? {{32{w_fma32_result    [31]}}, w_fma32_result} :
+                    w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
                     w_noncomp32_out_valid ? {{32{w_noncomp32_result[31]}}, w_noncomp32_result} :
                     w_fma64_out_valid  ? w_fma64_result :
+                    w_noncomp64_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp64_class_mask :
                     /* w_noncomp64_out_valid ? */ w_noncomp64_result;
-  assign o_fflags = w_fma32_out_valid ? w_fma32_fflags : w_fma64_fflags;
+  assign o_fflags = w_fma32_out_valid ? w_fma32_fflags :
+                    w_noncomp32_out_valid ? w_noncomp32_status :
+                    w_noncomp64_out_valid ? w_noncomp64_status :
+                    w_fma64_fflags;
 
 end else if (riscv_pkg::XLEN_W==32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid;
