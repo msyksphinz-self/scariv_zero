@@ -499,6 +499,9 @@ std::map<int, const char *> riscv_excpt_map {
   {12, "Instruction Page Fault"},
   {13, "Load Page Fault"},
   {15, "Store Page Fault"},
+  {24, "MRET Flush"},
+  {25, "SRET Flush"},
+  {26, "URET Flush"},
   {27, "CSR Update Flush"},
   {28, "Another Flush"}
 };
@@ -514,8 +517,9 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {
-    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %d PC=%012x, Inst=%08x, %s\n",
-            time, rtl_cmt_id, rtl_grp_id, rtl_exception_cause,
+    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012x, Inst=%08x, %s\n",
+            time, rtl_cmt_id, rtl_grp_id,
+            riscv_excpt_map[rtl_exception_cause], rtl_exception_cause,
             rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   }
   if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
