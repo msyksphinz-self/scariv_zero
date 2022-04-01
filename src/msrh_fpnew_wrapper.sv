@@ -42,6 +42,12 @@ assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31:
 assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[31: 0] : i_rs3[31: 0];
 assign w_fma32_boxed[2:0] = 3'b111;
 
+logic [ 1: 0][31: 0]                     w_noncomp32_rs;
+logic [ 1: 0]                            w_noncomp32_boxed;
+assign w_noncomp32_rs[0] = i_rs1[31: 0];
+assign w_noncomp32_rs[1] = i_rs2[31: 0];
+assign w_noncomp32_boxed = 2'b11;
+
 always_comb begin
   case (i_pipe_ctrl.op)
     OP_FMADD     : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::FMADD   };
@@ -141,11 +147,11 @@ fpnew_noncomp #(
     .PipeConfig (fpnew_pkg::BEFORE),
     .TagType    (logic),
     .AuxType    (logic)
-) fpnew_noncomp64 (
+) fpnew_noncomp32 (
   .clk_i  (i_clk    ),
   .rst_ni (i_reset_n),
-  .operands_i      ( w_fma32_rs             ),
-  .is_boxed_i      ( w_fma32_boxed          ),
+  .operands_i      ( w_noncomp32_rs         ),
+  .is_boxed_i      ( w_noncomp32_boxed      ),
   .rnd_mode_i      ( fpnew_pkg::RNE         ),
   .op_i            ( w_fpnew_op             ),
   .op_mod_i        ( w_fpnew_op_mod         ),
