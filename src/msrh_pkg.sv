@@ -280,7 +280,7 @@ typedef struct packed {
     logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
 
     reg_wr_issue_t         wr_reg;
-    reg_rd_issue_t [ 1: 0] rd_regs;
+    reg_rd_issue_t [ 2: 0] rd_regs;
 
     logic                          except_valid;
     except_t                       except_type;
@@ -338,6 +338,8 @@ function issue_t assign_issue_t(disp_t in,
   ret.rd_regs[1].rnid = in.rd_regs[1].rnid;
   ret.rd_regs[1].ready = in.rd_regs[1].ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
   ret.rd_regs[1].predict_ready = rs2_rel_hit & rs2_may_mispred;
+
+  ret.rd_regs[2] = 'h0;
 
   ret.except_valid = 1'b0;
   ret.except_type  = INST_ADDR_MISALIGN;
