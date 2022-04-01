@@ -12,4 +12,4 @@
 	url = git@github.com:msyksphinz-self/riscv-tests.git
 [submodule "src/fpnew"]
 	path = src/fpnew
-	url = https://github.com/pulp-platform/fpnew.git
+	url = https://github.com/msyksphinz-self/fpnew.git
