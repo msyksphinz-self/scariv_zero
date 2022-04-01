@@ -226,7 +226,7 @@ typedef struct packed {
 
     grp_id_t   except_valid;
     except_t [msrh_conf_pkg::DISP_SIZE-1:0] except_type;
-    riscv_pkg::xlen_t except_tval;
+    riscv_pkg::xlen_t [msrh_conf_pkg::DISP_SIZE-1:0] except_tval;
 
     grp_id_t  dead;
     grp_id_t  flush_valid;

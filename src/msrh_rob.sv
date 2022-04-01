@@ -37,7 +37,6 @@ logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_except_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
 
-logic [DISP_SIZE-1: 0] w_cmt_except_valid_oh;
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 except_t                            w_except_type_selected;
 riscv_pkg::xlen_t      w_except_tval_selected;
