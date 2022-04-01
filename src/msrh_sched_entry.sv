@@ -39,7 +39,6 @@ module msrh_sched_entry
    // Branch Flush Notification
    br_upd_if.slave                             br_upd_if,
 
-   output logic                                o_entry_done,
    output logic                                o_entry_wait_complete,
    output logic                                o_entry_finish,
 

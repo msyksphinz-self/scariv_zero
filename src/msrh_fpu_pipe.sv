@@ -84,8 +84,6 @@ decoder_fpu_ctrl u_pipe_ctrl (
   .op  (w_ex0_pipe_ctrl.op)
 );
 
-assign w_ex0_div_stall = w_ex0_pipe_ctrl.op == OP_FDIV;
-
 // ---------------------
 // EX1
 // ---------------------

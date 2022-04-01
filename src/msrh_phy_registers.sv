@@ -88,7 +88,7 @@ endgenerate
   endgenerate
 
 `ifdef SIMULATION
-riscv_pkg::xlen_t w_sim_phy_regs;
+riscv_pkg::xlen_t w_sim_phy_regs[msrh_pkg::RNID_SIZE];
 generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : sim_reg_loop
   assign w_sim_phy_regs[r_idx] = r_phy_regs[r_idx];
 end

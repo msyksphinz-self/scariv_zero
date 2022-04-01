@@ -107,35 +107,50 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic w_mul_commit_flush;
   logic w_mul_br_flush;
   logic w_mul_flush_valid;
-  assign w_mul_commit_flush = msrh_pkg::is_commit_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], i_commit);
-  assign w_mul_br_flush     = msrh_pkg::is_br_flush_target(r_br_mask[s_idx], br_upd_if.brtag,
-                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
-  assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
+  if (s_idx != 0) begin
+    assign w_mul_commit_flush = msrh_pkg::is_commit_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], i_commit);
+    assign w_mul_br_flush     = msrh_pkg::is_br_flush_target(r_br_mask[s_idx], br_upd_if.brtag,
+                                                             br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+    assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
+  end else begin
+    assign w_mul_flush_valid  = 1'b0;
+  end
 
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      prod_pipe        [s_idx+1] <= 'h0;
-      multiplier_pipe[s_idx+1] <= 'h0;
-      multiplicand_pipe  [s_idx+1] <= 'h0;
-      r_mul_valid_pipe       [s_idx+1] <= 1'b0;
-      op_pipe          [s_idx+1] <= OP__;
-      neg_out_pipe     [s_idx+1] <= 1'b0;
-    end else begin
-      if (s_idx == 0) begin
+  if (s_idx == 0) begin
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        prod_pipe         [1] <= 'h0;
+        multiplier_pipe   [1] <= 'h0;
+        multiplicand_pipe [1] <= 'h0;
+        r_mul_valid_pipe  [1] <= 1'b0;
+        op_pipe           [1] <= OP__;
+        neg_out_pipe      [1] <= 1'b0;
+      end else begin
         /* verilator lint_off WIDTH */
-        prod_pipe        [s_idx+1] <= w_prod;
-        multiplier_pipe  [s_idx+1] <= w_op1;
-        multiplicand_pipe[s_idx+1] <= w_op2;
-        r_mul_valid_pipe [s_idx+1] <= i_valid & ~w_flush_valid_load & w_is_mul;
-        op_pipe          [s_idx+1] <= i_op;
-        neg_out_pipe     [s_idx+1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
-        r_cmt_id         [s_idx+1] <= i_cmt_id;
-        r_grp_id         [s_idx+1] <= i_grp_id;
-        r_br_mask        [s_idx+1] <= i_br_mask;
+        prod_pipe        [1] <= w_prod;
+        multiplier_pipe  [1] <= w_op1;
+        multiplicand_pipe[1] <= w_op2;
+        r_mul_valid_pipe [1] <= i_valid & ~w_flush_valid_load & w_is_mul;
+        op_pipe          [1] <= i_op;
+        neg_out_pipe     [1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
+        r_cmt_id         [1] <= i_cmt_id;
+        r_grp_id         [1] <= i_grp_id;
+        r_br_mask        [1] <= i_br_mask;
 
-        r_mul_rd_rnid [s_idx+1] <= i_rd_rnid;
-        r_mul_rd_type [s_idx+1] <= i_rd_type;
-        r_mul_index_oh[s_idx+1] <= i_index_oh;
+        r_mul_rd_rnid [1] <= i_rd_rnid;
+        r_mul_rd_type [1] <= i_rd_type;
+        r_mul_index_oh[1] <= i_index_oh;
+      end // else: !if(!i_reset_n)
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end else begin // if (s_idx == 0)
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        prod_pipe         [s_idx+1] <= 'h0;
+        multiplier_pipe   [s_idx+1] <= 'h0;
+        multiplicand_pipe [s_idx+1] <= 'h0;
+        r_mul_valid_pipe  [s_idx+1] <= 1'b0;
+        op_pipe           [s_idx+1] <= OP__;
+        neg_out_pipe      [s_idx+1] <= 1'b0;
       end else begin
         /* verilator lint_off WIDTH */
         prod_pipe        [s_idx+1] <= $signed(w_prod);
@@ -151,9 +166,9 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         r_mul_rd_rnid [s_idx+1] <= r_mul_rd_rnid [s_idx];
         r_mul_rd_type [s_idx+1] <= r_mul_rd_type [s_idx];
         r_mul_index_oh[s_idx+1] <= r_mul_index_oh[s_idx];
-      end // else: !if(s_idx == 0)
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+      end // else: !if(!i_reset_n)
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end // else: !if(s_idx == 0)
 end // block: mul_loop
 endgenerate
 

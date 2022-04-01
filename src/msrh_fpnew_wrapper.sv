@@ -20,6 +20,7 @@ module msrh_fpnew_wrapper
 
 
 logic                                    w_fma32_in_valid;
+logic                                    w_noncomp32_in_valid;
 
 logic                                    w_fma_valid;
 logic                                    w_noncomp_valid;
@@ -33,6 +34,8 @@ logic                                    w_noncomp32_out_valid;
 logic [31: 0]                            w_noncomp32_result;
 fpnew_pkg::operation_e                   w_fpnew_op;
 logic                                    w_fpnew_op_mod;
+fpnew_pkg::status_t                      w_noncomp32_status;
+fpnew_pkg::classmask_e                   w_noncomp32_class_mask;
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
@@ -92,8 +95,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-assign w_fma32_in_valid    = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
-assign w_noncmp32_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
+assign w_fma32_in_valid     = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
+assign w_noncomp32_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
 
 fpnew_fma
   #(

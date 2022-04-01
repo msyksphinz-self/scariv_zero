@@ -105,6 +105,7 @@ riscv_pkg::xlen_t        w_ex2_data_tmp;
 riscv_pkg::xlen_t        w_ex2_data_sign_ext;
 logic                                 w_ex2_load_mispredicted;
 logic                                 r_ex2_tlb_miss;
+logic                                 w_ex2_l1d_missed;
 
 //
 // EX3 stage
