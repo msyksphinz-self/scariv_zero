@@ -145,7 +145,7 @@ interface cmt_brtag_if;
 
   logic          commit;
   msrh_pkg::grp_id_t is_br_inst;
-  msrh_pkg::grp_id_t brtag[$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)];
+  logic [msrh_conf_pkg::DISP_SIZE-1: 0][$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
 
   modport master (
     output commit,
