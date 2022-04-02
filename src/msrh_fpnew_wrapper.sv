@@ -185,7 +185,9 @@ fpnew_noncomp #(
   .rst_ni (i_reset_n),
   .operands_i      ( w_noncomp32_rs         ),
   .is_boxed_i      ( w_noncomp32_boxed      ),
-  .rnd_mode_i      ( i_rnd_mode             ),
+  .rnd_mode_i      ( i_pipe_ctrl.op == OP_FEQ  ? fpnew_pkg::RDN :
+                     ((i_pipe_ctrl.op == OP_FLT) | (i_pipe_ctrl.op == OP_FMAX))  ? fpnew_pkg::RTZ :
+                     /* ((i_pipe_ctrl.op == OP_FLE) | (i_pipe_ctrl.op == OP_FMIN))  ? */ fpnew_pkg::RNE),
   .op_i            ( w_fpnew_op             ),
   .op_mod_i        ( w_fpnew_op_mod         ),
   .tag_i           ( 1'b0                   ),
@@ -383,7 +385,9 @@ end else if (riscv_pkg::XLEN_W==32) begin : block_32 // block: fma64
                     w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
                     w_cast_out_valid    ? w_cast_result :
                     w_noncomp32_result;
-  assign o_fflags = w_fma32_fflags;
+  assign o_fflags = w_noncomp32_out_valid ? w_noncomp32_status :
+                    w_cast_out_valid      ? w_cast_status :
+                    w_fma32_fflags;
 end
 endgenerate
 
