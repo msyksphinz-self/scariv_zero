@@ -52,7 +52,11 @@ logic [ 1: 0][31: 0]                     w_noncomp32_rs;
 logic [ 1: 0]                            w_noncomp32_boxed;
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
+`ifdef RV64
 assign w_noncomp32_boxed = {&i_rs2[63: 32], &i_rs1[63: 32]};
+`else // RV64
+assign w_noncomp32_boxed = 2'b00;
+`endif // RV64
 
 always_comb begin
   case (i_pipe_ctrl.op)
