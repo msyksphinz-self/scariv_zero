@@ -38,7 +38,7 @@ always_comb begin
 end
 
 generate for (genvar d_idx = 0; d_idx < 32; d_idx++) begin : reg_loop
-  if (d_idx == 0) begin
+  if ((REG_TYPE == GPR) & (d_idx == 0)) begin
     assign r_commit_map[d_idx] = 'h0;
   end else begin
     always_ff @ (posedge i_clk, negedge i_reset_n) begin

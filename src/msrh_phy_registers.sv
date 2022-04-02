@@ -18,13 +18,12 @@ module msrh_phy_registers
   msrh_pkg::rnid_t wr_rnid[msrh_pkg::TGT_BUS_SIZE];
   riscv_pkg::xlen_t wr_data[msrh_pkg::TGT_BUS_SIZE];
 
-  generate
-    for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
-      assign wr_valid[w_idx] = i_phy_wr[w_idx].valid & (i_phy_wr[w_idx].rd_type == REG_TYPE);
-      assign wr_rnid [w_idx] = i_phy_wr[w_idx].rd_rnid;
-      assign wr_data [w_idx] = i_phy_wr[w_idx].rd_data;
-    end
-  endgenerate
+generate for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
+  assign wr_valid[w_idx] = i_phy_wr[w_idx].valid & (i_phy_wr[w_idx].rd_type == REG_TYPE);
+  assign wr_rnid [w_idx] = i_phy_wr[w_idx].rd_rnid;
+  assign wr_data [w_idx] = i_phy_wr[w_idx].rd_data;
+end
+endgenerate
 
 // RNID = 0 is always for X0
 
@@ -56,6 +55,10 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : re
       end
     end
   end // else: !if((REG_TYPE == GPR) & (r_idx == 0))
+`ifdef SIMULATION
+  riscv_pkg::xlen_t w_sim_phy_regs;
+  assign w_sim_phy_regs = r_phy_regs[r_idx];
+`endif // SIMULATION
 end
 endgenerate
 
@@ -87,12 +90,5 @@ endgenerate
     end
   endgenerate
 
-`ifdef SIMULATION
-riscv_pkg::xlen_t w_sim_phy_regs[msrh_pkg::RNID_SIZE];
-generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : sim_reg_loop
-  assign w_sim_phy_regs[r_idx] = r_phy_regs[r_idx];
-end
-endgenerate
-`endif // SIMULATION
 
 endmodule

@@ -125,7 +125,7 @@ always_comb begin
     w_entry_next.pc_addr = i_load_pc_addr;
     w_entry_next.inst    = i_load_inst;
     w_entry_next.br_upd_info = 'h0;
-
+    w_entry_next.fflags_update_valid = 'h0;
 
     w_entry_next.is_br_included = i_load_br_included;
 

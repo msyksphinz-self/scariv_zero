@@ -19,46 +19,47 @@ logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_phy_valids;
 msrh_pkg::rnid_t       w_phy_rnids[msrh_pkg::TGT_BUS_SIZE];
 
 logic [msrh_pkg::RNID_SIZE-1: 0]             r_inflight_list;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_inflight_list[0] <= 1'b1;
-  end
-end
 
-generate for (genvar rn_idx = 1; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
-  grp_id_t w_update_fetch_valid_tmp;
-  grp_id_t w_update_fetch_data_tmp;
+generate for (genvar rn_idx = 0; rn_idx < msrh_pkg::RNID_SIZE; rn_idx++) begin : list_loop
+  if ((REG_TYPE == GPR) & (rn_idx == 0)) begin
+
+    assign r_inflight_list[0] = 1'b1;
+
+  end else begin
+    grp_id_t w_update_fetch_valid_tmp;
+    grp_id_t w_update_fetch_data_tmp;
   logic w_update_fetch_valid;
   logic w_update_fetch_data;
-  for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
-    assign w_update_fetch_valid_tmp [d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
-    assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
-  end
-  assign w_update_fetch_valid   = |w_update_fetch_valid_tmp;
-  assign w_update_fetch_data  = |w_update_fetch_data_tmp;
+    for (genvar d_fetch_idx = 0; d_fetch_idx < msrh_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
+      assign w_update_fetch_valid_tmp [d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
+      assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
+    end
+    assign w_update_fetch_valid   = |w_update_fetch_valid_tmp;
+    assign w_update_fetch_data  = |w_update_fetch_data_tmp;
 
   logic [msrh_pkg::TGT_BUS_SIZE-1: 0] w_target_valid_tmp;
-  logic w_target_valid;
-  for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
-    assign w_target_valid_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid &
-                                            (i_phy_wr[d_cmt_idx].rd_rnid == rn_idx) &
-                                            (i_phy_wr[d_cmt_idx].rd_type == REG_TYPE);
-  end
-  assign w_target_valid   = |w_target_valid_tmp;
-
-
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_inflight_list[rn_idx] <= 1'b1;
-    end else begin
-      if (w_update_fetch_valid) begin
-        r_inflight_list[rn_idx] <= w_update_fetch_data;
-      end else if (w_target_valid) begin
-        r_inflight_list[rn_idx] <= 'b1;
-      end
+  logic                               w_target_valid;
+    for (genvar d_cmt_idx = 0; d_cmt_idx < msrh_pkg::TGT_BUS_SIZE; d_cmt_idx++) begin
+      assign w_target_valid_tmp [d_cmt_idx] = i_phy_wr[d_cmt_idx].valid &
+                                              (i_phy_wr[d_cmt_idx].rd_rnid == rn_idx) &
+                                              (i_phy_wr[d_cmt_idx].rd_type == REG_TYPE);
     end
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+    assign w_target_valid   = |w_target_valid_tmp;
 
+
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_inflight_list[rn_idx] <= 1'b1;
+      end else begin
+        if (w_update_fetch_valid) begin
+          r_inflight_list[rn_idx] <= w_update_fetch_data;
+        end else if (w_target_valid) begin
+          r_inflight_list[rn_idx] <= 'b1;
+        end
+      end
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+  end // else: !if((REG_TYPE == GPR) & (rn_idx == 0))
 end // block: list_loop
 endgenerate
 
