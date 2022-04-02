@@ -55,7 +55,7 @@ assign w_noncomp32_rs[1] = i_rs2[31: 0];
 `ifdef RV64
 assign w_noncomp32_boxed = {&i_rs2[63: 32], &i_rs1[63: 32]};
 `else // RV64
-assign w_noncomp32_boxed = 2'b00;
+assign w_noncomp32_boxed = 2'b11;
 `endif // RV64
 
 always_comb begin
@@ -379,7 +379,10 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
 
 end else if (riscv_pkg::XLEN_W==32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid;
-  assign o_result = w_fma32_out_valid ? w_fma32_result    : w_noncomp32_result;
+  assign o_result = w_fma32_out_valid ? w_fma32_result    :
+                    w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
+                    w_cast_out_valid    ? w_cast_result :
+                    w_noncomp32_result;
   assign o_fflags = w_fma32_fflags;
 end
 endgenerate
