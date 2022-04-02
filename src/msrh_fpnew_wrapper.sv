@@ -8,6 +8,7 @@ module msrh_fpnew_wrapper
    input logic                           i_valid,
    output logic                          o_ready,
    input pipe_ctrl_t                     i_pipe_ctrl,
+   input logic [ 2: 0]                   i_rnd_mode,
 
    input riscv_pkg::xlen_t  i_rs1,
    input riscv_pkg::xlen_t  i_rs2,
@@ -51,7 +52,7 @@ logic [ 1: 0][31: 0]                     w_noncomp32_rs;
 logic [ 1: 0]                            w_noncomp32_boxed;
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
-assign w_noncomp32_boxed = 2'b11;
+assign w_noncomp32_boxed = {&i_rs2[63: 32], &i_rs1[63: 32]};
 
 always_comb begin
   case (i_pipe_ctrl.op)
@@ -67,8 +68,8 @@ always_comb begin
     OP_FSGNJ_S   : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJN_S  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJX_S  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
-    OP_FMIN      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::MINMAX  };
-    OP_FMAX      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::MINMAX  };
+    OP_FMIN      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::MINMAX  };
+    OP_FMAX      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::MINMAX  };
     OP_FCVT_W_S  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::F2I     };
     OP_FCVT_WU_S : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, fpnew_pkg::F2I     };
     OP_FEQ       : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b1, 1'b0, fpnew_pkg::CMP     };
@@ -147,7 +148,7 @@ fpnew_32
  // Input signals
  .operands_i      (w_fma32_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
  .is_boxed_i      (w_fma32_boxed    ),  // input logic [2:0]                 // 3 operands
- .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
+ .rnd_mode_i      (i_rnd_mode       ),  // input fpnew_pkg::roundmode_e
  .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
  .op_mod_i        (w_fpnew_op_mod   ),  // input logic
  .tag_i           (1'b0             ),  // input TagType
@@ -180,7 +181,7 @@ fpnew_noncomp #(
   .rst_ni (i_reset_n),
   .operands_i      ( w_noncomp32_rs         ),
   .is_boxed_i      ( w_noncomp32_boxed      ),
-  .rnd_mode_i      ( fpnew_pkg::RNE         ),
+  .rnd_mode_i      ( i_rnd_mode             ),
   .op_i            ( w_fpnew_op             ),
   .op_mod_i        ( w_fpnew_op_mod         ),
   .tag_i           ( 1'b0                   ),
@@ -238,7 +239,7 @@ fpnew_opgroup_multifmt_slice /* #(
   .rst_ni          ( i_reset_n ),
   .operands_i      ( w_multifmt_rs    ),
   .is_boxed_i      ( w_multifmt_boxed ),
-  .rnd_mode_i      ( fpnew_pkg::RNE   ),
+  .rnd_mode_i      ( i_rnd_mode       ),
   .op_i            ( w_fpnew_op       ),
   .op_mod_i        ( w_fpnew_op_mod   ),
   .src_fmt_i       ( w_src_fp_fmt     ),
@@ -295,7 +296,7 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
    // Input signals
    .operands_i      (w_fma64_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
    .is_boxed_i      (w_fma64_boxed    ),  // input logic [2:0]                 // 3 operands
-   .rnd_mode_i      (fpnew_pkg::RNE   ),  // input fpnew_pkg::roundmode_e
+   .rnd_mode_i      (i_rnd_mode       ),  // input fpnew_pkg::roundmode_e
    .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
    .op_mod_i        (w_fpnew_op_mod   ),  // input logic
    .tag_i           (1'b0             ),  // input TagType
@@ -335,10 +336,9 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
     .rst_ni (i_reset_n),
     .operands_i      ( w_noncomp64_rs         ),
     .is_boxed_i      ( w_noncomp64_boxed      ),
-    .rnd_mode_i      ( i_pipe_ctrl.op == OP_FEQ ? fpnew_pkg::RDN :
-                       i_pipe_ctrl.op == OP_FLT ? fpnew_pkg::RTZ :
-                       i_pipe_ctrl.op == OP_FLE ? fpnew_pkg::RNE :
-                       fpnew_pkg::RNE         ),
+    .rnd_mode_i      ( i_pipe_ctrl.op == OP_FEQ  ? fpnew_pkg::RDN :
+                       ((i_pipe_ctrl.op == OP_FLT) | (i_pipe_ctrl.op == OP_FMAX))  ? fpnew_pkg::RTZ :
+                       /* ((i_pipe_ctrl.op == OP_FLE) | (i_pipe_ctrl.op == OP_FMIN))  ? */ fpnew_pkg::RNE),
     .op_i            ( w_fpnew_op             ),
     .op_mod_i        ( w_fpnew_op_mod         ),
     .tag_i           ( 1'b0                   ),
@@ -360,7 +360,7 @@ generate if (riscv_pkg::XLEN_W==64) begin : fma64
 
 
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid | w_cast_out_valid;
-  assign o_result = w_fma32_out_valid     ? {{32{w_fma32_result    [31]}}, w_fma32_result} :
+  assign o_result = w_fma32_out_valid     ? {{32{1'b1}}, w_fma32_result} :
                     w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
                     w_noncomp32_out_valid ? {{32{w_noncomp32_result[31]}}, w_noncomp32_result} :
                     w_fma64_out_valid  ? w_fma64_result :

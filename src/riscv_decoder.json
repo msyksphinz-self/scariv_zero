@@ -1247,7 +1247,7 @@
     {
         "name":"fcvt.l.d   r[11:7],f[19:15]",
         "length":"32", "xlen":["64"],
-        "field":["11000", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "field":["11000", "01", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["size", "w"], ["op", "fcvt_l_d"]]
@@ -1255,7 +1255,7 @@
     {
         "name":"fcvt.lu.d  r[11:7],f[19:15]",
         "length":"32", "xlen":["64"],
-        "field":["11000", "01", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "field":["11000", "01", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]],
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["size", "w"], ["op", "fcvt_lu_d"]]

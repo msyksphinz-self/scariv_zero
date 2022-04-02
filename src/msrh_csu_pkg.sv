@@ -59,6 +59,8 @@ riscv_pkg::xlen_t uepc;
 riscv_pkg::xlen_t satp;
 riscv_pkg::xlen_t medeleg;
 riscv_pkg::xlen_t sedeleg;
+logic [31: 0] fcsr;
+
 
 modport master (
   output priv,
@@ -71,7 +73,8 @@ modport master (
   output uepc,
   output satp,
   output medeleg,
-  output sedeleg
+  output sedeleg,
+  output fcsr
 );
 
 modport slave (
@@ -85,7 +88,8 @@ modport slave (
   input uepc,
   input satp,
   input medeleg,
-  input sedeleg
+  input sedeleg,
+  input fcsr
 );
 
 endinterface // csr_info_if

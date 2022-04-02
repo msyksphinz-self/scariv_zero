@@ -8,6 +8,9 @@ module msrh_fpu_pipe
     input logic i_clk,
     input logic i_reset_n,
 
+    /* CSR information */
+    csr_info_if.slave  csr_info,
+
     input msrh_pkg::issue_t rv0_issue,
     input logic [RV_ENTRY_SIZE-1:0] rv0_index,
     input msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
@@ -353,6 +356,7 @@ u_msrh_fpnew_wrapper
    .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
+   .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
 
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),

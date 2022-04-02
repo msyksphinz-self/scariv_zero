@@ -6,6 +6,8 @@ module msrh_fpu #(
 
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
+    /* CSR information */
+    csr_info_if.slave  csr_info,
 
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] disp_valid,
     disp_if.watch                          disp,
@@ -109,6 +111,8 @@ u_fpu
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .csr_info (csr_info),
 
    .rv0_issue(w_rv0_issue),
    .rv0_index(w_rv0_index_oh),

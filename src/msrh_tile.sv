@@ -493,6 +493,7 @@ generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
+    .csr_info (w_csr_info),
     .rob_info_if   (w_rob_info_if),
 
     .disp_valid(w_disp_fpu_valids[fpu_idx]),

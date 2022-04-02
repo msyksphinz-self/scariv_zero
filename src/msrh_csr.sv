@@ -51,9 +51,8 @@ xlen_t r_uepc;
 xlen_t r_ucause;
 xlen_t r_ubadaddr;
 xlen_t r_uip;
-xlen_t r_fflags;
-xlen_t r_frm;
-xlen_t r_fcsr;
+logic [ 4: 0]                 r_fflags;
+logic [ 2: 0]                 r_frm;
 xlen_t r_sedeleg;
 xlen_t r_sideleg;
 xlen_t r_sie;
@@ -164,9 +163,9 @@ always_comb begin
     `SYSREG_ADDR_UCAUSE         : read_if.data = r_ucause;
     `SYSREG_ADDR_UBADADDR       : read_if.data = r_ubadaddr;
     `SYSREG_ADDR_UIP            : read_if.data = r_uip;
-    `SYSREG_ADDR_FFLAGS         : read_if.data = r_fflags;
-    `SYSREG_ADDR_FRM            : read_if.data = r_frm;
-    `SYSREG_ADDR_FCSR           : read_if.data = r_fcsr;
+    `SYSREG_ADDR_FFLAGS         : read_if.data = {27'h0, r_fflags};
+    `SYSREG_ADDR_FRM            : read_if.data = {29'h0, r_frm};
+    `SYSREG_ADDR_FCSR           : read_if.data = {24'h0, r_frm, r_fflags};
     `SYSREG_ADDR_CYCLE          : read_if.data = r_cycle  [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_TIME           : read_if.data = r_time   [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_INSTRET        : read_if.data = r_instret[riscv_pkg::XLEN_W-1: 0];
@@ -392,12 +391,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (fflags_update_if.valid) begin
       r_fflags <= fflags_update_if.fflags;
     end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_FFLAGS)) begin
-      r_fflags <= write_if.data;
+      r_fflags <= write_if.data[ 4: 0];
+    end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_FRM)) begin
+      r_frm    <= write_if.data[ 2: 0];
+    end else if (write_if.valid & (write_if.addr ==  `SYSREG_ADDR_FCSR)) begin
+      r_fflags <= write_if.data[ 4: 0];
+      r_frm    <= write_if.data[ 7: 5];
     end
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_frm           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_FRM           ) begin r_frm           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_fcsr          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_FCSR          ) begin r_fcsr          <= write_if.data; end end
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter3   <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTER3   ) begin r_hpmcounter3   <= write_if.data; end end
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter4   <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTER4   ) begin r_hpmcounter4   <= write_if.data; end end
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter5   <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPMCOUNTER5   ) begin r_hpmcounter5   <= write_if.data; end end
@@ -721,6 +723,8 @@ assign csr_info.satp    = r_satp;
 assign csr_info.priv    = w_priv_next;
 assign csr_info.medeleg = r_medeleg;
 assign csr_info.sedeleg = r_sedeleg;
+assign csr_info.fcsr    = {24'h0, r_frm, r_fflags};
+
 // assign csr_info.int_request = |(r_mip & r_mie) & (r_priv == riscv_common_pkg::PRIV_M) |
 //                               |(r_sip & r_sie) & (r_priv == riscv_common_pkg::PRIV_S) |
 //                               |(r_uip & r_uie) & (r_priv == riscv_common_pkg::PRIV_U);
