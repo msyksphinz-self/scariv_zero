@@ -13,13 +13,13 @@ module msrh_icache
 
   input                      ic_req_t i_s0_req,
   output logic               o_s0_ready,
-  input logic [PADDR_W-1:0]  i_s1_paddr,
+  input msrh_pkg::paddr_t  i_s1_paddr,
   input logic                i_s1_kill,
 
   output                     ic_resp_t o_s2_resp,
 
   output logic               o_s2_miss,
-  output logic [VADDR_W-1:0] o_s2_miss_vaddr,
+  output msrh_pkg::vaddr_t o_s2_miss_vaddr,
 
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp
@@ -28,14 +28,14 @@ module msrh_icache
 /* S1 stage */
 logic                        r_s1_valid;
 logic [msrh_conf_pkg::ICACHE_WAYS-1 : 0] w_s1_tag_hit;
-logic [VADDR_W-1:0]                      r_s1_vaddr;
+msrh_pkg::vaddr_t                      r_s1_vaddr;
 logic                                    w_s1_hit;
 
 /* S2 stage */
 logic                                    r_s2_valid;
 logic                                    r_s2_hit;
 logic [msrh_conf_pkg::ICACHE_WAYS-1 : 0]   r_s2_tag_hit;
-logic [PADDR_W-1:0]                        r_s2_paddr;
+msrh_pkg::paddr_t                        r_s2_paddr;
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
 logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  w_s2_selected_data;
 
@@ -45,8 +45,8 @@ typedef enum                              { ICInit, ICReq, ICInvalidate, ICResp 
 ic_state_t r_ic_state;
 logic                                     ic_l2_resp_fire;
 logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] r_s2_replace_way;
-logic [VADDR_W-1: 0]                      r_s2_vaddr;
-logic [VADDR_W-1: 0]                      r_s2_waiting_vaddr;
+msrh_pkg::vaddr_t                      r_s2_vaddr;
+msrh_pkg::vaddr_t                      r_s2_waiting_vaddr;
 
 
 logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] r_replace_way[2**ICACHE_TAG_LOW];

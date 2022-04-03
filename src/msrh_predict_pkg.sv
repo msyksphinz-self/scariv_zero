@@ -21,7 +21,7 @@ typedef struct packed {
   logic                                            is_call;
   logic                                            is_ret;
   logic [riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1] pc_tag;
-  logic [riscv_pkg::VADDR_W-1:0]                   target_vaddr;
+  msrh_pkg::vaddr_t                   target_vaddr;
 } btb_entry_t;
 
 endpackage // msrh_predict_pkg
@@ -29,7 +29,7 @@ endpackage // msrh_predict_pkg
 interface btb_search_if;
 
   logic                                                 s0_valid;
-  logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
+  msrh_pkg::vaddr_t                        s0_pc_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_hit;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s1_target_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_call;
@@ -81,8 +81,8 @@ interface btb_update_if;
   logic                                                 is_call;
   logic                                                 is_ret;
   logic                                                 is_rvc;
-  logic [riscv_pkg::VADDR_W-1:0]                        pc_vaddr;
-  logic [riscv_pkg::VADDR_W-1:0]                        target_vaddr;
+  msrh_pkg::vaddr_t                        pc_vaddr;
+  msrh_pkg::vaddr_t                        target_vaddr;
 
   modport master (
     output valid,
@@ -108,7 +108,7 @@ endinterface // btb_update_if
 interface bim_search_if;
 
   logic                                                 s0_valid;
-  logic [riscv_pkg::VADDR_W-1:0]                        s0_pc_vaddr;
+  msrh_pkg::vaddr_t                        s0_pc_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s1_bim_value;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_pred_taken;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s2_bim_value;
@@ -143,7 +143,7 @@ endinterface // bim_search_if
 interface bim_update_if;
 
   logic                                                 valid;
-  logic [riscv_pkg::VADDR_W-1:0]                        pc_vaddr;
+  msrh_pkg::vaddr_t                        pc_vaddr;
   logic                                                 hit;
   logic                                                 taken;
   logic [ 1: 0]                                         bim_value;

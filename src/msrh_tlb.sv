@@ -114,7 +114,7 @@ logic                                  w_tlb_miss;
 logic                                  w_map_hit;
 map_attr_t                             w_map_attributes;
 
-logic [riscv_pkg::PADDR_W-1: 0]        mpu_physaddr;
+msrh_pkg::paddr_t        mpu_physaddr;
 assign mpu_physaddr = (r_state == ST_WAIT) & ptw_if.resp.valid ? {ptw_if.resp.pte.ppn, i_tlb_req.vaddr[11: 0]} :
                       o_tlb_resp.paddr;
 

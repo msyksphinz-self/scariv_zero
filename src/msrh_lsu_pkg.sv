@@ -52,7 +52,7 @@ typedef struct   packed {
 
   typedef struct packed {
     logic valid;
-    logic [riscv_pkg::VADDR_W-1:0] vaddr;
+    msrh_pkg::vaddr_t vaddr;
   } ic_req_t;
 
   typedef struct packed {
@@ -61,7 +61,7 @@ typedef struct   packed {
     logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
     logic [ICACHE_DATA_B_W-1:0] be;
 `ifdef SIMULATION
-    logic [riscv_pkg::VADDR_W-1:0] vaddr_dbg;
+    msrh_pkg::vaddr_t vaddr_dbg;
 `endif // SIMULATION
   } ic_resp_t;
 
@@ -117,7 +117,7 @@ typedef struct   packed {
 
   typedef struct packed {
     logic          valid;
-    logic [riscv_pkg::VADDR_W-1:0] vaddr;
+    msrh_pkg::vaddr_t vaddr;
     mem_cmd_t cmd;
     logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W/8)-1: 0] size;
     logic                                               passthrough;
@@ -137,12 +137,12 @@ typedef struct   packed {
     logic              must_alloc;
     logic              prefetchable;
     logic              miss;
-    logic [riscv_pkg::PADDR_W-1:0] paddr;
+    msrh_pkg::paddr_t paddr;
   } tlb_resp_t;
 
   typedef struct packed {
     mem_cmd_t cmd;
-    logic [riscv_pkg::PADDR_W-1:0] addr;
+    msrh_pkg::paddr_t addr;
     logic [L2_CMD_TAG_W-1:0] tag;
     logic [msrh_conf_pkg::ICACHE_DATA_W-1:0] data;
     logic [ICACHE_DATA_B_W-1:0] byte_en;
@@ -156,11 +156,11 @@ typedef struct   packed {
 typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
-  logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+  msrh_pkg::paddr_t           paddr;
 } evict_payload_t;
 
 typedef struct packed {
-  logic [riscv_pkg::PADDR_W-1:0] paddr;
+  msrh_pkg::paddr_t paddr;
   logic   evict_valid;
   evict_payload_t evict_payload;
 } lrq_req_t;
@@ -174,7 +174,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic [riscv_pkg::PADDR_W-1:0] paddr;
+  msrh_pkg::paddr_t paddr;
   logic                          sent;
   logic                          get_data;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
@@ -211,7 +211,7 @@ typedef struct packed {
   logic valid;
   logic rs1;
   logic rs2;
-  logic [riscv_pkg::VADDR_W-1: 0] addr;
+  msrh_pkg::vaddr_t addr;
   // Temporary Disable
   // logic asid = UInt(width = asIdBits max 1) // TODO zero-width
 } sfence_t;
@@ -227,8 +227,8 @@ typedef struct packed {
   logic                           tlb_except_valid;
   msrh_pkg::except_t              tlb_except_type;
   logic [MEM_Q_SIZE-1:0]          index_oh;
-  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::vaddr_t vaddr;
+  msrh_pkg::paddr_t paddr;
   logic                           st_data_valid;
   riscv_pkg::xlen_t  st_data;
 } ex1_q_update_t;
@@ -253,7 +253,7 @@ typedef struct packed {
   logic                                           s0_valid;
   logic                                           s0_tag_update_valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
-  logic [riscv_pkg::PADDR_W-1: 0]                 s0_paddr;
+  msrh_pkg::paddr_t                 s0_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s0_data;
   logic [DCACHE_DATA_B_W-1: 0]                    s0_be;
 } dc_wr_req_t;
@@ -262,12 +262,12 @@ typedef struct packed {
   logic                                     s1_hit;
   logic                                     s1_miss;
   logic                                     s2_evicted_valid;
-  logic [riscv_pkg::PADDR_W-1: 0]           s2_evicted_paddr;
+  msrh_pkg::paddr_t           s2_evicted_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s2_evicted_data;
 } dc_wr_resp_t;
 
 typedef struct packed {
-  logic [riscv_pkg::PADDR_W-1:0]                  s0_paddr;
+  msrh_pkg::paddr_t                  s0_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        s0_data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       s0_be;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
@@ -284,14 +284,14 @@ typedef struct packed {
 typedef struct packed {
   logic                                           s2_evicted_valid;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s2_evicted_data;
-  logic [riscv_pkg::PADDR_W-1: 0]                 s2_evicted_paddr;
+  msrh_pkg::paddr_t                 s2_evicted_paddr;
 } s2_l1d_wr_resp_t;
 
 
 typedef struct packed {
   logic          valid;
   logic          h_pri;
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::paddr_t paddr;
 } dc_read_req_t;
 
 typedef struct packed {
@@ -305,7 +305,7 @@ typedef struct packed {
   logic                                    replace_valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]  replace_way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
-  logic [riscv_pkg::PADDR_W-1: 0]          replace_paddr;
+  msrh_pkg::paddr_t          replace_paddr;
 
 } dc_read_resp_t;
 
@@ -425,8 +425,8 @@ typedef struct packed {
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
   stq_state_t                     state;
-  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::vaddr_t vaddr;
+  msrh_pkg::paddr_t paddr;
   logic                           paddr_valid;
   logic                           is_rs2_get;
   riscv_pkg::xlen_t  rs2_data;
@@ -448,7 +448,7 @@ typedef struct packed {
 } store_op_t;
 
 typedef struct packed {
-  logic [riscv_pkg::PADDR_W-1:0] paddr;
+  msrh_pkg::paddr_t paddr;
   decoder_lsu_ctrl_pkg::size_t   acc_size;
   riscv_pkg::xlen_t data;
 } srq_req_t;
@@ -527,8 +527,8 @@ typedef struct packed {
   msrh_pkg::grp_id_t grp_id;
   ldq_state_t                     state;
   logic                           is_get_data;
-  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::vaddr_t vaddr;
+  msrh_pkg::paddr_t paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
 
   logic                                 except_valid;
@@ -590,7 +590,7 @@ typedef enum logic [2:0]{
 // Snoop interface
 
 typedef struct packed {
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::paddr_t paddr;
 } snoop_req_t;
 
 typedef struct packed {
@@ -634,7 +634,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_WAIT_FINISH  = 11
 } st_buffer_state_t;
 
-function st_buffer_entry_t assign_st_buffer (logic [riscv_pkg::PADDR_W-1: 0]  paddr,
+function st_buffer_entry_t assign_st_buffer (msrh_pkg::paddr_t  paddr,
                                              logic [ST_BUF_WIDTH/8-1: 0] strb,
                                              logic [ST_BUF_WIDTH-1: 0]   data
                                              );

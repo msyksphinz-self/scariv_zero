@@ -32,7 +32,7 @@ cmt_id_t     w_in_cmt_id, w_out_cmt_id;
 logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
-// logic [riscv_pkg::VADDR_W-1: 0]    w_upd_br_vaddr;
+// msrh_pkg::vaddr_t    w_upd_br_vaddr;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_except_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
@@ -398,7 +398,7 @@ typedef struct packed {
 logic [31: 0]        lifetime;
 cmt_id_t cmt_id;
 logic [DISP_SIZE-1:0] grp_id;
-logic [riscv_pkg::VADDR_W-1:0] pc_addr;
+msrh_pkg::vaddr_t pc_addr;
 logic [31: 0]                  inst;
 logic [31: 0]                  cmt_time;
 } lifetime_t;

@@ -155,7 +155,7 @@ encoder #(.SIZE(msrh_pkg::LRQ_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in(w_out_pt
 // -------------------------------------
 // Conflict Check of Normal LRQ Entries
 // -------------------------------------
-function automatic logic hit_lrq_same_pa (logic valid, logic [riscv_pkg::PADDR_W-1: 0] req_paddr,
+function automatic logic hit_lrq_same_pa (logic valid, msrh_pkg::paddr_t req_paddr,
                                           msrh_lsu_pkg::miss_entry_t lrq_entry,
                                           logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
@@ -165,7 +165,7 @@ function automatic logic hit_lrq_same_pa (logic valid, logic [riscv_pkg::PADDR_W
 
 endfunction // hit_lrq_same_pa
 
-function automatic logic hit_lrq_same_evict_pa (logic valid, logic [riscv_pkg::PADDR_W-1: 0] req_evict_paddr,
+function automatic logic hit_lrq_same_evict_pa (logic valid, msrh_pkg::paddr_t req_evict_paddr,
                                                 msrh_lsu_pkg::miss_entry_t lrq_entry,
                                                 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
 
@@ -178,8 +178,8 @@ endfunction // hit_lrq_same_pa
 
 
 function automatic logic hit_port_pa (logic p0_valid, logic p1_valid,
-                                      logic [riscv_pkg::PADDR_W-1: 0] p0_pa,
-                                      logic [riscv_pkg::PADDR_W-1: 0] p1_pa);
+                                      msrh_pkg::paddr_t p0_pa,
+                                      msrh_pkg::paddr_t p1_pa);
   return p0_valid & p1_valid &
     (p0_pa[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
      p1_pa[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);

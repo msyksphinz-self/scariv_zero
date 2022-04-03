@@ -18,7 +18,7 @@ module msrh_predictor
 
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
+ output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
 
  input logic i_s1_valid,
  input logic i_s2_valid,
@@ -26,7 +26,7 @@ module msrh_predictor
 
  btb_update_if.slave update_btb_if,
  btb_search_if.slave search_btb_if,
- output logic [riscv_pkg::VADDR_W-1: 0] o_s1_btb_target_vaddr,
+ output msrh_pkg::vaddr_t o_s1_btb_target_vaddr,
 
  bim_update_if.slave update_bim_if,
  bim_search_if.slave search_bim_if,

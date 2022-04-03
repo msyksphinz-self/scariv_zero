@@ -61,7 +61,7 @@ sfence_if     w_sfence_if();
 logic                          w_fence_i;
 
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
-logic [riscv_pkg::VADDR_W-1: 0]                    w_sc_ras_vaddr;
+msrh_pkg::vaddr_t                    w_sc_ras_vaddr;
 
 // ----------------------------------
 // Committer Components

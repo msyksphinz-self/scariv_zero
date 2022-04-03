@@ -47,6 +47,9 @@ package msrh_pkg;
   localparam FP_REGPORT_NUM = msrh_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                               msrh_conf_pkg::LSU_INST_NUM;          // LSU port
 
+typedef logic [riscv_pkg::VADDR_W-1: 0] vaddr_t;
+typedef logic [riscv_pkg::PADDR_W-1: 0] paddr_t;
+
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
 typedef logic [RNID_W-1: 0]    rnid_t;
@@ -122,7 +125,7 @@ typedef struct packed {
     logic          rvc_inst_valid;
     logic [15: 0]  rvc_inst;
 
-    logic [riscv_pkg::VADDR_W-1:0] pc_addr;
+    vaddr_t pc_addr;
     inst_cat_t   cat;
     brtag_t brtag;
     brmask_t         br_mask;
@@ -135,11 +138,11 @@ typedef struct packed {
     logic                           is_call;
     logic                           is_ret;
     logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
-    logic [riscv_pkg::VADDR_W-1: 0]                    ras_prev_vaddr;
+    vaddr_t                    ras_prev_vaddr;
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
-    logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
+    vaddr_t pred_target_vaddr;
 
     reg_wr_disp_t         wr_reg;
     reg_rd_disp_t [ 2: 0] rd_regs;
@@ -210,7 +213,7 @@ typedef struct packed {
 `ifdef SIMULATION
   logic                                                          mispredicted;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0]             ras_index;
-  logic [riscv_pkg::VADDR_W-1: 0]                                pred_vaddr;
+  vaddr_t                                pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
 
@@ -261,7 +264,7 @@ typedef struct packed {
 
   typedef struct packed {
     logic valid;
-    logic [riscv_pkg::VADDR_W-1:0] pc_addr;
+    vaddr_t pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
     logic        is_rvc;
@@ -277,7 +280,7 @@ typedef struct packed {
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
-    logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
+    vaddr_t pred_target_vaddr;
 
     reg_wr_issue_t         wr_reg;
     reg_rd_issue_t [ 2: 0] rd_regs;
@@ -401,7 +404,7 @@ typedef struct packed {
   grp_id_t grp_id;
   grp_id_t except_valid;
   except_t                        except_type;
-  logic [riscv_pkg::VADDR_W-1: 0] epc;
+  vaddr_t epc;
   riscv_pkg::xlen_t  tval;
   grp_id_t                        dead_id;
   grp_id_t                        flush_valid;
@@ -426,9 +429,9 @@ function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp
 logic                                     inst0_cmt_id_older;
 logic                                     inst0_grp_id_older;
 
-  inst0_cmt_id_older = inst0_cmt_id[msrh_pkg::CMT_ID_W-1]   ^ inst1_cmt_id[msrh_pkg::CMT_ID_W-1] ?
-                       inst0_cmt_id[msrh_pkg::CMT_ID_W-2:0] > inst1_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
-                       inst0_cmt_id[msrh_pkg::CMT_ID_W-2:0] < inst1_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
+  inst0_cmt_id_older = inst0_cmt_id[CMT_ID_W-1]   ^ inst1_cmt_id[CMT_ID_W-1] ?
+                       inst0_cmt_id[CMT_ID_W-2:0] > inst1_cmt_id[CMT_ID_W-2:0] :
+                       inst0_cmt_id[CMT_ID_W-2:0] < inst1_cmt_id[CMT_ID_W-2:0] ;
   inst0_grp_id_older = inst0_cmt_id_older ||
                        (inst0_cmt_id == inst1_cmt_id && (inst0_grp_id < inst1_grp_id));
 
@@ -442,9 +445,9 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
   logic w_cmt_is_older;
   logic entry_older;
 
-  w_cmt_is_older = commit.cmt_id[msrh_pkg::CMT_ID_W-1]   ^ entry_cmt_id[msrh_pkg::CMT_ID_W-1] ?
-                   commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] > entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] :
-                   commit.cmt_id[msrh_pkg::CMT_ID_W-2:0] < entry_cmt_id[msrh_pkg::CMT_ID_W-2:0] ;
+  w_cmt_is_older = commit.cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
                 (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & (entry_grp_id-1)));
 
@@ -493,9 +496,9 @@ typedef struct packed {
   brtag_t         brtag;
   brmask_t        br_mask;
 
-  logic [riscv_pkg::VADDR_W-1: 0]                      pc_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]                      target_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]                      ras_prev_vaddr;
+  vaddr_t                      pc_vaddr;
+  vaddr_t                      target_vaddr;
+  vaddr_t                      ras_prev_vaddr;
   logic                                                taken;
   logic                                                mispredict;
   logic                                                done;

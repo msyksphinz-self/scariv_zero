@@ -1,7 +1,7 @@
 interface l1d_rd_if;
 
   logic                          s0_valid;
-  logic [riscv_pkg::PADDR_W-1:0] s0_paddr;
+  msrh_pkg::paddr_t s0_paddr;
   logic                          s0_h_pri;   // Highest Priority (used for when L1D eviction swap)
   logic                                    s1_hit;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
@@ -204,7 +204,7 @@ endinterface // lrq_dc_search_if
 interface lrq_pa_search_if;
 
 logic                                 s0_valid;
-logic [riscv_pkg::PADDR_W-1: 0]       s0_paddr;
+msrh_pkg::paddr_t       s0_paddr;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_hit_index_oh;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
 logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_sent;
@@ -257,7 +257,7 @@ interface fwd_check_if;
 logic                           valid;
 msrh_pkg::cmt_id_t cmt_id;
 msrh_pkg::grp_id_t grp_id;
-logic [riscv_pkg::PADDR_W-1: 0] paddr;
+msrh_pkg::paddr_t paddr;
 riscv_pkg::xlenb_t paddr_dw;
 logic                           fwd_valid;
 riscv_pkg::xlenb_t fwd_dw;
@@ -289,7 +289,7 @@ endinterface // fwd_check_if
 
 interface lrq_fwd_if;
 logic                                     ex2_valid;
-logic [riscv_pkg::PADDR_W-1: 0]           ex2_paddr;
+msrh_pkg::paddr_t           ex2_paddr;
 logic                                     ex2_fwd_valid;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] ex2_fwd_data;
 
@@ -314,7 +314,7 @@ endinterface // lrq_fwd_if
 
 interface ldq_haz_check_if;
 logic                                 ex2_valid;
-logic [riscv_pkg::PADDR_W-1: 0]       ex2_paddr;
+msrh_pkg::paddr_t       ex2_paddr;
 msrh_pkg::cmt_id_t        ex2_cmt_id;
 msrh_pkg::grp_id_t  ex2_grp_id;
 decoder_lsu_ctrl_pkg::size_t          ex2_size;
@@ -412,7 +412,7 @@ endinterface // datapath_ptw_if
 interface lsu_access_if;
 
   logic                           req_valid;
-  logic [riscv_pkg::PADDR_W-1: 0] paddr;
+  msrh_pkg::paddr_t paddr;
   decoder_lsu_ctrl_pkg::size_t    size;
 
   logic                           resp_valid;
@@ -457,7 +457,7 @@ interface sfence_if;
   logic      valid;
   logic      is_rs1_x0;
   logic      is_rs2_x0;
-  logic [riscv_pkg::VADDR_W-1: 0] vaddr;
+  msrh_pkg::vaddr_t vaddr;
 
   modport master (
     output valid,
@@ -527,7 +527,7 @@ endinterface // snoop_unit_if
 
 interface l1d_snoop_if;
   logic                           req_s0_valid;
-  logic [riscv_pkg::PADDR_W-1: 0] req_s0_paddr ;
+  msrh_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
   msrh_lsu_pkg::lsu_status_t                 resp_s1_status;
@@ -557,7 +557,7 @@ endinterface // l1d_snoop_if
 
 interface stq_snoop_if;
   logic                           req_s0_valid;
-  logic [riscv_pkg::PADDR_W-1: 0] req_s0_paddr ;
+  msrh_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
@@ -586,7 +586,7 @@ endinterface // stq_snoop_if
 
 interface st_buffer_if;
 logic                                     valid;
-logic [riscv_pkg::PADDR_W-1: 0]           paddr;
+msrh_pkg::paddr_t           paddr;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
 

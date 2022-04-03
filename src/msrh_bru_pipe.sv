@@ -69,7 +69,7 @@ msrh_pkg::issue_t                        w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 riscv_pkg::xlen_t            r_ex2_rs1_data;
 riscv_pkg::xlen_t            r_ex2_rs2_data;
-logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr;
+msrh_pkg::vaddr_t          w_ex2_br_vaddr;
 logic                                    r_ex2_wr_valid;
 logic                                    w_ex2_br_flush;
 logic                                    r_ex2_dead;
@@ -79,7 +79,7 @@ msrh_pkg::issue_t                        w_ex3_issue_next;
 pipe_ctrl_t                              r_ex3_pipe_ctrl;
 logic                                    r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
-logic [riscv_pkg::VADDR_W-1: 0]          r_ex3_br_vaddr;
+msrh_pkg::vaddr_t          r_ex3_br_vaddr;
 logic                                    r_ex3_rs1_pred_hit;
 logic                                    r_ex3_rs2_pred_hit;
 logic                                    r_ex3_dead;
@@ -281,8 +281,8 @@ assign ex3_done_if.index_oh = r_ex3_index;
 assign ex3_done_if.except_valid  = 1'b0;
 assign ex3_done_if.except_type = msrh_pkg::except_t'('h0);
 
-logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_uj;
-logic [riscv_pkg::VADDR_W-1: 0] w_ex2_offset_sb;
+msrh_pkg::vaddr_t w_ex2_offset_uj;
+msrh_pkg::vaddr_t w_ex2_offset_sb;
 
 assign w_ex2_offset_uj = {{(riscv_pkg::VADDR_W-21){r_ex2_issue.inst[31]}},
                           r_ex2_issue.inst[31],
@@ -302,7 +302,7 @@ always_comb begin
     IMM_SB : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_sb;
     IMM_UJ : w_ex2_br_vaddr = r_ex2_issue.pc_addr + w_ex2_offset_uj;
     IMM_I  : begin
-      logic [riscv_pkg::VADDR_W-1: 0]          w_ex2_br_vaddr_tmp;
+      msrh_pkg::vaddr_t          w_ex2_br_vaddr_tmp;
       w_ex2_br_vaddr_tmp = w_ex2_rs1_selected_data[riscv_pkg::VADDR_W-1: 0] +
                            {{(riscv_pkg::VADDR_W-12){r_ex2_issue.inst[31]}},
                             r_ex2_issue.inst[31:20]};

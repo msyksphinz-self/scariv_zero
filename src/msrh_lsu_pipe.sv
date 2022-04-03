@@ -84,7 +84,7 @@ lsu_pipe_ctrl_t                        w_ex0_pipe_ctrl;
 msrh_pkg::issue_t                      r_ex1_issue, w_ex1_issue_next;
 logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
-logic [riscv_pkg::VADDR_W-1: 0]        w_ex1_vaddr;
+msrh_pkg::vaddr_t        w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
 tlb_resp_t               w_ex1_tlb_resp;
 lsu_pipe_ctrl_t                        r_ex1_pipe_ctrl;
@@ -99,7 +99,7 @@ logic                                  w_ex1_rs2_mispred;
 //
 msrh_pkg::issue_t                     r_ex2_issue, w_ex2_issue_next;
 logic [MEM_Q_SIZE-1: 0]               r_ex2_index_oh;
-logic [riscv_pkg::PADDR_W-1: 0]       r_ex2_paddr;
+msrh_pkg::paddr_t       r_ex2_paddr;
 lsu_pipe_ctrl_t                       r_ex2_pipe_ctrl;
 riscv_pkg::xlen_t        w_ex2_data_tmp;
 riscv_pkg::xlen_t        w_ex2_data_sign_ext;

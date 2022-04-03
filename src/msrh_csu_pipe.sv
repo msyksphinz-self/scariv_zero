@@ -242,7 +242,7 @@ msrh_pkg::cmt_id_t r_sfence_vma_cmt_id;
 msrh_pkg::grp_id_t r_sfence_vma_grp_id;
 logic                                r_sfence_vma_is_rs1_x0;
 logic                                r_sfence_vma_is_rs2_x0;
-logic [riscv_pkg::VADDR_W-1: 0]      r_sfence_vma_vaddr;
+msrh_pkg::vaddr_t      r_sfence_vma_vaddr;
 
 logic                                w_sfence_vma_sfence_commit_match;
 assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &

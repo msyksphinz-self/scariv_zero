@@ -13,7 +13,7 @@ interface disp_if;
   logic                                           ready;
 
 `ifdef SIMULATION
-  logic [riscv_pkg::VADDR_W-1:0]  pc_addr_debug;
+  msrh_pkg::vaddr_t  pc_addr_debug;
   assign pc_addr_debug = {pc_addr, 1'b0};
 `endif // SIMULATION
   modport master(

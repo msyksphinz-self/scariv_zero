@@ -14,13 +14,13 @@ module msrh_rename
    // from Resource Allocator
    input brtag_t i_brtag  [msrh_conf_pkg::DISP_SIZE],
    input brmask_t         i_brmask [msrh_conf_pkg::DISP_SIZE],
-   input logic                                                i_resource_ok,
+   input logic            i_resource_ok,
 
    // Branch Tag Update Signal
-   br_upd_if.slave                                            br_upd_if,
+   br_upd_if.slave        br_upd_if,
 
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
-   input logic [riscv_pkg::VADDR_W-1: 0]                    i_sc_ras_vaddr,
+   input msrh_pkg::vaddr_t                    i_sc_ras_vaddr,
 
    // Committer Rename ID update
    input msrh_pkg::commit_blk_t   i_commit,

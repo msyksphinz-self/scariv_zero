@@ -38,7 +38,7 @@ module msrh_frontend
  // For checking RAS updates
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output logic [riscv_pkg::VADDR_W-1: 0]                    o_sc_ras_vaddr,
+ output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
 
  // Fetch Target Queue
  br_upd_if.master  br_upd_fe_if,
@@ -64,15 +64,15 @@ if_sm_t  r_if_state;
 if_sm_t  w_if_state_next;
 
 logic  r_s0_valid;
-logic [riscv_pkg::VADDR_W-1:0]  r_s0_vaddr;
-logic [riscv_pkg::VADDR_W-1:0]  w_s0_vaddr_next;
-logic [riscv_pkg::VADDR_W-1:0]  w_s0_vaddr;
+msrh_pkg::vaddr_t  r_s0_vaddr;
+msrh_pkg::vaddr_t  w_s0_vaddr_next;
+msrh_pkg::vaddr_t  w_s0_vaddr;
 logic                           w_s0_predicted;
 msrh_lsu_pkg::tlb_req_t         w_s0_tlb_req;
 msrh_lsu_pkg::tlb_resp_t        w_s0_tlb_resp;
 msrh_lsu_pkg::ic_req_t          w_s0_ic_req;
 logic                           w_s0_ic_ready;
-logic [riscv_pkg::VADDR_W-1: 0] w_s0_vaddr_flush_next;
+msrh_pkg::vaddr_t w_s0_vaddr_flush_next;
 
 // ==============
 // s1 stage
@@ -82,16 +82,16 @@ logic                          r_s1_valid;
 logic                          w_s1_inst_valid;
 logic                          r_s1_clear;
 logic                          r_s1_predicted;
-logic [riscv_pkg::VADDR_W-1:0] r_s1_vaddr;
-logic [riscv_pkg::PADDR_W-1:0] r_s1_paddr;
+msrh_pkg::vaddr_t r_s1_vaddr;
+msrh_pkg::paddr_t r_s1_paddr;
 logic                          r_s1_tlb_miss;
 logic                          r_s1_tlb_except_valid;
 except_t             r_s1_tlb_except_cause;
 
-logic [riscv_pkg::VADDR_W-1: 0] w_s1_btb_target_vaddr;
+msrh_pkg::vaddr_t w_s1_btb_target_vaddr;
 
 logic                           w_s1_predict_valid;
-logic [riscv_pkg::VADDR_W-1: 0] w_s1_predict_target_vaddr;
+msrh_pkg::vaddr_t w_s1_predict_target_vaddr;
 
 // ==============
 // s2 stage
@@ -101,16 +101,16 @@ logic                           w_s2_inst_valid;
 logic                           r_s2_valid;
 logic                           r_s2_clear;
 logic                           r_s2_predicted;
-logic [riscv_pkg::VADDR_W-1:0]  r_s2_vaddr;
+msrh_pkg::vaddr_t  r_s2_vaddr;
 msrh_lsu_pkg::ic_resp_t         w_s2_ic_resp;
 logic                           w_s2_ic_miss;
-logic [riscv_pkg::VADDR_W-1: 0] w_s2_ic_miss_vaddr;
+msrh_pkg::vaddr_t w_s2_ic_miss_vaddr;
 logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 except_t              r_s2_tlb_except_cause;
 
 logic                           w_s2_predict_valid;
-logic [riscv_pkg::VADDR_W-1: 0] w_s2_predict_target_vaddr;
+msrh_pkg::vaddr_t w_s2_predict_target_vaddr;
 
 logic                           w_s2_inst_buffer_load_valid;
 
@@ -127,7 +127,7 @@ bim_search_if w_bim_search_if ();
 ras_search_if w_ras_search_if ();
 
 `ifdef SIMULATION
-logic [riscv_pkg::PADDR_W-1:0]  r_s2_paddr;
+msrh_pkg::paddr_t  r_s2_paddr;
 `endif // SIMULATION
 
 br_upd_if  br_upd_fe_tmp_if();
@@ -587,7 +587,7 @@ assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                       (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
 `ifdef SIMULATION
-logic [riscv_pkg::PADDR_W-1: 0] w_s2_ic_resp_debug_addr;
+msrh_pkg::paddr_t w_s2_ic_resp_debug_addr;
 assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.vaddr, 1'b0};
 `endif // SIMULATION
 

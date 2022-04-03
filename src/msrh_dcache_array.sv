@@ -45,7 +45,7 @@ logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_h_pri_oh;
 logic                              w_s0_dc_tag_valid;
 logic                              w_s0_dc_tag_wr_valid;
 logic                              r_s1_dc_tag_wr_valid;
-logic [riscv_pkg::PADDR_W-1: 0]    w_s0_dc_tag_addr;
+msrh_pkg::paddr_t    w_s0_dc_tag_addr;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] w_s0_dc_tag_way;
 
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s1_dc_tag_way;
@@ -56,7 +56,7 @@ logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s1_data[msrh_conf_pkg::DCACHE_WAYS];
 logic [msrh_conf_pkg::DCACHE_WAYS-1 : 0]  w_s1_tag_valid;
 logic [TAG_SIZE-1:0]                      w_s1_tag[msrh_conf_pkg::DCACHE_WAYS];
 
-logic [riscv_pkg::PADDR_W-1: 0]          r_s1_dc_tag_addr;
+msrh_pkg::paddr_t          r_s1_dc_tag_addr;
 
 logic [msrh_conf_pkg::DCACHE_WAYS-1 : 0]  w_s1_wr_tag_hit;
 logic                                     r_s1_wr_req_valid;
@@ -209,7 +209,7 @@ logic [TAG_SIZE-1:0]                     r_s2_tag[msrh_conf_pkg::DCACHE_WAYS];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] w_s2_evicted_sel_data;
 logic [TAG_SIZE-1:0]                     r_s2_evicted_sel_tag;
 logic                                    r_s2_evicted_valid;
-logic [riscv_pkg::PADDR_W-1: 0]          r_s2_dc_tag_addr;
+msrh_pkg::paddr_t          r_s2_dc_tag_addr;
 
 assign w_s1_dc_tag_way_oh = 'h1 << r_s1_dc_tag_way;
 

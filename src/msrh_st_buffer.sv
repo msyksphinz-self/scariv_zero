@@ -188,7 +188,7 @@ select_lrq_entry_oh
 logic                                           r_s2_replace_valid;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
-logic [riscv_pkg::PADDR_W-1: 0]                 r_s2_replace_paddr;
+msrh_pkg::paddr_t                 r_s2_replace_paddr;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_hit_way;
 // logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_lrq_evict_hit_ways;
 // logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         w_s2_conflict_evict_addr;
@@ -336,7 +336,7 @@ byte l1d_array[msrh_lsu_pkg::DCACHE_DATA_B_W];
 endgenerate
 
 logic                                           sim_s1_valid;
-logic [riscv_pkg::PADDR_W-1:0]                  sim_s1_paddr;
+msrh_pkg::paddr_t                  sim_s1_paddr;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        sim_s1_data ;
 logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       sim_s1_be   ;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] sim_s1_way  ;

@@ -4,7 +4,7 @@ module msrh_addr_check
 (
  input msrh_pkg::cmt_id_t      i_entry_cmt_id,
  input msrh_pkg::grp_id_t i_entry_grp_id,
- input logic [riscv_pkg::PADDR_W-1: 0]      i_entry_paddr,
+ input msrh_pkg::paddr_t      i_entry_paddr,
  input decoder_lsu_ctrl_pkg::size_t         i_entry_size,
 
  input ex2_addr_check_t                     i_ex2_addr_check[msrh_conf_pkg::LSU_INST_NUM],

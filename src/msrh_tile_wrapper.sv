@@ -45,7 +45,7 @@ module msrh_tile_wrapper (
 
     // Snoop Interface
     input logic                          i_snoop_req_valid,
-    input logic [riscv_pkg::PADDR_W-1:0] i_snoop_req_paddr,
+    input msrh_pkg::paddr_t i_snoop_req_paddr,
 
     output logic                                     o_snoop_resp_valid,
     output logic [ msrh_conf_pkg::DCACHE_DATA_W-1:0] o_snoop_resp_data,

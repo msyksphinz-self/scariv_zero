@@ -53,11 +53,11 @@ interface br_upd_if;
   logic                                is_rvc;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [ 1: 0]                        bim_value;
-  logic [riscv_pkg::VADDR_W-1: 0]      pc_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]      target_vaddr;
-  logic [riscv_pkg::VADDR_W-1: 0]      ras_prev_vaddr;
+  msrh_pkg::vaddr_t      pc_vaddr;
+  msrh_pkg::vaddr_t      target_vaddr;
+  msrh_pkg::vaddr_t      ras_prev_vaddr;
 `ifdef SIMULATION
-  logic [riscv_pkg::VADDR_W-1: 0]      pred_vaddr;
+  msrh_pkg::vaddr_t      pred_vaddr;
 `endif // SIMULATION
   logic                                dead;
   msrh_pkg::cmt_id_t cmt_id;

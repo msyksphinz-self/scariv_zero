@@ -102,7 +102,7 @@ typedef struct packed {
   logic                           pred_taken;
   logic [1:0]                     bim_value;
   logic                           btb_valid;
-  logic [riscv_pkg::VADDR_W-1: 0] pred_target_vaddr;
+  msrh_pkg::vaddr_t pred_target_vaddr;
 } pred_info_t;
 
 pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
@@ -112,7 +112,7 @@ typedef struct packed {
   logic                           is_call;
   logic                           is_ret;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
-  logic [riscv_pkg::VADDR_W-1: 0]                    pred_target_vaddr;
+  msrh_pkg::vaddr_t                    pred_target_vaddr;
 } ras_info_t;
 
 ras_info_t w_expand_ras_info[msrh_conf_pkg::DISP_SIZE];
@@ -129,7 +129,7 @@ typedef struct packed {
   pred_info_t [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
   ras_info_t  [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
 `ifdef SIMULATION
-  logic [riscv_pkg::VADDR_W-1: 0]            pc_dbg;
+  msrh_pkg::vaddr_t            pc_dbg;
 `endif // SIMULATION
 } inst_buf_t;
 
