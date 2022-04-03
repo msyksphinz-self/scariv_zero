@@ -15,7 +15,7 @@ module msrh_fpnew_wrapper
    input msrh_pkg::alen_t    i_rs3,
 
    output logic              o_valid,
-   output riscv_pkg::xlen_t  o_result,
+   output msrh_pkg::alen_t   o_result,
    output logic [ 4: 0]      o_fflags
    );
 

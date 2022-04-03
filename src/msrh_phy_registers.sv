@@ -12,11 +12,13 @@ module msrh_phy_registers
     input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
-  riscv_pkg::xlen_t r_phy_regs[msrh_pkg::RNID_SIZE];
+localparam WIDTH = REG_TYPE == GPR ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
+
+  logic [WIDTH-1: 0] r_phy_regs[msrh_pkg::RNID_SIZE];
 
   logic [msrh_pkg::TGT_BUS_SIZE-1:0] wr_valid;
   msrh_pkg::rnid_t wr_rnid[msrh_pkg::TGT_BUS_SIZE];
-  riscv_pkg::xlen_t wr_data[msrh_pkg::TGT_BUS_SIZE];
+  logic [WIDTH-1: 0] wr_data[msrh_pkg::TGT_BUS_SIZE];
 
 generate for (genvar w_idx = 0; w_idx < msrh_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
   assign wr_valid[w_idx] = i_phy_wr[w_idx].valid & (i_phy_wr[w_idx].rd_type == REG_TYPE);
@@ -32,11 +34,11 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : re
     assign r_phy_regs[r_idx] = {riscv_pkg::XLEN_W{1'b0}};
   end else begin
     logic w_wr_valid;
-    riscv_pkg::xlen_t w_wr_data;
+    logic [WIDTH-1: 0]  w_wr_data;
     select_oh #(
         .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
         .KEY_WIDTH (msrh_pkg::RNID_W),
-        .DATA_WIDTH(riscv_pkg::XLEN_W)
+        .DATA_WIDTH(WIDTH)
     ) wr_data_select (
         .i_cmp_key(r_idx[msrh_pkg::RNID_W-1:0]),
         .i_valid(wr_valid),
@@ -47,7 +49,7 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : re
     );
     always_ff @(posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
-        r_phy_regs[r_idx] <= {riscv_pkg::XLEN_W{1'b0}};
+        r_phy_regs[r_idx] <= {WIDTH{1'b0}};
       end else begin
         if (w_wr_valid) begin
           r_phy_regs[r_idx] <= w_wr_data;
@@ -56,7 +58,7 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin : re
     end
   end // else: !if((REG_TYPE == GPR) & (r_idx == 0))
 `ifdef SIMULATION
-  riscv_pkg::xlen_t w_sim_phy_regs;
+  logic [WIDTH-1: 0]  w_sim_phy_regs;
   assign w_sim_phy_regs = r_phy_regs[r_idx];
 `endif // SIMULATION
 end
@@ -66,12 +68,12 @@ endgenerate
     for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
 
       logic w_wr_valid;
-      riscv_pkg::xlen_t w_wr_data;
+      logic [WIDTH-1: 0] w_wr_data;
 
       select_oh #(
           .SEL_WIDTH (msrh_pkg::TGT_BUS_SIZE),
           .KEY_WIDTH (msrh_pkg::RNID_W),
-          .DATA_WIDTH(riscv_pkg::XLEN_W)
+          .DATA_WIDTH(WIDTH)
       ) wr_data_fwd (
           .i_cmp_key(regread[p_idx].rnid),
           .i_valid(wr_valid),
