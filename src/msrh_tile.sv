@@ -45,7 +45,7 @@ disp_if w_sc_disp ();
 
 msrh_pkg::early_wr_t w_ex1_early_wr[msrh_pkg::REL_BUS_SIZE];
 msrh_pkg::phy_wr_t   w_ex3_phy_wr  [msrh_pkg::TGT_BUS_SIZE];
-msrh_pkg::cmt_id_t w_sc_new_cmt_id;
+msrh_pkg::cmt_id_t   w_sc_new_cmt_id;
 
 regread_if #(.REG_TYPE(msrh_pkg::GPR)) int_regread[msrh_pkg::INT_REGPORT_NUM] ();
 regread_if #(.REG_TYPE(msrh_pkg::FPR)) fp_regread [msrh_pkg::FP_REGPORT_NUM ] ();

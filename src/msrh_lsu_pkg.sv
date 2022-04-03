@@ -416,27 +416,27 @@ typedef enum logic[3:0] {
 } stq_state_t;
 
 typedef struct packed {
-  logic          is_valid;
-  brtag_t brtag;
+  logic           is_valid;
+  brtag_t          brtag;
   brmask_t         br_mask;
   logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   msrh_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
-  stq_state_t                     state;
-  msrh_pkg::vaddr_t vaddr;
-  msrh_pkg::paddr_t paddr;
-  logic                           paddr_valid;
-  logic                           is_rs2_get;
-  riscv_pkg::xlen_t  rs2_data;
+  stq_state_t        state;
+  msrh_pkg::vaddr_t  vaddr;
+  msrh_pkg::paddr_t  paddr;
+  logic                                  paddr_valid;
+  logic                                  is_rs2_get;
+  msrh_pkg::alen_t                       rs2_data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
 
-  logic                                 except_valid;
-  msrh_pkg::except_t                    except_type;
+  logic              except_valid;
+  msrh_pkg::except_t except_type;
 
-  logic                                another_flush_valid;
-  msrh_pkg::cmt_id_t       another_flush_cmt_id;
+  logic              another_flush_valid;
+  msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
 } stq_entry_t;
 

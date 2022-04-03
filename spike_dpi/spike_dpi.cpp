@@ -797,7 +797,7 @@ void step_spike(long long time, long long rtl_pc,
       }
       return;
     } else {
-      fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_xlen / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, 64 / 4, rtl_wr_val);
     }
   }
 

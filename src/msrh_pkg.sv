@@ -369,18 +369,18 @@ endfunction  // assign_issue_t
   typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
 
   typedef struct packed {
-    logic valid;
+    logic  valid;
     rnid_t rd_rnid;
-    reg_t rd_type;
+    reg_t  rd_type;
 
-    logic                        may_mispred;
+    logic  may_mispred;
   } early_wr_t;
 
   typedef struct packed {
-    logic valid;
+    logic  valid;
     rnid_t rd_rnid;
-    reg_t rd_type;
-    riscv_pkg::xlen_t rd_data;
+    reg_t  rd_type;
+    alen_t rd_data;
   } phy_wr_t;
 
   typedef struct packed {
