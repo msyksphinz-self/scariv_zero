@@ -117,14 +117,21 @@ FILELIST = sim_filelist.f
 	touch .config_design_rv64
 
 rv32_build: $(FILELIST) .config_design_rv32
-	verilator --top-module $(TOP) -o ../$(TOP)_rv32_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_rv32_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV32) ../src/riscv_common_pkg.sv ../src/riscv32_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv -f $(FILELIST)
+	verilator --top-module $(TOP) \
+		-o ../$(TOP)_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		$(VERILATOR_OPTS) \
+		$(VERILATOR_OPTS_RV32) \
+		../src/riscv_common_pkg.sv \
+		../src/riscv_fpu_$(ISA)_pkg.sv \
+		../src/riscv32_pkg.sv \
+		../src/msrh_$(CONF)_conf_pkg.sv \
+		-f $(FILELIST)
 
 rv64_build: $(FILELIST) .config_design_rv64
-	verilator --top-module $(TOP) -o ../$(TOP)_rv64_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_rv64_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv  -f $(FILELIST)
+	verilator --top-module $(TOP) -o ../$(TOP)_$(ISA)_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv  -f $(FILELIST)
 
-rv32_tiny: $(FILELIST) .config_design_rv32
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=tiny
+include rv32_tiny.mk
 
 rv32_small: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
@@ -168,10 +175,6 @@ regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32
 	rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
 
 #	rv64_tiny_benchmarks rv64_small_benchmarks rv64_standard_benchmarks rv64_big_benchmarks rv64_giant_benchmarks
-
-rv32_tiny_test:
-	$(MAKE) rv32_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_tiny rv32-tests.json log_rv32_tiny $(NPROCS) 2>&1 | tee rv32_tiny_test.log
 
 rv32_small_test:
 	$(MAKE) rv32_small DEBUG=off

@@ -308,10 +308,10 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
 
   assign stbuf_fwd_check_if[p_idx].fwd_valid = |st_buf_hit_array;
-  assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[riscv_pkg::XLEN_W/8 +: riscv_pkg::XLEN_W/8] :
-                                               w_fwd_entry.strb[riscv_pkg::XLEN_W/8-1: 0];
-  assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[riscv_pkg::XLEN_W +: riscv_pkg::XLEN_W] :
-                                               w_fwd_entry.data[riscv_pkg::XLEN_W-1: 0];
+  assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[msrh_pkg::ALEN_W/8 +: msrh_pkg::ALEN_W/8] :
+                                               w_fwd_entry.strb[msrh_pkg::ALEN_W/8-1: 0];
+  assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[msrh_pkg::ALEN_W +: msrh_pkg::ALEN_W] :
+                                               w_fwd_entry.data[msrh_pkg::ALEN_W-1: 0];
 
   end // block: lsu_fwd_loop
 endgenerate

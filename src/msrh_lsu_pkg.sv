@@ -602,7 +602,7 @@ typedef struct packed {
 // -----------------------
 // Store Buffer Interface
 // -----------------------
-localparam ST_BUF_WIDTH = (riscv_pkg::XLEN_W * 2);
+localparam ST_BUF_WIDTH = (msrh_pkg::ALEN_W * 2);
 localparam ST_BUF_ENTRY_SIZE = msrh_conf_pkg::STQ_SIZE / 4;
 
 typedef enum logic [1:0] {

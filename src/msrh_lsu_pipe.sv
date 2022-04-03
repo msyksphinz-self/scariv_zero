@@ -228,9 +228,7 @@ assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
 assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.op == OP_LOAD ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
-`ifdef RV64
                                    r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
-`endif // RV64
                                    r_ex1_pipe_ctrl.size == SIZE_W  ? 4 :
                                    r_ex1_pipe_ctrl.size == SIZE_H  ? 2 :
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
@@ -460,17 +458,11 @@ always_comb begin
                                                           r_ex2_paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0]);
 
   case (r_ex2_pipe_ctrl.size)
-`ifdef RV64
     SIZE_DW : begin
       w_expected_fwd_valid     = {8{1'b1}};
     end
-`endif // RV64
     SIZE_W  : begin
-`ifdef RV32
-      w_expected_fwd_valid     = {4{1'b1}};
-`else // RV32
       w_expected_fwd_valid     = 8'h0f;
-`endif // RV32
     end
     SIZE_H  : begin
       w_expected_fwd_valid     = 8'h03;
@@ -502,9 +494,7 @@ endgenerate
 
 always_comb begin
   case(r_ex2_pipe_ctrl.size)
-`ifdef RV64
     SIZE_DW : w_ex2_data_tmp = w_ex2_fwd_final_data;
-`endif // RV64
     SIZE_W  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-32){1'b0}}, w_ex2_fwd_final_data[31: 0]};
     SIZE_H  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W-16){1'b0}}, w_ex2_fwd_final_data[15: 0]};
     SIZE_B  : w_ex2_data_tmp = {{(riscv_pkg::XLEN_W- 8){1'b0}}, w_ex2_fwd_final_data[ 7: 0]};

@@ -2,6 +2,8 @@
 
 package riscv_pkg;
 
+import riscv_fpu_pkg::*;
+
   localparam XLEN_W = 32;
   localparam VADDR_W = 32;
   localparam VADDR_MSB = 31;

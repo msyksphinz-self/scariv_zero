@@ -55,17 +55,17 @@ logic                                              w_cmt_id_match;
 
 msrh_pkg::rnid_t                     w_rs1_rnid;
 msrh_pkg::rnid_t                     w_rs2_rnid;
-msrh_pkg::reg_t                                  w_rs1_type;
-msrh_pkg::reg_t                                  w_rs2_type;
-logic                                            w_rs1_rel_hit;
-logic                                            w_rs1_phy_hit;
-logic                                            w_rs1_may_mispred;
-logic                                            w_rs1_mispredicted;
-logic                                            w_rs2_phy_hit;
-riscv_pkg::xlen_t                   w_rs2_phy_data;
-logic                                            w_entry_rs2_ready_next;
+msrh_pkg::reg_t                      w_rs1_type;
+msrh_pkg::reg_t                      w_rs2_type;
+logic                                w_rs1_rel_hit;
+logic                                w_rs1_phy_hit;
+logic                                w_rs1_may_mispred;
+logic                                w_rs1_mispredicted;
+logic                                w_rs2_phy_hit;
+msrh_pkg::alen_t                     w_rs2_phy_data;
+logic                                w_entry_rs2_ready_next;
 
-logic                                            w_commit_finish;
+logic                                w_commit_finish;
 
 always_comb begin
   o_entry = r_entry;
@@ -326,7 +326,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     stq_snoop_if.resp_s1_valid <= stq_snoop_if.req_s0_valid;
     stq_snoop_if.resp_s1_be   <= w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
-    stq_snoop_if.resp_s1_data <= w_snoop_s0_hit ? {{(msrh_conf_pkg::DCACHE_DATA_W-riscv_pkg::XLEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
+    stq_snoop_if.resp_s1_data <= w_snoop_s0_hit ? {{(msrh_conf_pkg::DCACHE_DATA_W-msrh_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 

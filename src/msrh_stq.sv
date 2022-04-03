@@ -284,8 +284,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
       assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0]);
       assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0],
                                         ex2_fwd_check_if[p_idx].paddr_dw);
-      assign w_same_addr_region = w_stq_entries   [s_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(riscv_pkg::XLEN_W/8)] ==
-                                  ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(riscv_pkg::XLEN_W/8)];
+      assign w_same_addr_region = w_stq_entries   [s_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_pkg::ALEN_W/8)] ==
+                                  ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_pkg::ALEN_W/8)];
 
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                              (w_stq_entries[s_idx].state != STQ_DEAD) &
@@ -337,16 +337,16 @@ endgenerate
 // =========================
 // STQ Forwarding Logic
 // =========================
-riscv_pkg::xlen_t w_aligned_rs2_data_array[msrh_conf_pkg::STQ_SIZE];
+msrh_pkg::alen_t w_aligned_rs2_data_array[msrh_conf_pkg::STQ_SIZE];
 generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
-  assign w_aligned_rs2_data_array[s_idx] = w_stq_entries[s_idx].rs2_data << {w_stq_entries[s_idx].paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
+  assign w_aligned_rs2_data_array[s_idx] = w_stq_entries[s_idx].rs2_data << {w_stq_entries[s_idx].paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0], 3'b000};
 end
 endgenerate
 
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
 
-  for (genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin : byte_loop
-    riscv_pkg::xlen_t        w_stq_fwd_rs2_data;
+  for (genvar b_idx = 0; b_idx < msrh_pkg::ALEN_W/8; b_idx++) begin : byte_loop
+    msrh_pkg::alen_t                     w_stq_fwd_rs2_data;
     logic [ 7: 0]                        w_ex2_fwd_dw_selected;
     logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
     logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_strb_valid;
@@ -354,13 +354,9 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
       assign w_ex2_fwd_strb_valid[s_idx] = w_ex2_fwd_dw[p_idx][s_idx][b_idx] & w_ex2_fwd_valid[p_idx][s_idx];
     end
     bit_extract_msb_ptr_oh #(.WIDTH(msrh_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_strb_valid), .i_ptr_oh(w_out_ptr_oh), .out(w_ex2_fwd_valid_oh));
-    bit_oh_or #(.T(riscv_pkg::xlen_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_aligned_rs2_data_array), .o_selected(w_stq_fwd_rs2_data));
+    bit_oh_or #(.T(msrh_pkg::alen_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_aligned_rs2_data_array), .o_selected(w_stq_fwd_rs2_data));
 
     assign ex2_fwd_check_if[p_idx].fwd_dw  [b_idx]        = |w_ex2_fwd_strb_valid;
-    // logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] w_byte_diff;
-    // assign w_byte_diff = w_stq_fwd_entry.paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0] +
-    //                      ex2_fwd_check_if[p_idx].paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0];
-
     assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_rs2_data[b_idx*8+:8];
   end // block: byte_loop
 

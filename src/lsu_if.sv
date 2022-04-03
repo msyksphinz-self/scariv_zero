@@ -254,14 +254,14 @@ endinterface // lsu_replay_if
 
 interface fwd_check_if;
 
-logic                           valid;
+logic              valid;
 msrh_pkg::cmt_id_t cmt_id;
 msrh_pkg::grp_id_t grp_id;
-msrh_pkg::paddr_t paddr;
-riscv_pkg::xlenb_t paddr_dw;
-logic                           fwd_valid;
-riscv_pkg::xlenb_t fwd_dw;
-riscv_pkg::xlen_t  fwd_data;
+msrh_pkg::paddr_t  paddr;
+msrh_pkg::alenb_t  paddr_dw;
+logic              fwd_valid;
+msrh_pkg::alenb_t  fwd_dw;
+msrh_pkg::alen_t   fwd_data;
 
 modport master (
   output valid,
