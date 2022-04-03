@@ -1,14 +1,15 @@
 module msrh_rename_map
   import msrh_pkg::*;
   import msrh_conf_pkg::*;
-#(parameter REG_TYPE = GPR)
+#(parameter REG_TYPE = GPR,
+  localparam NUM_OPERANDS = (REG_TYPE == GPR) ? 2 : 3)
 (
    input logic                     i_clk,
    input logic                     i_reset_n,
 
-   input logic [DISP_SIZE * 2-1:0] i_arch_valid,
-   input logic [ 4: 0]             i_arch_id[DISP_SIZE * 2],
-   output rnid_t      o_rnid[DISP_SIZE * 2],
+   input logic [DISP_SIZE * NUM_OPERANDS-1:0] i_arch_valid,
+   input logic [ 4: 0]             i_arch_id[DISP_SIZE * NUM_OPERANDS],
+   output rnid_t      o_rnid[DISP_SIZE * NUM_OPERANDS],
 
    input logic [ 4: 0]             i_rd_regidx[DISP_SIZE],
    output rnid_t      o_rd_old_rnid[DISP_SIZE],
@@ -96,11 +97,12 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
 end
 endgenerate
 
-generate for (genvar i = 0; i < DISP_SIZE; i++) begin : rnid_loop
-  assign o_rnid[i * 2 + 0] = r_map[i_arch_id[i * 2 + 0]];
-  assign o_rnid[i * 2 + 1] = r_map[i_arch_id[i * 2 + 1]];
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : rnid_loop
+  for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
+    assign o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[i_arch_id[d_idx * NUM_OPERANDS + rs_idx]];
+  end
 
-  assign o_rd_old_rnid[i] = r_map[i_rd_regidx[i]];
+  assign o_rd_old_rnid[d_idx] = r_map[i_rd_regidx[d_idx]];
 end
 endgenerate
 

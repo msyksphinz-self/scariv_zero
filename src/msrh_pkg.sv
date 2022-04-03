@@ -165,15 +165,17 @@ typedef struct packed {
     logic [FPU_INST_NUM-1: 0][msrh_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
   } resource_cnt_t;
 
-  function disp_t assign_disp_rename (disp_t disp,
-                                      rnid_t rd_rnid,
-                                      rnid_t rd_old_rnid,
-                                      logic               rs1_active,
-                                      rnid_t rs1_rnid,
-                                      logic               rs2_active,
-                                      rnid_t rs2_rnid,
-                                      brtag_t brtag,
-                                      brmask_t         br_mask
+  function disp_t assign_disp_rename (disp_t   disp,
+                                      rnid_t   rd_rnid,
+                                      rnid_t   rd_old_rnid,
+                                      logic    rs1_active,
+                                      rnid_t   rs1_rnid,
+                                      logic    rs2_active,
+                                      rnid_t   rs2_rnid,
+                                      logic    rs3_active,
+                                      rnid_t   rs3_rnid,
+                                      brtag_t  brtag,
+                                      brmask_t br_mask
                                       );
     disp_t ret;
     ret = disp;
@@ -184,6 +186,8 @@ typedef struct packed {
     ret.rd_regs[0].rnid    = rs1_rnid;
     ret.rd_regs[1].ready   = rs2_active;
     ret.rd_regs[1].rnid    = rs2_rnid;
+    ret.rd_regs[2].ready   = rs3_active;
+    ret.rd_regs[2].rnid    = rs3_rnid;
     ret.brtag       = brtag;
     ret.br_mask     = br_mask;
 
@@ -297,9 +301,9 @@ typedef struct packed {
 function issue_t assign_issue_t(disp_t in,
                                 cmt_id_t cmt_id,
                                 grp_id_t grp_id,
-                                logic rs1_rel_hit, logic rs2_rel_hit,
-                                logic rs1_phy_hit, logic rs2_phy_hit,
-                                logic rs1_may_mispred, logic rs2_may_mispred);
+                                logic rs1_rel_hit, logic rs2_rel_hit, logic rs3_rel_hit,
+                                logic rs1_phy_hit, logic rs2_phy_hit, logic rs3_phy_hit,
+                                logic rs1_may_mispred, logic rs2_may_mispred, logic rs3_may_mispred);
   issue_t ret;
 
   ret.valid = in.valid;
@@ -342,7 +346,12 @@ function issue_t assign_issue_t(disp_t in,
   ret.rd_regs[1].ready = in.rd_regs[1].ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
   ret.rd_regs[1].predict_ready = rs2_rel_hit & rs2_may_mispred;
 
-  ret.rd_regs[2] = 'h0;
+  ret.rd_regs[2].valid         = in.rd_regs[2].valid;
+  ret.rd_regs[2].regidx        = in.rd_regs[2].regidx;
+  ret.rd_regs[2].typ           = in.rd_regs[2].typ;
+  ret.rd_regs[2].rnid          = in.rd_regs[2].rnid;
+  ret.rd_regs[2].ready         = in.rd_regs[2].ready | rs3_rel_hit & ~rs3_may_mispred | rs3_phy_hit;
+  ret.rd_regs[2].predict_ready = rs3_rel_hit & rs3_may_mispred;
 
   ret.except_valid = 1'b0;
   ret.except_type  = INST_ADDR_MISALIGN;

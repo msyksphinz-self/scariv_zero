@@ -15,9 +15,9 @@ module msrh_sched_entry
    rob_info_if.slave                           rob_info_if,
 
    input logic                                 i_put,
-   input msrh_pkg::cmt_id_t        i_cmt_id,
-   input msrh_pkg::grp_id_t  i_grp_id,
-   input                                       msrh_pkg::disp_t i_put_data,
+   input msrh_pkg::cmt_id_t                    i_cmt_id,
+   input msrh_pkg::grp_id_t                    i_grp_id,
+   input msrh_pkg::disp_t                      i_put_data,
 
    output logic                                o_entry_valid,
    output logic                                o_entry_ready,
@@ -58,20 +58,26 @@ logic    w_oldest_ready;
 
 msrh_pkg::rnid_t w_rs1_rnid;
 msrh_pkg::rnid_t w_rs2_rnid;
+msrh_pkg::rnid_t w_rs3_rnid;
 msrh_pkg::reg_t w_rs1_type;
 msrh_pkg::reg_t w_rs2_type;
+msrh_pkg::reg_t w_rs3_type;
 
 logic     w_rs1_rel_hit;
 logic     w_rs2_rel_hit;
+logic     w_rs3_rel_hit;
 
 logic     w_rs1_may_mispred;
 logic     w_rs2_may_mispred;
+logic     w_rs3_may_mispred;
 
 logic     w_rs1_phy_hit;
 logic     w_rs2_phy_hit;
+logic     w_rs3_phy_hit;
 
 logic     w_rs1_mispredicted;
 logic     w_rs2_mispredicted;
+logic     w_rs3_mispredicted;
 
 logic     w_entry_flush;
 logic     w_commit_flush;
@@ -101,9 +107,11 @@ endfunction // all_operand_ready
 
 assign w_rs1_rnid = i_put ? i_put_data.rd_regs[0].rnid : r_entry.rd_regs[0].rnid;
 assign w_rs2_rnid = i_put ? i_put_data.rd_regs[1].rnid : r_entry.rd_regs[1].rnid;
+assign w_rs3_rnid = i_put ? i_put_data.rd_regs[2].rnid : r_entry.rd_regs[2].rnid;
 
 assign w_rs1_type = i_put ? i_put_data.rd_regs[0].typ : r_entry.rd_regs[0].typ;
 assign w_rs2_type = i_put ? i_put_data.rd_regs[1].typ : r_entry.rd_regs[1].typ;
+assign w_rs3_type = i_put ? i_put_data.rd_regs[2].typ : r_entry.rd_regs[2].typ;
 
 select_early_wr_bus rs1_rel_select
 (
@@ -126,6 +134,16 @@ select_early_wr_bus rs2_rel_select
  .o_may_mispred(w_rs2_may_mispred)
  );
 
+select_early_wr_bus rs3_rel_select
+(
+ .i_entry_rnid (w_rs3_rnid),
+ .i_entry_type (w_rs3_type),
+ .i_early_wr   (i_early_wr),
+
+ .o_valid      (w_rs3_rel_hit),
+ .o_may_mispred(w_rs3_may_mispred)
+ );
+
 select_phy_wr_bus rs1_phy_select
 (
  .i_entry_rnid (w_rs1_rnid),
@@ -143,6 +161,15 @@ select_phy_wr_bus rs2_phy_select
  .i_phy_wr     (i_phy_wr),
 
  .o_valid      (w_rs2_phy_hit)
+ );
+
+select_phy_wr_bus rs3_phy_select
+(
+ .i_entry_rnid (w_rs3_rnid),
+ .i_entry_type (w_rs3_type),
+ .i_phy_wr     (i_phy_wr),
+
+ .o_valid      (w_rs3_phy_hit)
  );
 
 
@@ -165,6 +192,15 @@ select_mispred_bus rs2_mispred_select
  .o_mispred    (w_rs2_mispredicted)
  );
 
+select_mispred_bus rs3_mispred_select
+(
+ .i_entry_rnid (w_rs3_rnid),
+ .i_entry_type (w_rs3_type),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_rs3_mispredicted)
+ );
+
 
 always_comb begin
   w_state_next  = r_state;
@@ -174,9 +210,11 @@ always_comb begin
 
   w_entry_next.rd_regs[0].ready = r_entry.rd_regs[0].ready /* | r_entry.rd_regs[0].predict_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
   w_entry_next.rd_regs[1].ready = r_entry.rd_regs[1].ready /* | r_entry.rd_regs[1].predict_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
+  w_entry_next.rd_regs[2].ready = r_entry.rd_regs[2].ready /* | r_entry.rd_regs[1].predict_ready */ | (w_rs3_rel_hit & ~w_rs3_may_mispred) | w_rs3_phy_hit;
 
   w_entry_next.rd_regs[0].predict_ready = w_rs1_rel_hit & w_rs1_may_mispred;
   w_entry_next.rd_regs[1].predict_ready = w_rs2_rel_hit & w_rs2_may_mispred;
+  w_entry_next.rd_regs[2].predict_ready = w_rs3_rel_hit & w_rs3_may_mispred;
 
   case (r_state)
     msrh_pkg::INIT : begin
@@ -219,11 +257,13 @@ always_comb begin
           w_entry_next.fflags              = pipe_done_if.fflags;
         end
         if (r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted ||
-            r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
+            r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted ||
+            r_entry.rd_regs[2].predict_ready & w_rs3_mispredicted) begin
           w_state_next = msrh_pkg::WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
           w_entry_next.rd_regs[1].predict_ready = 1'b0;
+          w_entry_next.rd_regs[2].predict_ready = 1'b0;
         end
       end
     end
@@ -287,9 +327,9 @@ end
 
 
 assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
-                                               w_rs1_rel_hit, w_rs2_rel_hit,
-                                               w_rs1_phy_hit, w_rs2_phy_hit,
-                                               w_rs1_may_mispred, w_rs2_may_mispred);
+                                               w_rs1_rel_hit, w_rs2_rel_hit, w_rs3_rel_hit,
+                                               w_rs1_phy_hit, w_rs2_phy_hit, w_rs3_phy_hit,
+                                               w_rs1_may_mispred, w_rs2_may_mispred, w_rs3_may_mispred);
 
 assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
 assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,

@@ -213,9 +213,9 @@ always_comb begin
       end else if (i_disp_load) begin
         w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
         w_entry_next.inst = msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                 w_rs1_rel_hit, w_rs2_rel_hit,
-                                                 w_rs1_phy_hit, w_rs2_phy_hit,
-                                                 w_rs1_may_mispred, w_rs2_may_mispred);
+                                                     w_rs1_rel_hit, w_rs2_rel_hit, 1'b0,
+                                                     w_rs1_phy_hit, w_rs2_phy_hit, 1'b0,
+                                                     w_rs1_may_mispred, w_rs2_may_mispred, 1'b0);
         if (w_load_flush) begin
           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         end

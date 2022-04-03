@@ -27,6 +27,9 @@ module msrh_rename
    input msrh_pkg::cmt_rnid_upd_t i_commit_rnid_update
    );
 
+localparam NUM_OPERANDS = REG_TYPE == FPR ? 3 :
+                         2;   // REG_TYPE == INT
+
 logic    w_iq_fire;
 
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
@@ -35,9 +38,9 @@ logic                                 w_all_freelist_ready;
 rnid_t        w_rd_rnid[msrh_conf_pkg::DISP_SIZE];
 rnid_t        w_rd_old_rnid[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_archreg_valid;
-logic [ 4: 0]                             w_archreg[msrh_conf_pkg::DISP_SIZE * 2];
-rnid_t                       w_rnid[msrh_conf_pkg::DISP_SIZE * 2];
+logic [msrh_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_archreg_valid;
+logic [ 4: 0]                             w_archreg[msrh_conf_pkg::DISP_SIZE * NUM_OPERANDS];
+rnid_t                       w_rnid[msrh_conf_pkg::DISP_SIZE * NUM_OPERANDS];
 
 logic [ 4: 0]                             w_update_arch_id [msrh_conf_pkg::DISP_SIZE];
 rnid_t                       w_update_rnid    [msrh_conf_pkg::DISP_SIZE];
@@ -47,9 +50,10 @@ disp_t [msrh_conf_pkg::DISP_SIZE-1:0]     r_disp_inst;
 
 rnid_t                       rs1_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 rnid_t                       rs2_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
+rnid_t                       rs3_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 rnid_t                       rd_old_rnid_fwd[msrh_conf_pkg::DISP_SIZE];
 
-logic [msrh_conf_pkg::DISP_SIZE * 2-1: 0] w_active;
+logic [msrh_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_active;
 
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
@@ -148,11 +152,10 @@ endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
-  assign w_archreg_valid [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
-  assign w_archreg_valid [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].valid & (iq_disp.inst[d_idx].rd_regs[0].typ == REG_TYPE);
-
-  assign w_archreg [d_idx*2 + 0] = iq_disp.inst[d_idx].rd_regs[0].regidx;
-  assign w_archreg [d_idx*2 + 1] = iq_disp.inst[d_idx].rd_regs[1].regidx;
+  for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_idx_loop
+    assign w_archreg_valid [d_idx * NUM_OPERANDS + rs_idx] = iq_disp.inst[d_idx].rd_regs[rs_idx].valid & (iq_disp.inst[d_idx].rd_regs[rs_idx].typ == REG_TYPE);
+    assign w_archreg       [d_idx * NUM_OPERANDS + rs_idx] = iq_disp.inst[d_idx].rd_regs[rs_idx].regidx;
+  end
 
   assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
   assign w_update_rnid   [d_idx] = w_rd_rnid[d_idx];
@@ -261,48 +264,60 @@ always_comb begin
     if (sc_disp.inst[d_idx].is_call) begin
       sc_disp.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
     end
-    // if (sc_disp.inst[d_idx].is_ret) begin
-    //   sc_disp.inst[d_idx].pred_target_vaddr = i_sc_ras_vaddr;  // When RET, use pred adddres
-    // end
   end
 end
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop
   /* verilator lint_off UNOPTFLAT */
-  rnid_t rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t   rs1_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rs1_rnid_tmp_valid;
 
-  rnid_t rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t   rs2_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rs2_rnid_tmp_valid;
 
-  rnid_t         rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  rnid_t   rs3_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
+  grp_id_t rs3_rnid_tmp_valid;
+
+  rnid_t   rd_old_rnid_tmp[msrh_conf_pkg::DISP_SIZE];
   grp_id_t rd_old_rnid_tmp_valid;
 
   always_comb begin
 
     /* initial index of loop */
     if (iq_disp.inst[0].wr_reg.valid &&
-        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[0].typ &&
+        iq_disp.inst[0].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[0].typ &&
         iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[0].regidx) begin
       rs1_rnid_tmp_valid[0] = 1'b1;
       rs1_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs1_rnid_tmp_valid[0] = 1'b0;
-      rs1_rnid_tmp      [0] = w_rnid[d_idx * 2 + 0];
+      rs1_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 0];
     end
 
     if (iq_disp.inst[0].wr_reg.valid &&
-        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[1].typ &&
+        iq_disp.inst[0].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[1].typ &&
         iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[1].regidx) begin
       rs2_rnid_tmp_valid[0] = 1'b1;
       rs2_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs2_rnid_tmp_valid[0] = 1'b0;
-      rs2_rnid_tmp      [0] = w_rnid[d_idx * 2 + 1];
+      rs2_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 1];
     end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
+    if (NUM_OPERANDS >= 3) begin
+      if (iq_disp.inst[0].wr_reg.valid &&
+          iq_disp.inst[0].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[2].typ &&
+          iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[2].regidx) begin
+        rs3_rnid_tmp_valid[0] = 1'b1;
+        rs3_rnid_tmp      [0] = w_rd_rnid[0];
+      end else begin
+        rs3_rnid_tmp_valid[0] = 1'b0;
+        rs3_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 2];
+      end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
+    end // if (NUM_OPERANDS >= 3)
+
     if (iq_disp.inst[0].wr_reg.valid &&
-        iq_disp.inst[0].wr_reg.typ   == iq_disp.inst[d_idx].wr_reg.typ &&
+        iq_disp.inst[0].wr_reg.typ    == iq_disp.inst[d_idx].wr_reg.typ &&
         iq_disp.inst[0].wr_reg.regidx == iq_disp.inst[d_idx].wr_reg.regidx) begin
       rd_old_rnid_tmp_valid[0] = 1'b1;
       rd_old_rnid_tmp      [0] = w_rd_rnid[0];
@@ -314,7 +329,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     /* verilator lint_off UNSIGNED */
     for (int p_idx = 1; p_idx < d_idx; p_idx++) begin: prev_rd_loop
       if (iq_disp.inst[p_idx].wr_reg.valid &&
-          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[0].typ &&
+          iq_disp.inst[p_idx].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[0].typ &&
           iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[0].regidx) begin
         rs1_rnid_tmp_valid[p_idx] = 1'b1;
         rs1_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
@@ -324,7 +339,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
       if (iq_disp.inst[p_idx].wr_reg.valid &&
-          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].rd_regs[1].typ &&
+          iq_disp.inst[p_idx].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[1].typ &&
           iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[1].regidx) begin
         rs2_rnid_tmp_valid[p_idx] = 1'b1;
         rs2_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
@@ -333,8 +348,20 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
         rs2_rnid_tmp      [p_idx] = rs2_rnid_tmp      [p_idx-1];
       end // else: !if(iq_disp.inst[p_idx].wr_reg.valid &&...
 
+      if (NUM_OPERANDS >= 3) begin
+        if (iq_disp.inst[p_idx].wr_reg.valid &&
+            iq_disp.inst[p_idx].wr_reg.typ    == iq_disp.inst[d_idx].rd_regs[2].typ &&
+            iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].rd_regs[2].regidx) begin
+          rs3_rnid_tmp_valid[p_idx] = 1'b1;
+          rs3_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
+        end else begin
+          rs3_rnid_tmp_valid[p_idx] = rs3_rnid_tmp_valid[p_idx-1];
+          rs3_rnid_tmp      [p_idx] = rs3_rnid_tmp      [p_idx-1];
+        end
+      end // if (NUM_OPERANDS >= 3)
+
       if (iq_disp.inst[p_idx].wr_reg.valid &&
-          iq_disp.inst[p_idx].wr_reg.typ   == iq_disp.inst[d_idx].wr_reg.typ &&
+          iq_disp.inst[p_idx].wr_reg.typ    == iq_disp.inst[d_idx].wr_reg.typ &&
           iq_disp.inst[p_idx].wr_reg.regidx == iq_disp.inst[d_idx].wr_reg.regidx) begin
         rd_old_rnid_tmp_valid[p_idx] = 1'b1;
         rd_old_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
@@ -349,16 +376,20 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   /* verilator lint_off SELRANGE */
   assign rs1_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[0] : rs1_rnid_tmp[d_idx-1];
   assign rs2_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[1] : rs2_rnid_tmp[d_idx-1];
-
+  if (NUM_OPERANDS >= 3) begin
+    assign rs3_rnid_fwd[d_idx] = (d_idx == 0) ? w_rnid[2] : rs3_rnid_tmp[d_idx-1];
+  end
   assign rd_old_rnid_fwd[d_idx] = (d_idx == 0) ? w_rd_old_rnid[0] : rd_old_rnid_tmp[d_idx-1];
 
   assign w_disp_inst[d_idx] = assign_disp_rename (iq_disp.inst[d_idx],
                                                   w_rd_rnid[d_idx],
                                                   rd_old_rnid_fwd[d_idx],
-                                                  w_active [d_idx*2+0],
+                                                  w_active [d_idx * NUM_OPERANDS + 0],
                                                   rs1_rnid_fwd[d_idx],
-                                                  w_active [d_idx*2+1],
+                                                  w_active [d_idx * NUM_OPERANDS + 1],
                                                   rs2_rnid_fwd[d_idx],
+                                                  w_active [d_idx * NUM_OPERANDS + 2],
+                                                  rs3_rnid_fwd[d_idx],
                                                   i_brtag[d_idx],
                                                   i_brmask[d_idx]);
 
@@ -366,10 +397,13 @@ end // block: src_rn_loop
 endgenerate
 
 
-rnid_t w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE*2];
+rnid_t w_rs1_rs2_rnid[msrh_conf_pkg::DISP_SIZE * NUM_OPERANDS];
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
-  assign w_rs1_rs2_rnid[d_idx*2+0] = rs1_rnid_fwd[d_idx];
-  assign w_rs1_rs2_rnid[d_idx*2+1] = rs2_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 0] = rs1_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 1] = rs2_rnid_fwd[d_idx];
+  if (NUM_OPERANDS >= 3) begin
+    assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 2] = rs3_rnid_fwd[d_idx];
+  end
 end
 endgenerate
 
@@ -469,6 +503,14 @@ function void dump_json(string name, int fp);
       $fwrite(fp, "        rs2_regidx : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].regidx);
       $fwrite(fp, "        rs2_rnid   : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].rnid);
       $fwrite(fp, "        rs2_ready  : \"%d\",", sc_disp.inst[d_idx].rd_regs[1].ready);
+
+      if (NUM_OPERANDS >= 3) begin
+        $fwrite(fp, "        rs3_valid  : \"%d\",", sc_disp.inst[d_idx].rd_regs[2].valid);
+        $fwrite(fp, "        rs3_type   : \"%d\",", sc_disp.inst[d_idx].rd_regs[2].typ);
+        $fwrite(fp, "        rs3_regidx : \"%d\",", sc_disp.inst[d_idx].rd_regs[2].regidx);
+        $fwrite(fp, "        rs3_rnid   : \"%d\",", sc_disp.inst[d_idx].rd_regs[2].rnid);
+        $fwrite(fp, "        rs3_ready  : \"%d\",", sc_disp.inst[d_idx].rd_regs[2].ready);
+      end
 
       $fwrite(fp, "        cat[d_idx] : \"%d\",", sc_disp.inst[d_idx].cat);
       $fwrite(fp, "      },\n");
