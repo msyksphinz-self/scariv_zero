@@ -2,6 +2,8 @@
 
 package riscv_pkg;
 
+import riscv_fpu_pkg::*;
+
   parameter XLEN_W = 64;
   parameter VADDR_W = 64;
   parameter VADDR_MSB = 38;

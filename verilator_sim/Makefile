@@ -129,7 +129,16 @@ rv32_build: $(FILELIST) .config_design_rv32
 		-f $(FILELIST)
 
 rv64_build: $(FILELIST) .config_design_rv64
-	verilator --top-module $(TOP) -o ../$(TOP)_$(ISA)_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv  -f $(FILELIST)
+	verilator --top-module $(TOP) \
+		-o ../$(TOP)_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		$(VERILATOR_OPTS) \
+		$(VERILATOR_OPTS_RV64) \
+		../src/riscv_common_pkg.sv \
+		../src/riscv_fpu_$(ISA)_pkg.sv \
+		../src/riscv64_pkg.sv \
+		../src/msrh_$(CONF)_conf_pkg.sv \
+		-f $(FILELIST)
 
 include conf_tiny.mk
 include conf_small.mk
