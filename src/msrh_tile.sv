@@ -537,6 +537,9 @@ generate if (riscv_pkg::FLEN_W != 0) begin : fpu
      .i_phy_wr(w_ex3_phy_wr),
      .regread(fp_regread)
      );
+end else begin // block: fpu
+  assign w_sc_fp_disp.valid = 1'b1;
+  assign w_iq_dist_disp[1].ready = 1'b1;
 end // if (riscv_pkg::FLEN_W != 0)
 endgenerate
 
