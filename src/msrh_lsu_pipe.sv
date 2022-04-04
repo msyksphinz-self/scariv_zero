@@ -445,7 +445,7 @@ msrh_pkg::alen_t                    w_stbuf_fwd_aligned_data;
 msrh_pkg::alenb_t                  w_streq_fwd_dw;
 msrh_pkg::alen_t                    w_streq_fwd_aligned_data;
 
-msrh_pkg::alenb_t                  w_expected_fwd_valid;
+msrh_pkg::alenb_t                  w_ex2_expected_fwd_valid;
 msrh_pkg::alenb_t                  w_ex2_fwd_success;
 always_comb begin
   {w_stbuf_fwd_dw, w_stbuf_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
@@ -456,21 +456,11 @@ always_comb begin
                                                           r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
 
   case (r_ex2_pipe_ctrl.size)
-    SIZE_DW : begin
-      w_expected_fwd_valid     = {8{1'b1}};
-    end
-    SIZE_W  : begin
-      w_expected_fwd_valid     = 8'h0f;
-    end
-    SIZE_H  : begin
-      w_expected_fwd_valid     = 8'h03;
-    end
-    SIZE_B  : begin
-      w_expected_fwd_valid     = 8'h01;
-    end
-    default : begin
-      w_expected_fwd_valid     = 8'h00;
-    end
+    SIZE_DW : begin w_ex2_expected_fwd_valid     = {8{1'b1}}; end
+    SIZE_W  : begin w_ex2_expected_fwd_valid     = 8'h0f;     end
+    SIZE_H  : begin w_ex2_expected_fwd_valid     = 8'h03;     end
+    SIZE_B  : begin w_ex2_expected_fwd_valid     = 8'h01;     end
+    default : begin w_ex2_expected_fwd_valid     = 8'h00;     end
   endcase // case (r_ex2_pipe_ctrl.size)
 end
 
@@ -483,10 +473,10 @@ generate for (genvar b_idx = 0; b_idx < msrh_pkg::ALEN_W / 8; b_idx++) begin
                                               w_ex2_lrq_fwd_dw[b_idx] ? w_ex2_lrq_fwd_aligned_data[b_idx*8 +: 8] :
                                               w_streq_fwd_dw  [b_idx] ? w_streq_fwd_aligned_data  [b_idx*8 +: 8] :
                                                                         w_ex2_l1d_data            [b_idx*8 +: 8];
-  assign w_ex2_fwd_success[b_idx] = w_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw     [b_idx] |
-                                                                   w_stbuf_fwd_dw   [b_idx] |
-                                                                   w_ex2_lrq_fwd_dw [b_idx] |
-                                                                   w_streq_fwd_dw   [b_idx]) : 1'b1;
+  assign w_ex2_fwd_success[b_idx] = w_ex2_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw     [b_idx] |
+                                                                       w_stbuf_fwd_dw   [b_idx] |
+                                                                       w_ex2_lrq_fwd_dw [b_idx] |
+                                                                       w_streq_fwd_dw   [b_idx]) : 1'b1;
 end
 endgenerate
 

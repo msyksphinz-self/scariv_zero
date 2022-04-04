@@ -197,7 +197,7 @@ endfunction // assign_lrq_entry
 
 typedef struct packed {
   logic                                      valid;
-  riscv_pkg::xlen_t             data;
+  msrh_pkg::alen_t             data;
   logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
 } evict_merge_t;
 
@@ -230,7 +230,7 @@ typedef struct packed {
   msrh_pkg::vaddr_t vaddr;
   msrh_pkg::paddr_t paddr;
   logic                           st_data_valid;
-  riscv_pkg::xlen_t  st_data;
+  msrh_pkg::alen_t  st_data;
 } ex1_q_update_t;
 
 typedef struct packed {
@@ -309,36 +309,34 @@ typedef struct packed {
 
 } dc_read_resp_t;
 
-function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
-  fwd_align (decoder_lsu_ctrl_pkg::size_t size, riscv_pkg::xlenb_t fwd_dw, riscv_pkg::xlen_t fwd_data,
-             logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] paddr);
+function automatic logic [msrh_pkg::ALEN_W/8 + msrh_pkg::ALEN_W-1: 0]
+  fwd_align (decoder_lsu_ctrl_pkg::size_t size, msrh_pkg::alenb_t fwd_dw, msrh_pkg::alen_t fwd_data,
+             logic [$clog2(msrh_pkg::ALEN_W/8)-1:0] paddr);
 
-  riscv_pkg::xlenb_t                  w_aligned_fwd_dw;
-  riscv_pkg::xlen_t                    w_aligned_fwd_data;
+  msrh_pkg::alenb_t                  w_aligned_fwd_dw;
+  msrh_pkg::alen_t                  w_aligned_fwd_data;
 
   case (size)
-`ifdef RV64
     decoder_lsu_ctrl_pkg::SIZE_DW : begin
       w_aligned_fwd_dw   = fwd_dw;
       w_aligned_fwd_data = fwd_data;
     end
-`endif // RV64
     decoder_lsu_ctrl_pkg::SIZE_W  : begin
-`ifdef RV32
-      w_aligned_fwd_dw   = fwd_dw;
-      w_aligned_fwd_data = fwd_data;
-`else // RV32
-      w_aligned_fwd_dw   = fwd_dw   >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00};
-      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1], 2'b00, 3'b000};
-`endif // RV32
+// `ifdef RV32
+//       w_aligned_fwd_dw   = fwd_dw;
+//       w_aligned_fwd_data = fwd_data;
+// `else // RV32
+      w_aligned_fwd_dw   = fwd_dw   >> {paddr[$clog2(msrh_pkg::ALEN_W/8)-1], 2'b00};
+      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(msrh_pkg::ALEN_W/8)-1], 2'b00, 3'b000};
+// `endif // RV32
     end
     decoder_lsu_ctrl_pkg::SIZE_H  : begin
-      w_aligned_fwd_dw   = fwd_dw   >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0};
-      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:1], 1'b0, 3'b000};
+      w_aligned_fwd_dw   = fwd_dw   >> {paddr[$clog2(msrh_pkg::ALEN_W/8)-1:1], 1'b0};
+      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(msrh_pkg::ALEN_W/8)-1:1], 1'b0, 3'b000};
     end
     decoder_lsu_ctrl_pkg::SIZE_B  : begin
-      w_aligned_fwd_dw   = fwd_dw   >>  paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0];
-      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(riscv_pkg::XLEN_W/8)-1:0], 3'b000};
+      w_aligned_fwd_dw   = fwd_dw   >>  paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0];
+      w_aligned_fwd_data = fwd_data >> {paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0], 3'b000};
     end
     default : begin
       w_aligned_fwd_dw   = 'h0;
@@ -351,11 +349,9 @@ function automatic logic [riscv_pkg::XLEN_W/8 + riscv_pkg::XLEN_W-1: 0]
 endfunction // fwd_align
 
 
-function riscv_pkg::xlenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] addr);
+function msrh_pkg::alenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$clog2(msrh_pkg::ALEN_W/8)-1:0] addr);
   case(size)
-`ifdef RV64
     decoder_lsu_ctrl_pkg::SIZE_DW : return 8'b1111_1111;
-`endif // RV64
     decoder_lsu_ctrl_pkg::SIZE_W : begin
       // if (addr[1:0] != 2'b00) $fatal(0, "gen_dw with SIZE_W, addr[1:0] should be zero");
       /* verilator lint_off WIDTH */
@@ -376,9 +372,9 @@ endfunction // gen_dw
 
 
 // addr1/size1 includes addr2_dw ?
-function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(riscv_pkg::XLEN_W/8)-1:0] addr1,
-                              logic [riscv_pkg::XLEN_W/8-1:0] addr2_dw);
-  riscv_pkg::xlenb_t addr1_dw;
+function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(msrh_pkg::ALEN_W/8)-1:0] addr1,
+                              logic [msrh_pkg::ALEN_W/8-1:0] addr2_dw);
+  msrh_pkg::alenb_t addr1_dw;
   addr1_dw = gen_dw(size1, addr1);
 
   return (addr1_dw & addr2_dw) == addr2_dw;
@@ -388,9 +384,7 @@ endfunction // is_dw_included
 function logic [DCACHE_DATA_B_W-1: 0] gen_dw_cacheline(decoder_lsu_ctrl_pkg::size_t size,
                                                        logic [$clog2(DCACHE_DATA_B_W)-1:0] addr);
   case(size)
-`ifdef RV64
     decoder_lsu_ctrl_pkg::SIZE_DW : return 'hff << addr;
-`endif // RV64
     decoder_lsu_ctrl_pkg::SIZE_W  : return 'h0f << addr;
     decoder_lsu_ctrl_pkg::SIZE_H  : return 'h03 << addr;
     decoder_lsu_ctrl_pkg::SIZE_B  : return 'h01 << addr;
@@ -450,7 +444,7 @@ typedef struct packed {
 typedef struct packed {
   msrh_pkg::paddr_t paddr;
   decoder_lsu_ctrl_pkg::size_t   acc_size;
-  riscv_pkg::xlen_t data;
+  msrh_pkg::alen_t data;
 } srq_req_t;
 
 typedef struct packed {
