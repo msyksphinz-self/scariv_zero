@@ -240,33 +240,6 @@ u_msrh_int_rename (
 );
 
 
-msrh_rename
-  #(.REG_TYPE(msrh_pkg::FPR))
-u_msrh_fp_rename (
-  .i_clk(i_clk),
-  .i_reset_n(i_reset_n),
-
-  .iq_disp(w_iq_dist_disp[1]),
-  .i_sc_new_cmt_id (w_sc_new_cmt_id),
-
-  .i_commit             (w_commit),
-  .i_commit_rnid_update (w_commit_rnid_update),
-
-  .i_resource_ok (w_resource_ok),
-  .i_brtag  (w_iq_brtag),
-  .i_brmask (w_iq_brmask),
-
-  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
-
-  .i_phy_wr (w_ex3_phy_wr),
-  .sc_disp  (w_sc_fp_disp),
-  .i_sc_ras_index (w_sc_ras_index),
-  .i_sc_ras_vaddr (w_sc_ras_vaddr)
-);
-
-
-
-
 msrh_resource_alloc u_msrh_resource_alloc
 (
   .i_clk(i_clk),
@@ -483,63 +456,89 @@ u_int_phy_registers (
 );
 
 
-// =========================
-// FPU: Flaoting Point Unit
-// =========================
-generate for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
-  msrh_fpu #(
-    .PORT_BASE(fpu_idx)
-  ) u_msrh_fpu (
+generate if (riscv_pkg::FLEN_W != 0) begin : fpu
+  msrh_rename
+    #(.REG_TYPE(msrh_pkg::FPR))
+  u_msrh_fp_rename (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
-    .csr_info (w_csr_info),
-    .rob_info_if   (w_rob_info_if),
+    .iq_disp(w_iq_dist_disp[1]),
+    .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
-    .disp_valid(w_disp_fpu_valids[fpu_idx]),
-    .disp(w_sc_disp),
-    .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
+    .i_commit             (w_commit),
+    .i_commit_rnid_update (w_commit_rnid_update),
 
-    .ex1_regread_int_rs1(int_regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
-                                     msrh_conf_pkg::LSU_INST_NUM * 2 +
-                                     2 + 1 +
-                                     fpu_idx]),
+    .i_resource_ok (w_resource_ok),
+    .i_brtag  (w_iq_brtag),
+    .i_brmask (w_iq_brmask),
 
-    .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
-    .ex1_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
-    .ex1_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
+    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
 
-    .i_early_wr(w_ex1_early_wr),
-    .i_phy_wr  (w_ex3_phy_wr),
-    .i_mispred_lsu (w_ex2_mispred_lsu),
-
-    .o_ex1_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-    .o_ex3_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
-
-    .i_commit  (w_commit),
-    .br_upd_if (br_upd_fe_if),
-
-    .o_done_report (w_fpu_done_rpt[fpu_idx])
+    .i_phy_wr (w_ex3_phy_wr),
+    .sc_disp  (w_sc_fp_disp),
+    .i_sc_ras_index (w_sc_ras_index),
+    .i_sc_ras_vaddr (w_sc_ras_vaddr)
   );
-end
+
+  // =========================
+  // FPU: Flaoting Point Unit
+  // =========================
+  for (genvar fpu_idx = 0; fpu_idx < msrh_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
+    msrh_fpu #(
+      .PORT_BASE(fpu_idx)
+    ) u_msrh_fpu (
+      .i_clk(i_clk),
+      .i_reset_n(i_reset_n),
+
+      .csr_info (w_csr_info),
+      .rob_info_if   (w_rob_info_if),
+
+      .disp_valid(w_disp_fpu_valids[fpu_idx]),
+      .disp(w_sc_disp),
+      .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
+
+      .ex1_regread_int_rs1(int_regread[msrh_conf_pkg::ALU_INST_NUM * 2 +
+                                       msrh_conf_pkg::LSU_INST_NUM * 2 +
+                                       2 + 1 +
+                                       fpu_idx]),
+
+      .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
+      .ex1_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
+      .ex1_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
+
+      .i_early_wr(w_ex1_early_wr),
+      .i_phy_wr  (w_ex3_phy_wr),
+      .i_mispred_lsu (w_ex2_mispred_lsu),
+
+      .o_ex1_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
+      .o_ex3_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
+
+      .i_commit  (w_commit),
+      .br_upd_if (br_upd_fe_if),
+
+      .o_done_report (w_fpu_done_rpt[fpu_idx])
+    );
+  end
+
+  // --------------------------------------
+  // FPU: Floating Point Physical Register
+  // --------------------------------------
+  msrh_phy_registers
+    #(
+      .REG_TYPE(msrh_pkg::FPR),
+      .RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM)
+      )
+  u_fp_phy_registers
+    (
+     .i_clk(i_clk),
+     .i_reset_n(i_reset_n),
+
+     .i_phy_wr(w_ex3_phy_wr),
+     .regread(fp_regread)
+     );
+end // if (riscv_pkg::FLEN_W != 0)
 endgenerate
-
-// --------------------------------------
-// FPU: Floating Point Physical Register
-// --------------------------------------
-msrh_phy_registers
-  #(
-    .REG_TYPE(msrh_pkg::FPR),
-    .RD_PORT_SIZE(msrh_pkg::FP_REGPORT_NUM)
-    )
-u_fp_phy_registers
-  (
-   .i_clk(i_clk),
-   .i_reset_n(i_reset_n),
-
-   .i_phy_wr(w_ex3_phy_wr),
-   .regread(fp_regread)
-   );
 
 
 msrh_rob u_rob

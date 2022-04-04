@@ -23,7 +23,6 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_inst_buffer.dump_json(json_fp);
     // Rename --> Dispatch
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_int_rename.dump_json("int", json_fp);
-    u_msrh_tile_wrapper.u_msrh_tile.u_msrh_fp_rename.dump_json("fp", json_fp);
 
     // LSU LDQ
     u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_ldq.dump_json(json_fp);
@@ -41,8 +40,18 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
 
     // ROB
     u_msrh_tile_wrapper.u_msrh_tile.u_rob.dump_json(json_fp);
-  end // if (!w_msrh_reset_n)
+  end // if (w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
+
+
+generate if (riscv_pkg::FLEN_W != 0) begin
+  always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+    if (w_msrh_reset_n) begin
+      u_msrh_tile_wrapper.u_msrh_tile.fpu.u_msrh_fp_rename.dump_json("fp", json_fp);
+    end
+  end
+end
+endgenerate
 
 // ALU Scheduler
 generate if (msrh_conf_pkg::ALU_INST_NUM > 0)
