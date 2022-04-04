@@ -131,130 +131,18 @@ rv32_build: $(FILELIST) .config_design_rv32
 rv64_build: $(FILELIST) .config_design_rv64
 	verilator --top-module $(TOP) -o ../$(TOP)_$(ISA)_$(CONF)$(BINARY_SUFFIX) --Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) $(VERILATOR_OPTS) $(VERILATOR_OPTS_RV64) ../src/riscv_common_pkg.sv ../src/riscv64_pkg.sv ../src/msrh_$(CONF)_conf_pkg.sv  -f $(FILELIST)
 
-include rv32_tiny.mk
+include conf_tiny.mk
+include conf_small.mk
+include conf_standard.mk
+include conf_big.mk
+include conf_giant.mk
 
-rv32_small: $(FILELIST) .config_design_rv32
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=small
-
-rv32_standard: $(FILELIST) .config_design_rv32
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=standard
-
-rv32_big: $(FILELIST) .config_design_rv32
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=big
-
-rv32_giant: $(FILELIST) .config_design_rv32
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=giant
-
-
-rv64_tiny: $(FILELIST) .config_design_rv64
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=tiny
-
-rv64_small: $(FILELIST) .config_design_rv64
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=small
-
-rv64_standard: $(FILELIST) .config_design_rv64
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=standard
-
-rv64_big: $(FILELIST) .config_design_rv64
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=big
-
-rv64_giant: $(FILELIST) .config_design_rv64
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=giant
-
-regression: rv32_tiny_test rv32_small_test rv32_standard_test rv32_big_test rv32_giant_test \
-	rv64_tiny_test rv64_small_test rv64_standard_test rv64_big_test rv64_giant_test \
-	rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
-
-#	rv64_tiny_benchmarks rv64_small_benchmarks rv64_standard_benchmarks rv64_big_benchmarks rv64_giant_benchmarks
-
-rv32_small_test:
-	$(MAKE) rv32_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_small rv32-tests.json log_rv32_small $(NPROCS) 2>&1 | tee rv32_small_test.log
-
-rv32_standard_test:
-	$(MAKE) rv32_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_standard rv32-tests.json log_rv32_standard $(NPROCS) 2>&1 | tee rv32_standard_test.log
-
-rv32_big_test:
-	$(MAKE) rv32_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_big rv32-tests.json log_rv32_big $(NPROCS) 2>&1 | tee rv32_big_test.log
-
-rv32_giant_test:
-	$(MAKE) rv32_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32_giant rv32-tests.json log_rv32_giant $(NPROCS) 2>&1 | tee rv32_giant_test.log
-
-rv64_tiny_test:
-	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny rv64-tests.json log_rv64_tiny $(NPROCS) 2>&1 | tee rv64_tiny_test.log
-
-rv64_small_test:
-	$(MAKE) rv64_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_small rv64-tests.json log_rv64_small $(NPROCS) 2>&1 | tee rv64_small_test.log
-
-rv64_standard_test:
-	$(MAKE) rv64_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_standard rv64-tests.json log_rv64_standard $(NPROCS) 2>&1 | tee rv64_standard_test.log
-
-rv64_big_test:
-	$(MAKE) rv64_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_big rv64-tests.json log_rv64_big $(NPROCS) 2>&1 | tee rv64_big_test.log
-
-rv64_giant_test:
-	$(MAKE) rv64_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_giant rv64-tests.json log_rv64_giant $(NPROCS) 2>&1 | tee rv64_giant_test.log
-
-rv64_tiny_benchmarks:
-	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny rv64-bench.json log_rv64_tiny $(NPROCS) 2>&1 | tee rv64_tiny_benchmark.log
-
-rv64_small_benchmarks:
-	$(MAKE) rv64_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_small rv64-bench.json log_rv64_small $(NPROCS) 2>&1 | tee rv64_small_benchmark.log
-
-rv64_standard_benchmarks:
-	$(MAKE) rv64_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_standard rv64-bench.json log_rv64_standard $(NPROCS) 2>&1 | tee rv64_standard_benchmark.log
-
-rv64_big_benchmarks:
-	$(MAKE) rv64_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_big rv64-bench.json log_rv64_big $(NPROCS) 2>&1 | tee rv64_big_benchmark.log
-
-rv64_giant_benchmarks:
-	$(MAKE) rv64_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_giant rv64-bench.json log_rv64_giant $(NPROCS) 2>&1 | tee rv64_giant_benchmark.log
-
-rv64_torture_test:
-	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny ../tests/torture.json log_rv64_torture $(NPROCS) 2>&1 | tee rv64_torture.log
+regression: $(REGRESSION_LIST)
 
 rv64_aapg_test: gen_aapg
 	$(MAKE) rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
 gen_aapg:
 	cd ../tests/aapg/ && aapg gen --num_programs 100 && $(MAKE) -C work build objdump XLEN=64 ISA=rv64imfd ABI=lp64d -j$(NPROCS)
-rv64_tiny_aapg:
-	$(MAKE) rv64_tiny DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_tiny     ../tests/aapg.json log_rv64_tiny_aapg  	  $(NPROCS) 2>&1 | tee rv64_tiny_aapg.log
-rv64_small_aapg:
-	$(MAKE) rv64_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_small    ../tests/aapg.json log_rv64_small_aapg 	  $(NPROCS) 2>&1 | tee rv64_small_aapg.log
-rv64_standard_aapg:
-	$(MAKE) rv64_standard DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_standard ../tests/aapg.json log_rv64_standard_aapg $(NPROCS) 2>&1 | tee rv64_standard_aapg.log
-rv64_big_aapg:
-	$(MAKE) rv64_big DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_big      ../tests/aapg.json log_rv64_big_aapg      $(NPROCS) 2>&1 | tee rv64_big_aapg.log
-rv64_giant_aapg:
-	$(MAKE) rv64_giant DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64_giant    ../tests/aapg.json log_rv64_giant_aapg    $(NPROCS) 2>&1 | tee rv64_giant_aapg.log
 
 ../spike_dpi/libspike_dpi.so:
 	$(MAKE) -C ../spike_dpi
