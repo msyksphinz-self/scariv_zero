@@ -9,14 +9,14 @@ module msrh_csu_pipe
 
   input msrh_pkg::commit_blk_t      i_commit,
 
-  input                             msrh_pkg::issue_t rv0_issue,
+  input msrh_pkg::issue_t           rv0_issue,
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
-  input                             msrh_pkg::phy_wr_t ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
+  input msrh_pkg::phy_wr_t          ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
   regread_if.master                 ex1_regread_rs1,
 
-  output                            msrh_pkg::early_wr_t o_ex1_early_wr,
-  output                            msrh_pkg::phy_wr_t o_ex3_phy_wr,
+  output msrh_pkg::early_wr_t       o_ex1_early_wr,
+  output msrh_pkg::phy_wr_t         o_ex3_phy_wr,
 
   /* CSR information */
   input riscv_common_pkg::priv_t               i_status_priv,
@@ -228,6 +228,7 @@ assign ex3_done_if.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal |
 // CSR Update
 // ------------
 assign write_if.valid = r_ex3_issue.valid &
+                        !r_ex3_csr_illegal &
                         r_ex3_pipe_ctrl.csr_update &
                         !((write_if.addr == `SYSREG_ADDR_MISA) & r_ex3_issue.pc_addr[1]) & // Suppress write MISA when next fetch become misalign
                         !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rd_regs[0].regidx == 5'h0);
