@@ -16,15 +16,15 @@ REGRESSION_LIST += rv64imfdc_big_aapg
 #
 rv32imc_big: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=big ISA=imc
+	$(MAKE) rv32_build CONF=big ISA=imc RV_XLEN=32 RV_FLEN=0
 
 rv32imfc_big: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=big ISA=imfc
+	$(MAKE) rv32_build CONF=big ISA=imfc RV_XLEN=32 RV_FLEN=32
 
 rv32imfdc_big: $(FILELIST) .config_design_rv32
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=big ISA=imfdc
+	$(MAKE) rv32_build CONF=big ISA=imfdc RV_XLEN=32 RV_FLEN=64
 
 rv32imc_big_test:
 	$(MAKE) rv32imc_big DEBUG=off
@@ -44,15 +44,15 @@ rv32imfdc_big_test:
 #
 rv64imc_big: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=big ISA=imc
+	$(MAKE) rv64_build CONF=big ISA=imc RV_XLEN=64 RV_FLEN=0
 
 rv64imfc_big: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=big ISA=imfc
+	$(MAKE) rv64_build CONF=big ISA=imfc RV_XLEN=64 RV_FLEN=32
 
 rv64imfdc_big: $(FILELIST) .config_design_rv64
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=big ISA=imfdc
+	$(MAKE) rv64_build CONF=big ISA=imfdc RV_XLEN=64 RV_FLEN=64
 
 rv64imc_big_test:
 	$(MAKE) rv64imc_big DEBUG=off

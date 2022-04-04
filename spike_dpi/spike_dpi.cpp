@@ -113,13 +113,31 @@ static unsigned long atoul_nonzero_safe(const char* s)
 }
 
 
-void initial_spike (const char *filename, int rv_xlen)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen)
 {
   argv[0] = "spike_dpi";
   if (rv_xlen == 32) {
-    argv[1] = "--isa=rv32imacfd";
+    if (rv_flen == 0) {
+      argv[1] = "--isa=rv32imac";
+    } else if (rv_flen == 32) {
+      argv[1] = "--isa=rv32imafc";
+    } else if (rv_flen == 64) {
+      argv[1] = "--isa=rv32imafdc";
+    } else {
+      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
+      exit(1);
+    }
   } else if (rv_xlen == 64) {
-    argv[1] = "--isa=rv64imacfd";
+    if (rv_flen == 0) {
+      argv[1] = "--isa=rv64imac";
+    } else if (rv_flen == 32) {
+      argv[1] = "--isa=rv64imafc";
+    } else if (rv_flen == 64) {
+      argv[1] = "--isa=rv64imafdc";
+    } else {
+      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
+      exit(1);
+    }
   } else {
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
@@ -930,7 +948,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, RV_XLEN);
+  initial_spike(filename, RV_XLEN, RV_FLEN);
 
 }
 #endif // VERILATOR

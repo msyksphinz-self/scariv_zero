@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
 #endif // DUMP_FST
 
   fprintf(compare_log_fp, "initial_spike opening %s ...\n", filename);
-  initial_spike(filename, RV_XLEN);
+  initial_spike(filename, RV_XLEN, RV_FLEN);
 
   // Format
   dut->i_elf_loader_reset_n = 0;

@@ -1,5 +1,8 @@
 NPROCS = $(shell nproc)
 
+RV_XLEN = 64
+RV_FLEN = 64
+
 DEBUG = on
 
 BINARY_SUFFIX = ""
@@ -58,9 +61,9 @@ VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
+VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN)"
 
 VERILATOR_OPTS_RV64 += ../cpp/tb_elf_loader.cpp
-VERILATOR_OPTS_RV64 += -CFLAGS "-DRV_XLEN=64"
 VERILATOR_OPTS_RV64 += +define+RV64
 
 VERILATOR_OPTS_RV32 += ../cpp/tb_elf32_loader.cpp
@@ -84,8 +87,6 @@ DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
 
 build_decode_v: $(DECODE_FILES)
-
-RV_XLEN = 64
 
 ../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN)
