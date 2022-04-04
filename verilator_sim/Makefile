@@ -131,7 +131,7 @@ rv32_build: $(FILELIST) .config_design_rv32
 
 rv64_build: $(FILELIST) .config_design_rv64
 	verilator --top-module $(TOP) \
-		-o ../$(TOP)_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		$(VERILATOR_OPTS) \
 		$(VERILATOR_OPTS_RV64) \
