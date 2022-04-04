@@ -34,8 +34,11 @@ select_test.each_slice(max_threads) do |group|
       lock = puts_locks.pop
       print test["name"] + "\t: "
       result_stdout = `cat #{output_file}`
-      if result_stdout.include?("SIMULATION FINISH : FAIL")
+      if result_stdout.include?("SIMULATION FINISH : FAIL (CODE=100)")
         print "ERROR\n"
+      elsif result_stdout.include?("SIMULATION FINISH : FAIL")
+        print "MATCH\n"
+        pass_num = pass_num + 1
       elsif result_stdout.include?("SIMULATION FINISH : PASS")
         print "PASS\n"
         pass_num = pass_num + 1
