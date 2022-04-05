@@ -231,7 +231,8 @@ assign write_if.valid = r_ex3_issue.valid &
                         !r_ex3_csr_illegal &
                         r_ex3_pipe_ctrl.csr_update &
                         !((write_if.addr == `SYSREG_ADDR_MISA) & r_ex3_issue.pc_addr[1]) & // Suppress write MISA when next fetch become misalign
-                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) & r_ex3_issue.rd_regs[0].regidx == 5'h0);
+                        !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) &
+                          r_ex3_issue.rd_regs[0].valid & (r_ex3_issue.rd_regs[0].regidx == 5'h0));
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 
