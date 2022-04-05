@@ -107,12 +107,12 @@ build_decode_v: $(DECODE_FILES)
 
 FILELIST = sim_filelist.f
 
-.config_design_rv32: ../src/riscv_decoder.json
+.config_design_rv32: ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=32 $(DECODE_FILES)
 	rm -rf .config_design_*
 	touch .config_design_rv32
 
-.config_design_rv64: ../src/riscv_decoder.json
+.config_design_rv64: ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=64 $(DECODE_FILES)
 	rm -rf .config_design_*
 	touch .config_design_rv64
