@@ -45,13 +45,14 @@ $arch_table.each{ |arch|
   if not arch.key?(ctrl_idx) then
     next
   end
-  if arch.key?("xlen") and not arch["xlen"].include?(xlen) then
-    next
-  end
-  if arch.key?("flen") and not arch["flen"].include?(flen) then
-    next
-  end
+  # if arch.key?("xlen") and not arch["xlen"].include?(xlen) then
+  #   next
+  # end
+  # if arch.key?("flen") and not arch["flen"].include?(flen) then
+  #   next
+  # end
   arch[ctrl_idx].each {|ctrl|
+    puts "inst " + arch["name"].split(' ')[0]
     search_hit = false
     ctrl_fields.each{|ctrl_field|
       if ctrl_field.name == ctrl[0] then
@@ -112,6 +113,7 @@ $arch_table.each{ |arch|
   tmp_file.print arch["field"].join.gsub('X', '-')
   tmp_file.print ' '
   ctrl_fields.each {|ctrl|
+    puts "inst " + arch["name"].split(' ')[0]
     if arch[ctrl_idx].map{|n| n[0]}.include?(ctrl.name) then
       sig_index = arch[ctrl_idx].map{|n| n[0]}.index(ctrl.name)
       sig_val   = arch[ctrl_idx].map{|n| n[1]}[sig_index]
