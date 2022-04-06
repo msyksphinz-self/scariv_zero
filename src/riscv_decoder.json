@@ -1038,7 +1038,7 @@
     },
     {
         "name":"fld        f[11:7],r[19:15],h[31:20]",
-        "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
+        "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00001", "11"],
         "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "fpu"]],
         "reg": [["rd", "fd"], ["r1", "r1"]],
@@ -1046,7 +1046,7 @@
     },
     {
         "name":"fsd        f[24:20],h[31:25]|h[11:7](r[19:15])",
-        "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
+        "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01001", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "fpu"]],
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "f2"]],
