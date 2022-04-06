@@ -28,15 +28,15 @@ rv32imfdc_small: $(FILELIST) .config_design_rv32
 
 rv32imc_small_test:
 	$(MAKE) rv32imc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32imc_small rv32-tests.json log_rv32imc_small $(NPROCS) 2>&1 | tee rv32imc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv32imc_small rv32-tests.json log_rv32imc_small $(NPROCS) 2>&1 | tee rv32imc_small_test.log
 
 rv32imfc_small_test:
 	$(MAKE) rv32imfc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32imfc_small rv32-tests.json log_rv32imfc_small $(NPROCS) 2>&1 | tee rv32imfc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv32imfc_small rv32-tests.json log_rv32imfc_small $(NPROCS) 2>&1 | tee rv32imfc_small_test.log
 
 rv32imfdc_small_test:
 	$(MAKE) rv32imfdc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv32imfdc_small rv32-tests.json log_rv32imfdc_small $(NPROCS) 2>&1 | tee rv32imfdc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv32imfdc_small rv32-tests.json log_rv32imfdc_small $(NPROCS) 2>&1 | tee rv32imfdc_small_test.log
 
 
 #
@@ -56,36 +56,36 @@ rv64imfdc_small: $(FILELIST) .config_design_rv64
 
 rv64imc_small_test:
 	$(MAKE) rv64imc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imc_small rv64-tests.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv64imc_small rv64-tests.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_test.log
 
 rv64imfc_small_test:
 	$(MAKE) rv64imfc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfc_small rv64-tests.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv64imfc_small rv64-tests.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_test.log
 
 rv64imfdc_small_test:
 	$(MAKE) rv64imfdc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfdc_small rv64-tests.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_test.log
+	../scripts/run_regress.rb msrh_tb_rv64imfdc_small rv64-tests.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_test.log
 
 rv64imc_small_benchmarks:
 	$(MAKE) rv64imc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imc_small rv64-bench.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_benchmark.log
+	../scripts/run_regress.rb msrh_tb_rv64imc_small rv64-bench.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_benchmark.log
 
 rv64imfc_small_benchmarks:
 	$(MAKE) rv64imfc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfc_small rv64-bench.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_benchmark.log
+	../scripts/run_regress.rb msrh_tb_rv64imfc_small rv64-bench.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_benchmark.log
 
 rv64imfdc_small_benchmarks:
 	$(MAKE) rv64imfdc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfdc_small rv64-bench.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_benchmark.log
+	../scripts/run_regress.rb msrh_tb_rv64imfdc_small rv64-bench.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_benchmark.log
 
 rv64imc_small_aapg:
 	$(MAKE) rv64imc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imc_small     ../tests/aapg.json log_rv64imc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imc_small_aapg.log
+	../scripts/run_regress.rb msrh_tb_rv64imc_small     ../tests/aapg.json log_rv64imc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imc_small_aapg.log
 
 rv64imfc_small_aapg:
 	$(MAKE) rv64imfc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfc_small     ../tests/aapg.json log_rv64imfc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imfc_small_aapg.log
+	../scripts/run_regress.rb msrh_tb_rv64imfc_small     ../tests/aapg.json log_rv64imfc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imfc_small_aapg.log
 
 rv64imfdc_small_aapg:
 	$(MAKE) rv64imfdc_small DEBUG=off
-	../scripts/runtest.rb msrh_tb_rv64imfdc_small     ../tests/aapg.json log_rv64imfdc_small_aapg	  $(NPROCS) 2>&1 | tee rv64imfdc_small_aapg.log
+	../scripts/run_regress.rb msrh_tb_rv64imfdc_small     ../tests/aapg.json log_rv64imfdc_small_aapg	  $(NPROCS) 2>&1 | tee rv64imfdc_small_aapg.log
