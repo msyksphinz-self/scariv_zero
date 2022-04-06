@@ -89,35 +89,35 @@ DECODE_FILES += ../src/pma_map.sv
 build_decode_v: $(DECODE_FILES)
 
 ../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN)
+	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN)
+	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN)
+	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_bru_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN)
+	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN)
+	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_fpu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN)
+	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN)
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb reg $(RV_XLEN)
+	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
 	cd ../src && ../scripts/build_memory_map.rb $< $(RV_XLEN)
 
 FILELIST = sim_filelist.f
 
-.config_design_rv32: ../src/riscv_decoder.json ../src/pma_memory_map.json
+.config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=32 $(DECODE_FILES)
 	rm -rf .config_design_*
-	touch .config_design_rv32
+	touch $@
 
-.config_design_rv64: ../src/riscv_decoder.json ../src/pma_memory_map.json
+.config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=64 $(DECODE_FILES)
 	rm -rf .config_design_*
-	touch .config_design_rv64
+	touch $@
 
-rv32_build: $(FILELIST) .config_design_rv32
+rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
@@ -129,7 +129,7 @@ rv32_build: $(FILELIST) .config_design_rv32
 		../src/msrh_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
-rv64_build: $(FILELIST) .config_design_rv64
+rv64_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \

@@ -28,7 +28,8 @@ end
 
 ctrl_idx = ARGV[0]
 xlen = ARGV[1].to_s
-if ARGV.size != 2 then
+flen = ARGV[2].to_s
+if ARGV.size != 3 then
   STDERR.print "Please specify signal fields in JSON file\n"
 end
 
@@ -44,7 +45,10 @@ $arch_table.each{ |arch|
   if not arch.key?(ctrl_idx) then
     next
   end
-  if not arch["xlen"].include?(xlen) then
+  if arch.key?("xlen") and not arch["xlen"].include?(xlen) then
+    next
+  end
+  if arch.key?("flen") and not arch["flen"].include?(flen) then
     next
   end
   arch[ctrl_idx].each {|ctrl|
@@ -99,7 +103,10 @@ $arch_table.each{ |arch|
   if not arch.key?(ctrl_idx) then
     next
   end
-  if not arch["xlen"].include?(xlen) then
+  if arch.key?("xlen") and not arch["xlen"].include?(xlen) then
+    next
+  end
+  if arch.key?("flen") and not arch["flen"].include?(flen) then
     next
   end
   tmp_file.print arch["field"].join.gsub('X', '-')
@@ -154,11 +161,21 @@ ctrl_fields.each_with_index{|ct, i|
   sv_file.puts "  } " + ct.name + "_t;"
 }
 
+sv_file.puts "  typedef struct packed {"
+sv_file.puts "    logic dummy;"
+ctrl_fields.each{|ct|
+  sv_file.puts "    " + ct.name + "_t " + ct.name + ";"
+}
+sv_file.puts "  } pipe_ctrl_t;"
+
 sv_file.puts "endpackage\n\n"
 
 
 sv_file.puts "module internal_decoder_" + ctrl_idx + " ("
-sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
+sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst"
+if ctrl_fields.size != 0 then
+  sv_file.puts ","
+end
 ctrl_fields.each_with_index{|ct, i|
   sv_file.print "  output logic "
   if ct.op_list.length > 2 then
@@ -219,7 +236,10 @@ sv_file.puts "endmodule\n\n"
 
 
 sv_file.puts "module decoder_" + ctrl_idx + " ("
-sv_file.puts "  input logic [" + (inst_length-1).to_s + ":0] inst,"
+sv_file.puts  "  input logic [" + (inst_length-1).to_s + ":0] inst"
+if ctrl_fields.size != 0 then
+  sv_file.puts ","
+end
 ctrl_fields.each_with_index{|ct, i|
   sv_file.print "  output decoder_" + ctrl_idx + "_pkg::" + ct.name + "_t " + ct.name
 
@@ -241,7 +261,10 @@ ctrl_fields.each{|ct|
 }
 
 sv_file.puts "internal_decoder_" + ctrl_idx + " u_inst ("
-sv_file.puts " .inst(inst),"
+sv_file.puts " .inst(inst)"
+if ctrl_fields.size != 0 then
+  sv_file.puts ","
+end
 ctrl_fields.each_with_index{|ct,i|
   sv_file.print " ." + ct.name + "(raw_" + ct.name + ")"
   if i == ctrl_fields.length - 1 then
