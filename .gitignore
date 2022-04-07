@@ -2,7 +2,8 @@ verilator_sim/msrh_tb_*
 verilator_sim/obj_dir_*
 verilator_sim/simx.fst
 verilator_sim/*.log
-verilator_sim/log/
+verilator_sim/log_*
+verilator_sim/.config_*
 
 questa_sim/*.log
 questa_sim/.dbarInfo
