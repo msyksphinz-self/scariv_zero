@@ -55,37 +55,37 @@ rv64imfdc_small: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	$(MAKE) rv64_build CONF=small ISA=imfdc RV_XLEN=64 RV_FLEN=64
 
 rv64imc_small_test:
-	$(MAKE) rv64imc_small DEBUG=off
+	$(MAKE) rv64imc_small DEBUG=off RV_FLEN=0
 	../scripts/run_regress.rb msrh_tb_rv64imc_small rv64-tests.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_test.log
 
 rv64imfc_small_test:
-	$(MAKE) rv64imfc_small DEBUG=off
+	$(MAKE) rv64imfc_small DEBUG=off RV_FLEN=32
 	../scripts/run_regress.rb msrh_tb_rv64imfc_small rv64-tests.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_test.log
 
 rv64imfdc_small_test:
-	$(MAKE) rv64imfdc_small DEBUG=off
+	$(MAKE) rv64imfdc_small DEBUG=off RV_FLEN=64
 	../scripts/run_regress.rb msrh_tb_rv64imfdc_small rv64-tests.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_test.log
 
 rv64imc_small_benchmarks:
-	$(MAKE) rv64imc_small DEBUG=off
+	$(MAKE) rv64imc_small DEBUG=off RV_FLEN=0
 	../scripts/run_regress.rb msrh_tb_rv64imc_small rv64-bench.json log_rv64imc_small $(NPROCS) 2>&1 | tee rv64imc_small_benchmark.log
 
 rv64imfc_small_benchmarks:
-	$(MAKE) rv64imfc_small DEBUG=off
+	$(MAKE) rv64imfc_small DEBUG=off RV_FLEN=32
 	../scripts/run_regress.rb msrh_tb_rv64imfc_small rv64-bench.json log_rv64imfc_small $(NPROCS) 2>&1 | tee rv64imfc_small_benchmark.log
 
 rv64imfdc_small_benchmarks:
-	$(MAKE) rv64imfdc_small DEBUG=off
+	$(MAKE) rv64imfdc_small DEBUG=off RV_FLEN=64
 	../scripts/run_regress.rb msrh_tb_rv64imfdc_small rv64-bench.json log_rv64imfdc_small $(NPROCS) 2>&1 | tee rv64imfdc_small_benchmark.log
 
 rv64imc_small_aapg:
-	$(MAKE) rv64imc_small DEBUG=off
+	$(MAKE) rv64imc_small DEBUG=off RV_FLEN=0
 	../scripts/run_regress.rb msrh_tb_rv64imc_small     ../tests/aapg.json log_rv64imc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imc_small_aapg.log
 
 rv64imfc_small_aapg:
-	$(MAKE) rv64imfc_small DEBUG=off
+	$(MAKE) rv64imfc_small DEBUG=off RV_FLEN=32
 	../scripts/run_regress.rb msrh_tb_rv64imfc_small     ../tests/aapg.json log_rv64imfc_small_aapg  	  $(NPROCS) 2>&1 | tee rv64imfc_small_aapg.log
 
 rv64imfdc_small_aapg:
-	$(MAKE) rv64imfdc_small DEBUG=off
+	$(MAKE) rv64imfdc_small DEBUG=off RV_FLEN=64
 	../scripts/run_regress.rb msrh_tb_rv64imfdc_small     ../tests/aapg.json log_rv64imfdc_small_aapg	  $(NPROCS) 2>&1 | tee rv64imfdc_small_aapg.log
