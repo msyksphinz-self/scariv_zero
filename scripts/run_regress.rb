@@ -18,7 +18,6 @@ FileUtils.mkdir_p(log_dir)
 pass_num = 0
 
 select_test = $test_table.select{ |test| not (test.key?("skip") and test["skip"] == 1) }
-test_num = select_test.size
 
 xlen = 64
 if veri_sim_binary =~ /rv32/ then
@@ -32,6 +31,8 @@ elsif veri_sim_binary =~ /rv#{xlen}imfc/ then
   select_test = select_test.select{ |test| not ((test["elf"] =~ /rv32ud/) or (test["elf"] =~ /rv64ud/)) }
 elsif veri_sim_binary =~ /rv#{xlen}imfdc/ then
 end
+
+test_num = select_test.size
 
 puts_locks = Queue.new
 1.times { puts_locks.push :lock }
