@@ -129,7 +129,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 		../src/msrh_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
-rv64_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
+rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
