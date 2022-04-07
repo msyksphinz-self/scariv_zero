@@ -120,7 +120,7 @@ FILELIST = sim_filelist.f
 rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
-		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		--Mdir obj_dir_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		$(VERILATOR_OPTS) \
 		$(VERILATOR_OPTS_RV32) \
 		../src/riscv_common_pkg.sv \
@@ -132,7 +132,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
-		--Mdir obj_dir_$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		--Mdir obj_dir_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		$(VERILATOR_OPTS) \
 		$(VERILATOR_OPTS_RV64) \
 		../src/riscv_common_pkg.sv \
