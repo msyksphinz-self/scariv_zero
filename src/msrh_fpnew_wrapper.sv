@@ -57,7 +57,7 @@ logic [ 1: 0][31: 0]                     w_noncomp32_rs;
 logic [ 1: 0]                            w_noncomp32_boxed;
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
-assign w_noncomp32_boxed = {&(i_rs2 >> riscv_pkg::XLEN_W), &(i_rs1 >> riscv_pkg::XLEN_W)};
+assign w_noncomp32_boxed = 2'b11;
 
 always_comb begin
   case (i_pipe_ctrl.op)
@@ -92,12 +92,14 @@ always_comb begin
     OP_FCVT_WU_D : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::F2I     };
     OP_FCVT_D_W  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::I2F     };
     OP_FCVT_D_WU : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::I2F     };
-`ifdef RV64
     OP_FCVT_L_D  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::F2I     };
     OP_FCVT_LU_D : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::F2I     };
     OP_FCVT_D_L  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::I2F     };
     OP_FCVT_D_LU : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::I2F     };
-`endif // RV64
+    OP_FCVT_L_S  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::F2I     };
+    OP_FCVT_LU_S : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::F2I     };
+    OP_FCVT_S_L  : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::I2F     };
+    OP_FCVT_S_LU : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, fpnew_pkg::I2F     };
     default      : {w_fma_valid, w_noncomp_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b0, fpnew_pkg::FMADD   };
   endcase // case (i_op)
 
@@ -112,12 +114,14 @@ always_comb begin
     OP_FCVT_WU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
     OP_FCVT_D_W  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
     OP_FCVT_D_WU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
-`ifdef RV64
     OP_FCVT_L_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
     OP_FCVT_LU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
     OP_FCVT_D_L  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
     OP_FCVT_D_LU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
-`endif // RV64
+    OP_FCVT_L_S  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_LU_S : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_L  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_LU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
     default      : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
   endcase // case (i_pipe_ctrl.op)
 
@@ -286,7 +290,7 @@ assign w_cast_out_fflags = {w_cast_status.NV,
                             w_cast_status.UF,
                             w_cast_status.NX};
 
-generate if (riscv_pkg::FLEN_W==64) begin : fma64
+generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   logic [2:0][63: 0]                      w_fma64_rs;
   logic [2: 0]                            w_fma64_boxed;
   logic [63: 0]                           w_fma64_result;
@@ -413,7 +417,7 @@ generate if (riscv_pkg::FLEN_W==64) begin : fma64
                     w_cast_out_valid      ? w_cast_out_fflags :
                     w_fma64_out_fflags;
 
-end else if (riscv_pkg::XLEN_W==32) begin : block_32 // block: fma64
+end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_cast_out_valid;
   assign o_result = w_fma32_out_valid ? w_fma32_result    :
                     w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :

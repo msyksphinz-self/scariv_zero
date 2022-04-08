@@ -1037,6 +1037,38 @@
         "fpu_ctrl":[["size", "w"], ["op", "fmv_w_x"]]
     },
     {
+        "name":"fcvt.l.s   r[11:7],f[19:15]",
+        "length":"32", "xlen":["64"], "flen":["32", "64"],
+        "field":["11000", "00", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "r3"], ["r1", "f1"]],
+        "fpu_ctrl":[["size", "dw"], ["op", "fcvt_l_s"]]
+    },
+    {
+        "name":"fcvt.lu.s  r[11:7],f[19:15]",
+        "length":"32", "xlen":["64"], "flen":["32", "64"],
+        "field":["11000", "00", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "r3"], ["r1", "f1"]],
+        "fpu_ctrl":[["size", "dw"], ["op", "fcvt_lu_s"]]
+    },
+    {
+        "name":"fcvt.s.l   f[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
+        "field":["11010", "00", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "fd"], ["r1", "r1"]],
+        "fpu_ctrl":[["size", "dw"], ["op", "fcvt_s_l"]]
+    },
+    {
+        "name":"fcvt.s.lu  f[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
+        "field":["11010", "00", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
+        "inst_cat": [["inst_cat", "fpu"]],
+        "reg": [["rd", "fd"], ["r1", "r1"]],
+        "fpu_ctrl":[["size", "dw"], ["op", "fcvt_s_lu"]]
+    },
+    {
         "name":"fld        f[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00001", "11"],

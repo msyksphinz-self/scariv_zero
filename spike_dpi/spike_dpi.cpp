@@ -28,6 +28,7 @@ disassembler_t *disasm;
 int argc;
 const char *argv[20];
 int g_rv_xlen = 0;
+int g_rv_flen = 0;
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
@@ -143,6 +144,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
     exit(-1);
   }
   g_rv_xlen = rv_xlen;
+  g_rv_flen = rv_flen;
   argv[2] = "--log";
   argv[3] = "spike.log";
   argv[4] = "-l";
@@ -462,6 +464,19 @@ bool inline is_equal_xlen(int64_t val1, int64_t val2)
     return val1 == val2;
   } else {
     fprintf(compare_log_fp, "rv_xlen should be 32 or 64\n");
+    exit(-1);
+  }
+}
+
+
+bool inline is_equal_flen(int64_t val1, int64_t val2)
+{
+  if (g_rv_flen == 32) {
+    return (val1 & 0xffffffffULL) == (val2 & 0xffffffffULL);
+  } else if (g_rv_flen == 64) {
+    return val1 == val2;
+  } else {
+    fprintf(compare_log_fp, "rv_flen should be 32 or 64\n");
     exit(-1);
   }
 }
@@ -802,12 +817,12 @@ void step_spike(long long time, long long rtl_pc,
     }
   } else if (rtl_wr_valid && iss_wr_type == 1) { // FPR write
     int64_t iss_wr_val = p->get_state()->FPR[rtl_wr_gpr_addr].v[0];
-    if (!is_equal_xlen(iss_wr_val, rtl_wr_val)) {
+    if (!is_equal_flen(iss_wr_val, rtl_wr_val)) {
       fprintf(compare_log_fp, "==========================================\n");
       fprintf(compare_log_fp, "Wrong FPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
               rtl_wr_gpr_addr, rtl_wr_gpr_rnid,
-              g_rv_xlen / 4, rtl_wr_val,
-              g_rv_xlen / 4, iss_wr_val);
+              g_rv_flen / 4, rtl_wr_val,
+              g_rv_flen / 4, iss_wr_val);
       fprintf(compare_log_fp, "==========================================\n");
       fail_count ++;
       if (fail_count >= fail_max) {
@@ -815,7 +830,7 @@ void step_spike(long long time, long long rtl_pc,
       }
       return;
     } else {
-      fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, 64 / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_flen / 4, rtl_wr_val);
     }
   }
 

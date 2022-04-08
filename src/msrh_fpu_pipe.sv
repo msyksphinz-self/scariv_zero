@@ -236,17 +236,16 @@ assign tmp_ex2_result_d = 'h0;
 // Memo: I don't know why but if this sentence is integrated into above, test pattern fail.
 assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_ex2_rs2_selected_data[ 4:0];
 
-`ifdef RV64
-logic [ 63: 0]       w_ex2_rs1_canonical;
-logic [ 63: 0]       w_ex2_rs2_canonical;
-assign w_ex2_rs1_canonical = !(&w_ex2_rs1_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs1_selected_data;
-assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs2_selected_data;
-`else  // RV64
-logic [ 31: 0]       w_ex2_rs1_canonical;
-logic [ 31: 0]       w_ex2_rs2_canonical;
-assign w_ex2_rs1_canonical = w_ex2_rs1_selected_data;
-assign w_ex2_rs2_canonical = w_ex2_rs2_selected_data;
-`endif // RV64
+logic [63: 0] w_ex2_rs1_canonical;
+logic [63: 0] w_ex2_rs2_canonical;
+generate if (riscv_pkg::FLEN_W == 64) begin
+  assign w_ex2_rs1_canonical = !(&w_ex2_rs1_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs1_selected_data;
+  assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs2_selected_data;
+end else begin
+  assign w_ex2_rs1_canonical = w_ex2_rs1_selected_data;
+  assign w_ex2_rs2_canonical = w_ex2_rs2_selected_data;
+end
+endgenerate
 
 logic                w_ex2_fpnew_valid;
 
@@ -256,18 +255,15 @@ always_comb begin
       w_ex2_res_data = {{32{w_ex2_rs1_selected_data[31]}}, w_ex2_rs1_selected_data[31: 0]};
       w_ex2_fpnew_valid = 1'b0;
     end
-`ifdef RV64
     OP_FMV_W_X  : begin
-      w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
-      w_ex2_fpnew_valid = 1'b0;
+      if (riscv_pkg::XLEN_W == 64) begin
+        w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end else begin
+        w_ex2_res_data = w_ex2_rs1_selected_data;
+        w_ex2_fpnew_valid = 1'b0;
+      end
     end
-`else  // RV64
-    OP_FMV_W_X  : begin
-      w_ex2_res_data = w_ex2_rs1_selected_data;
-      w_ex2_fpnew_valid = 1'b0;
-    end
-`endif // RV64
-`ifdef RV64
     OP_FMV_X_D  : begin
       w_ex2_res_data = w_ex2_rs1_selected_data;
       w_ex2_fpnew_valid = 1'b0;
@@ -289,37 +285,36 @@ always_comb begin
                          w_ex2_rs1_selected_data[62:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
-`endif // RV64
-`ifdef RV64
     OP_FSGNJ_S  : begin
-      w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-      w_ex2_fpnew_valid = 1'b0;
+      if (riscv_pkg::FLEN_W == 64) begin
+        w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end else begin
+        w_ex2_res_data = {w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end
     end
     OP_FSGNJN_S : begin
-      w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-      w_ex2_fpnew_valid = 1'b0;
+      if (riscv_pkg::FLEN_W == 64) begin
+        w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end else begin
+        w_ex2_res_data = {~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end
     end
     OP_FSGNJX_S : begin
-      w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
-                        w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
-                        w_ex2_rs1_canonical[30: 0]};
-      w_ex2_fpnew_valid = 1'b0;
+      if (riscv_pkg::FLEN_W == 64) begin
+        w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
+                          w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
+                          w_ex2_rs1_canonical[30: 0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end else begin
+        w_ex2_res_data = {w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
+                          w_ex2_rs1_canonical[30: 0]};
+        w_ex2_fpnew_valid = 1'b0;
+      end
     end
-`else  // RV64
-    OP_FSGNJ_S  : begin
-      w_ex2_res_data = {w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-      w_ex2_fpnew_valid = 1'b0;
-    end
-    OP_FSGNJN_S : begin
-      w_ex2_res_data = {~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
-      w_ex2_fpnew_valid = 1'b0;
-    end
-    OP_FSGNJX_S : begin
-      w_ex2_res_data = {w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
-                        w_ex2_rs1_canonical[30: 0]};
-      w_ex2_fpnew_valid = 1'b0;
-    end
-`endif // RV64
     default    : begin
       w_ex2_res_data = 'h0;
       w_ex2_fpnew_valid = 1'b1;
