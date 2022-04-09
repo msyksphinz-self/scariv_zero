@@ -112,7 +112,7 @@ always_comb begin
     OP_FCVT_D_S  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
     OP_FCVT_W_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
     OP_FCVT_WU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_D_W  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
+    OP_FCVT_D_W  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
     OP_FCVT_D_WU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
     OP_FCVT_L_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
     OP_FCVT_LU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
