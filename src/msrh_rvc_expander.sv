@@ -38,7 +38,7 @@ always_comb begin
     end
     5'b001_00 : begin
       // `c.fld      rd', offset(rs1')`  00        `fld rd, offset(rs1)`
-      out_32bit = {4'b0000, w_ld_imm, rs1p, 3'b011, rs2p, 7'b0000011};
+      out_32bit = {4'b0000, w_ld_imm, rs1p, 3'b011, rs2p, 7'b0000111};
     end
     5'b010_00 : begin
       // `c.lw       rd', offset(rs1')`  00        `lw rd, offset(rs1)`
