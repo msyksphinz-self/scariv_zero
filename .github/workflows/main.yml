@@ -72,11 +72,11 @@ jobs:
 
       # Build library
       - name: RV32IMC Tiny Build
-        run: make -C verilator_sim/ rv32imc_tiny LINT=on
+        run: make -C verilator_sim/ rv32imc_tiny LINT=on DEBUG=off RV_FLEN=0
       - name: RV32IMFC Tiny Build
-        run: make -C verilator_sim/ rv32imfc_tiny LINT=on
+        run: make -C verilator_sim/ rv32imfc_tiny LINT=on DEBUG=off RV_FLEN=32
       - name: RV32IMFDC Tiny Build
-        run: make -C verilator_sim/ rv32imfdc_tiny LINT=on
+        run: make -C verilator_sim/ rv32imfdc_tiny LINT=on DEBUG=off RV_FLEN=64
 
       ## - name: RV32 Small Build
       ##   run: make -C verilator_sim/ rv32_build CONF=small RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
@@ -91,11 +91,11 @@ jobs:
       ##   run: make -C verilator_sim/ rv32_build CONF=giant RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
       ##
       - name: RV64IMC Tiny Build
-        run: make -C verilator_sim/ rv64imc_tiny LINT=on
+        run: make -C verilator_sim/ rv64imc_tiny LINT=on DEBUG=off RV_FLEN=0
       - name: RV64IMFC Tiny Build
-        run: make -C verilator_sim/ rv64imfc_tiny LINT=on
+        run: make -C verilator_sim/ rv64imfc_tiny LINT=on DEBUG=off RV_FLEN=32
       - name: RV64IMFDC Tiny Build
-        run: make -C verilator_sim/ rv64imfdc_tiny LINT=on
+        run: make -C verilator_sim/ rv64imfdc_tiny LINT=on DEBUG=off RV_FLEN=64
 
       ## - name: RV64 Small Build
       ##   run: make -C verilator_sim/ rv64_build CONF=small RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
