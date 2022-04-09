@@ -16,15 +16,15 @@ REGRESSION_LIST += rv64imfdc_tiny_aapg
 #
 rv32imc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=tiny ISA=imc RV_XLEN=32 RV_FLEN=0
+	$(MAKE) rv32_build CONF=tiny ISA=imc RV_XLEN=32 RV_FLEN=0 &> $@_build.log
 
 rv32imfc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=tiny ISA=imfc RV_XLEN=32 RV_FLEN=32
+	$(MAKE) rv32_build CONF=tiny ISA=imfc RV_XLEN=32 RV_FLEN=32 &> $@_build.log
 
 rv32imfdc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=tiny ISA=imfdc RV_XLEN=32 RV_FLEN=64
+	$(MAKE) rv32_build CONF=tiny ISA=imfdc RV_XLEN=32 RV_FLEN=64 &> $@_build.log
 
 rv32imc_tiny_test:
 	$(MAKE) rv32imc_tiny DEBUG=off RV_FLEN=0

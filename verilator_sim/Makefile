@@ -146,6 +146,7 @@ include conf_small.mk
 include conf_standard.mk
 include conf_big.mk
 include conf_giant.mk
+include regression.mk
 
 regression: $(REGRESSION_LIST)
 
