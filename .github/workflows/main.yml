@@ -71,30 +71,38 @@ jobs:
           submodules: recursive
 
       # Build library
-      ## - name: RV32 Tiny Build
-      ##   run: make -C verilator_sim/ rv32_build CONF=tiny ISA=imfc RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-      ##
+      - name: RV32IMC Tiny Build
+        run: make -C verilator_sim/ rv32imc_build LINT=on
+      - name: RV32IMFC Tiny Build
+        run: make -C verilator_sim/ rv32imfc_build LINT=on
+      - name: RV32IMFDC Tiny Build
+        run: make -C verilator_sim/ rv32imfdc_build LINT=on
+
       ## - name: RV32 Small Build
       ##   run: make -C verilator_sim/ rv32_build CONF=small RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-
-      - name: RV32 Standard Build
-        run: make -C verilator_sim/ rv32_build CONF=standard RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-
+      ##
+      ## - name: RV32 Standard Build
+      ##   run: make -C verilator_sim/ rv32imc_build CONF=standard RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
+      ##
       ## - name: RV32 Big Build
       ##   run: make -C verilator_sim/ rv32_build CONF=big RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
       ##
       ## - name: RV32 Giant Build
       ##   run: make -C verilator_sim/ rv32_build CONF=giant RV_XLEN=32 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
       ##
-      ## - name: RV64 Tiny Build
-      ##   run: make -C verilator_sim/ rv64_build CONF=tiny RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-      ##
+      - name: RV64IMC Tiny Build
+        run: make -C verilator_sim/ rv64imc_build LINT=on
+      - name: RV64IMFC Tiny Build
+        run: make -C verilator_sim/ rv64imfc_build LINT=on
+      - name: RV64IMFDC Tiny Build
+        run: make -C verilator_sim/ rv64imfdc_build LINT=on
+
       ## - name: RV64 Small Build
       ##   run: make -C verilator_sim/ rv64_build CONF=small RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-
-      - name: RV64 Standard Build
-        run: make -C verilator_sim/ rv64_build CONF=standard RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
-
+      ##
+      ## - name: RV64 Standard Build
+      ##   run: make -C verilator_sim/ rv64_build CONF=standard RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
+      ##
       ## - name: RV64 Big Build
       ##   run: make -C verilator_sim/ rv64_build CONF=big RV_XLEN=64 RV_FLEN=64 LINT=on VERILATOR_HOME=/usr/shared/verilator
       ##
