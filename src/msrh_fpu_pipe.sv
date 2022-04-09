@@ -256,7 +256,7 @@ always_comb begin
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FMV_W_X  : begin
-      if (riscv_pkg::XLEN_W == 64) begin
+      if (riscv_pkg::FLEN_W == 64) begin
         w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
         w_ex2_fpnew_valid = 1'b0;
       end else begin

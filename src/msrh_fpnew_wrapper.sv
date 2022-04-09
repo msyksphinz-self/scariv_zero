@@ -150,7 +150,7 @@ fpnew_fma
     .TagType    (logic),
     .AuxType    (logic)
     )
-fpnew_32
+fma_32
 (
  .clk_i  (i_clk    ),
  .rst_ni (i_reset_n),
@@ -406,7 +406,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid | w_cast_out_valid;
   assign o_result = w_fma32_out_valid     ? {{32{1'b1}}, w_fma32_result} :
                     w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
-                    w_noncomp32_out_valid ? {{32{w_noncomp32_result[31]}}, w_noncomp32_result} :
+                    w_noncomp32_out_valid ? {{32{1'b1}}, w_noncomp32_result} :
                     w_fma64_out_valid  ? w_fma64_result :
                     w_noncomp64_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp64_class_mask :
                     w_cast_out_valid    ? w_cast_result :
