@@ -16,15 +16,15 @@ REGRESSION_LIST += rv64imfdc_standard_aapg
 #
 rv32imc_standard: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=standard ISA=imc RV_XLEN=32 RV_FLEN=0 > $@_build.log
+	$(MAKE) rv32_build CONF=standard ISA=imc RV_XLEN=32 RV_FLEN=0 > $@_build.log 2>&1
 
 rv32imfc_standard: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=standard ISA=imfc RV_XLEN=32 RV_FLEN=32 > $@_build.log
+	$(MAKE) rv32_build CONF=standard ISA=imfc RV_XLEN=32 RV_FLEN=32 > $@_build.log 2>&1
 
 rv32imfdc_standard: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv32_build CONF=standard ISA=imfdc RV_XLEN=32 RV_FLEN=64 > $@_build.log
+	$(MAKE) rv32_build CONF=standard ISA=imfdc RV_XLEN=32 RV_FLEN=64 > $@_build.log 2>&1
 
 rv32imc_standard_test:
 	$(MAKE) rv32imc_standard DEBUG=off RV_FLEN=0
@@ -44,15 +44,15 @@ rv32imfdc_standard_test:
 #
 rv64imc_standard: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=standard ISA=imc RV_XLEN=64 RV_FLEN=0
+	$(MAKE) rv64_build CONF=standard ISA=imc RV_XLEN=64 RV_FLEN=0 > $@_build.log 2>&1
 
 rv64imfc_standard: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=standard ISA=imfc RV_XLEN=64 RV_FLEN=32
+	$(MAKE) rv64_build CONF=standard ISA=imfc RV_XLEN=64 RV_FLEN=32 > $@_build.log 2>&1
 
 rv64imfdc_standard: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
 	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
-	$(MAKE) rv64_build CONF=standard ISA=imfdc RV_XLEN=64 RV_FLEN=64
+	$(MAKE) rv64_build CONF=standard ISA=imfdc RV_XLEN=64 RV_FLEN=64 > $@_build.log 2>&1
 
 rv64imc_standard_test:
 	$(MAKE) rv64imc_standard DEBUG=off RV_FLEN=0

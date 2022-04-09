@@ -108,12 +108,12 @@ build_decode_v: $(DECODE_FILES)
 FILELIST = sim_filelist.f
 
 .config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) $(DECODE_FILES)
+	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) $(DECODE_FILES) > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
 .config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) $(DECODE_FILES)
+	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) $(DECODE_FILES) > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
@@ -148,7 +148,13 @@ include conf_big.mk
 include conf_giant.mk
 include regression.mk
 
-regression: $(REGRESSION_LIST)
+regression:
+	$(MAKE) rv32imc_regress
+	$(MAKE) rv32imfc_regress
+	$(MAKE) rv32imfdc_regress
+	$(MAKE) rv64imc_regress
+	$(MAKE) rv64imfc_regress
+	$(MAKE) rv64imfdc_regress
 
 rv64_aapg_test: gen_aapg
 	$(MAKE) rv64_tiny_aapg rv64_small_aapg rv64_standard_aapg rv64_big_aapg rv64_giant_aapg
