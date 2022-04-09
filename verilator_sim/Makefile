@@ -108,7 +108,7 @@ build_decode_v: $(DECODE_FILES)
 FILELIST = sim_filelist.f
 
 .config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) $(DECODE_FILES) > /dev/null 2>&1
+	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) $(DECODE_FILES)
 	rm -rf .config_design_*
 	touch $@
 
