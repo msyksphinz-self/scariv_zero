@@ -25,7 +25,8 @@ jobs:
 
     # The type of runner that the job will run on
     runs-on: ${{ matrix.system }}
-
+    container:
+        image: verilator/verilator:latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -38,29 +39,29 @@ jobs:
           sudo apt install -y tzdata
           sudo apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
 
-      # Build Verilator
-      - name: Cache Verilator ${{ matrix.verilator }}
-        uses: actions/cache@v2.1.6
-        id: cache-verilator
-        with:
-          path: verilator-${{ matrix.verilator }}
-          key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
-
-      - name: Compile Verilator ${{ matrix.verilator }}
-        # if: steps.cache-verilator.outputs.cache-hit != 'true'
-        run: |
-          wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
-          tar xvf v${{ matrix.verilator }}.tar.gz
-          cd verilator-${{ matrix.verilator }}
-          autoconf
-          ./configure
-          make
-      - name: Install Verilator ${{ matrix.verilator }}
-        # if: steps.cache-verilator.outputs.cache-hit != 'true'
-        run: |
-          cd verilator-${{ matrix.verilator }}
-          sudo make install
-          verilator --version
+      # # Build Verilator
+      # - name: Cache Verilator ${{ matrix.verilator }}
+      #   uses: actions/cache@v2.1.6
+      #   id: cache-verilator
+      #   with:
+      #     path: verilator-${{ matrix.verilator }}
+      #     key: ${{ matrix.system }}-verilator-${{ matrix.verilator }}
+      #
+      # - name: Compile Verilator ${{ matrix.verilator }}
+      #   # if: steps.cache-verilator.outputs.cache-hit != 'true'
+      #   run: |
+      #     wget https://github.com/verilator/verilator/archive/refs/tags/v${{ matrix.verilator }}.tar.gz
+      #     tar xvf v${{ matrix.verilator }}.tar.gz
+      #     cd verilator-${{ matrix.verilator }}
+      #     autoconf
+      #     ./configure
+      #     make
+      # - name: Install Verilator ${{ matrix.verilator }}
+      #   # if: steps.cache-verilator.outputs.cache-hit != 'true'
+      #   run: |
+      #     cd verilator-${{ matrix.verilator }}
+      #     sudo make install
+      #     verilator --version
 
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
