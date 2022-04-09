@@ -36,7 +36,7 @@ jobs:
       - name: apt_updates
         run: |
           apt-get update && apt install -y tzdata
-          apt install -y git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
+          apt install -y ruby git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
         env:
             TZ: Asia/Tokyo
             DEBIAN_FRONTEND: noninteractive
