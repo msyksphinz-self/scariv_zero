@@ -273,16 +273,16 @@ always_comb begin
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJ_D  : begin
-      w_ex2_res_data = { w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
+      w_ex2_res_data = { w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJN_D : begin
-      w_ex2_res_data = {~w_ex2_rs2_selected_data[63], w_ex2_rs1_selected_data[62:0]};
+      w_ex2_res_data = {~w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJX_D : begin
-      w_ex2_res_data = { w_ex2_rs1_selected_data[63] ^ w_ex2_rs2_selected_data[63],
-                         w_ex2_rs1_selected_data[62:0]};
+      w_ex2_res_data = { w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-1] ^ w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1],
+                         w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJ_S  : begin
