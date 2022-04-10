@@ -72,7 +72,8 @@ u_msrh_disp_pickup
 msrh_scheduler
   #(
     .ENTRY_SIZE  (msrh_conf_pkg::RV_FPU_ENTRY_SIZE),
-    .IN_PORT_SIZE(FPU_PORT_SIZE)
+    .IN_PORT_SIZE(FPU_PORT_SIZE),
+    .NUM_OPERANDS (3)
     )
 u_msrh_scheduler
   (

@@ -302,12 +302,10 @@ typedef struct packed {
   } issue_t;
 
 
-function issue_t assign_issue_t(disp_t in,
-                                cmt_id_t cmt_id,
-                                grp_id_t grp_id,
-                                logic rs1_rel_hit, logic rs2_rel_hit, logic rs3_rel_hit,
-                                logic rs1_phy_hit, logic rs2_phy_hit, logic rs3_phy_hit,
-                                logic rs1_may_mispred, logic rs2_may_mispred, logic rs3_may_mispred);
+
+function issue_t assign_issue_common (disp_t in,
+                                      cmt_id_t cmt_id,
+                                      grp_id_t grp_id);
   issue_t ret;
 
   ret.valid = in.valid;
@@ -336,27 +334,6 @@ function issue_t assign_issue_t(disp_t in,
   ret.wr_reg.regidx = in.wr_reg.regidx;
   ret.wr_reg.rnid = in.wr_reg.rnid;
 
-  ret.rd_regs[0].valid = in.rd_regs[0].valid;
-  ret.rd_regs[0].typ = in.rd_regs[0].typ;
-  ret.rd_regs[0].regidx = in.rd_regs[0].regidx;
-  ret.rd_regs[0].rnid = in.rd_regs[0].rnid;
-  ret.rd_regs[0].ready = in.rd_regs[0].ready | rs1_rel_hit & ~rs1_may_mispred | rs1_phy_hit;
-  ret.rd_regs[0].predict_ready = rs1_rel_hit & rs1_may_mispred;
-
-  ret.rd_regs[1].valid = in.rd_regs[1].valid;
-  ret.rd_regs[1].regidx = in.rd_regs[1].regidx;
-  ret.rd_regs[1].typ = in.rd_regs[1].typ;
-  ret.rd_regs[1].rnid = in.rd_regs[1].rnid;
-  ret.rd_regs[1].ready = in.rd_regs[1].ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
-  ret.rd_regs[1].predict_ready = rs2_rel_hit & rs2_may_mispred;
-
-  ret.rd_regs[2].valid         = in.rd_regs[2].valid;
-  ret.rd_regs[2].regidx        = in.rd_regs[2].regidx;
-  ret.rd_regs[2].typ           = in.rd_regs[2].typ;
-  ret.rd_regs[2].rnid          = in.rd_regs[2].rnid;
-  ret.rd_regs[2].ready         = in.rd_regs[2].ready | rs3_rel_hit & ~rs3_may_mispred | rs3_phy_hit;
-  ret.rd_regs[2].predict_ready = rs3_rel_hit & rs3_may_mispred;
-
   ret.except_valid = 1'b0;
   ret.except_type  = INST_ADDR_MISALIGN;
 
@@ -364,7 +341,49 @@ function issue_t assign_issue_t(disp_t in,
   ret.fflags = 'h0;
   return ret;
 
+endfunction // assign_issue_common
+
+function issue_t assign_issue_op2 (disp_t in,
+                                   cmt_id_t cmt_id,
+                                   grp_id_t grp_id,
+                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+  issue_t ret;
+  ret = assign_issue_common (in, cmt_id, grp_id);
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  return ret;
+
 endfunction  // assign_issue_t
+
+
+function issue_t assign_issue_op3 (disp_t in,
+                                   cmt_id_t cmt_id,
+                                   grp_id_t grp_id,
+                                   logic [ 2: 0] rs_rel_hit, logic [ 2: 0] rs_phy_hit, logic [ 2: 0] rs_may_mispred);
+  issue_t ret;
+  ret = assign_issue_common (in, cmt_id, grp_id);
+
+  for (int rs_idx = 0; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  return ret;
+
+endfunction  // assign_issue_t
+
 
   typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
 

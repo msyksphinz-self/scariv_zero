@@ -4,7 +4,8 @@ module msrh_scheduler
     parameter IS_BRANCH = 1'b0,
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
-    parameter EN_OLDEST = 0
+    parameter EN_OLDEST = 0,
+    parameter NUM_OPERANDS = 2
     )
 (
  input logic                           i_clk,
@@ -161,7 +162,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     #(
       .IS_STORE(IS_STORE),
       .IS_BRANCH (IS_BRANCH),
-      .EN_OLDEST(EN_OLDEST)
+      .EN_OLDEST(EN_OLDEST),
+      .NUM_OPERANDS(NUM_OPERANDS)
       )
   u_sched_entry(
     .i_clk    (i_clk    ),

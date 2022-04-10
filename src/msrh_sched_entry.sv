@@ -2,7 +2,8 @@ module msrh_sched_entry
   #(
     parameter IS_STORE = 1'b0,
     parameter IS_BRANCH = 1'b0,
-    parameter EN_OLDEST = 1'b0
+    parameter EN_OLDEST = 1'b0,
+    parameter NUM_OPERANDS = 2
     )
 (
    input logic                                 i_clk,
@@ -56,28 +57,12 @@ msrh_pkg::issue_t w_init_entry;
 
 logic    w_oldest_ready;
 
-msrh_pkg::rnid_t w_rs1_rnid;
-msrh_pkg::rnid_t w_rs2_rnid;
-msrh_pkg::rnid_t w_rs3_rnid;
-msrh_pkg::reg_t w_rs1_type;
-msrh_pkg::reg_t w_rs2_type;
-msrh_pkg::reg_t w_rs3_type;
-
-logic     w_rs1_rel_hit;
-logic     w_rs2_rel_hit;
-logic     w_rs3_rel_hit;
-
-logic     w_rs1_may_mispred;
-logic     w_rs2_may_mispred;
-logic     w_rs3_may_mispred;
-
-logic     w_rs1_phy_hit;
-logic     w_rs2_phy_hit;
-logic     w_rs3_phy_hit;
-
-logic     w_rs1_mispredicted;
-logic     w_rs2_mispredicted;
-logic     w_rs3_mispredicted;
+msrh_pkg::rnid_t w_rs_rnid[NUM_OPERANDS];
+msrh_pkg::reg_t  w_rs_type[NUM_OPERANDS];
+logic [NUM_OPERANDS-1: 0] w_rs_rel_hit;
+logic [NUM_OPERANDS-1: 0] w_rs_may_mispred;
+logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
+logic [NUM_OPERANDS-1: 0] w_rs_mispredicted;
 
 logic     w_entry_flush;
 logic     w_commit_flush;
@@ -106,101 +91,26 @@ function logic all_operand_ready(msrh_pkg::issue_t entry);
   return ret;
 endfunction // all_operand_ready
 
-assign w_rs1_rnid = i_put ? i_put_data.rd_regs[0].rnid : r_entry.rd_regs[0].rnid;
-assign w_rs2_rnid = i_put ? i_put_data.rd_regs[1].rnid : r_entry.rd_regs[1].rnid;
-assign w_rs3_rnid = i_put ? i_put_data.rd_regs[2].rnid : r_entry.rd_regs[2].rnid;
+generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
+  assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
+  assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
 
-assign w_rs1_type = i_put ? i_put_data.rd_regs[0].typ : r_entry.rd_regs[0].typ;
-assign w_rs2_type = i_put ? i_put_data.rd_regs[1].typ : r_entry.rd_regs[1].typ;
-assign w_rs3_type = i_put ? i_put_data.rd_regs[2].typ : r_entry.rd_regs[2].typ;
+  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
+                                        .o_valid   (w_rs_rel_hit[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
+                                        .o_valid   (w_rs_phy_hit[rs_idx]));
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
+                                        .o_mispred (w_rs_mispredicted[rs_idx]));
+end
+endgenerate
 
-select_early_wr_bus rs1_rel_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs1_rel_hit),
- .o_may_mispred(w_rs1_may_mispred)
- );
-
-
-select_early_wr_bus rs2_rel_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs2_rel_hit),
- .o_may_mispred(w_rs2_may_mispred)
- );
-
-select_early_wr_bus rs3_rel_select
-(
- .i_entry_rnid (w_rs3_rnid),
- .i_entry_type (w_rs3_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs3_rel_hit),
- .o_may_mispred(w_rs3_may_mispred)
- );
-
-select_phy_wr_bus rs1_phy_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs1_phy_hit)
- );
-
-
-select_phy_wr_bus rs2_phy_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs2_phy_hit)
- );
-
-select_phy_wr_bus rs3_phy_select
-(
- .i_entry_rnid (w_rs3_rnid),
- .i_entry_type (w_rs3_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs3_phy_hit)
- );
-
-
-select_mispred_bus rs1_mispred_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs1_mispredicted)
- );
-
-
-select_mispred_bus rs2_mispred_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs2_mispredicted)
- );
-
-select_mispred_bus rs3_mispred_select
-(
- .i_entry_rnid (w_rs3_rnid),
- .i_entry_type (w_rs3_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs3_mispredicted)
- );
+logic [NUM_OPERANDS-1: 0] w_rs_pred_mispredicted;
+logic                     w_rs_pred_mispredicted_or;
+generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_pred_mispred_loop
+  assign w_rs_pred_mispredicted[rs_idx] = r_entry.rd_regs[rs_idx].predict_ready & w_rs_mispredicted[rs_idx];
+end
+endgenerate
+assign w_rs_pred_mispredicted_or = |w_rs_pred_mispredicted;
 
 
 always_comb begin
@@ -209,13 +119,10 @@ always_comb begin
   w_issued_next = r_issued;
   w_entry_next  = r_entry;
 
-  w_entry_next.rd_regs[0].ready = r_entry.rd_regs[0].ready /* | r_entry.rd_regs[0].predict_ready */ | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.rd_regs[1].ready = r_entry.rd_regs[1].ready /* | r_entry.rd_regs[1].predict_ready */ | (w_rs2_rel_hit & ~w_rs2_may_mispred) | w_rs2_phy_hit;
-  w_entry_next.rd_regs[2].ready = r_entry.rd_regs[2].ready /* | r_entry.rd_regs[1].predict_ready */ | (w_rs3_rel_hit & ~w_rs3_may_mispred) | w_rs3_phy_hit;
-
-  w_entry_next.rd_regs[0].predict_ready = w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry_next.rd_regs[1].predict_ready = w_rs2_rel_hit & w_rs2_may_mispred;
-  w_entry_next.rd_regs[2].predict_ready = w_rs3_rel_hit & w_rs3_may_mispred;
+  for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
+    w_entry_next.rd_regs[rs_idx].ready         = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
+  end
 
   case (r_state)
     msrh_pkg::INIT : begin
@@ -257,9 +164,7 @@ always_comb begin
           w_entry_next.fflags_update_valid = pipe_done_if.fflags_update_valid;
           w_entry_next.fflags              = pipe_done_if.fflags;
         end
-        if (r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted ||
-            r_entry.rd_regs[1].predict_ready & w_rs2_mispredicted ||
-            r_entry.rd_regs[2].predict_ready & w_rs3_mispredicted) begin
+        if (w_rs_pred_mispredicted_or) begin
           w_state_next = msrh_pkg::WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
@@ -327,10 +232,14 @@ always_comb begin
 end
 
 
-assign w_init_entry = msrh_pkg::assign_issue_t(i_put_data, i_cmt_id, i_grp_id,
-                                               w_rs1_rel_hit, w_rs2_rel_hit, w_rs3_rel_hit,
-                                               w_rs1_phy_hit, w_rs2_phy_hit, w_rs3_phy_hit,
-                                               w_rs1_may_mispred, w_rs2_may_mispred, w_rs3_may_mispred);
+generate if (NUM_OPERANDS == 3) begin : init_entry_op3
+  assign w_init_entry = msrh_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
+                                                   w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+end else begin
+  assign w_init_entry = msrh_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
+                                                   w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+end
+endgenerate
 
 assign w_commit_flush = msrh_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
 assign w_br_flush     = msrh_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,

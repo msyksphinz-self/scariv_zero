@@ -64,22 +64,12 @@ logic                                            w_lrq_evict_is_hazard;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         r_ex2_ldq_entries_recv;
 logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]         w_ex2_ldq_entries_recv_next;
 
-msrh_pkg::rnid_t                     w_rs1_rnid;
-msrh_pkg::rnid_t                     w_rs2_rnid;
-msrh_pkg::reg_t                                  w_rs1_type;
-msrh_pkg::reg_t                                  w_rs2_type;
-
-logic                                            w_rs1_rel_hit;
-logic                                            w_rs2_rel_hit;
-
-logic                                            w_rs1_may_mispred;
-logic                                            w_rs2_may_mispred;
-
-logic                                            w_rs1_phy_hit;
-logic                                            w_rs2_phy_hit;
-
-logic                                            w_rs1_mispredicted;
-logic                                            w_rs2_mispredicted;
+msrh_pkg::rnid_t                                 w_rs_rnid[2];
+msrh_pkg::reg_t                                  w_rs_type[2];
+logic [ 1: 0]                                    w_rs_rel_hit;
+logic [ 1: 0]                                    w_rs_may_mispred;
+logic [ 1: 0]                                    w_rs_phy_hit;
+logic [ 1: 0]                                    w_rs_mispredicted;
 
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
@@ -113,71 +103,19 @@ assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(w_entry_next);
 
-assign w_rs1_rnid = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
-assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
 
-assign w_rs1_type = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
-assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
+generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
+  assign w_rs_rnid[rs_idx] = i_disp_load ? i_disp.rd_regs[rs_idx].rnid : r_entry.inst.rd_regs[rs_idx].rnid;
+  assign w_rs_type[rs_idx] = i_disp_load ? i_disp.rd_regs[rs_idx].typ  : r_entry.inst.rd_regs[rs_idx].typ;
 
-select_early_wr_bus rs1_rel_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs1_rel_hit),
- .o_may_mispred(w_rs1_may_mispred)
- );
-
-
-select_early_wr_bus rs2_rel_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs2_rel_hit),
- .o_may_mispred(w_rs2_may_mispred)
- );
-
-select_phy_wr_bus rs1_phy_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs1_phy_hit)
- );
-
-
-select_phy_wr_bus rs2_phy_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs2_phy_hit)
- );
-
-
-select_mispred_bus rs1_mispred_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs1_mispredicted)
- );
-
-
-select_mispred_bus rs2_mispred_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs2_mispredicted)
- );
+  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
+                                        .o_valid   (w_rs_rel_hit[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
+                                        .o_valid   (w_rs_phy_hit[rs_idx]));
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
+                                        .o_mispred (w_rs_mispredicted[rs_idx]));
+end
+endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -195,11 +133,11 @@ end
 always_comb begin
 
   w_entry_next = r_entry;
-  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | /* (w_rs1_rel_hit & ~w_rs1_may_mispred) | */ w_rs1_phy_hit;
-  w_entry_next.inst.rd_regs[1].ready = r_entry.inst.rd_regs[1].ready | /* (w_rs2_rel_hit & ~w_rs2_may_mispred) | */ w_rs2_phy_hit;
 
-  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0; // w_rs1_rel_hit & w_rs1_may_mispred;
-  w_entry_next.inst.rd_regs[1].predict_ready = 1'b0; // w_rs2_rel_hit & w_rs2_may_mispred;
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    w_entry_next.inst.rd_regs[rs_idx].ready = r_entry.inst.rd_regs[rs_idx].ready | w_rs_phy_hit[rs_idx];
+    w_entry_next.inst.rd_regs[rs_idx].predict_ready = 1'b0;
+  end
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
 
@@ -212,10 +150,8 @@ always_comb begin
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
-        w_entry_next.inst = msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                     w_rs1_rel_hit, w_rs2_rel_hit, 1'b0,
-                                                     w_rs1_phy_hit, w_rs2_phy_hit, 1'b0,
-                                                     w_rs1_may_mispred, w_rs2_may_mispred, 1'b0);
+        w_entry_next.inst = msrh_pkg::assign_issue_op2(i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_flush) begin
           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         end
@@ -248,8 +184,8 @@ always_comb begin
                                                   r_entry.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)
-        if (r_entry.inst.rd_regs[0].predict_ready & w_rs1_mispredicted ||
-            r_entry.inst.rd_regs[1].predict_ready & w_rs2_mispredicted) begin
+        if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0] |
+            r_entry.inst.rd_regs[1].predict_ready & w_rs_mispredicted[1]) begin
           w_entry_next.state = LDQ_ISSUE_WAIT;
           w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
           w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;

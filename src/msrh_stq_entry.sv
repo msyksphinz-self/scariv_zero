@@ -53,19 +53,16 @@ logic                                              w_load_br_flush;
 logic                                              w_dead_state_clear;
 logic                                              w_cmt_id_match;
 
-msrh_pkg::rnid_t                     w_rs1_rnid;
-msrh_pkg::rnid_t                     w_rs2_rnid;
-msrh_pkg::reg_t                      w_rs1_type;
-msrh_pkg::reg_t                      w_rs2_type;
-logic                                w_rs1_rel_hit;
-logic                                w_rs1_phy_hit;
-logic                                w_rs1_may_mispred;
-logic                                w_rs1_mispredicted;
-logic                                w_rs2_phy_hit;
-msrh_pkg::alen_t                     w_rs2_phy_data;
-logic                                w_entry_rs2_ready_next;
+msrh_pkg::rnid_t                                   w_rs_rnid[2];
+msrh_pkg::reg_t                                    w_rs_type[2];
+logic [ 1: 0]                                      w_rs_rel_hit;
+logic [ 1: 0]                                      w_rs_phy_hit;
+logic [ 1: 0]                                      w_rs_may_mispred;
+logic [ 1: 0]                                      w_rs_mispredicted;
+msrh_pkg::alen_t                                   w_rs2_phy_data;
+logic                                              w_entry_rs2_ready_next;
 
-logic                                w_commit_finish;
+logic                                              w_commit_finish;
 
 always_comb begin
   o_entry = r_entry;
@@ -77,52 +74,22 @@ always_comb begin
   end
 end
 
-assign w_rs1_rnid = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
-assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
+assign w_rs_rnid[0] = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
+assign w_rs_rnid[1] = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
 
-assign w_rs1_type = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
-assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
+assign w_rs_type[0] = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
+assign w_rs_type[1] = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
 
-select_early_wr_bus rs1_rel_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_early_wr   (i_early_wr),
-
- .o_valid      (w_rs1_rel_hit),
- .o_may_mispred(w_rs1_may_mispred)
- );
-
-
-select_phy_wr_bus rs1_phy_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs1_phy_hit)
- );
-
-
-select_mispred_bus rs1_mispred_select
-(
- .i_entry_rnid (w_rs1_rnid),
- .i_entry_type (w_rs1_type),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_rs1_mispredicted)
- );
-
-
-select_phy_wr_data rs2_phy_select
-(
- .i_entry_rnid (w_rs2_rnid),
- .i_entry_type (w_rs2_type),
- .i_phy_wr     (i_phy_wr),
-
- .o_valid      (w_rs2_phy_hit),
- .o_data       (w_rs2_phy_data)
- );
+select_early_wr_bus rs1_rel_select    (.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_early_wr (i_early_wr),
+                                       .o_valid   (w_rs_rel_hit[0]), .o_may_mispred (w_rs_may_mispred[0]));
+select_phy_wr_bus   rs1_phy_select    (.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_phy_wr   (i_phy_wr),
+                                       .o_valid   (w_rs_phy_hit[0]));
+select_mispred_bus  rs1_mispred_select(.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_mispred  (i_mispred_lsu),
+                                       .o_mispred (w_rs_mispredicted[0]));
+assign w_rs_rel_hit[1] = 1'b0;
+assign w_rs_mispredicted[1] = 1'b0;
+select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (w_rs_type[1]), .i_phy_wr (i_phy_wr),
+                                   .o_valid (w_rs_phy_hit[1]), .o_data (w_rs2_phy_data));
 
 
 
@@ -138,7 +105,7 @@ assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
-                                w_rs2_phy_hit |
+                                w_rs_phy_hit[1] |
                                 i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
 
 assign w_cmt_id_match = i_commit.commit &
@@ -173,7 +140,7 @@ always_comb begin
 
   w_entry_next.inst.rd_regs[1].ready = w_entry_rs2_ready_next | r_entry.inst.rd_regs[1].ready;
   if (~w_entry_next.is_rs2_get) begin
-    if (w_rs2_phy_hit) begin
+    if (w_rs_phy_hit[1]) begin
       w_entry_next.rs2_data   = w_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end else if (i_ex1_q_valid & i_ex1_q_updates.st_data_valid) begin
@@ -181,8 +148,8 @@ always_comb begin
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
-  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready /* | (w_rs1_rel_hit & ~w_rs1_may_mispred)*/ | w_rs1_phy_hit;
-  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0; /* w_rs1_rel_hit & w_rs1_may_mispred;*/
+  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | w_rs_phy_hit[0];
+  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
 
   case (r_entry.state)
     STQ_INIT : begin
@@ -193,10 +160,8 @@ always_comb begin
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
-        w_entry_next.inst = msrh_pkg::assign_issue_t(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                     w_rs1_rel_hit, 1'b0, 1'b0,
-                                                     w_rs1_phy_hit, w_rs2_phy_hit, 1'b0,
-                                                     w_rs1_may_mispred, 1'b0, 1'b0);
+        w_entry_next.inst = msrh_pkg::assign_issue_op2 (i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                                        w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_br_flush) begin
           w_entry_next.state    = STQ_DEAD;
         end
@@ -226,7 +191,7 @@ always_comb begin
         w_entry_next.size            = i_ex1_q_updates.size;
 
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
-      if (r_entry.inst.rd_regs[0].predict_ready & w_rs1_mispredicted) begin
+      if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
         w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
         w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
