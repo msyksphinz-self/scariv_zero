@@ -456,11 +456,11 @@ assign w_predict_taken_valid = |(w_inst_disp_mask & w_predict_taken_valid_array)
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) u_predict_valid_lsb (.in(w_inst_disp_mask & w_predict_taken_valid_array), .out(w_predict_taken_valid_lsb));
 bit_oh_or #(.T(logic[$clog2(msrh_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(msrh_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
 
-logic                               w_bru_predict_disp_valid;
+msrh_pkg::grp_id_t w_bru_predict_disp_valid;
 msrh_pkg::grp_id_t w_disp_special_limit_valid;
 msrh_pkg::grp_id_t w_disp_special_limit_valid_oh;
 
-assign w_bru_predict_disp_valid = |((w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp | w_predict_taken_valid_array));
+assign w_bru_predict_disp_valid = (w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp | w_predict_taken_valid_array);
 
 assign w_disp_special_limit_valid = w_bru_predict_disp_valid | (w_inst_csu_disp & (w_inst_disp_mask_tmp - 1));
 
