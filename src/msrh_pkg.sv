@@ -16,13 +16,17 @@ package msrh_pkg;
                             LSU_INST_NUM +
                             1 +              // BRU
                             1 +              // CSU
-                            FPU_INST_NUM;    // FPU
-  localparam TGT_BUS_SIZE = REL_BUS_SIZE;
-  localparam CMT_BUS_SIZE = ALU_INST_NUM +   // ALU
-                            LSU_INST_NUM +   // LSU
+                            FPU_INST_NUM;    // FPU: Now rel is only FPU Move Port
+  localparam TGT_BUS_SIZE = ALU_INST_NUM +
+                            LSU_INST_NUM +
                             1 +              // BRU
                             1 +              // CSU
-                            FPU_INST_NUM;    // FPU
+                            FPU_INST_NUM * 2;    // FPU
+  localparam CMT_BUS_SIZE = ALU_INST_NUM +    // ALU
+                            LSU_INST_NUM +    // LSU
+                            1 +               // BRU
+                            1 +               // CSU
+                            FPU_INST_NUM;     // FPU
 
   localparam FLIST_SIZE = CMT_ENTRY_SIZE;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;

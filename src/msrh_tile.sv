@@ -111,7 +111,8 @@ msrh_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 msrh_pkg::grp_id_t   w_disp_fpu_valids [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::early_wr_t w_ex1_fpu_early_wr[msrh_conf_pkg::FPU_INST_NUM];
-msrh_pkg::phy_wr_t   w_ex3_fpu_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
+msrh_pkg::phy_wr_t   w_ex3_fpumv_phy_wr  [msrh_conf_pkg::FPU_INST_NUM];
+msrh_pkg::phy_wr_t   w_fpnew_phy_wr      [msrh_conf_pkg::FPU_INST_NUM];
 msrh_pkg::done_rpt_t w_fpu_done_rpt    [msrh_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
@@ -173,9 +174,10 @@ assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 
 // FPU
 generate for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_loop
-  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx] = w_ex1_fpu_early_wr[f_idx];
-  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx] = w_ex3_fpu_phy_wr  [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx] = w_fpu_done_rpt    [f_idx];
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx]     = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
+  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx]     = w_fpu_done_rpt    [f_idx];
 end
 endgenerate
 
@@ -512,8 +514,8 @@ generate if (riscv_pkg::FLEN_W != 0) begin : fpu
       .i_mispred_lsu (w_ex2_mispred_lsu),
 
       .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-      .o_ex3_mv_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
-      .o_fpnew_phy_wr   (),
+      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr  [fpu_idx]),
+      .o_fpnew_phy_wr   (w_fpnew_phy_wr      [fpu_idx]),
 
       .i_commit  (w_commit),
       .br_upd_if (br_upd_fe_if),

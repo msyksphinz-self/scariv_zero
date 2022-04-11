@@ -145,8 +145,8 @@ select_mispred_bus rs2_mispred_select
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
-                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
+                                 ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 
 assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
@@ -346,6 +346,9 @@ end
 // FPNew Pipeline
 // ----------------------
 logic [RV_ENTRY_SIZE-1: 0] w_fpnew_sched_index;
+msrh_pkg::rnid_t           w_fpnew_rnid;
+msrh_pkg::reg_t            w_fpnew_reg_type;
+
 msrh_fpnew_wrapper
 u_msrh_fpnew_wrapper
   (
@@ -356,16 +359,20 @@ u_msrh_fpnew_wrapper
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_sched_index (r_ex2_index),
+   .i_rnid        (r_ex2_issue.wr_reg.rnid),
+   .i_reg_type    (r_ex2_issue.wr_reg.typ),
    .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
 
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),
    .i_rs3 (w_ex2_rs3_selected_data),
 
-   .o_valid (w_fpnew_result_valid ),
-   .o_result(w_fpnew_result_data  ),
-   .o_fflags(w_fpnew_result_fflags),
-   .o_sched_index(w_fpnew_sched_index)
+   .o_valid      (w_fpnew_result_valid ),
+   .o_result     (w_fpnew_result_data  ),
+   .o_fflags     (w_fpnew_result_fflags),
+   .o_sched_index(w_fpnew_sched_index  ),
+   .o_rnid       (w_fpnew_rnid         ),
+   .o_reg_type   (w_fpnew_reg_type     )
    );
 
 
@@ -375,7 +382,7 @@ always_comb begin
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  ex3_mv_done_if.done                = r_ex3_issue.valid;
+  ex3_mv_done_if.done                = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
   ex3_mv_done_if.index_oh            = r_ex3_index;
   ex3_mv_done_if.payload.except_valid        = 1'b0;
   ex3_mv_done_if.payload.except_type         = msrh_pkg::except_t'('h0);
@@ -383,8 +390,8 @@ always_comb begin
   ex3_mv_done_if.payload.fflags              = 'h0;
 
   o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
-  o_fpnew_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-  o_fpnew_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+  o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
+  o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
   o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
 
   fpnew_done_if.done                = w_fpnew_result_valid;
