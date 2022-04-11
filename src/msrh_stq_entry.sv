@@ -68,9 +68,9 @@ always_comb begin
   o_entry = r_entry;
   // When EX3, fast forwarding to another flush
   if (r_entry.state == STQ_DONE_EX3) begin
-    o_entry.another_flush_valid  = ex3_done_if.another_flush_valid;
-    o_entry.another_flush_cmt_id = ex3_done_if.another_flush_cmt_id;
-    o_entry.another_flush_grp_id = ex3_done_if.another_flush_grp_id;
+    o_entry.another_flush_valid  = ex3_done_if.payload.another_flush_valid;
+    o_entry.another_flush_cmt_id = ex3_done_if.payload.another_flush_cmt_id;
+    o_entry.another_flush_grp_id = ex3_done_if.payload.another_flush_grp_id;
   end
 end
 
@@ -217,9 +217,9 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else begin
         w_entry_next.state = STQ_WAIT_COMMIT;
-        w_entry_next.another_flush_valid  = ex3_done_if.another_flush_valid;
-        w_entry_next.another_flush_cmt_id = ex3_done_if.another_flush_cmt_id;
-        w_entry_next.another_flush_grp_id = ex3_done_if.another_flush_grp_id;
+        w_entry_next.another_flush_valid  = ex3_done_if.payload.another_flush_valid;
+        w_entry_next.another_flush_cmt_id = ex3_done_if.payload.another_flush_cmt_id;
+        w_entry_next.another_flush_grp_id = ex3_done_if.payload.another_flush_grp_id;
       end
     end
     STQ_WAIT_COMMIT : begin

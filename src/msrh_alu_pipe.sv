@@ -419,8 +419,8 @@ always_comb begin
 
     ex3_done_if.done          = w_muldiv_res_valid;
     ex3_done_if.index_oh      = w_muldiv_index_oh;
-    ex3_done_if.except_valid  = 1'b0;
-    ex3_done_if.except_type   = msrh_pkg::except_t'('h0);
+    ex3_done_if.payload.except_valid  = 1'b0;
+    ex3_done_if.payload.except_type   = msrh_pkg::except_t'('h0);
   end else begin
     o_ex3_phy_wr.valid   = r_ex3_wr_valid;
     o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
@@ -429,8 +429,8 @@ always_comb begin
 
     ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
     ex3_done_if.index_oh     = r_ex3_index;
-    ex3_done_if.except_valid = 1'b0;
-    ex3_done_if.except_type  = msrh_pkg::except_t'('h0);
+    ex3_done_if.payload.except_valid = 1'b0;
+    ex3_done_if.payload.except_type  = msrh_pkg::except_t'('h0);
   end // else: !if(w_muldiv_res_valid)
 end // always_comb
 

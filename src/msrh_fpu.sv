@@ -26,10 +26,12 @@ module msrh_fpu #(
     input msrh_pkg::mispred_t  i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
     /* write output */
-    output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
+    output msrh_pkg::early_wr_t o_ex1_mv_early_wr,
+    output msrh_pkg::phy_wr_t   o_ex3_mv_phy_wr,
+    output msrh_pkg::phy_wr_t   o_fpnew_phy_wr,
 
     output msrh_pkg::done_rpt_t o_done_report,
+
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit,
     br_upd_if.slave              br_upd_if
@@ -52,7 +54,7 @@ msrh_pkg::grp_id_t disp_picked_grp_id[FPU_PORT_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) w_ex3_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) w_fpu_done_if [2]();
 
 msrh_disp_pickup
   #(
@@ -73,7 +75,8 @@ msrh_scheduler
   #(
     .ENTRY_SIZE  (msrh_conf_pkg::RV_FPU_ENTRY_SIZE),
     .IN_PORT_SIZE(FPU_PORT_SIZE),
-    .NUM_OPERANDS (3)
+    .NUM_OPERANDS (3),
+    .NUM_DONE_PORT (2)
     )
 u_msrh_scheduler
   (
@@ -97,7 +100,7 @@ u_msrh_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if(w_ex3_done_if),
+   .pipe_done_if  (w_fpu_done_if),
    .i_commit      (i_commit),
    .br_upd_if     (br_upd_if),
    .o_done_report (o_done_report)
@@ -127,10 +130,12 @@ u_fpu
 
    .i_mispred_lsu (i_mispred_lsu),
 
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .o_ex1_mv_early_wr(o_ex1_mv_early_wr),
+   .o_ex3_mv_phy_wr  (o_ex3_mv_phy_wr  ),
+   .ex3_mv_done_if   (w_fpu_done_if[0] ),
 
-   .ex3_done_if (w_ex3_done_if)
+   .o_fpnew_phy_wr  (o_fpnew_phy_wr  ),
+   .fpnew_done_if   (w_fpu_done_if[1] )
    );
 
 

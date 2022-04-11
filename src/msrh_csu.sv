@@ -47,7 +47,7 @@ msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::CSU_DISP_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 logic [msrh_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_CSU_ENTRY_SIZE)) w_ex3_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_CSU_ENTRY_SIZE)) w_ex3_done_if[1]();
 
 logic         w_ex3_done;
 logic [msrh_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
@@ -100,7 +100,7 @@ u_msrh_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if(w_ex3_done_if),
+   .pipe_done_if  (w_ex3_done_if),
    .i_commit      (i_commit),
    .br_upd_if     (br_upd_if),
    .o_done_report (o_done_report)
@@ -134,7 +134,7 @@ u_csu_pipe
    .sfence_if (sfence_if),
    .o_fence_i (o_fence_i),
 
-   .ex3_done_if   (w_ex3_done_if)
+   .ex3_done_if   (w_ex3_done_if[0])
    );
 
 

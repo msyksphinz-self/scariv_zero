@@ -1,13 +1,17 @@
 module msrh_fpnew_wrapper
   import decoder_fpu_ctrl_pkg::*;
   import msrh_fpu_pkg::*;
-  (
+#(
+  parameter SCHED_ENTRY_SIZE = 8
+  )
+(
    input logic               i_clk,
    input logic               i_reset_n,
 
    input logic               i_valid,
    output logic              o_ready,
    input pipe_ctrl_t         i_pipe_ctrl,
+   input logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] i_sched_index,
    input logic [ 2: 0]       i_rnd_mode,
 
    input msrh_pkg::alen_t    i_rs1,
@@ -16,7 +20,8 @@ module msrh_fpnew_wrapper
 
    output logic              o_valid,
    output msrh_pkg::alen_t   o_result,
-   output logic [ 4: 0]      o_fflags
+   output logic [ 4: 0]      o_fflags,
+   output logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] o_sched_index
    );
 
 
@@ -32,21 +37,25 @@ logic [31: 0]                            w_fma32_result;
 fpnew_pkg::status_t                      w_fma32_fflags;
 logic                                    w_fma32_out_valid;
 logic [ 4: 0]                            w_fma32_out_fflags;
+logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_fma32_sched_index;
 
 logic                                    w_noncomp32_out_valid;
 logic [31: 0]                            w_noncomp32_result;
 fpnew_pkg::operation_e                   w_fpnew_op;
 logic                                    w_fpnew_op_mod;
+logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_fpnew_sched_index;
+
 fpnew_pkg::status_t                      w_noncomp32_status;
 fpnew_pkg::classmask_e                   w_noncomp32_class_mask;
 logic [ 4: 0]                            w_noncomp32_out_fflags;
+logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_noncomp32_sched_index;
 
 fpnew_pkg::fp_format_e                   w_dst_fp_fmt;
 fpnew_pkg::fp_format_e                   w_src_fp_fmt;
 fpnew_pkg::int_format_e                  w_int_fmt;
 logic                                    w_cvt_valid;
 logic [ 4: 0]                            w_cast_out_fflags;
-
+logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_cast_sched_index;
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
@@ -145,9 +154,9 @@ assign w_noncomp32_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == S
 fpnew_fma
   #(
     .FpFormat   (fpnew_pkg::FP32),
-    .NumPipeRegs(1),
+    .NumPipeRegs(msrh_conf_pkg::FPNEW_LATENCY),
     .PipeConfig (fpnew_pkg::BEFORE),
-    .TagType    (logic),
+    .TagType    (logic[msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0]),
     .AuxType    (logic)
     )
 fma_32
@@ -160,7 +169,7 @@ fma_32
  .rnd_mode_i      (i_rnd_mode       ),  // input fpnew_pkg::roundmode_e
  .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
  .op_mod_i        (w_fpnew_op_mod   ),  // input logic
- .tag_i           (1'b0             ),  // input TagType
+ .tag_i           (i_sched_index    ),  // input TagType
  .aux_i           (1'b0             ),  // input AuxType
  // Input Handshake
  .in_valid_i      (w_fma32_in_valid ),  // input  logic
@@ -170,7 +179,7 @@ fma_32
  .result_o        (w_fma32_result   ),  // output logic [WIDTH-1:0]
  .status_o        (w_fma32_fflags   ),  // output fpnew_pkg::status_t
  .extension_bit_o (                 ),  // output logic
- .tag_o           (                 ),  // output TagType
+ .tag_o           (w_fma32_sched_index),  // output TagType
  .aux_o           (                 ),  // output AuxType
  // Output handshake
  .out_valid_o     (w_fma32_out_valid),  // output logic
@@ -188,7 +197,7 @@ assign w_fma32_out_fflags = {w_fma32_fflags.NV,
 
 fpnew_noncomp #(
     .FpFormat   (fpnew_pkg::FP32),
-    .NumPipeRegs(1),
+    .NumPipeRegs(msrh_conf_pkg::FPNEW_LATENCY),
     .PipeConfig (fpnew_pkg::BEFORE),
     .TagType    (logic),
     .AuxType    (logic)
@@ -202,7 +211,7 @@ fpnew_noncomp #(
                      /* ((i_pipe_ctrl.op == OP_FLE) | (i_pipe_ctrl.op == OP_FMIN))  ? */ fpnew_pkg::RNE),
   .op_i            ( w_fpnew_op             ),
   .op_mod_i        ( w_fpnew_op_mod         ),
-  .tag_i           ( 1'b0                   ),
+  .tag_i           ( i_sched_index          ),
   .aux_i           (                        ), // Remember whether operation was vectorial
   .in_valid_i      ( w_noncomp32_in_valid   ),
   .in_ready_o      (                        ),
@@ -212,7 +221,7 @@ fpnew_noncomp #(
   .extension_bit_o (                        ),
   .class_mask_o    ( w_noncomp32_class_mask ),
   .is_class_o      (                        ),
-  .tag_o           (                        ),
+  .tag_o           ( w_noncomp32_sched_index),
   .aux_o           (                        ),
   .out_valid_o     ( w_noncomp32_out_valid  ),
   .out_ready_i     ( 1'b1                   ),
@@ -256,7 +265,7 @@ fpnew_opgroup_multifmt_slice /* #(
   .TagType       ( TagType          )
 ) */
   #(
-    .NumPipeRegs(1),
+    .NumPipeRegs(msrh_conf_pkg::FPNEW_LATENCY),
     .PipeConfig (fpnew_pkg::BEFORE),
     .TagType    (logic)
     ) fpnew_cvt (
@@ -271,14 +280,14 @@ fpnew_opgroup_multifmt_slice /* #(
   .dst_fmt_i       ( w_dst_fp_fmt     ),
   .int_fmt_i       ( w_int_fmt        ),
   .vectorial_op_i  (  ),
-  .tag_i           (  ),
+  .tag_i           ( i_sched_index   ),
   .in_valid_i      ( w_cvt_in_valid  ),
   .in_ready_o      (                 ),
   .flush_i         ( 1'b0            ),
   .result_o        ( w_cast_result   ),
   .status_o        ( w_cast_status   ),
   .extension_bit_o (  ),
-  .tag_o           (  ),
+  .tag_o           ( w_cast_sched_index ),
   .out_valid_o     ( w_cast_out_valid ),
   .out_ready_i     ( 1'b1 ),
   .busy_o          (  )
@@ -298,12 +307,15 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   logic [ 4: 0]                           w_fma64_out_fflags;
   logic                                   w_fma64_out_valid;
   logic                                   w_fma64_in_valid;
+  logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_fma64_sched_index;
+
   logic                                   w_noncomp64_in_valid;
   logic                                   w_noncomp64_out_valid;
   logic [63: 0]                           w_noncomp64_result;
   fpnew_pkg::status_t                     w_noncomp64_status;
   fpnew_pkg::classmask_e                  w_noncomp64_class_mask;
   logic [ 4: 0]                           w_noncomp64_out_fflags;
+  logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] w_noncomp64_sched_index;
 
   assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0   : i_rs1;
   assign w_fma64_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1 : i_rs2;
@@ -316,7 +328,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   fpnew_fma
     #(
       .FpFormat   (fpnew_pkg::FP64),
-      .NumPipeRegs(1),
+      .NumPipeRegs(msrh_conf_pkg::FPNEW_LATENCY),
       .PipeConfig (fpnew_pkg::BEFORE),
       .TagType    (logic),
       .AuxType    (logic)
@@ -331,7 +343,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
    .rnd_mode_i      (i_rnd_mode       ),  // input fpnew_pkg::roundmode_e
    .op_i            (w_fpnew_op       ),  // input fpnew_pkg::operation_e
    .op_mod_i        (w_fpnew_op_mod   ),  // input logic
-   .tag_i           (1'b0             ),  // input TagType
+   .tag_i           (i_sched_index    ),  // input TagType
    .aux_i           (1'b0             ),  // input AuxType
    // Input Handshake
    .in_valid_i      (w_fma64_in_valid ),  // input  logic
@@ -341,7 +353,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
    .result_o        (w_fma64_result   ),  // output logic [WIDTH-1:0]
    .status_o        (w_fma64_fflags   ),  // output fpnew_pkg::status_t
    .extension_bit_o (                 ),  // output logic
-   .tag_o           (                 ),  // output TagType
+   .tag_o           (w_fma64_sched_index),  // output TagType
    .aux_o           (                 ),  // output AuxType
    // Output handshake
    .out_valid_o     (w_fma64_out_valid),  // output logic
@@ -365,7 +377,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
 
   fpnew_noncomp #(
       .FpFormat   (fpnew_pkg::FP64),
-      .NumPipeRegs(1),
+      .NumPipeRegs(msrh_conf_pkg::FPNEW_LATENCY),
       .PipeConfig (fpnew_pkg::BEFORE),
       .TagType    (logic),
       .AuxType    (logic)
@@ -379,7 +391,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
                        /* ((i_pipe_ctrl.op == OP_FLE) | (i_pipe_ctrl.op == OP_FMIN))  ? */ fpnew_pkg::RNE),
     .op_i            ( w_fpnew_op             ),
     .op_mod_i        ( w_fpnew_op_mod         ),
-    .tag_i           ( 1'b0                   ),
+    .tag_i           ( i_sched_index          ),
     .aux_i           (                        ), // Remember whether operation was vectorial
     .in_valid_i      ( w_noncomp64_in_valid   ),
     .in_ready_o      (                        ),
@@ -389,7 +401,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
     .extension_bit_o (                        ),
     .class_mask_o    ( w_noncomp64_class_mask ),
     .is_class_o      (                        ),
-    .tag_o           (                        ),
+    .tag_o           ( w_noncomp64_sched_index),
     .aux_o           (                        ),
     .out_valid_o     ( w_noncomp64_out_valid  ),
     .out_ready_i     ( 1'b1                   ),
@@ -416,6 +428,11 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
                     w_noncomp64_out_valid ? w_noncomp64_out_fflags :
                     w_cast_out_valid      ? w_cast_out_fflags :
                     w_fma64_out_fflags;
+  assign o_sched_index = w_fma32_out_valid     ? w_fma32_sched_index :
+                         w_noncomp32_out_valid ? w_noncomp32_sched_index :
+                         w_noncomp64_out_valid ? w_noncomp64_sched_index :
+                         w_cast_out_valid      ? w_cast_sched_index :
+                         w_fma64_sched_index;
 
 end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_cast_out_valid;
@@ -426,7 +443,10 @@ end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_fflags = w_noncomp32_out_valid ? w_noncomp32_out_fflags :
                     w_cast_out_valid      ? w_cast_out_fflags :
                     w_fma32_out_fflags;
-end
+  assign o_sched_index = w_noncomp32_out_valid ? w_noncomp32_sched_index :
+                         w_cast_out_valid      ? w_cast_sched_index :
+                         w_fma32_sched_index;
+end // block: block_32
 endgenerate
 
 

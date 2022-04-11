@@ -511,8 +511,9 @@ generate if (riscv_pkg::FLEN_W != 0) begin : fpu
       .i_phy_wr  (w_ex3_phy_wr),
       .i_mispred_lsu (w_ex2_mispred_lsu),
 
-      .o_ex1_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-      .o_ex3_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
+      .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
+      .o_ex3_mv_phy_wr  (w_ex3_fpu_phy_wr  [fpu_idx]),
+      .o_fpnew_phy_wr   (),
 
       .i_commit  (w_commit),
       .br_upd_if (br_upd_fe_if),

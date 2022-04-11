@@ -202,27 +202,27 @@ assign w_ex3_sret_tsr_illegal   = r_ex3_pipe_ctrl.is_sret       & i_mstatus[`MST
 
 assign ex3_done_if.done       = r_ex3_issue.valid;
 assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
-                                   r_ex3_pipe_ctrl.is_mret |
-                                   r_ex3_pipe_ctrl.is_sret |
-                                   r_ex3_pipe_ctrl.is_uret |
-                                   r_ex3_pipe_ctrl.is_ecall |
-                                   r_ex3_pipe_ctrl.is_fence_i |
-                                   r_ex3_pipe_ctrl.is_sfence_vma |
-                                   r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
-                                   (write_if.valid & write_if.resp_error);
+assign ex3_done_if.payload.except_valid  = r_ex3_pipe_ctrl.csr_update |
+                                           r_ex3_pipe_ctrl.is_mret |
+                                           r_ex3_pipe_ctrl.is_sret |
+                                           r_ex3_pipe_ctrl.is_uret |
+                                           r_ex3_pipe_ctrl.is_ecall |
+                                           r_ex3_pipe_ctrl.is_fence_i |
+                                           r_ex3_pipe_ctrl.is_sfence_vma |
+                                           r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
+                                           (write_if.valid & write_if.resp_error);
 
-assign ex3_done_if.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? msrh_pkg::ILLEGAL_INST :
-                                 r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
-                                 r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
-                                 r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? msrh_pkg::ECALL_U :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? msrh_pkg::ECALL_S :
-                                 r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? msrh_pkg::ECALL_M :
-                                 msrh_pkg::SILENT_FLUSH;
+assign ex3_done_if.payload.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? msrh_pkg::ILLEGAL_INST :
+                                         r_ex3_pipe_ctrl.is_mret ? msrh_pkg::MRET :
+                                         r_ex3_pipe_ctrl.is_sret ? msrh_pkg::SRET :
+                                         r_ex3_pipe_ctrl.is_uret ? msrh_pkg::URET :
+                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? msrh_pkg::ECALL_U :
+                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? msrh_pkg::ECALL_S :
+                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? msrh_pkg::ECALL_M :
+                                         msrh_pkg::SILENT_FLUSH;
 
-assign ex3_done_if.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
-                                 'h0;
+assign ex3_done_if.payload.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
+                                         'h0;
 
 // ------------
 // CSR Update

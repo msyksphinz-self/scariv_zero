@@ -505,13 +505,13 @@ done_if_t w_done_array [msrh_conf_pkg::LSU_INST_NUM];
 done_if_t w_done_selected;
 
 generate for (genvar i=0; i < msrh_conf_pkg::LSU_INST_NUM; i++) begin
-  assign w_done_array[i].done                 = slave_if[i].done                ;
-  assign w_done_array[i].index_oh             = slave_if[i].index_oh            ;
-  assign w_done_array[i].except_valid         = slave_if[i].except_valid        ;
-  assign w_done_array[i].except_type          = slave_if[i].except_type         ;
-  assign w_done_array[i].another_flush_valid  = slave_if[i].another_flush_valid ;
-  assign w_done_array[i].another_flush_cmt_id = slave_if[i].another_flush_cmt_id;
-  assign w_done_array[i].another_flush_grp_id = slave_if[i].another_flush_grp_id;
+  assign w_done_array[i].done                         = slave_if[i].done                ;
+  assign w_done_array[i].index_oh                     = slave_if[i].index_oh            ;
+  assign w_done_array[i].except_valid         = slave_if[i].payload.except_valid        ;
+  assign w_done_array[i].except_type          = slave_if[i].payload.except_type         ;
+  assign w_done_array[i].another_flush_valid  = slave_if[i].payload.another_flush_valid ;
+  assign w_done_array[i].another_flush_cmt_id = slave_if[i].payload.another_flush_cmt_id;
+  assign w_done_array[i].another_flush_grp_id = slave_if[i].payload.another_flush_grp_id;
 end
 endgenerate
 
@@ -527,12 +527,12 @@ bit_oh_update
    .o_selected(w_done_selected)
    );
 
-assign master_if.done                 = w_done_selected.done                ;
-assign master_if.index_oh             = w_done_selected.index_oh            ;
-assign master_if.except_valid         = w_done_selected.except_valid        ;
-assign master_if.except_type          = w_done_selected.except_type         ;
-assign master_if.another_flush_valid  = w_done_selected.another_flush_valid ;
-assign master_if.another_flush_cmt_id = w_done_selected.another_flush_cmt_id;
-assign master_if.another_flush_grp_id = w_done_selected.another_flush_grp_id;
+assign master_if.done                         = w_done_selected.done                ;
+assign master_if.index_oh                     = w_done_selected.index_oh            ;
+assign master_if.payload.except_valid         = w_done_selected.except_valid        ;
+assign master_if.payload.except_type          = w_done_selected.except_type         ;
+assign master_if.payload.another_flush_valid  = w_done_selected.another_flush_valid ;
+assign master_if.payload.another_flush_cmt_id = w_done_selected.another_flush_cmt_id;
+assign master_if.payload.another_flush_grp_id = w_done_selected.another_flush_grp_id;
 
 endmodule // ex3_done_if_select

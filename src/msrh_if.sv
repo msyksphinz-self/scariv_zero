@@ -1,3 +1,25 @@
+interface done_if #(parameter RV_ENTRY_SIZE=32,
+                    parameter FPU_PIPE=1'b0);
+logic                                done;
+logic [RV_ENTRY_SIZE-1: 0]           index_oh;
+msrh_pkg::done_payload_t             payload;
+
+modport master(
+  output done,
+  output index_oh,
+  output payload
+);
+
+modport slave(
+  input done,
+  input index_oh,
+  input payload
+);
+
+endinterface // done_if
+
+
+
 //
 // ROB Information Notification IF
 //  For oldest uncommitted, notification that is become oldest

@@ -278,8 +278,8 @@ assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_iss
 
 assign ex3_done_if.done     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign ex3_done_if.index_oh = r_ex3_index;
-assign ex3_done_if.except_valid  = 1'b0;
-assign ex3_done_if.except_type = msrh_pkg::except_t'('h0);
+assign ex3_done_if.payload.except_valid  = 1'b0;
+assign ex3_done_if.payload.except_type = msrh_pkg::except_t'('h0);
 
 msrh_pkg::vaddr_t w_ex2_offset_uj;
 msrh_pkg::vaddr_t w_ex2_offset_sb;

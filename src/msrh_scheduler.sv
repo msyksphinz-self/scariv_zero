@@ -5,7 +5,8 @@ module msrh_scheduler
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
     parameter EN_OLDEST = 0,
-    parameter NUM_OPERANDS = 2
+    parameter NUM_OPERANDS = 2,
+    parameter NUM_DONE_PORT = 1
     )
 (
  input logic                           i_clk,
@@ -32,7 +33,7 @@ module msrh_scheduler
 
  input msrh_pkg::mispred_t             i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
- done_if.slave                         pipe_done_if,
+ done_if.slave                         pipe_done_if[NUM_DONE_PORT],
 
  output msrh_pkg::done_rpt_t           o_done_report,
 
@@ -158,6 +159,16 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(msrh_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[msrh_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
+  logic [NUM_DONE_PORT-1: 0]  w_pipe_done_valid;
+  msrh_pkg::done_payload_t    w_done_payloads[NUM_DONE_PORT];
+  msrh_pkg::done_payload_t    w_done_payload_oh;
+  for (genvar p_idx = 0; p_idx < NUM_DONE_PORT; p_idx++) begin : done_port_loop
+    assign w_pipe_done_valid[p_idx] = pipe_done_if[p_idx].done & pipe_done_if[p_idx].index_oh[s_idx];
+    assign w_done_payloads  [p_idx] = pipe_done_if[p_idx].payload;
+  end
+
+  bit_oh_or #(.T(msrh_pkg::done_payload_t), .WORDS(NUM_DONE_PORT)) u_done_port (.i_oh(w_pipe_done_valid), .i_data(w_done_payloads), .o_selected(w_done_payload_oh));
+
   msrh_sched_entry
     #(
       .IS_STORE(IS_STORE),
@@ -169,7 +180,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
-    .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx]),
+    .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx] ),
     .rob_info_if   (rob_info_if),
 
     .i_put      (|w_input_valid),
@@ -186,8 +197,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_phy_wr(i_phy_wr),
     .i_mispred_lsu(i_mispred_lsu),
 
-    .i_pipe_done (pipe_done_if.done & pipe_done_if.index_oh[s_idx]),
-    .pipe_done_if (pipe_done_if),
+    .i_pipe_done         (|w_pipe_done_valid),
+    .i_pipe_done_payload (w_done_payload_oh),
 
     .i_commit (i_commit),
     .br_upd_if (br_upd_if),

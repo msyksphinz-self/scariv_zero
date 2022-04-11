@@ -27,9 +27,7 @@ package msrh_conf_pkg;
   localparam STQ_SIZE = 4;
 
   localparam RV_CSU_ENTRY_SIZE = 4;
-
   localparam RV_BRU_ENTRY_SIZE = 4;
-
   localparam RV_FPU_ENTRY_SIZE = 4;
 
   localparam CMT_ENTRY_SIZE = 8;
@@ -37,5 +35,7 @@ package msrh_conf_pkg;
   localparam USING_VM = 1'b1;
 
   localparam RAS_ENTRY_SIZE = 32;
+
+  localparam FPNEW_LATENCY = 1;
 
 endpackage // msrh_conf_pkg

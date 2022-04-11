@@ -23,51 +23,53 @@ module msrh_fpu_pipe
 
     input msrh_pkg::mispred_t i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
-    output msrh_pkg::early_wr_t o_ex1_early_wr,
-    output msrh_pkg::phy_wr_t   o_ex3_phy_wr,
+    output msrh_pkg::early_wr_t o_ex1_mv_early_wr,
+    output msrh_pkg::phy_wr_t   o_ex3_mv_phy_wr,
+    done_if.master              ex3_mv_done_if,
 
-    done_if.master ex3_done_if
+    output msrh_pkg::phy_wr_t   o_fpnew_phy_wr,
+    done_if.master              fpnew_done_if
 );
 
-  msrh_pkg::issue_t                         r_ex0_issue;
-  logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
-  pipe_ctrl_t                              w_ex0_pipe_ctrl;
+msrh_pkg::issue_t                         r_ex0_issue;
+logic [RV_ENTRY_SIZE-1: 0]                w_ex0_index;
+pipe_ctrl_t                               w_ex0_pipe_ctrl;
 
-  pipe_ctrl_t                              r_ex1_pipe_ctrl;
-  msrh_pkg::issue_t                         r_ex1_issue;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
+pipe_ctrl_t                               r_ex1_pipe_ctrl;
+msrh_pkg::issue_t                         r_ex1_issue;
+logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
 
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs3_fwd_valid;
-  msrh_pkg::alen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-  msrh_pkg::alen_t w_ex2_rs1_fwd_data;
-  msrh_pkg::alen_t w_ex2_rs2_fwd_data;
-  msrh_pkg::alen_t w_ex2_rs3_fwd_data;
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs3_fwd_valid;
+msrh_pkg::alen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+msrh_pkg::alen_t w_ex2_rs1_fwd_data;
+msrh_pkg::alen_t w_ex2_rs2_fwd_data;
+msrh_pkg::alen_t w_ex2_rs3_fwd_data;
 
-  msrh_pkg::alen_t w_ex2_rs1_selected_data;
-  msrh_pkg::alen_t w_ex2_rs2_selected_data;
-  msrh_pkg::alen_t w_ex2_rs3_selected_data;
+msrh_pkg::alen_t w_ex2_rs1_selected_data;
+msrh_pkg::alen_t w_ex2_rs2_selected_data;
+msrh_pkg::alen_t w_ex2_rs3_selected_data;
 
-  logic                                    w_ex1_rs1_lsu_mispred;
-  logic                                    w_ex1_rs2_lsu_mispred;
-  logic                                    w_ex1_rs1_mispred;
-  logic                                    w_ex1_rs2_mispred;
+logic                              w_ex1_rs1_lsu_mispred;
+logic                              w_ex1_rs2_lsu_mispred;
+logic                              w_ex1_rs1_mispred;
+logic                              w_ex1_rs2_mispred;
 
-  pipe_ctrl_t                              r_ex2_pipe_ctrl;
-  msrh_pkg::issue_t                         r_ex2_issue;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
-  msrh_pkg::alen_t r_ex2_rs1_data;
-  msrh_pkg::alen_t r_ex2_rs2_data;
-  msrh_pkg::alen_t r_ex2_rs3_data;
-  logic                                    r_ex2_wr_valid;
+pipe_ctrl_t                              r_ex2_pipe_ctrl;
+msrh_pkg::issue_t                         r_ex2_issue;
+logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
+msrh_pkg::alen_t r_ex2_rs1_data;
+msrh_pkg::alen_t r_ex2_rs2_data;
+msrh_pkg::alen_t r_ex2_rs3_data;
+logic                              r_ex2_wr_valid;
 
-  msrh_pkg::issue_t                        r_ex3_issue;
-  logic                                    w_fpnew_result_valid;
-  msrh_pkg::alen_t            w_fpnew_result_data;
-logic [ 4: 0]                              w_fpnew_result_fflags;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
-  logic                                    r_ex3_wr_valid;
+msrh_pkg::issue_t                        r_ex3_issue;
+logic                              w_fpnew_result_valid;
+msrh_pkg::alen_t            w_fpnew_result_data;
+logic [ 4: 0]                      w_fpnew_result_fflags;
+logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
+logic                              r_ex3_wr_valid;
 pipe_ctrl_t                                r_ex3_pipe_ctrl;
 msrh_pkg::alen_t             w_ex2_res_data;
 msrh_pkg::alen_t             r_ex3_res_data;
@@ -82,9 +84,10 @@ end
 // ---------------------
 
 decoder_fpu_ctrl u_pipe_ctrl (
-  .inst(r_ex0_issue.inst),
-  .size(w_ex0_pipe_ctrl.size),
-  .op  (w_ex0_pipe_ctrl.op)
+  .inst (r_ex0_issue.inst),
+  .size (w_ex0_pipe_ctrl.size),
+  .op   (w_ex0_pipe_ctrl.op),
+  .pipe (w_ex0_pipe_ctrl.pipe)
 );
 
 // ---------------------
@@ -142,12 +145,12 @@ select_mispred_bus rs2_mispred_select
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
+assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
                               ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 
-assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
-assign o_ex1_early_wr.may_mispred = 1'b0;
+assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
+assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
+assign o_ex1_mv_early_wr.may_mispred = 1'b0;
 
 // -----------------------------
 // EX2 Stage
@@ -219,7 +222,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
-    r_ex2_wr_valid <= o_ex1_early_wr.valid;
+    r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
   end
 end
 
@@ -342,6 +345,7 @@ end
 // ----------------------
 // FPNew Pipeline
 // ----------------------
+logic [RV_ENTRY_SIZE-1: 0] w_fpnew_sched_index;
 msrh_fpnew_wrapper
 u_msrh_fpnew_wrapper
   (
@@ -351,6 +355,7 @@ u_msrh_fpnew_wrapper
    .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
+   .i_sched_index (r_ex2_index),
    .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
 
    .i_rs1 (w_ex2_rs1_selected_data),
@@ -359,22 +364,36 @@ u_msrh_fpnew_wrapper
 
    .o_valid (w_fpnew_result_valid ),
    .o_result(w_fpnew_result_data  ),
-   .o_fflags(w_fpnew_result_fflags)
+   .o_fflags(w_fpnew_result_fflags),
+   .o_sched_index(w_fpnew_sched_index)
    );
 
 
 always_comb begin
-  o_ex3_phy_wr.valid   = r_ex3_wr_valid;
-  o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-  o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-  o_ex3_phy_wr.rd_data = w_fpnew_result_valid ? w_fpnew_result_data : r_ex3_res_data;
+  o_ex3_mv_phy_wr.valid   = r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  o_ex3_mv_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+  o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  ex3_done_if.done                = r_ex3_issue.valid;
-  ex3_done_if.index_oh            = r_ex3_index;
-  ex3_done_if.except_valid        = 1'b0;
-  ex3_done_if.except_type         = msrh_pkg::except_t'('h0);
-  ex3_done_if.fflags_update_valid = w_fpnew_result_valid;
-  ex3_done_if.fflags              = w_fpnew_result_valid ? w_fpnew_result_fflags : 'h0;
+  ex3_mv_done_if.done                = r_ex3_issue.valid;
+  ex3_mv_done_if.index_oh            = r_ex3_index;
+  ex3_mv_done_if.payload.except_valid        = 1'b0;
+  ex3_mv_done_if.payload.except_type         = msrh_pkg::except_t'('h0);
+  ex3_mv_done_if.payload.fflags_update_valid = 1'b0;
+  ex3_mv_done_if.payload.fflags              = 'h0;
+
+  o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
+  o_fpnew_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  o_fpnew_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+  o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
+
+  fpnew_done_if.done                = w_fpnew_result_valid;
+  fpnew_done_if.index_oh            = w_fpnew_sched_index;
+  fpnew_done_if.payload.except_valid        = 1'b0;
+  fpnew_done_if.payload.except_type         = msrh_pkg::except_t'('h0);
+  fpnew_done_if.payload.fflags_update_valid = w_fpnew_result_valid;
+  fpnew_done_if.payload.fflags              = w_fpnew_result_fflags;
+
 end // always_comb
 
 

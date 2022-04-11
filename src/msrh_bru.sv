@@ -39,7 +39,7 @@ msrh_pkg::grp_id_t disp_picked_grp_id[msrh_conf_pkg::BRU_DISP_SIZE];
 msrh_pkg::issue_t w_rv0_issue;
 msrh_pkg::brmask_t w_rv0_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) w_ex3_done_if();
+done_if #(.RV_ENTRY_SIZE(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) w_ex3_done_if[1]();
 
 logic              w_ex3_done;
 msrh_pkg::brmask_t w_ex3_index;
@@ -119,7 +119,7 @@ u_bru_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex3_done_if   (w_ex3_done_if),
+   .ex3_done_if   (w_ex3_done_if[0]),
    .ex3_br_upd_if (ex3_br_upd_if)
    );
 

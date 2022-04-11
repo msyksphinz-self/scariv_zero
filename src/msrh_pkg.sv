@@ -384,6 +384,20 @@ function issue_t assign_issue_op3 (disp_t in,
 
 endfunction  // assign_issue_t
 
+typedef struct packed {
+  logic                       except_valid;
+  msrh_pkg::except_t          except_type;
+  riscv_pkg::xlen_t           except_tval;
+
+  // For FPU update
+  logic                       fflags_update_valid;
+  msrh_pkg::fflags_t          fflags;
+  // For flushing another instruction
+  logic                       another_flush_valid;
+  msrh_pkg::cmt_id_t          another_flush_cmt_id;
+  msrh_pkg::grp_id_t          another_flush_grp_id;
+} done_payload_t;
+
 
   typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
 

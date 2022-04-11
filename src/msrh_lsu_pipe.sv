@@ -521,11 +521,11 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign ex3_done_if.done          = r_ex3_issue.valid;
 assign ex3_done_if.index_oh      = 'h0;
-assign ex3_done_if.except_valid  = 1'b0;
-assign ex3_done_if.except_type   = msrh_pkg::except_t'('h0);
-assign ex3_done_if.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
-assign ex3_done_if.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
-assign ex3_done_if.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
+assign ex3_done_if.payload.except_valid  = 1'b0;
+assign ex3_done_if.payload.except_type   = msrh_pkg::except_t'('h0);
+assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
+assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
+assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
                               r_ex3_issue.wr_reg.valid &

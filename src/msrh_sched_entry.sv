@@ -33,7 +33,7 @@ module msrh_sched_entry
 
    // Done Interface
    input logic                                 i_pipe_done,
-   done_if.slave                               pipe_done_if,
+   input msrh_pkg::done_payload_t              i_pipe_done_payload,
 
    // Commit notification
    input                                       msrh_pkg::commit_blk_t i_commit,
@@ -158,11 +158,11 @@ always_comb begin
       end else begin
         if (i_pipe_done) begin
           w_state_next = msrh_pkg::DONE;
-          w_entry_next.except_valid = pipe_done_if.except_valid;
-          w_entry_next.except_type  = pipe_done_if.except_type;
-          w_entry_next.except_tval  = pipe_done_if.except_tval;
-          w_entry_next.fflags_update_valid = pipe_done_if.fflags_update_valid;
-          w_entry_next.fflags              = pipe_done_if.fflags;
+          w_entry_next.except_valid = i_pipe_done_payload.except_valid;
+          w_entry_next.except_type  = i_pipe_done_payload.except_type;
+          w_entry_next.except_tval  = i_pipe_done_payload.except_tval;
+          w_entry_next.fflags_update_valid = i_pipe_done_payload.fflags_update_valid;
+          w_entry_next.fflags              = i_pipe_done_payload.fflags;
         end
         if (w_rs_pred_mispredicted_or) begin
           w_state_next = msrh_pkg::WAIT;
