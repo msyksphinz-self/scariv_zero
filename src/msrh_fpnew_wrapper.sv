@@ -406,10 +406,10 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid | w_cast_out_valid;
   assign o_result = w_fma32_out_valid     ? {{32{1'b1}}, w_fma32_result} :
                     w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
-                    w_noncomp32_out_valid ? {{32{1'b1}}, w_noncomp32_result} :
-                    w_fma64_out_valid  ? w_fma64_result :
+                    w_noncomp32_out_valid ? {{32{(r_fpnew_op[0] == fpnew_pkg::MINMAX)}}, w_noncomp32_result} :
+                    w_fma64_out_valid     ? w_fma64_result :
                     w_noncomp64_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp64_class_mask :
-                    w_cast_out_valid    ? w_cast_result :
+                    w_cast_out_valid      ? w_cast_result :
                     /* w_noncomp64_out_valid ? */ w_noncomp64_result;
   assign o_fflags = w_fma32_out_valid     ? w_fma32_out_fflags :
                     w_noncomp32_out_valid ? w_noncomp32_out_fflags :
