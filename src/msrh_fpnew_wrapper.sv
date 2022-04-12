@@ -29,6 +29,8 @@ module msrh_fpnew_wrapper
    );
 
 typedef struct packed {
+  fpnew_pkg::operation_e                        op;
+  logic                                         op_mod;
   logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] sched_index;
   msrh_pkg::reg_t  reg_type;
   msrh_pkg::rnid_t rnid;
@@ -67,6 +69,9 @@ aux_fpnew_t                                   w_cast_aux;
 
 
 aux_fpnew_t w_aux_fpnew_in;
+
+assign w_aux_fpnew_in.op          = w_fpnew_op;
+assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.sched_index = i_sched_index;
@@ -149,18 +154,6 @@ always_comb begin
   endcase // case (i_pipe_ctrl.op)
 
 end // always_comb
-
-fpnew_pkg::operation_e                   r_fpnew_op[1];
-logic [ 0: 0]                            r_fpnew_op_mod;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_fpnew_op[0] <= 'h0;
-  end else begin
-    r_fpnew_op    [0] <= w_fpnew_op;
-    r_fpnew_op_mod[0] <= w_fpnew_op;
-  end
-end
-
 
 assign w_fma32_in_valid     = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
 assign w_noncomp32_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
@@ -433,10 +426,10 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
 
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid | w_cast_out_valid;
   assign o_result = w_fma32_out_valid     ? {{32{1'b1}}, w_fma32_result} :
-                    w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
-                    w_noncomp32_out_valid ? {{32{(r_fpnew_op[0] == fpnew_pkg::MINMAX)}}, w_noncomp32_result} :
+                    w_noncomp32_out_valid & (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
+                    w_noncomp32_out_valid ? {{32{(w_noncomp32_aux.op == fpnew_pkg::MINMAX)}}, w_noncomp32_result} :
                     w_fma64_out_valid     ? w_fma64_result :
-                    w_noncomp64_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp64_class_mask :
+                    w_noncomp64_out_valid & (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) ? w_noncomp64_class_mask :
                     w_cast_out_valid      ? w_cast_result :
                     /* w_noncomp64_out_valid ? */ w_noncomp64_result;
   assign o_fflags = w_fma32_out_valid     ? w_fma32_out_fflags :
@@ -464,7 +457,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
 end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_cast_out_valid;
   assign o_result = w_fma32_out_valid ? w_fma32_result    :
-                    w_noncomp32_out_valid & (r_fpnew_op[0] == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
+                    w_noncomp32_out_valid & (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) ? w_noncomp32_class_mask :
                     w_cast_out_valid    ? w_cast_result :
                     w_noncomp32_result;
   assign o_fflags = w_noncomp32_out_valid ? w_noncomp32_out_fflags :
