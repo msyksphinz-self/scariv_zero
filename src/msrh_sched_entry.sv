@@ -43,7 +43,8 @@ module msrh_sched_entry
    output logic                                o_entry_wait_complete,
    output logic                                o_entry_finish,
 
-   output msrh_pkg::done_rpt_t                 o_done_report
+   output msrh_pkg::done_rpt_t                 o_done_report,
+   input logic                                 i_done_accept
    );
 
 logic    r_issued;
@@ -178,18 +179,9 @@ always_comb begin
         w_state_next = msrh_pkg::DEAD;
         w_dead_next  = 1'b1;
       end else begin
-        // if (IS_BRANCH & w_entry_finish) begin
-        //   // Branch updates ROB from EX3 stage, may become commit in DONE (one cycle earlier).
-        //   w_state_next = msrh_pkg::INIT;
-        //   w_entry_next.valid = 1'b0;
-        //   w_issued_next = 1'b0;
-        //   w_dead_next = 1'b0;
-        //   // prevent all updates from Pipeline
-        //   w_entry_next.cmt_id = 'h0;
-        //   w_entry_next.grp_id = 'h0;
-        // end else begin
-        w_state_next = msrh_pkg::WAIT_COMPLETE;
-        // end // else: !if(IS_BRANCH & w_entry_finish)
+        if (i_done_accept) begin
+          w_state_next = msrh_pkg::WAIT_COMPLETE;
+        end
       end
     end
     msrh_pkg::WAIT_COMPLETE : begin

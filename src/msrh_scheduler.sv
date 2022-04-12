@@ -59,6 +59,7 @@ logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
+logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 msrh_pkg::done_rpt_t            w_entry_done_report[ENTRY_SIZE];
 
 logic                                w_flush_valid;
@@ -206,7 +207,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_entry_picked    (w_picked_inst_oh[s_idx]),
     .o_entry_wait_complete (w_entry_wait_complete[s_idx]),
     .o_entry_finish    (w_entry_finish[s_idx]),
-    .o_done_report     (w_entry_done_report[s_idx])
+    .o_done_report     (w_entry_done_report[s_idx]),
+    .i_done_accept     (w_entry_done_oh[s_idx])
   );
 
   assign w_entry_done[s_idx] = w_entry_done_report[s_idx].valid;
@@ -220,7 +222,8 @@ assign o_iss_index_oh = w_picked_inst_oh;
 // --------------
 // Done signals
 // --------------
-bit_oh_or #(.T(msrh_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  (.i_oh(w_entry_done), .i_data(w_entry_done_report), .o_selected(o_done_report ));
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_done_oh));
+bit_oh_or #(.T(msrh_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  (.i_oh(w_entry_done_oh), .i_data(w_entry_done_report), .o_selected(o_done_report ));
 
 `ifdef SIMULATION
 typedef struct packed {
