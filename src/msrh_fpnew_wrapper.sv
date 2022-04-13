@@ -109,8 +109,8 @@ always_comb begin
     OP_FADD      : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::ADD     };
     OP_FSUB      : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b1, fpnew_pkg::ADD     };
     OP_FMUL      : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::MUL     };
-    OP_FDIV      : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b1, 1'b0, fpnew_pkg::DIV     };
-    OP_FSQRT     : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::SQRT    };
+    OP_FDIV      : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, 1'b0, fpnew_pkg::DIV     };
+    OP_FSQRT     : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b0, 1'b0, 1'b1, 1'b0, fpnew_pkg::SQRT    };
     OP_FSGNJ_S   : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJN_S  : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJX_S  : {w_fma_valid, w_noncomp_valid, w_fdiv_valid, w_fpnew_op_mod, w_fpnew_op} = {1'b1, 1'b0, 1'b0, 1'b0, fpnew_pkg::SGNJ    };
@@ -326,7 +326,7 @@ assign w_fdiv32_in_valid = i_valid & w_fdiv_valid & (i_pipe_ctrl.size == SIZE_W)
 
 fpnew_divsqrt_multi
   #(
-    .FpFmtConfig ('h1              ),
+    .FpFmtConfig (5'b10000         ),
     .NumPipeRegs (32/2             ),
     .PipeConfig  (fpnew_pkg::BEFORE),
     .TagType     (aux_fpnew_t      ),
@@ -473,10 +473,10 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
     .busy_o          (                        )
   );
 
-  logic [ 1: 0][31: 0]   w_fdiv64_rs;
+  logic [ 1: 0][63: 0]   w_fdiv64_rs;
   logic [ 1: 0]          w_fdiv64_boxed;
   logic                  w_fdiv64_out_valid;
-  logic [31: 0]          w_fdiv64_result;
+  logic [63: 0]          w_fdiv64_result;
   fpnew_pkg::status_t    w_fdiv64_status;
   fpnew_pkg::classmask_e w_fdiv64_class_mask;
   logic [ 4: 0]          w_fdiv64_out_fflags;
@@ -491,7 +491,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
 
   fpnew_divsqrt_multi
     #(
-      .FpFmtConfig ('h1              ),
+      .FpFmtConfig (5'b01000         ),
       .NumPipeRegs (64/2             ),
       .PipeConfig  (fpnew_pkg::BEFORE),
       .TagType     (aux_fpnew_t      ),
@@ -533,7 +533,13 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
                                    w_noncomp64_status.NX};
 
 
-  assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_fma64_out_valid | w_noncomp64_out_valid | w_cast_out_valid;
+  assign o_valid  = w_fma32_out_valid |
+                    w_noncomp32_out_valid |
+                    w_fma64_out_valid |
+                    w_noncomp64_out_valid |
+                    w_cast_out_valid |
+                    w_fdiv32_out_valid |
+                    w_fdiv64_out_valid;
   always_comb begin
     if (w_fma32_out_valid) begin
       o_result      = {{32{1'b1}}, w_fma32_result};
@@ -574,7 +580,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
       o_rnid        = w_cast_aux.rnid;
       o_reg_type    = w_cast_aux.reg_type;
     end else if (w_fdiv32_out_valid) begin
-      o_result      = w_fdiv32_result;
+      o_result      = {{32{1'b1}}, w_fdiv32_result};
       o_fflags      = w_fdiv32_out_fflags;
       o_sched_index = w_fdiv32_aux.sched_index;
       o_rnid        = w_fdiv32_aux.rnid;
@@ -595,7 +601,10 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
   end // always_comb
 
 end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
-  assign o_valid  = w_fma32_out_valid | w_noncomp32_out_valid | w_cast_out_valid;
+  assign o_valid  = w_fma32_out_valid |
+                    w_noncomp32_out_valid |
+                    w_cast_out_valid |
+                    w_fdiv32_out_valid;
 
   always_comb begin
     if (w_fma32_out_valid) begin
@@ -621,7 +630,11 @@ end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
       o_rnid        = w_cast_aux.rnid;
       o_reg_type    = w_cast_aux.reg_type;
     end else if (w_fdiv32_out_valid) begin
-      o_result      = w_fdiv32_result;
+      if (msrh_pkg::ALEN_W == 64) begin
+        o_result      = {{32{1'b1}}, w_fdiv32_result};
+      end else begin
+        o_result      = w_fdiv32_result;
+      end
       o_fflags      = w_fdiv32_out_fflags;
       o_sched_index = w_fdiv32_aux.sched_index;
       o_rnid        = w_fdiv32_aux.rnid;
