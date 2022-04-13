@@ -70,14 +70,14 @@ logic                                    w_cvt_valid;
 logic [ 4: 0]                            w_cast_out_fflags;
 aux_fpnew_t                              w_cast_aux;
 
-logic [ 1: 0][31: 0]                     w_fdiv32_rs;
-logic [ 1: 0]                            w_fdiv32_boxed;
-logic                                    w_fdiv32_out_valid;
-logic [31: 0]                            w_fdiv32_result;
-fpnew_pkg::status_t                      w_fdiv32_status;
-fpnew_pkg::classmask_e                   w_fdiv32_class_mask;
-logic [ 4: 0]                            w_fdiv32_out_fflags;
-aux_fpnew_t                              w_fdiv32_aux;
+logic [ 1: 0][riscv_pkg::FLEN_W-1: 0]    w_fdiv_rs;
+logic [ 1: 0]                            w_fdiv_boxed;
+logic                                    w_fdiv_out_valid;
+logic [riscv_pkg::FLEN_W-1: 0]           w_fdiv_result;
+fpnew_pkg::status_t                      w_fdiv_status;
+fpnew_pkg::classmask_e                   w_fdiv_class_mask;
+logic [ 4: 0]                            w_fdiv_out_fflags;
+aux_fpnew_t                              w_fdiv_aux;
 
 aux_fpnew_t w_aux_fpnew_in;
 
@@ -96,9 +96,16 @@ assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
 assign w_noncomp32_boxed = 2'b11;
 
-assign w_fdiv32_rs[0] = i_rs1[31: 0];
-assign w_fdiv32_rs[1] = i_rs2[31: 0];
-assign w_fdiv32_boxed = 2'b11;
+generate if (msrh_pkg::ALEN_W == 63) begin
+  assign w_fdiv_rs[0] = (i_pipe_ctrl.size == SIZE_W) ? {{32{1'b1}}, i_rs1[31: 0]} : i_rs1;
+  assign w_fdiv_rs[1] = (i_pipe_ctrl.size == SIZE_W) ? {{32{1'b1}}, i_rs2[31: 0]} : i_rs2;
+end else begin
+  assign w_fdiv_rs[0] = i_rs1;
+  assign w_fdiv_rs[1] = i_rs2;
+end
+endgenerate
+
+assign w_fdiv_boxed = 2'b11;
 
 always_comb begin
   case (i_pipe_ctrl.op)
@@ -320,42 +327,44 @@ assign w_cast_out_fflags = {w_cast_status.NV,
                             w_cast_status.NX};
 
 
-logic                 w_fdiv32_in_valid;
-logic                 w_fdiv32_ready;
-assign w_fdiv32_in_valid = i_valid & w_fdiv_valid & (i_pipe_ctrl.size == SIZE_W);
+logic                 w_fdiv_in_valid;
+logic                 w_fdiv_ready;
+assign w_fdiv_in_valid = i_valid & w_fdiv_valid;
+
+localparam FpFmtConfig = riscv_pkg::FLEN_W == 32 ? 5'b10000 : 5'b11000;
 
 fpnew_divsqrt_multi
   #(
-    .FpFmtConfig (5'b10000         ),
+    .FpFmtConfig (FpFmtConfig      ),
     .NumPipeRegs (32/2             ),
     .PipeConfig  (fpnew_pkg::BEFORE),
     .TagType     (aux_fpnew_t      ),
     .AuxType     (logic            )
     )
-fdiv_32
+fdiv
 (
  .clk_i  (i_clk    ),
  .rst_ni (i_reset_n),
  // Input signals
- .operands_i      (w_fdiv32_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
- .is_boxed_i      (w_fdiv32_boxed    ),  // input logic [2:0]                 // 3 operands
+ .operands_i      (w_fdiv_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
+ .is_boxed_i      (w_fdiv_boxed    ),  // input logic [2:0]                 // 3 operands
  .rnd_mode_i      (i_rnd_mode        ),  // input fpnew_pkg::roundmode_e
- .dst_fmt_i       (fpnew_pkg::FP32   ),
+ .dst_fmt_i       (i_pipe_ctrl.size == SIZE_W ? fpnew_pkg::FP32 : fpnew_pkg::FP64 ),
  .op_i            (w_fpnew_op        ),  // input fpnew_pkg::operation_e
  .tag_i           (w_aux_fpnew_in    ),  // input TagType
  .aux_i           (                  ),  // input AuxType
  // Input Handshake
- .in_valid_i      (w_fdiv32_in_valid ),  // input  logic
- .in_ready_o      (w_fdiv32_ready    ),  // output logic
+ .in_valid_i      (w_fdiv_in_valid ),  // input  logic
+ .in_ready_o      (w_fdiv_ready    ),  // output logic
  .flush_i         (1'b0              ),  // input  logic
  // Output signals
- .result_o        (w_fdiv32_result   ),  // output logic [WIDTH-1:0]
- .status_o        (w_fdiv32_out_fflags),  // output fpnew_pkg::status_t
+ .result_o        (w_fdiv_result   ),  // output logic [WIDTH-1:0]
+ .status_o        (w_fdiv_out_fflags),  // output fpnew_pkg::status_t
  .extension_bit_o (                  ),  // output logic
- .tag_o           (w_fdiv32_aux      ),  // output TagType
+ .tag_o           (w_fdiv_aux      ),  // output TagType
  .aux_o           (                  ),  // output AuxType
  // Output handshake
- .out_valid_o     (w_fdiv32_out_valid),  // output logic
+ .out_valid_o     (w_fdiv_out_valid),  // output logic
  .out_ready_i     (1'b1              ),  // input  logic
  // Indication of valid data in flight
  .busy_o          (                  )   // output logic
@@ -473,59 +482,6 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
     .busy_o          (                        )
   );
 
-  logic [ 1: 0][63: 0]   w_fdiv64_rs;
-  logic [ 1: 0]          w_fdiv64_boxed;
-  logic                  w_fdiv64_out_valid;
-  logic [63: 0]          w_fdiv64_result;
-  fpnew_pkg::status_t    w_fdiv64_status;
-  fpnew_pkg::classmask_e w_fdiv64_class_mask;
-  logic [ 4: 0]          w_fdiv64_out_fflags;
-  aux_fpnew_t            w_fdiv64_aux;
-  logic                  w_fdiv64_ready;
-  logic                  w_fdiv64_in_valid;
-  assign w_fdiv64_in_valid = i_valid & w_fdiv_valid & (i_pipe_ctrl.size == SIZE_DW);
-
-  assign w_fdiv64_rs[0] = i_rs1;
-  assign w_fdiv64_rs[1] = i_rs2;
-  assign w_fdiv64_boxed = 2'b11;
-
-  fpnew_divsqrt_multi
-    #(
-      .FpFmtConfig (5'b01000         ),
-      .NumPipeRegs (64/2             ),
-      .PipeConfig  (fpnew_pkg::BEFORE),
-      .TagType     (aux_fpnew_t      ),
-      .AuxType     (logic            )
-      )
-  fdiv_64
-  (
-   .clk_i  (i_clk    ),
-   .rst_ni (i_reset_n),
-   // Input signals
-   .operands_i      (w_fdiv64_rs       ),  // input logic [2:0][WIDTH-1:0]      // 3 operands
-   .is_boxed_i      (w_fdiv64_boxed    ),  // input logic [2:0]                 // 3 operands
-   .rnd_mode_i      (i_rnd_mode        ),  // input fpnew_pkg::roundmode_e
-   .dst_fmt_i       (fpnew_pkg::FP64   ),
-   .op_i            (w_fpnew_op        ),  // input fpnew_pkg::operation_e
-   .tag_i           (w_aux_fpnew_in    ),  // input TagType
-   .aux_i           (                  ),  // input AuxType
-   // Input Handshake
-   .in_valid_i      (w_fdiv64_in_valid ),  // input  logic
-   .in_ready_o      (w_fdiv64_ready    ),  // output logic
-   .flush_i         (1'b0              ),  // input  logic
-   // Output signals
-   .result_o        (w_fdiv64_result   ),  // output logic [WIDTH-1:0]
-   .status_o        (w_fdiv64_out_fflags),  // output fpnew_pkg::status_t
-   .extension_bit_o (                  ),  // output logic
-   .tag_o           (w_fdiv64_aux      ),  // output TagType
-   .aux_o           (                  ),  // output AuxType
-   // Output handshake
-   .out_valid_o     (w_fdiv64_out_valid),  // output logic
-   .out_ready_i     (1'b1              ),  // input  logic
-   // Indication of valid data in flight
-   .busy_o          (                  )   // output logic
-   );
-
   assign w_noncomp64_out_fflags = {w_noncomp64_status.NV,
                                    w_noncomp64_status.DZ,
                                    w_noncomp64_status.OF,
@@ -538,8 +494,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
                     w_fma64_out_valid |
                     w_noncomp64_out_valid |
                     w_cast_out_valid |
-                    w_fdiv32_out_valid |
-                    w_fdiv64_out_valid;
+                    w_fdiv_out_valid;
   always_comb begin
     if (w_fma32_out_valid) begin
       o_result      = {{32{1'b1}}, w_fma32_result};
@@ -579,18 +534,12 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
       o_sched_index = w_cast_aux.sched_index;
       o_rnid        = w_cast_aux.rnid;
       o_reg_type    = w_cast_aux.reg_type;
-    end else if (w_fdiv32_out_valid) begin
-      o_result      = {{32{1'b1}}, w_fdiv32_result};
-      o_fflags      = w_fdiv32_out_fflags;
-      o_sched_index = w_fdiv32_aux.sched_index;
-      o_rnid        = w_fdiv32_aux.rnid;
-      o_reg_type    = w_fdiv32_aux.reg_type;
-    end else if (w_fdiv64_out_valid) begin
-      o_result      = w_fdiv64_result;
-      o_fflags      = w_fdiv64_out_fflags;
-      o_sched_index = w_fdiv64_aux.sched_index;
-      o_rnid        = w_fdiv64_aux.rnid;
-      o_reg_type    = w_fdiv64_aux.reg_type;
+    end else if (w_fdiv_out_valid) begin
+      o_result      = {{32{1'b1}}, w_fdiv_result};
+      o_fflags      = w_fdiv_out_fflags;
+      o_sched_index = w_fdiv_aux.sched_index;
+      o_rnid        = w_fdiv_aux.rnid;
+      o_reg_type    = w_fdiv_aux.reg_type;
     end else begin
       o_result      = 'h0;
       o_fflags      = 'h0;
@@ -604,7 +553,7 @@ end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid |
                     w_noncomp32_out_valid |
                     w_cast_out_valid |
-                    w_fdiv32_out_valid;
+                    w_fdiv_out_valid;
 
   always_comb begin
     if (w_fma32_out_valid) begin
@@ -629,23 +578,23 @@ end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
       o_sched_index = w_cast_aux.sched_index;
       o_rnid        = w_cast_aux.rnid;
       o_reg_type    = w_cast_aux.reg_type;
-    end else if (w_fdiv32_out_valid) begin
+    end else if (w_fdiv_out_valid) begin
       if (msrh_pkg::ALEN_W == 64) begin
-        o_result      = {{32{1'b1}}, w_fdiv32_result};
+        o_result      = {{32{1'b1}}, w_fdiv_result};
       end else begin
-        o_result      = w_fdiv32_result;
+        o_result      = w_fdiv_result;
       end
-      o_fflags      = w_fdiv32_out_fflags;
-      o_sched_index = w_fdiv32_aux.sched_index;
-      o_rnid        = w_fdiv32_aux.rnid;
-      o_reg_type    = w_fdiv32_aux.reg_type;
+      o_fflags      = w_fdiv_out_fflags;
+      o_sched_index = w_fdiv_aux.sched_index;
+      o_rnid        = w_fdiv_aux.rnid;
+      o_reg_type    = w_fdiv_aux.reg_type;
     end else begin
       o_result      = 'h0;
       o_fflags      = 'h0;
       o_sched_index = 'h0;
       o_rnid        = 'h0;
       o_reg_type    = msrh_pkg::FPR;
-    end // else: !if(w_fdiv32_out_valid)
+    end // else: !if(w_fdiv_out_valid)
   end // always_comb
 
 end // block: block_32
