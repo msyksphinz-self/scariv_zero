@@ -51,26 +51,26 @@ msrh_pkg::alen_t w_ex2_rs1_selected_data;
 msrh_pkg::alen_t w_ex2_rs2_selected_data;
 msrh_pkg::alen_t w_ex2_rs3_selected_data;
 
-logic                              w_ex1_rs1_lsu_mispred;
-logic                              w_ex1_rs2_lsu_mispred;
-logic                              w_ex1_rs1_mispred;
-logic                              w_ex1_rs2_mispred;
+logic [ 2: 0]                      w_ex1_rs_lsu_mispred;
+logic [ 2: 0]                      w_ex1_rs_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 msrh_pkg::issue_t                         r_ex2_issue;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
-msrh_pkg::alen_t r_ex2_rs1_data;
-msrh_pkg::alen_t r_ex2_rs2_data;
-msrh_pkg::alen_t r_ex2_rs3_data;
+msrh_pkg::alen_t                   r_ex2_rs1_data;
+msrh_pkg::alen_t                   r_ex2_rs2_data;
+msrh_pkg::alen_t                   r_ex2_rs3_data;
 logic                              r_ex2_wr_valid;
+logic [ 2: 0]                      r_ex2_rs_mispred;
 
-msrh_pkg::issue_t                        r_ex3_issue;
+
+msrh_pkg::issue_t                  r_ex3_issue;
 logic                              w_fpnew_result_valid;
-msrh_pkg::alen_t            w_fpnew_result_data;
+msrh_pkg::alen_t                   w_fpnew_result_data;
 logic [ 4: 0]                      w_fpnew_result_fflags;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
 logic                              r_ex3_wr_valid;
-pipe_ctrl_t                                r_ex3_pipe_ctrl;
+pipe_ctrl_t                        r_ex3_pipe_ctrl;
 msrh_pkg::alen_t             w_ex2_res_data;
 msrh_pkg::alen_t             r_ex3_res_data;
 
@@ -119,34 +119,27 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 
-select_mispred_bus rs1_mispred_select
-(
- .i_entry_rnid (r_ex1_issue.rd_regs[0].rnid),
- .i_entry_type (r_ex1_issue.rd_regs[0].typ),
- .i_mispred    (i_mispred_lsu),
+generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : mispred_loop
+   select_mispred_bus rs1_mispred_select
+   (
+    .i_entry_rnid (r_ex1_issue.rd_regs[rs_idx].rnid),
+    .i_entry_type (r_ex1_issue.rd_regs[rs_idx].typ),
+    .i_mispred    (i_mispred_lsu),
 
- .o_mispred    (w_ex1_rs1_lsu_mispred)
- );
+    .o_mispred    (w_ex1_rs_lsu_mispred[rs_idx])
+    );
 
+  assign w_ex1_rs_mispred[rs_idx] = r_ex1_issue.rd_regs[rs_idx].valid &
+                                    r_ex1_issue.rd_regs[rs_idx].predict_ready ? w_ex1_rs_lsu_mispred[rs_idx] : 1'b0;
+end
+endgenerate
 
-select_mispred_bus rs2_mispred_select
-(
- .i_entry_rnid (r_ex1_issue.rd_regs[1].rnid),
- .i_entry_type (r_ex1_issue.rd_regs[1].typ),
- .i_mispred    (i_mispred_lsu),
-
- .o_mispred    (w_ex1_rs2_lsu_mispred)
- );
 
 // -----------------------------
 // EX1 :
 // -----------------------------
-
-assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
-assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
-
 assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
-                                 ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+                                 &(~w_ex1_rs_mispred);
 
 assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
@@ -213,6 +206,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= 'h0;
 
     r_ex2_wr_valid <= 1'b0;
+
+    r_ex2_rs_mispred <= 3'b000;
   end else begin
     r_ex2_rs1_data <= (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
@@ -223,6 +218,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
     r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
+
+    r_ex2_rs_mispred <= w_ex1_rs_mispred;
   end
 end
 
@@ -355,7 +352,7 @@ u_msrh_fpnew_wrapper
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid),
+   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_sched_index (r_ex2_index),
