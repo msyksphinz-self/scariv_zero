@@ -525,7 +525,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
       o_rnid        = w_fma64_aux.rnid;
       o_reg_type    = w_fma64_aux.reg_type;
     end else if (w_noncomp64_out_valid) begin
-      if (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) begin
+      if (w_noncomp64_aux.op == fpnew_pkg::CLASSIFY) begin
         o_result = w_noncomp64_class_mask;
       end else begin
         o_result = w_noncomp64_result;
