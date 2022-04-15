@@ -94,7 +94,7 @@ assign w_fma32_boxed[2:0] = 3'b111;
 
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
-generate if (msrh_pkg::ALEN_W == 64) begin
+generate if (riscv_pkg::FLEN_W == 64) begin
   assign w_noncomp32_boxed = {&i_rs2[63:32], &i_rs1[63:32]};
 end else begin
   assign w_noncomp32_boxed = 2'b11;
