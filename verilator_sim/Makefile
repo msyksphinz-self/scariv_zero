@@ -170,4 +170,4 @@ $(FILELIST): ../src/fpnew.vf ../src/filelist.f filelist.f
 	cat $^ >> $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_*
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_* *.log simx.fst
