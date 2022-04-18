@@ -30,15 +30,17 @@ end
 command_build = "make rv#{rv_xlen}_build CONF=#{conf} ISA=#{isa_ext} RV_XLEN=#{rv_xlen} RV_FLEN=#{rv_flen}"
 system("#{command_build}")
 
-test_json_file = ""
 if rv_xlen == "32" then
-  test_json_file = "rv32-tests.json"
+  $test_table = JSON.load("rv32-tests.json")
 elsif rv_xlen == "64" then
-  test_json_file = "rv64-tests.json"
+  File.open("rv64-tests.json") do |file|
+    $test_table = JSON.load(file)
+  end
+  File.open("rv64-bench.json") do |file|
+    $test_table += JSON.load(file)
+  end
 end
-File.open(test_json_file) do |file|
-  $test_table = JSON.load(file)
-end
+# $test_table += JSON.load("rv64-bench.json")
 
 select_test = $test_table.select{ |test| (test["name"] == testcase) }
 if select_test.size != 1 then
