@@ -150,4 +150,85 @@ assign br_upd_fe_if.grp_id         = w_out_ftq_entry.grp_id;
 assign br_upd_fe_if.brtag          = w_out_ftq_entry.brtag;
 assign br_upd_fe_if.br_mask        = 'h0;
 
+
+`ifdef SIMULATION
+`ifdef MONITOR
+
+logic [63: 0] r_cycle_count;
+logic [10: 0] r_bru_valid_count;
+logic [10: 0] r_bru_cmp_count;
+logic [10: 0] r_bru_cmp_hit_count;
+logic [10: 0] r_bru_ret_count;
+logic [10: 0] r_bru_ret_hit_count;
+logic [10: 0] r_bru_other_count;
+logic [10: 0] r_bru_other_hit_count;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+  end
+end
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_bru_valid_count <= 'h0;
+    r_bru_cmp_count <= 'h0;
+    r_bru_cmp_hit_count    <= 'h0;
+    r_bru_ret_count     <= 'h0;
+    r_bru_ret_hit_count <= 'h0;
+    r_bru_other_count     <= 'h0;
+    r_bru_other_hit_count <= 'h0;
+  end else begin
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_bru_valid_count <= 'h0;
+      r_bru_cmp_count <= 'h0;
+      r_bru_cmp_hit_count <= 'h0;
+      r_bru_ret_count     <= 'h0;
+      r_bru_ret_hit_count <= 'h0;
+      r_bru_other_count     <= 'h0;
+      r_bru_other_hit_count <= 'h0;
+    end else begin
+      if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
+        r_bru_valid_count <= r_bru_valid_count + 'h1;
+        if (!br_upd_fe_if.is_call & !br_upd_fe_if.is_ret) begin
+          r_bru_cmp_count <= r_bru_cmp_count + 'h1;
+          if (!br_upd_fe_if.mispredict) begin
+            r_bru_cmp_hit_count <= r_bru_cmp_hit_count + 'h1;
+          end
+        end else begin
+          if (br_upd_fe_if.is_ret) begin  // RET
+            r_bru_ret_count <= r_bru_ret_count + 'h1;
+            if (!br_upd_fe_if.mispredict) begin
+              r_bru_ret_hit_count <= r_bru_ret_hit_count + 'h1;
+            end
+          end else begin
+            r_bru_other_count <= r_bru_other_count + 'h1;
+            if (!br_upd_fe_if.mispredict) begin
+              r_bru_other_hit_count <= r_bru_other_hit_count + 'h1;
+            end
+          end // else: !if(r_ex3_issue.inst == 32'h00008082)
+        end // else: !if(!br_upd_fe_if.is_call & !br_upd_fe_if.is_ret)
+      end // if (br_upd_fe_if.update & !br_upd_fe_if.dead)
+    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+function void dump_branch_perf (int fp);
+
+  $fwrite(fp, "  \"branch\" : {");
+  $fwrite(fp, "    \"execute\" : %5d, ", r_bru_valid_count);
+  $fwrite(fp, "    \"cmp\" : { \"execute\" : %5d, \"hit\" : %5d }, ", r_bru_cmp_count, r_bru_cmp_hit_count);
+  $fwrite(fp, "    \"uncond\" : { \"ret\" : { \"execute\" : %5d, \"hit\" : %5d}, ",
+          r_bru_ret_count, r_bru_ret_hit_count);
+  $fwrite(fp, "\"others\" : { \"execute\" : %5d, \"hit\" : %5d }}, ",
+          r_bru_other_count, r_bru_other_hit_count);
+  $fwrite(fp, "  },\n");
+
+endfunction // dump_perfto
+
+`endif // MONITOR
+`endif // SIMULATION
+
 endmodule // msrh_ftq
