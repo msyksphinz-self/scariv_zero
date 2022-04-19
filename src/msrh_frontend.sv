@@ -339,15 +339,10 @@ always_comb begin
       end else if (w_s2_ic_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
         w_s0_vaddr_next = w_s2_ic_miss_vaddr;
-      end else if (w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
-        if (r_s2_clear) begin
-          // Vaddr at S2 stage is no more used, Stall vaddr
-          w_s0_vaddr_next = r_s0_vaddr;
-        end else begin
-          // Retry from S2 stage Vaddr
-          w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
-          w_if_state_next = WAIT_IBUF_FREE;
-        end
+      end else if (r_s2_valid & !r_s2_clear & w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
+        // Retry from S2 stage Vaddr
+        w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
+        w_if_state_next = WAIT_IBUF_FREE;
       end else if (w_s2_predict_valid & !r_s2_clear) begin
         w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
