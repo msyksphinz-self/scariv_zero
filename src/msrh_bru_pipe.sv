@@ -315,8 +315,10 @@ end // always_comb
 
 // logic w_ex3_not_predict_taken;
 logic w_ex3_ras_hit;
+logic w_ex3_call_hit;
 logic w_ex3_bim_hit;
 
+assign w_ex3_call_hit = r_ex3_issue.is_call & r_ex3_issue.pred_taken & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
 assign w_ex3_ras_hit = r_ex3_issue.is_ret & r_ex3_issue.pred_taken & (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr);
 assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
                        ((~r_ex3_result & ~r_ex3_issue.pred_taken) |
@@ -330,7 +332,7 @@ assign ex3_br_upd_if.is_rvc        = r_ex3_issue.is_rvc;
 assign ex3_br_upd_if.ras_index     = r_ex3_issue.ras_index;
 assign ex3_br_upd_if.taken         = r_ex3_result;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
-assign ex3_br_upd_if.mispredict    = ~w_ex3_ras_hit & ~w_ex3_bim_hit;
+assign ex3_br_upd_if.mispredict    = ~w_ex3_ras_hit & ~w_ex3_call_hit & ~w_ex3_bim_hit;
 
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = /* r_ex3_issue.is_rvc ? */ r_ex3_issue.pc_addr /* : r_ex3_issue.pc_addr + 'h2 */;

@@ -178,6 +178,7 @@ interface ras_search_if;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s1_ras_index;
 
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_call;
+  logic [riscv_pkg::VADDR_W-1: 1]                    s2_call_target_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_ret;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_ras_vaddr;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s2_ras_index;
@@ -188,6 +189,7 @@ interface ras_search_if;
     output s1_ras_vaddr,
     output s1_ras_index,
     output s2_is_call,
+    output s2_call_target_vaddr,
     output s2_is_ret,
     output s2_ras_vaddr,
     output s2_ras_index
@@ -199,6 +201,7 @@ interface ras_search_if;
     input s1_ras_vaddr,
     input s1_ras_index,
     input s2_is_call,
+    input s2_call_target_vaddr,
     input s2_is_ret,
     input s2_ras_vaddr,
     input s2_ras_index

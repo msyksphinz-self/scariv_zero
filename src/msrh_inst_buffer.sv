@@ -216,8 +216,8 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
           r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
           r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
           r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_index;
-          r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= {ras_search_if.s2_ras_vaddr, 1'b0};
-        end
+          r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
+        end // block: pred_loop
 
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
@@ -597,7 +597,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx];
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
-      iq_disp.inst[d_idx].pred_target_vaddr = w_inst_is_ret [d_idx] ? w_expand_ras_info[d_idx].pred_target_vaddr :
+      iq_disp.inst[d_idx].pred_target_vaddr = (w_inst_is_ret[d_idx] | w_inst_is_call[d_idx]) ? w_expand_ras_info[d_idx].pred_target_vaddr :
                                               w_expand_pred_info[d_idx].pred_target_vaddr;
 
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];

@@ -31,7 +31,9 @@ command_build = "make rv#{rv_xlen}_build CONF=#{conf} ISA=#{isa_ext} RV_XLEN=#{r
 system("#{command_build}")
 
 if rv_xlen == "32" then
-  $test_table = JSON.load("rv32-tests.json")
+  File.open("rv32-tests.json") do |file|
+    $test_table = JSON.load(file)
+  end
 elsif rv_xlen == "64" then
   File.open("rv64-tests.json") do |file|
     $test_table = JSON.load(file)
