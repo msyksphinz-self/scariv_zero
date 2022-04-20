@@ -26,6 +26,9 @@ logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] search_btb_s1_hit;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s1_btb_bank_mask;
 
 logic [riscv_pkg::VADDR_W-1: 1]              w_update_pc_vaddr;
+// Memo: Why update PC_VADDR + 2 ?
+//       Because when Branch instruction cross cacheline,
+//       needs to fetch both lower line and upper line. So BTB needs to upper-side of cache line.
 assign w_update_pc_vaddr = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:1] + (update_btb_if.is_rvc ? 'h0 : 'h1);
 
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
