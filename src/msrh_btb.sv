@@ -84,7 +84,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
       r_s1_btb_valid <= 1'b0;
     end else begin
       if (btb_update_hit) begin
-        r_btb_valids[update_btb_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
+        r_btb_valids[w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_btb_valid <= r_btb_valids[search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
     end

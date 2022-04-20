@@ -57,7 +57,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
       r_s1_bim_valids <= 1'b0;
     end else begin
       if (bim_update_hit) begin
-        r_bim_valids[update_bim_if.pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
+        r_bim_valids[w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_bim_valids <= r_bim_valids[search_bim_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
     end
