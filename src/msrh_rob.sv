@@ -142,38 +142,41 @@ endgenerate
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
 
+rob_entry_t w_out_entry;
+assign w_out_entry = w_entries[w_out_cmt_entry_id];
+
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
-assign o_commit.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
+assign o_commit.grp_id       = w_out_entry.grp_id;
 assign o_commit.except_valid  = w_valid_except_grp_id;
 assign o_commit.except_type   = w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == msrh_pkg::INST_ADDR_MISALIGN  ||
-                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT) ? {w_entries[w_out_cmt_entry_id].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
+                                 o_commit.except_type == msrh_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
                                 w_except_tval_selected;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
-assign o_commit.epc          = w_entries[w_out_cmt_entry_id].inst[w_cmt_except_valid_encoded].pc_addr;
-assign o_commit.dead_id      = (w_entries[w_out_cmt_entry_id].dead | w_dead_grp_id) & o_commit.grp_id;
-assign o_commit.flush_valid  = w_entries[w_out_cmt_entry_id].flush_valid;
+assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
+assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
+assign o_commit.flush_valid  = w_out_entry.flush_valid;
 
 // Select Jump Insntruction
-assign w_valid_upd_pc_grp_id = (w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid |
-                                w_entries[w_out_cmt_entry_id].except_valid) /* & w_entries[w_out_cmt_entry_id].done_grp_id */;
+assign w_valid_upd_pc_grp_id = (w_out_entry.br_upd_info.upd_valid |
+                                w_out_entry.except_valid) /* & w_out_entry.done_grp_id */;
 bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_id), .out(w_cmt_pc_upd_valid_oh));
 
 // Select Exception Instruction
-assign w_valid_except_grp_id = w_entries[w_out_cmt_entry_id].except_valid & w_cmt_pc_upd_valid_oh;
-bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_type), .o_selected(w_except_type_selected));
-bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_entries[w_out_cmt_entry_id].except_tval), .o_selected(w_except_tval_selected));
+assign w_valid_except_grp_id = w_out_entry.except_valid & w_cmt_pc_upd_valid_oh;
+bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_type), .o_selected(w_except_type_selected));
+bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_tval), .o_selected(w_except_tval_selected));
 
 assign o_commit_rnid_update.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
-  assign o_commit_rnid_update.rnid_valid[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.valid;
-  assign o_commit_rnid_update.old_rnid  [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.old_rnid;
-  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.rnid;
-  assign o_commit_rnid_update.rd_regidx [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.regidx;
-  assign o_commit_rnid_update.rd_typ    [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].wr_reg.typ;
+  assign o_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
+  assign o_commit_rnid_update.old_rnid  [d_idx] = w_out_entry.inst[d_idx].wr_reg.old_rnid;
+  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_out_entry.inst[d_idx].wr_reg.rnid;
+  assign o_commit_rnid_update.rd_regidx [d_idx] = w_out_entry.inst[d_idx].wr_reg.regidx;
+  assign o_commit_rnid_update.rd_typ    [d_idx] = w_out_entry.inst[d_idx].wr_reg.typ;
 end
 endgenerate
 assign o_commit_rnid_update.dead_id        = o_commit.dead_id;
@@ -183,13 +186,13 @@ assign o_commit_rnid_update.except_type    = o_commit.except_type;
 
 grp_id_t w_fflags_update_valid_oh;
 fflags_t w_fflags_sel;
-bit_extract_msb  #(.WIDTH(DISP_SIZE)) u_bit_fflags_extract (.in(w_entries[w_out_cmt_entry_id].fflags_update_valid), .out(w_fflags_update_valid_oh));
-bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w_fflags_update_valid_oh), .i_data(w_entries[w_out_cmt_entry_id].fflags), .o_selected(w_fflags_sel));
+bit_extract_msb  #(.WIDTH(DISP_SIZE)) u_bit_fflags_extract (.in(w_out_entry.fflags_update_valid), .out(w_fflags_update_valid_oh));
+bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w_fflags_update_valid_oh), .i_data(w_out_entry.fflags), .o_selected(w_fflags_sel));
 
 // --------------------------
 // FFLAGS update when commit
 // --------------------------
-assign fflags_update_if.valid  = o_commit.commit & (|w_entries[w_out_cmt_entry_id].fflags_update_valid);
+assign fflags_update_if.valid  = o_commit.commit & (|w_out_entry.fflags_update_valid);
 assign fflags_update_if.fflags = w_fflags_sel;
 
 // --------------------------------------------------
@@ -201,10 +204,10 @@ logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_array[msrh_conf_p
 
 
 // Make dead Instruction, (after branch instruction)
-bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
+bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_out_entry.br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
 
 // Make dead Instruction, (after exception)
-bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(w_entries[w_out_cmt_entry_id].except_valid), .out(w_dead_grp_id_except_tmp));
+bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(w_out_entry.except_valid), .out(w_dead_grp_id_except_tmp));
 logic [DISP_SIZE-1: 0] w_except_dead_grp_id;
 logic                  w_is_active_except;   // Instruction generates exception but itself active
 // assign w_is_active_except = (w_except_type_selected == msrh_pkg::SILENT_FLUSH) |
@@ -238,16 +241,16 @@ assign w_dead_grp_id = w_except_dead_grp_id |
 
 // ROB Notification Information
 assign rob_info_if.cmt_id       = w_out_cmt_id;
-assign rob_info_if.grp_id       = w_entries[w_out_cmt_entry_id].grp_id;
-assign rob_info_if.done_grp_id  = w_entries[w_out_cmt_entry_id].done_grp_id;
-assign rob_info_if.upd_pc_valid = w_entries[w_out_cmt_entry_id].br_upd_info.upd_valid;
-assign rob_info_if.except_valid = w_entries[w_out_cmt_entry_id].except_valid;
+assign rob_info_if.grp_id       = w_out_entry.grp_id;
+assign rob_info_if.done_grp_id  = w_out_entry.done_grp_id;
+assign rob_info_if.upd_pc_valid = w_out_entry.br_upd_info.upd_valid;
+assign rob_info_if.except_valid = w_out_entry.except_valid;
 
 // Commit Branch Tag Update
 assign cmt_brtag_if.commit     = o_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
-  assign cmt_brtag_if.is_br_inst[d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR;
-  assign cmt_brtag_if.brtag     [d_idx] = w_entries[w_out_cmt_entry_id].inst[d_idx].brtag;
+  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR;
+  assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
 end
 endgenerate
 
@@ -327,7 +330,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         r_dead_count   <= r_dead_count + $countones(o_commit.grp_id &  o_commit.dead_id);
         for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
           if ((o_commit.grp_id & o_commit.dead_id >> grp_idx) & 'h1) begin
-            case (w_entries[w_out_cmt_entry_id].sim_dead_reason[grp_idx])
+            case (w_out_entry.sim_dead_reason[grp_idx])
               DEAD_EXC          : r_dead_reason_count.dead_exc          = r_dead_reason_count.dead_exc          + 'h1;
               DEAD_BRANCH       : r_dead_reason_count.dead_branch       = r_dead_reason_count.dead_branch       + 'h1;
               DEAD_PREVINST     : r_dead_reason_count.dead_previnst     = r_dead_reason_count.dead_previnst     + 'h1;
@@ -348,12 +351,12 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"commit\" : {");
   $fwrite(fp, "  \"cmt\" : %5d, ", r_commit_count);
   $fwrite(fp, "  \"inst\" : %5d, ", r_inst_count);
-  $fwrite(fp, "  \"dead\" : %5d\n", r_dead_count);
+  $fwrite(fp, "  \"dead\" : %5d,\n  ", r_dead_count);
   $fwrite(fp, "  \"reason\" : {");
-  $fwrite(fp, "  \"exc\" : %5d\n"       , r_dead_reason_count.dead_exc);
-  $fwrite(fp, "  \"branch\" : %5d"      , r_dead_reason_count.dead_branch);
-  $fwrite(fp, "  \"previnst\" : %5d"    , r_dead_reason_count.dead_previnst);
-  $fwrite(fp, "  \"anotherflush\" : %5d", r_dead_reason_count.dead_anotherflush);
+  $fwrite(fp, "  \"exc\" : %5d, "       , r_dead_reason_count.dead_exc);
+  $fwrite(fp, "  \"branch\" : %5d, "      , r_dead_reason_count.dead_branch);
+  $fwrite(fp, "  \"previnst\" : %5d, "    , r_dead_reason_count.dead_previnst);
+  $fwrite(fp, "  \"anotherflush\" : %5d, ", r_dead_reason_count.dead_anotherflush);
   $fwrite(fp, "  \"ext_kill\" : %5d"    , r_dead_reason_count.dead_ext_kill);
   $fwrite(fp, "  }},\n");
 endfunction
@@ -375,11 +378,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       for(int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
         if (o_commit.grp_id[d_idx]) begin
           lifetime_t new_life;
-          new_life.lifetime = w_entries[w_out_cmt_entry_id].lifetime[d_idx];
+          new_life.lifetime = w_out_entry.lifetime[d_idx];
           new_life.cmt_id   = o_commit.cmt_id;
           new_life.grp_id   = 1 << d_idx;
-          new_life.pc_addr  = w_entries[w_out_cmt_entry_id].inst[d_idx].pc_addr;
-          new_life.inst     = w_entries[w_out_cmt_entry_id].inst[d_idx].inst;
+          new_life.pc_addr  = w_out_entry.inst[d_idx].pc_addr;
+          new_life.inst     = w_out_entry.inst[d_idx].inst;
           new_life.cmt_time = $time;
 
           life_array.push_back(new_life);
