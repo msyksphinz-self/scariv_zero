@@ -229,6 +229,15 @@ typedef struct packed {
 `endif // SIMULATION
   } br_upd_info_t;
 
+typedef enum logic [ 2: 0] {
+   DEAD_NONE         = 0,
+   DEAD_EXC          = 1,
+   DEAD_BRANCH       = 2,
+   DEAD_PREVINST     = 3,
+   DEAD_ANOTHERFLUSH = 4,
+   DEAD_EXT_KILL     = 5
+} dead_reason_t;
+
   typedef struct packed {
     logic          valid;
 
@@ -255,6 +264,7 @@ typedef struct packed {
 
 `ifdef SIMULATION
     logic [DISP_SIZE-1: 0] [31: 0] lifetime;
+    dead_reason_t[msrh_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
 `endif // SIMULATION
   } rob_entry_t;
 

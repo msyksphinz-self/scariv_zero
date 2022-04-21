@@ -295,6 +295,13 @@ logic [63: 0] r_cycle_count;
 logic [63: 0] r_commit_count;
 logic [63: 0] r_inst_count;
 logic [63: 0] r_dead_count;
+struct packed {
+logic [63: 0] dead_exc;
+logic [63: 0] dead_branch;
+logic [63: 0] dead_previnst;
+logic [63: 0] dead_anotherflush;
+logic [63: 0] dead_ext_kill;
+} r_dead_reason_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -308,12 +315,29 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_commit_count <= 'h0;
       r_inst_count   <= 'h0;
       r_dead_count   <= 'h0;
+      r_dead_reason_count.dead_exc          = 'h0;
+      r_dead_reason_count.dead_branch       = 'h0;
+      r_dead_reason_count.dead_previnst     = 'h0;
+      r_dead_reason_count.dead_anotherflush = 'h0;
+      r_dead_reason_count.dead_ext_kill     = 'h0;
     end else begin
       if (o_commit.commit) begin
         r_commit_count <= r_commit_count + 'h1;
         r_inst_count   <= r_inst_count + $countones(o_commit.grp_id & ~o_commit.dead_id);
         r_dead_count   <= r_dead_count + $countones(o_commit.grp_id &  o_commit.dead_id);
-      end
+        for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
+          if ((o_commit.grp_id & o_commit.dead_id >> grp_idx) & 'h1) begin
+            case (w_entries[w_out_cmt_entry_id].sim_dead_reason[grp_idx])
+              DEAD_EXC          : r_dead_reason_count.dead_exc          = r_dead_reason_count.dead_exc          + 'h1;
+              DEAD_BRANCH       : r_dead_reason_count.dead_branch       = r_dead_reason_count.dead_branch       + 'h1;
+              DEAD_PREVINST     : r_dead_reason_count.dead_previnst     = r_dead_reason_count.dead_previnst     + 'h1;
+              DEAD_ANOTHERFLUSH : r_dead_reason_count.dead_anotherflush = r_dead_reason_count.dead_anotherflush + 'h1;
+              DEAD_EXT_KILL     : r_dead_reason_count.dead_ext_kill     = r_dead_reason_count.dead_ext_kill     + 'h1;
+              default           : ;
+            endcase // case (o_commit.dead_reason[grp_idx])
+          end
+        end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
+      end // if (o_commit.commit)
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
@@ -324,8 +348,14 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"commit\" : {");
   $fwrite(fp, "  \"cmt\" : %5d, ", r_commit_count);
   $fwrite(fp, "  \"inst\" : %5d, ", r_inst_count);
-  $fwrite(fp, "  \"dead\" : %5d", r_dead_count);
-  $fwrite(fp, "  },\n");
+  $fwrite(fp, "  \"dead\" : %5d\n", r_dead_count);
+  $fwrite(fp, "  \"reason\" : {");
+  $fwrite(fp, "  \"exc\" : %5d\n"       , r_dead_reason_count.dead_exc);
+  $fwrite(fp, "  \"branch\" : %5d"      , r_dead_reason_count.dead_branch);
+  $fwrite(fp, "  \"previnst\" : %5d"    , r_dead_reason_count.dead_previnst);
+  $fwrite(fp, "  \"anotherflush\" : %5d", r_dead_reason_count.dead_anotherflush);
+  $fwrite(fp, "  \"ext_kill\" : %5d"    , r_dead_reason_count.dead_ext_kill);
+  $fwrite(fp, "  }},\n");
 endfunction
 
 typedef struct packed {

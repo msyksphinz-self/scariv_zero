@@ -137,6 +137,9 @@ always_comb begin
       w_entry_next.except_tval [d_idx] = i_load_tlb_except_valid[d_idx] & (i_load_tlb_except_cause[d_idx] != ILLEGAL_INST) ? i_load_tlb_except_tval[d_idx] : 'h0;
       w_entry_next.flush_valid [d_idx] = w_entry_next.dead[d_idx] ? 1'b0 : w_entry_next.except_valid[d_idx];
       w_entry_next.dead        [d_idx] = w_entry_next.dead[d_idx] | w_entry_next.except_valid[d_idx];
+`ifdef SIMULATION
+      w_entry_next.sim_dead_reason[d_idx] = w_entry_next.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
+`endif // SIMULATION
     end
 
     if (br_upd_if.update) begin
@@ -146,6 +149,9 @@ always_comb begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           w_entry_next.flush_valid [d_idx] = 1'b0;
+`ifdef SIMULATION
+          w_entry_next.sim_dead_reason[d_idx] = DEAD_BRANCH;
+`endif // SIMULATION
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
@@ -194,6 +200,9 @@ always_comb begin
       if (w_tree_flush_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
           w_entry_next.dead [d_idx] = r_entry.grp_id[d_idx];
+`ifdef SIMULATION
+          w_entry_next.sim_dead_reason[d_idx] = DEAD_PREVINST;
+`endif // SIMULATION
         end
       end
 
@@ -203,6 +212,9 @@ always_comb begin
           w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
           w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
           w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
+`ifdef SIMULATION
+          w_entry_next.sim_dead_reason[d_idx] = DEAD_ANOTHERFLUSH;
+`endif // SIMULATION
         end
       end
 
@@ -212,6 +224,9 @@ always_comb begin
         w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
         w_entry_next.except_valid[d_idx] = 1'b0;
         w_entry_next.flush_valid [d_idx] = 1'b0;
+`ifdef SIMULATION
+        w_entry_next.sim_dead_reason[d_idx] = DEAD_EXT_KILL;
+`endif // SIMULATION
       end
     end
 
@@ -224,9 +239,10 @@ always_comb begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           w_entry_next.except_valid[d_idx] = 1'b0;
-          // if (!r_entry.dead[d_idx]) begin
           w_entry_next.flush_valid [d_idx] = 1'b0;
-          // end
+`ifdef SIMULATION
+          w_entry_next.sim_dead_reason[d_idx] = DEAD_BRANCH;
+`endif // SIMULATION
         end
         // Resolve the branch dependency
         w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
