@@ -677,9 +677,9 @@ msrh_predictor u_predictor
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .sc_disp   (sc_disp),
-   .o_sc_ras_index  (o_sc_ras_index),
-   .o_sc_ras_vaddr (o_sc_ras_vaddr),
+   // .sc_disp   (sc_disp),
+   // .o_sc_ras_index  (o_sc_ras_index),
+   // .o_sc_ras_vaddr (o_sc_ras_vaddr),
 
    .i_s1_valid   (w_s1_inst_valid),
    .i_s2_valid   (w_s2_inst_valid),

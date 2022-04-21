@@ -259,12 +259,12 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign sc_disp.cmt_id = i_sc_new_cmt_id;
 always_comb begin
   sc_disp.inst = r_disp_inst;
-  for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
-    sc_disp.inst[d_idx].ras_index      = i_sc_ras_index;
-    if (sc_disp.inst[d_idx].is_call) begin
-      sc_disp.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
-    end
-  end
+  // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
+  //   sc_disp.inst[d_idx].ras_index      = i_sc_ras_index;
+  //   if (sc_disp.inst[d_idx].is_call) begin
+  //     sc_disp.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
+  //   end
+  // end
 end
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : src_rn_loop

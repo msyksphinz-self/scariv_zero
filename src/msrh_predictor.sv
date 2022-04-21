@@ -16,9 +16,9 @@ module msrh_predictor
  input logic  i_clk,
  input logic  i_reset_n,
 
- disp_if.watch     sc_disp,
- output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
+ // disp_if.watch     sc_disp,
+ // output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
+ // output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
 
  input logic i_s1_valid,
  input logic i_s2_valid,
@@ -80,11 +80,12 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
 msrh_pkg::vaddr_t                 w_s2_call_vaddr;
+logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_next_pc;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
 logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_ret_vaddr;
 
-logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_next_pc;
-logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
+// logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_next_pc;
+// logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
 
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid;
 logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid_oh;
@@ -96,11 +97,11 @@ logic [$clog2(ICACHE_DATA_B_W/2)-1: 0] w_s2_call_enc;
 logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_target_vaddr;
 logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_offset;
 
-msrh_pkg::grp_id_t w_sc_grp_valid;
-msrh_pkg::grp_id_t w_sc_call_be;
-msrh_pkg::grp_id_t w_sc_ret_be;
-msrh_pkg::grp_id_t w_sc_call_valid;
-msrh_pkg::grp_id_t w_sc_ret_valid;
+// msrh_pkg::grp_id_t w_sc_grp_valid;
+// msrh_pkg::grp_id_t w_sc_call_be;
+// msrh_pkg::grp_id_t w_sc_ret_be;
+// msrh_pkg::grp_id_t w_sc_call_valid;
+// msrh_pkg::grp_id_t w_sc_ret_valid;
 
 logic [ICACHE_DATA_B_W / 2 -1: 0] w_is_32bit_inst;
 
@@ -213,14 +214,16 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 always_comb begin
   w_s2_ras_index_next = r_ras_input_index;
 
-  if ((w_br_call_dead | w_br_ret_dead) & ~r_during_recover) begin
+  if (w_br_call_dead & ~r_during_recover) begin
     w_s2_ras_index_next = br_upd_fe_if.ras_index;
+  end else if (w_br_ret_dead & ~r_during_recover) begin
+    w_s2_ras_index_next = br_upd_fe_if.ras_index + 'h1;
   end
 
   w_ras_index_next = w_s2_ras_index_next;
-  if (w_s2_ret_valid) begin
+  if (|w_s2_ret_valid) begin
     w_ras_index_next = w_s2_ras_index_next - 'h1;
-  end else if (w_sc_call_valid) begin
+  end else if (|w_s2_call_valid) begin
     w_ras_index_next = w_s2_ras_index_next + 'h1;
   end
   w_ras_wr_index = w_ras_index_next;
@@ -257,21 +260,24 @@ assign ras_search_if.s2_is_call           = w_s2_call_valid;
 assign ras_search_if.s2_call_target_vaddr = w_s2_call_target_vaddr;
 assign ras_search_if.s2_is_ret            = w_s2_ret_valid;
 assign ras_search_if.s2_ras_vaddr         = w_s2_ras_ret_vaddr;
-assign ras_search_if.s2_ras_index         = r_s2_ras_index_next;
+assign ras_search_if.s2_ras_index         = |w_s2_ret_valid ? w_ras_index_next : w_s2_ras_index_next;
 
-assign o_sc_ras_index = w_s2_ras_index_next;
-assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
+// assign o_sc_ras_index = w_s2_ras_index_next;
+// assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
 
-msrh_pkg::grp_id_t w_sc_call_be_array_vld;
-msrh_pkg::disp_t w_sc_call_entry;
-
-assign w_sc_call_be_array_vld = w_sc_call_be & w_sc_grp_valid;
+// msrh_pkg::grp_id_t w_sc_call_be_array_vld;
+// msrh_pkg::disp_t w_sc_call_entry;
+//
+// assign w_sc_call_be_array_vld = w_sc_call_be & w_sc_grp_valid;
 
 /* verilator lint_off WIDTH */
-assign w_sc_ras_next_pc = w_sc_call_entry.pc_addr[riscv_pkg::VADDR_W-1: 1] + (w_sc_call_entry.rvc_inst_valid ? 1 : 2);
+assign w_s2_ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2){1'b0}}} +
+                          w_s2_call_enc + 'h2;
 
-bit_oh_or_packed #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
-bit_oh_call_target(.i_oh(w_sc_call_be_array_vld), .i_data(sc_disp.inst), .o_selected(w_sc_call_entry));
+// assign w_sc_ras_next_pc = w_sc_call_entry.pc_addr[riscv_pkg::VADDR_W-1: 1] + (w_sc_call_entry.rvc_inst_valid ? 1 : 2);
+//
+// bit_oh_or_packed #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+// bit_oh_call_target(.i_oh(w_sc_call_be_array_vld), .i_data(sc_disp.inst), .o_selected(w_sc_call_entry));
 
 msrh_pred_ras
 u_ras
@@ -279,13 +285,17 @@ u_ras
    .i_clk (i_clk),
    .i_reset_n (i_reset_n),
 
-   .i_wr_valid (|w_sc_call_valid),
+   .i_wr_valid (|w_s2_call_valid),
    .i_wr_index (w_s2_ras_index_next),
-   .i_wr_pa    (w_sc_ras_next_pc),
+   .i_wr_pa    (w_s2_ras_next_pc),
 
-   .i_sc_rd_valid (|(w_sc_ret_valid | w_sc_call_valid)),
-   .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
-   .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
+   // .i_sc_rd_valid (|(w_sc_ret_valid | w_sc_call_valid)),
+   // .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
+   // .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
+
+   .i_sc_rd_valid (1'b0),
+   .i_sc_rd_index ('h0),
+   .o_sc_rd_pa    (),
 
    .i_s1_rd_valid ((|w_s2_ret_valid)),
    .i_s1_rd_index (r_ras_input_index-1),
@@ -382,15 +392,42 @@ assign w_s2_call_target_vaddr = w_s2_call_offset +
                                 {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2){1'b0}}} +
                                 w_s2_call_enc;
 
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
-  assign w_sc_grp_valid[d_idx] = sc_disp.inst[d_idx].valid;
-  assign w_sc_call_be  [d_idx] = sc_disp.inst[d_idx].is_call;
-  assign w_sc_ret_be   [d_idx] = sc_disp.inst[d_idx].is_ret;
-end
-endgenerate
+// generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
+//   assign w_sc_grp_valid[d_idx] = sc_disp.inst[d_idx].valid;
+//   assign w_sc_call_be  [d_idx] = sc_disp.inst[d_idx].is_call;
+//   assign w_sc_ret_be   [d_idx] = sc_disp.inst[d_idx].is_ret;
+// end
+// endgenerate
+//
+// assign w_sc_call_valid = sc_disp.valid & sc_disp.ready & |(w_sc_call_be & w_sc_grp_valid);
+// assign w_sc_ret_valid  = sc_disp.valid & sc_disp.ready & |(w_sc_ret_be  & w_sc_grp_valid);
 
-assign w_sc_call_valid = sc_disp.valid & sc_disp.ready & |(w_sc_call_be & w_sc_grp_valid);
-assign w_sc_ret_valid  = sc_disp.valid & sc_disp.ready & |(w_sc_ret_be  & w_sc_grp_valid);
+
+`ifdef SIMULATION
+logic  [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_committed_ras_index;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_committed_ras_index <= 'h0;
+  end else begin
+    if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_call) begin
+      if (r_committed_ras_index != br_upd_fe_if.ras_index) begin
+        $fatal (0, "CALL : expected ras_index different. Expectd=%0d, RTL=%0d\n",
+                r_committed_ras_index, br_upd_fe_if.ras_index);
+      end else begin
+        r_committed_ras_index <= r_committed_ras_index + 'h1;
+      end
+    end
+    if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_ret) begin
+      if (r_committed_ras_index-1 != br_upd_fe_if.ras_index) begin
+        $fatal (0, "RET : expected ras_index different. Expectd=%0d, RTL=%0d\n",
+                r_committed_ras_index-1, br_upd_fe_if.ras_index);
+      end else begin
+        r_committed_ras_index <= r_committed_ras_index - 'h1;
+      end
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+`endif // SIMULATION
 
 endmodule // msrh_predictor
 
