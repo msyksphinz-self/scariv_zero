@@ -110,6 +110,24 @@ logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] w_s2_inst;
 assign w_s2_inst    = i_s2_ic_resp.data;
 // assign w_s2_inst_be = i_s2_ic_resp.be;
 
+logic [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)] r_s2_prev_upper_vaddr_p1;
+logic                                                   r_is_32bit_inst_msb;
+logic                                                   w_s2_call_be_msb;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_s2_prev_upper_vaddr_p1 <= 'h0;
+    r_is_32bit_inst_msb <= 1'b0;
+    w_s2_call_be_msb <= 1'b0;
+  end else begin
+    if (i_s2_valid & i_s2_ic_resp.valid) begin
+      r_s2_prev_upper_vaddr_p1 <= i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)] + 'h1;
+      r_is_32bit_inst_msb <= w_is_32bit_inst[ICACHE_DATA_B_W / 2 -1];
+      w_s2_call_be_msb <= w_s2_call_be[ICACHE_DATA_B_W / 2 -1];
+    end
+  end
+end
+
+
 
 generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : call_loop
   // assign w_s2_inst_be[c_idx] = &(i_s2_ic_resp.be[c_idx*2 +: 2]);
@@ -125,7 +143,14 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
 `else // RV32
   assign is_rvc_jal = 'b0;
 `endif // RV32
-  assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11);
+  logic           w_same_prev_vaddr;
+  assign w_same_prev_vaddr = r_s2_prev_upper_vaddr_p1 ==
+                             i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)];
+  if (c_idx == 0) begin
+    assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11) & w_same_prev_vaddr & !r_is_32bit_inst_msb;
+  end else begin
+    assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11);
+  end
   // assign is_rvc_jalr = (w_rvc_inst[1:0] == 2'b10) &
   //                      (w_rvc_inst[15:12] == 4'b1001) &
   //                      (w_rvc_inst[11: 7] != 5'h0) &
@@ -138,7 +163,7 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   /* verilator lint_off SELRANGE */
   if (c_idx == (ICACHE_DATA_B_W / 2)-1) begin
     assign w_std_inst = {16'h0000, w_s2_inst[c_idx*16 +: 16]};
-    assign is_std_jal = 1'b0;
+    assign is_std_jal = (w_std_inst[11:7] == 5'h1) & (w_std_inst[ 6:0] == 7'b1101111);
   end else begin
     assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
     assign is_std_jal = (w_std_inst[11:7] == 5'h1) & (w_std_inst[ 6:0] == 7'b1101111);
@@ -159,8 +184,8 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
     assign w_is_rvc_ret = !w_is_32bit_inst[c_idx-1] & (w_rvc_inst == 16'h8082);
     assign w_is_std_ret = !w_is_32bit_inst[c_idx-1] & (w_std_inst == 32'h00008067);
   end else begin
-    assign w_is_rvc_ret = w_rvc_inst == 16'h8082;
-    assign w_is_std_ret = w_std_inst == 32'h00008067;
+    assign w_is_rvc_ret = w_same_prev_vaddr & !r_is_32bit_inst_msb & (w_rvc_inst == 16'h8082);
+    assign w_is_std_ret = w_same_prev_vaddr & !r_is_32bit_inst_msb & (w_std_inst == 32'h00008067);
   end
   assign w_s2_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
                               i_s2_ic_resp.be[c_idx * 2];
@@ -371,7 +396,8 @@ bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target
 
 bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(r_s2_pred_hit_oh | w_s2_call_be | w_s2_ret_be), .out(w_s2_pred_hit_oh));
 
-assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
+// assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
+assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be;
 assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_ret_be  & w_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
 
 generate for (genvar d_idx = 0; d_idx < ICACHE_DATA_B_W/2; d_idx++) begin : inst_array_32bit_loop
