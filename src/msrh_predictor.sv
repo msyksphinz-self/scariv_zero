@@ -113,16 +113,19 @@ assign w_s2_inst    = i_s2_ic_resp.data;
 logic [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)] r_s2_prev_upper_vaddr_p1;
 logic                                                   r_is_32bit_inst_msb;
 logic                                                   w_s2_call_be_msb;
+logic [15: 0]                                           r_last_prev_inst_msb;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_prev_upper_vaddr_p1 <= 'h0;
     r_is_32bit_inst_msb <= 1'b0;
     w_s2_call_be_msb <= 1'b0;
+    r_last_prev_inst_msb <= 'h0;
   end else begin
     if (i_s2_valid & i_s2_ic_resp.valid) begin
       r_s2_prev_upper_vaddr_p1 <= i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)] + 'h1;
-      r_is_32bit_inst_msb <= w_is_32bit_inst[ICACHE_DATA_B_W / 2 -1];
-      w_s2_call_be_msb <= w_s2_call_be[ICACHE_DATA_B_W / 2 -1];
+      r_is_32bit_inst_msb      <= w_is_32bit_inst[ICACHE_DATA_B_W / 2 -1];
+      w_s2_call_be_msb         <= w_s2_call_be   [ICACHE_DATA_B_W / 2 -1];
+      r_last_prev_inst_msb     <= i_s2_ic_resp.data[msrh_conf_pkg::ICACHE_DATA_W-1 -: 16];
     end
   end
 end
@@ -161,13 +164,12 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   logic           is_std_jal;
   logic           is_std_jalr;
   /* verilator lint_off SELRANGE */
-  if (c_idx == (ICACHE_DATA_B_W / 2)-1) begin
-    assign w_std_inst = {16'h0000, w_s2_inst[c_idx*16 +: 16]};
-    assign is_std_jal = (w_std_inst[11:7] == 5'h1) & (w_std_inst[ 6:0] == 7'b1101111);
+  if (c_idx == 0) begin
+    assign w_std_inst = {w_s2_inst[15: 0], r_last_prev_inst_msb};
   end else begin
-    assign w_std_inst = w_s2_inst[c_idx*16 +: 32];
-    assign is_std_jal = (w_std_inst[11:7] == 5'h1) & (w_std_inst[ 6:0] == 7'b1101111);
+    assign w_std_inst = w_s2_inst[(c_idx+1)*16 +: 32];
   end
+  assign is_std_jal = (w_std_inst[11:7] == 5'h1) & (w_std_inst[ 6:0] == 7'b1101111);
   assign w_std_call_be[c_idx] = is_std_jal;
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
@@ -437,16 +439,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_call) begin
       if (r_committed_ras_index != br_upd_fe_if.ras_index) begin
-        $fatal (0, "CALL : expected ras_index different. Expectd=%0d, RTL=%0d\n",
-                r_committed_ras_index, br_upd_fe_if.ras_index);
+        $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
+                  r_committed_ras_index, br_upd_fe_if.ras_index);
+        $finish;
       end else begin
         r_committed_ras_index <= r_committed_ras_index + 'h1;
       end
     end
     if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_ret) begin
       if (r_committed_ras_index-1 != br_upd_fe_if.ras_index) begin
-        $fatal (0, "RET : expected ras_index different. Expectd=%0d, RTL=%0d\n",
-                r_committed_ras_index-1, br_upd_fe_if.ras_index);
+        $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
+                 r_committed_ras_index-1, br_upd_fe_if.ras_index);
+        $finish;
       end else begin
         r_committed_ras_index <= r_committed_ras_index - 'h1;
       end
