@@ -29,6 +29,9 @@ end
 ## Build verilator binary
 command_build = "make rv#{rv_xlen}_build CONF=#{conf} ISA=#{isa_ext} RV_XLEN=#{rv_xlen} RV_FLEN=#{rv_flen}"
 system("#{command_build}")
+if $? != 0 then
+  exit
+end
 
 if rv_xlen == "32" then
   File.open("rv32-tests.json") do |file|
