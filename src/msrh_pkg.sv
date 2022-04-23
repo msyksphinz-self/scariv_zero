@@ -51,6 +51,8 @@ package msrh_pkg;
   localparam FP_REGPORT_NUM = msrh_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                               msrh_conf_pkg::LSU_INST_NUM;          // LSU port
 
+localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
+
 localparam ALEN_W = riscv_pkg::XLEN_W > riscv_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
 typedef logic [ALEN_W-1: 0]   alen_t;
 typedef logic [ALEN_W/8-1: 0] alenb_t;
@@ -459,15 +461,16 @@ typedef struct packed {
 // Commit Signals
 // -----------------
 typedef struct packed {
-  logic    commit;
-  cmt_id_t cmt_id;
-  grp_id_t grp_id;
-  grp_id_t except_valid;
-  except_t                        except_type;
-  vaddr_t epc;
-  riscv_pkg::xlen_t  tval;
-  grp_id_t                        dead_id;
-  grp_id_t                        flush_valid;
+  logic             commit;
+  cmt_id_t          cmt_id;
+  grp_id_t          grp_id;
+  grp_id_t          except_valid;
+  except_t          except_type;
+  vaddr_t           epc;
+  riscv_pkg::xlen_t tval;
+  grp_id_t          dead_id;
+  grp_id_t          flush_valid;
+  logic [RAS_W-1: 0][DISP_SIZE-1: 0] ras_index;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
@@ -540,29 +543,27 @@ typedef struct packed {
   // logic                                                        all_dead;
 } cmt_rnid_upd_t;
 
-localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
-
 // ===================
 // Fetch Target Queue
 // ===================
 typedef struct packed {
-  logic                                                valid;
-  logic                                                is_call;
-  logic                                                is_ret;
-  logic                                                is_rvc;
-  cmt_id_t                                 cmt_id;
-  grp_id_t                                 grp_id;
-  logic [RAS_W-1: 0]                                   ras_index;
-  brtag_t         brtag;
-  brmask_t        br_mask;
+  logic              valid;
+  logic              is_call;
+  logic              is_ret;
+  logic              is_rvc;
+  cmt_id_t           cmt_id;
+  grp_id_t           grp_id;
+  logic [RAS_W-1: 0] ras_index;
+  brtag_t            brtag;
+  brmask_t           br_mask;
 
-  vaddr_t                      pc_vaddr;
-  vaddr_t                      target_vaddr;
-  vaddr_t                      ras_prev_vaddr;
-  logic                                                taken;
-  logic                                                mispredict;
-  logic                                                done;
-  logic                                                dead;
+  vaddr_t pc_vaddr;
+  vaddr_t target_vaddr;
+  vaddr_t ras_prev_vaddr;
+  logic   taken;
+  logic   mispredict;
+  logic   done;
+  logic   dead;
 } ftq_entry_t;
 
 function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
@@ -588,6 +589,18 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   return ret;
 
 endfunction // assign_ftq_entry
+
+typedef struct packed {
+  logic                                     valid;
+  logic [riscv_pkg::VADDR_W-1: 1]           pc;
+`ifdef SIMULATION
+  vaddr_t                                   pc_dbg;
+`endif // SIMULATION
+  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  inst;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] byte_en;
+  logic                                     tlb_except_valid;
+  msrh_pkg::except_t                        tlb_except_cause;
+} inst_buffer_in_t;
 
 endpackage
 

@@ -585,6 +585,17 @@ assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
 msrh_pkg::paddr_t w_s2_ic_resp_debug_addr;
 assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.vaddr, 1'b0};
 `endif // SIMULATION
+msrh_pkg::inst_buffer_in_t w_s2_inst_buffer_in;
+assign w_s2_inst_buffer_in.valid            = w_s2_inst_buffer_load_valid;
+assign w_s2_inst_buffer_in.pc               = w_s2_ic_resp.vaddr;
+assign w_s2_inst_buffer_in.inst             = w_s2_ic_resp.data;
+`ifdef SIMULATION
+assign w_s2_inst_buffer_in.pc_dbg           = {w_s2_ic_resp.vaddr, 1'b0};
+`endif // SIMULATION
+assign w_s2_inst_buffer_in.byte_en          = w_s2_ic_resp.be;
+assign w_s2_inst_buffer_in.tlb_except_valid = r_s2_tlb_except_valid;
+assign w_s2_inst_buffer_in.tlb_except_cause = r_s2_tlb_except_cause;
+
 
 msrh_inst_buffer
 u_msrh_inst_buffer
@@ -596,19 +607,12 @@ u_msrh_inst_buffer
 
    .csr_info      (csr_info),
 
-   .i_s2_inst_valid       (w_s2_inst_buffer_load_valid),
-   .bim_search_if         (w_bim_search_if),
-   .btb_search_if         (w_btb_search_if),
-   .ras_search_if         (w_ras_search_if),
+   .bim_search_if (w_bim_search_if),
+   .btb_search_if (w_btb_search_if),
+   .ras_search_if (w_ras_search_if),
 
-   .i_commit (i_commit),
-
-   .o_inst_ready   (w_inst_buffer_ready),
-   .i_inst_pc      (w_s2_ic_resp.vaddr),
-   .i_inst_in      (w_s2_ic_resp.data),
-   .i_inst_byte_en (w_s2_ic_resp.be),
-   .i_inst_tlb_except_valid (r_s2_tlb_except_valid),
-   .i_inst_tlb_except_cause (r_s2_tlb_except_cause),
+   .o_inst_ready (w_inst_buffer_ready),
+   .i_s2_inst    (w_s2_inst_buffer_in),
 
    .iq_disp        (iq_disp)
    );
@@ -677,9 +681,7 @@ msrh_predictor u_predictor
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   // .sc_disp   (sc_disp),
-   // .o_sc_ras_index  (o_sc_ras_index),
-   // .o_sc_ras_vaddr (o_sc_ras_vaddr),
+   .i_commit  (i_commit),
 
    .i_s1_valid   (w_s1_inst_valid),
    .i_s2_valid   (w_s2_inst_valid & w_inst_buffer_ready),

@@ -1,29 +1,20 @@
 module msrh_inst_buffer
   import decoder_reg_pkg::*;
   (
- input logic                                     i_clk,
- input logic                                     i_reset_n,
- input logic                                     i_flush_valid,
+ input logic i_clk,
+ input logic i_reset_n,
+ input logic i_flush_valid,
 
  /* CSR information */
- csr_info_if.slave                               csr_info,
+ csr_info_if.slave                csr_info,
 
- input logic                                     i_s2_inst_valid,
- btb_search_if.monitor                           btb_search_if,
- bim_search_if.monitor                           bim_search_if,
- ras_search_if.slave                             ras_search_if,
+ btb_search_if.monitor btb_search_if,
+ bim_search_if.monitor bim_search_if,
+ ras_search_if.slave   ras_search_if,
 
- // PC Update from Committer
- input                                           msrh_pkg::commit_blk_t i_commit,
-
- output logic                                    o_inst_ready,
- input logic [riscv_pkg::VADDR_W-1: 1]           i_inst_pc,
- input logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] i_inst_in,
- input logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1:0] i_inst_byte_en,
- input logic                                     i_inst_tlb_except_valid,
- input                                           msrh_pkg::except_t i_inst_tlb_except_cause,
-
-                                                 disp_if.master iq_disp
+ output logic                     o_inst_ready,
+ input msrh_pkg::inst_buffer_in_t i_s2_inst,
+ disp_if.master                   iq_disp
  );
 
 logic                                       w_inst_buffer_fire;
@@ -160,7 +151,7 @@ msrh_pkg::grp_id_t w_rvc_valid;
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
-assign w_ptr_in_fire  = i_s2_inst_valid & o_inst_ready;
+assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         r_inst_queue[r_inst_buffer_outptr].valid & r_inst_queue[r_inst_buffer_outptr].dead ;
 
@@ -200,11 +191,11 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx] <= 'h0;
       end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
         r_inst_queue[idx].valid   <= 1'b1;
-        r_inst_queue[idx].data    <= i_inst_in;
-        r_inst_queue[idx].pc      <= i_inst_pc;
-        r_inst_queue[idx].byte_en <= i_inst_byte_en;
-        r_inst_queue[idx].tlb_except_valid <= i_inst_tlb_except_valid;
-        r_inst_queue[idx].tlb_except_cause <= i_inst_tlb_except_cause;
+        r_inst_queue[idx].data    <= i_s2_inst.inst;
+        r_inst_queue[idx].pc      <= i_s2_inst.pc;
+        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en;
+        r_inst_queue[idx].tlb_except_valid <= i_s2_inst.tlb_except_valid;
+        r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
           r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
@@ -220,7 +211,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         end // block: pred_loop
 
 `ifdef SIMULATION
-        r_inst_queue[idx].pc_dbg   <= {i_inst_pc, 1'b0};
+        r_inst_queue[idx].pc_dbg   <= {i_s2_inst.pc, 1'b0};
 `endif // SIMULATION
       end else if ((w_head_all_inst_issued |
                     w_head_predict_taken_issued |
@@ -229,7 +220,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].dead   <= 1'b0;
       end else if (w_head_predict_taken_issued & (w_pred_lsb_index == idx)) begin
         r_inst_queue[idx].dead <= 1'b1;
-      end // if (i_s2_inst_valid & o_inst_ready)
+      end // if (i_s2_inst.valid & o_inst_ready)
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -347,7 +338,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_expand_pred_info [w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
 
-      w_expand_ras_info  [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info [w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
+      w_expand_ras_info  [w_idx] = r_inst_queue[w_inst_buf_ptr_b2].ras_info [w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
