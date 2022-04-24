@@ -470,6 +470,7 @@ typedef struct packed {
   riscv_pkg::xlen_t tval;
   grp_id_t          dead_id;
   grp_id_t          flush_valid;
+  logic [DISP_SIZE-1: 0] ras_update;
   logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
 } commit_blk_t;
 

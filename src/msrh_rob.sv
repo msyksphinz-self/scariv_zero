@@ -160,7 +160,8 @@ assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_a
 assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_out_entry.flush_valid;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
-  assign o_commit.ras_index[d_idx]  = w_out_entry.inst[d_idx].ras_index;
+  assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
+  assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
 end
 endgenerate
 

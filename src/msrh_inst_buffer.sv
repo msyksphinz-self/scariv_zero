@@ -193,7 +193,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].valid   <= 1'b1;
         r_inst_queue[idx].data    <= i_s2_inst.inst;
         r_inst_queue[idx].pc      <= i_s2_inst.pc;
-        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en;
+        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en & ras_search_if.s2_ras_be;
         r_inst_queue[idx].tlb_except_valid <= i_s2_inst.tlb_except_valid;
         r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
 
@@ -206,7 +206,8 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 
           r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
           r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
-          r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_index;
+          r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
+                                                                 ras_search_if.s2_ras_index;
           r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
         end // block: pred_loop
 
