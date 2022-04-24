@@ -470,7 +470,7 @@ typedef struct packed {
   riscv_pkg::xlen_t tval;
   grp_id_t          dead_id;
   grp_id_t          flush_valid;
-  logic [RAS_W-1: 0][DISP_SIZE-1: 0] ras_index;
+  logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
 } commit_blk_t;
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);

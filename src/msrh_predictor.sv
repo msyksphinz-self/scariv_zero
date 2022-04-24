@@ -450,7 +450,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_committed_ras_index <= 'h0;
   end else begin
-    if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_call) begin
+    if (w_flush_valid) begin
+      r_committed_ras_index <= w_flush_ras_index;
+    end else if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_call) begin
       if (r_committed_ras_index != br_upd_fe_if.ras_index) begin
         $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
                   r_committed_ras_index, br_upd_fe_if.ras_index);
@@ -458,8 +460,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end else begin
         r_committed_ras_index <= r_committed_ras_index + 'h1;
       end
-    end
-    if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_ret) begin
+    end else if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_ret) begin
       if (r_committed_ras_index-1 != br_upd_fe_if.ras_index) begin
         $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
                  r_committed_ras_index-1, br_upd_fe_if.ras_index);
