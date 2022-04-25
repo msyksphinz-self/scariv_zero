@@ -193,7 +193,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].valid   <= 1'b1;
         r_inst_queue[idx].data    <= i_s2_inst.inst;
         r_inst_queue[idx].pc      <= i_s2_inst.pc;
-        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en & ras_search_if.s2_ras_be;
+        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en;
         r_inst_queue[idx].tlb_except_valid <= i_s2_inst.tlb_except_valid;
         r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
 
@@ -464,7 +464,7 @@ msrh_pkg::grp_id_t w_disp_special_csu_valid;
 assign w_disp_special_bru_valid = w_disp_special_limit_valid_oh & w_bru_predict_disp_valid;
 assign w_disp_special_csu_valid = w_disp_special_limit_valid_oh & w_inst_csu_disp;
 
-assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_inst_bru_disp, 1'b0} - 1 :
+assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid, 1'b0} - 1 :
                           (w_disp_special_csu_valid == 'h1) ? 'h1 :
                           |w_disp_special_csu_valid ? w_inst_csu_disp - 1 :
                           w_inst_disp_mask_tmp - 1;
