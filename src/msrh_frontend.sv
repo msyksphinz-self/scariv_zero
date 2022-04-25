@@ -678,7 +678,14 @@ assign w_s1_predict_valid = w_s1_inst_valid &
                             (|w_s1_btb_bim_hit_array);   // from BIM and BTB
 assign w_s1_predict_target_vaddr = w_s1_btb_target_vaddr;
 
-assign w_s2_predict_valid        = (r_s2_btb_bim_hit_array == 'h0) |  (r_s2_btb_bim_hit_array > (w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret)) ?
+
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_bim_hit_array_tree;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_call_ret_tree;
+bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_btb_tree_lsb      (.in(r_s2_btb_bim_hit_array), .out(w_s2_btb_bim_hit_array_tree));
+bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
+
+assign w_s2_predict_valid        = (((w_s2_btb_bim_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) &
+                                    ((w_s2_btb_bim_hit_array_tree | w_s2_call_ret_tree) != w_s2_btb_bim_hit_array_tree)) ?
                                    |(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret) : 'h0;  // from RAS
 assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if.s2_call_target_vaddr, 1'b0} :
                                    {w_ras_search_if.s2_ras_vaddr, 1'b0};
