@@ -530,7 +530,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear | w_s2_predict_valid & ~r_s1_predicted |
+    r_s2_clear <= r_s1_clear |
+                  w_s2_predict_valid & ~r_s1_predicted |
                   ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s2_predicted <= r_s1_predicted;
     r_s2_vaddr <= r_s1_vaddr;

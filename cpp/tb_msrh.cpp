@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     };
 
     int option_index = 0;
-    int c = getopt_long(argc, argv, "e:dho:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "e:dho:c:", long_options, &option_index);
 
     if (c == -1) break;
  retry:
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
       }
       case 'c': {
         cycle = strtol(optarg, NULL, 10);
-
+        fprintf(stderr, "cycle = %d\n", cycle);
         break;
       }
     }
