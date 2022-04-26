@@ -68,6 +68,9 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_rvc_call_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_std_call_be;
 call_size_t w_call_size_array[ICACHE_DATA_B_W/2];
 
+logic [ICACHE_DATA_B_W/2-1: 0]    w_rvc_noncond_be;
+logic [ICACHE_DATA_B_W/2-1: 0]    w_std_noncond_be;
+
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_call_be;
 logic [ICACHE_DATA_B_W/2-1:0]     w_s1_call_be_lsb;
 
@@ -78,6 +81,7 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
+logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_noncond_be;
 msrh_pkg::vaddr_t                 w_s2_call_vaddr;
 logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_next_pc;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
@@ -138,16 +142,32 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   // assign w_s2_inst_be[c_idx] = &(i_s2_ic_resp.be[c_idx*2 +: 2]);
 
   logic [15: 0] w_rvc_inst;
+  logic [31: 0] w_std_inst;
+  logic         is_rvc_j;
   logic         is_rvc_jal;
-  // logic         is_rvc_jalr;
+  logic         is_rvc_jalr;
+  logic         is_rvc_jr;
   logic         rvc_call_be;
+  logic         is_rvc_ret_raw;
+  logic         is_std_ret_raw;
   assign w_rvc_inst = i_s2_ic_resp.data[c_idx*16 +: 16];
-`ifdef RV32
-  assign is_rvc_jal = (w_rvc_inst[1:0] == 2'b01) &
-                      (w_rvc_inst[15:13] == 3'b001);
-`else // RV32
-  assign is_rvc_jal = 'b0;
-`endif // RV32
+  if (riscv_pkg::XLEN_W == 32) begin
+    assign is_rvc_jal = (w_rvc_inst[1:0] == 2'b01) &
+                        (w_rvc_inst[15:13] == 3'b001);
+  end else begin
+    assign is_rvc_jal = 'b0;
+  end // else: !if(riscv_pkg::XLEN_W == 32)
+  assign is_rvc_j = (w_rvc_inst[1:0] == 2'b01) &
+                    (w_rvc_inst[15:13] == 3'b101);
+  assign is_rvc_jr = (w_rvc_inst[ 1: 0] == 2'b01) &
+                     (w_rvc_inst[ 6: 2] == 5'h0) &
+                     (w_rvc_inst[11: 7] != 5'h0) &
+                     (w_rvc_inst[15:12] == 4'b1000);
+  assign is_rvc_jalr = (w_rvc_inst[ 1: 0] == 2'b10) &
+                       (w_rvc_inst[15:12] == 4'b1001) &
+                       (w_rvc_inst[11: 7] != 5'h0) &
+                       (w_rvc_inst[ 6: 2] == 5'h0);
+
   logic           w_same_prev_vaddr;
   assign w_same_prev_vaddr = r_s2_prev_upper_vaddr_p1 ==
                              i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)+1];
@@ -156,45 +176,72 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   end else begin
     assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11) & !w_is_32bit_inst[c_idx-1];
   end
-  // assign is_rvc_jalr = (w_rvc_inst[1:0] == 2'b10) &
-  //                      (w_rvc_inst[15:12] == 4'b1001) &
-  //                      (w_rvc_inst[11: 7] != 5'h0) &
-  //                      (w_rvc_inst[ 6: 2] == 5'h0);
-  assign w_rvc_call_be[c_idx] = is_rvc_jal & !w_is_32bit_inst[c_idx-1];
+  assign w_rvc_call_be   [c_idx] = is_rvc_jal & !w_is_32bit_inst[c_idx-1];
+  assign w_rvc_noncond_be[c_idx] = (is_rvc_j | is_rvc_jr | is_rvc_jalr) & !w_is_32bit_inst[c_idx-1];
 
+  logic           is_std_call;
+  logic           is_std_callr;
   logic           is_std_jal;
   logic           is_std_jalr;
   /* verilator lint_off SELRANGE */
   if (c_idx == 0) begin
-    assign w_s2_inst_array_32bit[c_idx] = {w_s2_inst[15: 0], r_last_prev_inst_uppper_16bit};
-  end else begin
-    assign w_s2_inst_array_32bit[c_idx] = w_s2_inst[(c_idx+1)*16-1 -: 32];
-  end
-
-  if (c_idx != 0) begin
-    assign is_std_jal = (w_s2_inst_array_32bit[c_idx][11:7] == 5'h1) & (w_s2_inst_array_32bit[c_idx][ 6:0] == 7'b1101111);
-  end else begin
+    assign w_std_inst = {w_s2_inst[15: 0], r_last_prev_inst_uppper_16bit};
+    assign is_std_call = w_same_prev_vaddr & r_is_32bit_inst_msb &
+                         (w_std_inst[11: 7] == 5'h1) &
+                         (w_std_inst[ 6: 0] == 7'b1101111);
     assign is_std_jal = w_same_prev_vaddr & r_is_32bit_inst_msb &
-                        (w_s2_inst_array_32bit[c_idx][11:7] == 5'h1) & (w_s2_inst_array_32bit[c_idx][ 6:0] == 7'b1101111);
+                        (w_std_inst[11: 7] != 5'h1) &
+                        (w_std_inst[ 6: 0] == 7'b1101111);
+    assign is_std_callr = w_same_prev_vaddr & r_is_32bit_inst_msb &
+                          (w_std_inst[14:12] == 3'b000) &
+                          (w_std_inst[11: 7] == 5'h1) &
+                          (w_std_inst[ 6: 0] == 7'b1100111);
+    assign is_std_jalr = w_same_prev_vaddr & r_is_32bit_inst_msb &
+                         (w_std_inst[14:12] == 3'b000) &
+                         (w_std_inst[11: 7] != 5'h1) &
+                         (w_std_inst[ 6: 0] == 7'b1100111);
+  end else begin
+    assign w_std_inst = w_s2_inst[(c_idx+1)*16-1 -: 32];
+    assign is_std_call = (w_std_inst[11: 7] == 5'h1) &
+                         (w_std_inst[ 6: 0] == 7'b1101111);
+    assign is_std_jal = (w_std_inst[11: 7] != 5'h1) &
+                        (w_std_inst[ 6: 0] == 7'b1101111);
+    assign is_std_callr = (w_std_inst[14:12] == 3'b000) &
+                          (w_std_inst[11: 7] == 5'h1) &
+                          (w_std_inst[ 6: 0] == 7'b1100111);
+    assign is_std_jalr = (w_std_inst[14:12] == 3'b000) &
+                         (w_std_inst[11: 7] != 5'h1) &
+                         (w_std_inst[ 6: 0] == 7'b1100111);
   end
-  assign w_std_call_be[c_idx] = is_std_jal;
+  assign w_s2_inst_array_32bit[c_idx] = w_std_inst;
+  assign w_std_call_be[c_idx] = is_std_call | is_std_callr;
+  assign w_std_noncond_be[c_idx] = is_std_jal | is_std_jalr;
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
   assign w_s2_call_be[c_idx] = (w_rvc_call_be[c_idx] | w_std_call_be[c_idx]) & i_s2_ic_resp.valid &
                                i_s2_ic_resp.be[c_idx * 2];
 
-
-  // --------------------------
+  assign w_s2_noncond_be[c_idx] = (w_rvc_noncond_be[c_idx] | w_std_noncond_be[c_idx]) & i_s2_ic_resp.valid &
+                                  i_s2_ic_resp.be[c_idx * 2];
+  // --------------------------o
   // Decode RET (JALR X0,X1,0)
   // --------------------------
-  logic             w_is_rvc_ret;
-  logic             w_is_std_ret;
+  logic w_is_rvc_ret;
+  logic w_is_std_ret;
+  assign is_rvc_ret_raw = (w_rvc_inst[ 1: 0] == 2'b10) &
+                          (w_rvc_inst[ 6: 2] == 5'h0) &
+                          (w_rvc_inst[11: 7] == 5'h1) &
+                          (w_rvc_inst[15:12] == 4'b1000);
+  assign is_std_ret_raw = (w_std_inst[ 6: 0] == 7'b1100111) &
+                          (w_std_inst[14:12] == 3'b000) &
+                          (w_std_inst[11: 7] == 5'h0) &
+                          (w_std_inst[19:15] == 5'h1);
   if (c_idx != 0) begin
-    assign w_is_rvc_ret = !w_is_32bit_inst[c_idx-1] & (w_rvc_inst == 16'h8082);
-    assign w_is_std_ret = !w_is_32bit_inst[c_idx-1] & (w_s2_inst_array_32bit[c_idx] == 32'h00008067);
+    assign w_is_rvc_ret = !w_is_32bit_inst[c_idx-1] & is_rvc_ret_raw;
+    assign w_is_std_ret = !w_is_32bit_inst[c_idx-1] & is_std_ret_raw;
   end else begin
-    assign w_is_rvc_ret = w_same_prev_vaddr & !r_is_32bit_inst_msb & (w_rvc_inst == 16'h8082);
-    assign w_is_std_ret = w_same_prev_vaddr &  r_is_32bit_inst_msb & (w_s2_inst_array_32bit[c_idx] == 32'h00008067);
+    assign w_is_rvc_ret = w_same_prev_vaddr & !r_is_32bit_inst_msb & is_rvc_ret_raw;
+    assign w_is_std_ret = w_same_prev_vaddr &  r_is_32bit_inst_msb & is_std_ret_raw;
   end
   assign w_s2_ret_be[c_idx] = (w_is_rvc_ret | w_is_std_ret) & i_s2_ic_resp.valid &
                               i_s2_ic_resp.be[c_idx * 2];
@@ -367,17 +414,6 @@ u_ras
    );
 
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_pred_hit_oh;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_pred_hit_oh;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_s2_pred_hit_oh <= 'h0;
-  end else begin
-    r_s2_pred_hit_oh <= w_s1_pred_hit_oh;
-  end
-end
-
-
 // ----------------------------------------
 // Extracting Call/Ret for 1st instruction
 // ----------------------------------------
@@ -389,14 +425,15 @@ bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_s1
 bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
 bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target_vaddr), .o_selected(o_s1_btb_target_vaddr));
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(r_s2_pred_hit_oh | w_s2_call_be | w_s2_ret_be), .out(w_s2_pred_hit_oh));
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
 
-// assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_call_be & w_s2_pred_hit_oh) ? w_s2_call_be : 'h0);
-assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be;
-assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & (|(w_s2_ret_be  & w_s2_pred_hit_oh) ? w_s2_ret_be  : 'h0);
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_valid_oh (.in(w_s2_call_valid & w_s2_call_be), .out(w_s2_call_valid_oh));
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_ret_valid_oh  (.in(w_s2_ret_valid  & w_s2_ret_be ), .out(w_s2_ret_valid_oh ));
+assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be & w_s2_noncond_call_ret_be_oh;
+assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_ret_be  & w_s2_noncond_call_ret_be_oh;
+
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_valid_oh (.in(w_s2_call_valid), .out(w_s2_call_valid_oh));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_ret_valid_oh  (.in(w_s2_ret_valid ), .out(w_s2_ret_valid_oh ));
 bit_oh_or #(.T(logic[31: 0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
 s2_inst_arary_32bit_sel(.i_oh(w_s2_call_valid_oh), .i_data(w_s2_inst_array_32bit), .o_selected(w_s2_inst_array_oh));
 encoder #(.SIZE(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_loc_encoder (.i_in(w_s2_call_valid_oh), .o_out(w_s2_call_enc));
