@@ -66,7 +66,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   assign search_bim_if.s1_bim_value [b_idx] = w_s1_counter[b_idx];
   assign search_bim_if.s1_pred_taken[b_idx] = w_s1_counter[b_idx][1];
 
-  assign w_s1_counter[b_idx] = r_s1_bim_valids ? w_s1_counter_tmp : 2'b10;  // by default, weakly taken
+  assign w_s1_counter[b_idx] = r_s1_bim_valids ? w_s1_counter_tmp : 2'b01;  // by default, weakly untaken
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin

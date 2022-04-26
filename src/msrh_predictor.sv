@@ -430,8 +430,11 @@ bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACH
 bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target_vaddr), .o_selected(o_s1_btb_target_vaddr));
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
+logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_bim_hit_array;
+assign w_s2_btb_bim_hit_array = search_btb_if.s2_hit & search_bim_if.s2_pred_taken;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
+
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_btb_bim_hit_array | w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
 
 assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be & w_s2_noncond_call_ret_be_oh;
 assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_ret_be  & w_s2_noncond_call_ret_be_oh;
