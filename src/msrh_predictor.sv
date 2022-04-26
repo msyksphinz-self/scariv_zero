@@ -172,7 +172,7 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
   assign w_same_prev_vaddr = r_s2_prev_upper_vaddr_p1 ==
                              i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)+1];
   if (c_idx == 0) begin
-    assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11) & w_same_prev_vaddr & !r_is_32bit_inst_msb;
+    assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11) & (w_same_prev_vaddr & ~r_is_32bit_inst_msb | ~w_same_prev_vaddr);
   end else begin
     assign w_is_32bit_inst [c_idx] = (w_rvc_inst[1:0] == 2'b11) & !w_is_32bit_inst[c_idx-1];
   end
@@ -202,20 +202,24 @@ generate for (genvar c_idx = 0; c_idx < ICACHE_DATA_B_W / 2; c_idx++) begin : ca
                          (w_std_inst[ 6: 0] == 7'b1100111);
   end else begin
     assign w_std_inst = w_s2_inst[(c_idx+1)*16-1 -: 32];
-    assign is_std_call = (w_std_inst[11: 7] == 5'h1) &
+    assign is_std_call = ~w_is_32bit_inst[c_idx] &
+                         (w_std_inst[11: 7] == 5'h1) &
                          (w_std_inst[ 6: 0] == 7'b1101111);
-    assign is_std_jal = (w_std_inst[11: 7] != 5'h1) &
+    assign is_std_jal = ~w_is_32bit_inst[c_idx] &
+                        (w_std_inst[11: 7] != 5'h1) &
                         (w_std_inst[ 6: 0] == 7'b1101111);
-    assign is_std_callr = (w_std_inst[14:12] == 3'b000) &
+    assign is_std_callr = ~w_is_32bit_inst[c_idx] &
+                          (w_std_inst[14:12] == 3'b000) &
                           (w_std_inst[11: 7] == 5'h1) &
                           (w_std_inst[ 6: 0] == 7'b1100111);
-    assign is_std_jalr = (w_std_inst[14:12] == 3'b000) &
+    assign is_std_jalr = ~w_is_32bit_inst[c_idx] &
+                         (w_std_inst[14:12] == 3'b000) &
                          (w_std_inst[11: 7] != 5'h1) &
                          (w_std_inst[ 6: 0] == 7'b1100111);
   end
   assign w_s2_inst_array_32bit[c_idx] = w_std_inst;
-  assign w_std_call_be[c_idx] = is_std_call | is_std_callr;
-  assign w_std_noncond_be[c_idx] = is_std_jal | is_std_jalr;
+  assign w_std_call_be   [c_idx] = is_std_call | is_std_callr;
+  assign w_std_noncond_be[c_idx] = is_std_jal  | is_std_jalr ;
 
   assign w_call_size_array[c_idx] = w_std_call_be[c_idx] ? STD_CALL : RVC_CALL;
   assign w_s2_call_be[c_idx] = (w_rvc_call_be[c_idx] | w_std_call_be[c_idx]) & i_s2_ic_resp.valid &
