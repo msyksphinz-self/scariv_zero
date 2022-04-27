@@ -47,7 +47,6 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
       // Branch
       u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_ftq.dump_branch_perf(perf_fp);
 
-      $fwrite(perf_fp, "\}\n");
     end
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
@@ -65,5 +64,15 @@ generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) be
   end
 end
 endgenerate
+
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+  end else begin
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      $fwrite(perf_fp, "\}\n");
+    end
+  end
+end
 
 `endif // MONITOR
