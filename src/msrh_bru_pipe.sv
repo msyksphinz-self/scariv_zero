@@ -332,7 +332,10 @@ assign ex3_br_upd_if.is_rvc        = r_ex3_issue.is_rvc;
 assign ex3_br_upd_if.ras_index     = r_ex3_issue.ras_index;
 assign ex3_br_upd_if.taken         = r_ex3_result;
 assign ex3_br_upd_if.dead          = r_ex3_dead;
-assign ex3_br_upd_if.mispredict    = ~w_ex3_ras_hit & ~w_ex3_call_hit & ~w_ex3_bim_hit;
+assign ex3_br_upd_if.mispredict    = r_ex3_issue.is_call   ? ~w_ex3_call_hit :
+                                     r_ex3_issue.is_ret    ? ~w_ex3_ras_hit  :
+                                     r_ex3_issue.btb_valid ? ~w_ex3_bim_hit  :
+                                     r_ex3_result;
 
 assign ex3_br_upd_if.bim_value     = r_ex3_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = /* r_ex3_issue.is_rvc ? */ r_ex3_issue.pc_addr /* : r_ex3_issue.pc_addr + 'h2 */;
