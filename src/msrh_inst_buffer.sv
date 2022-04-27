@@ -644,6 +644,38 @@ function void dump_json(int fp);
 
   $fwrite(fp, "  },\n");
 endfunction // dump
+
+logic [63: 0] r_cycle_count;
+logic [63: 0] r_ibuf_max_period;
+logic [63: 0] r_ibuf_entry_count;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_ibuf_max_period  <= 'h0;
+    r_ibuf_entry_count <= 'h0;
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_ibuf_max_period  <= 'h0;
+      r_ibuf_entry_count <= 'h0;
+    end else begin
+      if (|w_inst_buffer_valid) begin
+        if (&w_inst_buffer_valid) begin
+          r_ibuf_max_period  <= r_ibuf_max_period + 'h1;
+        end
+        r_ibuf_entry_count <= r_ibuf_entry_count + $countones(w_inst_buffer_valid);
+      end
+    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+function void dump_perf (int fp);
+  $fwrite(fp, "  \"inst_buffer\" : {");
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_ibuf_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_ibuf_entry_count / 1000.0);
+endfunction // dump_perf
+
 `endif // SIMULATION
 
 

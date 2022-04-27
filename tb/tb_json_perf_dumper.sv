@@ -32,6 +32,8 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
       $fwrite(perf_fp, "\"%t\" : {\n", $time);
 
+      // Instruction Buffer
+      u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_inst_buffer.dump_perf(perf_fp);
       // Commit Rate
       u_msrh_tile_wrapper.u_msrh_tile.u_rob.dump_perf(perf_fp);
       // ICache

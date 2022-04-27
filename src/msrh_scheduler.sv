@@ -277,6 +277,17 @@ function void dump_json(string name, int fp, int index);
     $fwrite(fp, "  },\n");
   end
 endfunction // dump_json
+
+
+logic [63: 0] r_rob_max_period;
+logic [63: 0] r_rob_entry_count;
+
+function void dump_perf (int fp);
+  $fwrite(fp, "  \"scheduler\" : {");
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_rob_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_rob_entry_count / 1000.0);
+endfunction // dump_perf
+
 `endif // SIMULATION
 
 endmodule // msrh_scheduler

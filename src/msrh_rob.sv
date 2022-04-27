@@ -305,6 +305,9 @@ logic [63: 0] r_inst_count;
 logic [63: 0] r_dead_count;
 logic [63: 0] r_sc_disp_count;
 logic [63: 0] r_sc_disp_inst_count;
+logic [63: 0] r_rob_max_period;
+logic [63: 0] r_rob_entry_count;
+
 struct packed {
   logic [63: 0] dead_exc;
   logic [63: 0] dead_branch;
@@ -315,10 +318,16 @@ struct packed {
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
+    r_sc_disp_count <= 'h0;
+    r_sc_disp_inst_count <= 'h0;
+
     r_commit_count <= 'h0;
     r_inst_count   <= 'h0;
     r_dead_count   <= 'h0;
     r_cycle_count  <= 'h0;
+
+    r_rob_max_period  <= 'h0;
+    r_rob_entry_count <= 'h0;
   end else begin
     r_cycle_count <= r_cycle_count + 'h1;
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
@@ -333,11 +342,22 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_dead_reason_count.dead_previnst     = 'h0;
       r_dead_reason_count.dead_anotherflush = 'h0;
       r_dead_reason_count.dead_ext_kill     = 'h0;
+
+      r_rob_max_period  <= 'h0;
+      r_rob_entry_count <= 'h0;
     end else begin
       if (sc_disp.valid & sc_disp.ready) begin
         r_sc_disp_count      <= r_sc_disp_count + 'h1;
         r_sc_disp_inst_count <= r_sc_disp_inst_count + $countones(w_disp_grp_id);
       end
+
+      if (|w_entry_valids) begin
+        if (&w_entry_valids) begin
+          r_rob_max_period  <= r_rob_max_period + 'h1;
+        end
+        r_rob_entry_count <= r_rob_entry_count + $countones(w_entry_valids);
+      end
+
       if (o_commit.commit) begin
         r_commit_count <= r_commit_count + 'h1;
         r_inst_count   <= r_inst_count + $countones(o_commit.grp_id & ~o_commit.dead_id);
@@ -365,6 +385,10 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"dispatch\" : {");
   $fwrite(fp, "  \"count\" : %5d, ", r_sc_disp_count);
   $fwrite(fp, "  \"inst\" : %5d},\n", r_sc_disp_inst_count);
+
+  $fwrite(fp, "  \"rob_entry\" : {");
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_rob_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_rob_entry_count / 1000.0);
 
   $fwrite(fp, "  \"commit\" : {");
   $fwrite(fp, "  \"cmt\" : %5d, ", r_commit_count);
