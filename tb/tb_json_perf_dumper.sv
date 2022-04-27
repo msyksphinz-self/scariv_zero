@@ -52,4 +52,18 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   end // else: !if(!w_msrh_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
 
+
+generate for (genvar a_idx = 0; a_idx < msrh_conf_pkg::ALU_INST_NUM; a_idx++) begin
+  always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+    if (!w_msrh_reset_n) begin
+    end else begin
+      if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+        // ALU
+        u_msrh_tile_wrapper.u_msrh_tile.alu_loop[a_idx].u_msrh_alu.u_msrh_scheduler.dump_perf("alu", perf_fp);
+      end
+    end
+  end
+end
+endgenerate
+
 `endif // MONITOR

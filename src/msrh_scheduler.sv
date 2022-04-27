@@ -279,13 +279,36 @@ function void dump_json(string name, int fp, int index);
 endfunction // dump_json
 
 
-logic [63: 0] r_rob_max_period;
-logic [63: 0] r_rob_entry_count;
+logic [63: 0] r_cycle_count;
+logic [63: 0] r_sched_max_period;
+logic [63: 0] r_sched_entry_count;
 
-function void dump_perf (int fp);
-  $fwrite(fp, "  \"scheduler\" : {");
-  $fwrite(fp, "  \"max_period\" : %5d, ", r_rob_max_period);
-  $fwrite(fp, "  \"average count\" : %5f},\n", r_rob_entry_count / 1000.0);
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sched_max_period  <= 'h0;
+    r_sched_entry_count <= 'h0;
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_sched_max_period  <= 'h0;
+      r_sched_entry_count <= 'h0;
+    end else begin
+      if (|w_entry_valid) begin
+        if (&w_entry_valid) begin
+          r_sched_max_period  <= r_sched_max_period + 'h1;
+        end
+        r_sched_entry_count <= r_sched_entry_count + $countones(w_entry_valid);
+      end
+    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+
+function void dump_perf (string name, int fp);
+  $fwrite(fp, "  \"%s\" : {", name);
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_sched_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_sched_entry_count / 1000.0);
 endfunction // dump_perf
 
 `endif // SIMULATION
