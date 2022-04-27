@@ -551,6 +551,37 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin
 end
 endgenerate
 
+logic [63: 0] r_cycle_count;
+logic [63: 0] r_stq_max_period;
+logic [63: 0] r_stq_entry_count;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_stq_max_period  <= 'h0;
+    r_stq_entry_count <= 'h0;
+    r_cycle_count  <= 'h0;
+  end else begin
+    r_cycle_count <= r_cycle_count + 'h1;
+    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_stq_max_period  <= 'h0;
+      r_stq_entry_count <= 'h0;
+    end else begin
+      if (|w_stq_valid) begin
+        if (&w_stq_valid) begin
+          r_stq_max_period  <= r_stq_max_period + 'h1;
+        end
+        r_stq_entry_count <= r_stq_entry_count + $countones(w_stq_valid);
+      end
+    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+function void dump_perf (int fp);
+  $fwrite(fp, "  \"stq\" : {");
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_stq_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_stq_entry_count / 1000.0);
+endfunction // dump_perf
+
 function void dump_json(int fp);
   if (|w_stq_valid) begin
     $fwrite(fp, "  \"msrh_stq\":{\n");

@@ -40,6 +40,10 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
       u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_msrh_icache.dump_perf(perf_fp);
       // DCache
       u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_msrh_dcache.dump_perf(perf_fp);
+      // LDQ
+      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_ldq.dump_perf(perf_fp);
+      // STQ
+      u_msrh_tile_wrapper.u_msrh_tile.u_msrh_lsu_top.u_stq.dump_perf(perf_fp);
       // Branch
       u_msrh_tile_wrapper.u_msrh_tile.u_frontend.u_ftq.dump_branch_perf(perf_fp);
 
