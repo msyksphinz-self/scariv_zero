@@ -303,12 +303,14 @@ logic [63: 0] r_cycle_count;
 logic [63: 0] r_commit_count;
 logic [63: 0] r_inst_count;
 logic [63: 0] r_dead_count;
+logic [63: 0] r_sc_disp_count;
+logic [63: 0] r_sc_disp_inst_count;
 struct packed {
-logic [63: 0] dead_exc;
-logic [63: 0] dead_branch;
-logic [63: 0] dead_previnst;
-logic [63: 0] dead_anotherflush;
-logic [63: 0] dead_ext_kill;
+  logic [63: 0] dead_exc;
+  logic [63: 0] dead_branch;
+  logic [63: 0] dead_previnst;
+  logic [63: 0] dead_anotherflush;
+  logic [63: 0] dead_ext_kill;
 } r_dead_reason_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -320,6 +322,9 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end else begin
     r_cycle_count <= r_cycle_count + 'h1;
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_sc_disp_count <= 'h0;
+      r_sc_disp_inst_count <= 'h0;
+
       r_commit_count <= 'h0;
       r_inst_count   <= 'h0;
       r_dead_count   <= 'h0;
@@ -329,6 +334,10 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_dead_reason_count.dead_anotherflush = 'h0;
       r_dead_reason_count.dead_ext_kill     = 'h0;
     end else begin
+      if (sc_disp.valid & sc_disp.ready) begin
+        r_sc_disp_count      <= r_sc_disp_count + 'h1;
+        r_sc_disp_inst_count <= r_sc_disp_inst_count + $countones(w_disp_grp_id);
+      end
       if (o_commit.commit) begin
         r_commit_count <= r_commit_count + 'h1;
         r_inst_count   <= r_inst_count + $countones(o_commit.grp_id & ~o_commit.dead_id);
@@ -353,6 +362,10 @@ end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 
 function void dump_perf (int fp);
+  $fwrite(fp, "  \"dispatch\" : {");
+  $fwrite(fp, "  \"count\" : %5d, ", r_sc_disp_count);
+  $fwrite(fp, "  \"inst\" : %5d},\n", r_sc_disp_inst_count);
+
   $fwrite(fp, "  \"commit\" : {");
   $fwrite(fp, "  \"cmt\" : %5d, ", r_commit_count);
   $fwrite(fp, "  \"inst\" : %5d, ", r_inst_count);
