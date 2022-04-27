@@ -10,7 +10,7 @@ package msrh_pkg;
 
   localparam PC_INIT_VAL = 'h8000_0000;
 
-  localparam INST_BUF_SIZE = 4;
+  localparam INST_BUF_SIZE = msrh_conf_pkg::INST_BUF_SIZE;
 
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +

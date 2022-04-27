@@ -8,6 +8,8 @@ package msrh_conf_pkg;
   localparam DCACHE_WAYS = 8;
   localparam DCACHE_BANKS = 8;
 
+  localparam INST_BUF_SIZE = 16;
+
   localparam DISP_SIZE = 16;
 
   localparam ALU_INST_NUM = 8;
