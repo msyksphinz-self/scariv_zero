@@ -27,6 +27,7 @@
 	{ "name": "ldq_stq_flush"     , "elf": "ldq_stq_flush/test.elf"     },
 	{ "name": "ras_check"         , "elf": "ras_check/test.elf"         },
 	{ "name": "ras_check2"        , "elf": "ras_check2/test.elf"        },
+	{ "name": "memcpy_test"       , "elf": "memcpy_test/test.elf"        },
 
     { "name": "rv64ui-p-add"         ,         "elf": "riscv-tests/isa/rv64ui-p-add"          , "xlen": 64},
     { "name": "rv64ui-p-addi"        ,         "elf": "riscv-tests/isa/rv64ui-p-addi"         , "xlen": 64},
