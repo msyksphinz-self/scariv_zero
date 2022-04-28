@@ -35,4 +35,6 @@ extern "C" {
                         int ram_addr,
                         const unsigned int* l1d_data,
                         int size);
+
+  void step_spike_wo_cmp(int steps);
 }

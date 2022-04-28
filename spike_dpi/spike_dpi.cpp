@@ -857,11 +857,11 @@ void record_stq_store(long long rtl_time,
   }
   fprintf(compare_log_fp, "\n");
 
-#ifndef SIMULATION
+#ifndef SIM_MAIN
   if (tohost_en && (tohost_addr == paddr) && (l1d_data[0] & 0x1 == 1)) {
     stop_sim(l1d_data[0]);
   }
-#endif // SIMULATION
+#endif // SIM_MAIN
 }
 
 
@@ -891,9 +891,11 @@ void record_l1d_load(long long rtl_time,
       }
     }
     fprintf(compare_log_fp, "\n");
+#ifndef SIM_MAIN
     if (tohost_en && tohost_addr == paddr & (merged_l1d_data[0] & 0x1 == 1)) {
       stop_sim(merged_l1d_data[0]);
     }
+#endif // SIM_MAIN
   }
 }
 
@@ -916,13 +918,37 @@ void record_l1d_evict(long long rtl_time,
 }
 
 
+void step_spike_wo_cmp(int steps)
+{
+  processor_t *p = spike_core->get_core(0);
+
+  for (int i = 0; i < steps; i++) {
+    p->step(1);
+    auto instret  = p->get_state()->minstret;
+    auto iss_pc   = p->get_state()->prev_pc;
+    auto iss_insn = p->get_state()->insn;
+    auto iss_priv = p->get_state()->last_inst_priv;
+    fprintf(compare_log_fp, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n", time,
+            instret,
+            iss_pc,
+            iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
+            iss_insn, disasm->disassemble(iss_insn).c_str());
+
+    fprintf(stderr, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n", time,
+            instret,
+            iss_pc,
+            iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
+            iss_insn, disasm->disassemble(iss_insn).c_str());
+  }
+}
+
 
 #ifdef SIM_MAIN
 int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
 
-  initial_spike (argv[1], 64);
+  initial_spike (argv[1], 64, 64);
   processor_t *p = spike_core->get_core(0);
 
   fprintf(compare_log_fp, "INST     CYCLE    PC\n");
@@ -963,7 +989,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, RV_XLEN, RV_FLEN);
+  initial_spike(filename, 64, 64);
 
 }
 #endif // VERILATOR

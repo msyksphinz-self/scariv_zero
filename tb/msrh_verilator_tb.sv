@@ -24,6 +24,8 @@ import "DPI-C" function void step_spike
    input longint rtl_wr_val
    );
 
+import "DPI-C" function void step_spike_wo_cmp(input int count);
+
 module msrh_tb (
     input logic i_clk,
 
