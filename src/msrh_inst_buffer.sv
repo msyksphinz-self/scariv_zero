@@ -175,7 +175,8 @@ inst_buf_ptr
    .o_out_ptr   (r_inst_buffer_outptr)
    );
 
-assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr + 'h1;
+assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr == msrh_pkg::INST_BUF_SIZE-1 ? 'h0 :
+                                 r_inst_buffer_outptr + 'h1;
 
 assign w_inst_buffer_fire = iq_disp.valid & iq_disp.ready;
 
