@@ -53,7 +53,7 @@ if select_test.size != 1 then
   exit
 end
 
-output_file = File.basename(select_test[0]["elf"], ".*") + ".log"
+output_file = File.basename(select_test[0]["elf"], ".*") + "." + isa + "." + conf + ".log"
 command_str = "./msrh_tb_#{isa}_#{conf}-debug -d -e " + "../tests/" + select_test[0]["elf"].to_s + " -o #{output_file}"
 puts "#{command_str}"
 system("#{command_str}")
