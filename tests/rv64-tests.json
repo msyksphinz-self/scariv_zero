@@ -22,7 +22,6 @@
 	{ "name": "simple_sb"         , "elf": "simple_sb/test.elf"         },
 	{ "name": "simple_sub"        , "elf": "simple_sub/test.elf"        },
 	{ "name": "x0_rename"         , "elf": "x0_rename/test.elf"         },
-	{ "name": "call_check"        , "elf": "call_check/test.elf"        },
 	{ "name": "cl_conflict_test"  , "elf": "cl_conflict_test/test.elf"  },
 	{ "name": "dcache_conflict"   , "elf": "dcache_conflict/test.elf"   },
 	{ "name": "ldq_stq_flush"     , "elf": "ldq_stq_flush/test.elf"     },
