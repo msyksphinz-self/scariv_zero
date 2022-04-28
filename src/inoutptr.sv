@@ -26,8 +26,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_inptr  <= 'h0;
       r_outptr <= 'h0;
     end else begin
-      r_inptr  <= i_in_valid  ? r_inptr + 'h1  : r_inptr;
-      r_outptr <= i_out_valid ? r_outptr + 'h1 : r_outptr;
+      if (i_in_valid) begin
+        if (r_inptr == SIZE-1) begin
+          r_inptr  <= 'h0;
+        end else begin
+          r_inptr  <= r_inptr + 'h1;
+        end
+      end
+      if (i_out_valid) begin
+        if (r_outptr == SIZE-1) begin
+          r_outptr <= 'h0;
+        end else begin
+          r_outptr <= r_outptr + 'h1;
+        end
+      end
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
