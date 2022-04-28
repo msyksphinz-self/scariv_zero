@@ -922,23 +922,22 @@ void step_spike_wo_cmp(int steps)
 {
   processor_t *p = spike_core->get_core(0);
 
+  fprintf(stderr, "step_spike_wo_cmp(%d)\n\n", steps);
+
   for (int i = 0; i < steps; i++) {
     p->step(1);
+    char spike_out_str[256];
     auto instret  = p->get_state()->minstret;
     auto iss_pc   = p->get_state()->prev_pc;
     auto iss_insn = p->get_state()->insn;
     auto iss_priv = p->get_state()->last_inst_priv;
-    fprintf(compare_log_fp, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n", time,
-            instret,
-            iss_pc,
-            iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
-            iss_insn, disasm->disassemble(iss_insn).c_str());
-
-    fprintf(stderr, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n", time,
-            instret,
-            iss_pc,
-            iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
-            iss_insn, disasm->disassemble(iss_insn).c_str());
+    sprintf (spike_out_str, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n",
+             instret,
+             iss_pc,
+             iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
+             iss_insn, disasm->disassemble(iss_insn).c_str());
+    fprintf(compare_log_fp, spike_out_str);
+    fprintf(stderr, spike_out_str);
   }
 }
 

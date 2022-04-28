@@ -43,10 +43,12 @@ end
 endgenerate
 
 logic [ 8 : 0] r_timeout_counter;
+logic          r_finish_valid;
 
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
     r_timeout_counter <= 'h0;
+    r_finish_valid <= 1'b0;
   end else begin
     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid) begin
       r_timeout_counter <= 'h0;
@@ -70,6 +72,15 @@ always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
         end // if (rob_entries[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id].valid &...
       end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
       step_spike_wo_cmp(10);
+      r_finish_valid <= 1'b1;
+    end
+  end
+end
+
+always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+  if (!w_msrh_reset_n) begin
+  end else begin
+    if (r_finish_valid) begin
       $finish;
     end
   end
