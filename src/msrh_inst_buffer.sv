@@ -597,6 +597,10 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
+`ifdef SIMULATION
+      iq_disp.inst[d_idx].kanata_id = {$time, d_idx[$clog2(msrh_conf_pkg::DISP_SIZE)-1: 0]};
+`endif // SIMULATION
+
     end else begin // if (w_inst_disp_mask[d_idx])
       iq_disp.inst[d_idx] = 'h0;
     end // else: !if(w_inst_disp_mask[d_idx])
@@ -676,6 +680,26 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"max_period\" : %5d, ", r_ibuf_max_period);
   $fwrite(fp, "  \"average count\" : %5f},\n", r_ibuf_entry_count / 1000.0);
 endfunction // dump_perf
+
+import "DPI-C" function void log_dispatch
+(
+ input longint      id,
+ input longint      paddr,
+ input int          inst
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (iq_disp.valid & iq_disp.ready) begin
+      for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
+        if (iq_disp.inst[i].valid) begin
+          log_dispatch (iq_disp.inst[i].kanata_id,
+                        iq_disp.inst[i].pc_addr, iq_disp.inst[i].inst);
+        end
+      end
+    end
+  end
+end
 
 `endif // SIMULATION
 

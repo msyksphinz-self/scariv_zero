@@ -156,6 +156,10 @@ typedef struct packed {
 
     reg_wr_disp_t         wr_reg;
     reg_rd_disp_t [ 2: 0] rd_regs;
+
+`ifdef SIMULATION
+    logic [63: 0]                     kanata_id;
+`endif // SIMULATION
   } disp_t;
 
 

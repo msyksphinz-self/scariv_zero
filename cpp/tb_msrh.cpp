@@ -2,6 +2,7 @@
 #include "mem_body.hpp"
 
 #include "spike_dpi.h"
+#include "kanata.hpp"
 
 #include <getopt.h>
 #include <iostream>
@@ -28,6 +29,7 @@ VerilatedFstC* tfp = NULL;
 
 int time_counter = 0;
 bool dump_fst_enable = false;
+bool kanata_enable = false;
 
 static void usage(const char * program_name)
 {
@@ -57,18 +59,19 @@ int main(int argc, char** argv) {
 
   while (1) {
     static struct option long_options[] = {
-      {"elf"   , required_argument, 0, 'e' },
+      {"elf"    , required_argument, 0, 'e' },
 #ifdef DUMP_FST
-      {"dump"  , no_argument,       0, 'd' },
+      {"dump"   , no_argument,       0, 'd' },
 #endif // DUMP_FST
-      {"output", required_argument, 0, 'o' },
-      {"cycle",  required_argument, 0, 'c' },
-      {"help"  , no_argument,       0, 'h' },
-      {0       , 0          ,       0, 0   }
+      {"output" , required_argument, 0, 'o' },
+      {"cycle"  , required_argument, 0, 'c' },
+      {"kanata" , no_argument,       0, 'k' },
+      {"help"   , no_argument,       0, 'h' },
+      {0        , 0          ,       0, 0   }
     };
 
     int option_index = 0;
-    int c = getopt_long(argc, argv, "e:dho:c:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "e:dho:c:k", long_options, &option_index);
 
     if (c == -1) break;
  retry:
@@ -100,6 +103,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "cycle = %d\n", cycle);
         break;
       }
+      case 'k':
+        kanata_enable = true;
+        break;
     }
   }
 
@@ -120,6 +126,11 @@ int main(int argc, char** argv) {
     tfp->open("simx.fst");
   }
 #endif // DUMP_FST
+
+  if (konata_enable) {
+    fprintf(compare_log_fp, "init kanata ...\n");
+    init_kanata();
+  }
 
   fprintf(compare_log_fp, "initial_spike opening %s ...\n", filename);
   initial_spike(filename, RV_XLEN, RV_FLEN);
@@ -161,9 +172,16 @@ int main(int argc, char** argv) {
   dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
+  if (kanata_enable) {
+    start_kanata (time_counter / 4);
+  }
+
   while (time_counter < cycle && !Verilated::gotFinish()) {
     if ((time_counter % 2) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
+      if (kanata_enable) {
+        proceed_kanata_cycle();
+      }
     }
 
     // Evaluate DUT
