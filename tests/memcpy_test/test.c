@@ -42,7 +42,7 @@ int main ()
 {
   memcpy2 ((void*)store_data, (const void*)init_data, sizeof(init_data[0])*128);
   __asm__ __volatile__ ("fence");
-  __asm__ __volatile__ ("sfence.vma");
+  // __asm__ __volatile__ ("sfence.vma");
   memcpy2 ((void*)store_data, (const void*)init_data, sizeof(init_data[0])*128);
 
   return 0;
