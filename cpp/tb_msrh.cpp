@@ -2,7 +2,7 @@
 #include "mem_body.hpp"
 
 #include "spike_dpi.h"
-#include "kanata.hpp"
+#include "kanata.h"
 
 #include <getopt.h>
 #include <iostream>
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
   }
 #endif // DUMP_FST
 
-  if (konata_enable) {
+  if (kanata_enable) {
     fprintf(compare_log_fp, "init kanata ...\n");
     init_kanata();
   }
@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
     if ((time_counter % 2) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
       if (kanata_enable) {
-        proceed_kanata_cycle();
+        proceed_kanata_cycle(1);
       }
     }
 

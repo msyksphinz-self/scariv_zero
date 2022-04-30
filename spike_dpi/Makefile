@@ -1,6 +1,7 @@
 .PHONY: riscv_isa_sim
 
-VERILATOR_HOME = /usr/local/share/verilator
+# VERILATOR_HOME = /usr/local/share/verilator
+VERILATOR_HOME = /home/kimura/usr/share/verilator
 
 ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR

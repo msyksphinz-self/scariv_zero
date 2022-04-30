@@ -14,17 +14,22 @@ VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -output-split 15000
 # VERILATOR_OPTS += -threads 4
-VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
+# VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
 VERILATOR_OPTS += ../cpp/tb_msrh.cpp
 VERILATOR_OPTS += ../cpp/tb_debug_tick.cpp
 VERILATOR_OPTS += ../cpp/memory_block.cpp
 VERILATOR_OPTS += ../cpp/mem_body.cpp
 VERILATOR_OPTS += ../cpp/kanata.cpp
-# VERILATOR_OPTS += -CFLAGS "-g"
+VERILATOR_OPTS += -CFLAGS "-g"
 VERILATOR_OPTS += -LDFLAGS "-lelf"
+VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
+VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
+VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi)
 VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi)
+VERILATOR_OPTS += -LDFLAGS "-L/home/kimura/usr/lib"
+VERILATOR_OPTS += -CFLAGS  "-I/home/kimura/usr/include"
 VERILATOR_OPTS += -LDFLAGS "-lspike_dpi"
 VERILATOR_OPTS += -LDFLAGS "-lriscv"
 VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
