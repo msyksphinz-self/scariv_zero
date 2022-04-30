@@ -458,7 +458,7 @@ end
 import "DPI-C" function void retire_inst
 (
  input longint id,
- input string retire
+ input int retire
 );
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin

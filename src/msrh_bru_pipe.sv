@@ -400,6 +400,30 @@ final begin
   $fclose(bim_fp);
 end
 
+// Kanata
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (r_ex0_issue.valid) begin
+      log_stage (r_ex0_issue.kanata_id, "EX0");
+    end
+    if (r_ex1_issue.valid) begin
+      log_stage (r_ex1_issue.kanata_id, "EX1");
+    end
+    if (r_ex2_issue.valid) begin
+      log_stage (r_ex2_issue.kanata_id, "EX2");
+    end
+    if (r_ex3_issue.valid) begin
+      log_stage (r_ex3_issue.kanata_id, "EX3");
+    end
+  end
+end
+
 `endif // MONITOR
 `endif // SIMULATION
 
