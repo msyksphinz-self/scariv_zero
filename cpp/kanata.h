@@ -6,6 +6,7 @@ void start_kanata (long long cycle);
 void proceed_kanata_cycle(int cycle);
 
 extern "C" {
-  void log_dispatch(long long id, long long pc, int inst);
-  void log_stage (long long id, char *stage);
+  void log_dispatch(long long time, long long id, long long pc, int inst);
+  void log_stage (long long id, const char *stage);
+  void retire_inst (long long id, bool retire);
 }

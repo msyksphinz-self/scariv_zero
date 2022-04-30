@@ -172,14 +172,10 @@ int main(int argc, char** argv) {
   dut->i_msrh_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
-  if (kanata_enable) {
-    start_kanata (time_counter / 4);
-  }
-
   while (time_counter < cycle && !Verilated::gotFinish()) {
     if ((time_counter % 2) == 0) {
       dut->i_clk = !dut->i_clk; // Toggle clock
-      if (kanata_enable) {
+      if (kanata_enable & dut->i_clk) {
         proceed_kanata_cycle(1);
       }
     }

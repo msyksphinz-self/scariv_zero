@@ -683,9 +683,16 @@ endfunction // dump_perf
 
 import "DPI-C" function void log_dispatch
 (
- input longint      id,
- input longint      paddr,
- input int          inst
+ input longint timeinfo,
+ input longint id,
+ input longint paddr,
+ input int     inst
+);
+
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
 );
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -693,8 +700,9 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (iq_disp.valid & iq_disp.ready) begin
       for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
         if (iq_disp.inst[i].valid) begin
-          log_dispatch (iq_disp.inst[i].kanata_id,
+          log_dispatch ($time, iq_disp.inst[i].kanata_id,
                         iq_disp.inst[i].pc_addr, iq_disp.inst[i].inst);
+          log_stage (iq_disp.inst[i].kanata_id, "Di");
         end
       end
     end

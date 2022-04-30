@@ -558,6 +558,26 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
+// Kanata
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (sc_disp.valid & sc_disp.ready) begin
+      for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
+        if (sc_disp.inst[i].valid) begin
+          log_stage (sc_disp.inst[i].kanata_id, "Rn");
+        end
+      end
+    end
+  end
+end
+
+
 `endif // SIMULATION
 
 endmodule // msrh_rename

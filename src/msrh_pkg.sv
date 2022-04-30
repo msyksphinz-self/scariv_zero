@@ -319,6 +319,9 @@ typedef struct packed {
 
     logic      fflags_update_valid;
     fflags_t   fflags;
+`ifdef SIMULATION
+    logic [63: 0]                     kanata_id;
+`endif // SIMULATION
   } issue_t;
 
 
@@ -359,6 +362,10 @@ function issue_t assign_issue_common (disp_t in,
 
   ret.fflags_update_valid = 1'b0;
   ret.fflags = 'h0;
+
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
   return ret;
 
 endfunction // assign_issue_common

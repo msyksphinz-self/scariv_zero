@@ -3,10 +3,21 @@
 
 require "json"
 require "fileutils"
+require "optparse"
 
-isa = ARGV[0]
-conf = ARGV[1]
-testcase = ARGV[2]
+isa = ""
+conf = ""
+testcase = ""
+opt = OptionParser.new
+
+options = ""
+opt.on('--isa VAL') { |v| isa = v }
+opt.on('-c VAL', '--conf VAL') { |v| conf = v }
+opt.on('-t VAL', '--testcase VAL') { |v| testcase = v}
+opt.on('-k', '--kanata') { |v| options += "-k"}
+
+opt.parse!(ARGV)
+
 rv_xlen = 0
 rv_flen = 0
 isa_ext = isa.slice(4..8)
@@ -54,7 +65,7 @@ if select_test.size != 1 then
 end
 
 output_file = File.basename(select_test[0]["elf"], ".*") + "." + isa + "." + conf + ".log"
-command_str = "./msrh_tb_#{isa}_#{conf}-debug -d -e " + "../tests/" + select_test[0]["elf"].to_s + " -o #{output_file}"
+command_str = "./msrh_tb_#{isa}_#{conf}-debug -d -e " + "../tests/" + select_test[0]["elf"].to_s + " -o #{output_file}" + " " + options
 puts "#{command_str}"
 system("#{command_str}")
 

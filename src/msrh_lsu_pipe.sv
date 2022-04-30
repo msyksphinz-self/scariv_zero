@@ -74,9 +74,9 @@ msrh_pkg::issue_t                     r_ex0_rs_issue, w_ex0_issue_next;
 logic [MEM_Q_SIZE-1: 0] r_ex0_rs_index_oh;
 
 // Selected signal
-msrh_pkg::issue_t                      w_ex0_issue;
+msrh_pkg::issue_t        w_ex0_issue;
 logic [MEM_Q_SIZE-1: 0]  w_ex0_index_oh;
-lsu_pipe_ctrl_t                        w_ex0_pipe_ctrl;
+lsu_pipe_ctrl_t          w_ex0_pipe_ctrl;
 
 //
 // EX1 stage
@@ -536,6 +536,33 @@ assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
+
+
+`ifdef SIMULATION
+// Kanata
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (w_ex0_issue.valid) begin
+      log_stage (w_ex0_issue.kanata_id, "EX0");
+    end
+    if (r_ex1_issue.valid) begin
+      log_stage (r_ex1_issue.kanata_id, "EX1");
+    end
+    if (r_ex2_issue.valid) begin
+      log_stage (r_ex2_issue.kanata_id, "EX2");
+    end
+    if (r_ex3_issue.valid) begin
+      log_stage (r_ex3_issue.kanata_id, "EX3");
+    end
+  end
+end
+`endif // SIMULATION
 
 
 endmodule // msrh_lsu_pipe

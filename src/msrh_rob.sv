@@ -454,6 +454,27 @@ final begin
   end
 end
 
+
+import "DPI-C" function void retire_inst
+(
+ input longint id,
+ input string retire
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (o_commit.commit) begin
+      for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
+        if (w_out_entry.grp_id[i]) begin
+          retire_inst (w_out_entry.inst[i].kanata_id,
+                       w_out_entry.flush_valid[i] | w_out_entry.dead[i] | w_dead_grp_id[i]);
+        end
+      end
+    end
+  end
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+
 `endif // MONITOR
 `endif // SIMULATION
 
