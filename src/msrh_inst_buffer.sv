@@ -137,6 +137,9 @@ logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
 
 logic                                       w_flush_pipeline;
 
+`ifdef SIMULATION
+`endif // SIMULATION
+
 // =================================
 // RVC Expand from 16-bit to 32-bit
 // =================================
@@ -558,6 +561,25 @@ generate for (genvar f_idx = 0; f_idx < msrh_conf_pkg::FPU_INST_NUM; f_idx++) be
 end
 endgenerate
 
+`ifdef SIMULATION
+logic [ 63: 0] r_kanata_cycle_count;
+msrh_pkg::grp_id_t w_valid_grp_id;
+generate for (genvar g_idx = 0; g_idx < msrh_conf_pkg::DISP_SIZE; g_idx++) begin : sim_grp_loop
+  assign w_valid_grp_id[g_idx] = iq_disp.inst[g_idx].valid;
+end
+endgenerate
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_kanata_cycle_count <= 'h0;
+  end else begin
+    if (iq_disp.valid & iq_disp.ready) begin
+      r_kanata_cycle_count <= r_kanata_cycle_count + $countones(w_valid_grp_id);
+    end
+  end
+end
+`endif // SIMULATION
+
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
@@ -598,7 +620,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
 `ifdef SIMULATION
-      iq_disp.inst[d_idx].kanata_id = {$time, d_idx[$clog2(msrh_conf_pkg::DISP_SIZE)-1: 0]};
+      iq_disp.inst[d_idx].kanata_id = r_kanata_cycle_count + d_idx;
 `endif // SIMULATION
 
     end else begin // if (w_inst_disp_mask[d_idx])
@@ -650,35 +672,35 @@ function void dump_json(int fp);
   $fwrite(fp, "  },\n");
 endfunction // dump
 
-logic [63: 0] r_cycle_count;
-logic [63: 0] r_ibuf_max_period;
-logic [63: 0] r_ibuf_entry_count;
+logic [63: 0] r_sim_cycle_count;
+logic [63: 0] r_sim_ibuf_max_period;
+logic [63: 0] r_sim_ibuf_entry_count;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ibuf_max_period  <= 'h0;
-    r_ibuf_entry_count <= 'h0;
-    r_cycle_count  <= 'h0;
+    r_sim_ibuf_max_period  <= 'h0;
+    r_sim_ibuf_entry_count <= 'h0;
+    r_sim_cycle_count  <= 'h0;
   end else begin
-    r_cycle_count <= r_cycle_count + 'h1;
-    if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
-      r_ibuf_max_period  <= 'h0;
-      r_ibuf_entry_count <= 'h0;
+    r_sim_cycle_count <= r_sim_cycle_count + 'h1;
+    if (r_sim_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
+      r_sim_ibuf_max_period  <= 'h0;
+      r_sim_ibuf_entry_count <= 'h0;
     end else begin
       if (|w_inst_buffer_valid) begin
         if (&w_inst_buffer_valid) begin
-          r_ibuf_max_period  <= r_ibuf_max_period + 'h1;
+          r_sim_ibuf_max_period  <= r_sim_ibuf_max_period + 'h1;
         end
-        r_ibuf_entry_count <= r_ibuf_entry_count + $countones(w_inst_buffer_valid);
+        r_sim_ibuf_entry_count <= r_sim_ibuf_entry_count + $countones(w_inst_buffer_valid);
       end
-    end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
+    end // else: !if(r_sim_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 function void dump_perf (int fp);
   $fwrite(fp, "  \"inst_buffer\" : {");
-  $fwrite(fp, "  \"max_period\" : %5d, ", r_ibuf_max_period);
-  $fwrite(fp, "  \"average count\" : %5f},\n", r_ibuf_entry_count / 1000.0);
+  $fwrite(fp, "  \"max_period\" : %5d, ", r_sim_ibuf_max_period);
+  $fwrite(fp, "  \"average count\" : %5f},\n", r_sim_ibuf_entry_count / 1000.0);
 endfunction // dump_perf
 
 import "DPI-C" function void log_dispatch

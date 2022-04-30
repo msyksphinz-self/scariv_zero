@@ -18,18 +18,18 @@ void init_kanata ()
 
 void start_kanata (long long cycle)
 {
-  fprintf (kanata_fp, "C=   %lld\n", cycle);
+  fprintf (kanata_fp, "C=\t%lld\n", cycle);
 }
 
 void proceed_kanata_cycle(int cycle)
 {
   if (log_started) {
-    fprintf (kanata_fp, "C   %d\n", cycle);
+    fprintf (kanata_fp, "C\t%d\n", cycle);
   }
 }
 
 
-std::map<long long, const char *> stage_map;
+std::map<long long, char *> stage_map;
 
 void log_dispatch(long long time, long long id, long long pc, int inst)
 {
@@ -37,7 +37,9 @@ void log_dispatch(long long time, long long id, long long pc, int inst)
     start_kanata (time);
     log_started = true;
   }
-  fprintf (kanata_fp, "L %lld 0 %08llx:%s\n",
+  fprintf (kanata_fp, "I\t%lld\t%lld\t0\n",
+           id, id);
+  fprintf (kanata_fp, "L\t%lld\t0\t%08llx:%s\n",
            id, pc, disasm->disassemble(inst).c_str());
 }
 
@@ -46,11 +48,13 @@ void log_stage (long long id, const char *stage)
 {
   decltype(stage_map)::iterator it = stage_map.find(id);
   if (it != stage_map.end()) {
-    fprintf (kanata_fp, "E %lld 0 %s\n", id, it->second);
+    fprintf (kanata_fp, "E\t%lld\t0\t%s\n", id, it->second);
     stage_map.erase (id);
   }
-  fprintf (kanata_fp, "S %lld 0 %s\n", id, stage);
-  stage_map.insert (std::make_pair(id, stage));
+  fprintf (kanata_fp, "S\t%lld\t0\t%s\n", id, stage);
+  char *stage_str = (char *)malloc(sizeof(strlen(stage))+1);
+  strcpy(stage_str, stage);
+  stage_map.insert (std::make_pair(id, stage_str));
 }
 
 
@@ -59,7 +63,12 @@ void retire_inst (long long id, bool retire)
   decltype(stage_map)::iterator it = stage_map.find(id);
   if (it != stage_map.end()) {
     stage_map.erase (id);
-    fprintf (kanata_fp, "E %lld 0 %s\n", id, it->second);
+    fprintf (kanata_fp, "E\t%lld\t0\t%s\n", id, it->second);
+    free (it->second);
   }
-  fprintf (kanata_fp, "R %lld %lld %d\n", id, id, retire ? 0 : 1);
+  if (retire) {
+    fprintf (kanata_fp, "R\t%lld\t%lld\t0\n", id, id);
+  } else {
+    fprintf (kanata_fp, "R\t%lld\t%lld\t1\n", id, id);
+  }
 }
