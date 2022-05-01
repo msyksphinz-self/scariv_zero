@@ -301,6 +301,23 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = w_ldq_done_entry.vaddr;
 
+`ifdef SIMULATION
+  // Kanata
+  import "DPI-C" function void log_stage
+    (
+     input longint id,
+     input string  stage
+     );
+
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (o_done_report[d_idx].valid) begin
+        log_stage (w_ldq_done_entry.kanata_id, "DO");
+      end
+    end
+  end
+`endif // SIMULATION
+
 end
 endgenerate
 

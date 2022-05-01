@@ -310,6 +310,10 @@ function ldq_entry_t assign_ldq_disp (msrh_pkg::disp_t in,
   ret.vaddr     = 'h0;
   ret.except_valid = 1'b0;
 
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+
   return ret;
 endfunction // assign_ldq_disp
 

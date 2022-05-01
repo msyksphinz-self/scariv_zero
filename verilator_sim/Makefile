@@ -14,7 +14,7 @@ VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -output-split 15000
 # VERILATOR_OPTS += -threads 4
-# VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
+VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
 VERILATOR_OPTS += ../cpp/tb_msrh.cpp
 VERILATOR_OPTS += ../cpp/tb_debug_tick.cpp
 VERILATOR_OPTS += ../cpp/memory_block.cpp

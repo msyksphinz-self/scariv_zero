@@ -460,14 +460,48 @@ import "DPI-C" function void retire_inst
  input longint id,
  input int retire
 );
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
+);
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (o_commit.commit) begin
       for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
         if (w_out_entry.grp_id[i]) begin
-          retire_inst (w_out_entry.inst[i].kanata_id,
-                       w_out_entry.flush_valid[i] | w_out_entry.dead[i] | w_dead_grp_id[i]);
+          log_stage (w_out_entry.inst[i].kanata_id, "CMT");
+        end
+      end
+    end
+  end
+end
+
+rob_entry_t r_out_entry_d1;
+logic r_commit_d1;
+logic [DISP_SIZE-1:0] r_dead_grp_d1;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_commit_d1    <= 1'b0;
+    r_out_entry_d1 <= 'h0;
+    r_dead_grp_d1  <= 'h0;
+  end else begin
+    r_commit_d1 <= o_commit.commit;
+    r_out_entry_d1 <= w_out_entry;
+    r_dead_grp_d1  <= w_dead_grp_id;
+  end
+end
+
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (r_commit_d1) begin
+      for (int i = 0; i < msrh_conf_pkg::DISP_SIZE; i++) begin
+        if (r_out_entry_d1.grp_id[i]) begin
+          retire_inst (r_out_entry_d1.inst[i].kanata_id,
+                       r_out_entry_d1.flush_valid[i] | r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
         end
       end
     end

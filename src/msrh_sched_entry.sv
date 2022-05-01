@@ -291,4 +291,21 @@ assign o_done_report.fflags       = r_entry.fflags;
 assign o_entry_finish = w_entry_finish & ((r_state == msrh_pkg::DEAD) |
                                           (r_state == msrh_pkg::WAIT_COMPLETE));
 
+`ifdef SIMULATION
+// Kanata
+import "DPI-C" function void log_stage
+(
+ input longint id,
+ input string stage
+);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (o_done_report.valid & i_done_accept) begin
+      log_stage (r_entry.kanata_id, "DO");
+    end
+  end
+end
+`endif // SIMULATION
+
 endmodule // msrh_sched_entry

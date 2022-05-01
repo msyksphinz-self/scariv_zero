@@ -432,6 +432,10 @@ typedef struct packed {
   logic              another_flush_valid;
   msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
+
+`ifdef SIMULATION
+    logic [63: 0]                     kanata_id;
+`endif // SIMULATION
 } stq_entry_t;
 
 
@@ -527,6 +531,11 @@ typedef struct packed {
 
   logic                                 except_valid;
   msrh_pkg::except_t                    except_type;
+
+`ifdef SIMULATION
+    logic [63: 0]                     kanata_id;
+`endif // SIMULATION
+
 } ldq_entry_t;
 
 // -----

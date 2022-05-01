@@ -319,6 +319,10 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
 
   ret.except_valid = 1'b0;
 
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+
   return ret;
 endfunction // assign_stq_disp
 
