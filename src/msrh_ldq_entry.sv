@@ -101,7 +101,7 @@ assign o_entry_finish = (r_entry.state == LDQ_WAIT_ENTRY_CLR) & i_ldq_outptr_val
 assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
-                       all_operand_ready(w_entry_next);
+                       all_operand_ready(r_entry);
 
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
@@ -136,7 +136,7 @@ always_comb begin
 
   for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
     w_entry_next.inst.rd_regs[rs_idx].ready = r_entry.inst.rd_regs[rs_idx].ready | w_rs_phy_hit[rs_idx];
-    w_entry_next.inst.rd_regs[rs_idx].predict_ready = 1'b0;
+    w_entry_next.inst.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
   end
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;

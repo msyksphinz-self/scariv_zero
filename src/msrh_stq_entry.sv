@@ -131,7 +131,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
-                       all_operand_ready(w_entry_next);
+                       all_operand_ready(r_entry);
 
 assign w_commit_finish = i_sq_op_accept | r_entry.except_valid;
 
@@ -149,7 +149,7 @@ always_comb begin
     end
   end
   w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | w_rs_phy_hit[0];
-  w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
+  w_entry_next.inst.rd_regs[0].predict_ready = w_rs_rel_hit[0] & w_rs_may_mispred[0];
 
   case (r_entry.state)
     STQ_INIT : begin

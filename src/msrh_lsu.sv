@@ -125,6 +125,7 @@ u_lsu_pipe
 
    .i_rv0_issue('h0),
    .i_rv0_index_oh('h0),
+   .ex1_i_phy_wr (i_phy_wr),
 
    .o_ex0_rs_conflicted    (),
    .o_ex0_rs_conf_index_oh (),

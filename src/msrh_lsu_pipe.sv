@@ -14,8 +14,9 @@ module msrh_lsu_pipe
  /* SFENCE update information */
  sfence_if.slave                       sfence_if,
 
- input msrh_pkg::issue_t               i_rv0_issue,
- input [RV_ENTRY_SIZE-1: 0]            i_rv0_index_oh,
+ input msrh_pkg::issue_t    i_rv0_issue,
+ input [RV_ENTRY_SIZE-1: 0] i_rv0_index_oh,
+ input msrh_pkg::phy_wr_t   ex1_i_phy_wr[msrh_pkg::TGT_BUS_SIZE],
 
  input msrh_pkg::mispred_t             i_mispred_lsu[msrh_conf_pkg::LSU_INST_NUM],
 
@@ -70,8 +71,8 @@ typedef struct packed {
 //
 // EX0 stage
 //
-msrh_pkg::issue_t                     r_ex0_rs_issue, w_ex0_issue_next;
-logic [MEM_Q_SIZE-1: 0] r_ex0_rs_index_oh;
+msrh_pkg::issue_t        r_ex0_rs_issue, w_ex0_issue_next;
+logic [MEM_Q_SIZE-1: 0]  r_ex0_rs_index_oh;
 
 // Selected signal
 msrh_pkg::issue_t        w_ex0_issue;
@@ -81,18 +82,22 @@ lsu_pipe_ctrl_t          w_ex0_pipe_ctrl;
 //
 // EX1 stage
 //
-msrh_pkg::issue_t                      r_ex1_issue, w_ex1_issue_next;
+msrh_pkg::issue_t        r_ex1_issue, w_ex1_issue_next;
 logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
 msrh_pkg::vaddr_t        w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
 tlb_resp_t               w_ex1_tlb_resp;
-lsu_pipe_ctrl_t                        r_ex1_pipe_ctrl;
+lsu_pipe_ctrl_t          r_ex1_pipe_ctrl;
 
-logic                                  w_ex1_rs1_lsu_mispred;
-logic                                  w_ex1_rs2_lsu_mispred;
-logic                                  w_ex1_rs1_mispred;
-logic                                  w_ex1_rs2_mispred;
+logic                    w_ex1_rs1_lsu_mispred;
+logic                    w_ex1_rs2_lsu_mispred;
+logic                    w_ex1_rs1_mispred;
+logic                    w_ex1_rs2_mispred;
+
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
+riscv_pkg::xlen_t                  w_ex1_tgt_data[msrh_pkg::TGT_BUS_SIZE];
+riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
 
 //
 // EX2 stage
@@ -207,6 +212,23 @@ assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
 //
 // EX1 stage pipeline
 //
+generate for (genvar tgt_idx = 0; tgt_idx < msrh_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                        (r_ex1_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                        (r_ex1_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                        (r_ex1_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
+  assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+end
+endgenerate
+
+bit_oh_or #(
+    .T(riscv_pkg::xlen_t),
+    .WORDS(msrh_pkg::TGT_BUS_SIZE)
+) u_rs1_data_select (
+    .i_oh(w_ex1_rs1_fwd_valid),
+    .i_data(w_ex1_tgt_data),
+    .o_selected(w_ex1_rs1_fwd_data)
+);
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
@@ -221,9 +243,12 @@ assign ex1_fp_regread_rs2.valid = r_ex1_issue.valid &
                                   r_ex1_issue.rd_regs[1].valid;
 assign ex1_fp_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
-assign w_ex1_vaddr = ex1_regread_rs1.data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
-                                                                     {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
-                                                                     {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
+riscv_pkg::xlen_t w_ex1_rs1_selected_data;
+assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : ex1_regread_rs1.data;
+
+assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
+                                                                        {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
+                                                                        {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
 assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.op == OP_LOAD ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
