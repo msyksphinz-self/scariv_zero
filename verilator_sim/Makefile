@@ -1,5 +1,4 @@
-# NPROCS = $(shell nproc)
-NPROCS = 10
+NPROCS = $(shell nproc)
 
 RV_XLEN = 64
 RV_FLEN = 64
@@ -22,7 +21,6 @@ VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
 VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
-VERILATOR_OPTS += $(abspath ./libsoftfloat.a)
 
 # VERILATOR_OPTS += -CFLAGS "-g"
 # VERILATOR_OPTS += -LDFLAGS "-lelf"
@@ -35,6 +33,7 @@ VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi/riscv-isa-sim/)
 # VERILATOR_OPTS += -LDFLAGS "-L"$(abspath .)
 # VERILATOR_OPTS += -LDFLAGS "-lspike_dpi"
 VERILATOR_OPTS += -LDFLAGS "-lriscv"
+VERILATOR_OPTS += $(abspath ./libsoftfloat.a)
 # VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
 VERILATOR_OPTS += -LDFLAGS "-ldisasm"
 VERILATOR_OPTS += -LDFLAGS "-lfesvr"
@@ -45,6 +44,7 @@ VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
+VERILATOR_OPTS += -I${VERILATOR_HOME}/include/vltstd
 
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
