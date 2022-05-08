@@ -15,15 +15,15 @@ REGRESSION_LIST += rv64imfdc_giant_aapg
 # RV32
 #
 rv32imc_giant: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv32_build CONF=giant ISA=imc RV_XLEN=32 RV_FLEN=0 > $@_build.log 2>&1
 
 rv32imfc_giant: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv32_build CONF=giant ISA=imfc RV_XLEN=32 RV_FLEN=32 > $@_build.log 2>&1
 
 rv32imfdc_giant: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv32_build CONF=giant ISA=imfdc RV_XLEN=32 RV_FLEN=64 > $@_build.log 2>&1
 
 rv32imc_giant_test:
@@ -43,15 +43,15 @@ rv32imfdc_giant_test:
 # RV64
 #
 rv64imc_giant: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv64_build CONF=giant ISA=imc RV_XLEN=64 RV_FLEN=0 > $@_build.log 2>&1
 
 rv64imfc_giant: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv64_build CONF=giant ISA=imfc RV_XLEN=64 RV_FLEN=32 > $@_build.log 2>&1
 
 rv64imfdc_giant: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+#	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
 	$(MAKE) rv64_build CONF=giant ISA=imfdc RV_XLEN=64 RV_FLEN=64 > $@_build.log 2>&1
 
 rv64imc_giant_test:

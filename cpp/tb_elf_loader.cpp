@@ -303,6 +303,11 @@ load_binary(char const* path_exec,
         } \
       } \
     } \
+    if (!tohost_en) { \
+      tohost_en = 1; \
+      tohost_addr = 0x80001000; \
+      fprintf (compare_log_fp, "Not found .tohost. Set Addr %0lx\n", tohost_addr);  \
+    } \
   } while(0)
 
   if (IS_ELFLE(*eh64)) {

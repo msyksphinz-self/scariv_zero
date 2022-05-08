@@ -6,6 +6,8 @@ FILE *kanata_fp = NULL;
 extern disassembler_t *disasm;
 bool log_started = false;
 
+extern bool kanata_enable;
+
 void init_kanata ()
 {
   if ((kanata_fp = fopen("kanata.log", "w")) == NULL) {
@@ -18,11 +20,15 @@ void init_kanata ()
 
 void start_kanata (long long cycle)
 {
+  if (!kanata_enable) return;
+
   fprintf (kanata_fp, "C=\t%lld\n", cycle);
 }
 
 void proceed_kanata_cycle(int cycle)
 {
+  if (!kanata_enable) return;
+
   if (log_started) {
     fprintf (kanata_fp, "C\t%d\n", cycle);
   }
@@ -33,6 +39,8 @@ std::map<long long, char *> stage_map;
 
 void log_dispatch(long long time, long long id, long long pc, int inst)
 {
+  if (!kanata_enable) return;
+
   if (!log_started) {
     start_kanata (time);
     log_started = true;
@@ -46,6 +54,8 @@ void log_dispatch(long long time, long long id, long long pc, int inst)
 
 void log_stage (long long id, const char *stage)
 {
+  if (!kanata_enable) return;
+
   decltype(stage_map)::iterator it = stage_map.find(id);
   if (it != stage_map.end()) {
     fprintf (kanata_fp, "E\t%lld\t0\t%s\n", id, it->second);
@@ -60,6 +70,7 @@ void log_stage (long long id, const char *stage)
 
 void retire_inst (long long id, bool dead)
 {
+  if (!kanata_enable) return;
   decltype(stage_map)::iterator it = stage_map.find(id);
   if (it != stage_map.end()) {
     stage_map.erase (id);
