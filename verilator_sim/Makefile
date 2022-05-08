@@ -96,7 +96,11 @@ DECODE_FILES += ../src/decoder_fpu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
 
-build_decode_v: $(DECODE_FILES)
+build_decode_v: build_espresso
+	$(MAKE) $(DECODE_FILES)
+
+build_espresso:
+	$(MAKE) -C ../tools/espresso-logic/espresso-src
 
 ../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
 	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN) $(RV_FLEN)
@@ -118,12 +122,12 @@ build_decode_v: $(DECODE_FILES)
 FILELIST = sim_filelist.f
 
 .config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) $(DECODE_FILES) > /dev/null 2>&1
+	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
 .config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) $(DECODE_FILES) > /dev/null 2>&1
+	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
