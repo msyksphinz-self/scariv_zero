@@ -13,3 +13,6 @@
 [submodule "src/fpnew"]
 	path = src/fpnew
 	url = https://github.com/msyksphinz-self/fpnew.git
+[submodule "tools/espresso-logic"]
+	path = tools/espresso-logic
+	url = https://github.com/classabbyamp/espresso-logic.git
