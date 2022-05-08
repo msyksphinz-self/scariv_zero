@@ -904,7 +904,7 @@ void record_l1d_load(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
 #ifndef SIM_MAIN
-    if (tohost_en && tohost_addr == paddr & (merged_l1d_data[0] & 0x1 == 1)) {
+    if (tohost_en && (tohost_addr == paddr) && (merged_l1d_data[0] & 0x1 == 1)) {
       stop_sim(merged_l1d_data[0]);
     }
 #endif // SIM_MAIN

@@ -213,6 +213,8 @@ bool    tohost_en;
 #include <vector>
 #include <map>
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 extern "C" int
 load_binary(char const* path_exec,
             char const* filename,
@@ -257,14 +259,14 @@ load_binary(char const* path_exec,
         if (bswap(ph[i].p_filesz)) {					\
           assert(size >= bswap(ph[i].p_offset) + bswap(ph[i].p_filesz)); \
           /* memif->write(bswap(ph[i].p_paddr), bswap(ph[i].p_filesz), (uint8_t*)buf + bswap(ph[i].p_offset));  */ \
-          fprintf (stderr, "filesz = %d\n", ph[i].p_filesz); \
+          /* fprintf (stderr, "filesz = %d\n", ph[i].p_filesz); */\
           for (int b_idx = 0; b_idx < ph[i].p_filesz; b_idx++) { \
-            fprintf(stderr, "addr = %08x, data = %01x\n", ph[i].p_paddr + b_idx, *(buf + bswap(ph[i].p_offset) + b_idx)); \
+            /* fprintf(stderr, "addr = %08x, data = %01x\n", ph[i].p_paddr + b_idx, *(buf + bswap(ph[i].p_offset) + b_idx)); */ \
             g_memory->StoreMemory<Byte_t> (ph[i].p_paddr + b_idx, (Byte_t *)(buf + bswap(ph[i].p_offset) + b_idx)); \
           } \
         } \
         zeros.resize(bswap(ph[i].p_memsz) - bswap(ph[i].p_filesz)); \
-        fprintf(stderr, "addr2 = %08x, data = %01x\n", ph[i].p_paddr, (Byte_t*)buf + bswap(ph[i].p_offset));  \
+        /* fprintf(stderr, "addr2 = %08x, data = %01x\n", ph[i].p_paddr, (Byte_t*)buf + bswap(ph[i].p_offset)); */ \
         /* memif->write(bswap(ph[i].p_paddr) + bswap(ph[i].p_filesz), bswap(ph[i].p_memsz) - bswap(ph[i].p_filesz), &zeros[0]); */ \
       } \
     } \
@@ -293,6 +295,12 @@ load_binary(char const* path_exec,
         assert(bswap(sym[i].st_name) < bswap(sh[strtabidx].sh_size));	\
         assert(strnlen(strtab + bswap(sym[i].st_name), max_len) < max_len); \
         /* symbols[strtab + bswap(sym[i].st_name)] = bswap(sym[i].st_value); */ \
+        /* fprintf(stderr, "symbols = %0s, symbolname = %08x\n", strtab + sym[i].st_name, sym[i].st_value); */ \
+        if (!strncmp(strtab + sym[i].st_name, "tohost", MAX(strlen(strtab + sym[i].st_name), strlen("tohost")))) { \
+          tohost_en = true; \
+          tohost_addr = sym[i].st_value; \
+          fprintf(compare_log_fp, "Set ToHost Addr %0lx\n", tohost_addr); \
+        } \
       } \
     } \
   } while(0)
