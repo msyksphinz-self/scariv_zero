@@ -1,4 +1,7 @@
 #include "spike_dpi.h"
+#include "tb_elf_loader.h"
+#include <string.h>
+
 #include "sim.h"
 // #include "mmu.h"
 #include "disasm.h"
@@ -113,6 +116,10 @@ static unsigned long atoul_nonzero_safe(const char* s)
   return res;
 }
 
+// void stop_sim(int code)
+// {
+//   fprintf(compare_log_fp, "stop_ism %d\n", code);
+// }
 
 void initial_spike (const char *filename, int rv_xlen, int rv_flen)
 {
@@ -150,10 +157,14 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   argv[4] = "-l";
   // argv[5] = "-d";
   argv[5] = "--log-commits";
-  argv[6] = filename;
-  argc = 7;
+  argv[6] = "--dtb";
+  argv[7] = "msrh.dtb";
+  argv[8] = filename;
+  argc = 9;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
-
+  for (int i = 0; i < 20; i++) {
+    fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
+  }
   bool debug = false;
   bool halted = false;
   bool histogram = false;
@@ -312,8 +323,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   parser.option(0, "log", 1,
                 [&](const char* s){log_path = s;});
 
-  fprintf(compare_log_fp, "argv = %s\n", argv[0]);
   auto argv1 = parser.parse(static_cast<const char* const*>(argv));
+
+  fprintf (stderr, "parse = %s\n", argv1);
 
   std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
 
@@ -847,7 +859,7 @@ void record_stq_store(long long rtl_time,
   fprintf(compare_log_fp, "%lld : L1D Stq Store : %llx(%02d) : ", rtl_time, paddr, ram_addr);
   for (int i = size-1; i >= 0; i--) {
     if ((be >> i) & 0x01) {
-      fprintf(compare_log_fp, "%02x", (unsigned uint8_t)(l1d_data[i]));
+      fprintf(compare_log_fp, "%02x", (uint8_t)(l1d_data[i]));
     } else {
       fprintf(compare_log_fp, "__");
     }
@@ -975,10 +987,6 @@ int main(int argc, char **argv)
   return 0;
 }
 
-void stop_sim(int code)
-{
-  fprintf(compare_log_fp, "stop_ism %d\n", code);
-}
 #endif // SIM_MAIN
 
 #ifndef VERILATOR

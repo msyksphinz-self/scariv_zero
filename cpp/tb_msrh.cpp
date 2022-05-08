@@ -1,6 +1,6 @@
 #include "memory_block.hpp"
 #include "mem_body.hpp"
-
+#include "Vmsrh_tb.h"
 #include "spike_dpi.h"
 #include "kanata.h"
 
@@ -12,8 +12,11 @@
 
 extern std::unique_ptr<Memory> g_memory;
 extern bool elf_load_finish;
+
 extern "C" {
-  FILE *compare_log_fp;
+  extern FILE *compare_log_fp;
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen);
+  void stop_sim(int code);
 }
 
 extern "C" {
@@ -133,6 +136,7 @@ int main(int argc, char** argv) {
   }
 
   fprintf(compare_log_fp, "initial_spike opening %s ...\n", filename);
+  fflush(compare_log_fp);
   initial_spike(filename, RV_XLEN, RV_FLEN);
 
   // Format

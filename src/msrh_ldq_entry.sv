@@ -159,6 +159,11 @@ always_comb begin
     LDQ_ISSUE_WAIT : begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
+      end else if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0] |
+            r_entry.inst.rd_regs[1].predict_ready & w_rs_mispredicted[1]) begin
+          w_entry_next.state = LDQ_ISSUE_WAIT;
+          w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
+          w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
       end else if (o_entry_ready & i_entry_picked) begin
         w_entry_next.state = LDQ_ISSUED;
       end
@@ -184,12 +189,6 @@ always_comb begin
                                                   r_entry.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)
-        if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0] |
-            r_entry.inst.rd_regs[1].predict_ready & w_rs_mispredicted[1]) begin
-          w_entry_next.state = LDQ_ISSUE_WAIT;
-          w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
-          w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
-        end
       end // else: !if(w_entry_flush)
     end // case: LDQ_ISSUED
     LDQ_TLB_HAZ : begin

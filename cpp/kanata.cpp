@@ -3,7 +3,7 @@
 #include "kanata.h"
 
 FILE *kanata_fp = NULL;
-disassembler_t *disasm;
+extern disassembler_t *disasm;
 bool log_started = false;
 
 void init_kanata ()

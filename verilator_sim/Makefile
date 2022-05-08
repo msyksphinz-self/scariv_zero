@@ -1,4 +1,5 @@
-NPROCS = $(shell nproc)
+# NPROCS = $(shell nproc)
+NPROCS = 10
 
 RV_XLEN = 64
 RV_FLEN = 64
@@ -15,24 +16,26 @@ VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -output-split 15000
 # VERILATOR_OPTS += -threads 4
 VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
-VERILATOR_OPTS += ../cpp/tb_msrh.cpp
-VERILATOR_OPTS += ../cpp/tb_debug_tick.cpp
-VERILATOR_OPTS += ../cpp/memory_block.cpp
-VERILATOR_OPTS += ../cpp/mem_body.cpp
-VERILATOR_OPTS += ../cpp/kanata.cpp
+VERILATOR_OPTS += $(abspath ../cpp/tb_msrh.cpp)
+VERILATOR_OPTS += $(abspath ../cpp/tb_debug_tick.cpp)
+VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
+VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
+VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
+VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
+VERILATOR_OPTS += $(abspath ./libsoftfloat.a)
+
 # VERILATOR_OPTS += -CFLAGS "-g"
-VERILATOR_OPTS += -LDFLAGS "-lelf"
+# VERILATOR_OPTS += -LDFLAGS "-lelf"
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
+VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../cpp)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi)
 VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi/riscv-isa-sim/)
-VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi)
-VERILATOR_OPTS += -LDFLAGS "-L/home/kimura/usr/lib"
-VERILATOR_OPTS += -CFLAGS  "-I/home/kimura/usr/include"
-VERILATOR_OPTS += -LDFLAGS "-lspike_dpi"
+# VERILATOR_OPTS += -LDFLAGS "-L"$(abspath .)
+# VERILATOR_OPTS += -LDFLAGS "-lspike_dpi"
 VERILATOR_OPTS += -LDFLAGS "-lriscv"
-VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
+# VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
 VERILATOR_OPTS += -LDFLAGS "-ldisasm"
 VERILATOR_OPTS += -LDFLAGS "-lfesvr"
 VERILATOR_OPTS += -LDFLAGS "-lfdt"
@@ -42,6 +45,7 @@ VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
+
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
 else
