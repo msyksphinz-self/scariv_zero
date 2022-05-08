@@ -133,7 +133,7 @@ tmp_file.close
 filename = tmp_file.path
 system("cat " + filename)
 
-cmd = "./espresso " + tmp_file.path
+cmd = "./../tools/espresso-logic/bin/espresso " + tmp_file.path
 result_line = ""
 Open3.popen2e(cmd) do |stdin, stdout_err, stderr, wait_thr|
   while line = stdout_err.gets
