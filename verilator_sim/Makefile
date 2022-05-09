@@ -1,4 +1,7 @@
 NPROCS = $(shell nproc)
+ifeq ($(shell uname), Darwin)
+	NPROCS = $(shell sysctl -n hw.logicalcpu)
+endif
 
 RV_XLEN = 64
 RV_FLEN = 64

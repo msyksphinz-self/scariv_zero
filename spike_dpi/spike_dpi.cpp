@@ -150,17 +150,17 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
   }
+  int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
-  argv[2] = "--log";
-  argv[3] = "spike.log";
-  argv[4] = "-l";
-  // argv[5] = "-d";
-  argv[5] = "--log-commits";
-  argv[6] = "--dtb";
-  argv[7] = "msrh.dtb";
-  argv[8] = filename;
-  argc = 9;
+  argv[arg_max++] = "--log";
+  argv[arg_max++] = "spike.log";
+  argv[arg_max++] = "-l";
+  argv[arg_max++] = "--log-commits";
+  // argv[arg_max++] = "--dtb";
+  // argv[arg_max++] = "msrh.dtb";
+  argv[arg_max++] = filename;
+  argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
   for (int i = 0; i < 20; i++) {
     fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
