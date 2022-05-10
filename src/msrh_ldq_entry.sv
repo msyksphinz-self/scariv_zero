@@ -160,7 +160,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0] |
-            r_entry.inst.rd_regs[1].predict_ready & w_rs_mispredicted[1]) begin
+                   r_entry.inst.rd_regs[1].predict_ready & w_rs_mispredicted[1]) begin
           w_entry_next.state = LDQ_ISSUE_WAIT;
           w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
           w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
@@ -319,8 +319,12 @@ endfunction // assign_ldq_disp
 
 function logic all_operand_ready(ldq_entry_t entry);
   logic     ret;
-  ret = (!entry.inst.rd_regs[0].valid | entry.inst.rd_regs[0].valid  & (entry.inst.rd_regs[0].ready | entry.inst.rd_regs[0].predict_ready)) &
-        (!entry.inst.rd_regs[1].valid | entry.inst.rd_regs[1].valid  & (entry.inst.rd_regs[1].ready | entry.inst.rd_regs[1].predict_ready));
+  ret = (!entry.inst.rd_regs[0].valid |
+          entry.inst.rd_regs[0].valid & (entry.inst.rd_regs[0].ready |
+                                         entry.inst.rd_regs[0].predict_ready & !w_rs_mispredicted[0])) &
+        (!entry.inst.rd_regs[1].valid |
+          entry.inst.rd_regs[1].valid & (entry.inst.rd_regs[1].ready |
+                                         entry.inst.rd_regs[1].predict_ready & !w_rs_mispredicted[1]));
   return ret;
 endfunction // all_operand_ready
 

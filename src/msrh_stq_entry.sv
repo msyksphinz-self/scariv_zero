@@ -86,8 +86,9 @@ select_phy_wr_bus   rs1_phy_select    (.i_entry_rnid (w_rs_rnid[0]), .i_entry_ty
                                        .o_valid   (w_rs_phy_hit[0]));
 select_mispred_bus  rs1_mispred_select(.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_mispred  (i_mispred_lsu),
                                        .o_mispred (w_rs_mispredicted[0]));
+select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (w_rs_type[1]), .i_mispred  (i_mispred_lsu),
+                                       .o_mispred (w_rs_mispredicted[1]));
 assign w_rs_rel_hit[1] = 1'b0;
-assign w_rs_mispredicted[1] = 1'b0;
 select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (w_rs_type[1]), .i_phy_wr (i_phy_wr),
                                    .o_valid (w_rs_phy_hit[1]), .o_data (w_rs2_phy_data));
 
@@ -105,7 +106,7 @@ assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
-                                w_rs_phy_hit[1] |
+                                w_rs_phy_hit[1] & !w_rs_mispredicted[1] |
                                 i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
 
 assign w_cmt_id_match = i_commit.commit &
