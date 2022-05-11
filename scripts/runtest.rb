@@ -67,11 +67,7 @@ end
 
 output_file = File.basename(select_test[0]["elf"], ".*") + "." + isa + "." + conf + ".log"
 command_str = "./msrh_tb_#{isa}_#{conf}-debug -d -e " + "../tests/" + select_test[0]["elf"].to_s + " -o #{output_file}" + " " + options
-puts "#{command_str}"
-unless system("#{command_str}")
-  puts "Got an interupt?"
-  exit 0
-end
+system("#{command_str}")
 
 print select_test[0]["name"] + "\t: "
 result_stdout = `cat #{output_file}`
