@@ -10,6 +10,7 @@
 #include <fesvr/option_parser.h>
 #include "remote_bitbang.h"
 #include "cachesim.h"
+#include "memtracer.h"
 #include "extension.h"
 #include "../VERSION"
 
@@ -951,6 +952,42 @@ void step_spike_wo_cmp(int steps)
     fprintf(compare_log_fp, spike_out_str);
     fprintf(stderr, spike_out_str);
   }
+}
+
+void check_mmu_trans (long long time, long long rtl_va,
+                      int rtl_len, int rtl_acc_type,
+                      long long rtl_pa)
+{
+  processor_t *p = spike_core->get_core(0);
+  spike_core->set_procs_debug(true);
+  mmu_t *mmu = p->get_mmu();
+
+  access_type acc_type;
+  switch (rtl_acc_type) {
+    case 0 : acc_type = LOAD;  break;
+    case 1 : acc_type = STORE; break;
+    default :
+      fprintf (stderr, "rtl_acc_type = %d is not supported\n", rtl_acc_type);
+      stop_sim(1);
+  }
+
+  try {
+    reg_t iss_paddr = mmu->translate(rtl_va, rtl_len, static_cast<access_type>(rtl_acc_type), 0);
+    if (iss_paddr != rtl_pa) {
+      char spike_out_str[256];
+      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08x, ISS=%08x",
+               rtl_pa, iss_paddr);
+      fprintf (compare_log_fp, spike_out_str);
+      fprintf (stderr, spike_out_str);
+      stop_sim(101);
+    } else {
+      // fprintf (compare_log_fp, "MMU check passed : VA = %08x, PA = %08x\n", rtl_va, rtl_pa);
+    }
+  } catch (trap_t &t) {
+    // fprintf (compare_log_fp, "Catch exception at check_mmu_trans : VA = %08x, PA = %08x\n", rtl_va, rtl_pa);
+  }
+
+  spike_core->set_procs_debug(false);
 }
 
 

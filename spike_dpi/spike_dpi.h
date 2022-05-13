@@ -37,4 +37,9 @@ extern "C" {
                         int size);
 
   void step_spike_wo_cmp(int steps);
+
+  void check_mmu_trans (long long time, long long rtl_va,
+                        int rtl_len, int rtl_acc_type,
+                        long long rtl_pa);
+
 }

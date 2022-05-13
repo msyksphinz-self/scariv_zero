@@ -486,4 +486,27 @@ assign o_tlb_update = (r_state_dly != ST_READY) & (r_state == ST_READY);
 
 assign o_tlb_resp_miss = w_tlb_resp_miss;
 
+`ifdef SIMULATION
+
+import "DPI-C" function void check_mmu_trans
+  (
+   input longint rtl_time,
+   input longint rtl_va,
+   input int     rtl_len,
+   input int     rtl_acc_type,
+   input longint rtl_pa
+   );
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (i_tlb_req.valid & !w_tlb_miss) begin
+      check_mmu_trans ($time, i_tlb_req.vaddr,
+                       i_tlb_req.size, i_tlb_req.cmd,
+                       o_tlb_resp.paddr);
+    end
+  end
+end
+
+`endif // SIMULATION
+
 endmodule // tlb
