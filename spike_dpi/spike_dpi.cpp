@@ -162,9 +162,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
-  for (int i = 0; i < 20; i++) {
-    fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
-  }
+  // for (int i = 0; i < 20; i++) {
+  //   fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
+  // }
   bool debug = false;
   bool halted = false;
   bool histogram = false;
@@ -325,7 +325,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
 
   auto argv1 = parser.parse(static_cast<const char* const*>(argv));
 
-  fprintf (stderr, "parse = %s\n", argv1);
+  // fprintf (stderr, "parse = %s\n", argv1);
 
   std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
 
