@@ -499,7 +499,7 @@ import "DPI-C" function void check_mmu_trans
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (i_tlb_req.valid & !w_tlb_miss) begin
+    if (i_tlb_req.valid & !o_tlb_resp.miss) begin
       check_mmu_trans ($time, i_tlb_req.vaddr,
                        i_tlb_req.size, i_tlb_req.cmd,
                        o_tlb_resp.paddr);

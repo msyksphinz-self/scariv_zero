@@ -857,7 +857,7 @@ void record_stq_store(long long rtl_time,
                       int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Stq Store : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  fprintf(compare_log_fp, "%lld : L1D Stq Store : %llx(%05d) : ", rtl_time, paddr, ram_addr);
   for (int i = size-1; i >= 0; i--) {
     if ((be >> i) & 0x01) {
       fprintf(compare_log_fp, "%02x", (uint8_t)(l1d_data[i]));
@@ -887,7 +887,7 @@ void record_l1d_load(long long rtl_time,
                      int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Load-In   : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  fprintf(compare_log_fp, "%lld : L1D Load-In   : %llx(%05d) : ", rtl_time, paddr, ram_addr);
   for (int i = size/4-1; i >= 0; i--) {
     fprintf(compare_log_fp, "%08x", l1d_data[i]);
     if (i != 0) {
@@ -896,7 +896,7 @@ void record_l1d_load(long long rtl_time,
   }
   fprintf(compare_log_fp, "\n");
   if (merge_valid) {
-    fprintf(compare_log_fp, "%lld : L1D Merged    : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+    fprintf(compare_log_fp, "%lld : L1D Merged    : %llx(%05d) : ", rtl_time, paddr, ram_addr);
     for (int i = size/4-1; i >= 0; i--) {
       fprintf(compare_log_fp, "%08x", merged_l1d_data[i]);
       if (i != 0) {
@@ -920,7 +920,7 @@ void record_l1d_evict(long long rtl_time,
                       int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Evict     : %llx(%02d) : ", rtl_time, paddr, ram_addr);
+  fprintf(compare_log_fp, "%lld : L1D Evict       : %llx(%05d) : ", rtl_time, paddr, ram_addr);
   for (int i = size/4-1; i >= 0; i--) {
     fprintf(compare_log_fp, "%08x", l1d_data[i]);
     if (i != 0) {
@@ -928,6 +928,31 @@ void record_l1d_evict(long long rtl_time,
     }
   }
   fprintf(compare_log_fp, "\n");
+
+  bool diff_found = false;
+  fprintf(compare_log_fp, "%lld : EVict ISS Check : %llx        : ", rtl_time, paddr);
+  try {
+    for (int i = size/8-1; i >= 0; i--) {
+      uint64_t iss_ld_data;
+      spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
+      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      if ((iss_ld_data >> 32 & 0xffffffff) != l1d_data[i*2+1] |
+          (iss_ld_data & 0xffffffff) != l1d_data[i*2+0]) {
+        diff_found = true;
+      }
+      if (i != 0) {
+        fprintf(compare_log_fp, "_");
+      }
+    }
+    fprintf(compare_log_fp, "\n");
+  } catch (trap_t &t) {
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+  }
+
+  if (diff_found) {
+    fprintf (compare_log_fp, "Eviction Data Compare Error\n");
+    stop_sim (102);
+  }
 }
 
 
@@ -975,16 +1000,16 @@ void check_mmu_trans (long long time, long long rtl_va,
     reg_t iss_paddr = mmu->translate(rtl_va, rtl_len, static_cast<access_type>(rtl_acc_type), 0);
     if (iss_paddr != rtl_pa) {
       char spike_out_str[256];
-      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08x, ISS=%08x",
+      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08llx, ISS=%08llx\n",
                rtl_pa, iss_paddr);
       fprintf (compare_log_fp, spike_out_str);
       fprintf (stderr, spike_out_str);
       stop_sim(101);
     } else {
-      // fprintf (compare_log_fp, "MMU check passed : VA = %08x, PA = %08x\n", rtl_va, rtl_pa);
+      fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
   } catch (trap_t &t) {
-    // fprintf (compare_log_fp, "Catch exception at check_mmu_trans : VA = %08x, PA = %08x\n", rtl_va, rtl_pa);
+    fprintf (compare_log_fp, "Catch exception at check_mmu_trans : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
   }
 
   spike_core->set_procs_debug(false);
