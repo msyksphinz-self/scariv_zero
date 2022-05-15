@@ -241,18 +241,6 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                       l1d_merge_if.s0_valid,
                       merged_l1d_array,
                       DCACHE_DATA_B_W);
-      // $fwrite(msrh_pkg::STDERR, "%t : L1D Load-In   : %0x(%x) <= ",
-      //         $time,
-      //         r_rp2_searched_lrq_entry.paddr,
-      //         r_rp2_searched_lrq_entry.paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW]);
-      // for (int i = DCACHE_DATA_B_W/4-1; i >=0 ; i--) begin
-      //   $fwrite(msrh_pkg::STDERR, "%08x", r_rp2_resp_data[i*32 +: 32]);
-      //   if (i != 0) begin
-      //     $fwrite(msrh_pkg::STDERR, "_");
-      //   end else begin
-      //     $fwrite(msrh_pkg::STDERR, "\n");
-      //   end
-      // end
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)

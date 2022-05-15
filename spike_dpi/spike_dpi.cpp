@@ -857,7 +857,7 @@ void record_stq_store(long long rtl_time,
                       int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Stq Store : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+  fprintf(compare_log_fp, "%lld : L1D Stq Store  : %llx(%05d) : ", rtl_time, paddr, ram_addr);
   for (int i = size-1; i >= 0; i--) {
     if ((be >> i) & 0x01) {
       fprintf(compare_log_fp, "%02x", (uint8_t)(l1d_data[i]));
@@ -869,6 +869,30 @@ void record_stq_store(long long rtl_time,
     }
   }
   fprintf(compare_log_fp, "\n");
+
+  bool diff_found = false;
+  fprintf(compare_log_fp, "%lld : STQ  ISS Check : %llx        : ", rtl_time, paddr);
+  try {
+    for (int i = size/8-1; i >= 0; i--) {
+      uint64_t iss_ld_data;
+      spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
+      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      for (int b = 0; b < 8; b++) {
+        if ((be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != (uint8_t)(l1d_data[i * 8 + b]))) {
+          diff_found = true;
+        }
+      }
+      if (i != 0) { fprintf (compare_log_fp, "_"); }
+    }
+    fprintf(compare_log_fp, "\n");
+  } catch (trap_t &t) {
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+  }
+
+  if (diff_found) {
+    fprintf (compare_log_fp, "L1D Update Data Compare Error\n");
+    stop_sim (102);
+  }
 
 #ifndef SIM_MAIN
   if (tohost_en && (tohost_addr == paddr) && (l1d_data[0] & 0x1 == 1)) {
@@ -887,7 +911,7 @@ void record_l1d_load(long long rtl_time,
                      int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Load-In   : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+  fprintf(compare_log_fp, "%lld : L1D Load-In    : %llx(%05d) : ", rtl_time, paddr, ram_addr);
   for (int i = size/4-1; i >= 0; i--) {
     fprintf(compare_log_fp, "%08x", l1d_data[i]);
     if (i != 0) {
@@ -896,7 +920,7 @@ void record_l1d_load(long long rtl_time,
   }
   fprintf(compare_log_fp, "\n");
   if (merge_valid) {
-    fprintf(compare_log_fp, "%lld : L1D Merged    : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+    fprintf(compare_log_fp, "%lld : L1D Merged     : %llx(%05d) : ", rtl_time, paddr, ram_addr);
     for (int i = size/4-1; i >= 0; i--) {
       fprintf(compare_log_fp, "%08x", merged_l1d_data[i]);
       if (i != 0) {
@@ -909,6 +933,33 @@ void record_l1d_load(long long rtl_time,
       stop_sim(merged_l1d_data[0]);
     }
 #endif // SIM_MAIN
+  }
+
+  bool diff_found = false;
+  fprintf(compare_log_fp, "%lld : Load ISS Check : %llx        : ", rtl_time, paddr);
+  try {
+    for (int i = size/8-1; i >= 0; i--) {
+      uint64_t iss_ld_data;
+      spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
+      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      uint64_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i*2+0] : l1d_data[i*2+0];
+      uint64_t rtl_wr_data1 = merge_valid ? merged_l1d_data[i*2+1] : l1d_data[i*2+1];
+      if ((iss_ld_data >> 32 & 0xffffffff) != rtl_wr_data1 |
+          (iss_ld_data       & 0xffffffff) != rtl_wr_data0) {
+        diff_found = true;
+      }
+      if (i != 0) {
+        fprintf(compare_log_fp, "_");
+      }
+    }
+    fprintf(compare_log_fp, "\n");
+  } catch (trap_t &t) {
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+  }
+
+  if (diff_found) {
+    fprintf (compare_log_fp, "L1D Load Data Compare Error\n");
+    // stop_sim (102);
   }
 }
 
@@ -936,8 +987,8 @@ void record_l1d_evict(long long rtl_time,
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
       fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
-      if ((iss_ld_data >> 32 & 0xffffffff) != l1d_data[i*2+1] |
-          (iss_ld_data & 0xffffffff) != l1d_data[i*2+0]) {
+      if (((iss_ld_data >> 32 & 0xffffffff) != l1d_data[i*2+1]) |
+          ((iss_ld_data       & 0xffffffff) != l1d_data[i*2+0])) {
         diff_found = true;
       }
       if (i != 0) {
@@ -1006,10 +1057,10 @@ void check_mmu_trans (long long time, long long rtl_va,
       fprintf (stderr, spike_out_str);
       stop_sim(101);
     } else {
-      fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
+      // fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at check_mmu_trans : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
+    // fprintf (compare_log_fp, "Catch exception at check_mmu_trans : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
   }
 
   spike_core->set_procs_debug(false);

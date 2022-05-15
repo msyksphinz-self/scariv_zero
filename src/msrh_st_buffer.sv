@@ -231,7 +231,7 @@ select_l1d_wr_entry_oh
 always_comb begin
   l1d_wr_if.s0_valid           = |w_entry_l1d_wr_req_oh;
   l1d_wr_if.s0_wr_req.s0_way   = r_s2_hit_way;
-  l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+  l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
   l1d_wr_if.s0_wr_req.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end
 
