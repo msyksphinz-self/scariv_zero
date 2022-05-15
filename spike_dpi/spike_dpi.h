@@ -25,9 +25,10 @@ extern "C" {
   void record_l1d_load(long long rtl_time,
                        long long paddr,
                        int ram_addr,
-                       const unsigned int* l1d_data,
+                       const uint8_t* l1d_data,
+                       long long l1d_be,
                        int merge_valid,
-                       const unsigned int* merged_l1d_data,
+                       const uint8_t* merged_l1d_data,
                        int size);
 
   void record_l1d_evict(long long rtl_time,

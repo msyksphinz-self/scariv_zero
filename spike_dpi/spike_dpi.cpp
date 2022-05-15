@@ -905,25 +905,32 @@ void record_stq_store(long long rtl_time,
 void record_l1d_load(long long rtl_time,
                      long long paddr,
                      int ram_addr,
-                     const unsigned int* l1d_data,
+                     const uint8_t* l1d_data,
+                     long long l1d_be,
                      int merge_valid,
-                     const unsigned int* merged_l1d_data,
+                     const uint8_t* merged_l1d_data,
                      int size)
 {
 
-  fprintf(compare_log_fp, "%lld : L1D Load-In    : %llx(%05d) : ", rtl_time, paddr, ram_addr);
-  for (int i = size/4-1; i >= 0; i--) {
-    fprintf(compare_log_fp, "%08x", l1d_data[i]);
-    if (i != 0) {
+  if (size > 64) {
+    fprintf (stderr, "Error: this compare system only support up to 512-bit system\n");
+    stop_sim(110);
+    return;
+  }
+
+  fprintf(compare_log_fp, "%lld : L1D Load-In     : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+  for (int i = size-1; i >= 0; i--) {
+    fprintf(compare_log_fp, "%02x", l1d_data[i]);
+    if (i % 4 == 0 && i != 0) {
       fprintf(compare_log_fp, "_");
     }
   }
   fprintf(compare_log_fp, "\n");
   if (merge_valid) {
-    fprintf(compare_log_fp, "%lld : L1D Merged     : %llx(%05d) : ", rtl_time, paddr, ram_addr);
-    for (int i = size/4-1; i >= 0; i--) {
-      fprintf(compare_log_fp, "%08x", merged_l1d_data[i]);
-      if (i != 0) {
+    fprintf(compare_log_fp, "%lld : L1D Merged      : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+    for (int i = size-1; i >= 0; i--) {
+      fprintf(compare_log_fp, "%02x", merged_l1d_data[i]);
+      if (i % 4 == 0 && i != 0) {
         fprintf(compare_log_fp, "_");
       }
     }
@@ -936,21 +943,19 @@ void record_l1d_load(long long rtl_time,
   }
 
   bool diff_found = false;
-  fprintf(compare_log_fp, "%lld : Load ISS Check : %llx        : ", rtl_time, paddr);
+  fprintf(compare_log_fp, "%lld : Load ISS Check  : %llx        : ", rtl_time, paddr);
   try {
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
       fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
-      uint64_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i*2+0] : l1d_data[i*2+0];
-      uint64_t rtl_wr_data1 = merge_valid ? merged_l1d_data[i*2+1] : l1d_data[i*2+1];
-      if ((iss_ld_data >> 32 & 0xffffffff) != rtl_wr_data1 |
-          (iss_ld_data       & 0xffffffff) != rtl_wr_data0) {
-        diff_found = true;
+      for (int b = 0; b < 8; b++) {
+        uint8_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i * 8 + b] : l1d_data[i * 8 + b];
+        if ((l1d_be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != rtl_wr_data0)) {
+          diff_found = true;
+        }
       }
-      if (i != 0) {
-        fprintf(compare_log_fp, "_");
-      }
+      if (i != 0) { fprintf (compare_log_fp, "_"); }
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
@@ -959,7 +964,7 @@ void record_l1d_load(long long rtl_time,
 
   if (diff_found) {
     fprintf (compare_log_fp, "L1D Load Data Compare Error\n");
-    // stop_sim (102);
+    stop_sim (102);
   }
 }
 

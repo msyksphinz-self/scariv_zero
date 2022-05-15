@@ -213,20 +213,21 @@ assign miss_l1d_wr_if.s2_wr_resp = l1d_wr_if.s2_wr_resp;
 `ifdef VERILATOR
 import "DPI-C" function void record_l1d_load
 (
- input longint      rtl_time,
- input longint      paddr,
- input int          ram_addr,
- input int unsigned array[msrh_conf_pkg::DCACHE_DATA_W/32],
- input int          merge_valid,
- input int unsigned merged_array[msrh_conf_pkg::DCACHE_DATA_W/32],
- input int          size
+ input longint rtl_time,
+ input longint paddr,
+ input int     ram_addr,
+ input byte    array[msrh_conf_pkg::DCACHE_DATA_W/8],
+ input longint be, // Note: currently only support upto 512-bit (64-be).
+ input int     merge_valid,
+ input byte    merged_array[msrh_conf_pkg::DCACHE_DATA_W/8],
+ input int     size
 );
 
-int unsigned l1d_array[msrh_conf_pkg::DCACHE_DATA_W/32];
-int unsigned merged_l1d_array[msrh_conf_pkg::DCACHE_DATA_W/32];
-generate for (genvar idx = 0; idx < msrh_conf_pkg::DCACHE_DATA_W/32; idx++) begin : array_loop
-  assign l1d_array[idx] = w_rp2_dc_wr_req.s0_data[idx*32+:32];
-  assign merged_l1d_array[idx] = w_rp2_merge_data[idx*32+:32];
+byte           l1d_array[msrh_conf_pkg::DCACHE_DATA_W/8];
+byte           merged_l1d_array[msrh_conf_pkg::DCACHE_DATA_W/8];
+generate for (genvar idx = 0; idx < msrh_conf_pkg::DCACHE_DATA_W/8; idx++) begin : array_loop
+  assign l1d_array       [idx] = w_rp2_dc_wr_req.s0_data[idx*8+:8];
+  assign merged_l1d_array[idx] = w_rp2_merge_data[idx*8+:8];
 end
 endgenerate
 
@@ -238,6 +239,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                       w_rp2_dc_wr_req.s0_paddr,
                       w_rp2_dc_wr_req.s0_paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW],
                       l1d_array,
+                      w_rp2_dc_wr_req.s0_be,
                       l1d_merge_if.s0_valid,
                       merged_l1d_array,
                       DCACHE_DATA_B_W);
