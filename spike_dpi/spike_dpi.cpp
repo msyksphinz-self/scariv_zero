@@ -891,7 +891,7 @@ void record_stq_store(long long rtl_time,
 
   if (diff_found) {
     fprintf (compare_log_fp, "L1D Update Data Compare Error\n");
-    stop_sim (102);
+    stop_sim (100);
   }
 
 #ifndef SIM_MAIN
@@ -914,7 +914,7 @@ void record_l1d_load(long long rtl_time,
 
   if (size > 64) {
     fprintf (stderr, "Error: this compare system only support up to 512-bit system\n");
-    stop_sim(110);
+    stop_sim(100);
     return;
   }
 
@@ -964,7 +964,7 @@ void record_l1d_load(long long rtl_time,
 
   if (diff_found) {
     fprintf (compare_log_fp, "L1D Load Data Compare Error\n");
-    stop_sim (102);
+    stop_sim (100);
   }
 }
 
@@ -1007,7 +1007,7 @@ void record_l1d_evict(long long rtl_time,
 
   if (diff_found) {
     fprintf (compare_log_fp, "Eviction Data Compare Error\n");
-    stop_sim (102);
+    stop_sim (100);
   }
 }
 
@@ -1060,7 +1060,7 @@ void check_mmu_trans (long long time, long long rtl_va,
                rtl_pa, iss_paddr);
       fprintf (compare_log_fp, spike_out_str);
       fprintf (stderr, spike_out_str);
-      stop_sim(101);
+      stop_sim(100);
     } else {
       // fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
