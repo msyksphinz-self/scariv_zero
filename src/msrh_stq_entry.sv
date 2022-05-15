@@ -330,7 +330,8 @@ endfunction // assign_stq_disp
 
 function logic all_operand_ready(stq_entry_t entry);
   logic     ret;
-  ret = (!entry.inst.rd_regs[0].valid | entry.inst.rd_regs[0].valid  & (entry.inst.rd_regs[0].ready | entry.inst.rd_regs[0].predict_ready));
+  ret = (!entry.inst.rd_regs[0].valid | entry.inst.rd_regs[0].valid  & (entry.inst.rd_regs[0].ready |
+                                                                        entry.inst.rd_regs[0].predict_ready & !w_rs_mispredicted[0]));
   return ret;
 endfunction // all_operand_ready
 
