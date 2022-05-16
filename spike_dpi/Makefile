@@ -38,6 +38,8 @@ EXE_CFLAGS += $(abspath riscv-isa-sim)/libdisasm.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libsoftfloat.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libfesvr.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libfdt.a
+EXE_CFLAGS += -lpthread
+EXE_CFLAGS += -ldl
 EXE_CFLAGS += -DSIM_MAIN
 EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 

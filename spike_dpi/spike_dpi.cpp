@@ -117,11 +117,6 @@ static unsigned long atoul_nonzero_safe(const char* s)
   return res;
 }
 
-// void stop_sim(int code)
-// {
-//   fprintf(compare_log_fp, "stop_ism %d\n", code);
-// }
-
 void initial_spike (const char *filename, int rv_xlen, int rv_flen)
 {
   argv[0] = "spike_dpi";
@@ -1073,6 +1068,11 @@ void check_mmu_trans (long long time, long long rtl_va,
 
 
 #ifdef SIM_MAIN
+void stop_sim(int code)
+{
+  fprintf(compare_log_fp, "stop_ism %d\n", code);
+}
+
 int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
