@@ -220,6 +220,7 @@ import "DPI-C" function void record_l1d_load
  input longint be, // Note: currently only support upto 512-bit (64-be).
  input int     merge_valid,
  input byte    merged_array[msrh_conf_pkg::DCACHE_DATA_W/8],
+ input longint merge_be, // Note: currently only support upto 512-bit (64-be).
  input int     size
 );
 
@@ -242,6 +243,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                       w_rp2_dc_wr_req.s0_be,
                       l1d_merge_if.s0_valid,
                       merged_l1d_array,
+                      l1d_merge_if.s0_wr_req.s0_be,
                       DCACHE_DATA_B_W);
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)

@@ -904,6 +904,7 @@ void record_l1d_load(long long rtl_time,
                      long long l1d_be,
                      int merge_valid,
                      const uint8_t* merged_l1d_data,
+                     long long merge_be,
                      int size)
 {
 
@@ -944,9 +945,10 @@ void record_l1d_load(long long rtl_time,
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
       fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      long long be = merge_valid ? merge_be : l1d_be;
       for (int b = 0; b < 8; b++) {
         uint8_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i * 8 + b] : l1d_data[i * 8 + b];
-        if ((l1d_be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != rtl_wr_data0)) {
+        if ((be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != rtl_wr_data0)) {
           diff_found = true;
         }
       }

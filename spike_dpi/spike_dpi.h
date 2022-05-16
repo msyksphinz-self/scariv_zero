@@ -29,6 +29,7 @@ extern "C" {
                        long long l1d_be,
                        int merge_valid,
                        const uint8_t* merged_l1d_data,
+                       long long merge_be,
                        int size);
 
   void record_l1d_evict(long long rtl_time,
