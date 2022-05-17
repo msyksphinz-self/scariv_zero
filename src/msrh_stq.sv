@@ -504,7 +504,10 @@ generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) be
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[msrh_conf_pkg::DISP_SIZE];
 end
 endgenerate
-
+`ifdef SIMULATION
+assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
+assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;
+`endif //SIMULATION
 
 
 `ifdef SIMULATION

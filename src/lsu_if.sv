@@ -589,6 +589,10 @@ logic                                     valid;
 msrh_pkg::paddr_t           paddr;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+`ifdef SIMULATION
+msrh_pkg::cmt_id_t cmt_id;
+msrh_pkg::grp_id_t grp_id;
+`endif // SIMULATION
 
 msrh_lsu_pkg::st_buffer_resp_t resp;
 
@@ -597,6 +601,8 @@ modport master (
   output paddr,
   output strb,
   output data,
+  output cmt_id,
+  output grp_id,
   input  resp
 );
 
@@ -606,6 +612,8 @@ modport slave (
   input paddr,
   input strb,
   input data,
+  input cmt_id,
+  input grp_id,
   output resp
 );
 

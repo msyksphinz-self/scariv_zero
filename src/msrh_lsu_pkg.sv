@@ -620,6 +620,10 @@ typedef struct packed {
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+`ifdef SIMULATION
+  msrh_pkg::cmt_id_t cmt_id;
+  msrh_pkg::grp_id_t grp_id;
+`endif // SIMULATION
 } st_buffer_entry_t;
 
 typedef enum logic [ 3: 0] {
@@ -637,7 +641,9 @@ typedef enum logic [ 3: 0] {
   ST_BUF_WAIT_FINISH  = 11
 } st_buffer_state_t;
 
-function st_buffer_entry_t assign_st_buffer (msrh_pkg::paddr_t  paddr,
+function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
+                                             msrh_pkg::grp_id_t grp_id,
+                                             msrh_pkg::paddr_t  paddr,
                                              logic [ST_BUF_WIDTH/8-1: 0] strb,
                                              logic [ST_BUF_WIDTH-1: 0]   data
                                              );
@@ -649,6 +655,11 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::paddr_t  paddr,
   ret.paddr = paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
   ret.strb  = strb;
   ret.data  = data;
+
+`ifdef SIMULATION
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
+`endif // SIMULATION
 
   return ret;
 endfunction // assign_st_buffer

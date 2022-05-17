@@ -43,16 +43,16 @@ EXE_CFLAGS += -ldl
 EXE_CFLAGS += -DSIM_MAIN
 EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 
-all: libspike_dpi.so spike_main
+all: libspike_dpi_exe.so spike_main
 
-libspike_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
+libspike_exe_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
 	g++ -shared -fPIC $(CFLAGS) spike_dpi.cpp -o $@
 
 # spike_main: riscv_isa_sim spike_dpi.o
-spike_main: spike_dpi.o libspike_dpi.so
+spike_main: spike_dpi_exe.o libspike_dpi_exe.so
 	g++ -o $@ spike_dpi.o $(EXE_CFLAGS)
 
-spike_dpi.o: spike_dpi.cpp
+spike_dpi_exe.o: spike_dpi.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
 
 riscv-isa-sim-makefile:
