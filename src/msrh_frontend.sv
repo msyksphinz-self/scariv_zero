@@ -126,6 +126,8 @@ bim_search_if w_bim_search_if ();
 
 ras_search_if w_ras_search_if ();
 
+gshare_search_if w_gshare_search_if ();
+
 `ifdef SIMULATION
 msrh_pkg::paddr_t  r_s2_paddr;
 `endif // SIMULATION
@@ -608,9 +610,10 @@ u_msrh_inst_buffer
 
    .csr_info      (csr_info),
 
-   .bim_search_if (w_bim_search_if),
-   .btb_search_if (w_btb_search_if),
-   .ras_search_if (w_ras_search_if),
+   .bim_search_if    (w_bim_search_if   ),
+   .btb_search_if    (w_btb_search_if   ),
+   .ras_search_if    (w_ras_search_if   ),
+   .gshare_search_if (w_gshare_search_if),
 
    .o_inst_ready (w_inst_buffer_ready),
    .i_s2_inst    (w_s2_inst_buffer_in),
@@ -663,6 +666,9 @@ assign w_bim_update_if.taken          = br_upd_if.taken;
 assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
 assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 
+assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
+assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
+
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_bim_hit_array;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_btb_bim_hit_array;
 assign w_s1_btb_bim_hit_array = w_btb_search_if.s1_hit & w_bim_search_if.s1_pred_taken;
@@ -712,6 +718,8 @@ msrh_predictor u_predictor
    .search_bim_if (w_bim_search_if),
 
    .ras_search_if (w_ras_search_if),
+
+   .gshare_search_if (w_gshare_search_if),
 
    .br_upd_fe_if (br_upd_fe_tmp_if)
    );

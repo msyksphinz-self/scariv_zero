@@ -32,6 +32,8 @@ module msrh_predictor
 
  ras_search_if.master ras_search_if,
 
+ gshare_search_if.slave gshare_search_if,
+
  br_upd_if.slave  br_upd_fe_if
  );
 
@@ -447,6 +449,22 @@ encoder #(.SIZE(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_loc_encoder (.i_in(w_s
 assign w_s2_call_offset = $signed({{(riscv_pkg::VADDR_W-11){w_s2_inst_array_oh[31]}}, w_s2_inst_array_oh[31], w_s2_inst_array_oh[19:12], w_s2_inst_array_oh[20], w_s2_inst_array_oh[30:21]});
 assign w_s2_call_pc     = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2)+1], {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2){1'b0}}};
 assign w_s2_call_target_vaddr = w_s2_call_offset + w_s2_call_pc + w_s2_call_enc - 1;
+
+
+// -----------------
+// GShare Predictor
+// -----------------
+
+msrh_gshare
+u_gshare
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .gshare_search_if (gshare_search_if),
+   .br_upd_fe_if     (br_upd_fe_if    )
+   );
+
 
 
 `ifdef SIMULATION

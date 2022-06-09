@@ -8,17 +8,20 @@ interface br_upd_if;
   logic                                is_rvc;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [ 1: 0]                        bim_value;
-  msrh_pkg::vaddr_t      pc_vaddr;
-  msrh_pkg::vaddr_t      target_vaddr;
-  msrh_pkg::vaddr_t      ras_prev_vaddr;
+  msrh_pkg::vaddr_t                    pc_vaddr;
+  msrh_pkg::vaddr_t                    target_vaddr;
+  msrh_pkg::vaddr_t                    ras_prev_vaddr;
 `ifdef SIMULATION
-  msrh_pkg::vaddr_t      pred_vaddr;
+  msrh_pkg::vaddr_t                    pred_vaddr;
 `endif // SIMULATION
   logic                                dead;
-  msrh_pkg::cmt_id_t cmt_id;
-  msrh_pkg::grp_id_t grp_id;
-  msrh_pkg::brtag_t  brtag;
-  msrh_pkg::brmask_t br_mask;
+  msrh_pkg::cmt_id_t                   cmt_id;
+  msrh_pkg::grp_id_t                   grp_id;
+  msrh_pkg::brtag_t                    brtag;
+  msrh_pkg::brmask_t                   br_mask;
+
+  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] gshare_index;
+  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
 
   modport master (
     output update,
@@ -39,7 +42,9 @@ interface br_upd_if;
     output cmt_id,
     output grp_id,
     output brtag,
-    output br_mask
+    output br_mask,
+    output gshare_index,
+    output gshare_bhr
   );
 
   modport slave (
@@ -61,7 +66,9 @@ interface br_upd_if;
     input cmt_id,
     input grp_id,
     input brtag,
-    input br_mask
+    input br_mask,
+    input gshare_index,
+    input gshare_bhr
   );
 
 endinterface // br_upd_if

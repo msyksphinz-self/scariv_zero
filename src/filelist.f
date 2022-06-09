@@ -8,10 +8,10 @@
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
+../src/msrh_predict_pkg.sv
 ../src/msrh_bru_pkg.sv
 ../src/msrh_csu_pkg.sv
 ../src/msrh_fpu_pkg.sv
-../src/msrh_predict_pkg.sv
 
 ../src/l2_if.sv
 ../src/disp_if.sv

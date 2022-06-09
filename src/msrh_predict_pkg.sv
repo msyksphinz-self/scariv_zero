@@ -16,6 +16,8 @@ localparam BTB_ENTRY_FIELD_MSB = $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2);
 localparam BTB_ENTRY_BIT_LSB   = BTB_ENTRY_FIELD_MSB + 1;
 localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 
+localparam GSHARE_BHT_W = 12;
+
 typedef struct packed {
   logic                                            valid;
   logic                                            is_call;
@@ -211,3 +213,41 @@ interface ras_search_if;
   );
 
 endinterface // bim_search_if
+
+
+interface gshare_search_if;
+
+  logic                                       s0_valid;
+  msrh_pkg::vaddr_t                           s0_pc_vaddr;
+  logic                                       s1_valid;
+  logic                                       s1_pred_taken;
+  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] s1_index;
+  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] s1_bhr;
+
+  modport master (
+    output s0_valid,
+    output s0_pc_vaddr,
+    input  s1_valid,
+    input  s1_pred_taken,
+    input  s1_index,
+    input  s1_bhr
+  );
+
+  modport slave (
+    input  s0_valid,
+    input  s0_pc_vaddr,
+    output s1_valid,
+    output s1_pred_taken,
+    output s1_index,
+    output s1_bhr
+  );
+
+modport monitor (
+  input s1_valid,
+  input s1_pred_taken,
+  input s1_index,
+  input s1_bhr
+);
+
+
+endinterface // gshare_search_if

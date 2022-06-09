@@ -8,9 +8,10 @@ module msrh_inst_buffer
  /* CSR information */
  csr_info_if.slave                csr_info,
 
- btb_search_if.monitor btb_search_if,
- bim_search_if.monitor bim_search_if,
- ras_search_if.slave   ras_search_if,
+ btb_search_if.monitor    btb_search_if,
+ bim_search_if.monitor    bim_search_if,
+ ras_search_if.slave      ras_search_if,
+ gshare_search_if.monitor gshare_search_if,
 
  output logic                     o_inst_ready,
  input msrh_pkg::inst_buffer_in_t i_s2_inst,
