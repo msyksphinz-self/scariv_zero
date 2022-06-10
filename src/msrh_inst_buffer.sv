@@ -91,10 +91,13 @@ msrh_pkg::grp_id_t w_inst_csu_disped;
 msrh_pkg::grp_id_t w_inst_fpu_disped;
 
 typedef struct packed {
-  logic                           pred_taken;
-  logic [1:0]                     bim_value;
-  logic                           btb_valid;
+  logic             pred_taken;
+  logic [1:0]       bim_value;
+  logic             btb_valid;
   msrh_pkg::vaddr_t pred_target_vaddr;
+  logic                               gshare_pred_taken;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_index;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
 } pred_info_t;
 
 pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
@@ -203,11 +206,14 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-          r_inst_queue[idx].pred_info[b_idx].pred_taken       <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
-                                                                 ras_search_if.s2_is_ret   [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].bim_value        <= bim_search_if.s2_bim_value[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].btb_valid        <= btb_search_if.s2_hit[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_taken        <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
+                                                                  ras_search_if.s2_is_ret   [b_idx];
+          r_inst_queue[idx].pred_info[b_idx].bim_value         <= bim_search_if.s2_bim_value[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].gshare_pred_taken <= gshare_search_if.s2_pred_taken;
+          r_inst_queue[idx].pred_info[b_idx].gshare_index      <= gshare_search_if.s2_index;
+          r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr;
 
           r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
           r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
@@ -620,6 +626,11 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
+
+      iq_disp.inst[d_idx].gshare_pred_taken = w_expand_pred_info[d_idx].gshare_pred_taken;
+      iq_disp.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
+      iq_disp.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
+
 `ifdef SIMULATION
       iq_disp.inst[d_idx].kanata_id = r_kanata_cycle_count + d_idx;
 `endif // SIMULATION

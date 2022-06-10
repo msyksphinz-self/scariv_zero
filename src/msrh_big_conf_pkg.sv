@@ -37,6 +37,7 @@ package msrh_conf_pkg;
   localparam USING_VM = 1'b1;
 
   localparam RAS_ENTRY_SIZE = 64;
+  localparam GSHARE_BHT_W   = 11;
 
   localparam FPNEW_LATENCY = 6;
 

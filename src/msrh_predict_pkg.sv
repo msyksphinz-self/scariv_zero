@@ -16,8 +16,6 @@ localparam BTB_ENTRY_FIELD_MSB = $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2);
 localparam BTB_ENTRY_BIT_LSB   = BTB_ENTRY_FIELD_MSB + 1;
 localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 
-localparam GSHARE_BHT_W = 12;
-
 typedef struct packed {
   logic                                            valid;
   logic                                            is_call;
@@ -31,7 +29,7 @@ endpackage // msrh_predict_pkg
 interface btb_search_if;
 
   logic                                                 s0_valid;
-  msrh_pkg::vaddr_t                        s0_pc_vaddr;
+  msrh_pkg::vaddr_t                                     s0_pc_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_hit;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s1_target_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_call;
@@ -221,8 +219,12 @@ interface gshare_search_if;
   msrh_pkg::vaddr_t                           s0_pc_vaddr;
   logic                                       s1_valid;
   logic                                       s1_pred_taken;
-  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] s1_index;
-  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] s1_bhr;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s1_index;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s1_bhr;
+  logic                                       s2_valid;
+  logic                                       s2_pred_taken;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s2_index;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s2_bhr;
 
   modport master (
     output s0_valid,
@@ -230,7 +232,11 @@ interface gshare_search_if;
     input  s1_valid,
     input  s1_pred_taken,
     input  s1_index,
-    input  s1_bhr
+    input  s1_bhr,
+    input  s2_valid,
+    input  s2_pred_taken,
+    input  s2_index,
+    input  s2_bhr
   );
 
   modport slave (
@@ -239,14 +245,22 @@ interface gshare_search_if;
     output s1_valid,
     output s1_pred_taken,
     output s1_index,
-    output s1_bhr
+    output s1_bhr,
+    output s2_valid,
+    output s2_pred_taken,
+    output s2_index,
+    output s2_bhr
   );
 
 modport monitor (
   input s1_valid,
   input s1_pred_taken,
   input s1_index,
-  input s1_bhr
+  input s1_bhr,
+  input s2_valid,
+  input s2_pred_taken,
+  input s2_index,
+  input s2_bhr
 );
 
 

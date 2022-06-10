@@ -20,8 +20,8 @@ interface br_upd_if;
   msrh_pkg::brtag_t                    brtag;
   msrh_pkg::brmask_t                   br_mask;
 
-  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] gshare_index;
-  logic [msrh_predict_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_index;
+  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
 
   modport master (
     output update,

@@ -51,7 +51,8 @@ package msrh_pkg;
   localparam FP_REGPORT_NUM = msrh_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                               msrh_conf_pkg::LSU_INST_NUM;          // LSU port
 
-localparam RAS_W = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
+localparam RAS_W    = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
+localparam GSHARE_BHT_W = msrh_conf_pkg::GSHARE_BHT_W;
 
 localparam ALEN_W = riscv_pkg::XLEN_W > riscv_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
 typedef logic [ALEN_W-1: 0]   alen_t;
@@ -147,12 +148,16 @@ typedef struct packed {
 
     logic                           is_call;
     logic                           is_ret;
-    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+    logic [RAS_W-1: 0] ras_index;
     vaddr_t                    ras_prev_vaddr;
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
-    vaddr_t pred_target_vaddr;
+    vaddr_t                         pred_target_vaddr;
+
+    logic                                       gshare_pred_taken;
+    logic [GSHARE_BHT_W-1: 0] gshare_index;
+    logic [GSHARE_BHT_W-1: 0] gshare_bhr;
 
     reg_wr_disp_t         wr_reg;
     reg_rd_disp_t [ 2: 0] rd_regs;
@@ -230,7 +235,7 @@ typedef struct packed {
 
 `ifdef SIMULATION
   logic                                                          mispredicted;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0]             ras_index;
+  logic [RAS_W-1: 0]             ras_index;
   vaddr_t                                pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
@@ -304,7 +309,7 @@ typedef struct packed {
 
     logic                   is_call;
     logic                   is_ret;
-    logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
+    logic [RAS_W-1: 0] ras_index;
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
@@ -569,6 +574,9 @@ typedef struct packed {
   brtag_t            brtag;
   brmask_t           br_mask;
 
+  logic [GSHARE_BHT_W-1: 0] gshare_index;
+  logic [GSHARE_BHT_W-1: 0] gshare_bhr;
+
   vaddr_t pc_vaddr;
   vaddr_t target_vaddr;
   vaddr_t ras_prev_vaddr;
@@ -594,6 +602,9 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.ras_index = inst.ras_index;
   ret.brtag     = inst.brtag;
   ret.br_mask   = inst.br_mask;
+
+  ret.gshare_index = inst.gshare_index;
+  ret.gshare_bhr   = inst.gshare_bhr;
 
   ret.done      = 1'b0;
   ret.dead      = 1'b0;

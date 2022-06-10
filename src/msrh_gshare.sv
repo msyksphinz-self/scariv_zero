@@ -70,11 +70,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     gshare_search_if.s1_valid <= 1'b0;
     gshare_search_if.s1_index <= 'h0;
     gshare_search_if.s1_bhr <= 'h0;
+
+    gshare_search_if.s2_valid <= 1'b0;
+    gshare_search_if.s2_index <= 'h0;
+    gshare_search_if.s2_bhr   <= 'h0;
   end else begin
     gshare_search_if.s1_valid <= gshare_search_if.s0_valid;
     gshare_search_if.s1_index <= w_xor_rd_index;
     gshare_search_if.s1_bhr   <= r_bhr;
-  end
-end
+
+    gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
+    gshare_search_if.s2_index <= gshare_search_if.s1_index;
+    gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 endmodule // msrh_gshare
