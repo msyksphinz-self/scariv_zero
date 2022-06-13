@@ -30,7 +30,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_bhr <= {GSHARE_BHT_W{1'b0}};
   end else begin
     if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.mispredict) begin
-      r_bhr <= br_upd_fe_if.gshare_bhr;
+      r_bhr <= {br_upd_fe_if.gshare_bhr[GSHARE_BHT_W-2:0], br_upd_fe_if.mispredict};;
     end else if (gshare_search_if.s1_valid) begin
       r_bhr <= {r_bhr[GSHARE_BHT_W-2:0], gshare_search_if.s1_pred_taken};
     end
@@ -85,5 +85,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
+`ifdef SIMULATION
+logic [GSHARE_BHT_W-1: 0] r_sim_bhr; // Branch History Register : 1=Taken / 0:NonTaken
+always_ff @ (posedge i_clk ,negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sim_bhr <= {GSHARE_BHT_W{1'b0}};
+  end else begin
+    if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
+      r_sim_bhr <= {r_sim_bhr[GSHARE_BHT_W-2:0], br_upd_fe_if.taken};
+    end
+  end
+end
+`endif // SIMULATION
 
 endmodule // msrh_gshare
