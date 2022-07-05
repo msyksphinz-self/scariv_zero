@@ -60,6 +60,7 @@ msrh_pkg::grp_id_t w_inst_illegal;
 
 msrh_pkg::grp_id_t w_inst_is_call;
 msrh_pkg::grp_id_t w_inst_is_ret;
+msrh_pkg::grp_id_t w_inst_is_cond;
 msrh_pkg::grp_id_t w_inst_is_call_ret_lsb;
 
 msrh_pkg::except_t w_fetch_except_cause[msrh_conf_pkg::DISP_SIZE];
@@ -94,6 +95,7 @@ typedef struct packed {
   logic             pred_taken;
   logic [1:0]       bim_value;
   logic             btb_valid;
+  logic             is_cond;
   msrh_pkg::vaddr_t pred_target_vaddr;
   logic                               gshare_pred_taken;
   logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_index;
@@ -208,6 +210,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
           r_inst_queue[idx].pred_info[b_idx].pred_taken        <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
                                                                   ras_search_if.s2_is_ret   [b_idx];
+          r_inst_queue[idx].pred_info[b_idx].is_cond           <= btb_search_if.s2_is_cond  [b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value         <= bim_search_if.s2_bim_value[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
@@ -623,6 +626,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                                                w_inst_is_call[d_idx] & w_expand_ras_info[d_idx].is_call) ? w_expand_ras_info[d_idx].pred_target_vaddr :
                                               w_expand_pred_info[d_idx].pred_target_vaddr;
 
+      iq_disp.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;

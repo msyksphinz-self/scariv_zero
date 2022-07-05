@@ -146,10 +146,11 @@ typedef struct packed {
     // logic size;
     // logic sign;
 
+    logic                           is_cond;
     logic                           is_call;
     logic                           is_ret;
-    logic [RAS_W-1: 0] ras_index;
-    vaddr_t                    ras_prev_vaddr;
+    logic [RAS_W-1: 0]              ras_index;
+    vaddr_t                         ras_prev_vaddr;
     logic                           pred_taken;
     logic [ 1: 0]                   bim_value;
     logic                           btb_valid;
@@ -307,6 +308,7 @@ typedef struct packed {
     cmt_id_t cmt_id;
     grp_id_t grp_id;
 
+    logic                   is_cond;
     logic                   is_call;
     logic                   is_ret;
     logic [RAS_W-1: 0] ras_index;
@@ -349,6 +351,7 @@ function issue_t assign_issue_common (disp_t in,
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
+  ret.is_cond          = in.is_cond;
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
   ret.ras_index        = in.ras_index;
@@ -565,6 +568,7 @@ typedef struct packed {
 // ===================
 typedef struct packed {
   logic              valid;
+  logic              is_cond;
   logic              is_call;
   logic              is_ret;
   logic              is_rvc;
@@ -594,6 +598,7 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.valid    = 1'b1;
   ret.pc_vaddr = inst.pc_addr;
   ret.ras_prev_vaddr = inst.ras_prev_vaddr;
+  ret.is_cond  = inst.is_cond;
   ret.is_call  = inst.is_call;
   ret.is_ret   = inst.is_ret;
   ret.is_rvc   = inst.rvc_inst_valid;

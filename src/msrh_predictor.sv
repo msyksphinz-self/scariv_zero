@@ -402,17 +402,9 @@ u_ras
    .i_wr_index (w_s2_ras_index_next),
    .i_wr_pa    (w_s2_ras_next_pc),
 
-   // .i_sc_rd_valid (|(w_sc_ret_valid | w_sc_call_valid)),
-   // .i_sc_rd_index (|w_sc_ret_valid ? w_ras_index_next : w_sc_call_entry.ras_index),
-   // .o_sc_rd_pa    (w_sc_ras_ret_vaddr),
-
-   .i_sc_rd_valid (1'b0),
-   .i_sc_rd_index ('h0),
-   .o_sc_rd_pa    (),
-
-   .i_s1_rd_valid ((|w_s2_ret_valid)),
-   .i_s1_rd_index (r_ras_input_index-1),
-   .o_s1_rd_pa    (w_s2_ras_ret_vaddr),
+   .i_s2_rd_valid ((|w_s2_ret_valid)),
+   .i_s2_rd_index (r_ras_input_index-1),
+   .o_s2_rd_pa    (w_s2_ras_ret_vaddr),
 
    .i_br_call_cmt_valid     (w_br_call_dead & ~r_during_recover),
    .i_br_call_cmt_ras_index (br_upd_fe_if.ras_index),

@@ -3,6 +3,7 @@ interface br_upd_if;
   logic                                update;
   logic                                taken;
   logic                                mispredict;
+  logic                                is_cond;
   logic                                is_call;
   logic                                is_ret;
   logic                                is_rvc;
@@ -27,6 +28,7 @@ interface br_upd_if;
     output update,
     output taken,
     output mispredict,
+    output is_cond,
     output is_call,
     output is_ret,
     output is_rvc,
@@ -51,6 +53,7 @@ interface br_upd_if;
     input update,
     input taken,
     input mispredict,
+    input is_cond,
     input is_call,
     input is_ret,
     input is_rvc,
@@ -83,6 +86,7 @@ module br_upd_if_buf
 assign master_if.update         = slave_if.update         ;
 assign master_if.taken          = slave_if.taken          ;
 assign master_if.mispredict     = slave_if.mispredict     ;
+assign master_if.is_cond        = slave_if.is_cond        ;
 assign master_if.is_call        = slave_if.is_call        ;
 assign master_if.is_ret         = slave_if.is_ret         ;
 assign master_if.is_rvc         = slave_if.is_rvc         ;

@@ -8,7 +8,7 @@ branch_count:
 .cut_aa:
     li      a0, 1
 
-    .bb_check:
+.bb_check:
     andi    a1, a1, 1
     beqz    a1, .cut_bb
     li      a1, 0

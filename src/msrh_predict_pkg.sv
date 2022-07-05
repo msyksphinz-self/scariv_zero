@@ -18,6 +18,7 @@ localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 
 typedef struct packed {
   logic                                            valid;
+  logic                                            is_cond;
   logic                                            is_call;
   logic                                            is_ret;
   logic [riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1] pc_tag;
@@ -32,10 +33,12 @@ interface btb_search_if;
   msrh_pkg::vaddr_t                                     s0_pc_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_hit;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s1_target_vaddr;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_cond;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_call;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_ret;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_hit;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s2_target_vaddr;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_cond;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_call;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_ret;
 
@@ -44,10 +47,12 @@ interface btb_search_if;
     output s0_pc_vaddr,
     input  s1_hit,
     input  s1_target_vaddr,
+    input  s1_is_cond,
     input  s1_is_call,
     input  s1_is_ret,
     input  s2_hit,
     input  s2_target_vaddr,
+    input  s2_is_cond,
     input  s2_is_call,
     input  s2_is_ret
   );
@@ -57,10 +62,12 @@ interface btb_search_if;
     input s0_pc_vaddr,
     output s1_hit,
     output s1_target_vaddr,
+    output s1_is_cond,
     output s1_is_call,
     output s1_is_ret,
     output s2_hit,
     output s2_target_vaddr,
+    output s2_is_cond,
     output s2_is_call,
     output s2_is_ret
   );
@@ -69,7 +76,8 @@ interface btb_search_if;
     input s1_hit,
     input s1_target_vaddr,
     input s2_hit,
-    input s2_target_vaddr
+    input s2_target_vaddr,
+    input s2_is_cond
   );
 
 endinterface // btb_search_if
@@ -78,6 +86,7 @@ endinterface // btb_search_if
 interface btb_update_if;
 
   logic                                                 valid;
+  logic                                                 is_cond;
   logic                                                 is_call;
   logic                                                 is_ret;
   logic                                                 is_rvc;
@@ -86,6 +95,7 @@ interface btb_update_if;
 
   modport master (
     output valid,
+    output is_cond,
     output is_call,
     output is_ret,
     output is_rvc,
@@ -95,6 +105,7 @@ interface btb_update_if;
 
   modport slave (
     input valid,
+    input is_cond,
     input is_call,
     input is_ret,
     input is_rvc,

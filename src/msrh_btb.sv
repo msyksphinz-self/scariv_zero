@@ -33,7 +33,7 @@ assign w_update_pc_vaddr = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:1] + (upd
 
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
   btb_entry_t update_entry;
-  btb_entry_t search_entry;
+  btb_entry_t w_s1_search_entry;
 
   logic btb_update_hit;
   assign btb_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
@@ -46,6 +46,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   //                                  (pc_ret_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
   assign update_entry.valid        = btb_update_hit;
+  assign update_entry.is_cond      = update_btb_if.is_cond;
   assign update_entry.is_call      = update_btb_if.is_call;
   assign update_entry.is_ret       = update_btb_if.is_ret;
   assign update_entry.pc_tag       = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
@@ -66,16 +67,16 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
      .i_wr_data (update_entry),
 
      .i_rd_addr (search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
-     .o_rd_data (search_entry)
+     .o_rd_data (w_s1_search_entry)
    );
 
   logic   r_s1_btb_valid;
   logic [BTB_ENTRY_SIZE-1: 0] r_btb_valids;
 
   assign search_btb_s1_hit[b_idx] = r_s1_search_valid &
-                                    search_entry.valid &
+                                    w_s1_search_entry.valid &
                                     r_s1_btb_valid &
-                                    (search_entry.pc_tag == r_s1_pc_tag);
+                                    (w_s1_search_entry.pc_tag == r_s1_pc_tag);
 
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -90,20 +91,23 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
     end
   end
 
-  assign search_btb_if.s1_target_vaddr[b_idx] = search_entry.target_vaddr;
+  assign search_btb_if.s1_target_vaddr[b_idx] = w_s1_search_entry.target_vaddr;
   assign search_btb_if.s1_hit         [b_idx] = r_s1_btb_valid & search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
-  assign search_btb_if.s1_is_call     [b_idx] = r_s1_btb_valid & search_entry.is_call;
-  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_btb_valid & search_entry.is_ret;
+  assign search_btb_if.s1_is_cond     [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_cond;
+  assign search_btb_if.s1_is_call     [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_call;
+  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_ret;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       search_btb_if.s2_target_vaddr[b_idx] <= 'h0;
       search_btb_if.s2_hit         [b_idx] <= 1'b0;
+      search_btb_if.s2_is_cond     [b_idx] <= 1'b0;
       search_btb_if.s2_is_call     [b_idx] <= 1'b0;
       search_btb_if.s2_is_ret      [b_idx] <= 1'b0;
     end else begin
       search_btb_if.s2_target_vaddr[b_idx] <= search_btb_if.s1_target_vaddr[b_idx];
       search_btb_if.s2_hit         [b_idx] <= search_btb_if.s1_hit         [b_idx];
+      search_btb_if.s2_is_cond     [b_idx] <= search_btb_if.s1_is_cond     [b_idx];
       search_btb_if.s2_is_call     [b_idx] <= search_btb_if.s1_is_call     [b_idx];
       search_btb_if.s2_is_ret      [b_idx] <= search_btb_if.s1_is_ret      [b_idx];
     end // else: !if(!i_reset_n)

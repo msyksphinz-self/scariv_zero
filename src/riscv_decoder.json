@@ -168,7 +168,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "eq"] , ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "eq"] , ["imm", "sb"]]
     },
     {
         "name":"bne        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
@@ -176,7 +176,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "ne"], ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "ne"], ["imm", "sb"]]
     },
     {
         "name":"blt        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
@@ -184,7 +184,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "lt"], ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "lt"], ["imm", "sb"]]
     },
     {
         "name":"bge        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
@@ -192,7 +192,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "ge"], ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "ge"], ["imm", "sb"]]
     },
     {
         "name":"bltu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
@@ -200,7 +200,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "ltu"], ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "ltu"], ["imm", "sb"]]
     },
     {
         "name":"bgeu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
@@ -208,7 +208,7 @@
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11000", "11"],
         "inst_cat": [["inst_cat", "br"]],
         "reg":[["r1", "r1"], ["r2", "r2"]],
-        "bru_ctrl":[["op", "geu"], ["imm", "sb"]]
+        "bru_ctrl":[["is_cond", "1"], ["op", "geu"], ["imm", "sb"]]
     },
     {
         "name":"jal        r[11:7],uj[31:12]",

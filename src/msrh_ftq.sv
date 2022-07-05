@@ -95,6 +95,7 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
                  (br_upd_if.cmt_id == r_ftq_entry[e_idx].cmt_id) &
                  (br_upd_if.grp_id == r_ftq_entry[e_idx].grp_id)) begin
       w_ftq_entry_next.done       = 1'b1;
+      w_ftq_entry_next.is_cond    = br_upd_if.is_cond;
       w_ftq_entry_next.dead       = br_upd_if.dead;
       w_ftq_entry_next.taken      = br_upd_if.taken;
       w_ftq_entry_next.mispredict = br_upd_if.mispredict;
@@ -136,6 +137,7 @@ assign br_upd_fe_if.update         = w_out_ftq_entry.valid &
                                      w_out_ftq_entry.done;
 assign br_upd_fe_if.taken          = w_out_ftq_entry.taken;
 assign br_upd_fe_if.mispredict     = w_out_ftq_entry.mispredict;
+assign br_upd_fe_if.is_cond        = w_out_ftq_entry.is_cond;
 assign br_upd_fe_if.is_call        = w_out_ftq_entry.is_call;
 assign br_upd_fe_if.is_ret         = w_out_ftq_entry.is_ret;
 assign br_upd_fe_if.is_rvc         = w_out_ftq_entry.is_rvc;

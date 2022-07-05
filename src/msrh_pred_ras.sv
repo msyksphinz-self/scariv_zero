@@ -7,13 +7,9 @@ module msrh_pred_ras
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_wr_index,
    input logic [riscv_pkg::VADDR_W-1: 1]                    i_wr_pa ,
 
-   input  logic                                             i_sc_rd_valid,
-   input  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_sc_rd_index,
-   output logic [riscv_pkg::VADDR_W-1: 1]                   o_sc_rd_pa,
-
-   input  logic                                             i_s1_rd_valid,
-   input  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_s1_rd_index,
-   output logic [riscv_pkg::VADDR_W-1: 1]                   o_s1_rd_pa,
+   input  logic                                             i_s2_rd_valid,
+   input  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0] i_s2_rd_index,
+   output logic [riscv_pkg::VADDR_W-1: 1]                   o_s2_rd_pa,
 
    input logic                                              i_br_call_cmt_valid,
    input logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1:0]  i_br_call_cmt_ras_index,
@@ -37,7 +33,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_sc_rd_pa = i_sc_rd_valid ? r_ras_array[i_sc_rd_index] : 'h0;
-assign o_s1_rd_pa = i_s1_rd_valid ? r_ras_array[i_s1_rd_index] : 'h0;
+assign o_s2_rd_pa = i_s2_rd_valid ? r_ras_array[i_s2_rd_index] : 'h0;
 
 endmodule // msrh_ras

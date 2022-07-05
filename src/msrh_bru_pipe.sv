@@ -28,6 +28,7 @@ module msrh_bru_pipe
 
 typedef struct packed {
   op_t  op;
+  logic is_cond;
   imm_t imm;
   logic wr_rd;
 } pipe_ctrl_t;
@@ -90,10 +91,11 @@ always_comb begin
 end
 
 decoder_bru_ctrl u_pipe_ctrl (
-  .inst(r_ex0_issue.inst),
-  .op  (w_ex0_pipe_ctrl.op),
-  .imm (w_ex0_pipe_ctrl.imm),
-  .wr_rd (w_ex0_pipe_ctrl.wr_rd)
+  .inst    (r_ex0_issue.inst       ),
+  .op      (w_ex0_pipe_ctrl.op     ),
+  .is_cond (w_ex0_pipe_ctrl.is_cond),
+  .imm     (w_ex0_pipe_ctrl.imm    ),
+  .wr_rd   (w_ex0_pipe_ctrl.wr_rd  )
 );
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
@@ -326,6 +328,7 @@ assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
                          (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr)));
 
 assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.is_cond       = r_ex3_pipe_ctrl.is_cond;
 assign ex3_br_upd_if.is_call       = r_ex3_issue.is_call;
 assign ex3_br_upd_if.is_ret        = r_ex3_issue.is_ret;
 assign ex3_br_upd_if.is_rvc        = r_ex3_issue.is_rvc;
