@@ -17,13 +17,12 @@ module msrh_gshare
  br_upd_if.slave  br_upd_fe_if,
 
  gshare_search_if.slave gshare_search_if
-
  );
 
-logic [GSHARE_BHT_W-1: 0] w_s0_xor_rd_index;
-logic [ 1: 0]             w_update_counter;
-logic [ 1: 0]             w_s1_bim_counter;
-logic [GSHARE_BHT_W-1: 0] r_bhr; // Branch History Register : 1=Taken / 0:NonTaken
+gshare_bht_t  w_s0_xor_rd_index;
+logic [ 1: 0] w_update_counter;
+logic [ 1: 0] w_s1_bim_counter;
+gshare_bht_t  r_bhr; // Branch History Register : 1=Taken / 0:NonTaken
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -37,12 +36,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_s0_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[riscv_pkg::VADDR_W-1 -: GSHARE_BHT_W];
+assign w_s0_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W];
 
-assign w_update_counter =  (((br_upd_fe_if.bim_value == 2'b11) & !br_upd_fe_if.mispredict &  br_upd_fe_if.taken |
-                             (br_upd_fe_if.bim_value == 2'b00) & !br_upd_fe_if.mispredict & !br_upd_fe_if.taken)) ? br_upd_fe_if.bim_value :
-                           br_upd_fe_if.taken ? br_upd_fe_if.bim_value + 2'b01 :
-                           br_upd_fe_if.bim_value - 2'b01;
+assign w_update_counter =  (((br_upd_fe_if.gshare_bim_value == 2'b11) & !br_upd_fe_if.mispredict &  br_upd_fe_if.taken |
+                             (br_upd_fe_if.gshare_bim_value == 2'b00) & !br_upd_fe_if.mispredict & !br_upd_fe_if.taken)) ? br_upd_fe_if.bim_value :
+                           br_upd_fe_if.taken ? br_upd_fe_if.gshare_bim_value + 2'b01 :
+                           br_upd_fe_if.gshare_bim_value - 2'b01;
 
 
 data_array_2p
@@ -82,12 +81,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
     gshare_search_if.s2_index <= gshare_search_if.s1_index;
     gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
+
+    gshare_search_if.s2_bim_value <= w_s1_bim_counter;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 `ifdef SIMULATION
 logic r_br_upd_fe_upd_d1;
-logic [GSHARE_BHT_W-1: 0] r_sim_bhr; // Branch History Register : 1=Taken / 0:NonTaken
+gshare_bht_t r_sim_bhr; // Branch History Register : 1=Taken / 0:NonTaken
 always_ff @ (posedge i_clk ,negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_sim_bhr <= {GSHARE_BHT_W{1'b0}};

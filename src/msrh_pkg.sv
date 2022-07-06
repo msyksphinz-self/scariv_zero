@@ -54,6 +54,8 @@ package msrh_pkg;
 localparam RAS_W    = $clog2(msrh_conf_pkg::RAS_ENTRY_SIZE);
 localparam GSHARE_BHT_W = msrh_conf_pkg::GSHARE_BHT_W;
 
+typedef logic [GSHARE_BHT_W-1: 0] gshare_bht_t;
+
 localparam ALEN_W = riscv_pkg::XLEN_W > riscv_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
 typedef logic [ALEN_W-1: 0]   alen_t;
 typedef logic [ALEN_W/8-1: 0] alenb_t;
@@ -156,9 +158,10 @@ typedef struct packed {
     logic                           btb_valid;
     vaddr_t                         pred_target_vaddr;
 
-    logic                                       gshare_pred_taken;
-    logic [GSHARE_BHT_W-1: 0] gshare_index;
-    logic [GSHARE_BHT_W-1: 0] gshare_bhr;
+    logic         gshare_pred_taken;
+    logic [ 1: 0] gshare_bim_value;
+    gshare_bht_t  gshare_index;
+    gshare_bht_t  gshare_bhr;
 
     reg_wr_disp_t         wr_reg;
     reg_rd_disp_t [ 2: 0] rd_regs;
@@ -578,8 +581,10 @@ typedef struct packed {
   brtag_t            brtag;
   brmask_t           br_mask;
 
-  logic [GSHARE_BHT_W-1: 0] gshare_index;
-  logic [GSHARE_BHT_W-1: 0] gshare_bhr;
+  logic         gshare_pred_taken;
+  logic [ 1: 0] gshare_bim_value;
+  gshare_bht_t  gshare_index;
+  gshare_bht_t  gshare_bhr;
 
   vaddr_t pc_vaddr;
   vaddr_t target_vaddr;
@@ -608,8 +613,10 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.brtag     = inst.brtag;
   ret.br_mask   = inst.br_mask;
 
-  ret.gshare_index = inst.gshare_index;
-  ret.gshare_bhr   = inst.gshare_bhr;
+  ret.gshare_bim_value  = inst.gshare_bim_value;
+  ret.gshare_pred_taken = inst.gshare_pred_taken;
+  ret.gshare_index      = inst.gshare_index;
+  ret.gshare_bhr        = inst.gshare_bhr;
 
   ret.done      = 1'b0;
   ret.dead      = 1'b0;

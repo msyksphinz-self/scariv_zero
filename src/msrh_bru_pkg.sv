@@ -21,6 +21,7 @@ interface br_upd_if;
   msrh_pkg::brtag_t                    brtag;
   msrh_pkg::brmask_t                   br_mask;
 
+  logic [ 1: 0]                       gshare_bim_value;
   logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_index;
   logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
 
@@ -45,6 +46,7 @@ interface br_upd_if;
     output grp_id,
     output brtag,
     output br_mask,
+    output gshare_bim_value,
     output gshare_index,
     output gshare_bhr
   );
@@ -70,6 +72,7 @@ interface br_upd_if;
     input grp_id,
     input brtag,
     input br_mask,
+    input gshare_bim_value,
     input gshare_index,
     input gshare_bhr
   );
@@ -103,6 +106,9 @@ assign master_if.cmt_id         = slave_if.cmt_id         ;
 assign master_if.grp_id         = slave_if.grp_id         ;
 assign master_if.brtag          = slave_if.brtag          ;
 assign master_if.br_mask        = slave_if.br_mask        ;
+assign master_if.gshare_bim_value = slave_if.gshare_bim_value;
+assign master_if.gshare_index     = slave_if.gshare_index    ;
+assign master_if.gshare_bhr       = slave_if.gshare_bhr      ;
 
 endmodule // br_upd_if_buf
 

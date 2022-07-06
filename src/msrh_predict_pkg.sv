@@ -226,16 +226,17 @@ endinterface // bim_search_if
 
 interface gshare_search_if;
 
-  logic                                       s0_valid;
-  msrh_pkg::vaddr_t                           s0_pc_vaddr;
-  logic                                       s1_valid;
-  logic                                       s1_pred_taken;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s1_index;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s1_bhr;
-  logic                                       s2_valid;
-  logic                                       s2_pred_taken;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s2_index;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] s2_bhr;
+  logic                  s0_valid;
+  msrh_pkg::vaddr_t      s0_pc_vaddr;
+  logic                  s1_valid;
+  logic                  s1_pred_taken;
+  msrh_pkg::gshare_bht_t s1_index;
+  msrh_pkg::gshare_bht_t s1_bhr;
+  logic                  s2_valid;
+  logic                  s2_pred_taken;
+  logic [ 1: 0]          s2_bim_value;
+  msrh_pkg::gshare_bht_t s2_index;
+  msrh_pkg::gshare_bht_t s2_bhr;
 
   modport master (
     output s0_valid,
@@ -246,6 +247,7 @@ interface gshare_search_if;
     input  s1_bhr,
     input  s2_valid,
     input  s2_pred_taken,
+    input  s2_bim_value,
     input  s2_index,
     input  s2_bhr
   );
@@ -259,6 +261,7 @@ interface gshare_search_if;
     output s1_bhr,
     output s2_valid,
     output s2_pred_taken,
+    output s2_bim_value,
     output s2_index,
     output s2_bhr
   );
@@ -271,6 +274,7 @@ modport monitor (
   input s2_valid,
   input s2_pred_taken,
   input s2_index,
+  input s2_bim_value,
   input s2_bhr
 );
 

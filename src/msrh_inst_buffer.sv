@@ -97,9 +97,10 @@ typedef struct packed {
   logic             btb_valid;
   logic             is_cond;
   msrh_pkg::vaddr_t pred_target_vaddr;
-  logic                               gshare_pred_taken;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_index;
-  logic [msrh_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
+  logic                  gshare_bim_value;
+  logic                  gshare_pred_taken;
+  msrh_pkg::gshare_bht_t gshare_index;
+  msrh_pkg::gshare_bht_t gshare_bhr;
 } pred_info_t;
 
 pred_info_t w_expand_pred_info[msrh_conf_pkg::DISP_SIZE];
@@ -215,6 +216,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
           r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
           r_inst_queue[idx].pred_info[b_idx].gshare_pred_taken <= gshare_search_if.s2_pred_taken;
+          r_inst_queue[idx].pred_info[b_idx].gshare_bim_value  <= gshare_search_if.s2_bim_value;
           r_inst_queue[idx].pred_info[b_idx].gshare_index      <= gshare_search_if.s2_index;
           r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr;
 
@@ -632,6 +634,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
 
       iq_disp.inst[d_idx].gshare_pred_taken = w_expand_pred_info[d_idx].gshare_pred_taken;
+      iq_disp.inst[d_idx].gshare_bim_value  = w_expand_pred_info[d_idx].gshare_bim_value ;
       iq_disp.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
       iq_disp.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
 

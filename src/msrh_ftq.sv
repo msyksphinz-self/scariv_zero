@@ -133,26 +133,27 @@ sel_out_entry
    .o_selected(w_out_ftq_entry)
    );
 
-assign br_upd_fe_if.update         = w_out_ftq_entry.valid &
-                                     w_out_ftq_entry.done;
-assign br_upd_fe_if.taken          = w_out_ftq_entry.taken;
-assign br_upd_fe_if.mispredict     = w_out_ftq_entry.mispredict;
-assign br_upd_fe_if.is_cond        = w_out_ftq_entry.is_cond;
-assign br_upd_fe_if.is_call        = w_out_ftq_entry.is_call;
-assign br_upd_fe_if.is_ret         = w_out_ftq_entry.is_ret;
-assign br_upd_fe_if.is_rvc         = w_out_ftq_entry.is_rvc;
-assign br_upd_fe_if.ras_index      = w_out_ftq_entry.ras_index;
-assign br_upd_fe_if.bim_value      = 'h0;
-assign br_upd_fe_if.pc_vaddr       = w_out_ftq_entry.pc_vaddr;
-assign br_upd_fe_if.target_vaddr   = w_out_ftq_entry.target_vaddr;
-assign br_upd_fe_if.ras_prev_vaddr = w_out_ftq_entry.ras_prev_vaddr;
-assign br_upd_fe_if.dead           = w_out_ftq_entry.dead;
-assign br_upd_fe_if.cmt_id         = w_out_ftq_entry.cmt_id;
-assign br_upd_fe_if.grp_id         = w_out_ftq_entry.grp_id;
-assign br_upd_fe_if.brtag          = w_out_ftq_entry.brtag;
-assign br_upd_fe_if.br_mask        = 'h0;
-assign br_upd_fe_if.gshare_index   = w_out_ftq_entry.gshare_index;
-assign br_upd_fe_if.gshare_bhr     = w_out_ftq_entry.gshare_bhr  ;
+assign br_upd_fe_if.update           = w_out_ftq_entry.valid &
+                                       w_out_ftq_entry.done;
+assign br_upd_fe_if.taken            = w_out_ftq_entry.taken;
+assign br_upd_fe_if.mispredict       = w_out_ftq_entry.mispredict;
+assign br_upd_fe_if.is_cond          = w_out_ftq_entry.is_cond;
+assign br_upd_fe_if.is_call          = w_out_ftq_entry.is_call;
+assign br_upd_fe_if.is_ret           = w_out_ftq_entry.is_ret;
+assign br_upd_fe_if.is_rvc           = w_out_ftq_entry.is_rvc;
+assign br_upd_fe_if.ras_index        = w_out_ftq_entry.ras_index;
+assign br_upd_fe_if.bim_value        = 'h0;
+assign br_upd_fe_if.pc_vaddr         = w_out_ftq_entry.pc_vaddr;
+assign br_upd_fe_if.target_vaddr     = w_out_ftq_entry.target_vaddr;
+assign br_upd_fe_if.ras_prev_vaddr   = w_out_ftq_entry.ras_prev_vaddr;
+assign br_upd_fe_if.dead             = w_out_ftq_entry.dead;
+assign br_upd_fe_if.cmt_id           = w_out_ftq_entry.cmt_id;
+assign br_upd_fe_if.grp_id           = w_out_ftq_entry.grp_id;
+assign br_upd_fe_if.brtag            = w_out_ftq_entry.brtag;
+assign br_upd_fe_if.br_mask          = 'h0;
+assign br_upd_fe_if.gshare_bim_value = w_out_ftq_entry.gshare_bim_value  ;
+assign br_upd_fe_if.gshare_index     = w_out_ftq_entry.gshare_index;
+assign br_upd_fe_if.gshare_bhr       = w_out_ftq_entry.gshare_bhr  ;
 
 
 `ifdef SIMULATION
