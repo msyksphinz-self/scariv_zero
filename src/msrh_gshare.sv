@@ -37,7 +37,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[msrh_pkg::VADDR_W-1 -: GSHARE_BHT_W];
+assign w_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[riscv_pkg::VADDR_W-1 -: GSHARE_BHT_W];
 
 assign w_update_counter =  (((br_upd_fe_if.bim_value == 2'b11) |
                              (br_upd_fe_if.bim_value == 2'b00)) & !br_upd_fe_if.mispredict) ? br_upd_fe_if.bim_value :

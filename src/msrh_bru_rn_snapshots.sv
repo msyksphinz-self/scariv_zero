@@ -37,7 +37,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     end
   end
 
-`ifdef VCS
+`ifndef VCS_SIM
   // TODO: Need to be fixed
   always_ff @ (posedge i_clk) begin
     if (i_load[d_idx]) begin
@@ -46,7 +46,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       end
     end
   end
-`endif // VCS
+`endif // VCS_SIM
 
 end
 endgenerate

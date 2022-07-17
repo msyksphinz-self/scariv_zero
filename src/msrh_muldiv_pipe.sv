@@ -68,6 +68,25 @@ msrh_pkg::rnid_t                          r_mul_rd_rnid [MUL_STEP: 1];
 msrh_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
 logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP: 1];
 
+logic         w_div_ready;
+logic         w_div_valid;
+logic [63: 0] w_div_res;
+
+msrh_pkg::cmt_id_t            w_div_cmt_id;
+msrh_pkg::grp_id_t            w_div_grp_id;
+msrh_pkg::rnid_t w_div_rd_rnid;
+msrh_pkg::reg_t               w_div_rd_type;
+logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
+msrh_pkg::brmask_t            w_div_br_mask;
+
+logic                         w_flush_valid_load;
+logic                         w_commit_flush_load;
+logic                         w_br_flush_load;
+
+logic                         w_flush_valid;
+logic                         w_commit_flush;
+logic                         w_br_flush;
+
 generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic [MUL_UNROLL-1: 0]                                 w_multiplicand_part;
   logic [MUL_UNROLL: 0]                                   w_step_multiplicand;
@@ -176,25 +195,6 @@ endgenerate
 // ================
 // Divide Unit
 // ================
-
-logic         w_div_ready;
-logic         w_div_valid;
-logic [63: 0] w_div_res;
-
-msrh_pkg::cmt_id_t            w_div_cmt_id;
-msrh_pkg::grp_id_t            w_div_grp_id;
-msrh_pkg::rnid_t w_div_rd_rnid;
-msrh_pkg::reg_t               w_div_rd_type;
-logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
-msrh_pkg::brmask_t            w_div_br_mask;
-
-logic                         w_flush_valid_load;
-logic                         w_commit_flush_load;
-logic                         w_br_flush_load;
-
-logic                         w_flush_valid;
-logic                         w_commit_flush;
-logic                         w_br_flush;
 
 assign w_commit_flush_load = msrh_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit);
 assign w_br_flush_load     = msrh_pkg::is_br_flush_target(i_br_mask, br_upd_if.brtag,

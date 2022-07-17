@@ -112,6 +112,15 @@ logic                   w_ex2_load_mispredicted;
 logic                   r_ex2_tlb_miss;
 logic                   w_ex2_l1d_missed;
 
+msrh_pkg::alenb_t       w_stbuf_fwd_dw;
+msrh_pkg::alen_t        w_stbuf_fwd_aligned_data;
+
+msrh_pkg::alenb_t       w_streq_fwd_dw;
+msrh_pkg::alen_t        w_streq_fwd_aligned_data;
+
+msrh_pkg::alenb_t       w_ex2_expected_fwd_valid;
+msrh_pkg::alenb_t       w_ex2_fwd_success;
+
 //
 // EX3 stage
 //
@@ -464,14 +473,6 @@ always_comb begin
 end
 
 
-msrh_pkg::alenb_t                  w_stbuf_fwd_dw;
-msrh_pkg::alen_t                    w_stbuf_fwd_aligned_data;
-
-msrh_pkg::alenb_t                  w_streq_fwd_dw;
-msrh_pkg::alen_t                    w_streq_fwd_aligned_data;
-
-msrh_pkg::alenb_t                  w_ex2_expected_fwd_valid;
-msrh_pkg::alenb_t                  w_ex2_fwd_success;
 always_comb begin
   {w_stbuf_fwd_dw, w_stbuf_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                           stbuf_fwd_check_if.fwd_dw, stbuf_fwd_check_if.fwd_data,
