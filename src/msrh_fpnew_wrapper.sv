@@ -28,6 +28,11 @@ module msrh_fpnew_wrapper
    output msrh_pkg::reg_t                               o_reg_type
    );
 
+logic     w_fma64_ready;
+logic     w_fma32_ready;
+
+assign o_ready = w_fma64_ready & w_fma32_ready;
+
 typedef struct packed {
   fpnew_pkg::operation_e                        op;
   logic                                         op_mod;
@@ -206,7 +211,7 @@ fma_32
  .aux_i           (                 ),  // input AuxType
  // Input Handshake
  .in_valid_i      (w_fma32_in_valid ),  // input  logic
- .in_ready_o      (o_ready          ),  // output logic
+ .in_ready_o      (w_fma32_ready    ),  // output logic
  .flush_i         (1'b0             ),  // input  logic
  // Output signals
  .result_o        (w_fma32_result   ),  // output logic [WIDTH-1:0]
@@ -427,7 +432,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
    .aux_i           (w_aux_fpnew_in   ),  // input AuxType
    // Input Handshake
    .in_valid_i      (w_fma64_in_valid ),  // input  logic
-   .in_ready_o      (o_ready          ),  // output logic
+   .in_ready_o      (w_fma64_ready    ),  // output logic
    .flush_i         (1'b0             ),  // input  logic
    // Output signals
    .result_o        (w_fma64_result   ),  // output logic [WIDTH-1:0]
