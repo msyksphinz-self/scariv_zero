@@ -6,7 +6,7 @@ FILE *kanata_fp = NULL;
 extern disassembler_t *disasm;
 bool log_started = false;
 
-extern bool kanata_enable;
+bool kanata_enable = false;
 
 void init_kanata ()
 {
