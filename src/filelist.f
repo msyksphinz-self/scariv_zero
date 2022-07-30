@@ -139,6 +139,5 @@
 ../src/msrh_pred_ras.sv
 ../src/msrh_gshare.sv
 ../src/msrh_ftq.sv
-../src/msrh_gshare.sv
 
 ../src/l2_if_arbiter.sv
