@@ -33,14 +33,14 @@ bool    tohost_en;
 //   (void) fprintf(stderr, "Error: %s\n", elf_errmsg(elf_errno()));
 //   exit(EXIT_FAILURE);
 // }
-// 
+//
 // void dump_segment (const char* segname, int fd);
-// 
+//
 // Elf_Scn    *scn;
 // Elf_Data   *data;
 // Elf64_Ehdr *ehdr;
 // Elf64_Phdr *phdr;
-// 
+//
 // extern "C" int
 // load_binary(char const* path_exec,
 //             char const* filename,
@@ -48,41 +48,41 @@ bool    tohost_en;
 // {
 //   g_dump_hex = is_load_dump;
 //   g_memory = std::unique_ptr<Memory> (new Memory ());
-// 
+//
 //   int fd;
 //   if ((fd = open(filename, O_RDONLY)) == -1) {
 //     printf ("Fatal error. Can not open specified ELF file.\n");
 //     exit(1);
 //   }
-// 
+//
 //   Elf *          elf;
 //   /* Obtain the ELF descriptor */
 //   (void) elf_version(EV_CURRENT);
 //   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
 //     failure();
-// 
+//
 //   if (((ehdr = elf64_getehdr(elf)) == NULL) ||
 //       ((scn  = elf_getscn(elf, ehdr->e_shstrndx)) == NULL) ||
 //       ((data = elf_getdata(scn, NULL)) == NULL) ||
 //       ((phdr = elf64_getphdr(elf)) == NULL))
 //     failure();
-// 
+//
 //   uint64_t elf_p_addr = 0;
 //   uint64_t elf_v_addr = 0;
-// 
+//
 //   elf_p_addr = phdr->p_paddr;
 //   elf_v_addr = phdr->p_vaddr;
-// 
+//
 //   // fprintf(stderr, "elf_p_addr = %012lx\n", elf_p_addr);
 //   // fprintf(stderr, "elf_v_addr = %012lx\n", elf_v_addr);
-// 
+//
 //   dump_segment (".text", fd);
 //   dump_segment (".text.init", fd);
 //   dump_segment (".text.startup", fd);
 //   dump_segment (".data", fd);
 //   dump_segment (".rodata", fd);
 //   dump_segment (".rodata.str1.8", fd);
-// 
+//
 //   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
 //     failure();
 //   Elf64_Shdr * shdr;
@@ -95,23 +95,23 @@ bool    tohost_en;
 //         strlen(".tohost") == strlen((char *)data->d_buf + shdr->sh_name)) {
 //       tohost_en = true;
 //       tohost_addr = shdr->sh_addr;
-// 
+//
 //       fprintf(compare_log_fp, "Set ToHost Addr %0lx\n", tohost_addr);
-// 
+//
 //       break;
 //     }
 //   }
 //   if (!tohost_en) {
 //     tohost_en = 1;
 //     tohost_addr = 0x80001000;
-// 
+//
 //     fprintf(compare_log_fp, "Not found .tohost. Set Addr %0lx\n", tohost_addr);
 //   }
-// 
+//
 //   return 0;
 // }
-// 
-// 
+//
+//
 // void dump_segment (const char* segname, int fd)
 // {
 //   unsigned int cnt;
@@ -124,7 +124,7 @@ bool    tohost_en;
 //   unsigned long long base;
 //   char * identity;
 //   size_t * ptr;
-// 
+//
 //   if ((elf = elf_begin(fd, ELF_C_READ, NULL)) == NULL)
 //     failure();
 //   /* Traverse input filename, printing each section */
@@ -134,15 +134,15 @@ bool    tohost_en;
 //     if (!strncmp ((char *)data->d_buf + shdr->sh_name,
 // 				   segname,strlen(segname)) &&
 //         strlen(segname) == strlen((char *)data->d_buf + shdr->sh_name)) {
-// 
+//
 //       lseek (fd,shdr->sh_offset,SEEK_SET);
 //       buffer = (Byte_t *) malloc ((shdr->sh_size)*sizeof(unsigned char));
 //       memset (buffer, 0, (shdr->sh_size)*sizeof(unsigned char));
 //       valsRead=read(fd,buffer, shdr->sh_size);
-// 
+//
 //       // base = phdr->p_paddr;
 //       base = shdr->sh_addr;
-// 
+//
 //       ptr = (size_t *)malloc(EI_NIDENT);
 //       identity = elf_getident(elf, ptr);
 //       {
@@ -162,13 +162,13 @@ bool    tohost_en;
 //         // fprintf (stderr, "# %s\n", endian);
 //         // fprintf (stderr, "%s\n", endian);
 //       }
-// 
+//
 //       for(count=0; count < valsRead; count=count+4) {
 //         // fprintf (stderr,"%08lx: ", base);
-// 
+//
 //         base = base + 4;
 //         switch (identity[EI_DATA]) {
-// 
+//
 //           case 1: {	/* Little endian */
 //             int max_count = valsRead - count < 4 ? valsRead - count : 4;
 //             for (count2 = max_count-1;count2 >= 0;count2--) {
@@ -185,7 +185,7 @@ bool    tohost_en;
 //             }
 //             // fprintf (stderr,"\n");
 //             break;
-// 
+//
 //           default:
 //             printf ("Undetermined Endianness.  Fatal error.\n");
 //             exit(EXIT_FAILURE);
@@ -248,6 +248,10 @@ load_binary(char const* path_exec,
 
   std::vector<uint8_t> zeros;
   // std::map<std::string, uint64_t> symbols;
+
+  if (!g_memory) {
+    g_memory = std::unique_ptr<Memory> (new Memory ());
+  }
 
   #define LOAD_ELF(ehdr_t, phdr_t, shdr_t, sym_t, bswap) do { \
     ehdr_t* eh = (ehdr_t*)buf; \
@@ -330,6 +334,6 @@ load_binary(char const* path_exec,
 
   munmap(buf, size);
 
-  // return symbols; 
+  // return symbols;
   return 0;
 }

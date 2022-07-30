@@ -7,6 +7,8 @@ ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR
 endif
 
+VCS_HOME = /dev/shm/shioya/opt/synopsys/vcs/S-2021.09
+
 CFLAGS += -g
 CFLAGS += --std=c++17
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
@@ -21,6 +23,8 @@ CFLAGS += $(abspath riscv-isa-sim)/libsoftfloat.a
 CFLAGS += $(abspath riscv-isa-sim)/libfesvr.a
 CFLAGS += $(abspath riscv-isa-sim)/libfdt.a
 CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
+CFLAGS += -I$(VCS_HOME)/include/
+
 # CFLAGS += -lriscv
 
 EXE_CFLAGS += -g
@@ -42,6 +46,9 @@ EXE_CFLAGS += -lpthread
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -DSIM_MAIN
 EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
+EXE_CFLAGS += -I$(VCS_HOME)/include/
+EXE_CFLAGS += -ldl
+EXE_CFLAGS += -lpthread
 
 all: libspike_dpi_exe.so spike_main
 

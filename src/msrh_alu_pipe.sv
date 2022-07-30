@@ -28,47 +28,50 @@ module msrh_alu_pipe
     done_if.master ex3_done_if
 );
 
-  typedef struct packed {
-    op_t  op;
-    imm_t imm;
-  } pipe_ctrl_t;
+typedef struct packed {
+  op_t  op;
+  imm_t imm;
+} pipe_ctrl_t;
 
-  msrh_pkg::issue_t                        r_ex0_issue;
-  logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
-  pipe_ctrl_t                              w_ex0_pipe_ctrl;
+msrh_pkg::issue_t                        r_ex0_issue;
+logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
+pipe_ctrl_t                              w_ex0_pipe_ctrl;
 
-  pipe_ctrl_t                              r_ex1_pipe_ctrl;
-  msrh_pkg::issue_t                        r_ex1_issue;
-  msrh_pkg::issue_t                        w_ex1_issue_next;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
+pipe_ctrl_t                r_ex1_pipe_ctrl;
+msrh_pkg::issue_t          r_ex1_issue;
+msrh_pkg::issue_t          w_ex1_issue_next;
+logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
+logic                      w_ex1_commit_flush;
+logic                      w_ex1_br_flush;
+logic                      w_ex1_flush;
 
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-  logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-  riscv_pkg::xlen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
-  riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
-  riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
+riscv_pkg::xlen_t w_ex2_tgt_data          [msrh_pkg::TGT_BUS_SIZE];
+riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
+riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
 
-  riscv_pkg::xlen_t w_ex2_rs1_selected_data;
-  riscv_pkg::xlen_t w_ex2_rs2_selected_data;
+riscv_pkg::xlen_t w_ex2_rs1_selected_data;
+riscv_pkg::xlen_t w_ex2_rs2_selected_data;
 
-  logic                                    w_ex1_rs1_lsu_mispred;
-  logic                                    w_ex1_rs2_lsu_mispred;
-  logic                                    w_ex1_rs1_mispred;
-  logic                                    w_ex1_rs2_mispred;
+logic                              w_ex1_rs1_lsu_mispred;
+logic                              w_ex1_rs2_lsu_mispred;
+logic                              w_ex1_rs1_mispred;
+logic                              w_ex1_rs2_mispred;
 
-  pipe_ctrl_t                              r_ex2_pipe_ctrl;
-  msrh_pkg::issue_t                        r_ex2_issue;
-  msrh_pkg::issue_t                        w_ex2_issue_next;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
-  riscv_pkg::xlen_t r_ex2_rs1_data;
-  riscv_pkg::xlen_t r_ex2_rs2_data;
-  logic                                    r_ex2_wr_valid;
+pipe_ctrl_t                              r_ex2_pipe_ctrl;
+msrh_pkg::issue_t                        r_ex2_issue;
+msrh_pkg::issue_t                        w_ex2_issue_next;
+logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
+riscv_pkg::xlen_t r_ex2_rs1_data;
+riscv_pkg::xlen_t r_ex2_rs2_data;
+logic                              r_ex2_wr_valid;
 
-  msrh_pkg::issue_t                        r_ex3_issue;
-  msrh_pkg::issue_t                        w_ex3_issue_next;
-  riscv_pkg::xlen_t r_ex3_result;
-  logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
-  logic                                    r_ex3_wr_valid;
+msrh_pkg::issue_t                        r_ex3_issue;
+msrh_pkg::issue_t                        w_ex3_issue_next;
+riscv_pkg::xlen_t r_ex3_result;
+logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
+logic                              r_ex3_wr_valid;
 
 // ----------------------
 // Multiplier Variables
@@ -253,9 +256,6 @@ bit_oh_or #(
     .o_selected(w_ex2_rs2_fwd_data)
 );
 
-logic                                      w_ex1_commit_flush;
-logic                                      w_ex1_br_flush;
-logic                                      w_ex1_flush;
 assign w_ex1_commit_flush = msrh_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit);
 assign w_ex1_br_flush     = msrh_pkg::is_br_flush_target(r_ex1_issue.br_mask, br_upd_if.brtag,
                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;

@@ -80,17 +80,16 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
 
     // Reply distribution
     assign w_dc_read_resp[p_idx][bank_idx] = w_dc_read_resp_bank[p_idx];
+  end
 
-    always_ff @ (posedge i_clk, negedge i_reset_n) begin
-      if (!i_reset_n) begin
-        r_s1_wr_bank_valid[bank_idx] <= 1'b0;
-        r_s2_wr_bank_valid[bank_idx] <= 1'b0;
-      end else begin
-        r_s1_wr_bank_valid[bank_idx] <= w_s0_wr_bank_valid[bank_idx];
-        r_s2_wr_bank_valid[bank_idx] <= r_s1_wr_bank_valid[bank_idx];
-      end
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_s1_wr_bank_valid[bank_idx] <= 1'b0;
+      r_s2_wr_bank_valid[bank_idx] <= 1'b0;
+    end else begin
+      r_s1_wr_bank_valid[bank_idx] <= w_s0_wr_bank_valid[bank_idx];
+      r_s2_wr_bank_valid[bank_idx] <= r_s1_wr_bank_valid[bank_idx];
     end
-
   end
 
 end // block: bank_loop

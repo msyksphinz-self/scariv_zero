@@ -1113,6 +1113,7 @@ int main(int argc, char **argv)
 #ifndef VERILATOR
 void open_log_fp(const char *filename)
 {
+  fprintf(stderr, "open_log_fp\n");
   if ((compare_log_fp = fopen("compare.log", "w")) == NULL) {
     perror("failed to open log file");
     exit(EXIT_FAILURE);

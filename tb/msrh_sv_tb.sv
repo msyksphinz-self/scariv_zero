@@ -23,10 +23,15 @@ import "DPI-C" function void step_spike
    input int     rtl_grp_id,
    input int     rtl_insn,
    input int     rtl_wr_valid,
+   input int     rtl_wr_typ,
    input int     rtl_wr_gpr,
    input int     rtl_wr_rnid,
    input longint rtl_wr_val
    );
+
+import "DPI-C" function void step_spike_wo_cmp(input int count);
+
+
 `endif // DIRECT_LOAD_HEX
 
 module tb;
@@ -364,37 +369,37 @@ end
 
 `include "tb_commit_mon_utils.sv"
 
-`ifdef SIMULATION
-  `ifndef VERILATOR
-
-always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
-  if (!w_msrh_reset_n) begin
-  end else begin
-    if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
-      for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
-        if (committed_rob_entry.grp_id[grp_idx] & (!w_dead_grp_id[grp_idx])) begin
-          $fwrite (log_fp, "%5t %5d PC=%010x (%02d,%02d) %08x ", $time,
-                   u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_minstret,
-                   committed_rob_entry.inst[grp_idx].pc_addr,
-                   u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
-                   committed_rob_entry.inst[grp_idx].inst);
-          if (committed_rob_entry.inst[grp_idx].rd_valid) begin
-            $fwrite (log_fp, "GPR[%02d](%03d)=%016x : ",
-                     committed_rob_entry.inst[grp_idx].rd_regidx,
-                     committed_rob_entry.inst[grp_idx].rd_rnid,
-                     w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
-          end else begin
-            $fwrite (log_fp, "                              : ");
-          end
-          $fwrite(log_fp, "DASM(%08x)\n", committed_rob_entry.inst[grp_idx].inst);
-        end // if (committed_rob_entry.grp_id[grp_idx])
-      end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
-    end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmd_id])
-  end
-end
-
-  `endif // SIMULATION
-`endif // VERILATOR
+// `ifdef SIMULATION
+//   `ifndef VERILATOR
+//
+// always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
+//   if (!w_msrh_reset_n) begin
+//   end else begin
+//     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
+//       for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
+//         if (committed_rob_entry.grp_id[grp_idx] & (!w_dead_grp_id[grp_idx])) begin
+//           $fwrite (log_fp, "%5t %5d PC=%010x (%02d,%02d) %08x ", $time,
+//                    u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_minstret,
+//                    committed_rob_entry.inst[grp_idx].pc_addr,
+//                    u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
+//                    committed_rob_entry.inst[grp_idx].inst);
+//           if (committed_rob_entry.inst[grp_idx].rd_valid) begin
+//             $fwrite (log_fp, "GPR[%02d](%03d)=%016x : ",
+//                      committed_rob_entry.inst[grp_idx].rd_regidx,
+//                      committed_rob_entry.inst[grp_idx].rd_rnid,
+//                      w_physical_int_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+//           end else begin
+//             $fwrite (log_fp, "                              : ");
+//           end
+//           $fwrite(log_fp, "DASM(%08x)\n", committed_rob_entry.inst[grp_idx].inst);
+//         end // if (committed_rob_entry.grp_id[grp_idx])
+//       end // for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++)
+//     end // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_entry_all_done[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmd_id])
+//   end
+// end
+//
+//   `endif // SIMULATION
+// `endif // VERILATOR
 
 `ifdef DIRECT_LOAD_HEX
 
@@ -411,7 +416,7 @@ always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
                      committed_rob_entry.inst[grp_idx].rd_regidx,
                      committed_rob_entry.inst[grp_idx].rd_rnid,
-                     w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+                     w_physical_int_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
           end else begin
             $fwrite (pipe_fp, "                                        : ");
           end
@@ -430,11 +435,10 @@ always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
   if (!w_msrh_reset_n) begin
   end else begin
     if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.commit) begin
-      for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++) begin
+      for (int grp_idx = 0; grp_idx < msrh_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.grp_id[grp_idx] &
             ~u_msrh_tile_wrapper.u_msrh_tile.u_rob.o_commit.dead_id[grp_idx]) begin
-          /* verilator lint_off WIDTH */
-          step_spike ($time, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
+          step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
                       int'(u_msrh_tile_wrapper.u_msrh_tile.u_msrh_csu.u_msrh_csr.r_priv),
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_sim_mstatus[u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_entry_id][grp_idx],
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_valid_except_grp_id[grp_idx],
@@ -442,10 +446,13 @@ always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
                       u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_cmt_id,
                       1 << grp_idx,
                       committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
-                      committed_rob_entry.inst[grp_idx].rd_valid,
-                      committed_rob_entry.inst[grp_idx].rd_regidx,
-                      committed_rob_entry.inst[grp_idx].rd_rnid,
-                      w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+                      committed_rob_entry.inst[grp_idx].wr_reg.valid,
+                      committed_rob_entry.inst[grp_idx].wr_reg.typ,
+                      committed_rob_entry.inst[grp_idx].wr_reg.regidx,
+                      committed_rob_entry.inst[grp_idx].wr_reg.rnid,
+                      committed_rob_entry.inst[grp_idx].wr_reg.typ == msrh_pkg::GPR ?
+                      w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
+                      w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
         end
       end  // for (int grp_idx = 0; grp_idx < msrh_pkg::DISP_SIZE; grp_idx++)
     end  // if (u_msrh_tile_wrapper.u_msrh_tile.u_rob.w_out_valid)
@@ -453,6 +460,17 @@ always_ff @(negedge w_clk, negedge w_msrh_reset_n) begin
 end  // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 
 `endif // !`ifndef DIRECT_LOAD_HEX
+
+`ifdef VCS
+export "DPI-C" task stop_sim;
+
+task stop_sim(int code);
+  #1000;
+  $finish;
+endtask // stop_sim
+
+`endif // VCS
+
 
 // always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
 //   if (!w_msrh_reset_n) begin
@@ -488,7 +506,7 @@ end  // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 //             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
 //                      committed_rob_entry.inst[grp_idx].rd_regidx,
 //                      committed_rob_entry.inst[grp_idx].rd_rnid,
-//                      w_physical_gpr_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+//                      w_physical_int_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
 //           end else begin
 //             $fwrite (pipe_fp, "                                        : ");
 //           end

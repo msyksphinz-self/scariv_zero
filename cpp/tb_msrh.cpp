@@ -32,7 +32,7 @@ VerilatedFstC* tfp = NULL;
 
 int time_counter = 0;
 bool dump_fst_enable = false;
-bool kanata_enable = false;
+extern bool kanata_enable;
 
 static void usage(const char * program_name)
 {
