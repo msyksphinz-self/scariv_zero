@@ -74,6 +74,7 @@ interface btb_search_if;
 
   modport monitor (
     input s1_hit,
+    input s1_is_cond,
     input s1_target_vaddr,
     input s2_hit,
     input s2_target_vaddr,

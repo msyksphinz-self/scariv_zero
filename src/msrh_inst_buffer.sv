@@ -97,7 +97,7 @@ typedef struct packed {
   logic             btb_valid;
   logic             is_cond;
   msrh_pkg::vaddr_t pred_target_vaddr;
-  logic                  gshare_bim_value;
+  logic [1:0]       gshare_bim_value;
   logic                  gshare_pred_taken;
   msrh_pkg::gshare_bht_t gshare_index;
   msrh_pkg::gshare_bht_t gshare_bhr;

@@ -453,6 +453,7 @@ u_gshare
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
+   .search_btb_if    (search_btb_if   ),
    .gshare_search_if (gshare_search_if),
    .br_upd_fe_if     (br_upd_fe_if    )
    );
