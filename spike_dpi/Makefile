@@ -52,15 +52,18 @@ EXE_CFLAGS += -lpthread
 
 all: libspike_dpi_exe.so spike_main
 
-libspike_exe_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
+libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
 	g++ -shared -fPIC $(CFLAGS) spike_dpi.cpp -o $@
 
 # spike_main: riscv_isa_sim spike_dpi.o
 spike_main: spike_dpi_exe.o libspike_dpi_exe.so
-	g++ -o $@ spike_dpi.o $(EXE_CFLAGS)
+	g++ -o $@ spike_dpi_exe.o $(EXE_CFLAGS)
 
 spike_dpi_exe.o: spike_dpi.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
+
+spike_dpi.o: spike_dpi.cpp
+	g++ $^ -c -o $@ $(CFLAGS)
 
 riscv-isa-sim-makefile:
 	@if [ ! -e $@ ]; then \
