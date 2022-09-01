@@ -11,15 +11,15 @@ module msrh_icache
 
   input logic                i_fence_i,
 
-  input                      ic_req_t i_s0_req,
+  input ic_req_t             i_s0_req,
   output logic               o_s0_ready,
-  input msrh_pkg::paddr_t  i_s1_paddr,
+  input msrh_pkg::paddr_t    i_s1_paddr,
   input logic                i_s1_kill,
 
-  output                     ic_resp_t o_s2_resp,
+  output ic_resp_t           o_s2_resp,
 
   output logic               o_s2_miss,
-  output msrh_pkg::vaddr_t o_s2_miss_vaddr,
+  output msrh_pkg::vaddr_t   o_s2_miss_vaddr,
 
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp
@@ -95,7 +95,9 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
   logic [VADDR_W-1:ICACHE_TAG_LOW] w_s1_tag;
 
   logic                    w_ram_wr;
+  logic                    w_ram_rd;
   assign w_ram_wr = ic_l2_resp_fire & (r_replace_way[w_tag_ram_addr] == way);
+  assign w_ram_rd = i_s0_req.valid | ic_l2_resp_fire;
 
   tag_array
     #(
@@ -108,12 +110,12 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
 
        .i_tag_clear(i_fence_i),
 
-       .i_wr  (w_ram_wr),
-       .i_addr(w_tag_ram_addr),
-       .i_tag_valid  (1'b1),
-       .i_tag (w_tag_ram_tag),
-       .o_tag(w_s1_tag),
-       .o_tag_valid(w_s1_tag_valid)
+       .i_wr        (w_ram_wr       ),
+       .i_addr      (w_tag_ram_addr ),
+       .i_tag_valid (w_ram_rd       ),
+       .i_tag       (w_tag_ram_tag  ),
+       .o_tag       (w_s1_tag       ),
+       .o_tag_valid (w_s1_tag_valid )
        );
 
   assign w_s1_tag_hit[way] = (r_s1_vaddr[VADDR_W-1:ICACHE_TAG_LOW] == w_s1_tag) & w_s1_tag_valid;

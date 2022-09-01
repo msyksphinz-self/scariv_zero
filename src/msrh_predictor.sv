@@ -27,9 +27,6 @@ module msrh_predictor
  btb_search_if.slave search_btb_if,
  output msrh_pkg::vaddr_t o_s1_btb_target_vaddr,
 
- bim_update_if.slave update_bim_if,
- bim_search_if.slave search_bim_if,
-
  ras_search_if.master ras_search_if,
 
  gshare_search_if.slave gshare_search_if,
@@ -48,17 +45,6 @@ msrh_btb u_btb
    .search_btb_if (search_btb_if),
 
    .o_s1_btb_hit_oh (w_s1_btb_hit_oh)
-   );
-
-msrh_bim u_bim
-  (
-   .i_clk    (i_clk),
-   .i_reset_n(i_reset_n),
-
-   .update_bim_if (update_bim_if),
-   .search_bim_if (search_bim_if),
-
-   .i_s1_btb_hit_oh (w_s1_btb_hit_oh)
    );
 
 typedef enum logic {
@@ -272,10 +258,6 @@ logic                                              w_cmt_dead_valid;
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       w_s1_pred_hit_oh;
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       w_s1_btb_bim_hit_array;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       w_s1_btb_bim_hit_lsb;
-
-
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_s2_ras_index_next;
 
 logic                                              w_br_call_dead;
@@ -415,20 +397,11 @@ u_ras
 // ----------------------------------------
 // Extracting Call/Ret for 1st instruction
 // ----------------------------------------
-assign w_s1_btb_bim_hit_array = search_btb_if.s1_hit & search_bim_if.s1_pred_taken;
-
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_btb_bim_hit_array | w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
-
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) btb_hit_lsb (.in(w_s1_btb_bim_hit_array), .out(w_s1_btb_bim_hit_lsb));
-bit_oh_or_packed #(.T(logic[riscv_pkg::VADDR_W-1:0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
-bit_oh_target_vaddr(.i_oh(w_s1_btb_bim_hit_lsb), .i_data(search_btb_if.s1_target_vaddr), .o_selected(o_s1_btb_target_vaddr));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_bim_hit_array;
-assign w_s2_btb_bim_hit_array = search_btb_if.s2_hit & search_bim_if.s2_pred_taken;
 
-
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_btb_bim_hit_array | w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
+bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
 
 assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be & w_s2_noncond_call_ret_be_oh;
 assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_ret_be  & w_s2_noncond_call_ret_be_oh;
