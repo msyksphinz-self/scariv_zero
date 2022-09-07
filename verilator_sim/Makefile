@@ -182,7 +182,7 @@ gen_aapg:
 	$(MAKE) -C ../spike_dpi
 	ln -sf ../spike_dpi/$@ .
 
-$(FILELIST): ../src/fpnew.vf ../src/filelist.f filelist.f
+$(FILELIST): ../src/fpnew.vf ../src/filelist.f ../src_r2/filelist.vf filelist.f
 	echo "../tb/sim_pkg.sv" > $@
 	cat $^ >> $@
 

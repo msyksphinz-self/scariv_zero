@@ -102,86 +102,86 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     gshare_search_if.s2_index <= 'h0;
     gshare_search_if.s2_bhr   <= 'h0;
   end else begin
-    gshare_search_if.s1_valid <= gshare_search_if.s0_valid;
-    gshare_search_if.s1_index <= w_s0_xor_rd_index;
-    gshare_search_if.s1_bhr   <= r_bhr;
-
-    gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
-    gshare_search_if.s2_index <= gshare_search_if.s1_index;
-    gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
-
-    gshare_search_if.s2_pred_taken <= gshare_search_if.s1_pred_taken;
-    gshare_search_if.s2_bim_value  <= w_s1_bim_value;
+    // gshare_search_if.s1_valid <= gshare_search_if.s0_valid;
+    // gshare_search_if.s1_index <= w_s0_xor_rd_index;
+    // gshare_search_if.s1_bhr   <= r_bhr;
+    //
+    // gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
+    // gshare_search_if.s2_index <= gshare_search_if.s1_index;
+    // gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
+    //
+    // gshare_search_if.s2_pred_taken <= gshare_search_if.s1_pred_taken;
+    // gshare_search_if.s2_bim_value  <= w_s1_bim_value;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-`ifdef SIMULATION
-logic r_br_upd_fe_upd_d1;
-gshare_bht_t r_sim_bhr; // Branch History Register : 1=Taken / 0:NonTaken
-gshare_bht_t w_sim_bhr_next;
-assign w_sim_bhr_next = {r_sim_bhr[GSHARE_BHT_W-2:0], br_upd_fe_if.taken};
-
-always_ff @ (posedge i_clk ,negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_sim_bhr <= {GSHARE_BHT_W{1'b0}};
-    r_br_upd_fe_upd_d1 <= 1'b0;
-  end else begin
-    r_br_upd_fe_upd_d1 <= br_upd_fe_if.update & !br_upd_fe_if.dead;
-    if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
-      r_sim_bhr <= w_sim_bhr_next;
-
-      if (w_sim_bhr_next != w_bhr_next) begin
-        $fatal (1, "When commit, w_sim_bhr_next and w_bhr_next is different.\nw_sim_bhr_next = %b\nw_bhr_next     = %b",
-                w_sim_bhr_next, w_bhr_next);
-      end
-    end
-  end // else: !if(!i_reset_n)
-end
-
-integer gshare_fp;
-initial begin
-  gshare_fp = $fopen("gshare.log");
-end
-
-final begin
-  $fclose(gshare_fp);
-end
-
-msrh_pkg::vaddr_t      r_s1_pc_vaddr;
-
-
-always_ff @ (negedge i_clk) begin
-  if (i_reset_n) begin
-    r_s1_pc_vaddr <= gshare_search_if.s0_pc_vaddr;
-    if (s1_update_bhr) begin
-      $fwrite (gshare_fp, "%t s1 : pc=%016x(bhr_target=%x), r_bhr=%b, index=%x, pred=%d\n",
-               $time,
-               r_s1_pc_vaddr,
-               r_s1_pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W],
-               gshare_search_if.s1_bhr,
-               gshare_search_if.s1_index,
-               w_s1_bim_value);
-    end
-    if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
-      $fwrite (gshare_fp, "%t cmt: pc=%016x(bhr_target=%x), r_bhr=%b, index=%x, pred=%d, result=%d (%s)",
-               $time,
-               br_upd_fe_if.pc_vaddr,
-               br_upd_fe_if.pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W],
-               br_upd_fe_if.gshare_bhr,
-               br_upd_fe_if.gshare_index,
-               br_upd_fe_if.gshare_bim_value,
-               br_upd_fe_if.taken,
-               br_upd_fe_if.mispredict ? "Miss" : "Hit");
-
-      if (br_upd_fe_if.mispredict) begin
-        $fwrite (gshare_fp, ", bhr->%b\n", w_cmt_next_bhr);
-      end else begin
-        $fwrite (gshare_fp, "\n");
-      end
-    end
-  end // if (reset_n)
-end
-
-`endif // SIMULATION
+// `ifdef SIMULATION
+// logic r_br_upd_fe_upd_d1;
+// gshare_bht_t r_sim_bhr; // Branch History Register : 1=Taken / 0:NonTaken
+// gshare_bht_t w_sim_bhr_next;
+// assign w_sim_bhr_next = {r_sim_bhr[GSHARE_BHT_W-2:0], br_upd_fe_if.taken};
+//
+// always_ff @ (posedge i_clk ,negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//     r_sim_bhr <= {GSHARE_BHT_W{1'b0}};
+//     r_br_upd_fe_upd_d1 <= 1'b0;
+//   end else begin
+//     r_br_upd_fe_upd_d1 <= br_upd_fe_if.update & !br_upd_fe_if.dead;
+//     if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
+//       r_sim_bhr <= w_sim_bhr_next;
+//
+//       if (w_sim_bhr_next != w_bhr_next) begin
+//         $fatal (1, "When commit, w_sim_bhr_next and w_bhr_next is different.\nw_sim_bhr_next = %b\nw_bhr_next     = %b",
+//                 w_sim_bhr_next, w_bhr_next);
+//       end
+//     end
+//   end // else: !if(!i_reset_n)
+// end
+//
+// integer gshare_fp;
+// initial begin
+//   gshare_fp = $fopen("gshare.log");
+// end
+//
+// final begin
+//   $fclose(gshare_fp);
+// end
+//
+// msrh_pkg::vaddr_t      r_s1_pc_vaddr;
+//
+//
+// always_ff @ (negedge i_clk) begin
+//   if (i_reset_n) begin
+//     r_s1_pc_vaddr <= gshare_search_if.s0_pc_vaddr;
+//     if (s1_update_bhr) begin
+//       $fwrite (gshare_fp, "%t s1 : pc=%016x(bhr_target=%x), r_bhr=%b, index=%x, pred=%d\n",
+//                $time,
+//                r_s1_pc_vaddr,
+//                r_s1_pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W],
+//                gshare_search_if.s1_bhr,
+//                gshare_search_if.s1_index,
+//                w_s1_bim_value);
+//     end
+//     if (br_upd_fe_if.update & !br_upd_fe_if.dead) begin
+//       $fwrite (gshare_fp, "%t cmt: pc=%016x(bhr_target=%x), r_bhr=%b, index=%x, pred=%d, result=%d (%s)",
+//                $time,
+//                br_upd_fe_if.pc_vaddr,
+//                br_upd_fe_if.pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W],
+//                br_upd_fe_if.gshare_bhr,
+//                br_upd_fe_if.gshare_index,
+//                br_upd_fe_if.gshare_bim_value,
+//                br_upd_fe_if.taken,
+//                br_upd_fe_if.mispredict ? "Miss" : "Hit");
+//
+//       if (br_upd_fe_if.mispredict) begin
+//         $fwrite (gshare_fp, ", bhr->%b\n", w_cmt_next_bhr);
+//       end else begin
+//         $fwrite (gshare_fp, "\n");
+//       end
+//     end
+//   end // if (reset_n)
+// end
+//
+// `endif // SIMULATION
 
 endmodule // msrh_gshare

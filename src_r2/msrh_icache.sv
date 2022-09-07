@@ -45,10 +45,10 @@ logic             w_s1_hit;
 /* S2 stage */
 logic             r_s2_valid;
 logic             r_s2_hit;
-ic_ways_t     r_s2_tag_hit;
+ic_ways_t         r_s2_tag_hit;
 msrh_pkg::paddr_t r_s2_paddr;
-ic_data_t     w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
-ic_data_t     w_s2_selected_data;
+ic_data_t         w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
+ic_data_t         w_s2_selected_data;
 
 logic [L2_CMD_TAG_W-1: 0] r_ic_req_tag;
 
@@ -57,10 +57,6 @@ logic             ic_l2_resp_fire;
 ic_ways_idx_t     r_s2_replace_way;
 msrh_pkg::vaddr_t r_s2_vaddr;
 msrh_pkg::vaddr_t r_s2_waiting_vaddr;
-
-// Prefetcher state machine
-ic_state_t r_pref_state;
-logic      ic_pref_resp_fire;
 
 ic_ways_idx_t r_replace_way[2**ICACHE_TAG_LOW];
 logic [ICACHE_TAG_LOW-1: 0] w_replace_addr;
@@ -273,47 +269,6 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 // IC Prefetcher
 assign ic_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
                            (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1});
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_pref_state <= ICInit;
-  end else begin
-    case (r_pref_state)
-      ICInit : begin
-        // When standard IC request is sent
-        if (~i_flush_valid & ic_l2_req.valid & ic_l2_req.ready & !i_fence_i) begin
-          r_pref_state <= ICReq;
-          r_pref_paddr <= i_s1_paddr;
-          r_pref_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
-          r_pref_waiting_vaddr <= r_s1_vaddr;
-          // end
-        end
-      end // case: ICInit
-      ICReq : begin
-        if (ic_l2_req.ready & !i_fence_i) begin
-          r_pref_state <= ICResp;
-        end else if (i_fence_i) begin
-          r_pref_state <= ICInvalidate;
-        end
-      end
-      ICResp : begin
-        if (ic_pref_resp_fire) begin
-          r_pref_state <= ICInit;
-          r_ic_req_tag <= r_ic_req_tag + 'h1;
-        end else if (i_fence_i) begin
-          r_pref_state <= ICInvalidate;
-        end
-      end
-      ICInvalidate: begin
-        if (ic_pref_resp_fire) begin
-          r_pref_state <= ICInit;
-          r_ic_req_tag <= r_ic_req_tag + 'h1;
-        end
-      end
-    endcase // case (r_pref_state)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
 
 
 assign ic_l2_req.valid           = (r_ic_state == ICReq);

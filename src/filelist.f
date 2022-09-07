@@ -64,7 +64,6 @@
 ../src/data_array.sv
 ../src/data_array_1p.sv
 ../src/data_array_2p.sv
-../src/msrh_icache.sv
 ../src/tag_array.sv
 ../src/msrh_frontend.sv
 ../src/msrh_tlb.sv
