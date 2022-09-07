@@ -1,6 +1,8 @@
 // `default_nettype none
 
 module msrh_icache
+  import msrh_pkg::*;
+  import msrh_ic_pkg::*;
   import msrh_lsu_pkg::*;
   import riscv_pkg::*;
 (
@@ -13,50 +15,44 @@ module msrh_icache
 
   input ic_req_t             i_s0_req,
   output logic               o_s0_ready,
-  input msrh_pkg::paddr_t    i_s1_paddr,
+  input paddr_t    i_s1_paddr,
   input logic                i_s1_kill,
 
   output ic_resp_t           o_s2_resp,
 
   output logic               o_s2_miss,
-  output msrh_pkg::vaddr_t   o_s2_miss_vaddr,
+  output vaddr_t   o_s2_miss_vaddr,
 
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp
 );
 
-typedef logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] ic_ways_idx_t;
-typedef logic [msrh_conf_pkg::ICACHE_WAYS-1 : 0]  ic_ways_t;
-typedef logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0] ic_data_t;
-
-typedef enum logic [ 1: 0] {
-  ICInit,
-  ICReq,
-  ICInvalidate,
-  ICResp
-} ic_state_t;
-
 /* S1 stage */
 logic             r_s1_valid;
-ic_ways_t     w_s1_tag_hit;
-msrh_pkg::vaddr_t r_s1_vaddr;
+ic_ways_t         w_s1_tag_hit;
+vaddr_t r_s1_vaddr;
 logic             w_s1_hit;
 
 /* S2 stage */
 logic             r_s2_valid;
 logic             r_s2_hit;
 ic_ways_t         r_s2_tag_hit;
-msrh_pkg::paddr_t r_s2_paddr;
+paddr_t r_s2_paddr;
 ic_data_t         w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
 ic_data_t         w_s2_selected_data;
 
 logic [L2_CMD_TAG_W-1: 0] r_ic_req_tag;
 
+logic                     w_is_tag_normal_fetch;
+logic                     w_is_tag_pre_fetch;
+
 ic_state_t        r_ic_state;
-logic             ic_l2_resp_fire;
-ic_ways_idx_t     r_s2_replace_way;
-msrh_pkg::vaddr_t r_s2_vaddr;
-msrh_pkg::vaddr_t r_s2_waiting_vaddr;
+
+logic                     ic_l2_normal_req_fire;
+logic                     ic_l2_normal_resp_fire;
+ic_ways_idx_t             r_s2_replace_way;
+vaddr_t                   r_s2_vaddr;
+vaddr_t                   r_s2_waiting_vaddr;
 
 ic_ways_idx_t r_replace_way[2**ICACHE_TAG_LOW];
 logic [ICACHE_TAG_LOW-1: 0] w_replace_addr;
@@ -65,6 +61,10 @@ ic_ways_idx_t w_next_way;
 logic [ICACHE_TAG_LOW-1: 0]                     w_tag_ram_addr;
 logic [VADDR_W-1:ICACHE_TAG_LOW]                w_tag_ram_tag;
 logic [ICACHE_TAG_LOW-1: 0]                     w_dat_ram_addr;
+
+
+assign w_is_tag_normal_fetch = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_tag_pre_fetch    = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
 assign w_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -88,14 +88,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // else: !if(msrh_conf_pkg::ICACHE_WAYS == 2)
 
 
-assign w_tag_ram_addr = ic_l2_resp_fire ?
+assign w_tag_ram_addr = ic_l2_normal_resp_fire ?
                         r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                         i_s0_req.vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
-assign w_tag_ram_tag = ic_l2_resp_fire ?
+assign w_tag_ram_tag = ic_l2_normal_resp_fire ?
                        r_s2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW] :
                        i_s0_req.vaddr[VADDR_W-1:ICACHE_TAG_LOW];
 
-assign w_dat_ram_addr = ic_l2_resp_fire ?
+assign w_dat_ram_addr = ic_l2_normal_resp_fire ?
                         r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                         r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -105,8 +105,8 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
 
   logic                    w_ram_wr;
   logic                    w_ram_rd;
-  assign w_ram_wr = ic_l2_resp_fire & (r_replace_way[w_tag_ram_addr] == way);
-  assign w_ram_rd = i_s0_req.valid | ic_l2_resp_fire;
+  assign w_ram_wr = ic_l2_normal_resp_fire & (r_replace_way[w_tag_ram_addr] == way);
+  assign w_ram_rd = i_s0_req.valid | ic_l2_normal_resp_fire;
 
   tag_array
     #(
@@ -196,7 +196,7 @@ end
 
 bit_oh_or
   #(
-    .T(logic[msrh_conf_pkg::ICACHE_DATA_W-1:0]),
+    .T(ic_data_t),
     .WORDS(msrh_conf_pkg::ICACHE_WAYS)
     )
 cache_data_sel
@@ -206,8 +206,9 @@ cache_data_sel
    .o_selected(w_s2_selected_data)
    );
 
-assign ic_l2_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
-                         (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}});
+assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_tag_normal_fetch;
+assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_tag_normal_fetch;
+
 assign o_s2_resp.valid = !i_flush_valid & r_s2_valid & r_s2_hit & (r_ic_state == ICInit);
 assign o_s2_resp.vaddr = r_s2_vaddr [VADDR_W-1: 1];
 assign o_s2_resp.data  = w_s2_selected_data;
@@ -249,7 +250,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       ICResp : begin
-        if (ic_l2_resp_fire) begin
+        if (ic_l2_normal_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
         end else if (i_fence_i) begin
@@ -257,7 +258,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       ICInvalidate: begin
-        if (ic_l2_resp_fire) begin
+        if (ic_l2_normal_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
         end
@@ -266,18 +267,29 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-// IC Prefetcher
-assign ic_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready &
-                           (ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1});
+// --------------
+// L2 Request
+// --------------
+always_comb begin
+  if (w_pref_l2_req_valid) begin
+    ic_l2_req.valid           = 1'b1;
+    ic_l2_req.payload.cmd     = M_XRD;
+    ic_l2_req.payload.addr    = w_pref_l2_req_paddr;
+    ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+    ic_l2_req.payload.data    = 'h0;
+    ic_l2_req.payload.byte_en = 'h0;
+  end else begin
+    ic_l2_req.valid           = (r_ic_state == ICReq);
+    ic_l2_req.payload.cmd     = M_XRD;
+    ic_l2_req.payload.addr    = r_s2_paddr;
+    ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+    ic_l2_req.payload.data    = 'h0;
+    ic_l2_req.payload.byte_en = 'h0;
+  end // else: !if(w_pref_l2_req_valid)
+end // always_comb
 
-
-assign ic_l2_req.valid           = (r_ic_state == ICReq);
-assign ic_l2_req.payload.cmd     = M_XRD;
-assign ic_l2_req.payload.addr    = r_s2_paddr;
-assign ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign ic_l2_req.payload.data    = 'h0;
-assign ic_l2_req.payload.byte_en = 'h0;
 assign ic_l2_resp.ready = 1'b1;
+
 
 assign o_s0_ready = (r_ic_state == ICInit);
 
@@ -294,6 +306,52 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     o_s2_miss_vaddr <= r_s1_vaddr;
   end
 end
+
+
+// =======================
+// Instruction Prefetcher
+// =======================
+logic   ic_l2_pref_req_fire ;
+logic   ic_l2_pref_resp_fire;
+logic   w_pref_l2_req_valid ;
+paddr_t w_pref_l2_req_paddr ;
+
+assign ic_l2_pref_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_tag_pre_fetch;
+assign ic_l2_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_tag_pre_fetch;
+
+
+logic     w_s1_pref_paddr_hit;
+ic_data_t w_s1_pref_hit_data;
+
+
+msrh_ic_pref
+u_ic_pref
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_flush_valid (i_flush_valid),
+   .i_fence_i     (i_fence_i),
+
+   .i_ic_l2_req_fire  (ic_l2_normal_req_fire),
+   .i_ic_l2_req_paddr (ic_l2_req.payload.addr),
+
+   // Requests prefetch
+   .o_pref_l2_req_valid (w_pref_l2_req_valid),
+   .i_pref_l2_req_ready (ic_l2_req.ready),
+   .o_pref_l2_req_paddr (w_pref_l2_req_paddr),
+
+   // Response prefetech
+   .i_pref_l2_resp_valid(ic_l2_pref_resp_fire),
+   .i_pref_l2_resp_data (ic_l2_resp.payload.data),
+
+   // Instruction Fetch search
+   .i_pref_search_valid(i_s0_req.valid),
+   .i_pref_search_paddr(i_s1_paddr),
+   .o_pref_search_hit  (w_s1_pref_paddr_hit),
+   .o_pref_search_data (w_s1_pref_hit_data)
+   );
+
 
 `ifdef SIMULATION
 function void dump_json(int fp);

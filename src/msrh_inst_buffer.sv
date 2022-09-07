@@ -1,4 +1,5 @@
 module msrh_inst_buffer
+  import msrh_pkg::*;
   import decoder_reg_pkg::*;
   (
  input logic i_clk,
@@ -119,8 +120,8 @@ typedef struct packed {
   logic                                      valid;
   logic                                      dead;
   logic [riscv_pkg::VADDR_W-1: 1]            pc;
-  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  data;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0] byte_en;
+  ic_data_t                                  data;
+  ic_strb_t                                  byte_en;
   logic                                      tlb_except_valid;
   msrh_pkg::except_t                         tlb_except_cause;
 

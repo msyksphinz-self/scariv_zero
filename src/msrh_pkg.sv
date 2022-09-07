@@ -69,6 +69,11 @@ typedef logic [RNID_W-1: 0]    rnid_t;
 typedef logic [$clog2(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
 typedef logic [msrh_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask_t;
 
+// ICache Data Types
+typedef logic [$clog2(msrh_conf_pkg::ICACHE_WAYS)-1: 0] ic_ways_idx_t;
+typedef logic [msrh_conf_pkg::ICACHE_WAYS-1 : 0]    ic_ways_t;
+typedef logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]   ic_data_t;
+typedef logic [msrh_conf_pkg::ICACHE_DATA_W/8-1: 0] ic_strb_t;
 
   typedef struct packed {
     logic valid;
@@ -300,13 +305,13 @@ typedef struct packed {
 } reg_rd_issue_t;
 
   typedef struct packed {
-    logic valid;
-    vaddr_t pc_addr;
+    logic        valid;
+    vaddr_t      pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
     logic        is_rvc;
-    brtag_t brtag;
-    brmask_t         br_mask;
+    brtag_t      brtag;
+    brmask_t     br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
@@ -423,17 +428,17 @@ function issue_t assign_issue_op3 (disp_t in,
 endfunction  // assign_issue_t
 
 typedef struct packed {
-  logic                       except_valid;
-  msrh_pkg::except_t          except_type;
-  riscv_pkg::xlen_t           except_tval;
+  logic             except_valid;
+  except_t          except_type;
+  riscv_pkg::xlen_t except_tval;
 
   // For FPU update
-  logic                       fflags_update_valid;
-  msrh_pkg::fflags_t          fflags;
+  logic             fflags_update_valid;
+  fflags_t          fflags;
   // For flushing another instruction
-  logic                       another_flush_valid;
-  msrh_pkg::cmt_id_t          another_flush_cmt_id;
-  msrh_pkg::grp_id_t          another_flush_grp_id;
+  logic             another_flush_valid;
+  cmt_id_t          another_flush_cmt_id;
+  grp_id_t          another_flush_grp_id;
 } done_payload_t;
 
 
@@ -462,14 +467,14 @@ typedef struct packed {
 
 
   typedef struct packed {
-    logic                 valid;
+    logic     valid;
     cmt_id_t  cmt_id;
     grp_id_t  grp_id;
-    logic                 except_valid;
-    except_t              except_type;
+    logic     except_valid;
+    except_t  except_type;
     riscv_pkg::xlen_t except_tval;
-    logic                          fflags_update_valid;
-    fflags_t                       fflags;
+    logic     fflags_update_valid;
+    fflags_t  fflags;
   } done_rpt_t;
 
 // For flushing another instruction
@@ -626,15 +631,15 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
 endfunction // assign_ftq_entry
 
 typedef struct packed {
-  logic                                     valid;
-  logic [riscv_pkg::VADDR_W-1: 1]           pc;
+  logic   valid;
+  logic [riscv_pkg::VADDR_W-1: 1] pc;
 `ifdef SIMULATION
-  vaddr_t                                   pc_dbg;
+  vaddr_t pc_dbg;
 `endif // SIMULATION
-  logic [msrh_conf_pkg::ICACHE_DATA_W-1: 0]  inst;
-  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] byte_en;
-  logic                                     tlb_except_valid;
-  msrh_pkg::except_t                        tlb_except_cause;
+  ic_data_t inst;
+  ic_strb_t byte_en;
+  logic     tlb_except_valid;
+  except_t  tlb_except_cause;
 } inst_buffer_in_t;
 
 endpackage
