@@ -47,14 +47,6 @@ generate for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
       r_snapshots[i_brtag[0]][i_idx] <= w_tmp_snapshots[msrh_conf_pkg::DISP_SIZE][i_idx];
     end
   end
-
-=======
-  always_ff @ (posedge i_clk) begin
-    if (|i_load) begin
-      r_snapshots[w_brtag_sel][r_idx] <= w_tmp_snapshots[msrh_conf_pkg::DISP_SIZE][r_idx];
-    end
-  end
->>>>>>> 347347225af18d3f8b5274bbfaf81210cff264a1
 end
 endgenerate
 
