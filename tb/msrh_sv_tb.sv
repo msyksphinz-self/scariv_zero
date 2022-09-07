@@ -31,10 +31,18 @@ import "DPI-C" function void step_spike
 
 import "DPI-C" function void step_spike_wo_cmp(input int count);
 
-
 `endif // DIRECT_LOAD_HEX
 
+
 module tb;
+
+export "DPI-C" task stop_sim;
+
+task stop_sim;
+  $finish;
+endtask // stop_sim
+
+
 
 logic w_clk;
 logic w_elf_loader_reset_n;
@@ -312,7 +320,7 @@ assign w_elf_req_byte_en = 'h0;
 `endif // DIRECT_LOAD_HEX
 
 localparam STEP = 1;
-localparam TIMEOUT = 100000;
+localparam TIMEOUT = 100000000;
 
 initial begin
   w_clk = 1'b0;
@@ -320,13 +328,13 @@ initial begin
   w_msrh_reset_n        = 1'b0;
   w_ram_reset_n        = 1'b0;
 
-  #(STEP * 10);
+  #(STEP * 100);
 
   w_elf_loader_reset_n = 1'b1;
   w_msrh_reset_n        = 1'b0;
   w_ram_reset_n        = 1'b1;
 
-  #(STEP * 100);
+  #(STEP * 10000);
 
   w_elf_loader_reset_n = 1'b0;
   w_msrh_reset_n        = 1'b1;
@@ -461,15 +469,16 @@ end  // always_ff @ (negedge i_clk, negedge i_msrh_reset_n)
 
 `endif // !`ifndef DIRECT_LOAD_HEX
 
-`ifdef VCS
-export "DPI-C" task stop_sim;
 
-task stop_sim(int code);
-  #1000;
-  $finish;
-endtask // stop_sim
+`ifdef VCS_SIM
 
-`endif // VCS
+initial begin
+  $fsdbDumpfile("wave.fsdb");
+  $fsdbDumpvars(0, tb);
+  $fsdbDumpvars("+all");
+end
+
+`endif // VCS_SIM
 
 
 // always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin

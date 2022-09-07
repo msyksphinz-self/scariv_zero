@@ -37,16 +37,15 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
     end
   end
 
-`ifndef VCS_SIM
-  // TODO: Need to be fixed
+end
+endgenerate
+
+generate for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
   always_ff @ (posedge i_clk) begin
-    if (i_load[d_idx]) begin
-      for(int i =  0; i < 32; i++) begin
-        r_snapshots[i_brtag[d_idx]][i] <= w_tmp_snapshots[d_idx+1][i];
-      end
+    if (|i_load) begin
+      r_snapshots[i_brtag[0]][i_idx] <= w_tmp_snapshots[msrh_conf_pkg::DISP_SIZE][i_idx];
     end
   end
-`endif // VCS_SIM
 
 end
 endgenerate

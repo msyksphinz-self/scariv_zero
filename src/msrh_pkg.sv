@@ -391,6 +391,10 @@ function issue_t assign_issue_op2 (disp_t in,
     ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
   end
 
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
   return ret;
 
 endfunction  // assign_issue_t

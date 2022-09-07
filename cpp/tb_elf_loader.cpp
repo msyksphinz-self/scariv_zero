@@ -265,7 +265,7 @@ load_binary(char const* path_exec,
           /* memif->write(bswap(ph[i].p_paddr), bswap(ph[i].p_filesz), (uint8_t*)buf + bswap(ph[i].p_offset));  */ \
           /* fprintf (stderr, "filesz = %d\n", ph[i].p_filesz); */\
           for (int b_idx = 0; b_idx < ph[i].p_filesz; b_idx++) { \
-            /* fprintf(stderr, "addr = %08x, data = %01x\n", ph[i].p_paddr + b_idx, *(buf + bswap(ph[i].p_offset) + b_idx)); */ \
+            /* fprintf(stderr, "addr = %08x, data = %02x\n", ph[i].p_paddr + b_idx, (uint8_t)(*(buf + bswap(ph[i].p_offset) + b_idx))); */ \
             g_memory->StoreMemory<Byte_t> (ph[i].p_paddr + b_idx, (Byte_t *)(buf + bswap(ph[i].p_offset) + b_idx)); \
           } \
         } \
