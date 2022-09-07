@@ -27,14 +27,15 @@ generate for(genvar i =  0; i < 32; i++) begin
 end
 endgenerate
 
+brtag_t w_brtag_sel;
+bit_oh_or #(.T(brtag_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+u_brtag_sel (.i_oh(i_load), .i_data(i_brtag), .o_selected(w_brtag_sel));
 
-generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
 
-  always_comb begin
-    for(int i =  0; i < 32; i++) begin
-      /* verilator lint_off ALWCOMBORDER */
-      w_tmp_snapshots[d_idx+1][i] = i_rd_valid[d_idx] & (i_rd_archreg[d_idx] == i[ 4: 0]) ? i_rd_rnid[d_idx] : w_tmp_snapshots[d_idx][i];
-    end
+generate for(genvar r_idx =  0; r_idx < 32; r_idx++) begin : register_loop
+  for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    /* verilator lint_off ALWCOMBORDER */
+    assign w_tmp_snapshots[d_idx+1][r_idx] = i_rd_valid[d_idx] & (i_rd_archreg[d_idx] == r_idx[ 4: 0]) ? i_rd_rnid[d_idx] : w_tmp_snapshots[d_idx][r_idx[ 4: 0]];
   end
 
 end
@@ -47,9 +48,15 @@ generate for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
     end
   end
 
+=======
+  always_ff @ (posedge i_clk) begin
+    if (|i_load) begin
+      r_snapshots[w_brtag_sel][r_idx] <= w_tmp_snapshots[msrh_conf_pkg::DISP_SIZE][r_idx];
+    end
+  end
+>>>>>>> 347347225af18d3f8b5274bbfaf81210cff264a1
 end
 endgenerate
-
 
 generate for(genvar i =  0; i < 32; i++) begin : o_loop
   assign o_rn_list[i] = r_snapshots[br_upd_if.brtag][i];
