@@ -1,4 +1,6 @@
 ../src_r2/msrh_ic_pkg.sv
 
+../src_r2/msrh_predictor.sv
+../src_r2/msrh_frontend.sv
 ../src_r2/msrh_icache.sv
 ../src_r2/msrh_ic_pref.sv

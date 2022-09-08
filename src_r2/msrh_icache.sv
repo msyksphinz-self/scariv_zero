@@ -6,22 +6,20 @@ module msrh_icache
   import msrh_lsu_pkg::*;
   import riscv_pkg::*;
 (
-  input logic                i_clk,
-  input logic                i_reset_n,
+  input logic      i_clk,
+  input logic      i_reset_n,
 
-  input logic                i_flush_valid,
+  input logic      i_flush_valid,
 
-  input logic                i_fence_i,
+  input logic      i_fence_i,
 
-  input ic_req_t             i_s0_req,
-  output logic               o_s0_ready,
+  input ic_req_t   i_s0_req,
+  output logic     o_s0_ready,
+
   input paddr_t    i_s1_paddr,
-  input logic                i_s1_kill,
+  input logic      i_s1_kill,
 
-  output ic_resp_t           o_s2_resp,
-
-  output logic               o_s2_miss,
-  output vaddr_t   o_s2_miss_vaddr,
+  output ic_resp_t o_s2_resp,
 
  l2_req_if.master ic_l2_req,
  l2_resp_if.slave ic_l2_resp
@@ -30,7 +28,7 @@ module msrh_icache
 /* S1 stage */
 logic             r_s1_valid;
 ic_ways_t         w_s1_tag_hit;
-vaddr_t r_s1_vaddr;
+vaddr_t           r_s1_vaddr;
 logic             w_s1_hit;
 
 /* S2 stage */
@@ -40,11 +38,15 @@ ic_ways_t         r_s2_tag_hit;
 paddr_t r_s2_paddr;
 ic_data_t         w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
 ic_data_t         w_s2_selected_data;
+logic             r_s2_normal_miss;
+
 
 logic [L2_CMD_TAG_W-1: 0] r_ic_req_tag;
 
-logic                     w_is_tag_normal_fetch;
-logic                     w_is_tag_pre_fetch;
+logic                     w_is_req_tag_normal_fetch;
+logic                     w_is_req_tag_pre_fetch;
+logic                     w_is_resp_tag_normal_fetch;
+logic                     w_is_resp_tag_pre_fetch;
 
 ic_state_t        r_ic_state;
 
@@ -55,23 +57,44 @@ vaddr_t                   r_s2_vaddr;
 vaddr_t                   r_s2_waiting_vaddr;
 
 ic_ways_idx_t r_replace_way[2**ICACHE_TAG_LOW];
-logic [ICACHE_TAG_LOW-1: 0] w_replace_addr;
+logic [ICACHE_TAG_LOW-1: 0] w_s2_replace_addr;
 ic_ways_idx_t w_next_way;
 
 logic [ICACHE_TAG_LOW-1: 0]                     w_tag_ram_addr;
-logic [VADDR_W-1:ICACHE_TAG_LOW]                w_tag_ram_tag;
+logic [VADDR_W-1:ICACHE_TAG_LOW]                w_tag_ram_tag ;
 logic [ICACHE_TAG_LOW-1: 0]                     w_dat_ram_addr;
+ic_data_t                                       w_dat_ram_data;
 
+// ------------------------
+// Instruction Prefetcher
+// ------------------------
+logic   w_pref_l2_req_valid ;
+paddr_t w_pref_l2_req_paddr ;
+logic     w_s2_pref_paddr_hit;
+ic_data_t w_s2_pref_hit_data;
+logic     ic_l2_pref_req_fire;
+logic     ic_l2_pref_resp_fire;
 
-assign w_is_tag_normal_fetch = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign w_is_tag_pre_fetch    = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+logic     w_pref_wr_valid;
+logic     w_pref_wr_ready;
+vaddr_t   w_pref_wr_vaddr;
+ic_data_t w_pref_wr_data ;
 
-assign w_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+logic     w_pref_wr_fire;
+assign w_pref_wr_fire = w_pref_wr_valid & w_pref_wr_ready;
+
+assign w_is_req_tag_normal_fetch = ic_l2_req.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_req_tag_pre_fetch    = ic_l2_req.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+
+assign w_is_resp_tag_normal_fetch = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_resp_tag_pre_fetch    = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+
+assign w_s2_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
 generate if (msrh_conf_pkg::ICACHE_WAYS == 2) begin : replace_way_2
-  assign w_next_way = ~r_replace_way[w_replace_addr];
+  assign w_next_way = ~r_replace_way[w_s2_replace_addr];
 end else begin
-  assign w_next_way = r_replace_way[w_replace_addr] + 'h1;
+  assign w_next_way = r_replace_way[w_s2_replace_addr] + 'h1;
 end
 endgenerate
 
@@ -82,22 +105,26 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
   end else begin
     if (o_s2_resp.valid) begin
-      r_replace_way[w_replace_addr] <= w_next_way;
+      r_replace_way[w_s2_replace_addr] <= w_next_way;
     end
   end
 end // else: !if(msrh_conf_pkg::ICACHE_WAYS == 2)
 
 
-assign w_tag_ram_addr = ic_l2_normal_resp_fire ?
-                        r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                        i_s0_req.vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
-assign w_tag_ram_tag = ic_l2_normal_resp_fire ?
-                       r_s2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW] :
-                       i_s0_req.vaddr[VADDR_W-1:ICACHE_TAG_LOW];
+assign w_tag_ram_addr = i_s0_req.valid         ? i_s0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                                                 w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
-assign w_dat_ram_addr = ic_l2_normal_resp_fire ?
-                        r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                        r_s1_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+assign w_tag_ram_tag = i_s0_req.valid         ? i_s0_req.vaddr    [VADDR_W-1:ICACHE_TAG_LOW] :
+                       ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW] :
+                                                w_pref_wr_vaddr   [VADDR_W-1:ICACHE_TAG_LOW];
+
+assign w_dat_ram_addr = r_s1_valid             ? r_s1_vaddr        [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                                                 w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+
+assign w_dat_ram_data = w_pref_wr_fire ? w_pref_wr_data :
+                        ic_l2_resp.payload.data;
 
 generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : icache_way_loop //
   logic    w_s1_tag_valid;
@@ -105,7 +132,8 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
 
   logic                    w_ram_wr;
   logic                    w_ram_rd;
-  assign w_ram_wr = ic_l2_normal_resp_fire & (r_replace_way[w_tag_ram_addr] == way);
+  assign w_ram_wr = (r_replace_way[w_tag_ram_addr] == way) &
+                    (ic_l2_normal_resp_fire | w_pref_wr_fire);
   assign w_ram_rd = i_s0_req.valid | ic_l2_normal_resp_fire;
 
   tag_array
@@ -140,7 +168,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
         .i_wr  (w_ram_wr),
         .i_addr(w_dat_ram_addr),
         .i_be  ({ICACHE_DATA_B_W{1'b1}}),
-        .i_data(ic_l2_resp.payload.data),
+        .i_data(w_dat_ram_data),
         .o_data(w_s2_data[way])
         );
 
@@ -206,14 +234,20 @@ cache_data_sel
    .o_selected(w_s2_selected_data)
    );
 
-assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_tag_normal_fetch;
-assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_tag_normal_fetch;
+assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_tag_normal_fetch;
+assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_normal_fetch;
 
-assign o_s2_resp.valid = !i_flush_valid & r_s2_valid & r_s2_hit & (r_ic_state == ICInit);
+assign o_s2_resp.valid = !i_flush_valid &
+                         (w_s2_pref_paddr_hit |
+                          r_s2_valid & r_s2_hit & (r_ic_state == ICInit));
+
 assign o_s2_resp.vaddr = r_s2_vaddr [VADDR_W-1: 1];
-assign o_s2_resp.data  = w_s2_selected_data;
+assign o_s2_resp.data  = w_s2_pref_paddr_hit ? w_s2_pref_hit_data :
+                         w_s2_selected_data;
 assign o_s2_resp.be    = {ICACHE_DATA_B_W{1'b1}} &
                          ~((1 << r_s2_vaddr[$clog2(ICACHE_DATA_B_W)-1: 0])-1);
+assign o_s2_resp.miss = r_s2_normal_miss & ~w_s2_pref_paddr_hit;
+
 `ifdef SIMULATION
 assign o_s2_resp.vaddr_dbg = r_s2_vaddr [VADDR_W-1: 0];
 `endif // SIMULATION
@@ -234,14 +268,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case (r_ic_state)
       ICInit : begin
         if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i) begin
-          // if (ic_l2_req.ready) begin
-          r_ic_state <= ICReq;
+          r_ic_state <= ICCheckPref;
           r_s2_paddr <= i_s1_paddr;
           r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
           r_s2_waiting_vaddr <= r_s1_vaddr;
           // end
         end
       end // case: ICInit
+      ICCheckPref : begin
+        if (!w_s2_pref_paddr_hit) begin
+          r_ic_state <= ICReq;
+        end else begin
+          r_ic_state <= ICInit;
+        end
+      end
       ICReq : begin
         if (ic_l2_req.ready & !i_fence_i) begin
           r_ic_state <= ICResp;
@@ -262,6 +302,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
         end
+      end
+      default : begin
       end
     endcase // case (r_ic_state)
   end
@@ -293,17 +335,14 @@ assign ic_l2_resp.ready = 1'b1;
 
 assign o_s0_ready = (r_ic_state == ICInit);
 
-
 // Missed Signal at s2
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_s2_miss <= 1'b0;
-    o_s2_miss_vaddr <= 'h0;
+    r_s2_normal_miss <= 1'b0;
   end else begin
-    o_s2_miss       <= r_s1_valid &
-                       ((r_ic_state == ICInit) & !i_flush_valid & !w_s1_hit |
-                        (r_ic_state != ICInit));
-    o_s2_miss_vaddr <= r_s1_vaddr;
+    r_s2_normal_miss <= r_s1_valid &
+                        ((r_ic_state == ICInit) & !i_flush_valid & !w_s1_hit |
+                         (r_ic_state != ICInit));
   end
 end
 
@@ -311,18 +350,10 @@ end
 // =======================
 // Instruction Prefetcher
 // =======================
-logic   ic_l2_pref_req_fire ;
-logic   ic_l2_pref_resp_fire;
-logic   w_pref_l2_req_valid ;
-paddr_t w_pref_l2_req_paddr ;
+assign ic_l2_pref_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_tag_pre_fetch;
+assign ic_l2_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_pre_fetch;
 
-assign ic_l2_pref_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_tag_pre_fetch;
-assign ic_l2_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_tag_pre_fetch;
-
-
-logic     w_s1_pref_paddr_hit;
-ic_data_t w_s1_pref_hit_data;
-
+assign w_pref_wr_ready = !(r_s1_valid | ic_l2_normal_resp_fire);
 
 msrh_ic_pref
 u_ic_pref
@@ -346,10 +377,16 @@ u_ic_pref
    .i_pref_l2_resp_data (ic_l2_resp.payload.data),
 
    // Instruction Fetch search
-   .i_pref_search_valid(i_s0_req.valid),
-   .i_pref_search_paddr(i_s1_paddr),
-   .o_pref_search_hit  (w_s1_pref_paddr_hit),
-   .o_pref_search_data (w_s1_pref_hit_data)
+   .i_s1_pref_search_valid (r_s1_valid          ),
+   .i_s1_pref_search_vaddr (r_s1_vaddr          ),
+   .i_s1_pref_search_paddr (i_s1_paddr          ),
+   .o_s2_pref_search_hit   (w_s2_pref_paddr_hit ),
+   .o_s2_pref_search_data  (w_s2_pref_hit_data  ),
+
+   .o_ic_wr_valid ( w_pref_wr_valid ),
+   .i_ic_wr_ready ( w_pref_wr_ready ),
+   .o_ic_wr_vaddr ( w_pref_wr_vaddr ),
+   .o_ic_wr_data  ( w_pref_wr_data  )
    );
 
 
@@ -368,8 +405,8 @@ function void dump_json(int fp);
     end
   end
   if (r_s2_valid) begin
-    $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_miss);
-    $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
+    $fwrite(fp, "    o_s2_miss : \"%d\",\n", o_s2_resp.miss);
+    $fwrite(fp, "    o_s2_miss_vaddr : \"0x%x\",\n", o_s2_resp.vaddr);
   end
   if (ic_l2_req.valid) begin
     $fwrite(fp, "    \"ic_l2_req\" : {\n");
@@ -384,8 +421,8 @@ function void dump_json(int fp);
     $fwrite(fp, "    \"o_s2_resp\" : {\n");
     $fwrite(fp, "      valid : \"%d\",\n", o_s2_resp.valid);
     $fwrite(fp, "      data : \"%x\",\n",  o_s2_resp.data);
-    $fwrite(fp, "      miss : \"%d\",\n",  o_s2_miss);
-    $fwrite(fp, "      vaddr : \"0x%x\",\n", o_s2_miss_vaddr);
+    $fwrite(fp, "      miss : \"%d\",\n",  o_s2_resp.miss);
+    $fwrite(fp, "      vaddr : \"0x%x\",\n", o_s2_resp.vaddr);
     $fwrite(fp, "    },\n");
   end
 
@@ -409,7 +446,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end else begin
       if (r_s2_valid) begin
         r_s2_valid_count <= r_s2_valid_count + 'h1;
-        if (o_s2_miss) begin
+        if (o_s2_resp.miss) begin
           r_s2_miss_count <= r_s2_miss_count + 'h1;
         end
       end

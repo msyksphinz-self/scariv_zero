@@ -305,8 +305,8 @@ typedef struct packed {
 } reg_rd_issue_t;
 
   typedef struct packed {
-    logic        valid;
-    vaddr_t      pc_addr;
+    logic   valid;
+    vaddr_t pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
     logic        is_rvc;

@@ -822,7 +822,7 @@ always_comb begin
 
     end // else: !if(r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) 1= 'h0))
 
-  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid)) begin
+  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid & ~i_commit.dead_id)) begin
     if (i_commit.except_type == msrh_pkg::MRET) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */

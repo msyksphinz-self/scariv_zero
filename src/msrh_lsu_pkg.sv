@@ -50,21 +50,6 @@ typedef struct   packed {
     LRQ_EVICT_CONFLICT
   } lmq_haz_t;
 
-  typedef struct packed {
-    logic valid;
-    msrh_pkg::vaddr_t vaddr;
-  } ic_req_t;
-
-  typedef struct packed {
-    logic valid;
-    logic [riscv_pkg::VADDR_W-1:1]      vaddr;
-    ic_data_t data;
-    ic_strb_t be;
-`ifdef SIMULATION
-    msrh_pkg::vaddr_t vaddr_dbg;
-`endif // SIMULATION
-  } ic_resp_t;
-
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
     M_XWR       = 5'b00001,  // int store

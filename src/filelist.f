@@ -65,7 +65,6 @@
 ../src/data_array_1p.sv
 ../src/data_array_2p.sv
 ../src/tag_array.sv
-../src/msrh_frontend.sv
 ../src/msrh_tlb.sv
 ../src/msrh_tile.sv
 ../src/msrh_tile_wrapper.sv
@@ -132,7 +131,6 @@
 
 ../src/pma_map.sv
 
-../src/msrh_predictor.sv
 ../src/msrh_bimodal.sv
 ../src/msrh_btb.sv
 ../src/msrh_pred_ras.sv

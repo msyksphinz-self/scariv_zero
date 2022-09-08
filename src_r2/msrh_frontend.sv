@@ -70,7 +70,7 @@ msrh_pkg::vaddr_t  w_s0_vaddr;
 logic                           w_s0_predicted;
 msrh_lsu_pkg::tlb_req_t         w_s0_tlb_req;
 msrh_lsu_pkg::tlb_resp_t        w_s0_tlb_resp;
-msrh_ic_pkg::ic_req_t          w_s0_ic_req;
+msrh_ic_pkg::ic_req_t           w_s0_ic_req;
 logic                           w_s0_ic_ready;
 msrh_pkg::vaddr_t w_s0_vaddr_flush_next;
 
@@ -102,9 +102,7 @@ logic                           r_s2_valid;
 logic                           r_s2_clear;
 logic                           r_s2_predicted;
 msrh_pkg::vaddr_t  r_s2_vaddr;
-msrh_ic_pkg::ic_resp_t         w_s2_ic_resp;
-logic                           w_s2_ic_miss;
-msrh_pkg::vaddr_t w_s2_ic_miss_vaddr;
+msrh_ic_pkg::ic_resp_t          w_s2_ic_resp;
 logic                           r_s2_tlb_miss;
 logic                           r_s2_tlb_except_valid;
 except_t              r_s2_tlb_except_cause;
@@ -338,9 +336,9 @@ always_comb begin
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
-      end else if (w_s2_ic_miss & !r_s2_clear) begin
+      end else if (w_s2_ic_resp.miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
-        w_s0_vaddr_next = w_s2_ic_miss_vaddr;
+        w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
       end else if (r_s2_valid & !r_s2_clear & w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
         // Retry from S2 stage Vaddr
         w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
@@ -574,10 +572,7 @@ msrh_icache u_msrh_icache
    .o_s2_resp (w_s2_ic_resp),
 
    .ic_l2_req  (ic_l2_req ),
-   .ic_l2_resp (ic_l2_resp),
-
-   .o_s2_miss       (w_s2_ic_miss      ),
-   .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
+   .ic_l2_resp (ic_l2_resp)
    );
 
 assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
