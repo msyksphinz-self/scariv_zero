@@ -25,18 +25,22 @@ module msrh_icache
  l2_resp_if.slave ic_l2_resp
 );
 
+// S0 stage
+logic    w_s0_req_fire;
+
 /* S1 stage */
 logic             r_s1_valid;
 ic_ways_t         w_s1_tag_hit;
 vaddr_t           r_s1_vaddr;
 logic             w_s1_hit;
+ic_data_t         w_s1_data[msrh_conf_pkg::ICACHE_WAYS];
 
 /* S2 stage */
 logic             r_s2_valid;
 logic             r_s2_hit;
 ic_ways_t         r_s2_tag_hit;
 paddr_t r_s2_paddr;
-ic_data_t         w_s2_data[msrh_conf_pkg::ICACHE_WAYS];
+ic_data_t         r_s2_data[msrh_conf_pkg::ICACHE_WAYS];
 ic_data_t         w_s2_selected_data;
 logic             r_s2_normal_miss;
 
@@ -70,8 +74,10 @@ ic_data_t                                       w_dat_ram_data;
 // ------------------------
 logic   w_pref_l2_req_valid ;
 paddr_t w_pref_l2_req_paddr ;
-logic     w_s2_pref_paddr_hit;
-ic_data_t w_s2_pref_hit_data;
+logic     w_s1_pref_paddr_hit;
+ic_data_t w_s1_pref_hit_data;
+logic     r_s2_pref_paddr_hit;
+ic_data_t r_s2_pref_hit_data;
 logic     ic_l2_pref_req_fire;
 logic     ic_l2_pref_resp_fire;
 
@@ -111,15 +117,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // else: !if(msrh_conf_pkg::ICACHE_WAYS == 2)
 
 
-assign w_tag_ram_addr = i_s0_req.valid         ? i_s0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+assign w_tag_ram_addr = w_s0_req_fire          ? i_s0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                         ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                                                  w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
-assign w_tag_ram_tag = i_s0_req.valid         ? i_s0_req.vaddr    [VADDR_W-1:ICACHE_TAG_LOW] :
+assign w_tag_ram_tag = w_s0_req_fire          ? i_s0_req.vaddr    [VADDR_W-1:ICACHE_TAG_LOW] :
                        ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW] :
                                                 w_pref_wr_vaddr   [VADDR_W-1:ICACHE_TAG_LOW];
 
-assign w_dat_ram_addr = r_s1_valid             ? r_s1_vaddr        [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+assign w_dat_ram_addr = w_s0_req_fire          ? i_s0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                         ic_l2_normal_resp_fire ? r_s2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
                                                  w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -134,7 +140,7 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
   logic                    w_ram_rd;
   assign w_ram_wr = (r_replace_way[w_tag_ram_addr] == way) &
                     (ic_l2_normal_resp_fire | w_pref_wr_fire);
-  assign w_ram_rd = i_s0_req.valid | ic_l2_normal_resp_fire;
+  assign w_ram_rd = w_s0_req_fire | ic_l2_normal_resp_fire;
 
   tag_array
     #(
@@ -163,25 +169,30 @@ generate for(genvar way = 0; way < msrh_conf_pkg::ICACHE_WAYS; way++) begin : ic
       .WORDS(1 << ICACHE_TAG_LOW)
       )
   data (
-        .i_clk(i_clk),
+        .i_clk    (i_clk),
         .i_reset_n(i_reset_n),
-        .i_wr  (w_ram_wr),
-        .i_addr(w_dat_ram_addr),
-        .i_be  ({ICACHE_DATA_B_W{1'b1}}),
-        .i_data(w_dat_ram_data),
-        .o_data(w_s2_data[way])
+        .i_wr   (w_ram_wr                ),
+        .i_addr (w_dat_ram_addr          ),
+        .i_be   ({ICACHE_DATA_B_W{1'b1}} ),
+        .i_data (w_dat_ram_data          ),
+        .o_data (w_s1_data[way]          )
         );
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_s2_tag_hit[way] <= 1'b0;
+      r_s2_data   [way] <= 'h0;
     end else begin
       r_s2_tag_hit[way] <= w_s1_tag_hit[way];
+      r_s2_data   [way] <= w_s1_data   [way];
     end
   end
 
 end
 endgenerate
+
+
+assign w_s0_req_fire = i_s0_req.valid & o_s0_ready;
 
 // ===============
 // S1 stage
@@ -196,7 +207,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     // This valid is not flush:
     // Because this when flushed, same cycle new request is issued,
     // should'nt be flushed.
-    r_s1_valid <= i_s0_req.valid & o_s0_ready;
+    r_s1_valid <= w_s0_req_fire;
     r_s1_vaddr <= i_s0_req.vaddr;
   end
 end
@@ -230,7 +241,7 @@ bit_oh_or
 cache_data_sel
   (
    .i_oh      (r_s2_tag_hit      ),
-   .i_data    (w_s2_data         ),
+   .i_data    (r_s2_data         ),
    .o_selected(w_s2_selected_data)
    );
 
@@ -238,15 +249,15 @@ assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_t
 assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_normal_fetch;
 
 assign o_s2_resp.valid = !i_flush_valid &
-                         (w_s2_pref_paddr_hit |
+                         (r_s2_pref_paddr_hit |
                           r_s2_valid & r_s2_hit & (r_ic_state == ICInit));
 
 assign o_s2_resp.vaddr = r_s2_vaddr [VADDR_W-1: 1];
-assign o_s2_resp.data  = w_s2_pref_paddr_hit ? w_s2_pref_hit_data :
+assign o_s2_resp.data  = r_s2_pref_paddr_hit ? r_s2_pref_hit_data :
                          w_s2_selected_data;
 assign o_s2_resp.be    = {ICACHE_DATA_B_W{1'b1}} &
                          ~((1 << r_s2_vaddr[$clog2(ICACHE_DATA_B_W)-1: 0])-1);
-assign o_s2_resp.miss = r_s2_normal_miss & ~w_s2_pref_paddr_hit;
+assign o_s2_resp.miss = r_s2_normal_miss & ~r_s2_pref_paddr_hit;
 
 `ifdef SIMULATION
 assign o_s2_resp.vaddr_dbg = r_s2_vaddr [VADDR_W-1: 0];
@@ -267,21 +278,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_ic_state)
       ICInit : begin
-        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i) begin
-          r_ic_state <= ICCheckPref;
+        if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i &
+            !w_s1_pref_paddr_hit) begin
+          r_ic_state <= ICReq;
           r_s2_paddr <= i_s1_paddr;
           r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
           r_s2_waiting_vaddr <= r_s1_vaddr;
           // end
         end
       end // case: ICInit
-      ICCheckPref : begin
-        if (!w_s2_pref_paddr_hit) begin
-          r_ic_state <= ICReq;
-        end else begin
-          r_ic_state <= ICInit;
-        end
-      end
       ICReq : begin
         if (ic_l2_req.ready & !i_fence_i) begin
           r_ic_state <= ICResp;
@@ -353,7 +358,13 @@ end
 assign ic_l2_pref_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_tag_pre_fetch;
 assign ic_l2_pref_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_pre_fetch;
 
-assign w_pref_wr_ready = !(r_s1_valid | ic_l2_normal_resp_fire);
+assign w_pref_wr_ready = !(w_s0_req_fire | ic_l2_normal_resp_fire);
+
+
+always_ff @ (posedge i_clk) begin
+  r_s2_pref_paddr_hit <= w_s1_pref_paddr_hit;
+  r_s2_pref_hit_data  <= w_s1_pref_hit_data;
+end
 
 msrh_ic_pref
 u_ic_pref
@@ -364,7 +375,8 @@ u_ic_pref
    .i_flush_valid (i_flush_valid),
    .i_fence_i     (i_fence_i),
 
-   .i_ic_l2_req_fire  (ic_l2_normal_req_fire),
+   .i_ic_l2_req_fire  (ic_l2_normal_req_fire ),
+   .i_ic_l2_req_vaddr (r_s2_waiting_vaddr    ),
    .i_ic_l2_req_paddr (ic_l2_req.payload.addr),
 
    // Requests prefetch
@@ -377,11 +389,10 @@ u_ic_pref
    .i_pref_l2_resp_data (ic_l2_resp.payload.data),
 
    // Instruction Fetch search
-   .i_s1_pref_search_valid (r_s1_valid          ),
-   .i_s1_pref_search_vaddr (r_s1_vaddr          ),
-   .i_s1_pref_search_paddr (i_s1_paddr          ),
-   .o_s2_pref_search_hit   (w_s2_pref_paddr_hit ),
-   .o_s2_pref_search_data  (w_s2_pref_hit_data  ),
+   .i_s0_pref_search_valid (i_s0_req.valid      ),
+   .i_s0_pref_search_vaddr (i_s0_req.vaddr      ),
+   .o_s1_pref_search_hit   (w_s1_pref_paddr_hit ),
+   .o_s1_pref_search_data  (w_s1_pref_hit_data  ),
 
    .o_ic_wr_valid ( w_pref_wr_valid ),
    .i_ic_wr_ready ( w_pref_wr_ready ),
@@ -394,7 +405,7 @@ u_ic_pref
 function void dump_json(int fp);
   $fwrite(fp, "  \"msrh_icache\" : {\n");
 
-  if (i_s0_req.valid & o_s0_ready) begin
+  if (w_s0_req_fire) begin
     $fwrite(fp, "    i_s0_req.valid : \"%d\",\n", i_s0_req.valid);
     $fwrite(fp, "    i_s0_req.vaddr : \"0x%x\",\n", i_s0_req.vaddr);
   end

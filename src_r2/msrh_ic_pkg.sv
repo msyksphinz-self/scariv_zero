@@ -18,9 +18,8 @@ typedef struct packed {
 `endif // SIMULATION
 } ic_resp_t;
 
-typedef enum logic [ 2: 0] {
+typedef enum logic [ 1: 0] {
   ICInit,
-  ICCheckPref,
   ICReq,
   ICInvalidate,
   ICResp

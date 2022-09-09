@@ -20,6 +20,7 @@ module msrh_ic_pref
 
  // Interface accessing with L2 by normal i-fetch
  input logic    i_ic_l2_req_fire,
+ input vaddr_t  i_ic_l2_req_vaddr,
  input paddr_t  i_ic_l2_req_paddr,
 
  // Requests prefetch
@@ -32,11 +33,10 @@ module msrh_ic_pref
  input ic_data_t i_pref_l2_resp_data,
 
  // Instruction Fetch search
- input logic      i_s1_pref_search_valid,
- input vaddr_t    i_s1_pref_search_vaddr,
- input paddr_t    i_s1_pref_search_paddr,
- output logic     o_s2_pref_search_hit,
- output ic_data_t o_s2_pref_search_data,
+ input logic      i_s0_pref_search_valid,
+ input vaddr_t    i_s0_pref_search_vaddr,
+ output logic     o_s1_pref_search_hit,
+ output ic_data_t o_s1_pref_search_data,
 
  // Write ICCache Interface
  output logic     o_ic_wr_valid,
@@ -46,14 +46,15 @@ module msrh_ic_pref
  );
 
 // Prefetcher state machine
-ic_state_t        r_pref_state;
-msrh_pkg::paddr_t r_pref_paddr;
-ic_ways_idx_t     r_pref_replace_way;
-msrh_pkg::vaddr_t r_pref_waiting_vaddr;
+ic_state_t    r_pref_state;
+paddr_t       r_pref_paddr;
+ic_ways_idx_t r_pref_replace_way;
+vaddr_t       r_pref_vaddr;
 
-logic     r_pref_l2_valid;
-paddr_t   r_pref_l2_paddr;
-ic_data_t r_pref_l2_data;
+logic     r_prefetched_valid;
+vaddr_t   r_prefetched_vaddr;
+paddr_t   r_prefetched_paddr;
+ic_data_t r_prefetched_data;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -63,7 +64,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       ICInit : begin
         if (~i_flush_valid & i_ic_l2_req_fire & !i_fence_i) begin
           r_pref_state <= ICReq;
-          r_pref_paddr <= i_ic_l2_req_paddr + msrh_conf_pkg::ICACHE_DATA_W / 8;
+          r_pref_vaddr <= (i_ic_l2_req_vaddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + msrh_lsu_pkg::ICACHE_DATA_B_W;
+          r_pref_paddr <= (i_ic_l2_req_paddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + msrh_lsu_pkg::ICACHE_DATA_B_W;
         end
       end // case: ICInit
       ICReq : begin
@@ -100,26 +102,26 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     if ((r_pref_state == ICResp) & i_pref_l2_resp_valid) begin
-      r_pref_l2_valid <= 1'b1;
-      r_pref_l2_paddr <= r_pref_paddr;
-      r_pref_l2_data  <= i_pref_l2_resp_data;
+      r_prefetched_valid <= 1'b1;
+      r_prefetched_vaddr <= r_pref_vaddr;
+      r_prefetched_data  <= i_pref_l2_resp_data;
     end else if (o_ic_wr_valid & i_ic_wr_ready) begin
-      r_pref_l2_valid <= 1'b0;
+      r_prefetched_valid <= 1'b0;
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-logic w_s1_pref_search_hit;
-assign w_s1_pref_search_hit = i_s1_pref_search_valid &
-                              r_pref_l2_valid &
-                              (i_s1_pref_search_paddr[$clog2(msrh_conf_pkg::ICACHE_DATA_W)-1: $clog2(ICACHE_DATA_B_W)] ==
-                               r_pref_l2_paddr[$clog2(msrh_conf_pkg::ICACHE_DATA_W)-1: $clog2(ICACHE_DATA_B_W)]);
+logic w_s0_pref_search_hit;
+assign w_s0_pref_search_hit = i_s0_pref_search_valid &
+                              r_prefetched_valid &
+                              (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
+                               r_prefetched_vaddr    [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
 
 always_ff @ (posedge i_clk) begin
   // Search
-  o_s2_pref_search_hit  <= w_s1_pref_search_hit;
-  o_s2_pref_search_data <= r_pref_l2_data;
+  o_s1_pref_search_hit  <= w_s0_pref_search_hit;
+  o_s1_pref_search_data <= r_prefetched_data;
 end
 
 // =========================
@@ -135,9 +137,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_pref_wr_state)
       PrefWrInit : begin
-        if (w_s1_pref_search_hit) begin
-          r_pref_search_vaddr <= i_s1_pref_search_vaddr;
-          r_pref_wr_state <= PrefWrWait;
+        if (w_s0_pref_search_hit) begin
+          r_pref_search_vaddr <= i_s0_pref_search_vaddr;
+          r_pref_wr_state     <= PrefWrWait;
         end
       end
       PrefWrWait : begin
@@ -153,7 +155,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 assign o_ic_wr_valid = (r_pref_wr_state == PrefWrWait);
-assign o_ic_wr_vaddr = r_pref_search_vaddr;
-assign o_ic_wr_data  = r_pref_l2_data;
+assign o_ic_wr_vaddr = r_prefetched_vaddr;
+assign o_ic_wr_data  = r_prefetched_data;
 
 endmodule // msrh_ic_pref
