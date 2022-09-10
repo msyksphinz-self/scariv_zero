@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
-import test_rv32
-
+import os
+import subprocess
+import json
 import argparse
 
 parser = argparse.ArgumentParser(description='Compile design and execute tests')
@@ -12,7 +13,7 @@ parser.add_argument('-i', '--isa', dest='isa', action='store',
 parser.add_argument('-c', '--conf', dest='conf', action='store',
                     default='standard',
                     help="Configuration of design : tiny, small, standard, big, giant")
-parser.add_argument('-t', '--testcase', dest='test', action='store',
+parser.add_argument('-t', '--testcase', dest='testcase', action='store',
                     default='testcase',
                     help="Testcase of run")
 parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
@@ -20,49 +21,55 @@ parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
 
 args = parser.parse_args()
 
-print(args)
-
 isa = args.isa
+conf = args.conf
 
 rv_xlen = 0
 rv_flen = 0
-isa_ext = isa.slice[4:8]
+isa_ext = isa[4:9]
+testcase = args.testcase
 
-if not (isa.slice[0:3] == "rv32" or isa.slice[0:3] == "rv64") :
+if not (isa[0:4] == "rv32" or isa[0:4] == "rv64") :
     print ("isa option need to start from \"rv32\" or \"rv64\"")
     exit
 else:
-    rv_xlen = isa.slice[2:3]
-    if isa.include('d') :
-        rv_flen = "64"
-    elif isa.include('f') :
-        rv_flen = "32"
-    else :
-        rv_flen = "0"
-
+    rv_xlen = int(isa[2:4])
+    print(isa_ext)
+    if "d" in isa_ext :
+        rv_flen = 64
+    elif "f" in isa_ext :
+        rv_flen = 32
 
 ## Build verilator binary
-command_build = "make rv#{rv_xlen}_build CONF=#{conf} ISA=#{isa_ext} RV_XLEN=#{rv_xlen} RV_FLEN=#{rv_flen}"
-print (command_build)
-system("#{command_build}")
+build_command = ["make", "rv" + str(rv_xlen) + "_build", "CONF=" + conf,  "ISA=" + isa_ext, "RV_XLEN=" + str(rv_xlen), "RV_FLEN=" + str(rv_flen)]
+print(build_command)
+subprocess.call(build_command)
 
-select_test = test_table.select{ |test| (test["name"] == testcase) }
-if select_test.size != 1 :
-    print ("Selected Test are not valid. " + select_test.to_s)
-    exit
+test_table = json
 
+if rv_xlen == 32 :
+    json_open = open('rv32-tests.json', 'r')
+    test_table = json.load(json_open)
+elif rv_xlen == 64 :
+    rv64_tests_fp = open('rv64-tests.json', 'r')
+    test_table = json.load(rv64_tests_fp)
+    rv64_bench_fp = open('rv64-bench.json', 'r')
+    test_table += json.load(rv64_bench_fp)
 
-output_file = File.basename(select_test[0]["elf"], ".*") + "." + isa + "." + conf + ".log"
-command_str = "./msrh_tb_#{isa}_#{conf}-debug -d -e " + "../tests/" + select_test[0]["elf"].to_s + " -o #{output_file}" + " " + options
-system("#{command_str}")
+select_test = list(filter(lambda x: x["name"] == testcase, test_table))
 
-print select_test[0]["name"] + "\t: "
-result_stdout = `cat #{output_file}`
-if result_stdout.include?("SIMULATION FINISH : FAIL (CODE=100)") :
+output_file = os.path.basename(select_test[0]["elf"]) + "." + isa + "." + conf + ".log"
+command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + select_test[0]["elf"] + " -o " + output_file + " "
+subprocess.call(command_str.split(" "))
+
+print (select_test[0]["name"] + "\t: ")
+result_stdout = subprocess.check_output(["cat", output_file])
+
+if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
     print ("ERROR\n")
-elif result_stdout.include?("SIMULATION FINISH : FAIL") :
+elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
     print ("MATCH\n")
-elif result_stdout.include?("SIMULATION FINISH : PASS") :
+elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
     print ("PASS\n")
 else :
     print ("UNKNOWN\n")
