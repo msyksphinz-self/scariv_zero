@@ -14,9 +14,7 @@ module msrh_btb
    input logic  i_reset_n,
 
    btb_update_if.slave update_btb_if,
-   btb_search_if.slave search_btb_if,
-
-   output logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] o_s1_btb_hit_oh
+   btb_search_if.slave search_btb_if
  );
 
 logic           r_s1_search_valid;

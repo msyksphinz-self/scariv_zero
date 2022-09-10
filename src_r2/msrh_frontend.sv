@@ -498,8 +498,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
-    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
-    r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    if (w_flush_valid) begin
+      r_s1_valid <= 1'b0;
+      r_s1_clear <= 1'b0;
+    end else begin
+      r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
+      r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    end
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
@@ -528,11 +533,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `ifdef SIMULATION
     r_s2_paddr <= 'h0;
 `endif // SIMULATION
-  end else begin
-    r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear |
-                  w_s2_predict_valid & ~r_s1_predicted |
-                  ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+  end else begin // if (!i_reset_n)
+    if (w_flush_valid) begin
+      r_s2_valid <= 1'b0;
+      r_s2_clear <= 1'b0;
+    end else begin
+      r_s2_valid <= r_s1_valid;
+      r_s2_clear <= r_s1_clear |
+                    w_s2_predict_valid & ~r_s1_predicted |
+                    ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    end
     r_s2_predicted <= r_s1_predicted;
     r_s2_vaddr <= r_s1_vaddr;
     r_s2_tlb_miss         <= r_s1_tlb_miss;
@@ -672,7 +682,8 @@ assign w_s1_predict_target_vaddr = w_s1_btb_target_vaddr;
 
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_gshare_hit_array_tree;
 logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_call_ret_tree;
-bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_btb_gshare_tree_lsb   (.in(r_s2_btb_gshare_hit_array), .out(w_s2_btb_gshare_hit_array_tree));
+// bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_btb_gshare_tree_lsb   (.in(r_s2_btb_gshare_hit_array), .out(w_s2_btb_gshare_hit_array_tree));
+assign w_s2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
 
 assign w_s2_predict_valid        = ((w_s2_btb_gshare_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) ?

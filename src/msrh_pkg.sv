@@ -511,7 +511,7 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & |(commit.flush_valid & ~commit.dead_id);
+  return commit.commit & |(commit.flush_valid);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,

@@ -25,7 +25,7 @@ module msrh_predictor
 
  btb_update_if.slave update_btb_if,
  btb_search_if.slave search_btb_if,
- output msrh_pkg::vaddr_t o_s1_btb_target_vaddr,
+ output vaddr_t o_s1_btb_target_vaddr,
 
  ras_search_if.master ras_search_if,
 
@@ -42,10 +42,18 @@ msrh_btb u_btb
    .i_reset_n(i_reset_n),
 
    .update_btb_if (update_btb_if),
-   .search_btb_if (search_btb_if),
-
-   .o_s1_btb_hit_oh (w_s1_btb_hit_oh)
+   .search_btb_if (search_btb_if)
    );
+
+bit_oh_or_packed
+  #(.T(vaddr_t),
+    .WORDS(ICACHE_DATA_B_W/2)
+    )
+u_s1_target_vaddr_hit_oh (
+ .i_oh      (search_btb_if.s1_hit),
+ .i_data    (search_btb_if.s1_target_vaddr),
+ .o_selected(o_s1_btb_target_vaddr)
+ );
 
 typedef enum logic {
   RVC_CALL = 1'b0,
@@ -70,7 +78,7 @@ logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
 
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_noncond_be;
-msrh_pkg::vaddr_t                 w_s2_call_vaddr;
+vaddr_t                 w_s2_call_vaddr;
 logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_next_pc;
 logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
 logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_ret_vaddr;
@@ -90,11 +98,11 @@ logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_target_vaddr;
 logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_offset;
 logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_pc;
 
-// msrh_pkg::grp_id_t w_sc_grp_valid;
-// msrh_pkg::grp_id_t w_sc_call_be;
-// msrh_pkg::grp_id_t w_sc_ret_be;
-// msrh_pkg::grp_id_t w_sc_call_valid;
-// msrh_pkg::grp_id_t w_sc_ret_valid;
+// grp_id_t w_sc_grp_valid;
+// grp_id_t w_sc_call_be;
+// grp_id_t w_sc_ret_be;
+// grp_id_t w_sc_call_valid;
+// grp_id_t w_sc_ret_valid;
 
 /* verilator lint_off UNOPTFLAT */
 logic [ICACHE_DATA_B_W / 2 -1: 0] w_is_32bit_inst;
@@ -256,7 +264,7 @@ logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
 logic                                              w_cmt_update_ras_idx;
 logic                                              w_cmt_dead_valid;
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       w_s1_pred_hit_oh;
+logic [ICACHE_DATA_B_W/2-1: 0]       w_s1_pred_hit_oh;
 
 logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_s2_ras_index_next;
 
@@ -284,16 +292,16 @@ logic w_ras_commit_flush;
 logic w_ras_br_flush;
 logic w_ras_flush_valid;
 logic [msrh_conf_pkg::DISP_SIZE-1: 0] w_ras_commit_flush_valid_oh;
-logic [msrh_pkg::RAS_W-1: 0]          w_ras_commit_flush_ras_index_oh;
+logic [RAS_W-1: 0]          w_ras_commit_flush_ras_index_oh;
 assign w_ras_commit_flush = is_flushed_commit(i_commit) /* & |(i_commit.flush_valid & i_commit.ras_update) */;
 assign w_ras_br_flush = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict /* &
                         (br_upd_fe_if.is_call | br_upd_fe_if.is_ret) */;
 bit_extract_lsb #(.WIDTH(msrh_conf_pkg::DISP_SIZE)) commit_flush_valid_oh (.in(i_commit.flush_valid), .out(w_ras_commit_flush_valid_oh));
-bit_oh_or_packed #(.T(logic [msrh_pkg::RAS_W-1: 0]), .WORDS(msrh_conf_pkg::DISP_SIZE))
+bit_oh_or_packed #(.T(logic [RAS_W-1: 0]), .WORDS(msrh_conf_pkg::DISP_SIZE))
 bit_oh_call_target(.i_oh(w_ras_commit_flush_valid_oh), .i_data(i_commit.ras_index), .o_selected(w_ras_commit_flush_ras_index_oh));
 assign w_ras_flush_valid   = w_ras_commit_flush | w_ras_br_flush;
 
-logic [msrh_pkg::RAS_W-1: 0]          w_flush_ras_index;
+logic [RAS_W-1: 0]          w_flush_ras_index;
 assign w_flush_ras_index = w_ras_commit_flush ? w_ras_commit_flush_ras_index_oh : br_upd_fe_if.ras_index;
 
 always_comb begin
@@ -338,7 +346,7 @@ end
 assign w_s1_call_valid = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_call_be & w_s1_pred_hit_oh) ? w_s1_call_be : 'h0);
 assign w_s1_ret_valid  = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_ret_be  & w_s1_pred_hit_oh) ? w_s1_ret_be  : 'h0);
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_ras_be;
+logic [ICACHE_DATA_B_W/2-1: 0] w_s2_ras_be;
 assign w_s2_ras_be = ({w_s2_call_valid_oh, 2'b00} - 'h1) & ({w_s2_ret_valid_oh, 2'b00} - 'h1);
 
 assign ras_search_if.s1_is_call   = w_s1_call_be_lsb;
@@ -349,7 +357,7 @@ assign ras_search_if.s1_ras_index = 'h0;
 assign ras_search_if.s2_is_call           = w_s2_call_valid;
 assign ras_search_if.s2_call_target_vaddr = w_s2_call_target_vaddr;
 assign ras_search_if.s2_is_ret            = w_s2_ret_valid;
-generate for (genvar be_idx = 0; be_idx < msrh_lsu_pkg::ICACHE_DATA_B_W / 2; be_idx++) begin : s2_be_loop
+generate for (genvar be_idx = 0; be_idx < ICACHE_DATA_B_W / 2; be_idx++) begin : s2_be_loop
   assign ras_search_if.s2_ras_be[be_idx*2+0] = w_s2_ras_be[be_idx];
   assign ras_search_if.s2_ras_be[be_idx*2+1] = w_s2_ras_be[be_idx];
 end
@@ -360,18 +368,18 @@ assign ras_search_if.s2_ras_index         = /* |w_s2_ret_valid ? w_ras_index_nex
 // assign o_sc_ras_index = w_s2_ras_index_next;
 // assign o_sc_ras_vaddr = {w_sc_ras_ret_vaddr, 1'b0};
 
-// msrh_pkg::grp_id_t w_sc_call_be_array_vld;
-// msrh_pkg::disp_t w_sc_call_entry;
+// grp_id_t w_sc_call_be_array_vld;
+// disp_t w_sc_call_entry;
 //
 // assign w_sc_call_be_array_vld = w_sc_call_be & w_sc_grp_valid;
 
 /* verilator lint_off WIDTH */
-assign w_s2_ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)], {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2){1'b0}}} +
+assign w_s2_ras_next_pc = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)], {$clog2(ICACHE_DATA_B_W/2){1'b0}}} +
                           w_s2_call_enc + 'h1;
 
 // assign w_sc_ras_next_pc = w_sc_call_entry.pc_addr[riscv_pkg::VADDR_W-1: 1] + (w_sc_call_entry.rvc_inst_valid ? 1 : 2);
 //
-// bit_oh_or_packed #(.T(msrh_pkg::disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+// bit_oh_or_packed #(.T(disp_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
 // bit_oh_call_target(.i_oh(w_sc_call_be_array_vld), .i_data(sc_disp.inst), .o_selected(w_sc_call_entry));
 
 msrh_pred_ras
@@ -397,22 +405,22 @@ u_ras
 // ----------------------------------------
 // Extracting Call/Ret for 1st instruction
 // ----------------------------------------
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
+logic [ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
 
 assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be & w_s2_noncond_call_ret_be_oh;
 assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_ret_be  & w_s2_noncond_call_ret_be_oh;
 
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_valid_oh (.in(w_s2_call_valid), .out(w_s2_call_valid_oh));
-bit_extract_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_ret_valid_oh  (.in(w_s2_ret_valid ), .out(w_s2_ret_valid_oh ));
-bit_oh_or #(.T(logic[31: 0]), .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2))
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_call_valid_oh (.in(w_s2_call_valid), .out(w_s2_call_valid_oh));
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_ret_valid_oh  (.in(w_s2_ret_valid ), .out(w_s2_ret_valid_oh ));
+bit_oh_or #(.T(logic[31: 0]), .WORDS(ICACHE_DATA_B_W/2))
 s2_inst_arary_32bit_sel(.i_oh(w_s2_call_valid_oh), .i_data(w_s2_inst_array_32bit), .o_selected(w_s2_inst_array_oh));
-encoder #(.SIZE(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_loc_encoder (.i_in(w_s2_call_valid_oh), .o_out(w_s2_call_enc));
+encoder #(.SIZE(ICACHE_DATA_B_W/2)) s2_call_loc_encoder (.i_in(w_s2_call_valid_oh), .o_out(w_s2_call_enc));
 assign w_s2_call_offset = $signed({{(riscv_pkg::VADDR_W-11){w_s2_inst_array_oh[31]}}, w_s2_inst_array_oh[31], w_s2_inst_array_oh[19:12], w_s2_inst_array_oh[20], w_s2_inst_array_oh[30:21]});
-assign w_s2_call_pc     = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2)+1], {$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2){1'b0}}};
+assign w_s2_call_pc     = {i_s2_ic_resp.vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W/2)+1], {$clog2(ICACHE_DATA_B_W/2){1'b0}}};
 assign w_s2_call_target_vaddr = w_s2_call_offset + w_s2_call_pc + w_s2_call_enc - 1;
 
 
