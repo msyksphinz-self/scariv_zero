@@ -363,8 +363,8 @@ function issue_t assign_issue_common (disp_t in,
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
   ret.ras_index        = in.ras_index;
-  ret.pred_taken       = in.pred_taken;
-  ret.bim_value        = in.bim_value;
+  ret.pred_taken       = in.gshare_pred_taken;
+  ret.bim_value        = in.gshare_bim_value;
   ret.btb_valid        = in.btb_valid;
   ret.pred_target_vaddr = in.pred_target_vaddr;
 

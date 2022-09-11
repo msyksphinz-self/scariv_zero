@@ -210,8 +210,9 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
         r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
 
         for (int b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-          r_inst_queue[idx].pred_info[b_idx].pred_taken        <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
-                                                                  ras_search_if.s2_is_ret   [b_idx];
+          // r_inst_queue[idx].pred_info[b_idx].pred_taken        <= bim_search_if.s2_bim_value[b_idx][1] & btb_search_if.s2_hit[b_idx] |
+          //                                                         ras_search_if.s2_is_ret   [b_idx];
+          r_inst_queue[idx].pred_info[b_idx].pred_taken        <= gshare_search_if.s2_pred_taken;
           r_inst_queue[idx].pred_info[b_idx].is_cond           <= btb_search_if.s2_is_cond  [b_idx];
           r_inst_queue[idx].pred_info[b_idx].bim_value         <= bim_search_if.s2_bim_value[b_idx];
           r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit[b_idx];

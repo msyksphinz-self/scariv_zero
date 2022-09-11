@@ -9,6 +9,7 @@
 
 module msrh_frontend
   import msrh_pkg::*;
+  import msrh_ic_pkg::*;
   import msrh_predict_pkg::*;
 (
  input logic i_clk,
@@ -38,7 +39,7 @@ module msrh_frontend
  // For checking RAS updates
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
+ output vaddr_t                    o_sc_ras_vaddr,
 
  // Fetch Target Queue
  br_upd_if.master  br_upd_fe_if,
@@ -64,15 +65,15 @@ if_sm_t  r_if_state;
 if_sm_t  w_if_state_next;
 
 logic  r_s0_valid;
-msrh_pkg::vaddr_t  r_s0_vaddr;
-msrh_pkg::vaddr_t  w_s0_vaddr_next;
-msrh_pkg::vaddr_t  w_s0_vaddr;
+vaddr_t  r_s0_vaddr;
+vaddr_t  w_s0_vaddr_next;
+vaddr_t  w_s0_vaddr;
 logic                           w_s0_predicted;
 msrh_lsu_pkg::tlb_req_t         w_s0_tlb_req;
 msrh_lsu_pkg::tlb_resp_t        w_s0_tlb_resp;
-msrh_ic_pkg::ic_req_t           w_s0_ic_req;
+ic_req_t           w_s0_ic_req;
 logic                           w_s0_ic_ready;
-msrh_pkg::vaddr_t w_s0_vaddr_flush_next;
+vaddr_t w_s0_vaddr_flush_next;
 
 // ==============
 // s1 stage
@@ -82,35 +83,37 @@ logic                          r_s1_valid;
 logic                          w_s1_inst_valid;
 logic                          r_s1_clear;
 logic                          r_s1_predicted;
-msrh_pkg::vaddr_t r_s1_vaddr;
-msrh_pkg::paddr_t r_s1_paddr;
+vaddr_t r_s1_vaddr;
+paddr_t r_s1_paddr;
 logic                          r_s1_tlb_miss;
 logic                          r_s1_tlb_except_valid;
 except_t             r_s1_tlb_except_cause;
 
-msrh_pkg::vaddr_t w_s1_btb_target_vaddr;
+vaddr_t w_s1_btb_target_vaddr;
 
 logic                           w_s1_predict_valid;
-msrh_pkg::vaddr_t w_s1_predict_target_vaddr;
+vaddr_t w_s1_predict_target_vaddr;
 
 // ==============
 // s2 stage
 // ==============
 
-logic                           w_s2_inst_valid;
-logic                           r_s2_valid;
-logic                           r_s2_clear;
-logic                           r_s2_predicted;
-msrh_pkg::vaddr_t  r_s2_vaddr;
-msrh_ic_pkg::ic_resp_t          w_s2_ic_resp;
-logic                           r_s2_tlb_miss;
-logic                           r_s2_tlb_except_valid;
-except_t              r_s2_tlb_except_cause;
+logic     w_s2_inst_valid;
+logic     r_s2_valid;
+logic     r_s2_clear;
+logic     r_s2_predicted;
+vaddr_t   r_s2_vaddr;
+ic_resp_t w_s2_ic_resp;
+logic     r_s2_tlb_miss;
+logic     r_s2_tlb_except_valid;
+except_t  r_s2_tlb_except_cause;
 
-logic                           w_s2_predict_valid;
-msrh_pkg::vaddr_t w_s2_predict_target_vaddr;
+vaddr_t   r_s2_btb_target_vaddr;
 
-logic                           w_s2_inst_buffer_load_valid;
+logic     w_s2_predict_valid;
+vaddr_t   w_s2_predict_target_vaddr;
+
+logic     w_s2_inst_buffer_load_valid;
 
 // =======================
 // Predictors
@@ -127,7 +130,7 @@ ras_search_if w_ras_search_if ();
 gshare_search_if w_gshare_search_if ();
 
 `ifdef SIMULATION
-msrh_pkg::paddr_t  r_s2_paddr;
+paddr_t  r_s2_paddr;
 `endif // SIMULATION
 
 br_upd_if  br_upd_fe_tmp_if();
@@ -146,11 +149,11 @@ logic                           w_flush_valid;
 
 logic                           r_flush_valid;
 cmt_id_t            r_flush_cmt_id;
-msrh_pkg::grp_id_t r_flush_grp_id;
+grp_id_t r_flush_grp_id;
 
 logic                           w_flush_valid_next;
 cmt_id_t            w_flush_cmt_id_next;
-msrh_pkg::grp_id_t w_flush_grp_id_next;
+grp_id_t w_flush_grp_id_next;
 
 logic                           w_existed_flush_is_older;
 
@@ -590,10 +593,10 @@ assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                       (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
 `ifdef SIMULATION
-msrh_pkg::paddr_t w_s2_ic_resp_debug_addr;
+paddr_t w_s2_ic_resp_debug_addr;
 assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.vaddr, 1'b0};
 `endif // SIMULATION
-msrh_pkg::inst_buffer_in_t w_s2_inst_buffer_in;
+inst_buffer_in_t w_s2_inst_buffer_in;
 assign w_s2_inst_buffer_in.valid            = w_s2_inst_buffer_load_valid;
 assign w_s2_inst_buffer_in.pc               = w_s2_ic_resp.vaddr;
 assign w_s2_inst_buffer_in.inst             = w_s2_ic_resp.data;
@@ -674,32 +677,36 @@ assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
 assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_gshare_hit_array;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_btb_gshare_hit_array;
-assign w_s1_btb_gshare_hit_array = w_btb_search_if.s1_hit & w_gshare_search_if.s1_pred_taken;
+ic_block_t w_s1_btb_gshare_hit_array;
+ic_block_t r_s2_btb_gshare_hit_array;
+assign w_s1_btb_gshare_hit_array = w_btb_search_if.s1_hit & {{($bits(ic_block_t))}{w_gshare_search_if.s1_pred_taken}};
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_btb_gshare_hit_array <= 'h0;
+    r_s2_btb_target_vaddr <= 'h0;
   end else begin
-    r_s2_btb_gshare_hit_array <= {(msrh_lsu_pkg::ICACHE_DATA_B_W/2){w_s1_predict_valid}} & w_s1_btb_gshare_hit_array;
+    r_s2_btb_gshare_hit_array <= {{($bits(ic_block_t))}{w_s1_predict_valid}} & w_s1_btb_gshare_hit_array;
+      r_s2_btb_target_vaddr <= w_s1_btb_target_vaddr;
   end
 end
 
-assign w_s1_predict_valid = w_s1_inst_valid & (|w_s1_btb_gshare_hit_array);
-assign w_s1_predict_target_vaddr = w_s1_btb_target_vaddr;
+assign w_s1_predict_valid = 1'b0;
+assign w_s1_predict_target_vaddr = 'h0;
 
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_gshare_hit_array_tree;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_call_ret_tree;
-// bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_btb_gshare_tree_lsb   (.in(r_s2_btb_gshare_hit_array), .out(w_s2_btb_gshare_hit_array_tree));
+ic_block_t w_s2_btb_gshare_hit_array_tree;
+ic_block_t w_s2_call_ret_tree;
 assign w_s2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
 
-assign w_s2_predict_valid        = ((w_s2_btb_gshare_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) ?
-                                   |(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret) : 'h0;  // from RAS
-assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if.s2_call_target_vaddr, 1'b0} :
-                                   {w_ras_search_if.s2_ras_vaddr, 1'b0};
+// assign w_s2_predict_valid        = ((w_s2_btb_gshare_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) ?
+//                                    |(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret) : 'h0;  // from RAS
+// assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if.s2_call_target_vaddr, 1'b0} :
+//                                    {w_ras_search_if.s2_ras_vaddr, 1'b0};
+
+assign w_s2_predict_valid        = w_gshare_search_if.s2_pred_taken;
+assign w_s2_predict_target_vaddr = r_s2_btb_target_vaddr;
 
 
 msrh_predictor_gshare u_predictor
