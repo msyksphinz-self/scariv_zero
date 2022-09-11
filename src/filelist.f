@@ -8,6 +8,7 @@
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
+../src_r2/msrh_ic_pkg.sv
 ../src/msrh_bru_pkg.sv
 ../src/msrh_csu_pkg.sv
 ../src/msrh_fpu_pkg.sv

@@ -43,7 +43,12 @@ else:
 ## Build verilator binary
 build_command = ["make", "rv" + str(rv_xlen) + "_build", "CONF=" + conf,  "ISA=" + isa_ext, "RV_XLEN=" + str(rv_xlen), "RV_FLEN=" + str(rv_flen)]
 print(build_command)
-subprocess.call(build_command)
+build_result = subprocess.run(build_command)
+
+print ("Result = " + str(build_result.returncode))
+
+if build_result.returncode != 0 :
+    exit()
 
 test_table = json
 
@@ -60,7 +65,7 @@ select_test = list(filter(lambda x: x["name"] == testcase, test_table))
 
 output_file = os.path.basename(select_test[0]["elf"]) + "." + isa + "." + conf + ".log"
 command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + select_test[0]["elf"] + " -o " + output_file + " "
-subprocess.call(command_str.split(" "))
+subprocess.run(command_str.split(" "))
 
 print (select_test[0]["name"] + "\t: ")
 result_stdout = subprocess.check_output(["cat", output_file])

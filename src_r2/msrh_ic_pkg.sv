@@ -1,5 +1,8 @@
 package msrh_ic_pkg;
 
+typedef logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ic_block_t;
+typedef logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] ic_block_vaddr_t;
+
 typedef struct packed {
   logic valid;
   msrh_pkg::vaddr_t vaddr;

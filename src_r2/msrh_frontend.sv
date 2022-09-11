@@ -702,7 +702,7 @@ assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if
                                    {w_ras_search_if.s2_ras_vaddr, 1'b0};
 
 
-msrh_predictor u_predictor
+msrh_predictor_gshare u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),

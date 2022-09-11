@@ -31,16 +31,16 @@ interface btb_search_if;
 
   logic                                                 s0_valid;
   msrh_pkg::vaddr_t                                     s0_pc_vaddr;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_hit;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s1_target_vaddr;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_cond;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_call;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_is_ret;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_hit;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] s2_target_vaddr;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_cond;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_call;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_is_ret;
+  msrh_ic_pkg::ic_block_t          s1_hit;
+  msrh_ic_pkg::ic_block_vaddr_t    s1_target_vaddr;
+  msrh_ic_pkg::ic_block_t          s1_is_cond;
+  msrh_ic_pkg::ic_block_t          s1_is_call;
+  msrh_ic_pkg::ic_block_t          s1_is_ret;
+  msrh_ic_pkg::ic_block_t          s2_hit;
+  msrh_ic_pkg::ic_block_vaddr_t    s2_target_vaddr;
+  msrh_ic_pkg::ic_block_t          s2_is_cond;
+  msrh_ic_pkg::ic_block_t          s2_is_call;
+  msrh_ic_pkg::ic_block_t          s2_is_ret;
 
   modport master (
     output s0_valid,
@@ -122,9 +122,9 @@ interface bim_search_if;
   logic                                                 s0_valid;
   msrh_pkg::vaddr_t                        s0_pc_vaddr;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s1_bim_value;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s1_pred_taken;
+  msrh_ic_pkg::ic_block_t          s1_pred_taken;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]   s2_bim_value;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]          s2_pred_taken;
+  msrh_ic_pkg::ic_block_t          s2_pred_taken;
 
   modport master (
     output s0_valid,
@@ -154,12 +154,12 @@ endinterface // bim_search_if
 
 interface bim_update_if;
 
-  logic                                                 valid;
-  msrh_pkg::vaddr_t                        pc_vaddr;
-  logic                                                 hit;
-  logic                                                 taken;
-  logic [ 1: 0]                                         bim_value;
-  logic                                                 is_rvc;
+  logic             valid;
+  msrh_pkg::vaddr_t pc_vaddr;
+  logic             hit;
+  logic             taken;
+  logic [ 1: 0]     bim_value;
+  logic             is_rvc;
 
   modport master (
     output valid,
@@ -184,14 +184,14 @@ endinterface // bim_update_if
 
 interface ras_search_if;
 
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s1_is_call;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s1_is_ret;
+  msrh_ic_pkg::ic_block_t       s1_is_call;
+  msrh_ic_pkg::ic_block_t       s1_is_ret;
   logic [riscv_pkg::VADDR_W-1: 1]                    s1_ras_vaddr;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s1_ras_index;
 
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_call;
+  msrh_ic_pkg::ic_block_t       s2_is_call;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_call_target_vaddr;
-  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]       s2_is_ret;
+  msrh_ic_pkg::ic_block_t       s2_is_ret;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0]         s2_ras_be;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_ras_vaddr;
   logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s2_ras_index;

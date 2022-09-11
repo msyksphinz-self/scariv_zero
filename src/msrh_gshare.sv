@@ -102,16 +102,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     gshare_search_if.s2_index <= 'h0;
     gshare_search_if.s2_bhr   <= 'h0;
   end else begin
-    // gshare_search_if.s1_valid <= gshare_search_if.s0_valid;
-    // gshare_search_if.s1_index <= w_s0_xor_rd_index;
-    // gshare_search_if.s1_bhr   <= r_bhr;
-    //
-    // gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
-    // gshare_search_if.s2_index <= gshare_search_if.s1_index;
-    // gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
-    //
-    // gshare_search_if.s2_pred_taken <= gshare_search_if.s1_pred_taken;
-    // gshare_search_if.s2_bim_value  <= w_s1_bim_value;
+    gshare_search_if.s1_valid <= gshare_search_if.s0_valid;
+    gshare_search_if.s1_index <= w_s0_xor_rd_index;
+    gshare_search_if.s1_bhr   <= r_bhr;
+
+    gshare_search_if.s2_valid <= gshare_search_if.s1_valid;
+    gshare_search_if.s2_index <= gshare_search_if.s1_index;
+    gshare_search_if.s2_bhr   <= gshare_search_if.s1_bhr  ;
+
+    gshare_search_if.s2_pred_taken <= gshare_search_if.s1_pred_taken;
+    gshare_search_if.s2_bim_value  <= w_s1_bim_value;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
