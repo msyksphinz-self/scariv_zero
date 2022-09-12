@@ -63,7 +63,7 @@ elif rv_xlen == 64 :
 
 select_test = list(filter(lambda x: x["name"] == testcase, test_table))
 
-output_file = os.path.basename(select_test[0]["elf"]) + "." + isa + "." + conf + ".log"
+output_file = os.path.basename(select_test[0]["name"]) + "." + isa + "." + conf + ".log"
 command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + select_test[0]["elf"] + " -o " + output_file + " "
 subprocess.run(command_str.split(" "))
 
