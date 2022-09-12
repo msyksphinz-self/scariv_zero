@@ -226,7 +226,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
   assign w_stq_snoop_be   [s_idx] = stq_entry_snoop_if.resp_s1_be;
 
   msrh_stq_entry
-  u_msrh_stq_entry
+  u_entry
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
