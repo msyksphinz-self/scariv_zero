@@ -9,6 +9,7 @@
 
 module msrh_predictor_gshare
   import msrh_pkg::*;
+  import msrh_ic_pkg::*;
   import msrh_predict_pkg::*;
   import msrh_lsu_pkg::*;
 (
@@ -32,9 +33,6 @@ module msrh_predictor_gshare
  br_upd_if.slave  br_upd_fe_if
  );
 
-typedef logic [ICACHE_DATA_B_W/2-1: 0] ic_block_t;
-
-
 ic_block_t w_s1_btb_hit_oh;
 
 // -----------
@@ -50,12 +48,14 @@ msrh_btb u_btb
    .search_btb_if (search_btb_if)
    );
 
+bit_extract_lsb #(.WIDTH($bits(ic_block_t))) u_s1_btb_extract_lsb_oh (.in(search_btb_if.s1_hit), .out(w_s1_btb_hit_oh));
+
 bit_oh_or_packed
   #(.T(vaddr_t),
-    .WORDS(ICACHE_DATA_B_W/2)
+    .WORDS($bits(ic_block_t))
     )
 u_s1_target_vaddr_hit_oh (
- .i_oh      (search_btb_if.s1_hit),
+ .i_oh      (w_s1_btb_hit_oh),
  .i_data    (search_btb_if.s1_target_vaddr),
  .o_selected(o_s1_btb_target_vaddr)
  );
