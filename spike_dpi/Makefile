@@ -57,7 +57,7 @@ libspike_exe_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
 
 # spike_main: riscv_isa_sim spike_dpi.o
 spike_main: spike_dpi_exe.o libspike_dpi_exe.so
-	g++ -o $@ spike_dpi.o $(EXE_CFLAGS)
+	g++ -o $@ $^ $(EXE_CFLAGS)
 
 spike_dpi_exe.o: spike_dpi.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
