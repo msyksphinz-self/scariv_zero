@@ -352,6 +352,8 @@ always_comb begin
       end else if (w_s1_predict_valid & !r_s1_clear) begin
         w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+      end else if (!w_s0_req_ready) begin
+        w_s0_vaddr_next = w_s0_vaddr;
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
