@@ -6,7 +6,7 @@ import riscv_fpu_pkg::*;
 
   parameter XLEN_W = 64;
   parameter FLEN_W = riscv_fpu_pkg::FLEN_W;
-  parameter VADDR_W = 64;
+  parameter VADDR_W = 39;
   parameter VADDR_MSB = 38;
   parameter PADDR_W = 56;
 

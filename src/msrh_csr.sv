@@ -822,8 +822,8 @@ always_comb begin
 
     end // else: !if(r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) 1= 'h0))
 
-  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid & ~i_commit.dead_id)) begin
-    if (i_commit.except_type == msrh_pkg::MRET) begin
+  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid)) begin
+    if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == msrh_pkg::MRET)) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
       // r_mcause <= i_commit.except_type;
@@ -833,7 +833,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
       w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
       // w_mtval_next = 'h0;
-    end else if (i_commit.except_type == msrh_pkg::SRET) begin
+    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == msrh_pkg::SRET)) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
       // r_mcause <= i_commit.except_type;
@@ -843,7 +843,7 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
       w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
       w_stval_next = i_commit.tval;
-    end else if (i_commit.except_type == msrh_pkg::URET) begin // if (i_commit.except_type == msrh_pkg::SRET)
+    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == msrh_pkg::URET)) begin // if (i_commit.except_type == msrh_pkg::SRET)
       w_mtval_next = 'h0;
     end else if (w_delegate) begin
       w_sepc_next = i_commit.epc;

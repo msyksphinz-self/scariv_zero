@@ -101,11 +101,11 @@ typedef struct   packed {
   } tlb_entry_t;
 
   typedef struct packed {
-    logic          valid;
-    msrh_pkg::vaddr_t vaddr;
-    mem_cmd_t cmd;
-    logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W/8)-1: 0] size;
-    logic                                               passthrough;
+    logic               valid;
+    riscv_pkg::xlen_t   vaddr;
+    mem_cmd_t           cmd;
+    msrh_pkg::ic_strb_t size;
+    logic               passthrough;
   } tlb_req_t;
 
   typedef struct packed {

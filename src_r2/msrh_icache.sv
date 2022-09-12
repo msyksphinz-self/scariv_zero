@@ -248,9 +248,9 @@ cache_data_sel
 assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_tag_normal_fetch;
 assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_normal_fetch;
 
-assign o_s2_resp.valid = !i_flush_valid &
+assign o_s2_resp.valid = !i_flush_valid & r_s2_valid &
                          (r_s2_pref_paddr_hit |
-                          r_s2_valid & r_s2_hit & (r_ic_state == ICInit));
+                          r_s2_hit & (r_ic_state == ICInit));
 
 assign o_s2_resp.vaddr = r_s2_vaddr [VADDR_W-1: 1];
 assign o_s2_resp.data  = r_s2_pref_paddr_hit ? r_s2_pref_hit_data :

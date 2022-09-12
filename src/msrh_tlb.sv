@@ -16,7 +16,7 @@ module tlb
  /* verilator lint_off UNOPTFLAT */
  output       msrh_lsu_pkg::tlb_resp_t o_tlb_resp,
 
- input riscv_common_pkg::priv_t               i_status_prv,
+ input riscv_common_pkg::priv_t i_status_prv,
  input riscv_pkg::xlen_t i_csr_status,
  input riscv_pkg::xlen_t i_csr_satp,
 
@@ -351,8 +351,8 @@ endgenerate
 
 `ifdef RV64
 assign w_bad_va     = i_tlb_req.valid &
-                      !(~|(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]) |  // extended bits all zero
-                         &(i_tlb_req.vaddr[riscv_pkg::VADDR_W-1:riscv_pkg::VADDR_MSB+1]));   // extended bits all one
+                      !(~|(i_tlb_req.vaddr[riscv_pkg::XLEN_W-1:riscv_pkg::VADDR_MSB+1]) |  // extended bits all zero
+                         &(i_tlb_req.vaddr[riscv_pkg::XLEN_W-1:riscv_pkg::VADDR_MSB+1]));   // extended bits all one
 `else // RV64
 assign w_bad_va     = 1'b0;
 `endif // RV64
