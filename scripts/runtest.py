@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from multiprocessing import Pool
 import os
 import subprocess
 import json
@@ -18,6 +19,8 @@ parser.add_argument('-t', '--testcase', dest='testcase', action='store',
                     help="Testcase of run")
 parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
                     default=False, help="Generate Katana Log file")
+parser.add_argument('-j', dest="parallel", action='store',
+                    default=1, help="Num of Parallel Jobs")
 
 args = parser.parse_args()
 
@@ -28,6 +31,7 @@ rv_xlen = 0
 rv_flen = 0
 isa_ext = isa[4:9]
 testcase = args.testcase
+parallel = int(args.parallel)
 
 if not (isa[0:4] == "rv32" or isa[0:4] == "rv64") :
     print ("isa option need to start from \"rv32\" or \"rv64\"")
@@ -45,8 +49,6 @@ build_command = ["make", "rv" + str(rv_xlen) + "_build", "CONF=" + conf,  "ISA="
 print(build_command)
 build_result = subprocess.run(build_command)
 
-print ("Result = " + str(build_result.returncode))
-
 if build_result.returncode != 0 :
     exit()
 
@@ -61,20 +63,24 @@ elif rv_xlen == 64 :
     rv64_bench_fp = open('rv64-bench.json', 'r')
     test_table += json.load(rv64_bench_fp)
 
-select_test = list(filter(lambda x: x["name"] == testcase, test_table))
+select_test = list(filter(lambda x: (x["name"] == testcase) or (testcase in x["group"]) , test_table))
+# max_length = max(map(lambda x: len(x["name"]), select_test))
 
-output_file = os.path.basename(select_test[0]["name"]) + "." + isa + "." + conf + ".log"
-command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + select_test[0]["elf"] + " -o " + output_file + " "
-subprocess.run(command_str.split(" "))
+def execute_test(test):
+    print (test["name"] + "\t: ", end='')
+    output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
+    command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + test["elf"] + " -o " + output_file + " "
+    subprocess.run(command_str.split(" "), capture_output=True)
+    result_stdout = subprocess.check_output(["cat", output_file])
 
-print (select_test[0]["name"] + "\t: ")
-result_stdout = subprocess.check_output(["cat", output_file])
+    if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
+        print ("ERROR")
+    elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
+        print ("MATCH")
+    elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
+        print ("PASS")
+    else :
+        print ("UNKNOWN")
 
-if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
-    print ("ERROR\n")
-elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
-    print ("MATCH\n")
-elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-    print ("PASS\n")
-else :
-    print ("UNKNOWN\n")
+with Pool(parallel) as pool:
+    pool.map(execute_test, select_test)
