@@ -129,6 +129,11 @@ ras_search_if w_ras_search_if ();
 
 gshare_search_if w_gshare_search_if ();
 
+decode_flush_t   w_decode_flush;
+logic   w_iq_predict_valid;
+vaddr_t w_iq_predict_target_vaddr;
+logic   r_iq_predict_flush;
+
 `ifdef SIMULATION
 paddr_t  r_s2_paddr;
 `endif // SIMULATION
@@ -138,38 +143,38 @@ br_upd_if  br_upd_fe_tmp_if();
 // ==============
 // TLB
 // ==============
-logic                           w_tlb_ready;
+logic    w_tlb_ready;
 
 // ==============
 // Commiter PC
 // ==============
-logic                           w_commit_flush;
-logic                           w_br_flush;
-logic                           w_flush_valid;
+logic    w_commit_flush;
+logic    w_br_flush;
+logic    w_flush_valid;
 
-logic                           r_flush_valid;
-cmt_id_t            r_flush_cmt_id;
+logic    r_flush_valid;
+cmt_id_t r_flush_cmt_id;
 grp_id_t r_flush_grp_id;
 
-logic                           w_flush_valid_next;
-cmt_id_t            w_flush_cmt_id_next;
+logic    w_flush_valid_next;
+cmt_id_t w_flush_cmt_id_next;
 grp_id_t w_flush_grp_id_next;
 
-logic                           w_existed_flush_is_older;
+logic    w_existed_flush_is_older;
 
-logic                           w_inst_buffer_ready;
+logic    w_inst_buffer_ready;
 
 
-logic                           w_ic_refill_wakeup;
-logic                           w_tlb_refill_wakeup;
-logic                           w_ibuf_refill_wakeup;
-logic                           w_flush_haz_clear;
+logic    w_ic_refill_wakeup;
+logic    w_tlb_refill_wakeup;
+logic    w_ibuf_refill_wakeup;
+logic    w_flush_haz_clear;
 
-logic                           w_is_ftq_empty;
-logic                           r_br_wait_ftq_free;
-logic                           w_br_wait_ftq_free;
+logic    w_is_ftq_empty;
+logic    r_br_wait_ftq_free;
+logic    w_br_wait_ftq_free;
 
-logic                           w_s0_req_ready;
+logic    w_s0_req_ready;
 assign w_s0_req_ready = w_s0_ic_ready & w_tlb_ready;
 assign w_ic_refill_wakeup    = (r_if_state == WAIT_IC_FILL ) & w_s0_req_ready;
 assign w_tlb_refill_wakeup   = (r_if_state == WAIT_TLB_FILL) & w_s0_req_ready;
@@ -336,6 +341,9 @@ always_comb begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
+      end else if (w_iq_predict_valid) begin
+        w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
@@ -403,6 +411,14 @@ always_comb begin
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
         end
+      end else if (w_iq_predict_valid) begin
+        if (w_ibuf_refill_wakeup) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
+        end
       end else if (w_ibuf_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -462,6 +478,9 @@ always_comb begin
   if (w_flush_valid) begin
     w_s0_predicted = 1'b0;
     w_s0_vaddr     = w_s0_vaddr_flush_next;
+  end else if (w_iq_predict_valid) begin
+    w_s0_predicted = 1'b1;
+    w_s0_vaddr     = w_iq_predict_target_vaddr;
   end else if (r_s2_valid & ~r_s2_clear & w_s2_predict_valid) begin
     w_s0_predicted = 1'b1;
     w_s0_vaddr     = w_s2_predict_target_vaddr;
@@ -515,7 +534,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
     r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
-    r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    // s1 clear condition : Trying to instruction allocate into Inst-Buffer but canceled
+    //                      --> Trying s2 request again from s0 stage.
+    // When IQ predicts, it also no need to set clear.
+    r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready &
+                  ~w_iq_predict_valid;
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
@@ -546,7 +569,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin // if (!i_reset_n)
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear | w_flush_valid |
+    r_s2_clear <= r_s1_clear | w_flush_valid | w_iq_predict_valid |
                   w_s2_predict_valid & ~r_s1_predicted |
                   ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s2_predicted <= r_s1_predicted;
@@ -617,7 +640,7 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (w_flush_valid),
+   .i_flush_valid (w_flush_valid | r_iq_predict_flush),
 
    .csr_info      (csr_info),
 
@@ -628,6 +651,8 @@ u_msrh_inst_buffer
 
    .o_inst_ready (w_inst_buffer_ready),
    .i_s2_inst    (w_s2_inst_buffer_in),
+
+   .o_decode_flush (w_decode_flush),
 
    .iq_disp        (iq_disp)
    );
@@ -703,13 +728,27 @@ ic_block_t w_s2_call_ret_tree;
 assign w_s2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
 
-// assign w_s2_predict_valid        = ((w_s2_btb_gshare_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) ?
-//                                    |(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret) : 'h0;  // from RAS
-// assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if.s2_call_target_vaddr, 1'b0} :
-//                                    {w_ras_search_if.s2_ras_vaddr, 1'b0};
-
+// ------------------------------
+// S2 Prediction Valid
+// ------------------------------
 assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & w_gshare_search_if.s2_pred_taken;
 assign w_s2_predict_target_vaddr = r_s2_btb_target_vaddr;
+
+// ------------------------------
+// Decode Level Prediction Valid
+// ------------------------------
+assign w_iq_predict_valid        = w_decode_flush.valid;
+assign w_iq_predict_target_vaddr = w_decode_flush.pred_vaddr;
+
+// 1-cycle Later, it flushes pipeline
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_iq_predict_flush <= 1'b0;
+  end else begin
+    r_iq_predict_flush <= w_iq_predict_valid;
+  end
+end
+
 
 
 msrh_predictor_gshare u_predictor

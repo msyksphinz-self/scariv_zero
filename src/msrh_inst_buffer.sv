@@ -15,14 +15,14 @@ module msrh_inst_buffer
  ras_search_if.slave      ras_search_if,
  gshare_search_if.monitor gshare_search_if,
 
- // output decode_flush_t    o_decode_flush,
+ output decode_flush_t    o_decode_flush,
 
  output logic                     o_inst_ready,
  input msrh_pkg::inst_buffer_in_t i_s2_inst,
  disp_if.master                   iq_disp
  );
 
-logic                                       w_inst_buffer_fire;
+logic  w_inst_buffer_fire;
 
 msrh_pkg::grp_id_t w_inst_arith_pick_up;
 msrh_pkg::grp_id_t w_inst_muldiv_pick_up;
@@ -668,7 +668,13 @@ vaddr_t  w_iq_ras_ret_vaddr;
 ras_idx_t r_ras_index;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : pc_vaddr_next_loop
-  assign iq_call_next_vaddr_array[d_idx] = iq_disp.inst[d_idx].pc_addr;
+  vaddr_t w_iq_call_offset;
+  assign w_iq_call_offset = $signed({{(riscv_pkg::VADDR_W-11){iq_disp.inst[d_idx].inst[31]}},
+                                     iq_disp.inst[d_idx].inst[31],
+                                     iq_disp.inst[d_idx].inst[19:12],
+                                     iq_disp.inst[d_idx].inst[20],
+                                     iq_disp.inst[d_idx].inst[30:21], 1'b0});
+  assign iq_call_next_vaddr_array[d_idx] = iq_disp.inst[d_idx].pc_addr + w_iq_call_offset;
 end
 endgenerate
 bit_oh_or #(.T(vaddr_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
@@ -684,6 +690,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ras_index = r_ras_index + 'h1;
   end
 end
+
+assign o_decode_flush.valid      = ((|iq_is_call_valid_oh) | (|iq_is_ret_valid_oh));
+assign o_decode_flush.pred_vaddr = (|iq_is_call_valid_oh) ? iq_call_next_vaddr_oh :
+                                   w_iq_ras_ret_vaddr;
 
 msrh_pred_ras
 u_ras
