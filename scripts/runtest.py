@@ -21,6 +21,8 @@ parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
                     default=False, help="Generate Katana Log file")
 parser.add_argument('-j', dest="parallel", action='store',
                     default=1, help="Num of Parallel Jobs")
+parser.add_argument('-d', dest="debug", action="store_true",
+                    default=False, help="Generate FST Dump File")
 
 args = parser.parse_args()
 
@@ -32,6 +34,7 @@ rv_flen = 0
 isa_ext = isa[4:9]
 testcase = args.testcase
 parallel = int(args.parallel)
+fst_dump = args.debug
 
 if not (isa[0:4] == "rv32" or isa[0:4] == "rv64") :
     print ("isa option need to start from \"rv32\" or \"rv64\"")
@@ -46,6 +49,12 @@ else:
 
 ## Build verilator binary
 build_command = ["make", "rv" + str(rv_xlen) + "_build", "CONF=" + conf,  "ISA=" + isa_ext, "RV_XLEN=" + str(rv_xlen), "RV_FLEN=" + str(rv_flen)]
+if fst_dump :
+    build_command += ["DEBUG=on"]
+else:
+    build_command += ["DEBUG=off"]
+
+
 print(build_command)
 build_result = subprocess.run(build_command)
 
@@ -63,16 +72,30 @@ elif rv_xlen == 64 :
     rv64_bench_fp = open('rv64-bench.json', 'r')
     test_table += json.load(rv64_bench_fp)
 
-select_test = list(filter(lambda x: (x["name"] == testcase) or (testcase in x["group"]) , test_table))
+select_test = list(filter(lambda x: ((x["name"] == testcase) or
+                                     (testcase in x["group"]) and
+                                     (x["skip"] != 1 if "skip" in x else True)) , test_table))
 # max_length = max(map(lambda x: len(x["name"]), select_test))
 
-def execute_test(test):
-    print (test["name"] + "\t: ", end='')
-    output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
-    command_str = "./msrh_tb_" + isa + "_" + conf + "-debug -d -e " + "../tests/" + test["elf"] + " -o " + output_file + " "
-    subprocess.run(command_str.split(" "), capture_output=True)
-    result_stdout = subprocess.check_output(["cat", output_file])
+show_stdout = len(select_test) == 1
 
+base_dir = "sim_" + isa + "_" + conf
+os.makedirs(base_dir, exist_ok=True)
+os.makedirs(base_dir + "/" + testcase, exist_ok=True)
+
+def execute_test(test):
+    output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
+    command_str = "../../msrh_tb_" + isa + "_" + conf
+    if fst_dump :
+        command_str += + "-debug -d "
+    command_str += " -e "
+    command_str += "../../../tests/" + test["elf"]
+    command_str += " -o " + output_file
+    # print (command_str)
+    subprocess.run(command_str.split(" "), capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
+    result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+
+    print (test["name"] + "\t: ", end='')
     if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
         print ("ERROR")
     elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
