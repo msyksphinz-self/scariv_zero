@@ -34,4 +34,12 @@ typedef enum logic [0:0] {
   PrefWrWait
 } pref_wr_state_t;
 
+//
+// Instruction Buffer Decode Flush
+//
+typedef struct packed {
+  logic             valid;
+  msrh_pkg::vaddr_t pred_vaddr;
+} decode_flush_t;
+
 endpackage // msrh_ic_pkg

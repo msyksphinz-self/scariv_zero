@@ -1,5 +1,6 @@
 module msrh_inst_buffer
   import msrh_pkg::*;
+  import msrh_ic_pkg::*;
   import decoder_reg_pkg::*;
   (
  input logic i_clk,
@@ -13,6 +14,8 @@ module msrh_inst_buffer
  bim_search_if.monitor    bim_search_if,
  ras_search_if.slave      ras_search_if,
  gshare_search_if.monitor gshare_search_if,
+
+ // output decode_flush_t    o_decode_flush,
 
  output logic                     o_inst_ready,
  input msrh_pkg::inst_buffer_in_t i_s2_inst,
@@ -650,6 +653,57 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   end // always_comb
 end
 endgenerate
+
+// ----------------------------
+// Decode Unit Flush Interface
+// ----------------------------
+typedef logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_idx_t;
+
+grp_id_t iq_is_call_valid_oh;
+grp_id_t iq_is_ret_valid_oh;
+vaddr_t  iq_call_next_vaddr_array[msrh_conf_pkg::DISP_SIZE];
+vaddr_t  iq_call_next_vaddr_oh;
+vaddr_t  w_iq_ras_ret_vaddr;
+
+ras_idx_t r_ras_index;
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : pc_vaddr_next_loop
+  assign iq_call_next_vaddr_array[d_idx] = iq_disp.inst[d_idx].pc_addr;
+end
+endgenerate
+bit_oh_or #(.T(vaddr_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+u_iq_call_pc_addr_oh (.i_oh(iq_is_call_valid_oh), .i_data(iq_call_next_vaddr_array), .o_selected(iq_call_next_vaddr_oh));
+
+assign iq_is_call_valid_oh = w_inst_disp_mask & w_inst_is_call;
+assign iq_is_ret_valid_oh  = w_inst_disp_mask & w_inst_is_ret;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (|iq_is_ret_valid_oh) begin
+    r_ras_index = r_ras_index - 'h1;
+  end else if (|iq_is_call_valid_oh) begin
+    r_ras_index = r_ras_index + 'h1;
+  end
+end
+
+msrh_pred_ras
+u_ras
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
+
+   .i_wr_valid (|iq_is_call_valid_oh  ),
+   .i_wr_index (r_ras_index           ),
+   .i_wr_pa    (iq_call_next_vaddr_oh ),
+
+   .i_s2_rd_valid (|iq_is_ret_valid_oh),
+   .i_s2_rd_index (r_ras_index-1      ),
+   .o_s2_rd_pa    (w_iq_ras_ret_vaddr ),
+
+   .i_br_call_cmt_valid     ('h0),
+   .i_br_call_cmt_ras_index ('h0),
+   .i_br_call_cmt_wr_vpc    ('h0)
+   );
+
 
 `ifdef SIMULATION
 function void dump_json(int fp);
