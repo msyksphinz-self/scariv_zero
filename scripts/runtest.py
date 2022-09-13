@@ -87,7 +87,7 @@ def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
     command_str = "../../msrh_tb_" + isa + "_" + conf
     if fst_dump :
-        command_str += + "-debug -d "
+        command_str += "-debug -d "
     command_str += " -e "
     command_str += "../../../tests/" + test["elf"]
     command_str += " -o " + output_file
