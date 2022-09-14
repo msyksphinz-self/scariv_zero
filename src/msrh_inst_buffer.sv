@@ -101,8 +101,6 @@ typedef struct packed {
   logic             btb_valid;
   logic             is_cond;
   msrh_pkg::vaddr_t pred_target_vaddr;
-  logic [1:0]       gshare_bim_value;
-  logic                  gshare_pred_taken;
   msrh_pkg::gshare_bht_t gshare_index;
   msrh_pkg::gshare_bht_t gshare_bhr;
 } pred_info_t;
@@ -217,11 +215,9 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
           //                                                         ras_search_if.s2_is_ret   [b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_taken        <= gshare_search_if.s2_pred_taken;
           r_inst_queue[idx].pred_info[b_idx].is_cond           <= btb_search_if.s2_is_cond  [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].bim_value         <= bim_search_if.s2_bim_value[b_idx];
+          r_inst_queue[idx].pred_info[b_idx].bim_value         <= gshare_search_if.s2_bim_value;
           r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit[b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].gshare_pred_taken <= gshare_search_if.s2_pred_taken;
-          r_inst_queue[idx].pred_info[b_idx].gshare_bim_value  <= gshare_search_if.s2_bim_value;
           r_inst_queue[idx].pred_info[b_idx].gshare_index      <= gshare_search_if.s2_index;
           r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr;
 
@@ -626,11 +622,14 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
-      iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx];
+      iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx] |
+                                              w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
-      iq_disp.inst[d_idx].pred_target_vaddr = (w_inst_is_ret [d_idx] & w_expand_ras_info[d_idx].is_ret |
-                                               w_inst_is_call[d_idx] & w_expand_ras_info[d_idx].is_call) ? w_expand_ras_info[d_idx].pred_target_vaddr :
+      // iq_disp.inst[d_idx].pred_target_vaddr = (w_inst_is_ret [d_idx] & w_expand_ras_info[d_idx].is_ret |
+      //                                          w_inst_is_call[d_idx] & w_expand_ras_info[d_idx].is_call) ? w_expand_ras_info[d_idx].pred_target_vaddr :
+      //                                         w_expand_pred_info[d_idx].pred_target_vaddr;
+      iq_disp.inst[d_idx].pred_target_vaddr = w_inst_is_call[d_idx] ? iq_call_next_vaddr_oh :
                                               w_expand_pred_info[d_idx].pred_target_vaddr;
 
       iq_disp.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
@@ -638,8 +637,6 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
 
-      iq_disp.inst[d_idx].gshare_pred_taken = w_expand_pred_info[d_idx].gshare_pred_taken;
-      iq_disp.inst[d_idx].gshare_bim_value  = w_expand_pred_info[d_idx].gshare_bim_value ;
       iq_disp.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
       iq_disp.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
 
