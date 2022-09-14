@@ -342,8 +342,12 @@ always_comb begin
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
       end else if (w_iq_predict_valid) begin
-        w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        if (w_s0_req_ready) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
+        end
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
@@ -377,6 +381,14 @@ always_comb begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
+        end
+      end else if (w_iq_predict_valid) begin
+        if (w_ic_refill_wakeup) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
         end
       end else if (w_ic_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +

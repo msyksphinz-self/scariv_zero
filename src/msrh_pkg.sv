@@ -163,8 +163,6 @@ typedef struct packed {
     logic                           btb_valid;
     vaddr_t                         pred_target_vaddr;
 
-    logic         gshare_pred_taken;
-    logic [ 1: 0] gshare_bim_value;
     gshare_bht_t  gshare_index;
     gshare_bht_t  gshare_bhr;
 
@@ -363,8 +361,8 @@ function issue_t assign_issue_common (disp_t in,
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
   ret.ras_index        = in.ras_index;
-  ret.pred_taken       = in.gshare_pred_taken;
-  ret.bim_value        = in.gshare_bim_value;
+  ret.pred_taken       = in.pred_taken;
+  ret.bim_value        = in.bim_value;
   ret.btb_valid        = in.btb_valid;
   ret.pred_target_vaddr = in.pred_target_vaddr;
 
@@ -586,8 +584,6 @@ typedef struct packed {
   brtag_t            brtag;
   brmask_t           br_mask;
 
-  logic         gshare_pred_taken;
-  logic [ 1: 0] gshare_bim_value;
   gshare_bht_t  gshare_index;
   gshare_bht_t  gshare_bhr;
 
@@ -618,8 +614,6 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.brtag     = inst.brtag;
   ret.br_mask   = inst.br_mask;
 
-  ret.gshare_bim_value  = inst.gshare_bim_value;
-  ret.gshare_pred_taken = inst.gshare_pred_taken;
   ret.gshare_index      = inst.gshare_index;
   ret.gshare_bhr        = inst.gshare_bhr;
 
