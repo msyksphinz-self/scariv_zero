@@ -749,7 +749,7 @@ assign w_s2_predict_target_vaddr = r_s2_btb_target_vaddr;
 // ------------------------------
 // Decode Level Prediction Valid
 // ------------------------------
-assign w_iq_predict_valid        = w_decode_flush.valid;
+assign w_iq_predict_valid        = iq_disp.valid & iq_disp.ready & w_decode_flush.valid;
 assign w_iq_predict_target_vaddr = w_decode_flush.pred_vaddr;
 
 // 1-cycle Later, it flushes pipeline
