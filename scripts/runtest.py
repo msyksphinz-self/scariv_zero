@@ -92,18 +92,23 @@ def execute_test(test):
     command_str += "../../../tests/" + test["elf"]
     command_str += " -o " + output_file
     # print (command_str)
-    subprocess.run(command_str.split(" "), capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
-    result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+    try:
+        subprocess.run("exec " + command_str, shell=True, capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
+        result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
-    print (test["name"] + "\t: ", end='')
-    if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
-        print ("ERROR")
-    elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
-        print ("MATCH")
-    elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-        print ("PASS")
-    else :
-        print ("UNKNOWN")
+        print (test["name"] + "\t: ", end='')
+        if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
+            print ("ERROR")
+        elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
+            print ("MATCH")
+        elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
+            print ("PASS")
+        else :
+            print ("UNKNOWN")
+
+    except KeyboardInterrupt:
+        import sys
+        sys.exit(2)
 
 with Pool(parallel) as pool:
     pool.map(execute_test, select_test)
