@@ -16,6 +16,8 @@ localparam BTB_ENTRY_FIELD_MSB = $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2);
 localparam BTB_ENTRY_BIT_LSB   = BTB_ENTRY_FIELD_MSB + 1;
 localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 
+typedef logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_idx_t;
+
 typedef struct packed {
   logic                                            valid;
   logic                                            is_cond;
@@ -187,14 +189,14 @@ interface ras_search_if;
   msrh_ic_pkg::ic_block_t       s1_is_call;
   msrh_ic_pkg::ic_block_t       s1_is_ret;
   logic [riscv_pkg::VADDR_W-1: 1]                    s1_ras_vaddr;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s1_ras_index;
+  msrh_predict_pkg::ras_idx_t     s1_ras_index;
 
   msrh_ic_pkg::ic_block_t       s2_is_call;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_call_target_vaddr;
   msrh_ic_pkg::ic_block_t       s2_is_ret;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W-1: 0]         s2_ras_be;
   logic [riscv_pkg::VADDR_W-1: 1]                    s2_ras_vaddr;
-  logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] s2_ras_index;
+  msrh_predict_pkg::ras_idx_t     s2_ras_index;
 
   modport master (
     output s1_is_call,

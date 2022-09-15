@@ -623,13 +623,15 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
 
       iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx] |
-                                              w_inst_is_call[d_idx];
+                                              w_inst_is_call[d_idx] |
+                                              w_inst_is_ret [d_idx];
       iq_disp.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
       iq_disp.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
       // iq_disp.inst[d_idx].pred_target_vaddr = (w_inst_is_ret [d_idx] & w_expand_ras_info[d_idx].is_ret |
       //                                          w_inst_is_call[d_idx] & w_expand_ras_info[d_idx].is_call) ? w_expand_ras_info[d_idx].pred_target_vaddr :
       //                                         w_expand_pred_info[d_idx].pred_target_vaddr;
       iq_disp.inst[d_idx].pred_target_vaddr = w_inst_is_call[d_idx] ? iq_call_next_vaddr_oh :
+                                              w_inst_is_ret [d_idx] ? w_iq_ras_ret_vaddr :
                                               w_expand_pred_info[d_idx].pred_target_vaddr;
 
       iq_disp.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
@@ -654,15 +656,15 @@ endgenerate
 // ----------------------------
 // Decode Unit Flush Interface
 // ----------------------------
-typedef logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_idx_t;
-
 grp_id_t iq_is_call_valid_oh;
 grp_id_t iq_is_ret_valid_oh;
 vaddr_t  iq_call_next_vaddr_array[msrh_conf_pkg::DISP_SIZE];
+vaddr_t  iq_call_stash_vaddr_array[msrh_conf_pkg::DISP_SIZE];
 vaddr_t  iq_call_next_vaddr_oh;
+vaddr_t  iq_call_stash_vaddr_oh;
 vaddr_t  w_iq_ras_ret_vaddr;
 
-ras_idx_t r_ras_index;
+msrh_predict_pkg::ras_idx_t r_ras_index;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : pc_vaddr_next_loop
   vaddr_t w_iq_call_offset;
@@ -672,13 +674,17 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
                                      iq_disp.inst[d_idx].inst[20],
                                      iq_disp.inst[d_idx].inst[30:21], 1'b0});
   assign iq_call_next_vaddr_array[d_idx] = iq_disp.inst[d_idx].pc_addr + w_iq_call_offset;
+  assign iq_call_stash_vaddr_array[d_idx] = iq_disp.inst[d_idx].pc_addr + (w_rvc_valid[d_idx] ? 'h2 : 'h4);
 end
 endgenerate
 bit_oh_or #(.T(vaddr_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
 u_iq_call_pc_addr_oh (.i_oh(iq_is_call_valid_oh), .i_data(iq_call_next_vaddr_array), .o_selected(iq_call_next_vaddr_oh));
 
-assign iq_is_call_valid_oh = w_inst_disp_mask & w_inst_is_call;
-assign iq_is_ret_valid_oh  = w_inst_disp_mask & w_inst_is_ret;
+bit_oh_or #(.T(vaddr_t), .WORDS(msrh_conf_pkg::DISP_SIZE))
+u_iq_call_stash_addr_oh (.i_oh(iq_is_call_valid_oh), .i_data(iq_call_stash_vaddr_array), .o_selected(iq_call_stash_vaddr_oh));
+
+assign iq_is_call_valid_oh = {{msrh_conf_pkg::DISP_SIZE{1'b1}}{(iq_disp.valid & iq_disp.ready)}} & w_inst_disp_mask & w_inst_is_call;
+assign iq_is_ret_valid_oh  = {{msrh_conf_pkg::DISP_SIZE{1'b1}}{(iq_disp.valid & iq_disp.ready)}} & w_inst_disp_mask & w_inst_is_ret;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (|iq_is_ret_valid_oh) begin
@@ -698,9 +704,9 @@ u_ras
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
-   .i_wr_valid (|iq_is_call_valid_oh  ),
-   .i_wr_index (r_ras_index           ),
-   .i_wr_pa    (iq_call_next_vaddr_oh ),
+   .i_wr_valid (|iq_is_call_valid_oh   ),
+   .i_wr_index (r_ras_index            ),
+   .i_wr_pa    (iq_call_stash_vaddr_oh ),
 
    .i_s2_rd_valid (|iq_is_ret_valid_oh),
    .i_s2_rd_index (r_ras_index-1      ),
