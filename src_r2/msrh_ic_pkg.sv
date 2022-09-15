@@ -3,6 +3,8 @@ package msrh_ic_pkg;
 typedef logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ic_block_t;
 typedef logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][riscv_pkg::VADDR_W-1:0] ic_block_vaddr_t;
 
+typedef logic [riscv_pkg::VADDR_W-1: 1]  ic_vaddr_h_t;
+
 typedef logic [riscv_pkg::VADDR_W-1:msrh_lsu_pkg::ICACHE_TAG_LOW + $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)] ic_tag_t;
 
 typedef struct packed {

@@ -45,10 +45,10 @@ end
 
 assign w_s0_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W];
 
-assign w_update_counter =  (((br_upd_fe_if.gshare_bim_value == 2'b11) & !br_upd_fe_if.mispredict &  br_upd_fe_if.taken |
-                             (br_upd_fe_if.gshare_bim_value == 2'b00) & !br_upd_fe_if.mispredict & !br_upd_fe_if.taken)) ? br_upd_fe_if.gshare_bim_value :
-                           br_upd_fe_if.taken ? br_upd_fe_if.gshare_bim_value + 2'b01 :
-                           br_upd_fe_if.gshare_bim_value - 2'b01;
+assign w_update_counter =  (((br_upd_fe_if.bim_value == 2'b11) & !br_upd_fe_if.mispredict &  br_upd_fe_if.taken |
+                             (br_upd_fe_if.bim_value == 2'b00) & !br_upd_fe_if.mispredict & !br_upd_fe_if.taken)) ? br_upd_fe_if.bim_value :
+                           br_upd_fe_if.taken ? br_upd_fe_if.bim_value + 2'b01 :
+                           br_upd_fe_if.bim_value - 2'b01;
 
 
 
@@ -169,7 +169,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 //                br_upd_fe_if.pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W],
 //                br_upd_fe_if.gshare_bhr,
 //                br_upd_fe_if.gshare_index,
-//                br_upd_fe_if.gshare_bim_value,
+//                br_upd_fe_if.bim_value,
 //                br_upd_fe_if.taken,
 //                br_upd_fe_if.mispredict ? "Miss" : "Hit");
 //

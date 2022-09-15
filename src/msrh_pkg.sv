@@ -584,6 +584,8 @@ typedef struct packed {
   brtag_t            brtag;
   brmask_t           br_mask;
 
+  logic [ 1: 0]      bim_value;
+
   gshare_bht_t  gshare_index;
   gshare_bht_t  gshare_bhr;
 
@@ -613,6 +615,8 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.ras_index = inst.ras_index;
   ret.brtag     = inst.brtag;
   ret.br_mask   = inst.br_mask;
+
+  ret.bim_value = inst.bim_value;
 
   ret.gshare_index      = inst.gshare_index;
   ret.gshare_bhr        = inst.gshare_bhr;
