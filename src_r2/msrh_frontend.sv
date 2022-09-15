@@ -666,7 +666,8 @@ u_msrh_inst_buffer
 
    .o_decode_flush (w_decode_flush),
 
-   .iq_disp        (iq_disp)
+   .iq_disp      (iq_disp),
+   .br_upd_fe_if (br_upd_fe_if)
    );
 
 

@@ -618,7 +618,7 @@ u_msrh_inst_buffer
    .o_inst_ready (w_inst_buffer_ready),
    .i_s2_inst    (w_s2_inst_buffer_in),
 
-   .iq_disp        (iq_disp)
+   .iq_disp      (iq_disp)
    );
 
 

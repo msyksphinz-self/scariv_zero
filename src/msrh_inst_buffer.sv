@@ -19,7 +19,9 @@ module msrh_inst_buffer
 
  output logic                     o_inst_ready,
  input msrh_pkg::inst_buffer_in_t i_s2_inst,
- disp_if.master                   iq_disp
+ disp_if.master                   iq_disp,
+
+ br_upd_if.slave br_upd_fe_if
  );
 
 logic  w_inst_buffer_fire;
@@ -223,8 +225,8 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
 
           r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
           r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
-          r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
-                                                                 ras_search_if.s2_ras_index;
+          // r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
+          // ras_search_if.s2_ras_index;
           r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
         end // block: pred_loop
 
@@ -637,7 +639,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
       iq_disp.inst[d_idx].is_call           = w_inst_is_call[d_idx];
       iq_disp.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
-      iq_disp.inst[d_idx].ras_index         = w_expand_ras_info[d_idx].ras_index;
+      iq_disp.inst[d_idx].ras_index         = r_ras_index; // w_expand_ras_info[d_idx].ras_index;
 
       iq_disp.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
       iq_disp.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
@@ -686,11 +688,21 @@ u_iq_call_stash_addr_oh (.i_oh(iq_is_call_valid_oh), .i_data(iq_call_stash_vaddr
 assign iq_is_call_valid_oh = {{msrh_conf_pkg::DISP_SIZE{1'b1}}{(iq_disp.valid & iq_disp.ready)}} & w_inst_disp_mask & w_inst_is_call;
 assign iq_is_ret_valid_oh  = {{msrh_conf_pkg::DISP_SIZE{1'b1}}{(iq_disp.valid & iq_disp.ready)}} & w_inst_disp_mask & w_inst_is_ret;
 
+logic w_ras_br_flush;
+assign w_ras_br_flush = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (|iq_is_ret_valid_oh) begin
-    r_ras_index = r_ras_index - 'h1;
-  end else if (|iq_is_call_valid_oh) begin
-    r_ras_index = r_ras_index + 'h1;
+  if (!i_reset_n) begin
+    r_ras_index <= 'h0;
+  end else begin
+    if (w_ras_br_flush) begin
+      r_ras_index <= br_upd_fe_if.ras_index;
+    end else if (|iq_is_ret_valid_oh) begin
+      r_ras_index <= r_ras_index - 'h1;
+    end else if (|iq_is_call_valid_oh) begin
+      r_ras_index <= r_ras_index + 'h1;
+    end
   end
 end
 
