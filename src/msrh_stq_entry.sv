@@ -4,6 +4,9 @@ module msrh_stq_entry
    input logic                                i_clk,
    input logic                                i_reset_n,
 
+   // ROB notification interface
+   rob_info_if.slave                           rob_info_if,
+
    input logic                                i_disp_load,
    input msrh_pkg::cmt_id_t                   i_disp_cmt_id,
    input msrh_pkg::grp_id_t                   i_disp_grp_id,
@@ -33,6 +36,7 @@ module msrh_stq_entry
    input msrh_pkg::commit_blk_t               i_commit,
    br_upd_if.slave                            br_upd_if,
 
+   output                                     o_stbuf_req_valid,
    input logic                                i_sq_op_accept,
 
    // Snoop Interface
@@ -63,6 +67,8 @@ msrh_pkg::alen_t                                   w_rs2_phy_data;
 logic                                              w_entry_rs2_ready_next;
 
 logic                                              w_commit_finish;
+
+logic                                              w_oldest_ready;
 
 always_comb begin
   o_entry = r_entry;
@@ -152,6 +158,10 @@ always_comb begin
   w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | w_rs_phy_hit[0];
   w_entry_next.inst.rd_regs[0].predict_ready = w_rs_rel_hit[0] & w_rs_may_mispred[0];
 
+  if (r_entry.is_valid & w_oldest_ready) begin
+    w_entry_next.inst.oldest_valid = 1'b1;
+  end
+
   case (r_entry.state)
     STQ_INIT : begin
       if (w_entry_flush & w_entry_next.is_valid) begin
@@ -179,17 +189,20 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
-        w_entry_next.state           = i_ex1_q_updates.hazard_valid ? STQ_TLB_HAZ :
-                                       !w_entry_rs2_ready_next ? STQ_WAIT_ST_DATA :
+        w_entry_next.state           = i_ex1_q_updates.oldest_hazard_valid ? STQ_OLDEST_HAZ :
+                                       i_ex1_q_updates.hazard_valid        ? STQ_TLB_HAZ :
+                                       !w_entry_rs2_ready_next             ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
-        w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
-        // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
-        // w_entry_next.inst            = i_ex1_q_updates.inst;
+        w_entry_next.paddr_valid     = ~i_ex1_q_updates.oldest_hazard_valid &
+                                       ~i_ex1_q_updates.hazard_valid;
         w_entry_next.size            = i_ex1_q_updates.size;
+
+        w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
+        w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
 
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
       if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
@@ -202,6 +215,13 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (|i_tlb_resolve) begin
+        w_entry_next.state = STQ_ISSUE_WAIT;
+      end
+    end
+    STQ_OLDEST_HAZ : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (r_entry.inst.oldest_valid) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
@@ -274,6 +294,18 @@ always_comb begin
   end
 
 end // always_comb
+
+
+// -----------------
+// Oldest Detection
+// -----------------
+
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+
+assign o_stbuf_req_valid = r_entry.state == STQ_COMMIT &
+                           ~r_entry.except_valid &
+                           (r_entry.inst.oldest_valid ? st_buffer_if.is_empty : 1'b1);
 
 
 // Snoop Interface Hit

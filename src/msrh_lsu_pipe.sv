@@ -65,6 +65,7 @@ typedef struct packed {
   size_t  size;
   sign_t  sign;
   op_t    op;
+  rmwop_t rmwop;
 } lsu_pipe_ctrl_t;
 
 
@@ -138,7 +139,8 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_pipe_ctrl.op == OP_LOAD ? !w_ex2_load_mispredicted & !((ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success))) :
+  w_ex3_issue_next.valid = ((r_ex2_pipe_ctrl.op == OP_LOAD) |
+                            (r_ex2_pipe_ctrl.op == OP_RMW)) ? !w_ex2_load_mispredicted & !((ex1_l1d_rd_if.s1_conflict & ~(&w_ex2_fwd_success))) :
                            r_ex2_issue.valid;
 end
 
@@ -203,10 +205,11 @@ u_tlb
 decoder_lsu_ctrl
 u_decoder_ls_ctrl
   (
-   .inst (w_ex0_issue.inst    ),
-   .size (w_ex0_pipe_ctrl.size),
-   .sign (w_ex0_pipe_ctrl.sign),
-   .op   (w_ex0_pipe_ctrl.op  )
+   .inst  (w_ex0_issue.inst     ),
+   .size  (w_ex0_pipe_ctrl.size ),
+   .sign  (w_ex0_pipe_ctrl.sign ),
+   .op    (w_ex0_pipe_ctrl.op   ),
+   .rmwop (w_ex0_pipe_ctrl.rmwop)
    );
 
 //
@@ -255,9 +258,8 @@ assign ex1_fp_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 riscv_pkg::xlen_t w_ex1_rs1_selected_data;
 assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : ex1_regread_rs1.data;
 
-assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + (r_ex1_issue.cat == decoder_inst_cat_pkg::INST_CAT_ST ?
-                                                                        {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:25], r_ex1_issue.inst[11: 7]} :
-                                                                        {{(riscv_pkg::VADDR_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]});
+assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
+
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
 assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.op == OP_LOAD ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
@@ -304,7 +306,8 @@ msrh_pkg::except_t w_ex1_tlb_except_type;
 
 assign w_ex1_ld_except_valid = (r_ex1_pipe_ctrl.op == OP_LOAD) &
                                (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = (r_ex1_pipe_ctrl.op == OP_STORE) &
+assign w_ex1_st_except_valid = ((r_ex1_pipe_ctrl.op == OP_STORE) |
+                                (r_ex1_pipe_ctrl.op == OP_RMW)) &
                                (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
 assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
                                w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
@@ -315,20 +318,21 @@ assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALI
                                msrh_pkg::except_t'('h0);
 
 // Interface to EX1 updates
-assign o_ex1_q_updates.update     = r_ex1_issue.valid;
-// assign o_ex1_q_updates.inst       = r_ex1_issue;
-// assign o_ex1_q_updates.pipe_sel_idx_oh = 1 << LSU_PIPE_IDX;
-assign o_ex1_q_updates.cmt_id     = r_ex1_issue.cmt_id;
-assign o_ex1_q_updates.grp_id     = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.hazard_valid = w_ex1_tlb_resp.miss;
-assign o_ex1_q_updates.tlb_except_valid = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
-assign o_ex1_q_updates.tlb_except_type  = w_ex1_tlb_except_type;
-assign o_ex1_q_updates.index_oh   = r_ex1_index_oh;
-assign o_ex1_q_updates.vaddr      = w_ex1_vaddr;
-assign o_ex1_q_updates.paddr      = w_ex1_tlb_resp.paddr;
-assign o_ex1_q_updates.st_data_valid = r_ex1_issue.rd_regs[1].ready;
-assign o_ex1_q_updates.st_data     = ex1_fp_regread_rs2.valid ? ex1_fp_regread_rs2.data : ex1_int_regread_rs2.data ;
-assign o_ex1_q_updates.size        = r_ex1_pipe_ctrl.size;
+assign o_ex1_q_updates.update              = r_ex1_issue.valid;
+assign o_ex1_q_updates.cmt_id              = r_ex1_issue.cmt_id;
+assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
+assign o_ex1_q_updates.oldest_hazard_valid = (r_ex1_pipe_ctrl.op == OP_RMW) & !r_ex1_issue.oldest_valid;
+assign o_ex1_q_updates.hazard_valid        = w_ex1_tlb_resp.miss;
+assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
+assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
+assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;
+assign o_ex1_q_updates.vaddr               = w_ex1_vaddr;
+assign o_ex1_q_updates.paddr               = w_ex1_tlb_resp.paddr;
+assign o_ex1_q_updates.st_data_valid       = r_ex1_issue.rd_regs[1].ready;
+assign o_ex1_q_updates.st_data             = ex1_fp_regread_rs2.valid ? ex1_fp_regread_rs2.data : ex1_int_regread_rs2.data ;
+assign o_ex1_q_updates.size                = r_ex1_pipe_ctrl.size;
+assign o_ex1_q_updates.is_rmw              = (r_ex1_pipe_ctrl.op == OP_RMW);
+assign o_ex1_q_updates.rmwop               = r_ex1_pipe_ctrl.rmwop;
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -349,7 +353,9 @@ end
 
 
 // Interface to L1D cache
-assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid & (r_ex1_pipe_ctrl.op == OP_LOAD) & !w_ex1_tlb_resp.miss;
+assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
+                                ((r_ex1_pipe_ctrl.op == OP_LOAD) |
+                                 (r_ex1_pipe_ctrl.op == OP_RMW)) & !w_ex1_tlb_resp.miss;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
@@ -367,11 +373,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign w_ex2_load_mispredicted = r_ex2_issue.valid &
-                                 (r_ex2_pipe_ctrl.op == OP_LOAD) &
+                                 ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
                                  (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) &
                                  ~(&w_ex2_fwd_success);
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
-                          (r_ex2_pipe_ctrl.op == OP_LOAD) &
+                          ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
                           ex1_l1d_rd_if.s1_miss &
                           ~ex1_l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);

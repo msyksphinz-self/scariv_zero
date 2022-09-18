@@ -217,20 +217,23 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  logic                           update;
-  // msrh_pkg::issue_t               inst;
-  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  // logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
-  msrh_pkg::cmt_id_t cmt_id;
-  msrh_pkg::grp_id_t grp_id;
-  logic                           hazard_valid;
-  logic                           tlb_except_valid;
-  msrh_pkg::except_t              tlb_except_type;
-  logic [MEM_Q_SIZE-1:0]          index_oh;
-  msrh_pkg::vaddr_t vaddr;
-  msrh_pkg::paddr_t paddr;
-  logic                           st_data_valid;
-  msrh_pkg::alen_t  st_data;
+  logic                         update;
+  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
+  msrh_pkg::cmt_id_t            cmt_id;
+  msrh_pkg::grp_id_t            grp_id;
+  logic                         hazard_valid;
+  logic                         oldest_hazard_valid;
+  logic                         tlb_except_valid;
+  msrh_pkg::except_t            tlb_except_type;
+  logic [MEM_Q_SIZE-1:0]        index_oh;
+  msrh_pkg::vaddr_t             vaddr;
+  msrh_pkg::paddr_t             paddr;
+  logic                         st_data_valid;
+  msrh_pkg::alen_t              st_data;
+
+  // Atomic Operations
+  logic                         is_rmw;
+  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
 } ex1_q_update_t;
 
 typedef struct packed {
@@ -406,7 +409,8 @@ typedef enum logic[3:0] {
   STQ_DEAD = 9,
   STQ_WAIT_COMMIT = 10,
   STQ_DONE_EX3 = 11,
-  STQ_ISSUED = 12
+  STQ_ISSUED = 12,
+  STQ_OLDEST_HAZ = 13
 } stq_state_t;
 
 typedef struct packed {
@@ -432,6 +436,10 @@ typedef struct packed {
   logic              another_flush_valid;
   msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
+
+  // Atomic Operations
+  logic                      is_rmw;
+  decoder_lsu_ctrl_pkg::op_t rmwop;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -620,6 +628,10 @@ typedef struct packed {
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+
+  logic                                                is_rmw;
+  decoder_lsu_ctrl_pkg::op_t                           rmwop;
+
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
@@ -644,8 +656,10 @@ typedef enum logic [ 3: 0] {
 function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
                                              msrh_pkg::grp_id_t grp_id,
                                              msrh_pkg::paddr_t  paddr,
-                                             logic [ST_BUF_WIDTH/8-1: 0] strb,
-                                             logic [ST_BUF_WIDTH-1: 0]   data
+                                             logic [ST_BUF_WIDTH/8-1: 0]   strb,
+                                             logic [ST_BUF_WIDTH-1: 0]     data,
+                                             logic                         is_rmw,
+                                             decoder_lsu_ctrl_pkg::rmwop_t rmwop
                                              );
   st_buffer_entry_t ret;
 
@@ -656,6 +670,9 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
   ret.strb  = strb;
   ret.data  = data;
 
+  ret.is_rmw = is_rmw;
+  ret.rmwop  = rmwop;
+
 `ifdef SIMULATION
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -664,5 +681,15 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
   return ret;
 endfunction // assign_st_buffer
 
+
+function automatic riscv_pkg::xlen_t mem_offset (decoder_lsu_ctrl_pkg::op_t op, logic [31: 0] inst);
+  if (op == decoder_lsu_ctrl_pkg::OP_STORE) begin
+    return {{(riscv_pkg::VADDR_W-12){inst[31]}}, inst[31:25], inst[11: 7]};
+  end else if (op == decoder_lsu_ctrl_pkg::OP_LOAD) begin
+    return {{(riscv_pkg::VADDR_W-12){inst[31]}}, inst[31:20]};
+  end else begin
+    return 'h0;
+  end
+endfunction // mem_offset
 
 endpackage // msrh_lsu_pkg

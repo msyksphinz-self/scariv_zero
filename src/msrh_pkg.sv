@@ -136,10 +136,10 @@ typedef struct packed {
     logic          rvc_inst_valid;
     logic [15: 0]  rvc_inst;
 
-    vaddr_t pc_addr;
-    inst_cat_t   cat;
-    brtag_t brtag;
-    brmask_t         br_mask;
+    vaddr_t     pc_addr;
+    inst_cat_t  cat;
+    brtag_t     brtag;
+    brmask_t    br_mask;
 
     // logic [2:0] op;
     // logic imm;
@@ -306,6 +306,8 @@ typedef struct packed {
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
+
+    logic            oldest_valid;
 
     logic                   is_call;
     logic                   is_ret;

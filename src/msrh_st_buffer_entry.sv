@@ -194,6 +194,7 @@ end // always_comb
 
 assign o_entry = r_entry;
 assign o_ready_to_merge = r_entry.valid &
+                          !r_entry.is_rmw &
                           (r_state != ST_BUF_L1D_UPDATE) &
                           (r_state != ST_BUF_L1D_UPD_RESP) &
                           (r_state != ST_BUF_L1D_MERGE) &

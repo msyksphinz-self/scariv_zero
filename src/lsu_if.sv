@@ -586,9 +586,14 @@ endinterface // stq_snoop_if
 
 interface st_buffer_if;
 logic                                     valid;
-msrh_pkg::paddr_t           paddr;
+msrh_pkg::paddr_t                         paddr;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+logic                                     is_rmw;
+decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
+
+logic                                     is_empty;
+
 `ifdef SIMULATION
 msrh_pkg::cmt_id_t cmt_id;
 msrh_pkg::grp_id_t grp_id;
@@ -601,9 +606,14 @@ modport master (
   output paddr,
   output strb,
   output data,
+  output is_rmw,
+  output rmwop,
+`ifdef SIMULATION
   output cmt_id,
   output grp_id,
-  input  resp
+`endif // SIMULATION
+  input  resp,
+  input  is_empty
 );
 
 
@@ -612,9 +622,14 @@ modport slave (
   input paddr,
   input strb,
   input data,
+  input is_rmw,
+  input rmwop,
+`ifdef SIMULATION
   input cmt_id,
   input grp_id,
-  output resp
+`endif // SIMULATION
+  output resp,
+  output is_empty
 );
 
 endinterface // st_buffer_if

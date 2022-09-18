@@ -5,6 +5,9 @@ module msrh_stq
     input logic i_clk,
     input logic i_reset_n,
 
+    // ROB notification interface
+    rob_info_if.slave                           rob_info_if,
+
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
     disp_if.watch                                      disp,
     cre_ret_if.slave                                   cre_ret_if,
@@ -231,6 +234,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
+     .rob_info_if (rob_info_if),
+
      .i_disp_load       (|w_input_valid    ),
      .i_disp_cmt_id     (disp.cmt_id       ),
      .i_disp_grp_id     (w_disp_grp_id     ),
@@ -256,6 +261,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
+     .o_stbuf_req_valid    (w_sq_commit_req[s_idx]),
      .i_sq_op_accept       (|w_stbuf_accept_array & (st_buffer_if.resp != msrh_lsu_pkg::ST_BUF_FULL)),
 
      // Snoop Interface
@@ -273,7 +279,6 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
       assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
-    assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT) & ~w_stq_entries[s_idx].except_valid;
 
     // Forwarding check
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
@@ -504,6 +509,9 @@ generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) be
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[msrh_conf_pkg::DISP_SIZE];
 end
 endgenerate
+assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.is_rmw;
+assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
+
 `ifdef SIMULATION
 assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
 assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;
@@ -560,6 +568,7 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_WAIT_COMMIT      : $fwrite(fp, "WAIT_COMMIT");
       STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
       STQ_ISSUED           : $fwrite(fp, "ISSUED");
+      STQ_OLDEST_HAZ       : $fwrite(fp, "OLDEST_HAZ");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

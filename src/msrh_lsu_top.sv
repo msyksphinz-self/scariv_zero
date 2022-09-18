@@ -220,6 +220,8 @@ msrh_stq
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
 
+ .rob_info_if (rob_info_if),
+
  .i_disp_valid (w_stq_disp_valid),
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
