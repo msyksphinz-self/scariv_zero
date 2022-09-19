@@ -595,7 +595,13 @@ typedef struct packed {
   logic   taken;
   logic   mispredict;
   logic   done;
+  logic   notify_valid;
   logic   dead;
+`ifdef SIMULATION
+  vaddr_t pred_target_vaddr;
+  logic [31: 0] inst;
+`endif // SIMULATION
+
 } ftq_entry_t;
 
 function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
@@ -621,8 +627,14 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.gshare_index      = inst.gshare_index;
   ret.gshare_bhr        = inst.gshare_bhr;
 
+  ret.notify_valid = 1'b0;
   ret.done      = 1'b0;
   ret.dead      = 1'b0;
+
+`ifdef SIMULATION
+  ret.pred_target_vaddr = inst.pred_target_vaddr;
+  ret.inst = inst.inst;
+`endif // SIMULATION
 
   return ret;
 

@@ -94,19 +94,21 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
     end else if (br_upd_if.update & r_ftq_entry[e_idx].valid &
                  (br_upd_if.cmt_id == r_ftq_entry[e_idx].cmt_id) &
                  (br_upd_if.grp_id == r_ftq_entry[e_idx].grp_id)) begin
-      w_ftq_entry_next.done       = 1'b1;
-      w_ftq_entry_next.is_cond    = br_upd_if.is_cond;
-      w_ftq_entry_next.dead       = br_upd_if.dead;
-      w_ftq_entry_next.taken      = br_upd_if.taken;
-      w_ftq_entry_next.mispredict = br_upd_if.mispredict;
+      w_ftq_entry_next.done         = 1'b1;
+      w_ftq_entry_next.notify_valid = r_ftq_entry[e_idx].dead ? 1'b0 : 1'b1;
+      w_ftq_entry_next.is_cond      = br_upd_if.is_cond;
+      w_ftq_entry_next.dead         = br_upd_if.dead;
+      w_ftq_entry_next.taken        = br_upd_if.taken;
+      w_ftq_entry_next.mispredict   = br_upd_if.mispredict;
       w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
     end
     if (w_commit_flush |
         br_upd_fe_if.update &
         (r_ftq_entry[e_idx].valid & is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict) |
          w_load &                   is_br_flush_target (w_ftq_entry_next.br_mask,   br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict))) begin
-      w_ftq_entry_next.done       = 1'b1;
-      w_ftq_entry_next.dead       = 1'b1;
+      w_ftq_entry_next.done         = 1'b1;
+      w_ftq_entry_next.notify_valid = 1'b0;
+      w_ftq_entry_next.dead         = 1'b1;
     end // else: !if(w_load)
   end // always_comb
 
@@ -134,7 +136,8 @@ sel_out_entry
    );
 
 assign br_upd_fe_if.update           = w_out_ftq_entry.valid &
-                                       w_out_ftq_entry.done;
+                                       w_out_ftq_entry.done &
+                                       w_out_ftq_entry.notify_valid;
 assign br_upd_fe_if.taken            = w_out_ftq_entry.taken;
 assign br_upd_fe_if.mispredict       = w_out_ftq_entry.mispredict;
 assign br_upd_fe_if.is_cond          = w_out_ftq_entry.is_cond;
@@ -157,6 +160,46 @@ assign br_upd_fe_if.gshare_bhr       = w_out_ftq_entry.gshare_bhr  ;
 
 `ifdef SIMULATION
 `ifdef MONITOR
+
+integer ftq_fp;
+initial begin
+  ftq_fp = $fopen("bru_detail.log", "w");
+end
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (br_upd_fe_if.update & ~w_out_ftq_entry.dead) begin
+      if (w_out_ftq_entry.is_cond) begin
+        $fwrite(ftq_fp, "%t : (%02d,%d) pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, %s, bim=%1d, gidx=%d, bhr=%b, %s, DASM(0x%08x)\n",
+                $time,
+                w_out_ftq_entry.cmt_id, w_out_ftq_entry.grp_id,
+                w_out_ftq_entry.pc_vaddr,
+                w_out_ftq_entry.target_vaddr,
+                w_out_ftq_entry.pred_target_vaddr,
+                w_out_ftq_entry.taken ? "Taken   " : "NotTaken",
+                w_out_ftq_entry.bim_value,
+                w_out_ftq_entry.gshare_index,
+                w_out_ftq_entry.gshare_bhr,
+                w_out_ftq_entry.mispredict ? "Miss" : "Succ",
+                w_out_ftq_entry.inst);
+      end else if (w_out_ftq_entry.is_ret | w_out_ftq_entry.is_call) begin
+        $fwrite(ftq_fp, "%t : (%02d,%d) pc_vaddr = %08x, target_addr = %08x, pred_target_addr = %08x, ras_index = %d, %s, DASM(0x%08x)\n",
+                $time,
+                w_out_ftq_entry.cmt_id, w_out_ftq_entry.grp_id,
+                w_out_ftq_entry.pc_vaddr,
+                w_out_ftq_entry.target_vaddr,
+                w_out_ftq_entry.pred_target_vaddr,
+                w_out_ftq_entry.is_ret ? w_out_ftq_entry.ras_index - 'h1 : w_out_ftq_entry.ras_index,
+                w_out_ftq_entry.mispredict ? "Miss" : "Succ",
+                w_out_ftq_entry.inst);
+      end
+    end
+  end
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+final begin
+  $fclose(ftq_fp);
+end
 
 logic [63: 0] r_cycle_count;
 logic [10: 0] r_bru_valid_count;
@@ -212,7 +255,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
             if (!br_upd_fe_if.mispredict) begin
               r_bru_other_hit_count <= r_bru_other_hit_count + 'h1;
             end
-          end // else: !if(r_ex3_issue.inst == 32'h00008082)
+          end // else: !if(br_upd_fe_if.is_ret)
         end // else: !if(!br_upd_fe_if.is_call & !br_upd_fe_if.is_ret)
       end // if (br_upd_fe_if.update & !br_upd_fe_if.dead)
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)

@@ -667,6 +667,7 @@ vaddr_t  iq_call_stash_vaddr_oh;
 vaddr_t  w_iq_ras_ret_vaddr;
 
 msrh_predict_pkg::ras_idx_t r_ras_index;
+msrh_predict_pkg::ras_idx_t w_ras_index_next;
 
 generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : pc_vaddr_next_loop
   vaddr_t w_iq_call_offset;
@@ -691,18 +692,29 @@ assign iq_is_ret_valid_oh  = {{msrh_conf_pkg::DISP_SIZE{1'b1}}{(iq_disp.valid & 
 logic w_ras_br_flush;
 assign w_ras_br_flush = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
 
+always_comb begin
+  if (w_ras_br_flush) begin
+    if (br_upd_fe_if.is_ret) begin
+      w_ras_index_next = br_upd_fe_if.ras_index - 'h1;
+    end else begin
+      w_ras_index_next = br_upd_fe_if.ras_index;
+    end
+  end else begin
+    w_ras_index_next = r_ras_index;
+  end
+
+  if (|iq_is_ret_valid_oh) begin
+    w_ras_index_next = w_ras_index_next - 'h1;
+  end else if (|iq_is_call_valid_oh) begin
+    w_ras_index_next = w_ras_index_next + 'h1;
+  end
+end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ras_index <= 'h0;
   end else begin
-    if (w_ras_br_flush) begin
-      r_ras_index <= br_upd_fe_if.ras_index;
-    end else if (|iq_is_ret_valid_oh) begin
-      r_ras_index <= r_ras_index - 'h1;
-    end else if (|iq_is_call_valid_oh) begin
-      r_ras_index <= r_ras_index + 'h1;
-    end
+    r_ras_index <= w_ras_index_next;
   end
 end
 
