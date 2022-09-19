@@ -398,18 +398,21 @@ endfunction // gen_dw
 // ---------
 // STQ
 // ---------
-typedef enum logic[3:0] {
-  STQ_INIT = 0,
-  STQ_TLB_HAZ = 1,
-  STQ_ISSUE_WAIT = 2,
-  STQ_DONE_EX2 = 3,
-  STQ_COMMIT = 4,
-  STQ_WAIT_ST_DATA = 5,
-  STQ_DEAD = 9,
-  STQ_WAIT_COMMIT = 10,
-  STQ_DONE_EX3 = 11,
-  STQ_ISSUED = 12,
-  STQ_OLDEST_HAZ = 13
+typedef enum logic[4:0] {
+  STQ_INIT          = 0,
+  STQ_TLB_HAZ       = 1,
+  STQ_ISSUE_WAIT    = 2,
+  STQ_DONE_EX2      = 3,
+  STQ_COMMIT        = 4,
+  STQ_WAIT_ST_DATA  = 5,
+  STQ_DEAD          = 9,
+  STQ_WAIT_COMMIT   = 10,
+  STQ_DONE_EX3      = 11,
+  STQ_ISSUED        = 12,
+  STQ_OLDEST_HAZ    = 13,
+  STQ_LRQ_CONFLICT  = 14,
+  STQ_LRQ_EVICT_HAZ = 15,
+  STQ_LRQ_FULL      = 16
 } stq_state_t;
 
 typedef struct packed {
@@ -424,10 +427,10 @@ typedef struct packed {
   stq_state_t        state;
   msrh_pkg::vaddr_t  vaddr;
   msrh_pkg::paddr_t  paddr;
-  logic                                  paddr_valid;
-  logic                                  is_rs2_get;
-  msrh_pkg::alen_t                       rs2_data;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+  logic                                 paddr_valid;
+  logic                                 is_rs2_get;
+  msrh_pkg::alen_t                      rs2_data;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
 
   logic              except_valid;
   msrh_pkg::except_t except_type;
@@ -439,8 +442,8 @@ typedef struct packed {
   // Atomic Operations
 logic                oldest_valid;
 logic                oldest_ready;
-  logic                      is_rmw;
-  decoder_lsu_ctrl_pkg::op_t rmwop;
+  logic                         is_rmw;
+  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -631,7 +634,7 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
 
   logic                                                is_rmw;
-  decoder_lsu_ctrl_pkg::op_t                           rmwop;
+  decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
 
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;
@@ -640,18 +643,19 @@ typedef struct packed {
 } st_buffer_entry_t;
 
 typedef enum logic [ 3: 0] {
-  ST_BUF_INIT         = 0,
-  ST_BUF_RD_L1D       = 1,
-  ST_BUF_RESP_L1D     = 2,
-  ST_BUF_L1D_UPDATE   = 3,
-  ST_BUF_L1D_UPD_RESP = 4,
-  ST_BUF_LRQ_REFILL   = 5,
-  ST_BUF_WAIT_REFILL  = 6,
-  ST_BUF_WAIT_FULL    = 7,
-  ST_BUF_WAIT_EVICT   = 8,
-  ST_BUF_L1D_MERGE    = 9,
-  ST_BUF_L1D_MERGE2   = 10,
-  ST_BUF_WAIT_FINISH  = 11
+  ST_BUF_INIT          = 0,
+  ST_BUF_RD_L1D        = 1,
+  ST_BUF_RESP_L1D      = 2,
+  ST_BUF_L1D_UPDATE    = 3,
+  ST_BUF_L1D_UPD_RESP  = 4,
+  ST_BUF_LRQ_REFILL    = 5,
+  ST_BUF_WAIT_REFILL   = 6,
+  ST_BUF_WAIT_FULL     = 7,
+  ST_BUF_WAIT_EVICT    = 8,
+  ST_BUF_L1D_MERGE     = 9,
+  ST_BUF_L1D_MERGE2    = 10,
+  ST_BUF_WAIT_FINISH   = 11,
+  ST_BUF_AMO_OPERATION = 12
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,

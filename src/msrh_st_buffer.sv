@@ -104,6 +104,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   assign w_load = st_buffer_if.valid & w_in_ptr_oh[e_idx] & w_st_buffer_allocated;
 
   msrh_st_buffer_entry
+    #(.index (e_idx))
   u_entry
     (
      .i_clk    (i_clk    ),
@@ -129,6 +130,8 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
 
      .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
      .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss),
+     .i_l1d_s1_data        (l1d_rd_if.s1_data),
+
      .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_wr_s1_resp_hit (l1d_wr_if.s1_wr_resp.s1_hit),
 

@@ -9,6 +9,7 @@
 
 module msrh_st_buffer_entry
   import msrh_lsu_pkg::*;
+#(parameter index = 0)
 (
  input logic  i_clk,
  input logic  i_reset_n,
@@ -33,6 +34,7 @@ module msrh_st_buffer_entry
 
  input logic i_l1d_rd_s1_conflict,
  input logic i_l1d_rd_s1_miss,
+ input logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] i_l1d_s1_data,
 
  output logic    o_l1d_wr_req,
  input logic     i_l1d_wr_s1_resp_hit,
@@ -61,11 +63,20 @@ logic                                    w_lrq_resolve_vld;
 assign w_lrq_resolve_vld = i_lrq_resolve.valid &
                            (i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh);
 
+riscv_pkg::xlen_t w_amo_op_result;
+riscv_pkg::xlen_t r_amo_l1d_data;
+riscv_pkg::xlen_t w_amo_l1d_data_next;
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
+
+    r_amo_l1d_data <= 'h0;
   end else begin
     r_entry <= w_entry_next;
+
+    r_amo_l1d_data <= w_amo_l1d_data_next;
   end
 end
 
@@ -79,6 +90,8 @@ end
 
 always_comb begin
   w_entry_next = r_entry;
+  w_amo_l1d_data_next = r_amo_l1d_data;
+
   w_state_next = r_state;
   w_l1d_rd_req_next = 1'b0;
   o_entry_finish = 1'b0;
@@ -126,7 +139,14 @@ always_comb begin
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else begin
-        w_state_next = ST_BUF_L1D_UPDATE;
+        if (index == 0 && r_entry.is_rmw) begin
+          w_state_next = ST_BUF_AMO_OPERATION;
+
+          /* verilator lint_off SELRANGE */
+          w_amo_l1d_data_next = i_l1d_s1_data[{r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0], 3'b000} +: riscv_pkg::XLEN_W];
+        end else begin
+          w_state_next = ST_BUF_L1D_UPDATE;
+        end
       end
     end
     ST_BUF_L1D_UPDATE: begin
@@ -187,6 +207,11 @@ always_comb begin
         w_entry_next.valid = 1'b0;
       end
     end
+    ST_BUF_AMO_OPERATION : begin
+      w_state_next = ST_BUF_L1D_UPDATE;
+
+      w_entry_next.data[riscv_pkg::XLEN_W-1: 0] = w_amo_op_result;
+    end
     default : begin
     end
   endcase // case (r_state)
@@ -212,6 +237,19 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign o_fwd_lsu_hit[p_idx] = r_entry.valid & stbuf_fwd_check_if[p_idx].valid &
                                 (r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] ==
                                  stbuf_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)]);
+end
+endgenerate
+
+
+generate if (index == 0) begin : amo_operation
+  msrh_amo_operation
+  u_amo_op
+    (
+     .i_data0 (r_entry.data[riscv_pkg::XLEN_W-1: 0]),
+     .i_data1 (r_amo_l1d_data                      ),
+     .i_op    (r_entry.rmwop                       ),
+     .o_data  (w_amo_op_result                     )
+     );
 end
 endgenerate
 

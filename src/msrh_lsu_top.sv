@@ -240,6 +240,9 @@ msrh_stq
 
  .ex3_done_if (w_ex3_done_if),
 
+ .i_lrq_resolve (w_lrq_resolve),
+ .i_lrq_is_full (w_lrq_is_full),
+
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
 
