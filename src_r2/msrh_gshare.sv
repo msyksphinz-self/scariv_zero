@@ -23,8 +23,6 @@ module msrh_gshare
 logic         r_s1_valid;
 gshare_bht_t  r_s1_bhr;
 
-logic [ 1: 0] w_update_counter;
-logic [ 1: 0] w_s1_bim_counter;
 gshare_bht_t  r_bhr;      // Branch History Register : 1=Taken / 0:NonTaken
 gshare_bht_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
 
@@ -55,10 +53,14 @@ generate for (genvar c_idx = 0; c_idx < msrh_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx
                              br_upd_fe_if.taken ? br_upd_fe_if.bim_value + 2'b01 :
                              br_upd_fe_if.bim_value - 2'b01;
 
+  logic [ 1: 0] w_update_counter;
+  logic [ 1: 0] w_s1_bim_counter;
+  logic [ 1: 0] w_s1_bim_counter_dram;
+
   data_array_2p
     #(
       .WIDTH (2),
-      .ADDR_W ($clog2(BTB_ENTRY_SIZE))
+      .ADDR_W (msrh_pkg::GSHARE_BHT_W)
       )
   bim_array
     (
@@ -70,8 +72,12 @@ generate for (genvar c_idx = 0; c_idx < msrh_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx
      .i_wr_data (w_update_counter),
 
      .i_rd_addr (w_s0_xor_rd_index),
-     .o_rd_data (w_s1_bim_counter)
+     .o_rd_data (w_s1_bim_counter_dram)
      );
+
+  assign w_s1_bim_counter = br_upd_fe_if.update & !br_upd_fe_if.dead &
+                            (br_upd_fe_if.gshare_index == w_s0_xor_rd_index) ? w_update_counter :
+                            w_s1_bim_counter_dram;
 
   // Data SRAM is not formatted.
   // First access, default is set to TAKEN.
