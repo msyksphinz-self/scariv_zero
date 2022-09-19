@@ -718,17 +718,11 @@ assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
 assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
 
-ic_block_t w_s1_btb_gshare_hit_array;
-ic_block_t r_s2_btb_gshare_hit_array;
-assign w_s1_btb_gshare_hit_array = w_btb_search_if.s1_hit & {{($bits(ic_block_t))}{w_gshare_search_if.s1_pred_taken}};
-
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_s2_btb_gshare_hit_array <= 'h0;
     r_s2_btb_target_vaddr <= 'h0;
   end else begin
-    r_s2_btb_gshare_hit_array <= {{($bits(ic_block_t))}{w_s1_predict_valid}} & w_s1_btb_gshare_hit_array;
-      r_s2_btb_target_vaddr <= w_s1_btb_target_vaddr;
+    r_s2_btb_target_vaddr <= w_s1_btb_target_vaddr;
   end
 end
 
@@ -744,7 +738,14 @@ bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.i
 // ------------------------------
 // S2 Prediction Valid
 // ------------------------------
-assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & w_gshare_search_if.s2_pred_taken;
+msrh_ic_pkg::ic_block_t w_s2_predict_taken;
+generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : bim_loop
+  assign w_s2_predict_taken[b_idx] = w_gshare_search_if.s2_bim_value[b_idx][1] &
+                                     w_btb_search_if.s2_hit[b_idx];
+end
+endgenerate
+
+assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & (|w_s2_predict_taken);
 assign w_s2_predict_target_vaddr = r_s2_btb_target_vaddr;
 
 // ------------------------------
