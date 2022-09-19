@@ -138,6 +138,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
+                       (r_entry.oldest_valid ? r_entry.oldest_ready : 1'b1) &
                        all_operand_ready(r_entry);
 
 assign w_commit_finish = i_sq_op_accept | r_entry.except_valid;
@@ -158,8 +159,8 @@ always_comb begin
   w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | w_rs_phy_hit[0];
   w_entry_next.inst.rd_regs[0].predict_ready = w_rs_rel_hit[0] & w_rs_may_mispred[0];
 
-  if (r_entry.is_valid & w_oldest_ready) begin
-    w_entry_next.inst.oldest_valid = 1'b1;
+  if (r_entry.is_valid) begin
+    w_entry_next.oldest_ready = w_oldest_ready;
   end
 
   case (r_entry.state)
@@ -189,16 +190,14 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
-        w_entry_next.state           = i_ex1_q_updates.oldest_hazard_valid ? STQ_OLDEST_HAZ :
-                                       i_ex1_q_updates.hazard_valid        ? STQ_TLB_HAZ :
+        w_entry_next.state           = i_ex1_q_updates.hazard_valid        ? STQ_TLB_HAZ :
                                        !w_entry_rs2_ready_next             ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
-        w_entry_next.paddr_valid     = ~i_ex1_q_updates.oldest_hazard_valid &
-                                       ~i_ex1_q_updates.hazard_valid;
+        w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
         w_entry_next.size            = i_ex1_q_updates.size;
 
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
@@ -215,13 +214,6 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (|i_tlb_resolve) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
-    end
-    STQ_OLDEST_HAZ : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (r_entry.inst.oldest_valid) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
@@ -351,6 +343,9 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
   ret.is_rs2_get  = 1'b0;
 
   ret.except_valid = 1'b0;
+
+  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) &
+                     (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
 
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;

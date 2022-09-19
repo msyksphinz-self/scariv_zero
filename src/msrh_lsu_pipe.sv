@@ -321,7 +321,6 @@ assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALI
 assign o_ex1_q_updates.update              = r_ex1_issue.valid;
 assign o_ex1_q_updates.cmt_id              = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.oldest_hazard_valid = (r_ex1_pipe_ctrl.op == OP_RMW) & !r_ex1_issue.oldest_valid;
 assign o_ex1_q_updates.hazard_valid        = w_ex1_tlb_resp.miss;
 assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
 assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;

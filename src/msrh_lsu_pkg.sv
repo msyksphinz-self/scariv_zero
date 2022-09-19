@@ -222,7 +222,6 @@ typedef struct packed {
   msrh_pkg::cmt_id_t            cmt_id;
   msrh_pkg::grp_id_t            grp_id;
   logic                         hazard_valid;
-  logic                         oldest_hazard_valid;
   logic                         tlb_except_valid;
   msrh_pkg::except_t            tlb_except_type;
   logic [MEM_Q_SIZE-1:0]        index_oh;
@@ -438,6 +437,8 @@ typedef struct packed {
   msrh_pkg::grp_id_t another_flush_grp_id;
 
   // Atomic Operations
+logic                oldest_valid;
+logic                oldest_ready;
   logic                      is_rmw;
   decoder_lsu_ctrl_pkg::op_t rmwop;
 

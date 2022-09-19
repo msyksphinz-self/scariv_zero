@@ -137,7 +137,8 @@ typedef struct packed {
     logic [15: 0]  rvc_inst;
 
     vaddr_t     pc_addr;
-    inst_cat_t  cat;
+    inst_cat_t    cat;
+    inst_subcat_t subcat;
     brtag_t     brtag;
     brmask_t    br_mask;
 
@@ -350,6 +351,9 @@ function issue_t assign_issue_common (disp_t in,
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
+
+  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
+                     (in.cat == decoder_inst_cat_pkg::INST_CAT_CSU);
 
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
