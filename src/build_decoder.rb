@@ -25,6 +25,9 @@ end
 File.open("riscv_decoder.json") do |file|
   $arch_table = JSON.load(file)
 end
+File.open("riscv_rvv_decoder.json") do |file|
+  $arch_table += JSON.load(file)
+end
 
 ctrl_idx = ARGV[0]
 xlen = ARGV[1].to_s
