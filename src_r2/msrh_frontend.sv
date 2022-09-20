@@ -108,10 +108,10 @@ logic             r_s2_tlb_miss;
 logic             r_s2_tlb_except_valid;
 except_t          r_s2_tlb_except_cause;
 
-vaddr_t           w_s2_btb_target_vaddr;
-
 logic             w_s2_predict_valid;
 vaddr_t           w_s2_predict_target_vaddr;
+logic             w_s2_predict_valid_gshare;
+vaddr_t           w_s2_predict_target_vaddr_gshare;
 
 logic             w_s2_inst_buffer_load_valid;
 
@@ -701,6 +701,8 @@ assign w_btb_update_if.valid          = br_upd_if.update &
                                         /* br_upd_if.taken */ &  // Even though Taken/NotTaken, it records "Branch is existed".
                                         ~br_upd_if.dead &
                                         ~br_upd_if.is_ret;
+assign w_btb_update_if.taken          = br_upd_if.taken;
+assign w_btb_update_if.mispredict     = br_upd_if.mispredict;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 assign w_btb_update_if.is_cond        = br_upd_if.is_cond;
@@ -730,27 +732,8 @@ ic_block_t w_s2_call_ret_tree;
 assign w_s2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
 
-// ------------------------------
-// S2 Prediction Valid
-// ------------------------------
-msrh_ic_pkg::ic_block_t w_s2_predict_taken;
-generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : bim_loop
-  assign w_s2_predict_taken[b_idx] = w_gshare_search_if.s2_bim_value[b_idx][1] &
-                                     w_btb_search_if.s2_hit[b_idx];
-end
-endgenerate
-
-assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & (|w_s2_predict_taken);
-bit_oh_or_packed
-  #(.T(vaddr_t),
-    .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2)
-    )
-u_s2_target_vaddr_hit_oh (
- .i_oh      (w_s2_predict_taken),
- .i_data    (w_btb_search_if.s2_target_vaddr),
- .o_selected(w_s2_btb_target_vaddr)
- );
-assign w_s2_predict_target_vaddr = w_s2_btb_target_vaddr;
+assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & w_s2_predict_valid_gshare;
+assign w_s2_predict_target_vaddr = w_s2_predict_target_vaddr_gshare;
 
 // ------------------------------
 // Decode Level Prediction Valid
@@ -788,6 +771,9 @@ msrh_predictor_gshare u_predictor
    .ras_search_if (w_ras_search_if),
 
    .gshare_search_if (w_gshare_search_if),
+
+   .o_s2_predict_valid        (w_s2_predict_valid_gshare       ),
+   .o_s2_predict_target_vaddr (w_s2_predict_target_vaddr_gshare),
 
    .br_upd_fe_if (br_upd_fe_tmp_if)
    );

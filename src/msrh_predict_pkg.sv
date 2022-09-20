@@ -19,12 +19,15 @@ localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 typedef logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_idx_t;
 
 typedef struct packed {
-  logic                                            valid;
-  logic                                            is_cond;
-  logic                                            is_call;
-  logic                                            is_ret;
+  logic valid;
+  logic is_cond;
+  logic is_call;
+  logic is_ret;
   logic [riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1] pc_tag;
-  msrh_pkg::vaddr_t                   target_vaddr;
+} btb_inst_info_t;
+
+typedef struct packed {
+  msrh_pkg::vaddr_t target_vaddr;
 } btb_entry_t;
 
 endpackage // msrh_predict_pkg
@@ -88,13 +91,15 @@ endinterface // btb_search_if
 
 interface btb_update_if;
 
-  logic                                                 valid;
-  logic                                                 is_cond;
-  logic                                                 is_call;
-  logic                                                 is_ret;
-  logic                                                 is_rvc;
-  msrh_pkg::vaddr_t                        pc_vaddr;
-  msrh_pkg::vaddr_t                        target_vaddr;
+  logic              valid;
+  logic              is_cond;
+  logic              is_call;
+  logic              is_ret;
+  logic              is_rvc;
+  logic              taken;
+  logic              mispredict;
+  msrh_pkg::vaddr_t  pc_vaddr;
+  msrh_pkg::vaddr_t  target_vaddr;
 
   modport master (
     output valid,
@@ -102,6 +107,8 @@ interface btb_update_if;
     output is_call,
     output is_ret,
     output is_rvc,
+    output taken,
+    output mispredict,
     output pc_vaddr,
     output target_vaddr
   );
@@ -112,6 +119,8 @@ interface btb_update_if;
     input is_call,
     input is_ret,
     input is_rvc,
+    input taken,
+    input mispredict,
     input pc_vaddr,
     input target_vaddr
   );
@@ -233,6 +242,7 @@ interface gshare_search_if;
   msrh_pkg::vaddr_t      s0_pc_vaddr;
 
   logic                                                                     s2_valid;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]                              s2_pred_taken;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]                       s2_bim_value;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][msrh_pkg::GSHARE_BHT_W-1: 0] s2_index;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][msrh_pkg::GSHARE_BHT_W-1: 0] s2_bhr;
@@ -241,6 +251,7 @@ interface gshare_search_if;
     output s0_valid,
     output s0_pc_vaddr,
     input  s2_valid,
+    input  s2_pred_taken,
     input  s2_bim_value,
     input  s2_index,
     input  s2_bhr
@@ -250,6 +261,7 @@ interface gshare_search_if;
     input  s0_valid,
     input  s0_pc_vaddr,
     output s2_valid,
+    output s2_pred_taken,
     output s2_bim_value,
     output s2_index,
     output s2_bhr
@@ -258,6 +270,7 @@ interface gshare_search_if;
   modport monitor (
     input s2_valid,
     input s2_index,
+    input s2_pred_taken,
     input s2_bim_value,
     input s2_bhr
   );

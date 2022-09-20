@@ -34,14 +34,39 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   btb_entry_t w_s1_search_entry;
 
   logic btb_update_hit;
-  assign btb_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  assign btb_update_hit = update_btb_if.valid &
+                          update_btb_if.taken &
+                          update_btb_if.mispredict & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
-  assign update_entry.valid        = btb_update_hit;
-  assign update_entry.is_cond      = update_btb_if.is_cond;
-  assign update_entry.is_call      = update_btb_if.is_call;
-  assign update_entry.is_ret       = update_btb_if.is_ret;
-  assign update_entry.pc_tag       = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
   assign update_entry.target_vaddr = update_btb_if.target_vaddr;
+
+  logic   btb_info_update_hit;
+  assign btb_info_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  btb_inst_info_t update_info_entry;
+  btb_inst_info_t w_s1_info_entry;
+  assign update_info_entry.valid   = btb_info_update_hit;
+  assign update_info_entry.is_cond = update_btb_if.is_cond;
+  assign update_info_entry.is_call = update_btb_if.is_call;
+  assign update_info_entry.is_ret  = update_btb_if.is_ret;
+  assign update_info_entry.pc_tag  = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
+
+  data_array_2p
+    #(
+      .WIDTH ($bits(btb_inst_info_t)),
+      .ADDR_W ($clog2(BTB_ENTRY_SIZE))
+      )
+  btb_info_array
+    (
+     .i_clk (i_clk),
+     .i_reset_n (i_reset_n),
+
+     .i_wr      (btb_info_update_hit),
+     .i_wr_addr (w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
+     .i_wr_data (update_info_entry),
+
+     .i_rd_addr (search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
+     .o_rd_data (w_s1_info_entry)
+   );
 
   data_array_2p
     #(
@@ -65,9 +90,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   logic [BTB_ENTRY_SIZE-1: 0] r_btb_valids;
 
   assign search_btb_s1_hit[b_idx] = r_s1_search_valid &
-                                    w_s1_search_entry.valid &
+                                    w_s1_info_entry.valid &
                                     r_s1_btb_valid &
-                                    (w_s1_search_entry.pc_tag == r_s1_pc_tag);
+                                    (w_s1_info_entry.pc_tag == r_s1_pc_tag);
 
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -75,7 +100,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
       r_btb_valids <= {BTB_ENTRY_SIZE{1'b0}};
       r_s1_btb_valid <= 1'b0;
     end else begin
-      if (btb_update_hit) begin
+      if (btb_info_update_hit) begin
         r_btb_valids[w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_btb_valid <= r_btb_valids[search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
@@ -84,9 +109,9 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
 
   assign search_btb_if.s1_target_vaddr[b_idx] = w_s1_search_entry.target_vaddr;
   assign search_btb_if.s1_hit         [b_idx] = r_s1_btb_valid & search_btb_s1_hit[b_idx] & r_s1_btb_bank_mask[b_idx];
-  assign search_btb_if.s1_is_cond     [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_cond;
-  assign search_btb_if.s1_is_call     [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_call;
-  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_btb_valid & w_s1_search_entry.is_ret;
+  assign search_btb_if.s1_is_cond     [b_idx] = r_s1_btb_valid & w_s1_info_entry.is_cond;
+  assign search_btb_if.s1_is_call     [b_idx] = r_s1_btb_valid & w_s1_info_entry.is_call;
+  assign search_btb_if.s1_is_ret      [b_idx] = r_s1_btb_valid & w_s1_info_entry.is_ret;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
