@@ -219,7 +219,7 @@ generate for (genvar idx = 0; idx < msrh_pkg::INST_BUF_SIZE; idx++) begin : inst
           r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit         [b_idx];
           r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr[b_idx];
           r_inst_queue[idx].pred_info[b_idx].gshare_index      <= gshare_search_if.s2_index    [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr;
+          r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr      [b_idx];
 
           r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
           r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];

@@ -235,7 +235,7 @@ interface gshare_search_if;
   logic                                                                     s2_valid;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]                       s2_bim_value;
   logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][msrh_pkg::GSHARE_BHT_W-1: 0] s2_index;
-  msrh_pkg::gshare_bht_t                                                    s2_bhr;
+  logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][msrh_pkg::GSHARE_BHT_W-1: 0] s2_bhr;
 
   modport master (
     output s0_valid,

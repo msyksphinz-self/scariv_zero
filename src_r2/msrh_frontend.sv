@@ -108,7 +108,7 @@ logic             r_s2_tlb_miss;
 logic             r_s2_tlb_except_valid;
 except_t          r_s2_tlb_except_cause;
 
-vaddr_t           r_s2_btb_target_vaddr;
+vaddr_t           w_s2_btb_target_vaddr;
 
 logic             w_s2_predict_valid;
 vaddr_t           w_s2_predict_target_vaddr;
@@ -545,7 +545,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
-    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
+    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid & w_s0_ic_ready;
     // s1 clear condition : Trying to instruction allocate into Inst-Buffer but canceled
     //                      --> Trying s2 request again from s0 stage.
     // When IQ predicts, it also no need to set clear.
@@ -697,7 +697,10 @@ br_upd_if_buf u_br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 
-assign w_btb_update_if.valid          = br_upd_if.update & br_upd_if.taken & ~br_upd_if.dead & ~br_upd_if.is_ret;
+assign w_btb_update_if.valid          = br_upd_if.update &
+                                        /* br_upd_if.taken */ &  // Even though Taken/NotTaken, it records "Branch is existed".
+                                        ~br_upd_if.dead &
+                                        ~br_upd_if.is_ret;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 assign w_btb_update_if.is_cond        = br_upd_if.is_cond;
@@ -717,14 +720,6 @@ assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 
 assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
 assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_s2_btb_target_vaddr <= 'h0;
-  end else begin
-    r_s2_btb_target_vaddr <= w_s1_btb_target_vaddr;
-  end
-end
 
 assign w_s1_predict_valid = 1'b0;
 assign w_s1_predict_target_vaddr = 'h0;
@@ -746,7 +741,16 @@ end
 endgenerate
 
 assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & (|w_s2_predict_taken);
-assign w_s2_predict_target_vaddr = r_s2_btb_target_vaddr;
+bit_oh_or_packed
+  #(.T(vaddr_t),
+    .WORDS(msrh_lsu_pkg::ICACHE_DATA_B_W/2)
+    )
+u_s2_target_vaddr_hit_oh (
+ .i_oh      (w_s2_predict_taken),
+ .i_data    (w_btb_search_if.s2_target_vaddr),
+ .o_selected(w_s2_btb_target_vaddr)
+ );
+assign w_s2_predict_target_vaddr = w_s2_btb_target_vaddr;
 
 // ------------------------------
 // Decode Level Prediction Valid

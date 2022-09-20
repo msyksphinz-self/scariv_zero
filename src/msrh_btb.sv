@@ -36,13 +36,6 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
   logic btb_update_hit;
   assign btb_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
-  // logic btb_update_call_ret_hit;
-  // msrh_pkg::vaddr_t pc_ret_vaddr;
-  // assign pc_ret_vaddr = update_btb_if.pc_vaddr + (update_btb_if.is_rvc ? 'h2 : 'h4);
-  // assign btb_update_call_ret_hit = update_btb_if.valid &
-  //                                  update_btb_if.is_call &
-  //                                  (pc_ret_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
-
   assign update_entry.valid        = btb_update_hit;
   assign update_entry.is_cond      = update_btb_if.is_cond;
   assign update_entry.is_call      = update_btb_if.is_call;
