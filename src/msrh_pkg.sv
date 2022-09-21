@@ -500,6 +500,22 @@ typedef struct packed {
   logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
 } commit_blk_t;
 
+function logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
+                                      cmt_id_t cmt_id1, grp_id_t grp_id1);
+logic                                w_cmt_is_older;
+logic                                w_0_older_than_1;
+
+  w_cmt_is_older = cmt_id0[msrh_pkg::CMT_ID_W-1]   ^ cmt_id1[msrh_pkg::CMT_ID_W-1] ?
+                   cmt_id0[msrh_pkg::CMT_ID_W-2:0] > cmt_id1[msrh_pkg::CMT_ID_W-2:0] :
+                   cmt_id0[msrh_pkg::CMT_ID_W-2:0] < cmt_id1[msrh_pkg::CMT_ID_W-2:0] ;
+  w_0_older_than_1 = w_cmt_is_older ||
+                     (cmt_id0 == cmt_id1 && grp_id0 < grp_id1);
+
+  return w_0_older_than_1;
+
+endfunction // id0_is_older_than_id1
+
+
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
   for (int i = 0; i < DISP_SIZE; i++) begin
     /* verilator lint_off WIDTH */

@@ -97,6 +97,8 @@ msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 lrq_fwd_if w_lrq_fwd_if [msrh_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
+rmw_order_check_if w_rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM]();
+
 st_buffer_if            w_st_buffer_if();
 lrq_pa_search_if        w_lrq_pa_search_if();
 
@@ -137,6 +139,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
     .ldq_haz_check_if (w_ldq_haz_check_if[lsu_idx]),
     .lrq_fwd_if (w_lrq_fwd_if[lsu_idx]),
+
+    .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
 
     .ldq_replay_if (w_ldq_replay[lsu_idx]),
     .stq_replay_if (w_stq_replay[lsu_idx]),
@@ -184,6 +188,8 @@ msrh_ldq
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
 
+ .rob_info_if (rob_info_if),
+
  .i_disp_valid (w_ldq_disp_valid),
  .disp         (disp            ),
  .cre_ret_if   (ldq_cre_ret_if  ),
@@ -204,6 +210,8 @@ msrh_ldq
  .ldq_replay_if (w_ldq_replay),
 
  .ex3_done_if (w_ex3_done_if),
+
+ .st_buffer_if (w_st_buffer_if),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
@@ -235,6 +243,7 @@ msrh_stq
  .i_ex2_q_updates(w_ex2_q_updates),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
+ .rmw_order_check_if (w_rmw_order_check_if),
 
  .stq_replay_if (w_stq_replay),
 

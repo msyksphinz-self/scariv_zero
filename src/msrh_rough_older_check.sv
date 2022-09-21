@@ -2,10 +2,10 @@ module msrh_rough_older_check
   import decoder_lsu_ctrl_pkg::*;
   import msrh_lsu_pkg::*;
 (
- input msrh_pkg::cmt_id_t      i_cmt_id0,
+ input msrh_pkg::cmt_id_t i_cmt_id0,
  input msrh_pkg::grp_id_t i_grp_id0,
 
- input msrh_pkg::cmt_id_t      i_cmt_id1,
+ input msrh_pkg::cmt_id_t i_cmt_id1,
  input msrh_pkg::grp_id_t i_grp_id1,
 
  output logic                               o_0_older_than_1

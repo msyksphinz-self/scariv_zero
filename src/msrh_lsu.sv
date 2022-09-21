@@ -50,6 +50,9 @@ module msrh_lsu
     // STQ -> LDQ check
     ldq_haz_check_if.master    ldq_haz_check_if,
 
+    // RMW Ordere Hazard Check
+    rmw_order_check_if.master  rmw_order_check_if,
+
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if,
 
@@ -152,6 +155,8 @@ u_lsu_pipe
    .l1d_lrq_if (l1d_lrq_if),
    .lrq_fwd_if (lrq_fwd_if),
    .ldq_haz_check_if (ldq_haz_check_if),
+
+   .rmw_order_check_if (rmw_order_check_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),

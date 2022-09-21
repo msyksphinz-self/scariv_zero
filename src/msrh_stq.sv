@@ -26,6 +26,9 @@ module msrh_stq
    // Forwarding checker
    fwd_check_if.slave                        ex2_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
+   // RMW Ordere Hazard Check
+   rmw_order_check_if.slave    rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    lsu_replay_if.master stq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
    done_if.slave        ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
@@ -71,6 +74,8 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
 // Forwarding Logic
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
+
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_rmw_order_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
 
 // Store Buffer Selection
 msrh_pkg::grp_id_t            w_stbuf_accepted_disp;
@@ -273,6 +278,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      // Snoop Interface
      .stq_snoop_if (stq_entry_snoop_if),
 
+     .i_st_buffer_empty (st_buffer_if.is_empty),
+
      .ex3_done_if           (w_ex3_done_sel_if),
      .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
@@ -320,8 +327,31 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
     end // block: fwd_loop
 
-  end // block: stq_loop
+
+  // RMW Order Hazard Check
+  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
+  logic pipe_is_younger_than_rmw;
+
+    assign pipe_is_younger_than_rmw = msrh_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].cmt_id,
+                                                                       w_stq_entries[s_idx].grp_id,
+                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
+                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
+    assign w_ex2_rmw_order_haz_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                                   w_stq_entries[s_idx].oldest_valid &
+                                                   rmw_order_check_if[p_idx].ex2_valid &
+                                                   pipe_is_younger_than_rmw;
+  end // block: rmw_order_haz_loop
+
+
+end // block: stq_loop
 endgenerate
+
+// RMW Order Hazard Check Logci
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_haz_resp_loop
+  assign rmw_order_check_if[p_idx].ex2_stq_haz_vld = |w_ex2_rmw_order_haz_vld[p_idx];
+end
+endgenerate
+
 
 // ===============
 // replay logic
@@ -578,6 +608,7 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_LRQ_CONFLICT     : $fwrite(fp, "STQ_LRQ_CONFLICT");
       STQ_LRQ_EVICT_HAZ    : $fwrite(fp, "STQ_LRQ_EVICT_HAZ");
       STQ_LRQ_FULL         : $fwrite(fp, "STQ_LRQ_FULL");
+      STQ_WAIT_OLDEST      : $fwrite(fp, "STQ_WAIT_OLDEST");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

@@ -4,6 +4,9 @@ module msrh_ldq
    input logic                           i_clk,
    input logic                           i_reset_n,
 
+   // ROB notification interface
+   rob_info_if.slave                          rob_info_if,
+
    input msrh_pkg::grp_id_t i_disp_valid,
    disp_if.watch                              disp,
    cre_ret_if.slave                           cre_ret_if,
@@ -30,6 +33,9 @@ module msrh_ldq
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
    br_upd_if.slave              br_upd_if,
+
+   // Store Buffer Interface
+   st_buffer_if.monitor         st_buffer_if,
 
    done_if.slave ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
 
@@ -188,6 +194,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
+     .rob_info_if   (rob_info_if),
+
      .i_disp_load   (|w_input_valid),
      .i_disp_cmt_id (disp.cmt_id),
      .i_disp_grp_id (w_disp_grp_id),
@@ -214,6 +222,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .i_lrq_resolve (i_lrq_resolve),
      .i_lrq_is_full (i_lrq_is_full),
+
+     .i_st_buffer_empty (st_buffer_if.is_empty),
 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
@@ -254,9 +264,9 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
                                                  w_ldq_entries[l_idx].is_get_data &
                                                  (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
+
 end
 endgenerate
-
 
 
 // request logic
@@ -423,6 +433,7 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
       LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
       LDQ_LRQ_EVICT_HAZ   : $fwrite(fp, "LDQ_LRQ_EVICT_HAZ");
       LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
+      LDQ_WAIT_OLDEST     : $fwrite(fp, "LDQ_WAIT_OLDEST");
       default             : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

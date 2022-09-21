@@ -349,6 +349,31 @@ modport slave
 endinterface // ldq_haz_check_if
 
 
+interface rmw_order_check_if;
+logic               ex2_valid;
+msrh_pkg::cmt_id_t  ex2_cmt_id;
+msrh_pkg::grp_id_t  ex2_grp_id;
+logic               ex2_stq_haz_vld;
+
+modport master
+  (
+   output ex2_valid,
+   output ex2_cmt_id,
+   output ex2_grp_id,
+   input  ex2_stq_haz_vld
+   );
+
+modport slave
+  (
+   input  ex2_valid,
+   input  ex2_cmt_id,
+   input  ex2_grp_id,
+   output ex2_stq_haz_vld
+   );
+
+endinterface // rmw_order_check_if
+
+
 interface tlb_ptw_if;
 
   msrh_lsu_pkg::ptw_req_t        req;
@@ -630,6 +655,22 @@ modport slave (
 `endif // SIMULATION
   output resp,
   output is_empty
+);
+
+
+modport monitor (
+  input valid,
+  input paddr,
+  input strb,
+  input data,
+  input is_rmw,
+  input rmwop,
+`ifdef SIMULATION
+  input cmt_id,
+  input grp_id,
+`endif // SIMULATION
+  input resp,
+  input is_empty
 );
 
 endinterface // st_buffer_if

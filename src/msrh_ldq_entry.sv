@@ -4,6 +4,9 @@ module msrh_ldq_entry
  input logic                                     i_clk,
  input logic                                     i_reset_n,
 
+ // ROB notification interface
+ rob_info_if.slave                               rob_info_if,
+
  input logic                                     i_disp_load,
  input msrh_pkg::cmt_id_t            i_disp_cmt_id,
  input msrh_pkg::grp_id_t      i_disp_grp_id,
@@ -35,6 +38,8 @@ module msrh_ldq_entry
  input                                           msrh_pkg::commit_blk_t i_commit,
  br_upd_if.slave                                 br_upd_if,
 
+ input logic                                     i_st_buffer_empty,
+
  input logic                                     i_ldq_outptr_valid,
  output logic                                    o_entry_finish,
 
@@ -54,6 +59,7 @@ logic                                            w_load_commit_flush;
 logic                                            w_load_flush;
 logic                                            w_dead_state_clear;
 logic                                            w_entry_commit;
+logic                                            w_oldest_ready;
 
 logic                                            w_lrq_is_conflict;
 logic                                            w_lrq_is_full;
@@ -102,6 +108,9 @@ assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(r_entry);
+
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
 
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
@@ -202,7 +211,8 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? LDQ_ISSUE_WAIT :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? LDQ_ISSUE_WAIT :
+                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? LDQ_WAIT_OLDEST :
                              w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
                              w_lrq_is_conflict     ? LDQ_LRQ_CONFLICT :
                              w_lrq_is_full         ? LDQ_LRQ_FULL :
@@ -244,6 +254,13 @@ always_comb begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else begin
         w_entry_next.state = LDQ_WAIT_COMMIT;
+      end
+    end
+    LDQ_WAIT_OLDEST : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
+      end else if (w_oldest_ready & i_st_buffer_empty) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end
     LDQ_WAIT_COMMIT : begin

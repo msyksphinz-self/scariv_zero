@@ -42,6 +42,8 @@ module msrh_stq_entry
    output                                     o_stbuf_req_valid,
    input logic                                i_sq_op_accept,
 
+   input logic                                i_st_buffer_empty,
+
    // Snoop Interface
    stq_snoop_if.slave                         stq_snoop_if,
 
@@ -238,7 +240,8 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT ? STQ_ISSUE_WAIT :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? STQ_ISSUE_WAIT :
+                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              w_lrq_is_conflict     ? STQ_LRQ_CONFLICT  :
                              w_lrq_is_full         ? STQ_LRQ_FULL      :
                              w_lrq_evict_is_hazard ? STQ_LRQ_EVICT_HAZ :
@@ -283,6 +286,13 @@ always_comb begin
         w_entry_next.another_flush_valid  = ex3_done_if.payload.another_flush_valid;
         w_entry_next.another_flush_cmt_id = ex3_done_if.payload.another_flush_cmt_id;
         w_entry_next.another_flush_grp_id = ex3_done_if.payload.another_flush_grp_id;
+      end
+    end
+    STQ_WAIT_OLDEST : begin
+      if (w_entry_flush) begin
+        w_entry_next.state = STQ_DEAD;
+      end else if (w_oldest_ready & i_st_buffer_empty) begin
+        w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
     STQ_WAIT_COMMIT : begin

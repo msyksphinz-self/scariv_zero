@@ -47,7 +47,8 @@ typedef struct   packed {
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL,
-    LRQ_EVICT_CONFLICT
+    LRQ_EVICT_CONFLICT,
+    RMW_ORDER_HAZ
   } lmq_haz_t;
 
   typedef struct packed {
@@ -399,20 +400,21 @@ endfunction // gen_dw
 // STQ
 // ---------
 typedef enum logic[4:0] {
-  STQ_INIT          = 0,
-  STQ_TLB_HAZ       = 1,
-  STQ_ISSUE_WAIT    = 2,
-  STQ_DONE_EX2      = 3,
-  STQ_COMMIT        = 4,
-  STQ_WAIT_ST_DATA  = 5,
-  STQ_DEAD          = 9,
-  STQ_WAIT_COMMIT   = 10,
-  STQ_DONE_EX3      = 11,
-  STQ_ISSUED        = 12,
-  STQ_OLDEST_HAZ    = 13,
-  STQ_LRQ_CONFLICT  = 14,
-  STQ_LRQ_EVICT_HAZ = 15,
-  STQ_LRQ_FULL      = 16
+  STQ_INIT          ,
+  STQ_TLB_HAZ       ,
+  STQ_ISSUE_WAIT    ,
+  STQ_DONE_EX2      ,
+  STQ_COMMIT        ,
+  STQ_WAIT_ST_DATA  ,
+  STQ_DEAD          ,
+  STQ_WAIT_COMMIT   ,
+  STQ_DONE_EX3      ,
+  STQ_ISSUED        ,
+  STQ_OLDEST_HAZ    ,
+  STQ_LRQ_CONFLICT  ,
+  STQ_LRQ_EVICT_HAZ ,
+  STQ_LRQ_FULL      ,
+  STQ_WAIT_OLDEST
 } stq_state_t;
 
 typedef struct packed {
@@ -512,18 +514,19 @@ endfunction // isAMOLogical
 // ---------
 
 typedef enum logic[3:0] {
-  LDQ_INIT = 0,
-  LDQ_EX2_RUN = 1,
-  LDQ_LRQ_CONFLICT = 2,
-  LDQ_TLB_HAZ = 4,
-  LDQ_ISSUE_WAIT = 5,
-  LDQ_CHECK_ST_DEPEND = 6,
-  LDQ_EX3_DONE = 7,
-  LDQ_WAIT_COMMIT = 8,
-  LDQ_WAIT_ENTRY_CLR = 9,
-  LDQ_ISSUED = 10,
-  LDQ_LRQ_EVICT_HAZ = 11,
-  LDQ_LRQ_FULL = 12
+  LDQ_INIT           ,
+  LDQ_EX2_RUN        ,
+  LDQ_LRQ_CONFLICT   ,
+  LDQ_TLB_HAZ        ,
+  LDQ_ISSUE_WAIT     ,
+  LDQ_CHECK_ST_DEPEND,
+  LDQ_EX3_DONE       ,
+  LDQ_WAIT_COMMIT    ,
+  LDQ_WAIT_ENTRY_CLR ,
+  LDQ_ISSUED         ,
+  LDQ_LRQ_EVICT_HAZ  ,
+  LDQ_LRQ_FULL       ,
+  LDQ_WAIT_OLDEST
 } ldq_state_t;
 
 typedef struct packed {
