@@ -35,6 +35,7 @@ logic [FTQ_SIZE-1: 0] w_out_ptr_oh;
 logic [FTQ_SIZE-1: 0] w_entry_valids;
 
 logic                 w_commit_flush;
+logic                 w_ftq_flush;
 
 ftq_entry_t r_ftq_entry[FTQ_SIZE];
 ftq_entry_t w_out_ftq_entry;
@@ -54,6 +55,8 @@ u_ptr
    .i_clk        (i_clk    ),
    .i_reset_n    (i_reset_n),
 
+   .i_rollback  (w_ftq_flush),
+
    .i_in_valid  (w_in_valid  ),
    .o_in_ptr    (w_in_ptr_oh ),
    .i_out_valid (w_out_valid ),
@@ -61,6 +64,8 @@ u_ptr
    );
 
 assign w_commit_flush = msrh_pkg::is_flushed_commit(i_commit);
+
+assign w_ftq_flush = w_commit_flush | br_upd_fe_if.update & br_upd_fe_if.mispredict;
 
 disp_t w_sc_br_inst;
 grp_id_t sc_br_inst_array;
@@ -91,6 +96,8 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
 
     if (w_out_valid & w_out_ptr_oh[e_idx]) begin
       w_ftq_entry_next.valid = 1'b0;
+    end else if (w_ftq_flush) begin
+      w_ftq_entry_next.valid = 1'b0;
     end else if (br_upd_if.update & r_ftq_entry[e_idx].valid &
                  (br_upd_if.cmt_id == r_ftq_entry[e_idx].cmt_id) &
                  (br_upd_if.grp_id == r_ftq_entry[e_idx].grp_id)) begin
@@ -102,14 +109,6 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
       w_ftq_entry_next.mispredict   = br_upd_if.mispredict;
       w_ftq_entry_next.target_vaddr = br_upd_if.target_vaddr;
     end
-    if (w_commit_flush |
-        br_upd_fe_if.update &
-        (r_ftq_entry[e_idx].valid & is_br_flush_target (r_ftq_entry[e_idx].br_mask, br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict) |
-         w_load &                   is_br_flush_target (w_ftq_entry_next.br_mask,   br_upd_fe_if.brtag, br_upd_fe_if.dead, br_upd_fe_if.mispredict))) begin
-      w_ftq_entry_next.done         = 1'b1;
-      w_ftq_entry_next.notify_valid = 1'b0;
-      w_ftq_entry_next.dead         = 1'b1;
-    end // else: !if(w_load)
   end // always_comb
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
