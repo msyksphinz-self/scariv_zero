@@ -890,7 +890,7 @@ void record_stq_store(long long rtl_time,
 
   if (diff_found) {
     fprintf (compare_log_fp, "L1D Update Data Compare Error\n");
-    stop_sim (100);
+    // stop_sim (100);
   }
 
 #ifndef SIM_MAIN
