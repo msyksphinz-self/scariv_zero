@@ -437,19 +437,23 @@ end
 `endif // SIMULATION
 
 // Forwarding check
-assign ex2_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+logic w_ex2_fwd_check_type;
+assign w_ex2_fwd_check_type = (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD) |
+                              (r_ex2_pipe_ctrl.op == decoder_lsu_ctrl_pkg::OP_RMW);
+
+assign ex2_fwd_check_if.valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign ex2_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign ex2_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign ex2_fwd_check_if.paddr  = r_ex2_paddr;
 assign ex2_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
 
-assign stbuf_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign stbuf_fwd_check_if.valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign stbuf_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign stbuf_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign stbuf_fwd_check_if.paddr  = r_ex2_paddr;
 assign stbuf_fwd_check_if.paddr_dw = gen_dw(r_ex2_pipe_ctrl.size, r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
 
-assign streq_fwd_check_if.valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign streq_fwd_check_if.valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign streq_fwd_check_if.cmt_id = r_ex2_issue.cmt_id;
 assign streq_fwd_check_if.grp_id = r_ex2_issue.grp_id;
 assign streq_fwd_check_if.paddr  = r_ex2_paddr;
@@ -467,7 +471,7 @@ assign rmw_order_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
 assign rmw_order_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 
 // LRQ Hazard Check
-assign lrq_fwd_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign lrq_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign lrq_fwd_if.ex2_paddr  = r_ex2_paddr;
 
 msrh_pkg::alenb_t                  w_ex2_fwd_dw;

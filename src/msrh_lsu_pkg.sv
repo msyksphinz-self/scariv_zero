@@ -414,7 +414,8 @@ typedef enum logic[4:0] {
   STQ_LRQ_CONFLICT  ,
   STQ_LRQ_EVICT_HAZ ,
   STQ_LRQ_FULL      ,
-  STQ_WAIT_OLDEST
+  STQ_WAIT_OLDEST   ,
+  STQ_WAIT_STBUF
 } stq_state_t;
 
 typedef struct packed {
@@ -635,9 +636,11 @@ typedef struct packed {
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]      l1d_way;
 
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
+
 
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;

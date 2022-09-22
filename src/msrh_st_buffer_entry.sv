@@ -32,9 +32,10 @@ module msrh_st_buffer_entry
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
  output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_fwd_lsu_hit,
 
- input logic i_l1d_rd_s1_conflict,
- input logic i_l1d_rd_s1_miss,
- input logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] i_l1d_s1_data,
+ input logic                                           i_l1d_rd_s1_conflict,
+ input logic                                           i_l1d_rd_s1_miss,
+ input logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] i_l1d_s1_way,
+ input logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        i_l1d_s1_data,
 
  output logic    o_l1d_wr_req,
  input logic     i_l1d_wr_s1_resp_hit,
@@ -142,9 +143,11 @@ always_comb begin
         if (index == 0 && r_entry.is_rmw) begin
           w_state_next = ST_BUF_AMO_OPERATION;
 
+          w_entry_next.l1d_way = i_l1d_s1_way;
           /* verilator lint_off SELRANGE */
           w_amo_l1d_data_next = i_l1d_s1_data[{r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0], 3'b000} +: riscv_pkg::XLEN_W];
         end else begin
+          w_entry_next.l1d_way = i_l1d_s1_way;
           w_state_next = ST_BUF_L1D_UPDATE;
         end
       end

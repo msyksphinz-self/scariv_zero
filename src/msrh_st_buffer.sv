@@ -129,8 +129,9 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
      .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
-     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss),
-     .i_l1d_s1_data        (l1d_rd_if.s1_data),
+     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss    ),
+     .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
+     .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
 
      .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_wr_s1_resp_hit (l1d_wr_if.s1_wr_resp.s1_hit),
@@ -237,7 +238,7 @@ select_l1d_wr_entry_oh
 
 always_comb begin
   l1d_wr_if.s0_valid           = |w_entry_l1d_wr_req_oh;
-  l1d_wr_if.s0_wr_req.s0_way   = r_s2_hit_way;
+  l1d_wr_if.s0_wr_req.s0_way   = w_l1d_wr_entry.l1d_way;
   l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
   l1d_wr_if.s0_wr_req.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end

@@ -609,6 +609,7 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_LRQ_EVICT_HAZ    : $fwrite(fp, "STQ_LRQ_EVICT_HAZ");
       STQ_LRQ_FULL         : $fwrite(fp, "STQ_LRQ_FULL");
       STQ_WAIT_OLDEST      : $fwrite(fp, "STQ_WAIT_OLDEST");
+      STQ_WAIT_STBUF       : $fwrite(fp, "STQ_WAIT_STBUF");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

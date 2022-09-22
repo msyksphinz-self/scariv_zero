@@ -130,8 +130,9 @@ assign w_cmt_id_match = i_commit.commit &
                         (i_commit.cmt_id == r_entry.cmt_id) &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
-assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT) & w_commit_finish |
-                               (r_entry.state == STQ_DEAD) & i_stq_outptr_valid;
+assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
+                               (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty |
+                               (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
 
 
@@ -241,13 +242,15 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? STQ_ISSUE_WAIT :
-                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              w_lrq_is_conflict     ? STQ_LRQ_CONFLICT  :
                              w_lrq_is_full         ? STQ_LRQ_FULL      :
                              w_lrq_evict_is_hazard ? STQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? STQ_ISSUE_WAIT    : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                              STQ_DONE_EX3;
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+      end else if (i_ex2_q_valid) begin
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
+                             STQ_DONE_EX3;
       end else begin
         w_entry_next.state = STQ_DONE_EX3;
       end // else: !if(r_entry.is_rmw & i_ex2_q_valid)
@@ -316,6 +319,19 @@ always_comb begin
     end
     STQ_COMMIT : begin
       if (w_commit_finish) begin
+        if (r_entry.is_rmw) begin
+          w_entry_next.state = STQ_WAIT_STBUF;
+        end else begin
+          w_entry_next.state = STQ_INIT;
+          w_entry_next.is_valid = 1'b0;
+          // prevent all updates from Pipeline
+          w_entry_next.cmt_id = 'h0;
+          w_entry_next.grp_id = 'h0;
+        end
+      end
+    end // case: STQ_COMMIT
+    STQ_WAIT_STBUF : begin
+      if (i_st_buffer_empty) begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline

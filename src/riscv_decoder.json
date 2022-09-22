@@ -673,7 +673,7 @@
         "field":["00001", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "swap32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "swap32"]]
     },
     {
         "name":"amoadd.w   r[11:7],r[24:20],(r[19:15])",
@@ -681,7 +681,7 @@
         "field":["00000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "add32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "add32"]]
     },
     {
         "name":"amoxor.w   r[11:7],r[24:20],(r[19:15])",
@@ -689,7 +689,7 @@
         "field":["00100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "xor32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "xor32"]]
     },
     {
         "name":"amoand.w   r[11:7],r[24:20],(r[19:15])",
@@ -697,7 +697,7 @@
         "field":["01100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "and32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "and32"]]
     },
     {
         "name":"amoor.w    r[11:7],r[24:20],(r[19:15])",
@@ -705,7 +705,7 @@
         "field":["01000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "or32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "or32"]]
     },
     {
         "name":"amomin.w   r[11:7],r[24:20],(r[19:15])",
@@ -713,7 +713,7 @@
         "field":["10000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "min32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "min32"]]
     },
     {
         "name":"amomax.w   r[11:7],r[24:20],(r[19:15])",
@@ -721,7 +721,7 @@
         "field":["10100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "u"], ["op", "rmw"], ["rmwop", "max32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "max32"]]
     },
     {
         "name":"amominu.w  r[11:7],r[24:20],(r[19:15])",
@@ -729,7 +729,7 @@
         "field":["11000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "minu32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "minu32"]]
     },
     {
         "name":"amomaxu.w  r[11:7],r[24:20],(r[19:15])",
@@ -737,7 +737,7 @@
         "field":["11100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "maxu32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "maxu32"]]
     },
     {
         "name":"lr.d       r[11:7],r[19:15]",
