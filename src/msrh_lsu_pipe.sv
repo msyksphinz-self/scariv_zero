@@ -374,13 +374,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic w_ex2_rmw_haz_vld;
+assign w_ex2_rmw_haz_vld = rmw_order_check_if.ex2_stq_haz_vld | rmw_order_check_if.ex2_stbuf_haz_vld;
+
 assign w_ex2_load_mispredicted = r_ex2_issue.valid &
                                  ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
-                                 (rmw_order_check_if.ex2_stq_haz_vld |
+                                 (w_ex2_rmw_haz_vld |
                                   (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) & ~(&w_ex2_fwd_success));
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
-                          ~rmw_order_check_if.ex2_stq_haz_vld &
+                          ~w_ex2_rmw_haz_vld &
                           ex1_l1d_rd_if.s1_miss &
                           ~ex1_l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
@@ -394,7 +397,7 @@ assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.hazard_typ = rmw_order_check_if.ex2_stq_haz_vld   ? RMW_ORDER_HAZ :
+assign o_ex2_q_updates.hazard_typ = w_ex2_rmw_haz_vld                    ? RMW_ORDER_HAZ :
                                     &w_ex2_fwd_success                   ? NONE          :
                                     ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT  :
                                     l1d_lrq_if.load ?

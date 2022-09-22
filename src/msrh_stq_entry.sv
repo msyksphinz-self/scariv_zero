@@ -131,7 +131,7 @@ assign w_cmt_id_match = i_commit.commit &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
-                               (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty |
+                               (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_sq_op_accept |
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
 
@@ -302,7 +302,11 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_cmt_id_match) begin
-        w_entry_next.state = STQ_COMMIT;
+        if (r_entry.is_rmw) begin
+          w_entry_next.state = STQ_WAIT_STBUF;
+        end else begin
+          w_entry_next.state = STQ_COMMIT;
+        end
       end
       // w_entry_next.is_valid = 1'b1;
       // prevent all updates from Pipeline
@@ -319,19 +323,15 @@ always_comb begin
     end
     STQ_COMMIT : begin
       if (w_commit_finish) begin
-        if (r_entry.is_rmw) begin
-          w_entry_next.state = STQ_WAIT_STBUF;
-        end else begin
-          w_entry_next.state = STQ_INIT;
-          w_entry_next.is_valid = 1'b0;
-          // prevent all updates from Pipeline
-          w_entry_next.cmt_id = 'h0;
-          w_entry_next.grp_id = 'h0;
-        end
+        w_entry_next.state = STQ_INIT;
+        w_entry_next.is_valid = 1'b0;
+        // prevent all updates from Pipeline
+        w_entry_next.cmt_id = 'h0;
+        w_entry_next.grp_id = 'h0;
       end
     end // case: STQ_COMMIT
     STQ_WAIT_STBUF : begin
-      if (i_st_buffer_empty) begin
+      if (i_st_buffer_empty & i_sq_op_accept) begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
@@ -371,10 +371,8 @@ end // always_comb
 assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
                         ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
 
-assign o_stbuf_req_valid = r_entry.state == STQ_COMMIT &
-                           ~r_entry.except_valid &
-                           (r_entry.inst.oldest_valid ? st_buffer_if.is_empty : 1'b1);
-
+assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stq_outptr_valid  :
+                           (r_entry.state == STQ_COMMIT) & ~r_entry.except_valid;
 
 // Snoop Interface Hit
 /* verilator lint_off WIDTH */

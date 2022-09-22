@@ -9,7 +9,6 @@
 
 module msrh_st_buffer_entry
   import msrh_lsu_pkg::*;
-#(parameter index = 0)
 (
  input logic  i_clk,
  input logic  i_reset_n,
@@ -42,6 +41,9 @@ module msrh_st_buffer_entry
 
  input lrq_resp_t    i_st_lrq_resp,
  input lrq_resolve_t i_lrq_resolve,
+
+ // Atomic Operation
+ amo_op_if.master amo_op_if,
 
  output logic             o_ready_to_merge,
  output logic             o_l1d_merge_req,
@@ -140,7 +142,7 @@ always_comb begin
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else begin
-        if (index == 0 && r_entry.is_rmw) begin
+        if (r_entry.is_rmw) begin
           w_state_next = ST_BUF_AMO_OPERATION;
 
           w_entry_next.l1d_way = i_l1d_s1_way;
@@ -213,7 +215,7 @@ always_comb begin
     ST_BUF_AMO_OPERATION : begin
       w_state_next = ST_BUF_L1D_UPDATE;
 
-      w_entry_next.data[riscv_pkg::XLEN_W-1: 0] = w_amo_op_result;
+      w_entry_next.data[riscv_pkg::XLEN_W-1: 0] = amo_op_if.result;
     end
     default : begin
     end
@@ -233,6 +235,15 @@ assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
 assign o_l1d_merge_req = r_entry.valid & (r_state == ST_BUF_L1D_MERGE);
 
+// ------------------
+// Atomic Operations
+// ------------------
+assign amo_op_if.valid = r_state == ST_BUF_AMO_OPERATION;
+assign amo_op_if.rmwop = r_entry.rmwop;
+assign amo_op_if.data0 = r_entry.data[riscv_pkg::XLEN_W-1: 0];
+assign amo_op_if.data1 = r_amo_l1d_data;
+
+
 // -----------------------------------
 // Forwarding check from LSU Pipeline
 // -----------------------------------
@@ -243,18 +254,6 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 end
 endgenerate
 
-
-generate if (index == 0) begin : amo_operation
-  msrh_amo_operation
-  u_amo_op
-    (
-     .i_data0 (r_entry.data[riscv_pkg::XLEN_W-1: 0]),
-     .i_data1 (r_amo_l1d_data                      ),
-     .i_op    (r_entry.rmwop                       ),
-     .o_data  (w_amo_op_result                     )
-     );
-end
-endgenerate
 
 `ifdef SIMULATION
 final begin

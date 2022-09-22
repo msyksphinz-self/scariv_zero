@@ -354,13 +354,15 @@ logic               ex2_valid;
 msrh_pkg::cmt_id_t  ex2_cmt_id;
 msrh_pkg::grp_id_t  ex2_grp_id;
 logic               ex2_stq_haz_vld;
+logic               ex2_stbuf_haz_vld;
 
 modport master
   (
    output ex2_valid,
    output ex2_cmt_id,
    output ex2_grp_id,
-   input  ex2_stq_haz_vld
+   input  ex2_stq_haz_vld,
+   input  ex2_stbuf_haz_vld
    );
 
 modport slave
@@ -368,7 +370,8 @@ modport slave
    input  ex2_valid,
    input  ex2_cmt_id,
    input  ex2_grp_id,
-   output ex2_stq_haz_vld
+   output ex2_stq_haz_vld,
+   output ex2_stbuf_haz_vld
    );
 
 endinterface // rmw_order_check_if
@@ -674,3 +677,29 @@ modport monitor (
 );
 
 endinterface // st_buffer_if
+
+interface amo_op_if;
+
+logic                         valid;
+decoder_lsu_ctrl_pkg::rmwop_t rmwop;
+riscv_pkg::xlen_t             data0;
+riscv_pkg::xlen_t             data1;
+riscv_pkg::xlen_t             result;
+
+modport master (
+  output valid,
+  output rmwop,
+  output data0,
+  output data1,
+  input  result
+);
+
+modport slave (
+  input  valid,
+  input  rmwop,
+  input  data0,
+  input  data1,
+  output result
+);
+
+endinterface // amo_op_if

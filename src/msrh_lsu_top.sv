@@ -313,6 +313,8 @@ u_st_buffer
    .l1d_wr_if           (w_l1d_wr_if),
    .l1d_merge_if        (w_l1d_merge_if),
 
+   .rmw_order_check_if  (w_rmw_order_check_if),
+
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
    .lrq_pa_search_if    (w_lrq_pa_search_if),
 
