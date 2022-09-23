@@ -91,6 +91,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] paddr_partial;
+assign paddr_partial = {r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: $clog2(ST_BUF_WIDTH/8)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+
 always_comb begin
   w_entry_next = r_entry;
   w_amo_l1d_data_next = r_amo_l1d_data;
@@ -147,7 +150,7 @@ always_comb begin
 
           w_entry_next.l1d_way = i_l1d_s1_way;
           /* verilator lint_off SELRANGE */
-          w_amo_l1d_data_next = i_l1d_s1_data[{r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0], 3'b000} +: riscv_pkg::XLEN_W];
+          w_amo_l1d_data_next = i_l1d_s1_data[paddr_partial +: riscv_pkg::XLEN_W];
         end else begin
           w_entry_next.l1d_way = i_l1d_s1_way;
           w_state_next = ST_BUF_L1D_UPDATE;
