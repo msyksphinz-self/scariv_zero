@@ -182,7 +182,8 @@ always_comb begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else begin
         if (w_entry_next.is_valid & i_ex1_q_valid) begin
-          w_entry_next.state           = i_ex1_q_updates.hazard_valid     ? LDQ_TLB_HAZ :
+          w_entry_next.state           = i_ex1_q_updates.hazard_typ == TLB_MISS  ? LDQ_TLB_HAZ :
+                                         i_ex1_q_updates.hazard_typ == UC_ACCESS ? LDQ_WAIT_OLDEST :
                                          LDQ_EX2_RUN;
           w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
@@ -194,7 +195,7 @@ always_comb begin
 
           for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
             w_ex2_ldq_entries_recv_next[p_idx] =  i_ex1_q_valid &
-                                                  !i_ex1_q_updates.hazard_valid &
+                                                  (i_ex1_q_updates.hazard_typ == EX1_NONE) &
                                                   r_entry.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)

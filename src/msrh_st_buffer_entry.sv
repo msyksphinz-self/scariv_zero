@@ -91,8 +91,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] paddr_partial;
-assign paddr_partial = {r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: $clog2(ST_BUF_WIDTH/8)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W)-1: 0] paddr_partial;
+assign paddr_partial = {r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0], 3'b000};
 
 always_comb begin
   w_entry_next = r_entry;
@@ -252,7 +252,7 @@ assign amo_op_if.data1 = r_amo_l1d_data;
 // -----------------------------------
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
   assign o_fwd_lsu_hit[p_idx] = r_entry.valid & stbuf_fwd_check_if[p_idx].valid &
-                                (r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] ==
+                                (r_entry.paddr                  [riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] ==
                                  stbuf_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)]);
 end
 endgenerate

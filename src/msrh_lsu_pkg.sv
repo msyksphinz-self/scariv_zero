@@ -13,10 +13,11 @@ package msrh_lsu_pkg;
   localparam ICACHE_TAG_LOW = $clog2(msrh_conf_pkg::ICACHE_WORDS);
   localparam ICACHE_DATA_B_W = msrh_conf_pkg::ICACHE_DATA_W / 8;
 
-
+// 128 / 8 = 16
   localparam DCACHE_DATA_B_W = msrh_conf_pkg::DCACHE_DATA_W / 8;
 
   localparam DCACHE_TAG_HIGH = riscv_pkg::PADDR_W-1;
+// log2(16 * 32) = 4 + 5 = 9
   localparam DCACHE_TAG_LOW = $clog2(DCACHE_DATA_B_W * msrh_conf_pkg::DCACHE_WORDS);
 
 localparam DCACHE_BANK_LOW  = $clog2(DCACHE_DATA_B_W);
@@ -41,15 +42,22 @@ typedef struct   packed {
   logic          c;
 } map_attr_t;
 
-  typedef enum logic [ 2: 0] {
-    NONE,
-    L1D_CONFLICT,
-    LRQ_ASSIGNED,
-    LRQ_CONFLICT,
-    LRQ_FULL,
-    LRQ_EVICT_CONFLICT,
-    RMW_ORDER_HAZ
-  } lmq_haz_t;
+typedef enum logic [ 2: 0] {
+  EX1_NONE,
+  TLB_MISS,
+  UC_ACCESS
+} ex1_haz_t;
+
+
+typedef enum logic [ 2: 0] {
+  NONE,
+  L1D_CONFLICT,
+  LRQ_ASSIGNED,
+  LRQ_CONFLICT,
+  LRQ_FULL,
+  LRQ_EVICT_CONFLICT,
+  RMW_ORDER_HAZ
+} ex2_haz_t;
 
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
@@ -203,18 +211,20 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  logic                         update;
-  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
-  msrh_pkg::cmt_id_t            cmt_id;
-  msrh_pkg::grp_id_t            grp_id;
-  logic                         hazard_valid;
-  logic                         tlb_except_valid;
-  msrh_pkg::except_t            tlb_except_type;
-  logic [MEM_Q_SIZE-1:0]        index_oh;
-  msrh_pkg::vaddr_t             vaddr;
-  msrh_pkg::paddr_t             paddr;
-  logic                         st_data_valid;
-  msrh_pkg::alen_t              st_data;
+  logic                           update;
+  // msrh_pkg::issue_t               inst;
+  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
+  // logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
+  msrh_pkg::cmt_id_t cmt_id;
+  msrh_pkg::grp_id_t grp_id;
+  ex1_haz_t                       hazard_typ;
+  logic                           tlb_except_valid;
+  msrh_pkg::except_t              tlb_except_type;
+  logic [MEM_Q_SIZE-1:0]          index_oh;
+  msrh_pkg::vaddr_t vaddr;
+  msrh_pkg::paddr_t paddr;
+  logic                           st_data_valid;
+  msrh_pkg::alen_t  st_data;
 
   // Atomic Operations
   logic                         is_rmw;
@@ -222,8 +232,8 @@ typedef struct packed {
 } ex1_q_update_t;
 
 typedef struct packed {
-  logic          update;
-  lmq_haz_t               hazard_typ;
+  logic                                 update;
+  ex2_haz_t                             hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
   logic [MEM_Q_SIZE-1:0]                index_oh;
 } ex2_q_update_t;
@@ -427,6 +437,7 @@ typedef struct packed {
   msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
 
+logic                is_committed;
   // Atomic Operations
 logic                oldest_valid;
 logic                oldest_ready;
@@ -617,7 +628,7 @@ typedef enum logic [1:0] {
 
 typedef struct packed {
   logic                                                valid;
-  logic [riscv_pkg::PADDR_W-1: $clog2(ST_BUF_WIDTH/8)] paddr;
+  logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
@@ -662,7 +673,7 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
   ret = 'h0;
 
   ret.valid = 1'b1;
-  ret.paddr = paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
+  ret.paddr = paddr[riscv_pkg::PADDR_W-1:0];
   ret.strb  = strb;
   ret.data  = data;
 

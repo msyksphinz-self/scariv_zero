@@ -473,7 +473,7 @@ assign o_tlb_resp.ae.inst      = w_vm_enabled & |(~w_px_array   & w_real_hits) |
 assign o_tlb_resp.ma.ld        = w_vm_enabled & |(w_ma_ld_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_read;
 assign o_tlb_resp.ma.st        = w_vm_enabled & |(w_ma_st_array & w_real_hits) | ~w_vm_enabled & w_misaligned & w_cmd_write;
 assign o_tlb_resp.ma.inst      = i_tlb_req.vaddr[0] != 1'b0;
-assign o_tlb_resp.cacheable    = |(w_c_array & w_real_hits);
+assign o_tlb_resp.cacheable    = w_vm_enabled & |(w_c_array & w_real_hits) | ~w_vm_enabled & w_map_hit & w_map_attributes.c;
 assign o_tlb_resp.must_alloc   = |(w_must_alloc_array & w_real_hits);
 // && edge.manager.managers.forall(m => !m.supportsAcquireB || m.supportsHint).B;
 assign o_tlb_resp.prefetchable = |(w_prefetchable_array & w_real_hits);

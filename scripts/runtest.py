@@ -107,6 +107,8 @@ def execute_test(test):
             print ("MATCH")
         elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
             print ("PASS")
+        elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
+            print ("DEADLOCK")
         else :
             print ("UNKNOWN")
 

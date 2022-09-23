@@ -136,9 +136,6 @@ u_lsu_pipe
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
-   .o_ex1_tlb_miss_hazard(),
-   .o_ex2_l1d_miss_hazard(),
-
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_int_regread_rs2(ex1_int_regread_rs2),
    .ex1_fp_regread_rs2 (ex1_fp_regread_rs2),

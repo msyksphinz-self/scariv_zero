@@ -198,7 +198,7 @@ select_l1d_rd_entry_oh
 
 assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
 assign l1d_rd_if.s0_h_pri = 1'b0;
-assign l1d_rd_if.s0_paddr = {w_l1d_rd_entry.paddr, {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+assign l1d_rd_if.s0_paddr = w_l1d_rd_entry.paddr;
 
 // -----------------
 // LRQ entry search
@@ -243,7 +243,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
-assign l1d_lrq_stq_miss_if.req_payload.paddr               = {w_lrq_target_entry.paddr, {($clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_lrq_stq_miss_if.req_payload.paddr               = w_lrq_target_entry.paddr;
 assign l1d_lrq_stq_miss_if.req_payload.evict_valid         = r_s2_replace_valid;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
 assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = r_s2_replace_way;
@@ -294,7 +294,7 @@ select_l1d_merge_entry_oh
    );
 
 assign l1d_merge_if.s0_valid = |w_entry_l1d_merge_req;
-assign l1d_merge_if.s0_wr_req.s0_paddr = {w_l1d_merge_entry.paddr, {($clog2(ST_BUF_WIDTH/8)){1'b0}}};
+assign l1d_merge_if.s0_wr_req.s0_paddr = w_l1d_merge_entry.paddr;
 
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];

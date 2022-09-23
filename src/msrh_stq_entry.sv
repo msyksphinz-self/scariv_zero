@@ -210,14 +210,15 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
-        w_entry_next.state           = i_ex1_q_updates.hazard_valid        ? STQ_TLB_HAZ :
-                                       !w_entry_rs2_ready_next             ? STQ_WAIT_ST_DATA :
+        w_entry_next.state           = i_ex1_q_updates.hazard_typ == TLB_MISS  ? STQ_TLB_HAZ :
+                                       i_ex1_q_updates.hazard_typ == UC_ACCESS ? STQ_WAIT_OLDEST :
+                                       !w_entry_rs2_ready_next                 ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
-        w_entry_next.paddr_valid     = ~i_ex1_q_updates.hazard_valid;
+        w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
 
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
@@ -302,6 +303,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_cmt_id_match) begin
+        w_entry_next.is_committed = 1'b1;
         if (r_entry.is_rmw) begin
           w_entry_next.state = STQ_WAIT_STBUF;
         end else begin
@@ -420,7 +422,7 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
 
   ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) &
                      (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
-
+  ret.is_committed = 1'b0;
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;
 `endif // SIMULATION

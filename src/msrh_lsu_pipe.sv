@@ -26,9 +26,6 @@ module msrh_lsu_pipe
  input msrh_pkg:: issue_t              i_ex0_replay_issue,
  input [MEM_Q_SIZE-1: 0]               i_ex0_replay_index_oh,
 
- output logic                          o_ex1_tlb_miss_hazard,
- output logic                          o_ex2_l1d_miss_hazard,
-
  regread_if.master                     ex1_regread_rs1,
  regread_if.master                     ex1_int_regread_rs2,
  regread_if.master                     ex1_fp_regread_rs2,
@@ -300,7 +297,6 @@ assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
-assign o_ex1_tlb_miss_hazard      = r_ex1_issue.valid & w_ex1_tlb_resp.miss;
 
 logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
@@ -324,7 +320,9 @@ assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALI
 assign o_ex1_q_updates.update              = r_ex1_issue.valid;
 assign o_ex1_q_updates.cmt_id              = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.hazard_valid        = w_ex1_tlb_resp.miss;
+assign o_ex1_q_updates.hazard_typ          = w_ex1_tlb_resp.miss ? TLB_MISS :
+                                             ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? UC_ACCESS :
+                                             EX1_NONE;
 assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
 assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
 assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;

@@ -337,7 +337,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                                                        rmw_order_check_if[p_idx].ex2_cmt_id,
                                                                        rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                                   w_stq_entries[s_idx].oldest_valid &
+                                                   (w_stq_entries[s_idx].is_rmw | w_stq_entries[s_idx].is_committed) &
                                                    rmw_order_check_if[p_idx].ex2_valid &
                                                    pipe_is_younger_than_rmw;
   end // block: rmw_order_haz_loop
