@@ -143,10 +143,11 @@ typedef struct packed {
     logic          rvc_inst_valid;
     logic [15: 0]  rvc_inst;
 
-    vaddr_t pc_addr;
-    inst_cat_t   cat;
-    brtag_t brtag;
-    brmask_t         br_mask;
+    vaddr_t     pc_addr;
+    inst_cat_t    cat;
+    inst_subcat_t subcat;
+    brtag_t     brtag;
+    brmask_t    br_mask;
 
     // logic [2:0] op;
     // logic imm;
@@ -315,6 +316,8 @@ typedef struct packed {
     grp_id_t grp_id;
 
     logic                   is_cond;
+    logic            oldest_valid;
+
     logic                   is_call;
     logic                   is_ret;
     logic [RAS_W-1: 0] ras_index;
@@ -358,6 +361,9 @@ function issue_t assign_issue_common (disp_t in,
   ret.grp_id = grp_id;
 
   ret.is_cond          = in.is_cond;
+  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
+                     (in.cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
   ret.ras_index        = in.ras_index;
@@ -398,6 +404,10 @@ function issue_t assign_issue_op2 (disp_t in,
     ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
     ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
     ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
   end
 
   return ret;
@@ -498,6 +508,22 @@ typedef struct packed {
   logic [DISP_SIZE-1: 0] ras_update;
   logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
 } commit_blk_t;
+
+function logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
+                                      cmt_id_t cmt_id1, grp_id_t grp_id1);
+logic                                w_cmt_is_older;
+logic                                w_0_older_than_1;
+
+  w_cmt_is_older = cmt_id0[msrh_pkg::CMT_ID_W-1]   ^ cmt_id1[msrh_pkg::CMT_ID_W-1] ?
+                   cmt_id0[msrh_pkg::CMT_ID_W-2:0] > cmt_id1[msrh_pkg::CMT_ID_W-2:0] :
+                   cmt_id0[msrh_pkg::CMT_ID_W-2:0] < cmt_id1[msrh_pkg::CMT_ID_W-2:0] ;
+  w_0_older_than_1 = w_cmt_is_older ||
+                     (cmt_id0 == cmt_id1 && grp_id0 < grp_id1);
+
+  return w_0_older_than_1;
+
+endfunction // id0_is_older_than_id1
+
 
 function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
   for (int i = 0; i < DISP_SIZE; i++) begin

@@ -31,14 +31,19 @@ module msrh_st_buffer_entry
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
  output logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] o_fwd_lsu_hit,
 
- input logic i_l1d_rd_s1_conflict,
- input logic i_l1d_rd_s1_miss,
+ input logic                                           i_l1d_rd_s1_conflict,
+ input logic                                           i_l1d_rd_s1_miss,
+ input logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] i_l1d_s1_way,
+ input logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        i_l1d_s1_data,
 
  output logic    o_l1d_wr_req,
  input logic     i_l1d_wr_s1_resp_hit,
 
  input lrq_resp_t    i_st_lrq_resp,
  input lrq_resolve_t i_lrq_resolve,
+
+ // Atomic Operation
+ amo_op_if.master amo_op_if,
 
  output logic             o_ready_to_merge,
  output logic             o_l1d_merge_req,
@@ -61,11 +66,20 @@ logic                                    w_lrq_resolve_vld;
 assign w_lrq_resolve_vld = i_lrq_resolve.valid &
                            (i_lrq_resolve.resolve_index_oh == r_entry.lrq_index_oh);
 
+riscv_pkg::xlen_t w_amo_op_result;
+riscv_pkg::xlen_t r_amo_l1d_data;
+riscv_pkg::xlen_t w_amo_l1d_data_next;
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
+
+    r_amo_l1d_data <= 'h0;
   end else begin
     r_entry <= w_entry_next;
+
+    r_amo_l1d_data <= w_amo_l1d_data_next;
   end
 end
 
@@ -77,8 +91,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: 0] paddr_partial;
+assign paddr_partial = {r_entry.paddr[$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)-1: $clog2(ST_BUF_WIDTH/8)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+
 always_comb begin
   w_entry_next = r_entry;
+  w_amo_l1d_data_next = r_amo_l1d_data;
+
   w_state_next = r_state;
   w_l1d_rd_req_next = 1'b0;
   o_entry_finish = 1'b0;
@@ -126,7 +145,16 @@ always_comb begin
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else begin
-        w_state_next = ST_BUF_L1D_UPDATE;
+        if (r_entry.is_rmw) begin
+          w_state_next = ST_BUF_AMO_OPERATION;
+
+          w_entry_next.l1d_way = i_l1d_s1_way;
+          /* verilator lint_off SELRANGE */
+          w_amo_l1d_data_next = i_l1d_s1_data[paddr_partial +: riscv_pkg::XLEN_W];
+        end else begin
+          w_entry_next.l1d_way = i_l1d_s1_way;
+          w_state_next = ST_BUF_L1D_UPDATE;
+        end
       end
     end
     ST_BUF_L1D_UPDATE: begin
@@ -187,6 +215,11 @@ always_comb begin
         w_entry_next.valid = 1'b0;
       end
     end
+    ST_BUF_AMO_OPERATION : begin
+      w_state_next = ST_BUF_L1D_UPDATE;
+
+      w_entry_next.data[riscv_pkg::XLEN_W-1: 0] = amo_op_if.result;
+    end
     default : begin
     end
   endcase // case (r_state)
@@ -194,6 +227,7 @@ end // always_comb
 
 assign o_entry = r_entry;
 assign o_ready_to_merge = r_entry.valid &
+                          !r_entry.is_rmw &
                           (r_state != ST_BUF_L1D_UPDATE) &
                           (r_state != ST_BUF_L1D_UPD_RESP) &
                           (r_state != ST_BUF_L1D_MERGE) &
@@ -204,6 +238,15 @@ assign o_lrq_req    = r_entry.valid & (r_state == ST_BUF_LRQ_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
 assign o_l1d_merge_req = r_entry.valid & (r_state == ST_BUF_L1D_MERGE);
 
+// ------------------
+// Atomic Operations
+// ------------------
+assign amo_op_if.valid = r_state == ST_BUF_AMO_OPERATION;
+assign amo_op_if.rmwop = r_entry.rmwop;
+assign amo_op_if.data0 = r_entry.data[riscv_pkg::XLEN_W-1: 0];
+assign amo_op_if.data1 = r_amo_l1d_data;
+
+
 // -----------------------------------
 // Forwarding check from LSU Pipeline
 // -----------------------------------
@@ -213,6 +256,7 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
                                  stbuf_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)]);
 end
 endgenerate
+
 
 `ifdef SIMULATION
 final begin

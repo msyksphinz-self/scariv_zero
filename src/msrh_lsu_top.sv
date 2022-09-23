@@ -97,6 +97,8 @@ msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 lrq_fwd_if w_lrq_fwd_if [msrh_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
+rmw_order_check_if w_rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM]();
+
 st_buffer_if            w_st_buffer_if();
 lrq_pa_search_if        w_lrq_pa_search_if();
 
@@ -137,6 +139,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
     .ldq_haz_check_if (w_ldq_haz_check_if[lsu_idx]),
     .lrq_fwd_if (w_lrq_fwd_if[lsu_idx]),
+
+    .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
 
     .ldq_replay_if (w_ldq_replay[lsu_idx]),
     .stq_replay_if (w_stq_replay[lsu_idx]),
@@ -184,6 +188,8 @@ msrh_ldq
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
 
+ .rob_info_if (rob_info_if),
+
  .i_disp_valid (w_ldq_disp_valid),
  .disp         (disp            ),
  .cre_ret_if   (ldq_cre_ret_if  ),
@@ -205,6 +211,8 @@ msrh_ldq
 
  .ex3_done_if (w_ex3_done_if),
 
+ .st_buffer_if (w_st_buffer_if),
+
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
  .o_done_report(w_ld_done_report)
@@ -220,6 +228,8 @@ msrh_stq
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
 
+ .rob_info_if (rob_info_if),
+
  .i_disp_valid (w_stq_disp_valid),
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
@@ -233,10 +243,14 @@ msrh_stq
  .i_ex2_q_updates(w_ex2_q_updates),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
+ .rmw_order_check_if (w_rmw_order_check_if),
 
  .stq_replay_if (w_stq_replay),
 
  .ex3_done_if (w_ex3_done_if),
+
+ .i_lrq_resolve (w_lrq_resolve),
+ .i_lrq_is_full (w_lrq_is_full),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
@@ -298,6 +312,8 @@ u_st_buffer
    .l1d_lrq_stq_miss_if (w_l1d_lrq_if[msrh_conf_pkg::LSU_INST_NUM]),
    .l1d_wr_if           (w_l1d_wr_if),
    .l1d_merge_if        (w_l1d_merge_if),
+
+   .rmw_order_check_if  (w_rmw_order_check_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
    .lrq_pa_search_if    (w_lrq_pa_search_if),

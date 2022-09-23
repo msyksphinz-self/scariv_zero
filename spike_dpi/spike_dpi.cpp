@@ -555,6 +555,10 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                 int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
+  svScope g_scope;
+  g_scope = svGetScopeFromName("tb");
+  svSetScope(g_scope);
+
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {

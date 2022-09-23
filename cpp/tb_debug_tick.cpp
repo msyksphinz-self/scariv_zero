@@ -42,6 +42,11 @@ extern "C" int debug_tick(
             addr = 0;
           }
         } else if (m_it == g_memory_ptr->GetIterEnd()) {
+
+          // fprintf(stderr, "ELF2 Loading ... Addr = %08x, Data = %08x\n",
+          //         *debug_req_bits_addr,
+          //         *debug_req_bits_data);
+
           state = 1;
           elf_load_finish = true;
         } else {
@@ -50,6 +55,7 @@ extern "C" int debug_tick(
         break;
       }
       default: {
+        // fprintf(stderr, "ELF Load Not Ready\n");
         *debug_req_valid = 0;
         *debug_req_bits_addr = 0;
         *debug_req_bits_data = 0;

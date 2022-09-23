@@ -349,6 +349,34 @@ modport slave
 endinterface // ldq_haz_check_if
 
 
+interface rmw_order_check_if;
+logic               ex2_valid;
+msrh_pkg::cmt_id_t  ex2_cmt_id;
+msrh_pkg::grp_id_t  ex2_grp_id;
+logic               ex2_stq_haz_vld;
+logic               ex2_stbuf_haz_vld;
+
+modport master
+  (
+   output ex2_valid,
+   output ex2_cmt_id,
+   output ex2_grp_id,
+   input  ex2_stq_haz_vld,
+   input  ex2_stbuf_haz_vld
+   );
+
+modport slave
+  (
+   input  ex2_valid,
+   input  ex2_cmt_id,
+   input  ex2_grp_id,
+   output ex2_stq_haz_vld,
+   output ex2_stbuf_haz_vld
+   );
+
+endinterface // rmw_order_check_if
+
+
 interface tlb_ptw_if;
 
   msrh_lsu_pkg::ptw_req_t        req;
@@ -586,9 +614,14 @@ endinterface // stq_snoop_if
 
 interface st_buffer_if;
 logic                                     valid;
-msrh_pkg::paddr_t           paddr;
+msrh_pkg::paddr_t                         paddr;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+logic                                     is_rmw;
+decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
+
+logic                                     is_empty;
+
 `ifdef SIMULATION
 msrh_pkg::cmt_id_t cmt_id;
 msrh_pkg::grp_id_t grp_id;
@@ -601,9 +634,14 @@ modport master (
   output paddr,
   output strb,
   output data,
+  output is_rmw,
+  output rmwop,
+`ifdef SIMULATION
   output cmt_id,
   output grp_id,
-  input  resp
+`endif // SIMULATION
+  input  resp,
+  input  is_empty
 );
 
 
@@ -612,9 +650,56 @@ modport slave (
   input paddr,
   input strb,
   input data,
+  input is_rmw,
+  input rmwop,
+`ifdef SIMULATION
   input cmt_id,
   input grp_id,
-  output resp
+`endif // SIMULATION
+  output resp,
+  output is_empty
+);
+
+
+modport monitor (
+  input valid,
+  input paddr,
+  input strb,
+  input data,
+  input is_rmw,
+  input rmwop,
+`ifdef SIMULATION
+  input cmt_id,
+  input grp_id,
+`endif // SIMULATION
+  input resp,
+  input is_empty
 );
 
 endinterface // st_buffer_if
+
+interface amo_op_if;
+
+logic                         valid;
+decoder_lsu_ctrl_pkg::rmwop_t rmwop;
+riscv_pkg::xlen_t             data0;
+riscv_pkg::xlen_t             data1;
+riscv_pkg::xlen_t             result;
+
+modport master (
+  output valid,
+  output rmwop,
+  output data0,
+  output data1,
+  input  result
+);
+
+modport slave (
+  input  valid,
+  input  rmwop,
+  input  data0,
+  input  data1,
+  output result
+);
+
+endinterface // amo_op_if

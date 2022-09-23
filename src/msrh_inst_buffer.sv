@@ -621,6 +621,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
       iq_disp.inst[d_idx].rd_regs[2].regidx = w_expand_inst[d_idx][31:27];
 
       iq_disp.inst[d_idx].cat        = w_inst_cat[d_idx];
+      iq_disp.inst[d_idx].subcat     = w_inst_subcat[d_idx];
 
       iq_disp.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx] |
                                               w_inst_is_call[d_idx] |

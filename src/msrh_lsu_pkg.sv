@@ -47,7 +47,8 @@ typedef struct   packed {
     LRQ_ASSIGNED,
     LRQ_CONFLICT,
     LRQ_FULL,
-    LRQ_EVICT_CONFLICT
+    LRQ_EVICT_CONFLICT,
+    RMW_ORDER_HAZ
   } lmq_haz_t;
 
   typedef enum logic [4:0] {
@@ -202,20 +203,22 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  logic                           update;
-  // msrh_pkg::issue_t               inst;
-  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  // logic [msrh_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
-  msrh_pkg::cmt_id_t cmt_id;
-  msrh_pkg::grp_id_t grp_id;
-  logic                           hazard_valid;
-  logic                           tlb_except_valid;
-  msrh_pkg::except_t              tlb_except_type;
-  logic [MEM_Q_SIZE-1:0]          index_oh;
-  msrh_pkg::vaddr_t vaddr;
-  msrh_pkg::paddr_t paddr;
-  logic                           st_data_valid;
-  msrh_pkg::alen_t  st_data;
+  logic                         update;
+  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
+  msrh_pkg::cmt_id_t            cmt_id;
+  msrh_pkg::grp_id_t            grp_id;
+  logic                         hazard_valid;
+  logic                         tlb_except_valid;
+  msrh_pkg::except_t            tlb_except_type;
+  logic [MEM_Q_SIZE-1:0]        index_oh;
+  msrh_pkg::vaddr_t             vaddr;
+  msrh_pkg::paddr_t             paddr;
+  logic                         st_data_valid;
+  msrh_pkg::alen_t              st_data;
+
+  // Atomic Operations
+  logic                         is_rmw;
+  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
 } ex1_q_update_t;
 
 typedef struct packed {
@@ -381,17 +384,23 @@ endfunction // gen_dw
 // ---------
 // STQ
 // ---------
-typedef enum logic[3:0] {
-  STQ_INIT = 0,
-  STQ_TLB_HAZ = 1,
-  STQ_ISSUE_WAIT = 2,
-  STQ_DONE_EX2 = 3,
-  STQ_COMMIT = 4,
-  STQ_WAIT_ST_DATA = 5,
-  STQ_DEAD = 9,
-  STQ_WAIT_COMMIT = 10,
-  STQ_DONE_EX3 = 11,
-  STQ_ISSUED = 12
+typedef enum logic[4:0] {
+  STQ_INIT          ,
+  STQ_TLB_HAZ       ,
+  STQ_ISSUE_WAIT    ,
+  STQ_DONE_EX2      ,
+  STQ_COMMIT        ,
+  STQ_WAIT_ST_DATA  ,
+  STQ_DEAD          ,
+  STQ_WAIT_COMMIT   ,
+  STQ_DONE_EX3      ,
+  STQ_ISSUED        ,
+  STQ_OLDEST_HAZ    ,
+  STQ_LRQ_CONFLICT  ,
+  STQ_LRQ_EVICT_HAZ ,
+  STQ_LRQ_FULL      ,
+  STQ_WAIT_OLDEST   ,
+  STQ_WAIT_STBUF
 } stq_state_t;
 
 typedef struct packed {
@@ -406,10 +415,10 @@ typedef struct packed {
   stq_state_t        state;
   msrh_pkg::vaddr_t  vaddr;
   msrh_pkg::paddr_t  paddr;
-  logic                                  paddr_valid;
-  logic                                  is_rs2_get;
-  msrh_pkg::alen_t                       rs2_data;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+  logic                                 paddr_valid;
+  logic                                 is_rs2_get;
+  msrh_pkg::alen_t                      rs2_data;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
 
   logic              except_valid;
   msrh_pkg::except_t except_type;
@@ -417,6 +426,12 @@ typedef struct packed {
   logic              another_flush_valid;
   msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
+
+  // Atomic Operations
+logic                oldest_valid;
+logic                oldest_ready;
+  logic                         is_rmw;
+  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -485,18 +500,19 @@ endfunction // isAMOLogical
 // ---------
 
 typedef enum logic[3:0] {
-  LDQ_INIT = 0,
-  LDQ_EX2_RUN = 1,
-  LDQ_LRQ_CONFLICT = 2,
-  LDQ_TLB_HAZ = 4,
-  LDQ_ISSUE_WAIT = 5,
-  LDQ_CHECK_ST_DEPEND = 6,
-  LDQ_EX3_DONE = 7,
-  LDQ_WAIT_COMMIT = 8,
-  LDQ_WAIT_ENTRY_CLR = 9,
-  LDQ_ISSUED = 10,
-  LDQ_LRQ_EVICT_HAZ = 11,
-  LDQ_LRQ_FULL = 12
+  LDQ_INIT           ,
+  LDQ_EX2_RUN        ,
+  LDQ_LRQ_CONFLICT   ,
+  LDQ_TLB_HAZ        ,
+  LDQ_ISSUE_WAIT     ,
+  LDQ_CHECK_ST_DEPEND,
+  LDQ_EX3_DONE       ,
+  LDQ_WAIT_COMMIT    ,
+  LDQ_WAIT_ENTRY_CLR ,
+  LDQ_ISSUED         ,
+  LDQ_LRQ_EVICT_HAZ  ,
+  LDQ_LRQ_FULL       ,
+  LDQ_WAIT_OLDEST
 } ldq_state_t;
 
 typedef struct packed {
@@ -605,6 +621,12 @@ typedef struct packed {
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]      l1d_way;
+
+  logic                                                is_rmw;
+  decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
+
+
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
@@ -612,25 +634,28 @@ typedef struct packed {
 } st_buffer_entry_t;
 
 typedef enum logic [ 3: 0] {
-  ST_BUF_INIT         = 0,
-  ST_BUF_RD_L1D       = 1,
-  ST_BUF_RESP_L1D     = 2,
-  ST_BUF_L1D_UPDATE   = 3,
-  ST_BUF_L1D_UPD_RESP = 4,
-  ST_BUF_LRQ_REFILL   = 5,
-  ST_BUF_WAIT_REFILL  = 6,
-  ST_BUF_WAIT_FULL    = 7,
-  ST_BUF_WAIT_EVICT   = 8,
-  ST_BUF_L1D_MERGE    = 9,
-  ST_BUF_L1D_MERGE2   = 10,
-  ST_BUF_WAIT_FINISH  = 11
+  ST_BUF_INIT          = 0,
+  ST_BUF_RD_L1D        = 1,
+  ST_BUF_RESP_L1D      = 2,
+  ST_BUF_L1D_UPDATE    = 3,
+  ST_BUF_L1D_UPD_RESP  = 4,
+  ST_BUF_LRQ_REFILL    = 5,
+  ST_BUF_WAIT_REFILL   = 6,
+  ST_BUF_WAIT_FULL     = 7,
+  ST_BUF_WAIT_EVICT    = 8,
+  ST_BUF_L1D_MERGE     = 9,
+  ST_BUF_L1D_MERGE2    = 10,
+  ST_BUF_WAIT_FINISH   = 11,
+  ST_BUF_AMO_OPERATION = 12
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
                                              msrh_pkg::grp_id_t grp_id,
                                              msrh_pkg::paddr_t  paddr,
-                                             logic [ST_BUF_WIDTH/8-1: 0] strb,
-                                             logic [ST_BUF_WIDTH-1: 0]   data
+                                             logic [ST_BUF_WIDTH/8-1: 0]   strb,
+                                             logic [ST_BUF_WIDTH-1: 0]     data,
+                                             logic                         is_rmw,
+                                             decoder_lsu_ctrl_pkg::rmwop_t rmwop
                                              );
   st_buffer_entry_t ret;
 
@@ -641,6 +666,9 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
   ret.strb  = strb;
   ret.data  = data;
 
+  ret.is_rmw = is_rmw;
+  ret.rmwop  = rmwop;
+
 `ifdef SIMULATION
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -649,5 +677,15 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
   return ret;
 endfunction // assign_st_buffer
 
+
+function automatic riscv_pkg::xlen_t mem_offset (decoder_lsu_ctrl_pkg::op_t op, logic [31: 0] inst);
+  if (op == decoder_lsu_ctrl_pkg::OP_STORE) begin
+    return {{(riscv_pkg::VADDR_W-12){inst[31]}}, inst[31:25], inst[11: 7]};
+  end else if (op == decoder_lsu_ctrl_pkg::OP_LOAD) begin
+    return {{(riscv_pkg::VADDR_W-12){inst[31]}}, inst[31:20]};
+  end else begin
+    return 'h0;
+  end
+endfunction // mem_offset
 
 endpackage // msrh_lsu_pkg

@@ -655,177 +655,177 @@
         "name":"lr.w       r[11:7],r[19:15]",
         "length":"32", "xlen":["64", "32"],
         "field":["00010", "XX", "00000", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "w"], ["op", "lr"]]
+        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "lr32"]]
     },
     {
         "name":"sc.w       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64", "32"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "w"], ["op", "sc"]]
+        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "sc32"]]
     },
     {
         "name":"amoswap.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00001", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoswap"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "swap32"]]
     },
     {
         "name":"amoadd.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoadd"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "add32"]]
     },
     {
         "name":"amoxor.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoxor"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "xor32"]]
     },
     {
         "name":"amoand.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["01100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoand"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "and32"]]
     },
     {
         "name":"amoor.w    r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["01000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoor"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "or32"]]
     },
     {
         "name":"amomin.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["10000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomin"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "min32"]]
     },
     {
         "name":"amomax.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["10100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomax"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "max32"]]
     },
     {
         "name":"amominu.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["11000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amominu"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "minu32"]]
     },
     {
         "name":"amomaxu.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["11100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomaxu"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "maxu32"]]
     },
     {
         "name":"lr.d       r[11:7],r[19:15]",
         "length":"32", "xlen":["64"],
         "field":["00010", "XX", "00000", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "lr"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "lr64"]]
     },
     {
         "name":"sc.d       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "sc"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "sc64"]]
     },
     {
         "name":"amoswap.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00001", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoswap"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "swap64"]]
     },
     {
         "name":"amoadd.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoadd"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "add64"]]
     },
     {
         "name":"amoxor.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoxor"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "xor64"]]
     },
     {
         "name":"amoand.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["01100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoand"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "and64"]]
     },
     {
         "name":"amoor.d    r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["01000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoor"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "or64"]]
     },
     {
         "name":"amomin.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["10000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomin"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "min64"]]
     },
     {
         "name":"amomax.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["10100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomax"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "max64"]]
     },
     {
         "name":"amominu.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["11000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amominu"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "minu64"]]
     },
     {
         "name":"amomaxu.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["11100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomaxu"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "maxu64"]]
     },
     {
         "comment": "Floating Point Load Word",

@@ -5,6 +5,9 @@ module msrh_stq
     input logic i_clk,
     input logic i_reset_n,
 
+    // ROB notification interface
+    rob_info_if.slave                           rob_info_if,
+
     input logic         [msrh_conf_pkg::DISP_SIZE-1:0] i_disp_valid,
     disp_if.watch                                      disp,
     cre_ret_if.slave                                   cre_ret_if,
@@ -23,9 +26,15 @@ module msrh_stq
    // Forwarding checker
    fwd_check_if.slave                        ex2_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
+   // RMW Ordere Hazard Check
+   rmw_order_check_if.slave    rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    lsu_replay_if.master stq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
    done_if.slave        ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
+
+   input lrq_resolve_t i_lrq_resolve,
+   input logic         i_lrq_is_full,
 
    // Commit notification
    input msrh_pkg::commit_blk_t   i_commit,
@@ -65,6 +74,8 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
 // Forwarding Logic
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
+
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_rmw_order_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
 
 // Store Buffer Selection
 msrh_pkg::grp_id_t            w_stbuf_accepted_disp;
@@ -231,6 +242,8 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
+     .rob_info_if (rob_info_if),
+
      .i_disp_load       (|w_input_valid    ),
      .i_disp_cmt_id     (disp.cmt_id       ),
      .i_disp_grp_id     (w_disp_grp_id     ),
@@ -253,13 +266,19 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .o_entry_ready (w_entry_ready[s_idx]),
      .i_entry_picked (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
+     .i_lrq_resolve (i_lrq_resolve),
+     .i_lrq_is_full (i_lrq_is_full),
+
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
+     .o_stbuf_req_valid    (w_sq_commit_req[s_idx]),
      .i_sq_op_accept       (|w_stbuf_accept_array & (st_buffer_if.resp != msrh_lsu_pkg::ST_BUF_FULL)),
 
      // Snoop Interface
      .stq_snoop_if (stq_entry_snoop_if),
+
+     .i_st_buffer_empty (st_buffer_if.is_empty),
 
      .ex3_done_if           (w_ex3_done_sel_if),
      .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
@@ -273,7 +292,6 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
       assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
-    assign w_sq_commit_req[s_idx] = (w_stq_entries[s_idx].state == STQ_COMMIT) & ~w_stq_entries[s_idx].except_valid;
 
     // Forwarding check
     for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
@@ -309,8 +327,31 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
     end // block: fwd_loop
 
-  end // block: stq_loop
+
+  // RMW Order Hazard Check
+  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
+  logic pipe_is_younger_than_rmw;
+
+    assign pipe_is_younger_than_rmw = msrh_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].cmt_id,
+                                                                       w_stq_entries[s_idx].grp_id,
+                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
+                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
+    assign w_ex2_rmw_order_haz_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                                   w_stq_entries[s_idx].oldest_valid &
+                                                   rmw_order_check_if[p_idx].ex2_valid &
+                                                   pipe_is_younger_than_rmw;
+  end // block: rmw_order_haz_loop
+
+
+end // block: stq_loop
 endgenerate
+
+// RMW Order Hazard Check Logci
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_haz_resp_loop
+  assign rmw_order_check_if[p_idx].ex2_stq_haz_vld = |w_ex2_rmw_order_haz_vld[p_idx];
+end
+endgenerate
+
 
 // ===============
 // replay logic
@@ -504,6 +545,9 @@ generate for(genvar b_idx = 0; b_idx < msrh_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) be
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[msrh_conf_pkg::DISP_SIZE];
 end
 endgenerate
+assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.is_rmw;
+assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
+
 `ifdef SIMULATION
 assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
 assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;
@@ -560,6 +604,12 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_WAIT_COMMIT      : $fwrite(fp, "WAIT_COMMIT");
       STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
       STQ_ISSUED           : $fwrite(fp, "ISSUED");
+      STQ_OLDEST_HAZ       : $fwrite(fp, "OLDEST_HAZ");
+      STQ_LRQ_CONFLICT     : $fwrite(fp, "STQ_LRQ_CONFLICT");
+      STQ_LRQ_EVICT_HAZ    : $fwrite(fp, "STQ_LRQ_EVICT_HAZ");
+      STQ_LRQ_FULL         : $fwrite(fp, "STQ_LRQ_FULL");
+      STQ_WAIT_OLDEST      : $fwrite(fp, "STQ_WAIT_OLDEST");
+      STQ_WAIT_STBUF       : $fwrite(fp, "STQ_WAIT_STBUF");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);
     endcase // unique case (entry.state)
     $fwrite(fp, "\"");

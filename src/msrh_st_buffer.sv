@@ -27,6 +27,9 @@ module msrh_st_buffer
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave  stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
+ // RMW Ordere Hazard Check
+ rmw_order_check_if.slave rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
  // Search LRQ entry: same cycle as L1D Search
  lrq_pa_search_if.master   lrq_pa_search_if,
 
@@ -66,6 +69,10 @@ st_buffer_entry_t w_init_load;
 
 logic [msrh_conf_pkg::LSU_INST_NUM-1:0] w_stbuf_fwd_hit[ST_BUF_ENTRY_SIZE];
 
+amo_op_if w_amo_op_if [ST_BUF_ENTRY_SIZE]();
+
+logic [ST_BUF_ENTRY_SIZE-1: 0]          w_ex2_rmw_order_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
+
 // ----------------------
 // STQ All Entries
 // ----------------------
@@ -86,13 +93,16 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
 
 // New Entry create
 assign w_init_load = assign_st_buffer(st_buffer_if.cmt_id, st_buffer_if.grp_id,
-                                      st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data);
+                                      st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
+                                      st_buffer_if.is_rmw, st_buffer_if.rmwop);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept       ? ST_BUF_MERGE :
                            ST_BUF_FULL;
 
-  generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop
+assign st_buffer_if.is_empty = ~|w_entry_valids;
+
+generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entry_loop
   logic w_ready_to_merge;
   logic w_load;
 
@@ -125,12 +135,17 @@ assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
      .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
      .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
-     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss),
+     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss    ),
+     .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
+     .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
+
      .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_wr_s1_resp_hit (l1d_wr_if.s1_wr_resp.s1_hit),
 
      .i_st_lrq_resp  (l1d_lrq_stq_miss_if.resp_payload ),
      .i_lrq_resolve (i_lrq_resolve),
+
+     .amo_op_if (w_amo_op_if[e_idx]),
 
      .o_ready_to_merge (w_ready_to_merge),
      .o_l1d_merge_req  (w_entry_l1d_merge_req[e_idx]),
@@ -143,9 +158,29 @@ assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
   assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge &
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
+  // RMW Order Hazard Check
+  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
+    logic pipe_is_younger_than_rmw;
+
+    assign pipe_is_younger_than_rmw = msrh_pkg::id0_is_older_than_id1 (w_entries[e_idx].cmt_id,
+                                                                       w_entries[e_idx].grp_id,
+                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
+                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
+    assign w_ex2_rmw_order_haz_vld[p_idx][e_idx] = w_entries[e_idx].valid &
+                                                   w_entries[e_idx].is_rmw &
+                                                   rmw_order_check_if[p_idx].ex2_valid &
+                                                   pipe_is_younger_than_rmw;
+  end // block: rmw_order_haz_loop
 
   end // block: entry_loop
 endgenerate
+
+// RMW Order Hazard Check Logci
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_haz_resp_loop
+  assign rmw_order_check_if[p_idx].ex2_stbuf_haz_vld = |w_ex2_rmw_order_haz_vld[p_idx];
+end
+endgenerate
+
 
 // -----------------
 // Make L1D request
@@ -231,7 +266,7 @@ select_l1d_wr_entry_oh
 
 always_comb begin
   l1d_wr_if.s0_valid           = |w_entry_l1d_wr_req_oh;
-  l1d_wr_if.s0_wr_req.s0_way   = r_s2_hit_way;
+  l1d_wr_if.s0_wr_req.s0_way   = w_l1d_wr_entry.l1d_way;
   l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
   l1d_wr_if.s0_wr_req.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
 end
@@ -317,6 +352,42 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   end // block: lsu_fwd_loop
 endgenerate
 
+// --------------
+// AMO Operation
+// --------------
+
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_amo_valids;
+decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop[ST_BUF_ENTRY_SIZE];
+riscv_pkg::xlen_t              w_amo_data0[ST_BUF_ENTRY_SIZE];
+riscv_pkg::xlen_t              w_amo_data1[ST_BUF_ENTRY_SIZE];
+
+decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop_sel;
+riscv_pkg::xlen_t              w_amo_data0_sel;
+riscv_pkg::xlen_t              w_amo_data1_sel;
+riscv_pkg::xlen_t              w_amo_op_result;
+
+msrh_amo_operation
+u_amo_op
+  (
+   .i_data0 (w_amo_data0_sel),
+   .i_data1 (w_amo_data1_sel),
+   .i_op    (w_amo_rmwop_sel),
+   .o_data  (w_amo_op_result)
+   );
+
+generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : amo_loop
+  assign w_amo_valids[e_idx] = w_amo_op_if[e_idx].valid;
+  assign w_amo_rmwop[e_idx] = w_amo_op_if[e_idx].rmwop;
+  assign w_amo_data0[e_idx] = w_amo_op_if[e_idx].data0;
+  assign w_amo_data1[e_idx] = w_amo_op_if[e_idx].data1;
+
+  assign w_amo_op_if[e_idx].result = w_amo_op_result;
+end
+endgenerate
+
+bit_oh_or #(.T(decoder_lsu_ctrl_pkg::rmwop_t), .WORDS(ST_BUF_ENTRY_SIZE)) amo_rmwop_sel (.i_oh(w_amo_valids), .i_data(w_amo_rmwop), .o_selected(w_amo_rmwop_sel));
+bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data0_sel (.i_oh(w_amo_valids), .i_data(w_amo_data0), .o_selected(w_amo_data0_sel));
+bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data1_sel (.i_oh(w_amo_valids), .i_data(w_amo_data1), .o_selected(w_amo_data1_sel));
 
 `ifdef SIMULATION
   `ifdef VERILATOR
