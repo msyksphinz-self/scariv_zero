@@ -56,7 +56,8 @@ typedef enum logic [ 2: 0] {
   LRQ_CONFLICT,
   LRQ_FULL,
   LRQ_EVICT_CONFLICT,
-  RMW_ORDER_HAZ
+  RMW_ORDER_HAZ,
+  STQ_NONFWD_HAZ
 } ex2_haz_t;
 
   typedef enum logic [4:0] {
@@ -232,10 +233,11 @@ typedef struct packed {
 } ex1_q_update_t;
 
 typedef struct packed {
-  logic                                 update;
-  ex2_haz_t                             hazard_typ;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
-  logic [MEM_Q_SIZE-1:0]                index_oh;
+  logic                                     update;
+  ex2_haz_t                                 hazard_typ;
+  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]     lrq_index_oh;
+  logic [MEM_Q_SIZE-1:0]                    index_oh;
+  logic [msrh_conf_pkg::STQ_SIZE-1:0] hazard_index;
 } ex2_q_update_t;
 
 typedef struct packed {
@@ -449,6 +451,10 @@ logic                oldest_ready;
 `endif // SIMULATION
 } stq_entry_t;
 
+typedef struct packed {
+  logic                                valid;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0] index;
+} stq_resolve_t;
 
 typedef struct packed {
   logic          done;
@@ -523,7 +529,8 @@ typedef enum logic[3:0] {
   LDQ_ISSUED         ,
   LDQ_LRQ_EVICT_HAZ  ,
   LDQ_LRQ_FULL       ,
-  LDQ_WAIT_OLDEST
+  LDQ_WAIT_OLDEST    ,
+  LDQ_NONFWD_HAZ_WAIT
 } ldq_state_t;
 
 typedef struct packed {
@@ -540,6 +547,7 @@ typedef struct packed {
   msrh_pkg::vaddr_t vaddr;
   msrh_pkg::paddr_t paddr;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
+  logic [msrh_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
   logic                                 except_valid;
   msrh_pkg::except_t                    except_type;

@@ -40,6 +40,8 @@ module msrh_ldq_entry
 
  input logic                                     i_st_buffer_empty,
 
+ input stq_resolve_t                             i_stq_resolve,
+
  input logic                                     i_ldq_outptr_valid,
  output logic                                    o_entry_finish,
 
@@ -212,8 +214,9 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? LDQ_ISSUE_WAIT :
-                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? LDQ_WAIT_OLDEST :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT   ? LDQ_ISSUE_WAIT      :
+                             i_ex2_q_updates.hazard_typ == STQ_NONFWD_HAZ ? LDQ_NONFWD_HAZ_WAIT :
+                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ  ? LDQ_WAIT_OLDEST     :
                              w_lrq_resolve_match   ? LDQ_ISSUE_WAIT :
                              w_lrq_is_conflict     ? LDQ_LRQ_CONFLICT :
                              w_lrq_is_full         ? LDQ_LRQ_FULL :
@@ -222,6 +225,7 @@ always_comb begin
                              LDQ_EX3_DONE;
         w_entry_next.is_get_data = (w_entry_next.state == LDQ_EX3_DONE);
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+        w_entry_next.hazard_index     = i_ex2_q_updates.hazard_index;
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
@@ -247,6 +251,16 @@ always_comb begin
       end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
+        w_entry_next.state = LDQ_ISSUE_WAIT;
+      end
+    end
+    LDQ_NONFWD_HAZ_WAIT : begin
+      if (i_stq_resolve.valid) begin
+        w_entry_next.hazard_index = r_entry.hazard_index & ~i_stq_resolve.index;
+      end
+      if (w_entry_flush) begin
+        w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
+      end else if (r_entry.hazard_index == 'h0) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end

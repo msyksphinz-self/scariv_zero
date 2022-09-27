@@ -37,6 +37,8 @@ module msrh_ldq
    // Store Buffer Interface
    st_buffer_if.monitor         st_buffer_if,
 
+   input stq_resolve_t          i_stq_resolve,
+
    done_if.slave ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
 
    output msrh_pkg::done_rpt_t o_done_report[msrh_conf_pkg::LSU_INST_NUM]
@@ -224,6 +226,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
      .i_lrq_is_full (i_lrq_is_full),
 
      .i_st_buffer_empty (st_buffer_if.is_empty),
+
+     .i_stq_resolve (i_stq_resolve),
 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),

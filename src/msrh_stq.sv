@@ -26,6 +26,9 @@ module msrh_stq
    // Forwarding checker
    fwd_check_if.slave                        ex2_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
+   // STQ Hazard Check
+   stq_haz_check_if.slave      stq_haz_check_if[msrh_conf_pkg::LSU_INST_NUM],
+
    // RMW Ordere Hazard Check
    rmw_order_check_if.slave    rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
@@ -35,6 +38,9 @@ module msrh_stq
 
    input lrq_resolve_t i_lrq_resolve,
    input logic         i_lrq_is_full,
+
+   // STQ Entry Clear Notification
+   output stq_resolve_t o_stq_resolve,
 
    // Commit notification
    input msrh_pkg::commit_blk_t   i_commit,
@@ -75,7 +81,9 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_ex2_fwd_valid[msrh_conf_pkg::LSU_INST_NUM];
 logic [ 7: 0]                       w_ex2_fwd_dw[msrh_conf_pkg::LSU_INST_NUM][msrh_conf_pkg::STQ_SIZE];
 
-logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_rmw_order_haz_vld[msrh_conf_pkg::LSU_INST_NUM];
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_rmw_order_haz_valid[msrh_conf_pkg::LSU_INST_NUM];
+
+logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_stq_haz_valid[msrh_conf_pkg::LSU_INST_NUM];
 
 // Store Buffer Selection
 msrh_pkg::grp_id_t            w_stbuf_accepted_disp;
@@ -336,10 +344,30 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
                                                                        w_stq_entries[s_idx].grp_id,
                                                                        rmw_order_check_if[p_idx].ex2_cmt_id,
                                                                        rmw_order_check_if[p_idx].ex2_grp_id);
-    assign w_ex2_rmw_order_haz_vld[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                                   w_stq_entries[s_idx].is_rmw &
-                                                   rmw_order_check_if[p_idx].ex2_valid &
-                                                   pipe_is_younger_than_rmw;
+    assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                                     w_stq_entries[s_idx].is_rmw &
+                                                     rmw_order_check_if[p_idx].ex2_valid &
+                                                     pipe_is_younger_than_rmw;
+  end // block: rmw_order_haz_loop
+
+  // STQ Hazard Check
+  for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : stq_nonfwd_haz_loop
+    logic pipe_is_younger_than_stq;
+    logic w_same_addr_region;
+
+    assign pipe_is_younger_than_stq = msrh_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].cmt_id,
+                                                                       w_stq_entries[s_idx].grp_id,
+                                                                       stq_haz_check_if[p_idx].ex2_cmt_id,
+                                                                       stq_haz_check_if[p_idx].ex2_grp_id);
+    assign w_same_addr_region = w_stq_entries   [s_idx].paddr    [riscv_pkg::PADDR_W-1:$clog2(msrh_pkg::ALEN_W/8)] ==
+                                stq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_pkg::ALEN_W/8)];
+
+    assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                               w_stq_entries[s_idx].paddr_valid &
+                                               !w_stq_entries[s_idx].inst.rd_regs[1].ready &
+                                               stq_haz_check_if[p_idx].ex2_valid &
+                                               w_same_addr_region &
+                                               pipe_is_younger_than_stq;
   end // block: rmw_order_haz_loop
 
 
@@ -348,7 +376,14 @@ endgenerate
 
 // RMW Order Hazard Check Logci
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_haz_resp_loop
-  assign rmw_order_check_if[p_idx].ex2_stq_haz_vld = |w_ex2_rmw_order_haz_vld[p_idx];
+  assign rmw_order_check_if[p_idx].ex2_stq_haz_vld = |w_ex2_rmw_order_haz_valid[p_idx];
+end
+endgenerate
+
+// STQ Hazard Check Logcic
+generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : stq_nonfwd_haz_resp_loop
+  assign stq_haz_check_if[p_idx].ex2_haz_valid = |w_ex2_stq_haz_valid[p_idx];
+  assign stq_haz_check_if[p_idx].ex2_haz_index =  w_ex2_stq_haz_valid[p_idx];
 end
 endgenerate
 
@@ -405,6 +440,17 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 end // block: fwd_loop
 endgenerate
 
+// =========================
+// STQ Hazard Resolve Logic
+// =========================
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_stq_resolve <= 'h0;
+  end else begin
+    o_stq_resolve.valid <= |w_stq_entry_st_finish;
+    o_stq_resolve.index <=  w_stq_entry_st_finish;
+  end
+end
 
 // ===============
 // Done Logic

@@ -41,6 +41,7 @@ module msrh_lsu_pipe
  fwd_check_if.master                   stbuf_fwd_check_if,   // ST-Buffer
  fwd_check_if.master                   streq_fwd_check_if,   // Store Requestor
  ldq_haz_check_if.master               ldq_haz_check_if,
+ stq_haz_check_if.master               stq_haz_check_if,
  lrq_fwd_if.master                     lrq_fwd_if,
 
  // RMW Ordere Hazard Check
@@ -392,19 +393,20 @@ assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
 assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way;
 
-
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.hazard_typ = w_ex2_rmw_haz_vld                    ? RMW_ORDER_HAZ :
-                                    &w_ex2_fwd_success                   ? NONE          :
-                                    ex1_l1d_rd_if.s1_conflict            ? L1D_CONFLICT  :
+assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONFWD_HAZ :
+                                    w_ex2_rmw_haz_vld                 ? RMW_ORDER_HAZ :
+                                    &w_ex2_fwd_success                ? NONE          :
+                                    ex1_l1d_rd_if.s1_conflict         ? L1D_CONFLICT  :
                                     l1d_lrq_if.load ?
-                                    (l1d_lrq_if.resp_payload.full        ? LRQ_FULL      :
-                                     l1d_lrq_if.resp_payload.conflict    ? LRQ_CONFLICT  :
+                                    (l1d_lrq_if.resp_payload.full     ? LRQ_FULL      :
+                                     l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT  :
                                      LRQ_ASSIGNED) :
                                     NONE;
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
+assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
 
 // ---------------------
 // Misprediction Update
@@ -466,6 +468,13 @@ assign ldq_haz_check_if.ex2_paddr  = r_ex2_paddr;
 assign ldq_haz_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
 assign ldq_haz_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 assign ldq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
+
+// STQ Speculative Load Hazard Check
+assign stq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign stq_haz_check_if.ex2_paddr  = r_ex2_paddr;
+assign stq_haz_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
+assign stq_haz_check_if.ex2_grp_id = r_ex2_issue.grp_id;
+assign stq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
 
 assign rmw_order_check_if.ex2_valid  = r_ex2_issue.valid;
 assign rmw_order_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;

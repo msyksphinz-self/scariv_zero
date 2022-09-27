@@ -75,6 +75,8 @@ lrq_dc_search_if w_lrq_dc_search_if ();
 lrq_resolve_t w_lrq_resolve;
 logic     w_lrq_is_full;
 
+stq_resolve_t w_stq_resolve;
+
 l2_req_if    w_l1d_ext_req[2]();
 l1d_evict_if w_l1d_evict_if();
 
@@ -96,6 +98,7 @@ msrh_pkg::done_rpt_t w_st_done_report[msrh_conf_pkg::LSU_INST_NUM];
 
 lrq_fwd_if w_lrq_fwd_if [msrh_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
+stq_haz_check_if w_stq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
 rmw_order_check_if w_rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM]();
 
@@ -138,6 +141,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .l1d_rd_if (w_l1d_rd_if[L1D_LS_PORT_BASE + lsu_idx]),
     .l1d_lrq_if (w_l1d_lrq_if[lsu_idx]),
     .ldq_haz_check_if (w_ldq_haz_check_if[lsu_idx]),
+    .stq_haz_check_if (w_stq_haz_check_if[lsu_idx]),
     .lrq_fwd_if (w_lrq_fwd_if[lsu_idx]),
 
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
@@ -207,6 +211,8 @@ msrh_ldq
  .i_lrq_resolve (w_lrq_resolve),
  .i_lrq_is_full (w_lrq_is_full),
 
+ .i_stq_resolve (w_stq_resolve),
+
  .ldq_replay_if (w_ldq_replay),
 
  .ex3_done_if (w_ex3_done_if),
@@ -243,6 +249,7 @@ msrh_stq
  .i_ex2_q_updates(w_ex2_q_updates),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
+ .stq_haz_check_if (w_stq_haz_check_if),
  .rmw_order_check_if (w_rmw_order_check_if),
 
  .stq_replay_if (w_stq_replay),
@@ -258,6 +265,8 @@ msrh_stq
  .st_buffer_if (w_st_buffer_if),
 
  .stq_snoop_if(stq_snoop_if),
+
+ .o_stq_resolve (w_stq_resolve),
 
  .o_done_report          (w_st_done_report),
  .o_another_flush_report (o_another_flush_report)
