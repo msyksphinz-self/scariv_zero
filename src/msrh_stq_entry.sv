@@ -212,7 +212,6 @@ always_comb begin
       end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
         w_entry_next.state           = i_ex1_q_updates.hazard_typ == TLB_MISS  ? STQ_TLB_HAZ :
                                        i_ex1_q_updates.hazard_typ == UC_ACCESS ? STQ_WAIT_OLDEST :
-                                       !w_entry_rs2_ready_next                 ? STQ_WAIT_ST_DATA :
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
@@ -304,7 +303,9 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_cmt_id_match) begin
         w_entry_next.is_committed = 1'b1;
-        if (r_entry.is_rmw) begin
+        if (!w_entry_next.inst.rd_regs[1].ready) begin
+          w_entry_next.state = STQ_WAIT_ST_DATA;
+        end else if (r_entry.is_rmw) begin
           w_entry_next.state = STQ_WAIT_STBUF;
         end else begin
           w_entry_next.state = STQ_COMMIT;
@@ -320,7 +321,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.inst.rd_regs[1].ready) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
+        w_entry_next.state = STQ_COMMIT;
       end
     end
     STQ_COMMIT : begin

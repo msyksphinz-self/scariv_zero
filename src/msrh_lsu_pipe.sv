@@ -378,7 +378,7 @@ assign w_ex2_rmw_haz_vld = rmw_order_check_if.ex2_stq_haz_vld | rmw_order_check_
 
 assign w_ex2_load_mispredicted = r_ex2_issue.valid &
                                  ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
-                                 (w_ex2_rmw_haz_vld |
+                                 (w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid |
                                   (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) & ~(&w_ex2_fwd_success));
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ((r_ex2_pipe_ctrl.op == OP_LOAD) | (r_ex2_pipe_ctrl.op == OP_RMW)) &
