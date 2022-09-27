@@ -56,10 +56,10 @@ module msrh_lsu_top
 // LSU Pipeline + STQ Interface + PTW + Snoop
 localparam L1D_SNOOP_PORT    = 0;
 localparam L1D_PTW_PORT      = L1D_SNOOP_PORT   + 1;
-localparam L1D_LRQ_PORT      = L1D_PTW_PORT     + 1;
+localparam L1D_LS_PORT_BASE  = L1D_PTW_PORT     + 1;
+localparam L1D_LRQ_PORT      = L1D_LS_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
 localparam L1D_ST_RD_PORT    = L1D_LRQ_PORT     + 1;
-localparam L1D_LS_PORT_BASE  = L1D_ST_RD_PORT   + 1;
-localparam L1D_RD_PORT_NUM   = L1D_LS_PORT_BASE + msrh_conf_pkg::LSU_INST_NUM;
+localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_wr_if();
