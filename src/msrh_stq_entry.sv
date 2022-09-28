@@ -1,5 +1,6 @@
 module msrh_stq_entry
   import msrh_lsu_pkg::*;
+#(parameter entry_index = 0)
 (
    input logic                                i_clk,
    input logic                                i_reset_n,
@@ -191,7 +192,7 @@ always_comb begin
         // w_entry_next.cmt_id = 'h0;
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
-        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, i_disp_pipe_sel_oh);
+        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 1 << (entry_index % msrh_conf_pkg::LSU_INST_NUM));
         w_entry_next.inst = msrh_pkg::assign_issue_op2 (i_disp, i_disp_cmt_id, i_disp_grp_id,
                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_br_flush) begin
