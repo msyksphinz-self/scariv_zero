@@ -28,7 +28,7 @@ typedef struct packed {
 
 typedef struct packed {
   msrh_pkg::vaddr_t target_vaddr;
-} btb_entry_t;
+} btb_target_va_t;
 
 endpackage // msrh_predict_pkg
 

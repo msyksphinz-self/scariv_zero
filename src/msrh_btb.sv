@@ -30,21 +30,22 @@ logic [riscv_pkg::VADDR_W-1: 1]              w_update_pc_vaddr;
 assign w_update_pc_vaddr = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:1] + (update_btb_if.is_rvc ? 'h0 : 'h1);
 
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : btb_loop
-  btb_entry_t update_entry;
-  btb_entry_t w_s1_search_entry;
+  btb_target_va_t update_entry;
+  btb_target_va_t w_s1_search_entry;
 
-  logic btb_update_hit;
-  assign btb_update_hit = update_btb_if.valid &
-                          update_btb_if.taken &
-                          update_btb_if.mispredict & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  logic va_target_wr_valid;
+  assign va_target_wr_valid = update_btb_if.valid &
+                              update_btb_if.taken &
+                              (update_btb_if.mispredict | update_btb_if.is_call | update_btb_if.is_ret) &
+                              (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
   assign update_entry.target_vaddr = update_btb_if.target_vaddr;
 
-  logic   btb_info_update_hit;
-  assign btb_info_update_hit = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  logic   info_update_valid;
+  assign info_update_valid = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
   btb_inst_info_t update_info_entry;
   btb_inst_info_t w_s1_info_entry;
-  assign update_info_entry.valid   = btb_info_update_hit;
+  assign update_info_entry.valid   = info_update_valid;
   assign update_info_entry.is_cond = update_btb_if.is_cond;
   assign update_info_entry.is_call = update_btb_if.is_call;
   assign update_info_entry.is_ret  = update_btb_if.is_ret;
@@ -60,7 +61,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_wr      (btb_info_update_hit),
+     .i_wr      (info_update_valid),
      .i_wr_addr (w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
      .i_wr_data (update_info_entry),
 
@@ -70,15 +71,15 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
 
   data_array_2p
     #(
-      .WIDTH ($bits(btb_entry_t)),
+      .WIDTH ($bits(btb_target_va_t)),
       .ADDR_W ($clog2(BTB_ENTRY_SIZE))
       )
-  btb_array
+  btb_target_va_array
     (
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_wr      (btb_update_hit),
+     .i_wr      (va_target_wr_valid),
      .i_wr_addr (w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]),
      .i_wr_data (update_entry),
 
@@ -100,7 +101,7 @@ generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++
       r_btb_valids <= {BTB_ENTRY_SIZE{1'b0}};
       r_s1_btb_valid <= 1'b0;
     end else begin
-      if (btb_info_update_hit) begin
+      if (info_update_valid) begin
         r_btb_valids[w_update_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]] <= 1'b1;
       end
       r_s1_btb_valid <= r_btb_valids[search_btb_if.s0_pc_vaddr[BTB_ENTRY_BIT_MSB:BTB_ENTRY_BIT_LSB]];
