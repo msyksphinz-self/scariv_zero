@@ -717,8 +717,24 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_decode_flush.valid      = ((|iq_is_call_valid_oh) | (|iq_is_ret_valid_oh));
-assign o_decode_flush.pred_vaddr = (|iq_is_call_valid_oh) ? iq_call_next_vaddr_oh :
+// ===============================================================
+// Generate Flush for CALL / RET
+// If BTB prediction and RAS prediction are different, make flush
+// ===============================================================
+msrh_pkg::grp_id_t w_call_flush_valid;
+msrh_pkg::grp_id_t w_ret_flush_valid;
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : ras_flush_loop
+  assign w_call_flush_valid[d_idx] = iq_is_call_valid_oh[d_idx] &
+                                     (!w_expand_pred_info[d_idx].pred_taken |
+                                      (iq_call_next_vaddr_array[d_idx] != w_expand_pred_info[d_idx].pred_target_vaddr));
+  assign w_ret_flush_valid[d_idx] = iq_is_ret_valid_oh[d_idx] &
+                                    (!w_expand_pred_info[d_idx].pred_taken |
+                                     (w_iq_ras_ret_vaddr != w_expand_pred_info[d_idx].pred_target_vaddr));
+end
+endgenerate
+
+assign o_decode_flush.valid      = (|w_call_flush_valid) | (|w_ret_flush_valid);
+assign o_decode_flush.pred_vaddr = (|w_call_flush_valid) ? iq_call_next_vaddr_oh :
                                    w_iq_ras_ret_vaddr;
 
 msrh_pred_ras
