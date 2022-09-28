@@ -786,17 +786,30 @@ endfunction // dump
 logic [63: 0] r_sim_cycle_count;
 logic [63: 0] r_sim_ibuf_max_period;
 logic [63: 0] r_sim_ibuf_entry_count;
+logic [63: 0] r_sim_ibuf_issue_count;
+logic [63: 0] r_sim_ibuf_issue_inst_count;
+
+disp_t sim_disp_valid;
+
+generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : sim_disp_loop
+  assign sim_disp_valid[d_idx] = iq_disp.inst[d_idx].valid;
+end
+endgenerate
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_sim_ibuf_max_period  <= 'h0;
     r_sim_ibuf_entry_count <= 'h0;
     r_sim_cycle_count  <= 'h0;
+    r_sim_ibuf_issue_count <= 'h0;
+    r_sim_ibuf_issue_inst_count <= 'h0;
   end else begin
     r_sim_cycle_count <= r_sim_cycle_count + 'h1;
     if (r_sim_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
       r_sim_ibuf_max_period  <= 'h0;
       r_sim_ibuf_entry_count <= 'h0;
+      r_sim_ibuf_issue_count <= 'h0;
+      r_sim_ibuf_issue_inst_count <= 'h0;
     end else begin
       if (|w_inst_buffer_valid) begin
         if (&w_inst_buffer_valid) begin
@@ -804,12 +817,18 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         end
         r_sim_ibuf_entry_count <= r_sim_ibuf_entry_count + $countones(w_inst_buffer_valid);
       end
+      if (iq_disp.valid & iq_disp.ready) begin
+        r_sim_ibuf_issue_count <= r_sim_ibuf_issue_count + 'h1;
+        r_sim_ibuf_issue_inst_count <= r_sim_ibuf_issue_inst_count + $countones(sim_disp_valid);
+      end
     end // else: !if(r_sim_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 function void dump_perf (int fp);
   $fwrite(fp, "  \"inst_buffer\" : {");
+  $fwrite(fp, "  \"issued_times\" : %5d, ", r_sim_ibuf_issue_count);
+  $fwrite(fp, "  \"issued_insts\" : %5d, ", r_sim_ibuf_issue_inst_count);
   $fwrite(fp, "  \"max_period\" : %5d, ", r_sim_ibuf_max_period);
   $fwrite(fp, "  \"average count\" : %5f},\n", r_sim_ibuf_entry_count / 1000.0);
 endfunction // dump_perf
