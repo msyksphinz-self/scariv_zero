@@ -75,7 +75,7 @@ lrq_dc_search_if w_lrq_dc_search_if ();
 lrq_resolve_t w_lrq_resolve;
 logic     w_lrq_is_full;
 
-stq_resolve_t w_stq_resolve;
+stq_resolve_t w_stq_rs2_resolve;
 
 l2_req_if    w_l1d_ext_req[2]();
 l1d_evict_if w_l1d_evict_if();
@@ -211,7 +211,7 @@ msrh_ldq
  .i_lrq_resolve (w_lrq_resolve),
  .i_lrq_is_full (w_lrq_is_full),
 
- .i_stq_resolve (w_stq_resolve),
+ .i_stq_rs2_resolve (w_stq_rs2_resolve),
 
  .ldq_replay_if (w_ldq_replay),
 
@@ -266,7 +266,7 @@ msrh_stq
 
  .stq_snoop_if(stq_snoop_if),
 
- .o_stq_resolve (w_stq_resolve),
+ .o_stq_rs2_resolve (w_stq_rs2_resolve),
 
  .o_done_report          (w_st_done_report),
  .o_another_flush_report (o_another_flush_report)

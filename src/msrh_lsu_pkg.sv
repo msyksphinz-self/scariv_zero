@@ -452,7 +452,6 @@ logic                oldest_ready;
 } stq_entry_t;
 
 typedef struct packed {
-  logic                                valid;
   logic [msrh_conf_pkg::STQ_SIZE-1: 0] index;
 } stq_resolve_t;
 

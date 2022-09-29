@@ -41,7 +41,7 @@ module msrh_ldq_entry
 
  input logic                                     i_st_buffer_empty,
 
- input stq_resolve_t                             i_stq_resolve,
+ input stq_resolve_t                             i_stq_rs2_resolve,
 
  input logic                                     i_ldq_outptr_valid,
  output logic                                    o_entry_finish,
@@ -256,9 +256,7 @@ always_comb begin
       end
     end
     LDQ_NONFWD_HAZ_WAIT : begin
-      if (i_stq_resolve.valid) begin
-        w_entry_next.hazard_index = r_entry.hazard_index & ~i_stq_resolve.index;
-      end
+      w_entry_next.hazard_index = r_entry.hazard_index & ~i_stq_rs2_resolve.index;
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (r_entry.hazard_index == 'h0) begin

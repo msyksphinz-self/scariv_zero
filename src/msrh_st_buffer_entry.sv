@@ -251,7 +251,8 @@ assign amo_op_if.data1 = r_amo_l1d_data;
 // Forwarding check from LSU Pipeline
 // -----------------------------------
 logic w_eligible_forwardnig;
-assign w_eligible_forwardnig = r_state != ST_BUF_WAIT_FINISH;
+// assign w_eligible_forwardnig = r_state != ST_BUF_WAIT_FINISH;
+assign w_eligible_forwardnig = 1'b1;
 
 generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_fwd_loop
   assign o_fwd_lsu_hit[p_idx] = r_entry.valid & stbuf_fwd_check_if[p_idx].valid &

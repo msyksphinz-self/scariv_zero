@@ -39,8 +39,8 @@ module msrh_stq
    input lrq_resolve_t i_lrq_resolve,
    input logic         i_lrq_is_full,
 
-   // STQ Entry Clear Notification
-   output stq_resolve_t o_stq_resolve,
+   // STQ Entry rs2 get Notification
+   output stq_resolve_t o_stq_rs2_resolve,
 
    // Commit notification
    input msrh_pkg::commit_blk_t   i_commit,
@@ -88,6 +88,8 @@ logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_ex2_stq_haz_valid[msrh_conf_pkg::LSU_INST
 // Store Buffer Selection
 msrh_pkg::grp_id_t            w_stbuf_accepted_disp;
 logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_req_accepted[msrh_conf_pkg::DISP_SIZE];
+
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]             w_stq_rs2_get;
 
 logic                                w_flush_valid;
 assign w_flush_valid = msrh_pkg::is_flushed_commit(i_commit);
@@ -294,6 +296,9 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
+  assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
+                                w_stq_entries[s_idx].is_rs2_get;
+
     for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
       assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
     end
@@ -348,7 +353,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
     assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                                      w_stq_entries[s_idx].is_rmw &
                                                      rmw_order_check_if[p_idx].ex2_valid &
-                                                     pipe_is_younger_than_rmw;
+                                                     (pipe_is_younger_than_rmw | w_stq_entries[s_idx].is_committed);
   end // block: rmw_order_haz_loop
 
   // STQ Hazard Check
@@ -446,10 +451,9 @@ endgenerate
 // =========================
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_stq_resolve <= 'h0;
+    o_stq_rs2_resolve <= 'h0;
   end else begin
-    o_stq_resolve.valid <= |w_stq_entry_st_finish;
-    o_stq_resolve.index <=  w_stq_entry_st_finish;
+    o_stq_rs2_resolve.index <= w_stq_rs2_get;
   end
 end
 
