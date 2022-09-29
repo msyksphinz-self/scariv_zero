@@ -93,7 +93,7 @@ def execute_test(test):
         command_str += "-debug -d "
     command_str += " -c " + str(cycle)
     command_str += " -e "
-    command_str += "../../../tests/" + test["elf"]
+    command_str += test["elf"]
     command_str += " -o " + output_file
     # print (command_str)
     try:
