@@ -296,9 +296,9 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
-  assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
-                                w_stq_entries[s_idx].is_rs2_get;
-
+    assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
+                                  (w_stq_entries[s_idx].is_rs2_get |
+                                   (w_stq_entries[s_idx].state == STQ_DEAD));
     for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
       assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
     end
