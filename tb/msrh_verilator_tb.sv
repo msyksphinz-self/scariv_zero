@@ -86,20 +86,6 @@ module msrh_tb (
   logic                   [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_ptw_resp_data;
   logic                                                        w_ptw_resp_ready;
 
-  /* L2 Interface */
-  logic                                                        w_l2_req_valid;
-  msrh_lsu_pkg::mem_cmd_t                                      w_l2_req_cmd;
-  logic                   [            riscv_pkg::PADDR_W-1:0] w_l2_req_addr;
-  logic                   [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_req_tag;
-  logic                   [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_l2_req_data;
-  logic                   [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
-  logic                                                        w_l2_req_ready;
-
-  logic                                                        w_l2_resp_valid;
-  logic                   [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_resp_tag;
-  logic                   [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_l2_resp_data;
-  logic                                                        w_l2_resp_ready;
-
   // Snoop Interface
   logic                                                        w_snoop_req_valid;
   logic                   [            riscv_pkg::PADDR_W-1:0] w_snoop_req_paddr;
@@ -107,6 +93,48 @@ module msrh_tb (
   logic                                                        w_snoop_resp_valid;
   logic                   [  msrh_conf_pkg::DCACHE_DATA_W-1:0] w_snoop_resp_data;
   logic                   [ msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] w_snoop_resp_be;
+
+  /* Middle Interface */
+  logic                                      w_mid_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_mid_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_mid_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_mid_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_mid_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_mid_req_byte_en;
+  logic                                      w_mid_req_ready;
+
+  logic                                      w_mid_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_mid_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_mid_resp_data;
+  logic                                      w_mid_resp_ready;
+
+  /* Peripheral Interface */
+  logic                                      w_peripheral_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_peripheral_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_peripheral_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_peripheral_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_peripheral_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_peripheral_req_byte_en;
+  logic                                      w_peripheral_req_ready;
+
+  logic                                      w_peripheral_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_peripheral_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_peripheral_resp_data;
+  logic                                      w_peripheral_resp_ready;
+
+  /* L2 Interface */
+  logic                                      w_l2_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_l2_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_l2_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_l2_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
+  logic                                      w_l2_req_ready;
+
+  logic                                      w_l2_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_l2_resp_data;
+  logic                                      w_l2_resp_ready;
 
   /* Connection */
   l2c_arbiter_wrapper u_l2c_arbiter_wrapper (
@@ -161,43 +189,64 @@ module msrh_tb (
       .o_ptw_resp_data (w_ptw_resp_data),
       .i_ptw_resp_ready(w_ptw_resp_ready),
 
-      /* L2 Interface */
-      .o_l2_req_valid  (w_l2_req_valid),
-      .o_l2_req_cmd    (w_l2_req_cmd),
-      .o_l2_req_addr   (w_l2_req_addr),
-      .o_l2_req_tag    (w_l2_req_tag),
-      .o_l2_req_data   (w_l2_req_data),
-      .o_l2_req_byte_en(w_l2_req_byte_en),
-      .i_l2_req_ready  (w_l2_req_ready),
+      /* Middle Interface */
+      .o_l2_req_valid  (w_mid_req_valid   ),
+      .o_l2_req_cmd    (w_mid_req_cmd     ),
+      .o_l2_req_addr   (w_mid_req_addr    ),
+      .o_l2_req_tag    (w_mid_req_tag     ),
+      .o_l2_req_data   (w_mid_req_data    ),
+      .o_l2_req_byte_en(w_mid_req_byte_en ),
+      .i_l2_req_ready  (w_mid_req_ready   ),
 
-      .i_l2_resp_valid(w_l2_resp_valid),
-      .i_l2_resp_tag  (w_l2_resp_tag),
-      .i_l2_resp_data (w_l2_resp_data),
-      .o_l2_resp_ready(w_l2_resp_ready)
+      .i_l2_resp_valid (w_mid_resp_valid  ),
+      .i_l2_resp_tag   (w_mid_resp_tag    ),
+      .i_l2_resp_data  (w_mid_resp_data   ),
+      .o_l2_resp_ready (w_mid_resp_ready  )
   );
 
+  l2c_splitter_wrapper u_l2c_splitter_wrapper (
+      /* L2 Interface */
+      .i_req_valid  (w_mid_req_valid   ),
+      .i_req_cmd    (w_mid_req_cmd     ),
+      .i_req_addr   (w_mid_req_addr    ),
+      .i_req_tag    (w_mid_req_tag     ),
+      .i_req_data   (w_mid_req_data    ),
+      .i_req_byte_en(w_mid_req_byte_en ),
+      .o_req_ready  (w_mid_req_ready   ),
 
-  // assign w_l2_req_valid   = w_l1d_req_valid ? w_l1d_req_valid   : i_msrh_reset_n ? w_ic_req_valid   : w_elf_req_valid;
-  // assign w_l2_req_cmd     = w_l1d_req_valid ? w_l1d_req_cmd     : i_msrh_reset_n ? w_ic_req_cmd     : w_elf_req_cmd;
-  // assign w_l2_req_addr    = w_l1d_req_valid ? w_l1d_req_addr    : i_msrh_reset_n ? w_ic_req_addr    : w_elf_req_addr;
-  // assign w_l2_req_tag     = w_l1d_req_valid ? w_l1d_req_tag     : i_msrh_reset_n ? w_ic_req_tag     : w_elf_req_tag;
-  // assign w_l2_req_data    = w_l1d_req_valid ? w_l1d_req_data    : i_msrh_reset_n ? w_ic_req_data    : w_elf_req_data;
-  // assign w_l2_req_byte_en = w_l1d_req_valid ? w_l1d_req_byte_en : i_msrh_reset_n ? w_ic_req_byte_en : w_elf_req_byte_en;
-  //
-  //
-  // assign w_ic_req_ready  = w_l1d_req_valid ? 1'b0 : w_l2_req_ready ;
-  // assign w_l1d_req_ready = w_l2_req_ready ;
-  // assign w_elf_req_ready = w_l2_req_ready ;
-  //
-  // assign w_ic_resp_valid = w_l2_resp_valid;
-  // assign w_ic_resp_tag   = w_l2_resp_tag  ;
-  // assign w_ic_resp_data  = w_l2_resp_data ;
-  //
-  // assign w_l2_resp_ready = w_ic_resp_ready | w_l1d_resp_ready;
-  //
-  // assign w_l1d_resp_valid = w_l2_resp_valid;
-  // assign w_l1d_resp_tag   = w_l2_resp_tag  ;
-  // assign w_l1d_resp_data  = w_l2_resp_data ;
+      .o_resp_valid (w_mid_resp_valid  ),
+      .o_resp_tag   (w_mid_resp_tag    ),
+      .o_resp_data  (w_mid_resp_data   ),
+      .i_resp_ready (w_mid_resp_ready  ),
+
+      /* Peripheral Interface */
+      .o_peripheral_req_valid  (w_peripheral_req_valid   ),
+      .o_peripheral_req_cmd    (w_peripheral_req_cmd     ),
+      .o_peripheral_req_addr   (w_peripheral_req_addr    ),
+      .o_peripheral_req_tag    (w_peripheral_req_tag     ),
+      .o_peripheral_req_data   (w_peripheral_req_data    ),
+      .o_peripheral_req_byte_en(w_peripheral_req_byte_en ),
+      .i_peripheral_req_ready  (w_peripheral_req_ready   ),
+
+      .i_peripheral_resp_valid (w_peripheral_resp_valid  ),
+      .i_peripheral_resp_tag   (w_peripheral_resp_tag    ),
+      .i_peripheral_resp_data  (w_peripheral_resp_data   ),
+      .o_peripheral_resp_ready (w_peripheral_resp_ready  ),
+
+      /* L2 Interface */
+      .o_l2_req_valid  (w_l2_req_valid   ),
+      .o_l2_req_cmd    (w_l2_req_cmd     ),
+      .o_l2_req_addr   (w_l2_req_addr    ),
+      .o_l2_req_tag    (w_l2_req_tag     ),
+      .o_l2_req_data   (w_l2_req_data    ),
+      .o_l2_req_byte_en(w_l2_req_byte_en ),
+      .i_l2_req_ready  (w_l2_req_ready   ),
+
+      .i_l2_resp_valid (w_l2_resp_valid  ),
+      .i_l2_resp_tag   (w_l2_resp_tag    ),
+      .i_l2_resp_data  (w_l2_resp_data   ),
+      .o_l2_resp_ready (w_l2_resp_ready  )
+  );
 
   msrh_tile_wrapper u_msrh_tile_wrapper (
       .i_clk    (i_clk),
@@ -289,6 +338,33 @@ module msrh_tb (
       .i_snoop_resp_be   (w_snoop_resp_be)
   );
 
+// BootROM
+msrh_bootrom
+#(
+  .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('h1000),
+  .SIZE     ('h4000),
+  .RD_LAT   (10)
+) u_msrh_bootrom (
+  .i_clk    (i_clk),
+  .i_reset_n(i_ram_reset_n),
+
+  // L2 request from ICache
+  .i_req_valid   (w_peripheral_req_valid   ),
+  .i_req_cmd     (w_peripheral_req_cmd     ),
+  .i_req_addr    (w_peripheral_req_addr    ),
+  .i_req_tag     (w_peripheral_req_tag     ),
+  .i_req_data    (w_peripheral_req_data    ),
+  .i_req_byte_en (w_peripheral_req_byte_en ),
+  .o_req_ready   (w_peripheral_req_ready   ),
+
+  .o_resp_valid  (w_peripheral_resp_valid  ),
+  .o_resp_tag    (w_peripheral_resp_tag    ),
+  .o_resp_data   (w_peripheral_resp_data   ),
+  .i_resp_ready  (w_peripheral_resp_ready  )
+);
 
   tb_elf_loader u_tb_elf_loader (
       .i_clk    (i_clk),

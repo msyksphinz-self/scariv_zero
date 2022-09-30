@@ -1,0 +1,27 @@
+module l2_if_resp_arbiter
+  #(parameter ARB_NUM = 4)
+(
+ l2_resp_if.slave  l2_resp_slave_if[ARB_NUM],
+ l2_resp_if.master l2_resp_master_if
+ );
+
+logic [ARB_NUM-1: 0] w_slave_valids;
+msrh_lsu_pkg::l2_resp_t w_slave_payloads[ARB_NUM];
+logic [ARB_NUM-1: 0] w_slave_ready;
+msrh_lsu_pkg::l2_resp_t w_payload_selected;
+
+generate for (genvar a_idx = 0; a_idx < ARB_NUM; a_idx++) begin : req_loop
+  assign w_slave_valids  [a_idx] = l2_resp_slave_if[a_idx].valid;
+  assign w_slave_payloads[a_idx] = l2_resp_slave_if[a_idx].payload;
+
+  assign l2_resp_slave_if[a_idx].ready = w_slave_ready[a_idx] & l2_resp_master_if.ready;
+end
+endgenerate
+bit_extract_lsb #(.WIDTH(ARB_NUM)) u_bit_select_valids (.in(w_slave_valids), .out(w_slave_ready));
+
+bit_oh_or #(.T(msrh_lsu_pkg::l2_resp_t), .WORDS(ARB_NUM)) sel_resp_payload (.i_oh(w_slave_ready), .i_data(w_slave_payloads), .o_selected(w_payload_selected));
+
+assign l2_resp_master_if.valid = |w_slave_valids;
+assign l2_resp_master_if.payload = w_payload_selected;
+
+endmodule // l2_if_resp_arbiter

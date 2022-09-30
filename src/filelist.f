@@ -139,3 +139,4 @@
 ../src/msrh_ftq.sv
 
 ../src/l2_if_arbiter.sv
+../src/l2_if_resp_arbiter.sv
