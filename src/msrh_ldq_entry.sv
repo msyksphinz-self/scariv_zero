@@ -153,6 +153,10 @@ always_comb begin
 
   w_ex2_ldq_entries_recv_next = r_ex2_ldq_entries_recv;
 
+  if (r_entry.is_valid) begin
+    w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid | w_oldest_ready;
+  end
+
   case (r_entry.state)
     LDQ_INIT :
       if (w_entry_flush & r_entry.is_valid) begin
