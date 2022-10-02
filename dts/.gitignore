@@ -1,0 +1,7 @@
+bootrom.bin
+bootrom.elf
+bootrom.hex
+bootrom.img
+bootrom.o
+rv*.dtb
+rv*.dts
