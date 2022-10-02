@@ -24,11 +24,58 @@ module msrh_bootrom #(
     input  logic              i_resp_ready
 );
 
-logic [DATA_W-1: 0]           r_rom[SIZE / (DATA_W / 8)];
+localparam WORDS = SIZE / (DATA_W / 8);
 
+logic [DATA_W-1: 0]           r_rom[WORDS];
+logic [DATA_W-1: 0]           r_rom_raw[WORDS];
+
+assign o_req_ready = 1'b1;
+
+logic [RD_LAT-1: 0]           r_resp_valid;
+logic [DATA_W-1: 0]           r_resp_data[RD_LAT];
+logic [TAG_W-1 : 0]           r_resp_tag [RD_LAT];
+
+logic [ADDR_W-1: 0]           w_req_addr_wo_offset;
+assign w_req_addr_wo_offset = i_req_addr - BASE_ADDR;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_resp_valid[0] <= 'h0;
+    r_resp_data [0] <= 'h0;
+    r_resp_tag  [0] <= 'h0;
+  end else begin
+    r_resp_valid[0] <= i_req_valid;
+    r_resp_data [0] <= r_rom[w_req_addr_wo_offset[$clog2(DATA_W / 8) +: $clog2(WORDS)]];
+    r_resp_tag  [0] <= i_req_tag;
+  end
+end
+
+generate for (genvar p_idx = 1; p_idx < RD_LAT; p_idx ++) begin : rd_loop
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_resp_valid[p_idx] <= 'h0;
+      r_resp_tag  [p_idx] <= 'h0;
+      r_resp_data [p_idx] <= 'h0;
+    end else begin
+      r_resp_valid[p_idx] <= r_resp_valid[p_idx-1];
+      r_resp_tag  [p_idx] <= r_resp_tag  [p_idx-1];
+      r_resp_data [p_idx] <= r_resp_data [p_idx-1];
+    end
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+end // block: rd_loop
+endgenerate
+
+assign o_resp_valid = r_resp_valid[RD_LAT-1];
+assign o_resp_tag   = r_resp_tag  [RD_LAT-1];
+assign o_resp_data  = r_resp_data [RD_LAT-1];
+
+generate for (genvar w_idx = 0; w_idx < WORDS; w_idx++) begin : w_loop
+  assign r_rom[w_idx] = {<<8{r_rom_raw[w_idx]}};
+end
+endgenerate
 
 initial begin
-  $readmemh ("../../../dts/bootrom.hex", r_rom);
+  $readmemh ("../../../dts/bootrom.hex", r_rom_raw);
 end
 
 endmodule // msrh_bootrom
