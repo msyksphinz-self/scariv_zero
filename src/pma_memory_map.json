@@ -6,16 +6,16 @@
         "comment": "Debug Controller"
     },
     {
+		"base": "0x0000_1000",
+        "size": "0x0000_1000",
+        "attr": {"R": 1, "W": 0, "A": 0, "X": 1, "C": 0},
+        "comment":"boot ROM"
+    },
+    {
 		"base": "0x0000_3000",
         "size": "0x0000_1000",
         "attr": {"R": 1, "W": 1, "X": 1, "A": 1, "C": 0},
         "comment": "error device"
-    },
-    {
-		"base": "0x0000_4000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
-        "comment":"boot ROM"
     },
     {
 		"base": "0x0001_0000",

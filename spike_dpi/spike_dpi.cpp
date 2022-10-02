@@ -153,8 +153,8 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
   argv[arg_max++] = "--log-commits";
-  // argv[arg_max++] = "--dtb";
-  // argv[arg_max++] = "msrh.dtb";
+  argv[arg_max++] = "--dtb";
+  argv[arg_max++] = "../../../dts/dts_rv64imc.dtb";
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -363,7 +363,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   spike_core->spike_dpi_init();
   spike_core->get_core(0)->reset();
   // spike_core->get_core(0)->get_state()->pc = 0x80000000;
-  spike_core->get_core(0)->step(5);
+  // spike_core->get_core(0)->step(5);
   spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MCYCLE),   0);
   spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MINSTRET), 0);
 

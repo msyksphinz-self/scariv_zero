@@ -263,5 +263,5 @@
     { "name": "rv64um-v-remuw"       , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64um-v-remuw"        , "xlen": 64},
     { "name": "rv64um-v-remw"        , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64um-v-remw"         , "xlen": 64},
 
-    { "name": "linux"        , "group": ["linux"], "elf": "/home/msyksphinz/work/riscv/linux/riscv64-linux/output/images/fw_jump.elf"         , "xlen": 64}
+    { "name": "linux"        , "group": ["linux"], "elf": "/home/msyksphinz/work/riscv/linux/riscv64-linux/output_spike/images/fw_jump.elf"         , "xlen": 64}
 ]
