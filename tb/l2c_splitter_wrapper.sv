@@ -47,7 +47,7 @@ l2_resp_if resp_if[2]();
 l2_resp_if resp_if_selected();
 
 logic                                                w_req_is_peripheral;
-assign w_req_is_peripheral = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h4000;
+assign w_req_is_peripheral = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h1000;
 
 // ===========================
 // Request from single Master
@@ -65,6 +65,9 @@ assign o_l2_req_addr    = i_req_addr   ;
 assign o_l2_req_tag     = i_req_tag    ;
 assign o_l2_req_data    = i_req_data   ;
 assign o_l2_req_byte_en = i_req_byte_en;
+
+assign o_req_ready =  w_req_is_peripheral & i_peripheral_req_ready |
+                     ~w_req_is_peripheral & i_l2_req_ready;
 
 // =============================
 // Response from several Slaves
