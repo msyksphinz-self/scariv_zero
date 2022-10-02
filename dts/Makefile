@@ -1,5 +1,5 @@
 XLEN = 64
-EXT = imc
+EXT = imac
 SVMODE = svxx
 
 ifeq ($(XLEN), 64)
@@ -14,10 +14,10 @@ build: dts_skelenton.dts bootrom.S
 	objcopy -I elf64-little  -O binary --only-section .text bootrom.elf bootrom.bin
 	sed 's/|XLEN|/$(XLEN)/g' dts_skelenton.dts | \
 		sed 's/|EXTENSION|/$(EXT)/g' | \
-		sed 's/|SVMODE|/$(SVMODE)/g' > dts_skelenton_tmp.dts
-	echo '0000000000000000000000000000000000000' > dummy.txt
-	dtc -@ -O dtb dts_skelenton_tmp.dts -o rv$(XLEN)$(EXT).dtb
-	cat bootrom.bin rv$(XLEN)$(EXT).dtb dummy.txt > bootrom.img
+		sed 's/|SVMODE|/$(SVMODE)/g' > rv$(XLEN)$(EXT).dts
+	dd if=/dev/zero of=dummy.bin bs=80 count=1
+	dtc -@ -O dtb rv$(XLEN)$(EXT).dts -o rv$(XLEN)$(EXT).dtb
+	cat bootrom.bin rv$(XLEN)$(EXT).dtb dummy.bin > bootrom.img
 	objcopy -I binary -O verilog --verilog-data-width 16 bootrom.img bootrom.hex
 
 clean:

@@ -154,7 +154,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   argv[arg_max++] = "-l";
   argv[arg_max++] = "--log-commits";
   argv[arg_max++] = "--dtb";
-  argv[arg_max++] = "../../../dts/dts_rv64imc.dtb";
+  argv[arg_max++] = "../../../dts/rv64imac.dtb";
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
