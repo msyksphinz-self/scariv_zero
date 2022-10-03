@@ -481,7 +481,7 @@
         "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_uret", "1"]]
+        "csu_ctrl":[["is_uret", "1"]]
     },
     {
         "name":"sret",
@@ -489,7 +489,7 @@
         "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_sret", "1"]]
+        "csu_ctrl":[["is_sret", "1"]]
     },
     {
         "name":"mret",
@@ -497,7 +497,7 @@
         "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
         "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_mret", "1"]]
+        "csu_ctrl":[["is_mret", "1"]]
     },
     {
         "name":"ecall",

@@ -158,7 +158,7 @@ assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::X
 // ------------
 // CSR Read
 // ------------
-assign read_if.valid = r_ex2_issue.valid;
+assign read_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin

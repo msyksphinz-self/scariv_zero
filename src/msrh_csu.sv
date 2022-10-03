@@ -151,9 +151,7 @@ u_msrh_csr
    .int_if   (int_if),
    .fflags_update_if (fflags_update_if),
 
-   .i_commit (i_commit),
-
-   .o_xcpt ()
+   .i_commit (i_commit)
    );
 
 

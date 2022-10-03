@@ -16,9 +16,7 @@ module msrh_csr
    fflags_update_if.slave     fflags_update_if,
 
    // Commit notification
-   input msrh_pkg::commit_blk_t i_commit,
-
-   output logic               o_xcpt
+   input msrh_pkg::commit_blk_t i_commit
    );
 
 `include "msrh_csr_def.svh"
@@ -34,6 +32,7 @@ logic w_rd_counter;
 logic w_rd_mcsr_ill_access;
 logic w_rd_scsr_ill_access;
 logic w_rd_fpu_ill_access;
+logic w_rd_ill_address;
 
 logic [63: 0]                 r_cycle;    // These registers are always 64-bit
 logic [63: 0]                 r_instret;  // These registers are always 64-bit
@@ -151,7 +150,7 @@ xlen_t r_pmpaddr15;
 xlen_t r_stats;
 
 always_comb begin
-  o_xcpt = 1'b0;
+  w_rd_ill_address = 1'b0;
   case (read_if.addr)
     `SYSREG_ADDR_USTATUS        : read_if.data = r_ustatus;
     `SYSREG_ADDR_UIE            : read_if.data = r_uie;
@@ -168,7 +167,7 @@ always_comb begin
     `SYSREG_ADDR_FRM            : read_if.data = {29'h0, r_frm};
     `SYSREG_ADDR_FCSR           : read_if.data = {24'h0, r_frm, r_fflags};
     `SYSREG_ADDR_CYCLE          : read_if.data = r_cycle  [riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_TIME           : read_if.data = r_time   [riscv_pkg::XLEN_W-1: 0];
+    // `SYSREG_ADDR_TIME           : read_if.data = r_time   [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_INSTRET        : read_if.data = r_instret[riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_HPMCOUNTER3    : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_HPMCOUNTER4    : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
@@ -201,7 +200,7 @@ always_comb begin
     `SYSREG_ADDR_HPMCOUNTER31   : read_if.data = r_hpmcounter[31][riscv_pkg::XLEN_W-1: 0];
 `ifdef RV32
     `SYSREG_ADDR_CYCLEH         : read_if.data = r_cycle          [63:32];
-    `SYSREG_ADDR_TIMEH          : read_if.data = r_time           [63:32];
+    // `SYSREG_ADDR_TIMEH          : read_if.data = r_time           [63:32];
     `SYSREG_ADDR_INSTRETH       : read_if.data = r_instret        [63:32];
     `SYSREG_ADDR_HPMCOUNTERH3   : read_if.data = r_hpmcounter[ 3][63:32];
     `SYSREG_ADDR_HPMCOUNTERH4   : read_if.data = r_hpmcounter[ 4][63:32];
@@ -363,7 +362,7 @@ always_comb begin
     `SYSREG_ADDR_STATS          : read_if.data = r_stats;
     default : begin
       read_if.data = {riscv_pkg::XLEN_W{1'bx}};
-      o_xcpt = 1'b1;
+      w_rd_ill_address = 1'b1;
     end
   endcase // case (read_if.addr)
 end // always_comb
@@ -647,7 +646,8 @@ assign w_rd_fpu_ill_access  = ((read_if.addr == `SYSREG_ADDR_FFLAGS) |
 
 assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_ill_access |
                                              w_rd_counter | w_rd_satp_tvm_1 |
-                                             w_rd_fpu_ill_access);
+                                             w_rd_fpu_ill_access |
+                                             w_rd_ill_address);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 3] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_hpmcounter[ 3] <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 4] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_hpmcounter[ 4] <= write_if.data; end end
