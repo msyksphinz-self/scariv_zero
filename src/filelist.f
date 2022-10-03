@@ -8,7 +8,7 @@
 
 ../src/msrh_pkg.sv
 ../src/msrh_lsu_pkg.sv
-../src_r2/msrh_ic_pkg.sv
+../src/msrh_ic_pkg.sv
 ../src/msrh_bru_pkg.sv
 ../src/msrh_csu_pkg.sv
 ../src/msrh_fpu_pkg.sv
@@ -76,6 +76,14 @@
 ../src/msrh_rvc_expander.sv
 
 ../src/simple_arbiter.sv
+../src/msrh_frontend.sv
+
+../src/msrh_predictor.sv
+../src/msrh_gshare.sv
+../src/msrh_predictor_gshare.sv
+
+../src/msrh_icache.sv
+../src/msrh_ic_pref.sv
 
 ../src/msrh_rename.sv
 ../src/msrh_resource_alloc.sv
