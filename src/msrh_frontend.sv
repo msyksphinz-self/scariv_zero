@@ -9,6 +9,7 @@
 
 module msrh_frontend
   import msrh_pkg::*;
+  import msrh_ic_pkg::*;
   import msrh_predict_pkg::*;
 (
  input logic i_clk,
@@ -38,7 +39,7 @@ module msrh_frontend
  // For checking RAS updates
  disp_if.watch     sc_disp,
  output logic [$clog2(msrh_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output msrh_pkg::vaddr_t                    o_sc_ras_vaddr,
+ output vaddr_t                    o_sc_ras_vaddr,
 
  // Fetch Target Queue
  br_upd_if.master  br_upd_fe_if,
@@ -63,56 +64,56 @@ typedef enum logic [ 2: 0]  {
 if_sm_t  r_if_state;
 if_sm_t  w_if_state_next;
 
-logic  r_s0_valid;
-msrh_pkg::vaddr_t  r_s0_vaddr;
-msrh_pkg::vaddr_t  w_s0_vaddr_next;
-msrh_pkg::vaddr_t  w_s0_vaddr;
-logic                           w_s0_predicted;
-msrh_lsu_pkg::tlb_req_t         w_s0_tlb_req;
-msrh_lsu_pkg::tlb_resp_t        w_s0_tlb_resp;
-msrh_ic_pkg::ic_req_t          w_s0_ic_req;
-logic                           w_s0_ic_ready;
-msrh_pkg::vaddr_t w_s0_vaddr_flush_next;
+logic                     r_s0_valid;
+riscv_pkg::xlen_t         r_s0_vaddr;
+riscv_pkg::xlen_t         w_s0_vaddr_next;
+riscv_pkg::xlen_t         w_s0_vaddr;
+logic                     w_s0_predicted;
+msrh_lsu_pkg::tlb_req_t   w_s0_tlb_req;
+msrh_lsu_pkg::tlb_resp_t  w_s0_tlb_resp;
+ic_req_t                  w_s0_ic_req;
+logic                     w_s0_ic_ready;
+riscv_pkg::xlen_t         w_s0_vaddr_flush_next;
 
 // ==============
 // s1 stage
 // ==============
 
-logic                          r_s1_valid;
-logic                          w_s1_inst_valid;
-logic                          r_s1_clear;
-logic                          r_s1_predicted;
-msrh_pkg::vaddr_t r_s1_vaddr;
-msrh_pkg::paddr_t r_s1_paddr;
-logic                          r_s1_tlb_miss;
-logic                          r_s1_tlb_except_valid;
-except_t             r_s1_tlb_except_cause;
+logic    r_s1_valid;
+logic    w_s1_inst_valid;
+logic    r_s1_clear;
+logic    r_s1_predicted;
+riscv_pkg::xlen_t  r_s1_vaddr;
+paddr_t  r_s1_paddr;
+logic    r_s1_tlb_miss;
+logic    r_s1_tlb_except_valid;
+except_t r_s1_tlb_except_cause;
 
-msrh_pkg::vaddr_t w_s1_btb_target_vaddr;
+vaddr_t  w_s1_btb_target_vaddr;
 
-logic                           w_s1_predict_valid;
-msrh_pkg::vaddr_t w_s1_predict_target_vaddr;
+logic    w_s1_predict_valid;
+vaddr_t  w_s1_predict_target_vaddr;
 
 // ==============
 // s2 stage
 // ==============
 
-logic                           w_s2_inst_valid;
-logic                           r_s2_valid;
-logic                           r_s2_clear;
-logic                           r_s2_predicted;
-msrh_pkg::vaddr_t  r_s2_vaddr;
-msrh_ic_pkg::ic_resp_t         w_s2_ic_resp;
-logic                           w_s2_ic_miss;
-msrh_pkg::vaddr_t w_s2_ic_miss_vaddr;
-logic                           r_s2_tlb_miss;
-logic                           r_s2_tlb_except_valid;
-except_t              r_s2_tlb_except_cause;
+logic             w_s2_inst_valid;
+logic             r_s2_valid;
+logic             r_s2_clear;
+logic             r_s2_predicted;
+riscv_pkg::xlen_t r_s2_vaddr;
+ic_resp_t         w_s2_ic_resp;
+logic             r_s2_tlb_miss;
+logic             r_s2_tlb_except_valid;
+except_t          r_s2_tlb_except_cause;
 
-logic                           w_s2_predict_valid;
-msrh_pkg::vaddr_t w_s2_predict_target_vaddr;
+logic             w_s2_predict_valid;
+vaddr_t           w_s2_predict_target_vaddr;
+logic             w_s2_predict_valid_gshare;
+vaddr_t           w_s2_predict_target_vaddr_gshare;
 
-logic                           w_s2_inst_buffer_load_valid;
+logic             w_s2_inst_buffer_load_valid;
 
 // =======================
 // Predictors
@@ -128,8 +129,13 @@ ras_search_if w_ras_search_if ();
 
 gshare_search_if w_gshare_search_if ();
 
+decode_flush_t   w_decode_flush;
+logic   w_iq_predict_valid;
+vaddr_t w_iq_predict_target_vaddr;
+logic   r_iq_predict_flush;
+
 `ifdef SIMULATION
-msrh_pkg::paddr_t  r_s2_paddr;
+paddr_t  r_s2_paddr;
 `endif // SIMULATION
 
 br_upd_if  br_upd_fe_tmp_if();
@@ -137,38 +143,38 @@ br_upd_if  br_upd_fe_tmp_if();
 // ==============
 // TLB
 // ==============
-logic                           w_tlb_ready;
+logic    w_tlb_ready;
 
 // ==============
 // Commiter PC
 // ==============
-logic                           w_commit_flush;
-logic                           w_br_flush;
-logic                           w_flush_valid;
+logic    w_commit_flush;
+logic    w_br_flush;
+logic    w_flush_valid;
 
-logic                           r_flush_valid;
-cmt_id_t            r_flush_cmt_id;
-msrh_pkg::grp_id_t r_flush_grp_id;
+logic    r_flush_valid;
+cmt_id_t r_flush_cmt_id;
+grp_id_t r_flush_grp_id;
 
-logic                           w_flush_valid_next;
-cmt_id_t            w_flush_cmt_id_next;
-msrh_pkg::grp_id_t w_flush_grp_id_next;
+logic    w_flush_valid_next;
+cmt_id_t w_flush_cmt_id_next;
+grp_id_t w_flush_grp_id_next;
 
-logic                           w_existed_flush_is_older;
+logic    w_existed_flush_is_older;
 
-logic                           w_inst_buffer_ready;
+logic    w_inst_buffer_ready;
 
 
-logic                           w_ic_refill_wakeup;
-logic                           w_tlb_refill_wakeup;
-logic                           w_ibuf_refill_wakeup;
-logic                           w_flush_haz_clear;
+logic    w_ic_refill_wakeup;
+logic    w_tlb_refill_wakeup;
+logic    w_ibuf_refill_wakeup;
+logic    w_flush_haz_clear;
 
-logic                           w_is_ftq_empty;
-logic                           r_br_wait_ftq_free;
-logic                           w_br_wait_ftq_free;
+logic    w_is_ftq_empty;
+logic    r_br_wait_ftq_free;
+logic    w_br_wait_ftq_free;
 
-logic                           w_s0_req_ready;
+logic    w_s0_req_ready;
 assign w_s0_req_ready = w_s0_ic_ready & w_tlb_ready;
 assign w_ic_refill_wakeup    = (r_if_state == WAIT_IC_FILL ) & w_s0_req_ready;
 assign w_tlb_refill_wakeup   = (r_if_state == WAIT_TLB_FILL) & w_s0_req_ready;
@@ -179,106 +185,106 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready 
 always_comb begin
   if (i_commit.commit & int_if.m_external_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
   end else if (i_commit.commit & int_if.s_external_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
   end else if (i_commit.commit & int_if.m_timer_int_valid   ) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
   end else if (i_commit.commit & int_if.s_timer_int_valid   ) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
   end else if (i_commit.commit & int_if.m_software_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
   end else if (i_commit.commit & int_if.s_software_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::VADDR_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
+    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
   end else if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
       SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
       ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
-      MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::VADDR_W-1: 0];
-      SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::VADDR_W-1: 0];
-      URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::VADDR_W-1: 0];
+      MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
+      SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
+      URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];
       ECALL_M        :
         if (csr_info.medeleg[ECALL_M]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       ECALL_S        :
         if (csr_info.medeleg[ECALL_S]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       ECALL_U        :
         if (csr_info.medeleg[ECALL_U]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       INST_ACC_FAULT :
         if (csr_info.medeleg[INST_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       LOAD_ACC_FAULT :
         if (csr_info.medeleg[LOAD_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       STAMO_ACC_FAULT :
         if (csr_info.medeleg[STAMO_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       INST_PAGE_FAULT :
         if (csr_info.medeleg[INST_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       LOAD_PAGE_FAULT :
         if (csr_info.medeleg[LOAD_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       STAMO_PAGE_FAULT :
         if (csr_info.medeleg[STAMO_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       INST_ADDR_MISALIGN :
         if (csr_info.medeleg[INST_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       LOAD_ADDR_MISALIGN :
         if (csr_info.medeleg[LOAD_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       STAMO_ADDR_MISALIGN :
         if (csr_info.medeleg[STAMO_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       ILLEGAL_INST        :
         if (csr_info.medeleg[ECALL_M]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
         end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::VADDR_W-1: 0];
+          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
         end
       default           : begin
         w_s0_vaddr_flush_next = 'h0;
@@ -335,15 +341,22 @@ always_comb begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
         end
+      end else if (w_iq_predict_valid) begin
+        if (w_s0_req_ready) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
+        end
       end else if (r_s2_tlb_miss & !r_s2_clear) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
-      end else if (w_s2_ic_miss & !r_s2_clear) begin
+      end else if (w_s2_ic_resp.miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
-        w_s0_vaddr_next = w_s2_ic_miss_vaddr;
+        w_s0_vaddr_next = r_s2_vaddr;
       end else if (r_s2_valid & !r_s2_clear & w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
         // Retry from S2 stage Vaddr
-        w_s0_vaddr_next = {w_s2_ic_resp.vaddr, 1'b0};
+        w_s0_vaddr_next = r_s2_vaddr;
         w_if_state_next = WAIT_IBUF_FREE;
       end else if (w_s2_predict_valid & !r_s2_clear) begin
         w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -351,6 +364,8 @@ always_comb begin
       end else if (w_s1_predict_valid & !r_s1_clear) begin
         w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+      end else if (!w_s0_req_ready) begin
+        w_s0_vaddr_next = w_s0_vaddr;
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -366,6 +381,14 @@ always_comb begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
+        end
+      end else if (w_iq_predict_valid) begin
+        if (w_ic_refill_wakeup) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
         end
       end else if (w_ic_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -399,6 +422,14 @@ always_comb begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
+        end
+      end else if (w_iq_predict_valid) begin
+        if (w_ibuf_refill_wakeup) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
         end
       end else if (w_ibuf_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
@@ -455,10 +486,24 @@ assign w_existed_flush_is_older = inst0_older (r_flush_valid,      r_flush_cmt_i
                                                w_flush_valid_next, w_flush_cmt_id_next, w_flush_grp_id_next);
 
 
-assign {w_s0_predicted, w_s0_vaddr} = w_flush_valid ? {1'b0, w_s0_vaddr_flush_next} :
-                                      r_s2_valid & ~r_s2_clear & w_s2_predict_valid ? {1'b1, w_s2_predict_target_vaddr} :
-                                      r_s1_valid & ~r_s1_clear & w_s1_predict_valid ? {1'b0, w_s1_predict_target_vaddr} :
-                                      {1'b0, r_s0_vaddr};
+always_comb begin
+  if (w_flush_valid) begin
+    w_s0_predicted = 1'b0;
+    w_s0_vaddr     = w_s0_vaddr_flush_next;
+  end else if (w_iq_predict_valid) begin
+    w_s0_predicted = 1'b1;
+    w_s0_vaddr     = w_iq_predict_target_vaddr;
+  end else if (r_s2_valid & ~r_s2_clear & w_s2_predict_valid) begin
+    w_s0_predicted = 1'b1;
+    w_s0_vaddr     = w_s2_predict_target_vaddr;
+  end else if (r_s1_valid & ~r_s1_clear & w_s1_predict_valid) begin
+    w_s0_predicted = 1'b0;
+    w_s0_vaddr     = w_s1_predict_target_vaddr;
+  end else begin
+    w_s0_predicted = 1'b0;
+    w_s0_vaddr     = r_s0_vaddr;
+  end
+end // always_comb
 
 assign w_s0_tlb_req.valid = w_s0_ic_req.valid;
 assign w_s0_tlb_req.vaddr = w_s0_vaddr;
@@ -500,8 +545,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
-    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid;
-    r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid & w_s0_ic_ready;
+    // s1 clear condition : Trying to instruction allocate into Inst-Buffer but canceled
+    //                      --> Trying s2 request again from s0 stage.
+    // When IQ predicts, it also no need to set clear.
+    r_s1_clear <= ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready &
+                  ~w_iq_predict_valid;
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
@@ -530,9 +579,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `ifdef SIMULATION
     r_s2_paddr <= 'h0;
 `endif // SIMULATION
-  end else begin
+  end else begin // if (!i_reset_n)
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear |
+    r_s2_clear <= r_s1_clear | w_flush_valid | w_iq_predict_valid |
                   w_s2_predict_valid & ~r_s1_predicted |
                   ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s2_predicted <= r_s1_predicted;
@@ -574,10 +623,7 @@ msrh_icache u_msrh_icache
    .o_s2_resp (w_s2_ic_resp),
 
    .ic_l2_req  (ic_l2_req ),
-   .ic_l2_resp (ic_l2_resp),
-
-   .o_s2_miss       (w_s2_ic_miss      ),
-   .o_s2_miss_vaddr (w_s2_ic_miss_vaddr)
+   .ic_l2_resp (ic_l2_resp)
    );
 
 assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
@@ -585,10 +631,10 @@ assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                       (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
 `ifdef SIMULATION
-msrh_pkg::paddr_t w_s2_ic_resp_debug_addr;
+paddr_t w_s2_ic_resp_debug_addr;
 assign w_s2_ic_resp_debug_addr = {w_s2_ic_resp.vaddr, 1'b0};
 `endif // SIMULATION
-msrh_pkg::inst_buffer_in_t w_s2_inst_buffer_in;
+inst_buffer_in_t w_s2_inst_buffer_in;
 assign w_s2_inst_buffer_in.valid            = w_s2_inst_buffer_load_valid;
 assign w_s2_inst_buffer_in.pc               = w_s2_ic_resp.vaddr;
 assign w_s2_inst_buffer_in.inst             = w_s2_ic_resp.data;
@@ -606,7 +652,7 @@ u_msrh_inst_buffer
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
    // flushing is first entry is enough, other killing time, no need to flush
-   .i_flush_valid (w_flush_valid),
+   .i_flush_valid (w_flush_valid | r_iq_predict_flush),
 
    .csr_info      (csr_info),
 
@@ -618,7 +664,10 @@ u_msrh_inst_buffer
    .o_inst_ready (w_inst_buffer_ready),
    .i_s2_inst    (w_s2_inst_buffer_in),
 
-   .iq_disp      (iq_disp)
+   .o_decode_flush (w_decode_flush),
+
+   .iq_disp      (iq_disp),
+   .br_upd_fe_if (br_upd_fe_if)
    );
 
 
@@ -648,7 +697,12 @@ br_upd_if_buf u_br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 
-assign w_btb_update_if.valid          = br_upd_if.update & br_upd_if.taken & ~br_upd_if.dead & ~br_upd_if.is_ret;
+assign w_btb_update_if.valid          = br_upd_if.update &
+                                        /* br_upd_if.taken */ &  // Even though Taken/NotTaken, it records "Branch is existed".
+                                        ~br_upd_if.dead /* &
+                                        ~br_upd_if.is_ret */;
+assign w_btb_update_if.taken          = br_upd_if.taken;
+assign w_btb_update_if.mispredict     = br_upd_if.mispredict;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
 assign w_btb_update_if.target_vaddr   = br_upd_if.target_vaddr;
 assign w_btb_update_if.is_cond        = br_upd_if.is_cond;
@@ -656,37 +710,49 @@ assign w_btb_update_if.is_call        = br_upd_if.is_call;
 assign w_btb_update_if.is_ret         = br_upd_if.is_ret;
 assign w_btb_update_if.is_rvc         = br_upd_if.is_rvc;
 
+assign w_bim_search_if.s0_valid       = w_s0_ic_req.valid;
+assign w_bim_search_if.s0_pc_vaddr    = w_s0_vaddr;
+
+assign w_bim_update_if.valid          = br_upd_if.update & ~br_upd_if.dead;
+assign w_bim_update_if.pc_vaddr       = br_upd_if.pc_vaddr;
+assign w_bim_update_if.hit            = ~br_upd_if.mispredict;
+assign w_bim_update_if.taken          = br_upd_if.taken;
+assign w_bim_update_if.bim_value      = br_upd_if.bim_value;
+assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
+
 assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
 assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s1_btb_gshare_hit_array;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] r_s2_btb_gshare_hit_array;
-assign w_s1_btb_gshare_hit_array = w_btb_search_if.s1_hit & w_gshare_search_if.s1_pred_taken;
+assign w_s1_predict_valid = 1'b0;
+assign w_s1_predict_target_vaddr = 'h0;
 
+
+ic_block_t w_s2_btb_gshare_hit_array_tree;
+ic_block_t w_s2_call_ret_tree;
+assign w_s2_btb_gshare_hit_array_tree = 'h0;
+bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
+
+assign w_s2_predict_valid        = r_s2_valid & ~r_s2_clear & w_s2_predict_valid_gshare;
+assign w_s2_predict_target_vaddr = w_s2_predict_target_vaddr_gshare;
+
+// ------------------------------
+// Decode Level Prediction Valid
+// ------------------------------
+assign w_iq_predict_valid        = iq_disp.valid & iq_disp.ready & w_decode_flush.valid;
+assign w_iq_predict_target_vaddr = w_decode_flush.pred_vaddr;
+
+// 1-cycle Later, it flushes pipeline
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_s2_btb_gshare_hit_array <= 'h0;
+    r_iq_predict_flush <= 1'b0;
   end else begin
-    r_s2_btb_gshare_hit_array <= {(msrh_lsu_pkg::ICACHE_DATA_B_W/2){w_s1_predict_valid}} & w_s1_btb_gshare_hit_array;
+    r_iq_predict_flush <= w_iq_predict_valid;
   end
 end
 
-assign w_s1_predict_valid = w_s1_inst_valid & (|w_s1_btb_gshare_hit_array);
-assign w_s1_predict_target_vaddr = w_s1_btb_target_vaddr;
 
 
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_btb_gshare_hit_array_tree;
-logic [msrh_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] w_s2_call_ret_tree;
-bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_btb_gshare_tree_lsb   (.in(r_s2_btb_gshare_hit_array), .out(w_s2_btb_gshare_hit_array_tree));
-bit_tree_lsb #(.WIDTH(msrh_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret), .out(w_s2_call_ret_tree));
-
-assign w_s2_predict_valid        = ((w_s2_btb_gshare_hit_array_tree | w_s2_call_ret_tree) == w_s2_call_ret_tree) ?
-                                   |(w_ras_search_if.s2_is_call | w_ras_search_if.s2_is_ret) : 'h0;  // from RAS
-assign w_s2_predict_target_vaddr = w_ras_search_if.s2_is_call ? {w_ras_search_if.s2_call_target_vaddr, 1'b0} :
-                                   {w_ras_search_if.s2_ras_vaddr, 1'b0};
-
-
-msrh_predictor u_predictor
+msrh_predictor_gshare u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
@@ -705,6 +771,9 @@ msrh_predictor u_predictor
    .ras_search_if (w_ras_search_if),
 
    .gshare_search_if (w_gshare_search_if),
+
+   .o_s2_predict_valid        (w_s2_predict_valid_gshare       ),
+   .o_s2_predict_target_vaddr (w_s2_predict_target_vaddr_gshare),
 
    .br_upd_fe_if (br_upd_fe_tmp_if)
    );
