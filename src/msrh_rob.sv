@@ -403,58 +403,6 @@ function void dump_perf (int fp);
   $fwrite(fp, "  }},\n");
 endfunction
 
-typedef struct packed {
-logic [31: 0]        lifetime;
-cmt_id_t cmt_id;
-logic [DISP_SIZE-1:0] grp_id;
-msrh_pkg::vaddr_t pc_addr;
-logic [31: 0]                  inst;
-logic [31: 0]                  cmt_time;
-} lifetime_t;
-
-lifetime_t life_array[$];
-
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
-    if (o_commit.commit) begin
-      for(int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
-        if (o_commit.grp_id[d_idx]) begin
-          lifetime_t new_life;
-          new_life.lifetime = w_out_entry.lifetime[d_idx];
-          new_life.cmt_id   = o_commit.cmt_id;
-          new_life.grp_id   = 1 << d_idx;
-          new_life.pc_addr  = w_out_entry.inst[d_idx].pc_addr;
-          new_life.inst     = w_out_entry.inst[d_idx].inst;
-          new_life.cmt_time = $time;
-
-          life_array.push_back(new_life);
-        end // if (o_commit.grp_id[d_idx] & !o_commit.all_dead)
-      end // for (int d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d++)
-
-      life_array.rsort();
-      // while (life_array.size() > 100) begin
-      //   life_array.pop_back();
-      // end
-    end // if (o_commit.commit)
-  end // else: !if(!i_reset_n)
-end // always_ff @ (negedge i_clk, negedge i_reset_n)
-
-
-integer life_fp;
-final begin
-  life_fp = $fopen("commit_life.log", "w");
-  foreach (life_array[i]) begin
-    $fwrite(life_fp, "%d, %d, (%d,%d), PC=%08x, DASM(0x%08x)\n",
-            life_array[i].lifetime,
-            life_array[i].cmt_time,
-            life_array[i].cmt_id,
-            life_array[i].grp_id,
-            life_array[i].pc_addr,
-            life_array[i].inst);
-  end
-end
-
-
 import "DPI-C" function void retire_inst
 (
  input longint id,
