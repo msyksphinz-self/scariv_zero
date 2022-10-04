@@ -359,11 +359,19 @@ always_comb begin
         w_s0_vaddr_next = r_s2_vaddr;
         w_if_state_next = WAIT_IBUF_FREE;
       end else if (w_s2_predict_valid & !r_s2_clear) begin
-        w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        if (!w_s0_req_ready) begin
+          w_s0_vaddr_next = w_s2_predict_target_vaddr;
+        end else begin
+          w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        end
       end else if (w_s1_predict_valid & !r_s1_clear) begin
-        w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                          (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+        if (!w_s0_req_ready) begin
+          w_s0_vaddr_next = w_s1_predict_target_vaddr;
+        end else begin
+          w_s0_vaddr_next = (w_s1_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          end
       end else if (!w_s0_req_ready) begin
         w_s0_vaddr_next = w_s0_vaddr;
       end else begin
