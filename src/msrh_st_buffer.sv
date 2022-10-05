@@ -59,6 +59,7 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req_oh;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_refused;
 
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req_oh;
@@ -80,7 +81,7 @@ st_buffer_entry_t w_entries[ST_BUF_ENTRY_SIZE];
 
 
 assign w_st_buffer_allocated = st_buffer_if.valid &
-                               (!(|w_merge_accept) & !w_entry_full);
+                               !(|w_merge_refused) & !(|w_merge_accept) & !w_entry_full;
 assign w_entry_full = &w_entry_valids;
 assign w_out_valid  = |(w_entry_finish & w_out_ptr_oh);
 
@@ -157,6 +158,9 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   // Search Merging
   assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge &
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
+
+  assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~w_ready_to_merge &
+                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
