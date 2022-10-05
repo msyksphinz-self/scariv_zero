@@ -673,7 +673,7 @@
         "field":["00001", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "swap32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "swap32"]]
     },
     {
         "name":"amoadd.w   r[11:7],r[24:20],(r[19:15])",
@@ -681,7 +681,7 @@
         "field":["00000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "add32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "add32"]]
     },
     {
         "name":"amoxor.w   r[11:7],r[24:20],(r[19:15])",
@@ -689,7 +689,7 @@
         "field":["00100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "xor32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "xor32"]]
     },
     {
         "name":"amoand.w   r[11:7],r[24:20],(r[19:15])",
@@ -697,7 +697,7 @@
         "field":["01100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "and32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "and32"]]
     },
     {
         "name":"amoor.w    r[11:7],r[24:20],(r[19:15])",
@@ -705,7 +705,7 @@
         "field":["01000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "or32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "or32"]]
     },
     {
         "name":"amomin.w   r[11:7],r[24:20],(r[19:15])",
@@ -713,7 +713,7 @@
         "field":["10000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "min32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "min32"]]
     },
     {
         "name":"amomax.w   r[11:7],r[24:20],(r[19:15])",
@@ -721,7 +721,7 @@
         "field":["10100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "max32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "max32"]]
     },
     {
         "name":"amominu.w  r[11:7],r[24:20],(r[19:15])",
@@ -729,7 +729,7 @@
         "field":["11000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "minu32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "minu32"]]
     },
     {
         "name":"amomaxu.w  r[11:7],r[24:20],(r[19:15])",
@@ -737,7 +737,7 @@
         "field":["11100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "maxu32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "maxu32"]]
     },
     {
         "name":"lr.d       r[11:7],r[19:15]",
@@ -761,7 +761,7 @@
         "field":["00001", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "swap64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "swap64"]]
     },
     {
         "name":"amoadd.d   r[11:7],r[24:20],(r[19:15])",
@@ -769,7 +769,7 @@
         "field":["00000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "add64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "add64"]]
     },
     {
         "name":"amoxor.d   r[11:7],r[24:20],(r[19:15])",
@@ -777,7 +777,7 @@
         "field":["00100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "xor64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "xor64"]]
     },
     {
         "name":"amoand.d   r[11:7],r[24:20],(r[19:15])",
@@ -785,7 +785,7 @@
         "field":["01100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "and64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "and64"]]
     },
     {
         "name":"amoor.d    r[11:7],r[24:20],(r[19:15])",
@@ -793,7 +793,7 @@
         "field":["01000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "or64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "or64"]]
     },
     {
         "name":"amomin.d   r[11:7],r[24:20],(r[19:15])",
@@ -801,7 +801,7 @@
         "field":["10000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "min64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "min64"]]
     },
     {
         "name":"amomax.d   r[11:7],r[24:20],(r[19:15])",
@@ -809,7 +809,7 @@
         "field":["10100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "max64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "max64"]]
     },
     {
         "name":"amominu.d  r[11:7],r[24:20],(r[19:15])",
@@ -817,7 +817,7 @@
         "field":["11000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "minu64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "minu64"]]
     },
     {
         "name":"amomaxu.d  r[11:7],r[24:20],(r[19:15])",
@@ -825,7 +825,7 @@
         "field":["11100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "maxu64"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "maxu64"]]
     },
     {
         "comment": "Floating Point Load Word",

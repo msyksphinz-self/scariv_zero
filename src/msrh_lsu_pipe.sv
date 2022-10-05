@@ -66,6 +66,7 @@ typedef struct packed {
   size_t  size;
   sign_t  sign;
   op_t    op;
+  is_amo_t is_amo;
   rmwop_t rmwop;
 } lsu_pipe_ctrl_t;
 
@@ -212,11 +213,12 @@ u_tlb
 decoder_lsu_ctrl
 u_decoder_ls_ctrl
   (
-   .inst  (w_ex0_issue.inst     ),
-   .size  (w_ex0_pipe_ctrl.size ),
-   .sign  (w_ex0_pipe_ctrl.sign ),
-   .op    (w_ex0_pipe_ctrl.op   ),
-   .rmwop (w_ex0_pipe_ctrl.rmwop)
+   .inst   (w_ex0_issue.inst      ),
+   .size   (w_ex0_pipe_ctrl.size  ),
+   .sign   (w_ex0_pipe_ctrl.sign  ),
+   .op     (w_ex0_pipe_ctrl.op    ),
+   .rmwop  (w_ex0_pipe_ctrl.rmwop ),
+   .is_amo (w_ex0_pipe_ctrl.is_amo)
    );
 
 //
@@ -279,7 +281,7 @@ assign w_ex1_readmem_op = (r_ex1_pipe_ctrl.op == OP_LOAD) | w_ex1_is_lr;
 
 assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_SC32) |
                                                        (r_ex1_pipe_ctrl.rmwop == RMWOP_SC64));
-assign w_ex1_writemem_op = (r_ex1_pipe_ctrl.op == OP_STORE) | w_ex1_is_sc;
+assign w_ex1_writemem_op = (r_ex1_pipe_ctrl.op == OP_STORE) | (r_ex1_pipe_ctrl.op == OP_RMW) | w_ex1_is_sc;
 
 
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
@@ -396,11 +398,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
 
-    r_ex2_is_lr <= w_ex1_is_lr;
-    r_ex2_is_sc <= w_ex1_is_sc;
+    r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
+    r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;
 
-    r_lr_registered_valid <= w_ex1_is_lr ? 1'b1 :
-                             w_ex1_is_sc ? 1'b0 :
+    r_lr_registered_valid <= r_ex2_issue.valid & r_ex2_is_lr ? 1'b1 :
+                             r_ex2_issue.valid & r_ex2_is_sc ? 1'b0 :
                              r_lr_registered_valid;
     r_lr_paddr <= w_ex1_is_lr ? w_ex1_tlb_resp.paddr : r_lr_paddr;
   end // else: !if(!i_reset_n)
@@ -428,7 +430,7 @@ assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
 assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way;
 
 
-assign w_ex2_sc_success = r_lr_paddr == r_ex2_paddr;
+assign w_ex2_sc_success = r_lr_registered_valid & (r_lr_paddr == r_ex2_paddr);
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
@@ -444,6 +446,7 @@ assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONF
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
+assign o_ex2_q_updates.is_amo     = r_ex2_pipe_ctrl.is_amo;
 assign o_ex2_q_updates.is_lr      = r_ex2_is_lr;
 assign o_ex2_q_updates.is_sc      = r_ex2_is_sc;
 assign o_ex2_q_updates.sc_success = w_ex2_sc_success;

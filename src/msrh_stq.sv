@@ -599,7 +599,7 @@ end
 endgenerate
 assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.is_rmw;
 assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
-
+assign st_buffer_if.is_amo = w_stq_cmt_head_entry.is_amo;
 `ifdef SIMULATION
 assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
 assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;

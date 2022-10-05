@@ -94,7 +94,7 @@ inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n
 // New Entry create
 assign w_init_load = assign_st_buffer(st_buffer_if.cmt_id, st_buffer_if.grp_id,
                                       st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
-                                      st_buffer_if.is_rmw, st_buffer_if.rmwop);
+                                      st_buffer_if.is_rmw, st_buffer_if.rmwop, st_buffer_if.is_amo);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept       ? ST_BUF_MERGE :

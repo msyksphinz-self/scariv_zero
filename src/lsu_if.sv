@@ -652,6 +652,7 @@ logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
 logic                                     is_rmw;
 decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
+logic                                     is_amo;
 
 logic                                     is_empty;
 
@@ -669,6 +670,7 @@ modport master (
   output data,
   output is_rmw,
   output rmwop,
+  output is_amo,
 `ifdef SIMULATION
   output cmt_id,
   output grp_id,
@@ -685,6 +687,7 @@ modport slave (
   input data,
   input is_rmw,
   input rmwop,
+  input is_amo,
 `ifdef SIMULATION
   input cmt_id,
   input grp_id,

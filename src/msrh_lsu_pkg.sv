@@ -238,6 +238,7 @@ typedef struct packed {
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]     lrq_index_oh;
   logic [MEM_Q_SIZE-1:0]                    index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1:0]       hazard_index;
+  logic                                     is_amo;
   logic                                     is_lr;
   logic                                     is_sc;
   logic                                     sc_success;
@@ -448,6 +449,7 @@ logic                oldest_valid;
 logic                oldest_ready;
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
+  logic                         is_amo;
   logic                         is_lr;
   logic                         is_sc;
   logic                         sc_success;
@@ -648,7 +650,7 @@ typedef struct packed {
 
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
-
+  logic                                                is_amo;
 
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;
@@ -678,7 +680,8 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
                                              logic [ST_BUF_WIDTH/8-1: 0]   strb,
                                              logic [ST_BUF_WIDTH-1: 0]     data,
                                              logic                         is_rmw,
-                                             decoder_lsu_ctrl_pkg::rmwop_t rmwop
+                                             decoder_lsu_ctrl_pkg::rmwop_t rmwop,
+                                             logic                         is_amo,
                                              );
   st_buffer_entry_t ret;
 
@@ -691,6 +694,7 @@ function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
 
   ret.is_rmw = is_rmw;
   ret.rmwop  = rmwop;
+  ret.is_amo = is_amo;
 
 `ifdef SIMULATION
   ret.cmt_id = cmt_id;

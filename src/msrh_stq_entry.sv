@@ -132,7 +132,7 @@ assign w_cmt_id_match = i_commit.commit &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
-                               (r_entry.state == STQ_COMMIT    ) & w_commit_finish & r_entry.is_rmw & (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
+                               (r_entry.state == STQ_COMMIT    ) & w_commit_finish & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
                                (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_sq_op_accept |
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
@@ -253,6 +253,7 @@ always_comb begin
                              w_lrq_is_assigned     ? STQ_ISSUE_WAIT    : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                              STQ_DONE_EX3;
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+        w_entry_next.is_amo           = i_ex2_q_updates.is_amo;
         w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
         w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
         w_entry_next.sc_success       = i_ex2_q_updates.sc_success;
@@ -312,7 +313,9 @@ always_comb begin
       end else if (w_cmt_id_match) begin
         w_entry_next.is_committed = 1'b1;
         if (r_entry.is_rmw) begin
-          if (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) begin
+          if (r_entry.except_valid |
+              r_entry.is_lr |
+              r_entry.is_sc & !r_entry.sc_success) begin
             w_entry_next.state = STQ_COMMIT;
           end else begin
             w_entry_next.state = STQ_WAIT_STBUF;

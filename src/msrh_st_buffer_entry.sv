@@ -145,7 +145,7 @@ always_comb begin
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_LRQ_REFILL;
       end else begin
-        if (r_entry.is_rmw) begin
+        if (r_entry.is_rmw & r_entry.is_amo) begin
           w_state_next = ST_BUF_AMO_OPERATION;
 
           w_entry_next.l1d_way = i_l1d_s1_way;
@@ -218,7 +218,7 @@ always_comb begin
     ST_BUF_AMO_OPERATION : begin
       w_state_next = ST_BUF_L1D_UPDATE;
 
-      w_entry_next.data[riscv_pkg::XLEN_W-1: 0] = amo_op_if.result;
+      w_entry_next.data[paddr_partial +: riscv_pkg::XLEN_W] = amo_op_if.result;
     end
     default : begin
     end
@@ -243,7 +243,7 @@ assign o_l1d_merge_req = r_entry.valid & (r_state == ST_BUF_L1D_MERGE);
 // ------------------
 assign amo_op_if.valid = r_state == ST_BUF_AMO_OPERATION;
 assign amo_op_if.rmwop = r_entry.rmwop;
-assign amo_op_if.data0 = r_entry.data[riscv_pkg::XLEN_W-1: 0];
+assign amo_op_if.data0 = r_entry.data[paddr_partial +: riscv_pkg::XLEN_W];
 assign amo_op_if.data1 = r_amo_l1d_data;
 
 

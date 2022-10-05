@@ -44,7 +44,4 @@
       reg = <0x0 0x2000000 0x0 0xc0000>;
     };
   };
-  htif {
-    compatible = "ucb,htif0";
-  };
 };
