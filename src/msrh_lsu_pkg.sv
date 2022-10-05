@@ -237,7 +237,10 @@ typedef struct packed {
   ex2_haz_t                                 hazard_typ;
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]     lrq_index_oh;
   logic [MEM_Q_SIZE-1:0]                    index_oh;
-  logic [msrh_conf_pkg::STQ_SIZE-1:0] hazard_index;
+  logic [msrh_conf_pkg::STQ_SIZE-1:0]       hazard_index;
+  logic                                     is_lr;
+  logic                                     is_sc;
+  logic                                     sc_success;
 } ex2_q_update_t;
 
 typedef struct packed {
@@ -445,7 +448,9 @@ logic                oldest_valid;
 logic                oldest_ready;
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
-
+  logic                         is_lr;
+  logic                         is_sc;
+  logic                         sc_success;
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
 `endif // SIMULATION

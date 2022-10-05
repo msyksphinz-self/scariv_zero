@@ -132,6 +132,7 @@ assign w_cmt_id_match = i_commit.commit &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
+                               (r_entry.state == STQ_COMMIT    ) & w_commit_finish & r_entry.is_rmw & (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
                                (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_sq_op_accept |
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
@@ -162,7 +163,9 @@ assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
                        (r_entry.oldest_valid ? r_entry.oldest_ready : 1'b1) &
                        all_operand_ready(r_entry);
 
-assign w_commit_finish = i_sq_op_accept | r_entry.except_valid;
+assign w_commit_finish = i_sq_op_accept |
+                         (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
+                         r_entry.except_valid;
 
 always_comb begin
   w_entry_next = r_entry;
@@ -243,12 +246,16 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? STQ_ISSUE_WAIT :
+                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              w_lrq_is_conflict     ? STQ_LRQ_CONFLICT  :
                              w_lrq_is_full         ? STQ_LRQ_FULL      :
                              w_lrq_evict_is_hazard ? STQ_LRQ_EVICT_HAZ :
                              w_lrq_is_assigned     ? STQ_ISSUE_WAIT    : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
                              STQ_DONE_EX3;
         w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+        w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
+        w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
+        w_entry_next.sc_success       = i_ex2_q_updates.sc_success;
       end else if (i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              STQ_DONE_EX3;
@@ -304,10 +311,14 @@ always_comb begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_cmt_id_match) begin
         w_entry_next.is_committed = 1'b1;
-        if (!w_entry_next.inst.rd_regs[1].ready) begin
+        if (r_entry.is_rmw) begin
+          if (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) begin
+            w_entry_next.state = STQ_COMMIT;
+          end else begin
+            w_entry_next.state = STQ_WAIT_STBUF;
+          end
+        end else if (!w_entry_next.inst.rd_regs[1].ready) begin
           w_entry_next.state = STQ_WAIT_ST_DATA;
-        end else if (r_entry.is_rmw) begin
-          w_entry_next.state = STQ_WAIT_STBUF;
         end else begin
           w_entry_next.state = STQ_COMMIT;
         end

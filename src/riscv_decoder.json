@@ -664,7 +664,7 @@
         "length":"32", "xlen":["64", "32"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
-        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "sc32"]]
     },
     {
@@ -752,7 +752,7 @@
         "length":"32", "xlen":["64"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
-        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "sc64"]]
     },
     {

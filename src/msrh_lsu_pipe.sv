@@ -123,6 +123,12 @@ msrh_pkg::alen_t        w_streq_fwd_aligned_data;
 msrh_pkg::alenb_t       w_ex2_expected_fwd_valid;
 msrh_pkg::alenb_t       w_ex2_fwd_success;
 
+logic                   w_ex2_sc_success;
+logic                   r_lr_registered_valid;
+msrh_pkg::paddr_t       r_lr_paddr;
+logic                   r_ex2_is_lr;
+logic                   r_ex2_is_sc;
+
 //
 // EX3 stage
 //
@@ -261,8 +267,23 @@ assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : ex1
 
 assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 
+logic w_ex1_readmem_op;
+logic w_ex1_writemem_op;
+logic w_ex1_is_lr;
+logic w_ex1_is_sc;
+logic r_ex2_readmem_op;
+logic r_ex2_writemem_op;
+assign w_ex1_is_lr = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_LR32) |
+                                                       (r_ex1_pipe_ctrl.rmwop == RMWOP_LR64));
+assign w_ex1_readmem_op = (r_ex1_pipe_ctrl.op == OP_LOAD) | w_ex1_is_lr;
+
+assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_SC32) |
+                                                       (r_ex1_pipe_ctrl.rmwop == RMWOP_SC64));
+assign w_ex1_writemem_op = (r_ex1_pipe_ctrl.op == OP_STORE) | w_ex1_is_sc;
+
+
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
-assign w_ex1_tlb_req.cmd         = r_ex1_pipe_ctrl.op == OP_LOAD ? M_XRD : M_XWR;
+assign w_ex1_tlb_req.cmd         = w_ex1_readmem_op ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
                                    r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
@@ -304,10 +325,9 @@ logic w_ex1_st_except_valid;
 logic r_ex2_except_valid;
 msrh_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ex1_ld_except_valid = (r_ex1_pipe_ctrl.op == OP_LOAD) &
+assign w_ex1_ld_except_valid = w_ex1_readmem_op &
                                (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = ((r_ex1_pipe_ctrl.op == OP_STORE) |
-                                (r_ex1_pipe_ctrl.op == OP_RMW)) &
+assign w_ex1_st_except_valid = w_ex1_writemem_op &
                                (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
 assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
                                w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
@@ -367,11 +387,25 @@ assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_paddr <= 'h0;
+
+    r_ex2_is_lr <= 1'b0;
+    r_ex2_is_sc <= 1'b0;
+    r_lr_registered_valid <= 1'b0;
+    r_lr_paddr <= 'h0;
   end else begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
-  end
-end
+
+    r_ex2_is_lr <= w_ex1_is_lr;
+    r_ex2_is_sc <= w_ex1_is_sc;
+
+    r_lr_registered_valid <= w_ex1_is_lr ? 1'b1 :
+                             w_ex1_is_sc ? 1'b0 :
+                             r_lr_registered_valid;
+    r_lr_paddr <= w_ex1_is_lr ? w_ex1_tlb_resp.paddr : r_lr_paddr;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 logic w_ex2_rmw_haz_vld;
 assign w_ex2_rmw_haz_vld = rmw_order_check_if.ex2_stq_haz_vld | rmw_order_check_if.ex2_stbuf_haz_vld;
@@ -393,6 +427,9 @@ assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
 assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way;
 
+
+assign w_ex2_sc_success = r_lr_paddr == r_ex2_paddr;
+
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
 assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONFWD_HAZ :
@@ -407,6 +444,9 @@ assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONF
 assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
+assign o_ex2_q_updates.is_lr      = r_ex2_is_lr;
+assign o_ex2_q_updates.is_sc      = r_ex2_is_sc;
+assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
 
 // ---------------------
 // Misprediction Update
@@ -568,7 +608,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
     r_ex3_mis_valid <= 1'b0;
   end else begin
-    r_ex3_aligned_data <= w_ex2_data_sign_ext;
+    r_ex3_aligned_data <= (r_ex2_pipe_ctrl.op == OP_RMW) &
+                          ((r_ex2_pipe_ctrl.rmwop == RMWOP_SC32) | (r_ex2_pipe_ctrl.rmwop == RMWOP_SC64)) ? !w_ex2_sc_success : w_ex2_data_sign_ext;
     r_ex3_mis_valid <= o_ex2_mispred.mis_valid;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
