@@ -27,7 +27,6 @@ module msrh_bootrom #(
 localparam WORDS = SIZE / (DATA_W / 8);
 
 logic [DATA_W-1: 0]           r_rom[WORDS];
-logic [DATA_W-1: 0]           r_rom_raw[WORDS];
 
 assign o_req_ready = 1'b1;
 
@@ -69,13 +68,14 @@ assign o_resp_valid = r_resp_valid[RD_LAT-1];
 assign o_resp_tag   = r_resp_tag  [RD_LAT-1];
 assign o_resp_data  = r_resp_data [RD_LAT-1];
 
-generate for (genvar w_idx = 0; w_idx < WORDS; w_idx++) begin : w_loop
-  assign r_rom[w_idx] = {<<8{r_rom_raw[w_idx]}};
-end
-endgenerate
-
 initial begin
-  $readmemh ("../../../dts/bootrom.hex", r_rom_raw);
+  if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
+    $readmemh ("../../../dts/bootrom_w16.hex", r_rom);
+  end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
+    $readmemh ("../../../dts/bootrom_w32.hex", r_rom);
+  end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
+    $readmemh ("../../../dts/bootrom_w64.hex", r_rom);
+  end
 end
 
 endmodule // msrh_bootrom
