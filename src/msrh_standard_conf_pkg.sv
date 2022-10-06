@@ -1,9 +1,9 @@
 package msrh_conf_pkg;
 
-  localparam ICACHE_DATA_W = 256;
-  localparam DCACHE_DATA_W = 256;
-  localparam ICACHE_WORDS = 64;
-  localparam DCACHE_WORDS = 64;
+  localparam ICACHE_DATA_W = 512;
+  localparam DCACHE_DATA_W = 512;
+  localparam ICACHE_WORDS = 32;
+  localparam DCACHE_WORDS = 32;
   localparam ICACHE_WAYS = 4;
   localparam DCACHE_WAYS = 4;
   localparam DCACHE_BANKS = 4;

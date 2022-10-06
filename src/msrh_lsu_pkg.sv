@@ -443,10 +443,9 @@ typedef struct packed {
   msrh_pkg::cmt_id_t another_flush_cmt_id;
   msrh_pkg::grp_id_t another_flush_grp_id;
 
-logic                is_committed;
+  logic              is_committed;
+  logic              oldest_ready;
   // Atomic Operations
-logic                oldest_valid;
-logic                oldest_ready;
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
   logic                         is_amo;

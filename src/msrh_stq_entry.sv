@@ -160,7 +160,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
-                       (r_entry.oldest_valid ? r_entry.oldest_ready : 1'b1) &
+                       (r_entry.inst.oldest_valid ? r_entry.oldest_ready : 1'b1) &
                        all_operand_ready(r_entry);
 
 assign w_commit_finish = i_sq_op_accept |
@@ -184,7 +184,7 @@ always_comb begin
   w_entry_next.inst.rd_regs[0].predict_ready = w_rs_rel_hit[0] & w_rs_may_mispred[0];
 
   if (r_entry.is_valid) begin
-    w_entry_next.oldest_ready = w_oldest_ready;
+    w_entry_next.oldest_ready = r_entry.oldest_ready | w_oldest_ready;
   end
 
   case (r_entry.state)
@@ -227,6 +227,8 @@ always_comb begin
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
         w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
 
+        w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid |
+                                         (i_ex1_q_updates.hazard_typ == UC_ACCESS);
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
       if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
@@ -303,7 +305,9 @@ always_comb begin
     STQ_WAIT_OLDEST : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (w_oldest_ready & i_st_buffer_empty) begin
+      end else if (r_entry.is_rmw & w_oldest_ready & i_st_buffer_empty) begin
+        w_entry_next.state = STQ_ISSUE_WAIT;
+      end else if (w_oldest_ready | r_entry.oldest_ready) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
@@ -436,8 +440,9 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
 
   ret.except_valid = 1'b0;
 
-  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) &
-                     (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
+  ret.inst.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) &
+                          (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
+  ret.oldest_ready = 1'b0;
   ret.is_committed = 1'b0;
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;

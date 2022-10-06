@@ -96,7 +96,7 @@ def execute_test(test):
     command_str += test["elf"]
     command_str += " -o " + output_file
     # print (command_str)
-    subprocess.run("exec " + command_str, shell=True, capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
+    subprocess.run(command_str, shell=True, capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
     result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
     print (test["name"] + "\t: ", end='')

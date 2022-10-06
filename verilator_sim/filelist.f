@@ -3,3 +3,4 @@
 ../tb/tb_elf_loader.sv
 ../tb/l2c_splitter_wrapper.sv
 ../tb/l2c_arbiter_wrapper.sv
+../tb/msrh_serialdevice.sv

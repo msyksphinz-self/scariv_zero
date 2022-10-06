@@ -94,8 +94,8 @@ generate for (genvar c_idx = 0; c_idx < msrh_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx
 
   logic [$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W/2)-1: 0] br_update_lane;
   logic br_update_lane_hit;
-  assign br_update_lane = br_upd_fe_if.is_rvc ? br_upd_fe_if.pc_vaddr[msrh_lsu_pkg::ICACHE_DATA_B_W-1: 1] :
-                          br_upd_fe_if.pc_vaddr[msrh_lsu_pkg::ICACHE_DATA_B_W-1: 1] + 'h1;
+  assign br_update_lane = br_upd_fe_if.is_rvc ? br_upd_fe_if.pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)-1: 1] :
+                          br_upd_fe_if.pc_vaddr[$clog2(msrh_lsu_pkg::ICACHE_DATA_B_W)-1: 1] + 'h1;
 
   assign br_update_lane_hit = br_update_lane == c_idx;
 

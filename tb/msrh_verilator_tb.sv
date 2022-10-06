@@ -108,19 +108,33 @@ module msrh_tb (
   logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_mid_resp_data;
   logic                                      w_mid_resp_ready;
 
-  /* Peripheral Interface */
-  logic                                      w_peripheral_req_valid;
-  msrh_lsu_pkg::mem_cmd_t                    w_peripheral_req_cmd;
-  logic [            riscv_pkg::PADDR_W-1:0] w_peripheral_req_addr;
-  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_peripheral_req_tag;
-  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_peripheral_req_data;
-  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_peripheral_req_byte_en;
-  logic                                      w_peripheral_req_ready;
+  /* BootROM Interface */
+  logic                                      w_bootrom_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_bootrom_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_bootrom_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_bootrom_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_bootrom_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_bootrom_req_byte_en;
+  logic                                      w_bootrom_req_ready;
 
-  logic                                      w_peripheral_resp_valid;
-  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_peripheral_resp_tag;
-  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_peripheral_resp_data;
-  logic                                      w_peripheral_resp_ready;
+  logic                                      w_bootrom_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_bootrom_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_bootrom_resp_data;
+  logic                                      w_bootrom_resp_ready;
+
+  /* Serial Interface */
+  logic                                      w_serial_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_serial_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_serial_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_serial_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_serial_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_serial_req_byte_en;
+  logic                                      w_serial_req_ready;
+
+  logic                                      w_serial_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_serial_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_serial_resp_data;
+  logic                                      w_serial_resp_ready;
 
   /* L2 Interface */
   logic                                      w_l2_req_valid;
@@ -219,19 +233,33 @@ module msrh_tb (
       .o_resp_data  (w_mid_resp_data   ),
       .i_resp_ready (w_mid_resp_ready  ),
 
-      /* Peripheral Interface */
-      .o_peripheral_req_valid  (w_peripheral_req_valid   ),
-      .o_peripheral_req_cmd    (w_peripheral_req_cmd     ),
-      .o_peripheral_req_addr   (w_peripheral_req_addr    ),
-      .o_peripheral_req_tag    (w_peripheral_req_tag     ),
-      .o_peripheral_req_data   (w_peripheral_req_data    ),
-      .o_peripheral_req_byte_en(w_peripheral_req_byte_en ),
-      .i_peripheral_req_ready  (w_peripheral_req_ready   ),
+      /* BootROM Interface */
+      .o_bootrom_req_valid  (w_bootrom_req_valid   ),
+      .o_bootrom_req_cmd    (w_bootrom_req_cmd     ),
+      .o_bootrom_req_addr   (w_bootrom_req_addr    ),
+      .o_bootrom_req_tag    (w_bootrom_req_tag     ),
+      .o_bootrom_req_data   (w_bootrom_req_data    ),
+      .o_bootrom_req_byte_en(w_bootrom_req_byte_en ),
+      .i_bootrom_req_ready  (w_bootrom_req_ready   ),
 
-      .i_peripheral_resp_valid (w_peripheral_resp_valid  ),
-      .i_peripheral_resp_tag   (w_peripheral_resp_tag    ),
-      .i_peripheral_resp_data  (w_peripheral_resp_data   ),
-      .o_peripheral_resp_ready (w_peripheral_resp_ready  ),
+      .i_bootrom_resp_valid (w_bootrom_resp_valid  ),
+      .i_bootrom_resp_tag   (w_bootrom_resp_tag    ),
+      .i_bootrom_resp_data  (w_bootrom_resp_data   ),
+      .o_bootrom_resp_ready (w_bootrom_resp_ready  ),
+
+      /* Serial Interface */
+      .o_serial_req_valid  (w_serial_req_valid   ),
+      .o_serial_req_cmd    (w_serial_req_cmd     ),
+      .o_serial_req_addr   (w_serial_req_addr    ),
+      .o_serial_req_tag    (w_serial_req_tag     ),
+      .o_serial_req_data   (w_serial_req_data    ),
+      .o_serial_req_byte_en(w_serial_req_byte_en ),
+      .i_serial_req_ready  (w_serial_req_ready   ),
+
+      .i_serial_resp_valid (w_serial_resp_valid  ),
+      .i_serial_resp_tag   (w_serial_resp_tag    ),
+      .i_serial_resp_data  (w_serial_resp_data   ),
+      .o_serial_resp_ready (w_serial_resp_ready  ),
 
       /* L2 Interface */
       .o_l2_req_valid  (w_l2_req_valid   ),
@@ -352,19 +380,49 @@ msrh_bootrom
   .i_reset_n(i_ram_reset_n),
 
   // L2 request from ICache
-  .i_req_valid   (w_peripheral_req_valid   ),
-  .i_req_cmd     (w_peripheral_req_cmd     ),
-  .i_req_addr    (w_peripheral_req_addr    ),
-  .i_req_tag     (w_peripheral_req_tag     ),
-  .i_req_data    (w_peripheral_req_data    ),
-  .i_req_byte_en (w_peripheral_req_byte_en ),
-  .o_req_ready   (w_peripheral_req_ready   ),
+  .i_req_valid   (w_bootrom_req_valid   ),
+  .i_req_cmd     (w_bootrom_req_cmd     ),
+  .i_req_addr    (w_bootrom_req_addr    ),
+  .i_req_tag     (w_bootrom_req_tag     ),
+  .i_req_data    (w_bootrom_req_data    ),
+  .i_req_byte_en (w_bootrom_req_byte_en ),
+  .o_req_ready   (w_bootrom_req_ready   ),
 
-  .o_resp_valid  (w_peripheral_resp_valid  ),
-  .o_resp_tag    (w_peripheral_resp_tag    ),
-  .o_resp_data   (w_peripheral_resp_data   ),
-  .i_resp_ready  (w_peripheral_resp_ready  )
+  .o_resp_valid  (w_bootrom_resp_valid  ),
+  .o_resp_tag    (w_bootrom_resp_tag    ),
+  .o_resp_data   (w_bootrom_resp_data   ),
+  .i_resp_ready  (w_bootrom_resp_ready  )
 );
+
+
+// Serial
+msrh_serialdevice
+#(
+  .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('h5400_0000),
+  .SIZE     ('h1000),
+  .RD_LAT   (10)
+) u_msrh_serialdevice (
+  .i_clk    (i_clk),
+  .i_reset_n(i_ram_reset_n),
+
+  // Serial request from ICache
+  .i_req_valid   (w_serial_req_valid   ),
+  .i_req_cmd     (w_serial_req_cmd     ),
+  .i_req_addr    (w_serial_req_addr    ),
+  .i_req_tag     (w_serial_req_tag     ),
+  .i_req_data    (w_serial_req_data    ),
+  .i_req_byte_en (w_serial_req_byte_en ),
+  .o_req_ready   (w_serial_req_ready   ),
+
+  .o_resp_valid  (w_serial_resp_valid  ),
+  .o_resp_tag    (w_serial_resp_tag    ),
+  .o_resp_data   (w_serial_resp_data   ),
+  .i_resp_ready  (w_serial_resp_ready  )
+);
+
 
   tb_elf_loader u_tb_elf_loader (
       .i_clk    (i_clk),

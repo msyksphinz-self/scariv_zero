@@ -29,6 +29,7 @@
 	{ "name": "ras_check2"        , "group" : ["sanity"], "elf": "../../../tests/ras_check2/test.elf"        , "xlen": 64},
 	{ "name": "memcpy_test"       , "group" : ["sanity"], "elf": "../../../tests/memcpy_test/test.elf"       , "xlen": 64},
 	{ "name": "gshare_test"       , "group" : ["sanity"], "elf": "../../../tests/gshare_test/test.elf"       , "xlen": 64},
+	{ "name": "serialdevice"      , "group" : ["sanity"], "elf": "../../../tests/serialdevice/test.elf"      , "xlen": 64},
 
     { "name": "rv64ui-p-add"         , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64ui-p-add"          , "xlen": 64},
     { "name": "rv64ui-p-addi"        , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64ui-p-addi"         , "xlen": 64},
