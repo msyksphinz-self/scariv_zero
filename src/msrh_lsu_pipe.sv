@@ -346,6 +346,7 @@ assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
 assign o_ex1_q_updates.hazard_typ          = w_ex1_tlb_resp.miss ? TLB_MISS :
                                              ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? UC_ACCESS :
                                              EX1_NONE;
+assign o_ex1_q_updates.tlb_uc              = ~w_ex1_tlb_resp.cacheable;
 assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
 assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
 assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;

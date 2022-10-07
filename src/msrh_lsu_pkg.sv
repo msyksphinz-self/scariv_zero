@@ -221,6 +221,8 @@ typedef struct packed {
   ex1_haz_t                       hazard_typ;
   logic                           tlb_except_valid;
   msrh_pkg::except_t              tlb_except_type;
+  logic                           tlb_uc;
+
   logic [MEM_Q_SIZE-1:0]          index_oh;
   msrh_pkg::vaddr_t vaddr;
   msrh_pkg::paddr_t paddr;

@@ -166,7 +166,8 @@ assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
                        (r_entry.inst.oldest_valid ? r_entry.oldest_ready : 1'b1) &
                        all_operand_ready(r_entry);
 
-assign w_commit_finish = i_stbuf_accept | i_uc_write_accept |
+assign w_commit_finish = o_stbuf_req_valid    & i_stbuf_accept |
+                         o_uc_write_req_valid & i_uc_write_accept |
                          (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
                          r_entry.except_valid;
 
@@ -226,7 +227,8 @@ always_comb begin
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
-        w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == UC_ACCESS;
+        w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == EX1_NONE ? i_ex1_q_updates.tlb_uc :
+                                       r_entry.is_uc;
 
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
         w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
