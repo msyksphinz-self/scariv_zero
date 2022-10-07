@@ -16,3 +16,6 @@
 [submodule "tools/espresso-logic"]
 	path = tools/espresso-logic
 	url = https://github.com/classabbyamp/espresso-logic.git
+[submodule "tests/riscv-coremark"]
+	path = tests/riscv-coremark
+	url = https://github.com/riscv-boom/riscv-coremark.git
