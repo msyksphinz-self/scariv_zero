@@ -104,6 +104,7 @@ rmw_order_check_if w_rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
 lrq_pa_search_if        w_lrq_pa_search_if();
+uc_write_if             w_uc_write_if();
 
 generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -263,6 +264,7 @@ msrh_stq
  .br_upd_if (br_upd_if),
 
  .st_buffer_if (w_st_buffer_if),
+ .uc_write_if  (w_uc_write_if),
 
  .stq_snoop_if(stq_snoop_if),
 
@@ -307,6 +309,8 @@ u_msrh_store_requester
    .fwd_check_if  (w_streq_fwd_check),
 
    .l1d_evict_if  (w_l1d_evict_if),
+   .uc_write_if   (w_uc_write_if),
+
    .l1d_ext_wr_req(w_l1d_ext_req[1])
    );
 

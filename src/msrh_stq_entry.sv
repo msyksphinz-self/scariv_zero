@@ -40,10 +40,13 @@ module msrh_stq_entry
    input lrq_resolve_t                        i_lrq_resolve,
    input logic                                i_lrq_is_full,
 
-   output                                     o_stbuf_req_valid,
-   input logic                                i_sq_op_accept,
+   output logic                               o_stbuf_req_valid,
+   input logic                                i_stbuf_accept,
 
    input logic                                i_st_buffer_empty,
+
+   output logic                               o_uc_write_req_valid,
+   input logic                                i_uc_write_accept,
 
    // Snoop Interface
    stq_snoop_if.slave                         stq_snoop_if,
@@ -133,7 +136,7 @@ assign w_cmt_id_match = i_commit.commit &
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
                                (r_entry.state == STQ_COMMIT    ) & w_commit_finish & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
-                               (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_sq_op_accept |
+                               (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stbuf_accept |
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
 
@@ -163,7 +166,7 @@ assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
                        (r_entry.inst.oldest_valid ? r_entry.oldest_ready : 1'b1) &
                        all_operand_ready(r_entry);
 
-assign w_commit_finish = i_sq_op_accept |
+assign w_commit_finish = i_stbuf_accept | i_uc_write_accept |
                          (r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
                          r_entry.except_valid;
 
@@ -223,6 +226,7 @@ always_comb begin
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
+        w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == UC_ACCESS;
 
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
         w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
@@ -353,7 +357,7 @@ always_comb begin
       end
     end // case: STQ_COMMIT
     STQ_WAIT_STBUF : begin
-      if (i_st_buffer_empty & i_sq_op_accept) begin
+      if (i_st_buffer_empty & i_stbuf_accept) begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
@@ -394,7 +398,10 @@ assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
                         ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
 
 assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stq_outptr_valid  :
-                           (r_entry.state == STQ_COMMIT) & ~r_entry.except_valid;
+                           (r_entry.state == STQ_COMMIT) & ~r_entry.is_uc & ~r_entry.except_valid;
+
+
+assign o_uc_write_req_valid = (r_entry.state == STQ_COMMIT) & r_entry.is_uc & ~r_entry.except_valid;
 
 // Snoop Interface Hit
 /* verilator lint_off WIDTH */
@@ -444,6 +451,8 @@ function stq_entry_t assign_stq_disp (msrh_pkg::disp_t in,
                           (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
   ret.oldest_ready = 1'b0;
   ret.is_committed = 1'b0;
+  ret.is_uc = 1'b0;
+
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;
 `endif // SIMULATION

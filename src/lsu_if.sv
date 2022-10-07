@@ -739,3 +739,30 @@ modport slave (
 );
 
 endinterface // amo_op_if
+
+
+interface uc_write_if;
+
+logic             valid;
+logic             ready;
+msrh_pkg::paddr_t paddr;
+riscv_pkg::xlen_t data;
+decoder_lsu_ctrl_pkg::size_t size;
+
+modport master (
+  output valid,
+  output paddr,
+  output data,
+  output size,
+  input ready
+);
+
+modport slave (
+  input  valid,
+  input  paddr,
+  input  data,
+  input  size,
+  output ready
+);
+
+endinterface // uc_write_if

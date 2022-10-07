@@ -445,6 +445,9 @@ typedef struct packed {
 
   logic              is_committed;
   logic              oldest_ready;
+  // Uncached Access Region
+  logic              is_uc;
+
   // Atomic Operations
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;

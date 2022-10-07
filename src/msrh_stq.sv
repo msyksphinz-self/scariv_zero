@@ -49,6 +49,9 @@ module msrh_stq
    // Store Buffer Interface
    st_buffer_if.master            st_buffer_if,
 
+   // UC Store Interface
+   uc_write_if.master             uc_write_if,
+
    // Snoop Interface
    stq_snoop_if.slave     stq_snoop_if,
 
@@ -125,13 +128,16 @@ u_credit_return_slave
 // Done Selection
 //
 
-logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_sq_commit_req;
+logic [msrh_conf_pkg::STQ_SIZE-1:0]  w_stbuf_req_valid;
 stq_entry_t w_stq_cmt_head_entry;
 stq_entry_t r_st1_committed_entry;
 logic [$clog2(msrh_conf_pkg::STQ_SIZE)-1: 0] r_cmt_head_idx;
 
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]   w_st1_rs2_data_tmp;
 logic [DCACHE_DATA_B_W-1: 0]                w_st1_rs2_byte_en_tmp;
+
+logic [msrh_conf_pkg::STQ_SIZE-1: 0]        w_uc_write_req_valid;
+
 
 // Instruction Pick up from Dispatch
 msrh_disp_pickup
@@ -283,8 +289,11 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
-     .o_stbuf_req_valid    (w_sq_commit_req[s_idx]),
-     .i_sq_op_accept       (|w_stbuf_accept_array & (st_buffer_if.resp != msrh_lsu_pkg::ST_BUF_FULL)),
+     .o_stbuf_req_valid (w_stbuf_req_valid[s_idx]),
+     .i_stbuf_accept    (|w_stbuf_accept_array & (st_buffer_if.resp != msrh_lsu_pkg::ST_BUF_FULL)),
+
+     .o_uc_write_req_valid (w_uc_write_req_valid[s_idx]),
+     .i_uc_write_accept    (uc_write_if.ready),
 
      // Snoop Interface
      .stq_snoop_if (stq_entry_snoop_if),
@@ -525,7 +534,7 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   logic [msrh_conf_pkg::STQ_SIZE-1: 0] w_shifted_out_ptr_oh;
   logic                                w_sq_commit_valid;
   bit_rotate_left #(.WIDTH(msrh_conf_pkg::STQ_SIZE), .VAL(d_idx)) u_ptr_rotate(.i_in(w_out_ptr_oh), .o_out(w_shifted_out_ptr_oh));
-  assign w_sq_commit_valid = |(w_sq_commit_req & w_shifted_out_ptr_oh);
+  assign w_sq_commit_valid = |(w_stbuf_req_valid & w_shifted_out_ptr_oh);
 
   if (d_idx == 0) begin
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid;
@@ -604,6 +613,18 @@ assign st_buffer_if.is_amo = w_stq_cmt_head_entry.is_amo;
 assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
 assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;
 `endif //SIMULATION
+
+// ---------------------------------
+// After Commit, UC-Write Operation
+// ---------------------------------
+stq_entry_t w_uc_write_entry_sel;
+bit_oh_or #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE)) select_uc_write_entry  (.i_oh(w_uc_write_req_valid), .i_data(w_stq_entries), .o_selected(w_uc_write_entry_sel));
+always_comb begin
+  uc_write_if.valid = |w_uc_write_req_valid;
+  uc_write_if.paddr = w_uc_write_entry_sel.paddr;
+  uc_write_if.data  = w_uc_write_entry_sel.rs2_data;
+  uc_write_if.size  = w_uc_write_entry_sel.size;
+end
 
 
 `ifdef SIMULATION
