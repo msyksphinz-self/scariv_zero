@@ -549,9 +549,11 @@ always_comb begin
   {w_stbuf_fwd_dw, w_stbuf_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                           stbuf_fwd_check_if.fwd_dw, stbuf_fwd_check_if.fwd_data,
                                                           r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
-  {w_streq_fwd_dw, w_streq_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
-                                                          streq_fwd_check_if.fwd_dw, streq_fwd_check_if.fwd_data,
-                                                          r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
+  // {w_streq_fwd_dw, w_streq_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
+  //                                                         streq_fwd_check_if.fwd_dw, streq_fwd_check_if.fwd_data,
+  //                                                         r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
+  w_streq_fwd_dw = streq_fwd_check_if.fwd_dw;
+  w_streq_fwd_aligned_data = streq_fwd_check_if.fwd_data[msrh_pkg::ALEN_W-1: 0];
 
   case (r_ex2_pipe_ctrl.size)
     SIZE_DW : begin w_ex2_expected_fwd_valid     = {8{1'b1}}; end
