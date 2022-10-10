@@ -30,6 +30,7 @@ clean:
 	rm -rf bootrom.elf
 	rm -rf bootrom.dump
 	rm -rf bootrom.bin
-	rm -rf bootrom.hex
+	rm -rf *.hex
+	rm -rf rv64*.dts
 	rm -rf dts_skelenton_tmp.dts
 	rm -rf *.dtb

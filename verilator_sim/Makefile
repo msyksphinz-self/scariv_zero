@@ -5,6 +5,7 @@ endif
 
 RV_XLEN = 64
 RV_FLEN = 64
+RV_AMO  = 1
 
 DEBUG = on
 
@@ -74,7 +75,7 @@ VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
-VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN)"
+VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DRV_AMO=$(RV_AMO)"
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
@@ -126,7 +127,6 @@ FILELIST = sim_filelist.f
 
 .config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
-	make -B XLEN=32 EXT=$(ISA) SVMODE=sv32 -C ../dts > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
@@ -136,7 +136,16 @@ FILELIST = sim_filelist.f
 	rm -rf .config_design_*
 	touch $@
 
-rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
+.dts_xlen$(RV_XLEN)_flen$(RV_FLEN)_$(ISA):
+	make -B XLEN=$(RV_XLEN) EXT=$(ISA) SVMODE=sv32 -C ../dts
+	touch $@
+
+.tests_build_done:
+	cd ../tests/ && \
+	./build_tests.sh
+	touch $@
+
+rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
@@ -148,7 +157,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN)
 		../src/msrh_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
-rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN)
+rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
 		--Mdir obj_dir_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \

@@ -33,6 +33,7 @@ conf = args.conf
 
 rv_xlen = 0
 rv_flen = 0
+rv_amo  = 0
 isa_ext = isa[4:9]
 testcase = args.testcase
 parallel = int(args.parallel)
@@ -49,9 +50,17 @@ else:
         rv_flen = 64
     elif "f" in isa_ext :
         rv_flen = 32
+    if "a" in isa_ext :
+        rv_amo = 1
 
 ## Build verilator binary
-build_command = ["make", "rv" + str(rv_xlen) + "_build", "CONF=" + conf,  "ISA=" + isa_ext, "RV_XLEN=" + str(rv_xlen), "RV_FLEN=" + str(rv_flen)]
+build_command = ["make",
+                 "rv" + str(rv_xlen) + "_build",
+                 "CONF=" + conf,
+                 "ISA=" + isa_ext,
+                 "RV_XLEN=" + str(rv_xlen),
+                 "RV_FLEN=" + str(rv_flen),
+                 "RV_AMO=" + str(rv_amo)]
 if fst_dump :
     build_command += ["DEBUG=on"]
 else:

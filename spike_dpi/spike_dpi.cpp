@@ -14,17 +14,9 @@
 #include "extension.h"
 #include "../VERSION"
 
-#ifdef SIM_MAIN
 FILE *compare_log_fp;
-#else // SIM_MAIN
-#ifdef VERILATOR
-extern FILE *compare_log_fp;
-#else // VERILATOR
-FILE     *compare_log_fp;
-#endif // VERILATOR
 extern uint64_t  tohost_addr; // define in tb_elf_loader.cpp
 extern bool    tohost_en;   // define in tb_elf_loader.cpp
-#endif // SIM_MAIN
 
 sim_t *spike_core;
 disassembler_t *disasm;
@@ -117,34 +109,31 @@ static unsigned long atoul_nonzero_safe(const char* s)
   return res;
 }
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
 {
   argv[0] = "spike_dpi";
-  if (rv_xlen == 32) {
-    if (rv_flen == 0) {
-      argv[1] = "--isa=rv32imac";
-    } else if (rv_flen == 32) {
-      argv[1] = "--isa=rv32imafc";
-    } else if (rv_flen == 64) {
-      argv[1] = "--isa=rv32imafdc";
-    } else {
-      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
-      exit(1);
-    }
-  } else if (rv_xlen == 64) {
-    if (rv_flen == 0) {
-      argv[1] = "--isa=rv64imac";
-    } else if (rv_flen == 32) {
-      argv[1] = "--isa=rv64imafc";
-    } else if (rv_flen == 64) {
-      argv[1] = "--isa=rv64imafdc";
-    } else {
-      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
-      exit(1);
-    }
-  } else {
+  char *isa_str = (char *)malloc(sizeof(char) * 32);
+  sprintf(isa_str, "rv%dim", rv_xlen);
+  if (rv_amo) {
+    strcat(isa_str, "a");
+  }
+  if (rv_flen >= 32) {
+    strcat(isa_str, "f");
+  }
+  if (rv_flen >= 64) {
+    strcat(isa_str, "d");
+  }
+  strcat(isa_str, "c");
+  char *spike_isa_argv =(char *)malloc(sizeof(char) * 32);
+  sprintf(spike_isa_argv, "--isa=%s", isa_str);
+  argv[1] = spike_isa_argv;
+  if (!(rv_xlen == 32 || rv_xlen == 64)) {
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
+  }
+  if (!(rv_flen == 0 || rv_flen == 32 || rv_flen == 64)) {
+    fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
+    exit(1);
   }
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
@@ -155,7 +144,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   argv[arg_max++] = "-l";
   argv[arg_max++] = "--log-commits";
   argv[arg_max++] = "--dtb";
-  argv[arg_max++] = "../../../dts/rv64imac.dtb";
+  char *dts_file =(char *)malloc(sizeof(char) * 64);
+  sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
+  argv[arg_max++] = dts_file;
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -556,9 +547,11 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                 int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
+#ifndef SIM_MAIN
   svScope g_scope;
   g_scope = svGetScopeFromName("tb");
   svSetScope(g_scope);
+#endif // SIM_MAIN
 
   processor_t *p = spike_core->get_core(0);
 
@@ -1093,7 +1086,7 @@ int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
 
-  initial_spike (argv[1], 64, 64);
+  initial_spike (argv[1], 64, 64, 1);
   processor_t *p = spike_core->get_core(0);
 
   fprintf(compare_log_fp, "INST     CYCLE    PC\n");
@@ -1131,7 +1124,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64);
+  initial_spike(filename, 64, 64, 1);
 
 }
 #endif // VERILATOR
