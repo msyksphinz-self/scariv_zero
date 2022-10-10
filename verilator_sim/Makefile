@@ -136,7 +136,8 @@ FILELIST = sim_filelist.f
 	touch $@
 
 .dts_xlen$(RV_XLEN)_flen$(RV_FLEN)_$(ISA):
-	make -B XLEN=$(RV_XLEN) EXT=$(ISA) SVMODE=sv32 -C ../dts
+	make -B XLEN=$(RV_XLEN) EXT=$(ISA) -C ../dts
+	rm -rf .dts_xlen*
 	touch $@
 
 .tests_build_done:
