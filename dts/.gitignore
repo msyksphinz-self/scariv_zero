@@ -5,3 +5,5 @@ bootrom.img
 bootrom.o
 rv*.dtb
 rv*.dts
+bootrom_w*.hex
+dummy.bin
