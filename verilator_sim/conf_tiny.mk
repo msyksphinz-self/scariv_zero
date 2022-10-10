@@ -15,15 +15,15 @@ REGRESSION_LIST += rv64imfdc_tiny_aapg
 # RV32
 #
 rv32imc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imc RV_XLEN=32 RV_FLEN=0 RV_AMO=0 > $@_build.log 2>&1
 
 rv32imfc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imfc RV_XLEN=32 RV_FLEN=32 RV_AMO=0 > $@_build.log 2>&1
 
 rv32imfdc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imfdc RV_XLEN=32 RV_FLEN=64 RV_AMO=0 > $@_build.log 2>&1
 
 rv32imc_tiny_test:
@@ -39,15 +39,15 @@ rv32imfdc_tiny_test:
 	../scripts/run_regress.rb msrh_tb_rv32imfdc_tiny rv32-tests.json log_rv32imfdc_tiny $(NPROCS) 2>&1 | tee rv32imfdc_tiny_test.log
 
 rv32imac_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imac RV_XLEN=32 RV_FLEN=0 RV_AMO=1 > $@_build.log 2>&1
 
 rv32imafc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imafc RV_XLEN=32 RV_FLEN=32 RV_AMO=1 > $@_build.log 2>&1
 
 rv32imafdc_tiny: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv32_build CONF=tiny ISA=imafdc RV_XLEN=32 RV_FLEN=64 RV_AMO=1 > $@_build.log 2>&1
 
 rv32imac_tiny_test:
@@ -66,11 +66,11 @@ rv32imafdc_tiny_test:
 # RV64
 #
 rv64imc_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv64_build CONF=tiny ISA=imc RV_XLEN=64 RV_FLEN=0 RV_AMO=0 > $@_build.log 2>&1
 
 rv64imfc_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv64_build CONF=tiny ISA=imfc RV_XLEN=64 RV_FLEN=32 RV_AMO=0 > $@_build.log 2>&1
 
 rv64imfdc_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done
@@ -114,11 +114,11 @@ rv64imfdc_tiny_aapg:
 	../scripts/run_regress.rb msrh_tb_rv64imfdc_tiny     ../tests/aapg.json log_rv64imfdc_tiny_aapg	  $(NPROCS) 2>&1 | tee rv64imfdc_tiny_aapg.log
 
 rv64imac_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv64_build CONF=tiny ISA=imac RV_XLEN=64 RV_FLEN=0 RV_AMO=1 > $@_build.log 2>&1
 
 rv64imafc_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done
-	$(MAKE) -C ../spike_dpi libspike_dpi.so VERILATOR=1
+	$(MAKE) -C ../spike_dpi spike_dpi.o VERILATOR=1
 	$(MAKE) rv64_build CONF=tiny ISA=imafc RV_XLEN=64 RV_FLEN=32 RV_AMO=1 > $@_build.log 2>&1
 
 rv64imafdc_tiny: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .tests_build_done

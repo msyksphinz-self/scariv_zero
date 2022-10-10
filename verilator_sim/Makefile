@@ -132,7 +132,6 @@ FILELIST = sim_filelist.f
 
 .config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
 	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
-	make -B XLEN=64 EXT=$(ISA) SVMODE=sv39 -C ../dts > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
@@ -198,4 +197,5 @@ $(FILELIST): ../src/fpnew.vf ../src/filelist.vf filelist.f
 	cat $^ >> $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_* sim_rv*
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_* sim_rv* .dts_xlen*
+	$(MAKE) -C ../dts clean

@@ -1,8 +1,6 @@
 #!/bin/sh
 
-pushd riscv-tests
+cd riscv-tests
 
 ./configure
 make -j$(nproc)
-
-popd

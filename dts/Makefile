@@ -9,7 +9,7 @@ else
 endif
 
 build: dts_skelenton.dts bootrom.S
-	riscv64-unknown-elf-as bootrom.S -o bootrom.o
+	riscv64-unknown-elf-gcc -march=rv64imafd -DXLEN$(XLEN) bootrom.S -c -o bootrom.o
 	riscv64-unknown-elf-ld bootrom.o -o bootrom.elf -Tlink.ld
 	objcopy -I elf64-little  -O binary --only-section .text bootrom.elf bootrom.bin
 	sed 's/|XLEN|/$(XLEN)/g' dts_skelenton.dts | \
