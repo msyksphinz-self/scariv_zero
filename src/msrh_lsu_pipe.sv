@@ -427,9 +427,6 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
 assign l1d_lrq_if.load              = w_ex2_l1d_missed & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
 // L1D replace information
-assign l1d_lrq_if.req_payload.evict_valid = ex1_l1d_rd_if.s1_replace_valid;
-assign l1d_lrq_if.req_payload.evict_payload.way   = ex1_l1d_rd_if.s1_replace_way;
-
 
 assign w_ex2_sc_success = r_lr_registered_valid & (r_lr_paddr == r_ex2_paddr);
 

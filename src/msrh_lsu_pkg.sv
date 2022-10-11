@@ -156,8 +156,6 @@ typedef struct packed {
 
 typedef struct packed {
   msrh_pkg::paddr_t paddr;
-  logic   evict_valid;
-  evict_payload_t evict_payload;
 } lrq_req_t;
 
 typedef struct packed {
@@ -184,7 +182,6 @@ function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
   ret.valid = valid;
   ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
                {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-  ret.way = req.evict_payload.way;
 
   return ret;
 

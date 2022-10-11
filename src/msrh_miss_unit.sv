@@ -168,10 +168,6 @@ endfunction // hit_lrq_same_pa
 function automatic logic hit_lrq_same_evict_pa (logic valid, msrh_pkg::paddr_t req_evict_paddr,
                                                 msrh_lsu_pkg::miss_entry_t lrq_entry,
                                                 logic [$clog2(msrh_pkg::LRQ_ENTRY_SIZE)-1: 0] entry_idx);
-
-  // return valid & lrq_entry.valid & lrq_entry.evict_valid & ~w_entry_finish[entry_idx] &
-  //   (lrq_entry.evict.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-  //    req_evict_paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
   return 1'b0;
 
 endfunction // hit_lrq_same_pa
@@ -224,25 +220,10 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
 
   // 3. check the evicted address with existed evict LRQ
   logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]   w_hit_lrq_same_evict_pa;
-  // for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin : entry_evict_loop
-  //   assign w_hit_lrq_same_evict_pa[e_idx] = hit_lrq_same_evict_pa (l1d_lrq[p_idx].load & l1d_lrq[p_idx].req_payload.evict_valid,
-  //                                                                  l1d_lrq[p_idx].req_payload.evict_payload.paddr,
-  //                                                                  w_lrq_entries[e_idx], e_idx);
-  // end
   assign w_hit_lrq_same_evict_pa = 'h0;
 
   // 4. check the evicted address with different pipeline
   logic [REQ_PORT_NUM-1: 0]             w_hit_port_same_evict_pa;
-  // for (genvar p2_idx = 0; p2_idx < REQ_PORT_NUM; p2_idx++) begin : adj_evict_port_loop
-  //   if (p_idx <= p2_idx) begin
-  //     assign w_hit_port_same_evict_pa[p2_idx] = 1'b0;
-  //   end else begin
-  //     assign w_hit_port_same_evict_pa[p2_idx] = hit_port_pa (l1d_lrq[p_idx ].load & l1d_lrq[p_idx ].req_payload.evict_valid,
-  //                                                            l1d_lrq[p2_idx].load & l1d_lrq[p2_idx].req_payload.evict_valid,
-  //                                                            l1d_lrq[p_idx ].req_payload.evict_payload.paddr,
-  //                                                            l1d_lrq[p2_idx].req_payload.evict_payload.paddr);
-  //   end
-  // end
   assign w_hit_port_same_evict_pa = 'h0;
 
   logic [REQ_PORT_NUM-1: 0] w_hit_port_same_evict_pa_lsb;
@@ -526,22 +507,6 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::LRQ_ENTRY_SIZE; e_idx++) begin
     end
   end
 
-
-  // assign w_stbuf_lrq_evict_hit_array_next[e_idx] = lrq_pa_search_if.s0_valid &
-  //                                                  w_lrq_entries[e_idx].valid &
-  //                                                  w_lrq_entries[e_idx].evict_valid &
-  //                                                  (w_lrq_entries[e_idx].evict.paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-  //                                                   lrq_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
-  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  //   if (!i_reset_n) begin
-  //     lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= 1'b0;
-  //     lrq_pa_search_if.s1_evict_sent        [e_idx] <= 1'b0;
-  //   end else begin
-  //     lrq_pa_search_if.s1_evict_hit_index_oh[e_idx] <= w_stbuf_lrq_evict_hit_array_next[e_idx];
-  //     lrq_pa_search_if.s1_evict_sent        [e_idx] <= w_lrq_entries[e_idx].evict_sent;
-  //   end
-  // end
-
 end
 endgenerate
 
@@ -559,12 +524,6 @@ function void dump_entry_json(int fp, msrh_lsu_pkg::miss_entry_t entry, int inde
     $fwrite(fp, "valid:%d, ", entry.valid);
     $fwrite(fp, "paddr:\"0x%0x\", ", entry.paddr);
     $fwrite(fp, "sent:\"%01d\", ", entry.sent);
-    // $fwrite(fp, "evict_valid:\"%01d\", ", entry.evict_valid);
-    // $fwrite(fp, "evict_sent:\"%01d\", ", entry.evict_sent);
-    // if (entry.evict_valid) begin
-    //   $fwrite(fp, "evict_way :\"0x%d\", ", entry.evict.way);
-    //   $fwrite(fp, "evict_paddr :\"0x%08x\"", entry.evict.paddr);
-    // end
     $fwrite(fp, " },\n");
   end // if (entry.valid)
 

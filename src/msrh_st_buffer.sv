@@ -248,10 +248,6 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
 assign l1d_lrq_stq_miss_if.req_payload.paddr               = w_lrq_target_entry.paddr;
-assign l1d_lrq_stq_miss_if.req_payload.evict_valid         = r_s2_replace_valid;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.paddr = r_s2_replace_paddr;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.way   = r_s2_replace_way;
-assign l1d_lrq_stq_miss_if.req_payload.evict_payload.data  = r_s2_replace_data;
 
 
 // --------------------------------------------
