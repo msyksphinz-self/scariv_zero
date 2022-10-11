@@ -19,7 +19,7 @@ module msrh_st_buffer
  l1d_rd_if.master l1d_rd_if,
 
  // Interface of Missed Data for Store
- l1d_lrq_if.master l1d_lrq_stq_miss_if,
+ l1d_missu_if.master l1d_missu_stq_miss_if,
  // Write Data to DCache
  l1d_wr_if.master l1d_wr_if,
  l1d_wr_if.master l1d_merge_if,
@@ -30,11 +30,11 @@ module msrh_st_buffer
  // RMW Ordere Hazard Check
  rmw_order_check_if.slave rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM],
 
- // Search LRQ entry: same cycle as L1D Search
- lrq_pa_search_if.master   lrq_pa_search_if,
+ // Search MISSU entry: same cycle as L1D Search
+ missu_pa_search_if.master   missu_pa_search_if,
 
- // LRQ Resolve Notofication
- input       lrq_resolve_t i_lrq_resolve
+ // MISSU Resolve Notofication
+ input       missu_resolve_t i_missu_resolve
  );
 
 
@@ -61,8 +61,8 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_refused;
 
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req;
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_lrq_req_oh;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_missu_req;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_missu_req_oh;
 
 logic                          r_l1d_rd_if_resp;
 
@@ -124,12 +124,12 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
      .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
 
-     .o_lrq_req      (w_entry_lrq_req   [e_idx]),
-     .i_lrq_accepted (w_entry_lrq_req_oh[e_idx]),
+     .o_missu_req      (w_entry_missu_req   [e_idx]),
+     .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
 
-     .i_lrq_search_hit       (lrq_pa_search_if.s1_hit_index_oh),
-     .i_lrq_evict_search_hit (lrq_pa_search_if.s1_evict_hit_index_oh),
-     .i_lrq_evict_sent       (lrq_pa_search_if.s1_evict_sent),
+     .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
+     .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
+     .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
 
      // Forward check interface from LSU Pipeline
      .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
@@ -143,8 +143,8 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
      .i_l1d_wr_s1_resp_hit (l1d_wr_if.s1_wr_resp.s1_hit),
 
-     .i_st_lrq_resp  (l1d_lrq_stq_miss_if.resp_payload ),
-     .i_lrq_resolve (i_lrq_resolve),
+     .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
+     .i_missu_resolve (i_missu_resolve),
 
      .amo_op_if (w_amo_op_if[e_idx]),
 
@@ -205,23 +205,23 @@ assign l1d_rd_if.s0_h_pri = 1'b0;
 assign l1d_rd_if.s0_paddr = w_l1d_rd_entry.paddr;
 
 // -----------------
-// LRQ entry search
+// MISSU entry search
 // -----------------
-assign lrq_pa_search_if.s0_valid = l1d_rd_if.s0_valid;
-assign lrq_pa_search_if.s0_paddr = l1d_rd_if.s0_paddr;
+assign missu_pa_search_if.s0_valid = l1d_rd_if.s0_valid;
+assign missu_pa_search_if.s0_paddr = l1d_rd_if.s0_paddr;
 
 // ------------------------
-// Make LRQ Refill request-
+// Make MISSU Refill request-
 // -----------------------
-st_buffer_entry_t  w_lrq_target_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_lrq_req_sel (.in(w_entry_lrq_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_lrq_req_oh));
+st_buffer_entry_t  w_missu_target_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_missu_req_sel (.in(w_entry_missu_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_missu_req_oh));
 bit_oh_or
   #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
-select_lrq_entry_oh
+select_missu_entry_oh
   (
-   .i_oh(w_entry_lrq_req_oh),
+   .i_oh(w_entry_missu_req_oh),
    .i_data(w_entries),
-   .o_selected(w_lrq_target_entry)
+   .o_selected(w_missu_target_entry)
    );
 
 // Eviction: Replaced Address
@@ -230,14 +230,14 @@ logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
 msrh_pkg::paddr_t                 r_s2_replace_paddr;
 logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_hit_way;
-// logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_lrq_evict_hit_ways;
+// logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_missu_evict_hit_ways;
 // logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]         w_s2_conflict_evict_addr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_replace_valid <= 1'b0;
 
-    // r_s2_lrq_evict_hit_ways <= 'h0;
+    // r_s2_missu_evict_hit_ways <= 'h0;
   end else begin
     r_s2_hit_way <= l1d_rd_if.s1_hit_way;
 
@@ -246,8 +246,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign l1d_lrq_stq_miss_if.load = |w_entry_lrq_req; /* & w_s2_conflict_evict_addrxo; */
-assign l1d_lrq_stq_miss_if.req_payload.paddr               = w_lrq_target_entry.paddr;
+assign l1d_missu_stq_miss_if.load = |w_entry_missu_req; /* & w_s2_conflict_evict_addrxo; */
+assign l1d_missu_stq_miss_if.req_payload.paddr               = w_missu_target_entry.paddr;
 
 
 // --------------------------------------------

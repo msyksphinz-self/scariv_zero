@@ -98,10 +98,10 @@ interface l1d_wr_if;
 endinterface // l1d_wr_if
 
 
-interface l1d_lrq_if;
+interface l1d_missu_if;
   logic load;
-  msrh_lsu_pkg::lrq_req_t  req_payload;
-  msrh_lsu_pkg::lrq_resp_t resp_payload;
+  msrh_lsu_pkg::missu_req_t  req_payload;
+  msrh_lsu_pkg::missu_resp_t resp_payload;
 
   modport master (
     output load,
@@ -115,13 +115,13 @@ interface l1d_lrq_if;
     output resp_payload
   );
 
-endinterface // l1d_lrq_if
+endinterface // l1d_missu_if
 
 
 // Search Interface
 // from STQ --> LRQ Eviction
 // to search hitting eviction address
-interface lrq_evict_search_if;
+interface missu_evict_search_if;
 logic                                    valid;
 logic [msrh_lsu_pkg::DCACHE_TAG_LOW-1:0] tag_low;
 logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  hit_ways;
@@ -138,7 +138,7 @@ modport slave (
   output hit_ways
 );
 
-endinterface // lrq_evict_search_if
+endinterface // missu_evict_search_if
 
 
 interface l1d_srq_if;
@@ -180,34 +180,34 @@ modport slave (
 
 endinterface // l1d_evict_if
 
-interface lrq_dc_search_if;
+interface missu_dc_search_if;
 
 logic valid;
-logic [msrh_pkg::LRQ_ENTRY_W-1: 0] index;
-msrh_lsu_pkg::miss_entry_t lrq_entry;
+logic [msrh_pkg::MISSU_ENTRY_W-1: 0] index;
+msrh_lsu_pkg::miss_entry_t missu_entry;
 
 modport master (
   output valid,
   output index,
-  input  lrq_entry
+  input  missu_entry
 );
 
 modport slave (
   input  valid,
   input  index,
-  output lrq_entry
+  output missu_entry
 );
 
-endinterface // lrq_dc_search_if
+endinterface // missu_dc_search_if
 
 
-interface lrq_pa_search_if;
+interface missu_pa_search_if;
 
 logic                                 s0_valid;
 msrh_pkg::paddr_t       s0_paddr;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_hit_index_oh;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
-logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] s1_evict_sent;
+logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
+logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
 
 modport master (
   output s0_valid,
@@ -225,7 +225,7 @@ modport slave (
   output s1_evict_sent
 );
 
-endinterface // lrq_pa_search_if
+endinterface // missu_pa_search_if
 
 
 interface lsu_replay_if;
@@ -287,7 +287,7 @@ modport slave (
 
 endinterface // fwd_check_if
 
-interface lrq_fwd_if;
+interface missu_fwd_if;
 logic                                     ex2_valid;
 msrh_pkg::paddr_t           ex2_paddr;
 logic                                     ex2_fwd_valid;
@@ -309,7 +309,7 @@ modport slave
    output ex2_fwd_data
    );
 
-endinterface // lrq_fwd_if
+endinterface // missu_fwd_if
 
 
 interface ldq_haz_check_if;
@@ -478,12 +478,12 @@ interface lsu_access_if;
 
   logic                           resp_valid;
   msrh_lsu_pkg::lsu_status_t      status;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_conflicted_idx_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
 
   riscv_pkg::xlen_t  data;
 
   logic                                 conflict_resolve_vld;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
 
   modport master (
     output req_valid,
@@ -491,7 +491,7 @@ interface lsu_access_if;
     output size,
     input  resp_valid,
     input  status,
-    input  lrq_conflicted_idx_oh,
+    input  missu_conflicted_idx_oh,
     input  data,
     input  conflict_resolve_vld,
     input  conflict_resolve_idx_oh
@@ -503,7 +503,7 @@ interface lsu_access_if;
     input  size,
     output resp_valid,
     output status,
-    output lrq_conflicted_idx_oh,
+    output missu_conflicted_idx_oh,
     output data,
     output conflict_resolve_vld,
     output conflict_resolve_idx_oh

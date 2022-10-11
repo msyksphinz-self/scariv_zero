@@ -37,8 +37,8 @@ module msrh_stq_entry
    input msrh_pkg::commit_blk_t               i_commit,
    br_upd_if.slave                            br_upd_if,
 
-   input lrq_resolve_t                        i_lrq_resolve,
-   input logic                                i_lrq_is_full,
+   input missu_resolve_t                        i_missu_resolve,
+   input logic                                i_missu_is_full,
 
    output logic                               o_stbuf_req_valid,
    input logic                                i_stbuf_accept,
@@ -79,11 +79,11 @@ logic                                              w_commit_finish;
 
 logic                                              w_oldest_ready;
 
-logic                                              w_lrq_is_conflict;
-logic                                              w_lrq_is_full;
-logic                                              w_lrq_is_assigned;
-logic                                              w_lrq_resolve_match;
-logic                                              w_lrq_evict_is_hazard;
+logic                                              w_missu_is_conflict;
+logic                                              w_missu_is_full;
+logic                                              w_missu_is_assigned;
+logic                                              w_missu_resolve_match;
+logic                                              w_missu_evict_is_hazard;
 
 always_comb begin
   o_entry = r_entry;
@@ -141,11 +141,11 @@ assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_fini
 
 
 
-assign w_lrq_is_conflict = i_ex2_q_updates.hazard_typ == LRQ_CONFLICT;
-assign w_lrq_is_full     = i_ex2_q_updates.hazard_typ == LRQ_FULL;
-assign w_lrq_evict_is_hazard = i_ex2_q_updates.hazard_typ == LRQ_EVICT_CONFLICT;
+assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == MISSU_CONFLICT;
+assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == MISSU_FULL;
+assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == MISSU_EVICT_CONFLICT;
 
-assign w_lrq_is_assigned = i_ex2_q_updates.hazard_typ == LRQ_ASSIGNED;
+assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == MISSU_ASSIGNED;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -255,12 +255,12 @@ always_comb begin
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? STQ_ISSUE_WAIT :
                              i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
-                             w_lrq_is_conflict     ? STQ_LRQ_CONFLICT  :
-                             w_lrq_is_full         ? STQ_LRQ_FULL      :
-                             w_lrq_evict_is_hazard ? STQ_LRQ_EVICT_HAZ :
-                             w_lrq_is_assigned     ? STQ_ISSUE_WAIT    : // When LRQ Assigned, LRQ index return is zero so rerun and ge LRQ index.
+                             w_missu_is_conflict     ? STQ_MISSU_CONFLICT  :
+                             w_missu_is_full         ? STQ_MISSU_FULL      :
+                             w_missu_evict_is_hazard ? STQ_MISSU_EVICT_HAZ :
+                             w_missu_is_assigned     ? STQ_ISSUE_WAIT    : // When MISSU Assigned, MISSU index return is zero so rerun and ge MISSU index.
                              STQ_DONE_EX3;
-        w_entry_next.lrq_haz_index_oh = i_ex2_q_updates.lrq_index_oh;
+        w_entry_next.missu_haz_index_oh = i_ex2_q_updates.missu_index_oh;
         w_entry_next.is_amo           = i_ex2_q_updates.is_amo;
         w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
         w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
@@ -272,28 +272,28 @@ always_comb begin
         w_entry_next.state = STQ_DONE_EX3;
       end // else: !if(r_entry.is_rmw & i_ex2_q_valid)
     end
-    STQ_LRQ_CONFLICT : begin
+    STQ_MISSU_CONFLICT : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
+      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
+      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
-    STQ_LRQ_FULL : begin
+    STQ_MISSU_FULL : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (!i_lrq_is_full) begin
+      end else if (!i_missu_is_full) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end
-    STQ_LRQ_EVICT_HAZ : begin
+    STQ_MISSU_EVICT_HAZ : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (i_lrq_resolve.valid && i_lrq_resolve.resolve_index_oh == r_entry.lrq_haz_index_oh) begin
+      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_lrq_resolve.lrq_entry_valids & r_entry.lrq_haz_index_oh)) begin
+      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end
     end

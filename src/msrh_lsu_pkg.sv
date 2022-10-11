@@ -52,10 +52,10 @@ typedef enum logic [ 2: 0] {
 typedef enum logic [ 2: 0] {
   NONE,
   L1D_CONFLICT,
-  LRQ_ASSIGNED,
-  LRQ_CONFLICT,
-  LRQ_FULL,
-  LRQ_EVICT_CONFLICT,
+  MISSU_ASSIGNED,
+  MISSU_CONFLICT,
+  MISSU_FULL,
+  MISSU_EVICT_CONFLICT,
   RMW_ORDER_HAZ,
   STQ_NONFWD_HAZ
 } ex2_haz_t;
@@ -156,14 +156,14 @@ typedef struct packed {
 
 typedef struct packed {
   msrh_pkg::paddr_t paddr;
-} lrq_req_t;
+} missu_req_t;
 
 typedef struct packed {
   logic                          full;
   logic                          evict_conflict;
   logic                          conflict;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
-} lrq_resp_t;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+} missu_resp_t;
 
 typedef struct packed {
   logic          valid;
@@ -174,7 +174,7 @@ typedef struct packed {
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
 } miss_entry_t;
 
-function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
+function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
   miss_entry_t ret;
 
   ret = 'h0;
@@ -185,7 +185,7 @@ function miss_entry_t assign_miss_entry (logic valid, lrq_req_t req);
 
   return ret;
 
-endfunction // assign_lrq_entry
+endfunction // assign_missu_entry
 
 typedef struct packed {
   logic                                      valid;
@@ -195,9 +195,9 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] resolve_index_oh;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_entry_valids;
-} lrq_resolve_t;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] resolve_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_entry_valids;
+} missu_resolve_t;
 
 typedef struct packed {
   logic valid;
@@ -234,7 +234,7 @@ typedef struct packed {
 typedef struct packed {
   logic                                     update;
   ex2_haz_t                                 hazard_typ;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]     lrq_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
   logic [MEM_Q_SIZE-1:0]                    index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1:0]       hazard_index;
   logic                                     is_amo;
@@ -411,9 +411,9 @@ typedef enum logic[4:0] {
   STQ_DONE_EX3      ,
   STQ_ISSUED        ,
   STQ_OLDEST_HAZ    ,
-  STQ_LRQ_CONFLICT  ,
-  STQ_LRQ_EVICT_HAZ ,
-  STQ_LRQ_FULL      ,
+  STQ_MISSU_CONFLICT  ,
+  STQ_MISSU_EVICT_HAZ ,
+  STQ_MISSU_FULL      ,
   STQ_WAIT_OLDEST   ,
   STQ_WAIT_STBUF
 } stq_state_t;
@@ -433,7 +433,7 @@ typedef struct packed {
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   msrh_pkg::alen_t                      rs2_data;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
 
   logic              except_valid;
   msrh_pkg::except_t except_type;
@@ -478,7 +478,7 @@ typedef struct packed {
 typedef struct packed {
   logic                          full;
   logic                          conflict;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
 } srq_resp_t;
 
 function logic is_amo_logical(mem_cmd_t cmd);
@@ -526,7 +526,7 @@ endfunction // isAMOLogical
 typedef enum logic[3:0] {
   LDQ_INIT           ,
   LDQ_EX2_RUN        ,
-  LDQ_LRQ_CONFLICT   ,
+  LDQ_MISSU_CONFLICT   ,
   LDQ_TLB_HAZ        ,
   LDQ_ISSUE_WAIT     ,
   LDQ_CHECK_ST_DEPEND,
@@ -534,8 +534,8 @@ typedef enum logic[3:0] {
   LDQ_WAIT_COMMIT    ,
   LDQ_WAIT_ENTRY_CLR ,
   LDQ_ISSUED         ,
-  LDQ_LRQ_EVICT_HAZ  ,
-  LDQ_LRQ_FULL       ,
+  LDQ_MISSU_EVICT_HAZ  ,
+  LDQ_MISSU_FULL       ,
   LDQ_WAIT_OLDEST    ,
   LDQ_NONFWD_HAZ_WAIT
 } ldq_state_t;
@@ -553,7 +553,7 @@ typedef struct packed {
   logic                           is_get_data;
   msrh_pkg::vaddr_t vaddr;
   msrh_pkg::paddr_t paddr;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0] lrq_haz_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
   logic                                 except_valid;
@@ -613,7 +613,7 @@ typedef enum logic [2:0]{
   STATUS_HIT = 1,
   STATUS_MISS = 2,
   STATUS_L1D_CONFLICT = 3,
-  STATUS_LRQ_CONFLICT = 4
+  STATUS_MISSU_CONFLICT = 4
 } lsu_status_t;
 
 
@@ -646,7 +646,7 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [msrh_pkg::LRQ_ENTRY_SIZE-1: 0]                lrq_index_oh;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]                missu_index_oh;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]      l1d_way;
 
   logic                                                is_rmw;
@@ -665,7 +665,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_RESP_L1D      = 2,
   ST_BUF_L1D_UPDATE    = 3,
   ST_BUF_L1D_UPD_RESP  = 4,
-  ST_BUF_LRQ_REFILL    = 5,
+  ST_BUF_MISSU_REFILL  = 5,
   ST_BUF_WAIT_REFILL   = 6,
   ST_BUF_WAIT_FULL     = 7,
   ST_BUF_WAIT_EVICT    = 8,

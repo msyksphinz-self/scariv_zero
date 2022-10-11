@@ -37,10 +37,10 @@ package msrh_pkg;
   localparam CMT_ID_SIZE = CMT_ENTRY_SIZE * 2;
   localparam CMT_ID_W = $clog2(CMT_ID_SIZE);
 
-  localparam LRQ_NORM_ENTRY_SIZE = 6;
-  localparam LRQ_ST_ENTRY_SIZE = 2;
-  localparam LRQ_ENTRY_SIZE = LRQ_NORM_ENTRY_SIZE + LRQ_ST_ENTRY_SIZE;
-  localparam LRQ_ENTRY_W = $clog2(LRQ_ENTRY_SIZE);
+  localparam MISSU_NORM_ENTRY_SIZE = 6;
+  localparam MISSU_ST_ENTRY_SIZE = 2;
+  localparam MISSU_ENTRY_SIZE = MISSU_NORM_ENTRY_SIZE + MISSU_ST_ENTRY_SIZE;
+  localparam MISSU_ENTRY_W = $clog2(MISSU_ENTRY_SIZE);
 
   localparam INT_REGPORT_NUM = msrh_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
                                msrh_conf_pkg::ALU_INST_NUM * 2 +    // LSU port

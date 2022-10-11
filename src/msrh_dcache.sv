@@ -14,8 +14,8 @@ module msrh_dcache
 
    l1d_wr_if.slave miss_l1d_wr_if,
 
-   // LRQ search interface
-   lrq_dc_search_if.master lrq_dc_search_if
+   // MISSU search interface
+   missu_dc_search_if.master missu_dc_search_if
    );
 
 dc_read_resp_t[msrh_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
@@ -120,35 +120,35 @@ endgenerate
 // RESP1 : Getting Data
 // ==========================
 // logic r_rp1_l1d_exp_resp_valid;
-// logic [msrh_pkg::LRQ_ENTRY_W-1:0] r_rp1_lrq_resp_tag;
-// logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_lrq_resp_data;
+// logic [msrh_pkg::MISSU_ENTRY_W-1:0] r_rp1_missu_resp_tag;
+// logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_missu_resp_data;
 //
 //
 // // --------------------------------------------------
-// // Interface of LRQ Search Entry to get information
+// // Interface of MISSU Search Entry to get information
 // // --------------------------------------------------
-// assign lrq_dc_search_if.valid = r_rp1_l1d_exp_resp_valid;
-// assign lrq_dc_search_if.index = r_rp1_lrq_resp_tag;
+// assign missu_dc_search_if.valid = r_rp1_l1d_exp_resp_valid;
+// assign missu_dc_search_if.index = r_rp1_missu_resp_tag;
 //
 // // ===========================
 // // L2 Reponse
-// // RESP2 : Search LRQ Entiers
+// // RESP2 : Search MISSU Entiers
 // // ===========================
 //
 // logic r_rp2_valid;
-// miss_entry_t r_rp2_searched_lrq_entry;
+// miss_entry_t r_rp2_searched_missu_entry;
 // logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
 // logic [DCACHE_DATA_B_W-1: 0] r_rp2_be;
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
 //     r_rp2_valid <= 1'b0;
-//     r_rp2_searched_lrq_entry <= 'h0;
+//     r_rp2_searched_missu_entry <= 'h0;
 //     r_rp2_resp_data <= 'h0;
 //     r_rp2_be <= 'h0;
 //   end else begin
 //     r_rp2_valid <= r_rp1_l1d_exp_resp_valid;
-//     r_rp2_searched_lrq_entry <= lrq_dc_search_if.lrq_entry;
-//     r_rp2_resp_data <= r_rp1_lrq_resp_data;
+//     r_rp2_searched_missu_entry <= missu_dc_search_if.missu_entry;
+//     r_rp2_resp_data <= r_rp1_missu_resp_data;
 //     r_rp2_be        <= {DCACHE_DATA_B_W{1'b1}};
 //   end
 // end

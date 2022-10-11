@@ -42,12 +42,12 @@ module msrh_lsu_pipe
  fwd_check_if.master                   streq_fwd_check_if,   // Store Requestor
  ldq_haz_check_if.master               ldq_haz_check_if,
  stq_haz_check_if.master               stq_haz_check_if,
- lrq_fwd_if.master                     lrq_fwd_if,
+ missu_fwd_if.master                   missu_fwd_if,
 
  // RMW Ordere Hazard Check
  rmw_order_check_if.master             rmw_order_check_if,
 
- l1d_lrq_if.master                     l1d_lrq_if,
+ l1d_missu_if.master                   l1d_missu_if,
 
  // Feedbacks to LDQ / STQ
  output ex1_q_update_t                 o_ex1_q_updates,
@@ -424,8 +424,8 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~ex1_l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
 
-assign l1d_lrq_if.load              = w_ex2_l1d_missed & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
-assign l1d_lrq_if.req_payload.paddr = r_ex2_paddr;
+assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
+assign l1d_missu_if.req_payload.paddr = r_ex2_paddr;
 // L1D replace information
 
 assign w_ex2_sc_success = r_lr_registered_valid & (r_lr_paddr == r_ex2_paddr);
@@ -436,12 +436,12 @@ assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONF
                                     w_ex2_rmw_haz_vld                 ? RMW_ORDER_HAZ :
                                     &w_ex2_fwd_success                ? NONE          :
                                     ex1_l1d_rd_if.s1_conflict         ? L1D_CONFLICT  :
-                                    l1d_lrq_if.load ?
-                                    (l1d_lrq_if.resp_payload.full     ? LRQ_FULL      :
-                                     l1d_lrq_if.resp_payload.conflict ? LRQ_CONFLICT  :
-                                     LRQ_ASSIGNED) :
+                                    l1d_missu_if.load ?
+                                    (l1d_missu_if.resp_payload.full     ? MISSU_FULL      :
+                                     l1d_missu_if.resp_payload.conflict ? MISSU_CONFLICT  :
+                                     MISSU_ASSIGNED) :
                                     NONE;
-assign o_ex2_q_updates.lrq_index_oh = l1d_lrq_if.resp_payload.lrq_index_oh;
+assign o_ex2_q_updates.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
 assign o_ex2_q_updates.is_amo     = r_ex2_pipe_ctrl.is_amo;
@@ -464,17 +464,17 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (o_ex2_q_updates.update &
         (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == LRQ_CONFLICT) &
-        !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
-             o_ex2_q_updates.lrq_index_oh);
+        (o_ex2_q_updates.hazard_typ == MISSU_CONFLICT) &
+        !$onehot(o_ex2_q_updates.missu_index_oh)) begin
+      $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
+             o_ex2_q_updates.missu_index_oh);
     end
     if (o_ex2_q_updates.update &
         (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == LRQ_ASSIGNED) &
-        !$onehot(o_ex2_q_updates.lrq_index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex2_q_updates.lrq_index_oh should be one-hot. Value=%x\n",
-             o_ex2_q_updates.lrq_index_oh);
+        (o_ex2_q_updates.hazard_typ == MISSU_ASSIGNED) &
+        !$onehot(o_ex2_q_updates.missu_index_oh)) begin
+      $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
+             o_ex2_q_updates.missu_index_oh);
     end
   end // if (i_reset_n)
 end
@@ -521,15 +521,15 @@ assign rmw_order_check_if.ex2_valid  = r_ex2_issue.valid;
 assign rmw_order_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
 assign rmw_order_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 
-// LRQ Hazard Check
-assign lrq_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
-assign lrq_fwd_if.ex2_paddr  = r_ex2_paddr;
+// MISSU Hazard Check
+assign missu_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
+assign missu_fwd_if.ex2_paddr  = r_ex2_paddr;
 
 msrh_pkg::alenb_t                  w_ex2_fwd_dw;
 msrh_pkg::alen_t                    w_ex2_fwd_aligned_data;
 
-msrh_pkg::alenb_t                  w_ex2_lrq_fwd_dw;
-msrh_pkg::alen_t                    w_ex2_lrq_fwd_aligned_data;
+msrh_pkg::alenb_t                  w_ex2_missu_fwd_dw;
+msrh_pkg::alen_t                    w_ex2_missu_fwd_aligned_data;
 
 msrh_pkg::alen_t                    w_ex2_fwd_final_data;
 
@@ -537,8 +537,8 @@ always_comb begin
   {w_ex2_fwd_dw, w_ex2_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                       ex2_fwd_check_if.fwd_dw, ex2_fwd_check_if.fwd_data,
                                                       r_ex2_paddr[$clog2(msrh_pkg::ALEN_W/8)-1:0]);
-  w_ex2_lrq_fwd_aligned_data = lrq_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
-  w_ex2_lrq_fwd_dw           = {8{lrq_fwd_if.ex2_fwd_valid}};
+  w_ex2_missu_fwd_aligned_data = missu_fwd_if.ex2_fwd_data >> {r_ex2_paddr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
+  w_ex2_missu_fwd_dw           = {8{missu_fwd_if.ex2_fwd_valid}};
 end
 
 
@@ -567,12 +567,12 @@ assign w_ex2_l1d_data = ex1_l1d_rd_if.s1_data[{r_ex2_paddr[$clog2(DCACHE_DATA_B_
 generate for (genvar b_idx = 0; b_idx < msrh_pkg::ALEN_W / 8; b_idx++) begin
   assign w_ex2_fwd_final_data[b_idx*8 +: 8] = w_ex2_fwd_dw    [b_idx] ? w_ex2_fwd_aligned_data    [b_idx*8 +: 8] :
                                               w_stbuf_fwd_dw  [b_idx] ? w_stbuf_fwd_aligned_data  [b_idx*8 +: 8] :
-                                              w_ex2_lrq_fwd_dw[b_idx] ? w_ex2_lrq_fwd_aligned_data[b_idx*8 +: 8] :
+                                              w_ex2_missu_fwd_dw[b_idx] ? w_ex2_missu_fwd_aligned_data[b_idx*8 +: 8] :
                                               w_streq_fwd_dw  [b_idx] ? w_streq_fwd_aligned_data  [b_idx*8 +: 8] :
                                                                         w_ex2_l1d_data            [b_idx*8 +: 8];
   assign w_ex2_fwd_success[b_idx] = w_ex2_expected_fwd_valid[b_idx] ? (w_ex2_fwd_dw     [b_idx] |
                                                                        w_stbuf_fwd_dw   [b_idx] |
-                                                                       w_ex2_lrq_fwd_dw [b_idx] |
+                                                                       w_ex2_missu_fwd_dw [b_idx] |
                                                                        w_streq_fwd_dw   [b_idx]) : 1'b1;
 end
 endgenerate

@@ -27,8 +27,8 @@ module msrh_ldq
 
    lsu_replay_if.master ldq_replay_if[msrh_conf_pkg::LSU_INST_NUM],
 
-   input lrq_resolve_t     i_lrq_resolve,
-   input logic             i_lrq_is_full,
+   input missu_resolve_t     i_missu_resolve,
+   input logic             i_missu_is_full,
 
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit,
@@ -223,8 +223,8 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
      .i_entry_picked (|w_run_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
 
-     .i_lrq_resolve (i_lrq_resolve),
-     .i_lrq_is_full (i_lrq_is_full),
+     .i_missu_resolve (i_missu_resolve),
+     .i_missu_is_full (i_missu_is_full),
 
      .i_st_buffer_empty (st_buffer_if.is_empty),
 
@@ -429,15 +429,15 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     unique case (entry.state)
       LDQ_INIT            : $fwrite(fp, "LDQ_INIT");
       LDQ_EX2_RUN         : $fwrite(fp, "LDQ_EX2_RUN");
-      LDQ_LRQ_CONFLICT    : $fwrite(fp, "LDQ_LRQ_CONFLICT");
+      LDQ_MISSU_CONFLICT  : $fwrite(fp, "LDQ_MISSU_CONFLICT");
       LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
       LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
       LDQ_EX3_DONE        : $fwrite(fp, "LDQ_EX3_DONE");
       LDQ_WAIT_COMMIT     : $fwrite(fp, "LDQ_WAIT_COMMIT");
       LDQ_WAIT_ENTRY_CLR  : $fwrite(fp, "LDQ_WAIT_ENTRY_CLR");
       LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
-      LDQ_LRQ_EVICT_HAZ   : $fwrite(fp, "LDQ_LRQ_EVICT_HAZ");
-      LDQ_LRQ_FULL        : $fwrite(fp, "LDQ_LRQ_FULL");
+      LDQ_MISSU_EVICT_HAZ : $fwrite(fp, "LDQ_MISSU_EVICT_HAZ");
+      LDQ_MISSU_FULL      : $fwrite(fp, "LDQ_MISSU_FULL");
       LDQ_WAIT_OLDEST     : $fwrite(fp, "LDQ_WAIT_OLDEST");
       LDQ_NONFWD_HAZ_WAIT : $fwrite(fp, "LDQ_NONFWD_HAZ_WAIT");
       default             : $fatal(0, "State Log lacked. %d\n", entry.state);
