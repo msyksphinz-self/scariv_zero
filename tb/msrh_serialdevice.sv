@@ -39,6 +39,62 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [ 9: 0]      r_read_valid_init;
+logic [ 7: 0]      r_read_data_init;
+logic [TAG_W-1: 0] r_read_tag_init;
+
+logic              r_read_valid[10];
+logic [ 7: 0]      r_read_data [10];
+logic [TAG_W-1: 0] r_read_tag  [10];
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_read_valid_init <= 1'b0;
+    r_read_data_init  <= 'h0;
+    r_read_tag_init   <= 'h0;
+  end else begin
+    if (i_req_valid & o_req_ready &
+        (i_req_cmd == msrh_lsu_pkg::M_XRD)) begin
+      r_read_valid_init <= 1'b1;
+      r_read_tag_init   <= i_req_tag;
+      case (i_req_addr)
+        BASE_ADDR + 5 : begin
+          r_read_data_init  <= 'h20;
+        end
+        default : begin
+          r_read_data_init  <= 'h00;
+        end
+      endcase // case (i_req_addr)
+    end else begin
+      r_read_valid_init <= 1'b0;
+      r_read_data_init  <= 'h0;
+      r_read_tag_init   <= 'h0;
+    end
+  end // else: !if(!i_reset_n)
+end
+
+
+generate for (genvar i = 0; i < 10; i++) begin : device_resp_loop
+  if (i == 0) begin
+    always_ff @ (posedge i_clk) begin
+      r_read_valid[i] <= r_read_valid_init;
+      r_read_data [i] <= r_read_data_init;
+      r_read_tag  [i] <= r_read_tag_init;
+    end
+  end else begin
+    always_ff @ (posedge i_clk) begin
+      r_read_valid[i] <= r_read_valid[i-1];
+      r_read_data [i] <= r_read_data [i-1];
+      r_read_tag  [i] <= r_read_tag  [i-1];
+    end
+  end // else: !if(i == 0)
+end
+endgenerate
+
+assign o_resp_valid = r_read_valid[9];
+assign o_resp_data  = r_read_data [9];
+assign o_resp_tag   = r_read_tag  [9];
+
 initial begin
   device_fp = $fopen("serial.out", "w");
 end

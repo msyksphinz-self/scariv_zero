@@ -141,11 +141,11 @@ assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_fini
 
 
 
-assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == MISSU_CONFLICT;
-assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == MISSU_FULL;
-assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == MISSU_EVICT_CONFLICT;
+assign w_missu_is_conflict     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
+assign w_missu_is_full         = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
+assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_EVICT_CONFLICT;
 
-assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == MISSU_ASSIGNED;
+assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -218,23 +218,23 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
-        w_entry_next.state           = i_ex1_q_updates.hazard_typ == TLB_MISS  ? STQ_TLB_HAZ :
-                                       i_ex1_q_updates.hazard_typ == UC_ACCESS ? STQ_WAIT_OLDEST :
+        w_entry_next.state           = i_ex1_q_updates.hazard_typ == EX1_HAZ_TLB_MISS  ? STQ_TLB_HAZ :
+                                       i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS ? STQ_WAIT_OLDEST :
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
         w_entry_next.paddr           = i_ex1_q_updates.paddr;
-        w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != TLB_MISS;
+        w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
-        w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == EX1_NONE ? i_ex1_q_updates.tlb_uc :
+        w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE ? i_ex1_q_updates.tlb_uc :
                                        r_entry.is_uc;
 
         w_entry_next.is_rmw  = i_ex1_q_updates.is_rmw;
         w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
 
         w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid |
-                                         (i_ex1_q_updates.hazard_typ == UC_ACCESS);
+                                         (i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS);
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
       if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
@@ -253,8 +253,8 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT  ? STQ_ISSUE_WAIT :
-                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT  ? STQ_ISSUE_WAIT :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              w_missu_is_conflict     ? STQ_MISSU_CONFLICT  :
                              w_missu_is_full         ? STQ_MISSU_FULL      :
                              w_missu_evict_is_hazard ? STQ_MISSU_EVICT_HAZ :
@@ -266,7 +266,7 @@ always_comb begin
         w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
         w_entry_next.sc_success       = i_ex2_q_updates.sc_success;
       end else if (i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
                              STQ_DONE_EX3;
       end else begin
         w_entry_next.state = STQ_DONE_EX3;

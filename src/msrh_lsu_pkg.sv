@@ -23,6 +23,12 @@ package msrh_lsu_pkg;
 localparam DCACHE_BANK_LOW  = $clog2(DCACHE_DATA_B_W);
 localparam DCACHE_BANK_HIGH = $clog2(msrh_conf_pkg::DCACHE_BANKS) + DCACHE_BANK_LOW - 1;
 
+// DCache Data Types
+typedef logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] dc_ways_idx_t;
+typedef logic [msrh_conf_pkg::DCACHE_WAYS-1 : 0]        dc_ways_t;
+typedef logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       dc_data_t;
+typedef logic [msrh_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
+
   localparam MEM_Q_SIZE = msrh_conf_pkg::LDQ_SIZE > msrh_conf_pkg::STQ_SIZE ?
                           msrh_conf_pkg::LDQ_SIZE :
                           msrh_conf_pkg::STQ_SIZE;
@@ -43,21 +49,21 @@ typedef struct   packed {
 } map_attr_t;
 
 typedef enum logic [ 2: 0] {
-  EX1_NONE,
-  TLB_MISS,
-  UC_ACCESS
+  EX1_HAZ_NONE,
+  EX1_HAZ_TLB_MISS,
+  EX1_HAZ_UC_ACCESS
 } ex1_haz_t;
 
 
 typedef enum logic [ 2: 0] {
-  NONE,
-  L1D_CONFLICT,
-  MISSU_ASSIGNED,
-  MISSU_CONFLICT,
-  MISSU_FULL,
-  MISSU_EVICT_CONFLICT,
-  RMW_ORDER_HAZ,
-  STQ_NONFWD_HAZ
+  EX2_HAZ_NONE,
+  EX2_HAZ_L1D_CONFLICT,
+  EX2_HAZ_MISSU_ASSIGNED,
+  EX2_HAZ_MISSU_CONFLICT,
+  EX2_HAZ_MISSU_FULL,
+  EX2_HAZ_MISSU_EVICT_CONFLICT,
+  EX2_HAZ_RMW_ORDER_HAZ,
+  EX2_HAZ_STQ_NONFWD_HAZ
 } ex2_haz_t;
 
   typedef enum logic [4:0] {
@@ -150,12 +156,13 @@ typedef enum logic [ 2: 0] {
 
 typedef struct packed {
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
+  dc_ways_idx_t way;
   msrh_pkg::paddr_t           paddr;
 } evict_payload_t;
 
 typedef struct packed {
   msrh_pkg::paddr_t paddr;
+  logic             is_uc;
 } missu_req_t;
 
 typedef struct packed {
@@ -168,10 +175,11 @@ typedef struct packed {
 typedef struct packed {
   logic          valid;
   msrh_pkg::paddr_t paddr;
+  logic                          is_uc;
   logic                          sent;
   logic                          get_data;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] data;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] way;
+  dc_data_t                      data;
+  dc_ways_idx_t way;
 } miss_entry_t;
 
 function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
@@ -180,17 +188,22 @@ function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
   ret = 'h0;
 
   ret.valid = valid;
-  ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
-               {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+  ret.is_uc = req.is_uc;
+  if (req.is_uc) begin
+    ret.paddr = req.paddr;
+  end else begin
+    ret.paddr = {req.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)],
+                   {$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+  end
 
   return ret;
 
 endfunction // assign_missu_entry
 
 typedef struct packed {
-  logic                                      valid;
-  msrh_pkg::alen_t             data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] be;
+  logic            valid;
+  msrh_pkg::alen_t data;
+  dc_strb_t        be;
 } evict_merge_t;
 
 typedef struct packed {
@@ -255,7 +268,7 @@ typedef struct packed {
 typedef struct packed {
   logic                                           s0_valid;
   logic                                           s0_tag_update_valid;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
+  dc_ways_idx_t s0_way;
   msrh_pkg::paddr_t                 s0_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s0_data;
   logic [DCACHE_DATA_B_W-1: 0]                    s0_be;
@@ -270,10 +283,10 @@ typedef struct packed {
 } dc_wr_resp_t;
 
 typedef struct packed {
-  msrh_pkg::paddr_t                  s0_paddr;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        s0_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0]       s0_be;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s0_way;
+  msrh_pkg::paddr_t              s0_paddr;
+  msrh_lsu_pkg::dc_data_t        s0_data;
+  msrh_lsu_pkg::dc_strb_t        s0_be;
+  dc_ways_idx_t s0_way;
 } s0_l1d_wr_req_t;
 
 
@@ -299,14 +312,14 @@ typedef struct packed {
 
 typedef struct packed {
   logic            hit;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] hit_way;
+  dc_ways_idx_t hit_way;
   logic            miss;
   logic            conflict;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
 
   // Eviction: Replaced Address
   logic                                    replace_valid;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]  replace_way;
+  dc_ways_idx_t  replace_way;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
   msrh_pkg::paddr_t          replace_paddr;
 
@@ -646,8 +659,8 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]                missu_index_oh;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0]      l1d_way;
+  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
+  dc_ways_idx_t                                        l1d_way;
 
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;

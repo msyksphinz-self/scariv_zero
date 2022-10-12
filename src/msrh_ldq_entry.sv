@@ -96,12 +96,12 @@ assign w_load_flush = w_load_commit_flush | w_load_br_flush;
 
 assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
 
-assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == MISSU_CONFLICT;
-assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == MISSU_FULL;
-assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == MISSU_EVICT_CONFLICT;
+assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
+assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
+assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_EVICT_CONFLICT;
 
-assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == MISSU_ASSIGNED;
-assign w_missu_resolve_match = i_ex2_q_updates.hazard_typ == MISSU_CONFLICT &
+assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED;
+assign w_missu_resolve_match = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT &
                              i_missu_resolve.valid &
                              (i_missu_resolve.resolve_index_oh == i_ex2_q_updates.missu_index_oh);
 
@@ -189,8 +189,8 @@ always_comb begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else begin
         if (w_entry_next.is_valid & i_ex1_q_valid) begin
-          w_entry_next.state           = i_ex1_q_updates.hazard_typ == TLB_MISS  ? LDQ_TLB_HAZ :
-                                         i_ex1_q_updates.hazard_typ == UC_ACCESS ? LDQ_WAIT_OLDEST :
+          w_entry_next.state           = i_ex1_q_updates.hazard_typ == EX1_HAZ_TLB_MISS  ? LDQ_TLB_HAZ :
+                                         i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS ? LDQ_WAIT_OLDEST :
                                          LDQ_EX2_RUN;
           w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
@@ -202,7 +202,7 @@ always_comb begin
 
           for (int p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
             w_ex2_ldq_entries_recv_next[p_idx] =  i_ex1_q_valid &
-                                                  (i_ex1_q_updates.hazard_typ == EX1_NONE) &
+                                                  (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
                                                   r_entry.pipe_sel_idx_oh[p_idx];
           end
         end // if (i_ex1_q_valid)
@@ -219,9 +219,9 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == L1D_CONFLICT   ? LDQ_ISSUE_WAIT      :
-                             i_ex2_q_updates.hazard_typ == STQ_NONFWD_HAZ ? LDQ_NONFWD_HAZ_WAIT :
-                             i_ex2_q_updates.hazard_typ == RMW_ORDER_HAZ  ? LDQ_WAIT_OLDEST     :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT   ? LDQ_ISSUE_WAIT      :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_STQ_NONFWD_HAZ ? LDQ_NONFWD_HAZ_WAIT :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? LDQ_WAIT_OLDEST     :
                              w_missu_resolve_match   ? LDQ_ISSUE_WAIT :
                              w_missu_is_conflict     ? LDQ_MISSU_CONFLICT :
                              w_missu_is_full         ? LDQ_MISSU_FULL :

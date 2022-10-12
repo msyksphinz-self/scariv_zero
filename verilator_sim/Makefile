@@ -18,13 +18,12 @@ VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -output-split 15000
 # VERILATOR_OPTS += -threads 4
-VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
+# VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
 VERILATOR_OPTS += $(abspath ../cpp/tb_msrh.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/tb_debug_tick.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
-VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
 
 # VERILATOR_OPTS += -CFLAGS "-g"
 # VERILATOR_OPTS += -LDFLAGS "-lelf"
@@ -44,6 +43,7 @@ VERILATOR_OPTS += -LDFLAGS "-lfesvr"
 VERILATOR_OPTS += -LDFLAGS "-lfdt"
 VERILATOR_OPTS += -LDFLAGS "-ldl"
 VERILATOR_OPTS += -LDFLAGS "-lpthread"
+VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include

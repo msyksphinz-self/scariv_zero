@@ -138,7 +138,8 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
-  argv[arg_max++] = "-m0x80000000:0x8000000,0x54000000:0x1000";
+  argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
+  argv[arg_max++] = "--device=serialdevice,1409286144,0";   // 1409286144 = 0x5400_0000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";

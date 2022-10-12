@@ -98,6 +98,8 @@ logic                    w_ex1_rs2_lsu_mispred;
 logic                    w_ex1_rs1_mispred;
 logic                    w_ex1_rs2_mispred;
 
+logic                    w_ex1_haz_detected;
+
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
 riscv_pkg::xlen_t                  w_ex1_tgt_data[msrh_pkg::TGT_BUS_SIZE];
 riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
@@ -111,8 +113,9 @@ msrh_pkg::paddr_t       r_ex2_paddr;
 lsu_pipe_ctrl_t         r_ex2_pipe_ctrl;
 msrh_pkg::alen_t        w_ex2_data_tmp;
 msrh_pkg::alen_t        w_ex2_data_sign_ext;
+logic                   r_ex2_is_uc;
 logic                   w_ex2_load_mispredicted;
-logic                   r_ex2_tlb_miss;
+logic                   r_ex2_haz_detected_from_ex1;
 logic                   w_ex2_l1d_missed;
 
 msrh_pkg::alenb_t       w_stbuf_fwd_dw;
@@ -137,6 +140,11 @@ msrh_pkg::issue_t     r_ex3_issue, w_ex3_issue_next;
 msrh_pkg::alen_t      r_ex3_aligned_data;
 logic                 r_ex3_mis_valid;
 
+logic                 w_ex2_haz_detected;
+assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
+                            (((r_ex2_pipe_ctrl.op == OP_LOAD) |
+                              (r_ex2_pipe_ctrl.op == OP_RMW)) ? w_ex2_load_mispredicted | (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE)  : 1'b0);
+
 //
 // Pipeline Logic
 //
@@ -144,12 +152,10 @@ always_comb begin
   w_ex1_issue_next   = w_ex0_issue;
 
   w_ex2_issue_next       = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_tlb_resp.miss;
+  w_ex2_issue_next.valid = r_ex1_issue.valid;
 
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = ((r_ex2_pipe_ctrl.op == OP_LOAD) |
-                            (r_ex2_pipe_ctrl.op == OP_RMW)) ? !w_ex2_load_mispredicted & (o_ex2_q_updates.hazard_typ == NONE)  :
-                           r_ex2_issue.valid;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_haz_detected;
 end
 
 
@@ -163,7 +169,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_issue     <= 'h0;
     r_ex2_index_oh  <= 'h0;
-    r_ex2_tlb_miss  <= 1'b0;
+    r_ex2_haz_detected_from_ex1  <= 1'b0;
+
+    r_ex2_is_uc     <= 1'b0;
   end else begin
     r_ex0_rs_issue  <= i_rv0_issue;
     r_ex0_rs_index_oh <= i_rv0_index_oh;
@@ -175,7 +183,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_issue     <= w_ex2_issue_next;
     r_ex2_index_oh  <= r_ex1_index_oh;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
-    r_ex2_tlb_miss  <= r_ex1_issue.valid & w_ex1_tlb_resp.miss;
+    r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
+
+    r_ex2_is_uc     <= !w_ex1_tlb_resp.cacheable;
 
     r_ex3_issue     <= w_ex3_issue_next;
   end // else: !if(!i_reset_n)
@@ -316,7 +326,7 @@ select_mispred_bus rs2_mispred_select
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !w_ex1_tlb_resp.miss &
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
                                     ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
@@ -339,13 +349,15 @@ assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALI
                                w_ex1_tlb_resp.ae.st ? msrh_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
                                msrh_pkg::except_t'('h0);
 
+assign w_ex1_haz_detected = o_ex1_q_updates.hazard_typ != EX1_HAZ_NONE;
+
 // Interface to EX1 updates
 assign o_ex1_q_updates.update              = r_ex1_issue.valid;
 assign o_ex1_q_updates.cmt_id              = r_ex1_issue.cmt_id;
 assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.hazard_typ          = w_ex1_tlb_resp.miss ? TLB_MISS :
-                                             ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? UC_ACCESS :
-                                             EX1_NONE;
+assign o_ex1_q_updates.hazard_typ          = w_ex1_tlb_resp.miss ? EX1_HAZ_TLB_MISS :
+                                             ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? EX1_HAZ_UC_ACCESS :
+                                             EX1_HAZ_NONE;
 assign o_ex1_q_updates.tlb_uc              = ~w_ex1_tlb_resp.cacheable;
 assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
 assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
@@ -379,7 +391,7 @@ end
 // Interface to L1D cache
 assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
                                 ((r_ex1_pipe_ctrl.op == OP_LOAD) |
-                                 (r_ex1_pipe_ctrl.op == OP_RMW)) & !w_ex1_tlb_resp.miss;
+                                 (r_ex1_pipe_ctrl.op == OP_RMW)) & !w_ex1_haz_detected;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
@@ -390,6 +402,7 @@ assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_paddr <= 'h0;
+    r_ex2_haz_detected_from_ex1 <= 1'b0;
 
     r_ex2_is_lr <= 1'b0;
     r_ex2_is_sc <= 1'b0;
@@ -398,6 +411,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
+    r_ex2_haz_detected_from_ex1 <= w_ex1_haz_detected;
 
     r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
     r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;
@@ -424,23 +438,24 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~ex1_l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
 
-assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_tlb_miss & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
+assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_paddr;
+assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 // L1D replace information
 
 assign w_ex2_sc_success = r_lr_registered_valid & (r_lr_paddr == r_ex2_paddr);
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? STQ_NONFWD_HAZ :
-                                    w_ex2_rmw_haz_vld                 ? RMW_ORDER_HAZ :
-                                    &w_ex2_fwd_success                ? NONE          :
-                                    ex1_l1d_rd_if.s1_conflict         ? L1D_CONFLICT  :
+assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
+                                    w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ :
+                                    &w_ex2_fwd_success                ? EX2_HAZ_NONE          :
+                                    ex1_l1d_rd_if.s1_conflict         ? EX2_HAZ_L1D_CONFLICT  :
                                     l1d_missu_if.load ?
-                                    (l1d_missu_if.resp_payload.full     ? MISSU_FULL      :
-                                     l1d_missu_if.resp_payload.conflict ? MISSU_CONFLICT  :
-                                     MISSU_ASSIGNED) :
-                                    NONE;
+                                    (l1d_missu_if.resp_payload.full     ? EX2_HAZ_MISSU_FULL      :
+                                     l1d_missu_if.resp_payload.conflict ? EX2_HAZ_MISSU_CONFLICT  :
+                                     EX2_HAZ_MISSU_ASSIGNED) :
+                                    EX2_HAZ_NONE;
 assign o_ex2_q_updates.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
@@ -453,7 +468,7 @@ assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
 // Misprediction Update
 // ---------------------
 always_comb begin
-  o_ex2_mispred.mis_valid = w_ex2_load_mispredicted | r_ex2_tlb_miss;
+  o_ex2_mispred.mis_valid = w_ex2_load_mispredicted | r_ex2_haz_detected_from_ex1;
   o_ex2_mispred.rd_type   = r_ex2_issue.wr_reg.typ;
   o_ex2_mispred.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
@@ -464,14 +479,14 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (o_ex2_q_updates.update &
         (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == MISSU_CONFLICT) &
+        (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT) &
         !$onehot(o_ex2_q_updates.missu_index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
              o_ex2_q_updates.missu_index_oh);
     end
     if (o_ex2_q_updates.update &
         (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == MISSU_ASSIGNED) &
+        (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
         !$onehot(o_ex2_q_updates.missu_index_oh)) begin
       $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
              o_ex2_q_updates.missu_index_oh);

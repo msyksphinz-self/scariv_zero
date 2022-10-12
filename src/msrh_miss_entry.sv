@@ -17,22 +17,26 @@ module msrh_miss_entry
    input logic i_wr_conflicted,
    input msrh_lsu_pkg::s2_l1d_wr_resp_t s2_l1d_wr_resp_payload,
 
+   // UC forward hit
+   input logic i_uc_fwd_hit,
+
    output msrh_lsu_pkg::miss_entry_t o_entry,
    output logic o_evict_ready,
-   input logic  i_evict_accepted,
 
+   input  logic i_out_ptr_valid,
    output logic o_entry_finish
    );
 
-typedef enum logic [2:0] {
-  INIT            = 0,
-  READY_REQ       = 1,
-  WAIT_RESP       = 2,
-  WRITE_L1D       = 3,
-  WRITE_L1D_TEMP  = 4,
-  WRITE_L1D_TEMP2 = 5,
-  EVICT_REQ       = 6,
-  WAIT_FINISH     = 7
+typedef enum logic [3:0] {
+  INIT             = 0,
+  READY_REQ        = 1,
+  WAIT_RESP        = 2,
+  WRITE_L1D        = 3,
+  WRITE_L1D_TEMP   = 4,
+  WRITE_L1D_TEMP2  = 5,
+  EVICT_REQ        = 6,
+  WAIT_FINISH      = 7,
+  WAIT_GET_UC_DATA = 8
 } state_t;
 
 
@@ -69,8 +73,12 @@ always_comb begin
       if (i_ext_load_fin) begin
         w_entry_next.data = l2_resp.data;
         w_entry_next.get_data = 1'b1;
-        w_state_next = WRITE_L1D;
         w_count_fin_next = 'h0;
+        if (!r_entry.is_uc) begin
+          w_state_next = WRITE_L1D;
+        end else begin
+          w_state_next = WAIT_GET_UC_DATA;
+        end
       end
     end
     WRITE_L1D : begin
@@ -98,12 +106,17 @@ always_comb begin
       // end
     end
     EVICT_REQ : begin
-      if (i_evict_accepted) begin
+      if (i_evict_sent) begin
+        w_state_next = WAIT_FINISH;
+      end
+    end
+    WAIT_GET_UC_DATA : begin
+      if (i_uc_fwd_hit) begin
         w_state_next = WAIT_FINISH;
       end
     end
     WAIT_FINISH : begin
-      if (r_count_fin == 'h1) begin
+      if ((r_count_fin == 'h1) && i_out_ptr_valid) begin
         w_state_next = INIT;
         w_entry_next = 'h0;
         o_entry_finish = 'b1;

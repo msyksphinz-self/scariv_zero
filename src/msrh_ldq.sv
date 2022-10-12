@@ -192,7 +192,7 @@ generate for (genvar l_idx = 0; l_idx < msrh_conf_pkg::LDQ_SIZE; l_idx++) begin 
 
   msrh_ldq_entry
     #(.entry_index (l_idx))
-  u_msrh_ldq_entry
+  u_entry
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),

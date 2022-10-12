@@ -67,6 +67,8 @@ logic [$clog2(REQ_PORT_NUM): 0] w_l1d_missu_valid_load_cnt;
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_missu_loads_cnt;
 logic [$clog2(msrh_pkg::MISSU_ENTRY_SIZE):0] r_missu_remained_size;
 
+logic [msrh_conf_pkg::LSU_INST_NUM-1: 0]     w_uc_fwd_hit [msrh_pkg::MISSU_ENTRY_SIZE] ;
+
 //
 // MISSU Request selection
 //
@@ -342,10 +344,12 @@ generate for (genvar e_idx = 0; e_idx < msrh_pkg::MISSU_ENTRY_SIZE; e_idx++) beg
        .i_wr_conflicted        (1'b0),
        .s2_l1d_wr_resp_payload (l1d_wr_if.s2_wr_resp),
 
+       .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
+
        .o_entry        (w_missu_entries[e_idx]),
        .o_evict_ready  (w_missu_entry_evict_ready[e_idx]),
-       .i_evict_accepted (w_missu_ready_to_evict_oh[e_idx]),
 
+       .i_out_ptr_valid (w_out_ptr_oh[e_idx]),
        .o_entry_finish (w_entry_finish[e_idx])
        );
 
@@ -358,10 +362,10 @@ localparam TAG_FILLER_W = msrh_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(msrh_pkg::MISS
 
 // selection of external memory request
 generate for (genvar e_idx = 0; e_idx < msrh_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : missu_sel_loop
-  assign w_missu_ready_to_send[e_idx] = w_missu_entries[e_idx].valid;
+  assign w_missu_ready_to_send[e_idx] = w_missu_entries[e_idx].valid & !w_missu_entries[e_idx].sent;
 
   assign w_missu_ready_to_evict[e_idx] = w_missu_entries[e_idx].valid &
-                                       w_missu_entry_evict_ready[e_idx];
+                                         w_missu_entry_evict_ready[e_idx];
 end
 endgenerate
 bit_extract_lsb_ptr #(.WIDTH(msrh_pkg::MISSU_ENTRY_SIZE)) u_bit_send_sel (.in(w_missu_ready_to_send), .i_ptr(w_out_ptr), .out(w_missu_ready_to_send_oh));
@@ -373,7 +377,7 @@ encoder#(.SIZE(msrh_pkg::MISSU_ENTRY_SIZE)) u_bit_evict_tag_encoder (.i_in(w_mis
 bit_oh_or #(.T(msrh_lsu_pkg::miss_entry_t), .WORDS(msrh_pkg::MISSU_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_missu_ready_to_evict_oh), .i_data(w_missu_entries), .o_selected(w_missu_ready_to_evict_entry));
 
 
-assign l1d_ext_rd_req.valid = w_missu_ready_to_send_entry.valid & !w_missu_ready_to_send_entry.sent;
+assign l1d_ext_rd_req.valid           = |w_missu_ready_to_send;
 assign l1d_ext_rd_req.payload.cmd     = msrh_lsu_pkg::M_XRD;
 assign l1d_ext_rd_req.payload.addr    = w_missu_ready_to_send_entry.paddr;
 assign l1d_ext_rd_req.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_missu_send_tag};
@@ -440,10 +444,12 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_fwd_hit;
   for (genvar e_idx = 0; e_idx < msrh_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : buffer_loop
     assign w_missu_fwd_hit[e_idx] = w_missu_entries[e_idx].valid &
-                                  w_missu_entries[e_idx].get_data &
-                                  missu_fwd_if[p_idx].ex2_valid &
-                                  (w_missu_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                   missu_fwd_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+                                    w_missu_entries[e_idx].get_data &
+                                    missu_fwd_if[p_idx].ex2_valid &
+                                    (w_missu_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                     missu_fwd_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]);
+
+    assign w_uc_fwd_hit[e_idx][p_idx] = w_missu_fwd_hit[e_idx];
   end
 
   msrh_lsu_pkg::miss_entry_t w_missu_fwd_entry;
@@ -452,40 +458,11 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
   assign missu_fwd_if[p_idx].ex2_fwd_valid = |w_missu_fwd_hit;
   assign missu_fwd_if[p_idx].ex2_fwd_data  = w_missu_fwd_entry.data;
 
-// `ifdef SIMULATION
-//   always_ff @ (negedge i_clk, negedge i_reset_n) begin
-//     if (i_reset_n) begin
-//       if (!$onehot0(w_missu_evict_hit)) begin
-//         $fatal(0, "MISSU Hazard Check : missu_evict_hit should be one-hot. Value=%x\n", w_missu_evict_hit);
-//       end
-//     end
-//   end
-// `endif // SIMULATION
-
 end
 endgenerate
 
 
-// --------------------------------
-// l1d_wr_if Eviction hazard check
-// --------------------------------
-// logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] l1d_wr_eviction_hazard_vlds;
-// generate for (genvar e_idx = 0; e_idx < msrh_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : wr_if_evicted_loop
-//   assign l1d_wr_eviction_hazard_vlds[e_idx] = w_missu_entries[e_idx].valid & l1d_wr_if.s0_valid &
-//                                               w_missu_entries[e_idx].evict_valid &
-//                                               (w_missu_entries[e_idx].evict.paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)] ==
-//                                                l1d_wr_if.s0_wr_req.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)]) &
-//                                               w_missu_entries[e_idx].evict_sent;
-// end
-// endgenerate
-//
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     l1d_wr_if.s1_missunit_already_evicted <= 1'b0;
-//   end else begin
-//     l1d_wr_if.s1_missunit_already_evicted <= |l1d_wr_eviction_hazard_vlds;
-//   end
-// end
+
 
 
 // --------------------------
