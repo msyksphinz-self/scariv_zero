@@ -39,13 +39,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-logic [ 9: 0]      r_read_valid_init;
-logic [ 7: 0]      r_read_data_init;
-logic [TAG_W-1: 0] r_read_tag_init;
+logic               r_read_valid_init;
+logic [DATA_W-1: 0] r_read_data_init;
+logic [TAG_W-1: 0]  r_read_tag_init;
 
-logic              r_read_valid[10];
-logic [ 7: 0]      r_read_data [10];
-logic [TAG_W-1: 0] r_read_tag  [10];
+logic               r_read_valid[10];
+logic [DATA_W-1: 0] r_read_data [10];
+logic [TAG_W-1: 0]  r_read_tag  [10];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -59,7 +59,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_read_tag_init   <= i_req_tag;
       case (i_req_addr)
         BASE_ADDR + 5 : begin
-          r_read_data_init  <= 'h20;
+          r_read_data_init  <= 'h20 << ((5 % (DATA_W/8)) * 8);
         end
         default : begin
           r_read_data_init  <= 'h00;

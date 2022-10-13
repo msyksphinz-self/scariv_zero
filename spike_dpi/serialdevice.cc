@@ -8,6 +8,7 @@
 #include "mmu.h"
 
 class serialdevice_t : public abstract_device_t {
+  FILE *serial_log_fp;
  public:
   serialdevice_t(std::string name);
   bool load(reg_t addr, size_t len, uint8_t* bytes);
@@ -15,9 +16,9 @@ class serialdevice_t : public abstract_device_t {
  private:
 };
 
-
 serialdevice_t::serialdevice_t(std::string name)
 {
+  serial_log_fp = fopen ("spike_serial.log", "w");
   std::cerr << "serialdevice: " << name << " loaded\n";
 }
 
@@ -25,8 +26,8 @@ bool serialdevice_t::load(reg_t addr, size_t len, uint8_t* bytes)
 {
   // std::cerr << "serialdevice_t::load called : addr = " << std::hex << addr << '\n';
   switch (addr) {
-    case 5 : return 0x20;
-    default : return 0x0;
+    case 5  : bytes[0] = 0x20; break;
+    default : bytes[0] = 0x00; break;
   }
 
   return true;
@@ -35,7 +36,8 @@ bool serialdevice_t::load(reg_t addr, size_t len, uint8_t* bytes)
 bool serialdevice_t::store(reg_t addr, size_t len, const uint8_t* bytes)
 {
   // std::cerr << "serialdevice_t::store called : addr = " << std::hex << addr << '\n';
-  std::cout << bytes[0];
+  fprintf (serial_log_fp, "%c", bytes[0]);
+  fflush (serial_log_fp);
   return true;
 }
 
