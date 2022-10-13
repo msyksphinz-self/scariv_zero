@@ -139,7 +139,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
-  argv[arg_max++] = "--device=serialdevice,1409286144,0";   // 1409286144 = 0x5400_0000
+  argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
@@ -248,7 +248,6 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
     auto avail = stream.rdbuf()->in_avail();
     std::string args(avail, '\0');
     stream.readsome(&args[0], avail);
-
     plugin_devices.emplace_back(base, new mmio_plugin_device_t(name, args));
   };
 
@@ -273,7 +272,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   parser.option(0, "isa", 1, [&](const char* s){isa = s;});
   parser.option(0, "priv", 1, [&](const char* s){priv = s;});
   parser.option(0, "varch", 1, [&](const char* s){varch = s;});
-  // parser.option(0, "device", 1, device_parser);
+  parser.option(0, "device", 1, device_parser);
   parser.option(0, "extension", 1, [&](const char* s){extension = find_extension(s);});
   parser.option(0, "dump-dts", 0, [&](const char *s){dump_dts = true;});
   parser.option(0, "disable-dtb", 0, [&](const char *s){dtb_enabled = false;});
