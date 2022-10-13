@@ -1086,29 +1086,29 @@ int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
 
-  initial_spike (argv[1], 64, 64, 1);
+  initial_spike (argv[1], 64, 0, 1);
   processor_t *p = spike_core->get_core(0);
 
-  fprintf(compare_log_fp, "INST     CYCLE    PC\n");
+  // fprintf(compare_log_fp, "INST     CYCLE    PC\n");
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10000000; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     auto instret = p->get_state()->minstret;
     auto cycle = p->get_state()->mcycle;
 
-    fprintf(compare_log_fp, "%10d %10d %08lx\n", instret, cycle, iss_pc);
+    // fprintf(compare_log_fp, "%10d %10d %08lx\n", instret, cycle, iss_pc);
 
-    for (auto &iss_rd: p->get_state()->log_mem_read) {
-      fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-              g_rv_xlen / 4, std::get<0>(iss_rd),
-              g_rv_xlen / 4, std::get<1>(iss_rd));
-    }
-    for (auto &iss_wr: p->get_state()->log_mem_write) {
-      fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
-              g_rv_xlen / 4, std::get<0>(iss_wr),
-              g_rv_xlen / 4, std::get<1>(iss_wr));
-    }
+    // for (auto &iss_rd: p->get_state()->log_mem_read) {
+    //   fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+    //           g_rv_xlen / 4, std::get<0>(iss_rd),
+    //           g_rv_xlen / 4, std::get<1>(iss_rd));
+    // }
+    // for (auto &iss_wr: p->get_state()->log_mem_write) {
+    //   fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
+    //           g_rv_xlen / 4, std::get<0>(iss_wr),
+    //           g_rv_xlen / 4, std::get<1>(iss_wr));
+    // }
   }
 
   return 0;
