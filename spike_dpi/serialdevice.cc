@@ -7,12 +7,6 @@
 #include "abstract_device.h"
 #include "mmu.h"
 
-class sim_t;
-class bus_t;
-
-void register_mmio_plugin(const char* name_cstr,
-                          const mmio_plugin_t* mmio_plugin);
-
 class serialdevice_t : public abstract_device_t {
  public:
   serialdevice_t(std::string name);
@@ -45,8 +39,6 @@ bool serialdevice_t::store(reg_t addr, size_t len, const uint8_t* bytes)
   return true;
 }
 
-extern "C" {
-  static mmio_plugin_registration_t<serialdevice_t> serialdevice_mmio_plugin_registration("serialdevice");
-}
+static mmio_plugin_registration_t<serialdevice_t> serialdevice_mmio_plugin_registration("serialdevice");
 
 #endif // _RISCV_SERIALDEVICE_H
