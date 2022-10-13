@@ -104,7 +104,10 @@ def execute_test(test):
     command_str += " -e "
     command_str += test["elf"]
     command_str += " -o " + output_file
-    # print (command_str)
+
+    command_log_fp = open(base_dir + '/' + testcase + '/sim.cmd', mode='w')
+    command_log_fp.write (command_str)
+    command_log_fp.close()
     subprocess.run(command_str, shell=True, capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
     result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
