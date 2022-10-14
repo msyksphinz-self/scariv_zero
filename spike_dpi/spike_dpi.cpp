@@ -172,7 +172,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   char *dts_file =(char *)malloc(sizeof(char) * 64);
   sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
   argv[arg_max++] = dts_file;
-  argv[arg_max++] = "--kernel=/home/msyksphinz/work/riscv/linux/riscv64-linux/output_hifive/images/Image";
+  argv[arg_max++] = "--kernel=../../../tests/linux/Image";
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }

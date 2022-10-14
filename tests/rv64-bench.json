@@ -12,7 +12,5 @@
 
     { "name": "coremark"        , "group": ["bench"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64},
 
-    { "name": "linux_spike"     , "group": ["linux"], "elf": "/home/msyksphinz/work/riscv/linux/riscv64-linux/output_spike/images/fw_jump.elf" , "xlen": 64},
-    { "name": "linux_qemu"      , "group": ["linux"], "elf": "/home/msyksphinz/work/riscv/linux/riscv64-linux/output_qemu/images/fw_jump.elf"  , "xlen": 64},
-    { "name": "linux_hifive"    , "group": ["linux"], "elf": "/home/msyksphinz/work/riscv/linux/riscv64-linux/output_hifive/images/fw_jump.elf"  , "xlen": 64}
+    { "name": "linux_hifive"    , "group": ["linux"], "elf": "../../../tests/linux/fw_jump.elf"  , "xlen": 64}
 ]
