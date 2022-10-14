@@ -415,6 +415,14 @@ always_comb begin
                             (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
           w_if_state_next = FETCH_REQ;
         end
+      end else if (w_iq_predict_valid) begin
+        if (w_tlb_refill_wakeup) begin
+          w_s0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+                            (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
+          w_if_state_next = FETCH_REQ;
+        end else begin
+          w_s0_vaddr_next = w_iq_predict_target_vaddr;
+        end
       end else if (w_tlb_refill_wakeup) begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(msrh_lsu_pkg::ICACHE_DATA_B_W));
@@ -636,7 +644,7 @@ msrh_icache u_msrh_icache
 
 assign w_s2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
                                      (w_s2_inst_valid  |
-                                      (r_s2_valid & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
+                                      (r_s2_valid & ~r_s2_clear & ~r_s2_tlb_miss & r_s2_tlb_except_valid));
 
 `ifdef SIMULATION
 paddr_t w_s2_ic_resp_debug_addr;
