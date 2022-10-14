@@ -38,7 +38,7 @@ bool serialdevice_t::store(reg_t addr, size_t len, const uint8_t* bytes)
   // std::cerr << "serialdevice_t::store called : addr = " << std::hex << addr << '\n';
   if (bytes[0] >= 0x20 ||
       bytes[0] == 0x10 ||  // LF
-      bytes[0] == 0x13 ||  // CR
+      bytes[0] == 0x13     // CR
       ) {
     fprintf (serial_log_fp, "%c", bytes[0]);
     fflush (serial_log_fp);
