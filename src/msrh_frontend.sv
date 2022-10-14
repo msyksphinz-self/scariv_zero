@@ -553,7 +553,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_tlb_miss <= 'h0;
     r_s1_tlb_except_valid <= 1'b0;
   end else begin
-    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid & w_s0_ic_ready;
+    r_s1_valid <= r_s0_valid & w_s0_ic_req.valid & w_s0_req_ready;
     // s1 clear condition : Trying to instruction allocate into Inst-Buffer but canceled
     //                      --> Trying s2 request again from s0 stage.
     // When IQ predicts, it also no need to set clear.
@@ -608,8 +608,8 @@ assign w_s0_ic_req.valid = (r_if_state != INIT) & (w_if_state_next == FETCH_REQ)
 
 assign w_s0_ic_req.vaddr = w_s0_vaddr;
 
-assign w_s2_inst_valid = w_s2_ic_resp.valid & !r_s2_clear & !r_s2_tlb_miss;
-assign w_s1_inst_valid = r_s1_valid         & !r_s1_clear & !r_s1_tlb_miss;
+assign w_s2_inst_valid = w_s2_ic_resp.valid & r_s2_valid & !r_s2_clear & !r_s2_tlb_miss;
+assign w_s1_inst_valid =                      r_s1_valid & !r_s1_clear & !r_s1_tlb_miss;
 
 msrh_icache u_msrh_icache
   (
