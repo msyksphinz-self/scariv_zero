@@ -216,9 +216,9 @@ bool    tohost_en;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 extern "C" int
-load_binary(char const* path_exec,
-            char const* filename,
-            bool is_load_dump)
+load_elf(char const* path_exec,
+         char const* filename,
+         bool is_load_dump)
 // std::map<std::string, uint64_t> load_elf(const char* fn, memif_t* memif, reg_t* entry)
 {
 

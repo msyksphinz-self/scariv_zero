@@ -20,7 +20,7 @@ extern "C" {
 }
 
 extern "C" {
-  int load_binary(char const* path_exec,
+  int load_elf(char const* path_exec,
                   char const* filename,
                   bool is_load_dump);
 }
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
   if (set_output_file == false) {
     compare_log_fp = stdout;
   }
-  load_binary("", filename, true);
+  load_elf("", filename, true);
 
   // Instantiate DUT
   dut = new Vmsrh_tb();
