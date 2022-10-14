@@ -35,8 +35,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         (i_req_addr == BASE_ADDR) &
         (i_req_cmd == msrh_lsu_pkg::M_XWR)) begin
       if (i_req_data[ 7: 0] >= 'h20 ||
-          i_req_data[ 7: 0] == 'h10 || // LF
-          i_req_data[ 7: 0] == 'h13    // CR
+          i_req_data[ 7: 0] == 'h0a || // LF
+          i_req_data[ 7: 0] == 'h0d    // CR
           ) begin
         $fwrite (device_fp, "%c", i_req_data[ 7: 0]);
         $fflush (device_fp);
