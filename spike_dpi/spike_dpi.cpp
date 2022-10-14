@@ -109,6 +109,30 @@ static unsigned long atoul_nonzero_safe(const char* s)
   return res;
 }
 
+static bool check_file_exists(const char *fileName)
+{
+  std::ifstream infile(fileName);
+  return infile.good();
+}
+
+static std::ifstream::pos_type get_file_size(const char *filename)
+{
+  std::ifstream in(filename, std::ios::ate | std::ios::binary);
+  return in.tellg();
+}
+
+static void read_file_bytes(const char *filename,size_t fileoff,
+                            mem_t* mem, size_t memoff, size_t read_sz)
+{
+  std::ifstream in(filename, std::ios::in | std::ios::binary);
+  in.seekg(fileoff, std::ios::beg);
+
+  std::vector<char> read_buf(read_sz, 0);
+  in.read(&read_buf[0], read_sz);
+  mem->store(memoff, read_sz, (uint8_t*)&read_buf[0]);
+}
+
+
 void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
 {
   argv[0] = "spike_dpi";
@@ -148,6 +172,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   char *dts_file =(char *)malloc(sizeof(char) * 64);
   sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
   argv[arg_max++] = dts_file;
+  argv[arg_max++] = "--kernel=/home/msyksphinz/work/riscv/linux/riscv64-linux/output_hifive/images/Image";
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -319,6 +344,32 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
 
   if (mems.empty())
     mems = make_mems("2048");
+
+  if (kernel && check_file_exists(kernel)) {
+    kernel_size = get_file_size(kernel);
+    if (isa[2] == '6' && isa[3] == '4')
+      kernel_offset = 0x200000;
+    else
+      kernel_offset = 0x400000;
+    for (auto& m : mems) {
+      if (kernel_size && (kernel_offset + kernel_size) < m.second->size()) {
+         read_file_bytes(kernel, 0, m.second, kernel_offset, kernel_size);
+         break;
+      }
+    }
+  }
+
+  if (initrd && check_file_exists(initrd)) {
+    initrd_size = get_file_size(initrd);
+    for (auto& m : mems) {
+      if (initrd_size && (initrd_size + 0x1000) < m.second->size()) {
+         initrd_end = m.first + m.second->size() - 0x1000;
+         initrd_start = initrd_end - initrd_size;
+         read_file_bytes(initrd, 0, m.second, initrd_start - m.first, initrd_size);
+         break;
+      }
+    }
+  }
 
   spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_time_clint,
                          initrd_start, initrd_end, bootargs, start_pc, mems, plugin_devices, htif_args,
@@ -1091,7 +1142,7 @@ int main(int argc, char **argv)
 
   // fprintf(compare_log_fp, "INST     CYCLE    PC\n");
 
-  for (int i = 0; i < 10000000; i++) {
+  for (int i = 0; i < 100000000; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     auto instret = p->get_state()->minstret;
