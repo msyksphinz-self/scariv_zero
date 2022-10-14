@@ -23,6 +23,8 @@ parser.add_argument('-j', dest="parallel", action='store',
                     default=1, help="Num of Parallel Jobs")
 parser.add_argument('-d', dest="debug", action="store_true",
                     default=False, help="Generate FST Dump File")
+parser.add_argument('--dump_start', dest="dump_start", action="store",
+                    default=0, help="FST Dump Start Time")
 parser.add_argument('--cycle', dest="cycle", action="store",
                     default=100000000, help="Cycle Limitation")
 
@@ -38,6 +40,7 @@ isa_ext = isa[4:9]
 testcase = args.testcase
 parallel = int(args.parallel)
 fst_dump = args.debug
+dump_start_time = args.dump_start
 cycle    = args.cycle
 
 if not (isa[0:4] == "rv32" or isa[0:4] == "rv64") :
@@ -99,7 +102,9 @@ def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
     command_str = "../../msrh_tb_" + isa + "_" + conf
     if fst_dump :
-        command_str += "-debug -d "
+        command_str += "-debug --dump "
+        command_str += " --dump_start " + str(dump_start_time)
+
     command_str += " -c " + str(cycle)
     command_str += " -e "
     command_str += test["elf"]

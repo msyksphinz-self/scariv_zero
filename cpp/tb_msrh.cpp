@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
   char *filename;
 
   int cycle = 10000000;
+  int dump_start_time = 0;
 
   Verilated::commandArgs(argc, argv);
 
@@ -65,6 +66,7 @@ int main(int argc, char** argv) {
       {"elf"    , required_argument, 0, 'e' },
 #ifdef DUMP_FST
       {"dump"   , no_argument,       0, 'd' },
+      {"dump_start"  , required_argument,  0, 's' },
 #endif // DUMP_FST
       {"output" , required_argument, 0, 'o' },
       {"cycle"  , required_argument, 0, 'c' },
@@ -74,7 +76,7 @@ int main(int argc, char** argv) {
     };
 
     int option_index = 0;
-    int c = getopt_long(argc, argv, "e:dho:c:k", long_options, &option_index);
+    int c = getopt_long(argc, argv, "e:ds:o:c:kh", long_options, &option_index);
 
     if (c == -1) break;
  retry:
@@ -83,6 +85,9 @@ int main(int argc, char** argv) {
       case 'h': usage(argv[0]);             return 1;
       case 'd':
         dump_fst_enable = true;
+        break;
+      case 's':
+        dump_start_time = strtol(optarg, NULL, 10);
         break;
       case 'e': {
         g_memory   = std::unique_ptr<Memory> (new Memory ());
@@ -154,7 +159,7 @@ int main(int argc, char** argv) {
   while (time_counter < 10) {
     dut->eval();
 #ifdef DUMP_FST
-    if (dump_fst_enable) tfp->dump(time_counter);
+    if (dump_fst_enable && time_counter >= dump_start_time) tfp->dump(time_counter);
 #endif // DUMP_FST
     time_counter++;
   }
@@ -167,7 +172,7 @@ int main(int argc, char** argv) {
   while (time_counter < 100) {
     dut->eval();
 #ifdef DUMP_FST
-    if (dump_fst_enable) tfp->dump(time_counter);
+    if (dump_fst_enable && time_counter >= dump_start_time) tfp->dump(time_counter);
 #endif // DUMP_FST
     time_counter++;
   }
@@ -188,7 +193,7 @@ int main(int argc, char** argv) {
     dut->eval();
 
 #ifdef DUMP_FST
-    if (dump_fst_enable) tfp->dump(time_counter);
+    if (dump_fst_enable && time_counter >= dump_start_time) tfp->dump(time_counter);
 #endif // DUMP_FST
 
     if (elf_load_finish) {
