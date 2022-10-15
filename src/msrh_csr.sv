@@ -846,7 +846,8 @@ always_comb begin
     end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == msrh_pkg::URET)) begin // if (i_commit.except_type == msrh_pkg::SRET)
       w_mtval_next = 'h0;
     end else if (w_delegate) begin
-      w_sepc_next = i_commit.epc;
+      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
+                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */
       w_scause_next = i_commit.except_type;
       if (i_commit.except_type == msrh_pkg::ILLEGAL_INST        ||
@@ -870,7 +871,8 @@ always_comb begin
       w_priv_next = riscv_common_pkg::PRIV_S;
     end else if (i_commit.except_type != msrh_pkg::SILENT_FLUSH &&
                  i_commit.except_type != msrh_pkg::ANOTHER_FLUSH) begin
-      w_mepc_next = i_commit.epc;
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
+                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */
       w_mcause_next = i_commit.except_type;
       if (i_commit.except_type == msrh_pkg::ILLEGAL_INST        ||
