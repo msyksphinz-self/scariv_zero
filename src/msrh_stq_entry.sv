@@ -135,7 +135,7 @@ assign w_cmt_id_match = i_commit.commit &
                         ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
-                               (r_entry.state == STQ_COMMIT    ) & w_commit_finish & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
+                               (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
                                (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stbuf_accept |
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
@@ -350,7 +350,7 @@ always_comb begin
       end
     end
     STQ_COMMIT : begin
-      if (w_commit_finish) begin
+      if (o_stq_entry_st_finish) begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
