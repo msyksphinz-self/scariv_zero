@@ -27,6 +27,7 @@ VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
 
 # VERILATOR_OPTS += -CFLAGS "-g"
 # VERILATOR_OPTS += -LDFLAGS "-lelf"
+VERILATOR_OPTS += -O3
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
