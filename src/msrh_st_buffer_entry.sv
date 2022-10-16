@@ -23,9 +23,9 @@ module msrh_st_buffer_entry
  output logic o_missu_req, // Refill request to MISSU
  input logic  i_missu_accepted,
 
- input logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_hit,
- input logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_search_hit,
- input logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_sent,
+ input logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_hit,
+ input logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_search_hit,
+ input logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_sent,
 
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave stbuf_fwd_check_if[msrh_conf_pkg::LSU_INST_NUM],

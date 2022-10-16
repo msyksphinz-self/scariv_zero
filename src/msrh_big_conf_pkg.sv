@@ -32,6 +32,8 @@ package msrh_conf_pkg;
   localparam RV_BRU_ENTRY_SIZE = 16;
   localparam RV_FPU_ENTRY_SIZE = 32;
 
+  localparam MISSU_ENTRY_SIZE = 12;
+
   localparam CMT_ENTRY_SIZE = 64;
 
   localparam USING_VM = 1'b1;

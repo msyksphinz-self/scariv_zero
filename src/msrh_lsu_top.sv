@@ -351,7 +351,7 @@ logic                                 r_ptw_resp_valid;
 logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr_sel;
 // logic                                 r_ptw_missu_resp_full;
 // logic                                 r_ptw_missu_resp_conflict;
-// logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] r_ptw_missu_resp_missu_index_oh;
+// logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_ptw_missu_resp_missu_index_oh;
 
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_h_pri = 1'b0;

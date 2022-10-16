@@ -169,7 +169,7 @@ typedef struct packed {
   logic                          full;
   logic                          evict_conflict;
   logic                          conflict;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
 } missu_resp_t;
 
 typedef struct packed {
@@ -208,8 +208,8 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] resolve_index_oh;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_entry_valids;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] resolve_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_entry_valids;
 } missu_resolve_t;
 
 typedef struct packed {
@@ -247,7 +247,7 @@ typedef struct packed {
 typedef struct packed {
   logic                                     update;
   ex2_haz_t                                 hazard_typ;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
   logic [MEM_Q_SIZE-1:0]                    index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1:0]       hazard_index;
   logic                                     is_amo;
@@ -446,7 +446,7 @@ typedef struct packed {
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   msrh_pkg::alen_t                      rs2_data;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
 
   logic              except_valid;
   msrh_pkg::except_t except_type;
@@ -491,7 +491,7 @@ typedef struct packed {
 typedef struct packed {
   logic                          full;
   logic                          conflict;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
 } srq_resp_t;
 
 function logic is_amo_logical(mem_cmd_t cmd);
@@ -566,7 +566,7 @@ typedef struct packed {
   logic                           is_get_data;
   msrh_pkg::vaddr_t vaddr;
   msrh_pkg::paddr_t paddr;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
   logic [msrh_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
   logic                                 except_valid;
@@ -659,7 +659,7 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
 
   logic                                                is_rmw;

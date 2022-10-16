@@ -205,9 +205,9 @@ interface missu_pa_search_if;
 
 logic                                 s0_valid;
 msrh_pkg::paddr_t       s0_paddr;
-logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
-logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
-logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
+logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
+logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
 
 modport master (
   output s0_valid,
@@ -478,12 +478,12 @@ interface lsu_access_if;
 
   logic                           resp_valid;
   msrh_lsu_pkg::lsu_status_t      status;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
 
   riscv_pkg::xlen_t  data;
 
   logic                                 conflict_resolve_vld;
-  logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
+  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
 
   modport master (
     output req_valid,

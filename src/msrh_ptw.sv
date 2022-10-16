@@ -28,7 +28,7 @@ typedef enum logic [ 2: 0] {
 
 state_t r_state;
 logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] r_count;
-logic [msrh_pkg::MISSU_ENTRY_SIZE-1: 0] r_wait_conflicted_missu_oh;
+logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_wait_conflicted_missu_oh;
 
 logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
 logic [PTW_PORT_NUM-1: 0]             w_ptw_accept;
