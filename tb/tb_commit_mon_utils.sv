@@ -1,10 +1,3 @@
-int log_fp;
-int pipe_fp;
-initial begin
-  log_fp = $fopen("simulate.log", "w");
-  pipe_fp = $fopen("pipetrace.log", "w");
-end
-
 logic [msrh_conf_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;
 msrh_pkg::rob_entry_t rob_entries[msrh_conf_pkg::CMT_ENTRY_SIZE];
 msrh_pkg::rob_entry_t committed_rob_entry;
@@ -104,12 +97,6 @@ end
 //     end
 //   end // else: !if(!w_msrh_reset_n)
 // end // always_ff @ (negedge w_clk, negedge w_msrh_reset_n)
-
-final begin
-  $fclose(log_fp);
-  $fclose(pipe_fp);
-end
-
 
 // ==========================
 // FreeList Checker
