@@ -9,11 +9,6 @@ RV_AMO  = 1
 
 DEBUG = on
 
-BINARY_SUFFIX = ""
-ifeq ($(DEBUG),on)
-	BINARY_SUFFIX = -debug
-endif
-
 VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -output-split 15000
@@ -151,8 +146,8 @@ FILELIST = sim_filelist.f
 
 rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
-		-o ../$(TOP)_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
-		--Mdir obj_dir_rv32$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		-o ../$(TOP)_rv32$(ISA)_$(CONF) \
+		--Mdir obj_dir_rv32$(ISA)_$(CONF) \
 		$(VERILATOR_OPTS) \
 		$(VERILATOR_OPTS_RV32) \
 		../src/riscv_common_pkg.sv \
@@ -163,8 +158,8 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 
 rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
-		-o ../$(TOP)_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
-		--Mdir obj_dir_rv64$(ISA)_$(CONF)$(BINARY_SUFFIX) \
+		-o ../$(TOP)_rv64$(ISA)_$(CONF) \
+		--Mdir obj_dir_rv64$(ISA)_$(CONF) \
 		$(VERILATOR_OPTS) \
 		$(VERILATOR_OPTS_RV64) \
 		../src/riscv_common_pkg.sv \

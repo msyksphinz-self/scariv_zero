@@ -64,10 +64,6 @@ build_command = ["make",
                  "RV_XLEN=" + str(rv_xlen),
                  "RV_FLEN=" + str(rv_flen),
                  "RV_AMO=" + str(rv_amo)]
-if fst_dump :
-    build_command += ["DEBUG=on"]
-else:
-    build_command += ["DEBUG=off"]
 
 
 print(build_command)
@@ -102,7 +98,7 @@ def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
     command_str = "../../msrh_tb_" + isa + "_" + conf
     if fst_dump :
-        command_str += "-debug --dump "
+        command_str += " --dump "
         command_str += " --dump_start " + str(dump_start_time)
 
     command_str += " -c " + str(cycle)
