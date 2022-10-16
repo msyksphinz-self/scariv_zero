@@ -56,13 +56,17 @@ vaddr_t   r_prefetched_vaddr;
 paddr_t   r_prefetched_paddr;
 ic_data_t r_prefetched_data;
 
+logic w_is_exceed_next_page;
+assign w_is_exceed_next_page = (i_ic_l2_req_vaddr[11: 0] + msrh_lsu_pkg::ICACHE_DATA_B_W) >= 13'h1000;
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_pref_state <= ICInit;
   end else begin
     case (r_pref_state)
       ICInit : begin
-        if (~i_flush_valid & i_ic_l2_req_fire & !i_fence_i) begin
+        if (~i_flush_valid & i_ic_l2_req_fire & !w_is_exceed_next_page & !i_fence_i) begin
           r_pref_state <= ICReq;
           r_pref_vaddr <= (i_ic_l2_req_vaddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + msrh_lsu_pkg::ICACHE_DATA_B_W;
           r_pref_paddr <= (i_ic_l2_req_paddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + msrh_lsu_pkg::ICACHE_DATA_B_W;
