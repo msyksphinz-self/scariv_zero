@@ -149,6 +149,9 @@ assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
   w_ex1_issue_next.valid = r_ex0_issue.valid & !w_ex0_flush;
+  if (br_upd_if.update) begin
+    w_ex1_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -264,6 +267,9 @@ assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
 always_comb begin
   w_ex2_issue_next = r_ex1_issue;
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
+  if (br_upd_if.update) begin
+    w_ex2_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -330,6 +336,9 @@ assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
 always_comb begin
   w_ex3_issue_next = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_flush;
+  if (br_upd_if.update) begin
+    w_ex3_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin

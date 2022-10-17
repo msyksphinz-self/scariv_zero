@@ -126,13 +126,30 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic w_mul_commit_flush;
   logic w_mul_br_flush;
   logic w_mul_flush_valid;
+
+  msrh_pkg::brmask_t w_br_mask_next;
+
   if (s_idx != 0) begin
     assign w_mul_commit_flush = msrh_pkg::is_commit_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], i_commit);
     assign w_mul_br_flush     = msrh_pkg::is_br_flush_target(r_br_mask[s_idx], br_upd_if.brtag,
                                                              br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
     assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
+
+    always_comb begin
+      w_br_mask_next = r_br_mask[s_idx];
+      if (br_upd_if.update) begin
+        w_br_mask_next[br_upd_if.brtag] = 1'b0;
+      end
+    end
   end else begin
     assign w_mul_flush_valid  = 1'b0;
+
+    always_comb begin
+      w_br_mask_next = i_br_mask;
+      if (br_upd_if.update) begin
+        w_br_mask_next[br_upd_if.brtag] = 1'b0;
+      end
+    end
   end
 
   if (s_idx == 0) begin
@@ -154,7 +171,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         neg_out_pipe     [1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
         r_cmt_id         [1] <= i_cmt_id;
         r_grp_id         [1] <= i_grp_id;
-        r_br_mask        [1] <= i_br_mask;
+        r_br_mask        [1] <= w_br_mask_next;
 
         r_mul_rd_rnid [1] <= i_rd_rnid;
         r_mul_rd_type [1] <= i_rd_type;
@@ -180,7 +197,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         neg_out_pipe     [s_idx+1] <= neg_out_pipe     [s_idx];
         r_cmt_id         [s_idx+1] <= r_cmt_id         [s_idx];
         r_grp_id         [s_idx+1] <= r_grp_id         [s_idx];
-        r_br_mask        [s_idx+1] <= r_br_mask        [s_idx];
+        r_br_mask        [s_idx+1] <= w_br_mask_next;
 
         r_mul_rd_rnid [s_idx+1] <= r_mul_rd_rnid [s_idx];
         r_mul_rd_type [s_idx+1] <= r_mul_rd_type [s_idx];
