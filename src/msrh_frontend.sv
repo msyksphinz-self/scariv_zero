@@ -348,7 +348,7 @@ always_comb begin
         end else begin
           w_s0_vaddr_next = w_iq_predict_target_vaddr;
         end
-      end else if (r_s2_tlb_miss & !r_s2_clear) begin
+      end else if (r_s2_valid & !r_s2_clear & r_s2_tlb_miss) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
       end else if (w_s2_ic_resp.miss & !r_s2_clear) begin
