@@ -164,19 +164,12 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
 
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
-    logic pipe_is_younger_than_rmw;
-
-    assign pipe_is_younger_than_rmw = msrh_pkg::id0_is_older_than_id1 (w_entries[e_idx].cmt_id,
-                                                                       w_entries[e_idx].grp_id,
-                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
-                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_vld[p_idx][e_idx] = w_entries[e_idx].valid &
                                                    w_entries[e_idx].is_rmw &
-                                                   rmw_order_check_if[p_idx].ex2_valid &
-                                                   pipe_is_younger_than_rmw;
+                                                   rmw_order_check_if[p_idx].ex2_valid;
   end // block: rmw_order_haz_loop
 
-  end // block: entry_loop
+end // block: entry_loop
 endgenerate
 
 // RMW Order Hazard Check Logci
