@@ -314,7 +314,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.grp_id;
   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = w_ldq_done_entry.vaddr;
+  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
+                                              w_ldq_done_entry.vaddr};
 
 `ifdef SIMULATION
   // Kanata

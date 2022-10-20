@@ -486,7 +486,8 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::LSU_INST_NUM; d_idx++) be
   assign o_done_report[d_idx].grp_id  = w_stq_done_entry.grp_id;
   assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = w_stq_done_entry.vaddr;
+  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_stq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
+                                              w_stq_done_entry.vaddr};
 
   assign o_another_flush_report[d_idx].valid  = w_stq_done_entry.another_flush_valid;
   assign o_another_flush_report[d_idx].cmt_id = w_stq_done_entry.another_flush_cmt_id;
