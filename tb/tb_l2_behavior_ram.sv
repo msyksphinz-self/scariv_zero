@@ -44,9 +44,24 @@ line_status_t                     status          [int unsigned];
 logic                             req_fire;
 logic                [ADDR_W-1:0] actual_addr;
 logic                [ADDR_W-1:0] actual_line_pos;
-logic                [DATA_W-1:0] rd_data         [RD_LAT];
-logic                [ TAG_W-1:0] rd_tag          [RD_LAT];
-logic                [RD_LAT-1:0] rd_valid;
+
+typedef struct packed {
+  logic [ TAG_W-1:0] tag  ;
+  logic [DATA_W-1:0] data ;
+  logic [ 3: 0]      sim_timer;
+} rd_data_t;
+
+rd_data_t rd_queue[$];
+rd_data_t rd_queue_init;
+rd_data_t rd_queue_ram;
+
+assign rd_queue_init.data      = ram.exists(actual_line_pos) ? ram[actual_line_pos] : 'h0;
+assign rd_queue_init.tag       = i_req_tag;
+assign rd_queue_init.sim_timer = 10;
+
+assign rd_queue_ram.data      = ram[r_req_paddr_pos];
+assign rd_queue_ram.tag       = r_req_tag;
+assign rd_queue_ram.sim_timer = 10;
 
 logic [riscv_pkg::PADDR_W-1:0] r_req_paddr_pos;
 logic                [ TAG_W-1:0] r_req_tag;
@@ -64,13 +79,6 @@ assign req_fire = i_req_valid & o_req_ready;
 assign actual_addr = i_req_addr /* - BASE_ADDR */;
 assign actual_line_pos = actual_addr >> $clog2(DATA_W / 8);
 
-// initial begin
-//   for (int i = 0; i < SIZE; i++) begin
-//     status[i] = ST_INIT;
-//   end
-// end
-
-
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_state <= IDLE;
@@ -82,7 +90,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case(r_state)
       IDLE: begin
         if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XWR) begin
-          rd_valid[0] <= 1'b0;
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
             status[actual_line_pos] = ST_INIT;
           end
@@ -96,20 +103,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
               status[actual_line_pos] = ST_GIVEN;
             end
-            rd_data[0] <= ram.exists(actual_line_pos) ? ram[actual_line_pos] : 'h0;
-            rd_tag[0] <= i_req_tag;
-            rd_valid[0] <= 1'b1;
+            rd_queue.push_back(rd_queue_init);
           end else begin
             r_state <= SNOOP;
             o_snoop_req_valid <= 1'b1;
             o_snoop_req_paddr <= i_req_addr;
             r_req_paddr_pos <= actual_line_pos;
             r_req_tag <= i_req_tag;
-            rd_valid[0] <= 1'b0;
-          end
-        end else begin
-          rd_valid[0] <= 1'b0;
-        end // else: !if(req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD)
+          end // else: !if((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT)
+        end // if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD)
       end // case: IDLE
       SNOOP : begin
         o_snoop_req_valid <= 1'b0;
@@ -122,28 +124,27 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];
             end
           end
-          rd_data[0] <= ram[r_req_paddr_pos];
-          rd_tag[0] <= r_req_tag;
-          rd_valid[0] <= 1'b1;
-        end else begin
-          rd_valid[0] <= 1'b0;
+          rd_queue.push_back(rd_queue_ram);
         end // else: !if(i_snoop_resp_valid)
       end // case: SNOOP
     endcase // case (r_state)
 
-    if (!(o_resp_valid & !i_resp_ready)) begin
-      for (int i = 1; i < RD_LAT; i++) begin
-        rd_valid[i] <= rd_valid[i-1];
-        rd_tag[i] <= rd_tag[i-1];
-        rd_data[i] <= rd_data[i-1];
+    for (int i = 0; i < rd_queue.size(); i++) begin
+      if (rd_queue[i].sim_timer > 0) begin
+        rd_queue[i].sim_timer <= rd_queue[i].sim_timer - 1;
+      end
+    end
+    if (rd_queue.size() > 0) begin
+      if ((rd_queue[0].sim_timer == 0) & i_resp_ready) begin
+        rd_queue.pop_front();
       end
     end
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign o_resp_valid = rd_valid[RD_LAT-1];
-assign o_resp_tag = rd_tag[RD_LAT-1];
-assign o_resp_data = rd_data[RD_LAT-1];
+assign o_resp_valid = rd_queue.size() > 0 ? rd_queue[0].sim_timer == 'h0 : 1'b0;
+assign o_resp_tag   = rd_queue.size() > 0 ? rd_queue[0].tag              : 'h0;
+assign o_resp_data  = rd_queue.size() > 0 ? rd_queue[0].data             : 'h0;
 
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
