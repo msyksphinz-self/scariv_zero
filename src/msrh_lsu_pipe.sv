@@ -414,8 +414,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
     r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;
 
-    r_lr_registered_valid <= r_ex2_issue.valid & r_ex2_is_lr & (o_ex2_q_updates.hazard_typ == EX2_HAZ_NONE) ? 1'b1 :
-                             r_ex2_issue.valid & r_ex2_is_sc & (o_ex2_q_updates.hazard_typ == EX2_HAZ_NONE) ? 1'b0 :
+    r_lr_registered_valid <= r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected ? 1'b1 :
+                             r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected ? 1'b0 :
                              r_lr_registered_valid;
     r_lr_paddr <= w_ex1_is_lr ? w_ex1_tlb_resp.paddr : r_lr_paddr;
   end // else: !if(!i_reset_n)
