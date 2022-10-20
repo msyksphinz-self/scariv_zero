@@ -131,7 +131,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     for (int i = 0; i < rd_queue.size(); i++) begin
       if (rd_queue[i].sim_timer > 0) begin
-        rd_queue[i].sim_timer <= rd_queue[i].sim_timer - 1;
+        rd_queue[i].sim_timer = rd_queue[i].sim_timer - 1;
       end
     end
     if (rd_queue.size() > 0) begin
@@ -145,6 +145,10 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign o_resp_valid = rd_queue.size() > 0 ? rd_queue[0].sim_timer == 'h0 : 1'b0;
 assign o_resp_tag   = rd_queue.size() > 0 ? rd_queue[0].tag              : 'h0;
 assign o_resp_data  = rd_queue.size() > 0 ? rd_queue[0].data             : 'h0;
+
+// assign sim_rd_data_front.sim_timer = rd_queue[0].sim_timer;
+// assign sim_rd_data_front.tag       = rd_queue[0].tag;
+// assign sim_rd_data_front.data      = rd_queue[0].data;
 
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
