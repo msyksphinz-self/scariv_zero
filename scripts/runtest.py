@@ -36,7 +36,7 @@ conf = args.conf
 rv_xlen = 0
 rv_flen = 0
 rv_amo  = 0
-isa_ext = isa[4:9]
+isa_ext = isa[4:10]
 testcase = args.testcase
 parallel = int(args.parallel)
 fst_dump = args.debug
@@ -82,6 +82,8 @@ elif rv_xlen == 64 :
     test_table = json.load(rv64_tests_fp)
     rv64_bench_fp = open('rv64-bench.json', 'r')
     test_table += json.load(rv64_bench_fp)
+    rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
+    test_table += json.load(rv64_aapg_fp)
 
 select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                      (testcase in x["group"]) and
