@@ -218,7 +218,11 @@ always_comb begin
     ST_BUF_AMO_OPERATION : begin
       w_state_next = ST_BUF_L1D_UPDATE;
 
-      w_entry_next.data[paddr_partial +: riscv_pkg::XLEN_W] = amo_op_if.result;
+      for (integer idx = 0; idx < riscv_pkg::XLEN_W; idx+=8) begin
+        if (paddr_partial + idx < ST_BUF_WIDTH) begin
+          w_entry_next.data[(paddr_partial + idx) +: 8] = amo_op_if.result[idx +: 8];
+        end
+      end
     end
     default : begin
     end
