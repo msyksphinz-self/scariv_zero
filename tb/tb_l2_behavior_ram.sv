@@ -59,7 +59,7 @@ assign rd_queue_init.data      = ram.exists(actual_line_pos) ? ram[actual_line_p
 assign rd_queue_init.tag       = i_req_tag;
 assign rd_queue_init.sim_timer = 10;
 
-assign rd_queue_ram.data      = ram[r_req_paddr_pos];
+assign rd_queue_ram.data      = i_snoop_resp_data;
 assign rd_queue_ram.tag       = r_req_tag;
 assign rd_queue_ram.sim_timer = 10;
 
