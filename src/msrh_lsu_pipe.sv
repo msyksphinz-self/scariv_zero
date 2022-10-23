@@ -92,6 +92,7 @@ msrh_pkg::vaddr_t        w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
 tlb_resp_t               w_ex1_tlb_resp;
 lsu_pipe_ctrl_t          r_ex1_pipe_ctrl;
+logic                    w_ex1_readmem_op;
 
 logic                    w_ex1_rs1_lsu_mispred;
 logic                    w_ex1_rs2_lsu_mispred;
@@ -117,6 +118,7 @@ logic                   r_ex2_is_uc;
 logic                   w_ex2_load_mispredicted;
 logic                   r_ex2_haz_detected_from_ex1;
 logic                   w_ex2_l1d_missed;
+logic                   w_ex2_readmem_op;
 
 msrh_pkg::alenb_t       w_stbuf_fwd_dw;
 msrh_pkg::alen_t        w_stbuf_fwd_aligned_data;
@@ -141,8 +143,10 @@ msrh_pkg::alen_t      r_ex3_aligned_data;
 logic                 r_ex3_mis_valid;
 
 logic                 w_ex2_haz_detected;
+assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
 assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
-                            (((r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr) ? w_ex2_load_mispredicted | (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE)  : 1'b0);
+                            (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) |
+                            (w_ex2_readmem_op ? w_ex2_load_mispredicted : 1'b0);
 
 //
 // Pipeline Logic
@@ -278,23 +282,23 @@ assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : ex1
 
 assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 
-logic w_ex1_readmem_op;
-logic w_ex1_writemem_op;
+logic w_ex1_readmem_cmd;
+logic w_ex1_writemem_cmd;
 logic w_ex1_is_lr;
 logic w_ex1_is_sc;
 logic r_ex2_readmem_op;
 logic r_ex2_writemem_op;
 assign w_ex1_is_lr = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_LR32) |
                                                        (r_ex1_pipe_ctrl.rmwop == RMWOP_LR64));
-assign w_ex1_readmem_op = (r_ex1_pipe_ctrl.op == OP_LOAD) | w_ex1_is_lr;
+assign w_ex1_readmem_cmd = (r_ex1_pipe_ctrl.op == OP_LOAD) | w_ex1_is_lr;
 
 assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_SC32) |
                                                        (r_ex1_pipe_ctrl.rmwop == RMWOP_SC64));
-assign w_ex1_writemem_op = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
+assign w_ex1_writemem_cmd = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
 
 
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid;
-assign w_ex1_tlb_req.cmd         = w_ex1_readmem_op ? M_XRD : M_XWR;
+assign w_ex1_tlb_req.cmd         = w_ex1_readmem_cmd ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
                                    r_ex1_pipe_ctrl.size == SIZE_DW ? 8 :
@@ -325,7 +329,7 @@ select_mispred_bus rs2_mispred_select
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
+assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
                                     ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
 assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
@@ -336,9 +340,9 @@ logic w_ex1_st_except_valid;
 logic r_ex2_except_valid;
 msrh_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_op &
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd &
                                (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = w_ex1_writemem_op &
+assign w_ex1_st_except_valid = w_ex1_writemem_cmd &
                                (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
 assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? msrh_pkg::LOAD_ADDR_MISALIGN :
                                w_ex1_tlb_resp.pf.ld ? msrh_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
@@ -388,8 +392,10 @@ end
 
 
 // Interface to L1D cache
+assign w_ex1_readmem_op = (r_ex1_pipe_ctrl.op == OP_LOAD) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_lr;
+
 assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
-                                ((r_ex1_pipe_ctrl.op == OP_LOAD) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_lr) & !w_ex1_haz_detected;
+                                w_ex1_readmem_op & !w_ex1_haz_detected;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_tlb_resp.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_h_pri = 1'b0;
@@ -426,11 +432,11 @@ logic w_ex2_rmw_haz_vld;
 assign w_ex2_rmw_haz_vld = rmw_order_check_if.ex2_stq_haz_vld | rmw_order_check_if.ex2_stbuf_haz_vld;
 
 assign w_ex2_load_mispredicted = r_ex2_issue.valid &
-                                 ((r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr) &
+                                 w_ex2_readmem_op &
                                  (w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid |
                                   (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) & ~(&w_ex2_fwd_success));
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
-                          ((r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr) &
+                          w_ex2_readmem_op &
                           ~w_ex2_rmw_haz_vld &
                           ex1_l1d_rd_if.s1_miss &
                           ~ex1_l1d_rd_if.s1_conflict &
