@@ -645,6 +645,64 @@ interface stq_snoop_if;
 endinterface // stq_snoop_if
 
 
+interface stbuf_snoop_if;
+  logic                           req_s0_valid;
+  msrh_pkg::paddr_t req_s0_paddr ;
+
+  logic                                      resp_s1_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+
+  modport master (
+    output req_s0_valid,
+    output req_s0_paddr,
+
+    input  resp_s1_valid,
+    input  resp_s1_data,
+    input  resp_s1_be
+  );
+
+  modport slave (
+    input  req_s0_valid,
+    input  req_s0_paddr,
+
+    output resp_s1_valid,
+    output resp_s1_data,
+    output resp_s1_be
+  );
+
+endinterface // stbuf_snoop_if
+
+
+interface streq_snoop_if;
+  logic                           req_s0_valid;
+  msrh_pkg::paddr_t req_s0_paddr ;
+
+  logic                                      resp_s1_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+
+  modport master (
+    output req_s0_valid,
+    output req_s0_paddr,
+
+    input  resp_s1_valid,
+    input  resp_s1_data,
+    input  resp_s1_be
+  );
+
+  modport slave (
+    input  req_s0_valid,
+    input  req_s0_paddr,
+
+    output resp_s1_valid,
+    output resp_s1_data,
+    output resp_s1_be
+  );
+
+endinterface // streq_snoop_if
+
+
 interface st_buffer_if;
 logic                                     valid;
 msrh_pkg::paddr_t                         paddr;

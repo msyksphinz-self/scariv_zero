@@ -10,6 +10,9 @@ module msrh_store_requestor
    uc_write_if.slave  uc_write_if,
    l1d_evict_if.slave l1d_evict_if,
 
+   // Snoop Interface
+   streq_snoop_if.slave  streq_snoop_if,
+
    l2_req_if.master  l1d_ext_wr_req
    );
 
@@ -114,6 +117,20 @@ generate for (genvar p_idx = 0; p_idx < msrh_conf_pkg::LSU_INST_NUM; p_idx++) be
 end // block: lsu_fwd_loop
 endgenerate
 
+
+// --------------
+// Snoop Checker
+// --------------
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    streq_snoop_if.resp_s1_valid <= 'h0;
+  end else begin
+    streq_snoop_if.resp_s1_valid <= streq_snoop_if.req_s0_valid;
+    streq_snoop_if.resp_s1_data  <= r_ext_evict_payload.data;
+    streq_snoop_if.resp_s1_be    <= {DCACHE_DATA_B_W{r_l1d_evict_req_valid & is_cache_addr_same(r_ext_evict_payload.paddr, streq_snoop_if.req_s0_paddr)}};
+  end
+end
 
 
 `ifdef SIMULATION
