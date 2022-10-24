@@ -45,8 +45,10 @@ module msrh_lsu_top
     output msrh_pkg::mispred_t  o_ex2_mispred[msrh_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
-    l1d_snoop_if.slave l1d_snoop_if,
-    stq_snoop_if.slave stq_snoop_if,
+    l1d_snoop_if.slave   l1d_snoop_if,
+    stq_snoop_if.slave   stq_snoop_if,
+    stbuf_snoop_if.slave stbuf_snoop_if,
+    streq_snoop_if.slave streq_snoop_if,
 
     // Commit notification
     input msrh_pkg::commit_blk_t i_commit,
@@ -311,6 +313,8 @@ u_msrh_store_requester
    .l1d_evict_if  (w_l1d_evict_if),
    .uc_write_if   (w_uc_write_if),
 
+   .streq_snoop_if(streq_snoop_if),
+
    .l1d_ext_wr_req(w_l1d_ext_req[1])
    );
 
@@ -325,6 +329,8 @@ u_st_buffer
    .l1d_missu_stq_miss_if (w_l1d_missu_if[msrh_conf_pkg::LSU_INST_NUM]),
    .l1d_wr_if           (w_l1d_wr_if),
    .l1d_merge_if        (w_l1d_merge_if),
+
+   .stbuf_snoop_if (stbuf_snoop_if),
 
    .rmw_order_check_if  (w_rmw_order_check_if),
 

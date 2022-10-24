@@ -729,4 +729,9 @@ function automatic riscv_pkg::xlen_t mem_offset (decoder_lsu_ctrl_pkg::op_t op, 
   end
 endfunction // mem_offset
 
+
+function automatic logic is_cache_addr_same(msrh_pkg::paddr_t pa0, msrh_pkg::paddr_t pa1);
+  return pa0[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] == pa1[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)];
+endfunction // is_cache_addr_same
+
 endpackage // msrh_lsu_pkg

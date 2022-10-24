@@ -6,9 +6,9 @@ COMMON_DIR := common
 BIN_DIR := bin
 OBJ_DIR := objdump
 LOG_DIR := log
-ISA ?= rv64imc
+ISA ?= rv64imafdc
 ABI ?= lp64
-
+SPIKE_ISA ?= rv64imafdc
 INCLUDE_DIRS := common
 CRT_FILE := common/crt.S
 TEMPLATE_FILE := common/templates.S
@@ -48,7 +48,7 @@ run: $(LOG_FILES)
 
 $(LOG_DIR)/%.log: $(BIN_DIR)/%.riscv
 	$(info ==================== Simulating binary on Spike =========)
-	spike -l --isa=$(ISA) $< 2> $@
+	spike -l --isa=$(SPIKE_ISA) $< 2> $@
 
 dump: $(DUMP_FILES)
 	$(info ==================== Spike dump Completed ===============)
@@ -56,7 +56,7 @@ dump: $(DUMP_FILES)
 
 $(LOG_DIR)/%.dump: $(BIN_DIR)/%.riscv
 	$(info ==================== Generating spike dump ==============)
-	spike --log-commits --log  $@ --isa=$(ISA) +signature=$@.sign $<
+	spike --log-commits --log  $@ --isa=$(SPIKE_ISA) +signature=$@.sign $<
 
 
 

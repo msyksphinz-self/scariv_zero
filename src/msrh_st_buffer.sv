@@ -33,6 +33,9 @@ module msrh_st_buffer
  // Search MISSU entry: same cycle as L1D Search
  missu_pa_search_if.master   missu_pa_search_if,
 
+ // Snoop Interface
+ stbuf_snoop_if.slave  stbuf_snoop_if,
+
  // MISSU Resolve Notofication
  input       missu_resolve_t i_missu_resolve
  );
@@ -382,6 +385,22 @@ endgenerate
 bit_oh_or #(.T(decoder_lsu_ctrl_pkg::rmwop_t), .WORDS(ST_BUF_ENTRY_SIZE)) amo_rmwop_sel (.i_oh(w_amo_valids), .i_data(w_amo_rmwop), .o_selected(w_amo_rmwop_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data0_sel (.i_oh(w_amo_valids), .i_data(w_amo_data0), .o_selected(w_amo_data0_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data1_sel (.i_oh(w_amo_valids), .i_data(w_amo_data1), .o_selected(w_amo_data1_sel));
+
+
+// ----------------------------------
+// Temporary implementation of Snoop
+// ----------------------------------
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    stbuf_snoop_if.resp_s1_valid <= 'h0;
+  end else begin
+    stbuf_snoop_if.resp_s1_valid <= stbuf_snoop_if.req_s0_valid;
+    stbuf_snoop_if.resp_s1_data  <= 'h0;
+    stbuf_snoop_if.resp_s1_be    <= {DCACHE_DATA_B_W{1'b0}};
+  end
+end
+
+
 
 `ifdef SIMULATION
   `ifdef VERILATOR

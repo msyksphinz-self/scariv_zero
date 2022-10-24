@@ -37,8 +37,9 @@ typedef struct packed {
   fpnew_pkg::operation_e                        op;
   logic                                         op_mod;
   logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] sched_index;
-  msrh_pkg::reg_t  reg_type;
-  msrh_pkg::rnid_t rnid;
+  msrh_pkg::reg_t                               reg_type;
+  msrh_pkg::rnid_t                              rnid;
+  fpnew_pkg::fp_format_e                        output_fmt;
 } aux_fpnew_t;
 
 logic                                    w_fma32_in_valid;
@@ -71,6 +72,7 @@ aux_fpnew_t                              w_noncomp32_aux;
 fpnew_pkg::fp_format_e                   w_dst_fp_fmt;
 fpnew_pkg::fp_format_e                   w_src_fp_fmt;
 fpnew_pkg::int_format_e                  w_int_fmt;
+logic                                    w_out_fp;
 logic                                    w_cvt_valid;
 logic [ 4: 0]                            w_cast_out_fflags;
 aux_fpnew_t                              w_cast_aux;
@@ -91,11 +93,17 @@ assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.sched_index = i_sched_index;
+assign w_aux_fpnew_in.output_fmt  = w_out_fp ? w_dst_fp_fmt : w_int_fmt;
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
 assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[31: 0] : i_rs3[31: 0];
-assign w_fma32_boxed[2:0] = 3'b111;
+generate if (riscv_pkg::FLEN_W == 64) begin
+  assign w_fma32_boxed[2:0] = {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]};
+end else begin
+  assign w_fma32_boxed[2:0] = 3'b111;
+end
+endgenerate
 
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
@@ -108,15 +116,16 @@ endgenerate
 
 
 generate if (msrh_pkg::ALEN_W == 64) begin
-  assign w_fdiv_rs[0] = (i_pipe_ctrl.size == SIZE_W) ? {{32{1'b1}}, i_rs1[31: 0]} : i_rs1;
-  assign w_fdiv_rs[1] = (i_pipe_ctrl.size == SIZE_W) ? {{32{1'b1}}, i_rs2[31: 0]} : i_rs2;
+  assign w_fdiv_rs[0] = i_rs1;
+  assign w_fdiv_rs[1] = i_rs2;
+  assign w_fdiv_boxed = (i_pipe_ctrl.size == SIZE_W) ? {&i_rs2[63:32], &i_rs1[63:32]} : 2'b11;
 end else begin
   assign w_fdiv_rs[0] = i_rs1;
   assign w_fdiv_rs[1] = i_rs2;
+  assign w_fdiv_boxed = 2'b11;
 end
 endgenerate
 
-assign w_fdiv_boxed = 2'b11;
 
 always_comb begin
   case (i_pipe_ctrl.op)
@@ -163,25 +172,25 @@ always_comb begin
   endcase // case (i_op)
 
   case (i_pipe_ctrl.op)
-    OP_FCVT_W_S  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_WU_S : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_S_W  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_S_WU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_S_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_D_S  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
-    OP_FCVT_W_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_WU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_D_W  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
-    OP_FCVT_D_WU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
-    OP_FCVT_L_D  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_LU_D : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
-    OP_FCVT_D_L  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
-    OP_FCVT_D_LU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
-    OP_FCVT_L_S  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_LU_S : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_S_L  : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    OP_FCVT_S_LU : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
-    default      : {w_cvt_valid, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_W_S  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_WU_S : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_W  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_WU : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_D  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_D_S  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
+    OP_FCVT_W_D  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_WU_D : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_D_W  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
+    OP_FCVT_D_WU : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
+    OP_FCVT_L_D  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_LU_D : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+    OP_FCVT_D_L  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
+    OP_FCVT_D_LU : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
+    OP_FCVT_L_S  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_LU_S : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_L  : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    OP_FCVT_S_LU : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+    default      : {w_cvt_valid, w_out_fp, w_int_fmt, w_dst_fp_fmt, w_src_fp_fmt} = {1'b0, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
   endcase // case (i_pipe_ctrl.op)
 
 end // always_comb
@@ -282,14 +291,14 @@ logic [63: 0]         w_cast_result;
 fpnew_pkg::status_t   w_cast_status;
 
 assign w_cvt_in_valid = i_valid & w_cvt_valid;
-assign w_multifmt_rs[0] = (i_pipe_ctrl.op == OP_FCVT_W_S || i_pipe_ctrl.op == OP_FCVT_WU_S) ? {{32{1'b1}}, i_rs1[31: 0]} : i_rs1;
-assign w_multifmt_rs[1] = (i_pipe_ctrl.op == OP_FCVT_W_S || i_pipe_ctrl.op == OP_FCVT_WU_S) ? {{32{1'b1}}, i_rs2[31: 0]} : i_rs2;
-assign w_multifmt_rs[2] = (i_pipe_ctrl.op == OP_FCVT_W_S || i_pipe_ctrl.op == OP_FCVT_WU_S) ? {{32{1'b1}}, i_rs3[31: 0]} : i_rs3;
-assign w_multifmt_boxed[0] = 3'b111;
-assign w_multifmt_boxed[1] = 3'b111;
-assign w_multifmt_boxed[2] = 3'b111;
-assign w_multifmt_boxed[3] = 3'b111;
-assign w_multifmt_boxed[4] = 3'b111;
+assign w_multifmt_rs[0] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs1[31: 0]} : */i_rs1;
+assign w_multifmt_rs[1] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs2[31: 0]} : */i_rs2;
+assign w_multifmt_rs[2] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs3[31: 0]} : */i_rs3;
+assign w_multifmt_boxed[0] = w_src_fp_fmt == fpnew_pkg::FP32 ? {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]} : 3'b111;
+assign w_multifmt_boxed[1] = w_src_fp_fmt == fpnew_pkg::FP32 ? {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]} : 3'b111;
+assign w_multifmt_boxed[2] = w_src_fp_fmt == fpnew_pkg::FP32 ? {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]} : 3'b111;
+assign w_multifmt_boxed[3] = w_src_fp_fmt == fpnew_pkg::FP32 ? {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]} : 3'b111;
+assign w_multifmt_boxed[4] = w_src_fp_fmt == fpnew_pkg::FP32 ? {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]} : 3'b111;
 
 
 fpnew_opgroup_multifmt_slice /* #(
@@ -540,7 +549,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
       o_rnid        = w_noncomp64_aux.rnid;
       o_reg_type    = w_noncomp64_aux.reg_type;
     end else if (w_cast_out_valid) begin // if (w_noncomp64_out_valid)
-      o_result      = w_cast_result;
+      o_result      = w_cast_aux.output_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, w_cast_result[31: 0]} : w_cast_result;
       o_fflags      = w_cast_out_fflags;
       o_sched_index = w_cast_aux.sched_index;
       o_rnid        = w_cast_aux.rnid;

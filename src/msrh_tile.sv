@@ -120,8 +120,10 @@ fflags_update_if w_fflags_update_if();
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
-l1d_snoop_if l1d_snoop_if();
-stq_snoop_if stq_snoop_if();
+l1d_snoop_if   l1d_snoop_if  ();
+stq_snoop_if   stq_snoop_if  ();
+stbuf_snoop_if stbuf_snoop_if();
+streq_snoop_if streq_snoop_if();
 
 // ----------------------------------
 // Credit/Return Management
@@ -368,8 +370,10 @@ u_msrh_lsu_top
     .o_another_flush_report(w_lsu_another_flush_rpt),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
-    .l1d_snoop_if (l1d_snoop_if),
-    .stq_snoop_if (stq_snoop_if),
+    .l1d_snoop_if   (l1d_snoop_if  ),
+    .stq_snoop_if   (stq_snoop_if  ),
+    .stbuf_snoop_if (stbuf_snoop_if),
+    .streq_snoop_if (streq_snoop_if),
 
     .i_commit  (w_commit),
     .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
@@ -593,8 +597,10 @@ msrh_snoop_top u_snoop_top
 
  .snoop_if       (snoop_if),
 
- .l1d_snoop_if (l1d_snoop_if),
- .stq_snoop_if (stq_snoop_if)
+ .l1d_snoop_if   (l1d_snoop_if  ),
+ .stq_snoop_if   (stq_snoop_if  ),
+ .stbuf_snoop_if (stbuf_snoop_if),
+ .streq_snoop_if (streq_snoop_if)
  );
 
 
