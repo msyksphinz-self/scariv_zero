@@ -38,6 +38,7 @@ module msrh_st_buffer_entry
 
  output logic    o_l1d_wr_req,
  input logic     i_l1d_wr_s1_resp_hit,
+ input logic     i_l1d_wr_s1_resp_conflict,
 
  input missu_resp_t    i_st_missu_resp,
  input missu_resolve_t i_missu_resolve,
@@ -145,7 +146,7 @@ always_comb begin
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_MISSU_REFILL;
       end else begin
-        if (r_entry.is_rmw & r_entry.is_amo) begin
+        if (r_entry.is_rmw & r_entry.is_amo & !r_entry.amo_op_done) begin
           w_state_next = ST_BUF_AMO_OPERATION;
 
           w_entry_next.l1d_way = i_l1d_s1_way;
@@ -161,7 +162,9 @@ always_comb begin
       w_state_next = ST_BUF_L1D_UPD_RESP;
     end
     ST_BUF_L1D_UPD_RESP : begin
-      if (!i_l1d_wr_s1_resp_hit) begin
+      if (i_l1d_wr_s1_resp_conflict) begin
+        w_state_next = ST_BUF_L1D_UPDATE;
+      end else if (!i_l1d_wr_s1_resp_hit) begin
         w_state_next = ST_BUF_RD_L1D;
       end else begin
         w_state_next = ST_BUF_WAIT_FINISH;
@@ -217,6 +220,7 @@ always_comb begin
     end
     ST_BUF_AMO_OPERATION : begin
       w_state_next = ST_BUF_L1D_UPDATE;
+      w_entry_next.amo_op_done = 1'b1;
 
       for (integer idx = 0; idx < riscv_pkg::XLEN_W; idx+=8) begin
         if (paddr_partial + idx < ST_BUF_WIDTH) begin
