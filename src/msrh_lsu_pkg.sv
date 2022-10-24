@@ -665,7 +665,7 @@ typedef struct packed {
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
   logic                                                is_amo;
-
+  logic                                                amo_op_done;
 `ifdef SIMULATION
   msrh_pkg::cmt_id_t cmt_id;
   msrh_pkg::grp_id_t grp_id;
