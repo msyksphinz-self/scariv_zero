@@ -360,9 +360,10 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
-  assign w_predict_taken_valid_array[w_idx] = w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken | // BIM
-                                              w_expand_ras_info[w_idx].is_call |  // RAS
-                                              w_expand_ras_info[w_idx].is_ret;  // RAS
+  assign w_predict_taken_valid_array[w_idx] = w_expanded_valid[w_idx] &
+                                              (w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken | // BIM
+                                               w_expand_ras_info[w_idx].is_call |  // RAS
+                                               w_expand_ras_info[w_idx].is_ret);  // RAS
 
 end
 endgenerate
