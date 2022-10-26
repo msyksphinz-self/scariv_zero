@@ -28,7 +28,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_head_ptr <= 'h0;
     r_tail_ptr <= 'h0;
-    r_active_bits <= {WIDTH{1'b1}};
+    r_active_bits <= {SIZE{1'b1}};
     for (int i = 0; i < SIZE; i++) begin
       /* verilator lint_off WIDTH */
       r_freelist[i] = INIT + i;
