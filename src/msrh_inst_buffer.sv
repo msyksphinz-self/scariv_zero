@@ -327,6 +327,7 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
                                  & (&w_rvc_byte_en);
 
       w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].valid &
+                                    !r_inst_queue[w_inst_buf_ptr_b0].dead &
                                     r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
       w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
       w_fetch_except_tval [w_idx] = iq_disp.inst[w_idx].pc_addr;
@@ -346,8 +347,8 @@ generate for (genvar w_idx = 0; w_idx < msrh_conf_pkg::DISP_SIZE; w_idx++) begin
       w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
 
-      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].valid & r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid |
-                                    r_inst_queue[w_inst_buf_ptr_b2].valid & r_inst_queue[w_inst_buf_ptr_b2].tlb_except_valid;
+      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].valid & !r_inst_queue[w_inst_buf_ptr_b0].dead & r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid |
+                                    r_inst_queue[w_inst_buf_ptr_b2].valid & !r_inst_queue[w_inst_buf_ptr_b2].dead & r_inst_queue[w_inst_buf_ptr_b2].tlb_except_valid;
       w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause :
                                     r_inst_queue[w_inst_buf_ptr_b2].tlb_except_cause;
       w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
