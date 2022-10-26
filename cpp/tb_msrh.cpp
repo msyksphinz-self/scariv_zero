@@ -30,7 +30,7 @@ Vmsrh_tb *dut;
 // Trace DUMP ON
 VerilatedFstC* tfp = NULL;
 
-int time_counter = 0;
+uint64_t time_counter = 0;
 bool dump_fst_enable = false;
 extern bool kanata_enable;
 
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
 
   char *filename;
 
-  int cycle = 10000000;
-  int dump_start_time = 0;
+  uint64_t cycle = 10000000;
+  uint64_t dump_start_time = 0;
 
   Verilated::commandArgs(argc, argv);
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         dump_fst_enable = true;
         break;
       case 's':
-        dump_start_time = strtol(optarg, NULL, 10);
+        dump_start_time = strtoul(optarg, NULL, 10);
         break;
       case 'e': {
         g_memory   = std::unique_ptr<Memory> (new Memory ());
@@ -107,8 +107,8 @@ int main(int argc, char** argv) {
         break;
       }
       case 'c': {
-        cycle = strtol(optarg, NULL, 10);
-        fprintf(stderr, "cycle = %d\n", cycle);
+        cycle = strtoul(optarg, NULL, 10);
+        fprintf(stderr, "cycle = %ld\n", cycle);
         break;
       }
       case 'k':
