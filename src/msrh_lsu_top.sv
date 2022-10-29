@@ -76,6 +76,7 @@ fwd_check_if w_streq_fwd_check[msrh_conf_pkg::LSU_INST_NUM] ();
 missu_dc_search_if w_missu_dc_search_if ();
 missu_resolve_t w_missu_resolve;
 logic     w_missu_is_full;
+logic     w_missu_is_empty;
 
 stq_resolve_t w_stq_rs2_resolve;
 
@@ -259,8 +260,9 @@ msrh_stq
 
  .ex3_done_if (w_ex3_done_if),
 
- .i_missu_resolve (w_missu_resolve),
- .i_missu_is_full (w_missu_is_full),
+ .i_missu_resolve  (w_missu_resolve ),
+ .i_missu_is_full  (w_missu_is_full ),
+ .i_missu_is_empty (w_missu_is_empty),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
@@ -287,8 +289,9 @@ u_miss_unit
  .l1d_missu  (w_l1d_missu_if),
  .missu_fwd_if (w_missu_fwd_if),
 
- .o_missu_is_full (w_missu_is_full),
- .o_missu_resolve (w_missu_resolve),
+ .o_missu_is_full  (w_missu_is_full ),
+ .o_missu_resolve  (w_missu_resolve ),
+ .o_missu_is_empty (w_missu_is_empty),
 
  .l1d_ext_rd_req  (w_l1d_ext_req[0]),
  .l1d_ext_rd_resp (l1d_ext_resp  ),

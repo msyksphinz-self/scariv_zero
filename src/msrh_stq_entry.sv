@@ -37,8 +37,9 @@ module msrh_stq_entry
    input msrh_pkg::commit_blk_t               i_commit,
    br_upd_if.slave                            br_upd_if,
 
-   input missu_resolve_t                        i_missu_resolve,
+   input missu_resolve_t                      i_missu_resolve,
    input logic                                i_missu_is_full,
+   input logic                                i_missu_is_empty,
 
    output logic                               o_stbuf_req_valid,
    input logic                                i_stbuf_accept,
@@ -163,7 +164,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
-                       (r_entry.inst.oldest_valid ? r_entry.oldest_ready & i_st_buffer_empty : 1'b1) &
+                       (r_entry.inst.oldest_valid ? r_entry.oldest_ready & i_st_buffer_empty & i_missu_is_empty & i_stq_outptr_valid : 1'b1) &
                        all_operand_ready(r_entry);
 
 assign w_commit_finish = o_stbuf_req_valid    & i_stbuf_accept |
@@ -311,7 +312,7 @@ always_comb begin
     STQ_WAIT_OLDEST : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (r_entry.is_rmw & w_oldest_ready & i_st_buffer_empty) begin
+      end else if (r_entry.is_rmw & w_oldest_ready & i_st_buffer_empty & i_missu_is_empty & i_stq_outptr_valid) begin
         w_entry_next.state = STQ_ISSUE_WAIT;
       end else if (w_oldest_ready | r_entry.oldest_ready) begin
         w_entry_next.state = STQ_ISSUE_WAIT;

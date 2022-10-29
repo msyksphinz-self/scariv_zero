@@ -19,7 +19,8 @@ module msrh_miss_unit
 
    // Information of MISSU
    output msrh_lsu_pkg::missu_resolve_t o_missu_resolve,
-   output logic                       o_missu_is_full,
+   output logic                         o_missu_is_full,
+   output logic                         o_missu_is_empty,
 
    // L2 External Interface
    l2_req_if.master  l1d_ext_rd_req,
@@ -418,7 +419,8 @@ assign missu_dc_search_if.missu_entry = w_missu_entries[missu_dc_search_if.index
 assign o_missu_resolve.valid            = w_ext_rd_resp_valid;
 assign o_missu_resolve.resolve_index_oh = 1 << w_ext_rd_resp_tag;
 assign o_missu_resolve.missu_entry_valids = w_missu_valids;
-assign o_missu_is_full = &w_missu_valids;
+assign o_missu_is_full  = &w_missu_valids;
+assign o_missu_is_empty = ~|w_missu_valids;
 
 // ---------------------
 // MISSU Search Registers

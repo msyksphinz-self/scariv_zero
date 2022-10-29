@@ -37,7 +37,8 @@ module msrh_stq
    done_if.slave        ex3_done_if[msrh_conf_pkg::LSU_INST_NUM],
 
    input missu_resolve_t i_missu_resolve,
-   input logic         i_missu_is_full,
+   input logic           i_missu_is_full,
+   input logic           i_missu_is_empty,
 
    // STQ Entry rs2 get Notification
    output stq_resolve_t o_stq_rs2_resolve,
@@ -285,6 +286,7 @@ generate for (genvar s_idx = 0; s_idx < msrh_conf_pkg::STQ_SIZE; s_idx++) begin 
 
      .i_missu_resolve (i_missu_resolve),
      .i_missu_is_full (i_missu_is_full),
+     .i_missu_is_empty(i_missu_is_empty),
 
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
