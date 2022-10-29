@@ -49,10 +49,10 @@ isa-instruction-distribution:
   rel_rv64m: 5
   rel_rv32a: 5
   rel_rv64a: 5
-  rel_rv32f: 5
-  rel_rv64f: 5
-  rel_rv32d: 5
-  rel_rv64d: 5
+  rel_rv32f: 0
+  rel_rv64f: 1
+  rel_rv32d: 0
+  rel_rv64d: 1
 
 # Compressed instructions
 
@@ -70,11 +70,11 @@ isa-instruction-distribution:
   rel_rv64c.data: 10
 
 float-rounding:
-  rne: 1
-  rtz: 1
-  rdn: 1
-  rup: 1
-  rmm: 1
+  rne: 0
+  rtz: 0
+  rdn: 0
+  rup: 0
+  rmm: 0
 
 branch-control:
   backward-probability: 0.5
