@@ -9,24 +9,24 @@ module msrh_dcache
 
    // LSU_INST_NUM ports from pipe, and STQ read and update port, PTW
    l1d_rd_if.slave l1d_rd_if[RD_PORT_NUM],
-   l1d_wr_if.slave l1d_wr_if,
-   l1d_wr_if.slave l1d_merge_if,
+   l1d_wr_if.slave stbuf_l1d_wr_if,
 
-   l1d_wr_if.slave miss_l1d_wr_if,
+   l1d_wr_if.slave stbuf_l1d_merge_if,
+   l1d_wr_if.slave missu_l1d_wr_if,
 
    // MISSU search interface
    missu_dc_search_if.master missu_dc_search_if
    );
 
 dc_read_resp_t[msrh_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
-dc_wr_req_t                                      w_rp2_dc_wr_req;
+dc_wr_req_t                                      w_s0_dc_wr_req;
 
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_dc_read_val[RD_PORT_NUM];
 
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] w_s0_wr_bank_valid;
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_s1_wr_bank_valid;
 logic [msrh_conf_pkg::DCACHE_BANKS-1: 0] r_s2_wr_bank_valid;
-dc_wr_resp_t [msrh_conf_pkg::DCACHE_BANKS-1: 0] w_rp2_dc_wr_resp_bank;
+dc_wr_resp_t [msrh_conf_pkg::DCACHE_BANKS-1: 0] w_s0_dc_wr_resp_bank;
 
 
 generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_idx++) begin : bank_loop
@@ -34,15 +34,15 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
   dc_read_req_t  w_dc_read_req [RD_PORT_NUM];
   dc_read_resp_t w_dc_read_resp_bank[RD_PORT_NUM];
 
-  dc_wr_req_t  w_rp2_dc_wr_req_bank;
+  dc_wr_req_t  w_s0_dc_wr_req_bank;
 
   logic [$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0] w_wr_paddr_bank;
-  assign w_wr_paddr_bank = w_rp2_dc_wr_req.s0_paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
+  assign w_wr_paddr_bank = w_s0_dc_wr_req.s0_paddr[DCACHE_BANK_HIGH:DCACHE_BANK_LOW];
   assign w_s0_wr_bank_valid[bank_idx] = (w_wr_paddr_bank == bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]);
 
   always_comb begin
-    w_rp2_dc_wr_req_bank = w_rp2_dc_wr_req;
-    w_rp2_dc_wr_req_bank.s0_valid = w_rp2_dc_wr_req.s0_valid & w_s0_wr_bank_valid[bank_idx];
+    w_s0_dc_wr_req_bank = w_s0_dc_wr_req;
+    w_s0_dc_wr_req_bank.s0_valid = w_s0_dc_wr_req.s0_valid & w_s0_wr_bank_valid[bank_idx];
   end
 
   msrh_dcache_array
@@ -54,8 +54,8 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
 
      .i_bank    (bank_idx[$clog2(msrh_conf_pkg::DCACHE_BANKS)-1: 0]),
 
-     .i_dc_wr_req    (w_rp2_dc_wr_req_bank ),
-     .o_dc_wr_resp   (w_rp2_dc_wr_resp_bank[bank_idx]),
+     .i_dc_wr_req    (w_s0_dc_wr_req_bank ),
+     .o_dc_wr_resp   (w_s0_dc_wr_resp_bank[bank_idx]),
      .i_dc_read_req  (w_dc_read_req        ),
      .o_dc_read_resp (w_dc_read_resp_bank  )
      );
@@ -68,7 +68,7 @@ generate for (genvar bank_idx = 0; bank_idx < msrh_conf_pkg::DCACHE_BANKS; bank_
 
     assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid & w_rd_bank_valid;
     assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].s0_paddr;
-    assign w_dc_read_req [p_idx].h_pri = l1d_rd_if[p_idx].s0_h_pri;
+    assign w_dc_read_req [p_idx].lock_valid = l1d_rd_if[p_idx].s0_lock_valid;
 
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
@@ -108,9 +108,6 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : rd_resp_lo
   assign l1d_rd_if[p_idx].s1_conflict = w_dc_read_resp_port.conflict;
   assign l1d_rd_if[p_idx].s1_data     = w_dc_read_resp_port.data;
 
-  assign l1d_rd_if[p_idx].s1_replace_valid = w_dc_read_resp_port.replace_valid;
-  assign l1d_rd_if[p_idx].s1_replace_way   = w_dc_read_resp_port.replace_way;
-
 end // block: rd_resp_loop
 endgenerate
 
@@ -135,21 +132,21 @@ endgenerate
 // // RESP2 : Search MISSU Entiers
 // // ===========================
 //
-// logic r_rp2_valid;
-// miss_entry_t r_rp2_searched_missu_entry;
-// logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_rp2_resp_data;
-// logic [DCACHE_DATA_B_W-1: 0] r_rp2_be;
+// logic r_s0_valid;
+// miss_entry_t r_s0_searched_missu_entry;
+// logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] r_s0_resp_data;
+// logic [DCACHE_DATA_B_W-1: 0] r_s0_be;
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
-//     r_rp2_valid <= 1'b0;
-//     r_rp2_searched_missu_entry <= 'h0;
-//     r_rp2_resp_data <= 'h0;
-//     r_rp2_be <= 'h0;
+//     r_s0_valid <= 1'b0;
+//     r_s0_searched_missu_entry <= 'h0;
+//     r_s0_resp_data <= 'h0;
+//     r_s0_be <= 'h0;
 //   end else begin
-//     r_rp2_valid <= r_rp1_l1d_exp_resp_valid;
-//     r_rp2_searched_missu_entry <= missu_dc_search_if.missu_entry;
-//     r_rp2_resp_data <= r_rp1_missu_resp_data;
-//     r_rp2_be        <= {DCACHE_DATA_B_W{1'b1}};
+//     r_s0_valid <= r_rp1_l1d_exp_resp_valid;
+//     r_s0_searched_missu_entry <= missu_dc_search_if.missu_entry;
+//     r_s0_resp_data <= r_rp1_missu_resp_data;
+//     r_s0_be        <= {DCACHE_DATA_B_W{1'b1}};
 //   end
 // end
 
@@ -157,12 +154,13 @@ endgenerate
 // -------------
 // Update of DC
 // -------------
-logic                                     w_rp2_merge_valid;
-logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_rp2_merge_data;
-assign w_rp2_merge_valid = miss_l1d_wr_if.s0_valid | l1d_merge_if.s0_valid;
+logic                                     w_s0_merge_valid;
+logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_s0_merge_data;
+msrh_lsu_pkg::mesi_t                      w_s0_merge_mesi;
+assign w_s0_merge_valid = missu_l1d_wr_if.s0_valid | stbuf_l1d_merge_if.s0_valid;
 generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : merge_byte_loop
-  assign w_rp2_merge_data[b_idx*8 +: 8] = l1d_merge_if.s0_wr_req.s0_be[b_idx] ? l1d_merge_if.s0_wr_req.s0_data[b_idx*8 +: 8] :
-                                          miss_l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8];
+  assign w_s0_merge_data[b_idx*8 +: 8] = stbuf_l1d_merge_if.s0_wr_req.s0_be[b_idx] ? stbuf_l1d_merge_if.s0_wr_req.s0_data[b_idx*8 +: 8] :
+                                          missu_l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8];
 end
 endgenerate
 
@@ -170,43 +168,45 @@ endgenerate
 dc_wr_resp_t w_s1_wr_selected_resp;
 dc_wr_resp_t w_s2_wr_selected_resp;
 bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(msrh_conf_pkg::DCACHE_BANKS))
-s1_resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s1_wr_bank_valid), .o_selected(w_s1_wr_selected_resp));
+s1_resp_bit_or (.i_data(w_s0_dc_wr_resp_bank), .i_oh(r_s1_wr_bank_valid), .o_selected(w_s1_wr_selected_resp));
 bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(msrh_conf_pkg::DCACHE_BANKS))
-s2_resp_bit_or (.i_data(w_rp2_dc_wr_resp_bank), .i_oh(r_s2_wr_bank_valid), .o_selected(w_s2_wr_selected_resp));
+s2_resp_bit_or (.i_data(w_s0_dc_wr_resp_bank), .i_oh(r_s2_wr_bank_valid), .o_selected(w_s2_wr_selected_resp));
 
 
-assign w_rp2_dc_wr_req.s0_valid            = w_rp2_merge_valid | l1d_wr_if.s0_valid;
-assign w_rp2_dc_wr_req.s0_tag_update_valid = w_rp2_merge_valid;
-assign w_rp2_dc_wr_req.s0_paddr            = miss_l1d_wr_if.s0_valid ? miss_l1d_wr_if.s0_wr_req.s0_paddr :
-                                             l1d_wr_if.s0_wr_req.s0_paddr;
-assign w_rp2_dc_wr_req.s0_data             = miss_l1d_wr_if.s0_valid ? w_rp2_merge_data :
-                                             l1d_wr_if.s0_wr_req.s0_data;
-assign w_rp2_dc_wr_req.s0_be               = miss_l1d_wr_if.s0_valid ? miss_l1d_wr_if.s0_wr_req.s0_be :
-                                             l1d_wr_if.s0_wr_req.s0_be;
-assign w_rp2_dc_wr_req.s0_way              = miss_l1d_wr_if.s0_valid ? miss_l1d_wr_if.s0_wr_req.s0_way :
-                                             l1d_wr_if.s0_wr_req.s0_way;
+assign w_s0_dc_wr_req.s0_valid            = w_s0_merge_valid | stbuf_l1d_wr_if.s0_valid;
+assign w_s0_dc_wr_req.s0_tag_update_valid = w_s0_merge_valid;
+assign w_s0_dc_wr_req.s0_paddr            = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_paddr :
+                                            stbuf_l1d_wr_if.s0_wr_req.s0_paddr;
+assign w_s0_dc_wr_req.s0_data             = missu_l1d_wr_if.s0_valid ? w_s0_merge_data :
+                                            stbuf_l1d_wr_if.s0_wr_req.s0_data;
+assign w_s0_dc_wr_req.s0_be               = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_be :
+                                            stbuf_l1d_wr_if.s0_wr_req.s0_be;
+assign w_s0_dc_wr_req.s0_mesi             = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_mesi :
+                                            stbuf_l1d_wr_if.s0_wr_req.s0_mesi;
+assign w_s0_dc_wr_req.s0_way              = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_way :
+                                            stbuf_l1d_wr_if.s0_wr_req.s0_way;
 logic w_s0_st_wr_confilct;
-assign w_s0_st_wr_confilct = w_rp2_merge_valid & l1d_wr_if.s0_valid;
+assign w_s0_st_wr_confilct = w_s0_merge_valid & stbuf_l1d_wr_if.s0_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    l1d_wr_if.s1_resp_valid          <= 1'b0;
-    l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
+    stbuf_l1d_wr_if.s1_resp_valid          <= 1'b0;
+    stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
   end else begin
-    l1d_wr_if.s1_resp_valid          <= l1d_wr_if.s0_valid;
-    l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_st_wr_confilct;
+    stbuf_l1d_wr_if.s1_resp_valid          <= stbuf_l1d_wr_if.s0_valid;
+    stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_st_wr_confilct;
   end
 end
-assign l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
-assign l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
-assign l1d_wr_if.s2_done            = 1'b0;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s2_wr_selected_resp.s2_evicted_valid;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_evicted_data;
-assign l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
+assign stbuf_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
+assign stbuf_l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
+assign stbuf_l1d_wr_if.s2_done            = 1'b0;
+assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s2_wr_selected_resp.s2_evicted_valid;
+assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_evicted_data;
+assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
 
 
-assign miss_l1d_wr_if.s1_wr_resp = l1d_wr_if.s1_wr_resp;
-assign miss_l1d_wr_if.s2_done    = l1d_wr_if.s2_done;
-assign miss_l1d_wr_if.s2_wr_resp = l1d_wr_if.s2_wr_resp;
+assign missu_l1d_wr_if.s1_wr_resp = stbuf_l1d_wr_if.s1_wr_resp;
+assign missu_l1d_wr_if.s2_done    = stbuf_l1d_wr_if.s2_done;
+assign missu_l1d_wr_if.s2_wr_resp = stbuf_l1d_wr_if.s2_wr_resp;
 
 `ifdef SIMULATION
 `ifdef VERILATOR
@@ -226,23 +226,23 @@ import "DPI-C" function void record_l1d_load
 byte           l1d_array[msrh_conf_pkg::DCACHE_DATA_W/8];
 byte           merged_l1d_array[msrh_conf_pkg::DCACHE_DATA_W/8];
 generate for (genvar idx = 0; idx < msrh_conf_pkg::DCACHE_DATA_W/8; idx++) begin : array_loop
-  assign l1d_array       [idx] = w_rp2_dc_wr_req.s0_data[idx*8+:8];
-  assign merged_l1d_array[idx] = w_rp2_merge_data[idx*8+:8];
+  assign l1d_array       [idx] = w_s0_dc_wr_req.s0_data[idx*8+:8];
+  assign merged_l1d_array[idx] = w_s0_merge_data[idx*8+:8];
 end
 endgenerate
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (w_rp2_dc_wr_req.s0_valid) begin
+    if (w_s0_dc_wr_req.s0_valid) begin
       /* verilator lint_off WIDTH */
       record_l1d_load($time,
-                      w_rp2_dc_wr_req.s0_paddr,
-                      w_rp2_dc_wr_req.s0_paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW],
+                      w_s0_dc_wr_req.s0_paddr,
+                      w_s0_dc_wr_req.s0_paddr[$clog2(DCACHE_DATA_B_W) +: DCACHE_TAG_LOW],
                       l1d_array,
-                      w_rp2_dc_wr_req.s0_be,
-                      l1d_merge_if.s0_valid,
+                      w_s0_dc_wr_req.s0_be,
+                      stbuf_l1d_merge_if.s0_valid,
                       merged_l1d_array,
-                      l1d_merge_if.s0_wr_req.s0_be,
+                      stbuf_l1d_merge_if.s0_wr_req.s0_be,
                       DCACHE_DATA_B_W);
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)

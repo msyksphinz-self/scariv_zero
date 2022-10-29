@@ -360,7 +360,7 @@ logic [$clog2(msrh_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr
 // logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_ptw_missu_resp_missu_index_oh;
 
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
-assign w_l1d_rd_if [L1D_PTW_PORT].s0_h_pri = 1'b0;
+assign w_l1d_rd_if [L1D_PTW_PORT].s0_lock_valid = 1'b0;
 assign w_l1d_rd_if [L1D_PTW_PORT].s0_paddr = lsu_access.paddr;
 assign lsu_access.resp_valid = r_ptw_resp_valid;
 assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
@@ -390,7 +390,7 @@ logic r_snoop_resp_valid;
 
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
-assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_h_pri = 1'b0;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_lock_valid = 1'b0;
 
 assign l1d_snoop_if.resp_s1_valid  = r_snoop_resp_valid;
 assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? STATUS_L1D_CONFLICT :
@@ -414,10 +414,12 @@ u_msrh_dcache
   (
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
-   .l1d_rd_if (w_l1d_rd_if),
-   .l1d_wr_if (w_l1d_wr_if),
-   .l1d_merge_if (w_l1d_merge_if),
-   .miss_l1d_wr_if (w_miss_l1d_wr_if),
+
+   .l1d_rd_if       (w_l1d_rd_if),
+   .stbuf_l1d_wr_if (w_l1d_wr_if),
+
+   .stbuf_l1d_merge_if (w_l1d_merge_if  ),
+   .missu_l1d_wr_if    (w_miss_l1d_wr_if),
 
    .missu_dc_search_if (w_missu_dc_search_if)
    );

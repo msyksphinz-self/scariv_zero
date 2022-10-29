@@ -33,12 +33,12 @@ typedef logic [msrh_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
                           msrh_conf_pkg::LDQ_SIZE :
                           msrh_conf_pkg::STQ_SIZE;
 
-    typedef enum logic [ 1: 0] {
-        MESI_INVALID = 0,
-        MESI_EXCLUSIVE = 1,
-        MESI_SHARED = 2,
-        MESI_MODIFIED = 3
-    } mesi_t;
+typedef enum logic [ 1: 0] {
+  MESI_INVALID   = 0,
+  MESI_EXCLUSIVE = 1,
+  MESI_SHARED    = 2,
+  MESI_MODIFIED  = 3
+} mesi_t;
 
 typedef struct   packed {
   logic          r;
@@ -272,41 +272,45 @@ typedef struct packed {
   msrh_pkg::paddr_t                 s0_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s0_data;
   logic [DCACHE_DATA_B_W-1: 0]                    s0_be;
+  msrh_lsu_pkg::mesi_t                            s0_mesi;
 } dc_wr_req_t;
 
 typedef struct packed {
   logic                                     s1_hit;
   logic                                     s1_miss;
   logic                                     s2_evicted_valid;
-  msrh_pkg::paddr_t           s2_evicted_paddr;
+  msrh_pkg::paddr_t                         s2_evicted_paddr;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s2_evicted_data;
+  mesi_t                                    s2_evicted_mesi;
 } dc_wr_resp_t;
 
 typedef struct packed {
   msrh_pkg::paddr_t              s0_paddr;
   msrh_lsu_pkg::dc_data_t        s0_data;
   msrh_lsu_pkg::dc_strb_t        s0_be;
-  dc_ways_idx_t s0_way;
+  dc_ways_idx_t                  s0_way;
+  mesi_t                         s0_mesi;
 } s0_l1d_wr_req_t;
 
 
 typedef struct packed {
-  logic                                           s1_hit;
-  logic                                           s1_miss;
-  logic                                           s1_conflict;
+  logic s1_hit;
+  logic s1_miss;
+  logic s1_conflict;
 } s1_l1d_wr_resp_t;
 
 
 typedef struct packed {
-  logic                                           s2_evicted_valid;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]       s2_evicted_data;
-  msrh_pkg::paddr_t                 s2_evicted_paddr;
+  logic                                     s2_evicted_valid;
+  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] s2_evicted_data;
+  msrh_pkg::paddr_t                         s2_evicted_paddr;
+  msrh_lsu_pkg::mesi_t                      s2_evicted_mesi;
 } s2_l1d_wr_resp_t;
 
 
 typedef struct packed {
   logic          valid;
-  logic          h_pri;
+  logic          lock_valid;
   msrh_pkg::paddr_t paddr;
 } dc_read_req_t;
 
@@ -316,13 +320,7 @@ typedef struct packed {
   logic            miss;
   logic            conflict;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] data;
-
-  // Eviction: Replaced Address
-  logic                                    replace_valid;
-  dc_ways_idx_t  replace_way;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] replace_data;
-  msrh_pkg::paddr_t          replace_paddr;
-
+  msrh_lsu_pkg::mesi_t                      mesi;
 } dc_read_resp_t;
 
 function automatic logic [msrh_pkg::ALEN_W/8 + msrh_pkg::ALEN_W-1: 0]

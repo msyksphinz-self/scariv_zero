@@ -401,15 +401,12 @@ assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_missu_entry_sel.paddr;
 assign l1d_wr_if.s0_wr_req.s0_data  = w_wr_missu_entry_sel.data;
 assign l1d_wr_if.s0_wr_req.s0_be    = {msrh_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
 assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_missu_entry_sel.way;
-
-
+assign l1d_wr_if.s0_wr_req.s0_mesi  = msrh_lsu_pkg::MESI_EXCLUSIVE;
 
 // -----------------
 // Eviction Request
 // -----------------
 assign l1d_evict_if.valid = |w_missu_ready_to_evict;
-// assign l1d_evict_if.payload.cmd     = msrh_lsu_pkg::M_XWR;
-// assign l1d_evict_if.payload.tag     = {msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_missu_evict_tag};
 assign l1d_evict_if.payload.paddr = w_missu_ready_to_evict_entry.paddr;
 assign l1d_evict_if.payload.data  = w_missu_ready_to_evict_entry.data;
 

@@ -1,56 +1,68 @@
 interface l1d_rd_if;
 
-  logic                          s0_valid;
+  logic             s0_valid;
   msrh_pkg::paddr_t s0_paddr;
-  logic                          s0_h_pri;   // Highest Priority (used for when L1D eviction swap)
+  logic             s0_lock_valid;
+
   logic                                    s1_hit;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
   logic                                    s1_miss;
   logic                                    s1_conflict;
+  msrh_lsu_pkg::mesi_t                     s1_mesi;
   logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
 
   // Eviction: Replaced Address
   logic                                           s1_replace_valid;
   logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
+  msrh_lsu_pkg::mesi_t                            s1_replace_mesi;
+
 
   modport master(
     output s0_valid,
     output s0_paddr,
-    output s0_h_pri,
+    output s0_lock_valid,
+
     input  s1_hit,
     input  s1_hit_way,
     input  s1_miss,
     input  s1_conflict,
     input  s1_data,
+    input  s1_mesi,
 
     input  s1_replace_valid,
-    input  s1_replace_way
+    input  s1_replace_way,
+    input  s1_replace_mesi
   );
 
   modport slave(
     input  s0_valid,
     input  s0_paddr,
-    input  s0_h_pri,
+    input  s0_lock_valid,
+
     output s1_hit,
     output s1_hit_way,
     output s1_miss,
     output s1_conflict,
     output s1_data,
+    output s1_mesi,
 
     output s1_replace_valid,
-    output s1_replace_way
+    output s1_replace_way,
+    output s1_replace_mesi
   );
 
 
   modport watch (
-    input  s1_hit,
-    input  s1_hit_way,
-    input  s1_miss,
-    input  s1_conflict,
-    input  s1_data,
+    input s1_hit,
+    input s1_hit_way,
+    input s1_miss,
+    input s1_conflict,
+    input s1_data,
+    input s1_mesi,
 
-    input  s1_replace_valid,
-    input  s1_replace_way
+    input s1_replace_valid,
+    input s1_replace_way,
+    input s1_replace_mesi
   );
 
 endinterface // l1d_rd_if
@@ -60,6 +72,9 @@ interface l1d_wr_if;
 
   logic                          s0_valid;
   msrh_lsu_pkg::s0_l1d_wr_req_t  s0_wr_req;
+  msrh_lsu_pkg::mesi_t           s0_mesi;
+  logic                          s0_unlock_valid;
+
   logic                          s1_resp_valid;
   msrh_lsu_pkg::s1_l1d_wr_resp_t s1_wr_resp;
   logic                          s2_done;
@@ -68,6 +83,7 @@ interface l1d_wr_if;
   modport master(
     output s0_valid,
     output s0_wr_req,
+    output s0_unlock_valid,
     input  s1_resp_valid,
     input  s1_wr_resp,
     input  s2_done,
@@ -77,6 +93,7 @@ interface l1d_wr_if;
   modport slave(
     input  s0_valid,
     input  s0_wr_req,
+    input  s0_unlock_valid,
     output s1_resp_valid,
     output s1_wr_resp,
     output s2_done,
@@ -92,7 +109,8 @@ interface l1d_wr_if;
 
   modport missunit_watch(
     input  s0_valid,
-    input  s0_wr_req
+    input  s0_wr_req,
+    input  s0_unlock_valid
   );
 
 endinterface // l1d_wr_if

@@ -198,7 +198,7 @@ select_l1d_rd_entry_oh
    );
 
 assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
-assign l1d_rd_if.s0_h_pri = 1'b0;
+assign l1d_rd_if.s0_lock_valid = 1'b0;
 assign l1d_rd_if.s0_paddr = w_l1d_rd_entry.paddr;
 
 // -----------------
@@ -262,10 +262,11 @@ select_l1d_wr_entry_oh
    );
 
 always_comb begin
-  l1d_wr_if.s0_valid           = |w_entry_l1d_wr_req_oh;
-  l1d_wr_if.s0_wr_req.s0_way   = w_l1d_wr_entry.l1d_way;
-  l1d_wr_if.s0_wr_req.s0_paddr = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
-  l1d_wr_if.s0_wr_req.s0_data  = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+  l1d_wr_if.s0_valid                   = |w_entry_l1d_wr_req_oh;
+  l1d_wr_if.s0_wr_req.s0_way           = w_l1d_wr_entry.l1d_way;
+  l1d_wr_if.s0_wr_req.s0_paddr         = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(msrh_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
+  l1d_wr_if.s0_wr_req.s0_data          = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+  l1d_wr_if.s0_wr_req.s0_mesi          = msrh_lsu_pkg::MESI_MODIFIED;
 end
 
 generate if (multiply_dc_stbuf_width == 1) begin
@@ -292,6 +293,7 @@ select_l1d_merge_entry_oh
 
 assign l1d_merge_if.s0_valid = |w_entry_l1d_merge_req;
 assign l1d_merge_if.s0_wr_req.s0_paddr = w_l1d_merge_entry.paddr;
+assign l1d_merge_if.s0_wr_req.s0_mesi  = msrh_lsu_pkg::MESI_MODIFIED;
 
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
