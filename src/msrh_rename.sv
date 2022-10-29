@@ -15,6 +15,7 @@ module msrh_rename
    input brtag_t i_brtag  [msrh_conf_pkg::DISP_SIZE],
    input brmask_t         i_brmask [msrh_conf_pkg::DISP_SIZE],
    input logic            i_resource_ok,
+   output logic           o_freelist_ready,
 
    // Branch Tag Update Signal
    br_upd_if.slave        br_upd_if,
@@ -78,6 +79,7 @@ logic                                     w_br_flush;
 logic                                     w_flush_valid;
 
 assign w_all_freelist_ready = ~(|w_freelist_empty);
+assign o_freelist_ready = w_all_freelist_ready;
 
 assign iq_disp.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
                        i_resource_ok & w_all_freelist_ready;

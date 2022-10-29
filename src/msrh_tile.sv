@@ -137,6 +137,10 @@ cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
 cre_ret_if #(.MAX_INC(msrh_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[msrh_conf_pkg::FPU_INST_NUM]();
 
+logic w_int_freelist_ready;
+logic w_fpu_freelist_ready;
+
+
 // ----------------------------------
 // Branch Tag
 // ----------------------------------
@@ -231,7 +235,9 @@ u_msrh_int_rename (
   .i_commit             (w_commit),
   .i_commit_rnid_update (w_commit_rnid_update),
 
-  .i_resource_ok (w_resource_ok),
+  .i_resource_ok (w_resource_ok & w_fpu_freelist_ready),
+  .o_freelist_ready (w_int_freelist_ready),
+
   .i_brtag  (w_iq_brtag),
   .i_brmask (w_iq_brmask),
 
@@ -475,7 +481,9 @@ generate if (riscv_pkg::FLEN_W != 0) begin : fpu
     .i_commit             (w_commit),
     .i_commit_rnid_update (w_commit_rnid_update),
 
-    .i_resource_ok (w_resource_ok),
+    .i_resource_ok (w_resource_ok & w_int_freelist_ready),
+    .o_freelist_ready (w_fpu_freelist_ready),
+
     .i_brtag  (w_iq_brtag),
     .i_brmask (w_iq_brmask),
 
@@ -547,6 +555,7 @@ generate if (riscv_pkg::FLEN_W != 0) begin : fpu
 end else begin // block: fpu
   assign w_sc_fp_disp.valid = 1'b1;
   assign w_iq_dist_disp[1].ready = 1'b1;
+  assign w_fpu_freelist_ready = 1'b1;
 end // if (riscv_pkg::FLEN_W != 0)
 endgenerate
 
