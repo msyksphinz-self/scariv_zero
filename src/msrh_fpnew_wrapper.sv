@@ -77,6 +77,7 @@ logic                                    w_cvt_valid;
 logic [ 4: 0]                            w_cast_out_fflags;
 aux_fpnew_t                              w_cast_aux;
 
+/* verilator lint_off UNOPTFLAT */
 logic [ 1: 0][riscv_pkg::FLEN_W-1: 0]    w_fdiv_rs;
 logic [ 1: 0]                            w_fdiv_boxed;
 logic                                    w_fdiv_out_valid;
@@ -115,13 +116,16 @@ end
 endgenerate
 
 
-generate if (msrh_pkg::ALEN_W == 64) begin
-  assign w_fdiv_rs[0] = i_rs1;
-  assign w_fdiv_rs[1] = i_rs2;
-  assign w_fdiv_boxed = (i_pipe_ctrl.size == SIZE_W) ? {&i_rs2[63:32], &i_rs1[63:32]} : 2'b11;
+generate if (msrh_pkg::FLEN_W == 64) begin
+  assign w_fdiv_rs[0] = i_pipe_ctrl.size == SIZE_DW ? i_rs1 :
+                        &i_rs1[63:32] ? i_rs1 : 64'hffffffff7fc00000;
+  assign w_fdiv_rs[1] = i_pipe_ctrl.size == SIZE_DW ? i_rs2 :
+                        i_pipe_ctrl.op == OP_FSQRT ? w_fdiv_rs[0] :
+                        &i_rs2[63:32] ? i_rs2 : 64'hffffffff7fc00000;
+  assign w_fdiv_boxed = 2'b11;
 end else begin
   assign w_fdiv_rs[0] = i_rs1;
-  assign w_fdiv_rs[1] = i_rs2;
+  assign w_fdiv_rs[1] = i_pipe_ctrl.op == OP_FSQRT ? i_rs1 : i_rs2;
   assign w_fdiv_boxed = 2'b11;
 end
 endgenerate

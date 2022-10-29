@@ -38,6 +38,7 @@ pipe_ctrl_t                               w_ex0_pipe_ctrl;
 pipe_ctrl_t                               r_ex1_pipe_ctrl;
 msrh_pkg::issue_t                         r_ex1_issue;
 logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
+logic                                     w_ex1_frm_invalid;
 
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [msrh_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
@@ -62,6 +63,7 @@ msrh_pkg::alen_t                   r_ex2_rs2_data;
 msrh_pkg::alen_t                   r_ex2_rs3_data;
 logic                              r_ex2_wr_valid;
 logic [ 2: 0]                      r_ex2_rs_mispred;
+logic                              r_ex2_frm_invalid;
 
 
 msrh_pkg::issue_t                  r_ex3_issue;
@@ -71,8 +73,10 @@ logic [ 4: 0]                      w_fpnew_result_fflags;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
 logic                              r_ex3_wr_valid;
 pipe_ctrl_t                        r_ex3_pipe_ctrl;
-msrh_pkg::alen_t             w_ex2_res_data;
-msrh_pkg::alen_t             r_ex3_res_data;
+msrh_pkg::alen_t                   w_ex2_res_data;
+msrh_pkg::alen_t                   r_ex3_res_data;
+logic                              r_ex3_frm_invalid;
+logic                              w_ex3_done_report_illegal;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -84,10 +88,11 @@ end
 // ---------------------
 
 decoder_fpu_ctrl u_pipe_ctrl (
-  .inst (r_ex0_issue.inst),
-  .size (w_ex0_pipe_ctrl.size),
-  .op   (w_ex0_pipe_ctrl.op),
-  .pipe (w_ex0_pipe_ctrl.pipe)
+  .inst    (r_ex0_issue.inst        ),
+  .size    (w_ex0_pipe_ctrl.size    ),
+  .op      (w_ex0_pipe_ctrl.op      ),
+  .pipe    (w_ex0_pipe_ctrl.pipe    ),
+  .use_frm (w_ex0_pipe_ctrl.use_frm )
 );
 
 // ---------------------
@@ -144,6 +149,9 @@ assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & 
 assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_mv_early_wr.may_mispred = 1'b0;
+
+assign w_ex1_frm_invalid = r_ex1_pipe_ctrl.use_frm & ((r_ex1_issue.inst[14:12] == 3'b111) ? (csr_info.fcsr[7:5] == 3'b101) | (csr_info.fcsr[7:5] == 3'b110) | (csr_info.fcsr[7:5] == 3'b111) :
+                                                      (r_ex1_issue.inst[14:12] == 3'b101) | (r_ex1_issue.inst[14:12] == 3'b110));
 
 // -----------------------------
 // EX2 Stage
@@ -208,6 +216,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_wr_valid <= 1'b0;
 
     r_ex2_rs_mispred <= 3'b000;
+
+    r_ex2_frm_invalid <= 1'b0;
   end else begin
     r_ex2_rs1_data <= (r_ex1_issue.rd_regs[0].typ == msrh_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
     r_ex2_rs2_data <= ex1_regread_rs2.data;
@@ -220,6 +230,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
 
     r_ex2_rs_mispred <= w_ex1_rs_mispred;
+
+    r_ex2_frm_invalid <= w_ex1_frm_invalid;
   end
 end
 
@@ -330,12 +342,14 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_wr_valid  <= 1'b0;
     r_ex3_pipe_ctrl <= 'h0;
     r_ex3_res_data  <= 'h0;
+    r_ex3_frm_invalid <= 1'b0;
   end else begin
     r_ex3_issue <= r_ex2_issue;
     r_ex3_index <= r_ex2_index;
     r_ex3_wr_valid  <= r_ex2_wr_valid;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
     r_ex3_res_data  <= w_ex2_res_data;
+    r_ex3_frm_invalid <= r_ex2_frm_invalid;
   end
 end
 
@@ -352,7 +366,7 @@ u_msrh_fpnew_wrapper
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
+   .i_valid (r_ex2_issue.valid & !r_ex2_frm_invalid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_sched_index (r_ex2_index),
@@ -374,15 +388,15 @@ u_msrh_fpnew_wrapper
 
 
 always_comb begin
-  o_ex3_mv_phy_wr.valid   = r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  o_ex3_mv_phy_wr.valid   = r_ex3_wr_valid & ~r_ex3_frm_invalid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
   o_ex3_mv_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  ex3_mv_done_if.done                = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  ex3_mv_done_if.index_oh            = r_ex3_index;
-  ex3_mv_done_if.payload.except_valid        = 1'b0;
-  ex3_mv_done_if.payload.except_type         = msrh_pkg::except_t'('h0);
+  ex3_mv_done_if.done                        = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  ex3_mv_done_if.index_oh                    = r_ex3_index;
+  ex3_mv_done_if.payload.except_valid        = r_ex3_frm_invalid;
+  ex3_mv_done_if.payload.except_type         = msrh_pkg::ILLEGAL_INST;
   ex3_mv_done_if.payload.fflags_update_valid = 1'b0;
   ex3_mv_done_if.payload.fflags              = 'h0;
 
@@ -391,10 +405,13 @@ always_comb begin
   o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
   o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
 
-  fpnew_done_if.done                = w_fpnew_result_valid;
-  fpnew_done_if.index_oh            = w_fpnew_sched_index;
-  fpnew_done_if.payload.except_valid        = 1'b0;
-  fpnew_done_if.payload.except_type         = msrh_pkg::except_t'('h0);
+  w_ex3_done_report_illegal = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FPNEW) & r_ex3_frm_invalid;
+
+  fpnew_done_if.done                        = w_fpnew_result_valid | w_ex3_done_report_illegal;
+  fpnew_done_if.index_oh                    = w_ex3_done_report_illegal ? r_ex3_index :
+                                              w_fpnew_sched_index;
+  fpnew_done_if.payload.except_valid        = w_ex3_done_report_illegal;
+  fpnew_done_if.payload.except_type         = msrh_pkg::ILLEGAL_INST;
   fpnew_done_if.payload.fflags_update_valid = w_fpnew_result_valid;
   fpnew_done_if.payload.fflags              = w_fpnew_result_fflags;
 

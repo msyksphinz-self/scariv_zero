@@ -518,6 +518,7 @@ endgenerate
 // After commit, store operation
 // ==============================
 
+/* verilator lint_off UNOPTFLAT */
 msrh_pkg::grp_id_t w_sq_commit_ready_issue;
 bit_oh_or
   #(.T(stq_entry_t), .WORDS(msrh_conf_pkg::STQ_SIZE))
@@ -542,6 +543,9 @@ generate for (genvar d_idx = 0; d_idx < msrh_conf_pkg::DISP_SIZE; d_idx++) begin
   end else begin
 
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid &
+                                            w_sq_commit_ready_issue[d_idx-1] &
+                                            !w_stq_cmt_head_entry.is_rmw &
+                                            !w_stq_cmt_entry.is_rmw &
                                             (w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)] ==
                                              w_stq_cmt_entry.paddr     [riscv_pkg::PADDR_W-1:$clog2(msrh_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)
