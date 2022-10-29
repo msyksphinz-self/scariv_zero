@@ -163,7 +163,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_entry_ready = (r_entry.state == STQ_ISSUE_WAIT) & !w_entry_flush &
-                       (r_entry.inst.oldest_valid ? r_entry.oldest_ready : 1'b1) &
+                       (r_entry.inst.oldest_valid ? r_entry.oldest_ready & i_st_buffer_empty : 1'b1) &
                        all_operand_ready(r_entry);
 
 assign w_commit_finish = o_stbuf_req_valid    & i_stbuf_accept |
