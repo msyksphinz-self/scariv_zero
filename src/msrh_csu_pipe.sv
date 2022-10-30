@@ -208,6 +208,7 @@ assign ex3_done_if.payload.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                            r_ex3_pipe_ctrl.is_uret |
                                            r_ex3_pipe_ctrl.is_ecall |
                                            r_ex3_pipe_ctrl.is_fence_i |
+                                           r_ex3_pipe_ctrl.is_fence |
                                            r_ex3_pipe_ctrl.is_sfence_vma |
                                            r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
                                            (write_if.valid & write_if.resp_error);
