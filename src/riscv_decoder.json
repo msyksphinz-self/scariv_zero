@@ -657,7 +657,7 @@
         "field":["00010", "XX", "00000", "XXXXX", "010", "XXXXX", "01011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]],
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "lr32"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "lr32"]]
     },
     {
         "name":"sc.w       r[11:7],r[19:15],r[24:20]",
