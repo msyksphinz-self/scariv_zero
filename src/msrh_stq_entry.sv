@@ -65,7 +65,7 @@ logic                                              w_commit_flush;
 logic                                              w_br_flush;
 logic                                              w_load_br_flush;
 logic                                              w_dead_state_clear;
-logic                                              w_cmt_id_match;
+logic                                              w_ready_to_mv_stbuf;
 
 msrh_pkg::rnid_t                                   w_rs_rnid[2];
 msrh_pkg::reg_t                                    w_rs_type[2];
@@ -131,9 +131,15 @@ assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
                                 w_rs_phy_hit[1] & !w_rs_mispredicted[1] |
                                 i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
 
-assign w_cmt_id_match = i_commit.commit &
-                        (i_commit.cmt_id == r_entry.cmt_id) &
-                        ((|i_commit.except_valid) ? ((i_commit.dead_id & r_entry.grp_id) == 0) : 1'b1);
+msrh_pkg::grp_id_t w_normal_comitted_grp_id;
+msrh_pkg::grp_id_t w_commit_grp_id_mask;
+msrh_pkg::grp_id_t w_done_tree_grp_id;
+assign w_commit_grp_id_mask = r_entry.grp_id - 1;
+assign w_done_tree_grp_id   = w_commit_grp_id_mask & (i_commit.grp_id & ~i_commit.dead_id & ~i_commit.except_valid);
+
+assign w_normal_comitted_grp_id = (w_done_tree_grp_id == w_commit_grp_id_mask);
+
+assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.cmt_id) & w_normal_comitted_grp_id;
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
                                (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
@@ -321,7 +327,7 @@ always_comb begin
     STQ_WAIT_COMMIT : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (w_cmt_id_match) begin
+      end else if (w_ready_to_mv_stbuf) begin
         w_entry_next.is_committed = 1'b1;
         if (r_entry.is_rmw) begin
           if (r_entry.except_valid |
