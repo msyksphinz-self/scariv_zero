@@ -37,6 +37,7 @@ module msrh_st_buffer_entry
  input logic [msrh_conf_pkg::DCACHE_DATA_W-1:0]        i_l1d_s1_data,
 
  output logic    o_l1d_wr_req,
+ input logic     i_l1d_wr_accepted,
  input logic     i_l1d_wr_s1_resp_hit,
  input logic     i_l1d_wr_s1_resp_conflict,
 
@@ -159,7 +160,9 @@ always_comb begin
       end
     end
     ST_BUF_L1D_UPDATE: begin
-      w_state_next = ST_BUF_L1D_UPD_RESP;
+      if (i_l1d_wr_accepted) begin
+        w_state_next = ST_BUF_L1D_UPD_RESP;
+      end
     end
     ST_BUF_L1D_UPD_RESP : begin
       if (i_l1d_wr_s1_resp_conflict) begin
