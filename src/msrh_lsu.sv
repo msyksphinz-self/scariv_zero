@@ -53,6 +53,9 @@ module msrh_lsu
     // RMW Ordere Hazard Check
     rmw_order_check_if.master  rmw_order_check_if,
 
+    // LRSC update Logic
+    lrsc_if.master             lrsc_if,
+
     // STQ Hazard Check
     stq_haz_check_if.master stq_haz_check_if,
 
@@ -163,6 +166,8 @@ u_lsu_pipe
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),
    .streq_fwd_check_if (streq_fwd_check_if),
+
+   .lrsc_if (lrsc_if),
 
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),

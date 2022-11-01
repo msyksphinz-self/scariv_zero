@@ -105,6 +105,8 @@ stq_haz_check_if w_stq_haz_check_if [msrh_conf_pkg::LSU_INST_NUM]();
 
 rmw_order_check_if w_rmw_order_check_if[msrh_conf_pkg::LSU_INST_NUM]();
 
+lrsc_if  w_lrsc_if[msrh_conf_pkg::LSU_INST_NUM]();
+
 st_buffer_if            w_st_buffer_if();
 missu_pa_search_if        w_missu_pa_search_if();
 uc_write_if             w_uc_write_if();
@@ -149,6 +151,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < msrh_conf_pkg::LSU_INST_NUM; lsu_idx
     .missu_fwd_if (w_missu_fwd_if[lsu_idx]),
 
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
+    .lrsc_if            (w_lrsc_if[lsu_idx]),
 
     .ldq_replay_if (w_ldq_replay[lsu_idx]),
     .stq_replay_if (w_stq_replay[lsu_idx]),
@@ -351,6 +354,16 @@ u_msrh_l2_req_arbiter
  .l1d_ext_in_req (w_l1d_ext_req),
  .l1d_ext_req    (l1d_ext_req  )
  );
+
+
+msrh_lsu_lrsc
+u_lrsc
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .lrsc_if (w_lrsc_if)
+   );
 
 
 // --------------------------
