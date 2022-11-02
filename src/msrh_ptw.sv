@@ -89,7 +89,7 @@ end // block: ptw_resp_loop
 endgenerate
 
 
-simple_arbiter #(.WIDTH(PTW_PORT_NUM)) u_simple_arbiter (.i_valid(w_ptw_valid), .o_accept(w_ptw_accept));
+bit_extract_lsb_ptr_oh #(.WIDTH(PTW_PORT_NUM)) u_simple_arbiter (.in(w_ptw_valid), .i_ptr_oh(r_ptw_accept), .out(w_ptw_accept));
 bit_oh_or #(.T(ptw_req_t),                     .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_req    (.i_oh(w_ptw_accept), .i_data(w_ptw_req   ), .o_selected(w_ptw_accepted_req   ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_satp   (.i_oh(w_ptw_accept), .i_data(w_ptw_satp  ), .o_selected(w_ptw_accepted_satp  ));
 bit_oh_or #(.T(logic[riscv_pkg::XLEN_W-1: 0]), .WORDS(PTW_PORT_NUM)) bit_accepted_ptw_status (.i_oh(w_ptw_accept), .i_data(w_ptw_status), .o_selected(w_ptw_accepted_status));
