@@ -842,3 +842,27 @@ modport slave (
 );
 
 endinterface // uc_write_if
+
+
+interface lrsc_if;
+
+logic    lr_update_valid;
+logic    sc_check_valid;
+msrh_pkg::paddr_t paddr;
+logic    sc_success;
+
+modport master (
+  output lr_update_valid,
+  output sc_check_valid,
+  output paddr,
+  input  sc_success
+);
+
+modport slave (
+  input  lr_update_valid,
+  input  sc_check_valid,
+  input  paddr,
+  output sc_success
+);
+
+endinterface // lrsc_if

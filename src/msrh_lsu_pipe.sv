@@ -49,6 +49,9 @@ module msrh_lsu_pipe
 
  l1d_missu_if.master                   l1d_missu_if,
 
+ // LRSC update Logic
+ lrsc_if.master                        lrsc_if,
+
  // Feedbacks to LDQ / STQ
  output ex1_q_update_t                 o_ex1_q_updates,
  output logic                          o_tlb_resolve,
@@ -130,8 +133,6 @@ msrh_pkg::alenb_t       w_ex2_expected_fwd_valid;
 msrh_pkg::alenb_t       w_ex2_fwd_success;
 
 logic                   w_ex2_sc_success;
-logic                   r_lr_registered_valid;
-msrh_pkg::paddr_t       r_lr_paddr;
 logic                   r_ex2_is_lr;
 logic                   r_ex2_is_sc;
 
@@ -410,8 +411,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_lr <= 1'b0;
     r_ex2_is_sc <= 1'b0;
-    r_lr_registered_valid <= 1'b0;
-    r_lr_paddr <= 'h0;
   end else begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
@@ -419,13 +418,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
     r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;
-
-    r_lr_registered_valid <= r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected ? 1'b1 :
-                             r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected ? 1'b0 :
-                             r_lr_registered_valid;
-    r_lr_paddr <= w_ex1_is_lr ? w_ex1_tlb_resp.paddr : r_lr_paddr;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected;
+assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected;
+assign lrsc_if.paddr           = r_ex2_paddr;
+assign w_ex2_sc_success        = lrsc_if.sc_success;
 
 
 logic w_ex2_rmw_haz_vld;
@@ -446,8 +445,6 @@ assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_f
 assign l1d_missu_if.req_payload.paddr = r_ex2_paddr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 // L1D replace information
-
-assign w_ex2_sc_success = r_lr_registered_valid & (r_lr_paddr == r_ex2_paddr);
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;

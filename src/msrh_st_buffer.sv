@@ -143,7 +143,9 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
      .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
 
-     .o_l1d_wr_req         (w_entry_l1d_wr_req[e_idx]),
+     .o_l1d_wr_req         (w_entry_l1d_wr_req   [e_idx]),
+     .i_l1d_wr_accepted    (w_entry_l1d_wr_req_oh[e_idx]),
+
      .i_l1d_wr_s1_resp_hit      (l1d_wr_if.s1_wr_resp.s1_hit),
      .i_l1d_wr_s1_resp_conflict (l1d_wr_if.s1_wr_resp.s1_conflict),
 
