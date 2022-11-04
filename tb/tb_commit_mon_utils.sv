@@ -35,7 +35,7 @@ generate for (genvar r_idx = 0; r_idx < msrh_pkg::RNID_SIZE; r_idx++) begin: reg
 end
 endgenerate
 
-logic [ 8 : 0] r_timeout_counter;
+logic [11 : 0] r_timeout_counter;
 logic          r_finish_valid;
 
 always_ff @ (negedge w_clk, negedge w_msrh_reset_n) begin
