@@ -24,20 +24,11 @@ jobs:
         verilator: ["4.214"]
 
     # The type of runner that the job will run on
-    runs-on: msyksphinz/msrh:run_env
+    runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      # Apt updates
-      - name: apt_updates
-        run: |
-          apt-get update && apt install -y tzdata
-          apt install -y ruby git autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev libfl-dev device-tree-compiler ccache clang libelf-dev
-        env:
-            TZ: Asia/Tokyo
-            DEBIAN_FRONTEND: noninteractive
 
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
