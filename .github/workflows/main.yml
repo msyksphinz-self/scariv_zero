@@ -35,4 +35,4 @@ jobs:
         run: |
            docker-compose -f ./top-test.yml build
            docker-compose -f ./top-test.yml up --abort-on-container-exit
-        working-directory: ./docker/
+        working-directory: ./
