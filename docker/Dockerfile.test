@@ -5,7 +5,7 @@ RUN apt install -y clang ccache
 
 WORKDIR /work
 
-COPY ./ /work/
+COPY ../ /work/
 
 WORKDIR /work/verilator_sim
 
