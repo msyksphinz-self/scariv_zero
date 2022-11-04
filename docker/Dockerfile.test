@@ -9,4 +9,5 @@ COPY ./ /work/
 
 WORKDIR /work/verilator_sim
 
+RUN ["ls -1 /work/verilator_sim/"]
 RUN ["/work/scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "dhrystone"]
