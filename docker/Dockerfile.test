@@ -1,0 +1,12 @@
+FROM msyksphinz/msrh:run_env
+
+RUN apt install -y ruby
+RUN apt install -y clang ccache
+
+WORKDIR /work
+
+COPY ../ /work/
+
+WORKDIR /work/verilator_sim
+
+# CMD ["../scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "dhrystone"]
