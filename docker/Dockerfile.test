@@ -5,8 +5,8 @@ RUN apt install -y clang ccache
 
 WORKDIR /work
 
-COPY ../ /work/
+COPY ./ /work/
 
 WORKDIR /work/verilator_sim
 
-CMD ["../scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "dhrystone"]
+RUN ["../scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "dhrystone"]
