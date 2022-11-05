@@ -6,6 +6,6 @@ services:
       context: "."
       dockerfile: "Dockerfile.test"
     image: msrh-test
-    container_name: msrh-test
+    container_name: top-test
     environment:
         TZ: 'Asia/Tokyo'
