@@ -1,10 +1,11 @@
 module tb_flash #(
-    parameter DATA_W    = 256,
-    parameter TAG_W     = 4,
-    parameter ADDR_W    = 12,
+    parameter FILE = "",
+    parameter DATA_W = 256,
+    parameter TAG_W = 4,
+    parameter ADDR_W = 12,
     parameter BASE_ADDR = 'h1000,
-    parameter SIZE      = 4096,
-    parameter RD_LAT    = 10
+    parameter SIZE = 4096,
+    parameter RD_LAT = 10
 ) (
     input logic i_clk,
     input logic i_reset_n,
@@ -78,12 +79,22 @@ assign o_resp_tag   = r_resp_tag  [RD_LAT-1];
 assign o_resp_data  = r_resp_data [RD_LAT-1];
 
 initial begin
-  if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
-    $readmemh ("../../../tests/linux/image_w16.hex", r_ram);
-  end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
-    $readmemh ("../../../tests/linux/image_w32.hex", r_ram);
-  end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
-    $readmemh ("../../../tests/linux/image_w64.hex", r_ram);
+  if (FILE == "image") begin
+    if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
+      $readmemh ("../../../tests/linux/image_w16.hex", r_ram);
+    end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
+      $readmemh ("../../../tests/linux/image_w32.hex", r_ram);
+    end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
+      $readmemh ("../../../tests/linux/image_w64.hex", r_ram);
+    end
+  end else if (FILE == "initrd") begin
+    if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
+      $readmemh ("../../../tests/linux/spike_rootfs_w16.hex", r_ram);
+    end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
+      $readmemh ("../../../tests/linux/spike_rootfs_w32.hex", r_ram);
+    end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
+      $readmemh ("../../../tests/linux/spike_rootfs_w64.hex", r_ram);
+    end
   end
 end
 

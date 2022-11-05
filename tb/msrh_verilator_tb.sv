@@ -136,19 +136,33 @@ module msrh_tb (
   logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_serial_resp_data;
   logic                                      w_serial_resp_ready;
 
-  /* BootROM Interface */
-  logic                                      w_flash_req_valid;
-  msrh_lsu_pkg::mem_cmd_t                    w_flash_req_cmd;
-  logic [            riscv_pkg::PADDR_W-1:0] w_flash_req_addr;
-  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_flash_req_tag;
-  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_flash_req_data;
-  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_flash_req_byte_en;
-  logic                                      w_flash_req_ready;
+  /* Kernel Boot Flash Interface */
+  logic                                      w_kernel_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_kernel_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_kernel_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_kernel_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_kernel_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_kernel_req_byte_en;
+  logic                                      w_kernel_req_ready;
 
-  logic                                      w_flash_resp_valid;
-  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_flash_resp_tag;
-  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_flash_resp_data;
-  logic                                      w_flash_resp_ready;
+  logic                                      w_kernel_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_kernel_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_kernel_resp_data;
+  logic                                      w_kernel_resp_ready;
+
+  /* initrd Boot Flash Interface */
+  logic                                      w_initrd_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_initrd_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_initrd_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_initrd_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_initrd_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_initrd_req_byte_en;
+  logic                                      w_initrd_req_ready;
+
+  logic                                      w_initrd_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_initrd_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_initrd_resp_data;
+  logic                                      w_initrd_resp_ready;
 
   /* L2 Interface */
   logic                                      w_l2_req_valid;
@@ -275,19 +289,33 @@ module msrh_tb (
       .i_serial_resp_data  (w_serial_resp_data   ),
       .o_serial_resp_ready (w_serial_resp_ready  ),
 
-      /* Flash Interface */
-      .o_flash_req_valid   (w_flash_req_valid   ),
-      .o_flash_req_cmd     (w_flash_req_cmd     ),
-      .o_flash_req_addr    (w_flash_req_addr    ),
-      .o_flash_req_tag     (w_flash_req_tag     ),
-      .o_flash_req_data    (w_flash_req_data    ),
-      .o_flash_req_byte_en (w_flash_req_byte_en ),
-      .i_flash_req_ready   (w_flash_req_ready   ),
+      /* Kernel Flash Interface */
+      .o_kernel_req_valid   (w_kernel_req_valid   ),
+      .o_kernel_req_cmd     (w_kernel_req_cmd     ),
+      .o_kernel_req_addr    (w_kernel_req_addr    ),
+      .o_kernel_req_tag     (w_kernel_req_tag     ),
+      .o_kernel_req_data    (w_kernel_req_data    ),
+      .o_kernel_req_byte_en (w_kernel_req_byte_en ),
+      .i_kernel_req_ready   (w_kernel_req_ready   ),
 
-      .i_flash_resp_valid (w_flash_resp_valid  ),
-      .i_flash_resp_tag   (w_flash_resp_tag    ),
-      .i_flash_resp_data  (w_flash_resp_data   ),
-      .o_flash_resp_ready (w_flash_resp_ready  ),
+      .i_kernel_resp_valid (w_kernel_resp_valid  ),
+      .i_kernel_resp_tag   (w_kernel_resp_tag    ),
+      .i_kernel_resp_data  (w_kernel_resp_data   ),
+      .o_kernel_resp_ready (w_kernel_resp_ready  ),
+
+      /* initrd Flash Interface */
+      .o_initrd_req_valid   (w_initrd_req_valid   ),
+      .o_initrd_req_cmd     (w_initrd_req_cmd     ),
+      .o_initrd_req_addr    (w_initrd_req_addr    ),
+      .o_initrd_req_tag     (w_initrd_req_tag     ),
+      .o_initrd_req_data    (w_initrd_req_data    ),
+      .o_initrd_req_byte_en (w_initrd_req_byte_en ),
+      .i_initrd_req_ready   (w_initrd_req_ready   ),
+
+      .i_initrd_resp_valid (w_initrd_resp_valid  ),
+      .i_initrd_resp_tag   (w_initrd_resp_tag    ),
+      .i_initrd_resp_data  (w_initrd_resp_data   ),
+      .o_initrd_resp_ready (w_initrd_resp_ready  ),
 
       /* L2 Interface */
       .o_l2_req_valid  (w_l2_req_valid   ),
@@ -452,32 +480,63 @@ msrh_serialdevice
 );
 
 
-// BootROM
+// Kernel Flash
 tb_flash
 #(
+  .FILE     ("image"),
   .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
   .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h8020_0000),
   .SIZE     ('h0200_0000),
   .RD_LAT   (30)
-) u_flash (
+) u_kernel_flash (
   .i_clk    (i_clk),
   .i_reset_n(i_ram_reset_n),
 
   // L2 request from ICache
-  .i_req_valid   (w_flash_req_valid   ),
-  .i_req_cmd     (w_flash_req_cmd     ),
-  .i_req_addr    (w_flash_req_addr    ),
-  .i_req_tag     (w_flash_req_tag     ),
-  .i_req_data    (w_flash_req_data    ),
-  .i_req_byte_en (w_flash_req_byte_en ),
-  .o_req_ready   (w_flash_req_ready   ),
+  .i_req_valid   (w_kernel_req_valid   ),
+  .i_req_cmd     (w_kernel_req_cmd     ),
+  .i_req_addr    (w_kernel_req_addr    ),
+  .i_req_tag     (w_kernel_req_tag     ),
+  .i_req_data    (w_kernel_req_data    ),
+  .i_req_byte_en (w_kernel_req_byte_en ),
+  .o_req_ready   (w_kernel_req_ready   ),
 
-  .o_resp_valid  (w_flash_resp_valid  ),
-  .o_resp_tag    (w_flash_resp_tag    ),
-  .o_resp_data   (w_flash_resp_data   ),
-  .i_resp_ready  (w_flash_resp_ready  )
+  .o_resp_valid  (w_kernel_resp_valid  ),
+  .o_resp_tag    (w_kernel_resp_tag    ),
+  .o_resp_data   (w_kernel_resp_data   ),
+  .i_resp_ready  (w_kernel_resp_ready  )
+);
+
+
+// initrd Flash
+tb_flash
+#(
+  .FILE     ("initrd"),
+  .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('h8000_1000),
+  .SIZE     ('h0200_0000),
+  .RD_LAT   (30)
+) u_initrd_flash (
+  .i_clk    (i_clk),
+  .i_reset_n(i_ram_reset_n),
+
+  // L2 request from ICache
+  .i_req_valid   (w_initrd_req_valid   ),
+  .i_req_cmd     (w_initrd_req_cmd     ),
+  .i_req_addr    (w_initrd_req_addr    ),
+  .i_req_tag     (w_initrd_req_tag     ),
+  .i_req_data    (w_initrd_req_data    ),
+  .i_req_byte_en (w_initrd_req_byte_en ),
+  .o_req_ready   (w_initrd_req_ready   ),
+
+  .o_resp_valid  (w_initrd_resp_valid  ),
+  .o_resp_tag    (w_initrd_resp_tag    ),
+  .o_resp_data   (w_initrd_resp_data   ),
+  .i_resp_ready  (w_initrd_resp_ready  )
 );
 
 
