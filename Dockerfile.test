@@ -4,7 +4,7 @@ WORKDIR /work
 COPY . /work/
 
 WORKDIR /work/tests/riscv-tests
-RUN ["configure"]
+RUN ["./configure"]
 RUN ["make", "-j20"]
 
 WORKDIR /work/verilator_sim
