@@ -18,7 +18,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     name: ci_rv64_build
-
+    timeout-minutes: 30 # 30-minutes
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     container:
