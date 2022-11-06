@@ -135,7 +135,7 @@ msrh_pkg::grp_id_t w_normal_comitted_grp_id;
 msrh_pkg::grp_id_t w_commit_grp_id_mask;
 msrh_pkg::grp_id_t w_done_tree_grp_id;
 assign w_commit_grp_id_mask = r_entry.grp_id - 1;
-assign w_done_tree_grp_id   = w_commit_grp_id_mask & (i_commit.grp_id & ~i_commit.dead_id & ~i_commit.except_valid);
+assign w_done_tree_grp_id   = w_commit_grp_id_mask & (rob_info_if.done_grp_id & ~rob_info_if.except_valid);
 
 assign w_normal_comitted_grp_id = (w_done_tree_grp_id == w_commit_grp_id_mask);
 
