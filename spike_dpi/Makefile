@@ -50,8 +50,9 @@ EXE_CFLAGS += -I$(VCS_HOME)/include/
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
 
-all: riscv-isa-sim-makefile libserialdevice.so Makefile
+all: riscv-isa-sim-makefile Makefile
 	$(MAKE) -f spike_dpi.mk libspike_dpi.a
+	$(MAKE) libserialdevice.so
 	$(MAKE) spike_main
 
 libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
