@@ -34,6 +34,6 @@ jobs:
 
       - name: Tiny Build
         run: |
-           cd $GITHUB_WORKSPACE/tests/riscv-tests && ./configure && make -j20
-           cd $GITHUB_WORKSPACE/spike_dpi && make all
-           cd $GITHUB_WORKSPACE/verilator_sim && ../scripts/runtest.py --isa rv64imac -c tiny -t sanity -j20
+           cd $GITHUB_WORKSPACE/tests/riscv-tests && ./configure && make -j$(nproc)
+           cd $GITHUB_WORKSPACE/spike_dpi && make all -j$(nproc)
+           cd $GITHUB_WORKSPACE/verilator_sim && ../scripts/runtest.py --isa rv64imacfd -c tiny -t sanity -j$(nproc)
