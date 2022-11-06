@@ -1,12 +1,10 @@
 FROM msyksphinz/msrh:run_env
 
-RUN apt install -y ruby
-RUN apt install -y clang ccache
-
 WORKDIR /work
-
 COPY . /work/
 
-WORKDIR /work/verilator_sim
+WORKDIR /work/tests/riscv-tests
+RUN ["make", "-j$(nproc)"]
 
-RUN ["/work/scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "dhrystone"]
+WORKDIR /work/verilator_sim
+RUN ["/work/scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "sanity", "-j$(nproc)"]
