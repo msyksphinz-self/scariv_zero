@@ -51,8 +51,7 @@ EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
 
 all: riscv-isa-sim-makefile libserialdevice.so Makefile
-	$(MAKE) spike_dpi.o
-	$(MAKE) libspike_dpi_exe.so
+	$(MAKE) -f spike_dpi.mk libspike_dpi.a
 	$(MAKE) spike_main
 
 libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
@@ -66,8 +65,6 @@ spike_main: spike_dpi_exe.o libspike_dpi.a
 
 spike_dpi_exe.o: spike_dpi.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
-
-include spike_dpi.mk
 
 riscv-isa-sim-makefile:
 	@if [ ! -e $@ ]; then \
