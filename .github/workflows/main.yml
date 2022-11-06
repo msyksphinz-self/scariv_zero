@@ -33,6 +33,6 @@ jobs:
 
       - name: Tiny Build
         run: |
-           docker-compose -f ./top-test.yml build
-           docker-compose -f ./top-test.yml up --abort-on-container-exit
-        working-directory: ./
+           cd riscv-tests && ./configure && make -j20
+           cd spike_dpi && make all
+           cd verilator_sim && ../scripts/runtest.py --isa rv64imac -c tiny -t sanity -j20
