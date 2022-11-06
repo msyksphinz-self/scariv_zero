@@ -7,5 +7,9 @@ WORKDIR /work/tests/riscv-tests
 RUN ["./configure"]
 RUN ["make", "-j20"]
 
+WORKDIR /work/spike_dpi
+RUN ["make", "all"]
+RUN ["make", "libspike_dpi.a"]
+
 WORKDIR /work/verilator_sim
 RUN ["/work/scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "sanity", "-j20"]
