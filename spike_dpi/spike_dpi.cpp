@@ -162,24 +162,37 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
+#ifndef SIM_MAIN
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
+#else // SIM_MAIN
+  argv[arg_max++] = "--extlib=./libserialdevice.so";
+#endif // SIM_MAIN
   argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
   argv[arg_max++] = "--log-commits";
-  argv[arg_max++] = "--dtb";
   char *dts_file =(char *)malloc(sizeof(char) * 64);
+#ifndef SIM_MAIN
   sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
+#else // SIM_MAIN
+  sprintf (dts_file, "../dts/%s.dtb", isa_str);
+#endif // SIM_MAIN
+  argv[arg_max++] = "--dtb";
   argv[arg_max++] = dts_file;
+#ifndef SIM_MAIN
   argv[arg_max++] = "--kernel=../../../tests/linux/Image";
   argv[arg_max++] = "--initrd=../../../tests/linux/spike_rootfs.cpio";
+#else // SIM_MAIN
+  argv[arg_max++] = "--kernel=../tests/linux/Image";
+  argv[arg_max++] = "--initrd=../tests/linux/spike_rootfs.cpio";
+#endif // SIM_MAIN
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
-  // for (int i = 0; i < 20; i++) {
-  //   fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
-  // }
+  for (int i = 0; i < 20; i++) {
+    fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
+  }
   bool debug = false;
   bool halted = false;
   bool histogram = false;
@@ -1138,12 +1151,12 @@ int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
 
-  initial_spike (argv[1], 64, 0, 1);
+  initial_spike (argv[1], 64, 64, 1);
   processor_t *p = spike_core->get_core(0);
 
   // fprintf(compare_log_fp, "INST     CYCLE    PC\n");
 
-  for (int i = 0; i < 100000000; i++) {
+  for (int i = 0; i < 1000000000; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     auto instret = p->get_state()->minstret;

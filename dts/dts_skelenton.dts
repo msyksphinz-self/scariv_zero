@@ -6,7 +6,9 @@
   compatible = "ucbbar,spike-bare-dev";
   model = "ucbbar,spike-bare";
   chosen {
-    bootargs = "console=hvc0 earlycon=sbi";
+    linux,initrd-start = <4291316224>;
+    linux,initrd-end = <4294963200>;
+    bootargs = "root=/dev/ram console=hvc0 earlycon=sbi";
     /* bootargs = [00]; */
     stdout-path = "/uart@54000000";
   };
