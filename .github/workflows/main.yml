@@ -16,8 +16,8 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
-    name: ci_rv64_build
+  ci_rv64_build:
+    name: RV64 Tiny Sanity Test
     timeout-minutes: 30 # 30-minutes
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -37,3 +37,25 @@ jobs:
            cd $GITHUB_WORKSPACE/tests/riscv-tests && ./configure && make -j$(nproc)
            cd $GITHUB_WORKSPACE/spike_dpi && make all -j$(nproc)
            cd $GITHUB_WORKSPACE/verilator_sim && ../scripts/runtest.py --isa rv64imafdc -c tiny -t sanity -j$(nproc)
+
+  ci_rv32_build:
+    name: RV32 Tiny Sanity Test
+    timeout-minutes: 30 # 30-minutes
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container:
+      image: msyksphinz/msrh:run_env
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Tiny Build
+        run: |
+           cd $GITHUB_WORKSPACE/tests/riscv-tests && ./configure && make -j$(nproc)
+           cd $GITHUB_WORKSPACE/spike_dpi && make all -j$(nproc)
+           cd $GITHUB_WORKSPACE/verilator_sim && ../scripts/runtest.py --isa rv32imafdc -c tiny -t sanity -j$(nproc)
