@@ -97,8 +97,8 @@ assign w_req_is_bootrom = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h
 assign w_req_is_serial  = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h5400_0000;
 assign w_req_is_kernel  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 'h0000_8020_0000) &&
                           (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  'h0000_8220_0000);
-assign w_req_is_initrd  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 'hffff_ff00_0000) &&
-                          (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  'hffff_ffff_0000);
+assign w_req_is_initrd  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 48'hffff_ff00_0000) &&
+                          (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  48'hffff_ffff_0000);
 assign w_req_is_another = !w_req_is_bootrom & !w_req_is_serial & !w_req_is_kernel & !w_req_is_initrd;
 
 
