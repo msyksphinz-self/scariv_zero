@@ -517,7 +517,7 @@ tb_flash
   .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
   .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
-  .BASE_ADDR('h8000_1000),
+  .BASE_ADDR('hffc8_4a00),
   .SIZE     ('h0200_0000),
   .RD_LAT   (30)
 ) u_initrd_flash (
