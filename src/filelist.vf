@@ -148,3 +148,6 @@
 
 ../src/l2_if_arbiter.sv
 ../src/l2_if_resp_arbiter.sv
+
+../src/clint_if.sv
+../src/msrh_clint.sv

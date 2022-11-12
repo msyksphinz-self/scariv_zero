@@ -70,6 +70,20 @@ module l2c_splitter_wrapper
    input  logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   i_initrd_resp_data,
    output logic                                      o_initrd_resp_ready,
 
+   /* Initrd Flash */
+   output logic                                      o_clint_req_valid,
+   output msrh_lsu_pkg::mem_cmd_t                    o_clint_req_cmd,
+   output logic [riscv_pkg::PADDR_W-1:0]             o_clint_req_addr,
+   output logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]     o_clint_req_tag,
+   output logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   o_clint_req_data,
+   output logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] o_clint_req_byte_en,
+   input  logic                                      i_clint_req_ready,
+
+   input  logic                                      i_clint_resp_valid,
+   input  logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]     i_clint_resp_tag,
+   input  logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   i_clint_resp_data,
+   output logic                                      o_clint_resp_ready,
+
    /* L2 Interface */
    output logic                                      o_l2_req_valid,
    output msrh_lsu_pkg::mem_cmd_t                    o_l2_req_cmd,
@@ -85,13 +99,14 @@ module l2c_splitter_wrapper
    output logic                                      o_l2_resp_ready
    );
 
-l2_resp_if resp_if[5]();
+l2_resp_if resp_if[6]();
 l2_resp_if resp_if_selected();
 
 logic                                                w_req_is_bootrom;
 logic                                                w_req_is_serial;
 logic                                                w_req_is_kernel;
 logic                                                w_req_is_initrd;
+logic                                                w_req_is_clint;
 logic                                                w_req_is_another;
 assign w_req_is_bootrom = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h0000_1000;
 assign w_req_is_serial  = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h5400_0000;
@@ -99,7 +114,8 @@ assign w_req_is_kernel  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 'h8020_0000) 
                           (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  'h8220_0000);
 assign w_req_is_initrd  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 'hffc8_4a00) &&
                           (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  'hffff_f000);
-assign w_req_is_another = !w_req_is_bootrom & !w_req_is_serial & !w_req_is_kernel & !w_req_is_initrd;
+assign w_req_is_clint   = {i_req_addr[riscv_pkg::PADDR_W-1: 16], 16'h000}  == 'h200_0000;
+assign w_req_is_another = !w_req_is_bootrom & !w_req_is_serial & !w_req_is_kernel & !w_req_is_initrd & !w_req_is_clint;
 
 
 // ===========================
@@ -133,6 +149,13 @@ assign o_initrd_req_tag     = i_req_tag    ;
 assign o_initrd_req_data    = i_req_data   ;
 assign o_initrd_req_byte_en = i_req_byte_en;
 
+assign o_clint_req_valid   = i_req_valid & w_req_is_clint;
+assign o_clint_req_cmd     = i_req_cmd    ;
+assign o_clint_req_addr    = i_req_addr   ;
+assign o_clint_req_tag     = i_req_tag    ;
+assign o_clint_req_data    = i_req_data   ;
+assign o_clint_req_byte_en = i_req_byte_en;
+
 assign o_l2_req_valid   = i_req_valid & w_req_is_another;
 assign o_l2_req_cmd     = i_req_cmd    ;
 assign o_l2_req_addr    = i_req_addr   ;
@@ -142,8 +165,9 @@ assign o_l2_req_byte_en = i_req_byte_en;
 
 assign o_req_ready = w_req_is_bootrom & i_bootrom_req_ready |
                      w_req_is_serial  & i_serial_req_ready  |
-                     w_req_is_kernel  & i_kernel_req_ready   |
-                     w_req_is_initrd  & i_initrd_req_ready   |
+                     w_req_is_kernel  & i_kernel_req_ready  |
+                     w_req_is_initrd  & i_initrd_req_ready  |
+                     w_req_is_clint   & i_clint_req_ready  |
                      w_req_is_another & i_l2_req_ready;
 
 // =============================
@@ -174,13 +198,19 @@ assign resp_if[3].payload.tag  = i_initrd_resp_tag;
 assign resp_if[3].payload.data = i_initrd_resp_data;
 assign o_initrd_resp_ready     = resp_if[3].ready;
 
-// L2 interconnection
-assign resp_if[4].valid        = i_l2_resp_valid;
-assign resp_if[4].payload.tag  = i_l2_resp_tag;
-assign resp_if[4].payload.data = i_l2_resp_data;
-assign o_l2_resp_ready         = resp_if[4].ready;
+// CLINT interconnection
+assign resp_if[4].valid        = i_clint_resp_valid;
+assign resp_if[4].payload.tag  = i_clint_resp_tag;
+assign resp_if[4].payload.data = i_clint_resp_data;
+assign o_clint_resp_ready      = resp_if[4].ready;
 
-l2_if_resp_arbiter #(.ARB_NUM(5)) u_l2_if_arbiter (.l2_resp_slave_if(resp_if), .l2_resp_master_if(resp_if_selected));
+// L2 interconnection
+assign resp_if[5].valid        = i_l2_resp_valid;
+assign resp_if[5].payload.tag  = i_l2_resp_tag;
+assign resp_if[5].payload.data = i_l2_resp_data;
+assign o_l2_resp_ready         = resp_if[5].ready;
+
+l2_if_resp_arbiter #(.ARB_NUM(6)) u_l2_if_arbiter (.l2_resp_slave_if(resp_if), .l2_resp_master_if(resp_if_selected));
 
 assign o_resp_valid = resp_if_selected.valid;
 assign o_resp_tag   = resp_if_selected.payload.tag;

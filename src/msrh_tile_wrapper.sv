@@ -49,7 +49,11 @@ module msrh_tile_wrapper (
 
     output logic                                     o_snoop_resp_valid,
     output logic [ msrh_conf_pkg::DCACHE_DATA_W-1:0] o_snoop_resp_data,
-    output logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] o_snoop_resp_be
+    output logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] o_snoop_resp_be,
+
+    // CLINT Interface
+    input logic i_clint_ipi_valid,
+    input logic i_clint_time_irq_valid
 );
 
   l2_req_if ic_l2_req ();

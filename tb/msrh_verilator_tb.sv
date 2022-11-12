@@ -178,6 +178,23 @@ module msrh_tb (
   logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_l2_resp_data;
   logic                                      w_l2_resp_ready;
 
+  /* CLINT */
+  logic                                      w_clint_req_valid;
+  msrh_lsu_pkg::mem_cmd_t                    w_clint_req_cmd;
+  logic [            riscv_pkg::PADDR_W-1:0] w_clint_req_addr;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_clint_req_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_clint_req_data;
+  logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] w_clint_req_byte_en;
+  logic                                      w_clint_req_ready;
+
+  logic                                      w_clint_resp_valid;
+  logic [    msrh_lsu_pkg::L2_CMD_TAG_W-1:0] w_clint_resp_tag;
+  logic [  msrh_conf_pkg::ICACHE_DATA_W-1:0] w_clint_resp_data;
+  logic                                      w_clint_resp_ready;
+
+  clint_if w_clint_if();
+
+
   /* Connection */
   l2c_arbiter_wrapper u_l2c_arbiter_wrapper (
       /* from ELF Loader */
@@ -317,6 +334,20 @@ module msrh_tb (
       .i_initrd_resp_data  (w_initrd_resp_data   ),
       .o_initrd_resp_ready (w_initrd_resp_ready  ),
 
+      /* CLINT Interface */
+      .o_clint_req_valid   (w_clint_req_valid   ),
+      .o_clint_req_cmd     (w_clint_req_cmd     ),
+      .o_clint_req_addr    (w_clint_req_addr    ),
+      .o_clint_req_tag     (w_clint_req_tag     ),
+      .o_clint_req_data    (w_clint_req_data    ),
+      .o_clint_req_byte_en (w_clint_req_byte_en ),
+      .i_clint_req_ready   (w_clint_req_ready   ),
+
+      .i_clint_resp_valid  (w_clint_resp_valid  ),
+      .i_clint_resp_tag    (w_clint_resp_tag    ),
+      .i_clint_resp_data   (w_clint_resp_data   ),
+      .o_clint_resp_ready  (w_clint_resp_ready  ),
+
       /* L2 Interface */
       .o_l2_req_valid  (w_l2_req_valid   ),
       .o_l2_req_cmd    (w_l2_req_cmd     ),
@@ -384,7 +415,10 @@ module msrh_tb (
 
       .o_snoop_resp_valid(w_snoop_resp_valid),
       .o_snoop_resp_data (w_snoop_resp_data),
-      .o_snoop_resp_be   (w_snoop_resp_be)
+      .o_snoop_resp_be   (w_snoop_resp_be),
+
+      .i_clint_ipi_valid      (w_clint_if.ipi_valid     ),
+      .i_clint_time_irq_valid (w_clint_if.time_irq_valid)
   );
 
 
@@ -553,6 +587,37 @@ tb_elf_loader u_tb_elf_loader (
     .o_req_byte_en(w_elf_req_byte_en),
     .i_req_ready  (w_elf_req_ready)
 );
+
+
+msrh_clint
+#(
+  .DATA_W   (msrh_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (msrh_lsu_pkg::L2_CMD_TAG_W),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('h200_0000),
+  .SIZE     ('h1_0000),
+  .RD_LAT   (10)
+) u_clint (
+  .i_clk    (i_clk),
+  .i_reset_n(i_ram_reset_n),
+
+  // clint
+  .i_req_valid   (w_clint_req_valid   ),
+  .i_req_cmd     (w_clint_req_cmd     ),
+  .i_req_addr    (w_clint_req_addr    ),
+  .i_req_tag     (w_clint_req_tag     ),
+  .i_req_data    (w_clint_req_data    ),
+  .i_req_byte_en (w_clint_req_byte_en ),
+  .o_req_ready   (w_clint_req_ready   ),
+
+  .o_resp_valid  (w_clint_resp_valid  ),
+  .o_resp_tag    (w_clint_resp_tag    ),
+  .o_resp_data   (w_clint_resp_data   ),
+  .i_resp_ready  (w_clint_resp_ready  ),
+
+  .clint_if (w_clint_if)
+);
+
 
 `include "tb_commit_mon_utils.sv"
 
