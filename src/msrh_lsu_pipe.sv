@@ -407,14 +407,12 @@ assign ex1_l1d_rd_if.s0_lock_valid = 1'b0;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_paddr <= 'h0;
-    r_ex2_haz_detected_from_ex1 <= 1'b0;
 
     r_ex2_is_lr <= 1'b0;
     r_ex2_is_sc <= 1'b0;
   end else begin
     r_ex2_paddr <= w_ex1_tlb_resp.paddr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
-    r_ex2_haz_detected_from_ex1 <= w_ex1_haz_detected;
 
     r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
     r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;

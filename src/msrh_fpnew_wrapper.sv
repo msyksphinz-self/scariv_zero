@@ -39,7 +39,7 @@ typedef struct packed {
   logic [msrh_conf_pkg::RV_FPU_ENTRY_SIZE-1: 0] sched_index;
   msrh_pkg::reg_t                               reg_type;
   msrh_pkg::rnid_t                              rnid;
-  fpnew_pkg::fp_format_e                        output_fmt;
+  logic                                         output_is_fp32;
 } aux_fpnew_t;
 
 logic                                    w_fma32_in_valid;
@@ -94,7 +94,7 @@ assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.sched_index = i_sched_index;
-assign w_aux_fpnew_in.output_fmt  = w_out_fp ? w_dst_fp_fmt : w_int_fmt;
+assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP32) : 1'b0;
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
@@ -116,7 +116,7 @@ end
 endgenerate
 
 
-generate if (msrh_pkg::FLEN_W == 64) begin
+generate if (riscv_pkg::FLEN_W == 64) begin
   assign w_fdiv_rs[0] = i_pipe_ctrl.size == SIZE_DW ? i_rs1 :
                         &i_rs1[63:32] ? i_rs1 : 64'hffffffff7fc00000;
   assign w_fdiv_rs[1] = i_pipe_ctrl.size == SIZE_DW ? i_rs2 :
@@ -553,7 +553,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
       o_rnid        = w_noncomp64_aux.rnid;
       o_reg_type    = w_noncomp64_aux.reg_type;
     end else if (w_cast_out_valid) begin // if (w_noncomp64_out_valid)
-      o_result      = w_cast_aux.output_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, w_cast_result[31: 0]} : w_cast_result;
+      o_result      = w_cast_aux.output_is_fp32 ? {{32{1'b1}}, w_cast_result[31: 0]} : w_cast_result;
       o_fflags      = w_cast_out_fflags;
       o_sched_index = w_cast_aux.sched_index;
       o_rnid        = w_cast_aux.rnid;

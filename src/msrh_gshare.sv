@@ -191,8 +191,8 @@ msrh_ic_pkg::ic_block_t w_s2_predict_taken_oh;
 vaddr_t                 w_s2_btb_target_vaddr;
 
 generate for (genvar b_idx = 0; b_idx < msrh_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : bim_loop
-  assign w_s2_predict_taken[b_idx] = w_gshare_search_if.s2_bim_value[b_idx][1] &
-                                     w_btb_search_if.s2_hit[b_idx];
+  assign w_s2_predict_taken[b_idx] = gshare_search_if.s2_bim_value[b_idx][1] &
+                                     search_btb_if.s2_hit[b_idx];
 end
 endgenerate
 
@@ -205,7 +205,7 @@ bit_oh_or_packed
     )
 u_s2_target_vaddr_hit_oh (
  .i_oh      (w_s2_predict_taken_oh),
- .i_data    (w_btb_search_if.s2_target_vaddr),
+ .i_data    (search_btb_if.s2_target_vaddr),
  .o_selected(w_s2_btb_target_vaddr)
  );
 assign o_s2_predict_target_vaddr = w_s2_btb_target_vaddr;

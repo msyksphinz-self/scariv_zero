@@ -714,9 +714,7 @@ assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
 assign w_btb_search_if.s0_pc_vaddr    = w_s0_vaddr;
 
 assign w_btb_update_if.valid          = br_upd_if.update &
-                                        /* br_upd_if.taken */ &  // Even though Taken/NotTaken, it records "Branch is existed".
-                                        ~br_upd_if.dead /* &
-                                        ~br_upd_if.is_ret */;
+                                        ~br_upd_if.dead;
 assign w_btb_update_if.taken          = br_upd_if.taken;
 assign w_btb_update_if.mispredict     = br_upd_if.mispredict;
 assign w_btb_update_if.pc_vaddr       = br_upd_if.pc_vaddr;

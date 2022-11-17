@@ -686,15 +686,18 @@ typedef enum logic [ 3: 0] {
   ST_BUF_AMO_OPERATION = 12
 } st_buffer_state_t;
 
-function st_buffer_entry_t assign_st_buffer (msrh_pkg::cmt_id_t cmt_id,
-                                             msrh_pkg::grp_id_t grp_id,
-                                             msrh_pkg::paddr_t  paddr,
-                                             logic [ST_BUF_WIDTH/8-1: 0]   strb,
-                                             logic [ST_BUF_WIDTH-1: 0]     data,
-                                             logic                         is_rmw,
-                                             decoder_lsu_ctrl_pkg::rmwop_t rmwop,
-                                             logic                         is_amo,
-                                             );
+function st_buffer_entry_t assign_st_buffer (
+`ifdef SIMULATION
+   msrh_pkg::cmt_id_t cmt_id,
+   msrh_pkg::grp_id_t grp_id,
+`endif // SIMULATION
+   msrh_pkg::paddr_t  paddr,
+   logic [ST_BUF_WIDTH/8-1: 0]   strb,
+   logic [ST_BUF_WIDTH-1: 0]     data,
+   logic                         is_rmw,
+   decoder_lsu_ctrl_pkg::rmwop_t rmwop,
+   logic                         is_amo
+  );
   st_buffer_entry_t ret;
 
   ret = 'h0;

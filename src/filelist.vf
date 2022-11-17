@@ -125,6 +125,7 @@
 ../src/msrh_dcache.sv
 ../src/msrh_dcache_array.sv
 ../src/msrh_addr_check.sv
+../src/msrh_lsu_lrsc.sv
 
 ../src/msrh_snoop_top.sv
 

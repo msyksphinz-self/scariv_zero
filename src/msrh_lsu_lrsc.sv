@@ -65,4 +65,4 @@ end
 
 assign w_sc_success = r_lr_registered_valid & (r_lr_paddr == w_sc_paddr_sel);
 
-endmodule; // msrh_lsu_lrsc
+endmodule // msrh_lsu_lrsc

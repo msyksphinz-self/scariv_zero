@@ -13,6 +13,9 @@ set_property board_part em.avnet.com:zed:part0:1.3 [current_project]
 set_property vhdl_version vhdl_2k [current_fileset]
 
 add_files -norecurse ../src/riscv_common_pkg.sv
+import_files ../src/riscv_common_pkg.sv
+add_files -norecurse ../src/riscv_fpu_imafdc_pkg.sv
+import_files ../src/riscv_fpu_imafdc_pkg.sv
 add_files -norecurse ../src/riscv64_pkg.sv
 import_files ../src/riscv64_pkg.sv
 add_files -norecurse ../src/msrh_standard_conf_pkg.sv
@@ -21,6 +24,9 @@ import_files ../src/msrh_standard_conf_pkg.sv
 # add_files -norecurse $RTL_ROOT_DIR
 source filelist.tcl
 import_files
+
+add_files -norecurse ../src/msrh_tile_wrapper.sv
+import_files ../src/msrh_tile_wrapper.sv
 
 read_xdc synth_constraints.xdc
 set_property used_in_implementation false [get_files synth_constraints.xdc]
