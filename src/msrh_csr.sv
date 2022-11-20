@@ -516,7 +516,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mim
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhartid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHARTID       ) begin r_mhartid       <= write_if.data; end end
 
 xlen_t w_misa_reset;
-generate if (riscv_pkg::FLEN_W == 0) begin
+generate if (riscv_fpu_pkg::FLEN_W == 0) begin
   assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("I" - "A")) |
@@ -524,7 +524,7 @@ generate if (riscv_pkg::FLEN_W == 0) begin
               ('h1 << ("S" - "A")) |
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
-end else if (riscv_pkg::FLEN_W == 32) begin
+end else if (riscv_fpu_pkg::FLEN_W == 32) begin
   assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("F" - "A")) |
@@ -533,7 +533,7 @@ end else if (riscv_pkg::FLEN_W == 32) begin
               ('h1 << ("S" - "A")) |
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
-end else if (riscv_pkg::FLEN_W ==64) begin
+end else if (riscv_fpu_pkg::FLEN_W ==64) begin
   assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("D" - "A")) |

@@ -12,7 +12,7 @@ module msrh_phy_registers
     input msrh_pkg::phy_wr_t i_phy_wr[msrh_pkg::TGT_BUS_SIZE]
 );
 
-localparam WIDTH = REG_TYPE == GPR ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
+localparam WIDTH = REG_TYPE == GPR ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 
   logic [WIDTH-1: 0] r_phy_regs[msrh_pkg::RNID_SIZE];
 

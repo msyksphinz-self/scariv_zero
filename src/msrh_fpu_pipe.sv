@@ -250,7 +250,7 @@ assign w_ex2_rs1_selected_data_sra = $signed(w_ex2_rs1_selected_data_32) >>> w_e
 
 logic [63: 0] w_ex2_rs1_canonical;
 logic [63: 0] w_ex2_rs2_canonical;
-generate if (riscv_pkg::FLEN_W == 64) begin
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin
   assign w_ex2_rs1_canonical = !(&w_ex2_rs1_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs1_selected_data;
   assign w_ex2_rs2_canonical = !(&w_ex2_rs2_selected_data[63:32]) ? 64'hffffffff_7fc00000 : w_ex2_rs2_selected_data;
 end else begin
@@ -268,7 +268,7 @@ always_comb begin
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FMV_W_X  : begin
-      if (riscv_pkg::FLEN_W == 64) begin
+      if (riscv_fpu_pkg::FLEN_W == 64) begin
         w_ex2_res_data = {{32{1'b1}}, w_ex2_rs1_selected_data[31: 0]};
         w_ex2_fpnew_valid = 1'b0;
       end else begin
@@ -285,20 +285,20 @@ always_comb begin
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJ_D  : begin
-      w_ex2_res_data = { w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
+      w_ex2_res_data = { w_ex2_rs2_selected_data[riscv_fpu_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_fpu_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJN_D : begin
-      w_ex2_res_data = {~w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
+      w_ex2_res_data = {~w_ex2_rs2_selected_data[riscv_fpu_pkg::FLEN_W-1], w_ex2_rs1_selected_data[riscv_fpu_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJX_D : begin
-      w_ex2_res_data = { w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-1] ^ w_ex2_rs2_selected_data[riscv_pkg::FLEN_W-1],
-                         w_ex2_rs1_selected_data[riscv_pkg::FLEN_W-2:0]};
+      w_ex2_res_data = { w_ex2_rs1_selected_data[riscv_fpu_pkg::FLEN_W-1] ^ w_ex2_rs2_selected_data[riscv_fpu_pkg::FLEN_W-1],
+                         w_ex2_rs1_selected_data[riscv_fpu_pkg::FLEN_W-2:0]};
       w_ex2_fpnew_valid = 1'b0;
     end
     OP_FSGNJ_S  : begin
-      if (riscv_pkg::FLEN_W == 64) begin
+      if (riscv_fpu_pkg::FLEN_W == 64) begin
         w_ex2_res_data = {w_ex2_rs1_canonical[63:32],  w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
         w_ex2_fpnew_valid = 1'b0;
       end else begin
@@ -307,7 +307,7 @@ always_comb begin
       end
     end
     OP_FSGNJN_S : begin
-      if (riscv_pkg::FLEN_W == 64) begin
+      if (riscv_fpu_pkg::FLEN_W == 64) begin
         w_ex2_res_data = {w_ex2_rs1_canonical[63:32], ~w_ex2_rs2_canonical[31], w_ex2_rs1_canonical[30:0]};
         w_ex2_fpnew_valid = 1'b0;
       end else begin
@@ -316,7 +316,7 @@ always_comb begin
       end
     end
     OP_FSGNJX_S : begin
-      if (riscv_pkg::FLEN_W == 64) begin
+      if (riscv_fpu_pkg::FLEN_W == 64) begin
         w_ex2_res_data = {w_ex2_rs1_canonical[63:32],
                           w_ex2_rs1_canonical[31] ^ w_ex2_rs2_canonical[31],
                           w_ex2_rs1_canonical[30: 0]};

@@ -54,7 +54,7 @@ localparam GSHARE_BHT_W = msrh_conf_pkg::GSHARE_BHT_W;
 
 typedef logic [GSHARE_BHT_W-1: 0] gshare_bht_t;
 
-localparam ALEN_W = riscv_pkg::XLEN_W > riscv_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_pkg::FLEN_W;
+localparam ALEN_W = riscv_pkg::XLEN_W > riscv_fpu_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 typedef logic [ALEN_W-1: 0]   alen_t;
 typedef logic [ALEN_W/8-1: 0] alenb_t;
 

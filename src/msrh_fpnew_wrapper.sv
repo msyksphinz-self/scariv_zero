@@ -78,10 +78,10 @@ logic [ 4: 0]                            w_cast_out_fflags;
 aux_fpnew_t                              w_cast_aux;
 
 /* verilator lint_off UNOPTFLAT */
-logic [ 1: 0][riscv_pkg::FLEN_W-1: 0]    w_fdiv_rs;
+logic [ 1: 0][riscv_fpu_pkg::FLEN_W-1: 0]    w_fdiv_rs;
 logic [ 1: 0]                            w_fdiv_boxed;
 logic                                    w_fdiv_out_valid;
-logic [riscv_pkg::FLEN_W-1: 0]           w_fdiv_result;
+logic [riscv_fpu_pkg::FLEN_W-1: 0]           w_fdiv_result;
 fpnew_pkg::status_t                      w_fdiv_status;
 fpnew_pkg::classmask_e                   w_fdiv_class_mask;
 logic [ 4: 0]                            w_fdiv_out_fflags;
@@ -99,7 +99,7 @@ assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
 assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[31: 0] : i_rs3[31: 0];
-generate if (riscv_pkg::FLEN_W == 64) begin
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin
   assign w_fma32_boxed[2:0] = {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]};
 end else begin
   assign w_fma32_boxed[2:0] = 3'b111;
@@ -108,7 +108,7 @@ endgenerate
 
 assign w_noncomp32_rs[0] = i_rs1[31: 0];
 assign w_noncomp32_rs[1] = i_rs2[31: 0];
-generate if (riscv_pkg::FLEN_W == 64) begin
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin
   assign w_noncomp32_boxed = {&i_rs2[63:32], &i_rs1[63:32]};
 end else begin
   assign w_noncomp32_boxed = 2'b11;
@@ -116,7 +116,7 @@ end
 endgenerate
 
 
-generate if (riscv_pkg::FLEN_W == 64) begin
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin
   assign w_fdiv_rs[0] = i_pipe_ctrl.size == SIZE_DW ? i_rs1 :
                         &i_rs1[63:32] ? i_rs1 : 64'hffffffff7fc00000;
   assign w_fdiv_rs[1] = i_pipe_ctrl.size == SIZE_DW ? i_rs2 :
@@ -355,7 +355,7 @@ logic                 w_fdiv_in_valid;
 logic                 w_fdiv_ready;
 assign w_fdiv_in_valid = i_valid & w_fdiv_valid;
 
-localparam FpFmtConfig = riscv_pkg::FLEN_W == 32 ? 5'b10000 : 5'b11000;
+localparam FpFmtConfig = riscv_fpu_pkg::FLEN_W == 32 ? 5'b10000 : 5'b11000;
 
 fpnew_divsqrt_multi
   #(
@@ -395,7 +395,7 @@ fdiv
  );
 
 
-generate if (riscv_pkg::FLEN_W == 64) begin : fma64
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   logic [2:0][63: 0]                      w_fma64_rs;
   logic [2: 0]                            w_fma64_boxed;
   logic [63: 0]                           w_fma64_result;
@@ -573,7 +573,7 @@ generate if (riscv_pkg::FLEN_W == 64) begin : fma64
     end
   end // always_comb
 
-end else if (riscv_pkg::FLEN_W == 32) begin : block_32 // block: fma64
+end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   assign o_valid  = w_fma32_out_valid |
                     w_noncomp32_out_valid |
                     w_cast_out_valid |

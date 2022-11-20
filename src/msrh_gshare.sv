@@ -32,6 +32,10 @@ gshare_bht_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
 /* verilator lint_off UNOPTFLAT */
 gshare_bht_t  w_bhr_lane_next[msrh_lsu_pkg::ICACHE_DATA_B_W / 2];
 
+logic [ 1: 0] w_update_counter;
+logic [ 1: 0] w_s1_bim_counter;
+logic [ 1: 0] r_s1_bim_counter_dram;
+
 logic         s1_update_bhr;
 assign s1_update_bhr = r_s1_valid & |(search_btb_if.s1_hit & search_btb_if.s1_is_cond);
 gshare_bht_t  w_cmt_next_bhr;
@@ -59,10 +63,6 @@ generate for (genvar c_idx = 0; c_idx < msrh_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx
                                (br_upd_fe_if.bim_value == 2'b00) & !br_upd_fe_if.mispredict & !br_upd_fe_if.taken)) ? br_upd_fe_if.bim_value :
                              br_upd_fe_if.taken ? br_upd_fe_if.bim_value + 2'b01 :
                              br_upd_fe_if.bim_value - 2'b01;
-
-  logic [ 1: 0] w_update_counter;
-  logic [ 1: 0] w_s1_bim_counter;
-  logic [ 1: 0] r_s1_bim_counter_dram;
 
   if (c_idx == 0) begin
     assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] ?

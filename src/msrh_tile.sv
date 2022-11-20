@@ -468,7 +468,7 @@ u_int_phy_registers (
 );
 
 
-generate if (riscv_pkg::FLEN_W != 0) begin : fpu
+generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
   msrh_rename
     #(.REG_TYPE(msrh_pkg::FPR))
   u_msrh_fp_rename (
@@ -556,7 +556,7 @@ end else begin // block: fpu
   assign w_sc_fp_disp.valid = 1'b1;
   assign w_iq_dist_disp[1].ready = 1'b1;
   assign w_fpu_freelist_ready = 1'b1;
-end // if (riscv_pkg::FLEN_W != 0)
+end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
 
