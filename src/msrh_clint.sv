@@ -34,6 +34,7 @@ module msrh_clint #(
    clint_if.master clint_if
 );
 
+logic w_req_fire;
 
 logic r_msip;
 logic [ 7: 0] r_mtimecmp[riscv_pkg::XLEN_W/8];
@@ -43,11 +44,15 @@ logic [riscv_pkg::XLEN_W-1: 0] w_mtime_flatten;
 logic [riscv_pkg::XLEN_W-1: 0] w_mtime_next;
 logic [riscv_pkg::XLEN_W-1: 0] w_mtimecmp_flatten;
 
+assign o_req_ready = !(o_resp_valid & !i_resp_ready);
+
+assign w_req_fire = i_req_valid & o_req_ready;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_msip <= 1'b0;
   end else begin
-    if (i_req_valid &
+    if (w_req_fire &
         (i_req_cmd == msrh_lsu_pkg::M_XWR) &
         (i_req_addr == BASE_ADDR)) begin
       r_msip <= i_req_data[0];
@@ -61,7 +66,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_mtimecmp[b_idx] <= 8'h0;
     end
   end else begin
-    if (i_req_valid &
+    if (w_req_fire &
         (i_req_cmd == msrh_lsu_pkg::M_XWR) &
         (i_req_addr == BASE_ADDR + 'h4000)) begin
       for (int b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin
@@ -78,7 +83,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_mtime[b_idx] <= 8'h0;
     end
   end else begin
-    if (i_req_valid &
+    if (w_req_fire &
         (i_req_cmd == msrh_lsu_pkg::M_XWR) &
         (i_req_addr == BASE_ADDR + 'hbff8)) begin
       for (int b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin
@@ -92,7 +97,68 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign w_mtime_next = w_mtime_flatten + 'h1;
+
+logic w_resp_valid_next;
+riscv_pkg::xlen_t w_resp_data_next;
+logic [TAG_W-1:0] w_resp_tag_next;
+
+
+always_comb begin
+  if (w_req_fire &
+      (i_req_cmd == msrh_lsu_pkg::M_XRD)) begin
+    case (i_req_addr)
+      BASE_ADDR + 'h0000 : begin
+        w_resp_valid_next = 1'b1;
+        w_resp_tag_next   = i_req_tag;
+        w_resp_data_next  = {{(riscv_pkg::XLEN_W-1){1'b0}}, r_msip};
+      end
+      BASE_ADDR + 'h4000 : begin
+        w_resp_valid_next = 1'b1;
+        w_resp_tag_next   = i_req_tag;
+        w_resp_data_next  = w_mtimecmp_flatten;
+      end
+      BASE_ADDR + 'hbff8 : begin
+        w_resp_valid_next = 1'b1;
+        w_resp_tag_next   = i_req_tag;
+        w_resp_data_next  = w_mtime_flatten;
+      end
+      default : begin
+        w_resp_valid_next = 1'b0;
+        w_resp_tag_next   = i_req_tag;
+        w_resp_data_next  = 'h0;
+      end
+    endcase // case (i_req_addr)
+  end else begin // if (w_req_fire &...
+    w_resp_valid_next = 1'b0;
+  end // if (w_req_fire &...
+end // always_comb
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_resp_valid <= 1'b0;
+  end else begin
+    if (o_resp_valid & i_resp_ready) begin
+      o_resp_valid <= 1'b0;
+    end else if (!(o_resp_valid & !i_resp_ready)) begin
+      o_resp_valid <= w_resp_valid_next;
+      o_resp_data  <= w_resp_data_next << {i_req_addr[$clog2(DATA_W/8)-1:0], 3'b000};
+      o_resp_tag   <= w_resp_tag_next;
+    end
+  end
+end
+
+logic [ 5: 0] r_interleave;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_interleave <= 6'h0;
+  end else begin
+    r_interleave <= r_interleave + 'h1;
+  end
+end
+
+
+assign w_mtime_next = w_mtime_flatten + &r_interleave;
 generate for(genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin : byte_loop
   assign w_mtime_flatten   [b_idx * 8 +: 8] = r_mtime[b_idx];
   assign w_mtimecmp_flatten[b_idx * 8 +: 8] = r_mtimecmp[b_idx];

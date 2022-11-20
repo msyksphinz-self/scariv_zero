@@ -1,4 +1,6 @@
 [
+	{ "name": "clint_test"        , "group" : ["sanity"], "elf": "../../../tests/clint_test/test_rv32.elf"   },
+
 	{ "name": "rv32ui-p-add"        , "group" : ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv32ui-p-add"        },
 	{ "name": "rv32ui-p-addi"       , "group" : ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv32ui-p-addi"       },
 	{ "name": "rv32ui-p-and"        , "group" : ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv32ui-p-and"        },
