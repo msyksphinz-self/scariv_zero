@@ -34,6 +34,9 @@ module msrh_csu
   /* FENCE.I update */
   output logic                      o_fence_i,
 
+  // CLINT connection
+  clint_if.slave clint_if,
+
   // Commit notification
   input msrh_pkg::commit_blk_t i_commit,
   br_upd_if.slave              br_upd_if
@@ -146,6 +149,8 @@ u_msrh_csr
 
    .read_if (w_csr_read),
    .write_if (w_csr_write),
+
+   .clint_if (clint_if),
 
    .csr_info (csr_info),
    .int_if   (int_if),

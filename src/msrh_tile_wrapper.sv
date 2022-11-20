@@ -53,7 +53,8 @@ module msrh_tile_wrapper (
 
     // CLINT Interface
     input logic i_clint_ipi_valid,
-    input logic i_clint_time_irq_valid
+    input logic i_clint_time_irq_valid,
+    input logic i_clint_time_irq_clear
 );
 
   l2_req_if ic_l2_req ();
@@ -66,6 +67,8 @@ module msrh_tile_wrapper (
   l2_resp_if ptw_l2_resp ();
 
   snoop_if snoop_if ();
+
+  clint_if clint_if ();
 
   // -------------------
   // IC Interconnection
@@ -98,6 +101,10 @@ module msrh_tile_wrapper (
   assign l1d_l2_resp.payload.tag = i_l1d_resp_tag;
   assign l1d_l2_resp.payload.data = i_l1d_resp_data;
   assign o_l1d_resp_ready = l1d_l2_resp.ready;
+
+assign clint_if.ipi_valid      = i_clint_ipi_valid;
+assign clint_if.time_irq_valid = i_clint_time_irq_valid;
+assign clint_if.time_irq_clear = i_clint_time_irq_clear;
 
   // --------------------
   // PTW Interconnection
@@ -138,7 +145,9 @@ module msrh_tile_wrapper (
 
       // Page Table Walk Interface
       .ptw_req(ptw_l2_req),
-      .ptw_resp(ptw_l2_resp)
+      .ptw_resp(ptw_l2_resp),
+
+      .clint_if (clint_if)
   );
 
 

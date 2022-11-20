@@ -707,9 +707,19 @@ void step_spike(long long time, long long rtl_pc,
 
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+    uint64_t iss_lsu_addr = std::get<0>(iss_rd);
     fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-            g_rv_xlen / 4, std::get<0>(iss_rd),
+            g_rv_xlen / 4, iss_lsu_addr,
             g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+    if (iss_lsu_addr == 0x200bff8) {
+      fprintf(compare_log_fp, "==========================================\n");
+      fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
+      fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "==========================================\n");
+      p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
+      p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
+      return;
+    }
   }
   for (auto &iss_wr: p->get_state()->log_mem_write) {
     fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
@@ -1138,6 +1148,14 @@ void check_mmu_trans (long long time, long long rtl_va,
   }
 
   spike_core->set_procs_debug(false);
+}
+
+
+void spike_update_timer (long long value)
+{
+  fprintf (stderr, "spike_update_timer called : %x is passed\n", value);
+  processor_t *p = spike_core->get_core(0);
+  p->get_mmu()->store_uint64 (0x200bff8, value);
 }
 
 

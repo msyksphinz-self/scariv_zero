@@ -44,4 +44,6 @@ extern "C" {
                         int rtl_len, int rtl_acc_type,
                         long long rtl_pa);
 
+  void spike_update_timer(long long value);
+
 }

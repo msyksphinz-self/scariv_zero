@@ -90,7 +90,7 @@
 
 #define NUM_TICKS_ONE_S                         RTC_FREQ            // it takes this many ticks of mtime for 1s to elapse
 #define NUM_TICKS_ONE_MS                        (RTC_FREQ/1000)     // it takes this many ticks of mtime for 1ms to elapse
-#define DEMO_TIMER_INTERVAL                     50000               // 5s timer interval
+#define DEMO_TIMER_INTERVAL                     100                 // 5s timer interval
 #define SET_TIMER_INTERVAL_MS(ms_ticks)         write_dword(MTIMECMP_BASE_ADDR(read_csr(mhartid)), (read_dword(MTIME_BASE_ADDR) + (ms_ticks * NUM_TICKS_ONE_MS)))
 
 /* Setup prototypes */
