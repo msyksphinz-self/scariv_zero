@@ -15,7 +15,10 @@ module msrh_tile (
 
     // PTW interconnection
     l2_req_if.master ptw_req,
-    l2_resp_if.slave ptw_resp
+    l2_resp_if.slave ptw_resp,
+
+    // CLINT connection
+    clint_if.slave clint_if
 );
 
 localparam ALU_INST_PORT_BASE = 0;
@@ -437,6 +440,8 @@ u_msrh_csu (
     .o_ex1_early_wr(w_ex1_csu_early_wr),
     .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
     .i_mispred_lsu (w_ex2_mispred_lsu),
+
+    .clint_if (clint_if),
 
     .csr_info    (w_csr_info   ),
     .int_if      (w_int_if),

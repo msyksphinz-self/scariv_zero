@@ -418,7 +418,8 @@ module msrh_tb (
       .o_snoop_resp_be   (w_snoop_resp_be),
 
       .i_clint_ipi_valid      (w_clint_if.ipi_valid     ),
-      .i_clint_time_irq_valid (w_clint_if.time_irq_valid)
+      .i_clint_time_irq_valid (w_clint_if.time_irq_valid),
+      .i_clint_time_irq_clear (w_clint_if.time_irq_clear)
   );
 
 

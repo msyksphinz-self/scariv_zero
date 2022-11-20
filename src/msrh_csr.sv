@@ -15,6 +15,9 @@ module msrh_csr
    /* FFlags update for FPU */
    fflags_update_if.slave     fflags_update_if,
 
+   // CLINT connection
+   clint_if.slave clint_if,
+
    // Commit notification
    input msrh_pkg::commit_blk_t i_commit
    );
@@ -574,7 +577,18 @@ end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MSCRATCH      ) begin r_mscratch      <= write_if.data; end end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIP           ) begin r_mip           <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mip <= 'h0;
+  end else if (write_if.valid & (write_if.addr == `SYSREG_ADDR_MIP)) begin
+    r_mip <= write_if.data;
+  end else if (clint_if.time_irq_clear) begin
+    r_mip[7] <= 1'b0;
+  end else if (clint_if.time_irq_valid) begin
+    r_mip[7] <= 1'b1;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbase         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBASE         ) begin r_mbase         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbound        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBOUND        ) begin r_mbound        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mibase        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIBASE        ) begin r_mibase        <= write_if.data; end end
