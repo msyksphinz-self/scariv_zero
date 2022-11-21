@@ -1,13 +1,10 @@
 .PHONY: riscv_isa_sim
 
-# VERILATOR_HOME = /usr/local/share/verilator
-VERILATOR_HOME = /home/kimura/usr/share/verilator
+VERILATOR_HOME = /usr/local/share/verilator
 
 ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR
 endif
-
-VCS_HOME = /dev/shm/shioya/opt/synopsys/vcs/S-2021.09
 
 CFLAGS += -g
 CFLAGS += --std=c++17
