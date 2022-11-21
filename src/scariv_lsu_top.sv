@@ -283,8 +283,8 @@ scariv_stq
 
 assign w_l1d_rd_if [L1D_MISSU_PORT].s0_valid = 'h0;
 
-scariv_miss_unit
-u_miss_unit
+scariv_l1d_mshr
+u_l1d_mshr
 (
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),

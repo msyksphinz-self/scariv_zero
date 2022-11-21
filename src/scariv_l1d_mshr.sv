@@ -7,7 +7,7 @@
 //
 // ------------------------------------------------------------------------
 
-module scariv_miss_unit
+module scariv_l1d_mshr
   (
    input logic  i_clk,
    input logic  i_reset_n,
@@ -518,4 +518,4 @@ endfunction // dump_json
 `endif // SIMULATION
 
 
-endmodule // scariv_miss_unit
+endmodule // scariv_l1d_mshr

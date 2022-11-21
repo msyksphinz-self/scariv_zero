@@ -34,7 +34,7 @@ int json_fp;
       u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_stq.dump_json(json_fp);
 
       // LSU LRQ
-      u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_miss_unit.dump_json(json_fp);
+      u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_l1d_mshr.dump_json(json_fp);
 
       // BRU Scheduler
       u_scariv_tile_wrapper.u_scariv_tile.u_scariv_bru.u_scariv_scheduler.dump_json("bru", json_fp, 0);
