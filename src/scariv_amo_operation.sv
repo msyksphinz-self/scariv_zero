@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MSRH Atomic Operations
+// NAME : SCARIV Atomic Operations
 // TYPE : module
 // ------------------------------------------------------------------------
 // Atomic Operations

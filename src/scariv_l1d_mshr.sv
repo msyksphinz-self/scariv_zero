@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MSRH Load Requseter (LRQ) for L1D
+// NAME : SCARIV Load Requseter (LRQ) for L1D
 // TYPE : module
 // ------------------------------------------------------------------------
 // L1D Load Requestor and Replace Data

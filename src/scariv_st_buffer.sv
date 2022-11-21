@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MSRH Store Buffer
+// NAME : SCARIV Store Buffer
 // TYPE : module
 // ------------------------------------------------------------------------
 // After STQ commit, request L1D write and control

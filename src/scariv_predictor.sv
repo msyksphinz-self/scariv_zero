@@ -2,7 +2,7 @@
 // NAME : MRSH Predictor
 // TYPE : module
 // ------------------------------------------------------------------------
-// It includes all variations of predictors for MSRH
+// It includes all variations of predictors for SCARIV
 // ------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------

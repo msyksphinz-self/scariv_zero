@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MSRH Branch Target Buffer(BTB)
+// NAME : SCARIV Branch Target Buffer(BTB)
 // TYPE : module
 // ------------------------------------------------------------------------
 // Branch Target Buffer, mainly composed with SRAM

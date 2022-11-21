@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MSRH Store Buffer Entry
+// NAME : SCARIV Store Buffer Entry
 // TYPE : module
 // ------------------------------------------------------------------------
 // Request Control Entry and State Machine of Store Buffer
