@@ -98,7 +98,7 @@ os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
 def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
-    command_str = "../../msrh_tb_" + isa + "_" + conf
+    command_str = "../../scariv_tb_" + isa + "_" + conf
     if fst_dump :
         command_str += " --dump "
         command_str += " --dump_start " + str(dump_start_time)
