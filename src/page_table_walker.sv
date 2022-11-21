@@ -3,11 +3,11 @@ module page_table_walker
     input logic clk,
     input logic reset_n,
 
-    input  msrh_pkg::ptw_req_t  i_ptw_req,
-    output msrh_pkg::ptw_resp_t o_ptw_resp,
+    input  scariv_pkg::ptw_req_t  i_ptw_req,
+    output scariv_pkg::ptw_resp_t o_ptw_resp,
 
-    output msrh_lsu_pkg::mem_req_t  o_mem_req,
-    input  msrh_lsu_pkg::mem_resp_t i_mem_resp,
+    output scariv_lsu_pkg::mem_req_t  o_mem_req,
+    input  scariv_lsu_pkg::mem_resp_t i_mem_resp,
 );
 
 typedef enum {

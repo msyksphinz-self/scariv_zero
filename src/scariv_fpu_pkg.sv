@@ -1,0 +1,5 @@
+package scariv_fpu_pkg;
+
+import decoder_fpu_ctrl_pkg::*;
+
+endpackage // scariv_fpu_pkg

@@ -1,20 +1,20 @@
 interface l1d_rd_if;
 
   logic             s0_valid;
-  msrh_pkg::paddr_t s0_paddr;
+  scariv_pkg::paddr_t s0_paddr;
   logic             s0_lock_valid;
 
   logic                                    s1_hit;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
+  logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
   logic                                    s1_miss;
   logic                                    s1_conflict;
-  msrh_lsu_pkg::mesi_t                     s1_mesi;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
+  scariv_lsu_pkg::mesi_t                     s1_mesi;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
 
   // Eviction: Replaced Address
   logic                                           s1_replace_valid;
-  logic [$clog2(msrh_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
-  msrh_lsu_pkg::mesi_t                            s1_replace_mesi;
+  logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
+  scariv_lsu_pkg::mesi_t                            s1_replace_mesi;
 
 
   modport master(
@@ -71,14 +71,14 @@ endinterface // l1d_rd_if
 interface l1d_wr_if;
 
   logic                          s0_valid;
-  msrh_lsu_pkg::s0_l1d_wr_req_t  s0_wr_req;
-  msrh_lsu_pkg::mesi_t           s0_mesi;
+  scariv_lsu_pkg::s0_l1d_wr_req_t  s0_wr_req;
+  scariv_lsu_pkg::mesi_t           s0_mesi;
   logic                          s0_unlock_valid;
 
   logic                          s1_resp_valid;
-  msrh_lsu_pkg::s1_l1d_wr_resp_t s1_wr_resp;
+  scariv_lsu_pkg::s1_l1d_wr_resp_t s1_wr_resp;
   logic                          s2_done;
-  msrh_lsu_pkg::s2_l1d_wr_resp_t s2_wr_resp;
+  scariv_lsu_pkg::s2_l1d_wr_resp_t s2_wr_resp;
 
   modport master(
     output s0_valid,
@@ -118,8 +118,8 @@ endinterface // l1d_wr_if
 
 interface l1d_missu_if;
   logic load;
-  msrh_lsu_pkg::missu_req_t  req_payload;
-  msrh_lsu_pkg::missu_resp_t resp_payload;
+  scariv_lsu_pkg::missu_req_t  req_payload;
+  scariv_lsu_pkg::missu_resp_t resp_payload;
 
   modport master (
     output load,
@@ -141,8 +141,8 @@ endinterface // l1d_missu_if
 // to search hitting eviction address
 interface missu_evict_search_if;
 logic                                    valid;
-logic [msrh_lsu_pkg::DCACHE_TAG_LOW-1:0] tag_low;
-logic [msrh_conf_pkg::DCACHE_WAYS-1: 0]  hit_ways;
+logic [scariv_lsu_pkg::DCACHE_TAG_LOW-1:0] tag_low;
+logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]  hit_ways;
 
 modport master (
   output valid,
@@ -161,8 +161,8 @@ endinterface // missu_evict_search_if
 
 interface l1d_srq_if;
   logic load;
-  msrh_lsu_pkg::srq_req_t  req_payload;
-  msrh_lsu_pkg::srq_resp_t resp_payload;
+  scariv_lsu_pkg::srq_req_t  req_payload;
+  scariv_lsu_pkg::srq_resp_t resp_payload;
 
 modport master (
   output load,
@@ -182,7 +182,7 @@ endinterface // l1d_srq_if
 interface l1d_evict_if;
 logic    valid;
 logic    ready;
-msrh_lsu_pkg::evict_payload_t payload;
+scariv_lsu_pkg::evict_payload_t payload;
 
 modport master (
   output valid,
@@ -201,8 +201,8 @@ endinterface // l1d_evict_if
 interface missu_dc_search_if;
 
 logic valid;
-logic [msrh_pkg::MISSU_ENTRY_W-1: 0] index;
-msrh_lsu_pkg::miss_entry_t missu_entry;
+logic [scariv_pkg::MISSU_ENTRY_W-1: 0] index;
+scariv_lsu_pkg::miss_entry_t missu_entry;
 
 modport master (
   output valid,
@@ -222,10 +222,10 @@ endinterface // missu_dc_search_if
 interface missu_pa_search_if;
 
 logic                                 s0_valid;
-msrh_pkg::paddr_t       s0_paddr;
-logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
-logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
-logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
+scariv_pkg::paddr_t       s0_paddr;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
 
 modport master (
   output s0_valid,
@@ -249,8 +249,8 @@ endinterface // missu_pa_search_if
 interface lsu_replay_if;
 
 logic    valid;
-msrh_pkg::issue_t issue;
-logic [msrh_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
+scariv_pkg::issue_t issue;
+logic [scariv_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
 logic                                 conflict;
 
 modport master (
@@ -273,13 +273,13 @@ endinterface // lsu_replay_if
 interface fwd_check_if;
 
 logic              valid;
-msrh_pkg::cmt_id_t cmt_id;
-msrh_pkg::grp_id_t grp_id;
-msrh_pkg::paddr_t  paddr;
-msrh_pkg::alenb_t  paddr_dw;
+scariv_pkg::cmt_id_t cmt_id;
+scariv_pkg::grp_id_t grp_id;
+scariv_pkg::paddr_t  paddr;
+scariv_pkg::alenb_t  paddr_dw;
 logic              fwd_valid;
-msrh_pkg::alenb_t  fwd_dw;
-msrh_pkg::alen_t   fwd_data;
+scariv_pkg::alenb_t  fwd_dw;
+scariv_pkg::alen_t   fwd_data;
 
 modport master (
   output valid,
@@ -307,9 +307,9 @@ endinterface // fwd_check_if
 
 interface missu_fwd_if;
 logic                                     ex2_valid;
-msrh_pkg::paddr_t           ex2_paddr;
+scariv_pkg::paddr_t           ex2_paddr;
 logic                                     ex2_fwd_valid;
-logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0] ex2_fwd_data;
+logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0] ex2_fwd_data;
 
 modport master
   (
@@ -332,13 +332,13 @@ endinterface // missu_fwd_if
 
 interface ldq_haz_check_if;
 logic                                 ex2_valid;
-msrh_pkg::paddr_t       ex2_paddr;
-msrh_pkg::cmt_id_t        ex2_cmt_id;
-msrh_pkg::grp_id_t  ex2_grp_id;
+scariv_pkg::paddr_t       ex2_paddr;
+scariv_pkg::cmt_id_t        ex2_cmt_id;
+scariv_pkg::grp_id_t  ex2_grp_id;
 decoder_lsu_ctrl_pkg::size_t          ex2_size;
 logic                                 ex3_haz_valid;
-msrh_pkg::cmt_id_t        ex3_haz_cmt_id;
-msrh_pkg::grp_id_t  ex3_haz_grp_id;
+scariv_pkg::cmt_id_t        ex3_haz_cmt_id;
+scariv_pkg::grp_id_t  ex3_haz_grp_id;
 
 modport master
   (
@@ -368,12 +368,12 @@ endinterface // ldq_haz_check_if
 
 interface stq_haz_check_if;
 logic                        ex2_valid;
-msrh_pkg::paddr_t            ex2_paddr;
-msrh_pkg::cmt_id_t           ex2_cmt_id;
-msrh_pkg::grp_id_t           ex2_grp_id;
+scariv_pkg::paddr_t            ex2_paddr;
+scariv_pkg::cmt_id_t           ex2_cmt_id;
+scariv_pkg::grp_id_t           ex2_grp_id;
 decoder_lsu_ctrl_pkg::size_t ex2_size;
 logic                                ex2_haz_valid;
-logic [msrh_conf_pkg::STQ_SIZE-1: 0] ex2_haz_index;
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] ex2_haz_index;
 
 modport master
   (
@@ -402,8 +402,8 @@ endinterface // stq_haz_check_if
 
 interface rmw_order_check_if;
 logic               ex2_valid;
-msrh_pkg::cmt_id_t  ex2_cmt_id;
-msrh_pkg::grp_id_t  ex2_grp_id;
+scariv_pkg::cmt_id_t  ex2_cmt_id;
+scariv_pkg::grp_id_t  ex2_grp_id;
 logic               ex2_stq_haz_vld;
 logic               ex2_stbuf_haz_vld;
 
@@ -430,13 +430,13 @@ endinterface // rmw_order_check_if
 
 interface tlb_ptw_if;
 
-  msrh_lsu_pkg::ptw_req_t        req;
+  scariv_lsu_pkg::ptw_req_t        req;
   logic    req_ready;
-  msrh_lsu_pkg::ptw_resp_t       resp;
+  scariv_lsu_pkg::ptw_resp_t       resp;
   logic    resp_ready;
   riscv_pkg::xlen_t satp;
   riscv_pkg::xlen_t status;
-  // msrh_lsu_pkg::pmp_t            pmp[msrh_lsu_pkg::PMP_NUM];
+  // scariv_lsu_pkg::pmp_t            pmp[scariv_lsu_pkg::PMP_NUM];
 
   modport master (
     output req,
@@ -491,17 +491,17 @@ endinterface // datapath_ptw_if
 interface lsu_access_if;
 
   logic                           req_valid;
-  msrh_pkg::paddr_t paddr;
+  scariv_pkg::paddr_t paddr;
   decoder_lsu_ctrl_pkg::size_t    size;
 
   logic                           resp_valid;
-  msrh_lsu_pkg::lsu_status_t      status;
-  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
+  scariv_lsu_pkg::lsu_status_t      status;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
 
   riscv_pkg::xlen_t  data;
 
   logic                                 conflict_resolve_vld;
-  logic [msrh_conf_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
 
   modport master (
     output req_valid,
@@ -536,7 +536,7 @@ interface sfence_if;
   logic      valid;
   logic      is_rs1_x0;
   logic      is_rs2_x0;
-  msrh_pkg::vaddr_t vaddr;
+  scariv_pkg::vaddr_t vaddr;
 
   modport master (
     output valid,
@@ -559,8 +559,8 @@ interface snoop_if;
   logic     req_valid;
   logic     resp_valid;
 
-  msrh_lsu_pkg::snoop_req_t  req_payload;
-  msrh_lsu_pkg::snoop_resp_t resp_payload;
+  scariv_lsu_pkg::snoop_req_t  req_payload;
+  scariv_lsu_pkg::snoop_resp_t resp_payload;
 
   modport master (
     output req_valid,
@@ -581,11 +581,11 @@ endinterface // snoop_if
 
 interface snoop_unit_if;
   logic                     req_valid;
-  msrh_lsu_pkg::snoop_req_t req_payload;
+  scariv_lsu_pkg::snoop_req_t req_payload;
 
   // L1D interface
   logic                      resp_valid;
-  msrh_lsu_pkg::snoop_resp_t resp_payload;
+  scariv_lsu_pkg::snoop_resp_t resp_payload;
 
   modport master (
     output req_valid,
@@ -606,12 +606,12 @@ endinterface // snoop_unit_if
 
 interface l1d_snoop_if;
   logic                           req_s0_valid;
-  msrh_pkg::paddr_t req_s0_paddr ;
+  scariv_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
-  msrh_lsu_pkg::lsu_status_t                 resp_s1_status;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  scariv_lsu_pkg::lsu_status_t                 resp_s1_status;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
   modport master (
     output req_s0_valid,
@@ -636,11 +636,11 @@ endinterface // l1d_snoop_if
 
 interface stq_snoop_if;
   logic                           req_s0_valid;
-  msrh_pkg::paddr_t req_s0_paddr ;
+  scariv_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
   modport master (
     output req_s0_valid,
@@ -665,11 +665,11 @@ endinterface // stq_snoop_if
 
 interface stbuf_snoop_if;
   logic                           req_s0_valid;
-  msrh_pkg::paddr_t req_s0_paddr ;
+  scariv_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
   modport master (
     output req_s0_valid,
@@ -694,11 +694,11 @@ endinterface // stbuf_snoop_if
 
 interface streq_snoop_if;
   logic                           req_s0_valid;
-  msrh_pkg::paddr_t req_s0_paddr ;
+  scariv_pkg::paddr_t req_s0_paddr ;
 
   logic                                      resp_s1_valid;
-  logic [msrh_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
-  logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
   modport master (
     output req_s0_valid,
@@ -723,9 +723,9 @@ endinterface // streq_snoop_if
 
 interface st_buffer_if;
 logic                                     valid;
-msrh_pkg::paddr_t                         paddr;
-logic [msrh_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
-logic [msrh_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
+scariv_pkg::paddr_t                         paddr;
+logic [scariv_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
+logic [scariv_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
 logic                                     is_rmw;
 decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
 logic                                     is_amo;
@@ -733,11 +733,11 @@ logic                                     is_amo;
 logic                                     is_empty;
 
 `ifdef SIMULATION
-msrh_pkg::cmt_id_t cmt_id;
-msrh_pkg::grp_id_t grp_id;
+scariv_pkg::cmt_id_t cmt_id;
+scariv_pkg::grp_id_t grp_id;
 `endif // SIMULATION
 
-msrh_lsu_pkg::st_buffer_resp_t resp;
+scariv_lsu_pkg::st_buffer_resp_t resp;
 
 modport master (
   output valid,
@@ -821,7 +821,7 @@ interface uc_write_if;
 
 logic             valid;
 logic             ready;
-msrh_pkg::paddr_t paddr;
+scariv_pkg::paddr_t paddr;
 riscv_pkg::xlen_t data;
 decoder_lsu_ctrl_pkg::size_t size;
 
@@ -848,7 +848,7 @@ interface lrsc_if;
 
 logic    lr_update_valid;
 logic    sc_check_valid;
-msrh_pkg::paddr_t paddr;
+scariv_pkg::paddr_t paddr;
 logic    sc_success;
 
 modport master (

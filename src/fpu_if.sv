@@ -1,6 +1,6 @@
 interface fflags_update_if;
   logic               valid;
-  msrh_pkg::fflags_t  fflags;
+  scariv_pkg::fflags_t  fflags;
 
 modport master
   (

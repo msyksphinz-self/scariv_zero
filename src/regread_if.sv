@@ -1,10 +1,10 @@
-interface regread_if #(parameter REG_TYPE = msrh_pkg::GPR);
+interface regread_if #(parameter REG_TYPE = scariv_pkg::GPR);
 
-  localparam WDITH_W = REG_TYPE == msrh_pkg::GPR ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
+  localparam WDITH_W = REG_TYPE == scariv_pkg::GPR ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 
   logic                valid;
-  msrh_pkg::rnid_t     rnid;
-  msrh_pkg::reg_t      reg_type;
+  scariv_pkg::rnid_t     rnid;
+  scariv_pkg::reg_t      reg_type;
   logic                resp;
   logic [WDITH_W-1: 0] data;
 

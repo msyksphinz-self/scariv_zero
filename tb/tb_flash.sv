@@ -12,7 +12,7 @@ module tb_flash #(
 
     // L2 request
     input  logic                   i_req_valid,
-    input  msrh_lsu_pkg::mem_cmd_t i_req_cmd,
+    input  scariv_lsu_pkg::mem_cmd_t i_req_cmd,
     input  logic [  ADDR_W-1:0]    i_req_addr,
     input  logic [   TAG_W-1:0]    i_req_tag,
     input  logic [  DATA_W-1:0]    i_req_data,
@@ -44,7 +44,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_resp_data [0] <= 'h0;
     r_resp_tag  [0] <= 'h0;
   end else begin
-    r_resp_valid[0] <= i_req_valid & (i_req_cmd == msrh_lsu_pkg::M_XRD);
+    r_resp_valid[0] <= i_req_valid & (i_req_cmd == scariv_lsu_pkg::M_XRD);
     r_resp_data [0] <= r_ram[w_req_addr_wo_offset[$clog2(DATA_W / 8) +: $clog2(WORDS)]];
     r_resp_tag  [0] <= i_req_tag;
   end
@@ -53,7 +53,7 @@ end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (i_req_valid && (i_req_cmd == msrh_lsu_pkg::M_XWR)) begin
+    if (i_req_valid && (i_req_cmd == scariv_lsu_pkg::M_XWR)) begin
       r_ram[w_req_addr_wo_offset[$clog2(DATA_W / 8) +: $clog2(WORDS)]] <= i_req_data;
     end
   end
@@ -80,19 +80,19 @@ assign o_resp_data  = r_resp_data [RD_LAT-1];
 
 initial begin
   if (FILE == "image") begin
-    if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
+    if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin
       $readmemh ("../../../tests/linux/image_w16.hex", r_ram);
-    end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
+    end else if (scariv_conf_pkg::ICACHE_DATA_W == 256) begin
       $readmemh ("../../../tests/linux/image_w32.hex", r_ram);
-    end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
+    end else if (scariv_conf_pkg::ICACHE_DATA_W == 512) begin
       $readmemh ("../../../tests/linux/image_w64.hex", r_ram);
     end
   end else if (FILE == "initrd") begin
-    if (msrh_conf_pkg::ICACHE_DATA_W == 128) begin
+    if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin
       $readmemh ("../../../tests/linux/spike_rootfs_w16.hex", r_ram);
-    end else if (msrh_conf_pkg::ICACHE_DATA_W == 256) begin
+    end else if (scariv_conf_pkg::ICACHE_DATA_W == 256) begin
       $readmemh ("../../../tests/linux/spike_rootfs_w32.hex", r_ram);
-    end else if (msrh_conf_pkg::ICACHE_DATA_W == 512) begin
+    end else if (scariv_conf_pkg::ICACHE_DATA_W == 512) begin
       $readmemh ("../../../tests/linux/spike_rootfs_w64.hex", r_ram);
     end
   end

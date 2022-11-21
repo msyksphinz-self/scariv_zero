@@ -11,7 +11,7 @@ module tb_l2_behavior_ram #(
 
     // L2 request
     input  logic                                  i_req_valid,
-    input  msrh_lsu_pkg::mem_cmd_t                i_req_cmd,
+    input  scariv_lsu_pkg::mem_cmd_t                i_req_cmd,
     input  logic                   [  ADDR_W-1:0] i_req_addr,
     input  logic                   [   TAG_W-1:0] i_req_tag,
     input  logic                   [  DATA_W-1:0] i_req_data,
@@ -28,8 +28,8 @@ module tb_l2_behavior_ram #(
     output logic [riscv_pkg::PADDR_W-1:0] o_snoop_req_paddr,
 
     input logic                                     i_snoop_resp_valid,
-    input logic [ msrh_conf_pkg::DCACHE_DATA_W-1:0] i_snoop_resp_data,
-    input logic [msrh_lsu_pkg::DCACHE_DATA_B_W-1:0] i_snoop_resp_be
+    input logic [ scariv_conf_pkg::DCACHE_DATA_W-1:0] i_snoop_resp_data,
+    input logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1:0] i_snoop_resp_be
 );
 
 // localparam SIZE_W = $clog2(SIZE);
@@ -89,7 +89,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case(r_state)
       IDLE: begin
-        if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XWR) begin
+        if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XWR) begin
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
             status[actual_line_pos] = ST_INIT;
           end
@@ -98,9 +98,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               ram[actual_line_pos][byte_idx*8+:8] = i_req_data[byte_idx*8+:8];
             end
           end
-        end else if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD) begin
+        end else if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD) begin
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
-            if (i_req_tag[TAG_W-1 -: 2] == msrh_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
+            if (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
               status[actual_line_pos] = ST_GIVEN;
             end
             rd_queue.push_back(rd_queue_init);
@@ -111,7 +111,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             r_req_paddr_pos <= actual_line_pos;
             r_req_tag <= i_req_tag;
           end // else: !if((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT)
-        end // if (req_fire && i_req_cmd == msrh_lsu_pkg::M_XRD)
+        end // if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD)
       end // case: IDLE
       SNOOP : begin
         o_snoop_req_valid <= 1'b0;
