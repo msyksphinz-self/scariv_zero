@@ -37,19 +37,19 @@ ifeq ($(strip $(ISA)), rv32)
 endif
 
 ifeq ($(strip $(CONFIG)), standard)
-	CONFIG_PKG = ../src/msrh_standard_conf_pkg.sv
+	CONFIG_PKG = ../src/scariv_standard_conf_pkg.sv
 endif
 ifeq ($(strip $(CONFIG)), big)
-	CONFIG_PKG = ../src/msrh_big_conf_pkg.sv
+	CONFIG_PKG = ../src/scariv_big_conf_pkg.sv
 endif
 ifeq ($(strip $(CONFIG)), giant)
-	CONFIG_PKG = ../src/msrh_giant_conf_pkg.sv
+	CONFIG_PKG = ../src/scariv_giant_conf_pkg.sv
 endif
 ifeq ($(strip $(CONFIG)), small)
-	CONFIG_PKG = ../src/msrh_small_conf_pkg.sv
+	CONFIG_PKG = ../src/scariv_small_conf_pkg.sv
 endif
 ifeq ($(strip $(CONFIG)), tiny)
-	CONFIG_PKG = ../src/msrh_tiny_conf_pkg.sv
+	CONFIG_PKG = ../src/scariv_tiny_conf_pkg.sv
 endif
 
 all:
@@ -80,7 +80,7 @@ clean:
 	rm -rf cimports.dll
 	rm -rf cimports.exe
 	rm -rf ld.exe.stackdump
-	rm -rf msrh.cr.mti
+	rm -rf scariv.cr.mti
 	rm -rf transcript
 	rm -rf vsim_stacktrace.vstf vish_stacktrace.vstf
 #	rm -rf work

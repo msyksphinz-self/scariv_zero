@@ -1,6 +1,6 @@
 build-env:
-	docker build . -f Dockerfile.migrate --platform=linux/amd64 -t msyksphinz/msrh:run_env
-	docker push msyksphinz/msrh:run_env
+	docker build . -f Dockerfile.migrate --platform=linux/amd64 -t msyksphinz/scariv:run_env
+	docker push msyksphinz/scariv:run_env
 
 run:
 	docker-compose -f top-test.yml build
@@ -8,5 +8,5 @@ run:
 
 debug:
 	cd ../; \
-	docker build . -f docker/Dockerfile.test --platform=linux/amd64 -t msyksphinz/msrh:run; \
-	docker run -it msyksphinz/msrh:run /bin/bash
+	docker build . -f docker/Dockerfile.test --platform=linux/amd64 -t msyksphinz/scariv:run; \
+	docker run -it msyksphinz/scariv:run /bin/bash

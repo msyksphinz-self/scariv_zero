@@ -1,7 +1,7 @@
-set PROJ_NAME msrh_tile_wrapper
+set PROJ_NAME scariv_tile_wrapper
 set PROJ_DIR .
 set RTL_ROOT_DIR ../../src
-set TOP_NAME msrh_tile_wrapper
+set TOP_NAME scariv_tile_wrapper
 
 create_project -in_memory -part xc7z020clg484-1 $PROJ_NAME $PROJ_DIR
 save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr

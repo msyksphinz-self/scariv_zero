@@ -13,7 +13,7 @@ VERILATOR_OPTS =
 VERILATOR_OPTS += --exe
 # VERILATOR_OPTS += -threads 4
 VERILATOR_OPTS += -MAKEFLAGS "OBJCACHE=ccache CXX=clang++ LINK=clang++"
-VERILATOR_OPTS += $(abspath ../cpp/tb_msrh.cpp)
+VERILATOR_OPTS += $(abspath ../cpp/tb_scariv.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/tb_debug_tick.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
@@ -82,7 +82,7 @@ VERILATOR_OPTS_RV64 += +define+RV64
 VERILATOR_OPTS_RV32 += -CFLAGS "-DRV_XLEN=32"
 VERILATOR_OPTS_RV32 += +define+RV32
 
-TOP      = msrh_tb
+TOP      = scariv_tb
 
 .PHONY: rv32_standard rv64_standard rv32_big rv64_big rv32_small rv64_small rv32_giant rv64_giant rv32_tiny rv64_tiny
 
@@ -152,7 +152,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv32_pkg.sv \
-		../src/msrh_$(CONF)_conf_pkg.sv \
+		../src/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
 rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
@@ -164,7 +164,7 @@ rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(R
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv64_pkg.sv \
-		../src/msrh_$(CONF)_conf_pkg.sv \
+		../src/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
 include conf_tiny.mk

@@ -1,6 +1,6 @@
 #include "memory_block.hpp"
 #include "mem_body.hpp"
-#include "Vmsrh_tb.h"
+#include "Vscariv_tb.h"
 #include "spike_dpi.h"
 #include "kanata.h"
 
@@ -8,7 +8,7 @@
 #include <iostream>
 #include <verilated.h>
 #include <verilated_fst_c.h>
-#include "Vmsrh_tb.h"
+#include "Vscariv_tb.h"
 
 extern std::unique_ptr<Memory> g_memory;
 extern bool elf_load_finish;
@@ -26,7 +26,7 @@ extern "C" {
 }
 
 // Instantiate DUT
-Vmsrh_tb *dut;
+Vscariv_tb *dut;
 // Trace DUMP ON
 VerilatedFstC* tfp = NULL;
 
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
   load_elf("", filename, true);
 
   // Instantiate DUT
-  dut = new Vmsrh_tb();
+  dut = new Vscariv_tb();
 
 #ifdef DUMP_FST
   if (dump_fst_enable) {
@@ -146,13 +146,13 @@ int main(int argc, char** argv) {
 
   // Format
   dut->i_elf_loader_reset_n = 0;
-  dut->i_msrh_reset_n = 0;
+  dut->i_scariv_reset_n = 0;
   dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
 
   // Format
   dut->i_elf_loader_reset_n = 1;
-  dut->i_msrh_reset_n = 1;
+  dut->i_scariv_reset_n = 1;
   dut->i_ram_reset_n = 1;
   dut->i_clk = 0;
   // Reset Time
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
 
   // Format
   dut->i_elf_loader_reset_n = 0;
-  dut->i_msrh_reset_n = 0;
+  dut->i_scariv_reset_n = 0;
   dut->i_ram_reset_n = 0;
   dut->i_clk = 0;
   while (time_counter < 100) {
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
   }
   // Release reset
   dut->i_elf_loader_reset_n = 1;
-  dut->i_msrh_reset_n = 0;
+  dut->i_scariv_reset_n = 0;
   dut->i_ram_reset_n = 1;
 
   while (time_counter < cycle && !Verilated::gotFinish()) {
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
 
     if (elf_load_finish) {
       dut->i_elf_loader_reset_n = 0;
-      dut->i_msrh_reset_n = 1;
+      dut->i_scariv_reset_n = 1;
     }
 
     time_counter++;
