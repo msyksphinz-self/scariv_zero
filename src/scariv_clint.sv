@@ -162,7 +162,8 @@ end
 import "DPI-C" function void spike_update_timer (longint value);
 
 always_ff @ (posedge i_clk) begin
-  if (&r_interleave) begin
+  if (&r_interleave &
+      (w_mtimecmp_flatten != 'h0)) begin  // Temporary limitation of MTIMECMP != 0
     spike_update_timer (w_mtime_next);
   end
 end
@@ -178,10 +179,10 @@ end
 endgenerate
 
 assign clint_if.ipi_valid = r_msip;
-assign clint_if.time_irq_valid = w_mtime_flatten >= w_mtimecmp_flatten;
+assign clint_if.time_irq_valid = w_mtime_flatten >= w_mtimecmp_flatten &
+                                 (w_mtimecmp_flatten != 'h0);   // Temporary limitation of MTIMECMP != 0
 assign clint_if.time_irq_clear = w_req_fire &
                                  (i_req_cmd == scariv_lsu_pkg::M_XWR) &
                                  (i_req_addr == BASE_ADDR + 'h4000);
-
 
 endmodule // scariv_st_buffer
