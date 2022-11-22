@@ -70,6 +70,7 @@ riscv-isa-sim-makefile:
 	fi
 	touch -f $@
 	make -C riscv-isa-sim -j$(shell nproc)
+	cp riscv-isa-sim/riscv/decode.h .
 
 CLEAN_FILES += riscv-isa-sim-makefile
 
