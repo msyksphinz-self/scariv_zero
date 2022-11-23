@@ -1,20 +1,21 @@
 interface disp_if;
   /* verilator lint_off UNOPTFLAT */
-  scariv_pkg::cmt_id_t                  cmt_id;
-  logic [riscv_pkg::VADDR_W-1:1]                  pc_addr;
-  scariv_pkg::grp_id_t            tlb_except_valid;
-  scariv_pkg::except_t                              tlb_except_cause[scariv_conf_pkg::DISP_SIZE] ;
-  riscv_pkg::xlen_t                  tlb_except_tval [scariv_conf_pkg::DISP_SIZE];
-  scariv_pkg::resource_cnt_t                        resource_cnt;
+  scariv_pkg::cmt_id_t           cmt_id;
+  logic [riscv_pkg::VADDR_W-1:1] pc_addr;
+  scariv_pkg::grp_id_t           tlb_except_valid;
+  scariv_pkg::except_t           tlb_except_cause[scariv_conf_pkg::DISP_SIZE] ;
+  riscv_pkg::xlen_t              tlb_except_tval [scariv_conf_pkg::DISP_SIZE];
+  scariv_pkg::resource_cnt_t     resource_cnt;
   // Counter for each dispatch Resources
   scariv_pkg::disp_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
-  logic                                           is_br_included; // When Branch Instruction is included
-  logic                                           valid;
-  logic                                           ready;
+  logic                          is_br_included; // When Branch Instruction is included
+  logic                          valid;
+  logic                          ready;
 
 `ifdef SIMULATION
   scariv_pkg::vaddr_t  pc_addr_debug;
   assign pc_addr_debug = {pc_addr, 1'b0};
+  logic sim_int_inserted;
 `endif // SIMULATION
   modport master(
     output valid,
@@ -26,6 +27,9 @@ interface disp_if;
     output resource_cnt,
     output inst,
     output is_br_included,
+`ifdef SIMULATION
+    output sim_int_inserted,
+`endif // SIMULATION
     input  ready
   );
   modport slave(
@@ -38,6 +42,9 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
+`ifdef SIMULATION
+    input sim_int_inserted,
+`endif // SIMULATION
     output ready
   );
   modport watch(
@@ -50,6 +57,9 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
+`ifdef SIMULATION
+    input sim_int_inserted,
+`endif // SIMULATION
     input  ready
   );
 

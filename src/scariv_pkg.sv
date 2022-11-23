@@ -282,6 +282,7 @@ typedef enum logic [ 2: 0] {
 `ifdef SIMULATION
     logic [DISP_SIZE-1: 0] [31: 0] lifetime;
     dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
+    logic                                         sim_int_inserted;
 `endif // SIMULATION
   } rob_entry_t;
 
@@ -671,6 +672,7 @@ typedef struct packed {
   logic [riscv_pkg::VADDR_W-1: 1] pc;
 `ifdef SIMULATION
   vaddr_t pc_dbg;
+  logic sim_int_inserted;
 `endif // SIMULATION
   ic_data_t inst;
   ic_strb_t byte_en;

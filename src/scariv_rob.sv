@@ -98,6 +98,45 @@ endgenerate
 riscv_pkg::xlen_t w_sim_mstatus[CMT_ENTRY_SIZE][scariv_conf_pkg::DISP_SIZE];
 `endif // SIMULATION
 
+function automatic rob_entry_t assign_rob_entry();
+  rob_entry_t ret;
+
+  ret.valid       = 1'b1;
+  ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
+  ret.grp_id      = w_disp_grp_id;
+  ret.pc_addr     = sc_disp.pc_addr;
+  ret.inst        = sc_disp.inst;
+  ret.br_upd_info = 'h0;
+  ret.fflags_update_valid = 'h0;
+
+  ret.is_br_included = sc_disp.is_br_included;
+
+`ifdef SIMULATION
+  ret.sim_int_inserted = sc_disp.sim_int_inserted;
+`endif // SIMULATION
+
+  for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    // If TLB Exception detected before execution, this instruction already done.
+    ret.done_grp_id [d_idx] = (sc_disp.tlb_except_valid[d_idx] | sc_disp.inst[d_idx].illegal_valid) ? w_disp_grp_id[d_idx] : 1'b0;
+    ret.except_valid[d_idx] = (sc_disp.tlb_except_valid[d_idx] | sc_disp.inst[d_idx].illegal_valid) & w_disp_grp_id[d_idx];
+    ret.except_type [d_idx] = sc_disp.tlb_except_valid[d_idx] ? sc_disp.tlb_except_cause[d_idx] : ILLEGAL_INST;
+    ret.except_tval [d_idx] = sc_disp.tlb_except_valid[d_idx] & (sc_disp.tlb_except_cause[d_idx] != ILLEGAL_INST) ? sc_disp.tlb_except_tval[d_idx] : 'h0;
+    ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
+    ret.dead        [d_idx] = ret.dead[d_idx] | ret.except_valid[d_idx];
+`ifdef SIMULATION
+    ret.sim_dead_reason[d_idx] = ret.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
+`endif // SIMULATION
+  end
+
+  return ret;
+
+endfunction // assign_rob_entry
+
+
+rob_entry_t w_entry_in;
+assign w_entry_in = assign_rob_entry();
+
+
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
   assign w_load_valid = sc_disp.valid & (w_in_cmt_entry_id == c_idx);
@@ -109,14 +148,8 @@ logic w_load_valid;
 
      .i_cmt_id (c_idx[CMT_ENTRY_W-1:0]),
 
-     .i_load_valid   (w_load_valid),
-     .i_load_pc_addr (sc_disp.pc_addr),
-     .i_load_inst    (sc_disp.inst),
-     .i_load_grp_id  (w_disp_grp_id),
-     .i_load_br_included (sc_disp.is_br_included),
-     .i_load_tlb_except_valid (sc_disp.tlb_except_valid),
-     .i_load_tlb_except_cause (sc_disp.tlb_except_cause),
-     .i_load_tlb_except_tval  (sc_disp.tlb_except_tval),
+     .i_load_valid (w_load_valid),
+     .i_entry_in   (w_entry_in),
 
      .i_done_rpt             (i_done_rpt),
      .i_another_flush_report (i_another_flush_report),

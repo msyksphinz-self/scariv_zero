@@ -1,30 +1,24 @@
 module scariv_rob_entry
   import scariv_pkg::*;
   (
-   input logic                                i_clk,
-   input logic                                i_reset_n,
+   input logic        i_clk,
+   input logic        i_reset_n,
 
-   input logic [CMT_ENTRY_W-1:0]              i_cmt_id,
+   input cmt_id_t     i_cmt_id,
 
-   input logic                                i_load_valid,
-   input logic [riscv_pkg::VADDR_W-1: 1]      i_load_pc_addr,
-   input disp_t[scariv_conf_pkg::DISP_SIZE-1:0] i_load_inst,
-   input scariv_pkg::grp_id_t                   i_load_grp_id,
-   input logic                                i_load_br_included,
-   input scariv_pkg::grp_id_t                   i_load_tlb_except_valid,
-   input scariv_pkg::except_t                   i_load_tlb_except_cause[scariv_conf_pkg::DISP_SIZE],
-   input riscv_pkg::xlen_t                    i_load_tlb_except_tval[scariv_conf_pkg::DISP_SIZE],
+   input logic        i_load_valid,
+   input rob_entry_t  i_entry_in,
 
    input done_rpt_t      i_done_rpt [CMT_BUS_SIZE],
    input another_flush_t i_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
 
-   output                                     rob_entry_t o_entry,
-   output logic                               o_block_all_done,
-   input logic                                i_commit_finish,
+   output rob_entry_t o_entry,
+   output logic       o_block_all_done,
+   input logic        i_commit_finish,
 
-   input logic                                i_kill,
+   input logic        i_kill,
 
-   br_upd_if.slave                            br_upd_if
+   br_upd_if.slave  br_upd_if
    );
 
 rob_entry_t             r_entry;
@@ -119,32 +113,10 @@ always_comb begin
   w_entry_next = r_entry;
 
   if (i_load_valid) begin
-    w_entry_next.valid = 1'b1;
-    w_entry_next.dead  = i_load_grp_id & {scariv_conf_pkg::DISP_SIZE{i_kill}};
-    w_entry_next.grp_id = i_load_grp_id;
-    w_entry_next.pc_addr = i_load_pc_addr;
-    w_entry_next.inst    = i_load_inst;
-    w_entry_next.br_upd_info = 'h0;
-    w_entry_next.fflags_update_valid = 'h0;
-
-    w_entry_next.is_br_included = i_load_br_included;
-
-    for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-      // If TLB Exception detected before execution, this instruction already done.
-      w_entry_next.done_grp_id [d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) ? i_load_grp_id[d_idx] : 1'b0;
-      w_entry_next.except_valid[d_idx] = (i_load_tlb_except_valid[d_idx] | i_load_inst[d_idx].illegal_valid) & i_load_grp_id[d_idx];
-      w_entry_next.except_type [d_idx] = i_load_tlb_except_valid[d_idx] ? i_load_tlb_except_cause[d_idx] : ILLEGAL_INST;
-      w_entry_next.except_tval [d_idx] = i_load_tlb_except_valid[d_idx] & (i_load_tlb_except_cause[d_idx] != ILLEGAL_INST) ? i_load_tlb_except_tval[d_idx] : 'h0;
-      w_entry_next.flush_valid [d_idx] = w_entry_next.dead[d_idx] ? 1'b0 : w_entry_next.except_valid[d_idx];
-      w_entry_next.dead        [d_idx] = w_entry_next.dead[d_idx] | w_entry_next.except_valid[d_idx];
-`ifdef SIMULATION
-      w_entry_next.sim_dead_reason[d_idx] = w_entry_next.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
-`endif // SIMULATION
-    end
-
+    w_entry_next = i_entry_in;
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (is_br_flush_target (i_load_inst[d_idx].br_mask, br_upd_if.brtag,
+        if (is_br_flush_target (i_entry_in.inst[d_idx].br_mask, br_upd_if.brtag,
                                 br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
