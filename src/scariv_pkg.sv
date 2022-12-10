@@ -506,6 +506,9 @@ typedef struct packed {
   grp_id_t          flush_valid;
   logic [DISP_SIZE-1: 0] ras_update;
   logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
+
+  // Interrupt Inserted
+logic                                int_valid;
 } commit_blk_t;
 
 function logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,

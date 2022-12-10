@@ -158,19 +158,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-`ifdef SIMULATION
-import "DPI-C" function void spike_update_timer (longint value);
-
-always_ff @ (posedge i_clk) begin
-  if (&r_interleave &
-      (w_mtimecmp_flatten != 'h0)) begin  // Temporary limitation of MTIMECMP != 0
-    spike_update_timer (w_mtime_next);
-  end
-end
-
-`endif // SIMULATION
-
-
 assign w_mtime_next = w_mtime_flatten + &r_interleave;
 generate for(genvar b_idx = 0; b_idx < riscv_pkg::XLEN_W/8; b_idx++) begin : byte_loop
   assign w_mtime_flatten   [b_idx * 8 +: 8] = r_mtime[b_idx];

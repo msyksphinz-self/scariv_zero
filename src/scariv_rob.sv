@@ -181,8 +181,8 @@ assign w_out_entry = w_entries[w_out_cmt_entry_id];
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_out_entry.grp_id;
-assign o_commit.except_valid  = w_valid_except_grp_id;
-assign o_commit.except_type   = w_except_type_selected;
+assign o_commit.except_valid = w_valid_except_grp_id;
+assign o_commit.except_type  = w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
                                  o_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
@@ -192,11 +192,26 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_out_entry.flush_valid;
+assign o_commit.int_valid    = w_out_entry.sim_int_inserted;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
   assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
   assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
 end
 endgenerate
+
+`ifdef SIMULATION
+
+import "DPI-C" function void spike_update_timer (longint value);
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (o_commit.commit & w_out_entry.sim_int_inserted) begin
+      spike_update_timer (scariv_tb.u_clint.w_mtime_next);
+    end
+  end
+end
+`endif // SIMULATION
 
 // Select Jump Insntruction
 assign w_valid_upd_pc_grp_id = (w_out_entry.br_upd_info.upd_valid |

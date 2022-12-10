@@ -18,6 +18,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 end
 endgenerate
 assign o_disp.is_br_included   = i_int_disp.is_br_included;
+assign o_disp.sim_int_inserted = i_int_disp.sim_int_inserted;
 
 assign i_int_disp.ready = o_disp.ready;
 assign i_fp_disp.ready  = o_disp.ready;

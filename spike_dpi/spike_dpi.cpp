@@ -521,8 +521,11 @@ static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*
 }
 
 
-bool inline is_equal_xlen(int64_t val1, int64_t val2)
+bool inline is_equal_xlen(int64_t val1, int64_t val2, int compare_lsb = 0)
 {
+  val1 = val1 & ~((1 << compare_lsb) - 1);
+  val2 = val2 & ~((1 << compare_lsb) - 1);
+
   if (g_rv_xlen == 32) {
     return (val1 & 0xffffffffULL) == (val2 & 0xffffffffULL);
   } else if (g_rv_xlen == 64) {
@@ -756,7 +759,7 @@ void step_spike(long long time, long long rtl_pc,
 
   // When RTL generate exception, stop to compare mstatus.
   // Because mstatus update timing is too much complex.
-  if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus)) {
+  if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus, 13)) {
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
             g_rv_xlen / 4, rtl_mstatus,
@@ -1153,7 +1156,6 @@ void check_mmu_trans (long long time, long long rtl_va,
 
 void spike_update_timer (long long value)
 {
-  fprintf (stderr, "spike_update_timer called : %x is passed\n", value);
   processor_t *p = spike_core->get_core(0);
   p->get_mmu()->store_uint64 (0x200bff8, value);
 }

@@ -136,11 +136,12 @@ logic   r_iq_predict_flush;
 
 `ifdef SIMULATION
 paddr_t  r_s2_paddr;
-logic    w_s0_sim_flush_int_inserted;
-logic    w_s0_sim_int_inserted;
-logic    r_s1_sim_int_inserted;
-logic    r_s2_sim_int_inserted;
 `endif // SIMULATION
+logic r_s0_int_flush;
+logic w_s0_int_flush_next;
+logic w_s0_sim_int_inserted;
+logic r_s1_sim_int_inserted;
+logic r_s2_sim_int_inserted;
 
 br_upd_if  br_upd_fe_tmp_if();
 
@@ -155,6 +156,8 @@ logic    w_tlb_ready;
 logic    w_commit_flush;
 logic    w_br_flush;
 logic    w_flush_valid;
+logic    w_int_flush_valid;
+logic    r_int_flush_valid;
 
 logic    r_flush_valid;
 cmt_id_t r_flush_cmt_id;
@@ -187,45 +190,31 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready 
                                (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
 always_comb begin
-`ifdef SIMULATION
-  w_s0_sim_flush_int_inserted = 1'b0;
-`endif // SIMULATION
-  if (i_commit.commit & int_if.m_external_int_valid) begin
+  w_int_flush_valid = 1'b0;
+  if (int_if.m_external_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
-  end else if (i_commit.commit & int_if.s_external_int_valid) begin
+    w_int_flush_valid = 1'b1;
+  end else if (int_if.s_external_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
-  end else if (i_commit.commit & int_if.m_timer_int_valid   ) begin
+    w_int_flush_valid = 1'b1;
+  end else if (int_if.m_timer_int_valid   ) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
-  end else if (i_commit.commit & int_if.s_timer_int_valid   ) begin
+    w_int_flush_valid = 1'b1;
+  end else if (int_if.s_timer_int_valid   ) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
-  end else if (i_commit.commit & int_if.m_software_int_valid) begin
+    w_int_flush_valid = 1'b1;
+  end else if (int_if.m_software_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
-  end else if (i_commit.commit & int_if.s_software_int_valid) begin
+    w_int_flush_valid = 1'b1;
+  end else if (int_if.s_software_int_valid) begin
     /* verilator lint_off WIDTHCONCAT */
     w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
-`ifdef SIMULATION
-    w_s0_sim_flush_int_inserted = 1'b1;
-`endif // SIMULATION
+    w_int_flush_valid = 1'b1;
   end else if (is_flushed_commit(i_commit)) begin
     case (i_commit.except_type)
       SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
@@ -338,6 +327,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_if_state <= w_if_state_next;
     r_s0_valid <= 1'b1;
     r_s0_vaddr <= w_s0_vaddr_next;
+    r_s0_int_flush <= w_s0_int_flush_next;
     r_br_wait_ftq_free <= w_br_wait_ftq_free;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -351,19 +341,19 @@ always_comb begin
   w_s0_vaddr_next = r_s0_vaddr;
   w_if_state_next = r_if_state;
   w_br_wait_ftq_free = r_br_wait_ftq_free;
-  w_s0_sim_int_inserted = 1'b0;
+  w_s0_int_flush_next = r_s0_int_flush;
 
   case (r_if_state)
     INIT : begin
       w_if_state_next = FETCH_REQ;
     end
     FETCH_REQ : begin
-      if (w_flush_valid) begin
+      if (w_flush_valid | w_int_flush_valid) begin
         if (!w_s0_req_ready | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
-          w_s0_sim_int_inserted = w_s0_sim_flush_int_inserted;
           w_if_state_next = WAIT_FLUSH_FREE;
           w_br_wait_ftq_free = w_br_flush & !w_is_ftq_empty;
+          w_s0_int_flush_next = w_s0_sim_int_inserted;
         end else begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
@@ -378,9 +368,11 @@ always_comb begin
       end else if (r_s2_valid & !r_s2_clear & r_s2_tlb_miss) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
+        w_s0_int_flush_next = r_s2_sim_int_inserted;
       end else if (w_s2_ic_resp.miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
+        w_s0_int_flush_next = r_s2_sim_int_inserted;
       end else if (r_s2_valid & !r_s2_clear & w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
         // Retry from S2 stage Vaddr
         w_s0_vaddr_next = r_s2_vaddr;
@@ -404,10 +396,11 @@ always_comb begin
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
+        w_s0_int_flush_next = w_s0_sim_int_inserted;
       end
     end
     WAIT_IC_FILL : begin
-      if (w_flush_valid) begin
+      if (w_flush_valid | w_int_flush_valid) begin
         if (!w_ic_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -432,7 +425,7 @@ always_comb begin
       end
     end
     WAIT_TLB_FILL : begin
-      if (w_flush_valid) begin
+      if (w_flush_valid | w_int_flush_valid) begin
         if (!w_tlb_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -457,7 +450,7 @@ always_comb begin
       end
     end
     WAIT_IBUF_FREE : begin
-      if (w_flush_valid) begin
+      if (w_flush_valid | w_int_flush_valid) begin
         if (!w_ibuf_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -481,7 +474,7 @@ always_comb begin
       end
     end
     WAIT_FLUSH_FREE : begin
-      if (w_flush_valid & !w_existed_flush_is_older) begin
+      if (w_flush_valid & !w_existed_flush_is_older | w_int_flush_valid) begin
         if (w_flush_haz_clear) begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
@@ -507,7 +500,7 @@ assign w_commit_flush  = is_flushed_commit(i_commit);
 assign w_br_flush      = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
 
-assign w_flush_valid_next  = w_commit_flush | w_br_flush;
+assign w_flush_valid_next  = w_flush_valid;
 assign w_flush_cmt_id_next = w_commit_flush ? i_commit.cmt_id       : br_upd_fe_if.cmt_id;
 assign w_flush_grp_id_next = w_commit_flush ? i_commit.except_valid : br_upd_fe_if.grp_id;
 
@@ -530,12 +523,11 @@ assign w_existed_flush_is_older = inst0_older (r_flush_valid,      r_flush_cmt_i
 
 
 always_comb begin
-  w_s0_sim_int_inserted = 1'b0;
+  w_s0_sim_int_inserted = w_int_flush_valid;
 
-  if (w_flush_valid) begin
+  if (w_flush_valid | w_int_flush_valid) begin
     w_s0_predicted = 1'b0;
     w_s0_vaddr     = w_s0_vaddr_flush_next;
-    w_s0_sim_int_inserted = w_s0_sim_flush_int_inserted;
   end else if (w_iq_predict_valid) begin
     w_s0_predicted = 1'b1;
     w_s0_vaddr     = w_iq_predict_target_vaddr;
@@ -600,7 +592,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
 `ifdef SIMULATION
-    r_s1_sim_int_inserted <= w_s0_sim_int_inserted;
+    r_s1_sim_int_inserted <= w_s0_sim_int_inserted | r_s0_int_flush;
 `endif // SIMULATION
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= /* w_s0_tlb_resp.miss*/ w_s0_tlb_resp_miss & r_s0_valid & w_s0_ic_req.valid;
@@ -631,7 +623,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
   end else begin // if (!i_reset_n)
     r_s2_valid <= r_s1_valid;
-    r_s2_clear <= r_s1_clear | w_flush_valid | w_iq_predict_valid |
+    r_s2_clear <= r_s1_clear | w_int_flush_valid | w_flush_valid | w_iq_predict_valid |
                   w_s2_predict_valid & ~r_s1_predicted |
                   ~w_flush_valid & w_s2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_s2_predicted <= r_s1_predicted;
