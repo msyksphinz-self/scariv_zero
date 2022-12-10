@@ -20,6 +20,9 @@ module scariv_rob
    fflags_update_if.master fflags_update_if,
    output cmt_rnid_upd_t   o_commit_rnid_update,
 
+   // Interrupt Request information
+   interrupt_if.slave  int_if,
+
    // Branch Tag Update Signal
    cmt_brtag_if.master cmt_brtag_if,
 
@@ -178,11 +181,27 @@ assign o_sc_new_cmt_id = w_in_cmt_id;
 rob_entry_t w_out_entry;
 assign w_out_entry = w_entries[w_out_cmt_entry_id];
 
+// Interrupt detection
+logic w_int_valid;
+logic [$clog2(riscv_pkg::XLEN_W)-1: 0] w_int_type;
+
+assign w_int_valid = int_if.m_external_int_valid | int_if.m_timer_int_valid | int_if.m_software_int_valid |
+                     int_if.s_external_int_valid | int_if.s_timer_int_valid | int_if.s_software_int_valid;
+
+assign w_int_type = int_if.m_external_int_valid ? riscv_common_pkg::MACHINE_EXTERNAL_INT :
+                    int_if.m_timer_int_valid    ? riscv_common_pkg::MACHINE_TIMER_INT    :
+                    int_if.m_software_int_valid ? riscv_common_pkg::MACHINE_SOFT_INT     :
+                    int_if.s_external_int_valid ? riscv_common_pkg::SUPER_EXTERNAL_INT   :
+                    int_if.s_timer_int_valid    ? riscv_common_pkg::SUPER_TIMER_INT      :
+                    int_if.s_software_int_valid ? riscv_common_pkg::SUPER_SOFT_INT       :
+                    'h0;
+
 assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_out_entry.grp_id;
-assign o_commit.except_valid = w_valid_except_grp_id;
-assign o_commit.except_type  = w_except_type_selected;
+assign o_commit.except_valid = w_valid_except_grp_id | w_int_valid;
+assign o_commit.int_valid    = w_int_valid;
+assign o_commit.except_type  = w_int_valid ? w_int_type : w_except_type_selected;
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
                                  o_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
@@ -191,8 +210,8 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id),
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
 assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
-assign o_commit.flush_valid  = w_out_entry.flush_valid;
-assign o_commit.int_valid    = w_out_entry.sim_int_inserted;
+assign o_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
+
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
   assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
   assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;

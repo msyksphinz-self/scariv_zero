@@ -573,6 +573,8 @@ scariv_rob u_rob
    .sc_disp    (w_sc_disp     ),
    .cre_ret_if (rob_cre_ret_if),
 
+   .int_if     (w_int_if),
+
    .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
    .i_done_rpt (w_done_rpt),

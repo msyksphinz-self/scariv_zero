@@ -191,122 +191,133 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_s0_req_ready 
 
 always_comb begin
   w_int_flush_valid = 1'b0;
-  if (int_if.m_external_int_valid) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (int_if.s_external_int_valid) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (int_if.m_timer_int_valid   ) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (int_if.s_timer_int_valid   ) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (int_if.m_software_int_valid) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (int_if.s_software_int_valid) begin
-    /* verilator lint_off WIDTHCONCAT */
-    w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
-    w_int_flush_valid = 1'b1;
-  end else if (is_flushed_commit(i_commit)) begin
-    case (i_commit.except_type)
-      SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
-      ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
-      MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
-      SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
-      URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];
-      ECALL_M        :
-        if (csr_info.medeleg[ECALL_M]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+  if (is_flushed_commit(i_commit)) begin
+    if (i_commit.int_valid) begin
+      case (i_commit.except_type)
+        riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      ECALL_S        :
-        if (csr_info.medeleg[ECALL_S]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+        riscv_common_pkg::SUPER_EXTERNAL_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      ECALL_U        :
-        if (csr_info.medeleg[ECALL_U]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+        riscv_common_pkg::MACHINE_TIMER_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      INST_ACC_FAULT :
-        if (csr_info.medeleg[INST_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+        riscv_common_pkg::SUPER_TIMER_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      LOAD_ACC_FAULT :
-        if (csr_info.medeleg[LOAD_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+        riscv_common_pkg::MACHINE_SOFT_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      STAMO_ACC_FAULT :
-        if (csr_info.medeleg[STAMO_ACC_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+        riscv_common_pkg::SUPER_SOFT_INT : begin
+          /* verilator lint_off WIDTHCONCAT */
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
+          w_int_flush_valid = 1'b1;
         end
-      INST_PAGE_FAULT :
-        if (csr_info.medeleg[INST_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      LOAD_PAGE_FAULT :
-        if (csr_info.medeleg[LOAD_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      STAMO_PAGE_FAULT :
-        if (csr_info.medeleg[STAMO_PAGE_FAULT]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      INST_ADDR_MISALIGN :
-        if (csr_info.medeleg[INST_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      LOAD_ADDR_MISALIGN :
-        if (csr_info.medeleg[LOAD_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      STAMO_ADDR_MISALIGN :
-        if (csr_info.medeleg[STAMO_ADDR_MISALIGN]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      ILLEGAL_INST        :
-        if (csr_info.medeleg[ECALL_M]) begin
-          w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-        end else begin
-          w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-        end
-      default           : begin
-        w_s0_vaddr_flush_next = 'h0;
+      endcase // case (i_commit.except_type)
+    end else begin
+      case (i_commit.except_type)
+        SILENT_FLUSH   : w_s0_vaddr_flush_next = i_commit.epc + 4;
+        ANOTHER_FLUSH  : w_s0_vaddr_flush_next = i_commit.epc;
+        MRET           : w_s0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
+        SRET           : w_s0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
+        URET           : w_s0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];
+        ECALL_M        :
+          if (csr_info.medeleg[ECALL_M]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        ECALL_S        :
+          if (csr_info.medeleg[ECALL_S]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        ECALL_U        :
+          if (csr_info.medeleg[ECALL_U]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        INST_ACC_FAULT :
+          if (csr_info.medeleg[INST_ACC_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        LOAD_ACC_FAULT :
+          if (csr_info.medeleg[LOAD_ACC_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        STAMO_ACC_FAULT :
+          if (csr_info.medeleg[STAMO_ACC_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        INST_PAGE_FAULT :
+          if (csr_info.medeleg[INST_PAGE_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        LOAD_PAGE_FAULT :
+          if (csr_info.medeleg[LOAD_PAGE_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        STAMO_PAGE_FAULT :
+          if (csr_info.medeleg[STAMO_PAGE_FAULT]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        INST_ADDR_MISALIGN :
+          if (csr_info.medeleg[INST_ADDR_MISALIGN]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        LOAD_ADDR_MISALIGN :
+          if (csr_info.medeleg[LOAD_ADDR_MISALIGN]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        STAMO_ADDR_MISALIGN :
+          if (csr_info.medeleg[STAMO_ADDR_MISALIGN]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        ILLEGAL_INST        :
+          if (csr_info.medeleg[ECALL_M]) begin
+            w_s0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_s0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
+        default           : begin
+          w_s0_vaddr_flush_next = 'h0;
 `ifdef SIMULATION
-        $fatal (0, "This exception not supported now : %d", i_commit.except_type);
+          $fatal (0, "This exception not supported now : %d", i_commit.except_type);
 `endif // SIMULATION
-      end
-    endcase // case (i_commit.except_type)
+        end
+      endcase // case (i_commit.except_type)
+    end // else: !if(i_commit.int_valid)
   end else if (br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict) begin
     w_s0_vaddr_flush_next = br_upd_fe_if.target_vaddr;
   end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))

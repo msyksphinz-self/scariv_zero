@@ -764,8 +764,6 @@ assign csr_info.fcsr    = {24'h0, r_frm, r_fflags};
 
 riscv_pkg::xlen_t w_m_int_en;
 riscv_pkg::xlen_t w_s_int_en;
-riscv_pkg::xlen_t r_m_int_en_last;
-riscv_pkg::xlen_t r_s_int_en_last;
 riscv_pkg::xlen_t w_m_pend_ints;
 logic                          w_m_csr_int_en;
 logic                          w_s_csr_int_en;
@@ -781,23 +779,12 @@ assign w_s_csr_int_en = (r_priv < riscv_common_pkg::PRIV_S) |
 assign w_s_int_en = w_m_int_en == 'h0 ? w_m_pend_ints & r_mideleg & {riscv_pkg::XLEN_W{w_s_csr_int_en}} :
                     'h0;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_m_int_en_last <= 'h0;
-    r_s_int_en_last <= 'h0;
-  end else begin
-    r_m_int_en_last <= w_m_int_en;
-    r_s_int_en_last <= w_s_int_en;
-  end
-end
-
-
-assign int_if.s_software_int_valid = w_m_int_en[ 1] & ~r_m_int_en_last[ 1] | w_s_int_en[ 1] & ~r_s_int_en_last[ 1];
-assign int_if.m_software_int_valid = w_m_int_en[ 3] & ~r_m_int_en_last[ 3] | w_s_int_en[ 3] & ~r_s_int_en_last[ 3];
-assign int_if.s_timer_int_valid    = w_m_int_en[ 5] & ~r_m_int_en_last[ 5] | w_s_int_en[ 5] & ~r_s_int_en_last[ 5];
-assign int_if.m_timer_int_valid    = w_m_int_en[ 7] & ~r_m_int_en_last[ 7] | w_s_int_en[ 7] & ~r_s_int_en_last[ 7];
-assign int_if.s_external_int_valid = w_m_int_en[ 9] & ~r_m_int_en_last[ 9] | w_s_int_en[ 9] & ~r_s_int_en_last[ 9];
-assign int_if.m_external_int_valid = w_m_int_en[11] & ~r_m_int_en_last[11] | w_s_int_en[11] & ~r_s_int_en_last[11];
+assign int_if.s_software_int_valid = w_m_int_en[ 1] | w_s_int_en[ 1];
+assign int_if.m_software_int_valid = w_m_int_en[ 3] | w_s_int_en[ 3];
+assign int_if.s_timer_int_valid    = w_m_int_en[ 5] | w_s_int_en[ 5];
+assign int_if.m_timer_int_valid    = w_m_int_en[ 7] | w_s_int_en[ 7];
+assign int_if.s_external_int_valid = w_m_int_en[ 9] | w_s_int_en[ 9];
+assign int_if.m_external_int_valid = w_m_int_en[11] | w_s_int_en[11];
 
 logic w_delegate;
 assign w_delegate = scariv_conf_pkg::USING_VM & (r_priv <= riscv_common_pkg::PRIV_S) &
@@ -838,6 +825,10 @@ always_comb begin
 
     if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0)) begin
       // Delegation
+
+      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
+                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+
       // CSRWrite (SYSREG_ADDR_SEPC,  epc);
       w_scause_next = 1 << (riscv_pkg::XLEN_W - 1) | deleg_int_encoded;
       w_stval_next = 'h0;
@@ -847,7 +838,11 @@ always_comb begin
       w_mstatus_next[`SSTATUS_SIE] = r_mstatus[`SSTATUS_SPIE];
       w_mstatus_next[`SSTATUS_SPP] = r_priv;
       w_mstatus_next[`SSTATUS_SIE] = 'h0;
-    end else begin
+    end else begin // if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0))
+
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
+                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+
       // CSRWrite (SYSREG_ADDR_MEPC,   epc);
       w_mcause_next = 1 << (riscv_pkg::XLEN_W - 1) | int_encoded;
       w_mtval_next = 'h0;
