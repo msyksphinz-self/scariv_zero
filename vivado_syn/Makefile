@@ -105,3 +105,11 @@ all_build: $(TARGET_DIR)
 
 $(TARGET_DIR):
 	make -C $@
+
+TARGET_DIR_CLEAN = $(addsuffix _clean, $(TARGET_DIR))
+.PHONY: $(TARGET_DIR_CLEAN)
+
+clean: $(TARGET_DIR_CLEAN)
+
+$(TARGET_DIR_CLEAN):
+	make -C $(subst _clean,,$@) clean
