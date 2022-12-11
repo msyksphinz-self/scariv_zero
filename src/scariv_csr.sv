@@ -835,9 +835,9 @@ always_comb begin
       // CSRRead  (SYSREG_ADDR_STVEC,to &tvec);
       w_priv_next = riscv_common_pkg::PRIV_S;
 
-      w_mstatus_next[`SSTATUS_SIE] = r_mstatus[`SSTATUS_SPIE];
-      w_mstatus_next[`SSTATUS_SPP] = r_priv;
-      w_mstatus_next[`SSTATUS_SIE] = 'h0;
+      w_mstatus_next[`SSTATUS_SPIE] = r_mstatus[`SSTATUS_SIE];
+      w_mstatus_next[`SSTATUS_SPP]  = r_priv;
+      w_mstatus_next[`SSTATUS_SIE]  = 'h0;
     end else begin // if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0))
 
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
@@ -848,9 +848,9 @@ always_comb begin
       w_mtval_next = 'h0;
 
       // CSRRead  (SYSREG_ADDR_MTVEC, &tvec);
-      w_mstatus_next[`MSTATUS_MIE] = r_mstatus[`MSTATUS_MPIE];
-      w_mstatus_next[`MSTATUS_MPP] = r_priv;
-      w_mstatus_next[`MSTATUS_MIE] = 'h0;
+      w_mstatus_next[`MSTATUS_MPIE] = r_mstatus[`MSTATUS_MIE];
+      w_mstatus_next[`MSTATUS_MPP]  = r_priv;
+      w_mstatus_next[`MSTATUS_MIE]  = 'h0;
 
     end // else: !if(r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) 1= 'h0))
 
