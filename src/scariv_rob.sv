@@ -201,7 +201,7 @@ assign o_commit.cmt_id       = w_out_cmt_id;
 assign o_commit.grp_id       = w_out_entry.grp_id;
 assign o_commit.except_valid = w_valid_except_grp_id | w_int_valid;
 assign o_commit.int_valid    = w_int_valid;
-assign o_commit.except_type  = w_int_valid ? w_int_type : w_except_type_selected;
+assign o_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
 /* verilator lint_off WIDTH */
 assign o_commit.tval          = (o_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
                                  o_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :

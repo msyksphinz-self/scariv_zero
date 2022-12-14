@@ -412,6 +412,7 @@ always_comb begin
     end
     WAIT_IC_FILL : begin
       if (w_flush_valid | w_int_flush_valid) begin
+        w_s0_int_flush_next = w_s0_sim_int_inserted;
         if (!w_ic_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -437,6 +438,7 @@ always_comb begin
     end
     WAIT_TLB_FILL : begin
       if (w_flush_valid | w_int_flush_valid) begin
+        w_s0_int_flush_next = w_s0_sim_int_inserted;
         if (!w_tlb_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -462,6 +464,7 @@ always_comb begin
     end
     WAIT_IBUF_FREE : begin
       if (w_flush_valid | w_int_flush_valid) begin
+        w_s0_int_flush_next = w_s0_sim_int_inserted;
         if (!w_ibuf_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -486,6 +489,7 @@ always_comb begin
     end
     WAIT_FLUSH_FREE : begin
       if (w_flush_valid & !w_existed_flush_is_older | w_int_flush_valid) begin
+        w_s0_int_flush_next = w_s0_sim_int_inserted;
         if (w_flush_haz_clear) begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
