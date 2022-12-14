@@ -10,4 +10,4 @@ filelist.tcl:
 	echo "add_files -norecurse " $(shell sed 's|^|../|g' ../../src/fpnew.vf | sed 's/\r\n/ /g') $(shell sed 's|^|../|g' ../../src/filelist.vf | sed 's/\r\n/ /g') > $@
 
 clean:
-	rm -rf *.log *.rpt *.pb *.jou *.xpr *.dcp
+	rm -rf *.log *.rpt *.pb *.jou *.xpr *.dcp .Xil

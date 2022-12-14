@@ -3,7 +3,10 @@ set PROJ_DIR .
 set RTL_ROOT_DIR ../../src
 set TOP_NAME scariv_tile_wrapper
 
-create_project -in_memory -part xc7z020clg484-1 $PROJ_NAME $PROJ_DIR
+# set DEVICE_NAME xc7z045ffg900
+set DEVICE_NAME xc7z030fbg484
+
+create_project -in_memory -part $DEVICE_NAME $PROJ_NAME $PROJ_DIR
 save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr
 
 set_property parent.project_path ${PROJ_DIR}/${PROJ_NAME}.xpr [current_project]
@@ -29,12 +32,12 @@ source filelist.tcl
 import_files
 
 read_xdc ../synth_constraints.xdc
-set_property used_in_implementation false [get_files ../synth_constraints.xdc]
+# set_property used_in_implementation false [get_files ../synth_constraints.xdc]
 
 # read_xdc dont_touch.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
-synth_design -top ${TOP_NAME} -part xc7z020clg484-1 -fanout_limit 10000 \
+synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
     -flatten_hierarchy rebuilt \
     -include_dir ../../src/fpnew/src/common_cells/include \
     -include_dir ../../src \
