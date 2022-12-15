@@ -139,9 +139,9 @@ paddr_t  r_s2_paddr;
 `endif // SIMULATION
 logic r_s0_int_flush;
 logic w_s0_int_flush_next;
-logic w_s0_sim_int_inserted;
-logic r_s1_sim_int_inserted;
-logic r_s2_sim_int_inserted;
+logic w_s0_int_inserted;
+logic r_s1_int_inserted;
+logic r_s2_int_inserted;
 
 br_upd_if  br_upd_fe_tmp_if();
 
@@ -364,7 +364,7 @@ always_comb begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
           w_br_wait_ftq_free = w_br_flush & !w_is_ftq_empty;
-          w_s0_int_flush_next = w_s0_sim_int_inserted;
+          w_s0_int_flush_next = w_s0_int_inserted;
         end else begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
@@ -379,11 +379,11 @@ always_comb begin
       end else if (r_s2_valid & !r_s2_clear & r_s2_tlb_miss) begin
         w_if_state_next = WAIT_TLB_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
-        w_s0_int_flush_next = r_s2_sim_int_inserted;
+        w_s0_int_flush_next = r_s2_int_inserted;
       end else if (w_s2_ic_resp.miss & !r_s2_clear) begin
         w_if_state_next = WAIT_IC_FILL;
         w_s0_vaddr_next = r_s2_vaddr;
-        w_s0_int_flush_next = r_s2_sim_int_inserted;
+        w_s0_int_flush_next = r_s2_int_inserted;
       end else if (r_s2_valid & !r_s2_clear & w_s2_ic_resp.valid & ~w_inst_buffer_ready) begin
         // Retry from S2 stage Vaddr
         w_s0_vaddr_next = r_s2_vaddr;
@@ -407,12 +407,12 @@ always_comb begin
       end else begin
         w_s0_vaddr_next = (r_s0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-        w_s0_int_flush_next = w_s0_sim_int_inserted;
+        w_s0_int_flush_next = w_s0_int_inserted;
       end
     end
     WAIT_IC_FILL : begin
       if (w_flush_valid | w_int_flush_valid) begin
-        w_s0_int_flush_next = w_s0_sim_int_inserted;
+        w_s0_int_flush_next = w_s0_int_inserted;
         if (!w_ic_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -438,7 +438,7 @@ always_comb begin
     end
     WAIT_TLB_FILL : begin
       if (w_flush_valid | w_int_flush_valid) begin
-        w_s0_int_flush_next = w_s0_sim_int_inserted;
+        w_s0_int_flush_next = w_s0_int_inserted;
         if (!w_tlb_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -464,7 +464,7 @@ always_comb begin
     end
     WAIT_IBUF_FREE : begin
       if (w_flush_valid | w_int_flush_valid) begin
-        w_s0_int_flush_next = w_s0_sim_int_inserted;
+        w_s0_int_flush_next = w_s0_int_inserted;
         if (!w_ibuf_refill_wakeup | w_br_flush & !w_is_ftq_empty) begin
           w_s0_vaddr_next = w_s0_vaddr_flush_next;
           w_if_state_next = WAIT_FLUSH_FREE;
@@ -489,7 +489,7 @@ always_comb begin
     end
     WAIT_FLUSH_FREE : begin
       if (w_flush_valid & !w_existed_flush_is_older | w_int_flush_valid) begin
-        w_s0_int_flush_next = w_s0_sim_int_inserted;
+        w_s0_int_flush_next = w_s0_int_inserted;
         if (w_flush_haz_clear) begin
           w_s0_vaddr_next = (w_s0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
@@ -538,7 +538,7 @@ assign w_existed_flush_is_older = inst0_older (r_flush_valid,      r_flush_cmt_i
 
 
 always_comb begin
-  w_s0_sim_int_inserted = w_int_flush_valid;
+  w_s0_int_inserted = w_int_flush_valid;
 
   if (w_flush_valid | w_int_flush_valid) begin
     w_s0_predicted = 1'b0;
@@ -606,9 +606,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                   ~w_iq_predict_valid;
     r_s1_predicted <= w_s0_predicted;
     r_s1_vaddr <= w_s0_vaddr;
-`ifdef SIMULATION
-    r_s1_sim_int_inserted <= w_s0_sim_int_inserted | r_s0_int_flush;
-`endif // SIMULATION
+    r_s1_int_inserted <= w_s0_int_inserted | r_s0_int_flush;
     r_s1_paddr <= w_s0_tlb_resp.paddr;
     r_s1_tlb_miss <= /* w_s0_tlb_resp.miss*/ w_s0_tlb_resp_miss & r_s0_valid & w_s0_ic_req.valid;
     r_s1_tlb_except_valid <= w_s0_tlb_resp.pf.inst |
@@ -634,8 +632,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_tlb_except_cause <= except_t'(0);
 `ifdef SIMULATION
     r_s2_paddr <= 'h0;
-    r_s2_sim_int_inserted <= 1'b0;
 `endif // SIMULATION
+    r_s2_int_inserted <= 1'b0;
   end else begin // if (!i_reset_n)
     r_s2_valid <= r_s1_valid;
     r_s2_clear <= r_s1_clear | w_int_flush_valid | w_flush_valid | w_iq_predict_valid |
@@ -646,9 +644,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_s2_tlb_miss         <= r_s1_tlb_miss;
     r_s2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_s1_tlb_except_valid;
     r_s2_tlb_except_cause <= r_s1_tlb_except_cause;
+    r_s2_int_inserted <= r_s1_int_inserted;
 `ifdef SIMULATION
     r_s2_paddr <= r_s1_paddr;
-    r_s2_sim_int_inserted <= r_s1_sim_int_inserted;
 `endif // SIMULATION
   end
 end
@@ -698,8 +696,8 @@ assign w_s2_inst_buffer_in.pc               = w_s2_ic_resp.vaddr;
 assign w_s2_inst_buffer_in.inst             = w_s2_ic_resp.data;
 `ifdef SIMULATION
 assign w_s2_inst_buffer_in.pc_dbg           = {w_s2_ic_resp.vaddr, 1'b0};
-assign w_s2_inst_buffer_in.sim_int_inserted = r_s2_sim_int_inserted;
 `endif // SIMULATION
+assign w_s2_inst_buffer_in.int_inserted = r_s2_int_inserted;
 assign w_s2_inst_buffer_in.byte_en          = w_s2_ic_resp.be;
 assign w_s2_inst_buffer_in.tlb_except_valid = r_s2_tlb_except_valid;
 assign w_s2_inst_buffer_in.tlb_except_cause = r_s2_tlb_except_cause;

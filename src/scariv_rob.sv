@@ -114,9 +114,7 @@ function automatic rob_entry_t assign_rob_entry();
 
   ret.is_br_included = sc_disp.is_br_included;
 
-`ifdef SIMULATION
-  ret.sim_int_inserted = sc_disp.sim_int_inserted;
-`endif // SIMULATION
+  ret.int_inserted = sc_disp.int_inserted;
 
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     // If TLB Exception detected before execution, this instruction already done.
@@ -225,7 +223,7 @@ import "DPI-C" function void spike_update_timer (longint value);
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (o_commit.commit & w_out_entry.sim_int_inserted) begin
+    if (o_commit.commit & w_out_entry.int_inserted) begin
       spike_update_timer (scariv_tb.u_clint.w_mtime_next);
     end
   end

@@ -9,13 +9,13 @@ interface disp_if;
   // Counter for each dispatch Resources
   scariv_pkg::disp_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
   logic                          is_br_included; // When Branch Instruction is included
+  logic                          int_inserted;
   logic                          valid;
   logic                          ready;
 
 `ifdef SIMULATION
   scariv_pkg::vaddr_t  pc_addr_debug;
   assign pc_addr_debug = {pc_addr, 1'b0};
-  logic sim_int_inserted;
 `endif // SIMULATION
   modport master(
     output valid,
@@ -27,9 +27,7 @@ interface disp_if;
     output resource_cnt,
     output inst,
     output is_br_included,
-`ifdef SIMULATION
-    output sim_int_inserted,
-`endif // SIMULATION
+    output int_inserted,
     input  ready
   );
   modport slave(
@@ -42,9 +40,7 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
-`ifdef SIMULATION
-    input sim_int_inserted,
-`endif // SIMULATION
+    input int_inserted,
     output ready
   );
   modport watch(
@@ -57,9 +53,7 @@ interface disp_if;
     input  resource_cnt,
     input  inst,
     input  is_br_included,
-`ifdef SIMULATION
-    input sim_int_inserted,
-`endif // SIMULATION
+    input int_inserted,
     input  ready
   );
 

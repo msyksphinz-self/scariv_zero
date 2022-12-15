@@ -14,7 +14,7 @@ generate for (genvar p_idx = 0; p_idx < 2; p_idx++) begin : port_loop
   assign o_disp[p_idx].cmt_id           = i_disp.cmt_id;
   assign o_disp[p_idx].resource_cnt     = i_disp.resource_cnt;
   assign o_disp[p_idx].is_br_included   = i_disp.is_br_included;
-  assign o_disp[p_idx].sim_int_inserted = i_disp.sim_int_inserted;
+  assign o_disp[p_idx].int_inserted = i_disp.int_inserted;
 
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     assign o_disp[p_idx].inst[d_idx]    = i_disp.inst[d_idx];

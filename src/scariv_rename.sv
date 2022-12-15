@@ -252,9 +252,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     sc_disp.tlb_except_tval  <= iq_disp.tlb_except_tval;
     sc_disp.resource_cnt     <= iq_disp.resource_cnt;
 
-`ifdef SIMULATION
-    sc_disp.sim_int_inserted <= iq_disp.sim_int_inserted;
-`endif // SIMULATION
+    sc_disp.int_inserted <= iq_disp.int_inserted;
     r_disp_inst <= w_disp_inst;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)

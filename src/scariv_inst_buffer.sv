@@ -132,8 +132,8 @@ typedef struct packed {
   ras_info_t  [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
 `ifdef SIMULATION
   scariv_pkg::vaddr_t pc_dbg;
-  logic               sim_int_inserted;
 `endif // SIMULATION
+  logic               int_inserted;
 } inst_buf_t;
 
 inst_buf_t r_inst_queue[scariv_pkg::INST_BUF_SIZE];
@@ -231,8 +231,8 @@ generate for (genvar idx = 0; idx < scariv_pkg::INST_BUF_SIZE; idx++) begin : in
 
 `ifdef SIMULATION
         r_inst_queue[idx].pc_dbg           <= {i_s2_inst.pc, 1'b0};
-        r_inst_queue[idx].sim_int_inserted <= i_s2_inst.sim_int_inserted;
 `endif // SIMULATION
+        r_inst_queue[idx].int_inserted <= i_s2_inst.int_inserted;
       end else if ((w_head_all_inst_issued |
                     w_head_predict_taken_issued |
                     r_inst_queue[idx].valid & r_inst_queue[idx].dead) & (r_inst_buffer_outptr == idx)) begin
@@ -496,9 +496,7 @@ assign iq_disp.is_br_included = |w_inst_bru_disped;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
-`ifdef SIMULATION
-assign iq_disp.sim_int_inserted  = r_inst_queue[r_inst_buffer_outptr].sim_int_inserted;
-`endif // SIMULATION
+assign iq_disp.int_inserted  = r_inst_queue[r_inst_buffer_outptr].int_inserted;
 
 // -------------------------------
 // Dispatch Inst, Resource Count
