@@ -590,36 +590,6 @@ tb_elf_loader u_tb_elf_loader (
 );
 
 
-scariv_clint
-#(
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
-  .ADDR_W   (riscv_pkg::PADDR_W),
-  .BASE_ADDR('h200_0000),
-  .SIZE     ('h1_0000),
-  .RD_LAT   (10)
-) u_clint (
-  .i_clk    (i_clk),
-  .i_reset_n(i_ram_reset_n),
-
-  // clint
-  .i_req_valid   (w_clint_req_valid   ),
-  .i_req_cmd     (w_clint_req_cmd     ),
-  .i_req_addr    (w_clint_req_addr    ),
-  .i_req_tag     (w_clint_req_tag     ),
-  .i_req_data    (w_clint_req_data    ),
-  .i_req_byte_en (w_clint_req_byte_en ),
-  .o_req_ready   (w_clint_req_ready   ),
-
-  .o_resp_valid  (w_clint_resp_valid  ),
-  .o_resp_tag    (w_clint_resp_tag    ),
-  .o_resp_data   (w_clint_resp_data   ),
-  .i_resp_ready  (w_clint_resp_ready  ),
-
-  .clint_if (w_clint_if)
-);
-
-
 `include "tb_commit_mon_utils.sv"
 
 logic [63: 0]                                                  cycle_counter;
