@@ -389,6 +389,8 @@ assign w_ext_rd_resp_valid = l1d_ext_rd_resp.valid &
                              (l1d_ext_rd_resp.payload.tag[scariv_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D);
 assign w_ext_rd_resp_tag = l1d_ext_rd_resp.payload.tag[$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0];
 
+assign l1d_ext_rd_resp.ready = 1'b1;
+
 // ------------------------
 // L1D Write Request
 // ------------------------
