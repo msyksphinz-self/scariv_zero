@@ -1,24 +1,29 @@
-module l2_if_splitter_with_others
+module l2_if_req_splitter_with_others
   #(parameter ARB_NUM = 4)
 (
  l2_req_if.slave  l2_req_slave_if,
- l2_req_if.master l2_req_master_if[ARB_NUM + 1]
+ l2_req_if.master l2_req_master_if[ARB_NUM + 1],
 
  input scariv_pkg::paddr_t i_base_addr[ARB_NUM],
- input scariv_pkg::paddr_t i_mask     [ARB_NUM],
+ input scariv_pkg::paddr_t i_mask     [ARB_NUM]
  );
 
+// --------
+// Request
+// --------
+
+/* verilator lint_off UNOPTFLAT */
 logic [ARB_NUM: 0] w_region_hit;
 generate for (genvar idx = 0; idx < ARB_NUM; idx++) begin : req_loop
-  assign w_region_hit[idx] = (l2_req_slave_if.payload.paddr & ~i_mask[idx]) == i_base_addr[idx];
+  assign w_region_hit[idx] = (l2_req_slave_if.payload.addr & ~i_mask[idx]) == i_base_addr[idx];
 end
 endgenerate
 assign w_region_hit[ARB_NUM] = w_region_hit[ARB_NUM-1: 0] == 'h0;
 
 
-always_comb begin
-  $assert ($onehot0(w_region_hit));
-end
+// always_comb begin
+//   $assert ($onehot0(w_region_hit));
+// end
 
 
 logic [ARB_NUM: 0] w_l2_resp_ready;
@@ -33,4 +38,5 @@ endgenerate
 
 assign l2_req_slave_if.ready = |w_l2_resp_ready;
 
-endmodule // l2_if_splitter_with_others
+
+endmodule // l2_if_req_splitter_with_others

@@ -33,19 +33,19 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
       $fwrite(perf_fp, "\"%t\" : {\n", $time);
 
       // Instruction Buffer
-      u_scariv_tile_wrapper.u_scariv_tile.u_frontend.u_scariv_inst_buffer.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_inst_buffer.dump_perf(perf_fp);
       // Commit Rate
-      u_scariv_tile_wrapper.u_scariv_tile.u_rob.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.dump_perf(perf_fp);
       // ICache
-      u_scariv_tile_wrapper.u_scariv_tile.u_frontend.u_scariv_icache.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_icache.dump_perf(perf_fp);
       // DCache
-      u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_scariv_dcache.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.u_scariv_dcache.dump_perf(perf_fp);
       // LDQ
-      u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_ldq.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.u_ldq.dump_perf(perf_fp);
       // STQ
-      u_scariv_tile_wrapper.u_scariv_tile.u_scariv_lsu_top.u_stq.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.u_stq.dump_perf(perf_fp);
       // Branch
-      u_scariv_tile_wrapper.u_scariv_tile.u_frontend.u_ftq.dump_branch_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_ftq.dump_branch_perf(perf_fp);
 
     end
   end // else: !if(!w_scariv_reset_n)
@@ -58,7 +58,7 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
     end else begin
       if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
         // ALU
-        u_scariv_tile_wrapper.u_scariv_tile.alu_loop[a_idx].u_scariv_alu.u_scariv_scheduler.dump_perf("alu", perf_fp);
+        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[a_idx].u_scariv_alu.u_scariv_scheduler.dump_perf("alu", perf_fp);
       end
     end
   end

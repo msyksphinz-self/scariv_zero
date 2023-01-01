@@ -224,7 +224,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     if (o_commit.commit & w_out_entry.int_inserted) begin
-      spike_update_timer (scariv_tb.u_clint.w_mtime_next);
+      spike_update_timer (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_clint.w_mtime_next);
     end
   end
 end
