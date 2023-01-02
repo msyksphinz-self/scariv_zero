@@ -155,3 +155,7 @@
 
 ../src/clint_if.sv
 ../src/scariv_clint.sv
+
+../src/scariv_ss_router.sv
+../src/scariv_subsystem.sv
+../src/scariv_subsystem_wrapper.sv
