@@ -381,13 +381,13 @@ bit_oh_or #(.T(scariv_lsu_pkg::miss_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTR
 assign l1d_ext_rd_req.valid           = |w_missu_ready_to_send;
 assign l1d_ext_rd_req.payload.cmd     = scariv_lsu_pkg::M_XRD;
 assign l1d_ext_rd_req.payload.addr    = w_missu_ready_to_send_entry.paddr;
-assign l1d_ext_rd_req.payload.tag     = {scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_missu_send_tag};
+assign l1d_ext_rd_req.tag             = {scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D, {TAG_FILLER_W{1'b0}}, w_missu_send_tag};
 assign l1d_ext_rd_req.payload.data    = 'h0;
 assign l1d_ext_rd_req.payload.byte_en = 'h0;
 
 assign w_ext_rd_resp_valid = l1d_ext_rd_resp.valid &
-                             (l1d_ext_rd_resp.payload.tag[scariv_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D);
-assign w_ext_rd_resp_tag = l1d_ext_rd_resp.payload.tag[$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0];
+                             (l1d_ext_rd_resp.tag        [scariv_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D);
+assign w_ext_rd_resp_tag = l1d_ext_rd_resp.tag[$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0];
 
 assign l1d_ext_rd_resp.ready = 1'b1;
 

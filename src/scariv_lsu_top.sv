@@ -59,7 +59,7 @@ module scariv_lsu_top
 localparam L1D_SNOOP_PORT    = 0;
 localparam L1D_PTW_PORT      = L1D_SNOOP_PORT   + 1;
 localparam L1D_LS_PORT_BASE  = L1D_PTW_PORT     + 1;
-localparam L1D_MISSU_PORT      = L1D_LS_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
+localparam L1D_MISSU_PORT    = L1D_LS_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
 localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT     + 1;
 localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
 
@@ -347,12 +347,12 @@ u_st_buffer
    );
 
 
-scariv_l2_req_arbiter
-  #(.REQ_PORT_NUM(2))
+l2_if_arbiter
+  #(.ARB_NUM(2))
 u_scariv_l2_req_arbiter
 (
- .l1d_ext_in_req (w_l1d_ext_req),
- .l1d_ext_req    (l1d_ext_req  )
+ .l2_req_slave_if  (w_l1d_ext_req),
+ .l2_req_master_if (l1d_ext_req  )
  );
 
 

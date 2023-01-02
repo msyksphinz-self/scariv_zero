@@ -122,7 +122,7 @@ assign lsu_access_is_leaf = lsu_access_pte.v &
 assign lsu_access_bad_pte = ~lsu_access_pte.v |
                             (~lsu_access_pte.r & lsu_access_pte.w);
 
-assign l2_resp_tag_match = ptw_resp.payload.tag == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};
+assign l2_resp_tag_match = ptw_resp.tag         == {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};
 
 assign l2_resp_fin = lsu_access_is_leaf | (r_count == 'h0) |
                      lsu_access_bad_pte;
@@ -237,7 +237,7 @@ assign lsu_access.size  = decoder_lsu_ctrl_pkg::SIZE_W;
 assign ptw_req.valid           = (r_state == L2_REQUEST);
 assign ptw_req.payload.cmd     = M_XRD;
 assign ptw_req.payload.addr    = r_ptw_addr;
-assign ptw_req.payload.tag     = {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};;
+assign ptw_req.tag             = {L2_UPPER_TAG_PTW, {(L2_CMD_TAG_W-2){1'b0}}};;
 assign ptw_req.payload.data    = 'h0;
 assign ptw_req.payload.byte_en = 'h0;
 assign ptw_resp.ready = 1'b1;

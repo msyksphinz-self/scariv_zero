@@ -1,5 +1,6 @@
 module l2_if_arbiter
-  #(parameter ARB_NUM = 4)
+  #(parameter TAG_W = scariv_lsu_pkg::L2_CMD_TAG_W,
+    parameter ARB_NUM = 4)
 (
  l2_req_if.slave  l2_req_slave_if[ARB_NUM],
  l2_req_if.master l2_req_master_if
@@ -8,13 +9,17 @@ module l2_if_arbiter
  // l2_resp_if.master l2_resp_master_if[ARB_NUM]
  );
 
-logic [ARB_NUM-1: 0] w_slave_valids;
+logic [ARB_NUM-1: 0]     w_slave_valids;
+logic [TAG_W-1: 0]       w_slave_tags[ARB_NUM];
 scariv_lsu_pkg::l2_req_t w_slave_payloads[ARB_NUM];
-logic [ARB_NUM-1: 0] w_slave_ready;
+
+logic [ARB_NUM-1: 0]     w_slave_ready;
 scariv_lsu_pkg::l2_req_t w_payload_selected;
+logic [TAG_W-1: 0]       w_tag_selected;
 
 generate for (genvar a_idx = 0; a_idx < ARB_NUM; a_idx++) begin : req_loop
   assign w_slave_valids  [a_idx] = l2_req_slave_if[a_idx].valid;
+  assign w_slave_tags    [a_idx] = l2_req_slave_if[a_idx].tag;
   assign w_slave_payloads[a_idx] = l2_req_slave_if[a_idx].payload;
 
   assign l2_req_slave_if[a_idx].ready = w_slave_ready[a_idx] & l2_req_master_if.ready;
@@ -23,9 +28,11 @@ endgenerate
 bit_extract_lsb #(.WIDTH(ARB_NUM)) u_bit_select_valids (.in(w_slave_valids), .out(w_slave_ready));
 
 bit_oh_or #(.T(scariv_lsu_pkg::l2_req_t), .WORDS(ARB_NUM)) sel_req_payload (.i_oh(w_slave_ready), .i_data(w_slave_payloads), .o_selected(w_payload_selected));
+bit_oh_or #(.T(logic[TAG_W-1: 0]),        .WORDS(ARB_NUM)) sel_req_tag     (.i_oh(w_slave_ready), .i_data(w_slave_tags),     .o_selected(w_tag_selected));
 
-assign l2_req_master_if.valid = |w_slave_valids;
-assign l2_req_master_if.payload = w_payload_selected;
+assign l2_req_master_if.valid   = |w_slave_valids;
+assign l2_req_master_if.tag     =  w_tag_selected;
+assign l2_req_master_if.payload =  w_payload_selected;
 
 
 // generate for (genvar a_idx = 0; a_idx < ARB_NUM; a_idx++) begin : resp_loop

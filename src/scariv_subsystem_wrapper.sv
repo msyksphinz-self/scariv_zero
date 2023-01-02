@@ -7,13 +7,13 @@ module scariv_subsystem_wrapper
     output logic                                                          o_l2_req_valid,
     output scariv_lsu_pkg::mem_cmd_t                                      o_l2_req_cmd,
     output logic                   [              riscv_pkg::PADDR_W-1:0] o_l2_req_addr,
-    output logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] o_l2_req_tag,
+    output logic                   [  scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] o_l2_req_tag,
     output logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] o_l2_req_data,
     output logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] o_l2_req_byte_en,
     input  logic                                                          i_l2_req_ready,
 
     input  logic                                      i_l2_resp_valid,
-    input  logic [  scariv_lsu_pkg::L2_CMD_TAG_W-1:0] i_l2_resp_tag,
+    input  logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] i_l2_resp_tag,
     input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0] i_l2_resp_data,
     output logic                                      o_l2_resp_ready,
 
@@ -26,8 +26,8 @@ module scariv_subsystem_wrapper
     output logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1:0] o_snoop_resp_be
    );
 
-l2_req_if  w_l2_req ();
-l2_resp_if w_l2_resp ();
+l2_req_if  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W+2)) w_l2_req ();
+l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W+2)) w_l2_resp();
 
 snoop_if w_snoop_if ();
 
@@ -38,13 +38,13 @@ snoop_if w_snoop_if ();
 assign o_l2_req_valid          = w_l2_req.valid;
 assign o_l2_req_cmd            = w_l2_req.payload.cmd;
 assign o_l2_req_addr           = w_l2_req.payload.addr;
-assign o_l2_req_tag            = w_l2_req.payload.tag;
+assign o_l2_req_tag            = w_l2_req.tag        ;
 assign o_l2_req_data           = w_l2_req.payload.data;
 assign o_l2_req_byte_en        = w_l2_req.payload.byte_en;
 assign w_l2_req.ready          = i_l2_req_ready;
 
 assign w_l2_resp.valid        = i_l2_resp_valid;
-assign w_l2_resp.payload.tag  = i_l2_resp_tag;
+assign w_l2_resp.tag          = i_l2_resp_tag;
 assign w_l2_resp.payload.data = i_l2_resp_data;
 assign o_l2_resp_ready        = w_l2_resp.ready;
 

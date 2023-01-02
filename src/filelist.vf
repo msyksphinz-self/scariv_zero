@@ -148,7 +148,10 @@
 ../src/scariv_ftq.sv
 
 ../src/l2_if_arbiter.sv
+../src/l2_if_req_splitter_with_others.sv
+
 ../src/l2_if_resp_arbiter.sv
+../src/l2_if_resp_splitter.sv
 
 ../src/clint_if.sv
 ../src/scariv_clint.sv

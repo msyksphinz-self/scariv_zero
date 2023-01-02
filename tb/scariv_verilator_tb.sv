@@ -35,151 +35,156 @@ module scariv_tb (
     input logic i_ram_reset_n
 );
 
+localparam TAG_W = scariv_lsu_pkg::L2_CMD_TAG_W + 2;
+typedef logic [TAG_W-1: 0] tag_t;
+
 /* from ELF Loader */
-logic                                                          w_elf_req_valid;
-scariv_lsu_pkg::mem_cmd_t                                      w_elf_req_cmd;
-logic                   [            riscv_pkg::PADDR_W-1:0]   w_elf_req_addr;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_elf_req_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_elf_req_data;
-logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
-logic                                                          w_elf_req_ready;
+logic                     w_elf_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_elf_req_cmd;
+scariv_pkg::paddr_t       w_elf_req_addr;
+tag_t                     w_elf_req_tag;
+scariv_pkg::ic_data_t     w_elf_req_data;
+scariv_pkg::ic_strb_t     w_elf_req_byte_en;
+logic                     w_elf_req_ready;
 
 /* from Frontend IC */
-logic                                                          w_ss_req_valid;
-scariv_lsu_pkg::mem_cmd_t                                      w_ss_req_cmd;
-logic                   [            riscv_pkg::PADDR_W-1:0]   w_ss_req_addr;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_ss_req_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_ss_req_data;
-logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_ss_req_byte_en;
-logic                                                          w_ss_req_ready;
+logic                     w_ss_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_ss_req_cmd;
+scariv_pkg::paddr_t       w_ss_req_addr;
+tag_t                     w_ss_req_tag;
+scariv_pkg::ic_data_t     w_ss_req_data;
+scariv_pkg::ic_strb_t     w_ss_req_byte_en;
+logic                     w_ss_req_ready;
 
-logic                                                          w_ss_resp_valid;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_ss_resp_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_ss_resp_data;
-logic                                                          w_ss_resp_ready;
+logic                     w_ss_resp_valid;
+tag_t                     w_ss_resp_tag;
+scariv_pkg::ic_data_t     w_ss_resp_data;
+logic                     w_ss_resp_ready;
 
 /* L1D Interface */
-logic                                                          w_l1d_req_valid;
-scariv_lsu_pkg::mem_cmd_t                                      w_l1d_req_cmd;
-logic                   [            riscv_pkg::PADDR_W-1:0]   w_l1d_req_addr;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_l1d_req_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_l1d_req_data;
-logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
-logic                                                          w_l1d_req_ready;
+logic                     w_l1d_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_l1d_req_cmd;
+scariv_pkg::paddr_t       w_l1d_req_addr;
+tag_t                     w_l1d_req_tag;
+scariv_pkg::ic_data_t     w_l1d_req_data;
+scariv_pkg::ic_strb_t     w_l1d_req_byte_en;
+logic                     w_l1d_req_ready;
 
-logic                                                          w_l1d_resp_valid;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_l1d_resp_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_l1d_resp_data;
-logic                                                          w_l1d_resp_ready;
+logic                     w_l1d_resp_valid;
+tag_t                     w_l1d_resp_tag;
+scariv_pkg::ic_data_t     w_l1d_resp_data;
+logic                     w_l1d_resp_ready;
 
 /* PTW Interface */
-logic                                                          w_ptw_req_valid;
-scariv_lsu_pkg::mem_cmd_t                                      w_ptw_req_cmd;
-logic                   [            riscv_pkg::PADDR_W-1:0]   w_ptw_req_addr;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_ptw_req_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_ptw_req_data;
-logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_ptw_req_byte_en;
-logic                                                          w_ptw_req_ready;
+logic                     w_ptw_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_ptw_req_cmd;
+scariv_pkg::paddr_t       w_ptw_req_addr;
+tag_t                     w_ptw_req_tag;
+scariv_pkg::ic_data_t     w_ptw_req_data;
+scariv_pkg::ic_strb_t     w_ptw_req_byte_en;
+logic                     w_ptw_req_ready;
 
-logic                                                          w_ptw_resp_valid;
-logic                   [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_ptw_resp_tag;
-logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_ptw_resp_data;
-logic                                                          w_ptw_resp_ready;
+logic                     w_ptw_resp_valid;
+tag_t                     w_ptw_resp_tag;
+scariv_pkg::ic_data_t     w_ptw_resp_data;
+logic                     w_ptw_resp_ready;
 
 // Snoop Interface
-logic                                                          w_snoop_req_valid;
-logic                   [            riscv_pkg::PADDR_W-1:0]   w_snoop_req_paddr;
+logic                     w_snoop_req_valid;
+scariv_pkg::paddr_t       w_snoop_req_paddr;
 
-logic                                                          w_snoop_resp_valid;
-logic                   [  scariv_conf_pkg::DCACHE_DATA_W-1:0] w_snoop_resp_data;
-logic                   [ scariv_lsu_pkg::DCACHE_DATA_B_W-1:0] w_snoop_resp_be;
+logic                     w_snoop_resp_valid;
+scariv_pkg::ic_data_t     w_snoop_resp_data;
+scariv_pkg::ic_strb_t     w_snoop_resp_be;
 
 /* Middle Interface */
-logic                                        w_mid_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_mid_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_mid_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_mid_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_mid_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_mid_req_byte_en;
-logic                                        w_mid_req_ready;
+logic                     w_mid_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_mid_req_cmd;
+scariv_pkg::paddr_t       w_mid_req_addr;
+tag_t                     w_mid_req_tag;
+scariv_pkg::ic_data_t     w_mid_req_data;
+scariv_pkg::ic_strb_t     w_mid_req_byte_en;
+logic                     w_mid_req_ready;
 
-logic                                        w_mid_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_mid_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_mid_resp_data;
-logic                                        w_mid_resp_ready;
+logic                     w_mid_resp_valid;
+tag_t                     w_mid_resp_tag;
+scariv_pkg::ic_data_t     w_mid_resp_data;
+logic                     w_mid_resp_ready;
 
 /* BootROM Interface */
-logic                                        w_bootrom_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_bootrom_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_bootrom_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_bootrom_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_bootrom_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_bootrom_req_byte_en;
-logic                                        w_bootrom_req_ready;
+logic                     w_bootrom_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_bootrom_req_cmd;
+scariv_pkg::paddr_t       w_bootrom_req_addr;
+tag_t                     w_bootrom_req_tag;
+scariv_pkg::ic_data_t     w_bootrom_req_data;
+scariv_pkg::ic_strb_t     w_bootrom_req_byte_en;
+logic                     w_bootrom_req_ready;
 
-logic                                        w_bootrom_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_bootrom_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_bootrom_resp_data;
-logic                                        w_bootrom_resp_ready;
+logic                     w_bootrom_resp_valid;
+tag_t                     w_bootrom_resp_tag;
+scariv_pkg::ic_data_t     w_bootrom_resp_data;
+logic                     w_bootrom_resp_ready;
 
 /* Serial Interface */
-logic                                        w_serial_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_serial_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_serial_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_serial_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_serial_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_serial_req_byte_en;
-logic                                        w_serial_req_ready;
+logic                     w_serial_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_serial_req_cmd;
+scariv_pkg::paddr_t       w_serial_req_addr;
+tag_t                     w_serial_req_tag;
+scariv_pkg::ic_data_t     w_serial_req_data;
+scariv_pkg::ic_strb_t     w_serial_req_byte_en;
+logic                     w_serial_req_ready;
 
-logic                                        w_serial_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_serial_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_serial_resp_data;
-logic                                        w_serial_resp_ready;
+logic                     w_serial_resp_valid;
+tag_t                     w_serial_resp_tag;
+scariv_pkg::ic_data_t     w_serial_resp_data;
+logic                     w_serial_resp_ready;
 
 /* Kernel Boot Flash Interface */
-logic                                        w_kernel_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_kernel_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_kernel_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_kernel_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_kernel_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_kernel_req_byte_en;
-logic                                        w_kernel_req_ready;
+logic                     w_kernel_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_kernel_req_cmd;
+scariv_pkg::paddr_t       w_kernel_req_addr;
+tag_t                     w_kernel_req_tag;
+scariv_pkg::ic_data_t     w_kernel_req_data;
+scariv_pkg::ic_strb_t     w_kernel_req_byte_en;
+logic                     w_kernel_req_ready;
 
-logic                                        w_kernel_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_kernel_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_kernel_resp_data;
-logic                                        w_kernel_resp_ready;
+logic                     w_kernel_resp_valid;
+tag_t                     w_kernel_resp_tag;
+scariv_pkg::ic_data_t     w_kernel_resp_data;
+logic                     w_kernel_resp_ready;
 
 /* initrd Boot Flash Interface */
-logic                                        w_initrd_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_initrd_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_initrd_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_initrd_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_initrd_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_initrd_req_byte_en;
-logic                                        w_initrd_req_ready;
+logic                     w_initrd_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_initrd_req_cmd;
+scariv_pkg::paddr_t       w_initrd_req_addr;
+tag_t                     w_initrd_req_tag;
+scariv_pkg::ic_data_t     w_initrd_req_data;
+scariv_pkg::ic_strb_t     w_initrd_req_byte_en;
+logic                     w_initrd_req_ready;
 
-logic                                        w_initrd_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_initrd_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_initrd_resp_data;
-logic                                        w_initrd_resp_ready;
+logic                     w_initrd_resp_valid;
+tag_t                     w_initrd_resp_tag;
+scariv_pkg::ic_data_t     w_initrd_resp_data;
+logic                     w_initrd_resp_ready;
 
 /* L2 Interface */
-logic                                        w_l2_req_valid;
-scariv_lsu_pkg::mem_cmd_t                    w_l2_req_cmd;
-logic [            riscv_pkg::PADDR_W-1:0]   w_l2_req_addr;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_req_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_l2_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
-logic                                        w_l2_req_ready;
+logic                     w_l2_req_valid;
+scariv_lsu_pkg::mem_cmd_t w_l2_req_cmd;
+scariv_pkg::paddr_t       w_l2_req_addr;
+tag_t                     w_l2_req_tag;
+scariv_pkg::ic_data_t     w_l2_req_data;
+scariv_pkg::ic_strb_t     w_l2_req_byte_en;
+logic                     w_l2_req_ready;
 
-logic                                        w_l2_resp_valid;
-logic [    scariv_lsu_pkg::L2_CMD_TAG_W-1:0] w_l2_resp_tag;
-logic [  scariv_conf_pkg::ICACHE_DATA_W-1:0] w_l2_resp_data;
-logic                                        w_l2_resp_ready;
+logic                     w_l2_resp_valid;
+tag_t                     w_l2_resp_tag;
+scariv_pkg::ic_data_t     w_l2_resp_data;
+logic                     w_l2_resp_ready;
 
 /* Connection */
-l2c_arbiter_wrapper u_l2c_arbiter_wrapper
+l2c_arbiter_wrapper
+  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2))
+u_l2c_arbiter_wrapper
 (
  /* from ELF Loader */
  .i_elf_req_valid  (w_elf_req_valid),
@@ -219,7 +224,9 @@ l2c_arbiter_wrapper u_l2c_arbiter_wrapper
  .o_l2_resp_ready (w_mid_resp_ready  )
  );
 
-l2c_splitter_wrapper u_l2c_splitter_wrapper
+l2c_splitter_wrapper
+  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2))
+u_l2c_splitter_wrapper
   (
    /* L2 Interface */
    .i_req_valid  (w_mid_req_valid   ),
@@ -339,7 +346,7 @@ u_scariv_subsystem_wrapper
 tb_l2_behavior_ram
   #(
     .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-    .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
+    .TAG_W    (TAG_W),
     .ADDR_W   (riscv_pkg::PADDR_W),
     .BASE_ADDR('h8000_0000),
     .SIZE     ('h4000),
@@ -377,7 +384,7 @@ u_tb_l2_behavior_ram
 scariv_bootrom
 #(
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
+  .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h1000),
   .SIZE     ('h4000),
@@ -406,7 +413,7 @@ scariv_bootrom
 scariv_serialdevice
 #(
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
+  .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h5400_0000),
   .SIZE     ('h1000),
@@ -436,7 +443,7 @@ tb_flash
 #(
   .FILE     ("image"),
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
+  .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h8020_0000),
   .SIZE     ('h0200_0000),
@@ -466,7 +473,7 @@ tb_flash
 #(
   .FILE     ("initrd"),
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
-  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W),
+  .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('hffc8_4a00),
   .SIZE     ('h0200_0000),

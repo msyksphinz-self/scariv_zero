@@ -89,12 +89,12 @@ always_comb begin
   l1d_ext_wr_req.payload.cmd     = M_XWR;
   if (!st_ext_arbiter) begin
     l1d_ext_wr_req.payload.addr    = r_ext_evict_payload.paddr;
-    l1d_ext_wr_req.payload.tag     = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
+    l1d_ext_wr_req.tag             = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
     l1d_ext_wr_req.payload.data    = r_ext_evict_payload.data;
     l1d_ext_wr_req.payload.byte_en = {DCACHE_DATA_B_W{1'b1}};
   end else begin
     l1d_ext_wr_req.payload.addr    = r_uc_wr_paddr;
-    l1d_ext_wr_req.payload.tag     = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
+    l1d_ext_wr_req.tag             = {L2_UPPER_TAG_WR_L1D, {(L2_CMD_TAG_W-2){1'b0}}};
     l1d_ext_wr_req.payload.data    = r_uc_wr_data;
     l1d_ext_wr_req.payload.byte_en = r_uc_wr_strb;
   end // else: !if(r_l1d_evict_req_valid)
