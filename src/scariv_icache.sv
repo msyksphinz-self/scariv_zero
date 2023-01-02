@@ -89,11 +89,11 @@ ic_data_t w_pref_wr_data ;
 logic     w_pref_wr_fire;
 assign w_pref_wr_fire = w_pref_wr_valid & w_pref_wr_ready;
 
-assign w_is_req_tag_normal_fetch = ic_l2_req.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign w_is_req_tag_pre_fetch    = ic_l2_req.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+assign w_is_req_tag_normal_fetch = ic_l2_req.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_req_tag_pre_fetch    = ic_l2_req.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
-assign w_is_resp_tag_normal_fetch = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign w_is_resp_tag_pre_fetch    = ic_l2_resp.payload.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+assign w_is_resp_tag_normal_fetch = ic_l2_resp.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_resp_tag_pre_fetch    = ic_l2_resp.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
 assign w_s2_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -322,14 +322,14 @@ always_comb begin
     ic_l2_req.valid           = 1'b1;
     ic_l2_req.payload.cmd     = M_XRD;
     ic_l2_req.payload.addr    = w_pref_l2_req_paddr;
-    ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+    ic_l2_req.tag             = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
     ic_l2_req.payload.data    = 'h0;
     ic_l2_req.payload.byte_en = 'h0;
   end else begin
     ic_l2_req.valid           = (r_ic_state == ICReq);
     ic_l2_req.payload.cmd     = M_XRD;
     ic_l2_req.payload.addr    = r_s2_paddr;
-    ic_l2_req.payload.tag     = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+    ic_l2_req.tag             = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
     ic_l2_req.payload.data    = 'h0;
     ic_l2_req.payload.byte_en = 'h0;
   end // else: !if(w_pref_l2_req_valid)
@@ -424,7 +424,7 @@ function void dump_json(int fp);
     $fwrite(fp, "      valid : \"%d\",\n", ic_l2_req.valid);
     $fwrite(fp, "      cmd : \"%d\",\n", ic_l2_req.payload.cmd);
     $fwrite(fp, "      addr : \"0x%x\",\n", ic_l2_req.payload.addr);
-    $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.payload.tag);
+    $fwrite(fp, "      tag : \"%d\",\n", ic_l2_req.tag        );
     $fwrite(fp, "    },\n");
   end
 

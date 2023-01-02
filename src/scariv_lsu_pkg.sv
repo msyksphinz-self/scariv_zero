@@ -144,13 +144,11 @@ typedef enum logic [ 2: 0] {
   typedef struct packed {
     mem_cmd_t cmd;
     scariv_pkg::paddr_t addr;
-    logic [L2_CMD_TAG_W-1:0] tag;
     ic_data_t data;
     ic_strb_t byte_en;
   } l2_req_t;
 
   typedef struct packed {
-    logic [L2_CMD_TAG_W-1:0] tag;
     ic_data_t data;
   } l2_resp_t;
 
