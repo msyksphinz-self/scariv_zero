@@ -1,68 +1,20 @@
 [
 	{
         "base": "0x0000_0000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 1, "X": 1, "A": 1, "C": 0},
-        "comment": "Debug Controller"
+        "size": "0x0002_0000",
+        "attr": {"R": 1, "W": 0, "X": 1, "A": 1, "C": 0},
+        "comment": "ROM"
     },
     {
-		"base": "0x0000_1000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 0, "A": 0, "X": 1, "C": 0},
-        "comment":"boot ROM"
-    },
-    {
-		"base": "0x0000_3000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 1, "X": 1, "A": 1, "C": 0},
-        "comment": "error device"
-    },
-    {
-		"base": "0x0001_0000",
-        "size": "0x0001_0000",
-        "attr": {"R": 1, "X": 1, "A": 0, "W": 0, "C": 0},
-        "comment":"ROM"
-    },
-    {
-		"base": "0x0002_0000",
-        "size": "0x0001_0000",
-        "attr": {"R": 1, "X": 1, "C": 1, "A": 0, "W": 0},
-        "comment":"LBWIF ROM"
-    },
-    {
-		"base": "0x0200_0000",
-        "size": "0x0001_0000",
-        "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
-        "comment":"CLINT"
-    },
-    {
-		"base": "0x0201_0000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
-        "comment":"Cache Controller"
-    },
-    {
-		"base": "0x0c00_0000",
+        "base": "0x0c00_0000",
         "size": "0x0400_0000",
         "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
         "comment":"Interrupt Controller"
     },
     {
-		"base": "0x1000_0000",
-        "size": "0x0000_1000",
+		"base": "0x2000_0000",
+        "size": "0x0000_2000",
         "attr": {"R": 1, "W": 1, "X": 1, "C": 1, "A": 1},
-        "comment":"LBWIF RAM"
-    },
-    {
-		"base": "0x5400_0000",
-        "size": "0x0000_1000",
-        "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
-        "comment":"Serial device"
-    },
-    {
-		"base": "0x8000_0000",
-        "size": "0x8000_0000",
-        "attr": {"R": 1, "W": 1, "X": 1, "C": 1, "A": 1},
-        "comment":"Main Memory"
+        "comment":"SRAM"
     }
 ]
