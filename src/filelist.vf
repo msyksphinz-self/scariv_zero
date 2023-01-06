@@ -159,3 +159,4 @@
 ../src/scariv_ss_router.sv
 ../src/scariv_subsystem.sv
 ../src/scariv_subsystem_wrapper.sv
+../src/scariv_subsystem_axi_wrapper.sv
