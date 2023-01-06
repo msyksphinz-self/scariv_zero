@@ -525,4 +525,55 @@ end // always_ff @ (negedge i_clk, negedge i_reset_n)
 `endif // MONITOR
 `endif // SIMULATION
 
+
+`ifdef LITEX_SIMULATION
+
+integer litex_log_fp;
+initial begin
+  litex_log_fp = $fopen ("scariv_inst.log", "w");
+end
+
+logic [riscv_pkg::XLEN_W-1: 0] w_physical_int_data [scariv_pkg::RNID_SIZE + 32];
+logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::RNID_SIZE + 32];
+generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin: reg_loop
+  assign w_physical_int_data[r_idx] = scariv_subsystem_axi_wrapper.u_scariv_subsystem.u_tile.u_int_phy_registers.r_phy_regs[r_idx];
+  if (riscv_pkg::FLEN_W != 0) begin
+    assign w_physical_fp_data [r_idx] = scariv_subsystem_axi_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.r_phy_regs[r_idx];
+  end
+end
+endgenerate
+
+
+always_ff @(negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (o_commit.commit) begin
+      for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
+        if (o_commit.grp_id[grp_idx] &
+            ~o_commit.dead_id[grp_idx]) begin
+          $fwrite (litex_log_fp, "%10t (%2d,%2d) PC=0x%010x: %08x DASM(%08x)\n",
+                   $time,
+                   w_out_cmt_id, 1 << grp_idx,
+                   w_out_entry.inst[grp_idx].pc_addr,
+                   w_out_entry.inst[grp_idx].rvc_inst_valid ? w_out_entry.inst[grp_idx].rvc_inst : w_out_entry.inst[grp_idx].inst,
+                   w_out_entry.inst[grp_idx].rvc_inst_valid ? w_out_entry.inst[grp_idx].rvc_inst : w_out_entry.inst[grp_idx].inst);
+          $fflush (litex_log_fp);
+
+          if (w_out_entry.inst[grp_idx].wr_reg.valid) begin
+            $fwrite (litex_log_fp, "  %s[%2d](%3x) <= %016x\n",
+                     w_out_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ? "GPR" : "FPR",
+                     w_out_entry.inst[grp_idx].wr_reg.regidx,
+                     w_out_entry.inst[grp_idx].wr_reg.rnid,
+                     w_out_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
+                     w_physical_int_data[w_out_entry.inst[grp_idx].wr_reg.rnid] :
+                     w_physical_fp_data [w_out_entry.inst[grp_idx].wr_reg.rnid]);
+          end
+        end // if (o_commit.grp_id[grp_idx] &...
+      end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
+    end  // if (w_out_valid)
+  end // else: !if(!i_scariv_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
+
+`endif //  `ifdef LITEX_SIMULATION
+
 endmodule // scariv_rob

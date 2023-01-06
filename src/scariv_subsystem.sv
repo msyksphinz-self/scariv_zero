@@ -83,7 +83,7 @@ scariv_clint
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
   .ADDR_W   (riscv_pkg::PADDR_W),
-  .BASE_ADDR('h200_0000),
+  .BASE_ADDR('hc00_0000),
   .SIZE     ('h1_0000),
   .RD_LAT   (10)
 ) u_clint (

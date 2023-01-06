@@ -123,7 +123,7 @@ always_comb begin
         w_resp_data_next  = w_mtime_flatten;
       end
       default : begin
-        w_resp_valid_next = 1'b0;
+        w_resp_valid_next = 1'b1;
         w_resp_tag_next   = i_req_tag;
         w_resp_data_next  = 'h0;
       end
