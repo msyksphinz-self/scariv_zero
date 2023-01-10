@@ -60,14 +60,16 @@ snoop_if w_snoop_if ();
 
 typedef enum logic {
   IDLE = 0,
-  WAIT = 1
+  WR_WAIT = 1
 } state_t;
 
 state_t r_state;
+scariv_lsu_pkg::l2_req_t r_l2_payload;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] r_l2_tag;
 
 logic w_wr_valid;
 logic w_rd_valid;
-assign w_wr_valid = w_l2_req.valid & (w_l2_req.payload.cmd == scariv_lsu_pkg::M_XWR);
+assign w_wr_valid = (r_state == WR_WAIT) & (r_l2_payload.cmd == scariv_lsu_pkg::M_XWR);
 assign w_rd_valid = w_l2_req.valid & (w_l2_req.payload.cmd == scariv_lsu_pkg::M_XRD);
 
 logic w_aw_fire;
@@ -85,13 +87,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_state)
       IDLE : begin
-        if (w_wr_valid) begin
-          r_state <= WAIT;
-          r_aw_fire_hold <= w_aw_fire;
-          r_w_fire_hold  <= w_w_fire;
+        if (w_l2_req.valid &
+            (w_l2_req.payload.cmd == scariv_lsu_pkg::M_XWR)) begin
+          r_state <= WR_WAIT;
+          r_l2_payload <= w_l2_req.payload;
+          r_l2_tag     <= w_l2_req.tag;
         end
       end
-      WAIT : begin
+      WR_WAIT : begin
         r_aw_fire_hold <= r_aw_fire_hold | w_aw_fire;
         r_w_fire_hold  <= r_w_fire_hold  | w_w_fire;
         if (r_aw_fire_hold & r_w_fire_hold) begin
@@ -108,10 +111,9 @@ end // always_ff @ (posedge i_clk, i_reset_n)
 // -------------------
 // L2 Interconnection
 // -------------------
-assign axi_if_aw_valid  = w_wr_valid;
-assign axi_if_aw_addr   = w_l2_req.payload.addr;
-assign axi_if_aw_id     = w_l2_req.tag;
-assign axi_if_aw_data   = w_l2_req.payload.data;
+assign axi_if_aw_valid  = w_wr_valid & ~r_aw_fire_hold;
+assign axi_if_aw_addr   = r_l2_payload.addr;
+assign axi_if_aw_id     = r_l2_tag;
 assign axi_if_aw_last   = 1'b1;
 assign axi_if_aw_burst  = 2'b0;
 assign axi_if_aw_len    = 8'h0;
@@ -122,10 +124,10 @@ assign axi_if_aw_cache  = 1'b0;
 assign axi_if_aw_qos    = 1'b0;
 assign axi_if_aw_region = 1'b0;
 
-assign axi_if_w_valid = w_wr_valid;
+assign axi_if_w_valid = w_wr_valid & ~r_w_fire_hold;
 assign axi_if_w_last  = 1'b1;
-assign axi_if_w_data  = w_l2_req.payload.data;
-assign axi_if_w_strb  = w_l2_req.payload.byte_en;
+assign axi_if_w_data  = r_l2_payload.data;
+assign axi_if_w_strb  = r_l2_payload.byte_en;
 
 assign axi_if_b_ready = 1'b1;
 
@@ -147,7 +149,7 @@ assign w_l2_resp.valid        = axi_if_r_valid;
 assign w_l2_resp.tag          = axi_if_r_id;
 assign w_l2_resp.payload.data = axi_if_r_data;
 
-assign w_l2_req.ready = (r_state == IDLE);
+assign w_l2_req.ready = (r_state == IDLE) & (w_rd_valid ? axi_if_ar_ready : 1'b1);
 
 // // ----------------
 // // Snoop Interface
