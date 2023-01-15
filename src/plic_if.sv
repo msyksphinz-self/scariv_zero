@@ -1,35 +1,35 @@
 // ------------------------------------------------------------------------
-// NAME : CLINT Packages
+// NAME : PLIC Packages
 // TYPE : packages
 // ------------------------------------------------------------------------
-// CLINT (Core Local Interruptor) Packages
+// PLIC (Platform Level Interruptor) Packages
 // ------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------
 
-interface clint_if;
+interface plic_if;
 
-logic ipi_valid;
-logic time_irq_valid;
-logic time_irq_clear;
-logic ip;  // Pending
-logic ie;  // Interrutpt Enable
+logic         int_valid;
+logic [ 2: 0] int_id;
+logic         int_complete;
+logic         ie;
+logic         ip;
 
 modport master (
-  input  ie,
   output ip,
-  output ipi_valid,
-  output time_irq_valid,
-  output time_irq_clear
+  input  ie,
+  output int_valid,
+  output int_id,
+  input  int_complete
 );
 
 
 modport slave (
-  output ie,
   input  ip,
-  input  ipi_valid,
-  input  time_irq_valid,
-  input  time_irq_clear
+  output ie,
+  input  int_valid,
+  input  int_id,
+  output int_complete
 );
 
-endinterface // clint_if
+endinterface // plic_if

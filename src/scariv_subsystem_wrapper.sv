@@ -17,6 +17,8 @@ module scariv_subsystem_wrapper
     input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0] i_l2_resp_data,
     output logic                                      o_l2_resp_ready,
 
+    input logic [ 7: 0] i_interrupts,
+
     // Snoop Interface
     input logic               i_snoop_req_valid,
     input scariv_pkg::paddr_t i_snoop_req_paddr,
@@ -67,6 +69,8 @@ u_scariv_subsystem
 
  .l2_req  (w_l2_req ),
  .l2_resp (w_l2_resp),
+
+ .i_interrupts (i_interrupts),
 
  .snoop_if (w_snoop_if)
 

@@ -339,7 +339,9 @@ u_scariv_subsystem_wrapper
 
    .o_snoop_resp_valid(w_snoop_resp_valid),
    .o_snoop_resp_data (w_snoop_resp_data),
-   .o_snoop_resp_be   (w_snoop_resp_be)
+   .o_snoop_resp_be   (w_snoop_resp_be),
+
+   .i_interrupts ('h0)
    );
 
 

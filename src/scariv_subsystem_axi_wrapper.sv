@@ -47,8 +47,10 @@ module scariv_subsystem_axi_wrapper
    input logic                                      axi_if_r_last,
    input logic [1:0]                                axi_if_r_resp,
    input scariv_lsu_pkg::ic_data_t                  axi_if_r_data,
-   input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id
+   input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id,
 
+   // External Interrupts
+   input logic [ 7: 0] i_interrupts
 );
 
 
@@ -169,6 +171,8 @@ u_scariv_subsystem
 
  .l2_req  (w_l2_req ),
  .l2_resp (w_l2_resp),
+
+ .i_interrupts (i_interrupts),
 
  .snoop_if (w_snoop_if)
 

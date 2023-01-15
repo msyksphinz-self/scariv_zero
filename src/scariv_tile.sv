@@ -18,7 +18,9 @@ module scariv_tile (
     l2_resp_if.slave ptw_resp,
 
     // CLINT connection
-    clint_if.slave clint_if
+    clint_if.slave clint_if,
+    // PLIC connection
+    plic_if.slave plic_if
 );
 
 localparam ALU_INST_PORT_BASE = 0;
@@ -442,6 +444,7 @@ u_scariv_csu (
     .i_mispred_lsu (w_ex2_mispred_lsu),
 
     .clint_if (clint_if),
+    .plic_if  (plic_if),
 
     .csr_info    (w_csr_info   ),
     .int_if      (w_int_if),
