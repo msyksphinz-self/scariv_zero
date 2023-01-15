@@ -69,6 +69,7 @@ module scariv_tile_wrapper (
   snoop_if snoop_if ();
 
   clint_if clint_if ();
+  plic_if  plic_if ();
 
   // -------------------
   // IC Interconnection
@@ -147,7 +148,8 @@ assign clint_if.time_irq_clear = i_clint_time_irq_clear;
       .ptw_req(ptw_l2_req),
       .ptw_resp(ptw_l2_resp),
 
-      .clint_if (clint_if)
+      .clint_if (clint_if),
+      .plic_if  (plic_if)
   );
 
 

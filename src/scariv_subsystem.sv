@@ -6,12 +6,18 @@ module scariv_subsystem (
     l2_req_if.master l2_req,
     l2_resp_if.slave l2_resp,
 
+
+    // External Interrupts
+    input logic [ 7: 0] i_interrupts,
+
     // Cache Coherent Interface
     snoop_if.slave snoop_if
 );
 
 // CLINT connection
 clint_if w_clint_if();
+// PLIC connection
+plic_if  w_plic_if();
 
 l2_req_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W)) w_req_core_ic_if();
 l2_req_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W)) w_req_core_dc_if();
@@ -30,23 +36,25 @@ u_tile
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
-    // L2 request from ICache
-    .ic_l2_req  (w_req_core_ic_if ),
-    .ic_l2_resp (w_resp_core_ic_if),
+   // L2 request from ICache
+   .ic_l2_req  (w_req_core_ic_if ),
+   .ic_l2_resp (w_resp_core_ic_if),
 
-    // L2 request from L1D
-    .l1d_ext_req  (w_req_core_dc_if ),
-    .l1d_ext_resp (w_resp_core_dc_if),
+   // L2 request from L1D
+   .l1d_ext_req  (w_req_core_dc_if ),
+   .l1d_ext_resp (w_resp_core_dc_if),
 
-    // Cache Coherent Interface
-    .snoop_if (snoop_if),
+   // Cache Coherent Interface
+   .snoop_if (snoop_if),
 
-    // PTW interconnection
-    .ptw_req  (w_req_core_ptw_if ),
-    .ptw_resp (w_resp_core_ptw_if),
+   // PTW interconnection
+   .ptw_req  (w_req_core_ptw_if ),
+   .ptw_resp (w_resp_core_ptw_if),
 
-    // CLINT connection
-    .clint_if (w_clint_if)
+   // CLINT connection
+   .clint_if (w_clint_if),
+   // PLIC connection
+   .plic_if (w_plic_if)
    );
 
 
@@ -107,4 +115,54 @@ scariv_clint
   .clint_if (w_clint_if)
 );
 
-endmodule // scariv_tile
+
+logic [ 7: 0] w_ie       [1];  // Interrupt enable per source, for each target
+logic [ 2: 0] w_ipriority[8];  // Priority for each source (priority is a reserved keyword)
+logic [ 2: 0] w_threshold[1];  // Priority Threshold for each target
+
+logic [ 0: 0] w_int_req;
+logic [ 3: 0] w_int_id[1];
+logic [ 0: 0] w_int_claim;
+logic [ 0: 0] w_int_complete;
+
+assign w_ie[0] = {8{w_plic_if.ie}};
+assign w_ipriority[0] = 3'h0;
+assign w_ipriority[1] = 3'h0;
+assign w_ipriority[2] = 3'h0;
+assign w_ipriority[3] = 3'h0;
+assign w_ipriority[4] = 3'h0;
+assign w_ipriority[5] = 3'h0;
+assign w_ipriority[6] = 3'h0;
+assign w_ipriority[7] = 3'h0;
+assign w_threshold[0] = 3'h0;
+
+assign w_plic_if.int_id = w_int_id[0];
+
+
+plic_core
+  #(
+    .SOURCES           (8), //Number of interrupt sources
+    .TARGETS           (1), //Number of interrupt targets
+    .PRIORITIES        (8), //Number of Priority levels
+    .MAX_PENDING_COUNT (0)
+    )
+u_plic_core
+  (
+   .clk   (i_clk),     // Input: System clock
+   .rst_n (i_reset_n), // Input: Active low asynchronous reset
+
+   .src       (i_interrupts),           // Input: Interrupt request from devices/sources
+   .el        (1'b0),                   // Input: Edge/Level sensitive for each source
+   .ip        (w_plic_if.ip), // Output: Interrupt Pending for each source
+
+   .ie        (w_ie),                   // Input: Interrupt enable per source, for each target
+   .ipriority (w_ipriority),            // Input: Priority for each source (priority is a reserved keyword)
+   .threshold (w_threshold),            // Input: Priority Threshold for each target
+
+   .ireq      (w_plic_if.int_valid   ),         // Output: Interrupt request for each target
+   .id        (w_int_id              ),         // Output: Interrupt ID (1..SOURCES), for each target
+   .claim     (1'b0                  ),         // Input: Interrupt claim
+   .complete  (w_plic_if.int_complete)          // Input: Interrupt handling complete
+   );
+
+endmodule // scariv_subsystem

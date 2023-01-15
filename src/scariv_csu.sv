@@ -36,6 +36,8 @@ module scariv_csu
 
   // CLINT connection
   clint_if.slave clint_if,
+  // PLIC connection
+  plic_if.slave plic_if,
 
   // Commit notification
   input scariv_pkg::commit_blk_t i_commit,
@@ -151,6 +153,7 @@ u_scariv_csr
    .write_if (w_csr_write),
 
    .clint_if (clint_if),
+   .plic_if  (plic_if),
 
    .csr_info (csr_info),
    .int_if   (int_if),
