@@ -114,7 +114,8 @@ end // always_ff @ (posedge i_clk, i_reset_n)
 // L2 Interconnection
 // -------------------
 assign axi_if_aw_valid  = w_wr_valid & ~r_aw_fire_hold;
-assign axi_if_aw_addr   = r_l2_payload.addr;
+assign axi_if_aw_addr   = {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ICACHE_DATA_W/8)],
+                           {$clog2(scariv_pkg::ICACHE_DATA_W/8){1'b0}}
 assign axi_if_aw_id     = r_l2_tag;
 assign axi_if_aw_last   = 1'b1;
 assign axi_if_aw_burst  = 2'b0;
@@ -128,8 +129,8 @@ assign axi_if_aw_region = 1'b0;
 
 assign axi_if_w_valid = w_wr_valid & ~r_w_fire_hold;
 assign axi_if_w_last  = 1'b1;
-assign axi_if_w_data  = r_l2_payload.data;
-assign axi_if_w_strb  = r_l2_payload.byte_en;
+assign axi_if_w_data  = r_l2_payload.data    << {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ICACHE_DATA_W/8), 3'b000};
+assign axi_if_w_strb  = r_l2_payload.byte_en <<  r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ICACHE_DATA_W/8);
 
 assign axi_if_b_ready = 1'b1;
 
