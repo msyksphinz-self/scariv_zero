@@ -98,7 +98,7 @@ scariv_clint
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
   .ADDR_W   (riscv_pkg::PADDR_W),
-  .BASE_ADDR('hc00_0000),
+  .BASE_ADDR('h200_0000),
   .SIZE     ('h1_0000),
   .RD_LAT   (10)
 ) u_clint (
@@ -123,43 +123,34 @@ scariv_clint
 );
 
 
-assign w_req_plic_if.ready = 1'b1;
+scariv_plic
+#(
+  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('hc00_0000),
+  .SIZE     ('h1_0000),
+  .RD_LAT   (10)
+) u_clint (
+  .i_clk    (i_clk),
+  .i_reset_n(i_reset_n),
 
-apb4_plic_top
-  #(
-    // AHB Parameters
-    .PADDR_SIZE(riscv_pkg::PADDR_W),
-    .PDATA_SIZE(scariv_conf_pkg::ICACHE_DATA_W),
-    // PLIC Parameters
-    .SOURCES           (64),   //Number of interrupt sources
-    .TARGETS           ( 4),   //Number of interrupt targets
-    .PRIORITIES        ( 8),   //Number of Priority levels
-    .MAX_PENDING_COUNT ( 8),   //Max. number of 'pending' events
-    .HAS_THRESHOLD     ( 1),   //Is 'threshold' implemented?
-    .HAS_CONFIG_REG    ( 1)    //Is the 'configuration' register implemented?
-    )
-u_plic
-  (
-   .PCLK    (i_clk),
-   .PRESETn (i_reset_n),
+  // PLIC
+  .i_req_valid   (w_req_plic_if.valid           ),
+  .i_req_cmd     (w_req_plic_if.payload.cmd     ),
+  .i_req_addr    (w_req_plic_if.payload.addr    ),
+  .i_req_tag     (w_req_plic_if.tag             ),
+  .i_req_data    (w_req_plic_if.payload.data    ),
+  .i_req_byte_en (w_req_plic_if.payload.byte_en ),
+  .o_req_ready   (w_req_plic_if.ready           ),
 
-   //AHB Slave Interface
-   .PSEL    (w_req_plic_if.valid),
-   .PENABLE (w_req_plic_if.payload.cmd == scariv_lsu_pkg::M_XWR),
-   .PADDR   (w_req_plic_if.payload.addr),
-   .PWRITE  (w_req_plic_if.payload.cmd == scariv_lsu_pkg::M_XWR),
-   .PSTRB   ('h0f),
-   .PWDATA  (w_req_plic_if.payload.data),
+  .o_resp_valid  (w_resp_plic_if.valid        ),
+  .o_resp_tag    (w_resp_plic_if.tag          ),
+  .o_resp_data   (w_resp_plic_if.payload.data ),
+  .i_resp_ready  (w_resp_plic_if.ready        ),
 
-   .PRDATA  (w_resp_plic_if.payload.data),
-   .PREADY  (w_resp_plic_if.valid),
-   .PSLVERR (),
-
-   .src (i_interrupts),       // Interrupt sources
-   .irq (w_plic_if.int_valid)        // Interrupt Requests
-   );
-
-
+  .plic_if (w_plic_if)
+);
 
 
 endmodule // scariv_subsystem
