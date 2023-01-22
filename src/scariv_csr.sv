@@ -561,7 +561,14 @@ end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_medeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG       ) begin r_medeleg       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG       ) begin r_mideleg       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE           ) begin r_mie           <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mie <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MIE) begin
+    r_mie <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mtvec.raw_bit <= 'h0;
@@ -593,8 +600,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign plic_if.ie = r_mie[11];
-
+assign plic_if.ie = r_mstatus[`MSTATUS_MIE];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbase         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBASE         ) begin r_mbase         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mbound        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MBOUND        ) begin r_mbound        <= write_if.data; end end

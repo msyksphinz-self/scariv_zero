@@ -162,6 +162,7 @@
 ../src/scariv_subsystem_axi_wrapper.sv
 
 ../src/plic_if.sv
+../src/plic/apb4_plic_top.sv
 ../src/plic/plic_cell.sv
 ../src/plic/plic_core.sv
 ../src/plic/plic_dynamic_registers.sv

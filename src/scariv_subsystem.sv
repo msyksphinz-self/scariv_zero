@@ -30,6 +30,9 @@ l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W)) w_resp_core_ptw_if();
 l2_req_if  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_req_clint_if ();
 l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_resp_clint_if();
 
+l2_req_if  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_req_plic_if ();
+l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_resp_plic_if();
+
 scariv_tile
 u_tile
   (
@@ -81,7 +84,11 @@ u_router
 
    // CLINT
    .clint_req  (w_req_clint_if),
-   .clint_resp (w_resp_clint_if)
+   .clint_resp (w_resp_clint_if),
+
+   // PLIC
+   .plic_req  (w_req_plic_if),
+   .plic_resp (w_resp_plic_if)
    );
 
 
@@ -116,53 +123,43 @@ scariv_clint
 );
 
 
-logic [ 7: 0] w_ie       [1];  // Interrupt enable per source, for each target
-logic [ 2: 0] w_ipriority[8];  // Priority for each source (priority is a reserved keyword)
-logic [ 2: 0] w_threshold[1];  // Priority Threshold for each target
+assign w_req_plic_if.ready = 1'b1;
 
-logic [ 0: 0] w_int_req;
-logic [ 3: 0] w_int_id[1];
-logic [ 0: 0] w_int_claim;
-logic [ 0: 0] w_int_complete;
-
-assign w_ie[0] = {8{w_plic_if.ie}};
-assign w_ipriority[0] = 3'h0;
-assign w_ipriority[1] = 3'h0;
-assign w_ipriority[2] = 3'h0;
-assign w_ipriority[3] = 3'h0;
-assign w_ipriority[4] = 3'h0;
-assign w_ipriority[5] = 3'h0;
-assign w_ipriority[6] = 3'h0;
-assign w_ipriority[7] = 3'h0;
-assign w_threshold[0] = 3'h0;
-
-assign w_plic_if.int_id = w_int_id[0];
-
-
-plic_core
+apb4_plic_top
   #(
-    .SOURCES           (8), //Number of interrupt sources
-    .TARGETS           (1), //Number of interrupt targets
-    .PRIORITIES        (8), //Number of Priority levels
-    .MAX_PENDING_COUNT (0)
+    // AHB Parameters
+    .PADDR_SIZE(riscv_pkg::PADDR_W),
+    .PDATA_SIZE(scariv_conf_pkg::ICACHE_DATA_W),
+    // PLIC Parameters
+    .SOURCES           (64),   //Number of interrupt sources
+    .TARGETS           ( 4),   //Number of interrupt targets
+    .PRIORITIES        ( 8),   //Number of Priority levels
+    .MAX_PENDING_COUNT ( 8),   //Max. number of 'pending' events
+    .HAS_THRESHOLD     ( 1),   //Is 'threshold' implemented?
+    .HAS_CONFIG_REG    ( 1)    //Is the 'configuration' register implemented?
     )
-u_plic_core
+u_plic
   (
-   .clk   (i_clk),     // Input: System clock
-   .rst_n (i_reset_n), // Input: Active low asynchronous reset
+   .PCLK    (i_clk),
+   .PRESETn (i_reset_n),
 
-   .src       (i_interrupts),           // Input: Interrupt request from devices/sources
-   .el        (1'b0),                   // Input: Edge/Level sensitive for each source
-   .ip        (w_plic_if.ip), // Output: Interrupt Pending for each source
+   //AHB Slave Interface
+   .PSEL    (w_req_plic_if.valid),
+   .PENABLE (w_req_plic_if.payload.cmd == scariv_lsu_pkg::M_XWR),
+   .PADDR   (w_req_plic_if.payload.addr),
+   .PWRITE  (w_req_plic_if.payload.cmd == scariv_lsu_pkg::M_XWR),
+   .PSTRB   ('h0f),
+   .PWDATA  (w_req_plic_if.payload.data),
 
-   .ie        (w_ie),                   // Input: Interrupt enable per source, for each target
-   .ipriority (w_ipriority),            // Input: Priority for each source (priority is a reserved keyword)
-   .threshold (w_threshold),            // Input: Priority Threshold for each target
+   .PRDATA  (w_resp_plic_if.payload.data),
+   .PREADY  (w_resp_plic_if.valid),
+   .PSLVERR (),
 
-   .ireq      (w_plic_if.int_valid   ),         // Output: Interrupt request for each target
-   .id        (w_int_id              ),         // Output: Interrupt ID (1..SOURCES), for each target
-   .claim     (1'b0                  ),         // Input: Interrupt claim
-   .complete  (w_plic_if.int_complete)          // Input: Interrupt handling complete
+   .src (i_interrupts),       // Interrupt sources
+   .irq (w_plic_if.int_valid)        // Interrupt Requests
    );
+
+
+
 
 endmodule // scariv_subsystem

@@ -22,14 +22,18 @@ module scariv_ss_router
 
    // CLINT
    l2_req_if.master clint_req,
-   l2_resp_if.slave clint_resp
+   l2_resp_if.slave clint_resp,
+
+   // PLIC
+   l2_req_if.master plic_req,
+   l2_resp_if.slave plic_resp
    );
 
 localparam EXTENDED_TAG_W = scariv_lsu_pkg::L2_CMD_TAG_W + $clog2(3);
 
 l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if[3]();
 l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_selected();
-l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_splitted[2]();
+l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_splitted[3]();
 
 assign w_req_if[0].valid   = core_ic_req.valid;
 assign w_req_if[0].tag     = {2'b00, core_ic_req.tag};
@@ -46,11 +50,13 @@ assign w_req_if[2].tag     = {2'b10, core_ptw_req.tag};
 assign w_req_if[2].payload = core_ptw_req.payload;
 assign core_ptw_req.ready  = w_req_if[2].ready;
 
-scariv_pkg::paddr_t w_base_addr_list[1];
-scariv_pkg::paddr_t w_mask_list[1];
+scariv_pkg::paddr_t w_base_addr_list[2];
+scariv_pkg::paddr_t w_mask_list[2];
 always_comb begin
-  w_base_addr_list[0] = 'h0c00_0000;
-  w_mask_list     [0] = 'h003f_ffff;
+  w_base_addr_list[0] = 'h0200_0000; // CLINT
+  w_mask_list     [0] = 'h003f_ffff; // CLINT
+  w_base_addr_list[1] = 'h0c00_0000; // PLIC
+  w_mask_list     [1] = 'h00ff_ffff; // PLIC
 end
 
 
@@ -63,7 +69,7 @@ u_req_arbiter
    .l2_req_master_if(w_req_if_selected)
 );
 l2_if_req_splitter_with_others
-  #(.ARB_NUM(1))
+  #(.ARB_NUM(2))
 u_req_splitter
   (
    .l2_req_slave_if (w_req_if_selected),
@@ -73,15 +79,20 @@ u_req_splitter
    .i_mask      (w_mask_list)
 );
 
-assign clint_req.valid = w_req_if_splitted[0].valid;
-assign clint_req.tag   = w_req_if_splitted[0].tag;
+assign clint_req.valid   = w_req_if_splitted[0].valid;
+assign clint_req.tag     = w_req_if_splitted[0].tag;
 assign clint_req.payload = w_req_if_splitted[0].payload;
 assign w_req_if_splitted[0].ready = clint_req.ready;
 
-assign l2_req.valid = w_req_if_splitted[1].valid;
-assign l2_req.tag   = w_req_if_splitted[1].tag;
-assign l2_req.payload = w_req_if_splitted[1].payload;
-assign w_req_if_splitted[1].ready = l2_req.ready;
+assign plic_req.valid   = w_req_if_splitted[1].valid;
+assign plic_req.tag     = w_req_if_splitted[1].tag;
+assign plic_req.payload = w_req_if_splitted[1].payload;
+assign w_req_if_splitted[1].ready = plic_req.ready;
+
+assign l2_req.valid   = w_req_if_splitted[2].valid;
+assign l2_req.tag     = w_req_if_splitted[2].tag;
+assign l2_req.payload = w_req_if_splitted[2].payload;
+assign w_req_if_splitted[2].ready = l2_req.ready;
 
 
 
