@@ -97,7 +97,7 @@ assign w_req_if_splitted[2].ready = l2_req.ready;
 
 
 
-l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if[2]();
+l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if[3]();
 l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if_selected();
 l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if_splitted[3]();
 
@@ -106,14 +106,18 @@ assign w_resp_if[0].tag   = clint_resp.tag;
 assign w_resp_if[0].payload = clint_resp.payload;
 assign clint_resp.ready = w_resp_if[0].ready;
 
+assign w_resp_if[1].valid = plic_resp.valid;
+assign w_resp_if[1].tag   = plic_resp.tag;
+assign w_resp_if[1].payload = plic_resp.payload;
+assign plic_resp.ready = w_resp_if[1].ready;
 
-assign w_resp_if[1].valid   = l2_resp.valid;
-assign w_resp_if[1].tag     = l2_resp.tag;
-assign w_resp_if[1].payload = l2_resp.payload;
-assign l2_resp.ready = w_resp_if[1].ready;
+assign w_resp_if[2].valid   = l2_resp.valid;
+assign w_resp_if[2].tag     = l2_resp.tag;
+assign w_resp_if[2].payload = l2_resp.payload;
+assign l2_resp.ready = w_resp_if[2].ready;
 
 l2_if_resp_arbiter
-  #(.ARB_NUM(2))
+  #(.ARB_NUM(3))
 u_resp_arbiter
   (
    .l2_resp_slave_if (w_resp_if),
