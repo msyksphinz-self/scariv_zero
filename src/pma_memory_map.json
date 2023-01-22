@@ -45,7 +45,7 @@
 		"base": "0x0c00_0000",
         "size": "0x0400_0000",
         "attr": {"R": 1, "W": 1, "A": 1, "X": 0, "C": 0},
-        "comment":"Interrupt Controller"
+        "comment":"PLIC, Interrupt Controller"
     },
     {
 		"base": "0x1000_0000",
