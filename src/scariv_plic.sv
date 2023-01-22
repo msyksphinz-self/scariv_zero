@@ -31,19 +31,21 @@ module scariv_plic #(
    output logic [DATA_W-1:0] o_resp_data,
    input  logic              i_resp_ready,
 
+   input logic [ 7: 0] i_interrupts,
+
    plic_if.master plic_if
 );
 
 typedef enum logic [ 1: 0] {
-  INIT = 0,
-  READ = 1
+  INIT      = 0,
+  READ_WAIT = 1,
+  READ_RESP = 2
 } plic_state_t;
 
 plic_state_t r_state;
-logic w_plic_req_fire;
-logic w_plic_resp_fire;
-logic [   TAG_W-1:0] r_req_tag;
-logic [DATA_W-1: 0]  r_plic_prdata;
+logic                w_plic_req_fire;
+logic                w_plic_resp_fire;
+logic [TAG_W-1:0]    r_req_tag;
 
 logic                 w_plic_penable;
 logic                 w_plic_pwrite;
@@ -75,7 +77,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       INIT : begin
         if (w_plic_req_fire &
             (i_req_cmd == scariv_lsu_pkg::M_XRD)) begin
-          r_state <= READ;
+          r_state <= READ_WAIT;
           r_req_tag <= i_req_tag;
         end
       end
