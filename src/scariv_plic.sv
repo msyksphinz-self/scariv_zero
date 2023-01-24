@@ -13,7 +13,6 @@ module scariv_plic #(
     parameter ADDR_W    = 12,
     parameter BASE_ADDR = 'h5400_0000,
     parameter SIZE      = 'h1000,
-    parameter RD_LAT    = 10,
 
     parameter NUM_PRIORITIES = 4,
     parameter NUM_HARTS = 4,
@@ -35,15 +34,17 @@ module scariv_plic #(
    output logic [DATA_W-1:0] o_resp_data,
    input  logic              i_resp_ready,
 
-   input logic [NUM_SOURCES-1: 0] i_interrupts
+   input logic [NUM_SOURCES-1: 0] i_interrupts,
 
    plic_if.master plic_if
 );
 
-logic [NUM_SOURCES-1: 0]            r_pending;
-logic [$clog2(NUM_PRIORITIES)-1: 0] r_priorities[NUM_SOURCES];
-logic [NUM_SOURCES-1: 0]            r_enables[NUM_HARTS];
-logic [$clog2(NUM_PRIORITIES)-1: 0] r_threshold[NUM_HARTS];
+logic [NUM_SOURCES-1: 0]            w_reg_pending;
+logic [$clog2(NUM_PRIORITIES)-1: 0] w_reg_priorities[NUM_SOURCES];
+logic [NUM_SOURCES-1: 0]            w_reg_enables[NUM_HARTS];
+logic [$clog2(NUM_PRIORITIES)-1: 0] w_reg_threshold[NUM_HARTS];
+logic [NUM_PRIORITIES-1: 0]         w_plic_valid;
+
 logic [NUM_HARTS-1: 0]              w_int_eligible;
 
 logic [DATA_W-1: 0]                 w_req_data_mask;
@@ -53,26 +54,25 @@ end
 endgenerate
 
 generate for (genvar g_idx = 0; g_idx < NUM_SOURCES; g_idx++) begin : gateway_loop
-  logic w_plic_valid;
   plic_gateway
   u_gateway
     (
-     .i_clk (),
-     .i_reset_n (),
+     .i_clk     (i_clk),
+     .i_reset_n (i_reset_n),
 
-     .i_interrupt     (i_interrupts[g_idx] ),
-     .i_plic_ready    (!r_pending  [g_idx]),
-     .i_plic_complete (i_complete  [g_idx]),
-     .o_plic_valid    (w_plic_valid)
+     .i_interrupt     (i_interrupts  [g_idx]),
+     .i_plic_ready    (!w_reg_pending[g_idx]),
+     .i_plic_complete (),
+     .o_plic_valid    (w_plic_valid  [g_idx])
      );
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      r_pending[g_idx] <= 'h0;
+      w_reg_pending[g_idx] <= 'h0;
     end else begin
-      if (i_claimed[g_idx] | w_plic_valid) begin
-        r_pending[g_idx] <= !i_claimed[g_idx];
-      end
+      // if (/* i_claimed[g_idx] | */w_plic_valid) begin
+      //   w_reg_pending[g_idx] <= !i_claimed[g_idx];
+      // end
     end
   end
 
@@ -95,162 +95,58 @@ generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : harts_loop
       )
   u_fanin
     (
-     .i_interrupts(r_enables[h_idx] & r_pending),
-     .i_priority  (r_priorities),
+     .i_interrupts(w_reg_enables[h_idx] & w_reg_pending),
+     .i_priority  (w_reg_priorities),
 
      .o_int_valid    (w_int_valid),
      .o_int_index    (w_int_index),
      .o_int_priority (w_int_priority)
      );
 
-  assign plic_if.int_valid[h_idx] = w_int_valid & w_int_priority[s_idx] > r_threshold[h_idx];
-  end
-end
-endgenerate
+  assign plic_if.int_valid[h_idx] = w_int_valid & w_int_priority > w_reg_threshold[h_idx];
 
-localparam SRC_PRIO_BASE_ADDR  = BASE_ADDR + 'h4;
-localparam PENDING_BASE_ADDR   = BASE_ADDR + 'h1000;
-localparam ENABLE_BASE_ADDR    = BASE_ADDR + 'h2000;
-localparam THRESHOLD_BASE_ADDR = BASE_ADDR + 'h20_0000;
-
-logic                                      w_priority_region;
-logic                                      w_pending_region;
-logic [$clog2(NUM_HARTS)-1: 0]             w_enable_region;
-logic [$clog2(NUM_HARTS)-1: 0]             w_threshold_region;
-
-logic [ADDR_W-1: 0]                        priority_addr ;
-logic [ADDR_W-1: 0]                        source_addr   ;
-logic [ADDR_W-1: 0]                        enable_addr   ;
-logic [ADDR_W-1: 0]                        threshold_addr;
-
-assign priority_addr  = i_req_addr - SRC_PRIO_BASE_ADDR;
-assign source_addr    = i_req_addr - PENDING_BASE_ADDR;
-assign enable_addr    = i_req_addr - ENABLE_BASE_ADDR;
-assign threshold_addr = i_req_addr - THRESHOLD_BASE_ADDR;
-
-generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pri_loop
-  // Priorities
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_priorities[s_idx] <= 'h0;
-    end else begin
-      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 0 == s_idx)) begin
-        for (genvar b_idx = 0; b_idx < 4; b_idx++ ) begin
-          if (i_req_byte_en[b_idx]) begin
-            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
-          end
-        end
-      end
-      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 1 == s_idx)) begin
-        for (genvar b_idx = 4; b_idx < 8; b_idx++ ) begin
-          if (i_req_byte_en[b_idx]) begin
-            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
-          end
-        end
-      end
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
-end // block: r_pri_loop
+end // block: harts_loop
 endgenerate
 
 
-generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pend_loop
-  // Pending Bits
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_pending[s_idx] <= 'h0;
-    end else begin
-      if (w_pending_region) begin
-        if          ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_pending[s_idx] <= i_req_data[0];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_pending[s_idx] <= i_req_data[1];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_pending[s_idx] <= i_req_data[2];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_pending[s_idx] <= i_req_data[3];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_pending[s_idx] <= i_req_data[4];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_pending[s_idx] <= i_req_data[5];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_pending[s_idx] <= i_req_data[6];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_pending[s_idx] <= i_req_data[7];
-        end
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+scariv_plic_regs
+  #(
+    .DATA_W    (DATA_W    ),
+    .TAG_W     (TAG_W     ),
+    .ADDR_W    (ADDR_W    ),
+    .BASE_ADDR (BASE_ADDR ),
+    .SIZE      (SIZE      ),
 
+    .NUM_PRIORITIES (NUM_PRIORITIES),
+    .NUM_HARTS      (NUM_HARTS     ),
+    .NUM_SOURCES    (NUM_SOURCES   )
+    )
+u_regs
+  (
+   .i_clk     (i_clk),
+   .i_reset_n (i_reset_n),
 
-end // block: r_pri_loop
-endgenerate
+   .i_req_valid   (i_req_valid  ),
+   .i_req_cmd     (i_req_cmd    ),
+   .i_req_addr    (i_req_addr   ),
+   .i_req_tag     (i_req_tag    ),
+   .i_req_data    (i_req_data   ),
+   .i_req_byte_en (i_req_byte_en),
+   .o_req_ready   (o_req_ready  ),
 
+   .o_resp_valid (o_resp_valid),
+   .o_resp_tag   (o_resp_tag  ),
+   .o_resp_data  (o_resp_data ),
+   .i_resp_ready (i_resp_ready),
 
-generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : r_enable_loop
-  for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin : r_source_loop
-    // Enable Bits
-    always_ff @ (posedge i_clk, negedge i_reset_n) begin
-      if (!i_reset_n) begin
-        r_enables[h_idx][s_idx] <= 'h0;
-      end else begin
-        if (w_enable_region[h_idx]) begin
-          if          ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_enables[h_idx][s_idx] <= i_req_data[0];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_enables[h_idx][s_idx] <= i_req_data[1];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_enables[h_idx][s_idx] <= i_req_data[2];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_enables[h_idx][s_idx] <= i_req_data[3];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_enables[h_idx][s_idx] <= i_req_data[4];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_enables[h_idx][s_idx] <= i_req_data[5];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_enables[h_idx][s_idx] <= i_req_data[6];
-          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_enables[h_idx][s_idx] <= i_req_data[7];
-          end
-        end // if (w_enable_region[h_idx])
-      end // else: !if(!i_reset_n)
-    end // always_ff @ (posedge i_clk, negedge i_reset_n)
-  end // block: r_source_loop
-end // block: r_enable_loop
-endgenerate
+   .o_reg_pending    (w_reg_pending   ),
+   .o_reg_priorities (w_reg_priorities),
+   .o_reg_enables    (w_reg_enables   ),
+   .o_reg_threshold  (w_reg_threshold ),
 
-
-generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : r_threshold_loop
-  // Enable Bits
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_enables[h_idx][s_idx] <= 'h0;
-    end else begin
-      if (w_threshold_region[h_idx]) begin
-        if          ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_threshold[h_idx][s_idx] <= i_req_data[0];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_threshold[h_idx][s_idx] <= i_req_data[1];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_threshold[h_idx][s_idx] <= i_req_data[2];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_threshold[h_idx][s_idx] <= i_req_data[3];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_threshold[h_idx][s_idx] <= i_req_data[4];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_threshold[h_idx][s_idx] <= i_req_data[5];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_threshold[h_idx][s_idx] <= i_req_data[6];
-        end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_threshold[h_idx][s_idx] <= i_req_data[7];
-        end
-      end // if (w_enable_region[h_idx])
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
-end // block: r_source_loop
-
-
-// Memory Map
-always_comb begin
-  w_priority_region  = 1'b0;
-  w_pending_region   = 1'b0;
-  w_enable_region    = 'h0;
-  w_threshold_region = 'h0;
-
-  if (i_req_valid & i_req_cmd == scariv_lsu_pkg::XWR) begin
-      if (i_req_addr == BASE_ADDR + 'h0) begin
-        // ignore
-      end else if (i_req_addr >= SRC_PRIO_BASE_ADDR && i_req_addr < SRC_PRIO_BASE_ADDR + (NUM_SOURCES + 32) / 32 * 4) begin
-        w_proority_region = 1'b1;
-        // Source Priority
-      end else if (i_req_addr >= PENDING_BASE_ADDR && i_req_addr < PENDING_BASE_ADDR + (NUM_SOURCES + 32) / 32 * 4) begin
-        // Pending Bits
-        w_pending_region = 1'b1;
-      end else if (i_req_addr >= ENABLE_BASE_ADDR && i_req_addr < ENABLE_BASE_ADDR + NUM_HARTS * 4) begin
-        // Enable Bits
-        w_enable_region = 'h1 << enable_addr[7 +: $clog2(NUM_HARTS)];
-      end else if (i_req_addr >= THRESHOLD_BASE_ADDR && i_req_addr < THRESHOLD_BASE_ADDR + NUM_HARTS * 4) begin
-        // Threshold
-        w_threshold_region = 'h1 << enable_addr[12 +: $clog2(NUM_HARTS)];
-      end
-    end // if (i_req_valid & i_req_cmd == scariv_lsu_pkg::XWR)
-  end // else: !if(!i_reset_n)
-end
+   .i_pending_update_valid (/* i_claimed | */w_plic_valid),
+   .i_pending_update_value (/* ~i_claimed */)
+   );
 
 endmodule // scariv_plic
 
@@ -296,7 +192,7 @@ module plic_fanin
  output logic                              o_int_priority
  );
 
-logic [$clog2(NUM_PRIORITIES): 0] w_priority_valids[NUM_SOURCES];
+logic [$clog2(NUM_PRIORITIES): 0] w_priority_valids[NUM_SOURCES-1: 0];
 
 generate for(genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: priority_valid_loop
   assign w_priority_valids[s_idx] = {i_interrupts[s_idx], i_priority[s_idx]};
@@ -317,7 +213,7 @@ u_recurse_max
   (
    .in        (w_priority_valids),
    .out       ({w_priority_max_valid, w_priority_max_value}),
-   .out_index (w_priority_max_index),
+   .out_index (w_priority_max_index)
    );
 
 assign o_int_valid = w_priority_max_valid;
@@ -334,12 +230,12 @@ module recurse_module_with_index
     parameter FUNCTION = recurse_pkg::MAX
     )
 (
- input logic [DATA_SIZE-1:0]       in[WIDTH],
+ input logic [DATA_SIZE-1:0]       in[WIDTH-1: 0],
  output logic [DATA_SIZE-1: 0]     out,
  output logic [$clog2(WIDTH)-1: 0] out_index
  );
 
-generate if (WIDTH == 1) begin : width_1
+generate if (WIDTH <= 1) begin : width_1
   assign out = in[0];
   assign out = 'h0;
 end else begin
@@ -351,8 +247,8 @@ end else begin
   logic [$clog2(HALF)-1: 0]       lo_index;
   logic [$clog2(WIDTH-HALF)-1: 0] hi_index;
 
-  recurse_module #(.WIDTH(HALF))      cnt_lo(.in(in[HALF-1:0])    , .out(lo_value), out_index(lo_index));
-  recurse_module #(.WIDTH(WIDTH-HALF))cnt_hi(.in(in[WIDTH-1:HALF]), .out(hi_value), out_index(hi_index));
+  recurse_module_with_index #(.WIDTH(HALF))       module_lo (.in(in[HALF-1:0])    , .out(lo_value), .out_index(lo_index));
+  recurse_module_with_index #(.WIDTH(WIDTH-HALF)) module_hi (.in(in[WIDTH-1:HALF]), .out(hi_value), .out_index(hi_index));
 
   if (FUNCTION == recurse_pkg::MAX) begin : max_op
     assign out       = lo_value < hi_value ? hi_value        : lo_value;
@@ -361,6 +257,7 @@ end else begin
     assign out       = 'h0;
     assign out_index = 'h0;
   end
+
 end // else: !if(WIDTH == 1)
 endgenerate
 
