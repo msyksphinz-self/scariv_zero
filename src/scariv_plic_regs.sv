@@ -50,6 +50,8 @@ localparam PENDING_BASE_ADDR   = BASE_ADDR + 'h1000;
 localparam ENABLE_BASE_ADDR    = BASE_ADDR + 'h2000;
 localparam THRESHOLD_BASE_ADDR = BASE_ADDR + 'h20_0000;
 
+localparam PRIO_REG_BLOCK_NUM = $clog2(NUM_PRIORITIES) / 8; // number of 8-bit blocks
+
 // Registers
 logic [NUM_SOURCES-1: 0]            r_pending;
 logic [$clog2(NUM_PRIORITIES)-1: 0] r_priorities[NUM_SOURCES];
@@ -107,57 +109,53 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-
+// ---------------------
+// Priorities Registers
+// ---------------------
 generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pri_loop
-  // Priorities
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_priorities[s_idx] <= 'h0;
-    end else begin
-      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 0 == s_idx)) begin
-        for (int b_idx = 0; b_idx < 4; b_idx++ ) begin
-          if (i_req_byte_en[b_idx]) begin
-            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
-          end
-        end
-      end
-      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 1 == s_idx)) begin
-        for (int b_idx = 4; b_idx < 8; b_idx++ ) begin
-          if (i_req_byte_en[b_idx]) begin
-            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
-          end
-        end
-      end
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  logic priority_wr_valid;
+  assign priority_wr_valid = i_req_valid &
+                             (i_req_cmd == scariv_lsu_pkg::M_XWR) &
+                             w_priority_region &
+                             (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 0 == s_idx);
 
-  assign o_reg_priorities[s_idx] = r_priorities[s_idx];
+  scariv_plic_reg_priority
+  u_reg
+    (
+     .i_clk   (i_clk    ),
+     .i_reset (i_reset_n),
+     .i_wr         (priority_wr_valid   ),
+     .i_wr_byte_en (i_req_byte_en[ 3: 0]),
+     .i_wr_data    (i_req_data   [31: 0]),
+
+     .o_data (o_reg_priorities[s_idx])
+     );
+
 end // block: r_pri_loop
 endgenerate
 
-generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pend_loop
-  // Pending Bits
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_pending[s_idx] <= 'h0;
-    end else begin
-      if (i_pending_update_valid[s_idx]) begin
-        r_pending[s_idx] <= i_pending_update_value[s_idx];
-      end else if (w_pending_region) begin
-        if          ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_pending[s_idx] <= i_req_data[0];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_pending[s_idx] <= i_req_data[1];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_pending[s_idx] <= i_req_data[2];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_pending[s_idx] <= i_req_data[3];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_pending[s_idx] <= i_req_data[4];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_pending[s_idx] <= i_req_data[5];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_pending[s_idx] <= i_req_data[6];
-        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_pending[s_idx] <= i_req_data[7];
-        end
-      end // else: !if(!i_reset_n)
-    end // always_ff @ (posedge i_clk, negedge i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+// ------------------
+// Pending Registers
+// ------------------
+generate for (genvar s_idx = 0; s_idx < NUM_SOURCES / 8; s_idx+=8) begin: r_pend_loop
+  logic pending_wr_valid;
+  assign pending_wr_valid = i_req_valid &
+                            (i_req_cmd == scariv_lsu_pkg::M_XWR) &
+                            w_pending_region &
+                            (pending_addr[$clog2(NUM_SOURCES)-1: 3] + 0 == s_idx);
 
-  assign o_reg_pending[s_idx] = r_pending[s_idx];
+  scariv_plic_reg_pending
+  u_reg
+   (
+     .i_clk   (i_clk    ),
+     .i_reset (i_reset_n),
+     .i_wr         (pending_wr_valid    ),
+     .i_wr_byte_en (i_req_byte_en[ 3: 0]),
+     .i_wr_data    (i_req_data   [31: 0]),
+
+     .o_data (o_reg_pending[s_idx*8 +: 8])
+    );
+
 end // block: r_pend_loop
 endgenerate
 
