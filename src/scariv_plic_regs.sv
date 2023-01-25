@@ -1,0 +1,246 @@
+// ------------------------------------------------------------------------
+// NAME : SCARIV PLIC Registers
+// TYPE : module
+// ------------------------------------------------------------------------
+// PLIC (Platform Level Interrupt Controller)
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
+module scariv_plic_regs
+  #(
+    parameter DATA_W    = 256,
+    parameter TAG_W     = 4,
+    parameter ADDR_W    = 12,
+    parameter BASE_ADDR = 'h5400_0000,
+    parameter SIZE      = 'h1000,
+
+    parameter NUM_PRIORITIES = 4,
+    parameter NUM_HARTS = 4,
+    parameter NUM_SOURCES = 8
+    )
+(
+ input logic i_clk,
+ input logic i_reset_n,
+
+ input  logic                     i_req_valid,
+ input  scariv_lsu_pkg::mem_cmd_t i_req_cmd,
+ input  logic [  ADDR_W-1:0]      i_req_addr,
+ input  logic [   TAG_W-1:0]      i_req_tag,
+ input  logic [  DATA_W-1:0]      i_req_data,
+ input  logic [DATA_W/8-1:0]      i_req_byte_en,
+ output logic                     o_req_ready,
+
+ output logic              o_resp_valid,
+ output logic [ TAG_W-1:0] o_resp_tag,
+ output logic [DATA_W-1:0] o_resp_data,
+ input  logic              i_resp_ready,
+
+ output logic [NUM_SOURCES-1: 0]            o_reg_pending,
+ output logic [$clog2(NUM_PRIORITIES)-1: 0] o_reg_priorities[NUM_SOURCES],
+ output logic [NUM_SOURCES-1: 0]            o_reg_enables[NUM_HARTS],
+ output logic [$clog2(NUM_PRIORITIES)-1: 0] o_reg_threshold[NUM_HARTS],
+
+ input logic [NUM_SOURCES-1: 0] i_pending_update_valid,
+ input logic [NUM_SOURCES-1: 0] i_pending_update_value
+ );
+
+localparam SRC_PRIO_BASE_ADDR  = BASE_ADDR + 'h4;
+localparam PENDING_BASE_ADDR   = BASE_ADDR + 'h1000;
+localparam ENABLE_BASE_ADDR    = BASE_ADDR + 'h2000;
+localparam THRESHOLD_BASE_ADDR = BASE_ADDR + 'h20_0000;
+
+// Registers
+logic [NUM_SOURCES-1: 0]            r_pending;
+logic [$clog2(NUM_PRIORITIES)-1: 0] r_priorities[NUM_SOURCES];
+logic [NUM_SOURCES-1: 0]            r_enables[NUM_HARTS];
+logic [$clog2(NUM_PRIORITIES)-1: 0] r_threshold[NUM_HARTS];
+
+logic                                      w_priority_region;
+logic                                      w_pending_region;
+logic [$clog2(NUM_HARTS)-1: 0]             w_enable_region;
+logic [$clog2(NUM_HARTS)-1: 0]             w_threshold_region;
+
+logic [ADDR_W-1: 0]                        priority_addr ;
+logic [ADDR_W-1: 0]                        pending_addr  ;
+logic [ADDR_W-1: 0]                        enable_addr   ;
+logic [ADDR_W-1: 0]                        threshold_addr;
+
+assign priority_addr  = i_req_addr - SRC_PRIO_BASE_ADDR;
+assign pending_addr   = i_req_addr - PENDING_BASE_ADDR;
+assign enable_addr    = i_req_addr - ENABLE_BASE_ADDR;
+assign threshold_addr = i_req_addr - THRESHOLD_BASE_ADDR;
+
+logic                                      w_resp_valid_pre;
+logic [ TAG_W-1:0]                         w_resp_tag_pre;
+logic [DATA_W-1:0]                         w_resp_data_pre;
+
+always_comb begin
+  w_resp_valid_pre = i_req_valid & (i_req_cmd == scariv_lsu_pkg::M_XRD);
+  w_resp_tag_pre   = i_req_tag;
+
+  if (w_priority_region) begin
+    w_resp_data_pre = r_priorities[priority_addr[2 +: $clog2(NUM_SOURCES)]];
+  end else if (w_pending_region) begin
+    w_resp_data_pre = r_pending[priority_addr[2 +: $clog2(NUM_SOURCES)]];
+  end else if (w_enable_region) begin
+    w_resp_data_pre = r_enables[enable_addr[7 +: $clog2(NUM_HARTS)]][enable_addr[2 +: $clog2(NUM_SOURCES)]];
+  end else if (w_threshold_region) begin
+    w_resp_data_pre = r_threshold[threshold_addr[7 +: $clog2(NUM_HARTS)]][threshold_addr[2 +: $clog2(NUM_SOURCES)]];
+  end else begin
+    w_resp_data_pre = 'h0;
+  end
+end
+
+
+assign o_req_ready = o_resp_valid & ~i_resp_ready;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_resp_valid <= 1'b0;
+  end else begin
+    if (~o_resp_valid | o_resp_valid & i_resp_ready) begin
+      o_resp_valid <= w_resp_valid_pre;
+      o_resp_data  <= w_resp_data_pre;
+      o_resp_tag   <= w_resp_tag_pre;
+    end
+  end
+end
+
+
+generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pri_loop
+  // Priorities
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_priorities[s_idx] <= 'h0;
+    end else begin
+      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 0 == s_idx)) begin
+        for (int b_idx = 0; b_idx < 4; b_idx++ ) begin
+          if (i_req_byte_en[b_idx]) begin
+            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
+          end
+        end
+      end
+      if (w_priority_region & (priority_addr[$clog2(NUM_SOURCES)-1: 3] + 1 == s_idx)) begin
+        for (int b_idx = 4; b_idx < 8; b_idx++ ) begin
+          if (i_req_byte_en[b_idx]) begin
+            r_priorities[s_idx][b_idx*8 +: 8] <= i_req_data[b_idx*8 +: 8];
+          end
+        end
+      end
+    end // else: !if(!i_reset_n)
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+  assign o_reg_priorities[s_idx] = r_priorities[s_idx];
+end // block: r_pri_loop
+endgenerate
+
+generate for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: r_pend_loop
+  // Pending Bits
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_pending[s_idx] <= 'h0;
+    end else begin
+      if (i_pending_update_valid[s_idx]) begin
+        r_pending[s_idx] <= i_pending_update_value[s_idx];
+      end else if (w_pending_region) begin
+        if          ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_pending[s_idx] <= i_req_data[0];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_pending[s_idx] <= i_req_data[1];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_pending[s_idx] <= i_req_data[2];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_pending[s_idx] <= i_req_data[3];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_pending[s_idx] <= i_req_data[4];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_pending[s_idx] <= i_req_data[5];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_pending[s_idx] <= i_req_data[6];
+        end else if ((pending_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_pending[s_idx] <= i_req_data[7];
+        end
+      end // else: !if(!i_reset_n)
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+  assign o_reg_pending[s_idx] = r_pending[s_idx];
+end // block: r_pend_loop
+endgenerate
+
+
+generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : r_enable_loop
+  for (genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin : r_source_loop
+    // Enable Bits
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_enables[h_idx][s_idx] <= 'h0;
+      end else begin
+        if (w_enable_region[h_idx]) begin
+          if          ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 0 == s_idx) & i_req_byte_en[0]) begin r_enables[h_idx][s_idx] <= i_req_data[0];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 1 == s_idx) & i_req_byte_en[1]) begin r_enables[h_idx][s_idx] <= i_req_data[1];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 2 == s_idx) & i_req_byte_en[2]) begin r_enables[h_idx][s_idx] <= i_req_data[2];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 3 == s_idx) & i_req_byte_en[3]) begin r_enables[h_idx][s_idx] <= i_req_data[3];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 4 == s_idx) & i_req_byte_en[4]) begin r_enables[h_idx][s_idx] <= i_req_data[4];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 5 == s_idx) & i_req_byte_en[5]) begin r_enables[h_idx][s_idx] <= i_req_data[5];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 6 == s_idx) & i_req_byte_en[6]) begin r_enables[h_idx][s_idx] <= i_req_data[6];
+          end else if ((enable_addr[$clog2(NUM_SOURCES)-1: 0] + 7 == s_idx) & i_req_byte_en[7]) begin r_enables[h_idx][s_idx] <= i_req_data[7];
+          end
+        end // if (w_enable_region[h_idx])
+      end // else: !if(!i_reset_n)
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end // block: r_source_loop
+
+  assign o_reg_enables[h_idx] = r_enables[h_idx];
+
+end // block: r_enable_loop
+endgenerate
+
+
+generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : r_threshold_loop
+  // Enable Bits
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_enables[h_idx] <= 'h0;
+    end else begin
+      if (w_threshold_region[h_idx]) begin
+        if          (i_req_byte_en[0]) begin r_threshold[h_idx][ 7: 0] <= i_req_data[ 7: 0];
+        end else if (i_req_byte_en[1]) begin r_threshold[h_idx][15: 8] <= i_req_data[1];
+        end else if (i_req_byte_en[2]) begin r_threshold[h_idx][23:16] <= i_req_data[2];
+        end else if (i_req_byte_en[3]) begin r_threshold[h_idx][31:24] <= i_req_data[3];
+        end else if (i_req_byte_en[4]) begin r_threshold[h_idx][39:32] <= i_req_data[4];
+        end else if (i_req_byte_en[5]) begin r_threshold[h_idx][47:40] <= i_req_data[5];
+        end else if (i_req_byte_en[6]) begin r_threshold[h_idx][55:48] <= i_req_data[6];
+        end else if (i_req_byte_en[7]) begin r_threshold[h_idx][63:56] <= i_req_data[7];
+        end
+      end // if (w_enable_region[h_idx])
+    end // else: !if(!i_reset_n)
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+  assign o_reg_threshold[h_idx] = r_threshold[h_idx];
+
+end // block: r_source_loop
+endgenerate
+
+// Memory Map
+always_comb begin
+  w_priority_region  = 1'b0;
+  w_pending_region   = 1'b0;
+  w_enable_region    = 'h0;
+  w_threshold_region = 'h0;
+
+  if (i_req_valid & i_req_cmd == scariv_lsu_pkg::M_XWR) begin
+      if (i_req_addr == BASE_ADDR + 'h0) begin
+        // ignore
+      end else if (i_req_addr >= SRC_PRIO_BASE_ADDR && i_req_addr < SRC_PRIO_BASE_ADDR + (NUM_SOURCES + 32) / 32 * 4) begin
+        w_priority_region = 1'b1;
+        // Source Priority
+      end else if (i_req_addr >= PENDING_BASE_ADDR && i_req_addr < PENDING_BASE_ADDR + (NUM_SOURCES + 32) / 32 * 4) begin
+        // Pending Bits
+        w_pending_region = 1'b1;
+      end else if (i_req_addr >= ENABLE_BASE_ADDR && i_req_addr < ENABLE_BASE_ADDR + NUM_HARTS * 4) begin
+        // Enable Bits
+        w_enable_region = 'h1 << enable_addr[7 +: $clog2(NUM_HARTS)];
+      end else if (i_req_addr >= THRESHOLD_BASE_ADDR && i_req_addr < THRESHOLD_BASE_ADDR + NUM_HARTS * 4) begin
+        // Threshold
+        w_threshold_region = 'h1 << enable_addr[12 +: $clog2(NUM_HARTS)];
+      end
+  end // if (i_req_valid & i_req_cmd == scariv_lsu_pkg::XWR)
+end // always_comb
+
+
+
+endmodule // scariv_plic_regs
