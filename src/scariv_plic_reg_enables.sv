@@ -1,6 +1,6 @@
-module scariv_plic_reg_pending
+module scariv_plic_reg_enables
   #(
-    parameter NUM_PENDING = 8
+    parameter NUM_SOURCES = 8
     )
 (
  input logic          i_clk,
@@ -13,7 +13,7 @@ module scariv_plic_reg_pending
  output logic [ 7: 0] o_data
  );
 
-logic [NUM_PENDING-1: 0] r_data;
+logic [NUM_SOURCES-1: 0] r_data;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -29,7 +29,7 @@ end
 assign o_data = r_data;
 
 initial begin
-  assert(NUM_PENDING <= 8);
+  assert(NUM_SOURCES <= 8);
 end
 
-endmodule // scariv_plic_reg_pending
+endmodule // scariv_plic_reg_enables

@@ -43,7 +43,7 @@ logic [NUM_SOURCES-1: 0]            w_reg_pending;
 logic [$clog2(NUM_PRIORITIES)-1: 0] w_reg_priorities[NUM_SOURCES];
 logic [NUM_SOURCES-1: 0]            w_reg_enables[NUM_HARTS];
 logic [$clog2(NUM_PRIORITIES)-1: 0] w_reg_threshold[NUM_HARTS];
-logic [NUM_PRIORITIES-1: 0]         w_plic_valid;
+logic [NUM_SOURCES-1: 0]            w_plic_valid;
 
 logic [NUM_HARTS-1: 0]              w_int_eligible;
 
@@ -162,7 +162,7 @@ module plic_gateway
    );
 
 logic          r_inflight;
-always_ff @ (posedge i_clk, i_reset_n) begin
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_inflight <= 1'b0;
   end else begin
@@ -192,7 +192,7 @@ module plic_fanin
  output logic                              o_int_priority
  );
 
-logic [$clog2(NUM_PRIORITIES): 0] w_priority_valids[NUM_SOURCES-1: 0];
+logic [$clog2(NUM_PRIORITIES): 0][NUM_SOURCES-1: 0] w_priority_valids;
 
 generate for(genvar s_idx = 0; s_idx < NUM_SOURCES; s_idx++) begin: priority_valid_loop
   assign w_priority_valids[s_idx] = {i_interrupts[s_idx], i_priority[s_idx]};
@@ -205,9 +205,9 @@ logic [$clog2(NUM_SOURCES)-1: 0]    w_priority_max_index;
 
 recurse_module_with_index
   #(
-    .WIDTH(NUM_SOURCES),
-    .DATA_SIZE(NUM_PRIORITIES + 1),
-    .FUNCTION(recurse_pkg::MAX)
+    .WIDTH    (NUM_SOURCES),
+    .DATA_SIZE($clog2(NUM_PRIORITIES) + 1),
+    .FUNCTION (recurse_pkg::MAX)
     )
 u_recurse_max
   (
@@ -230,9 +230,9 @@ module recurse_module_with_index
     parameter FUNCTION = recurse_pkg::MAX
     )
 (
- input logic [DATA_SIZE-1:0]       in[WIDTH-1: 0],
- output logic [DATA_SIZE-1: 0]     out,
- output logic [$clog2(WIDTH)-1: 0] out_index
+ input logic [WIDTH-1: 0][DATA_SIZE-1:0] in,
+ output logic [DATA_SIZE-1: 0]           out,
+ output logic [$clog2(WIDTH)-1: 0]       out_index
  );
 
 generate if (WIDTH <= 1) begin : width_1

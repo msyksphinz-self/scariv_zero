@@ -9,7 +9,7 @@
 
 interface plic_if;
 
-logic         int_valid;
+logic [ 0: 0] int_valid;
 logic [ 2: 0] int_id;
 logic         int_complete;
 logic         ie;

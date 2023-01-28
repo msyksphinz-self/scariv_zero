@@ -1,6 +1,6 @@
-module scariv_plic_reg_priority
+module scariv_plic_reg_threshold
   #(
-    parameter NUM_PRIORITY = 8
+    parameter NUM_THRESHOLD = 8
     )
 (
  input logic          i_clk,
@@ -13,12 +13,11 @@ module scariv_plic_reg_priority
  output logic [31: 0] o_data
  );
 
-logic [$clog2(NUM_PRIORITY)-1: 0] r_data;
-
+logic [$clog2(NUM_THRESHOLD)-1: 0] r_data;
 
 generate for (genvar b_idx = 0; b_idx < 4; b_idx++) begin
-  if (b_idx * 8 < $clog2(NUM_PRIORITY)) begin
-    localparam EFFECTIVE_BITS = ($clog2(NUM_PRIORITY) - b_idx * 8) % 8;
+  if (b_idx * 8 < $clog2(NUM_THRESHOLD)) begin
+    localparam EFFECTIVE_BITS = ($clog2(NUM_THRESHOLD) - b_idx * 8) % 8;
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
         r_data[b_idx*8 +: EFFECTIVE_BITS] <= 'h0;
@@ -34,4 +33,4 @@ endgenerate
 
 assign o_data = r_data;
 
-endmodule // scariv_plic_reg_priority
+endmodule // scariv_plic_reg_threshold

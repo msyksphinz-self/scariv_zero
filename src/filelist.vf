@@ -165,3 +165,7 @@
 ../src/plic_if.sv
 ../src/scariv_plic.sv
 ../src/scariv_plic_regs.sv
+../src/scariv_plic_reg_priority.sv
+../src/scariv_plic_reg_enables.sv
+../src/scariv_plic_reg_pending.sv
+../src/scariv_plic_reg_threshold.sv
