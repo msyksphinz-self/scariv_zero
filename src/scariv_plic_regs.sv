@@ -95,7 +95,7 @@ always_comb begin
 end
 
 
-assign o_req_ready = o_resp_valid & ~i_resp_ready;
+assign o_req_ready = ~o_resp_valid | o_resp_valid & ~i_resp_ready;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

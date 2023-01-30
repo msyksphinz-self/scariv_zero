@@ -6,8 +6,10 @@
 
 int plic_reg_rw_test()
 {
-  *((volatile unsigned int *)(PLIC_SOURCE_BASE_ADDR)) = 0xdeadbeef;
-  *(volatile unsigned int *)(PLIC_SOURCE_BASE_ADDR);
+  for (int i = 0; i < 8; i++) {
+    *((volatile unsigned int *)(PLIC_SOURCE_BASE_ADDR + i * sizeof(unsigned int))) = 0xdeadbeef;
+    *(volatile unsigned int *)(PLIC_SOURCE_BASE_ADDR + i * sizeof(unsigned int));
+  }
 
   *((volatile unsigned int *)(PLIC_PENDING_BASE_ADDR)) = 0xdeadbeef;
   *(volatile unsigned int *)(PLIC_PENDING_BASE_ADDR);
