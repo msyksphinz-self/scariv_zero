@@ -50,6 +50,7 @@ EXE_CFLAGS += -lpthread
 all: riscv-isa-sim-makefile Makefile
 	$(MAKE) -f spike_dpi.mk libspike_dpi.a
 	$(MAKE) libserialdevice.so
+	$(MAKE) libsimple_plic.so
 	$(MAKE) spike_main
 
 libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
@@ -58,7 +59,10 @@ libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
 libserialdevice.so: serialdevice.cc
 	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
 
-spike_main: spike_dpi_exe.o libspike_dpi.a
+libsimple_plic.so: simple_plic.cc
+	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
+
+spike_main: spike_dpi_exe.o libsimple_plic.so libserialdevice.so libspike_dpi.a
 	g++ -L. -Wl,--export-dynamic -o $@ $^ $(EXE_CFLAGS)
 
 spike_dpi_exe.o: spike_dpi.cpp

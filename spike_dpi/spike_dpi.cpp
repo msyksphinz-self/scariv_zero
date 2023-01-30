@@ -168,6 +168,14 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   argv[arg_max++] = "--extlib=./libserialdevice.so";
 #endif // SIM_MAIN
   argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
+
+#ifndef SIM_MAIN
+  argv[arg_max++] = "--extlib=../../../spike_dpi/libsimple_plic.so";
+#else // SIM_MAIN
+  argv[arg_max++] = "--extlib=./libsimple_plic.so";
+#endif // SIM_MAIN
+  argv[arg_max++] = "--device=simpleplic,201326592,plic";   // 201326592 = 0x0c00_0000
+
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
