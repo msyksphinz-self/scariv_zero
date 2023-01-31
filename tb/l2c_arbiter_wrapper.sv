@@ -86,6 +86,6 @@ assign o_l2_req_data    = req_if_selected.payload.data;
 assign o_l2_req_byte_en = req_if_selected.payload.byte_en;
 assign req_if_selected.ready = i_l2_req_ready;
 
-assign o_l2_resp_ready = 1'b1;
+assign o_l2_resp_ready = i_ss_resp_ready;
 
 endmodule // l2c_arbiter_wrapper
