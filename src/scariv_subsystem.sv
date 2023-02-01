@@ -131,7 +131,7 @@ scariv_plic
   .BASE_ADDR('hc00_0000),
   .SIZE     ('h1_0000),
 
-  .NUM_PRIORITIES (1),
+  .NUM_PRIORITIES (8),
   .NUM_HARTS      (1),
   .NUM_SOURCES    (8)
 ) u_plic (

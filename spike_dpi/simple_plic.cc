@@ -13,6 +13,7 @@ class simpleplic_t : public abstract_device_t {
   bool load(reg_t addr, size_t len, uint8_t* bytes);
   bool store(reg_t addr, size_t len, const uint8_t* bytes);
  private:
+  uint8_t priority[256];
 };
 
 simpleplic_t::simpleplic_t(std::string name)
@@ -22,9 +23,11 @@ simpleplic_t::simpleplic_t(std::string name)
 
 bool simpleplic_t::load(reg_t addr, size_t len, uint8_t* bytes)
 {
-  std::cerr << "simple PLIC_t::load called : addr = " << std::hex << addr << '\n';
-  switch (addr) {
-    default : bytes[0] = 0x00; break;
+  std::cerr << "simple PLIC_t::load called : addr = " << std::hex << addr << ", len = " << len << '\n';
+  if (addr >= 0 && addr < 4) {
+    memset(&priority[addr], 0, len);
+  } else if (addr >= 4 && addr < 256) {
+    memcpy(bytes, &priority[addr], len);
   }
 
   return true;
@@ -32,7 +35,17 @@ bool simpleplic_t::load(reg_t addr, size_t len, uint8_t* bytes)
 
 bool simpleplic_t::store(reg_t addr, size_t len, const uint8_t* bytes)
 {
-  std::cerr << "simple PLIC_t::store called : addr = " << std::hex << addr << '\n';
+  std::cerr << "simple PLIC_t::store  called : addr = " << std::hex << addr << ", len = " << len << '\n';
+
+  uint8_t raw_bytes[8];
+
+  if (addr >= 4 && addr < 256) {
+    raw_bytes[0] = bytes[0] & 0x7;
+    for (int i = 1; i < len; i++) {
+      raw_bytes[i] = 0;
+    }
+    memcpy(&priority[addr], raw_bytes, len);
+  }
 
   return true;
 }
