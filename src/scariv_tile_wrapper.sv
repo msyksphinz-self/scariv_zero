@@ -77,13 +77,13 @@ module scariv_tile_wrapper (
   assign o_ic_req_valid = ic_l2_req.valid;
   assign o_ic_req_cmd = ic_l2_req.payload.cmd;
   assign o_ic_req_addr = ic_l2_req.payload.addr;
-  assign o_ic_req_tag = ic_l2_req.payload.tag;
+  assign o_ic_req_tag = ic_l2_req.tag;
   assign o_ic_req_data = ic_l2_req.payload.data;
   assign o_ic_req_byte_en = ic_l2_req.payload.byte_en;
   assign ic_l2_req.ready = i_ic_req_ready;
 
   assign ic_l2_resp.valid = i_ic_resp_valid;
-  assign ic_l2_resp.payload.tag = i_ic_resp_tag;
+  assign ic_l2_resp.tag = i_ic_resp_tag;
   assign ic_l2_resp.payload.data = i_ic_resp_data;
   assign o_ic_resp_ready = ic_l2_resp.ready;
 
@@ -93,13 +93,13 @@ module scariv_tile_wrapper (
   assign o_l1d_req_valid = l1d_l2_req.valid;
   assign o_l1d_req_cmd = l1d_l2_req.payload.cmd;
   assign o_l1d_req_addr = l1d_l2_req.payload.addr;
-  assign o_l1d_req_tag = l1d_l2_req.payload.tag;
+  assign o_l1d_req_tag = l1d_l2_req.tag;
   assign o_l1d_req_data = l1d_l2_req.payload.data;
   assign o_l1d_req_byte_en = l1d_l2_req.payload.byte_en;
   assign l1d_l2_req.ready = i_l1d_req_ready;
 
   assign l1d_l2_resp.valid = i_l1d_resp_valid;
-  assign l1d_l2_resp.payload.tag = i_l1d_resp_tag;
+  assign l1d_l2_resp.tag = i_l1d_resp_tag;
   assign l1d_l2_resp.payload.data = i_l1d_resp_data;
   assign o_l1d_resp_ready = l1d_l2_resp.ready;
 
@@ -113,13 +113,13 @@ assign clint_if.time_irq_clear = i_clint_time_irq_clear;
   assign o_ptw_req_valid = ptw_l2_req.valid;
   assign o_ptw_req_cmd = ptw_l2_req.payload.cmd;
   assign o_ptw_req_addr = ptw_l2_req.payload.addr;
-  assign o_ptw_req_tag = ptw_l2_req.payload.tag;
+  assign o_ptw_req_tag = ptw_l2_req.tag;
   assign o_ptw_req_data = ptw_l2_req.payload.data;
   assign o_ptw_req_byte_en = ptw_l2_req.payload.byte_en;
   assign ptw_l2_req.ready = i_ptw_req_ready;
 
   assign ptw_l2_resp.valid = i_ptw_resp_valid;
-  assign ptw_l2_resp.payload.tag = i_ptw_resp_tag;
+  assign ptw_l2_resp.tag = i_ptw_resp_tag;
   assign ptw_l2_resp.payload.data = i_ptw_resp_data;
   assign o_ptw_resp_ready = ptw_l2_resp.ready;
 
