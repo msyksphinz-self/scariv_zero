@@ -44,6 +44,11 @@ synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
     -verilog_define $::env(RV_DEFINE)
 write_checkpoint -force ${TOP_NAME}.dcp
 report_utilization -file ${TOP_NAME}_utilization_synth.rpt -pb ${TOP_NAME}_utilization_synth.pb
+report_utilization -file ${TOP_NAME}.area.hier1.rpt -hierarchical -hierarchical_depth 1
+report_utilization -file ${TOP_NAME}.area.hier2.rpt -hierarchical -hierarchical_depth 2
+report_utilization -file ${TOP_NAME}.area.hier3.rpt -hierarchical -hierarchical_depth 3
+report_utilization -file ${TOP_NAME}.area.hier.rpt  -hierarchical
+
 report_timing -file ${TOP_NAME}_timing_synth.rpt
 
 exit
