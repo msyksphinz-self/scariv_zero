@@ -275,6 +275,7 @@ typedef struct packed {
 // Instruction's static information from decoder
 typedef struct packed {
   logic              valid;
+  vaddr_t            pc_addr;
   brmask_t           br_mask;
   inst_cat_t         cat;
   brtag_t            brtag;
@@ -283,11 +284,10 @@ typedef struct packed {
   logic              is_call;
   logic              is_ret;
 `ifdef SIMULATION
-  vaddr_t              pc_addr;
-  logic                rvc_inst_valid;
-  logic [15: 0]        rvc_inst;
-  logic [31: 0]        inst;
-  logic [63: 0]        kanata_id;
+  logic              rvc_inst_valid;
+  logic [15: 0]      rvc_inst;
+  logic [31: 0]      inst;
+  logic [63: 0]      kanata_id;
 `endif // SIMULATION
 } rob_static_info_t;
 
