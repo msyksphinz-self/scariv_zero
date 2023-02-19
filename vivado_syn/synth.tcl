@@ -49,6 +49,8 @@ report_utilization -file ${TOP_NAME}.area.hier2.rpt -hierarchical -hierarchical_
 report_utilization -file ${TOP_NAME}.area.hier3.rpt -hierarchical -hierarchical_depth 3
 report_utilization -file ${TOP_NAME}.area.hier.rpt  -hierarchical
 
+write_verilog -force -mode design ${TOP_NAME}.synth.v
+
 report_timing -file ${TOP_NAME}_timing_synth.rpt
 
 exit

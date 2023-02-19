@@ -181,14 +181,26 @@ endgenerate
 
 
 logic [scariv_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_valid;
-logic [scariv_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_hit ;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]              w_stq_snoop_data[scariv_conf_pkg::STQ_SIZE];
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0]             w_stq_snoop_be  [scariv_conf_pkg::STQ_SIZE];
 
-assign stq_snoop_if.resp_s1_valid = |w_stq_snoop_valid;
-bit_or #(.WIDTH(scariv_conf_pkg::DCACHE_DATA_W),  .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_data_or (.i_data(w_stq_snoop_data), .o_selected(stq_snoop_if.resp_s1_data));
-bit_or #(.WIDTH(scariv_lsu_pkg::DCACHE_DATA_B_W), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_be_or   (.i_data(w_stq_snoop_be),   .o_selected(stq_snoop_if.resp_s1_be));
+logic [scariv_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_resp_s0_valid;
+logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]              w_stq_snoop_resp_s0_data;
+logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0]             w_stq_snoop_resp_s0_be;
 
+assign w_stq_snoop_resp_s0_valid = |w_stq_snoop_valid;
+bit_or #(.WIDTH(scariv_conf_pkg::DCACHE_DATA_W),  .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_data_or (.i_data(w_stq_snoop_data), .o_selected(w_stq_snoop_resp_s0_data));
+bit_or #(.WIDTH(scariv_lsu_pkg::DCACHE_DATA_B_W), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_be_or   (.i_data(w_stq_snoop_be),   .o_selected(w_stq_snoop_resp_s0_be));
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    stq_snoop_if.resp_s1_valid <= 1'b0;
+  end else begin
+    stq_snoop_if.resp_s1_valid <= w_stq_snoop_resp_s0_valid;
+    stq_snoop_if.resp_s1_data  <= w_stq_snoop_resp_s0_data;
+    stq_snoop_if.resp_s1_be    <= w_stq_snoop_resp_s0_be;
+  end
+end
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;

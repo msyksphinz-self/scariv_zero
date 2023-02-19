@@ -206,9 +206,9 @@ always_comb begin
         // w_entry_next.cmt_id = 'h0;
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
-        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM));
-        w_entry_next.inst = scariv_pkg::assign_issue_op2 (i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                        w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                       1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
+                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_br_flush) begin
           w_entry_next.state    = STQ_DEAD;
         end
@@ -422,21 +422,15 @@ assign w_snoop_s0_hit = r_entry.paddr_valid &
                         (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
                          r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    stq_snoop_if.resp_s1_valid <= 1'b0;
-  end else begin
-    stq_snoop_if.resp_s1_valid <= stq_snoop_if.req_s0_valid;
-    stq_snoop_if.resp_s1_be   <= w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
-    stq_snoop_if.resp_s1_data <= w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
+assign stq_snoop_if.resp_s1_valid = stq_snoop_if.req_s0_valid;
+assign stq_snoop_if.resp_s1_be    = w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
+assign stq_snoop_if.resp_s1_data  = w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
 
 function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                       scariv_pkg::cmt_id_t cmt_id,
                                       scariv_pkg::grp_id_t grp_id,
-                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
+                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
+                                      logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
@@ -461,6 +455,19 @@ function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.oldest_ready = 1'b0;
   ret.is_committed = 1'b0;
   ret.is_uc = 1'b0;
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.inst.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.inst.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.inst.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.inst.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.inst.rd_regs[rs_idx].valid = 1'b0;
+  end
 
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;

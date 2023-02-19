@@ -428,11 +428,21 @@ typedef enum logic[4:0] {
 } stq_state_t;
 
 typedef struct packed {
+  logic          oldest_valid;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+`ifdef SIMULATION
+  vaddr_t pc_addr;
+  logic [31:0]   inst;
+`endif // SIMULATION
+} stq_static_info_t;
+
+typedef struct packed {
   logic           is_valid;
   brtag_t          brtag;
   brmask_t         br_mask;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
-  scariv_pkg::issue_t inst;
+  stq_static_info_t inst;
+  // scariv_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
