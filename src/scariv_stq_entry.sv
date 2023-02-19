@@ -49,8 +49,8 @@ module scariv_stq_entry
    output logic                               o_uc_write_req_valid,
    input logic                                i_uc_write_accept,
 
-   // Snoop Interface
-   stq_snoop_if.slave                         stq_snoop_if,
+   // // Snoop Interface
+   // stq_snoop_if.slave                         stq_snoop_if,
 
    done_if.slave    ex3_done_if,
    input logic                                     i_stq_outptr_valid,
@@ -412,19 +412,18 @@ assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & 
 
 assign o_uc_write_req_valid = (r_entry.state == STQ_COMMIT) & r_entry.is_uc & ~r_entry.except_valid;
 
-// Snoop Interface Hit
-/* verilator lint_off WIDTH */
-logic [$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
-assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-logic                                              w_snoop_s0_hit;
-assign w_snoop_s0_hit = r_entry.paddr_valid &
-                        (r_entry.state == STQ_COMMIT) &
-                        (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
-                         r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
-
-assign stq_snoop_if.resp_s1_valid = stq_snoop_if.req_s0_valid;
-assign stq_snoop_if.resp_s1_be    = w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
-assign stq_snoop_if.resp_s1_data  = w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
+// // Snoop Interface Hit
+// /* verilator lint_off WIDTH */
+// logic [$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
+// assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+// // logic                                                w_snoop_s0_hit;
+// assign o_snoop_s0_hit = r_entry.paddr_valid &
+//                         (r_entry.state == STQ_COMMIT) &
+//                         (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
+//                          r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+// assign stq_snoop_if.resp_s1_valid = stq_snoop_if.req_s0_valid;
+// assign stq_snoop_if.resp_s1_be    = w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
+// assign stq_snoop_if.resp_s1_data  = w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
 
 function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                       scariv_pkg::cmt_id_t cmt_id,
