@@ -36,8 +36,6 @@ module scariv_stq
 
    done_if.slave        ex3_done_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   input missu_resolve_t i_missu_resolve,
-   input logic           i_missu_is_full,
    input logic           i_missu_is_empty,
 
    // STQ Entry rs2 get Notification
@@ -300,8 +298,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .o_entry_ready (w_entry_ready[s_idx]),
      .i_entry_picked (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
-     .i_missu_resolve (i_missu_resolve),
-     .i_missu_is_full (i_missu_is_full),
      .i_missu_is_empty(i_missu_is_empty),
 
      .i_commit (i_commit),
@@ -701,9 +697,6 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
       STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
       STQ_ISSUED           : $fwrite(fp, "ISSUED");
       STQ_OLDEST_HAZ       : $fwrite(fp, "OLDEST_HAZ");
-      STQ_MISSU_CONFLICT   : $fwrite(fp, "STQ_MISSU_CONFLICT");
-      STQ_MISSU_EVICT_HAZ  : $fwrite(fp, "STQ_MISSU_EVICT_HAZ");
-      STQ_MISSU_FULL       : $fwrite(fp, "STQ_MISSU_FULL");
       STQ_WAIT_OLDEST      : $fwrite(fp, "STQ_WAIT_OLDEST");
       STQ_WAIT_STBUF       : $fwrite(fp, "STQ_WAIT_STBUF");
       default              : $fatal(0, "State Log lacked. %d\n", entry.state);

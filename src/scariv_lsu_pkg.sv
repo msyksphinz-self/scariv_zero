@@ -446,9 +446,6 @@ typedef enum logic[4:0] {
   STQ_DONE_EX3      ,
   STQ_ISSUED        ,
   STQ_OLDEST_HAZ    ,
-  STQ_MISSU_CONFLICT  ,
-  STQ_MISSU_EVICT_HAZ ,
-  STQ_MISSU_FULL      ,
   STQ_WAIT_OLDEST   ,
   STQ_WAIT_STBUF
 } stq_state_t;
@@ -478,7 +475,6 @@ typedef struct packed {
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   scariv_pkg::alen_t                      rs2_data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
 
   logic              except_valid;
   scariv_pkg::except_t except_type;
