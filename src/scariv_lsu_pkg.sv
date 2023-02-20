@@ -383,6 +383,32 @@ function scariv_pkg::alenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$c
 endfunction // gen_dw
 
 
+function scariv_pkg::alen_t align_byte (scariv_pkg::alen_t data, logic [$clog2(scariv_pkg::ALEN_W/8)-1:0] pa);
+  if (scariv_pkg::ALEN_W == 64) begin
+    case (pa)
+      'b000: return data;
+      'b001: return {data[scariv_pkg::ALEN_W- 8-1: 0],  8'h00};
+      'b010: return {data[scariv_pkg::ALEN_W-16-1: 0], 16'h00};
+      'b011: return {data[scariv_pkg::ALEN_W-24-1: 0], 24'h00};
+      'b100: return {data[scariv_pkg::ALEN_W-32-1: 0], 32'h00};
+      'b101: return {data[scariv_pkg::ALEN_W-40-1: 0], 40'h00};
+      'b110: return {data[scariv_pkg::ALEN_W-48-1: 0], 48'h00};
+      'b111: return {data[scariv_pkg::ALEN_W-56-1: 0], 56'h00};
+      default : return 'h0;
+    endcase // case (pa)
+  end else begin // if (scariv_pkg::ALEN_W == 64)
+    case (pa)
+      'b00: return data;
+      'b01: return {data[scariv_pkg::ALEN_W- 8-1: 0],  8'h00};
+      'b10: return {data[scariv_pkg::ALEN_W-16-1: 0], 16'h00};
+      'b11: return {data[scariv_pkg::ALEN_W-24-1: 0], 24'h00};
+      default : return 'h0;
+    endcase // case (pa)
+  end // else: !if(scariv_pkg::ALEN_W == 64)
+
+endfunction // align_byte
+
+
 // addr1/size1 includes addr2_dw ?
 function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(scariv_pkg::ALEN_W/8)-1:0] addr1,
                               logic [scariv_pkg::ALEN_W/8-1:0] addr2_dw);
@@ -420,9 +446,6 @@ typedef enum logic[4:0] {
   STQ_DONE_EX3      ,
   STQ_ISSUED        ,
   STQ_OLDEST_HAZ    ,
-  STQ_MISSU_CONFLICT  ,
-  STQ_MISSU_EVICT_HAZ ,
-  STQ_MISSU_FULL      ,
   STQ_WAIT_OLDEST   ,
   STQ_WAIT_STBUF
 } stq_state_t;
@@ -452,7 +475,6 @@ typedef struct packed {
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   scariv_pkg::alen_t                      rs2_data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
 
   logic              except_valid;
   scariv_pkg::except_t except_type;

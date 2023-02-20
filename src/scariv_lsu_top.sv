@@ -263,8 +263,6 @@ scariv_stq
 
  .ex3_done_if (w_ex3_done_if),
 
- .i_missu_resolve  (w_missu_resolve ),
- .i_missu_is_full  (w_missu_is_full ),
  .i_missu_is_empty (w_missu_is_empty),
 
  .i_commit (i_commit),

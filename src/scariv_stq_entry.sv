@@ -37,8 +37,6 @@ module scariv_stq_entry
    input scariv_pkg::commit_blk_t               i_commit,
    br_upd_if.slave                            br_upd_if,
 
-   input missu_resolve_t                      i_missu_resolve,
-   input logic                                i_missu_is_full,
    input logic                                i_missu_is_empty,
 
    output logic                               o_stbuf_req_valid,
@@ -79,12 +77,6 @@ logic                                              w_entry_rs2_ready_next;
 logic                                              w_commit_finish;
 
 logic                                              w_oldest_ready;
-
-logic                                              w_missu_is_conflict;
-logic                                              w_missu_is_full;
-logic                                              w_missu_is_assigned;
-logic                                              w_missu_resolve_match;
-logic                                              w_missu_evict_is_hazard;
 
 always_comb begin
   o_entry = r_entry;
@@ -147,12 +139,6 @@ assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_fini
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
 
-
-assign w_missu_is_conflict     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
-assign w_missu_is_full         = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
-assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_EVICT_CONFLICT;
-
-assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -262,12 +248,7 @@ always_comb begin
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
         w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT  ? STQ_ISSUE_WAIT :
                              i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
-                             w_missu_is_conflict     ? STQ_MISSU_CONFLICT  :
-                             w_missu_is_full         ? STQ_MISSU_FULL      :
-                             w_missu_evict_is_hazard ? STQ_MISSU_EVICT_HAZ :
-                             w_missu_is_assigned     ? STQ_ISSUE_WAIT    : // When MISSU Assigned, MISSU index return is zero so rerun and ge MISSU index.
                              STQ_DONE_EX3;
-        w_entry_next.missu_haz_index_oh = i_ex2_q_updates.missu_index_oh;
         w_entry_next.is_amo           = i_ex2_q_updates.is_amo;
         w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
         w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
@@ -278,31 +259,6 @@ always_comb begin
       end else begin
         w_entry_next.state = STQ_DONE_EX3;
       end // else: !if(r_entry.is_rmw & i_ex2_q_valid)
-    end
-    STQ_MISSU_CONFLICT : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
-    end
-    STQ_MISSU_FULL : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (!i_missu_is_full) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
-    end
-    STQ_MISSU_EVICT_HAZ : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
     end
     STQ_DONE_EX3 : begin
       // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
