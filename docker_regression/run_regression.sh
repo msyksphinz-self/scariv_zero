@@ -14,7 +14,10 @@ make -j$(nproc)
 
 cd ${SCARIV_DIR}/verilator_sim
 
-isa_list=(rv32imac rv32imafc rv32imafdc rv64imac rv64imafc rv64imafdc)
+isa_list=(rv32imc  rv32imfc  rv32imfdc
+          rv32imac rv32imafc rv32imafdc
+          rv64imc  rv64imfc  rv64imfdc
+          rv64imac rv64imafc rv64imafdc)
 config_list=(tiny small standard big giant)
 
 for i in ${isa_list[@]}
