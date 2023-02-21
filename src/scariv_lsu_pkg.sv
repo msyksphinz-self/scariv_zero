@@ -384,29 +384,28 @@ function scariv_pkg::alenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$c
 endfunction // gen_dw
 
 
-function scariv_pkg::alen_t align_byte (scariv_pkg::alen_t data, logic [$clog2(scariv_pkg::ALEN_W/8)-1:0] pa);
-  if (scariv_pkg::ALEN_W == 64) begin
-    case (pa)
-      'b000: return data;
-      'b001: return {data[scariv_pkg::ALEN_W- 8-1: 0],  8'h00};
-      'b010: return {data[scariv_pkg::ALEN_W-16-1: 0], 16'h00};
-      'b011: return {data[scariv_pkg::ALEN_W-24-1: 0], 24'h00};
-      'b100: return {data[scariv_pkg::ALEN_W-32-1: 0], 32'h00};
-      'b101: return {data[scariv_pkg::ALEN_W-40-1: 0], 40'h00};
-      'b110: return {data[scariv_pkg::ALEN_W-48-1: 0], 48'h00};
-      'b111: return {data[scariv_pkg::ALEN_W-56-1: 0], 56'h00};
-      default : return 'h0;
-    endcase // case (pa)
-  end else begin // if (scariv_pkg::ALEN_W == 64)
-    case (pa)
-      'b00: return data;
-      'b01: return {data[scariv_pkg::ALEN_W- 8-1: 0],  8'h00};
-      'b10: return {data[scariv_pkg::ALEN_W-16-1: 0], 16'h00};
-      'b11: return {data[scariv_pkg::ALEN_W-24-1: 0], 24'h00};
-      default : return 'h0;
-    endcase // case (pa)
-  end // else: !if(scariv_pkg::ALEN_W == 64)
+function scariv_pkg::alen_t align_8byte (logic [63: 0] data, logic [ 2: 0] pa);
+  case (pa)
+    'b000: return data;
+    'b001: return {data[64- 8-1: 0],  8'h00};
+    'b010: return {data[64-16-1: 0], 16'h00};
+    'b011: return {data[64-24-1: 0], 24'h00};
+    'b100: return {data[64-32-1: 0], 32'h00};
+    'b101: return {data[64-40-1: 0], 40'h00};
+    'b110: return {data[64-48-1: 0], 48'h00};
+    'b111: return {data[64-56-1: 0], 56'h00};
+    default : return 'h0;
+  endcase // case (pa)
+endfunction // align_8byte
 
+function scariv_pkg::alen_t align_4byte (logic [31: 0] data, logic [ 1: 0] pa);
+  case (pa)
+    'b00: return data;
+    'b01: return {data[32- 8-1: 0],  8'h00};
+    'b10: return {data[32-16-1: 0], 16'h00};
+    'b11: return {data[32-24-1: 0], 24'h00};
+    default : return 'h0;
+  endcase // case (pa)
 endfunction // align_byte
 
 

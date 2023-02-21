@@ -444,7 +444,11 @@ endgenerate
 // =========================
 scariv_pkg::alen_t w_aligned_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
-  assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].paddr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+  if (scariv_pkg::ALEN_W == 64) begin
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].paddr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+  end else begin
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].paddr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+  end
 end
 endgenerate
 
