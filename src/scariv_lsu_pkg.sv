@@ -1,6 +1,7 @@
 package scariv_lsu_pkg;
 
   import scariv_pkg::*;
+  import decoder_inst_cat_pkg::*;
 
   localparam L2_CMD_TAG_W = 5;
 
@@ -451,11 +452,15 @@ typedef enum logic[4:0] {
 } stq_state_t;
 
 typedef struct packed {
-  logic          oldest_valid;
+  logic [31: 0]          inst;
+  inst_cat_t             cat;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic                  oldest_valid;
   reg_rd_issue_t [ 2: 0] rd_regs;
 `ifdef SIMULATION
+  logic [63: 0]          kanata_id;
   vaddr_t pc_addr;
-  logic [31:0]   inst;
 `endif // SIMULATION
 } stq_static_info_t;
 
@@ -467,8 +472,6 @@ typedef struct packed {
   stq_static_info_t inst;
   // scariv_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
   stq_state_t        state;
   scariv_pkg::vaddr_t  vaddr;
   scariv_pkg::paddr_t  paddr;
@@ -582,15 +585,27 @@ typedef enum logic[3:0] {
 } ldq_state_t;
 
 typedef struct packed {
+  logic [31: 0]          inst;
+  inst_cat_t             cat;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic                  oldest_valid;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
+`ifdef SIMULATION
+  vaddr_t pc_addr;
+  logic [63: 0]          kanata_id;
+`endif // SIMULATION
+} ldq_static_info_t;
+
+
+typedef struct packed {
   logic          is_valid;
   brtag_t brtag;
   brmask_t         br_mask;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   ldq_static_info_t inst;
-  // scariv_pkg::issue_t               inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
   ldq_state_t                     state;
   logic                           is_get_data;
   scariv_pkg::vaddr_t vaddr;
@@ -606,6 +621,22 @@ typedef struct packed {
 `endif // SIMULATION
 
 } ldq_entry_t;
+
+
+typedef struct packed {
+  logic                  valid;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic [31: 0]          inst;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
+  logic                  oldest_valid;
+  inst_cat_t             cat;
+`ifdef SIMULATION
+  logic [63: 0]          kanata_id;
+`endif // SIMULATION
+} lsu_pipe_issue_t;
+
 
 // -----
 // TLB

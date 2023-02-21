@@ -32,7 +32,7 @@ module scariv_stq
    // RMW Ordere Hazard Check
    rmw_order_check_if.slave    rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   lsu_replay_if.master stq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
+   stq_replay_if.master stq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
 
    done_if.slave        ex3_done_if[scariv_conf_pkg::LSU_INST_NUM],
 
@@ -226,7 +226,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_stq_entries[s_idx].cmt_id), .grp_id(w_stq_entries[s_idx].grp_id),
+  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_stq_entries[s_idx].inst.cmt_id), .grp_id(w_stq_entries[s_idx].inst.grp_id),
                                          .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
   // Selection of EX2 Update signal
@@ -354,8 +354,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
       scariv_rough_older_check
       u_rough_older_check
         (
-         .i_cmt_id0 (w_stq_entries[s_idx].cmt_id   ),
-         .i_grp_id0 (w_stq_entries[s_idx].grp_id   ),
+         .i_cmt_id0 (w_stq_entries[s_idx].inst.cmt_id   ),
+         .i_grp_id0 (w_stq_entries[s_idx].inst.grp_id   ),
          .i_cmt_id1 (ex2_fwd_check_if[p_idx].cmt_id),
          .i_grp_id1 (ex2_fwd_check_if[p_idx].grp_id),
 
@@ -369,8 +369,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
   logic pipe_is_younger_than_rmw;
 
-    assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].cmt_id,
-                                                                       w_stq_entries[s_idx].grp_id,
+    assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
+                                                                       w_stq_entries[s_idx].inst.grp_id,
                                                                        rmw_order_check_if[p_idx].ex2_cmt_id,
                                                                        rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
@@ -384,8 +384,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
     logic pipe_is_younger_than_stq;
     logic w_same_addr_region;
 
-    assign pipe_is_younger_than_stq = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].cmt_id,
-                                                                       w_stq_entries[s_idx].grp_id,
+    assign pipe_is_younger_than_stq = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
+                                                                       w_stq_entries[s_idx].inst.grp_id,
                                                                        stq_haz_check_if[p_idx].ex2_cmt_id,
                                                                        stq_haz_check_if[p_idx].ex2_grp_id);
     assign w_same_addr_region = w_stq_entries   [s_idx].paddr    [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
@@ -496,8 +496,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) 
   bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
 
   assign o_done_report[d_idx].valid   = |w_stq_done_oh;
-  assign o_done_report[d_idx].cmt_id  = w_stq_done_entry.cmt_id;
-  assign o_done_report[d_idx].grp_id  = w_stq_done_entry.grp_id;
+  assign o_done_report[d_idx].cmt_id  = w_stq_done_entry.inst.cmt_id;
+  assign o_done_report[d_idx].grp_id  = w_stq_done_entry.inst.grp_id;
   assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
   assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_stq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
@@ -629,8 +629,8 @@ assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.is_rmw;
 assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
 assign st_buffer_if.is_amo = w_stq_cmt_head_entry.is_amo;
 `ifdef SIMULATION
-assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.cmt_id;
-assign st_buffer_if.grp_id = w_stq_cmt_head_entry.grp_id;
+assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.inst.cmt_id;
+assign st_buffer_if.grp_id = w_stq_cmt_head_entry.inst.grp_id;
 `endif //SIMULATION
 
 // ---------------------------------
@@ -681,8 +681,8 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.inst.inst);
 
-    $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
-    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
+    $fwrite(fp, "cmt_id:%d, ", entry.inst.cmt_id);
+    $fwrite(fp, "grp_id:%d, ", entry.inst.grp_id);
 
     $fwrite(fp, "state:\"");
     unique case(entry.state)

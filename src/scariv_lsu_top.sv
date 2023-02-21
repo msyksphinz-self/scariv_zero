@@ -88,8 +88,8 @@ ex1_q_update_t        w_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 ex2_q_update_t        w_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 
-lsu_replay_if w_ldq_replay[scariv_conf_pkg::LSU_INST_NUM]();
-lsu_replay_if w_stq_replay[scariv_conf_pkg::LSU_INST_NUM]();
+ldq_replay_if w_ldq_replay[scariv_conf_pkg::LSU_INST_NUM]();
+stq_replay_if w_stq_replay[scariv_conf_pkg::LSU_INST_NUM]();
 
 done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
 

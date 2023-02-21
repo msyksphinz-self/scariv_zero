@@ -108,7 +108,7 @@ select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (
 
 
 
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
@@ -117,7 +117,7 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp.br_mask, br_upd_i
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
 assign w_dead_state_clear = i_commit.commit &
-                            (i_commit.cmt_id == r_entry.cmt_id);
+                            (i_commit.cmt_id == r_entry.inst.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
                                 w_rs_phy_hit[1] & !w_rs_mispredicted[1] |
@@ -126,12 +126,12 @@ assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
 scariv_pkg::grp_id_t w_normal_comitted_grp_id;
 scariv_pkg::grp_id_t w_commit_grp_id_mask;
 scariv_pkg::grp_id_t w_done_tree_grp_id;
-assign w_commit_grp_id_mask = r_entry.grp_id - 1;
+assign w_commit_grp_id_mask = r_entry.inst.grp_id - 1;
 assign w_done_tree_grp_id   = w_commit_grp_id_mask & (rob_info_if.done_grp_id & ~rob_info_if.except_valid);
 
 assign w_normal_comitted_grp_id = (w_done_tree_grp_id == w_commit_grp_id_mask);
 
-assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.cmt_id) & w_normal_comitted_grp_id;
+assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.inst.cmt_id) & w_normal_comitted_grp_id;
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
                                (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
@@ -189,8 +189,8 @@ always_comb begin
       if (w_entry_flush & w_entry_next.is_valid) begin
         w_entry_next.state = STQ_DEAD;
         // w_entry_next.is_valid = 1'b0;
-        // w_entry_next.cmt_id = 'h0;
-        // w_entry_next.grp_id = 'h0;
+        // w_entry_next.inst.cmt_id = 'h0;
+        // w_entry_next.inst.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
                                        1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
@@ -301,8 +301,8 @@ always_comb begin
       end
       // w_entry_next.is_valid = 1'b1;
       // prevent all updates from Pipeline
-      // w_entry_next.cmt_id = 'h0;
-      // w_entry_next.grp_id = 'h0;
+      // w_entry_next.inst.cmt_id = 'h0;
+      // w_entry_next.inst.grp_id = 'h0;
       // end
     end
     STQ_WAIT_ST_DATA : begin
@@ -317,8 +317,8 @@ always_comb begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end // case: STQ_COMMIT
     STQ_WAIT_STBUF : begin
@@ -326,8 +326,8 @@ always_comb begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end
     STQ_DEAD : begin
@@ -335,8 +335,8 @@ always_comb begin
         w_entry_next.state    = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end // case: scariv_pkg::DEAD
     default : begin
@@ -359,8 +359,8 @@ end // always_comb
 // Oldest Detection
 // -----------------
 
-assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.inst.grp_id-1) == r_entry.inst.grp_id-1);
 
 assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stq_outptr_valid  :
                            (r_entry.state == STQ_COMMIT) & ~r_entry.is_uc & ~r_entry.except_valid;
@@ -390,8 +390,10 @@ function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
 
   ret.is_valid  = 1'b1;
 
-  ret.cmt_id    = cmt_id;
-  ret.grp_id    = grp_id;
+  ret.inst.inst   = in.inst;
+  ret.inst.cat    = in.cat;
+  ret.inst.cmt_id = cmt_id;
+  ret.inst.grp_id = grp_id;
 
   ret.brtag   = in.brtag;
   ret.br_mask = in.br_mask;
