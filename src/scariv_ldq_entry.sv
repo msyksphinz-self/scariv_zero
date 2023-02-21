@@ -166,8 +166,19 @@ always_comb begin
         // w_entry_next.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM));
-        w_entry_next.inst = scariv_pkg::assign_issue_op2(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+        for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+          w_entry_next.inst.rd_regs[rs_idx].valid         = i_disp.rd_regs[rs_idx].valid;
+          w_entry_next.inst.rd_regs[rs_idx].typ           = i_disp.rd_regs[rs_idx].typ;
+          w_entry_next.inst.rd_regs[rs_idx].regidx        = i_disp.rd_regs[rs_idx].regidx;
+          w_entry_next.inst.rd_regs[rs_idx].rnid          = i_disp.rd_regs[rs_idx].rnid;
+          w_entry_next.inst.rd_regs[rs_idx].ready         = i_disp.rd_regs[rs_idx].ready | w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx] | w_rs_phy_hit[rs_idx];
+          w_entry_next.inst.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
+        end
+
+        for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+          w_entry_next.inst.rd_regs[rs_idx].valid = 1'b0;
+        end
+
         if (w_load_flush) begin
           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         end

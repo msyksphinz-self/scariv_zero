@@ -249,9 +249,9 @@ endinterface // missu_pa_search_if
 interface lsu_replay_if;
 
 logic    valid;
-scariv_pkg::issue_t issue;
+scariv_lsu_pkg::lsq_static_info_t       issue;
 logic [scariv_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
-logic                                 conflict;
+logic                                   conflict;
 
 modport master (
   output valid,
