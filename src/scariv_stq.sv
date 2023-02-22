@@ -200,7 +200,7 @@ endgenerate
 //   end
 // end
 
-assign stq_snoop_if.resp_s1_valid = 1'b0;
+assign stq_snoop_if.resp_s1_valid = 1'b1;
 assign stq_snoop_if.resp_s1_data  = 'h0;
 assign stq_snoop_if.resp_s1_be    = 'h0;
 
