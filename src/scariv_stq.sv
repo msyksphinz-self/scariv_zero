@@ -336,10 +336,10 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
       logic  w_same_addr_region;
       logic  w_same_dw;
       logic [ 7: 0] w_entry_dw;
-      assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0]);
-      assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].paddr[2:0],
+      assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].addr[2:0]);
+      assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].addr[2:0],
                                         ex2_fwd_check_if[p_idx].paddr_dw);
-      assign w_same_addr_region = w_stq_entries   [s_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
+      assign w_same_addr_region = w_stq_entries   [s_idx].addr [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
                                   ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
@@ -388,7 +388,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                                                        w_stq_entries[s_idx].inst.grp_id,
                                                                        stq_haz_check_if[p_idx].ex2_cmt_id,
                                                                        stq_haz_check_if[p_idx].ex2_grp_id);
-    assign w_same_addr_region = w_stq_entries   [s_idx].paddr    [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
+    assign w_same_addr_region = w_stq_entries   [s_idx].addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
                                 stq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
     assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
@@ -445,9 +445,9 @@ endgenerate
 scariv_pkg::alen_t w_aligned_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
   if (scariv_pkg::ALEN_W == 64) begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].paddr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
   end else begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].paddr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
   end
 end
 endgenerate
@@ -504,8 +504,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) 
   assign o_done_report[d_idx].grp_id  = w_stq_done_entry.inst.grp_id;
   assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_stq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
-                                              w_stq_done_entry.vaddr};
+  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_stq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
+                                              w_stq_done_entry.addr};
 
   assign o_another_flush_report[d_idx].valid  = w_stq_done_entry.another_flush_valid;
   assign o_another_flush_report[d_idx].cmt_id = w_stq_done_entry.another_flush_cmt_id;
@@ -564,8 +564,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                             w_sq_commit_ready_issue[d_idx-1] &
                                             !w_stq_cmt_head_entry.is_rmw &
                                             !w_stq_cmt_entry.is_rmw &
-                                            (w_stq_cmt_head_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)] ==
-                                             w_stq_cmt_entry.paddr     [riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)]);
+                                            (w_stq_cmt_head_entry.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)] ==
+                                             w_stq_cmt_entry.addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)
 
   stq_entry_t w_stq_cmt_entry;
@@ -591,8 +591,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
     end else begin
       w_strb_origin = 'h0;
     end // else: !if(w_sq_commit_valid)
-    w_st_buffer_strb[d_idx] = w_strb_origin << w_stq_cmt_entry.paddr[$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)-1: 0];
-    w_st_buffer_data[d_idx] = w_stq_cmt_entry.rs2_data << {w_stq_cmt_entry.paddr[$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)-1: 0], 3'b000};
+    w_st_buffer_strb[d_idx] = w_strb_origin << w_stq_cmt_entry.addr[$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)-1: 0];
+    w_st_buffer_data[d_idx] = w_stq_cmt_entry.rs2_data << {w_stq_cmt_entry.addr[$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)-1: 0], 3'b000};
   end
 
   assign w_stbuf_req_accepted[d_idx] = w_shifted_out_ptr_oh & {scariv_conf_pkg::STQ_SIZE{w_stbuf_accepted_disp[d_idx]}};
@@ -608,7 +608,7 @@ assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 
 // Make Store Buffer Request
 assign st_buffer_if.valid = |w_stbuf_accepted_disp;
-assign st_buffer_if.paddr = w_stq_cmt_head_entry.paddr;
+assign st_buffer_if.paddr = w_stq_cmt_head_entry.addr;
 
 generate for(genvar b_idx = 0; b_idx < scariv_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   scariv_pkg::grp_id_t w_strb_array;
@@ -644,7 +644,7 @@ stq_entry_t w_uc_write_entry_sel;
 bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_uc_write_entry  (.i_oh(w_uc_write_req_valid), .i_data(w_stq_entries), .o_selected(w_uc_write_entry_sel));
 always_comb begin
   uc_write_if.valid = |w_uc_write_req_valid;
-  uc_write_if.paddr = w_uc_write_entry_sel.paddr;
+  uc_write_if.paddr = w_uc_write_entry_sel.addr;
   uc_write_if.data  = w_uc_write_entry_sel.rs2_data;
   uc_write_if.size  = w_uc_write_entry_sel.size;
 end
