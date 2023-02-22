@@ -472,8 +472,9 @@ typedef struct packed {
   // scariv_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   stq_state_t        state;
-  scariv_pkg::vaddr_t  vaddr;
-  scariv_pkg::paddr_t  paddr;
+  // scariv_pkg::vaddr_t  vaddr;
+  // scariv_pkg::paddr_t  paddr;
+  scariv_pkg::maxaddr_t  addr;
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   scariv_pkg::alen_t                      rs2_data;
@@ -607,8 +608,9 @@ typedef struct packed {
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
   ldq_state_t                     state;
   logic                           is_get_data;
-  scariv_pkg::vaddr_t vaddr;
-  scariv_pkg::paddr_t paddr;
+  // scariv_pkg::vaddr_t vaddr;
+  // scariv_pkg::paddr_t paddr;
+  scariv_pkg::maxaddr_t  addr;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
   logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 

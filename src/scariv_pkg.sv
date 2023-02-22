@@ -12,6 +12,8 @@ package scariv_pkg;
 
   localparam INST_BUF_SIZE = scariv_conf_pkg::INST_BUF_SIZE;
 
+  localparam MAX_ADDR_W = VADDR_W > PADDR_W ? VADDR_W : PADDR_W;
+
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
                             1 +              // BRU
@@ -60,6 +62,7 @@ typedef logic [ALEN_W/8-1: 0] alenb_t;
 
 typedef logic [riscv_pkg::VADDR_W-1: 0] vaddr_t;
 typedef logic [riscv_pkg::PADDR_W-1: 0] paddr_t;
+typedef logic [MAX_ADDR_W-1: 0]         maxaddr_t;
 
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
