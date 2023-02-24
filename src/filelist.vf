@@ -42,6 +42,7 @@
 ../src/bit_reverse.sv
 ../src/bit_rotate.sv
 ../src/ring_fifo.sv
+../src/ring_fifo_2ptr.sv
 
 ../src/encoder.sv
 ../src/inoutptr.sv
