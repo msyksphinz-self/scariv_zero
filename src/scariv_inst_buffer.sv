@@ -97,46 +97,12 @@ scariv_pkg::grp_id_t w_inst_bru_disped;
 scariv_pkg::grp_id_t w_inst_csu_disped;
 scariv_pkg::grp_id_t w_inst_fpu_disped;
 
-typedef struct packed {
-  logic             pred_taken;
-  logic [1:0]       bim_value;
-  logic             btb_valid;
-  logic             is_cond;
-  scariv_pkg::vaddr_t pred_target_vaddr;
-  scariv_pkg::gshare_bht_t gshare_index;
-  scariv_pkg::gshare_bht_t gshare_bhr;
-} pred_info_t;
 
-pred_info_t w_expand_pred_info[scariv_conf_pkg::DISP_SIZE];
+scariv_ibuf_pkg::pred_info_t w_expand_pred_info[scariv_conf_pkg::DISP_SIZE];
 logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] w_expand_pred_index[scariv_conf_pkg::DISP_SIZE];
 
-typedef struct packed {
-  logic                           is_call;
-  logic                           is_ret;
-  logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
-  scariv_pkg::vaddr_t                    pred_target_vaddr;
-} ras_info_t;
-
-ras_info_t w_expand_ras_info[scariv_conf_pkg::DISP_SIZE];
-
-typedef struct packed {
-  logic                                      valid;
-  logic                                      dead;
-  logic [riscv_pkg::VADDR_W-1: 1]            pc;
-  ic_data_t                                  data;
-  ic_strb_t                                  byte_en;
-  logic                                      tlb_except_valid;
-  scariv_pkg::except_t                         tlb_except_cause;
-
-  pred_info_t [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
-  ras_info_t  [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
-`ifdef SIMULATION
-  scariv_pkg::vaddr_t pc_dbg;
-`endif // SIMULATION
-  logic               int_inserted;
-} inst_buf_t;
-
-inst_buf_t r_inst_queue[scariv_pkg::INST_BUF_SIZE];
+scariv_ibuf_pkg::ras_info_t w_expand_ras_info[scariv_conf_pkg::DISP_SIZE];
+scariv_ibuf_pkg::inst_buf_t r_inst_queue[scariv_pkg::INST_BUF_SIZE];
 logic [scariv_pkg::INST_BUF_SIZE-1:0]      w_inst_buffer_valid;
 
 logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_inptr;

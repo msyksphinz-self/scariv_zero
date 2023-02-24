@@ -13,6 +13,7 @@
 ../src/scariv_csu_pkg.sv
 ../src/scariv_fpu_pkg.sv
 ../src/scariv_predict_pkg.sv
+../src/scariv_ibuf_pkg.sv
 
 ../src/l2_if.sv
 ../src/disp_if.sv
