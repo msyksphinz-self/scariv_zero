@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MRSH Fetch Target Queue
+// NAME : scariv_ftq
 // TYPE : module
 // ------------------------------------------------------------------------
 // FTQ remembers the order of branch instruction.

@@ -1,3 +1,17 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_fpu_pipe
+// TYPE : module
+// ------------------------------------------------------------------------
+// FPU Pipeline
+// ------------------------------------------------------------------------
+// ex0: Decode instruction
+// ex1: Send Early-release
+// ex2: Get Forwarding data
+// ex3: FPU Execute
+// ...
+//    : FPU Execution Done
+// ------------------------------------------------------------------------
+
 module scariv_fpu_pipe
   import decoder_fpu_ctrl_pkg::*;
   import scariv_fpu_pkg::*;

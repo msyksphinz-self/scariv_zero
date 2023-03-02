@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : MRSH Frontend Instruction Fetcher
+// NAME : scariv_frontend
 // TYPE : module
 // ------------------------------------------------------------------------
 // Frontend Instruction Fetcher and Predictor

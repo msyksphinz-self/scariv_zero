@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : Entry Selector
+// NAME : scariv_entry_selector
 // TYPE : module
 // ------------------------------------------------------------------------
 // Valid bits are selected based on i_oh_ptr

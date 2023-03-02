@@ -1,3 +1,15 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_alu_pipe
+// TYPE : module
+// ------------------------------------------------------------------------
+// Arithmetic Unit
+// ------------------------------------------------------------------------
+// ex0: Decode instruction
+// ex1: Send Early-release
+// ex2: Get Forwarding data
+// ex3: Write Data / Done Report
+// ------------------------------------------------------------------------
+
 module scariv_alu_pipe
   import decoder_alu_ctrl_pkg::*;
 #(

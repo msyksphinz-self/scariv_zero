@@ -130,7 +130,6 @@
 ../src/scariv_amo_operation.sv
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv
-../src/scariv_addr_check.sv
 ../src/scariv_lsu_lrsc.sv
 
 ../src/scariv_snoop_top.sv

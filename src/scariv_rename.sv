@@ -1,3 +1,17 @@
+// ------------------------------------------------------------------------
+// NAME : SCARIV Rename Unit
+// TYPE : module
+// ------------------------------------------------------------------------
+// Rename Unit
+// ------------------------------------------------------------------------
+// SubUnit:
+//  FreeList, contains free Physical ID
+//  Rename Map, translate Logical Register Index -> Physical Register Index
+//  Inflight List, checking Physical Index is flight or not
+//  BR RN Snapshot, snapshot for Branch Instruction
+//  Commit Map, snapshot for Exception
+// ------------------------------------------------------------------------
+
 module scariv_rename
   import scariv_pkg::*;
   #(parameter REG_TYPE = GPR)

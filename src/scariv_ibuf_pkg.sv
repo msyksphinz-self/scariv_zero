@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : SCARIV Inst-Buffer Package
+// NAME : scariv_ibuf_pkg
 // TYPE : package
 // ------------------------------------------------------------------------
 // Instruction Buffer packages

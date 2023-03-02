@@ -1,3 +1,14 @@
+// ------------------------------------------------------------------------
+// NAME : Resource Allocator
+// TYPE : module
+// ------------------------------------------------------------------------
+// Backend module resource manager
+// ------------------------------------------------------------------------
+// Controls number of remaining entries in backend modules
+// Input : Distpached instruction
+// Output: Resource information
+// ------------------------------------------------------------------------
+
 module scariv_resource_alloc
   import scariv_pkg::*;
   (
