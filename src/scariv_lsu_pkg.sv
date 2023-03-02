@@ -188,10 +188,10 @@ typedef struct packed {
   logic                          get_data;
   dc_data_t                      data;
   dc_ways_idx_t way;
-} miss_entry_t;
+} mshr_entry_t;
 
-function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
-  miss_entry_t ret;
+function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
+  mshr_entry_t ret;
 
   ret = 'h0;
 
@@ -206,7 +206,7 @@ function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
 
   return ret;
 
-endfunction // assign_missu_entry
+endfunction // assign_mshr_entry
 
 typedef struct packed {
   logic            valid;

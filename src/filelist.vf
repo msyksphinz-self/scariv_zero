@@ -118,7 +118,7 @@
 ../src/scariv_lsu.sv
 ../src/scariv_lsu_pipe.sv
 ../src/scariv_l1d_mshr.sv
-../src/scariv_miss_entry.sv
+../src/scariv_l1d_mshr_entry.sv
 ../src/scariv_store_requestor.sv
 ../src/scariv_l2_req_arbiter.sv
 ../src/scariv_ldq.sv

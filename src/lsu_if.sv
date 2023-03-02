@@ -202,7 +202,7 @@ interface missu_dc_search_if;
 
 logic valid;
 logic [scariv_pkg::MISSU_ENTRY_W-1: 0] index;
-scariv_lsu_pkg::miss_entry_t missu_entry;
+scariv_lsu_pkg::mshr_entry_t missu_entry;
 
 modport master (
   output valid,
