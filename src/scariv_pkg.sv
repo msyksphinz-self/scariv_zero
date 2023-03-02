@@ -470,7 +470,7 @@ typedef struct packed {
 } done_payload_t;
 
 
-  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
+  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD, SCHED_CLEAR } sched_state_t;
 
   typedef struct packed {
     logic  valid;

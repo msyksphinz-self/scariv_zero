@@ -28,10 +28,12 @@ module scariv_muldiv_pipe
  output logic                          o_stall,
 
  output logic                          o_valid,
- output riscv_pkg::xlen_t o_res,
+ output scariv_pkg::cmt_id_t           o_cmt_id,
+ output scariv_pkg::grp_id_t           o_grp_id,
+ output riscv_pkg::xlen_t              o_res,
 
- output scariv_pkg::rnid_t  o_rd_rnid,
- output scariv_pkg::reg_t                o_rd_type,
+ output scariv_pkg::rnid_t             o_rd_rnid,
+ output scariv_pkg::reg_t              o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]     o_index_oh
  );
 
@@ -66,7 +68,9 @@ scariv_pkg::brmask_t                     r_br_mask         [MUL_STEP: 1];
 
 scariv_pkg::rnid_t                          r_mul_rd_rnid [MUL_STEP: 1];
 scariv_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
-logic [RV_ENTRY_SIZE-1: 0]                r_mul_index_oh[MUL_STEP: 1];
+scariv_pkg::cmt_id_t                        r_mul_cmt_id  [MUL_STEP: 1];
+scariv_pkg::grp_id_t                        r_mul_grp_id  [MUL_STEP: 1];
+logic [RV_ENTRY_SIZE-1: 0]                  r_mul_index_oh[MUL_STEP: 1];
 
 logic         w_div_ready;
 logic         w_div_valid;
@@ -175,6 +179,8 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
 
         r_mul_rd_rnid [1] <= i_rd_rnid;
         r_mul_rd_type [1] <= i_rd_type;
+        r_mul_cmt_id  [1] <= i_cmt_id;
+        r_mul_grp_id  [1] <= i_grp_id;
         r_mul_index_oh[1] <= i_index_oh;
       end // else: !if(!i_reset_n)
     end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -201,6 +207,8 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
 
         r_mul_rd_rnid [s_idx+1] <= r_mul_rd_rnid [s_idx];
         r_mul_rd_type [s_idx+1] <= r_mul_rd_type [s_idx];
+        r_mul_cmt_id  [s_idx+1] <= r_mul_cmt_id  [s_idx];
+        r_mul_grp_id  [s_idx+1] <= r_mul_grp_id  [s_idx];
         r_mul_index_oh[s_idx+1] <= r_mul_index_oh[s_idx];
       end // else: !if(!i_reset_n)
     end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -280,6 +288,8 @@ assign o_res   = w_div_out_fire ? w_div_res :
 
 assign o_rd_rnid  = w_div_out_fire ? w_div_rd_rnid  : r_mul_rd_rnid[MUL_STEP];
 assign o_rd_type  = w_div_out_fire ? w_div_rd_type  : r_mul_rd_type[MUL_STEP];
+assign o_cmt_id   = w_div_out_fire ? w_div_cmt_id   : r_mul_cmt_id [MUL_STEP];
+assign o_grp_id   = w_div_out_fire ? w_div_grp_id   : r_mul_grp_id [MUL_STEP];
 assign o_index_oh = w_div_out_fire ? w_div_index_oh : r_mul_index_oh[MUL_STEP];
 
 endmodule // scariv_muldiv_pipe

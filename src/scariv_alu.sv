@@ -49,8 +49,6 @@ logic [scariv_conf_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic                                        w_muldiv_stall;
 
-done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_ALU_ENTRY_SIZE)) w_ex3_done_if[1]();
-
 scariv_disp_pickup
   #(
     .PORT_BASE(0),
@@ -66,7 +64,7 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_alu_scheduler
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_ALU_ENTRY_SIZE),
     .IN_PORT_SIZE(ALU_PORT_SIZE)
@@ -93,10 +91,8 @@ u_scariv_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if  (w_ex3_done_if),
    .i_commit      (i_commit),
-   .br_upd_if     (br_upd_if),
-   .o_done_report (o_done_report)
+   .br_upd_if     (br_upd_if)
    );
 
 
@@ -126,7 +122,7 @@ u_alu
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex3_done_if (w_ex3_done_if[0])
+   .o_done_report (o_done_report)
    );
 
 

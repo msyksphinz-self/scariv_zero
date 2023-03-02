@@ -101,6 +101,9 @@
 ../src/scariv_scheduler.sv
 ../src/scariv_sched_entry.sv
 
+../src/scariv_alu_scheduler.sv
+../src/scariv_alu_sched_entry.sv
+
 ../src/scariv_phy_registers.sv
 
 ../src/scariv_rob.sv

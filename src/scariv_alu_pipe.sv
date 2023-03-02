@@ -25,7 +25,7 @@ module scariv_alu_pipe
     output scariv_pkg::early_wr_t o_ex1_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
 
-    done_if.master ex3_done_if
+    output scariv_pkg::done_rpt_t o_done_report
 );
 
 typedef struct packed {
@@ -83,7 +83,9 @@ logic                                      w_mul_stall_pipe;
 logic                                      w_ex1_muldiv_valid;
 logic                                      w_ex1_muldiv_type_valid;
 logic                                      w_muldiv_res_valid;
-riscv_pkg::xlen_t             w_muldiv_res;
+scariv_pkg::cmt_id_t                       w_muldiv_res_cmt_id;
+scariv_pkg::grp_id_t                       w_muldiv_res_grp_id;
+riscv_pkg::xlen_t                          w_muldiv_res;
 
 logic                                      r_ex2_muldiv_valid;
 
@@ -412,6 +414,8 @@ u_scariv_muldiv_pipe
 
    .o_stall (w_ex3_muldiv_stall),
    .o_valid (w_muldiv_res_valid),
+   .o_cmt_id (w_muldiv_res_cmt_id),
+   .o_grp_id (w_muldiv_res_grp_id),
    .o_res   (w_muldiv_res),
 
    .o_rd_rnid  (w_muldiv_rd_rnid ),
@@ -426,20 +430,23 @@ always_comb begin
     o_ex3_phy_wr.rd_type = w_muldiv_rd_type;
     o_ex3_phy_wr.rd_data = w_muldiv_res;
 
-    ex3_done_if.done          = w_muldiv_res_valid;
-    ex3_done_if.index_oh      = w_muldiv_index_oh;
-    ex3_done_if.payload.except_valid  = 1'b0;
-    ex3_done_if.payload.except_type   = scariv_pkg::except_t'('h0);
+    o_done_report.valid  = w_muldiv_res_valid;
+    o_done_report.cmt_id = w_muldiv_res_cmt_id;
+    o_done_report.grp_id = w_muldiv_res_grp_id;
+    o_done_report.fflags_update_valid = 1'b0;
+    o_done_report.fflags = 'h0;
   end else begin
     o_ex3_phy_wr.valid   = r_ex3_wr_valid;
     o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
     o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
     o_ex3_phy_wr.rd_data = r_ex3_result;
 
-    ex3_done_if.done         = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
-    ex3_done_if.index_oh     = r_ex3_index;
-    ex3_done_if.payload.except_valid = 1'b0;
-    ex3_done_if.payload.except_type  = scariv_pkg::except_t'('h0);
+    o_done_report.valid  = r_ex3_issue.valid & ~r_ex3_muldiv_valid;
+    o_done_report.cmt_id = r_ex3_issue.cmt_id;
+    o_done_report.grp_id = r_ex3_issue.grp_id;
+    o_done_report.fflags_update_valid = 1'b0;
+    o_done_report.fflags = 'h0;
+
   end // else: !if(w_muldiv_res_valid)
 end // always_comb
 
