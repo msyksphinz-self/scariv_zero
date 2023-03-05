@@ -72,8 +72,8 @@ always_ff @ (posedge i_clk) begin
   end
 end
 
-assign w_inptr_next  = r_inptr  + 'h1;
-assign w_outptr_next = r_outptr + 'h1;
+assign w_inptr_next  = r_inptr  + 'h1 == DEPTH ? 'h0 : r_inptr  + 'h1;
+assign w_outptr_next = r_outptr + 'h1 == DEPTH ? 'h0 : r_outptr + 'h1;
 
 assign o_empty = r_inptr == r_outptr;
 assign o_full  = w_inptr_next == r_outptr;
