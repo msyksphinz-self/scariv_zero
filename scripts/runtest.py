@@ -138,5 +138,5 @@ def execute_test(test):
 with Pool(parallel) as pool:
     pool.map(execute_test, select_test)
 
-with open(base_dir + './result.json', 'w') as f:
+with open(base_dir + '/result.json', 'w') as f:
     json.dump(result_dict, f)
