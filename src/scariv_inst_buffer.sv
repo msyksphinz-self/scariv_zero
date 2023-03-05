@@ -124,6 +124,7 @@ logic [ 1: 0]                               w_inst_buf_valid;
 scariv_ibuf_pkg::inst_buf_t                      w_inst_buf_data[2];
 
 logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
+logic                                       w_inst_queue_pop;
 
 logic                                       w_flush_pipeline;
 
@@ -145,9 +146,12 @@ scariv_pkg::grp_id_t w_rvc_valid;
 assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
-assign w_ptr_out_fire = w_head_all_inst_issued |
+assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         w_inst_buf_valid[0] & w_inst_buf_data[0].dead ;
-assign w_flush_pipeline = i_flush_valid | w_head_predict_taken_issued;
+assign w_flush_pipeline = i_flush_valid;
+
+assign w_inst_queue_pop = w_head_all_inst_issued |
+                          w_head_predict_taken_issued;
 
 // Queue Control Pointer
 inoutptr
@@ -191,7 +195,7 @@ u_inst_queue
  .o_empty (w_inst_buf_empty),
  .o_full  (w_inst_buf_full),
 
- .i_pop  (w_head_all_inst_issued),
+ .i_pop  (w_inst_queue_pop),
 
  .o_valid0 (w_inst_buf_valid[0]),
  .o_data0  (w_inst_buf_data [0]),
