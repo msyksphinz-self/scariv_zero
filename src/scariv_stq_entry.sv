@@ -225,8 +225,8 @@ always_comb begin
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
-        w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
-        w_entry_next.paddr           = i_ex1_q_updates.paddr;
+        w_entry_next.addr            = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+                                       i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
         w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE ? i_ex1_q_updates.tlb_uc :
@@ -409,7 +409,7 @@ function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
 
   ret.state     = STQ_ISSUE_WAIT;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
-  ret.vaddr     = 'h0;
+  ret.addr        = 'h0;
   ret.paddr_valid = 1'b0;
 
   ret.is_rs2_get  = 1'b0;

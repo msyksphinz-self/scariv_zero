@@ -271,12 +271,12 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
     logic   w_ex2_same_dw;
     assign w_ex2_same_dw = |(scariv_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
-                             scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].paddr[2:0]));
+                             scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].addr[2:0]));
     assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
                                                  w_ldq_entries[l_idx].is_valid &
                                                  ld_is_younger_than_st &
                                                  w_ldq_entries[l_idx].is_get_data &
-                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
+                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].addr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
 
 end
@@ -323,8 +323,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) 
   assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.inst.grp_id;
   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
-                                              w_ldq_done_entry.vaddr};
+  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
+                                              w_ldq_done_entry.addr};
 
 `ifdef SIMULATION
   // Kanata

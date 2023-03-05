@@ -219,8 +219,8 @@ always_comb begin
                                          LDQ_EX2_RUN;
           w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
-          w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
-          w_entry_next.paddr           = i_ex1_q_updates.paddr;
+          w_entry_next.addr            = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+                                         i_ex1_q_updates.paddr;
           // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
           // w_entry_next.inst            = i_ex1_q_updates.inst;
           w_entry_next.size            = i_ex1_q_updates.size;
@@ -369,7 +369,7 @@ function ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
   ret.state     = LDQ_ISSUE_WAIT;
   ret.is_get_data = 1'b0;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
-  ret.vaddr     = 'h0;
+  ret.addr     = 'h0;
   ret.except_valid = 1'b0;
 
 `ifdef SIMULATION

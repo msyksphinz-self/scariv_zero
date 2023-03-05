@@ -12,3 +12,7 @@ build: Dockerfile
 run:
 	docker run --cap-add=SYS_PTRACE --security-opt="seccomp=unconfined" \
 		--rm -it -v "$(REPO_HOME):/work/scariv" --user $(shell id -u):$(shell id -g) -w "/work/scariv" $(DOCKER_IMAGE) "/work/scariv/docker_regression/run_regression.sh"
+
+debug:
+	docker run --cap-add=SYS_PTRACE --security-opt="seccomp=unconfined" \
+		--rm -it -v "$(REPO_HOME):/work/scariv" --user $(shell id -u):$(shell id -g) -w "/work/scariv" $(DOCKER_IMAGE) "/bin/bash"

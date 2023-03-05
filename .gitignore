@@ -1,4 +1,4 @@
-verilator_sim/msrh_tb_*
+verilator_sim/scariv_tb_*
 verilator_sim/obj_dir_*
 verilator_sim/simx.fst
 verilator_sim/*.log

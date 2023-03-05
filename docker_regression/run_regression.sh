@@ -24,6 +24,6 @@ for i in ${isa_list[@]}
 do
     for c in ${config_list[@]}
     do
-        ${SCARIV_DIR}/scripts/runtest.py --isa ${i} -c ${c} -t sanity -j$(nproc) || true
+        ${SCARIV_DIR}/scripts/runtest.py --isa ${i} -c ${c} -t sanity -j$(nproc) --cycle 1000000 || true
     done
 done

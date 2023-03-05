@@ -96,6 +96,8 @@ base_dir = "sim_" + isa + "_" + conf
 os.makedirs(base_dir, exist_ok=True)
 os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
+result_dict = {'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'unknown': 0}
+
 def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
     command_str = "../../scariv_tb_" + isa + "_" + conf
@@ -117,14 +119,24 @@ def execute_test(test):
     print (test["name"] + "\t: ", end='')
     if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
         print ("ERROR")
+        result_dict['error'] = result_dict['error'] + 1
     elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
         print ("MATCH")
+        result_dict['match'] = result_dict['match'] + 1
     elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
         print ("PASS")
+        result_dict['pass'] = result_dict['error'] + 1
     elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
         print ("DEADLOCK")
+        result_dict['deadlock'] = result_dict['deadlock'] + 1
     else :
         print ("UNKNOWN")
+        result_dict['unknown'] = result_dict['unknown'] + 1
+
+
 
 with Pool(parallel) as pool:
     pool.map(execute_test, select_test)
+
+with open(base_dir + './result.json', 'w') as f:
+    json.dump(result_dict, f)
