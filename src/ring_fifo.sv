@@ -42,7 +42,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (i_push & !o_full) begin
       r_inptr <= w_inptr_next;
     end
-    if (i_pop & !o_emtpy) begin
+    if (i_pop & !o_empty) begin
       r_outptr <= w_outptr_next;
     end
   end // else: !if(!i_reset_n)
