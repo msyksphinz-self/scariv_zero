@@ -119,24 +119,28 @@ def execute_test(test):
     print (test["name"] + "\t: ", end='')
     if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
         print ("ERROR")
-        result_dict['error'] = result_dict['error'] + 1
+        result_dict['error'] += 1
     elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
         print ("MATCH")
-        result_dict['match'] = result_dict['match'] + 1
+        result_dict['match'] += 1
     elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
         print ("PASS")
-        result_dict['pass'] = result_dict['error'] + 1
+        result_dict['pass'] += 1
     elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
         print ("DEADLOCK")
-        result_dict['deadlock'] = result_dict['deadlock'] + 1
+        result_dict['deadlock'] += 1
     else :
         print ("UNKNOWN")
-        result_dict['unknown'] = result_dict['unknown'] + 1
+        result_dict['unknown'] += 1
 
+# initialize worker processes
+def init_worker():
+    # declare scope of a new global variable
+    global result_dict
 
-
-with Pool(parallel) as pool:
+with Pool(initializer=init_worker, maxtasksperchild=parallel) as pool:
     pool.map(execute_test, select_test)
 
+print (result_dict)
 with open(base_dir + '/result.json', 'w') as f:
     json.dump(result_dict, f)
