@@ -201,7 +201,6 @@ u_inst_queue
 
 
 always_comb begin
-  w_inst_buf_load.valid   = w_ptr_in_fire;
   w_inst_buf_load.data    = i_s2_inst.inst;
   w_inst_buf_load.pc      = i_s2_inst.pc;
   w_inst_buf_load.byte_en = i_s2_inst.byte_en;
@@ -244,7 +243,7 @@ always_comb begin
 end // always_comb
 
 
-assign o_inst_ready = !w_inst_buf_empty;
+assign o_inst_ready = !w_inst_buf_full;
 
 // Extract next start position of decoding
 logic [ic_word_num-1: 0] w_bit_next_start_pos_oh;
@@ -290,6 +289,8 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   logic [15: 0]                    w_rvc_next_inst;
   logic [ 1: 0]                    w_rvc_byte_en;
   logic [ 1: 0]                    w_rvc_next_byte_en;
+  logic                            w_inst_buf_valid_b0;
+  logic                            w_inst_buf_valid_b2;
   scariv_ibuf_pkg::inst_buf_t      w_inst_buf_entry_b0;
   scariv_ibuf_pkg::inst_buf_t      w_inst_buf_entry_b2;
 
@@ -304,10 +305,10 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   assign w_rvc_buf_idx_with_offset_b2     = w_rvc_buf_idx_with_offset[w_idx] + 1;
 
   /* verilator lint_off WIDTH */
-  assign w_inst_buf_entry_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? w_inst_buf_data[0] :
-                               w_inst_buf_data[1];
-  assign w_inst_buf_entry_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? w_inst_buf_data[0] :
-                               w_inst_buf_data[1];
+  assign w_inst_buf_valid_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? w_inst_buf_valid[0] : w_inst_buf_valid[1];
+  assign w_inst_buf_entry_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? w_inst_buf_data [0] : w_inst_buf_data [1];
+  assign w_inst_buf_valid_b2 = (w_rvc_buf_idx_with_offset_b2     < ic_word_num) ? w_inst_buf_valid[0] : w_inst_buf_valid[1];
+  assign w_inst_buf_entry_b2 = (w_rvc_buf_idx_with_offset_b2     < ic_word_num) ? w_inst_buf_data [0] : w_inst_buf_data [1];
 
   assign w_local_rvc_inst   = w_inst_buf_entry_b0.data   [ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]*16 +:16];
   assign w_rvc_next_inst    = w_inst_buf_entry_b2.data   [ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0]*16 +:16];
@@ -323,11 +324,11 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       w_expand_inst[w_idx]     = w_local_expand_inst;
       w_rvc_inst[w_idx]    = w_local_rvc_inst;
       w_rvc_valid[w_idx]   = 1'b1;
-      w_expanded_valid[w_idx]  = w_inst_buf_entry_b0.valid &
+      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 &
                                  !w_inst_buf_entry_b0.dead &
                                  & (&w_rvc_byte_en);
 
-      w_fetch_except[w_idx]       = w_inst_buf_entry_b0.valid &
+      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 &
                                     !w_inst_buf_entry_b0.dead &
                                     w_inst_buf_entry_b0.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
@@ -342,14 +343,14 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
-      w_expanded_valid[w_idx]  = w_inst_buf_entry_b0.valid & !w_inst_buf_entry_b0.dead &
-                                 w_inst_buf_entry_b2.valid & !w_inst_buf_entry_b2.dead &
+      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead &
+                                 w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
       w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
 
-      w_fetch_except[w_idx]       = w_inst_buf_entry_b0.valid & !w_inst_buf_entry_b0.dead & w_inst_buf_entry_b0.tlb_except_valid |
-                                    w_inst_buf_entry_b2.valid & !w_inst_buf_entry_b2.dead & w_inst_buf_entry_b2.tlb_except_valid;
+      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead & w_inst_buf_entry_b0.tlb_except_valid |
+                                    w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead & w_inst_buf_entry_b2.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
                                     w_inst_buf_entry_b2.tlb_except_cause;
       w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :

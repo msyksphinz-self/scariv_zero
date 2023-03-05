@@ -29,7 +29,6 @@ typedef struct packed {
 
 
 typedef struct packed {
-  logic                                      valid;
   logic                                      dead;
   logic [riscv_pkg::VADDR_W-1: 1]            pc;
   scariv_pkg::ic_data_t                      data;
