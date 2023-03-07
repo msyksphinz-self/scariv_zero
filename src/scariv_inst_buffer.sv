@@ -148,7 +148,7 @@ assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid 
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         w_inst_buf_valid[0] & w_inst_buf_data[0].dead ;
-assign w_flush_pipeline = i_flush_valid;
+assign w_flush_pipeline = i_flush_valid | w_head_predict_taken_issued;
 
 assign w_inst_queue_pop = w_head_all_inst_issued |
                           w_head_predict_taken_issued;
