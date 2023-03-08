@@ -35,6 +35,9 @@ module scariv_inst_buffer
 
 logic  w_inst_buffer_fire;
 
+logic                                         r_pred_entry_kill_valid;
+logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] r_pred_entry_kill_index;
+
 scariv_pkg::grp_id_t w_inst_arith_pick_up;
 scariv_pkg::grp_id_t w_inst_muldiv_pick_up;
 scariv_pkg::grp_id_t w_inst_mem_pick_up;
@@ -121,7 +124,7 @@ logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
 logic [ 1: 0]                               w_inst_buf_valid;
-scariv_ibuf_pkg::inst_buf_t                      w_inst_buf_data[2];
+scariv_ibuf_pkg::inst_buf_t                 w_inst_buf_data[2];
 
 logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
 logic                                       w_inst_queue_pop;
@@ -147,11 +150,10 @@ assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
-                        w_inst_buf_valid[0] & w_inst_buf_data[0].dead ;
+                        w_inst_buf_valid[0] & r_pred_entry_kill_valid ;
 assign w_flush_pipeline = i_flush_valid;
 
-assign w_inst_queue_pop = w_head_all_inst_issued |
-                          w_head_predict_taken_issued;
+assign w_inst_queue_pop = w_ptr_out_fire;
 
 // Queue Control Pointer
 inoutptr
@@ -304,6 +306,11 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   logic [31: 0]                                w_local_expand_inst;
   logic [$clog2(ic_word_num): 0]               w_rvc_buf_idx_with_offset_b2;
 
+  /* verilator lint_off WIDTH */
+  assign w_inst_buf_ptr_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
+                             w_inst_buffer_outptr_p1;
+  assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
+                             w_inst_buffer_outptr_p1;
 
   assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
   assign w_rvc_buf_idx_with_offset_b2     = w_rvc_buf_idx_with_offset[w_idx] + 1;
@@ -471,7 +478,30 @@ bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1,
 assign w_predict_taken_valid = |(w_inst_disp_mask & w_predict_taken_valid_array);
 
 bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_predict_valid_lsb (.in(w_inst_disp_mask & w_predict_taken_valid_array), .out(w_predict_taken_valid_lsb));
-bit_oh_or #(.T(logic[$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
+bit_oh_or #(.T(logic[$clog2(scariv_pkg::INST_BUF_SIZE)-1:0]), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_pred_entry_kill_valid <= 1'b0;
+    r_pred_entry_kill_index <= 'h0;
+  end else begin
+    if (w_flush_pipeline) begin
+      r_pred_entry_kill_valid <= 1'b0;
+    end else begin
+      if (~r_pred_entry_kill_valid &
+          w_head_predict_taken_issued &
+          (w_pred_lsb_index != r_inst_buffer_outptr)) begin
+        r_pred_entry_kill_valid <= 1'b1;
+        r_pred_entry_kill_index <= w_pred_lsb_index;
+      end else if (r_pred_entry_kill_valid &
+                   w_inst_buf_valid[0] &
+                   (r_pred_entry_kill_index == r_inst_buffer_outptr)) begin
+        r_pred_entry_kill_valid <= 1'b0;
+      end
+    end // else: !if(w_flush_pipeline)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 scariv_pkg::grp_id_t w_bru_predict_disp_valid;
 scariv_pkg::grp_id_t w_disp_special_limit_valid;
@@ -495,7 +525,7 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           w_inst_disp_mask_tmp - 1;
 
 // assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
-assign iq_disp.valid          = |w_inst_disp_mask;
+assign iq_disp.valid          = |w_inst_disp_mask & !r_pred_entry_kill_valid;
 assign iq_disp.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
 assign iq_disp.is_br_included = |w_inst_bru_disped;
 assign iq_disp.tlb_except_valid = w_fetch_except;
