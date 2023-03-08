@@ -58,6 +58,7 @@ logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
+logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 
@@ -186,11 +187,16 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_entry_picked    (w_picked_inst_oh  [s_idx]),
     .o_issue_succeeded (w_entry_finish    [s_idx]),
-    .i_clear_entry     (w_entry_out_ptr_oh[s_idx])
+    .i_clear_entry     (w_entry_finish_oh [s_idx])
+    // .i_clear_entry     (w_entry_out_ptr_oh[s_idx])
   );
 
 end
 endgenerate
+
+// Clear selection
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
+
 
 bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
