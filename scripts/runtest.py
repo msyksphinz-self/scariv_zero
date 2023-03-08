@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 import os
 import subprocess
 import json
@@ -96,7 +96,8 @@ base_dir = "sim_" + isa + "_" + conf
 os.makedirs(base_dir, exist_ok=True)
 os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
-result_dict = {'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'unknown': 0}
+manager = Manager()
+result_dict = manager.dict({'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
 
 def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
@@ -133,14 +134,9 @@ def execute_test(test):
         print ("UNKNOWN")
         result_dict['unknown'] += 1
 
-# initialize worker processes
-def init_worker():
-    # declare scope of a new global variable
-    global result_dict
-
-with Pool(initializer=init_worker, maxtasksperchild=parallel) as pool:
+with Pool(maxtasksperchild=parallel) as pool:
     pool.map(execute_test, select_test)
 
 print (result_dict)
 with open(base_dir + '/result.json', 'w') as f:
-    json.dump(result_dict, f)
+    json.dump(result_dict, f, default=str)
