@@ -466,6 +466,7 @@ typedef struct packed {
   scariv_pkg::grp_id_t   grp_id;
   logic                  oldest_valid;
   reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
   vaddr_t pc_addr;

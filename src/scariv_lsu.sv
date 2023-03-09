@@ -120,16 +120,16 @@ always_comb begin
 
     w_ex0_replay_index_oh           = ldq_replay_if.index_oh;
   end else begin // if (w_ld_selected)
-    w_ex0_replay_issue.valid        = stq_replay_if.valid       ;
-    w_ex0_replay_issue.cmt_id       = stq_replay_if.issue.cmt_id      ;
-    w_ex0_replay_issue.grp_id       = stq_replay_if.issue.grp_id      ;
-    w_ex0_replay_issue.inst         = stq_replay_if.issue.inst        ;
-    w_ex0_replay_issue.rd_regs      = stq_replay_if.issue.rd_regs     ;
-    w_ex0_replay_issue.wr_reg       = 'h0;
+    w_ex0_replay_issue.valid        = stq_replay_if.valid;
+    w_ex0_replay_issue.cmt_id       = stq_replay_if.issue.cmt_id;
+    w_ex0_replay_issue.grp_id       = stq_replay_if.issue.grp_id;
+    w_ex0_replay_issue.inst         = stq_replay_if.issue.inst;
+    w_ex0_replay_issue.rd_regs      = stq_replay_if.issue.rd_regs;
+    w_ex0_replay_issue.wr_reg       = stq_replay_if.issue.wr_reg;
     w_ex0_replay_issue.oldest_valid = stq_replay_if.issue.oldest_valid;
-    w_ex0_replay_issue.cat          = stq_replay_if.issue.cat         ;
+    w_ex0_replay_issue.cat          = stq_replay_if.issue.cat;
 `ifdef SIMULATION
-    w_ex0_replay_issue.kanata_id    = stq_replay_if.issue.kanata_id   ;
+    w_ex0_replay_issue.kanata_id    = stq_replay_if.issue.kanata_id;
 `endif // SIMULATION
     w_ex0_replay_index_oh = stq_replay_if.index_oh;
   end // else: !if(w_ld_selected)

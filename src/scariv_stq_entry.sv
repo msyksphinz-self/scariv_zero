@@ -431,6 +431,11 @@ function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
     ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
   end
 
+  ret.inst.wr_reg.valid  = in.wr_reg.valid;
+  ret.inst.wr_reg.typ    = in.wr_reg.typ;
+  ret.inst.wr_reg.regidx = in.wr_reg.regidx;
+  ret.inst.wr_reg.rnid   = in.wr_reg.rnid;
+
   for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
     ret.inst.rd_regs[rs_idx].valid = 1'b0;
   end
