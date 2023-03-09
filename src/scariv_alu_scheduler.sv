@@ -62,32 +62,33 @@ logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 
-logic                                w_flush_valid;
+logic                           w_flush_valid;
 assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
 
-logic                                w_ignore_disp;
-logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
+logic                           w_ignore_disp;
+logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-inoutptr_var_oh
-  #(.SIZE(ENTRY_SIZE))
-u_req_ptr
-  (
-   .i_clk (i_clk),
-   .i_reset_n(i_reset_n),
-
-   .i_rollback (1'b0),
-
-   .i_in_valid (|i_disp_valid & ~w_ignore_disp),
-   .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
-   .o_in_ptr_oh(w_entry_in_ptr_oh   ),
-
-   .i_out_valid  (|w_entry_finish),
-   .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
-   .o_out_ptr_oh (w_entry_out_ptr_oh                  )
-   );
+// inoutptr_var_oh
+//   #(.SIZE(ENTRY_SIZE))
+// u_req_ptr
+//   (
+//    .i_clk (i_clk),
+//    .i_reset_n(i_reset_n),
+//
+//    .i_rollback (1'b0),
+//
+//    .i_in_valid (|i_disp_valid & ~w_ignore_disp),
+//    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
+//    .o_in_ptr_oh(w_entry_in_ptr_oh   ),
+//
+//    .i_out_valid  (|w_entry_finish),
+//    .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
+//    .o_out_ptr_oh (w_entry_out_ptr_oh                  )
+//    );
+assign w_entry_out_ptr_oh = 'h1;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
 assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
@@ -188,12 +189,13 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_entry_picked    (w_picked_inst_oh  [s_idx]),
     .o_issue_succeeded (w_entry_finish    [s_idx]),
     .i_clear_entry     (w_entry_finish_oh [s_idx])
-    // .i_clear_entry     (w_entry_out_ptr_oh[s_idx])
   );
 
 end
 endgenerate
 
+// Allocate selection
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_alloc_bit_oh  (.in(~w_entry_valid), .i_ptr_oh('h1), .out(w_entry_in_ptr_oh));
 // Clear selection
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
