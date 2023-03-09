@@ -525,7 +525,7 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           w_inst_disp_mask_tmp - 1;
 
 // assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
-assign iq_disp.valid          = |w_inst_disp_mask & !r_pred_entry_kill_valid;
+assign iq_disp.valid          = |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
 assign iq_disp.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
 assign iq_disp.is_br_included = |w_inst_bru_disped;
 assign iq_disp.tlb_except_valid = w_fetch_except;
