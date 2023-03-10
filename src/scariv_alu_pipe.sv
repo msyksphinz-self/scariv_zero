@@ -280,7 +280,7 @@ assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
 
 always_comb begin
   w_ex2_issue_next = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush & (~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred);
   if (br_upd_if.update) begin
     w_ex2_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
