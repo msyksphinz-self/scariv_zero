@@ -41,6 +41,7 @@
 ../src/bit_blshift.sv
 ../src/bit_reverse.sv
 ../src/bit_rotate.sv
+../src/bit_encoder.sv
 ../src/ring_fifo.sv
 ../src/ring_fifo_2ptr.sv
 

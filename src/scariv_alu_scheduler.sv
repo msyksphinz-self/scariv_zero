@@ -69,9 +69,13 @@ logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
 
 logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
+
+bit_encoder #(.WIDTH(ENTRY_SIZE)) u_finish_entry_encoder (.i_in(w_entry_finish_oh), .o_out(w_entry_finish_index[0]));
+assign w_entry_finish_index[1] = 'h0;
 
 scariv_freelist_multiports
   #(.SIZE (ENTRY_SIZE),
@@ -84,9 +88,9 @@ u_entry_freelist
    .i_reset_n(i_reset_n),
 
    .i_push    (|w_entry_finish),
-   .i_push_id (),
+   .i_push_id (w_entry_finish_index),
 
-   .i_pop   (i_disp_valid),
+   .i_pop   (i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}}),
    .o_pop_id(w_entry_load_index),
 
    .o_is_empty()
@@ -128,8 +132,30 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       //        u_credit_return_slave.r_credits,
       //        w_entry_valid_cnt);
     end
+
+    if ($countones(w_entry_valid) + $countones(u_entry_freelist.r_active_bits) != ENTRY_SIZE) begin
+      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contraction\n",
+             $countones(w_entry_valid), $countones(u_entry_freelist.r_active_bits));
+    end
   end
 end
+
+generate for (genvar e_idx = 0; e_idx < ENTRY_SIZE; e_idx++) begin : entry_check_loop
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (u_entry_freelist.r_active_bits[e_idx]) begin
+        // Freelist's active bits should be disabled at Entry
+        if (w_entry_valid[u_entry_freelist.r_freelist[e_idx]]) begin
+          $fatal(0, "entry[%d] is valid, but still in freelist[%d]\n",
+                 u_entry_freelist.r_freelist[e_idx],
+                 e_idx);
+        end
+      end
+    end
+  end // always_ff @ (negedge i_clk, negedge i_reset_n)
+end endgenerate
+
+
 `endif // SIMULATION
 
 bit_brshift
@@ -158,11 +184,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   scariv_pkg::disp_t          w_disp_entry;
   scariv_pkg::grp_id_t        w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    logic [ENTRY_SIZE-1: 0] target_idx_oh;
-    bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
-    // assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & target_idx_oh[s_idx] & (w_entry_load_index == s_idx);
-
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (w_entry_load_index[i_idx] == s_idx);
   end
 
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
