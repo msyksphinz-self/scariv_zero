@@ -74,8 +74,13 @@ logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-bit_encoder #(.WIDTH(ENTRY_SIZE)) u_finish_entry_encoder (.i_in(w_entry_finish_oh), .o_out(w_entry_finish_index[0]));
-assign w_entry_finish_index[1] = 'h0;
+generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : entry_finish_loop
+  if (p_idx == 0) begin
+    bit_encoder #(.WIDTH(ENTRY_SIZE)) u_finish_entry_encoder (.i_in(w_entry_finish_oh), .o_out(w_entry_finish_index[p_idx]));
+  end else begin
+    assign w_entry_finish_index[p_idx] = 'h0;
+  end
+end endgenerate
 
 scariv_freelist_multiports
   #(.SIZE (ENTRY_SIZE),
