@@ -105,31 +105,31 @@ build_espresso:
 	$(MAKE) -C ../tools/espresso-logic/espresso-src
 
 ../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_bru_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_fpu_ctrl.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_reg.sv: ../src/riscv_decoder.json
-	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN)
+	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
 	cd ../src && ../scripts/build_memory_map.rb $< $(RV_XLEN)
 
 FILELIST = sim_filelist.f
 
 .config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
+	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) ISA=$(ISA) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
 .config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
-	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) build_decode_v > /dev/null 2>&1
+	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) ISA=$(ISA) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
