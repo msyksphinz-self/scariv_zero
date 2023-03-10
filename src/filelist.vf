@@ -91,6 +91,7 @@
 ../src/scariv_rename.sv
 ../src/scariv_resource_alloc.sv
 ../src/scariv_freelist.sv
+../src/scariv_freelist_multiports.sv
 ../src/scariv_rename_map.sv
 ../src/scariv_inflight_list.sv
 ../src/scariv_bru_rn_snapshots.sv

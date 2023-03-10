@@ -68,26 +68,31 @@ assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
 logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
 
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
+
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-// inoutptr_var_oh
-//   #(.SIZE(ENTRY_SIZE))
-// u_req_ptr
-//   (
-//    .i_clk (i_clk),
-//    .i_reset_n(i_reset_n),
-//
-//    .i_rollback (1'b0),
-//
-//    .i_in_valid (|i_disp_valid & ~w_ignore_disp),
-//    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
-//    .o_in_ptr_oh(w_entry_in_ptr_oh   ),
-//
-//    .i_out_valid  (|w_entry_finish),
-//    .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
-//    .o_out_ptr_oh (w_entry_out_ptr_oh                  )
-//    );
+scariv_freelist_multiports
+  #(.SIZE (ENTRY_SIZE),
+    .WIDTH ($clog2(ENTRY_SIZE)),
+    .PORTS (IN_PORT_SIZE)
+    )
+u_entry_freelist
+  (
+   .i_clk    (i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_push    (|w_entry_finish),
+   .i_push_id (),
+
+   .i_pop   (i_disp_valid),
+   .o_pop_id(w_entry_load_index),
+
+   .o_is_empty()
+   );
+
+
 assign w_entry_out_ptr_oh = 'h1;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
@@ -155,7 +160,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     logic [ENTRY_SIZE-1: 0] target_idx_oh;
     bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
+    // assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & target_idx_oh[s_idx] & (w_entry_load_index == s_idx);
+
   end
 
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
