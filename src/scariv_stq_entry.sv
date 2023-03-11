@@ -255,8 +255,9 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT  ? STQ_ISSUE_WAIT :
-                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT   ? STQ_ISSUE_WAIT  :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? STQ_ISSUE_WAIT  :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? STQ_WAIT_OLDEST :
                              STQ_DONE_EX3;
         w_entry_next.is_amo           = i_ex2_q_updates.is_amo;
         w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
