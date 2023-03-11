@@ -48,6 +48,8 @@ VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
 VERILATOR_OPTS += -I${VERILATOR_HOME}/include/vltstd
 
+VERILATOR_OPTS += +define+RV_AMO=$(RV_AMO)
+
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
 else
