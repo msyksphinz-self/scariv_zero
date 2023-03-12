@@ -27,6 +27,8 @@ parser.add_argument('--dump_start', dest="dump_start", action="store",
                     default=0, help="FST Dump Start Time")
 parser.add_argument('--cycle', dest="cycle", action="store",
                     default=100000000, help="Cycle Limitation")
+parser.add_argument('--docker', dest="docker", action="store_true",
+                    default=False, help="Use Docker environment")
 
 args = parser.parse_args()
 
@@ -42,13 +44,13 @@ parallel = int(args.parallel)
 fst_dump = args.debug
 dump_start_time = args.dump_start
 cycle    = args.cycle
+use_docker = args.docker
 
 if not (isa[0:4] == "rv32" or isa[0:4] == "rv64") :
     print ("isa option need to start from \"rv32\" or \"rv64\"")
     exit
 else:
     rv_xlen = int(isa[2:4])
-    print(isa_ext)
     if "d" in isa_ext :
         rv_flen = 64
     elif "f" in isa_ext :
@@ -65,9 +67,37 @@ build_command = ["make",
                  "RV_FLEN=" + str(rv_flen),
                  "RV_AMO=" + str(rv_amo)]
 
+current_dir = os.path.abspath("../")
+user_id    = os.getuid()
+group_id   = os.getgid()
+docker_env = os.environ.copy()
+docker_env["CCACHE_DIR"] = "/work/scariv/ccache"
 
-print(build_command)
-build_result = subprocess.run(build_command)
+if use_docker:
+    command = ["docker",
+               "run",
+               "--cap-add=SYS_PTRACE",
+               "--security-opt=seccomp=unconfined",
+               "--rm",
+               "-it",
+               "-v",
+               current_dir + ":/work/scariv",
+               "--user", str(user_id) + ":" + str(group_id),
+               "-w",
+               "/work/scariv/verilator_sim",
+               "msyksphinz/scariv:run_env"] + build_command
+else:
+    command = build_command
+
+build_result = subprocess.Popen(command, env=docker_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+for line in iter(build_result.stdout.readline, ""):
+    print(line, end='')
+
+    with open("build_" + isa + "_" + conf + ".log", 'w') as f:
+        f.write(line)
+
+build_result.wait()
 
 if build_result.returncode != 0 :
     exit()
@@ -101,20 +131,37 @@ result_dict = manager.dict({'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'u
 
 def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
-    command_str = "../../scariv_tb_" + isa + "_" + conf
+    run_command = ["../../scariv_tb_" + isa + "_" + conf]
     if fst_dump :
-        command_str += " --dump "
-        command_str += " --dump_start " + str(dump_start_time)
+        run_command += ["--dump "]
+        run_command += ["--dump_start", str(dump_start_time)]
 
-    command_str += " -c " + str(cycle)
-    command_str += " -e "
-    command_str += test["elf"]
-    command_str += " -o " + output_file
+    run_command += ["-c", str(cycle)]
+    run_command += ["-e"]
+    run_command += [test["elf"]]
+    run_command += ["-o", output_file]
 
     command_log_fp = open(base_dir + '/' + testcase + '/sim.cmd', mode='w')
-    command_log_fp.write (command_str)
+    command_log_fp.write (" ".join(run_command))
     command_log_fp.close()
-    subprocess.run(command_str, shell=True, capture_output=not show_stdout, cwd=base_dir + '/' + testcase)
+
+    if use_docker:
+        command = ["docker",
+                   "run",
+                   "--cap-add=SYS_PTRACE",
+                   "--security-opt=seccomp=unconfined",
+                   "--rm",
+                   "-it",
+                   "-v",
+                   current_dir + ":/work/scariv",
+                   "--user", str(user_id) + ":" + str(group_id),
+                   "-w",
+                   "/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
+                   "msyksphinz/scariv:run_env"] + run_command
+    else:
+        command = run_command
+
+    subprocess.run(command, capture_output=not show_stdout)
     result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
     print (test["name"] + "\t: ", end='')

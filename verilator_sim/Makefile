@@ -155,8 +155,10 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv32_pkg.sv \
 		../src/scariv_$(CONF)_conf_pkg.sv \
-		-f $(FILELIST) \
-		2>&1 | tee build_rv32$(ISA)_$(CONF).log
+		-f $(FILELIST)
+
+# \
+#		2>&1 | tee build_rv32$(ISA)_$(CONF).log
 
 rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
@@ -168,8 +170,10 @@ rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(R
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv64_pkg.sv \
 		../src/scariv_$(CONF)_conf_pkg.sv \
-		-f $(FILELIST) \
-		2>&1 | tee build_rv64$(ISA)_$(CONF).log
+		-f $(FILELIST)
+
+# \
+#		2>&1 | tee build_rv64$(ISA)_$(CONF).log
 
 include conf_tiny.mk
 include conf_small.mk
