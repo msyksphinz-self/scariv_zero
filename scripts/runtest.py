@@ -2,6 +2,7 @@
 
 from multiprocessing import Pool, Manager
 import os
+import sys
 import subprocess
 import json
 import argparse
@@ -70,8 +71,9 @@ build_command = ["make",
 current_dir = os.path.abspath("../")
 user_id    = os.getuid()
 group_id   = os.getgid()
-docker_env = os.environ.copy()
-docker_env["CCACHE_DIR"] = "/work/scariv/ccache"
+env = os.environ.copy()
+if use_docker:
+    env["CCACHE_DIR"] = "/work/scariv/ccache"
 
 if use_docker:
     command = ["docker",
@@ -89,7 +91,7 @@ if use_docker:
 else:
     command = build_command
 
-build_result = subprocess.Popen(command, env=docker_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 for line in iter(build_result.stdout.readline, ""):
     print(line, end='')
@@ -161,7 +163,23 @@ def execute_test(test):
     else:
         command = run_command
 
-    subprocess.run(command, capture_output=not show_stdout)
+    print(command)
+
+    if use_docker:
+        run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True)
+    else:
+        run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
+                                       cwd=base_dir + '/' + testcase)
+
+    for line in iter(run_process.stdout.readline, ""):
+        sys.stdout.write(line)
+
+    try:
+        run_process.wait()
+    except KeyboardInterrupt:
+        run_process.send_signal(subprocess.signal.SIGINT)
+        run_process.wait()
+
     result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
     print (test["name"] + "\t: ", end='')
