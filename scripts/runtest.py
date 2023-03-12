@@ -96,7 +96,7 @@ build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr
 for line in iter(build_result.stdout.readline, ""):
     print(line, end='')
 
-    with open("build_" + isa + "_" + conf + ".log", 'w') as f:
+    with open("build_" + isa + "_" + conf + ".log", 'a') as f:
         f.write(line)
 
 build_result.wait()
@@ -163,8 +163,6 @@ def execute_test(test):
     else:
         command = run_command
 
-    print(command)
-
     if use_docker:
         run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True)
     else:
@@ -173,6 +171,7 @@ def execute_test(test):
 
     for line in iter(run_process.stdout.readline, ""):
         sys.stdout.write(line)
+        sys.stdout.flush()
 
     try:
         run_process.wait()
