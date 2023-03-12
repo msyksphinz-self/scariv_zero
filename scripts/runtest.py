@@ -135,12 +135,11 @@ def execute_test(test):
     output_file = os.path.basename(test["name"]) + "." + isa + "." + conf + ".log"
     run_command = ["../../scariv_tb_" + isa + "_" + conf]
     if fst_dump :
-        run_command += ["--dump "]
+        run_command += ["--dump"]
         run_command += ["--dump_start", str(dump_start_time)]
 
     run_command += ["-c", str(cycle)]
-    run_command += ["-e"]
-    run_command += [test["elf"]]
+    run_command += ["-e", test["elf"]]
     run_command += ["-o", output_file]
 
     command_log_fp = open(base_dir + '/' + testcase + '/sim.cmd', mode='w')
