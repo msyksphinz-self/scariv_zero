@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_lsu
+// TYPE : module
+// ------------------------------------------------------------------------
+// LSU Top Module
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_lsu
   import scariv_lsu_pkg::*;
   #(
@@ -20,9 +29,9 @@ module scariv_lsu
     // cre_ret_if.slave                       cre_ret_if,
 
     // Replay from LDQ
-    lsu_replay_if.slave ldq_replay_if,
+    ldq_replay_if.slave ldq_replay_if,
     // Replay from STQ
-    lsu_replay_if.slave stq_replay_if,
+    stq_replay_if.slave stq_replay_if,
 
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_int_regread_rs2,
@@ -84,19 +93,48 @@ logic [1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[2];
 
 
-scariv_pkg::issue_t w_rv0_issue;
-logic [MEM_Q_SIZE-1: 0] w_rv0_index_oh;
+scariv_lsu_pkg::lsu_pipe_issue_t w_rv0_issue;
+logic [MEM_Q_SIZE-1: 0]          w_rv0_index_oh;
 
-scariv_pkg::issue_t                     w_ex0_replay_issue;
-logic [MEM_Q_SIZE-1: 0] w_ex0_replay_index_oh;
-logic                   w_ld_is_older_than_st;
-logic                   w_ld_selected;
+scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
+logic [MEM_Q_SIZE-1: 0]          w_ex0_replay_index_oh;
+logic                            w_ld_is_older_than_st;
+logic                            w_ld_selected;
 
 assign w_ld_selected = ldq_replay_if.valid & ~stq_replay_if.valid |
                        ldq_replay_if.valid &  stq_replay_if.valid & w_ld_is_older_than_st;
 
-assign w_ex0_replay_issue    = w_ld_selected ? ldq_replay_if.issue    : stq_replay_if.issue   ;
-assign w_ex0_replay_index_oh = w_ld_selected ? ldq_replay_if.index_oh : stq_replay_if.index_oh;
+always_comb begin
+  if (w_ld_selected) begin
+    w_ex0_replay_issue.valid        = ldq_replay_if.valid       ;
+    w_ex0_replay_issue.cmt_id       = ldq_replay_if.issue.cmt_id      ;
+    w_ex0_replay_issue.grp_id       = ldq_replay_if.issue.grp_id      ;
+    w_ex0_replay_issue.inst         = ldq_replay_if.issue.inst        ;
+    w_ex0_replay_issue.rd_regs      = ldq_replay_if.issue.rd_regs     ;
+    w_ex0_replay_issue.wr_reg       = ldq_replay_if.issue.wr_reg      ;
+    w_ex0_replay_issue.oldest_valid = ldq_replay_if.issue.oldest_valid;
+    w_ex0_replay_issue.cat          = ldq_replay_if.issue.cat         ;
+`ifdef SIMULATION
+    w_ex0_replay_issue.kanata_id    = ldq_replay_if.issue.kanata_id   ;
+`endif // SIMULATION
+
+    w_ex0_replay_index_oh           = ldq_replay_if.index_oh;
+  end else begin // if (w_ld_selected)
+    w_ex0_replay_issue.valid        = stq_replay_if.valid;
+    w_ex0_replay_issue.cmt_id       = stq_replay_if.issue.cmt_id;
+    w_ex0_replay_issue.grp_id       = stq_replay_if.issue.grp_id;
+    w_ex0_replay_issue.inst         = stq_replay_if.issue.inst;
+    w_ex0_replay_issue.rd_regs      = stq_replay_if.issue.rd_regs;
+    w_ex0_replay_issue.wr_reg       = stq_replay_if.issue.wr_reg;
+    w_ex0_replay_issue.oldest_valid = stq_replay_if.issue.oldest_valid;
+    w_ex0_replay_issue.cat          = stq_replay_if.issue.cat;
+`ifdef SIMULATION
+    w_ex0_replay_issue.kanata_id    = stq_replay_if.issue.kanata_id;
+`endif // SIMULATION
+    w_ex0_replay_index_oh = stq_replay_if.index_oh;
+  end // else: !if(w_ld_selected)
+end // always_comb
+
 
 scariv_rough_older_check
 u_pipe_age

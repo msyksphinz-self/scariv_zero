@@ -13,6 +13,7 @@
 ../src/scariv_csu_pkg.sv
 ../src/scariv_fpu_pkg.sv
 ../src/scariv_predict_pkg.sv
+../src/scariv_ibuf_pkg.sv
 
 ../src/l2_if.sv
 ../src/disp_if.sv
@@ -40,6 +41,9 @@
 ../src/bit_blshift.sv
 ../src/bit_reverse.sv
 ../src/bit_rotate.sv
+../src/bit_encoder.sv
+../src/ring_fifo.sv
+../src/ring_fifo_2ptr.sv
 
 ../src/encoder.sv
 ../src/inoutptr.sv
@@ -88,6 +92,7 @@
 ../src/scariv_rename.sv
 ../src/scariv_resource_alloc.sv
 ../src/scariv_freelist.sv
+../src/scariv_freelist_multiports.sv
 ../src/scariv_rename_map.sv
 ../src/scariv_inflight_list.sv
 ../src/scariv_bru_rn_snapshots.sv
@@ -97,6 +102,9 @@
 
 ../src/scariv_scheduler.sv
 ../src/scariv_sched_entry.sv
+
+../src/scariv_alu_scheduler.sv
+../src/scariv_alu_sched_entry.sv
 
 ../src/scariv_phy_registers.sv
 
@@ -112,7 +120,7 @@
 ../src/scariv_lsu.sv
 ../src/scariv_lsu_pipe.sv
 ../src/scariv_l1d_mshr.sv
-../src/scariv_miss_entry.sv
+../src/scariv_l1d_mshr_entry.sv
 ../src/scariv_store_requestor.sv
 ../src/scariv_l2_req_arbiter.sv
 ../src/scariv_ldq.sv
@@ -124,7 +132,6 @@
 ../src/scariv_amo_operation.sv
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv
-../src/scariv_addr_check.sv
 ../src/scariv_lsu_lrsc.sv
 
 ../src/scariv_snoop_top.sv

@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_stq_entry
+// TYPE : module
+// ------------------------------------------------------------------------
+// SCARIV Store Queue Entry
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_stq_entry
   import scariv_lsu_pkg::*;
 #(parameter entry_index = 0)
@@ -37,8 +46,6 @@ module scariv_stq_entry
    input scariv_pkg::commit_blk_t               i_commit,
    br_upd_if.slave                            br_upd_if,
 
-   input missu_resolve_t                      i_missu_resolve,
-   input logic                                i_missu_is_full,
    input logic                                i_missu_is_empty,
 
    output logic                               o_stbuf_req_valid,
@@ -49,8 +56,8 @@ module scariv_stq_entry
    output logic                               o_uc_write_req_valid,
    input logic                                i_uc_write_accept,
 
-   // Snoop Interface
-   stq_snoop_if.slave                         stq_snoop_if,
+   // // Snoop Interface
+   // stq_snoop_if.slave                         stq_snoop_if,
 
    done_if.slave    ex3_done_if,
    input logic                                     i_stq_outptr_valid,
@@ -79,12 +86,6 @@ logic                                              w_entry_rs2_ready_next;
 logic                                              w_commit_finish;
 
 logic                                              w_oldest_ready;
-
-logic                                              w_missu_is_conflict;
-logic                                              w_missu_is_full;
-logic                                              w_missu_is_assigned;
-logic                                              w_missu_resolve_match;
-logic                                              w_missu_evict_is_hazard;
 
 always_comb begin
   o_entry = r_entry;
@@ -116,7 +117,7 @@ select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (
 
 
 
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
@@ -125,7 +126,7 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp.br_mask, br_upd_i
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
 assign w_dead_state_clear = i_commit.commit &
-                            (i_commit.cmt_id == r_entry.cmt_id);
+                            (i_commit.cmt_id == r_entry.inst.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
                                 w_rs_phy_hit[1] & !w_rs_mispredicted[1] |
@@ -134,12 +135,12 @@ assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
 scariv_pkg::grp_id_t w_normal_comitted_grp_id;
 scariv_pkg::grp_id_t w_commit_grp_id_mask;
 scariv_pkg::grp_id_t w_done_tree_grp_id;
-assign w_commit_grp_id_mask = r_entry.grp_id - 1;
+assign w_commit_grp_id_mask = r_entry.inst.grp_id - 1;
 assign w_done_tree_grp_id   = w_commit_grp_id_mask & (rob_info_if.done_grp_id & ~rob_info_if.except_valid);
 
 assign w_normal_comitted_grp_id = (w_done_tree_grp_id == w_commit_grp_id_mask);
 
-assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.cmt_id) & w_normal_comitted_grp_id;
+assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.inst.cmt_id) & w_normal_comitted_grp_id;
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & ~r_entry.is_rmw |
                                (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
@@ -147,12 +148,6 @@ assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_fini
                                (r_entry.state == STQ_DEAD      ) & i_stq_outptr_valid ;
 
 
-
-assign w_missu_is_conflict     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
-assign w_missu_is_full         = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
-assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_EVICT_CONFLICT;
-
-assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -203,12 +198,12 @@ always_comb begin
       if (w_entry_flush & w_entry_next.is_valid) begin
         w_entry_next.state = STQ_DEAD;
         // w_entry_next.is_valid = 1'b0;
-        // w_entry_next.cmt_id = 'h0;
-        // w_entry_next.grp_id = 'h0;
+        // w_entry_next.inst.cmt_id = 'h0;
+        // w_entry_next.inst.grp_id = 'h0;
       end else if (i_disp_load) begin
-        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM));
-        w_entry_next.inst = scariv_pkg::assign_issue_op2 (i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                        w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+        w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
+                                       1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
+                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_br_flush) begin
           w_entry_next.state    = STQ_DEAD;
         end
@@ -230,8 +225,8 @@ always_comb begin
                                        STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
-        w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
-        w_entry_next.paddr           = i_ex1_q_updates.paddr;
+        w_entry_next.addr            = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+                                       i_ex1_q_updates.paddr;
         w_entry_next.paddr_valid     = i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
         w_entry_next.size            = i_ex1_q_updates.size;
         w_entry_next.is_uc           = i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE ? i_ex1_q_updates.tlb_uc :
@@ -260,14 +255,10 @@ always_comb begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
       end else if (r_entry.is_rmw & i_ex2_q_valid) begin
-        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT  ? STQ_ISSUE_WAIT :
-                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? STQ_WAIT_OLDEST :
-                             w_missu_is_conflict     ? STQ_MISSU_CONFLICT  :
-                             w_missu_is_full         ? STQ_MISSU_FULL      :
-                             w_missu_evict_is_hazard ? STQ_MISSU_EVICT_HAZ :
-                             w_missu_is_assigned     ? STQ_ISSUE_WAIT    : // When MISSU Assigned, MISSU index return is zero so rerun and ge MISSU index.
+        w_entry_next.state = i_ex2_q_updates.hazard_typ == EX2_HAZ_L1D_CONFLICT   ? STQ_ISSUE_WAIT  :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? STQ_ISSUE_WAIT  :
+                             i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? STQ_WAIT_OLDEST :
                              STQ_DONE_EX3;
-        w_entry_next.missu_haz_index_oh = i_ex2_q_updates.missu_index_oh;
         w_entry_next.is_amo           = i_ex2_q_updates.is_amo;
         w_entry_next.is_lr            = i_ex2_q_updates.is_lr;
         w_entry_next.is_sc            = i_ex2_q_updates.is_sc;
@@ -278,31 +269,6 @@ always_comb begin
       end else begin
         w_entry_next.state = STQ_DONE_EX3;
       end // else: !if(r_entry.is_rmw & i_ex2_q_valid)
-    end
-    STQ_MISSU_CONFLICT : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
-    end
-    STQ_MISSU_FULL : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (!i_missu_is_full) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
-    end
-    STQ_MISSU_EVICT_HAZ : begin
-      if (w_entry_flush) begin
-        w_entry_next.state = STQ_DEAD;
-      end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_haz_index_oh)) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
-      end
     end
     STQ_DONE_EX3 : begin
       // Ex2 --> Ex3 needs due to adjust Load Pipeline with Done Port
@@ -345,8 +311,8 @@ always_comb begin
       end
       // w_entry_next.is_valid = 1'b1;
       // prevent all updates from Pipeline
-      // w_entry_next.cmt_id = 'h0;
-      // w_entry_next.grp_id = 'h0;
+      // w_entry_next.inst.cmt_id = 'h0;
+      // w_entry_next.inst.grp_id = 'h0;
       // end
     end
     STQ_WAIT_ST_DATA : begin
@@ -361,8 +327,8 @@ always_comb begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end // case: STQ_COMMIT
     STQ_WAIT_STBUF : begin
@@ -370,8 +336,8 @@ always_comb begin
         w_entry_next.state = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end
     STQ_DEAD : begin
@@ -379,8 +345,8 @@ always_comb begin
         w_entry_next.state    = STQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end // case: scariv_pkg::DEAD
     default : begin
@@ -403,8 +369,8 @@ end // always_comb
 // Oldest Detection
 // -----------------
 
-assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.inst.grp_id-1) == r_entry.inst.grp_id-1);
 
 assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & i_st_buffer_empty & i_stq_outptr_valid  :
                            (r_entry.state == STQ_COMMIT) & ~r_entry.is_uc & ~r_entry.except_valid;
@@ -412,44 +378,39 @@ assign o_stbuf_req_valid = r_entry.is_rmw ? (r_entry.state == STQ_WAIT_STBUF) & 
 
 assign o_uc_write_req_valid = (r_entry.state == STQ_COMMIT) & r_entry.is_uc & ~r_entry.except_valid;
 
-// Snoop Interface Hit
-/* verilator lint_off WIDTH */
-logic [$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
-assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
-logic                                              w_snoop_s0_hit;
-assign w_snoop_s0_hit = r_entry.paddr_valid &
-                        (r_entry.state == STQ_COMMIT) &
-                        (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
-                         r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    stq_snoop_if.resp_s1_valid <= 1'b0;
-  end else begin
-    stq_snoop_if.resp_s1_valid <= stq_snoop_if.req_s0_valid;
-    stq_snoop_if.resp_s1_be   <= w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
-    stq_snoop_if.resp_s1_data <= w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
+// // Snoop Interface Hit
+// /* verilator lint_off WIDTH */
+// logic [$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)-1: 0] w_entry_snp_addr_diff;
+// assign w_entry_snp_addr_diff = r_entry.paddr - {stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}};
+// // logic                                                w_snoop_s0_hit;
+// assign o_snoop_s0_hit = r_entry.paddr_valid &
+//                         (r_entry.state == STQ_COMMIT) &
+//                         (stq_snoop_if.req_s0_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
+//                          r_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+// assign stq_snoop_if.resp_s1_valid = stq_snoop_if.req_s0_valid;
+// assign stq_snoop_if.resp_s1_be    = w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
+// assign stq_snoop_if.resp_s1_data  = w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
 
 function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                       scariv_pkg::cmt_id_t cmt_id,
                                       scariv_pkg::grp_id_t grp_id,
-                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
+                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
+                                      logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
 
-  ret.cmt_id    = cmt_id;
-  ret.grp_id    = grp_id;
+  ret.inst.inst   = in.inst;
+  ret.inst.cat    = in.cat;
+  ret.inst.cmt_id = cmt_id;
+  ret.inst.grp_id = grp_id;
 
   ret.brtag   = in.brtag;
   ret.br_mask = in.br_mask;
 
   ret.state     = STQ_ISSUE_WAIT;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
-  ret.vaddr     = 'h0;
+  ret.addr        = 'h0;
   ret.paddr_valid = 1'b0;
 
   ret.is_rs2_get  = 1'b0;
@@ -461,6 +422,24 @@ function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.oldest_ready = 1'b0;
   ret.is_committed = 1'b0;
   ret.is_uc = 1'b0;
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.inst.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.inst.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.inst.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.inst.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  ret.inst.wr_reg.valid  = in.wr_reg.valid;
+  ret.inst.wr_reg.typ    = in.wr_reg.typ;
+  ret.inst.wr_reg.regidx = in.wr_reg.regidx;
+  ret.inst.wr_reg.rnid   = in.wr_reg.rnid;
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.inst.rd_regs[rs_idx].valid = 1'b0;
+  end
 
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;

@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_inst_buffer
+// TYPE : module
+// ------------------------------------------------------------------------
+// SCARIV Instruction Buffer
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_inst_buffer
   import scariv_pkg::*;
   import scariv_ic_pkg::*;
@@ -25,6 +34,9 @@ module scariv_inst_buffer
  );
 
 logic  w_inst_buffer_fire;
+
+logic                                         r_pred_entry_kill_valid;
+logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] r_pred_entry_kill_index;
 
 scariv_pkg::grp_id_t w_inst_arith_pick_up;
 scariv_pkg::grp_id_t w_inst_muldiv_pick_up;
@@ -97,47 +109,13 @@ scariv_pkg::grp_id_t w_inst_bru_disped;
 scariv_pkg::grp_id_t w_inst_csu_disped;
 scariv_pkg::grp_id_t w_inst_fpu_disped;
 
-typedef struct packed {
-  logic             pred_taken;
-  logic [1:0]       bim_value;
-  logic             btb_valid;
-  logic             is_cond;
-  scariv_pkg::vaddr_t pred_target_vaddr;
-  scariv_pkg::gshare_bht_t gshare_index;
-  scariv_pkg::gshare_bht_t gshare_bhr;
-} pred_info_t;
+logic w_inst_buf_empty;
+logic w_inst_buf_full;
 
-pred_info_t w_expand_pred_info[scariv_conf_pkg::DISP_SIZE];
+scariv_ibuf_pkg::pred_info_t w_expand_pred_info[scariv_conf_pkg::DISP_SIZE];
 logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] w_expand_pred_index[scariv_conf_pkg::DISP_SIZE];
 
-typedef struct packed {
-  logic                           is_call;
-  logic                           is_ret;
-  logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
-  scariv_pkg::vaddr_t                    pred_target_vaddr;
-} ras_info_t;
-
-ras_info_t w_expand_ras_info[scariv_conf_pkg::DISP_SIZE];
-
-typedef struct packed {
-  logic                                      valid;
-  logic                                      dead;
-  logic [riscv_pkg::VADDR_W-1: 1]            pc;
-  ic_data_t                                  data;
-  ic_strb_t                                  byte_en;
-  logic                                      tlb_except_valid;
-  scariv_pkg::except_t                         tlb_except_cause;
-
-  pred_info_t [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] pred_info;
-  ras_info_t  [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
-`ifdef SIMULATION
-  scariv_pkg::vaddr_t pc_dbg;
-`endif // SIMULATION
-  logic               int_inserted;
-} inst_buf_t;
-
-inst_buf_t r_inst_queue[scariv_pkg::INST_BUF_SIZE];
-logic [scariv_pkg::INST_BUF_SIZE-1:0]      w_inst_buffer_valid;
+scariv_ibuf_pkg::ras_info_t w_expand_ras_info[scariv_conf_pkg::DISP_SIZE];
 
 logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_inptr;
 logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] r_inst_buffer_outptr;
@@ -145,7 +123,11 @@ logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] w_inst_buffer_outptr_p1;
 logic                                       w_ptr_in_fire;
 logic                                       w_ptr_out_fire;
 
+logic [ 1: 0]                               w_inst_buf_valid;
+scariv_ibuf_pkg::inst_buf_t                 w_inst_buf_data[2];
+
 logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
+logic                                       w_inst_queue_pop;
 
 logic                                       w_flush_pipeline;
 
@@ -168,9 +150,10 @@ assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w
 assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & iq_disp.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
-                        r_inst_queue[r_inst_buffer_outptr].valid & r_inst_queue[r_inst_buffer_outptr].dead ;
-
+                        w_inst_buf_valid[0] & r_pred_entry_kill_valid ;
 assign w_flush_pipeline = i_flush_valid;
+
+assign w_inst_queue_pop = w_ptr_out_fire;
 
 // Queue Control Pointer
 inoutptr
@@ -195,60 +178,78 @@ assign w_inst_buffer_outptr_p1 = r_inst_buffer_outptr == scariv_pkg::INST_BUF_SI
 
 assign w_inst_buffer_fire = iq_disp.valid & iq_disp.ready;
 
-generate for (genvar idx = 0; idx < scariv_pkg::INST_BUF_SIZE; idx++) begin : inst_buf_loop
+scariv_ibuf_pkg::inst_buf_t w_inst_buf_load;
 
-  assign w_inst_buffer_valid[idx] = r_inst_queue[idx].valid;
+ring_fifo_2ptr
+  #(.T(scariv_ibuf_pkg::inst_buf_t),
+    .DEPTH (scariv_pkg::INST_BUF_SIZE)
+    )
+u_inst_queue
+(
+ .i_clk (i_clk),
+ .i_reset_n (i_reset_n),
 
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_inst_queue[idx] <= 'h0;
-    end else begin
-      if (w_flush_pipeline) begin
-        r_inst_queue[idx] <= 'h0;
-      end else if (w_ptr_in_fire & (r_inst_buffer_inptr == idx)) begin
-        r_inst_queue[idx].valid   <= 1'b1;
-        r_inst_queue[idx].data    <= i_s2_inst.inst;
-        r_inst_queue[idx].pc      <= i_s2_inst.pc;
-        r_inst_queue[idx].byte_en <= i_s2_inst.byte_en;
-        r_inst_queue[idx].tlb_except_valid <= i_s2_inst.tlb_except_valid;
-        r_inst_queue[idx].tlb_except_cause <= i_s2_inst.tlb_except_cause;
+ .i_clear (w_flush_pipeline),
 
-        for (int b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-          r_inst_queue[idx].pred_info[b_idx].pred_taken        <= gshare_search_if.s2_pred_taken[b_idx];
-          r_inst_queue[idx].pred_info[b_idx].is_cond           <= btb_search_if.s2_is_cond      [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].bim_value         <= gshare_search_if.s2_bim_value [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].btb_valid         <= btb_search_if.s2_hit          [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].pred_target_vaddr <= btb_search_if.s2_target_vaddr [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].gshare_index      <= gshare_search_if.s2_index     [b_idx];
-          r_inst_queue[idx].pred_info[b_idx].gshare_bhr        <= gshare_search_if.s2_bhr       [b_idx];
+ .i_push (w_ptr_in_fire),
+ .i_data (w_inst_buf_load),
 
-          r_inst_queue[idx].ras_info[b_idx].is_call           <= ras_search_if.s2_is_call[b_idx];
-          r_inst_queue[idx].ras_info[b_idx].is_ret            <= ras_search_if.s2_is_ret [b_idx];
-          // r_inst_queue[idx].ras_info[b_idx].ras_index         <= ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
-          // ras_search_if.s2_ras_index;
-          r_inst_queue[idx].ras_info[b_idx].pred_target_vaddr <= ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
-        end // block: pred_loop
+ .o_empty (w_inst_buf_empty),
+ .o_full  (w_inst_buf_full),
+
+ .i_pop  (w_inst_queue_pop),
+
+ .o_valid0 (w_inst_buf_valid[0]),
+ .o_data0  (w_inst_buf_data [0]),
+ .o_valid1 (w_inst_buf_valid[1]),
+ .o_data1  (w_inst_buf_data [1])
+ );
+
+
+always_comb begin
+  w_inst_buf_load.data    = i_s2_inst.inst;
+  w_inst_buf_load.pc      = i_s2_inst.pc;
+  w_inst_buf_load.byte_en = i_s2_inst.byte_en;
+  w_inst_buf_load.tlb_except_valid = i_s2_inst.tlb_except_valid;
+  w_inst_buf_load.tlb_except_cause = i_s2_inst.tlb_except_cause;
+
+  for (int b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
+    w_inst_buf_load.pred_info[b_idx].pred_taken        = gshare_search_if.s2_pred_taken[b_idx];
+    w_inst_buf_load.pred_info[b_idx].is_cond           = btb_search_if.s2_is_cond      [b_idx];
+    w_inst_buf_load.pred_info[b_idx].bim_value         = gshare_search_if.s2_bim_value [b_idx];
+    w_inst_buf_load.pred_info[b_idx].btb_valid         = btb_search_if.s2_hit          [b_idx];
+    w_inst_buf_load.pred_info[b_idx].pred_target_vaddr = btb_search_if.s2_target_vaddr [b_idx];
+    w_inst_buf_load.pred_info[b_idx].gshare_index      = gshare_search_if.s2_index     [b_idx];
+    w_inst_buf_load.pred_info[b_idx].gshare_bhr        = gshare_search_if.s2_bhr       [b_idx];
+
+    w_inst_buf_load.ras_info[b_idx].is_call           = ras_search_if.s2_is_call[b_idx];
+    w_inst_buf_load.ras_info[b_idx].is_ret            = ras_search_if.s2_is_ret [b_idx];
+    // w_inst_buf_load.ras_info[b_idx].ras_index         = ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
+    // ras_search_if.s2_ras_index;
+    w_inst_buf_load.ras_info[b_idx].pred_target_vaddr = ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
+  end // block: pred_loop
 
 `ifdef SIMULATION
-        r_inst_queue[idx].pc_dbg           <= {i_s2_inst.pc, 1'b0};
+  w_inst_buf_load.pc_dbg           = {i_s2_inst.pc, 1'b0};
 `endif // SIMULATION
-        r_inst_queue[idx].int_inserted <= i_s2_inst.int_inserted;
-      end else if ((w_head_all_inst_issued |
-                    w_head_predict_taken_issued |
-                    r_inst_queue[idx].valid & r_inst_queue[idx].dead) & (r_inst_buffer_outptr == idx)) begin
-        r_inst_queue[idx].valid  <= 1'b0;
-        r_inst_queue[idx].dead   <= 1'b0;
-      end else if (w_head_predict_taken_issued & (w_pred_lsb_index == idx)) begin
-        r_inst_queue[idx].dead <= 1'b1;
-      end // if (i_s2_inst.valid & o_inst_ready)
-    end // else: !if(!i_reset_n)
-  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  w_inst_buf_load.int_inserted = i_s2_inst.int_inserted;
+// end else if ((w_head_all_inst_issued |
+//               w_head_predict_taken_issued |
+//               w_inst_buf_load.valid & w_inst_buf_load.dead) & (r_inst_buffer_outptr == idx)) begin
+//   w_inst_buf_load.valid  = 1'b0;
+//   w_inst_buf_load.dead   = 1'b0;
+// end else if (w_head_predict_taken_issued & (w_pred_lsb_index == idx)) begin
+//   w_inst_buf_load.dead = 1'b1;
+//       end // if (i_s2_inst.valid & o_inst_ready)
+//     end // else: !if(!i_reset_n)
+//   end // always_ff @ (posedge i_clk, negedge i_reset_n)
+//
+// end // block: inst_buf_loop
+// endgenerate
+end // always_comb
 
-end // block: inst_buf_loop
-endgenerate
 
-
-assign o_inst_ready = !(&w_inst_buffer_valid);
+assign o_inst_ready = !w_inst_buf_full;
 
 // Extract next start position of decoding
 logic [ic_word_num-1: 0] w_bit_next_start_pos_oh;
@@ -268,7 +269,7 @@ u_select_next_pos (
 );
 
 
-assign w_out_inst_q_pc = r_inst_queue[r_inst_buffer_outptr].pc[1+:$clog2(ic_word_num)];
+assign w_out_inst_q_pc = w_inst_buf_data[0].pc[1+:$clog2(ic_word_num)];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -294,15 +295,16 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   logic [15: 0]                    w_rvc_next_inst;
   logic [ 1: 0]                    w_rvc_byte_en;
   logic [ 1: 0]                    w_rvc_next_byte_en;
+  logic                            w_inst_buf_valid_b0;
+  logic                            w_inst_buf_valid_b2;
+  scariv_ibuf_pkg::inst_buf_t      w_inst_buf_entry_b0;
+  scariv_ibuf_pkg::inst_buf_t      w_inst_buf_entry_b2;
+
   logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr_b0;
   logic [$clog2(scariv_pkg::INST_BUF_SIZE)-1: 0] w_inst_buf_ptr_b2;
 
   logic [31: 0]                                w_local_expand_inst;
   logic [$clog2(ic_word_num): 0]               w_rvc_buf_idx_with_offset_b2;
-
-
-  assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
-  assign w_rvc_buf_idx_with_offset_b2     = w_rvc_buf_idx_with_offset[w_idx] + 1;
 
   /* verilator lint_off WIDTH */
   assign w_inst_buf_ptr_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? r_inst_buffer_outptr :
@@ -310,10 +312,19 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   assign w_inst_buf_ptr_b2 = (w_rvc_buf_idx_with_offset_b2 < ic_word_num) ? r_inst_buffer_outptr :
                              w_inst_buffer_outptr_p1;
 
-  assign w_local_rvc_inst   = r_inst_queue[w_inst_buf_ptr_b0].data   [ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]*16 +:16];
-  assign w_rvc_next_inst    = r_inst_queue[w_inst_buf_ptr_b2].data   [ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0]*16 +:16];
-  assign w_rvc_byte_en      = r_inst_queue[w_inst_buf_ptr_b0].byte_en[ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0] *2 +: 2];
-  assign w_rvc_next_byte_en = r_inst_queue[w_inst_buf_ptr_b2].byte_en[ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0] *2 +: 2];
+  assign w_rvc_buf_idx_with_offset[w_idx] = w_rvc_buf_idx[w_idx] + w_out_inst_q_pc;
+  assign w_rvc_buf_idx_with_offset_b2     = w_rvc_buf_idx_with_offset[w_idx] + 1;
+
+  /* verilator lint_off WIDTH */
+  assign w_inst_buf_valid_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? w_inst_buf_valid[0] : w_inst_buf_valid[1];
+  assign w_inst_buf_entry_b0 = (w_rvc_buf_idx_with_offset[w_idx] < ic_word_num) ? w_inst_buf_data [0] : w_inst_buf_data [1];
+  assign w_inst_buf_valid_b2 = (w_rvc_buf_idx_with_offset_b2     < ic_word_num) ? w_inst_buf_valid[0] : w_inst_buf_valid[1];
+  assign w_inst_buf_entry_b2 = (w_rvc_buf_idx_with_offset_b2     < ic_word_num) ? w_inst_buf_data [0] : w_inst_buf_data [1];
+
+  assign w_local_rvc_inst   = w_inst_buf_entry_b0.data   [ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]*16 +:16];
+  assign w_rvc_next_inst    = w_inst_buf_entry_b2.data   [ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0]*16 +:16];
+  assign w_rvc_byte_en      = w_inst_buf_entry_b0.byte_en[ w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0] *2 +: 2];
+  assign w_rvc_next_byte_en = w_inst_buf_entry_b2.byte_en[ w_rvc_buf_idx_with_offset_b2    [$clog2(ic_word_num)-1:0] *2 +: 2];
   scariv_rvc_expander u_scariv_rvc_expander (.i_rvc_inst(w_local_rvc_inst), .out_32bit(w_local_expand_inst));
 
   always_comb begin
@@ -324,42 +335,42 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       w_expand_inst[w_idx]     = w_local_expand_inst;
       w_rvc_inst[w_idx]    = w_local_rvc_inst;
       w_rvc_valid[w_idx]   = 1'b1;
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid &
-                                 !r_inst_queue[w_inst_buf_ptr_b0].dead &
+      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 &
+                                 !w_inst_buf_entry_b0.dead &
                                  & (&w_rvc_byte_en);
 
-      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].valid &
-                                    !r_inst_queue[w_inst_buf_ptr_b0].dead &
-                                    r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid;
-      w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause;
+      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 &
+                                    !w_inst_buf_entry_b0.dead &
+                                    w_inst_buf_entry_b0.tlb_except_valid;
+      w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
       w_fetch_except_tval [w_idx] = iq_disp.inst[w_idx].pc_addr;
 
-      w_expand_pred_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
+      w_expand_pred_info[w_idx] = w_inst_buf_entry_b0.pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
 
-      w_expand_ras_info[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].ras_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
+      w_expand_ras_info[w_idx] = w_inst_buf_entry_b0.ras_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
     end else begin
       // Normal instruction
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
-      w_expanded_valid[w_idx]  = r_inst_queue[w_inst_buf_ptr_b0].valid & !r_inst_queue[w_inst_buf_ptr_b0].dead &
-                                 r_inst_queue[w_inst_buf_ptr_b2].valid & !r_inst_queue[w_inst_buf_ptr_b2].dead &
+      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead &
+                                 w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
       w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
 
-      w_fetch_except[w_idx]       = r_inst_queue[w_inst_buf_ptr_b0].valid & !r_inst_queue[w_inst_buf_ptr_b0].dead & r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid |
-                                    r_inst_queue[w_inst_buf_ptr_b2].valid & !r_inst_queue[w_inst_buf_ptr_b2].dead & r_inst_queue[w_inst_buf_ptr_b2].tlb_except_valid;
-      w_fetch_except_cause[w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? r_inst_queue[w_inst_buf_ptr_b0].tlb_except_cause :
-                                    r_inst_queue[w_inst_buf_ptr_b2].tlb_except_cause;
-      w_fetch_except_tval [w_idx] = r_inst_queue[w_inst_buf_ptr_b0].tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
+      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead & w_inst_buf_entry_b0.tlb_except_valid |
+                                    w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead & w_inst_buf_entry_b2.tlb_except_valid;
+      w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
+                                    w_inst_buf_entry_b2.tlb_except_cause;
+      w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? iq_disp.inst[w_idx].pc_addr :
                                     iq_disp.inst[w_idx].pc_addr + 'h2;
 
-      w_expand_pred_info [w_idx] = r_inst_queue[w_inst_buf_ptr_b2].pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
+      w_expand_pred_info [w_idx] = w_inst_buf_entry_b2.pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
 
-      w_expand_ras_info  [w_idx] = r_inst_queue[w_inst_buf_ptr_b2].ras_info [w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
+      w_expand_ras_info  [w_idx] = w_inst_buf_entry_b2.ras_info [w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
     end // else: !if(w_rvc_inst[1:0] != 2'b11)
   end // always_comb
 
@@ -467,7 +478,30 @@ bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1,
 assign w_predict_taken_valid = |(w_inst_disp_mask & w_predict_taken_valid_array);
 
 bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_predict_valid_lsb (.in(w_inst_disp_mask & w_predict_taken_valid_array), .out(w_predict_taken_valid_lsb));
-bit_oh_or #(.T(logic[$clog2(scariv_pkg::INST_BUF_SIZE)-1:0] ), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
+bit_oh_or #(.T(logic[$clog2(scariv_pkg::INST_BUF_SIZE)-1:0]), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_inst_buf_pred_index (.i_oh(w_predict_taken_valid_lsb), .i_data(w_expand_pred_index), .o_selected(w_pred_lsb_index));
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_pred_entry_kill_valid <= 1'b0;
+    r_pred_entry_kill_index <= 'h0;
+  end else begin
+    if (w_flush_pipeline) begin
+      r_pred_entry_kill_valid <= 1'b0;
+    end else begin
+      if (~r_pred_entry_kill_valid &
+          w_head_predict_taken_issued &
+          (w_pred_lsb_index != r_inst_buffer_outptr)) begin
+        r_pred_entry_kill_valid <= 1'b1;
+        r_pred_entry_kill_index <= w_pred_lsb_index;
+      end else if (r_pred_entry_kill_valid &
+                   w_inst_buf_valid[0] &
+                   (r_pred_entry_kill_index == r_inst_buffer_outptr)) begin
+        r_pred_entry_kill_valid <= 1'b0;
+      end
+    end // else: !if(w_flush_pipeline)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 scariv_pkg::grp_id_t w_bru_predict_disp_valid;
 scariv_pkg::grp_id_t w_disp_special_limit_valid;
@@ -490,13 +524,14 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           |w_disp_special_csu_valid ? w_inst_csu_disp - 1 :
                           w_inst_disp_mask_tmp - 1;
 
-assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
-assign iq_disp.pc_addr        = r_inst_queue[r_inst_buffer_outptr].pc + r_head_start_pos;
+// assign iq_disp.valid          = |w_inst_disp_mask & !w_flush_pipeline;
+assign iq_disp.valid          = |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
+assign iq_disp.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
 assign iq_disp.is_br_included = |w_inst_bru_disped;
 assign iq_disp.tlb_except_valid = w_fetch_except;
 assign iq_disp.tlb_except_cause = w_fetch_except_cause;
 assign iq_disp.tlb_except_tval  = w_fetch_except_tval;
-assign iq_disp.int_inserted  = r_inst_queue[r_inst_buffer_outptr].int_inserted;
+assign iq_disp.int_inserted  = w_inst_buf_data[0].int_inserted;
 
 // -------------------------------
 // Dispatch Inst, Resource Count
@@ -592,7 +627,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_kanata_cycle_count <= 'h0;
   end else begin
     if (iq_disp.valid & iq_disp.ready) begin
-      r_kanata_cycle_count <= r_kanata_cycle_count + $countones(w_valid_grp_id);
+      r_kanata_cycle_count <= r_kanata_cycle_count + $countones(u_inst_queue.r_valids);
     end
   end
 end
@@ -606,7 +641,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       iq_disp.inst[d_idx].inst = w_expand_inst[d_idx];
       iq_disp.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
       iq_disp.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
-      iq_disp.inst[d_idx].pc_addr = {r_inst_queue[r_inst_buffer_outptr].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
+      iq_disp.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       iq_disp.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
@@ -766,16 +801,16 @@ u_ras
 function void dump_json(int fp);
   $fwrite(fp, "  \"scariv_inst_buffer\" : {\n");
 
-  for(int idx=0; idx < scariv_pkg::INST_BUF_SIZE; idx++) begin
-    if (r_inst_queue[idx].valid) begin
-      $fwrite(fp, "    \"r_inst_queue[%d]\" : {\n", idx);
-      $fwrite(fp, "      valid     : \"%d\",\n", r_inst_queue[idx].valid);
-      $fwrite(fp, "      data    : \"0x%x\",\n", r_inst_queue[idx].data);
-      $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc << 1);
-      $fwrite(fp, "      byte_en : \"0x%x\",\n", r_inst_queue[idx].byte_en);
-      $fwrite(fp, "    },\n");
-    end
-  end
+  // for(int idx=0; idx < scariv_pkg::INST_BUF_SIZE; idx++) begin
+  //   if (r_inst_queue[idx].valid) begin
+  //     $fwrite(fp, "    \"r_inst_queue[%d]\" : {\n", idx);
+  //     $fwrite(fp, "      valid     : \"%d\",\n", r_inst_queue[idx].valid);
+  //     $fwrite(fp, "      data    : \"0x%x\",\n", r_inst_queue[idx].data);
+  //     $fwrite(fp, "      pc      : \"0x%x\",\n", r_inst_queue[idx].pc << 1);
+  //     $fwrite(fp, "      byte_en : \"0x%x\",\n", r_inst_queue[idx].byte_en);
+  //     $fwrite(fp, "    },\n");
+  //   end
+  // end
 
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     if (iq_disp.inst[d_idx].valid) begin
@@ -832,11 +867,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_sim_ibuf_issue_count <= 'h0;
       r_sim_ibuf_issue_inst_count <= 'h0;
     end else begin
-      if (|w_inst_buffer_valid) begin
-        if (&w_inst_buffer_valid) begin
+      if (!w_inst_buf_empty) begin
+        if (w_inst_buf_full) begin
           r_sim_ibuf_max_period  <= r_sim_ibuf_max_period + 'h1;
         end
-        r_sim_ibuf_entry_count <= r_sim_ibuf_entry_count + $countones(w_inst_buffer_valid);
+        r_sim_ibuf_entry_count <= r_sim_ibuf_entry_count + $countones(u_inst_queue.r_valids);
       end
       if (iq_disp.valid & iq_disp.ready) begin
         r_sim_ibuf_issue_count <= r_sim_ibuf_issue_count + 'h1;

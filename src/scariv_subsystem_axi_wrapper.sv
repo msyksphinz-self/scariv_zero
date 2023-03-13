@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_subsystem_axi_wrapper
+// TYPE : module
+// ------------------------------------------------------------------------
+// SCARIV Subsystem AXI Wrapper
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_subsystem_axi_wrapper
   (
    input logic   i_clk,
@@ -20,8 +29,8 @@ module scariv_subsystem_axi_wrapper
    output logic                     axi_if_w_valid,
    input  logic                     axi_if_w_ready,
    output logic                     axi_if_w_last,
-   output scariv_lsu_pkg::ic_data_t axi_if_w_data,
-   output scariv_lsu_pkg::ic_strb_t axi_if_w_strb,
+   output scariv_pkg::ic_data_t     axi_if_w_data,
+   output scariv_pkg::ic_strb_t     axi_if_w_strb,
 
    input  logic                                      axi_if_b_valid,
    output logic                                      axi_if_b_ready,
@@ -46,7 +55,7 @@ module scariv_subsystem_axi_wrapper
    output logic                                     axi_if_r_ready,
    input logic                                      axi_if_r_last,
    input logic [1:0]                                axi_if_r_resp,
-   input scariv_lsu_pkg::ic_data_t                  axi_if_r_data,
+   input scariv_pkg::ic_data_t                      axi_if_r_data,
    input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id,
 
    // External Interrupts
@@ -114,8 +123,8 @@ end // always_ff @ (posedge i_clk, i_reset_n)
 // L2 Interconnection
 // -------------------
 assign axi_if_aw_valid  = w_wr_valid & ~r_aw_fire_hold;
-assign axi_if_aw_addr   = {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ICACHE_DATA_W/8)],
-                           {$clog2(scariv_pkg::ICACHE_DATA_W/8){1'b0}}};
+assign axi_if_aw_addr   = {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)],
+                           {$clog2(scariv_conf_pkg::ICACHE_DATA_W/8){1'b0}}};
 assign axi_if_aw_id     = r_l2_tag;
 assign axi_if_aw_last   = 1'b1;
 assign axi_if_aw_burst  = 2'b0;
@@ -129,8 +138,8 @@ assign axi_if_aw_region = 1'b0;
 
 assign axi_if_w_valid = w_wr_valid & ~r_w_fire_hold;
 assign axi_if_w_last  = 1'b1;
-assign axi_if_w_data  = r_l2_payload.data    << {r_l2_payload.addr[$clog2(scariv_pkg::ICACHE_DATA_W/8)-1: 0], 3'b000};
-assign axi_if_w_strb  = r_l2_payload.byte_en <<  r_l2_payload.addr[$clog2(scariv_pkg::ICACHE_DATA_W/8)-1: 0];
+assign axi_if_w_data  = r_l2_payload.data    << {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)], 3'b000};
+assign axi_if_w_strb  = r_l2_payload.byte_en <<  r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)];
 
 assign axi_if_b_ready = 1'b1;
 

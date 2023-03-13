@@ -1,3 +1,11 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_pkg
+// TYPE : package
+// ------------------------------------------------------------------------
+// SCARIV Main Package
+// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
+
 `default_nettype none
 
 package scariv_pkg;
@@ -11,6 +19,8 @@ package scariv_pkg;
   localparam PC_INIT_VAL = 'h0000_0000;
 
   localparam INST_BUF_SIZE = scariv_conf_pkg::INST_BUF_SIZE;
+
+  localparam MAX_ADDR_W = VADDR_W > PADDR_W ? VADDR_W : PADDR_W;
 
   localparam REL_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
@@ -60,6 +70,7 @@ typedef logic [ALEN_W/8-1: 0] alenb_t;
 
 typedef logic [riscv_pkg::VADDR_W-1: 0] vaddr_t;
 typedef logic [riscv_pkg::PADDR_W-1: 0] paddr_t;
+typedef logic [MAX_ADDR_W-1: 0]         maxaddr_t;
 
 typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
@@ -241,9 +252,9 @@ typedef struct packed {
     brtag_t        brtag;
 
 `ifdef SIMULATION
-  logic                                                          mispredicted;
-  logic [RAS_W-1: 0]             ras_index;
-  vaddr_t                                pred_vaddr;
+  logic              mispredicted;
+  logic [RAS_W-1: 0] ras_index;
+  vaddr_t            pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
 
@@ -256,13 +267,49 @@ typedef enum logic [ 2: 0] {
    DEAD_EXT_KILL     = 5
 } dead_reason_t;
 
+typedef struct packed {
+  logic              valid;
+  reg_t              typ;
+  logic [4:0]        regidx;
+  rnid_t rnid;
+} reg_wr_issue_t;
+
+typedef struct packed {
+  logic              valid;
+  reg_t              typ;
+  logic [4:0]        regidx;
+  rnid_t rnid;
+  logic              ready;
+  logic              predict_ready;
+} reg_rd_issue_t;
+
+// Instruction's static information from decoder
+typedef struct packed {
+  logic              valid;
+  vaddr_t            pc_addr;
+  brmask_t           br_mask;
+  inst_cat_t         cat;
+  brtag_t            brtag;
+  reg_wr_disp_t      wr_reg;
+  logic [RAS_W-1: 0] ras_index;
+  logic              is_call;
+  logic              is_ret;
+`ifdef SIMULATION
+  logic              rvc_inst_valid;
+  logic [15: 0]      rvc_inst;
+  logic [31: 0]      inst;
+  logic [63: 0]      kanata_id;
+`endif // SIMULATION
+} rob_static_info_t;
+
   typedef struct packed {
     logic          valid;
 
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
     grp_id_t grp_id;
 
-    disp_t[scariv_conf_pkg::DISP_SIZE-1:0] inst;
+    rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
+    // disp_t[scariv_conf_pkg::DISP_SIZE-1:0] inst;
 
     grp_id_t done_grp_id;
 
@@ -286,22 +333,6 @@ typedef enum logic [ 2: 0] {
     dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
 `endif // SIMULATION
   } rob_entry_t;
-
-typedef struct packed {
-  logic              valid;
-  reg_t              typ;
-  logic [4:0]        regidx;
-  rnid_t rnid;
-} reg_wr_issue_t;
-
-typedef struct packed {
-  logic              valid;
-  reg_t              typ;
-  logic [4:0]        regidx;
-  rnid_t rnid;
-  logic              ready;
-  logic              predict_ready;
-} reg_rd_issue_t;
 
   typedef struct packed {
     logic   valid;
@@ -450,7 +481,7 @@ typedef struct packed {
 } done_payload_t;
 
 
-  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD } sched_state_t;
+  typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD, SCHED_CLEAR } sched_state_t;
 
   typedef struct packed {
     logic  valid;

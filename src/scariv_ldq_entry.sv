@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_ldq_entry
+// TYPE : module
+// ------------------------------------------------------------------------
+// LSU Load Queue Entry
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_ldq_entry
   import scariv_lsu_pkg::*;
 #(parameter entry_index = 0)
@@ -83,7 +92,7 @@ logic [ 1: 0]                                    w_rs_mispredicted;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
@@ -94,7 +103,7 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp.br_mask, br_upd_i
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_flush = w_load_commit_flush | w_load_br_flush;
 
-assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
+assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
 
 assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
 assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
@@ -107,13 +116,13 @@ assign w_missu_resolve_match = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFL
 
 assign o_entry_finish = (r_entry.state == LDQ_WAIT_ENTRY_CLR) & i_ldq_outptr_valid;
 
-assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.cmt_id);
+assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
 
 assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
                        all_operand_ready(r_entry);
 
-assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.inst.grp_id-1) == r_entry.inst.grp_id-1);
 
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
@@ -162,12 +171,28 @@ always_comb begin
       if (w_entry_flush & r_entry.is_valid) begin
         w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         // w_entry_next.is_valid = 1'b0;
-        // w_entry_next.cmt_id = 'h0;
-        // w_entry_next.grp_id = 'h0;
+        // w_entry_next.inst.cmt_id = 'h0;
+        // w_entry_next.inst.grp_id = 'h0;
       end else if (i_disp_load) begin
         w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM));
-        w_entry_next.inst = scariv_pkg::assign_issue_op2(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+        for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+          w_entry_next.inst.rd_regs[rs_idx].valid         = i_disp.rd_regs[rs_idx].valid;
+          w_entry_next.inst.rd_regs[rs_idx].typ           = i_disp.rd_regs[rs_idx].typ;
+          w_entry_next.inst.rd_regs[rs_idx].regidx        = i_disp.rd_regs[rs_idx].regidx;
+          w_entry_next.inst.rd_regs[rs_idx].rnid          = i_disp.rd_regs[rs_idx].rnid;
+          w_entry_next.inst.rd_regs[rs_idx].ready         = i_disp.rd_regs[rs_idx].ready | w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx] | w_rs_phy_hit[rs_idx];
+          w_entry_next.inst.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
+        end
+
+        for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+          w_entry_next.inst.rd_regs[rs_idx].valid = 1'b0;
+        end
+
+        w_entry_next.inst.wr_reg.valid  = i_disp.wr_reg.valid;
+        w_entry_next.inst.wr_reg.typ    = i_disp.wr_reg.typ;
+        w_entry_next.inst.wr_reg.regidx = i_disp.wr_reg.regidx;
+        w_entry_next.inst.wr_reg.rnid   = i_disp.wr_reg.rnid;
+
         if (w_load_flush) begin
           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
         end
@@ -194,8 +219,8 @@ always_comb begin
                                          LDQ_EX2_RUN;
           w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
-          w_entry_next.vaddr           = i_ex1_q_updates.vaddr;
-          w_entry_next.paddr           = i_ex1_q_updates.paddr;
+          w_entry_next.addr            = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+                                         i_ex1_q_updates.paddr;
           // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
           // w_entry_next.inst            = i_ex1_q_updates.inst;
           w_entry_next.size            = i_ex1_q_updates.size;
@@ -291,8 +316,8 @@ always_comb begin
         w_entry_next.state = LDQ_INIT;
         w_entry_next.is_valid = 1'b0;
         // prevent all updates from Pipeline
-        w_entry_next.cmt_id = 'h0;
-        w_entry_next.grp_id = 'h0;
+        w_entry_next.inst.cmt_id = 'h0;
+        w_entry_next.inst.grp_id = 'h0;
       end
     end // case: LDQ_WAIT_ENTRY_CLR
     default : begin
@@ -332,8 +357,11 @@ function ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
   ldq_entry_t ret;
 
   ret.is_valid  = 1'b1;
-  ret.cmt_id    = cmt_id;
-  ret.grp_id    = grp_id;
+
+  ret.inst.inst      = in.inst;
+  ret.inst.cat       = in.cat;
+  ret.inst.cmt_id    = cmt_id;
+  ret.inst.grp_id    = grp_id;
 
   ret.brtag   = in.brtag;
   ret.br_mask = in.br_mask;
@@ -341,7 +369,7 @@ function ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
   ret.state     = LDQ_ISSUE_WAIT;
   ret.is_get_data = 1'b0;
   ret.pipe_sel_idx_oh = pipe_sel_oh;
-  ret.vaddr     = 'h0;
+  ret.addr     = 'h0;
   ret.except_valid = 1'b0;
 
 `ifdef SIMULATION

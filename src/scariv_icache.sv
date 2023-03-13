@@ -1,3 +1,14 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_icache
+// TYPE : module
+// ------------------------------------------------------------------------
+// Instruction Cache
+// ------------------------------------------------------------------------
+// s0: Request receive, send request into TAG and DATA
+// s1: Get response from TAGRAM and DATA
+// s2: Back to response
+// ------------------------------------------------------------------------
+
 // `default_nettype none
 
 module scariv_icache

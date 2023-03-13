@@ -1,3 +1,20 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_lsu_top
+// TYPE : package
+// ------------------------------------------------------------------------
+// LSU Top
+// ------------------------------------------------------------------------
+// SubUnit
+//  LSU SubUnit
+//  LDQ
+//  STQ
+//  MSHR
+//  Store Requseter for L2
+//  ST-Buffer for Store Merge
+//  LR/SC Unit
+//  DCache
+// ------------------------------------------------------------------------
+
 module scariv_lsu_top
   import scariv_lsu_pkg::*;
 (
@@ -88,8 +105,8 @@ ex1_q_update_t        w_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 ex2_q_update_t        w_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 
-lsu_replay_if w_ldq_replay[scariv_conf_pkg::LSU_INST_NUM]();
-lsu_replay_if w_stq_replay[scariv_conf_pkg::LSU_INST_NUM]();
+ldq_replay_if w_ldq_replay[scariv_conf_pkg::LSU_INST_NUM]();
+stq_replay_if w_stq_replay[scariv_conf_pkg::LSU_INST_NUM]();
 
 done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
 
@@ -263,8 +280,6 @@ scariv_stq
 
  .ex3_done_if (w_ex3_done_if),
 
- .i_missu_resolve  (w_missu_resolve ),
- .i_missu_is_full  (w_missu_is_full ),
  .i_missu_is_empty (w_missu_is_empty),
 
  .i_commit (i_commit),

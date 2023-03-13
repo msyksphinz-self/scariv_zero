@@ -1,3 +1,13 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_rob
+// TYPE : module
+// ------------------------------------------------------------------------
+// Reorder Buffer
+// ------------------------------------------------------------------------
+// Input: Logical Register Index
+// Output: Physical Register Index
+// ------------------------------------------------------------------------
+
 module scariv_rob
   import scariv_conf_pkg::*;
   import scariv_pkg::*;
@@ -108,7 +118,24 @@ function automatic rob_entry_t assign_rob_entry();
   ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
   ret.grp_id      = w_disp_grp_id;
   ret.pc_addr     = sc_disp.pc_addr;
-  ret.inst        = sc_disp.inst;
+  for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
+    ret.inst[d_idx].valid          = sc_disp.inst[d_idx].valid         ;
+    ret.inst[d_idx].pc_addr        = sc_disp.inst[d_idx].pc_addr       ;
+    ret.inst[d_idx].br_mask        = sc_disp.inst[d_idx].br_mask       ;
+    ret.inst[d_idx].cat            = sc_disp.inst[d_idx].cat           ;
+    ret.inst[d_idx].brtag          = sc_disp.inst[d_idx].brtag         ;
+    ret.inst[d_idx].wr_reg         = sc_disp.inst[d_idx].wr_reg        ;
+    ret.inst[d_idx].ras_index      = sc_disp.inst[d_idx].ras_index     ;
+    ret.inst[d_idx].is_call        = sc_disp.inst[d_idx].is_call       ;
+    ret.inst[d_idx].is_ret         = sc_disp.inst[d_idx].is_ret        ;
+`ifdef SIMULATION
+    ret.inst[d_idx].rvc_inst_valid = sc_disp.inst[d_idx].rvc_inst_valid;
+    ret.inst[d_idx].rvc_inst       = sc_disp.inst[d_idx].rvc_inst      ;
+    ret.inst[d_idx].inst           = sc_disp.inst[d_idx].inst          ;
+    ret.inst[d_idx].kanata_id      = sc_disp.inst[d_idx].kanata_id     ;
+`endif // SIMULATION
+  end // block: inst_loop
+
   ret.br_upd_info = 'h0;
   ret.fflags_update_valid = 'h0;
 

@@ -202,7 +202,7 @@ interface missu_dc_search_if;
 
 logic valid;
 logic [scariv_pkg::MISSU_ENTRY_W-1: 0] index;
-scariv_lsu_pkg::miss_entry_t missu_entry;
+scariv_lsu_pkg::mshr_entry_t missu_entry;
 
 modport master (
   output valid,
@@ -246,12 +246,12 @@ modport slave (
 endinterface // missu_pa_search_if
 
 
-interface lsu_replay_if;
+interface ldq_replay_if;
 
-logic    valid;
-scariv_pkg::issue_t issue;
+logic                                   valid;
+scariv_lsu_pkg::ldq_static_info_t       issue;
 logic [scariv_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
-logic                                 conflict;
+logic                                   conflict;
 
 modport master (
   output valid,
@@ -267,7 +267,30 @@ modport slave (
   output conflict
 );
 
-endinterface // lsu_replay_if
+endinterface // ldq_replay_if
+
+interface stq_replay_if;
+
+logic                                   valid;
+scariv_lsu_pkg::stq_static_info_t       issue;
+logic [scariv_lsu_pkg::MEM_Q_SIZE-1: 0] index_oh;
+logic                                   conflict;
+
+modport master (
+  output valid,
+  output issue,
+  output index_oh,
+  input  conflict
+);
+
+modport slave (
+  input  valid,
+  input  issue,
+  input  index_oh,
+  output conflict
+);
+
+endinterface // stq_replay_if
 
 
 interface fwd_check_if;

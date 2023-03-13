@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : SCARIV Branch Target Buffer(BTB)
+// NAME : scariv_btb
 // TYPE : module
 // ------------------------------------------------------------------------
 // Branch Target Buffer, mainly composed with SRAM

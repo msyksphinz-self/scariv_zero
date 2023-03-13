@@ -5,7 +5,7 @@ services:
     build:
       context: "."
       dockerfile: "Dockerfile.test"
-    image: msrh-test
+    image: scariv-test
     container_name: top-test
     environment:
         TZ: 'Asia/Tokyo'

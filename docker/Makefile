@@ -3,8 +3,8 @@ build-env:
 	docker push msyksphinz/scariv:run_env
 
 run:
-	docker-compose -f top-test.yml build
-	docker-compose -f top-test.yml up --abort-on-container-exit
+	docker compose -f ../top-test.yml build
+	docker compose -f ../top-test.yml up --abort-on-container-exit
 
 debug:
 	cd ../; \

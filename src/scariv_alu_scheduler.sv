@@ -1,20 +1,16 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_scheduler
+// NAME : scariv_alu_scheduler
 // TYPE : module
 // ------------------------------------------------------------------------
-// SCARIV Instruction Scheduler
+// Scheduler for ALU
 // ------------------------------------------------------------------------
+//
 // ------------------------------------------------------------------------
 
-module scariv_scheduler
+module scariv_alu_scheduler
   #(
-    parameter IS_STORE = 0,
-    parameter IS_BRANCH = 1'b0,
     parameter ENTRY_SIZE = 32,
-    parameter IN_PORT_SIZE = 2,
-    parameter EN_OLDEST = 0,
-    parameter NUM_OPERANDS = 2,
-    parameter NUM_DONE_PORT = 1
+    parameter IN_PORT_SIZE = 2
     )
 (
  input logic                           i_clk,
@@ -25,7 +21,7 @@ module scariv_scheduler
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input scariv_pkg::cmt_id_t  i_cmt_id,
- input scariv_pkg::grp_id_t i_grp_id[IN_PORT_SIZE],
+ input scariv_pkg::grp_id_t  i_grp_id[IN_PORT_SIZE],
  scariv_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
 
  cre_ret_if.slave                      cre_ret_if,
@@ -40,10 +36,6 @@ module scariv_scheduler
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
  input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-
- done_if.slave                         pipe_done_if[NUM_DONE_PORT],
-
- output scariv_pkg::done_rpt_t           o_done_report,
 
  // Commit notification
  input scariv_pkg::commit_blk_t          i_commit,
@@ -66,36 +58,51 @@ logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
+logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
-scariv_pkg::done_rpt_t            w_entry_done_report[ENTRY_SIZE];
 
-logic                                w_flush_valid;
+logic                           w_flush_valid;
 assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
 
-logic                                w_ignore_disp;
-logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
+logic                           w_ignore_disp;
+logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
+
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
 
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-inoutptr_var_oh
-  #(.SIZE(ENTRY_SIZE))
-u_req_ptr
+generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : entry_finish_loop
+  if (p_idx == 0) begin
+    bit_encoder #(.WIDTH(ENTRY_SIZE)) u_finish_entry_encoder (.i_in(w_entry_finish_oh), .o_out(w_entry_finish_index[p_idx]));
+  end else begin
+    assign w_entry_finish_index[p_idx] = 'h0;
+  end
+end endgenerate
+
+scariv_freelist_multiports
+  #(.SIZE (ENTRY_SIZE),
+    .WIDTH ($clog2(ENTRY_SIZE)),
+    .PORTS (IN_PORT_SIZE)
+    )
+u_entry_freelist
   (
-   .i_clk (i_clk),
+   .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_rollback (1'b0),
+   .i_push    (|w_entry_finish),
+   .i_push_id (w_entry_finish_index),
 
-   .i_in_valid (|i_disp_valid & ~w_ignore_disp),
-   .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
-   .o_in_ptr_oh(w_entry_in_ptr_oh   ),
+   .i_pop   (i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}}),
+   .o_pop_id(w_entry_load_index),
 
-   .i_out_valid  (|w_entry_finish),
-   .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
-   .o_out_ptr_oh (w_entry_out_ptr_oh                  )
+   .o_is_empty()
    );
+
+
+assign w_entry_out_ptr_oh = 'h1;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
 assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
@@ -130,8 +137,30 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       //        u_credit_return_slave.r_credits,
       //        w_entry_valid_cnt);
     end
+
+    if ($countones(w_entry_valid) + $countones(u_entry_freelist.r_active_bits) != ENTRY_SIZE) begin
+      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contraction\n",
+             $countones(w_entry_valid), $countones(u_entry_freelist.r_active_bits));
+    end
   end
 end
+
+generate for (genvar e_idx = 0; e_idx < ENTRY_SIZE; e_idx++) begin : entry_check_loop
+  always_ff @ (negedge i_clk, negedge i_reset_n) begin
+    if (i_reset_n) begin
+      if (u_entry_freelist.r_active_bits[e_idx]) begin
+        // Freelist's active bits should be disabled at Entry
+        if (w_entry_valid[u_entry_freelist.r_freelist[e_idx]]) begin
+          $fatal(0, "entry[%d] is valid, but still in freelist[%d]\n",
+                 u_entry_freelist.r_freelist[e_idx],
+                 e_idx);
+        end
+      end
+    end
+  end // always_ff @ (negedge i_clk, negedge i_reset_n)
+end endgenerate
+
+
 `endif // SIMULATION
 
 bit_brshift
@@ -160,31 +189,13 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   scariv_pkg::disp_t          w_disp_entry;
   scariv_pkg::grp_id_t        w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    logic [ENTRY_SIZE-1: 0] target_idx_oh;
-    bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (w_entry_load_index[i_idx] == s_idx);
   end
 
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  logic [NUM_DONE_PORT-1: 0]  w_pipe_done_valid;
-  scariv_pkg::done_payload_t    w_done_payloads[NUM_DONE_PORT];
-  scariv_pkg::done_payload_t    w_done_payload_oh;
-  for (genvar p_idx = 0; p_idx < NUM_DONE_PORT; p_idx++) begin : done_port_loop
-    assign w_pipe_done_valid[p_idx] = pipe_done_if[p_idx].done & pipe_done_if[p_idx].index_oh[s_idx];
-    assign w_done_payloads  [p_idx] = pipe_done_if[p_idx].payload;
-  end
-
-  bit_oh_or #(.T(scariv_pkg::done_payload_t), .WORDS(NUM_DONE_PORT)) u_done_port (.i_oh(w_pipe_done_valid), .i_data(w_done_payloads), .o_selected(w_done_payload_oh));
-
-  scariv_sched_entry
-    #(
-      .IS_STORE(IS_STORE),
-      .IS_BRANCH (IS_BRANCH),
-      .EN_OLDEST(EN_OLDEST),
-      .NUM_OPERANDS(NUM_OPERANDS)
-      )
+  scariv_alu_sched_entry
   u_sched_entry(
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
@@ -206,23 +217,22 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_phy_wr(i_phy_wr),
     .i_mispred_lsu(i_mispred_lsu),
 
-    .i_pipe_done         (|w_pipe_done_valid),
-    .i_pipe_done_payload (w_done_payload_oh),
-
-    .i_commit (i_commit),
+    .i_commit  (i_commit),
     .br_upd_if (br_upd_if),
 
-    .i_entry_picked    (w_picked_inst_oh[s_idx]),
-    .o_entry_wait_complete (w_entry_wait_complete[s_idx]),
-    .o_entry_finish    (w_entry_finish[s_idx]),
-    .o_done_report     (w_entry_done_report[s_idx]),
-    .i_done_accept     (w_entry_done_oh[s_idx])
+    .i_entry_picked    (w_picked_inst_oh  [s_idx]),
+    .o_issue_succeeded (w_entry_finish    [s_idx]),
+    .i_clear_entry     (w_entry_finish_oh [s_idx])
   );
-
-  assign w_entry_done[s_idx] = w_entry_done_report[s_idx].valid;
 
 end
 endgenerate
+
+// Allocate selection
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_alloc_bit_oh  (.in(~w_entry_valid), .i_ptr_oh('h1), .out(w_entry_in_ptr_oh));
+// Clear selection
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
+
 
 bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
@@ -231,7 +241,6 @@ assign o_iss_index_oh = w_picked_inst_oh;
 // Done signals
 // --------------
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_done_oh));
-bit_oh_or #(.T(scariv_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  (.i_oh(w_entry_done_oh), .i_data(w_entry_done_report), .o_selected(o_done_report ));
 
 `ifdef SIMULATION
 typedef struct packed {

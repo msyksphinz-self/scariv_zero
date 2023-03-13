@@ -1,8 +1,18 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_lsu_pkg
+// TYPE : package
+// ------------------------------------------------------------------------
+// LSU Package
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 package scariv_lsu_pkg;
 
   import scariv_pkg::*;
+  import decoder_inst_cat_pkg::*;
 
-  localparam L2_CMD_TAG_W = 5;
+  localparam L2_CMD_TAG_W = 7;
 
   localparam L2_UPPER_TAG_IC     = 2'b00;
   localparam L2_UPPER_TAG_RD_L1D = 2'b01;
@@ -178,10 +188,10 @@ typedef struct packed {
   logic                          get_data;
   dc_data_t                      data;
   dc_ways_idx_t way;
-} miss_entry_t;
+} mshr_entry_t;
 
-function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
-  miss_entry_t ret;
+function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
+  mshr_entry_t ret;
 
   ret = 'h0;
 
@@ -196,7 +206,7 @@ function miss_entry_t assign_miss_entry (logic valid, missu_req_t req);
 
   return ret;
 
-endfunction // assign_missu_entry
+endfunction // assign_mshr_entry
 
 typedef struct packed {
   logic            valid;
@@ -383,6 +393,31 @@ function scariv_pkg::alenb_t gen_dw(decoder_lsu_ctrl_pkg::size_t size, logic [$c
 endfunction // gen_dw
 
 
+function scariv_pkg::alen_t align_8byte (logic [63: 0] data, logic [ 2: 0] pa);
+  case (pa)
+    'b000: return data;
+    'b001: return {data[64- 8-1: 0],  8'h00};
+    'b010: return {data[64-16-1: 0], 16'h00};
+    'b011: return {data[64-24-1: 0], 24'h00};
+    'b100: return {data[64-32-1: 0], 32'h00};
+    'b101: return {data[64-40-1: 0], 40'h00};
+    'b110: return {data[64-48-1: 0], 48'h00};
+    'b111: return {data[64-56-1: 0], 56'h00};
+    default : return 'h0;
+  endcase // case (pa)
+endfunction // align_8byte
+
+function scariv_pkg::alen_t align_4byte (logic [31: 0] data, logic [ 1: 0] pa);
+  case (pa)
+    'b00: return data;
+    'b01: return {data[32- 8-1: 0],  8'h00};
+    'b10: return {data[32-16-1: 0], 16'h00};
+    'b11: return {data[32-24-1: 0], 24'h00};
+    default : return 'h0;
+  endcase // case (pa)
+endfunction // align_byte
+
+
 // addr1/size1 includes addr2_dw ?
 function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(scariv_pkg::ALEN_W/8)-1:0] addr1,
                               logic [scariv_pkg::ALEN_W/8-1:0] addr2_dw);
@@ -420,29 +455,39 @@ typedef enum logic[4:0] {
   STQ_DONE_EX3      ,
   STQ_ISSUED        ,
   STQ_OLDEST_HAZ    ,
-  STQ_MISSU_CONFLICT  ,
-  STQ_MISSU_EVICT_HAZ ,
-  STQ_MISSU_FULL      ,
   STQ_WAIT_OLDEST   ,
   STQ_WAIT_STBUF
 } stq_state_t;
+
+typedef struct packed {
+  logic [31: 0]          inst;
+  inst_cat_t             cat;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic                  oldest_valid;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
+`ifdef SIMULATION
+  logic [63: 0]          kanata_id;
+  vaddr_t pc_addr;
+`endif // SIMULATION
+} stq_static_info_t;
 
 typedef struct packed {
   logic           is_valid;
   brtag_t          brtag;
   brmask_t         br_mask;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
-  scariv_pkg::issue_t inst;
+  stq_static_info_t inst;
+  // scariv_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
   stq_state_t        state;
-  scariv_pkg::vaddr_t  vaddr;
-  scariv_pkg::paddr_t  paddr;
+  // scariv_pkg::vaddr_t  vaddr;
+  // scariv_pkg::paddr_t  paddr;
+  scariv_pkg::maxaddr_t  addr;
   logic                                 paddr_valid;
   logic                                 is_rs2_get;
   scariv_pkg::alen_t                      rs2_data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
 
   logic              except_valid;
   scariv_pkg::except_t except_type;
@@ -550,18 +595,32 @@ typedef enum logic[3:0] {
 } ldq_state_t;
 
 typedef struct packed {
+  logic [31: 0]          inst;
+  inst_cat_t             cat;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic                  oldest_valid;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
+`ifdef SIMULATION
+  vaddr_t pc_addr;
+  logic [63: 0]          kanata_id;
+`endif // SIMULATION
+} ldq_static_info_t;
+
+
+typedef struct packed {
   logic          is_valid;
   brtag_t brtag;
   brmask_t         br_mask;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
-  scariv_pkg::issue_t               inst;
+  ldq_static_info_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
   ldq_state_t                     state;
   logic                           is_get_data;
-  scariv_pkg::vaddr_t vaddr;
-  scariv_pkg::paddr_t paddr;
+  // scariv_pkg::vaddr_t vaddr;
+  // scariv_pkg::paddr_t paddr;
+  scariv_pkg::maxaddr_t  addr;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
   logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
@@ -573,6 +632,22 @@ typedef struct packed {
 `endif // SIMULATION
 
 } ldq_entry_t;
+
+
+typedef struct packed {
+  logic                  valid;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  logic [31: 0]          inst;
+  reg_rd_issue_t [ 2: 0] rd_regs;
+  reg_wr_issue_t         wr_reg;
+  logic                  oldest_valid;
+  inst_cat_t             cat;
+`ifdef SIMULATION
+  logic [63: 0]          kanata_id;
+`endif // SIMULATION
+} lsu_pipe_issue_t;
+
 
 // -----
 // TLB

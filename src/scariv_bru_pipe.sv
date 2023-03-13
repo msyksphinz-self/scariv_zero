@@ -1,3 +1,15 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_bootrom
+// TYPE : module
+// ------------------------------------------------------------------------
+// Branch Unit Pipeline
+// ------------------------------------------------------------------------
+// ex0: Decode instruction
+// ex1: Send Early-release
+// ex2: Get Forwarding data
+// ex3: Send Branch Result
+// ------------------------------------------------------------------------
+
 module scariv_bru_pipe
   import decoder_bru_ctrl_pkg::*;
 #(

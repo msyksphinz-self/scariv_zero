@@ -62,7 +62,7 @@ scariv_lsu_pkg::missu_req_t               w_l1d_picked_req_payloads [REQ_PORT_NU
 logic [REQ_PORT_NUM-1: 0]             w_l1d_missu_loads_no_conflicts;
 
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_load_entry_valid;
-scariv_lsu_pkg::miss_entry_t w_missu_entries[scariv_conf_pkg::MISSU_ENTRY_SIZE];
+scariv_lsu_pkg::mshr_entry_t w_missu_entries[scariv_conf_pkg::MISSU_ENTRY_SIZE];
 
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_missu_valid_load_cnt;
 logic [$clog2(REQ_PORT_NUM): 0] w_l1d_missu_loads_cnt;
@@ -73,7 +73,7 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]     w_uc_fwd_hit [scariv_conf_pkg::MI
 //
 // MISSU Request selection
 //
-scariv_lsu_pkg::miss_entry_t             w_missu_ready_to_send_entry;
+scariv_lsu_pkg::mshr_entry_t             w_missu_ready_to_send_entry;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_ready_to_send;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_ready_to_send_oh;
 logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] w_missu_send_tag;
@@ -86,12 +86,12 @@ logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] w_ext_rd_resp_tag;
 //
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_wr_req_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_wr_req_valid_oh;
-scariv_lsu_pkg::miss_entry_t                    w_wr_missu_entry_sel;
+scariv_lsu_pkg::mshr_entry_t                    w_wr_missu_entry_sel;
 
 //
 // Evict Information
 //
-scariv_lsu_pkg::miss_entry_t             w_missu_ready_to_evict_entry;
+scariv_lsu_pkg::mshr_entry_t             w_missu_ready_to_evict_entry;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_entry_evict_ready;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_ready_to_evict;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_missu_ready_to_evict_oh;
@@ -159,7 +159,7 @@ encoder #(.SIZE(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_out_ptr_encoder (.i_in
 // Conflict Check of Normal MISSU Entries
 // -------------------------------------
 function automatic logic hit_missu_same_pa (logic valid, scariv_pkg::paddr_t req_paddr,
-                                          scariv_lsu_pkg::miss_entry_t missu_entry,
+                                          scariv_lsu_pkg::mshr_entry_t missu_entry,
                                           logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] entry_idx);
 
   return valid & missu_entry.valid & ~w_entry_finish[entry_idx] &
@@ -169,7 +169,7 @@ function automatic logic hit_missu_same_pa (logic valid, scariv_pkg::paddr_t req
 endfunction // hit_missu_same_pa
 
 function automatic logic hit_missu_same_evict_pa (logic valid, scariv_pkg::paddr_t req_evict_paddr,
-                                                scariv_lsu_pkg::miss_entry_t missu_entry,
+                                                scariv_lsu_pkg::mshr_entry_t missu_entry,
                                                 logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] entry_idx);
   return 1'b0;
 
@@ -318,14 +318,14 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
   scariv_lsu_pkg::missu_req_t w_l1d_picked_req_payloads_oh;
   bit_oh_or #(.T(scariv_lsu_pkg::missu_req_t), .WORDS(REQ_PORT_NUM)) pick_entry (.i_oh(w_sel_load_valid), .i_data(w_l1d_picked_req_payloads), .o_selected(w_l1d_picked_req_payloads_oh));
 
-  scariv_lsu_pkg::miss_entry_t w_load_entry;
-  assign w_load_entry = scariv_lsu_pkg::assign_miss_entry(w_load_entry_valid[e_idx],
-                                                        w_l1d_picked_req_payloads_oh);
+  scariv_lsu_pkg::mshr_entry_t w_load_entry;
+  assign w_load_entry = scariv_lsu_pkg::assign_mshr_entry(w_load_entry_valid[e_idx],
+                                                          w_l1d_picked_req_payloads_oh);
 
   assign w_evict_sent   = l1d_evict_if.valid   & l1d_evict_if.ready   & w_missu_ready_to_evict_oh[e_idx];
   assign w_ext_req_sent = l1d_ext_rd_req.valid & l1d_ext_rd_req.ready & w_missu_ready_to_send_oh [e_idx];
 
-  scariv_miss_entry
+  scariv_l1d_mshr_entry
     u_entry
       (
        .i_clk     (i_clk    ),
@@ -371,11 +371,11 @@ end
 endgenerate
 bit_extract_lsb_ptr #(.WIDTH(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_send_sel (.in(w_missu_ready_to_send), .i_ptr(w_out_ptr), .out(w_missu_ready_to_send_oh));
 encoder#(.SIZE(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_send_tag_encoder (.i_in(w_missu_ready_to_send_oh), .o_out(w_missu_send_tag));
-bit_oh_or #(.T(scariv_lsu_pkg::miss_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_send_entry  (.i_oh(w_missu_ready_to_send_oh), .i_data(w_missu_entries), .o_selected(w_missu_ready_to_send_entry));
+bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_send_entry  (.i_oh(w_missu_ready_to_send_oh), .i_data(w_missu_entries), .o_selected(w_missu_ready_to_send_entry));
 
 bit_extract_lsb_ptr #(.WIDTH(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_evict_sel (.in(w_missu_ready_to_evict), .i_ptr(w_out_ptr), .out(w_missu_ready_to_evict_oh));
 encoder#(.SIZE(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_evict_tag_encoder (.i_in(w_missu_ready_to_evict_oh), .o_out(w_missu_evict_tag));
-bit_oh_or #(.T(scariv_lsu_pkg::miss_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_missu_ready_to_evict_oh), .i_data(w_missu_entries), .o_selected(w_missu_ready_to_evict_entry));
+bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_missu_ready_to_evict_oh), .i_data(w_missu_entries), .o_selected(w_missu_ready_to_evict_entry));
 
 
 assign l1d_ext_rd_req.valid           = |w_missu_ready_to_send;
@@ -397,7 +397,7 @@ assign l1d_ext_rd_resp.ready = 1'b1;
 
 assign l1d_wr_if.s0_valid = |w_wr_req_valid;
 bit_extract_lsb_ptr #(.WIDTH(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_bit_wr_req_select (.in(w_wr_req_valid), .i_ptr(w_out_ptr), .out(w_wr_req_valid_oh));
-bit_oh_or #(.T(scariv_lsu_pkg::miss_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE))
+bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE))
 select_l1d_wr_req_entry (.i_oh(w_wr_req_valid_oh), .i_data(w_missu_entries), .o_selected(w_wr_missu_entry_sel));
 
 assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_missu_entry_sel.paddr;
@@ -453,8 +453,8 @@ generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) 
     assign w_uc_fwd_hit[e_idx][p_idx] = w_missu_fwd_hit[e_idx];
   end
 
-  scariv_lsu_pkg::miss_entry_t w_missu_fwd_entry;
-  bit_oh_or #(.T(scariv_lsu_pkg::miss_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_missu_fwd_hit), .i_data(w_missu_entries), .o_selected(w_missu_fwd_entry));
+  scariv_lsu_pkg::mshr_entry_t w_missu_fwd_entry;
+  bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTRY_SIZE)) select_evict_entry  (.i_oh(w_missu_fwd_hit), .i_data(w_missu_entries), .o_selected(w_missu_fwd_entry));
 
   assign missu_fwd_if[p_idx].ex2_fwd_valid = |w_missu_fwd_hit;
   assign missu_fwd_if[p_idx].ex2_fwd_data  = w_missu_fwd_entry.data;
@@ -495,7 +495,7 @@ initial begin
 end
 
 `ifdef SIMULATION
-function void dump_entry_json(int fp, scariv_lsu_pkg::miss_entry_t entry, int index);
+function void dump_entry_json(int fp, scariv_lsu_pkg::mshr_entry_t entry, int index);
 
   if (entry.valid) begin
     $fwrite(fp, "    \"missu_entry[%02d]\" : {", index[$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1:0]);

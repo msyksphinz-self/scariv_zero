@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_ldq
+// TYPE : module
+// ------------------------------------------------------------------------
+// LSU Load Queue
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_ldq
   import scariv_lsu_pkg::*;
 (
@@ -25,7 +34,7 @@ module scariv_ldq
    // Hazard check for STQ -> LDQ
    ldq_haz_check_if.slave      ldq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   lsu_replay_if.master ldq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
+   ldq_replay_if.master ldq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input missu_resolve_t     i_missu_resolve,
    input logic             i_missu_is_full,
@@ -159,7 +168,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].cmt_id), .grp_id(w_ldq_entries[l_idx].grp_id),
+  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
                                          .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
   // Selection of EX1 Update signal
@@ -254,20 +263,20 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
        .i_cmt_id0 (ldq_haz_check_if[p_idx].ex2_cmt_id),
        .i_grp_id0 (ldq_haz_check_if[p_idx].ex2_grp_id),
 
-       .i_cmt_id1 (w_ldq_entries[l_idx].cmt_id),
-       .i_grp_id1 (w_ldq_entries[l_idx].grp_id),
+       .i_cmt_id1 (w_ldq_entries[l_idx].inst.cmt_id),
+       .i_grp_id1 (w_ldq_entries[l_idx].inst.grp_id),
 
        .o_0_older_than_1 (ld_is_younger_than_st)
        );
 
     logic   w_ex2_same_dw;
     assign w_ex2_same_dw = |(scariv_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
-                             scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].paddr[2:0]));
+                             scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].addr[2:0]));
     assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
                                                  w_ldq_entries[l_idx].is_valid &
                                                  ld_is_younger_than_st &
                                                  w_ldq_entries[l_idx].is_get_data &
-                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].paddr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
+                                                 (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].addr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
 
 end
@@ -310,12 +319,12 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) 
   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_done_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
 
   assign o_done_report[d_idx].valid   = |w_ldq_done_array;
-  assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.cmt_id;
-  assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.grp_id;
+  assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.inst.cmt_id;
+  assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.inst.grp_id;
   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.vaddr[riscv_pkg::VADDR_W-1]}},
-                                              w_ldq_done_entry.vaddr};
+  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
+                                              w_ldq_done_entry.addr};
 
 `ifdef SIMULATION
   // Kanata
@@ -372,8 +381,8 @@ generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) 
       ldq_haz_check_if[p_idx].ex3_haz_valid <= 1'b0;
     end else begin
       ldq_haz_check_if[p_idx].ex3_haz_valid  <= |w_ex2_ldq_stq_haz_vld[p_idx];
-      ldq_haz_check_if[p_idx].ex3_haz_cmt_id <= w_sel_ldq_entry.cmt_id;
-      ldq_haz_check_if[p_idx].ex3_haz_grp_id <= w_sel_ldq_entry.grp_id;
+      ldq_haz_check_if[p_idx].ex3_haz_cmt_id <= w_sel_ldq_entry.inst.cmt_id;
+      ldq_haz_check_if[p_idx].ex3_haz_grp_id <= w_sel_ldq_entry.inst.grp_id;
     end
   end
 
@@ -423,8 +432,8 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.inst.inst);
 
-    $fwrite(fp, "cmt_id:%d, ", entry.cmt_id);
-    $fwrite(fp, "grp_id:%d, ", entry.grp_id);
+    $fwrite(fp, "cmt_id:%d, ", entry.inst.cmt_id);
+    $fwrite(fp, "grp_id:%d, ", entry.inst.grp_id);
 
     $fwrite(fp, "state:\"");
     unique case (entry.state)

@@ -1,10 +1,18 @@
-module scariv_miss_entry
+// ------------------------------------------------------------------------
+// NAME : scariv_l1d_mshr_entry
+// TYPE : module
+// ------------------------------------------------------------------------
+// SCARIV MSHR Entry
+// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
+
+module scariv_l1d_mshr_entry
   (
    input logic i_clk,
    input logic i_reset_n,
 
    input logic i_load,
-   input scariv_lsu_pkg::miss_entry_t i_load_entry,
+   input scariv_lsu_pkg::mshr_entry_t i_load_entry,
 
    input logic                   i_ext_load_fin,
    input scariv_lsu_pkg::l2_resp_t l2_resp,  // Response from L2
@@ -20,7 +28,7 @@ module scariv_miss_entry
    // UC forward hit
    input logic i_uc_fwd_hit,
 
-   output scariv_lsu_pkg::miss_entry_t o_entry,
+   output scariv_lsu_pkg::mshr_entry_t o_entry,
    output logic o_evict_ready,
 
    input  logic i_out_ptr_valid,
@@ -40,8 +48,8 @@ typedef enum logic [3:0] {
 } state_t;
 
 
-scariv_lsu_pkg::miss_entry_t r_entry;
-scariv_lsu_pkg::miss_entry_t w_entry_next;
+scariv_lsu_pkg::mshr_entry_t r_entry;
+scariv_lsu_pkg::mshr_entry_t w_entry_next;
 
 state_t r_state;
 state_t w_state_next;

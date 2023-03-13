@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// NAME : scariv_csr
+// TYPE : module
+// ------------------------------------------------------------------------
+// Actual Control & System Register File
+// ------------------------------------------------------------------------
+//
+// ------------------------------------------------------------------------
+
 module scariv_csr
   import riscv_pkg::*;
   import scariv_csu_pkg::*;
@@ -522,7 +531,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mha
 
 xlen_t w_misa_reset;
 generate if (riscv_fpu_pkg::FLEN_W == 0) begin
-  assign w_misa_reset = ('h1 << ("A" - "A")) |
+  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("I" - "A")) |
               ('h1 << ("M" - "A")) |
@@ -530,7 +539,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 0) begin
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
 end else if (riscv_fpu_pkg::FLEN_W == 32) begin
-  assign w_misa_reset = ('h1 << ("A" - "A")) |
+  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("F" - "A")) |
               ('h1 << ("I" - "A")) |
@@ -539,7 +548,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
 end else if (riscv_fpu_pkg::FLEN_W ==64) begin
-  assign w_misa_reset = ('h1 << ("A" - "A")) |
+  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("D" - "A")) |
               ('h1 << ("F" - "A")) |
