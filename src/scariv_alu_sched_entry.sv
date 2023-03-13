@@ -170,6 +170,11 @@ always_comb begin
 `endif // SIMULATION
     end
   endcase // case (r_state)
+
+  // BrMask update
+  if (br_upd_if.update) begin
+    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 end // always_comb
 
 
@@ -184,7 +189,7 @@ assign w_entry_flush = w_commit_flush | w_br_flush;
 
 assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
-                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush;
 
 assign w_entry_finish = i_out_ptr_valid;
