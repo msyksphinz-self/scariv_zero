@@ -94,7 +94,7 @@ else:
 build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 for line in iter(build_result.stdout.readline, ""):
-    print(line, end='')
+    print(line, end='\r\n')
 
     with open("build_" + isa + "_" + conf + ".log", 'a') as f:
         f.write(line)
