@@ -140,9 +140,11 @@ scariv_plic
   .BASE_ADDR('hc00_0000),
   .SIZE     ('h1_0000),
   .RD_LAT   (10)
-) u_clint (
+) u_plic (
   .i_clk    (i_clk),
   .i_reset_n(i_reset_n),
+
+  .i_interrupts  (i_interrupts),
 
   // PLIC
   .i_req_valid   (w_req_plic_if.valid           ),
