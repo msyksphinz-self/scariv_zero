@@ -12,7 +12,7 @@ package scariv_lsu_pkg;
   import scariv_pkg::*;
   import decoder_inst_cat_pkg::*;
 
-  localparam L2_CMD_TAG_W = 5;
+  localparam L2_CMD_TAG_W = 7;
 
   localparam L2_UPPER_TAG_IC     = 2'b00;
   localparam L2_UPPER_TAG_RD_L1D = 2'b01;

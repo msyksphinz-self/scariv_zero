@@ -35,3 +35,4 @@ RUN curl -L https://github.com/riscv-collab/riscv-gnu-toolchain/releases/downloa
 
 ENV PATH            $RISCV/bin:$PATH
 ENV LD_LIBRARY_PATH $RISCV/lib:$LD_LIBRARY_PATH
+ENV CCACHE_DIR      "work/scariv/ccache"
