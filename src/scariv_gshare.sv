@@ -33,8 +33,6 @@ gshare_bht_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
 gshare_bht_t  w_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2];
 
 logic [ 1: 0] w_update_counter;
-logic [ 1: 0] w_s1_bim_counter;
-logic [ 1: 0] r_s1_bim_counter_dram;
 
 logic         s1_update_bhr;
 assign s1_update_bhr = r_s1_valid & |(search_btb_if.s1_hit & search_btb_if.s1_is_cond);
@@ -55,6 +53,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx++) begin : bhr_loop
+logic [ 1: 0] w_s1_bim_counter;
+logic [ 1: 0] r_s1_bim_counter_dram;
   gshare_bht_t  w_s0_xor_rd_index;
   gshare_bht_t  r_s1_xor_rd_index;
   assign w_s0_xor_rd_index = r_bhr ^ gshare_search_if.s0_pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W];
