@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
-import time
+import docker
 from multiprocessing import Pool, Manager
+import multiprocessing
 import os
 import sys
 import subprocess
@@ -12,7 +13,7 @@ import argparse
 class verilator_sim:
 
     manager = Manager()
-    result_dict = manager.dict({'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
+    result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -23,31 +24,29 @@ class verilator_sim:
         user_id    = os.getuid()
         group_id   = os.getgid()
 
-        if sim_conf["use_docker"]:
-            command = ["docker",
-                       "run",
-                       "--cap-add=SYS_PTRACE",
-                       "--security-opt=seccomp=unconfined",
-                       "--rm",
-                       "-it",
-                       "-v",
-                       current_dir + ":/work/scariv",
-                       "--user", str(user_id) + ":" + str(group_id),
-                       "-w",
-                       "/work/scariv/verilator_sim",
-                       "msyksphinz/scariv:run_env"] + build_command
-        else:
-            command = build_command
-
-        build_result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-
-        for line in iter(build_result.stdout.readline, ""):
-            print(line, end="\r")
-
+        cli = docker.from_env()
+        build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
+                                          auto_remove=True,
+                                          volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                          working_dir="/work/scariv/verilator_sim/",
+                                          detach=True,
+                                          tty=True,
+                                          command=build_command)
+        for line in build_result.logs(stream=True):
+            # message = line.decode('utf-8').strip()
+            message = line.decode('utf-8')
+            if message:
+                print(message, end='')
         build_result.wait()
 
-        if build_result.returncode != 0 :
-            exit()
+        # build_result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+        # for line in iter(build_result.stdout.readline, ""):
+        #     print(line, end="\r")
+
+
+        # if build_result.returncode != 0 :
+        #     exit()
 
         ## Build verilator binary
         build_command = ["make",
@@ -61,11 +60,10 @@ class verilator_sim:
         current_dir = os.path.abspath("../")
         user_id    = os.getuid()
         group_id   = os.getgid()
-        env = os.environ.copy()
-        if sim_conf["use_docker"]:
-            env["CCACHE_DIR"] = "/work/scariv/ccache"
+        docker_env = dict()
 
         if sim_conf["use_docker"]:
+            docker_env["CCACHE_DIR"] = "/work/scariv/ccache"
             command = ["docker",
                        "run",
                        "--cap-add=SYS_PTRACE",
@@ -81,18 +79,31 @@ class verilator_sim:
         else:
             command = build_command
 
-        build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
+                                          auto_remove=True,
+                                          volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                          working_dir="/work/scariv/verilator_sim/",
+                                          detach=True,
+                                          tty=True,
+                                          command=build_command)
 
-        for line in iter(build_result.stdout.readline, ""):
-            print(line, end="\r")
+        for line in build_result.logs(stream=True):
+            # message = line.decode('utf-8').strip()
+            message = line.decode('utf-8')
+            if message:
+                print(message, end='')
+        # build_result = subprocess.Popen(command, env=docker_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-            with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
-                f.write(line)
+        # for line in iter(build_result.stdout.readline, ""):
+        #     print(line, end="\r")
+        #
+        #     with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
+        #         f.write(line)
 
         build_result.wait()
 
-        if build_result.returncode != 0 :
-            exit()
+        # if build_result.returncode != 0 :
+        #     exit()
 
     def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
         output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -126,52 +137,57 @@ class verilator_sim:
                        "--user", str(user_id) + ":" + str(group_id),
                        "-w",
                        "/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
-                       "msyksphinz/scariv:run_env"] + run_command
+                       ] + run_command
         else:
             command = run_command
 
-        time.sleep(10)
-        print("run!", end="\r\n")
-        # if sim_conf["use_docker"]:
-        #     run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True)
-        # else:
-        #     run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
-        #                                    cwd=base_dir + '/' + testcase)
-        #
-        # if show_stdout:
-        #     for line in iter(run_process.stdout.readline, ""):
-        #         print(line, end="\r\n")
-        #         sys.stdout.flush()
-        # run_process.wait()
-        #
-        # # try:
-        # #     if show_stdout:
-        # #         for line in iter(run_process.stdout.readline, ""):
-        # #             print(line, end="\r\n")
-        # #             sys.stdout.flush()
-        # #     run_process.wait()
-        # # except KeyboardInterrupt:
-        # #     run_process.send_signal(subprocess.signal.SIGINT)
-        # #     run_process.wait()
-        #
-        # result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
-        #
-        # print (test["name"] + "\t: ", end="")
-        # if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
-        #     print ("ERROR", end="\r\n")
-        #     result_dict['error'] += 1
-        # elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
-        #     print ("MATCH", end="\r\n")
-        #     result_dict['match'] += 1
-        # elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-        #     print ("PASS", end="\r\n")
-        #     result_dict['pass'] += 1
-        # elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
-        #     print ("DEADLOCK", end="\r\n")
-        #     result_dict['deadlock'] += 1
-        # else :
-        #     print ("UNKNOWN", end="\r\n")
-        #     result_dict['unknown'] += 1
+        if sim_conf["use_docker"]:
+            cli = docker.from_env()
+            run_process = cli.containers.run(image="msyksphinz/scariv:run_env",
+                                             auto_remove=True,
+                                             volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                             working_dir="/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
+                                             detach=True,
+                                             tty=True,
+                                             command=run_command)
+            if show_stdout:
+                for line in run_process.logs(stream=True):
+                    # message = line.decode('utf-8').strip()
+                    message = line.decode('utf-8')
+                    if message:
+                        print(message, end='')
+            else:
+                run_process.wait()
+        else:
+            run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
+                                           cwd=base_dir + '/' + testcase)
+            if show_stdout:
+                for line in iter(run_process.stdout.readline, ""):
+                    print(line, end="\r\n")
+                    sys.stdout.flush()
+            run_process.wait()
+
+        result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+
+        print (test["name"] + "\t: ", end="")
+        if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
+            print ("ERROR", end="\r\n")
+            self.result_dict['error'] += 1
+        elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
+            print ("MATCH", end="\r\n")
+            self.result_dict['match'] += 1
+        elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
+            print ("TIMEOUT", end="\r\n")
+            self.result_dict['timeout'] += 1
+        elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
+            print ("PASS", end="\r\n")
+            self.result_dict['pass'] += 1
+        elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
+            print ("DEADLOCK", end="\r\n")
+            self.result_dict['deadlock'] += 1
+        else :
+            print ("UNKNOWN", end="\r\n")
+            self.result_dict['unknown'] += 1
 
     def execute_test_wrapper (self, args):
         return self.execute_test(*args)
@@ -200,14 +216,21 @@ class verilator_sim:
         os.makedirs(base_dir, exist_ok=True)
         os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
-        with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
-            try:
-                args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
-                pool.map(self.execute_test_wrapper, args_list)
-            except KeyboardInterrupt:
-                print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
-                pool.terminate()
-                pool.join()
+        process = multiprocessing.current_process()
+        if process.daemon:
+            for t in select_test:
+                args_list = (sim_conf, show_stdout, base_dir, testcase, t)
+                self.execute_test_wrapper (args_list)
+
+        else:
+            with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
+                try:
+                    args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
+                    pool.map(self.execute_test_wrapper, args_list)
+                except KeyboardInterrupt:
+                    print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
+                    pool.terminate()
+                    pool.join()
 
         print (self.result_dict)
         with open(base_dir + '/result.json', 'w') as f:
