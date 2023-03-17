@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import time
 from multiprocessing import Pool, Manager
 import os
 import sys
@@ -7,165 +8,210 @@ import subprocess
 import json
 import argparse
 
-def build_sim(sim_conf):
-    ## Build verilator binary
-    build_command = ["make",
-                     "rv" + str(sim_conf["xlen"]) + "_build",
-                     "CONF=" + sim_conf["conf"],
-                     "ISA=" + sim_conf["isa_ext"],
-                     "RV_XLEN=" + str(sim_conf["xlen"]),
-                     "RV_FLEN=" + str(sim_conf["flen"]),
-                     "RV_AMO=" + str(sim_conf["amo"])]
 
-    current_dir = os.path.abspath("../")
-    user_id    = os.getuid()
-    group_id   = os.getgid()
-    env = os.environ.copy()
-    if sim_conf["use_docker"]:
-        env["CCACHE_DIR"] = "/work/scariv/ccache"
-
-    if sim_conf["use_docker"]:
-        command = ["docker",
-                   "run",
-                   "--cap-add=SYS_PTRACE",
-                   "--security-opt=seccomp=unconfined",
-                   "--rm",
-                   "-it",
-                   "-v",
-                   current_dir + ":/work/scariv",
-                   "--user", str(user_id) + ":" + str(group_id),
-                   "-w",
-                   "/work/scariv/verilator_sim",
-                   "msyksphinz/scariv:run_env"] + build_command
-    else:
-        command = build_command
-
-    build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-
-    for line in iter(build_result.stdout.readline, ""):
-        print(line, end="\r")
-
-        with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
-            f.write(line)
-
-    build_result.wait()
-
-    if build_result.returncode != 0 :
-        exit()
-
-def execute_test(sim_conf, show_stdout, base_dir, testcase, test):
-    output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
-    run_command = ["../../scariv_tb_" + sim_conf["isa"] + "_" + sim_conf["conf"]]
-    if sim_conf["fst_dump"] :
-        run_command += ["--dump"]
-        run_command += ["--dump_start", str(sim_conf["dump_start_time"])]
-
-    run_command += ["-c", str(sim_conf["cycle"])]
-    run_command += ["-e", test["elf"]]
-    run_command += ["-o", output_file]
-
-    command_log_fp = open(base_dir + '/' + testcase + '/sim.cmd', mode='w')
-    command_log_fp.write (" ".join(run_command))
-    command_log_fp.close()
-
-    current_dir = os.path.abspath("../")
-    user_id    = os.getuid()
-    group_id   = os.getgid()
-    env = os.environ.copy()
-
-    if sim_conf["use_docker"]:
-        command = ["docker",
-                   "run",
-                   "--cap-add=SYS_PTRACE",
-                   "--security-opt=seccomp=unconfined",
-                   "--rm",
-                   "-it",
-                   "-v",
-                   current_dir + ":/work/scariv",
-                   "--user", str(user_id) + ":" + str(group_id),
-                   "-w",
-                   "/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
-                   "msyksphinz/scariv:run_env"] + run_command
-    else:
-        command = run_command
-
-    if sim_conf["use_docker"]:
-        run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True)
-    else:
-        run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
-                                       cwd=base_dir + '/' + testcase)
-
-    try:
-        if show_stdout:
-            for line in iter(run_process.stdout.readline, ""):
-                print(line, end="\r\n")
-                sys.stdout.flush()
-        run_process.wait()
-    except KeyboardInterrupt:
-        run_process.send_signal(subprocess.signal.SIGINT)
-        run_process.wait()
-
-    result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
-
-    print (test["name"] + "\t: ", end="")
-    if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
-        print ("ERROR", end="\r\n")
-        result_dict['error'] += 1
-    elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
-        print ("MATCH", end="\r\n")
-        result_dict['match'] += 1
-    elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-        print ("PASS", end="\r\n")
-        result_dict['pass'] += 1
-    elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
-        print ("DEADLOCK", end="\r\n")
-        result_dict['deadlock'] += 1
-    else :
-        print ("UNKNOWN", end="\r\n")
-        result_dict['unknown'] += 1
-
-def execute_test_wrapper (args):
-    return execute_test(*args)
-
-def run_sim(sim_conf, testcase):
-    test_table = json
-    if sim_conf["xlen"] == 32 :
-        json_open = open('rv32-tests.json', 'r')
-        test_table = json.load(json_open)
-    elif sim_conf["xlen"] == 64 :
-        rv64_tests_fp = open('rv64-tests.json', 'r')
-        test_table = json.load(rv64_tests_fp)
-        rv64_bench_fp = open('rv64-bench.json', 'r')
-        test_table += json.load(rv64_bench_fp)
-        rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
-        test_table += json.load(rv64_aapg_fp)
-
-    select_test = list(filter(lambda x: ((x["name"] == testcase) or
-                                         (testcase in x["group"]) and
-                                         (x["skip"] != 1 if "skip" in x else True)) , test_table))
-    # max_length = max(map(lambda x: len(x["name"]), select_test))
-
-    show_stdout = len(select_test) == 1
-
-    base_dir = "sim_" + sim_conf["isa"] + "_" + sim_conf["conf"]
-    os.makedirs(base_dir, exist_ok=True)
-    os.makedirs(base_dir + "/" + testcase, exist_ok=True)
+class verilator_sim:
 
     manager = Manager()
     result_dict = manager.dict({'pass': 0, 'match': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
 
-    with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
-        try:
-            args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
-            pool.map(execute_test_wrapper, args_list)
-        except KeyboardInterrupt:
-            print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
-            pool.terminate()
-            pool.join()
+    def build_sim(self, sim_conf):
+        # Make spike-dpi
+        build_command = ["make",
+                         "-C", "../spike_dpi"]
 
-    print (result_dict)
-    with open(base_dir + '/result.json', 'w') as f:
-        json.dump(result_dict, f, default=str)
+        current_dir = os.path.abspath("../")
+        user_id    = os.getuid()
+        group_id   = os.getgid()
+
+        if sim_conf["use_docker"]:
+            command = ["docker",
+                       "run",
+                       "--cap-add=SYS_PTRACE",
+                       "--security-opt=seccomp=unconfined",
+                       "--rm",
+                       "-it",
+                       "-v",
+                       current_dir + ":/work/scariv",
+                       "--user", str(user_id) + ":" + str(group_id),
+                       "-w",
+                       "/work/scariv/verilator_sim",
+                       "msyksphinz/scariv:run_env"] + build_command
+        else:
+            command = build_command
+
+        build_result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+        for line in iter(build_result.stdout.readline, ""):
+            print(line, end="\r")
+
+        build_result.wait()
+
+        if build_result.returncode != 0 :
+            exit()
+
+        ## Build verilator binary
+        build_command = ["make",
+                         "rv" + str(sim_conf["xlen"]) + "_build",
+                         "CONF=" + sim_conf["conf"],
+                         "ISA=" + sim_conf["isa_ext"],
+                         "RV_XLEN=" + str(sim_conf["xlen"]),
+                         "RV_FLEN=" + str(sim_conf["flen"]),
+                         "RV_AMO=" + str(sim_conf["amo"])]
+
+        current_dir = os.path.abspath("../")
+        user_id    = os.getuid()
+        group_id   = os.getgid()
+        env = os.environ.copy()
+        if sim_conf["use_docker"]:
+            env["CCACHE_DIR"] = "/work/scariv/ccache"
+
+        if sim_conf["use_docker"]:
+            command = ["docker",
+                       "run",
+                       "--cap-add=SYS_PTRACE",
+                       "--security-opt=seccomp=unconfined",
+                       "--rm",
+                       "-it",
+                       "-v",
+                       current_dir + ":/work/scariv",
+                       "--user", str(user_id) + ":" + str(group_id),
+                       "-w",
+                       "/work/scariv/verilator_sim",
+                       "msyksphinz/scariv:run_env"] + build_command
+        else:
+            command = build_command
+
+        build_result = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+        for line in iter(build_result.stdout.readline, ""):
+            print(line, end="\r")
+
+            with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
+                f.write(line)
+
+        build_result.wait()
+
+        if build_result.returncode != 0 :
+            exit()
+
+    def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
+        output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
+        run_command = ["../../scariv_tb_" + sim_conf["isa"] + "_" + sim_conf["conf"]]
+        if sim_conf["fst_dump"] :
+            run_command += ["--dump"]
+            run_command += ["--dump_start", str(sim_conf["dump_start_time"])]
+
+        run_command += ["-c", str(sim_conf["cycle"])]
+        run_command += ["-e", test["elf"]]
+        run_command += ["-o", output_file]
+
+        command_log_fp = open(base_dir + '/' + testcase + '/sim.cmd', mode='w')
+        command_log_fp.write (" ".join(run_command))
+        command_log_fp.close()
+
+        current_dir = os.path.abspath("../")
+        user_id    = os.getuid()
+        group_id   = os.getgid()
+        env = os.environ.copy()
+
+        if sim_conf["use_docker"]:
+            command = ["docker",
+                       "run",
+                       "--cap-add=SYS_PTRACE",
+                       "--security-opt=seccomp=unconfined",
+                       "--rm",
+                       "-it",
+                       "-v",
+                       current_dir + ":/work/scariv",
+                       "--user", str(user_id) + ":" + str(group_id),
+                       "-w",
+                       "/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
+                       "msyksphinz/scariv:run_env"] + run_command
+        else:
+            command = run_command
+
+        time.sleep(10)
+        print("run!", end="\r\n")
+        # if sim_conf["use_docker"]:
+        #     run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True)
+        # else:
+        #     run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
+        #                                    cwd=base_dir + '/' + testcase)
+        #
+        # if show_stdout:
+        #     for line in iter(run_process.stdout.readline, ""):
+        #         print(line, end="\r\n")
+        #         sys.stdout.flush()
+        # run_process.wait()
+        #
+        # # try:
+        # #     if show_stdout:
+        # #         for line in iter(run_process.stdout.readline, ""):
+        # #             print(line, end="\r\n")
+        # #             sys.stdout.flush()
+        # #     run_process.wait()
+        # # except KeyboardInterrupt:
+        # #     run_process.send_signal(subprocess.signal.SIGINT)
+        # #     run_process.wait()
+        #
+        # result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+        #
+        # print (test["name"] + "\t: ", end="")
+        # if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
+        #     print ("ERROR", end="\r\n")
+        #     result_dict['error'] += 1
+        # elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
+        #     print ("MATCH", end="\r\n")
+        #     result_dict['match'] += 1
+        # elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
+        #     print ("PASS", end="\r\n")
+        #     result_dict['pass'] += 1
+        # elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
+        #     print ("DEADLOCK", end="\r\n")
+        #     result_dict['deadlock'] += 1
+        # else :
+        #     print ("UNKNOWN", end="\r\n")
+        #     result_dict['unknown'] += 1
+
+    def execute_test_wrapper (self, args):
+        return self.execute_test(*args)
+
+    def run_sim(self, sim_conf, testcase):
+        test_table = json
+        if sim_conf["xlen"] == 32 :
+            json_open = open('rv32-tests.json', 'r')
+            test_table = json.load(json_open)
+        elif sim_conf["xlen"] == 64 :
+            rv64_tests_fp = open('rv64-tests.json', 'r')
+            test_table = json.load(rv64_tests_fp)
+            rv64_bench_fp = open('rv64-bench.json', 'r')
+            test_table += json.load(rv64_bench_fp)
+            rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
+            test_table += json.load(rv64_aapg_fp)
+
+        select_test = list(filter(lambda x: ((x["name"] == testcase) or
+                                             (testcase in x["group"]) and
+                                             (x["skip"] != 1 if "skip" in x else True)) , test_table))
+        # max_length = max(map(lambda x: len(x["name"]), select_test))
+
+        show_stdout = len(select_test) == 1
+
+        base_dir = "sim_" + sim_conf["isa"] + "_" + sim_conf["conf"]
+        os.makedirs(base_dir, exist_ok=True)
+        os.makedirs(base_dir + "/" + testcase, exist_ok=True)
+
+        with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
+            try:
+                args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
+                pool.map(self.execute_test_wrapper, args_list)
+            except KeyboardInterrupt:
+                print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
+                pool.terminate()
+                pool.join()
+
+        print (self.result_dict)
+        with open(base_dir + '/result.json', 'w') as f:
+            json.dump(self.result_dict, f, default=str)
 
 
 def main():
@@ -224,8 +270,10 @@ def main():
         else:
             sim_conf["amo"] = 0
 
-    build_sim(sim_conf)
-    run_sim(sim_conf, testcase)
+    sim = verilator_sim()
+
+    sim.build_sim(sim_conf)
+    sim.run_sim(sim_conf, testcase)
 
 if __name__ == "__main__":
     main()
