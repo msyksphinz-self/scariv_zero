@@ -27,6 +27,7 @@ class verilator_sim:
         cli = docker.from_env()
         build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
                                           auto_remove=True,
+                                          user=user_id,
                                           volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
                                           working_dir="/work/scariv/verilator_sim/",
                                           detach=True,
@@ -81,6 +82,7 @@ class verilator_sim:
 
         build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
                                           auto_remove=True,
+                                          user=user_id,
                                           volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
                                           working_dir="/work/scariv/verilator_sim/",
                                           detach=True,
@@ -145,6 +147,7 @@ class verilator_sim:
             cli = docker.from_env()
             run_process = cli.containers.run(image="msyksphinz/scariv:run_env",
                                              auto_remove=True,
+                                             user=user_id,
                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
                                              working_dir="/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
                                              detach=True,
