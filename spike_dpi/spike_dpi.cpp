@@ -162,6 +162,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
+  argv[arg_max++] = "-m0x80000000:0x10000,0x726000:0x1000,0x28cfb4d00:0x1000,0x9899ca3400:0x1000,0x1ce9e93c00:0x1000,0x13e316afc00:0x1000,0x129000:0x1000,0x1c0058:0x1000,0x4c7000:0x1000,0x1146018:0x1000,0x3d16000:0x1000,0x8a4f1d0:0x1000,0xce68008:0x1000,0x43755000:0x1000,0x80030328:0x1000,0x6b1e47200:0x1000,0x192c79b108:0x1000,0x281ee84058:0x1000,0x13e316afc00:0x1000,0x298b2df3010:0x1000,0x466799200b0:0x1000,0x1c0bff9f5010:0x1000";
 #ifndef SIM_MAIN
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
 #else // SIM_MAIN
@@ -190,7 +191,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < arg_max; i++) {
     fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
   }
   bool debug = false;

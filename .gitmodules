@@ -19,3 +19,6 @@
 [submodule "tests/riscv-coremark"]
 	path = tests/riscv-coremark
 	url = https://github.com/riscv-boom/riscv-coremark.git
+[submodule "tests/riscv_arch_tests"]
+	path = tests/riscv_arch_tests
+	url = https://github.com/tenstorrent/riscv_arch_tests.git

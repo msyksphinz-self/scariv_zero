@@ -24,30 +24,30 @@ class verilator_sim:
         user_id    = os.getuid()
         group_id   = os.getgid()
 
-        cli = docker.from_env()
-        build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
-                                          auto_remove=True,
-                                          user=user_id,
-                                          volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
-                                          working_dir="/work/scariv/verilator_sim/",
-                                          detach=True,
-                                          tty=True,
-                                          command=build_command)
-        for line in build_result.logs(stream=True):
-            # message = line.decode('utf-8').strip()
-            message = line.decode('utf-8')
-            if message:
-                print(message, end='')
-        build_result.wait()
+        if sim_conf["use_docker"]:
+            cli = docker.from_env()
+            build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
+                                              auto_remove=True,
+                                              user=user_id,
+                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                              working_dir="/work/scariv/verilator_sim/",
+                                              detach=True,
+                                              tty=True,
+                                              command=build_command)
+            for line in build_result.logs(stream=True):
+                # message = line.decode('utf-8').strip()
+                message = line.decode('utf-8')
+                if message:
+                    print(message, end='')
+            build_result.wait()
+        else:
+            build_result = subprocess.Popen(build_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-        # build_result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in iter(build_result.stdout.readline, ""):
+                print(line, end="\r")
 
-        # for line in iter(build_result.stdout.readline, ""):
-        #     print(line, end="\r")
-
-
-        # if build_result.returncode != 0 :
-        #     exit()
+            # if build_result.returncode != 0 :
+            #     exit()
 
         ## Build verilator binary
         build_command = ["make",
@@ -64,48 +64,33 @@ class verilator_sim:
         docker_env = dict()
 
         if sim_conf["use_docker"]:
-            docker_env["CCACHE_DIR"] = "/work/scariv/ccache"
-            command = ["docker",
-                       "run",
-                       "--cap-add=SYS_PTRACE",
-                       "--security-opt=seccomp=unconfined",
-                       "--rm",
-                       "-it",
-                       "-v",
-                       current_dir + ":/work/scariv",
-                       "--user", str(user_id) + ":" + str(group_id),
-                       "-w",
-                       "/work/scariv/verilator_sim",
-                       "msyksphinz/scariv:run_env"] + build_command
+            build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
+                                              auto_remove=True,
+                                              user=user_id,
+                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                              working_dir="/work/scariv/verilator_sim/",
+                                              detach=True,
+                                              tty=True,
+                                              command=build_command)
+
+            for line in build_result.logs(stream=True):
+                # message = line.decode('utf-8').strip()
+                message = line.decode('utf-8')
+                if message:
+                    print(message, end='')
         else:
-            command = build_command
+            build_result = subprocess.Popen(build_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-        build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
-                                          auto_remove=True,
-                                          user=user_id,
-                                          volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
-                                          working_dir="/work/scariv/verilator_sim/",
-                                          detach=True,
-                                          tty=True,
-                                          command=build_command)
+            for line in iter(build_result.stdout.readline, ""):
+                print(line, end="\r")
 
-        for line in build_result.logs(stream=True):
-            # message = line.decode('utf-8').strip()
-            message = line.decode('utf-8')
-            if message:
-                print(message, end='')
-        # build_result = subprocess.Popen(command, env=docker_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
+                    f.write(line)
 
-        # for line in iter(build_result.stdout.readline, ""):
-        #     print(line, end="\r")
-        #
-        #     with open("build_" + sim_conf["isa"] + "_" + sim_conf["conf"] + ".log", 'a') as f:
-        #         f.write(line)
+            build_result.wait()
 
-        build_result.wait()
-
-        # if build_result.returncode != 0 :
-        #     exit()
+            # if build_result.returncode != 0 :
+            #     exit()
 
     def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
         output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -166,7 +151,7 @@ class verilator_sim:
                                            cwd=base_dir + '/' + testcase)
             if show_stdout:
                 for line in iter(run_process.stdout.readline, ""):
-                    print(line, end="\r\n")
+                    print(line, end="")
                     sys.stdout.flush()
             run_process.wait()
 
