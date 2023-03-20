@@ -42,6 +42,7 @@ module scariv_snoop_top
 logic [MAX_INDEX-1: 0] r_resp_valid;
 
 state_t                                      r_l1d_state;
+scariv_pkg::paddr_t                          r_l1d_paddr;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_l1d_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_l1d_be;
 
@@ -84,14 +85,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     // L1D state machine
     case (r_l1d_state)
       IDLE : begin
-        if (w_snoop_if_fire |
-            (r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
+        if (w_snoop_if_fire) begin
           r_l1d_state <= WAIT_RESP;
           r_resp_valid[L1D_INDEX] <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
           l1d_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
+          r_l1d_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
+        end else if ((r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
+          r_l1d_state <= WAIT_RESP;
+          r_resp_valid[L1D_INDEX] <= 1'b0;
+          l1d_snoop_if.req_s0_valid <= 1'b1;
+          l1d_snoop_if.req_s0_paddr <= r_l1d_paddr;
         end
-      end
+      end // case: IDLE
       WAIT_RESP : begin
         if (l1d_snoop_if.resp_s1_valid) begin
           if (l1d_snoop_if.resp_s1_status == STATUS_L1D_CONFLICT) begin
