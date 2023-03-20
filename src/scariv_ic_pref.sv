@@ -37,6 +37,7 @@ module scariv_ic_pref
  input vaddr_t    i_s0_pref_search_vaddr,
  output logic     o_s1_pref_search_hit,
  output ic_data_t o_s1_pref_search_data,
+ output logic     o_s1_pref_search_working_hit, // Currently same address is fetching now, will be come response
 
  // Write ICCache Interface
  output logic     o_ic_wr_valid,
@@ -117,15 +118,22 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
 logic w_s0_pref_search_hit;
+logic w_s0_pref_search_working_hit;
 assign w_s0_pref_search_hit = i_s0_pref_search_valid &
                               r_prefetched_valid &
                               (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
                                r_prefetched_vaddr    [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
 
+assign w_s0_pref_search_working_hit = i_s0_pref_search_valid &
+                                      (r_pref_state == ICResp) &
+                                      (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
+                                       r_pref_vaddr          [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
+
 always_ff @ (posedge i_clk) begin
   // Search
   o_s1_pref_search_hit  <= w_s0_pref_search_hit;
   o_s1_pref_search_data <= r_prefetched_data;
+  o_s1_pref_search_working_hit <= w_s0_pref_search_working_hit;
 end
 
 // =========================

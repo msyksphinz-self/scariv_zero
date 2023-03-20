@@ -64,6 +64,7 @@ module scariv_lsu_top
     // Internal Broadcast Interface
     l1d_snoop_if.slave   l1d_snoop_if,
     stq_snoop_if.slave   stq_snoop_if,
+    mshr_snoop_if.slave  mshr_snoop_if,
     stbuf_snoop_if.slave stbuf_snoop_if,
     streq_snoop_if.slave streq_snoop_if,
 
@@ -317,6 +318,8 @@ u_l1d_mshr
  .l1d_wr_if (w_miss_l1d_wr_if),
 
  .l1d_evict_if  (w_l1d_evict_if),
+
+ .mshr_snoop_if(mshr_snoop_if),
 
  .missu_pa_search_if (w_missu_pa_search_if),
  .missu_dc_search_if (w_missu_dc_search_if)

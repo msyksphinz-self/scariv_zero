@@ -18,6 +18,7 @@ module scariv_snoop_top
 
    // Internal Broadcast Interface
    stq_snoop_if.master   stq_snoop_if,
+   mshr_snoop_if.master  mshr_snoop_if,
    l1d_snoop_if.master   l1d_snoop_if,
    stbuf_snoop_if.master stbuf_snoop_if,
    streq_snoop_if.master streq_snoop_if
@@ -25,32 +26,42 @@ module scariv_snoop_top
 
   typedef enum logic [ 1: 0] {
      IDLE = 0,
-     WAIT_RESP = 1
+     WAIT_RESP = 1,
+     WAIT_HAZ_RESOLVE = 2
   } state_t;
 
   typedef enum logic [ 2: 0] {
     L1D_INDEX = 0,
     STQ_INDEX = 1,
-    STBUF_INDEX = 2,
-    STREQ_INDEX = 3,
-    MAX_INDEX   = 4
+    MSHR_INDEX = 2,
+    STBUF_INDEX = 3,
+    STREQ_INDEX = 4,
+    MAX_INDEX   = 5
   } resp_index_t;
 
 logic [MAX_INDEX-1: 0] r_resp_valid;
 
-state_t                                    r_l1d_state;
+state_t                                      r_l1d_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_l1d_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_l1d_be;
 
-state_t                                    r_stq_state;
+state_t                                      r_stq_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_stq_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_stq_be;
 
-state_t                                    r_stbuf_state;
+state_t                                      r_mshr_state;
+logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_mshr_data;
+logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_mshr_be;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_mshr_haz_entry_index;
+logic                                          w_mshr_haz_solved;
+
+assign w_mshr_haz_solved = (r_mshr_haz_entry_index & mshr_snoop_if.entry_valid) == 'h0;
+
+state_t                                      r_stbuf_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_stbuf_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_stbuf_be;
 
-state_t                                    r_streq_state;
+state_t                                      r_streq_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_streq_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_streq_be;
 
@@ -62,15 +73,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     l1d_snoop_if.req_s0_valid <= 1'b0;
     stq_snoop_if.req_s0_valid <= 1'b0;
 
-    r_l1d_state <= IDLE;
-    r_stq_state <= IDLE;
+    r_l1d_state   <= IDLE;
+    r_stq_state   <= IDLE;
+    r_mshr_state  <= IDLE;
+    r_stbuf_state <= IDLE;
+    r_streq_state <= IDLE;
 
     r_resp_valid <= 'h0;
   end else begin
     // L1D state machine
     case (r_l1d_state)
       IDLE : begin
-        if (w_snoop_if_fire) begin
+        if (w_snoop_if_fire |
+            (r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
           r_l1d_state <= WAIT_RESP;
           r_resp_valid[L1D_INDEX] <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
@@ -129,6 +144,41 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end
     endcase // case (r_state)
 
+    // MSHR state machine
+    case (r_mshr_state)
+      IDLE : begin
+        if (w_snoop_if_fire) begin
+          r_resp_valid[MSHR_INDEX] <= 1'b0;
+          r_mshr_state <= WAIT_RESP;
+          mshr_snoop_if.req_s0_valid <= 1'b1;
+          mshr_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
+        end
+      end
+      WAIT_RESP : begin
+        mshr_snoop_if.req_s0_valid <= 1'b0;
+        if (mshr_snoop_if.resp_s1_valid) begin
+          if (mshr_snoop_if.s1_hit_index == 'h0) begin
+            r_mshr_state <= IDLE;
+            r_resp_valid[MSHR_INDEX] <= 1'b1;
+          end else begin
+            r_mshr_state <= WAIT_HAZ_RESOLVE;
+            r_mshr_haz_entry_index <= mshr_snoop_if.s1_hit_index;
+          end
+        end
+      end
+      WAIT_HAZ_RESOLVE : begin
+        if (w_mshr_haz_solved) begin
+          r_mshr_state <= IDLE;
+          r_resp_valid[MSHR_INDEX] <= 1'b1;
+          r_mshr_haz_entry_index <= 'h0;
+        end
+      end
+      default : begin
+`ifdef SIMULATION
+        $fatal(0, "default state reached.");
+`endif // SIMULATION
+      end
+    endcase // case (r_state)
 
     // STBUF state machine
     case (r_stbuf_state)
@@ -190,6 +240,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       for (int b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : byte_loop
         snoop_if.resp_payload.data[b_idx*8 +: 8] <= {8{r_l1d_be  [b_idx]}} & r_l1d_data  [b_idx*8 +: 8] |
                                                     {8{r_stq_be  [b_idx]}} & r_stq_data  [b_idx*8 +: 8] |
+                                                    {8{r_mshr_be [b_idx]}} & r_mshr_data [b_idx*8 +: 8] |
                                                     {8{r_stbuf_be[b_idx]}} & r_stbuf_data[b_idx*8 +: 8] |
                                                     {8{r_streq_be[b_idx]}} & r_streq_data[b_idx*8 +: 8] ;
         snoop_if.resp_payload.be  [b_idx       ] <= r_l1d_be[b_idx] | r_stq_be[b_idx];

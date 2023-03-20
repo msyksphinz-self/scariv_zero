@@ -34,6 +34,9 @@ module scariv_l1d_mshr
    // Search MISSU entry
    missu_pa_search_if.slave   missu_pa_search_if,
 
+   // Snoop Interface
+   mshr_snoop_if.slave  mshr_snoop_if,
+
    // MISSU search interface (from DCache)
    missu_dc_search_if.slave missu_dc_search_if
    );
@@ -487,6 +490,39 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
 
 end
 endgenerate
+
+
+
+// --------------------------
+// MISSU Snoop Search
+// --------------------------
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_evict_hit_array_next;
+generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : snoop_missu_loop
+  assign w_snoop_missu_hit_array_next[e_idx] = mshr_snoop_if.req_s0_valid &
+                                               w_missu_entries[e_idx].valid &
+                                               !w_entry_finish[e_idx] &
+                                               (w_missu_entries[e_idx].paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                mshr_snoop_if.req_s0_paddr  [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      mshr_snoop_if.s1_hit_index[e_idx] <= 1'b0;
+      mshr_snoop_if.entry_valid [e_idx] <= 1'b0;
+    end else begin
+      mshr_snoop_if.s1_hit_index[e_idx] <= w_snoop_missu_hit_array_next[e_idx];
+      mshr_snoop_if.entry_valid [e_idx] <= w_missu_entries[e_idx].valid;
+    end
+  end
+end
+endgenerate
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    mshr_snoop_if.resp_s1_valid <= 1'b0;
+  end else begin
+    mshr_snoop_if.resp_s1_valid <= mshr_snoop_if.req_s0_valid;
+  end
+end
 
 
 
