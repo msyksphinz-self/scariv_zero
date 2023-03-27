@@ -136,6 +136,7 @@ fflags_update_if w_fflags_update_if();
 // -------------------------------
 l1d_snoop_if   l1d_snoop_if  ();
 stq_snoop_if   stq_snoop_if  ();
+mshr_snoop_if  mshr_snoop_if ();
 stbuf_snoop_if stbuf_snoop_if();
 streq_snoop_if streq_snoop_if();
 
@@ -392,6 +393,7 @@ u_scariv_lsu_top
 
     .l1d_snoop_if   (l1d_snoop_if  ),
     .stq_snoop_if   (stq_snoop_if  ),
+    .mshr_snoop_if  (mshr_snoop_if ),
     .stbuf_snoop_if (stbuf_snoop_if),
     .streq_snoop_if (streq_snoop_if),
 
@@ -627,6 +629,7 @@ scariv_snoop_top u_snoop_top
 
  .l1d_snoop_if   (l1d_snoop_if  ),
  .stq_snoop_if   (stq_snoop_if  ),
+ .mshr_snoop_if  (mshr_snoop_if ),
  .stbuf_snoop_if (stbuf_snoop_if),
  .streq_snoop_if (streq_snoop_if)
  );

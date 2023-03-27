@@ -45,16 +45,17 @@ ic_ways_t         w_s1_tag_hit;
 vaddr_t           r_s1_vaddr;
 logic             w_s1_hit;
 ic_data_t         w_s1_data[scariv_conf_pkg::ICACHE_WAYS];
+logic             w_s1_pref_search_working_hit;
 
 /* S2 stage */
-logic             r_s2_valid;
-logic             r_s2_hit;
-ic_ways_t         r_s2_tag_hit;
-paddr_t r_s2_paddr;
-ic_data_t         r_s2_data[scariv_conf_pkg::ICACHE_WAYS];
-ic_data_t         w_s2_selected_data;
-logic             r_s2_normal_miss;
-
+logic     r_s2_valid;
+logic     r_s2_hit;
+ic_ways_t r_s2_tag_hit;
+paddr_t   r_s2_paddr;
+ic_data_t r_s2_data[scariv_conf_pkg::ICACHE_WAYS];
+ic_data_t w_s2_selected_data;
+logic     r_s2_normal_miss;
+logic     r_s2_working_pref_hit;
 
 logic [L2_CMD_TAG_W-1: 0] r_ic_req_tag;
 
@@ -291,10 +292,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       ICInit : begin
         if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i &
             !w_s1_pref_paddr_hit) begin
-          r_ic_state <= ICReq;
+          if (w_s1_pref_search_working_hit) begin
+            r_ic_state <= ICResp;
+          end else begin
+            r_ic_state <= ICReq;
+          end
           r_s2_paddr <= i_s1_paddr;
           r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
           r_s2_waiting_vaddr <= r_s1_vaddr;
+          r_s2_working_pref_hit <= w_s1_pref_search_working_hit;
           // end
         end
       end // case: ICInit
@@ -306,7 +312,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       ICResp : begin
-        if (ic_l2_normal_resp_fire) begin
+        if (ic_l2_normal_resp_fire |
+            r_s2_working_pref_hit & ic_l2_pref_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
         end else if (i_fence_i) begin
@@ -337,7 +344,7 @@ always_comb begin
     ic_l2_req.payload.data    = 'h0;
     ic_l2_req.payload.byte_en = 'h0;
   end else begin
-    ic_l2_req.valid           = (r_ic_state == ICReq);
+    ic_l2_req.valid           = (r_ic_state == ICReq) & !r_s2_working_pref_hit;
     ic_l2_req.payload.cmd     = M_XRD;
     ic_l2_req.payload.addr    = r_s2_paddr;
     ic_l2_req.tag             = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
@@ -400,10 +407,11 @@ u_ic_pref
    .i_pref_l2_resp_data (ic_l2_resp.payload.data),
 
    // Instruction Fetch search
-   .i_s0_pref_search_valid (i_s0_req.valid      ),
-   .i_s0_pref_search_vaddr (i_s0_req.vaddr      ),
-   .o_s1_pref_search_hit   (w_s1_pref_paddr_hit ),
-   .o_s1_pref_search_data  (w_s1_pref_hit_data  ),
+   .i_s0_pref_search_valid       (i_s0_req.valid              ),
+   .i_s0_pref_search_vaddr       (i_s0_req.vaddr              ),
+   .o_s1_pref_search_hit         (w_s1_pref_paddr_hit         ),
+   .o_s1_pref_search_data        (w_s1_pref_hit_data          ),
+   .o_s1_pref_search_working_hit (w_s1_pref_search_working_hit),
 
    .o_ic_wr_valid ( w_pref_wr_valid ),
    .i_ic_wr_ready ( w_pref_wr_ready ),

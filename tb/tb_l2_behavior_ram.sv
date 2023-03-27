@@ -79,6 +79,9 @@ assign req_fire = i_req_valid & o_req_ready;
 assign actual_addr = i_req_addr /* - BASE_ADDR */;
 assign actual_line_pos = actual_addr >> $clog2(DATA_W / 8);
 
+line_status_t  actual_line_status;
+assign actual_line_status = status[actual_line_pos];
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_state <= IDLE;

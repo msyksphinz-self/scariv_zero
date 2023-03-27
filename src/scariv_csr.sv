@@ -560,11 +560,25 @@ end else if (riscv_fpu_pkg::FLEN_W ==64) begin
 end
 endgenerate
 
+xlen_t w_misa_next;
+always_comb begin
+  w_misa_next = write_if.data;
+  if (riscv_fpu_pkg::FLEN_W == 0) begin
+    w_misa_next[("F" - "A")] = 1'b0;
+    w_misa_next[("D" - "A")] = 1'b0;
+  end else if (riscv_fpu_pkg::FLEN_W == 32) begin
+    w_misa_next[("D" - "A")] = 1'b0;
+  end
+  w_misa_next[("A" - "A")] = `RV_AMO;
+  w_misa_next[("B" - "A")] = 1'b0;
+  w_misa_next[("V" - "A")] = 1'b0;
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_misa <= w_misa_reset;
   end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MISA) begin
-    r_misa <= write_if.data;
+    r_misa <= w_misa_next;
   end
 end
 
