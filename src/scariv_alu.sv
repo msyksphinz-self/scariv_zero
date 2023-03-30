@@ -20,7 +20,7 @@ module scariv_alu #(
     rob_info_if.slave           rob_info_if,
 
     input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    disp_if.watch                          disp,
+    scariv_front_if.watch                          disp,
     cre_ret_if.slave                       cre_ret_if,
 
 
@@ -89,7 +89,7 @@ u_scariv_scheduler
    .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
-   .i_cmt_id    (disp.cmt_id),
+   .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
    .cre_ret_if  (cre_ret_if),

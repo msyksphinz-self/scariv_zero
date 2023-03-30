@@ -19,11 +19,11 @@ module scariv_rename
    input logic i_clk,
    input logic i_reset_n,
 
-   disp_if.slave ibuf_disp_if,
+   scariv_front_if.slave      ibuf_front_if,
    input scariv_pkg::cmt_id_t i_sc_new_cmt_id,
 
    input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
-   disp_if.master           rn_disp_if,
+   scariv_front_if.master           rn_front_if,
 
    // from Resource Allocator
    input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
@@ -95,7 +95,7 @@ logic                                     w_flush_valid;
 assign w_all_freelist_ready = ~(|w_freelist_empty);
 assign o_freelist_ready = w_all_freelist_ready;
 
-assign ibuf_disp_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
+assign ibuf_front_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
                        i_resource_ok & w_all_freelist_ready;
 
 //                                          Freelist      RenameMap
@@ -138,10 +138,10 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   end
 
   logic w_freelist_pop;
-  assign w_freelist_pop = ibuf_disp_if.inst[d_idx].valid &
-                          ibuf_disp_if.inst[d_idx].wr_reg.valid &
-                          (ibuf_disp_if.inst[d_idx].wr_reg.typ == REG_TYPE) &
-                          ((REG_TYPE == GPR) ? (ibuf_disp_if.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
+  assign w_freelist_pop = ibuf_front_if.payload.inst[d_idx].valid &
+                          ibuf_front_if.payload.inst[d_idx].wr_reg.valid &
+                          (ibuf_front_if.payload.inst[d_idx].wr_reg.typ == REG_TYPE) &
+                          ((REG_TYPE == GPR) ? (ibuf_front_if.payload.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
 
   scariv_freelist
     #(
@@ -162,15 +162,15 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
      .o_is_empty (w_freelist_empty[d_idx])
   );
-  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & (ibuf_disp_if.inst[d_idx].wr_reg.regidx == 'h0) ? 'h0 : w_rd_rnid_tmp;
+  assign w_rd_rnid[d_idx] = (REG_TYPE == GPR) & (ibuf_front_if.payload.inst[d_idx].wr_reg.regidx == 'h0) ? 'h0 : w_rd_rnid_tmp;
 end
 endgenerate
 
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : src_rd_loop
   for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_idx_loop
-    assign w_archreg_valid [d_idx * NUM_OPERANDS + rs_idx] = ibuf_disp_if.inst[d_idx].rd_regs[rs_idx].valid & (ibuf_disp_if.inst[d_idx].rd_regs[rs_idx].typ == REG_TYPE);
-    assign w_archreg       [d_idx * NUM_OPERANDS + rs_idx] = ibuf_disp_if.inst[d_idx].rd_regs[rs_idx].regidx;
+    assign w_archreg_valid [d_idx * NUM_OPERANDS + rs_idx] = ibuf_front_if.payload.inst[d_idx].rd_regs[rs_idx].valid & (ibuf_front_if.payload.inst[d_idx].rd_regs[rs_idx].typ == REG_TYPE);
+    assign w_archreg       [d_idx * NUM_OPERANDS + rs_idx] = ibuf_front_if.payload.inst[d_idx].rd_regs[rs_idx].regidx;
   end
 
   assign w_update_arch_id[d_idx] = w_rd_regidx[d_idx];
@@ -241,43 +241,43 @@ u_scariv_rename_map
 
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : rd_loop
-  assign w_rd_valids[d_idx] =  w_iq_fire & ibuf_disp_if.inst[d_idx].wr_reg.valid &
-                               (ibuf_disp_if.inst[d_idx].wr_reg.typ == REG_TYPE);
-  assign w_rd_regidx[d_idx] =  ibuf_disp_if.inst[d_idx].wr_reg.regidx;
-  assign w_rd_data  [d_idx] = !ibuf_disp_if.inst[d_idx].wr_reg.valid;
+  assign w_rd_valids[d_idx] =  w_iq_fire & ibuf_front_if.payload.inst[d_idx].wr_reg.valid &
+                               (ibuf_front_if.payload.inst[d_idx].wr_reg.typ == REG_TYPE);
+  assign w_rd_regidx[d_idx] =  ibuf_front_if.payload.inst[d_idx].wr_reg.regidx;
+  assign w_rd_data  [d_idx] = !ibuf_front_if.payload.inst[d_idx].wr_reg.valid;
 end
 endgenerate
 
-assign w_iq_fire = ~w_flush_valid & ibuf_disp_if.valid & ibuf_disp_if.ready;
+assign w_iq_fire = ~w_flush_valid & ibuf_front_if.valid & ibuf_front_if.ready;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    rn_disp_if.valid <= 'h0;
-    rn_disp_if.pc_addr <= 'h0;
-    rn_disp_if.is_br_included <= 1'b0;
+    rn_front_if.valid <= 'h0;
+    rn_front_if.payload.pc_addr <= 'h0;
+    rn_front_if.payload.is_br_included <= 1'b0;
 
     r_disp_inst <= 'h0;
   end else begin
-    rn_disp_if.valid            <= w_iq_fire;
-    rn_disp_if.pc_addr          <= ibuf_disp_if.pc_addr;
-    rn_disp_if.is_br_included   <= ibuf_disp_if.is_br_included;
-    rn_disp_if.tlb_except_valid <= ibuf_disp_if.tlb_except_valid;
-    rn_disp_if.tlb_except_cause <= ibuf_disp_if.tlb_except_cause;
-    rn_disp_if.tlb_except_tval  <= ibuf_disp_if.tlb_except_tval;
-    rn_disp_if.resource_cnt     <= ibuf_disp_if.resource_cnt;
+    rn_front_if.valid            <= w_iq_fire;
+    rn_front_if.payload.pc_addr          <= ibuf_front_if.payload.pc_addr;
+    rn_front_if.payload.is_br_included   <= ibuf_front_if.payload.is_br_included;
+    rn_front_if.payload.tlb_except_valid <= ibuf_front_if.payload.tlb_except_valid;
+    rn_front_if.payload.tlb_except_cause <= ibuf_front_if.payload.tlb_except_cause;
+    rn_front_if.payload.tlb_except_tval  <= ibuf_front_if.payload.tlb_except_tval;
+    rn_front_if.payload.resource_cnt     <= ibuf_front_if.payload.resource_cnt;
 
-    rn_disp_if.int_inserted <= ibuf_disp_if.int_inserted;
+    rn_front_if.payload.int_inserted <= ibuf_front_if.payload.int_inserted;
     r_disp_inst <= w_disp_inst;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign rn_disp_if.cmt_id = i_sc_new_cmt_id;
+assign rn_front_if.payload.cmt_id = i_sc_new_cmt_id;
 always_comb begin
-  rn_disp_if.inst = r_disp_inst;
+  rn_front_if.payload.inst = r_disp_inst;
   // for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
-  //   rn_disp_if.inst[d_idx].ras_index      = i_sc_ras_index;
-  //   if (rn_disp_if.inst[d_idx].is_call) begin
-  //     rn_disp_if.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
+  //   rn_front_if.payload.inst[d_idx].ras_index      = i_sc_ras_index;
+  //   if (rn_front_if.payload.inst[d_idx].is_call) begin
+  //     rn_front_if.payload.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
   //   end
   // end
 end
@@ -299,9 +299,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   always_comb begin
 
     /* initial index of loop */
-    if (ibuf_disp_if.inst[0].wr_reg.valid &&
-        ibuf_disp_if.inst[0].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[0].typ &&
-        ibuf_disp_if.inst[0].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[0].regidx) begin
+    if (ibuf_front_if.payload.inst[0].wr_reg.valid &&
+        ibuf_front_if.payload.inst[0].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[0].typ &&
+        ibuf_front_if.payload.inst[0].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[0].regidx) begin
       rs1_rnid_tmp_valid[0] = 1'b1;
       rs1_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
@@ -309,64 +309,64 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       rs1_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 0];
     end
 
-    if (ibuf_disp_if.inst[0].wr_reg.valid &&
-        ibuf_disp_if.inst[0].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[1].typ &&
-        ibuf_disp_if.inst[0].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[1].regidx) begin
+    if (ibuf_front_if.payload.inst[0].wr_reg.valid &&
+        ibuf_front_if.payload.inst[0].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[1].typ &&
+        ibuf_front_if.payload.inst[0].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[1].regidx) begin
       rs2_rnid_tmp_valid[0] = 1'b1;
       rs2_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rs2_rnid_tmp_valid[0] = 1'b0;
       rs2_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 1];
-    end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+    end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
 
     if (NUM_OPERANDS >= 3) begin
-      if (ibuf_disp_if.inst[0].wr_reg.valid &&
-          ibuf_disp_if.inst[0].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[2].typ &&
-          ibuf_disp_if.inst[0].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[2].regidx) begin
+      if (ibuf_front_if.payload.inst[0].wr_reg.valid &&
+          ibuf_front_if.payload.inst[0].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[2].typ &&
+          ibuf_front_if.payload.inst[0].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[2].regidx) begin
         rs3_rnid_tmp_valid[0] = 1'b1;
         rs3_rnid_tmp      [0] = w_rd_rnid[0];
       end else begin
         rs3_rnid_tmp_valid[0] = 1'b0;
         rs3_rnid_tmp      [0] = w_rnid[d_idx * NUM_OPERANDS + 2];
-      end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+      end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
     end // if (NUM_OPERANDS >= 3)
 
-    if (ibuf_disp_if.inst[0].wr_reg.valid &&
-        ibuf_disp_if.inst[0].wr_reg.typ    == ibuf_disp_if.inst[d_idx].wr_reg.typ &&
-        ibuf_disp_if.inst[0].wr_reg.regidx == ibuf_disp_if.inst[d_idx].wr_reg.regidx) begin
+    if (ibuf_front_if.payload.inst[0].wr_reg.valid &&
+        ibuf_front_if.payload.inst[0].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].wr_reg.typ &&
+        ibuf_front_if.payload.inst[0].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].wr_reg.regidx) begin
       rd_old_rnid_tmp_valid[0] = 1'b1;
       rd_old_rnid_tmp      [0] = w_rd_rnid[0];
     end else begin
       rd_old_rnid_tmp_valid[0] = 1'b0;
       rd_old_rnid_tmp      [0] = w_rd_old_rnid[d_idx];
-    end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+    end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
 
     /* verilator lint_off UNSIGNED */
     for (int p_idx = 1; p_idx < d_idx; p_idx++) begin: prev_rd_loop
-      if (ibuf_disp_if.inst[p_idx].wr_reg.valid &&
-          ibuf_disp_if.inst[p_idx].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[0].typ &&
-          ibuf_disp_if.inst[p_idx].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[0].regidx) begin
+      if (ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[0].typ &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[0].regidx) begin
         rs1_rnid_tmp_valid[p_idx] = 1'b1;
         rs1_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs1_rnid_tmp_valid[p_idx] = rs1_rnid_tmp_valid[p_idx-1];
         rs1_rnid_tmp      [p_idx] = rs1_rnid_tmp      [p_idx-1];
-      end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+      end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
 
-      if (ibuf_disp_if.inst[p_idx].wr_reg.valid &&
-          ibuf_disp_if.inst[p_idx].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[1].typ &&
-          ibuf_disp_if.inst[p_idx].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[1].regidx) begin
+      if (ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[1].typ &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[1].regidx) begin
         rs2_rnid_tmp_valid[p_idx] = 1'b1;
         rs2_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rs2_rnid_tmp_valid[p_idx] = rs2_rnid_tmp_valid[p_idx-1];
         rs2_rnid_tmp      [p_idx] = rs2_rnid_tmp      [p_idx-1];
-      end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+      end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
 
       if (NUM_OPERANDS >= 3) begin
-        if (ibuf_disp_if.inst[p_idx].wr_reg.valid &&
-            ibuf_disp_if.inst[p_idx].wr_reg.typ    == ibuf_disp_if.inst[d_idx].rd_regs[2].typ &&
-            ibuf_disp_if.inst[p_idx].wr_reg.regidx == ibuf_disp_if.inst[d_idx].rd_regs[2].regidx) begin
+        if (ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&
+            ibuf_front_if.payload.inst[p_idx].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].rd_regs[2].typ &&
+            ibuf_front_if.payload.inst[p_idx].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].rd_regs[2].regidx) begin
           rs3_rnid_tmp_valid[p_idx] = 1'b1;
           rs3_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
         end else begin
@@ -375,15 +375,15 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
         end
       end // if (NUM_OPERANDS >= 3)
 
-      if (ibuf_disp_if.inst[p_idx].wr_reg.valid &&
-          ibuf_disp_if.inst[p_idx].wr_reg.typ    == ibuf_disp_if.inst[d_idx].wr_reg.typ &&
-          ibuf_disp_if.inst[p_idx].wr_reg.regidx == ibuf_disp_if.inst[d_idx].wr_reg.regidx) begin
+      if (ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.typ    == ibuf_front_if.payload.inst[d_idx].wr_reg.typ &&
+          ibuf_front_if.payload.inst[p_idx].wr_reg.regidx == ibuf_front_if.payload.inst[d_idx].wr_reg.regidx) begin
         rd_old_rnid_tmp_valid[p_idx] = 1'b1;
         rd_old_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
       end else begin
         rd_old_rnid_tmp_valid[p_idx] = rd_old_rnid_tmp_valid[p_idx-1];
         rd_old_rnid_tmp      [p_idx] = rd_old_rnid_tmp      [p_idx-1];
-      end // else: !if(ibuf_disp_if.inst[p_idx].wr_reg.valid &&...
+      end // else: !if(ibuf_front_if.payload.inst[p_idx].wr_reg.valid &&...
     end // block: prev_rd_loop
 
   end // always_comb
@@ -396,7 +396,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   end
   assign rd_old_rnid_fwd[d_idx] = (d_idx == 0) ? w_rd_old_rnid[0] : rd_old_rnid_tmp[d_idx-1];
 
-  assign w_disp_inst[d_idx] = assign_disp_rename (ibuf_disp_if.inst[d_idx],
+  assign w_disp_inst[d_idx] = assign_disp_rename (ibuf_front_if.payload.inst[d_idx],
                                                   w_rd_rnid[d_idx],
                                                   rd_old_rnid_fwd[d_idx],
                                                   w_active [d_idx * NUM_OPERANDS + 0],
@@ -443,8 +443,8 @@ u_inflight_map
 grp_id_t w_is_br_inst;
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : br_loop
   assign w_is_br_inst[d_idx] = w_iq_fire &
-                               ibuf_disp_if.inst[d_idx].valid &
-                               (ibuf_disp_if.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+                               ibuf_front_if.payload.inst[d_idx].valid &
+                               (ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
 end
 endgenerate
 
@@ -489,45 +489,45 @@ assign w_flush_valid  = w_commit_flush | w_br_flush;
 function void dump_json(string name, int fp);
   $fwrite(fp, "  \"scariv_%s_rename\" : {\n", name);
 
-  if (rn_disp_if.valid) begin
-    $fwrite(fp, "    \"rn_disp_if\" : {\n");
-    $fwrite(fp, "      valid  : \"%d\",\n", rn_disp_if.valid);
-    $fwrite(fp, "      ready  : \"%d\",\n", rn_disp_if.ready);
-    $fwrite(fp, "      cmt_id  : \"%d\",\n", rn_disp_if.cmt_id);
-    $fwrite(fp, "      pc_addr : \"0x%08x\",\n", rn_disp_if.pc_addr);
+  if (rn_front_if.valid) begin
+    $fwrite(fp, "    \"rn_front_if\" : {\n");
+    $fwrite(fp, "      valid  : \"%d\",\n", rn_front_if.valid);
+    $fwrite(fp, "      ready  : \"%d\",\n", rn_front_if.ready);
+    $fwrite(fp, "      cmt_id  : \"%d\",\n", rn_front_if.payload.cmt_id);
+    $fwrite(fp, "      pc_addr : \"0x%08x\",\n", rn_front_if.payload.pc_addr);
 
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       $fwrite(fp, "      \"inst[%d]\" : {", d_idx);
-      $fwrite(fp, "        valid : \"%d\",",      rn_disp_if.inst[d_idx].valid);
-      $fwrite(fp, "        inst  : \"%08x\",",     rn_disp_if.inst[d_idx].inst);
-      $fwrite(fp, "        pc_addr : \"%0x\",",   rn_disp_if.inst[d_idx].pc_addr);
+      $fwrite(fp, "        valid : \"%d\",",      rn_front_if.payload.inst[d_idx].valid);
+      $fwrite(fp, "        inst  : \"%08x\",",     rn_front_if.payload.inst[d_idx].inst);
+      $fwrite(fp, "        pc_addr : \"%0x\",",   rn_front_if.payload.inst[d_idx].pc_addr);
 
-      $fwrite(fp, "        rd_valid   : \"%d\",", rn_disp_if.inst[d_idx].wr_reg.valid);
-      $fwrite(fp, "        rd_type    : \"%d\",", rn_disp_if.inst[d_idx].wr_reg.typ);
-      $fwrite(fp, "        rd_regidx  : \"%d\",", rn_disp_if.inst[d_idx].wr_reg.regidx);
-      $fwrite(fp, "        rd_rnid    : \"%d\",", rn_disp_if.inst[d_idx].wr_reg.rnid);
+      $fwrite(fp, "        rd_valid   : \"%d\",", rn_front_if.payload.inst[d_idx].wr_reg.valid);
+      $fwrite(fp, "        rd_type    : \"%d\",", rn_front_if.payload.inst[d_idx].wr_reg.typ);
+      $fwrite(fp, "        rd_regidx  : \"%d\",", rn_front_if.payload.inst[d_idx].wr_reg.regidx);
+      $fwrite(fp, "        rd_rnid    : \"%d\",", rn_front_if.payload.inst[d_idx].wr_reg.rnid);
 
-      $fwrite(fp, "        rs1_valid  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[0].valid);
-      $fwrite(fp, "        rs1_type   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[0].typ);
-      $fwrite(fp, "        rs1_regidx : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[0].regidx);
-      $fwrite(fp, "        rs1_rnid   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[0].rnid);
-      $fwrite(fp, "        rs1_ready  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[0].ready);
+      $fwrite(fp, "        rs1_valid  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[0].valid);
+      $fwrite(fp, "        rs1_type   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[0].typ);
+      $fwrite(fp, "        rs1_regidx : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[0].regidx);
+      $fwrite(fp, "        rs1_rnid   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[0].rnid);
+      $fwrite(fp, "        rs1_ready  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[0].ready);
 
-      $fwrite(fp, "        rs2_valid  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[1].valid);
-      $fwrite(fp, "        rs2_type   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[1].typ);
-      $fwrite(fp, "        rs2_regidx : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[1].regidx);
-      $fwrite(fp, "        rs2_rnid   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[1].rnid);
-      $fwrite(fp, "        rs2_ready  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[1].ready);
+      $fwrite(fp, "        rs2_valid  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[1].valid);
+      $fwrite(fp, "        rs2_type   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[1].typ);
+      $fwrite(fp, "        rs2_regidx : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[1].regidx);
+      $fwrite(fp, "        rs2_rnid   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[1].rnid);
+      $fwrite(fp, "        rs2_ready  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[1].ready);
 
       if (NUM_OPERANDS >= 3) begin
-        $fwrite(fp, "        rs3_valid  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[2].valid);
-        $fwrite(fp, "        rs3_type   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[2].typ);
-        $fwrite(fp, "        rs3_regidx : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[2].regidx);
-        $fwrite(fp, "        rs3_rnid   : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[2].rnid);
-        $fwrite(fp, "        rs3_ready  : \"%d\",", rn_disp_if.inst[d_idx].rd_regs[2].ready);
+        $fwrite(fp, "        rs3_valid  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[2].valid);
+        $fwrite(fp, "        rs3_type   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[2].typ);
+        $fwrite(fp, "        rs3_regidx : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[2].regidx);
+        $fwrite(fp, "        rs3_rnid   : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[2].rnid);
+        $fwrite(fp, "        rs3_ready  : \"%d\",", rn_front_if.payload.inst[d_idx].rd_regs[2].ready);
       end
 
-      $fwrite(fp, "        cat[d_idx] : \"%d\",", rn_disp_if.inst[d_idx].cat);
+      $fwrite(fp, "        cat[d_idx] : \"%d\",", rn_front_if.payload.inst[d_idx].cat);
       $fwrite(fp, "      },\n");
     end
 
@@ -539,7 +539,7 @@ function void dump_json(string name, int fp);
     //   $fwrite(fp, "%d,", free_loop[d_idx].u_freelist.r_freelist[f_idx]);
     // end
     // $fwrite(fp, "      }\n", );
-  end // if (rn_disp_if.valid & rn_disp_if.ready)
+  end // if (rn_front_if.valid & rn_front_if.ready)
   $fwrite(fp, "  },\n");
 
 endfunction // dump
@@ -582,10 +582,10 @@ import "DPI-C" function void log_stage
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (rn_disp_if.valid & rn_disp_if.ready) begin
+    if (rn_front_if.valid & rn_front_if.ready) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
-        if (rn_disp_if.inst[i].valid) begin
-          log_stage (rn_disp_if.inst[i].kanata_id, "Rn");
+        if (rn_front_if.payload.inst[i].valid) begin
+          log_stage (rn_front_if.payload.inst[i].kanata_id, "Rn");
         end
       end
     end

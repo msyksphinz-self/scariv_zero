@@ -17,7 +17,7 @@ module scariv_stq_entry
    // ROB notification interface
    rob_info_if.slave                           rob_info_if,
 
-   input logic                                i_disp_load,
+   input logic                                  i_disp_load,
    input scariv_pkg::cmt_id_t                   i_disp_cmt_id,
    input scariv_pkg::grp_id_t                   i_disp_grp_id,
    input scariv_pkg::disp_t                     i_disp,

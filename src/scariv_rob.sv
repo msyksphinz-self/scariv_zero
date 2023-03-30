@@ -15,7 +15,7 @@ module scariv_rob
    input logic                   i_clk,
    input logic                   i_reset_n,
 
-   disp_if.slave                 rn_disp_if,
+   scariv_front_if.slave                 rn_front_if,
 
    cre_ret_if.slave              cre_ret_if,
 
@@ -73,7 +73,7 @@ logic [DISP_SIZE-1: 0]              w_valid_except_grp_id;
 assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
 assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
 
-assign w_in_valid  = rn_disp_if.valid;
+assign w_in_valid  = rn_front_if.valid;
 assign w_out_valid = w_entry_all_done[w_out_cmt_entry_id];
 
 logic                                      w_flush_valid;
@@ -84,8 +84,8 @@ inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_in_valid (w_in_valid ), .o_in_ptr (w_in_cmt_id  ),
                                          .i_out_valid(w_out_valid), .o_out_ptr(w_out_cmt_id));
 
-assign rn_disp_if.ready = 1'b1;
-assign w_ignore_disp = w_flush_valid & (rn_disp_if.valid & rn_disp_if.ready);
+assign rn_front_if.ready = 1'b1;
+assign w_ignore_disp = w_flush_valid & (rn_front_if.valid & rn_front_if.ready);
 assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) /* +
                              (w_ignore_disp   ? 'h1 : 'h0) */ ;
 
@@ -103,7 +103,7 @@ u_credit_return_slave
  );
 
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : disp_loop
-  assign w_disp_grp_id[d_idx] = rn_disp_if.inst[d_idx].valid;
+  assign w_disp_grp_id[d_idx] = rn_front_if.payload.inst[d_idx].valid;
 end
 endgenerate
 
@@ -117,38 +117,38 @@ function automatic rob_entry_t assign_rob_entry();
   ret.valid       = 1'b1;
   ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
   ret.grp_id      = w_disp_grp_id;
-  ret.pc_addr     = rn_disp_if.pc_addr;
+  ret.pc_addr     = rn_front_if.payload.pc_addr;
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
-    ret.inst[d_idx].valid          = rn_disp_if.inst[d_idx].valid         ;
-    ret.inst[d_idx].pc_addr        = rn_disp_if.inst[d_idx].pc_addr       ;
-    ret.inst[d_idx].br_mask        = rn_disp_if.inst[d_idx].br_mask       ;
-    ret.inst[d_idx].cat            = rn_disp_if.inst[d_idx].cat           ;
-    ret.inst[d_idx].brtag          = rn_disp_if.inst[d_idx].brtag         ;
-    ret.inst[d_idx].wr_reg         = rn_disp_if.inst[d_idx].wr_reg        ;
-    ret.inst[d_idx].ras_index      = rn_disp_if.inst[d_idx].ras_index     ;
-    ret.inst[d_idx].is_call        = rn_disp_if.inst[d_idx].is_call       ;
-    ret.inst[d_idx].is_ret         = rn_disp_if.inst[d_idx].is_ret        ;
+    ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
+    ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
+    ret.inst[d_idx].br_mask        = rn_front_if.payload.inst[d_idx].br_mask       ;
+    ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
+    ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
+    ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
+    ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
+    ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
+    ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
 `ifdef SIMULATION
-    ret.inst[d_idx].rvc_inst_valid = rn_disp_if.inst[d_idx].rvc_inst_valid;
-    ret.inst[d_idx].rvc_inst       = rn_disp_if.inst[d_idx].rvc_inst      ;
-    ret.inst[d_idx].inst           = rn_disp_if.inst[d_idx].inst          ;
-    ret.inst[d_idx].kanata_id      = rn_disp_if.inst[d_idx].kanata_id     ;
+    ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
+    ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
+    ret.inst[d_idx].inst           = rn_front_if.payload.inst[d_idx].inst          ;
+    ret.inst[d_idx].kanata_id      = rn_front_if.payload.inst[d_idx].kanata_id     ;
 `endif // SIMULATION
   end // block: inst_loop
 
   ret.br_upd_info = 'h0;
   ret.fflags_update_valid = 'h0;
 
-  ret.is_br_included = rn_disp_if.is_br_included;
+  ret.is_br_included = rn_front_if.payload.is_br_included;
 
-  ret.int_inserted = rn_disp_if.int_inserted;
+  ret.int_inserted = rn_front_if.payload.int_inserted;
 
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     // If TLB Exception detected before execution, this instruction already done.
-    ret.done_grp_id [d_idx] = (rn_disp_if.tlb_except_valid[d_idx] | rn_disp_if.inst[d_idx].illegal_valid) ? w_disp_grp_id[d_idx] : 1'b0;
-    ret.except_valid[d_idx] = (rn_disp_if.tlb_except_valid[d_idx] | rn_disp_if.inst[d_idx].illegal_valid) & w_disp_grp_id[d_idx];
-    ret.except_type [d_idx] = rn_disp_if.tlb_except_valid[d_idx] ? rn_disp_if.tlb_except_cause[d_idx] : ILLEGAL_INST;
-    ret.except_tval [d_idx] = rn_disp_if.tlb_except_valid[d_idx] & (rn_disp_if.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_disp_if.tlb_except_tval[d_idx] : 'h0;
+    ret.done_grp_id [d_idx] = (rn_front_if.payload.tlb_except_valid[d_idx] | rn_front_if.payload.inst[d_idx].illegal_valid) ? w_disp_grp_id[d_idx] : 1'b0;
+    ret.except_valid[d_idx] = (rn_front_if.payload.tlb_except_valid[d_idx] | rn_front_if.payload.inst[d_idx].illegal_valid) & w_disp_grp_id[d_idx];
+    ret.except_type [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] ? rn_front_if.payload.tlb_except_cause[d_idx] : ILLEGAL_INST;
+    ret.except_tval [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] & (rn_front_if.payload.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_front_if.payload.tlb_except_tval[d_idx] : 'h0;
     ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
     ret.dead        [d_idx] = ret.dead[d_idx] | ret.except_valid[d_idx];
 `ifdef SIMULATION
@@ -167,7 +167,7 @@ assign w_entry_in = assign_rob_entry();
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
-  assign w_load_valid = rn_disp_if.valid & (w_in_cmt_entry_id == c_idx);
+  assign w_load_valid = rn_front_if.valid & (w_in_cmt_entry_id == c_idx);
 
   scariv_rob_entry u_entry
     (
@@ -395,8 +395,8 @@ logic [63: 0] r_cycle_count;
 logic [63: 0] r_commit_count;
 logic [63: 0] r_inst_count;
 logic [63: 0] r_dead_count;
-logic [63: 0] r_rn_disp_if_count;
-logic [63: 0] r_rn_disp_if_inst_count;
+logic [63: 0] r_rn_front_if_count;
+logic [63: 0] r_rn_front_if_inst_count;
 logic [63: 0] r_rob_max_period;
 logic [63: 0] r_rob_entry_count;
 
@@ -410,8 +410,8 @@ struct packed {
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_rn_disp_if_count <= 'h0;
-    r_rn_disp_if_inst_count <= 'h0;
+    r_rn_front_if_count <= 'h0;
+    r_rn_front_if_inst_count <= 'h0;
 
     r_commit_count <= 'h0;
     r_inst_count   <= 'h0;
@@ -423,8 +423,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end else begin
     r_cycle_count <= r_cycle_count + 'h1;
     if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
-      r_rn_disp_if_count <= 'h0;
-      r_rn_disp_if_inst_count <= 'h0;
+      r_rn_front_if_count <= 'h0;
+      r_rn_front_if_inst_count <= 'h0;
 
       r_commit_count <= 'h0;
       r_inst_count   <= 'h0;
@@ -438,9 +438,9 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_rob_max_period  <= 'h0;
       r_rob_entry_count <= 'h0;
     end else begin
-      if (rn_disp_if.valid & rn_disp_if.ready) begin
-        r_rn_disp_if_count      <= r_rn_disp_if_count + 'h1;
-        r_rn_disp_if_inst_count <= r_rn_disp_if_inst_count + $countones(w_disp_grp_id);
+      if (rn_front_if.valid & rn_front_if.ready) begin
+        r_rn_front_if_count      <= r_rn_front_if_count + 'h1;
+        r_rn_front_if_inst_count <= r_rn_front_if_inst_count + $countones(w_disp_grp_id);
       end
 
       if (|w_entry_valids) begin
@@ -475,8 +475,8 @@ end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 function void dump_perf (int fp);
   $fwrite(fp, "  \"dispatch\" : {");
-  $fwrite(fp, "  \"count\" : %5d, ", r_rn_disp_if_count);
-  $fwrite(fp, "  \"inst\" : %5d},\n", r_rn_disp_if_inst_count);
+  $fwrite(fp, "  \"count\" : %5d, ", r_rn_front_if_count);
+  $fwrite(fp, "  \"inst\" : %5d},\n", r_rn_front_if_inst_count);
 
   $fwrite(fp, "  \"rob_entry\" : {");
   $fwrite(fp, "  \"max_period\" : %5d, ", r_rob_max_period);

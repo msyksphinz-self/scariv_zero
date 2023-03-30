@@ -233,7 +233,7 @@ typedef struct packed {
   endfunction  // assign_disp_rename
 
 
-  function disp_t merge_disp_if (disp_t int_disp,
+  function disp_t merge_scariv_front_if (disp_t int_disp,
                                  disp_t fp_disp);
     disp_t ret;
     ret = int_disp;

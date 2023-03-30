@@ -31,7 +31,7 @@ module scariv_lsu_top
     rob_info_if.slave           rob_info_if,
 
     input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    disp_if.watch                                      disp,
+    scariv_front_if.watch                                      disp,
     // cre_ret_if.slave    sch_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
@@ -203,8 +203,8 @@ end // block: lsu_loop
 endgenerate
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
-  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
+  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
+  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
 end
 endgenerate
 
