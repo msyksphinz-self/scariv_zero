@@ -13,7 +13,7 @@ module scariv_ftq
    input logic i_clk,
    input logic i_reset_n,
 
-   disp_if.watch   sc_disp,
+   scariv_front_if.watch   rn_front_if,
    br_upd_if.slave br_upd_if,
 
    output logic o_is_ftq_empty,
@@ -42,9 +42,9 @@ ftq_entry_t w_out_ftq_entry;
 
 assign o_is_ftq_empty = (w_entry_valids == 'h0);
 
-assign w_in_valid = sc_disp.valid &
-                    sc_disp.ready &
-                    sc_disp.is_br_included;
+assign w_in_valid = rn_front_if.valid &
+                    rn_front_if.ready &
+                    rn_front_if.payload.is_br_included;
 assign w_out_valid = w_out_ftq_entry.valid &
                      w_out_ftq_entry.done;
 
@@ -69,14 +69,14 @@ assign w_ftq_flush = w_commit_flush | br_upd_fe_if.update & br_upd_fe_if.mispred
 
 disp_t w_sc_br_inst;
 grp_id_t sc_br_inst_array;
-generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : sc_disp_loop
-  assign sc_br_inst_array[d_idx] = sc_disp.inst[d_idx].valid &
-                                   (sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : rn_front_if_loop
+  assign sc_br_inst_array[d_idx] = rn_front_if.payload.inst[d_idx].valid &
+                                   (rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
 end
 endgenerate
 
 bit_oh_or_packed #(.T(disp_t), .WORDS(scariv_conf_pkg::DISP_SIZE))
-bit_br_select(.i_oh(sc_br_inst_array), .i_data(sc_disp.inst), .o_selected(w_sc_br_inst));
+bit_br_select(.i_oh(sc_br_inst_array), .i_data(rn_front_if.payload.inst), .o_selected(w_sc_br_inst));
 
 generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
   logic w_load;
@@ -89,7 +89,7 @@ generate for (genvar e_idx = 0; e_idx < FTQ_SIZE; e_idx++) begin : entry_loop
     w_ftq_entry_next = r_ftq_entry[e_idx];
 
     if (w_load) begin
-      w_ftq_entry_next = assign_ftq_entry (sc_disp.cmt_id,
+      w_ftq_entry_next = assign_ftq_entry (rn_front_if.payload.cmt_id,
                                            sc_br_inst_array,
                                            w_sc_br_inst);
     end

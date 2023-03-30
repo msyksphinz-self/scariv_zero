@@ -25,7 +25,7 @@ module scariv_lsu
     rob_info_if.slave                     rob_info_if,
 
     // input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    // disp_if.slave                          disp,
+    // scariv_front_if.slave                          disp,
     // cre_ret_if.slave                       cre_ret_if,
 
     // Replay from LDQ

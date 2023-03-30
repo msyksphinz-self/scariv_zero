@@ -3,8 +3,8 @@ module scariv_decoder
    input logic i_clk,
    input logic i_reset_n,
 
-   disp_if.slave  iq_disp,
-   disp_if.master id_disp
+   scariv_front_if.slave  iq_disp,
+   scariv_front_if.master id_disp
    );
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

@@ -50,12 +50,11 @@ localparam FPU_DONE_PORT_BASE = CSU_DONE_PORT_BASE + 1;
 l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
-disp_if w_iq_disp ();
-disp_if w_iq_dist_disp[2]();  // Int/FP
-disp_if w_id_disp ();
-disp_if w_sc_int_disp ();
-disp_if w_sc_fp_disp ();
-disp_if w_sc_disp ();
+scariv_front_if w_ibuf_front_if();
+scariv_front_if w_ibuf_dist_front_if[2]();  // Int/FP
+scariv_front_if w_rn_int_front_if ();
+scariv_front_if w_rn_fp_front_if ();
+scariv_front_if w_rn_front_if ();
 
 scariv_pkg::early_wr_t w_ex1_early_wr[scariv_pkg::REL_BUS_SIZE];
 scariv_pkg::phy_wr_t   w_ex3_phy_wr  [scariv_pkg::TGT_BUS_SIZE];
@@ -219,8 +218,8 @@ scariv_frontend u_frontend (
   .csr_info (w_csr_info),
   .int_if   (w_int_if),
 
-  .iq_disp (w_iq_disp),
-  .sc_disp (w_sc_int_disp),
+  .ibuf_front_if(w_ibuf_front_if),
+  .rn_front_if (w_rn_int_front_if),
   .o_sc_ras_index  (w_sc_ras_index),
   .o_sc_ras_vaddr (w_sc_ras_vaddr),
 
@@ -234,8 +233,8 @@ scariv_frontend u_frontend (
 scariv_disp_distribute
 u_iq_dist
 (
- .i_disp (w_iq_disp),
- .o_disp (w_iq_dist_disp)
+ .i_disp (w_ibuf_front_if),
+ .o_disp (w_ibuf_dist_front_if)
  );
 
 scariv_rename
@@ -244,7 +243,7 @@ u_scariv_int_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .iq_disp(w_iq_dist_disp[0]),
+  .ibuf_front_if (w_ibuf_dist_front_if[0]),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
   .i_commit             (w_commit),
@@ -259,7 +258,7 @@ u_scariv_int_rename (
   .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .sc_disp  (w_sc_int_disp),
+  .rn_front_if  (w_rn_int_front_if),
   .i_sc_ras_index (w_sc_ras_index),
   .i_sc_ras_vaddr (w_sc_ras_vaddr)
 );
@@ -270,7 +269,7 @@ scariv_resource_alloc u_scariv_resource_alloc
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .iq_disp(w_iq_disp),
+  .ibuf_front_if (w_ibuf_front_if),
 
   .rob_cre_ret_if (rob_cre_ret_if),
   .alu_cre_ret_if (alu_cre_ret_if),
@@ -294,9 +293,9 @@ scariv_resource_alloc u_scariv_resource_alloc
 scariv_disp_merge
 u_sc_merge
   (
-   .i_int_disp (w_sc_int_disp),
-   .i_fp_disp  (w_sc_fp_disp),
-   .o_disp     (w_sc_disp)
+   .i_int_disp (w_rn_int_front_if),
+   .i_fp_disp  (w_rn_fp_front_if),
+   .o_disp     (w_rn_front_if)
    );
 
 localparam ALU_PORT_SIZE = scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM;
@@ -304,20 +303,20 @@ localparam FPU_PORT_SIZE = scariv_conf_pkg::FPU_DISP_SIZE / scariv_conf_pkg::FPU
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_valid_loop
   for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin: alu_disp_valid_loop
-    assign w_disp_alu_valids[a_idx][d_idx] = w_sc_disp.valid & w_sc_disp.inst[d_idx].valid & !w_sc_disp.inst[d_idx].illegal_valid &
-                                             w_sc_disp.resource_cnt.alu_inst_valid[a_idx][d_idx];
+    assign w_disp_alu_valids[a_idx][d_idx] = w_rn_front_if.valid & w_rn_front_if.payload.inst[d_idx].valid & !w_rn_front_if.payload.inst[d_idx].illegal_valid &
+                                             w_rn_front_if.payload.resource_cnt.alu_inst_valid[a_idx][d_idx];
   end
 
-  assign w_disp_lsu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
-                                     w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
-  assign w_disp_bru_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
-  assign w_disp_csu_valids[d_idx] = w_sc_disp.valid && w_sc_disp.inst[d_idx].valid && !w_sc_disp.inst[d_idx].illegal_valid &&
-                                    (w_sc_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+  assign w_disp_lsu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                    (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
+                                     w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
+  assign w_disp_bru_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                    (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+  assign w_disp_csu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                    (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU);
   for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin: fpu_disp_valid_loop
-    assign w_disp_fpu_valids[f_idx][d_idx] = w_sc_disp.valid & w_sc_disp.inst[d_idx].valid & !w_sc_disp.inst[d_idx].illegal_valid &&
-                                             w_sc_disp.resource_cnt.fpu_inst_valid[f_idx][d_idx];
+    assign w_disp_fpu_valids[f_idx][d_idx] = w_rn_front_if.valid & w_rn_front_if.payload.inst[d_idx].valid & !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                             w_rn_front_if.payload.resource_cnt.fpu_inst_valid[f_idx][d_idx];
   end
 end
 endgenerate
@@ -333,7 +332,7 @@ generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_i
       .rob_info_if   (w_rob_info_if),
 
       .disp_valid(w_disp_alu_valids[alu_idx]),
-      .disp(w_sc_disp),
+      .disp(w_rn_front_if),
       .cre_ret_if (alu_cre_ret_if[alu_idx]),
 
       .ex1_regread_rs1(int_regread[alu_idx * 2 + 0]),
@@ -367,7 +366,7 @@ u_scariv_lsu_top
     .csr_info (w_csr_info),
 
     .disp_valid (w_disp_lsu_valids),
-    .disp (w_sc_disp),
+    .disp (w_rn_front_if),
     // .sch_cre_ret_if (lsu_cre_ret_if),
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
@@ -410,7 +409,7 @@ u_scariv_bru (
     .rob_info_if   (w_rob_info_if),
 
     .disp_valid(w_disp_bru_valids),
-    .disp(w_sc_disp),
+    .disp(w_rn_front_if),
     .cre_ret_if (bru_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
@@ -440,7 +439,7 @@ u_scariv_csu (
     .i_reset_n(i_reset_n),
 
     .disp_valid(w_disp_csu_valids),
-    .disp(w_sc_disp),
+    .disp(w_rn_front_if),
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
@@ -494,7 +493,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
-    .iq_disp(w_iq_dist_disp[1]),
+    .ibuf_front_if (w_ibuf_dist_front_if[1]),
     .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
     .i_commit             (w_commit),
@@ -509,7 +508,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
     .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
 
     .i_phy_wr (w_ex3_phy_wr),
-    .sc_disp  (w_sc_fp_disp),
+    .rn_front_if  (w_rn_fp_front_if),
     .i_sc_ras_index (w_sc_ras_index),
     .i_sc_ras_vaddr (w_sc_ras_vaddr)
   );
@@ -528,7 +527,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .rob_info_if   (w_rob_info_if),
 
       .disp_valid(w_disp_fpu_valids[fpu_idx]),
-      .disp(w_sc_disp),
+      .disp(w_rn_front_if),
       .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
       .ex1_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
@@ -572,8 +571,8 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
      .regread(fp_regread)
      );
 end else begin // block: fpu
-  assign w_sc_fp_disp.valid = 1'b1;
-  assign w_iq_dist_disp[1].ready = 1'b1;
+  assign w_rn_fp_front_if.valid = 1'b1;
+  assign w_ibuf_dist_front_if[1].ready = 1'b1;
   assign w_fpu_freelist_ready = 1'b1;
 end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
@@ -584,7 +583,7 @@ scariv_rob u_rob
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .sc_disp    (w_sc_disp     ),
+   .rn_front_if    (w_rn_front_if     ),
    .cre_ret_if (rob_cre_ret_if),
 
    .int_if     (w_int_if),

@@ -119,6 +119,8 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 logic w_s0_pref_search_hit;
 logic w_s0_pref_search_working_hit;
+logic w_s0_pref_search_working_hit_and_l2_return;
+
 assign w_s0_pref_search_hit = i_s0_pref_search_valid &
                               r_prefetched_valid &
                               (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
@@ -129,11 +131,13 @@ assign w_s0_pref_search_working_hit = i_s0_pref_search_valid &
                                       (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
                                        r_pref_vaddr          [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
 
+assign w_s0_pref_search_working_hit_and_l2_return = w_s0_pref_search_working_hit & i_pref_l2_resp_valid;
+
 always_ff @ (posedge i_clk) begin
   // Search
-  o_s1_pref_search_hit  <= w_s0_pref_search_hit;
-  o_s1_pref_search_data <= r_prefetched_data;
-  o_s1_pref_search_working_hit <= w_s0_pref_search_working_hit;
+  o_s1_pref_search_hit         <= w_s0_pref_search_hit | w_s0_pref_search_working_hit_and_l2_return;
+  o_s1_pref_search_data        <= w_s0_pref_search_working_hit_and_l2_return ? i_pref_l2_resp_data : r_prefetched_data;
+  o_s1_pref_search_working_hit <= w_s0_pref_search_working_hit & ~i_pref_l2_resp_valid;
 end
 
 // =========================

@@ -17,8 +17,8 @@ module scariv_ldq
    rob_info_if.slave                          rob_info_if,
 
    input scariv_pkg::grp_id_t i_disp_valid,
-   disp_if.watch                              disp,
-   cre_ret_if.slave                           cre_ret_if,
+   scariv_front_if.watch      disp,
+   cre_ret_if.slave           cre_ret_if,
 
    /* Forwarding path */
    input scariv_pkg::early_wr_t                 i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -209,7 +209,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .rob_info_if   (rob_info_if),
 
      .i_disp_load   (|w_input_valid),
-     .i_disp_cmt_id (disp.cmt_id),
+     .i_disp_cmt_id (disp.payload.cmt_id),
      .i_disp_grp_id (w_disp_grp_id),
      .i_disp        (w_disp_entry),
      .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),

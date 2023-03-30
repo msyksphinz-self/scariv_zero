@@ -34,10 +34,10 @@ module scariv_frontend
  interrupt_if.slave          int_if,
 
  // Dispatch Info
- disp_if.master    iq_disp,
+ scariv_front_if.master    ibuf_front_if,
 
  // For checking RAS updates
- disp_if.watch     sc_disp,
+ scariv_front_if.watch     rn_front_if,
  output logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
  output vaddr_t                    o_sc_ras_vaddr,
 
@@ -723,7 +723,7 @@ u_scariv_inst_buffer
 
    .o_decode_flush (w_decode_flush),
 
-   .iq_disp      (iq_disp),
+   .ibuf_front_if(ibuf_front_if),
    .br_upd_fe_if (br_upd_fe_if)
    );
 
@@ -740,7 +740,7 @@ scariv_ftq u_ftq
 
    .o_is_ftq_empty (w_is_ftq_empty),
 
-   .sc_disp (sc_disp),
+   .rn_front_if (rn_front_if),
    .br_upd_if (br_upd_if),
 
    .br_upd_fe_if (br_upd_fe_tmp_if)
@@ -793,7 +793,7 @@ assign w_s2_predict_target_vaddr = w_s2_predict_target_vaddr_gshare;
 // ------------------------------
 // Decode Level Prediction Valid
 // ------------------------------
-assign w_iq_predict_valid        = iq_disp.valid & iq_disp.ready & w_decode_flush.valid;
+assign w_iq_predict_valid        = ibuf_front_if.valid & ibuf_front_if.ready & w_decode_flush.valid;
 assign w_iq_predict_target_vaddr = w_decode_flush.pred_vaddr;
 
 // 1-cycle Later, it flushes pipeline

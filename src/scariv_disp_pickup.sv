@@ -15,7 +15,7 @@ module scariv_disp_pickup
     )
 (
  input scariv_pkg::grp_id_t  i_disp_valid,
- disp_if.watch                          i_disp,
+ scariv_front_if.watch                  i_disp,
 
  output logic [PORT_SIZE-1:0]           o_disp_valid,
  output scariv_pkg::disp_t                o_disp[PORT_SIZE],
@@ -24,7 +24,7 @@ module scariv_disp_pickup
 
 scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
 generate for(genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
-  assign w_disp_inst[d_idx] = i_disp.inst[d_idx];
+  assign w_disp_inst[d_idx] = i_disp.payload.inst[d_idx];
 end
 endgenerate
 

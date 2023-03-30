@@ -18,8 +18,8 @@ module scariv_ldq_entry
  rob_info_if.slave                               rob_info_if,
 
  input logic                                     i_disp_load,
- input scariv_pkg::cmt_id_t            i_disp_cmt_id,
- input scariv_pkg::grp_id_t      i_disp_grp_id,
+ input scariv_pkg::cmt_id_t                      i_disp_cmt_id,
+ input scariv_pkg::grp_id_t                      i_disp_grp_id,
  input                                           scariv_pkg::disp_t i_disp,
  input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  i_disp_pipe_sel_oh,
 

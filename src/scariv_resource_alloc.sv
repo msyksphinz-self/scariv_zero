@@ -15,7 +15,7 @@ module scariv_resource_alloc
    input logic i_clk,
    input logic i_reset_n,
 
-   disp_if.watch iq_disp,
+   scariv_front_if.watch ibuf_front_if,
 
    // -------------------------------
    // Credit Return Update interface
@@ -70,7 +70,7 @@ assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
-assign w_iq_fire = ~w_flush_valid & iq_disp.valid & iq_disp.ready;
+assign w_iq_fire = ~w_flush_valid & ibuf_front_if.valid & ibuf_front_if.ready;
 
 scariv_credit_return_master
   #(.MAX_CREDITS(scariv_conf_pkg::CMT_ENTRY_SIZE))
@@ -91,10 +91,10 @@ u_rob_credit_return
 
 generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   logic w_inst_arith_valid;
-  assign w_inst_arith_valid = iq_disp.valid & |iq_disp.resource_cnt.alu_inst_cnt[a_idx];
+  assign w_inst_arith_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.alu_inst_cnt[a_idx];
   logic [$clog2(scariv_conf_pkg::RV_ALU_ENTRY_SIZE):0] w_alu_inst_cnt;
   /* verilator lint_off WIDTH */
-  assign w_alu_inst_cnt = iq_disp.resource_cnt.alu_inst_cnt[a_idx];
+  assign w_alu_inst_cnt = ibuf_front_if.payload.resource_cnt.alu_inst_cnt[a_idx];
 
   scariv_credit_return_master
     #(.MAX_CREDITS(scariv_conf_pkg::RV_ALU_ENTRY_SIZE))
@@ -103,7 +103,7 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(~w_flush_valid & w_inst_arith_valid & iq_disp.ready),
+   .i_get_credit(~w_flush_valid & w_inst_arith_valid & ibuf_front_if.ready),
    .i_credit_val(w_alu_inst_cnt),
 
    .o_credits(),
@@ -116,9 +116,9 @@ endgenerate
 
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
 //   logic w_inst_lsu_valid;
-//   assign w_inst_lsu_valid = iq_disp.valid & |iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
+//   assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
 //   logic [$clog2(scariv_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
-//   assign w_lsu_inst_cnt = iq_disp.resource_cnt.lsu_inst_cnt[l_idx];
+//   assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
 //
 //   scariv_credit_return_master
 //     #(.MAX_CREDITS(scariv_lsu_pkg::MEM_Q_SIZE))
@@ -127,7 +127,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) 
 //    .i_clk(i_clk),
 //    .i_reset_n(i_reset_n),
 //
-//    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & iq_disp.ready),
+//    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & ibuf_front_if.ready),
 //    .i_credit_val(w_lsu_inst_cnt),
 //
 //    .o_credits(),
@@ -141,7 +141,7 @@ endgenerate
 
 
 logic   w_inst_ld_valid;
-assign w_inst_ld_valid = iq_disp.valid & |iq_disp.resource_cnt.ld_inst_cnt;
+assign w_inst_ld_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.ld_inst_cnt;
 scariv_credit_return_master
   #(.MAX_CREDITS(scariv_conf_pkg::LDQ_SIZE))
 u_ldq_credit_return
@@ -149,8 +149,8 @@ u_ldq_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(~w_flush_valid & w_inst_ld_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.ld_inst_cnt),
+ .i_get_credit(~w_flush_valid & w_inst_ld_valid & ibuf_front_if.ready),
+ .i_credit_val(ibuf_front_if.payload.resource_cnt.ld_inst_cnt),
 
  .o_credits(),
  .o_no_credits(w_ldq_no_credits_remained),
@@ -160,7 +160,7 @@ u_ldq_credit_return
 
 
 logic   w_inst_st_valid;
-assign w_inst_st_valid = iq_disp.valid & |iq_disp.resource_cnt.st_inst_cnt;
+assign w_inst_st_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.st_inst_cnt;
 scariv_credit_return_master
   #(.MAX_CREDITS(scariv_conf_pkg::STQ_SIZE))
 u_stq_credit_return
@@ -168,8 +168,8 @@ u_stq_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(~w_flush_valid & w_inst_st_valid & iq_disp.ready),
- .i_credit_val(iq_disp.resource_cnt.st_inst_cnt),
+ .i_get_credit(~w_flush_valid & w_inst_st_valid & ibuf_front_if.ready),
+ .i_credit_val(ibuf_front_if.payload.resource_cnt.st_inst_cnt),
 
  .o_credits    (),
  .o_no_credits (w_stq_no_credits_remained),
@@ -179,9 +179,9 @@ u_stq_credit_return
 
 
 logic   w_inst_csu_valid;
-assign w_inst_csu_valid = iq_disp.valid & |iq_disp.resource_cnt.csu_inst_cnt;
+assign w_inst_csu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.csu_inst_cnt;
 logic [$clog2(scariv_conf_pkg::RV_CSU_ENTRY_SIZE):0] w_inst_csu_cnt;
-assign w_inst_csu_cnt = iq_disp.resource_cnt.csu_inst_cnt;
+assign w_inst_csu_cnt = ibuf_front_if.payload.resource_cnt.csu_inst_cnt;
 scariv_credit_return_master
   #(.MAX_CREDITS(scariv_conf_pkg::RV_CSU_ENTRY_SIZE))
 u_csu_credit_return
@@ -189,7 +189,7 @@ u_csu_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(~w_flush_valid & w_inst_csu_valid & iq_disp.ready),
+ .i_get_credit(~w_flush_valid & w_inst_csu_valid & ibuf_front_if.ready),
  .i_credit_val(w_inst_csu_cnt),
 
  .o_credits(),
@@ -199,9 +199,9 @@ u_csu_credit_return
 );
 
 logic   w_inst_bru_valid;
-assign w_inst_bru_valid = iq_disp.valid & |iq_disp.resource_cnt.bru_inst_cnt;
+assign w_inst_bru_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.bru_inst_cnt;
 logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE):0] w_bru_inst_cnt;
-assign w_bru_inst_cnt = iq_disp.resource_cnt.bru_inst_cnt;
+assign w_bru_inst_cnt = ibuf_front_if.payload.resource_cnt.bru_inst_cnt;
 scariv_credit_return_master
   #(.MAX_CREDITS(scariv_conf_pkg::RV_BRU_ENTRY_SIZE))
 u_bru_credit_return
@@ -209,7 +209,7 @@ u_bru_credit_return
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_credit(~w_flush_valid & w_inst_bru_valid & iq_disp.ready),
+ .i_get_credit(~w_flush_valid & w_inst_bru_valid & ibuf_front_if.ready),
  .i_credit_val(w_bru_inst_cnt),
 
  .o_credits(),
@@ -221,10 +221,10 @@ u_bru_credit_return
 
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_cre_ret_loop
   logic w_inst_fpu_valid;
-  assign w_inst_fpu_valid = iq_disp.valid & |iq_disp.resource_cnt.fpu_inst_cnt[f_idx];
+  assign w_inst_fpu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.fpu_inst_cnt[f_idx];
   logic [$clog2(scariv_conf_pkg::RV_FPU_ENTRY_SIZE):0] w_fpu_inst_cnt;
   /* verilator lint_off WIDTH */
-  assign w_fpu_inst_cnt = iq_disp.resource_cnt.fpu_inst_cnt[f_idx];
+  assign w_fpu_inst_cnt = ibuf_front_if.payload.resource_cnt.fpu_inst_cnt[f_idx];
 
   scariv_credit_return_master
     #(.MAX_CREDITS(scariv_conf_pkg::RV_FPU_ENTRY_SIZE))
@@ -233,7 +233,7 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
    .i_clk(i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_get_credit(~w_flush_valid & w_inst_fpu_valid & iq_disp.ready),
+   .i_get_credit(~w_flush_valid & w_inst_fpu_valid & ibuf_front_if.ready),
    .i_credit_val(w_fpu_inst_cnt),
 
    .o_credits(),
@@ -279,7 +279,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
   logic w_is_br_inst;
   assign w_is_br_inst = w_iq_fire &
-                        iq_disp.inst[d_idx].valid & (iq_disp.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
+                        ibuf_front_if.payload.inst[d_idx].valid & (ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
 
   assign w_br_mask_temp_valid[d_idx+1] = !w_is_br_inst ? w_br_mask_temp_valid[d_idx] : w_br_mask_temp_valid[d_idx] | (1 << w_br_tag_temp_idx[d_idx]);
   assign w_br_tag_temp_idx   [d_idx+1] = !w_is_br_inst ? w_br_tag_temp_idx   [d_idx] : w_br_tag_temp_idx[d_idx] + 'h1;
