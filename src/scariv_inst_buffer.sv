@@ -33,7 +33,9 @@ module scariv_inst_buffer
  br_upd_if.slave br_upd_fe_if
  );
 
+logic  w_ibuf_front_valid_next;
 scariv_front_pkg::front_t w_ibuf_front_payload_next;
+logic  w_inst_buffer_fire_next;
 
 logic  w_inst_buffer_fire;
 
@@ -148,8 +150,8 @@ logic [15: 0]                        w_rvc_inst[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::grp_id_t w_rvc_valid;
 
 /* verilator lint_off WIDTH */
-assign w_head_all_inst_issued = w_inst_buffer_fire & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
-assign w_head_predict_taken_issued = w_inst_buffer_fire & w_predict_taken_valid & ibuf_front_if.payload.is_br_included;
+assign w_head_all_inst_issued      = w_inst_buffer_fire_next & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
+assign w_head_predict_taken_issued = w_inst_buffer_fire_next & w_predict_taken_valid & w_ibuf_front_payload_next.is_br_included;
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         w_inst_buf_valid[0] & r_pred_entry_kill_valid ;
@@ -282,7 +284,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else if (w_head_all_inst_issued) begin
       // Move to next Line, carring lower bits for next
       r_head_start_pos <= w_head_start_pos_next + w_out_inst_q_pc;
-    end else if (w_inst_buffer_fire) begin
+    end else if (w_inst_buffer_fire_next) begin
       r_head_start_pos <= w_head_start_pos_next[$clog2(ic_word_num)-1:0];
     end
   end
@@ -527,11 +529,14 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           w_inst_disp_mask_tmp - 1;
 
 
+assign w_ibuf_front_valid_next = |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
+assign w_inst_buffer_fire_next  = w_ibuf_front_valid_next & ibuf_front_if.ready;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     ibuf_front_if.valid <= 1'b0;
   end else begin
-    ibuf_front_if.valid <= |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
+    ibuf_front_if.valid   <= w_ibuf_front_valid_next;
     ibuf_front_if.payload <= w_ibuf_front_payload_next;
   end
 end
