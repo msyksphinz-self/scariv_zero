@@ -63,7 +63,7 @@ assign o_resp_valid = r_state == READ_RESP;
 assign o_resp_tag   = r_req_tag;
 assign o_resp_data  = r_plic_prdata;
 
-assign w_plic_resp_fire = w_resp_plic_if.valid & w_resp_plic_if.ready;
+assign w_plic_resp_fire = o_resp_valid & i_resp_ready;
 
 assign w_plic_penable = i_req_cmd == scariv_lsu_pkg::M_XWR;
 assign w_plic_pwrite  = i_req_cmd == scariv_lsu_pkg::M_XWR;
@@ -127,7 +127,7 @@ u_plic
    .PSLVERR (),
 
    .src (i_interrupts),       // Interrupt sources
-   .irq (w_plic_if.int_valid)        // Interrupt Requests
+   .irq (plic_if.int_valid)        // Interrupt Requests
    );
 
 

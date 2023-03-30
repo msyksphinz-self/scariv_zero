@@ -529,6 +529,10 @@ end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mimpid        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIMPID        ) begin r_mimpid        <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhartid       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHARTID       ) begin r_mhartid       <= write_if.data; end end
 
+`ifndef RV_AMO
+  `define RV_AMO 0
+`endif // RV_AMO
+
 xlen_t w_misa_reset;
 generate if (riscv_fpu_pkg::FLEN_W == 0) begin
   assign w_misa_reset = (`RV_AMO << ("A" - "A")) |

@@ -123,7 +123,11 @@ MulDiv u_MulDiv
 endmodule // scariv_div_unit
 
 
+`define RV64
+
 `ifdef RV64
+
+
 
 module MulDiv(
   input         clock,
