@@ -33,6 +33,8 @@ module scariv_inst_buffer
  br_upd_if.slave br_upd_fe_if
  );
 
+scariv_front_pkg::front_t w_ibuf_front_payload_next;
+
 logic  w_inst_buffer_fire;
 
 logic                                         r_pred_entry_kill_valid;
@@ -524,14 +526,22 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           |w_disp_special_csu_valid ? w_inst_csu_disp - 1 :
                           w_inst_disp_mask_tmp - 1;
 
-// assign ibuf_front_if.valid          = |w_inst_disp_mask & !w_flush_pipeline;
-assign ibuf_front_if.valid          = |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
-assign ibuf_front_if.payload.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
-assign ibuf_front_if.payload.is_br_included = |w_inst_bru_disped;
-assign ibuf_front_if.payload.tlb_except_valid = w_fetch_except;
-assign ibuf_front_if.payload.tlb_except_cause = w_fetch_except_cause;
-assign ibuf_front_if.payload.tlb_except_tval  = w_fetch_except_tval;
-assign ibuf_front_if.payload.int_inserted  = w_inst_buf_data[0].int_inserted;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    ibuf_front_if.valid <= 1'b0;
+  end else begin
+    ibuf_front_if.valid <= |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
+    ibuf_front_if.payload <= w_ibuf_front_payload_next;
+  end
+end
+
+assign w_ibuf_front_payload_next.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
+assign w_ibuf_front_payload_next.is_br_included = |w_inst_bru_disped;
+assign w_ibuf_front_payload_next.tlb_except_valid = w_fetch_except;
+assign w_ibuf_front_payload_next.tlb_except_cause = w_fetch_except_cause;
+assign w_ibuf_front_payload_next.tlb_except_tval  = w_fetch_except_tval;
+assign w_ibuf_front_payload_next.int_inserted  = w_inst_buf_data[0].int_inserted;
 
 // -------------------------------
 // Dispatch Inst, Resource Count
@@ -564,39 +574,39 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
   end
   bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(alu_lane_width)) alu_disped_or (.i_data(w_lane_disped_valid), .o_selected(w_lane_disped_valid_or));
   bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_alu_inst_cnt (.in(w_lane_disped_valid_or), .out(w_lane_disp_cnt));
-  assign ibuf_front_if.payload.resource_cnt.alu_inst_cnt  [a_idx] = w_lane_disp_cnt;
-  assign ibuf_front_if.payload.resource_cnt.alu_inst_valid[a_idx] = w_lane_disped_valid_or;
+  assign w_ibuf_front_payload_next.resource_cnt.alu_inst_cnt  [a_idx] = w_lane_disp_cnt;
+  assign w_ibuf_front_payload_next.resource_cnt.alu_inst_valid[a_idx] = w_lane_disped_valid_or;
 end
 endgenerate
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_muldiv_inst_cnt (.in(w_inst_muldiv_disped), .out(w_inst_muldiv_cnt));
-assign ibuf_front_if.payload.resource_cnt.muldiv_inst_cnt = w_inst_muldiv_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.muldiv_inst_cnt = w_inst_muldiv_cnt;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_mem_inst_cnt (.in(w_inst_mem_disped), .out(w_inst_mem_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_ld_inst_cnt  (.in(w_inst_ld_disped), .out(w_inst_ld_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_st_inst_cnt  (.in(w_inst_st_disped), .out(w_inst_st_cnt));
-assign ibuf_front_if.payload.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
+assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
 
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_rsrc_loop
   logic [$clog2(scariv_conf_pkg::MEM_DISP_SIZE): 0]  lsu_lane_width;
   assign lsu_lane_width = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
-  assign ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx] = (w_inst_mem_cnt >= lsu_lane_width * (l_idx+1)) ? lsu_lane_width :
+  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_cnt[l_idx] = (w_inst_mem_cnt >= lsu_lane_width * (l_idx+1)) ? lsu_lane_width :
                                                     /* verilator lint_off UNSIGNED */
                                                     (w_inst_mem_cnt <  lsu_lane_width * l_idx) ? 'h0 :
                                                     w_inst_mem_cnt - lsu_lane_width * l_idx;
 end
 endgenerate
 
-assign ibuf_front_if.payload.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
-assign ibuf_front_if.payload.resource_cnt.st_inst_cnt = w_inst_st_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.st_inst_cnt = w_inst_st_cnt;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_bru_inst_cnt (.in(w_inst_bru_disped), .out(w_inst_bru_cnt));
-assign ibuf_front_if.payload.resource_cnt.bru_inst_cnt   = w_inst_bru_cnt;
-assign ibuf_front_if.payload.resource_cnt.bru_inst_valid = w_inst_bru_disped;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_cnt   = w_inst_bru_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_valid = w_inst_bru_disped;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_csu_inst_cnt (.in(w_inst_csu_disped), .out(w_inst_csu_cnt));
-assign ibuf_front_if.payload.resource_cnt.csu_inst_cnt   = w_inst_csu_cnt;
-assign ibuf_front_if.payload.resource_cnt.csu_inst_valid = w_inst_csu_disped;
+assign w_ibuf_front_payload_next.resource_cnt.csu_inst_cnt   = w_inst_csu_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.csu_inst_valid = w_inst_csu_disped;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_fpu_inst_cnt (.in(w_inst_fpu_disped), .out(w_inst_fpu_cnt));
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_rsrc_loop
@@ -609,8 +619,8 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   end
   bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(fpu_lane_width)) fpu_disped_or (.i_data(w_lane_disped_valid), .o_selected(w_lane_disped_valid_or));
   bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_fpu_inst_cnt (.in(w_lane_disped_valid_or), .out(w_lane_disp_cnt));
-  assign ibuf_front_if.payload.resource_cnt.fpu_inst_cnt[f_idx] = w_lane_disp_cnt;
-  assign ibuf_front_if.payload.resource_cnt.fpu_inst_valid[f_idx] = w_lane_disped_valid_or;
+  assign w_ibuf_front_payload_next.resource_cnt.fpu_inst_cnt[f_idx] = w_lane_disp_cnt;
+  assign w_ibuf_front_payload_next.resource_cnt.fpu_inst_valid[f_idx] = w_lane_disped_valid_or;
 end
 endgenerate
 
@@ -636,59 +646,59 @@ end
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   always_comb begin
     if (w_inst_disp_mask[d_idx]) begin
-      ibuf_front_if.payload.inst[d_idx].valid = w_inst_disp_mask[d_idx];
-      ibuf_front_if.payload.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
-      ibuf_front_if.payload.inst[d_idx].inst = w_expand_inst[d_idx];
-      ibuf_front_if.payload.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
-      ibuf_front_if.payload.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
-      ibuf_front_if.payload.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
+      w_ibuf_front_payload_next.inst[d_idx].valid = w_inst_disp_mask[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].illegal_valid = w_inst_illegal_disp[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].inst = w_expand_inst[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
                                     {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
-      ibuf_front_if.payload.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
-      ibuf_front_if.payload.inst[d_idx].wr_reg.typ     = rd_field_type[d_idx] == RD_R3 ? scariv_pkg::GPR : scariv_pkg::FPR;
-      ibuf_front_if.payload.inst[d_idx].wr_reg.regidx  = w_expand_inst[d_idx][11: 7];
+      w_ibuf_front_payload_next.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
+      w_ibuf_front_payload_next.inst[d_idx].wr_reg.typ     = rd_field_type[d_idx] == RD_R3 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].wr_reg.regidx  = w_expand_inst[d_idx][11: 7];
 
-      ibuf_front_if.payload.inst[d_idx].rd_regs[0].valid  = rs1_field_type[d_idx] != R1__;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[0].typ    = rs1_field_type[d_idx] == R1_R1 ? scariv_pkg::GPR : scariv_pkg::FPR;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].valid  = rs1_field_type[d_idx] != R1__;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].typ    = rs1_field_type[d_idx] == R1_R1 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
-      ibuf_front_if.payload.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR : scariv_pkg::FPR;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
-      ibuf_front_if.payload.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[2].typ    = scariv_pkg::FPR;
-      ibuf_front_if.payload.inst[d_idx].rd_regs[2].regidx = w_expand_inst[d_idx][31:27];
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].typ    = scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].regidx = w_expand_inst[d_idx][31:27];
 
-      ibuf_front_if.payload.inst[d_idx].cat        = w_inst_cat[d_idx];
-      ibuf_front_if.payload.inst[d_idx].subcat     = w_inst_subcat[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].cat        = w_inst_cat[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].subcat     = w_inst_subcat[d_idx];
 
-      ibuf_front_if.payload.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx] |
+      w_ibuf_front_payload_next.inst[d_idx].pred_taken        = w_predict_taken_valid_lsb[d_idx] |
                                               w_inst_is_call[d_idx] |
                                               w_inst_is_ret [d_idx];
-      ibuf_front_if.payload.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
-      ibuf_front_if.payload.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
-      // ibuf_front_if.payload.inst[d_idx].pred_target_vaddr = (w_inst_is_ret [d_idx] & w_expand_ras_info[d_idx].is_ret |
+      w_ibuf_front_payload_next.inst[d_idx].bim_value         = w_expand_pred_info[d_idx].bim_value;
+      w_ibuf_front_payload_next.inst[d_idx].btb_valid         = w_expand_pred_info[d_idx].btb_valid;
+      // w_ibuf_front_payload_next.inst[d_idx].pred_target_vaddr = (w_inst_is_ret [d_idx] & w_expand_ras_info[d_idx].is_ret |
       //                                          w_inst_is_call[d_idx] & w_expand_ras_info[d_idx].is_call) ? w_expand_ras_info[d_idx].pred_target_vaddr :
       //                                         w_expand_pred_info[d_idx].pred_target_vaddr;
-      ibuf_front_if.payload.inst[d_idx].pred_target_vaddr = w_inst_is_call[d_idx] ? iq_call_next_vaddr_oh :
+      w_ibuf_front_payload_next.inst[d_idx].pred_target_vaddr = w_inst_is_call[d_idx] ? iq_call_next_vaddr_oh :
                                               w_inst_is_ret [d_idx] ? w_iq_ras_ret_vaddr :
                                               w_expand_pred_info[d_idx].pred_target_vaddr;
 
-      ibuf_front_if.payload.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
-      ibuf_front_if.payload.inst[d_idx].is_call           = w_inst_is_call[d_idx];
-      ibuf_front_if.payload.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
-      ibuf_front_if.payload.inst[d_idx].ras_index         = r_ras_index; // w_expand_ras_info[d_idx].ras_index;
+      w_ibuf_front_payload_next.inst[d_idx].is_cond           = w_expand_pred_info[d_idx].is_cond;
+      w_ibuf_front_payload_next.inst[d_idx].is_call           = w_inst_is_call[d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].is_ret            = w_inst_is_ret [d_idx];
+      w_ibuf_front_payload_next.inst[d_idx].ras_index         = r_ras_index; // w_expand_ras_info[d_idx].ras_index;
 
-      ibuf_front_if.payload.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
-      ibuf_front_if.payload.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
+      w_ibuf_front_payload_next.inst[d_idx].gshare_index      = w_expand_pred_info[d_idx].gshare_index     ;
+      w_ibuf_front_payload_next.inst[d_idx].gshare_bhr        = w_expand_pred_info[d_idx].gshare_bhr       ;
 
 `ifdef SIMULATION
-      ibuf_front_if.payload.inst[d_idx].kanata_id = r_kanata_cycle_count + d_idx;
+      w_ibuf_front_payload_next.inst[d_idx].kanata_id = r_kanata_cycle_count + d_idx;
 `endif // SIMULATION
 
     end else begin // if (w_inst_disp_mask[d_idx])
-      ibuf_front_if.payload.inst[d_idx] = 'h0;
+      w_ibuf_front_payload_next.inst[d_idx] = 'h0;
     end // else: !if(w_inst_disp_mask[d_idx])
   end // always_comb
 end
