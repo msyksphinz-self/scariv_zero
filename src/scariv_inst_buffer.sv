@@ -536,12 +536,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     ibuf_front_if.valid <= 1'b0;
   end else begin
-    ibuf_front_if.valid   <= w_ibuf_front_valid_next;
-    ibuf_front_if.payload <= w_ibuf_front_payload_next;
+    if (w_flush_pipeline) begin
+      ibuf_front_if.valid <= 1'b0;
+    end else if (ibuf_front_if.ready) begin
+      ibuf_front_if.valid   <= w_ibuf_front_valid_next;
+      ibuf_front_if.payload <= w_ibuf_front_payload_next;
+    end
   end
 end
 
 assign w_ibuf_front_payload_next.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
+`ifdef SIMULATION
+assign w_ibuf_front_payload_next.pc_addr_debug  = (w_inst_buf_data[0].pc + r_head_start_pos) << 1;
+`endif // SIMULATION
 assign w_ibuf_front_payload_next.is_br_included = |w_inst_bru_disped;
 assign w_ibuf_front_payload_next.tlb_except_valid = w_fetch_except;
 assign w_ibuf_front_payload_next.tlb_except_cause = w_fetch_except_cause;
@@ -788,9 +795,20 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 end
 endgenerate
 
-assign o_decode_flush.valid      = (|w_call_flush_valid) | (|w_ret_flush_valid);
-assign o_decode_flush.pred_vaddr = (|w_call_flush_valid) ? iq_call_next_vaddr_oh :
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_decode_flush.valid <= 1'b0;
+  end else begin
+    if (w_flush_pipeline) begin
+      o_decode_flush.valid <= 1'b0;
+    end else if (ibuf_front_if.ready) begin
+      o_decode_flush.valid <= (|w_call_flush_valid) | (|w_ret_flush_valid);
+      o_decode_flush.pred_vaddr <= (|w_call_flush_valid) ? iq_call_next_vaddr_oh :
                                    w_iq_ras_ret_vaddr;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 scariv_pred_ras
 u_ras
