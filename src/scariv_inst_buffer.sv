@@ -347,7 +347,7 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
                                     !w_inst_buf_entry_b0.dead &
                                     w_inst_buf_entry_b0.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
-      w_fetch_except_tval [w_idx] = ibuf_front_if.payload.inst[w_idx].pc_addr;
+      w_fetch_except_tval [w_idx] = {w_inst_buf_data[0].pc + r_head_start_pos, 1'b0};
 
       w_expand_pred_info[w_idx] = w_inst_buf_entry_b0.pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b0;
@@ -368,8 +368,8 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
                                     w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead & w_inst_buf_entry_b2.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
                                     w_inst_buf_entry_b2.tlb_except_cause;
-      w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? ibuf_front_if.payload.inst[w_idx].pc_addr :
-                                    ibuf_front_if.payload.inst[w_idx].pc_addr + 'h2;
+      w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? {w_inst_buf_data[0].pc + r_head_start_pos, 1'b0} :
+                                    {w_inst_buf_data[0].pc + r_head_start_pos, 1'b0} + 'h2;
 
       w_expand_pred_info [w_idx] = w_inst_buf_entry_b2.pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
