@@ -84,7 +84,7 @@ riscv_pkg::xlen_t        r_csr_status;
 riscv_pkg::xlen_t        r_csr_satp;
 
 always_ff @ (posedge i_clk) begin
-  r_status_prv <= r_status_prv;
+  r_status_prv <= i_status_prv;
   r_csr_status <= i_csr_status;
   r_csr_satp   <= i_csr_satp;
 end
