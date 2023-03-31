@@ -58,6 +58,7 @@ endinterface // csr_wr_if
 
 interface csr_info_if;
 
+logic      update;
 riscv_common_pkg::priv_t       priv;
 riscv_pkg::xlen_t mstatus;
 riscv_pkg::xlen_t mepc;
@@ -73,6 +74,7 @@ logic [31: 0] fcsr;
 
 
 modport master (
+  output update,
   output priv,
   output mstatus,
   output mepc,
@@ -88,6 +90,7 @@ modport master (
 );
 
 modport slave (
+  input update,
   input priv,
   input mstatus,
   input mepc,

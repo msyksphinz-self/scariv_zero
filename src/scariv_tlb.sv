@@ -26,9 +26,10 @@ module tlb
  /* verilator lint_off UNOPTFLAT */
  output       scariv_lsu_pkg::tlb_resp_t o_tlb_resp,
 
+ input logic                    i_csr_update,
  input riscv_common_pkg::priv_t i_status_prv,
- input riscv_pkg::xlen_t i_csr_status,
- input riscv_pkg::xlen_t i_csr_satp,
+ input riscv_pkg::xlen_t        i_csr_status,
+ input riscv_pkg::xlen_t        i_csr_satp,
 
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if,
@@ -75,6 +76,28 @@ typedef enum logic [1:0] {
   ST_WAIT            = 2,
   ST_WAIT_INVALIDATE = 3
 } tlb_state_t;
+
+// ------------------------------------
+// Intermediate Configuration Register
+// ------------------------------------
+riscv_common_pkg::priv_t r_status_prv;
+riscv_pkg::xlen_t        r_csr_status;
+riscv_pkg::xlen_t        r_csr_satp;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_status_prv <= riscv_common_pkg::PRIV_M;
+    r_csr_status <= riscv_pkg::init_mstatus;
+    r_csr_satp   <= 'h0;
+  end else begin
+    if (i_csr_update) begin
+      r_status_prv <= i_status_prv;
+      r_csr_status <= i_csr_status;
+      r_csr_satp   <= i_csr_satp;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 
 tlb_state_t r_state;
 tlb_state_t r_state_dly;
@@ -285,11 +308,11 @@ bit_oh_or #(.T(logic[riscv_pkg::PPN_W-1:0]), .WORDS(TLB_ALL_ENTRIES_NUM)) bit_pp
 assign w_vpn = i_tlb_req.vaddr[riscv_pkg::VADDR_MSB: PG_IDX_W];
 assign w_ppn = !w_vm_enabled ? {{(riscv_pkg::PPN_W+PG_IDX_W-(riscv_pkg::VADDR_MSB+1)){1'b0}}, w_vpn} : w_selected_ppn;
 
-assign o_tlb_ready = (r_state === ST_READY);
-assign w_priv_s = i_status_prv[0];
-assign w_priv_uses_vm = i_status_prv <= riscv_common_pkg::PRIV_S;
+assign o_tlb_ready = (r_state === ST_READY) & !i_csr_update;
+assign w_priv_s = r_status_prv[0];
+assign w_priv_uses_vm = r_status_prv <= riscv_common_pkg::PRIV_S;
 assign w_vm_enabled = scariv_conf_pkg::USING_VM &
-                      (i_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
+                      (r_csr_satp[riscv_pkg::XLEN_W-1 -: 2] != 'h0) &
                       w_priv_uses_vm &
                       !i_tlb_req.passthrough;
 
@@ -467,8 +490,8 @@ assign w_do_refill = scariv_conf_pkg::USING_VM && (r_state == ST_WAIT) & ptw_if.
 // ---------------
 assign ptw_if.req.valid = r_state == ST_REQUEST;
 assign ptw_if.req.addr  = r_refill_tag;
-assign ptw_if.satp      = i_csr_satp;
-assign ptw_if.status    = i_csr_status;
+assign ptw_if.satp      = r_csr_satp;
+assign ptw_if.status    = r_csr_status;
 assign ptw_if.resp_ready = 1'b1;
 
 // ------------------

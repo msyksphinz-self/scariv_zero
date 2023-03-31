@@ -218,6 +218,7 @@ u_tlb
  .i_kill(1'b0),
  .sfence_if(sfence_if),
 
+ .i_csr_update (csr_info.update),
  .i_status_prv(csr_info.mstatus[`MSTATUS_MPRV] ? csr_info.mstatus[`MSTATUS_MPP] : csr_info.priv),
  .i_csr_status(csr_info.mstatus),
  .i_csr_satp  (csr_info.satp   ),
