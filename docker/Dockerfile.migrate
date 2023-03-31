@@ -11,6 +11,8 @@ RUN apt install -y libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev vim
 RUN apt install -y ruby
 RUN apt install -y clang ccache
 RUN apt install -y git-lfs
+RUN apt install -y python3-pip
+RUN pip3 install docker-py
 
 ENV RISCV /work/riscv
 
