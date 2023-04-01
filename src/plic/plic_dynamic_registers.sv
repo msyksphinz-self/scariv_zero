@@ -58,7 +58,7 @@
 //  HAS_THRESHOLD     [0,1]   Is 'threshold' impl.?    1
 //  HAS_CONFIG_REG    [0,1]   Is 'config' implemented? 1
 // ------------------------------------------------------------------
-// REUSE ISSUES 
+// REUSE ISSUES
 //   Reset Strategy      : external asynchronous active low; rst_n
 //   Clock Domains       : 1, clk, rising edge
 //   Critical Timing     : na
@@ -67,7 +67,7 @@
 //   Scan Methodology    : na
 //   Instantiations      : none
 //   Synthesizable (y/n) : Yes
-//   Other               :                                         
+//   Other               :
 // -FHDR-------------------------------------------------------------
 
 module plic_dynamic_registers #(
@@ -157,7 +157,7 @@ module plic_dynamic_registers #(
   localparam PRIORITY_NIBBLES = (PRIORITY_BITS +3 -1) / 4;
 
   //How many PRIORITY fields fit in 1 register?
-  localparam PRIORITY_FIELDS_PER_REG = DATA_SIZE / (PRIORITY_NIBBLES*4); 
+  localparam PRIORITY_FIELDS_PER_REG = DATA_SIZE / (PRIORITY_NIBBLES*4);
 
   //How many Priority registers are there?
   localparam PRIORITY_REGS  = (SOURCES + PRIORITY_FIELDS_PER_REG -1) / PRIORITY_FIELDS_PER_REG;
@@ -216,22 +216,22 @@ module plic_dynamic_registers #(
     idx = r;
 
     //1. Configuration Register
-    if (idx < CONFIG_REGS  ) return CONFIG;
-    idx -= CONFIG_REGS;
+    if (0 <= idx && idx < CONFIG_REGS) return CONFIG;
+    // idx -= CONFIG_REGS;
 
     //2. Gateway control registers
     //  Edge/Level
-    if (idx < EL_REGS      ) return EL;
-    idx -= EL_REGS;
+    // if (4 <= idx && idx < 4 + EL_REGS) return EL;
+    // idx -= EL_REGS;
 
     //3. PLIC Core fabric registers
-    if (idx < PRIORITY_REGS) return PRIORITY;
-    idx -= PRIORITY_REGS;
-    if (idx < IE_REGS      ) return IE;
-    idx -= IE_REGS;
+    /* verilator lint_off UNSIGNED */
+    if (idx >= 'h4/DATA_BYTES && idx < 'h4/DATA_BYTES + PRIORITY_REGS) return PRIORITY;
+
+    if (idx >= 'h2000/DATA_BYTES && idx < 'h2000/DATA_BYTES + IE_REGS) return IE;
 
     //4. Target registers
-    if (idx < THRESHOLD_REGS) return THRESHOLD;
+    if (idx >= 'h2000/DATA_BYTES && idx < 'h200000/DATA_BYTES + THRESHOLD_REGS) return THRESHOLD;
     return ID;
   endfunction : register_function
 
@@ -244,24 +244,24 @@ module plic_dynamic_registers #(
     idx = r;
 
     //1. Configuration registers
-    if (idx < CONFIG_REGS  ) return idx;
+    if (0 <= idx && idx < CONFIG_REGS) return idx;
     idx -= CONFIG_REGS;
 
     //2. first Gateway control registers
     //  Edge/Level
     //  Interrupt Pending/Acknowledge
-    if (idx < EL_REGS      ) return idx;
-    idx -= EL_REGS;
+    // if (idx < EL_REGS      ) return idx;
+    // idx -= EL_REGS;
 
     //3. PLIC Core fabric registers
-    if (idx < PRIORITY_REGS) return idx;
-    idx -= PRIORITY_REGS;
-    if (idx < IE_REGS      ) return idx;
-    idx -= IE_REGS;
+    /* verilator lint_off UNSIGNED */
+    if (idx >= 'h4/DATA_BYTES && idx < 'h4/DATA_BYTES + PRIORITY_REGS) return idx - 'h4/DATA_BYTES;
+
+    if (idx >= 'h2000/DATA_BYTES && idx < 'h2000/DATA_BYTES + IE_REGS) return idx - 'h2000/DATA_BYTES;
 
     //4. Target registers
-    if (idx < THRESHOLD_REGS) return idx;
-    idx -= THRESHOLD_REGS;
+    if (idx >= 'h2000/DATA_BYTES && idx < 'h200000/DATA_BYTES + THRESHOLD_REGS) return idx - 'h2000/DATA_BYTES;
+
     return idx;
   endfunction : register_idx
 
@@ -457,7 +457,7 @@ module plic_dynamic_registers #(
       if (r == 0)
         $display ("TARGETS,SOURCES");
       else
-        $display ("15'h0,TH,PRIORITIES"); 
+        $display ("15'h0,TH,PRIORITIES");
   endtask : display_config_map
 
   task display_el_map;
@@ -614,7 +614,7 @@ generate
                          else
                            assign el[SOURCES-1:register_idx(r) * DATA_SIZE] = registers[r];
                      end
- 
+
           //Decode PRIORITY register(s)
           // There are SOURCES priority-fields, each PRIORITY_BITS
           //  wide, spread out over DATA_SIZE wide registers,
@@ -712,4 +712,3 @@ endgenerate
       endcase
 
 endmodule : plic_dynamic_registers
-

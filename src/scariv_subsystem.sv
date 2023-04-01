@@ -149,7 +149,7 @@ scariv_plic
   // PLIC
   .i_req_valid   (w_req_plic_if.valid           ),
   .i_req_cmd     (w_req_plic_if.payload.cmd     ),
-  .i_req_addr    (w_req_plic_if.payload.addr    ),
+  .i_req_addr    (w_req_plic_if.payload.addr - 'hc00_0000),
   .i_req_tag     (w_req_plic_if.tag             ),
   .i_req_data    (w_req_plic_if.payload.data    ),
   .i_req_byte_en (w_req_plic_if.payload.byte_en ),

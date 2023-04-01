@@ -134,6 +134,12 @@ function automatic rob_entry_t assign_rob_entry();
     ret.inst[d_idx].inst           = rn_front_if.payload.inst[d_idx].inst          ;
     ret.inst[d_idx].kanata_id      = rn_front_if.payload.inst[d_idx].kanata_id     ;
 `endif // SIMULATION
+
+`ifdef LITEX_SIMULATION
+    ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
+    ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
+    ret.inst[d_idx].inst           = rn_front_if.payload.inst[d_idx].inst          ;
+`endif // LITEX_SIMULATION
   end // block: inst_loop
 
   ret.br_upd_info = 'h0;

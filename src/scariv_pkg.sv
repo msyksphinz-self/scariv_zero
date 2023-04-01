@@ -300,6 +300,11 @@ typedef struct packed {
   logic [31: 0]      inst;
   logic [63: 0]      kanata_id;
 `endif // SIMULATION
+`ifdef LITEX_SIMULATION
+  logic              rvc_inst_valid;
+  logic [15: 0]      rvc_inst;
+  logic [31: 0]      inst;
+`endif // LITEX_SIMULATION
 } rob_static_info_t;
 
   typedef struct packed {

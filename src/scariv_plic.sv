@@ -92,6 +92,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_state <= INIT;
         end
       end
+      default : begin
+      end
     endcase // case (r_state)
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -102,12 +104,12 @@ apb4_plic_top
     .PADDR_SIZE(riscv_pkg::PADDR_W),
     .PDATA_SIZE(scariv_conf_pkg::ICACHE_DATA_W),
     // PLIC Parameters
-    .SOURCES           (64),   //Number of interrupt sources
-    .TARGETS           ( 4),   //Number of interrupt targets
-    .PRIORITIES        ( 8),   //Number of Priority levels
-    .MAX_PENDING_COUNT ( 8),   //Max. number of 'pending' events
-    .HAS_THRESHOLD     ( 1),   //Is 'threshold' implemented?
-    .HAS_CONFIG_REG    ( 1)    //Is the 'configuration' register implemented?
+    .SOURCES           (8),   //Number of interrupt sources
+    .TARGETS           (1),   //Number of interrupt targets
+    .PRIORITIES        (8),   //Number of Priority levels
+    .MAX_PENDING_COUNT (8),   //Max. number of 'pending' events
+    .HAS_THRESHOLD     (1),   //Is 'threshold' implemented?
+    .HAS_CONFIG_REG    (0)    //Is the 'configuration' register implemented?
     )
 u_plic
   (
