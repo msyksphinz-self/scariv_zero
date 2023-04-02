@@ -529,7 +529,9 @@ assign w_inst_disp_mask = |w_disp_special_bru_valid ? {w_disp_special_bru_valid,
                           w_inst_disp_mask_tmp - 1;
 
 
-assign w_ibuf_front_valid_next = |w_inst_disp_mask & !r_pred_entry_kill_valid & !w_flush_pipeline;
+assign w_ibuf_front_valid_next = |w_inst_disp_mask & !r_pred_entry_kill_valid &
+                                 !w_flush_pipeline &
+                                 !o_decode_flush.valid;
 assign w_inst_buffer_fire_next  = w_ibuf_front_valid_next & ibuf_front_if.ready;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
