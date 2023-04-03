@@ -1,12 +1,18 @@
-build-env:
-	docker build . -f Dockerfile.migrate --platform=linux/amd64 -t msyksphinz/scariv:run_env
-	docker push msyksphinz/scariv:run_env
+.PHONY: build run
+
+DOCKER_IMAGE ?= msyksphinz/scariv:run_env
+TZFULL=$(subst /, ,$(shell readlink /etc/localtime))
+TZ=$(word $(shell expr $(words $(TZFULL)) - 1 ),$(TZFULL))/$(word $(words $(TZFULL)),$(TZFULL))
+
+REPO_HOME = $(abspath ../)
+
+build: Dockerfile
+	docker build --build-arg TZ_ARG=$(TZ) $(DOCKER_BUILD_OPT) -f $(<) -t $(DOCKER_IMAGE) .
 
 run:
-	docker compose -f ../top-test.yml build
-	docker compose -f ../top-test.yml up --abort-on-container-exit
+	docker run --cap-add=SYS_PTRACE --security-opt="seccomp=unconfined" \
+		--rm -it -v "$(REPO_HOME):/work/scariv" --user $(shell id -u):$(shell id -g) -w "/work/scariv" $(DOCKER_IMAGE) "/work/scariv/docker_regression/run_regression.sh"
 
 debug:
-	cd ../; \
-	docker build . -f docker/Dockerfile.test --platform=linux/amd64 -t msyksphinz/scariv:run; \
-	docker run -it msyksphinz/scariv:run /bin/bash
+	docker run --cap-add=SYS_PTRACE --security-opt="seccomp=unconfined" \
+		--rm -it -v "$(REPO_HOME):/work/scariv" --user $(shell id -u):$(shell id -g) -w "/work/scariv" $(DOCKER_IMAGE) "/bin/bash"
