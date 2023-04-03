@@ -50,6 +50,9 @@ $map_table.each_with_index{ |map, map_index|
   end
 
   paddr_bitlen = rv_xlen == 32 ? 34 : 56
+  if base_addr == 0 then
+  printf(out_sv, "/* verilator lint_off UNSIGNED */\n", base_addr)
+  end
   printf(out_sv, "assign w_hit_addr[%2d] = (i_pa >= %d'h%014x) & (i_pa < %d'h%014x);  // Address Region : %x - %x\n",
          map_index,
          paddr_bitlen, base_addr,
