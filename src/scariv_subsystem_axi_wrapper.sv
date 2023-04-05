@@ -138,8 +138,8 @@ assign axi_if_aw_region = 1'b0;
 
 assign axi_if_w_valid = w_wr_valid & ~r_w_fire_hold;
 assign axi_if_w_last  = 1'b1;
-assign axi_if_w_data  = r_l2_payload.data    << {r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)], 3'b000};
-assign axi_if_w_strb  = r_l2_payload.byte_en <<  r_l2_payload.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)];
+assign axi_if_w_data  = r_l2_payload.data    << {r_l2_payload.addr[$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)-1: 0], 3'b000};
+assign axi_if_w_strb  = r_l2_payload.byte_en <<  r_l2_payload.addr[$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)-1: 0];
 
 assign axi_if_b_ready = 1'b1;
 
