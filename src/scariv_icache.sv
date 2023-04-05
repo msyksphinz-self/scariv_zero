@@ -292,17 +292,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       ICInit : begin
         if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i &
             !w_s1_pref_paddr_hit) begin
-          if (w_s1_pref_search_working_hit) begin
+          if (w_s1_pref_search_working_hit & !ic_l2_pref_resp_fire) begin
             r_ic_state <= ICResp;
-          end else begin
+          end else if (!w_s1_pref_search_working_hit) begin
             r_ic_state <= ICReq;
           end
-          r_s2_paddr <= i_s1_paddr;
-          r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
-          r_s2_waiting_vaddr <= r_s1_vaddr;
-          r_s2_working_pref_hit <= w_s1_pref_search_working_hit;
-          // end
-        end
+          if (w_s1_pref_search_working_hit & !ic_l2_pref_resp_fire |
+              !w_s1_pref_search_working_hit) begin
+            r_s2_paddr <= i_s1_paddr;
+            r_s2_replace_way <= r_replace_way[r_s1_vaddr[ICACHE_TAG_LOW-1: 0]];
+            r_s2_waiting_vaddr <= r_s1_vaddr;
+            r_s2_working_pref_hit <= w_s1_pref_search_working_hit;
+          end
+        end // if (~i_flush_valid & r_s1_valid & !w_s1_hit & !i_s1_kill & !i_fence_i &...
       end // case: ICInit
       ICReq : begin
         if (ic_l2_req.ready & !i_fence_i) begin
