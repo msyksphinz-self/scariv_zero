@@ -169,6 +169,14 @@
 ../src/scariv_subsystem_axi_wrapper.sv
 
 ../src/plic_if.sv
+../src/scariv_plic.sv
+../src/scariv_plic_reg_enable.sv
+../src/scariv_plic_reg_enables.sv
+../src/scariv_plic_reg_pending.sv
+../src/scariv_plic_reg_priority.sv
+../src/scariv_plic_reg_threshold.sv
+../src/scariv_plic_regs.sv
+../src/plic/apb4_plic_top.sv
 ../src/plic/plic_cell.sv
 ../src/plic/plic_core.sv
 ../src/plic/plic_dynamic_registers.sv
