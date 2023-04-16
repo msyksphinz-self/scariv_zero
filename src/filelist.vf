@@ -6,6 +6,7 @@
 ../src/decoder_csu_ctrl.sv
 ../src/decoder_fpu_ctrl.sv
 
+../src/recurse_pkg.sv
 ../src/scariv_pkg.sv
 ../src/scariv_lsu_pkg.sv
 ../src/scariv_ic_pkg.sv
