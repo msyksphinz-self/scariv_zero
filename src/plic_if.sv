@@ -20,7 +20,7 @@ modport master (
   input  ie,
   output int_valid,
   output int_id,
-  input  int_complete
+  output int_complete
 );
 
 
@@ -29,7 +29,7 @@ modport slave (
   output ie,
   input  int_valid,
   input  int_id,
-  output int_complete
+  input  int_complete
 );
 
 endinterface // plic_if

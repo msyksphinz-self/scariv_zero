@@ -38,17 +38,24 @@ module scariv_plic_regs
 
  output logic [NUM_SOURCES-1: 0]            o_reg_pending,
  output logic [$clog2(NUM_PRIORITIES)-1: 0] o_reg_priorities[NUM_SOURCES],
- output logic [NUM_SOURCES-1: 0]            o_reg_enables[NUM_HARTS],
+ output logic [NUM_SOURCES-1: 0]            o_reg_enables  [NUM_HARTS],
  output logic [$clog2(NUM_PRIORITIES)-1: 0] o_reg_threshold[NUM_HARTS],
+ output logic [NUM_SOURCES-1: 0]            o_reg_claim_complete[NUM_HARTS],
+
+ input logic [$clog2(NUM_SOURCES)-1: 0]     i_int_index[NUM_HARTS],
+
+ output logic [NUM_SOURCES-1: 0]     o_plic_claim_valid,
+ output logic [NUM_SOURCES-1: 0]     o_plic_complete_valid,
 
  input logic [NUM_SOURCES-1: 0] i_pending_update_valid,
  input logic [NUM_SOURCES-1: 0] i_pending_update_value
  );
 
-localparam SRC_PRIO_BASE_ADDR  = BASE_ADDR + 'h4;
-localparam PENDING_BASE_ADDR   = BASE_ADDR + 'h1000;
-localparam ENABLE_BASE_ADDR    = BASE_ADDR + 'h2000;
-localparam THRESHOLD_BASE_ADDR = BASE_ADDR + 'h20_0000;
+localparam SRC_PRIO_BASE_ADDR  = 'h4;
+localparam PENDING_BASE_ADDR   = 'h1000;
+localparam ENABLE_BASE_ADDR    = 'h2000;
+localparam THRESHOLD_BASE_ADDR = 'h20_0000;
+localparam CLAIM_COMPLETE_BASE_ADDR = 'h20_0004;
 
 localparam PRIO_REG_BLOCK_NUM = $clog2(NUM_PRIORITIES) / 8; // number of 8-bit blocks
 
@@ -56,16 +63,19 @@ logic                                      w_priority_region;
 logic                                      w_pending_region;
 logic [$clog2(NUM_HARTS+1)-1: 0]           w_enables_region;
 logic [$clog2(NUM_HARTS+1)-1: 0]           w_threshold_region;
+logic [$clog2(NUM_HARTS+1)-1: 0]           w_claim_complete_region;
 
 logic [ADDR_W-1: 0]                        w_priority_addr ;
 logic [ADDR_W-1: 0]                        w_pending_addr  ;
 logic [ADDR_W-1: 0]                        w_enables_addr   ;
 logic [ADDR_W-1: 0]                        w_threshold_addr;
+logic [ADDR_W-1: 0]                        w_claim_complete_addr;
 
-assign w_priority_addr  = i_req_addr - SRC_PRIO_BASE_ADDR;
-assign w_pending_addr   = i_req_addr - PENDING_BASE_ADDR;
-assign w_enables_addr   = i_req_addr - ENABLE_BASE_ADDR;
-assign w_threshold_addr = i_req_addr - THRESHOLD_BASE_ADDR;
+assign w_priority_addr       = i_req_addr - SRC_PRIO_BASE_ADDR;
+assign w_pending_addr        = i_req_addr - PENDING_BASE_ADDR;
+assign w_enables_addr        = i_req_addr - ENABLE_BASE_ADDR;
+assign w_threshold_addr      = i_req_addr - THRESHOLD_BASE_ADDR;
+assign w_claim_complete_addr = i_req_addr - CLAIM_COMPLETE_BASE_ADDR;
 
 logic                                      w_resp_valid_pre;
 logic [ TAG_W-1:0]                         w_resp_tag_pre;
@@ -73,18 +83,37 @@ logic [DATA_W-1:0]                         w_resp_data_pre;
 
 always_comb begin
   w_resp_valid_pre = i_req_valid & (i_req_cmd == scariv_lsu_pkg::M_XRD);
-  w_resp_tag_pre   = i_req_tag;
+  w_resp_data_pre    = 'h0;
+  w_resp_tag_pre     = i_req_tag;
+  o_plic_claim_valid = 'h0;
 
-  if (w_priority_region) begin
-    w_resp_data_pre = o_reg_priorities[w_priority_addr[2 +: $clog2(NUM_SOURCES+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
-  end else if (w_pending_region) begin
-    w_resp_data_pre = o_reg_pending[w_pending_addr[2 +: $clog2(NUM_SOURCES+1)] +: NUM_SOURCES] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
-  end else if (w_enables_region) begin
-    w_resp_data_pre = o_reg_enables[w_enables_addr[7 +: $clog2(NUM_HARTS+1)]][w_enables_addr[2 +: $clog2(NUM_SOURCES+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
-  end else if (w_threshold_region) begin
-    w_resp_data_pre = o_reg_threshold[w_threshold_addr[7 +: $clog2(NUM_HARTS+1)]][w_threshold_addr[2 +: $clog2(NUM_SOURCES+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
-  end else begin
-    w_resp_data_pre = 'h0;
+  if (i_req_valid & (i_req_cmd == scariv_lsu_pkg::M_XRD)) begin
+    if (w_priority_region) begin
+      w_resp_data_pre = o_reg_priorities[w_priority_addr[2 +: $clog2(NUM_SOURCES+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
+    end else if (w_pending_region) begin
+      w_resp_data_pre = o_reg_pending[w_pending_addr[2 +: $clog2(NUM_SOURCES+1)] +: NUM_SOURCES] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
+    end else if (|w_enables_region) begin
+      w_resp_data_pre = o_reg_enables[w_enables_addr[7 +: $clog2(NUM_HARTS+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
+    end else if (|w_threshold_region) begin
+      w_resp_data_pre = o_reg_threshold[w_threshold_addr[7 +: $clog2(NUM_HARTS+1)]] << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
+    end else if (|w_claim_complete_region) begin
+      w_resp_data_pre = o_reg_pending << {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000}; // Very temporary
+      o_plic_claim_valid = 1 << i_int_index[0];
+    end else begin
+      w_resp_data_pre = 'h0;
+    end
+  end // if (i_req_valid & (i_req_cmd == scariv_lsu_pkg::M_XRD))
+end // always_comb
+
+logic [$clog2(NUM_SOURCES)-1: 0] w_plic_complete_valid_decode;
+assign w_plic_complete_valid_decode = i_req_data >> {i_req_addr[$clog2(DATA_W/8)-1: 0], 3'b000};
+
+always_comb begin
+  o_plic_complete_valid = 'h0;
+  if (i_req_cmd == scariv_lsu_pkg::M_XWR) begin
+    if (|w_claim_complete_region) begin
+      o_plic_complete_valid = 'h1 << w_plic_complete_valid_decode;
+    end
   end
 end
 
@@ -143,9 +172,12 @@ generate for (genvar s_idx = 0; s_idx < NUM_SOURCES / 8; s_idx+=8) begin: r_pend
    (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
-     .i_wr         (pending_wr_valid    ),
-     .i_wr_byte_en (i_req_byte_en[ 3: 0]),
-     .i_wr_data    (i_req_data   [31: 0]),
+     .i_wr         (pending_wr_valid  ),
+     .i_wr_byte_en (i_req_byte_en[0]),
+     .i_wr_data    ({i_req_data   [31: 1], 1'b0}),
+
+     .i_update_valid (i_pending_update_valid),
+     .i_update_value (i_pending_update_value),
 
      .o_data (o_reg_pending[s_idx*8 +: 8])
     );
@@ -203,10 +235,9 @@ endgenerate
 
 // Memory Map
 always_comb begin
-  w_priority_region  = 1'b0;
-  w_pending_region   = 1'b0;
-  w_enables_region    = 'h0;
-  w_threshold_region = 'h0;
+  w_priority_region       = 1'b0;
+  w_pending_region        = 1'b0;
+  w_enables_region        = 'h0;
 
   if (i_req_valid) begin
       if (i_req_addr == BASE_ADDR + 'h0) begin
@@ -220,13 +251,24 @@ always_comb begin
       end else if (i_req_addr >= ENABLE_BASE_ADDR && i_req_addr < ENABLE_BASE_ADDR + NUM_HARTS * 4) begin
         // Enable Bits
         w_enables_region = 'h1 << w_enables_addr[7 +: $clog2(NUM_HARTS + 1)];
-      end else if (i_req_addr >= THRESHOLD_BASE_ADDR && i_req_addr < THRESHOLD_BASE_ADDR + NUM_HARTS * 4) begin
-        // Threshold
-        w_threshold_region = 'h1 << w_threshold_addr[12 +: $clog2(NUM_HARTS + 1)];
       end
-  end // if (i_req_valid & i_req_cmd == scariv_lsu_pkg::XWR)
+  end // if (i_req_valid)
 end // always_comb
 
-
+generate for (genvar h_idx = 0; h_idx < NUM_HARTS; h_idx++) begin : hart_region_loop
+  always_comb begin
+    w_threshold_region     [h_idx] = 1'b0;
+    w_claim_complete_region[h_idx] = 1'b0;
+    if (i_req_valid) begin
+      if (i_req_addr == THRESHOLD_BASE_ADDR + 'h2000 * h_idx) begin
+        // Threshold
+        w_threshold_region[h_idx] = 'h1;
+      end else if (i_req_addr == CLAIM_COMPLETE_BASE_ADDR + 'h2000 * h_idx) begin
+        // claim / complete
+        w_claim_complete_region[h_idx] = 1'b1;
+      end
+    end
+  end
+end endgenerate
 
 endmodule // scariv_plic_regs

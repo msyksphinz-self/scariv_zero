@@ -196,7 +196,8 @@ always_comb begin
       case (i_commit.except_type)
         riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
           /* verilator lint_off WIDTHCONCAT */
-          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
+          w_s0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0};
+          // + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
           w_int_flush_valid = 1'b1;
         end
         riscv_common_pkg::SUPER_EXTERNAL_INT : begin

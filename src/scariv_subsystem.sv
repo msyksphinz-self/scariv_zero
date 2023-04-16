@@ -108,8 +108,7 @@ scariv_clint
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h200_0000),
-  .SIZE     ('h1_0000),
-  .RD_LAT   (10)
+  .SIZE     ('h1_0000)
 ) u_clint (
   .i_clk    (i_clk),
   .i_reset_n(i_reset_n),
@@ -139,7 +138,9 @@ scariv_plic
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('hc00_0000),
   .SIZE     ('h1_0000),
-  .RD_LAT   (10)
+  .NUM_PRIORITIES (2),
+  .NUM_HARTS      (1),
+  .NUM_SOURCES    (8)
 ) u_plic (
   .i_clk    (i_clk),
   .i_reset_n(i_reset_n),

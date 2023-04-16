@@ -118,4 +118,22 @@ endgenerate
 
 assign o_rn_list = r_map;
 
+`ifdef SIMULATION
+`endif // SIMULATION
+
+`ifdef LITEX_SIMULATION
+logic [31: 0][31: 0] w_sim_same_rnid;
+generate for (genvar j = 0; j < 32; j++) begin : sim_onehot_loop
+  for (genvar i = 0; i < 32; i++) begin : sim_onehot_loop2
+    always_ff @ (negedge i_clk, negedge i_reset_n) begin
+      if (i_reset_n) begin
+        if (j != i && (r_map[j] == r_map[i])) begin
+          $fatal (0, "r_map[%d] == r_map[%d] = %d\n", j, i, r_map[i]);
+        end
+      end
+    end
+  end
+end endgenerate
+`endif // LITEX_SIMULATION
+
 endmodule // scariv_rename_map

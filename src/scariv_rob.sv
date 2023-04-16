@@ -240,7 +240,7 @@ assign o_commit.tval          = (o_commit.except_type == scariv_pkg::INST_ADDR_M
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
-assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
+assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id | {DISP_SIZE{w_int_valid}}) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
 
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop

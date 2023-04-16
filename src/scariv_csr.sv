@@ -622,8 +622,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_mip[ 7] <= 1'b0;
   end else if (clint_if.time_irq_valid) begin
     r_mip[ 7] <= 1'b1;
-  end else if (plic_if.int_valid) begin
+  end
+  if (plic_if.int_valid) begin
     r_mip[11] <= 1'b1;
+  end else if (plic_if.int_complete) begin
+    r_mip[11] <= 1'b0;
   end
 end
 
