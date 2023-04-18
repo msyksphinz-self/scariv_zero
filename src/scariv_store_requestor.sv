@@ -86,7 +86,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign uc_write_if.ready = !r_uc_wr_req_valid;
-
+assign uc_write_if.is_empty = !r_uc_wr_req_valid;
 
 assign st_ext_arbiter = r_l1d_evict_req_valid ? 1'b0 :
                         r_uc_wr_req_valid     ? 1'b1 :

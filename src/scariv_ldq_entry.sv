@@ -49,6 +49,7 @@ module scariv_ldq_entry
  br_upd_if.slave                                 br_upd_if,
 
  input logic                                     i_st_buffer_empty,
+ input logic                                     i_st_requester_empty,
 
  input stq_resolve_t                             i_stq_rs2_resolve,
 
@@ -302,7 +303,7 @@ always_comb begin
     LDQ_WAIT_OLDEST : begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
-      end else if (w_oldest_ready & i_st_buffer_empty) begin
+      end else if (w_oldest_ready & i_st_buffer_empty & i_st_requester_empty) begin
         w_entry_next.state = LDQ_ISSUE_WAIT;
       end
     end

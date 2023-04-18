@@ -876,13 +876,15 @@ logic             ready;
 scariv_pkg::paddr_t paddr;
 riscv_pkg::xlen_t data;
 decoder_lsu_ctrl_pkg::size_t size;
+logic             is_empty;
 
 modport master (
   output valid,
   output paddr,
   output data,
   output size,
-  input ready
+  input  is_empty,
+  input  ready
 );
 
 modport slave (
@@ -890,7 +892,18 @@ modport slave (
   input  paddr,
   input  data,
   input  size,
+  output is_empty,
   output ready
+);
+
+
+modport monitor (
+  input  valid,
+  input  paddr,
+  input  data,
+  input  size,
+  input  is_empty,
+  input  ready
 );
 
 endinterface // uc_write_if

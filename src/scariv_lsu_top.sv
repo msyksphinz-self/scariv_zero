@@ -243,6 +243,7 @@ scariv_ldq
  .ex3_done_if (w_ex3_done_if),
 
  .st_buffer_if (w_st_buffer_if),
+ .uc_write_if  (w_uc_write_if),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
