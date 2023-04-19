@@ -18,13 +18,13 @@ logic [$clog2(NUM_ENABLE)-1: 0] r_data;
 
 generate for (genvar b_idx = 0; b_idx < 4; b_idx++) begin
   if (b_idx * 8 < $clog2(NUM_ENABLE)) begin
-    localparam EFFICTIVE_BITS = ($clog2(NUM_ENABLE) - b_idx * 8) % 8;
+    localparam EFFECTIVE_BITS = ($clog2(NUM_ENABLE) - b_idx * 8) % 8;
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
-        r_data[b_idx*8 +: EFFICTIVE_BITS] <= 'h0;
+        r_data[b_idx*8 +: EFFECTIVE_BITS] <= 'h0;
       end else begin
         if (i_wr & i_wr_byte_en[b_idx]) begin
-          r_data[b_idx*8 +: EFFICTIVE_BITS] <= i_wr_data[b_idx * 8 +: EFECTIVE_BITS];
+          r_data[b_idx*8 +: EFFECTIVE_BITS] <= i_wr_data[b_idx * 8 +: EFFECTIVE_BITS];
         end
       end
     end
