@@ -605,17 +605,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_msc
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mip <= 'h0;
-
-  end else if (write_if.valid & (write_if.addr == `SYSREG_ADDR_MIP)) begin
-    r_mip <= write_if.data;
-  end else if (clint_if.time_irq_clear) begin
-    r_mip[ 7] <= 1'b0;
-  end else if (clint_if.time_irq_valid) begin
-    r_mip[ 7] <= 1'b1;
-  end else if (plic_if.int_valid) begin
-    r_mip[11] <= 1'b1;
-  end
-
   end else begin
     if (write_if.valid & (write_if.addr == `SYSREG_ADDR_MIP)) begin
       r_mip <= write_if.data;
@@ -630,7 +619,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_mip[11] <= 1'b0;
     end
   end // else: !if(!i_reset_n)
-
 end
 
 assign plic_if.ie = r_mie[11];
