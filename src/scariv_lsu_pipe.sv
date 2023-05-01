@@ -23,14 +23,9 @@ module scariv_lsu_pipe
  /* SFENCE update information */
  sfence_if.slave                       sfence_if,
 
- input scariv_lsu_pkg::lsu_pipe_issue_t i_rv0_issue,
- input [RV_ENTRY_SIZE-1: 0]             i_rv0_index_oh,
  input scariv_pkg::phy_wr_t             ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
  input scariv_pkg::mispred_t            i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-
- output logic                          o_ex0_rs_conflicted,
- output logic [RV_ENTRY_SIZE-1: 0]     o_ex0_rs_conf_index_oh,
 
  input scariv_lsu_pkg::lsu_pipe_issue_t i_ex0_replay_issue,
  input [MEM_Q_SIZE-1: 0]                i_ex0_replay_index_oh,
@@ -174,9 +169,6 @@ end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex0_rs_issue   <= 'h0;
-    r_ex0_rs_index_oh <= 'h0;
-
     r_ex1_issue   <= 'h0;
     r_ex1_index_oh   <= 'h0;
 
@@ -186,9 +178,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_uc     <= 1'b0;
   end else begin
-    r_ex0_rs_issue  <= i_rv0_issue;
-    r_ex0_rs_index_oh <= i_rv0_index_oh;
-
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
@@ -249,10 +238,8 @@ u_decoder_ls_ctrl
 // EX0 stage pipeline
 //
 // Pipe selection
-assign w_ex0_issue = i_ex0_replay_issue.valid ? i_ex0_replay_issue    : r_ex0_rs_issue;
-assign w_ex0_index_oh = i_ex0_replay_issue.valid ? i_ex0_replay_index_oh : 'h0;
-assign o_ex0_rs_conflicted    = i_ex0_replay_issue.valid & r_ex0_rs_issue.valid;
-assign o_ex0_rs_conf_index_oh = r_ex0_rs_index_oh;
+assign w_ex0_issue    = i_ex0_replay_issue;
+assign w_ex0_index_oh = i_ex0_replay_index_oh;
 
 //
 // EX1 stage pipeline

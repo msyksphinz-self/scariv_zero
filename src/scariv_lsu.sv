@@ -93,9 +93,6 @@ logic [1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[2];
 
 
-scariv_lsu_pkg::lsu_pipe_issue_t w_rv0_issue;
-logic [MEM_Q_SIZE-1: 0]          w_rv0_index_oh;
-
 scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
 logic [MEM_Q_SIZE-1: 0]          w_ex0_replay_index_oh;
 logic                            w_ld_is_older_than_st;
@@ -170,12 +167,7 @@ u_lsu_pipe
    .csr_info (csr_info),
    .sfence_if(sfence_if),
 
-   .i_rv0_issue('h0),
-   .i_rv0_index_oh('h0),
    .ex1_i_phy_wr (i_phy_wr),
-
-   .o_ex0_rs_conflicted    (),
-   .o_ex0_rs_conf_index_oh (),
 
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
