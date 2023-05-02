@@ -69,7 +69,6 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_NONE,
   EX2_HAZ_L1D_CONFLICT,
   EX2_HAZ_MISSU_ASSIGNED,
-  EX2_HAZ_MISSU_CONFLICT,
   EX2_HAZ_MISSU_FULL,
   EX2_HAZ_MISSU_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
@@ -176,7 +175,7 @@ typedef struct packed {
 typedef struct packed {
   logic                          full;
   logic                          evict_conflict;
-  logic                          conflict;
+  logic                          allocated;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
 } missu_resp_t;
 
@@ -580,7 +579,7 @@ endfunction // isAMOLogical
 typedef enum logic[3:0] {
   LDQ_INIT           ,
   LDQ_EX2_RUN        ,
-  LDQ_MISSU_CONFLICT   ,
+  LDQ_MISSU_WAIT     ,
   LDQ_TLB_HAZ        ,
   LDQ_ISSUE_WAIT     ,
   LDQ_CHECK_ST_DEPEND,

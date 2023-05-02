@@ -448,9 +448,8 @@ assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_
                                     &w_ex2_fwd_success                ? EX2_HAZ_NONE          :
                                     ex1_l1d_rd_if.s1_conflict         ? EX2_HAZ_L1D_CONFLICT  :
                                     l1d_missu_if.load ?
-                                    (l1d_missu_if.resp_payload.full     ? EX2_HAZ_MISSU_FULL      :
-                                     l1d_missu_if.resp_payload.conflict ? EX2_HAZ_MISSU_CONFLICT  :
-                                     EX2_HAZ_MISSU_ASSIGNED) :
+                                    (l1d_missu_if.resp_payload.full   ? EX2_HAZ_MISSU_FULL       :
+                                     /* l1d_missu_if.resp_payload.allocated ? */ EX2_HAZ_MISSU_ASSIGNED) :
                                     EX2_HAZ_NONE;
 assign o_ex2_q_updates.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
 assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
@@ -473,13 +472,6 @@ end
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (o_ex2_q_updates.update &
-        (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT) &
-        !$onehot(o_ex2_q_updates.missu_index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
-             o_ex2_q_updates.missu_index_oh);
-    end
     if (o_ex2_q_updates.update &
         (r_ex2_pipe_ctrl.op == OP_LOAD) &
         (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &

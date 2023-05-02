@@ -243,17 +243,17 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   assign w_resp_evict_conflict[p_idx] = (|w_hit_missu_same_evict_pa) |  // 3. hazard
                                         (|w_hit_port_same_evict_pa);   // 4. hazard
 
-  assign w_missu_index_oh[p_idx] = |w_l1d_missu_loads_no_conflicts[p_idx] ? w_load_picked_valid[w_l1d_missu_picked_index[p_idx]] : // Success Load
-                                 |w_hit_missu_same_pa        ? w_hit_missu_same_pa                   :                               // 1. hazard
-                                 |w_hit_port_same_pa       ? hit_port_same_pa_entry_idx_oh       :                               // 2. hazard
-                                 |w_hit_missu_same_evict_pa  ? w_hit_missu_same_evict_pa             :                               // 3. hazard
-                                 |w_hit_port_same_evict_pa ? w_hit_port_same_evict_pa_idx_oh     :                               // 4. hazard
-                                 'h0;
+  assign w_missu_index_oh[p_idx] = w_l1d_missu_loads_no_conflicts[p_idx] ? w_load_picked_valid[w_l1d_missu_picked_index[p_idx]] : // Success Load
+                                   |w_hit_missu_same_pa                  ? w_hit_missu_same_pa                   :                // 1. hazard
+                                   |w_hit_port_same_pa                   ? hit_port_same_pa_entry_idx_oh         :                // 2. hazard
+                                   |w_hit_missu_same_evict_pa            ? w_hit_missu_same_evict_pa             :                // 3. hazard
+                                   |w_hit_port_same_evict_pa             ? w_hit_port_same_evict_pa_idx_oh       :                // 4. hazard
+                                   'h0;
 
   assign l1d_missu[p_idx].resp_payload.full           = (w_valid_load_index[p_idx] > w_l1d_missu_valid_load_cnt);
   assign l1d_missu[p_idx].resp_payload.evict_conflict = w_resp_evict_conflict[p_idx];
-  assign l1d_missu[p_idx].resp_payload.conflict       = w_resp_conflict[p_idx];
-  assign l1d_missu[p_idx].resp_payload.missu_index_oh   = w_missu_index_oh[p_idx];
+  assign l1d_missu[p_idx].resp_payload.allocated      = w_l1d_missu_loads_no_conflicts[p_idx] | w_resp_conflict[p_idx];
+  assign l1d_missu[p_idx].resp_payload.missu_index_oh = w_missu_index_oh[p_idx];
 
 end // block: port_loop
 endgenerate
@@ -267,8 +267,8 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_l
     w_l1d_missu_loads[p_idx] = l1d_missu[p_idx].load;
     w_l1d_req_payloads[p_idx] = l1d_missu[p_idx].req_payload;
     w_l1d_missu_loads_no_conflicts[p_idx] = w_l1d_missu_loads[p_idx] &
-                                          !w_resp_conflict[p_idx] &
-                                          !w_resp_evict_conflict[p_idx];
+                                            !w_resp_conflict[p_idx] &
+                                            !w_resp_evict_conflict[p_idx];
   end
 
   bit_pick_1_index

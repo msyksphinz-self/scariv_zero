@@ -443,7 +443,6 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     unique case (entry.state)
       LDQ_INIT            : $fwrite(fp, "LDQ_INIT");
       LDQ_EX2_RUN         : $fwrite(fp, "LDQ_EX2_RUN");
-      LDQ_MISSU_CONFLICT  : $fwrite(fp, "LDQ_MISSU_CONFLICT");
       LDQ_TLB_HAZ         : $fwrite(fp, "LDQ_TLB_HAZ");
       LDQ_ISSUE_WAIT      : $fwrite(fp, "LDQ_ISSUE_WAIT");
       LDQ_EX3_DONE        : $fwrite(fp, "LDQ_EX3_DONE");

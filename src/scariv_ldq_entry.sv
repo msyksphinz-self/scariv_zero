@@ -74,7 +74,6 @@ logic                                            w_dead_state_clear;
 logic                                            w_entry_commit;
 logic                                            w_oldest_ready;
 
-logic                                            w_missu_is_conflict;
 logic                                            w_missu_is_full;
 logic                                            w_missu_is_assigned;
 logic                                            w_missu_resolve_match;
@@ -106,14 +105,13 @@ assign w_load_flush = w_load_commit_flush | w_load_br_flush;
 
 assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
 
-assign w_missu_is_conflict = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT;
 assign w_missu_is_full     = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_FULL;
 assign w_missu_evict_is_hazard = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_EVICT_CONFLICT;
 
 assign w_missu_is_assigned = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED;
-assign w_missu_resolve_match = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_CONFLICT &
-                             i_missu_resolve.valid &
-                             (i_missu_resolve.resolve_index_oh == i_ex2_q_updates.missu_index_oh);
+assign w_missu_resolve_match = i_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED &
+                               i_missu_resolve.valid &
+                               (i_missu_resolve.resolve_index_oh == i_ex2_q_updates.missu_index_oh);
 
 assign o_entry_finish = (r_entry.state == LDQ_WAIT_ENTRY_CLR) & i_ldq_outptr_valid;
 
@@ -249,10 +247,9 @@ always_comb begin
                              i_ex2_q_updates.hazard_typ == EX2_HAZ_STQ_NONFWD_HAZ ? LDQ_NONFWD_HAZ_WAIT :
                              i_ex2_q_updates.hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? LDQ_WAIT_OLDEST     :
                              w_missu_resolve_match   ? LDQ_ISSUE_WAIT :
-                             w_missu_is_conflict     ? LDQ_MISSU_CONFLICT :
                              w_missu_is_full         ? LDQ_MISSU_FULL :
                              w_missu_evict_is_hazard ? LDQ_MISSU_EVICT_HAZ :
-                             w_missu_is_assigned     ? LDQ_ISSUE_WAIT : // When MISSU Assigned, MISSU index return is zero so rerun and ge MISSU index.
+                             w_missu_is_assigned     ? LDQ_MISSU_WAIT      :
                              LDQ_EX3_DONE;
         w_entry_next.is_get_data = (w_entry_next.state == LDQ_EX3_DONE);
         w_entry_next.missu_haz_index_oh = i_ex2_q_updates.missu_index_oh;
@@ -260,7 +257,7 @@ always_comb begin
         w_ex2_ldq_entries_recv_next = 'h0;
       end
     end
-    LDQ_MISSU_CONFLICT : begin
+    LDQ_MISSU_WAIT : begin
       if (w_entry_flush) begin
         w_entry_next.state = LDQ_WAIT_ENTRY_CLR;
       end else if (i_missu_resolve.valid && i_missu_resolve.resolve_index_oh == r_entry.missu_haz_index_oh) begin
@@ -342,9 +339,6 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex2_q_valid) begin
     if (w_missu_is_assigned & !$onehot(i_ex2_q_updates.missu_index_oh)) begin
       $fatal (0, "When MISSU is assigned, MISSU index ID must be one hot but actually %x\n", i_ex2_q_updates.missu_index_oh);
-    end
-    if (w_missu_is_conflict & !$onehot0(i_ex2_q_updates.missu_index_oh)) begin
-      $fatal (0, "missu_index_oh must be one hot but actually %x\n", i_ex2_q_updates.missu_index_oh);
     end
   end
 end
