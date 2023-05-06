@@ -34,8 +34,8 @@ module scariv_bru_pipe
   output                            scariv_pkg::early_wr_t o_ex1_early_wr,
   output                            scariv_pkg::phy_wr_t o_ex3_phy_wr,
 
-  done_if.master   ex3_done_if,
-  br_upd_if.master ex3_br_upd_if
+  output scariv_pkg::done_rpt_t     o_done_report,
+  br_upd_if.master                  ex3_br_upd_if
 );
 
 typedef struct packed {
@@ -290,10 +290,11 @@ assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
                                r_ex3_issue.pc_addr} + (r_ex3_issue.is_rvc ? 'h2 : 'h4);
 
-assign ex3_done_if.done     = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
-assign ex3_done_if.index_oh = r_ex3_index;
-assign ex3_done_if.payload.except_valid  = 1'b0;
-assign ex3_done_if.payload.except_type = scariv_pkg::except_t'('h0);
+assign o_done_report.valid    = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;
+assign o_done_report.grp_id   = r_ex3_issue.grp_id;
+assign o_done_report.except_valid  = 1'b0;
+assign o_done_report.except_type = scariv_pkg::except_t'('h0);
 
 scariv_pkg::vaddr_t w_ex2_offset_uj;
 scariv_pkg::vaddr_t w_ex2_offset_sb;

@@ -42,7 +42,7 @@ module scariv_csu_pipe
   /* FENCE.I update */
   output logic                      o_fence_i,
 
-  done_if.master   ex3_done_if
+  output scariv_pkg::done_rpt_t     o_done_report
 );
 
 `include "scariv_csr_def.svh"
@@ -212,30 +212,31 @@ logic w_ex3_sret_tsr_illegal;
 assign w_ex3_sfence_vma_illegal = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM];
 assign w_ex3_sret_tsr_illegal   = r_ex3_pipe_ctrl.is_sret       & i_mstatus[`MSTATUS_TSR];
 
-assign ex3_done_if.done       = r_ex3_issue.valid;
-assign ex3_done_if.index_oh   = r_ex3_index;
-assign ex3_done_if.payload.except_valid  = r_ex3_pipe_ctrl.csr_update |
-                                           r_ex3_pipe_ctrl.is_mret |
-                                           r_ex3_pipe_ctrl.is_sret |
-                                           r_ex3_pipe_ctrl.is_uret |
-                                           r_ex3_pipe_ctrl.is_ecall |
-                                           r_ex3_pipe_ctrl.is_fence_i |
-                                           r_ex3_pipe_ctrl.is_fence |
-                                           r_ex3_pipe_ctrl.is_sfence_vma |
-                                           r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
-                                           (write_if.valid & write_if.resp_error);
+assign o_done_report.valid    = r_ex3_issue.valid;
+assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;
+assign o_done_report.grp_id   = r_ex3_issue.grp_id;
+assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
+                                     r_ex3_pipe_ctrl.is_mret |
+                                     r_ex3_pipe_ctrl.is_sret |
+                                     r_ex3_pipe_ctrl.is_uret |
+                                     r_ex3_pipe_ctrl.is_ecall |
+                                     r_ex3_pipe_ctrl.is_fence_i |
+                                     r_ex3_pipe_ctrl.is_fence |
+                                     r_ex3_pipe_ctrl.is_sfence_vma |
+                                     r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
+                                     (write_if.valid & write_if.resp_error);
 
-assign ex3_done_if.payload.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? scariv_pkg::ILLEGAL_INST :
-                                         r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
-                                         r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
-                                         r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
-                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? scariv_pkg::ECALL_U :
-                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
-                                         r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
-                                         scariv_pkg::SILENT_FLUSH;
+assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? scariv_pkg::ILLEGAL_INST :
+                                   r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
+                                   r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
+                                   r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? scariv_pkg::ECALL_U :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
+                                   scariv_pkg::SILENT_FLUSH;
 
-assign ex3_done_if.payload.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
-                                         'h0;
+assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
+                                   'h0;
 
 // ------------
 // CSR Update

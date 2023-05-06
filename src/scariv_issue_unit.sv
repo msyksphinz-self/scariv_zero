@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_alu_scheduler
+// NAME : scariv_issue_unit
 // TYPE : module
 // ------------------------------------------------------------------------
 // Scheduler for ALU
@@ -7,10 +7,14 @@
 //
 // ------------------------------------------------------------------------
 
-module scariv_alu_scheduler
+module scariv_issue_unit
   #(
     parameter ENTRY_SIZE = 32,
-    parameter IN_PORT_SIZE = 2
+    parameter IN_PORT_SIZE = 2,
+    parameter IS_BRANCH = 1'b0,
+    parameter EN_OLDEST = 0,
+    parameter NUM_OPERANDS = 2,
+    parameter NUM_DONE_PORT = 1
     )
 (
  input logic                           i_clk,
@@ -195,8 +199,13 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  scariv_alu_sched_entry
-  u_sched_entry(
+  scariv_issue_entry
+    #(
+      .IS_BRANCH (IS_BRANCH),
+      .EN_OLDEST(EN_OLDEST),
+      .NUM_OPERANDS(NUM_OPERANDS)
+      )
+  u_issue_entry(
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
@@ -251,7 +260,7 @@ typedef struct packed {
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
-    $fwrite(fp, "    \"scariv_sched_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "    \"scariv_issue_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "valid:%d, ", entry.entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
@@ -278,14 +287,14 @@ endfunction // dump_json
 
 entry_ptr_t w_entry_ptr[ENTRY_SIZE];
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop_ptr
-  assign w_entry_ptr[s_idx].entry = entry_loop[s_idx].u_sched_entry.r_entry;
-  assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_sched_entry.r_state;
+  assign w_entry_ptr[s_idx].entry = entry_loop[s_idx].u_issue_entry.r_entry;
+  assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_issue_entry.r_state;
 end
 endgenerate
 
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
-    $fwrite(fp, "  \"scariv_scheduler_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "  \"scariv_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
     $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
@@ -330,4 +339,4 @@ endfunction // dump_perf
 
 `endif // SIMULATION
 
-endmodule // scariv_scheduler
+endmodule // scariv_issue_unit

@@ -69,13 +69,13 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
     .IS_BRANCH (1'b1),
     .IN_PORT_SIZE(scariv_conf_pkg::BRU_DISP_SIZE)
     )
-u_scariv_scheduler
+u_scariv_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -97,12 +97,8 @@ u_scariv_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if(w_ex3_done_if),
-
    .i_commit (i_commit),
-   .br_upd_if (ex3_br_upd_slave_if),
-
-   .o_done_report (o_done_report)
+   .br_upd_if (ex3_br_upd_slave_if)
    );
 
 
@@ -129,7 +125,7 @@ u_bru_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex3_done_if   (w_ex3_done_if[0]),
+   .o_done_report (o_done_report),
    .ex3_br_upd_if (ex3_br_upd_if)
    );
 

@@ -76,12 +76,12 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_alu_scheduler
+scariv_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_ALU_ENTRY_SIZE),
     .IN_PORT_SIZE(ALU_PORT_SIZE)
     )
-u_scariv_scheduler
+u_scariv_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),

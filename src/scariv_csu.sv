@@ -62,8 +62,6 @@ scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::CSU_DISP_SIZE];
 scariv_pkg::issue_t w_rv0_issue;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
-done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_CSU_ENTRY_SIZE)) w_ex3_done_if[1]();
-
 logic         w_ex3_done;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
 
@@ -87,13 +85,13 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_CSU_ENTRY_SIZE),
     .IN_PORT_SIZE(scariv_conf_pkg::CSU_DISP_SIZE),
     .EN_OLDEST(1'b1)
     )
-u_scariv_scheduler
+u_scariv_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -115,10 +113,8 @@ u_scariv_scheduler
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if  (w_ex3_done_if),
    .i_commit      (i_commit),
-   .br_upd_if     (br_upd_if),
-   .o_done_report (o_done_report)
+   .br_upd_if     (br_upd_if)
    );
 
 
@@ -149,7 +145,7 @@ u_csu_pipe
    .sfence_if (sfence_if),
    .o_fence_i (o_fence_i),
 
-   .ex3_done_if   (w_ex3_done_if[0])
+   .o_done_report (o_done_report)
    );
 
 

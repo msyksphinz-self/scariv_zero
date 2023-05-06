@@ -25,8 +25,8 @@ module scariv_fpu_pipe
     /* CSR information */
     csr_info_if.slave  csr_info,
 
-    input scariv_pkg::issue_t rv0_issue,
-    input logic [RV_ENTRY_SIZE-1:0] rv0_index,
+    input scariv_pkg::issue_t ex0_issue,
+    input logic [RV_ENTRY_SIZE-1:0] ex0_index,
     input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
     regread_if.master ex1_regread_int_rs1,
@@ -39,13 +39,13 @@ module scariv_fpu_pipe
 
     output scariv_pkg::early_wr_t o_ex1_mv_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
-    done_if.master              ex3_mv_done_if,
+    output scariv_pkg::done_rpt_t o_mv_done_report,
 
     output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
-    done_if.master              fpnew_done_if
+    output scariv_pkg::done_rpt_t o_fp_done_report
 );
 
-scariv_pkg::issue_t                         r_ex0_issue;
+scariv_pkg::issue_t                       w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0]                w_ex0_index;
 pipe_ctrl_t                               w_ex0_pipe_ctrl;
 
@@ -93,8 +93,8 @@ logic                              r_ex3_frm_invalid;
 logic                              w_ex3_done_report_illegal;
 
 always_comb begin
-  r_ex0_issue = rv0_issue;
-  w_ex0_index = rv0_index;
+  w_ex0_issue = ex0_issue;
+  w_ex0_index = ex0_index;
 end
 
 // ---------------------
@@ -102,7 +102,7 @@ end
 // ---------------------
 
 decoder_fpu_ctrl u_pipe_ctrl (
-  .inst    (r_ex0_issue.inst        ),
+  .inst    (w_ex0_issue.inst        ),
   .size    (w_ex0_pipe_ctrl.size    ),
   .op      (w_ex0_pipe_ctrl.op      ),
   .pipe    (w_ex0_pipe_ctrl.pipe    ),
@@ -131,7 +131,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_index <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
   end else begin
-    r_ex1_issue <= r_ex0_issue;
+    r_ex1_issue <= w_ex0_issue;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
   end
@@ -370,9 +370,10 @@ end
 // ----------------------
 // FPNew Pipeline
 // ----------------------
-logic [RV_ENTRY_SIZE-1: 0] w_fpnew_sched_index;
-scariv_pkg::rnid_t           w_fpnew_rnid;
-scariv_pkg::reg_t            w_fpnew_reg_type;
+scariv_pkg::cmt_id_t       w_fpnew_cmt_id;
+scariv_pkg::grp_id_t       w_fpnew_grp_id;
+scariv_pkg::rnid_t         w_fpnew_rnid;
+scariv_pkg::reg_t          w_fpnew_reg_type;
 
 scariv_fpnew_wrapper
 u_scariv_fpnew_wrapper
@@ -383,9 +384,10 @@ u_scariv_fpnew_wrapper
    .i_valid (r_ex2_issue.valid & !r_ex2_frm_invalid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
-   .i_sched_index (r_ex2_index),
-   .i_rnid        (r_ex2_issue.wr_reg.rnid),
-   .i_reg_type    (r_ex2_issue.wr_reg.typ),
+   .i_cmt_id    (r_ex2_issue.cmt_id),
+   .i_grp_id    (r_ex2_issue.grp_id),
+   .i_rnid      (r_ex2_issue.wr_reg.rnid),
+   .i_reg_type  (r_ex2_issue.wr_reg.typ),
    .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
 
    .i_rs1 (w_ex2_rs1_selected_data),
@@ -395,7 +397,8 @@ u_scariv_fpnew_wrapper
    .o_valid      (w_fpnew_result_valid ),
    .o_result     (w_fpnew_result_data  ),
    .o_fflags     (w_fpnew_result_fflags),
-   .o_sched_index(w_fpnew_sched_index  ),
+   .o_cmt_id     (w_fpnew_cmt_id       ),
+   .o_grp_id     (w_fpnew_grp_id       ),
    .o_rnid       (w_fpnew_rnid         ),
    .o_reg_type   (w_fpnew_reg_type     )
    );
@@ -407,12 +410,13 @@ always_comb begin
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  ex3_mv_done_if.done                        = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  ex3_mv_done_if.index_oh                    = r_ex3_index;
-  ex3_mv_done_if.payload.except_valid        = r_ex3_frm_invalid;
-  ex3_mv_done_if.payload.except_type         = scariv_pkg::ILLEGAL_INST;
-  ex3_mv_done_if.payload.fflags_update_valid = 1'b0;
-  ex3_mv_done_if.payload.fflags              = 'h0;
+  o_mv_done_report.valid                       = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  o_mv_done_report.cmt_id                      = r_ex3_issue.cmd_id;
+  o_mv_done_report.grp_id                      = r_ex3_issue.grp_id;
+  o_mv_done_report.payload.except_valid        = r_ex3_frm_invalid;
+  o_mv_done_report.payload.except_type         = scariv_pkg::ILLEGAL_INST;
+  o_mv_done_report.payload.fflags_update_valid = 1'b0;
+  o_mv_done_report.payload.fflags              = 'h0;
 
   o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
   o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
@@ -421,13 +425,15 @@ always_comb begin
 
   w_ex3_done_report_illegal = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FPNEW) & r_ex3_frm_invalid;
 
-  fpnew_done_if.done                        = w_fpnew_result_valid | w_ex3_done_report_illegal;
-  fpnew_done_if.index_oh                    = w_ex3_done_report_illegal ? r_ex3_index :
-                                              w_fpnew_sched_index;
-  fpnew_done_if.payload.except_valid        = w_ex3_done_report_illegal;
-  fpnew_done_if.payload.except_type         = scariv_pkg::ILLEGAL_INST;
-  fpnew_done_if.payload.fflags_update_valid = w_fpnew_result_valid;
-  fpnew_done_if.payload.fflags              = w_fpnew_result_fflags;
+  o_fp_done_report.valid                       = w_fpnew_result_valid | w_ex3_done_report_illegal;
+  o_fp_done_report.cmt_id                      = w_ex3_done_report_illegal ? r_ex3_issue.cmt_id :
+                                                 w_fpnew_cmt_id;
+  o_fp_done_report.grp_id                      = w_ex3_done_report_illegal ? r_ex3_issue.grp_id :
+                                                 w_fpnew_grp_id;
+  o_fp_done_report.payload.except_valid        = w_ex3_done_report_illegal;
+  o_fp_done_report.payload.except_type         = scariv_pkg::ILLEGAL_INST;
+  o_fp_done_report.payload.fflags_update_valid = w_fpnew_result_valid;
+  o_fp_done_report.payload.fflags              = w_fpnew_result_fflags;
 
 end // always_comb
 

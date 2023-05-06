@@ -1,12 +1,12 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_sched_entry
+// NAME : scariv_issue_entry
 // TYPE : module
 // ------------------------------------------------------------------------
 // SCARIV Scheduler Entry
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
-module scariv_sched_entry
+module scariv_issue_entry
   #(
     parameter IS_STORE = 1'b0,
     parameter IS_BRANCH = 1'b0,
@@ -316,4 +316,4 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
 end
 `endif // SIMULATION
 
-endmodule // scariv_sched_entry
+endmodule // scariv_issue_entry

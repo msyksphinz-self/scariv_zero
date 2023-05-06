@@ -36,7 +36,7 @@ package scariv_pkg;
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU
                             1 +               // CSU
-                            FPU_INST_NUM;     // FPU
+                            FPU_INST_NUM * 2; // FPU
 
   localparam FLIST_SIZE = CMT_ENTRY_SIZE;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;

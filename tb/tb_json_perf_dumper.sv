@@ -58,7 +58,7 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
     end else begin
       if (r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1) begin
         // ALU
-        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[a_idx].u_scariv_alu.u_scariv_scheduler.dump_perf("alu", perf_fp);
+        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[a_idx].u_scariv_alu.u_scariv_issue_unit.dump_perf("alu", perf_fp);
       end
     end
   end

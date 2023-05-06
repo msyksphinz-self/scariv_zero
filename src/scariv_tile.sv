@@ -124,9 +124,10 @@ scariv_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_fpu_valids [scariv_conf_pkg::FPU_INST_NUM];
 scariv_pkg::early_wr_t w_ex1_fpu_early_wr[scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr  [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_fpnew_phy_wr      [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::done_rpt_t w_fpu_done_rpt    [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr[scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::phy_wr_t   w_fpnew_phy_wr    [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::done_rpt_t w_fpu_mv_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::done_rpt_t w_fpu_fp_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
 
@@ -197,7 +198,8 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx]     = w_ex1_fpu_early_wr[f_idx];
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx]     = w_fpu_done_rpt    [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpu_mv_done_rpt [f_idx];
 end
 endgenerate
 
@@ -544,13 +546,14 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .i_mispred_lsu (w_ex2_mispred_lsu),
 
       .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr  [fpu_idx]),
-      .o_fpnew_phy_wr   (w_fpnew_phy_wr      [fpu_idx]),
+      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr[fpu_idx]),
+      .o_fpnew_phy_wr   (w_fpnew_phy_wr    [fpu_idx]),
 
       .i_commit  (w_commit),
       .br_upd_if (br_upd_fe_if),
 
-      .o_done_report (w_fpu_done_rpt[fpu_idx])
+      .o_mv_done_report (w_fpu_mv_done_rpt[fpu_idx]),
+      .o_fp_done_report (w_fpu_fp_done_rpt[fpu_idx])
     );
   end
 

@@ -101,11 +101,8 @@
 ../src/scariv_entry_selector.sv
 ../src/scariv_disp_distribute.sv
 
-../src/scariv_scheduler.sv
-../src/scariv_sched_entry.sv
-
-../src/scariv_alu_scheduler.sv
-../src/scariv_alu_sched_entry.sv
+../src/scariv_issue_unit.sv
+../src/scariv_issue_entry.sv
 
 ../src/scariv_phy_registers.sv
 
