@@ -55,6 +55,7 @@ logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
 logic [scariv_conf_pkg::FPU_INST_NUM-1: 0]            w_fpu_no_credits_remained;
 
+brmask_t    r_br_mask_valid;
 
 assign o_resource_ok = !w_rob_no_credits_remained &
                        !(|w_alu_no_credits_remained) &
@@ -62,7 +63,7 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_ldq_no_credits_remained &
                        !w_stq_no_credits_remained &
                        !w_csu_no_credits_remained &
-                       !w_bru_no_credits_remained &
+                       !w_bru_no_credits_remained & (r_br_mask_valid != {scariv_conf_pkg::RV_BRU_ENTRY_SIZE{1'b1}}) &
                        !(|w_fpu_no_credits_remained);
 
 
@@ -245,7 +246,6 @@ end // block: fpu_cre_ret_loop
 endgenerate
 
 
-brmask_t    r_br_mask_valid;
 brmask_t    w_br_mask_valid_next;
 /* verilator lint_off UNOPTFLAT */
 brmask_t    w_br_mask_temp_valid[scariv_conf_pkg::DISP_SIZE+1];
