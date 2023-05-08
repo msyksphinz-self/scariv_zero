@@ -62,8 +62,11 @@ scariv_pkg::alen_t w_ex2_rs1_fwd_data;
 scariv_pkg::alen_t w_ex2_rs2_fwd_data;
 scariv_pkg::alen_t w_ex2_rs3_fwd_data;
 
+/* verilator lint_off UNOPTFLAT */
 scariv_pkg::alen_t w_ex2_rs1_selected_data;
+/* verilator lint_off UNOPTFLAT */
 scariv_pkg::alen_t w_ex2_rs2_selected_data;
+/* verilator lint_off UNOPTFLAT */
 scariv_pkg::alen_t w_ex2_rs3_selected_data;
 
 logic [ 2: 0]                      w_ex1_rs_lsu_mispred;
@@ -410,13 +413,13 @@ always_comb begin
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  o_mv_done_report.valid                       = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  o_mv_done_report.cmt_id                      = r_ex3_issue.cmd_id;
-  o_mv_done_report.grp_id                      = r_ex3_issue.grp_id;
-  o_mv_done_report.payload.except_valid        = r_ex3_frm_invalid;
-  o_mv_done_report.payload.except_type         = scariv_pkg::ILLEGAL_INST;
-  o_mv_done_report.payload.fflags_update_valid = 1'b0;
-  o_mv_done_report.payload.fflags              = 'h0;
+  o_mv_done_report.valid               = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  o_mv_done_report.cmt_id              = r_ex3_issue.cmt_id;
+  o_mv_done_report.grp_id              = r_ex3_issue.grp_id;
+  o_mv_done_report.except_valid        = r_ex3_frm_invalid;
+  o_mv_done_report.except_type         = scariv_pkg::ILLEGAL_INST;
+  o_mv_done_report.fflags_update_valid = 1'b0;
+  o_mv_done_report.fflags              = 'h0;
 
   o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
   o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
@@ -425,15 +428,15 @@ always_comb begin
 
   w_ex3_done_report_illegal = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FPNEW) & r_ex3_frm_invalid;
 
-  o_fp_done_report.valid                       = w_fpnew_result_valid | w_ex3_done_report_illegal;
-  o_fp_done_report.cmt_id                      = w_ex3_done_report_illegal ? r_ex3_issue.cmt_id :
-                                                 w_fpnew_cmt_id;
-  o_fp_done_report.grp_id                      = w_ex3_done_report_illegal ? r_ex3_issue.grp_id :
-                                                 w_fpnew_grp_id;
-  o_fp_done_report.payload.except_valid        = w_ex3_done_report_illegal;
-  o_fp_done_report.payload.except_type         = scariv_pkg::ILLEGAL_INST;
-  o_fp_done_report.payload.fflags_update_valid = w_fpnew_result_valid;
-  o_fp_done_report.payload.fflags              = w_fpnew_result_fflags;
+  o_fp_done_report.valid               = w_fpnew_result_valid | w_ex3_done_report_illegal;
+  o_fp_done_report.cmt_id              = w_ex3_done_report_illegal ? r_ex3_issue.cmt_id :
+                                         w_fpnew_cmt_id;
+  o_fp_done_report.grp_id              = w_ex3_done_report_illegal ? r_ex3_issue.grp_id :
+                                         w_fpnew_grp_id;
+  o_fp_done_report.except_valid        = w_ex3_done_report_illegal;
+  o_fp_done_report.except_type         = scariv_pkg::ILLEGAL_INST;
+  o_fp_done_report.fflags_update_valid = w_fpnew_result_valid;
+  o_fp_done_report.fflags              = w_fpnew_result_fflags;
 
 end // always_comb
 

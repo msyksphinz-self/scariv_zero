@@ -106,13 +106,16 @@ assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.cmt_id = i_cmt_id;
+assign w_aux_fpnew_in.grp_id = i_grp_id;
 assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP32) : 1'b0;
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
 assign w_fma32_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2[31: 0] : i_rs3[31: 0];
 generate if (riscv_fpu_pkg::FLEN_W == 64) begin
-  assign w_fma32_boxed[2:0] = {&i_rs3[63:32], &i_rs2[63:32], &i_rs1[63:32]};
+  assign w_fma32_boxed[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 1'b1          : &i_rs1[63:32];
+  assign w_fma32_boxed[1] = (w_fpnew_op == fpnew_pkg::ADD) ? &i_rs1[63:32] : &i_rs2[63:32];
+  assign w_fma32_boxed[2] = (w_fpnew_op == fpnew_pkg::ADD) ? &i_rs2[63:32] : &i_rs3[63:32];
 end else begin
   assign w_fma32_boxed[2:0] = 3'b111;
 end
@@ -222,7 +225,7 @@ fpnew_fma
     .TagType    (aux_fpnew_t),
     .AuxType    (logic)
     )
-fma_32
+fma32
 (
  .clk_i  (i_clk    ),
  .rst_ni (i_reset_n),
@@ -415,8 +418,8 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   logic [ 4: 0]                           w_fma64_out_fflags;
   logic                                   w_fma64_out_valid;
   logic                                   w_fma64_in_valid;
-  cmt_id_t                                w_fma64_cmt_id;
-  grp_id_t                                w_fma64_grp_id;
+  scariv_pkg::cmt_id_t                    w_fma64_cmt_id;
+  scariv_pkg::grp_id_t                    w_fma64_grp_id;
   aux_fpnew_t                             w_fma64_aux;
 
   logic                                   w_noncomp64_in_valid;
@@ -425,8 +428,8 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   fpnew_pkg::status_t                     w_noncomp64_status;
   fpnew_pkg::classmask_e                  w_noncomp64_class_mask;
   logic [ 4: 0]                           w_noncomp64_out_fflags;
-  cmt_id_t                                w_noncomp64_cmt_id;
-  grp_id_t                                w_noncomp64_grp_id;
+  scariv_pkg::cmt_id_t                    w_noncomp64_cmt_id;
+  scariv_pkg::grp_id_t                    w_noncomp64_grp_id;
   aux_fpnew_t                             w_noncomp64_aux;
 
   assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0   : i_rs1;
