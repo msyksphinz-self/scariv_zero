@@ -345,11 +345,12 @@ end
 `endif // SIMULATION
 
 
-function ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
-                                      scariv_pkg::cmt_id_t cmt_id,
-                                      scariv_pkg::grp_id_t grp_id,
-                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
+function automatic ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
+                                                scariv_pkg::cmt_id_t cmt_id,
+                                                scariv_pkg::grp_id_t grp_id,
+                                                logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh);
   ldq_entry_t ret;
+  ret = 'h0;
 
   ret.is_valid  = 1'b1;
 

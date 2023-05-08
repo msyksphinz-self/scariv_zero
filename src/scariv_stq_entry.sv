@@ -391,11 +391,11 @@ assign o_uc_write_req_valid = (r_entry.state == STQ_COMMIT) & r_entry.is_uc & ~r
 // assign stq_snoop_if.resp_s1_be    = w_snoop_s0_hit ? gen_dw_cacheline(r_entry.size, w_entry_snp_addr_diff) : 'h0;
 // assign stq_snoop_if.resp_s1_data  = w_snoop_s0_hit ? {{(scariv_conf_pkg::DCACHE_DATA_W-scariv_pkg::ALEN_W){1'b0}}, r_entry.rs2_data} << {w_entry_snp_addr_diff, 3'b000} : 'h0;
 
-function stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
-                                      scariv_pkg::cmt_id_t cmt_id,
-                                      scariv_pkg::grp_id_t grp_id,
-                                      logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
-                                      logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
+                                                scariv_pkg::cmt_id_t cmt_id,
+                                                scariv_pkg::grp_id_t grp_id,
+                                                logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
+                                                logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
