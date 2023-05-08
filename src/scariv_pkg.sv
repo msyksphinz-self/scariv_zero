@@ -29,9 +29,9 @@ package scariv_pkg;
                             FPU_INST_NUM;    // FPU: Now rel is only FPU Move Port
   localparam TGT_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
-                            1 +              // BRU
-                            1 +              // CSU
-                            FPU_INST_NUM * 2;    // FPU
+                            1 +               // BRU
+                            1 +               // CSU
+                            FPU_INST_NUM * 2; // FPU
   localparam CMT_BUS_SIZE = ALU_INST_NUM +    // ALU
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU

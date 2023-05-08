@@ -413,7 +413,7 @@ always_comb begin
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
-  o_mv_done_report.valid               = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  o_mv_done_report.valid               = r_ex3_issue.valid & r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
   o_mv_done_report.cmt_id              = r_ex3_issue.cmt_id;
   o_mv_done_report.grp_id              = r_ex3_issue.grp_id;
   o_mv_done_report.except_valid        = r_ex3_frm_invalid;
