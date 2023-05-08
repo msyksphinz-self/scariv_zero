@@ -29,13 +29,14 @@ module scariv_issue_entry
    input scariv_pkg::disp_t   i_put_data,
 
    output logic               o_entry_valid,
+   /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
    output scariv_pkg::issue_t o_entry,
 
    /* Forwarding path */
    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-   input scariv_pkg::mispred_t i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+   input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic       i_entry_picked,
 
@@ -185,8 +186,14 @@ always_comb begin
 end // always_comb
 
 
-assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                   w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+generate if (NUM_OPERANDS == 3) begin : init_entry_op3
+  assign w_init_entry = scariv_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
+                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+end else begin
+  assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
+                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+end
+endgenerate
 
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;

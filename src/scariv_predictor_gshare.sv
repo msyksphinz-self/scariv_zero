@@ -22,8 +22,9 @@ module scariv_predictor_gshare
  input logic i_s2_valid,
  input scariv_ic_pkg::ic_resp_t i_s2_ic_resp,
 
- btb_update_if.slave update_btb_if,
- btb_search_if.slave search_btb_if,
+ btb_update_if.slave   update_btb_if,
+ btb_search_if.slave   search_btb_if,
+ btb_search_if.monitor search_btb_mon_if,
  output vaddr_t o_s1_btb_target_vaddr,
 
  ras_search_if.master ras_search_if,
@@ -75,9 +76,9 @@ u_gshare
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
-   .search_btb_if    (search_btb_if   ),
-   .gshare_search_if (gshare_search_if),
-   .br_upd_fe_if     (br_upd_fe_if    ),
+   .search_btb_if    (search_btb_mon_if),
+   .gshare_search_if (gshare_search_if ),
+   .br_upd_fe_if     (br_upd_fe_if     ),
 
    .o_s2_predict_valid        (o_s2_predict_valid       ),
    .o_s2_predict_target_vaddr (o_s2_predict_target_vaddr)

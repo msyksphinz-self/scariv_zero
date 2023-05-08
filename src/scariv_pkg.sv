@@ -665,9 +665,9 @@ typedef struct packed {
 
 } ftq_entry_t;
 
-function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
-                                      grp_id_t grp_id,
-                                      disp_t inst);
+function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
+                                                grp_id_t grp_id,
+                                                disp_t inst);
   ftq_entry_t ret;
 
   ret.valid    = 1'b1;
