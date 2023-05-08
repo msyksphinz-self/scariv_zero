@@ -725,7 +725,7 @@ u_scariv_inst_buffer
    .o_decode_flush (w_decode_flush),
 
    .ibuf_front_if(ibuf_front_if),
-   .br_upd_fe_if (br_upd_fe_if)
+   .br_upd_fe_if (br_upd_fe_tmp_if)
    );
 
 
@@ -820,8 +820,9 @@ scariv_predictor_gshare u_predictor
 
    .i_s2_ic_resp (w_s2_ic_resp),
 
-   .update_btb_if (w_btb_update_if),
-   .search_btb_if (w_btb_search_if),
+   .update_btb_if     (w_btb_update_if),
+   .search_btb_if     (w_btb_search_if),
+   .search_btb_mon_if (w_btb_search_if),
    .o_s1_btb_target_vaddr (w_s1_btb_target_vaddr),
 
    .ras_search_if (w_ras_search_if),
