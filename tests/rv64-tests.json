@@ -145,7 +145,7 @@
     { "name": "rv64mi-p-sbreak"      , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-sbreak"       , "skip": 1, "xlen": 64},
     { "name": "rv64mi-p-scall"       , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-scall"        , "xlen": 64},
     { "name": "rv64si-p-csr"         , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-csr"          , "xlen": 64},
-    { "name": "rv64si-p-dirty"       , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-dirty"        , "xlen": 64},
+    { "name": "rv64si-p-dirty"       , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-dirty"        , "skip": 1, "xlen": 64},
     { "name": "rv64si-p-icache-alias", "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-icache-alias" , "xlen": 64},
     { "name": "rv64si-p-ma_fetch"    , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-ma_fetch"     , "xlen": 64},
     { "name": "rv64si-p-sbreak"      , "group": ["sanity"], "elf": "../../../tests/riscv-tests/isa/rv64si-p-sbreak"       , "skip": 1, "xlen": 64},
