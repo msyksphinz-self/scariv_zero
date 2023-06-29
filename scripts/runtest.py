@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from enum import Enum
 import docker
 from multiprocessing import Pool, Manager
 import multiprocessing
@@ -9,6 +10,10 @@ import subprocess
 import json
 import argparse
 
+class BuildResult(Enum):
+    SUCCESS = 0
+    FAIL = 1
+    
 
 class verilator_sim:
 
@@ -41,13 +46,14 @@ class verilator_sim:
                     print(message, end='')
             build_result.wait()
         else:
-            build_result = subprocess.Popen(build_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            # build_result = subprocess.Popen(build_command, stdout=subprocess.STDOUT, stderr=subprocess.STDOUT, text=True)
+            build_result = subprocess.Popen(build_command, text=True)
+            build_result.wait()
+            # for line in iter(build_result.stdout.readline, ""):
+            #     print(line, end="\r")
 
-            for line in iter(build_result.stdout.readline, ""):
-                print(line, end="\r")
-
-            # if build_result.returncode != 0 :
-            #     exit()
+            if build_result.returncode != 0:
+                return BuildResult.FAIL
 
         ## Build verilator binary
         build_command = ["make",
@@ -88,9 +94,9 @@ class verilator_sim:
                     f.write(line)
 
             build_result.wait()
-
-            # if build_result.returncode != 0 :
-            #     exit()
+        
+        if build_result.returncode != 0:
+            return BuildResult.FAIL
 
     def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
         output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -283,7 +289,8 @@ def main():
 
     sim = verilator_sim()
 
-    sim.build_sim(sim_conf)
+    if sim.build_sim(sim_conf) == BuildResult.FAIL:
+        return
     sim.run_sim(sim_conf, testcase)
 
 if __name__ == "__main__":
