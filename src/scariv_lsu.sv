@@ -24,9 +24,9 @@ module scariv_lsu
     /* ROB notification interface */
     rob_info_if.slave                     rob_info_if,
 
-    // input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    // scariv_front_if.slave                          disp,
-    // cre_ret_if.slave                       cre_ret_if,
+    input logic [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
+    scariv_front_if.watch                        disp,
+    cre_ret_if.slave                             cre_ret_if,
 
     // Replay from LDQ
     ldq_replay_if.slave ldq_replay_if,
@@ -84,19 +84,75 @@ module scariv_lsu
     input scariv_pkg::commit_blk_t i_commit,
 
     output scariv_pkg::mispred_t   o_ex2_mispred,
-    done_if.master               ex3_done_if
+    done_if.master                 ex3_done_if,
+    br_upd_if.slave                br_upd_if
    );
 
-scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
-scariv_pkg::disp_t disp_picked_inst[2];
-logic [1:0] disp_picked_inst_valid;
-scariv_pkg::grp_id_t disp_picked_grp_id[2];
+localparam MEM_PORT_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 
+done_if ex3_internal_done_if();
 
 scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
 logic [MEM_Q_SIZE-1: 0]          w_ex0_replay_index_oh;
 logic                            w_ld_is_older_than_st;
 logic                            w_ld_selected;
+
+logic [MEM_PORT_SIZE-1:0] disp_picked_inst_valid;
+scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
+scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
+
+scariv_pkg::issue_t                             w_issue_from_iss;
+logic [scariv_conf_pkg::RV_LSU_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
+
+scariv_disp_pickup
+  #(
+    .PORT_BASE(PORT_BASE),
+    .PORT_SIZE(MEM_PORT_SIZE)
+    )
+u_scariv_disp_pickup
+  (
+   .i_disp_valid  (disp_valid),
+   .i_disp        (disp),
+   .o_disp_valid  (disp_picked_inst_valid),
+   .o_disp        (disp_picked_inst      ),
+   .o_disp_grp_id (disp_picked_grp_id    )
+   );
+
+scariv_lsu_issue_unit
+#(
+  .ENTRY_SIZE (scariv_conf_pkg::RV_LSU_ENTRY_SIZE),
+  .IN_PORT_SIZE(MEM_PORT_SIZE)
+)
+u_issue_unit
+(
+  .i_clk    (i_clk    ),
+  .i_reset_n(i_reset_n),
+
+  .i_disp_valid (disp_picked_inst_valid),
+  .i_cmt_id     (disp.payload.cmt_id   ),
+  .i_grp_id     (disp_picked_grp_id    ),
+  .i_disp_info  (disp_picked_inst      ),
+  .cre_ret_if   (cre_ret_if            ),
+    
+  .i_stall      (1'b0                  ),
+
+  .o_issue        (w_issue_from_iss      ),
+  .o_iss_index_oh (w_issue_index_from_iss),
+
+  .pipe_done_if (ex3_internal_done_if),
+
+  .o_done_report (),
+
+  .i_commit  (),
+  .br_upd_if (br_upd_if),
+
+  // .request_if (request_if),
+
+  .i_early_wr    (i_early_wr),
+  .i_phy_wr      (i_phy_wr  ),
+  .i_mispred_lsu (i_mispred_lsu)
+);
+
 
 assign w_ld_selected = ldq_replay_if.valid & ~stq_replay_if.valid |
                        ldq_replay_if.valid &  stq_replay_if.valid & w_ld_is_older_than_st;
@@ -114,22 +170,21 @@ always_comb begin
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = ldq_replay_if.issue.kanata_id   ;
 `endif // SIMULATION
-
     w_ex0_replay_index_oh           = ldq_replay_if.index_oh;
-  end else begin // if (w_ld_selected)
-    w_ex0_replay_issue.valid        = stq_replay_if.valid;
-    w_ex0_replay_issue.cmt_id       = stq_replay_if.issue.cmt_id;
-    w_ex0_replay_issue.grp_id       = stq_replay_if.issue.grp_id;
-    w_ex0_replay_issue.inst         = stq_replay_if.issue.inst;
-    w_ex0_replay_issue.rd_regs      = stq_replay_if.issue.rd_regs;
-    w_ex0_replay_issue.wr_reg       = stq_replay_if.issue.wr_reg;
-    w_ex0_replay_issue.oldest_valid = stq_replay_if.issue.oldest_valid;
-    w_ex0_replay_issue.cat          = stq_replay_if.issue.cat;
+  end else begin
+    w_ex0_replay_issue.valid        = w_issue_from_iss.valid;
+    w_ex0_replay_issue.cmt_id       = w_issue_from_iss.cmt_id;
+    w_ex0_replay_issue.grp_id       = w_issue_from_iss.grp_id;
+    w_ex0_replay_issue.inst         = w_issue_from_iss.inst;
+    w_ex0_replay_issue.rd_regs      = w_issue_from_iss.rd_regs;
+    w_ex0_replay_issue.wr_reg       = w_issue_from_iss.wr_reg;
+    w_ex0_replay_issue.oldest_valid = w_issue_from_iss.oldest_valid;
+    w_ex0_replay_issue.cat          = w_issue_from_iss.cat;
 `ifdef SIMULATION
-    w_ex0_replay_issue.kanata_id    = stq_replay_if.issue.kanata_id;
+    w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
 `endif // SIMULATION
-    w_ex0_replay_index_oh = stq_replay_if.index_oh;
-  end // else: !if(w_ld_selected)
+    w_ex0_replay_index_oh           = w_issue_index_from_iss;
+  end
 end // always_comb
 
 
@@ -149,6 +204,7 @@ u_pipe_age
 assign ldq_replay_if.conflict = ~w_ld_selected;
 assign stq_replay_if.conflict =  w_ld_selected;
 
+connect_done_if u_con_done_if (.slave(ex3_internal_done_if), .master(ex3_done_if));
 
 // ===========================
 // LSU Pipeline

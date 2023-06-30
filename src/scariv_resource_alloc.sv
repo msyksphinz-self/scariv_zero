@@ -22,6 +22,7 @@ module scariv_resource_alloc
    // -------------------------------
    cre_ret_if.master rob_cre_ret_if,
    cre_ret_if.master alu_cre_ret_if[scariv_conf_pkg::ALU_INST_NUM],
+   cre_ret_if.master lsu_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
    cre_ret_if.master ldq_cre_ret_if,
    cre_ret_if.master stq_cre_ret_if,
    cre_ret_if.master csu_cre_ret_if,
@@ -116,27 +117,26 @@ end // block: alu_cre_ret_loop
 endgenerate
 
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
-//   logic w_inst_lsu_valid;
-//   assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
-//   logic [$clog2(scariv_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
-//   assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
-//
-//   scariv_credit_return_master
-//     #(.MAX_CREDITS(scariv_lsu_pkg::MEM_Q_SIZE))
-//   u_lsu_credit_return
-//   (
-//    .i_clk(i_clk),
-//    .i_reset_n(i_reset_n),
-//
-//    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & ibuf_front_if.ready),
-//    .i_credit_val(w_lsu_inst_cnt),
-//
-//    .o_credits(),
-//    .o_no_credits(w_lsu_no_credits_remained[l_idx]),
-//
-//    .cre_ret_if (lsu_cre_ret_if[l_idx])
-//    );
-  assign w_lsu_no_credits_remained[l_idx] = 1'b0;
+  logic w_inst_lsu_valid;
+  assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
+  logic [$clog2(scariv_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
+  assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
+
+  scariv_credit_return_master
+    #(.MAX_CREDITS(scariv_lsu_pkg::MEM_Q_SIZE))
+  u_lsu_credit_return
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_get_credit(~w_flush_valid & w_inst_lsu_valid & ibuf_front_if.ready),
+   .i_credit_val(w_lsu_inst_cnt),
+
+   .o_credits(),
+   .o_no_credits(w_lsu_no_credits_remained[l_idx]),
+
+  .cre_ret_if (lsu_cre_ret_if[l_idx])
+  );
 end
 endgenerate
 

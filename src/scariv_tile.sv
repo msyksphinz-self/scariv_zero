@@ -146,6 +146,7 @@ streq_snoop_if streq_snoop_if();
 logic                                w_resource_ok;
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::CMT_ENTRY_SIZE   )) rob_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_ALU_ENTRY_SIZE)) alu_cre_ret_if[scariv_conf_pkg::ALU_INST_NUM]();
+cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_LSU_ENTRY_SIZE)) lsu_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM]();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::LDQ_SIZE         )) ldq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
@@ -275,6 +276,7 @@ scariv_resource_alloc u_scariv_resource_alloc
 
   .rob_cre_ret_if (rob_cre_ret_if),
   .alu_cre_ret_if (alu_cre_ret_if),
+  .lsu_cre_ret_if (lsu_cre_ret_if),
   .ldq_cre_ret_if (ldq_cre_ret_if),
   .stq_cre_ret_if (stq_cre_ret_if),
   .csu_cre_ret_if (csu_cre_ret_if),
@@ -369,7 +371,8 @@ u_scariv_lsu_top
 
     .disp_valid (w_disp_lsu_valids),
     .disp (w_rn_front_if),
-    // .sch_cre_ret_if (lsu_cre_ret_if),
+
+    .iss_cre_ret_if (lsu_cre_ret_if),
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 

@@ -25,6 +25,7 @@ package scariv_conf_pkg;
 
   localparam RV_ALU_ENTRY_SIZE = 4;
 
+  localparam RV_LSU_ENTRY_SIZE = 4;
   localparam LDQ_SIZE = 4;
   localparam STQ_SIZE = 4;
 

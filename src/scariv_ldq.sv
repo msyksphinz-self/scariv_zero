@@ -20,21 +20,8 @@ module scariv_ldq
    scariv_front_if.watch      disp,
    cre_ret_if.slave           cre_ret_if,
 
-   /* Forwarding path */
-   input scariv_pkg::early_wr_t                 i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t                   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-   input scariv_pkg::mispred_t                  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-
-   // Updates from LSU Pipeline EX1 stage
-   input ex1_q_update_t        i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-   // Updates from LSU Pipeline EX2 stage
-   input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
-   input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-
    // Hazard check for STQ -> LDQ
    ldq_haz_check_if.slave      ldq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
-
-   ldq_replay_if.master ldq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input missu_resolve_t     i_missu_resolve,
    input logic             i_missu_is_full,
@@ -168,39 +155,39 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
   bit_oh_or #(.T(logic[scariv_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
 
-  // Selection of EX1 Update signal
-  ex1_q_update_t w_ex1_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
-                                         .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
+  // // Selection of EX1 Update signal
+  // ex1_q_update_t w_ex1_q_updates;
+  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
+  // ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
+  //                                        .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
-  // Selection of EX1 Update signal
-  ex2_q_update_t w_ex2_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
-  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .q_index(l_idx[$clog2(scariv_conf_pkg::LDQ_SIZE)-1:0]),
-                                         .i_ex2_recv(w_ex2_ldq_entries_recv),
-                                         .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
+  // // Selection of EX1 Update signal
+  // ex2_q_update_t w_ex2_q_updates;
+  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
+  // ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
+  //                                        .q_index(l_idx[$clog2(scariv_conf_pkg::LDQ_SIZE)-1:0]),
+  //                                        .i_ex2_recv(w_ex2_ldq_entries_recv),
+  //                                        .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_ex3_q_valid <= 'h0;
-    end else begin
-      r_ex3_q_valid <= w_ex2_q_valid;
-    end
-  end
-  done_if w_ex3_done_sel_if();
-
-  // Selection of EX3 Update signal
-  ex3_done_if_select
-    #(.ENTRY_SIZE(scariv_conf_pkg::LDQ_SIZE))
-  u_ex3_done_if_select
-    (
-     .i_select  (r_ex3_q_valid),
-     .slave_if  (ex3_done_if),
-     .master_if (w_ex3_done_sel_if)
-     );
+  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
+  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  //   if (!i_reset_n) begin
+  //     r_ex3_q_valid <= 'h0;
+  //   end else begin
+  //     r_ex3_q_valid <= w_ex2_q_valid;
+  //   end
+  // end
+  // done_if w_ex3_done_sel_if();
+  // 
+  // // Selection of EX3 Update signal
+  // ex3_done_if_select
+  //   #(.ENTRY_SIZE(scariv_conf_pkg::LDQ_SIZE))
+  // u_ex3_done_if_select
+  //   (
+  //    .i_select  (r_ex3_q_valid),
+  //    .slave_if  (ex3_done_if),
+  //    .master_if (w_ex3_done_sel_if)
+  //    );
 
   scariv_ldq_entry
     #(.entry_index (l_idx))
@@ -216,18 +203,6 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .i_disp_grp_id (w_disp_grp_id),
      .i_disp        (w_disp_entry),
      .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
-
-     .i_early_wr (i_early_wr),
-     .i_phy_wr   (i_phy_wr),
-     .i_mispred_lsu (i_mispred_lsu),
-
-     .i_ex1_q_valid   (|w_ex1_q_valid),
-     .i_ex1_q_updates (w_ex1_q_updates),
-
-     .i_tlb_resolve (i_tlb_resolve),
-
-     .i_ex2_q_valid  (|w_ex2_q_valid),
-     .i_ex2_q_updates(w_ex2_q_updates),
 
      .o_entry (w_ldq_entries[l_idx]),
      .o_entry_ready (w_entry_ready[l_idx]),
@@ -246,7 +221,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .i_commit (i_commit),
      .br_upd_if (br_upd_if),
 
-     .ex3_done_if    (w_ex3_done_sel_if),
+     // .ex3_done_if    (w_ex3_done_sel_if),
 
      .i_ldq_outptr_valid (w_out_ptr_oh[l_idx]),
      .o_entry_finish (w_entry_complete[l_idx])
@@ -287,25 +262,25 @@ end
 endgenerate
 
 
-// request logic
-generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-  assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
-  ldq_entry_t w_ldq_replay_entry;
-
-  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
-  bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
-
-  assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
-
-  assign ldq_replay_if[p_idx].index_oh = w_run_request_oh[p_idx];
-
-  for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
-    assign w_run_request_rev_oh[l_idx][p_idx] = w_run_request_oh[p_idx][l_idx];
-
-    assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_run_request[p_idx][l_idx];
-  end
-end
-endgenerate
+// // request logic
+// generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+//   assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
+//   ldq_entry_t w_ldq_replay_entry;
+// 
+//   bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
+//   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
+// 
+//   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
+// 
+//   assign ldq_replay_if[p_idx].index_oh = w_run_request_oh[p_idx];
+// 
+//   for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
+//     assign w_run_request_rev_oh[l_idx][p_idx] = w_run_request_oh[p_idx][l_idx];
+// 
+//     assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_run_request[p_idx][l_idx];
+//   end
+// end
+// endgenerate
 
 // ===============
 // done logic

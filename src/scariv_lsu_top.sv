@@ -32,7 +32,7 @@ module scariv_lsu_top
 
     input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
     scariv_front_if.watch                                      disp,
-    // cre_ret_if.slave    sch_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
+    cre_ret_if.slave    iss_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
@@ -145,9 +145,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rob_info_if (rob_info_if),
     .sfence_if   (sfence_if),
 
-    // .disp_valid (disp_valid),
-    // .disp (disp),
-    // .cre_ret_if  (sch_cre_ret_if[lsu_idx]),
+    .disp_valid (disp_valid             ),
+    .disp       (disp                   ),
+    .cre_ret_if (iss_cre_ret_if[lsu_idx]),
 
     .ex1_regread_rs1     (ex1_int_regread[lsu_idx * 2 + 0]),
     .ex1_int_regread_rs2 (ex1_int_regread[lsu_idx * 2 + 1]),
@@ -184,7 +184,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_commit (i_commit),
 
     .o_ex2_mispred (o_ex2_mispred[lsu_idx]),
-    .ex3_done_if   (w_ex3_done_if[lsu_idx])
+    .ex3_done_if   (w_ex3_done_if[lsu_idx]),
+    .br_upd_if     (br_upd_if             )
    );
 
   // Done Report Generate
@@ -212,7 +213,7 @@ endgenerate
 // Ldq
 // -----------------------------------
 scariv_ldq
-  u_ldq
+u_ldq
 (
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
@@ -223,22 +224,12 @@ scariv_ldq
  .disp         (disp            ),
  .cre_ret_if   (ldq_cre_ret_if  ),
 
- .i_early_wr    (i_early_wr),
- .i_phy_wr      (i_phy_wr  ),
- .i_mispred_lsu (o_ex2_mispred),
-
- .i_tlb_resolve   (w_tlb_resolve   ),
- .i_ex1_q_updates (w_ex1_q_updates ),
- .i_ex2_q_updates (w_ex2_q_updates ),
-
  .ldq_haz_check_if (w_ldq_haz_check_if),
 
  .i_missu_resolve (w_missu_resolve),
  .i_missu_is_full (w_missu_is_full),
 
  .i_stq_rs2_resolve (w_stq_rs2_resolve),
-
- .ldq_replay_if (w_ldq_replay),
 
  .ex3_done_if (w_ex3_done_if),
 
