@@ -106,16 +106,12 @@ ex1_q_update_t        w_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
 ex2_q_update_t        w_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM];
 
-ldq_replay_if w_ldq_replay[scariv_conf_pkg::LSU_INST_NUM]();
-stq_replay_if w_stq_replay[scariv_conf_pkg::LSU_INST_NUM]();
-
 done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
 
-scariv_pkg::done_rpt_t w_ld_done_report[scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::done_rpt_t w_st_done_report[scariv_conf_pkg::LSU_INST_NUM];
+scariv_pkg::done_rpt_t w_done_report[scariv_conf_pkg::LSU_INST_NUM];
 
 missu_fwd_if w_missu_fwd_if [scariv_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
@@ -171,35 +167,26 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),
 
-    .ldq_replay_if (w_ldq_replay[lsu_idx]),
-    .stq_replay_if (w_stq_replay[lsu_idx]),
-
     .o_ex1_q_updates (w_ex1_q_updates [lsu_idx]),
     .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
     .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
 
+    .i_st_buffer_empty    (w_st_buffer_if.is_empty),
+    .i_st_requester_empty (w_uc_write_if.is_empty ),
+
+    .i_missu_resolve (w_missu_resolve),
+    .i_missu_is_full (w_missu_is_full),
+   
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 
     .i_commit (i_commit),
 
     .o_ex2_mispred (o_ex2_mispred[lsu_idx]),
-    .ex3_done_if   (w_ex3_done_if[lsu_idx]),
+    .o_done_report (o_done_report[lsu_idx]),
     .br_upd_if     (br_upd_if             )
    );
 
-  // Done Report Generate
-  assign o_done_report[lsu_idx] = w_ld_done_report[lsu_idx].valid ? w_ld_done_report[lsu_idx] : w_st_done_report[lsu_idx];
-`ifdef SIMULATION
-  always_ff @ (negedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-    end else begin
-      if (w_ld_done_report[lsu_idx].valid & w_st_done_report[lsu_idx].valid) begin
-        $fatal(0, "ld / st done report asserted in same time");
-      end
-    end
-  end
-`endif // SIMULATION
 end // block: lsu_loop
 endgenerate
 
@@ -238,7 +225,7 @@ u_ldq
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
- .o_done_report(w_ld_done_report)
+ .o_done_report()
  );
 
 
@@ -269,8 +256,6 @@ scariv_stq
  .stq_haz_check_if (w_stq_haz_check_if),
  .rmw_order_check_if (w_rmw_order_check_if),
 
- .stq_replay_if (w_stq_replay),
-
  .ex3_done_if (w_ex3_done_if),
 
  .i_missu_is_empty (w_missu_is_empty),
@@ -285,7 +270,7 @@ scariv_stq
 
  .o_stq_rs2_resolve (w_stq_rs2_resolve),
 
- .o_done_report          (w_st_done_report),
+ .o_done_report          (),
  .o_another_flush_report (o_another_flush_report)
  );
 

@@ -40,8 +40,6 @@ module scariv_stq
    // RMW Ordere Hazard Check
    rmw_order_check_if.slave    rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   stq_replay_if.master stq_replay_if[scariv_conf_pkg::LSU_INST_NUM],
-
    done_if.slave        ex3_done_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic           i_missu_is_empty,
@@ -241,7 +239,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   ex2_q_update_t w_ex2_q_updates;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .q_index(s_idx[$clog2(scariv_conf_pkg::STQ_SIZE)-1:0]),
+                                         .i_cmt_id(w_stq_entries[s_idx].inst.cmt_id),
+                                         .i_grp_id(w_stq_entries[s_idx].inst.grp_id),
                                          .i_ex2_recv(r_ex2_stq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
@@ -428,24 +427,24 @@ endgenerate
 // ===============
 // replay logic
 // ===============
-generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-  assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
-  stq_entry_t w_stq_replay_entry;
-
-  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rerun_request_oh[p_idx]));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
-
-  assign stq_replay_if[p_idx].issue    = w_stq_replay_entry.inst;
-  assign stq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
-
-  for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
-    assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
-
-    assign w_stq_replay_conflict[s_idx][p_idx] = stq_replay_if[p_idx].conflict & w_rerun_request[p_idx][s_idx];
-  end
-
-end // block: pipe_loop
-endgenerate
+// generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
+//   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
+//   stq_entry_t w_stq_replay_entry;
+// 
+//   bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rerun_request_oh[p_idx]));
+//   bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
+// 
+//   assign stq_replay_if[p_idx].issue    = w_stq_replay_entry.inst;
+//   assign stq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
+// 
+//   for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+//     assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
+// 
+//     assign w_stq_replay_conflict[s_idx][p_idx] = stq_replay_if[p_idx].conflict & w_rerun_request[p_idx][s_idx];
+//   end
+// 
+// end // block: pipe_loop
+// endgenerate
 
 // =========================
 // STQ Forwarding Logic

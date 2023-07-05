@@ -7,7 +7,8 @@
 // ------------------------------------------------------------------------
 
 module scariv_lsu_issue_unit
-  #(
+  import scariv_lsu_pkg::*;
+#(
     parameter IS_STORE = 0,
     parameter IS_BRANCH = 1'b0,
     parameter ENTRY_SIZE = 32,
@@ -17,36 +18,44 @@ module scariv_lsu_issue_unit
     parameter NUM_DONE_PORT = 1
     )
 (
- input logic                           i_clk,
- input logic                           i_reset_n,
+  input logic                           i_clk,
+  input logic                           i_reset_n,
+  
+  // ROB notification interface
+  rob_info_if.slave                     rob_info_if,
+  
+  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
+  input scariv_pkg::cmt_id_t  i_cmt_id,
+  input scariv_pkg::grp_id_t i_grp_id[IN_PORT_SIZE],
+  scariv_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
+  
+  cre_ret_if.slave                      cre_ret_if,
+  
+  input logic                           i_stall,
+  
+  /* Forwarding path */
+  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
+  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+  
+  output scariv_pkg::issue_t o_issue,
+  output [ENTRY_SIZE-1:0]    o_iss_index_oh,
+  
+  input scariv_pkg::mispred_t           i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+  // Execution updates from pipeline
+  input ex1_q_update_t                  i_ex1_updates,
+  input logic                           i_tlb_resolve,
+  input logic                           i_st_buffer_empty,
+  input logic                           i_st_requester_empty,
 
- input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input scariv_pkg::cmt_id_t  i_cmt_id,
- input scariv_pkg::grp_id_t i_grp_id[IN_PORT_SIZE],
- scariv_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
-
- cre_ret_if.slave                      cre_ret_if,
-
- input logic                           i_stall,
-
- /* Forwarding path */
- input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
- input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
-
- output scariv_pkg::issue_t o_issue,
- output [ENTRY_SIZE-1:0]    o_iss_index_oh,
-
- input scariv_pkg::mispred_t           i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-
- done_if.slave                         pipe_done_if,
-
- output scariv_pkg::done_rpt_t         o_done_report,
-
- // Commit notification
- input scariv_pkg::commit_blk_t          i_commit,
- // Branch Flush Notification
- br_upd_if.slave                       br_upd_if
- );
+  done_if.slave                         pipe_done_if,
+  
+  output scariv_pkg::done_rpt_t         o_done_report,
+  
+  // Commit notification
+  input scariv_pkg::commit_blk_t          i_commit,
+  // Branch Flush Notification
+  br_upd_if.slave                       br_upd_if
+);
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
@@ -63,9 +72,10 @@ logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
+logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
-scariv_pkg::done_rpt_t            w_entry_done_report[ENTRY_SIZE];
+scariv_pkg::done_rpt_t          w_entry_done_report[ENTRY_SIZE];
 
 logic                                w_flush_valid;
 assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
@@ -89,13 +99,13 @@ u_req_ptr
    .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
    .o_in_ptr_oh(w_entry_in_ptr_oh   ),
 
-   .i_out_valid  (|w_entry_finish),
+   .i_out_valid  (|w_entry_finish_oh),
    .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
    .o_out_ptr_oh (w_entry_out_ptr_oh                  )
    );
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
+assign w_credit_return_val = ((|w_entry_finish_oh) ? 'h1 : 'h0) +
                              (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
 
 scariv_credit_return_slave
@@ -105,7 +115,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_entry_finish) | w_ignore_disp),
+ .i_get_return((|w_entry_finish_oh) | w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -177,6 +187,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx] ),
 
+    .rob_info_if (rob_info_if),
+
     .i_put      (|w_input_valid),
 
     .i_cmt_id   (i_cmt_id  ),
@@ -189,13 +201,18 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_early_wr(i_early_wr),
     .i_phy_wr(i_phy_wr),
-    .i_mispred_lsu(i_mispred_lsu),
 
+    .i_mispred_lsu (i_mispred_lsu),
+    .i_ex1_updates (i_ex1_updates),
+    .i_tlb_resolve        (i_tlb_resolve       ),
+    .i_st_buffer_empty    (i_st_buffer_empty   ),
+    .i_st_requester_empty (i_st_requester_empty),  
+  
     .i_commit (i_commit),
     .br_upd_if (br_upd_if),
 
-    .o_issue_succeeded (),
-    .i_clear_entry     (1'b0),
+    .o_issue_succeeded (w_entry_finish   [s_idx]),
+    .i_clear_entry     (w_entry_finish_oh[s_idx]),
 
     .i_entry_picked    (w_picked_inst_oh[s_idx])
   );
@@ -207,6 +224,8 @@ endgenerate
 
 bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
+// Clear selection
+assign w_entry_finish_oh = w_entry_finish & w_entry_out_ptr_oh;
 
 // --------------
 // Done signals

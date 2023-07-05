@@ -4,6 +4,8 @@ verilator_sim/simx.fst
 verilator_sim/*.log
 verilator_sim/log_*
 verilator_sim/.config_*
+verilator_sim/.dts_xlen*_flen*
+verilator_sim/*.fst
 
 questa_sim/*.log
 questa_sim/.dbarInfo
@@ -31,6 +33,8 @@ vivado_*/riscv*/*.backup.log
 spike_dpi/*.so
 spike_dpi/spike_main
 spike_dpi/*.o
+spike_dpi/libspike_dpi.a
+
 
 src/decoder*.sv
 src/pma_map.sv

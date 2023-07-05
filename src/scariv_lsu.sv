@@ -28,11 +28,6 @@ module scariv_lsu
     scariv_front_if.watch                        disp,
     cre_ret_if.slave                             cre_ret_if,
 
-    // Replay from LDQ
-    ldq_replay_if.slave ldq_replay_if,
-    // Replay from STQ
-    stq_replay_if.slave stq_replay_if,
-
     regread_if.master ex1_regread_rs1,
     regread_if.master ex1_int_regread_rs2,
     regread_if.master ex1_fp_regread_rs2,
@@ -76,6 +71,12 @@ module scariv_lsu
     output logic            o_tlb_resolve,
     output ex2_q_update_t   o_ex2_q_updates,
 
+    input logic             i_st_buffer_empty,
+    input logic             i_st_requester_empty,
+
+    input missu_resolve_t   i_missu_resolve,
+    input logic             i_missu_is_full,   
+
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
@@ -84,7 +85,7 @@ module scariv_lsu
     input scariv_pkg::commit_blk_t i_commit,
 
     output scariv_pkg::mispred_t   o_ex2_mispred,
-    done_if.master                 ex3_done_if,
+    output scariv_pkg::done_rpt_t  o_done_report,
     br_upd_if.slave                br_upd_if
    );
 
@@ -94,8 +95,7 @@ done_if ex3_internal_done_if();
 
 scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
 logic [MEM_Q_SIZE-1: 0]          w_ex0_replay_index_oh;
-logic                            w_ld_is_older_than_st;
-logic                            w_ld_selected;
+logic                            w_replay_selected;
 
 logic [MEM_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
@@ -103,6 +103,13 @@ scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
 
 scariv_pkg::issue_t                             w_issue_from_iss;
 logic [scariv_conf_pkg::RV_LSU_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
+
+lsu_pipe_haz_if w_lsu_pipe_haz_if ();
+lsu_pipe_req_if w_lsu_pipe_req_if ();
+
+done_if              w_ex3_done_if();
+scariv_pkg::cmt_id_t w_ex3_cmt_id;
+scariv_pkg::grp_id_t w_ex3_grp_id;
 
 scariv_disp_pickup
   #(
@@ -128,6 +135,8 @@ u_issue_unit
   .i_clk    (i_clk    ),
   .i_reset_n(i_reset_n),
 
+  .rob_info_if  (rob_info_if),
+
   .i_disp_valid (disp_picked_inst_valid),
   .i_cmt_id     (disp.payload.cmt_id   ),
   .i_grp_id     (disp_picked_grp_id    ),
@@ -139,11 +148,16 @@ u_issue_unit
   .o_issue        (w_issue_from_iss      ),
   .o_iss_index_oh (w_issue_index_from_iss),
 
+  .i_ex1_updates        (o_ex1_q_updates     ),
+  .i_tlb_resolve        (o_tlb_resolve       ),
+  .i_st_buffer_empty    (i_st_buffer_empty   ),
+  .i_st_requester_empty (i_st_requester_empty),
+
   .pipe_done_if (ex3_internal_done_if),
 
   .o_done_report (),
 
-  .i_commit  (),
+  .i_commit  (i_commit),
   .br_upd_if (br_upd_if),
 
   // .request_if (request_if),
@@ -154,27 +168,47 @@ u_issue_unit
 );
 
 
-assign w_ld_selected = ldq_replay_if.valid & ~stq_replay_if.valid |
-                       ldq_replay_if.valid &  stq_replay_if.valid & w_ld_is_older_than_st;
+// Replay Queue
+scariv_lsu_replay_queue
+u_replay_queue
+(
+  .i_clk (i_clk),
+  .i_reset_n (i_reset_n),
+
+  .i_commit  (i_commit),
+  .br_upd_if (br_upd_if),
+
+  .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+  
+  .i_missu_resolve (i_missu_resolve ),
+  .i_missu_is_full (i_missu_is_full ),
+
+  .lsu_pipe_req_if (w_lsu_pipe_req_if)
+);
+
+assign w_replay_selected = w_lsu_pipe_req_if.valid;
+assign w_lsu_pipe_req_if.ready = 1'b1;
 
 always_comb begin
-  if (w_ld_selected) begin
-    w_ex0_replay_issue.valid        = ldq_replay_if.valid       ;
-    w_ex0_replay_issue.cmt_id       = ldq_replay_if.issue.cmt_id      ;
-    w_ex0_replay_issue.grp_id       = ldq_replay_if.issue.grp_id      ;
-    w_ex0_replay_issue.inst         = ldq_replay_if.issue.inst        ;
-    w_ex0_replay_issue.rd_regs      = ldq_replay_if.issue.rd_regs     ;
-    w_ex0_replay_issue.wr_reg       = ldq_replay_if.issue.wr_reg      ;
-    w_ex0_replay_issue.oldest_valid = ldq_replay_if.issue.oldest_valid;
-    w_ex0_replay_issue.cat          = ldq_replay_if.issue.cat         ;
+  if (w_replay_selected) begin
+    w_ex0_replay_issue.valid        = w_lsu_pipe_req_if.valid       ;
+    w_ex0_replay_issue.cmt_id       = w_lsu_pipe_req_if.payload.cmt_id      ;
+    w_ex0_replay_issue.grp_id       = w_lsu_pipe_req_if.payload.grp_id      ;
+    w_ex0_replay_issue.br_mask      = w_lsu_pipe_req_if.payload.br_mask     ;
+    w_ex0_replay_issue.inst         = w_lsu_pipe_req_if.payload.inst        ;
+    w_ex0_replay_issue.rd_regs[0]   = w_lsu_pipe_req_if.payload.rd_reg      ;
+    w_ex0_replay_issue.wr_reg       = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_replay_issue.oldest_valid = w_lsu_pipe_req_if.payload.oldest_valid;
+    w_ex0_replay_issue.cat          = w_lsu_pipe_req_if.payload.cat         ;
 `ifdef SIMULATION
-    w_ex0_replay_issue.kanata_id    = ldq_replay_if.issue.kanata_id   ;
+    w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION
-    w_ex0_replay_index_oh           = ldq_replay_if.index_oh;
+    w_ex0_replay_index_oh           = 'h0;
   end else begin
     w_ex0_replay_issue.valid        = w_issue_from_iss.valid;
     w_ex0_replay_issue.cmt_id       = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id       = w_issue_from_iss.grp_id;
+    w_ex0_replay_issue.br_mask      = w_issue_from_iss.br_mask;
     w_ex0_replay_issue.inst         = w_issue_from_iss.inst;
     w_ex0_replay_issue.rd_regs      = w_issue_from_iss.rd_regs;
     w_ex0_replay_issue.wr_reg       = w_issue_from_iss.wr_reg;
@@ -187,24 +221,6 @@ always_comb begin
   end
 end // always_comb
 
-
-scariv_rough_older_check
-u_pipe_age
-  (
-   .i_cmt_id0 (ldq_replay_if.issue.cmt_id),
-   .i_grp_id0 (ldq_replay_if.issue.grp_id),
-
-   .i_cmt_id1 (stq_replay_if.issue.cmt_id),
-   .i_grp_id1 (stq_replay_if.issue.grp_id),
-
-   .o_0_older_than_1 (w_ld_is_older_than_st)
-   );
-
-
-assign ldq_replay_if.conflict = ~w_ld_selected;
-assign stq_replay_if.conflict =  w_ld_selected;
-
-connect_done_if u_con_done_if (.slave(ex3_internal_done_if), .master(ex3_done_if));
 
 // ===========================
 // LSU Pipeline
@@ -258,8 +274,21 @@ u_lsu_pipe
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),
    .o_ex2_q_updates  (o_ex2_q_updates ),
+    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
-   .ex3_done_if (ex3_done_if)
+   .ex3_done_if (w_ex3_done_if),
+   .o_ex3_cmt_id (w_ex3_cmt_id),
+   .o_ex3_grp_id (w_ex3_grp_id)
 );
+
+assign o_done_report.valid               = w_ex3_done_if.done;
+assign o_done_report.cmt_id              = w_ex3_cmt_id;
+assign o_done_report.grp_id              = w_ex3_grp_id;
+assign o_done_report.except_valid        = w_ex3_done_if.payload.except_valid       ;
+assign o_done_report.except_type         = w_ex3_done_if.payload.except_type        ;
+assign o_done_report.except_tval         = w_ex3_done_if.payload.except_tval        ;
+assign o_done_report.fflags_update_valid = w_ex3_done_if.payload.fflags_update_valid;
+assign o_done_report.fflags              = w_ex3_done_if.payload.fflags             ;
+
 
 endmodule // scariv_lsu

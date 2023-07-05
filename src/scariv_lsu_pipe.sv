@@ -61,6 +61,11 @@ module scariv_lsu_pipe
  output logic                          o_tlb_resolve,
  output ex2_q_update_t                 o_ex2_q_updates,
 
+  // Interface for Replay Queue
+  lsu_pipe_haz_if.master                 lsu_pipe_haz_if,
+
+  output scariv_pkg::cmt_id_t          o_ex3_cmt_id,
+  output scariv_pkg::grp_id_t          o_ex3_grp_id,
  done_if.master                        ex3_done_if,
 
  // Page Table Walk I/O
@@ -77,12 +82,6 @@ typedef struct packed {
   rmwop_t rmwop;
 } lsu_pipe_ctrl_t;
 
-
-//
-// EX0 stage
-//
-scariv_lsu_pkg::lsu_pipe_issue_t        r_ex0_rs_issue, w_ex0_issue_next;
-logic [MEM_Q_SIZE-1: 0]  r_ex0_rs_index_oh;
 
 // Selected signal
 scariv_lsu_pkg::lsu_pipe_issue_t        w_ex0_issue;
@@ -443,6 +442,8 @@ assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 
 // Interface to EX2 updates
 assign o_ex2_q_updates.update     = r_ex2_issue.valid;
+assign o_ex2_q_updates.cmt_id     = r_ex2_issue.cmt_id;
+assign o_ex2_q_updates.grp_id     = r_ex2_issue.grp_id;
 assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                                     w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ :
                                     &w_ex2_fwd_success                ? EX2_HAZ_NONE          :
@@ -452,12 +453,27 @@ assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_
                                      /* l1d_missu_if.resp_payload.allocated ? */ EX2_HAZ_MISSU_ASSIGNED) :
                                     EX2_HAZ_NONE;
 assign o_ex2_q_updates.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
-assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
+// assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
 assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
 assign o_ex2_q_updates.is_amo     = r_ex2_pipe_ctrl.is_amo;
 assign o_ex2_q_updates.is_lr      = r_ex2_is_lr;
 assign o_ex2_q_updates.is_sc      = r_ex2_is_sc;
 assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
+
+// Interface to Replay Queue
+assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE);
+assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
+assign lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
+assign lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
+assign lsu_pipe_haz_if.payload.br_mask        = r_ex2_issue.br_mask;
+assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
+assign lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
+assign lsu_pipe_haz_if.payload.hazard_typ     = o_ex2_q_updates.hazard_typ;
+assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
+assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
+assign lsu_pipe_haz_if.payload.paddr          = r_ex2_paddr;
+assign lsu_pipe_haz_if.payload.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
+
 
 // ---------------------
 // Misprediction Update
@@ -627,6 +643,8 @@ assign ex3_done_if.payload.except_type   = scariv_pkg::except_t'('h0);
 assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
 assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
+assign o_ex3_cmt_id = r_ex3_issue.cmt_id;
+assign o_ex3_grp_id = r_ex3_issue.grp_id;
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
                               r_ex3_issue.wr_reg.valid &

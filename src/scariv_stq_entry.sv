@@ -206,15 +206,20 @@ always_comb begin
                                        w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
         if (w_load_br_flush) begin
           w_entry_next.state    = STQ_DEAD;
+        end else begin
+          w_entry_next.state    = STQ_ISSUED;
         end
       end
     end // case: STQ_INIT
     STQ_ISSUE_WAIT : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (o_entry_ready & i_entry_picked) begin
-        w_entry_next.state = STQ_ISSUED;
+      end else begin
+        w_entry_next.state = STQ_DONE_EX2;
       end
+      // end else if (o_entry_ready & i_entry_picked) begin
+      //   w_entry_next.state = STQ_ISSUED;
+      // end
     end
     STQ_ISSUED : begin
       if (w_entry_flush) begin

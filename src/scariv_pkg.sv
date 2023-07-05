@@ -482,6 +482,7 @@ typedef struct packed {
 
 
   typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD, SCHED_CLEAR } sched_state_t;
+  typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_TLB_HAZ, LSU_SCHED_WAIT_OLDEST, LSU_SCHED_CLEAR, LSU_SCHED_DONE } lsu_sched_state_t;
 
   typedef struct packed {
     logic  valid;
@@ -506,14 +507,14 @@ typedef struct packed {
 
 
   typedef struct packed {
-    logic     valid;
-    cmt_id_t  cmt_id;
-    grp_id_t  grp_id;
-    logic     except_valid;
-    except_t  except_type;
+    logic             valid;
+    cmt_id_t          cmt_id;
+    grp_id_t          grp_id;
+    logic             except_valid;
+    except_t          except_type;
     riscv_pkg::xlen_t except_tval;
-    logic     fflags_update_valid;
-    fflags_t  fflags;
+    logic             fflags_update_valid;
+    fflags_t          fflags;
   } done_rpt_t;
 
 // For flushing another instruction

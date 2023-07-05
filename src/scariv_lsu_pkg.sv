@@ -255,8 +255,9 @@ typedef struct packed {
   logic                                     update;
   ex2_haz_t                                 hazard_typ;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
-  logic [MEM_Q_SIZE-1:0]                    index_oh;
-  logic [scariv_conf_pkg::STQ_SIZE-1:0]       hazard_index;
+  scariv_pkg::cmt_id_t                      cmt_id;
+  scariv_pkg::grp_id_t                      grp_id;
+  logic [scariv_conf_pkg::STQ_SIZE-1:0]     hazard_index;
   logic                                     is_amo;
   logic                                     is_lr;
   logic                                     is_sc;
@@ -637,6 +638,7 @@ typedef struct packed {
   logic                  valid;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
+  scariv_pkg::brmask_t   br_mask;
   logic [31: 0]          inst;
   reg_rd_issue_t [ 2: 0] rd_regs;
   reg_wr_issue_t         wr_reg;
@@ -806,5 +808,20 @@ endfunction // mem_offset
 function automatic logic is_cache_addr_same(scariv_pkg::paddr_t pa0, scariv_pkg::paddr_t pa1);
   return pa0[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] == pa1[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)];
 endfunction // is_cache_addr_same
+
+// LSU Replay Queue
+typedef struct packed {
+  logic [31: 0]              inst;
+  scariv_pkg::cmt_id_t       cmt_id;
+  scariv_pkg::grp_id_t       grp_id;
+  brmask_t                   br_mask;
+  scariv_pkg::inst_cat_t     cat;
+  logic                      oldest_valid;
+  scariv_pkg::reg_rd_issue_t rd_reg;
+  scariv_pkg::reg_wr_issue_t wr_reg;
+  scariv_pkg::paddr_t        paddr;
+  scariv_lsu_pkg::ex2_haz_t  hazard_typ;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+} lsu_replay_queue_t;
 
 endpackage // scariv_lsu_pkg

@@ -160,6 +160,8 @@ always_comb begin
 
         if (w_load_flush) begin
           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
+        end else begin
+          w_entry_next.state    = LDQ_EX3_DONE;
         end
       end
     LDQ_ISSUE_WAIT : begin

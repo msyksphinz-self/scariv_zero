@@ -512,7 +512,8 @@ module ex2_update_select
   import scariv_lsu_pkg::*;
   (
    input ex2_q_update_t i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-   input logic [$clog2(scariv_conf_pkg::LDQ_SIZE)-1: 0] q_index,
+   input scariv_pkg::cmt_id_t                           i_cmt_id,
+   input scariv_pkg::grp_id_t                           i_grp_id,
    input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]     i_ex2_recv,
    output logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]    o_ex2_q_valid,
    output                                             ex2_q_update_t o_ex2_q_updates
@@ -522,7 +523,8 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
 
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
   assign w_ex2_update_match[p_idx] = (i_ex2_q_updates[p_idx].update &&
-                                      i_ex2_q_updates[p_idx].index_oh[q_index]) |
+                                      i_ex2_q_updates[p_idx].cmt_id == i_cmt_id &&
+                                      i_ex2_q_updates[p_idx].grp_id == i_grp_id) |
                                      i_ex2_recv[p_idx];
 end
 endgenerate
