@@ -236,7 +236,7 @@ bit_oh_or #(.T(scariv_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  
 `ifdef SIMULATION
 typedef struct packed {
   scariv_pkg::issue_t entry;
-  scariv_pkg::sched_state_t state;
+  scariv_pkg::lsu_sched_state_t state;
 } entry_ptr_t;
 
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);

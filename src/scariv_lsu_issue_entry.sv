@@ -239,7 +239,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
 
-    r_state <= scariv_pkg::INIT;
+    r_state <= scariv_pkg::LSU_SCHED_INIT;
     r_issued <= 1'b0;
     r_dead   <= 1'b0;
   end else begin
