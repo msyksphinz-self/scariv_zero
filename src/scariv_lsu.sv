@@ -76,6 +76,7 @@ module scariv_lsu
 
     input missu_resolve_t   i_missu_resolve,
     input logic             i_missu_is_full,   
+    input logic             i_missu_is_empty,
 
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_early_wr,
@@ -152,6 +153,8 @@ u_issue_unit
   .i_tlb_resolve        (o_tlb_resolve       ),
   .i_st_buffer_empty    (i_st_buffer_empty   ),
   .i_st_requester_empty (i_st_requester_empty),
+  
+  .i_missu_is_empty     (i_missu_is_empty    ),
 
   .pipe_done_if (ex3_internal_done_if),
 

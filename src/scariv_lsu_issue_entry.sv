@@ -25,7 +25,7 @@ import scariv_lsu_pkg::*;
    input scariv_pkg::disp_t   i_put_data,
 
    output logic               o_entry_valid,
-   /* verilator lint_off UNOPTFLAT */
+  /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
    output scariv_pkg::issue_t o_entry,
 
@@ -39,7 +39,8 @@ import scariv_lsu_pkg::*;
    input logic                  i_tlb_resolve,
    input logic                  i_st_buffer_empty,
    input logic                  i_st_requester_empty,
- 
+   input logic                  i_missu_is_empty,
+
    input logic       i_entry_picked,
 
    // Commit notification
@@ -251,15 +252,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_oldest_ready = r_entry.oldest_valid ? 
+                        (rob_info_if.cmt_id == r_entry.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid : 1'b1;
 assign w_pc_update_before_entry = 1'b0;
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
-assign o_entry       = w_entry_next;
+assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
+                       !w_pc_update_before_entry & all_operand_ready(w_entry_next);
+assign o_entry       = r_entry;
 
 assign o_issue_succeeded = (r_state == scariv_pkg::LSU_SCHED_CLEAR);
 
