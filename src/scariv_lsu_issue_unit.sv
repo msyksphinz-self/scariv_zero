@@ -262,12 +262,10 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[0].valid, entry.entry.rd_regs[0].regidx, entry.entry.rd_regs[0].rnid, entry.entry.rd_regs[0].ready);
     // Source 2
     $fwrite(fp, "rs2:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[1].valid, entry.entry.rd_regs[1].regidx, entry.entry.rd_regs[1].rnid, entry.entry.rd_regs[1].ready);
-    $fwrite(fp, "state:\"%s\", ", entry.state == scariv_pkg::INIT          ? "INIT" :
-                                  entry.state == scariv_pkg::WAIT          ? "WAIT" :
-                                  entry.state == scariv_pkg::ISSUED        ? "ISSUED" :
-                                  entry.state == scariv_pkg::DONE          ? "DONE" :
-                                  entry.state == scariv_pkg::WAIT_COMPLETE ? "WAIT_COMPLETE" :
-                                  entry.state == scariv_pkg::DEAD          ? "DEAD" : "x");
+    $fwrite(fp, "state:\"%s\", ", entry.state == scariv_lsu_pkg::LSU_SCHED_INIT          ? "INIT" :
+                                  entry.state == scariv_lsu_pkg::LSU_SCHED_WAIT          ? "WAIT" :
+                                  entry.state == scariv_lsu_pkg::LSU_SCHED_ISSUED        ? "ISSUED" :
+                                  "x");
     $fwrite(fp, " },\n");
   end // if (entry.entry.valid)
 
