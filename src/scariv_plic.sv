@@ -237,7 +237,6 @@ module recurse_module_with_index
 
 generate if (WIDTH <= 1) begin : width_1
   assign out = in[0];
-  assign out = 'h0;
 end else begin
   localparam HALF = WIDTH/2;
 

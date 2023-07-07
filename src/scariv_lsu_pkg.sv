@@ -815,7 +815,7 @@ typedef struct packed {
   scariv_pkg::cmt_id_t       cmt_id;
   scariv_pkg::grp_id_t       grp_id;
   brmask_t                   br_mask;
-  scariv_pkg::inst_cat_t     cat;
+  inst_cat_t                 cat;
   logic                      oldest_valid;
   scariv_pkg::reg_rd_issue_t rd_reg;
   scariv_pkg::reg_wr_issue_t wr_reg;

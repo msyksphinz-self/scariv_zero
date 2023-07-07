@@ -135,6 +135,20 @@ logic                                       w_inst_queue_pop;
 
 logic                                       w_flush_pipeline;
 
+// ----------------------------
+// Decode Unit Flush Interface
+// ----------------------------
+grp_id_t iq_is_call_valid_oh;
+grp_id_t iq_is_ret_valid_oh;
+vaddr_t  iq_call_next_vaddr_array[scariv_conf_pkg::DISP_SIZE];
+vaddr_t  iq_call_stash_vaddr_array[scariv_conf_pkg::DISP_SIZE];
+vaddr_t  iq_call_next_vaddr_oh;
+vaddr_t  iq_call_stash_vaddr_oh;
+vaddr_t  w_iq_ras_ret_vaddr;
+
+scariv_predict_pkg::ras_idx_t r_ras_index;
+scariv_predict_pkg::ras_idx_t w_ras_index_next;
+
 `ifdef SIMULATION
 `endif // SIMULATION
 
@@ -717,20 +731,6 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   end // always_comb
 end
 endgenerate
-
-// ----------------------------
-// Decode Unit Flush Interface
-// ----------------------------
-grp_id_t iq_is_call_valid_oh;
-grp_id_t iq_is_ret_valid_oh;
-vaddr_t  iq_call_next_vaddr_array[scariv_conf_pkg::DISP_SIZE];
-vaddr_t  iq_call_stash_vaddr_array[scariv_conf_pkg::DISP_SIZE];
-vaddr_t  iq_call_next_vaddr_oh;
-vaddr_t  iq_call_stash_vaddr_oh;
-vaddr_t  w_iq_ras_ret_vaddr;
-
-scariv_predict_pkg::ras_idx_t r_ras_index;
-scariv_predict_pkg::ras_idx_t w_ras_index_next;
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : pc_vaddr_next_loop
   vaddr_t w_iq_call_offset;
