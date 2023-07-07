@@ -912,6 +912,7 @@ endinterface // uc_write_if
 interface lrsc_if;
 
 logic    lr_update_valid;
+/* verilator lint_off UNOPTFLAT */
 logic    sc_check_valid;
 scariv_pkg::paddr_t paddr;
 logic    sc_success;

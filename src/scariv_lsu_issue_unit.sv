@@ -37,16 +37,18 @@ module scariv_lsu_issue_unit
   input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
   input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
   
-  output scariv_pkg::issue_t o_issue,
-  output [ENTRY_SIZE-1:0]    o_iss_index_oh,
+  output scariv_lsu_pkg::lsu_issue_entry_t o_issue,
+  output [ENTRY_SIZE-1:0]                  o_iss_index_oh,
   
   input scariv_pkg::mispred_t           i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
   input ex1_q_update_t                  i_ex1_updates,
   input logic                           i_tlb_resolve,
+  input ex2_q_update_t                  i_ex2_updates,
   input logic                           i_st_buffer_empty,
   input logic                           i_st_requester_empty,
   input logic                           i_missu_is_empty,
+  input logic                           i_replay_queue_full,
 
   done_if.slave                         pipe_done_if,
   
@@ -64,7 +66,7 @@ logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-scariv_pkg::issue_t w_entry[ENTRY_SIZE];
+scariv_lsu_pkg::lsu_issue_entry_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
@@ -206,9 +208,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_mispred_lsu (i_mispred_lsu),
     .i_ex1_updates (i_ex1_updates),
     .i_tlb_resolve        (i_tlb_resolve       ),
+    .i_ex2_updates        (i_ex2_updates       ),
     .i_st_buffer_empty    (i_st_buffer_empty   ),
     .i_st_requester_empty (i_st_requester_empty),  
-
+    .i_replay_queue_full  (i_replay_queue_full ),
     .i_missu_is_empty     (i_missu_is_empty    ),
 
     .i_commit (i_commit),
@@ -225,7 +228,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 end
 endgenerate
 
-bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_lsu_pkg::lsu_issue_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 // Clear selection
 assign w_entry_finish_oh = w_entry_finish & w_entry_out_ptr_oh;
@@ -238,8 +241,8 @@ bit_oh_or #(.T(scariv_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  
 
 `ifdef SIMULATION
 typedef struct packed {
-  scariv_pkg::issue_t entry;
-  scariv_pkg::lsu_sched_state_t state;
+  scariv_lsu_pkg::lsu_issue_entry_t entry;
+  scariv_lsu_pkg::lsu_sched_state_t state;
 } entry_ptr_t;
 
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);

@@ -27,7 +27,7 @@ import scariv_lsu_pkg::*;
    output logic               o_entry_valid,
   /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
-   output scariv_pkg::issue_t o_entry,
+   output scariv_lsu_pkg::lsu_issue_entry_t o_entry,
 
    /* Forwarding path */
    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -37,9 +37,11 @@ import scariv_lsu_pkg::*;
   // Execution updates from pipeline
    input ex1_q_update_t         i_ex1_updates,
    input logic                  i_tlb_resolve,
+   input ex2_q_update_t         i_ex2_updates,
    input logic                  i_st_buffer_empty,
    input logic                  i_st_requester_empty,
    input logic                  i_missu_is_empty,
+   input logic                  i_replay_queue_full,
 
    input logic       i_entry_picked,
 
@@ -56,10 +58,10 @@ logic    r_issued;
 logic    w_issued_next;
 logic    r_dead;
 logic    w_dead_next;
-scariv_pkg::issue_t r_entry;
+scariv_lsu_pkg::lsu_issue_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
-scariv_pkg::issue_t w_entry_next;
-scariv_pkg::issue_t w_init_entry;
+scariv_lsu_pkg::lsu_issue_entry_t w_entry_next;
+scariv_lsu_pkg::lsu_issue_entry_t w_init_entry;
 
 logic    w_oldest_ready;
 
@@ -82,10 +84,10 @@ logic     w_entry_finish;
 // When previous instruction generates exception or jump
 logic w_pc_update_before_entry;
 
-scariv_pkg::lsu_sched_state_t r_state;
-scariv_pkg::lsu_sched_state_t w_state_next;
+scariv_lsu_pkg::lsu_sched_state_t r_state;
+scariv_lsu_pkg::lsu_sched_state_t w_state_next;
 
-function logic all_operand_ready(scariv_pkg::issue_t entry);
+function logic all_operand_ready(scariv_lsu_pkg::lsu_issue_entry_t entry);
   logic     ret;
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
         (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
@@ -131,72 +133,95 @@ always_comb begin
   end
 
   case (r_state)
-    scariv_pkg::LSU_SCHED_INIT : begin
+    scariv_lsu_pkg::LSU_SCHED_INIT : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::LSU_SCHED_INIT;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
         if (w_load_entry_flush) begin
-          w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
           w_dead_next  = 1'b1;
         end else begin
-          w_state_next = scariv_pkg::LSU_SCHED_WAIT;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
         end
       end
     end
-    scariv_pkg::LSU_SCHED_WAIT : begin
+    scariv_lsu_pkg::LSU_SCHED_WAIT : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
-          w_state_next = scariv_pkg::LSU_SCHED_DONE;
-        end else if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+        if (o_entry_valid & o_entry_ready & i_entry_picked) begin
           w_issued_next = 1'b1;
-          w_state_next = scariv_pkg::LSU_SCHED_ISSUED;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_ISSUED;
         end
       end
     end
-    scariv_pkg::LSU_SCHED_ISSUED : begin
+    scariv_lsu_pkg::LSU_SCHED_ISSUED : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
         if (w_rs_pred_mispredicted_or) begin
-          w_state_next = scariv_pkg::LSU_SCHED_WAIT;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
           w_entry_next.rd_regs[1].predict_ready = 1'b0;
           w_entry_next.rd_regs[2].predict_ready = 1'b0;
         end else if (i_ex1_updates.update) begin
-          w_state_next           = i_ex1_updates.hazard_typ == EX1_HAZ_TLB_MISS  ? scariv_pkg::LSU_SCHED_TLB_HAZ :
-                                   i_ex1_updates.hazard_typ == EX1_HAZ_UC_ACCESS ? scariv_pkg::LSU_SCHED_WAIT_OLDEST :
-                                   scariv_pkg::LSU_SCHED_CLEAR;
+          w_entry_next.haz_reason = i_ex1_updates.hazard_typ == EX1_HAZ_TLB_MISS  ? LSU_ISSUE_HAZ_TLB_MISS :
+                                    i_ex1_updates.hazard_typ == EX1_HAZ_UC_ACCESS ? LSU_ISSUE_HAZ_UC_ACCESS :
+                                    r_entry.haz_reason;
+          w_state_next            = i_ex1_updates.hazard_typ != EX1_HAZ_NONE  ? scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT :
+                                    scariv_lsu_pkg::LSU_SCHED_EX2;
           w_entry_next.except_valid    = i_ex1_updates.tlb_except_valid;
           w_entry_next.except_type     = i_ex1_updates.tlb_except_type;
         end else begin
-          w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         end
       end
-    end // case: scariv_pkg::LSU_SCHED_ISSUED
-    scariv_pkg::LSU_SCHED_TLB_HAZ : begin
+    end // case: scariv_lsu_pkg::LSU_SCHED_ISSUED
+    scariv_lsu_pkg::LSU_SCHED_EX2 : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
-      end else if (|i_tlb_resolve) begin
-        w_state_next = scariv_pkg::LSU_SCHED_WAIT;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
+      end else if (i_ex2_updates.update) begin
+        if ((i_ex2_updates.hazard_typ != EX2_HAZ_NONE) & i_replay_queue_full) begin
+          w_entry_next.haz_reason = LSU_ISSUE_HAZ_REPLAY_FULL;
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT;
+        end else begin
+          w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
+        end
       end
     end
-    scariv_pkg::LSU_SCHED_WAIT_OLDEST : begin
+    scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::LSU_SCHED_CLEAR;
-      end else if (w_oldest_ready & i_st_buffer_empty & i_st_requester_empty) begin
-        w_state_next = scariv_pkg::LSU_SCHED_WAIT;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
+      end else begin
+        case (r_entry.haz_reason) 
+          LSU_ISSUE_HAZ_TLB_MISS : begin
+            if (|i_tlb_resolve) begin
+              w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
+            end
+          end
+          LSU_ISSUE_HAZ_UC_ACCESS : begin
+            if (w_oldest_ready & i_st_buffer_empty & i_st_requester_empty) begin
+              w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
+            end
+          end
+          LSU_ISSUE_HAZ_REPLAY_FULL : begin
+            if (!i_replay_queue_full) begin
+              w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
+            end
+          end
+          default : begin
+            $fatal(0, "This state must not come");
+          end
+        endcase
       end
     end
-
-    scariv_pkg::LSU_SCHED_CLEAR : begin
+    scariv_lsu_pkg::LSU_SCHED_CLEAR : begin
       if (i_clear_entry) begin
-        w_state_next = scariv_pkg::LSU_SCHED_INIT;
+        w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
         w_entry_next.valid = 1'b0;
       end
     end
@@ -214,14 +239,8 @@ always_comb begin
 end // always_comb
 
 
-generate if (2 == 3) begin : init_entry_op3
-  assign w_init_entry = scariv_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
-end else begin
-  assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
-end
-endgenerate
+assign w_init_entry = scariv_lsu_pkg::assign_lsu_issue_entry(i_put_data, i_cmt_id, i_grp_id,
+                                                             w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
 
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
@@ -240,7 +259,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
 
-    r_state <= scariv_pkg::LSU_SCHED_INIT;
+    r_state <= scariv_lsu_pkg::LSU_SCHED_INIT;
     r_issued <= 1'b0;
     r_dead   <= 1'b0;
   end else begin
@@ -259,10 +278,10 @@ assign w_pc_update_before_entry = 1'b0;
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
                        !w_pc_update_before_entry & all_operand_ready(w_entry_next);
 assign o_entry       = r_entry;
 
-assign o_issue_succeeded = (r_state == scariv_pkg::LSU_SCHED_CLEAR);
+assign o_issue_succeeded = (r_state == scariv_lsu_pkg::LSU_SCHED_CLEAR);
 
 endmodule // scariv_lsu_issue_entry

@@ -75,6 +75,110 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_STQ_NONFWD_HAZ
 } ex2_haz_t;
 
+  typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT, 
+                                LSU_SCHED_EX2, LSU_SCHED_CLEAR } lsu_sched_state_t;
+
+  typedef enum logic [ 1: 0] {
+    LSU_ISSUE_HAZ_TLB_MISS,
+    LSU_ISSUE_HAZ_UC_ACCESS,
+    LSU_ISSUE_HAZ_REPLAY_FULL
+  } lsu_issue_haz_reason_t;
+
+  typedef struct packed {
+    logic   valid;
+    vaddr_t pc_addr;
+    logic [31:0] inst;
+    inst_cat_t   cat;
+    logic        is_rvc;
+    brtag_t      brtag;
+    brmask_t     br_mask;
+
+    cmt_id_t cmt_id;
+    grp_id_t grp_id;
+
+    logic                   is_cond;
+    logic                   oldest_valid;
+
+    lsu_issue_haz_reason_t  haz_reason;
+
+    logic                   is_call;
+    logic                   is_ret;
+    logic [RAS_W-1: 0]      ras_index;
+    logic                           pred_taken;
+    logic [ 1: 0]                   bim_value;
+    logic                           btb_valid;
+    vaddr_t pred_target_vaddr;
+
+    reg_wr_issue_t         wr_reg;
+    reg_rd_issue_t [ 2: 0] rd_regs;
+
+    logic                          except_valid;
+    except_t                       except_type;
+    riscv_pkg::xlen_t except_tval;
+`ifdef SIMULATION
+    logic [63: 0]                     kanata_id;
+`endif // SIMULATION
+  } lsu_issue_entry_t;
+
+function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
+                                         cmt_id_t cmt_id,
+                                         grp_id_t grp_id,
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+  lsu_issue_entry_t ret;
+  ret.valid = in.valid;
+  ret.inst = in.inst;
+  ret.pc_addr = in.pc_addr;
+
+  ret.cat = in.cat;
+  ret.is_rvc = in.rvc_inst_valid;
+
+  ret.brtag   = in.brtag;
+  ret.br_mask = in.br_mask;
+
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
+
+  ret.is_cond          = in.is_cond;
+  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
+                     (in.cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+
+  ret.is_call          = in.is_call;
+  ret.is_ret           = in.is_ret;
+  ret.ras_index        = in.ras_index;
+  ret.pred_taken       = in.pred_taken;
+  ret.bim_value        = in.bim_value;
+  ret.btb_valid        = in.btb_valid;
+  ret.pred_target_vaddr = in.pred_target_vaddr;
+
+  ret.wr_reg.valid = in.wr_reg.valid;
+  ret.wr_reg.typ = in.wr_reg.typ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid = in.wr_reg.rnid;
+
+  ret.except_valid = 1'b0;
+  ret.except_type  = INST_ADDR_MISALIGN;
+
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
+  return ret;
+
+endfunction  // assign_issue_t
+
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
     M_XWR       = 5'b00001,  // int store

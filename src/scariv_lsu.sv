@@ -102,7 +102,7 @@ logic [MEM_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
 scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
 
-scariv_pkg::issue_t                             w_issue_from_iss;
+scariv_lsu_pkg::lsu_issue_entry_t               w_issue_from_iss;
 logic [scariv_conf_pkg::RV_LSU_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
 lsu_pipe_haz_if w_lsu_pipe_haz_if ();
@@ -111,6 +111,8 @@ lsu_pipe_req_if w_lsu_pipe_req_if ();
 done_if              w_ex3_done_if();
 scariv_pkg::cmt_id_t w_ex3_cmt_id;
 scariv_pkg::grp_id_t w_ex3_grp_id;
+
+logic w_replay_queue_full;
 
 scariv_disp_pickup
   #(
@@ -151,9 +153,11 @@ u_issue_unit
 
   .i_ex1_updates        (o_ex1_q_updates     ),
   .i_tlb_resolve        (o_tlb_resolve       ),
+  .i_ex2_updates        (o_ex2_q_updates     ),
   .i_st_buffer_empty    (i_st_buffer_empty   ),
   .i_st_requester_empty (i_st_requester_empty),
-  
+  .i_replay_queue_full  (w_replay_queue_full ),
+
   .i_missu_is_empty     (i_missu_is_empty    ),
 
   .pipe_done_if (ex3_internal_done_if),
@@ -185,6 +189,8 @@ u_replay_queue
   
   .i_missu_resolve (i_missu_resolve ),
   .i_missu_is_full (i_missu_is_full ),
+
+  .o_full (w_replay_queue_full),
 
   .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );

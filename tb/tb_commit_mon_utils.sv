@@ -43,7 +43,9 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
     r_timeout_counter <= 'h0;
     r_finish_valid <= 1'b0;
   end else begin
-    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
+    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit & 
+        (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
+         ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id) != 'h0) begin
       r_timeout_counter <= 'h0;
     end else begin
       r_timeout_counter <= r_timeout_counter + 'h1;

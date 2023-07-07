@@ -13,6 +13,8 @@ module scariv_lsu_replay_queue
     input logic i_clk,
     input logic i_reset_n,
 
+    output logic o_full,
+
     input scariv_pkg::commit_blk_t i_commit,
     br_upd_if.slave                br_upd_if,
 
@@ -200,6 +202,8 @@ always_comb begin
     
 end
 assign lsu_pipe_req_if.valid = w_lsu_replay_valid & ~r_replay_additional_queue[r_replay_queue_tail_ptr].dead;
+
+assign o_full = w_full;
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
