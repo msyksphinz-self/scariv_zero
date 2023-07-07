@@ -116,6 +116,9 @@
 
 ../src/scariv_lsu_top.sv
 ../src/scariv_lsu.sv
+../src/scariv_lsu_issue_unit.sv
+../src/scariv_lsu_issue_entry.sv
+../src/scariv_lsu_replay_queue.sv
 ../src/scariv_lsu_pipe.sv
 ../src/scariv_l1d_mshr.sv
 ../src/scariv_l1d_mshr_entry.sv
@@ -174,3 +177,5 @@
 ../src/scariv_plic_reg_priority.sv
 ../src/scariv_plic_reg_threshold.sv
 ../src/scariv_plic_regs.sv
+
+../src/scariv_bootrom.sv

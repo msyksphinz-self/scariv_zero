@@ -32,7 +32,7 @@ logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;
 
 typedef struct packed {
     logic [31: 0]                                  inst;
-    scariv_pkg::inst_cat_t                         cat;
+    decoder_inst_cat_pkg::inst_cat_t               cat;
     logic                                          oldest_valid;
     scariv_pkg::reg_rd_issue_t                     rd_reg;
     scariv_pkg::reg_wr_issue_t                     wr_reg;
@@ -52,7 +52,7 @@ typedef struct packed {
 replay_queue_t w_new_replay_queue_info;
 replay_queue_t w_rd_replay_queue_info;
 replay_additional_queue_t r_replay_additional_queue[REPLAY_QUEUE_SIZE];
-
+logic w_lsu_replay_valid;
 
 logic w_empty;
 logic w_full;
@@ -164,7 +164,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
 end
 
-logic w_lsu_replay_valid;
 always_comb begin
     if (!w_empty) begin
         if (w_rd_replay_queue_info.diff_counter != 'h0 && 
