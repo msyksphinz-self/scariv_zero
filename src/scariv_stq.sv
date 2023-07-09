@@ -196,19 +196,15 @@ endgenerate
 // bit_or #(.WIDTH(scariv_conf_pkg::DCACHE_DATA_W),  .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_data_or (.i_data(w_stq_snoop_data), .o_selected(w_stq_snoop_resp_s0_data));
 // bit_or #(.WIDTH(scariv_lsu_pkg::DCACHE_DATA_B_W), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_snoop_be_or   (.i_data(w_stq_snoop_be),   .o_selected(w_stq_snoop_resp_s0_be));
 //
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     stq_snoop_if.resp_s1_valid <= 1'b0;
-//   end else begin
-//     stq_snoop_if.resp_s1_valid <= w_stq_snoop_resp_s0_valid;
-//     stq_snoop_if.resp_s1_data  <= w_stq_snoop_resp_s0_data;
-//     stq_snoop_if.resp_s1_be    <= w_stq_snoop_resp_s0_be;
-//   end
-// end
-
-assign stq_snoop_if.resp_s1_valid = 1'b1;
-assign stq_snoop_if.resp_s1_data  = 'h0;
-assign stq_snoop_if.resp_s1_be    = 'h0;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    stq_snoop_if.resp_s1_valid <= 1'b0;
+  end else begin
+    stq_snoop_if.resp_s1_valid <= stq_snoop_if.req_s0_valid;
+    stq_snoop_if.resp_s1_data  <= 'h0;
+    stq_snoop_if.resp_s1_be    <= 'h0;
+  end
+end
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;

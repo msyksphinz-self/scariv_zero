@@ -725,6 +725,7 @@ typedef struct packed {
   // scariv_pkg::vaddr_t vaddr;
   // scariv_pkg::paddr_t paddr;
   scariv_pkg::maxaddr_t  addr;
+  logic                  paddr_valid;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
   logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 

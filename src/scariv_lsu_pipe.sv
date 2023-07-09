@@ -88,6 +88,11 @@ scariv_lsu_pkg::lsu_pipe_issue_t        w_ex0_issue;
 logic [MEM_Q_SIZE-1: 0]  w_ex0_index_oh;
 lsu_pipe_ctrl_t          w_ex0_pipe_ctrl;
 
+logic                    w_ex0_rs1_lsu_mispred;
+logic                    w_ex0_rs2_lsu_mispred;
+logic                    w_ex0_rs1_mispred;
+logic                    w_ex0_rs2_mispred;
+
 //
 // EX1 stage
 //
@@ -156,14 +161,36 @@ assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
 // Pipeline Logic
 //
 always_comb begin
-  w_ex1_issue_next   = w_ex0_issue;
+  w_ex1_issue_next       = w_ex0_issue;
+  w_ex1_issue_next.valid = w_ex0_issue.valid & ~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred;
 
   w_ex2_issue_next       = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid;
 
   w_ex3_issue_next       = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_haz_detected;
 end
+
+select_mispred_bus ex0_rs1_mispred_select
+(
+ .i_entry_rnid (w_ex0_issue.rd_regs[0].rnid),
+ .i_entry_type (w_ex0_issue.rd_regs[0].typ),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex0_rs1_lsu_mispred)
+ );
+
+
+select_mispred_bus ex0_rs2_mispred_select
+(
+ .i_entry_rnid (w_ex0_issue.rd_regs[1].rnid),
+ .i_entry_type (w_ex0_issue.rd_regs[1].typ),
+ .i_mispred    (i_mispred_lsu),
+
+ .o_mispred    (w_ex0_rs2_lsu_mispred)
+ );
+
+assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
+assign w_ex0_rs2_mispred = w_ex0_issue.rd_regs[1].valid & w_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
 
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -304,7 +331,7 @@ assign w_ex1_tlb_req.size        =
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
 assign w_ex1_tlb_req.passthrough = 1'b0;
 
-select_mispred_bus rs1_mispred_select
+select_mispred_bus ex1_rs1_mispred_select
 (
  .i_entry_rnid (r_ex1_issue.rd_regs[0].rnid),
  .i_entry_type (r_ex1_issue.rd_regs[0].typ),
@@ -314,7 +341,7 @@ select_mispred_bus rs1_mispred_select
  );
 
 
-select_mispred_bus rs2_mispred_select
+select_mispred_bus ex1_rs2_mispred_select
 (
  .i_entry_rnid (r_ex1_issue.rd_regs[1].rnid),
  .i_entry_type (r_ex1_issue.rd_regs[1].typ),

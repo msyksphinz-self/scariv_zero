@@ -29,6 +29,13 @@ module scariv_ldq_entry
 
  input logic                                     i_entry_picked,
 
+  // Updates from LSU Pipeline EX1 stage
+  input logic                                    i_ex1_q_valid,
+  input ex1_q_update_t                           i_ex1_q_updates,
+
+  input logic                                    i_ex2_q_valid,
+  input ex2_q_update_t                           i_ex2_q_updates,
+
  input                                           missu_resolve_t i_missu_resolve,
  input logic                                     i_missu_is_full,
  // Commit notification
@@ -129,6 +136,16 @@ always_comb begin
 
   if (r_entry.is_valid) begin
     w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid | w_oldest_ready;
+
+    if (i_ex1_q_valid) begin
+      w_entry_next.addr        = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+                                 i_ex1_q_updates.paddr;
+      w_entry_next.paddr_valid = !i_ex1_q_updates.tlb_except_valid;
+      w_entry_next.size        = i_ex1_q_updates.size;
+    end
+    if (i_ex2_q_valid & r_entry.paddr_valid & (i_ex2_q_updates.hazard_typ == EX2_HAZ_NONE)) begin
+      w_entry_next.is_get_data = 1'b1;
+    end
   end
 
   case (r_entry.state)

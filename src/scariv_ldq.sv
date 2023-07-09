@@ -26,6 +26,10 @@ module scariv_ldq
    input missu_resolve_t     i_missu_resolve,
    input logic             i_missu_is_full,
 
+   // Updates from LSU Pipeline EX1 stage
+   input ex1_q_update_t        i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
+   input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
+
    // Commit notification
    input scariv_pkg::commit_blk_t i_commit,
    br_upd_if.slave              br_upd_if,
@@ -155,19 +159,18 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
   bit_oh_or #(.T(logic[scariv_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
 
-  // // Selection of EX1 Update signal
-  // ex1_q_update_t w_ex1_q_updates;
-  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  // ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
-  //                                        .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
+  // Selection of EX1 Update signal
+  ex1_q_update_t w_ex1_q_updates;
+  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
+  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
+                                         .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
-  // // Selection of EX1 Update signal
-  // ex2_q_update_t w_ex2_q_updates;
-  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
-  // ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-  //                                        .q_index(l_idx[$clog2(scariv_conf_pkg::LDQ_SIZE)-1:0]),
-  //                                        .i_ex2_recv(w_ex2_ldq_entries_recv),
-  //                                        .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
+  // Selection of EX1 Update signal
+  ex2_q_update_t w_ex2_q_updates;
+  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
+  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates), .i_cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .i_grp_id(w_ldq_entries[l_idx].inst.grp_id),
+                                         .i_ex2_recv(w_ex2_ldq_entries_recv),
+                                         .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
   // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
   // always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -209,6 +212,12 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .o_ex2_ldq_entries_recv(w_ex2_ldq_entries_recv),
 
      .i_entry_picked (|w_run_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
+
+    .i_ex1_q_valid   (|w_ex1_q_valid ),
+    .i_ex1_q_updates (w_ex1_q_updates),
+
+    .i_ex2_q_valid   (|w_ex2_q_valid ),
+    .i_ex2_q_updates (w_ex2_q_updates),
 
      .i_missu_resolve (i_missu_resolve),
      .i_missu_is_full (i_missu_is_full),

@@ -151,7 +151,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+        if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
           w_issued_next = 1'b1;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_ISSUED;
         end
@@ -197,7 +197,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
       end else begin
-        case (r_entry.haz_reason) 
+        case (r_entry.haz_reason)
           LSU_ISSUE_HAZ_TLB_MISS : begin
             if (|i_tlb_resolve) begin
               w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
@@ -271,7 +271,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = r_entry.oldest_valid ? 
+assign w_oldest_ready = r_entry.oldest_valid ?
                         (rob_info_if.cmt_id == r_entry.cmt_id) &
                         ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid : 1'b1;
 assign w_pc_update_before_entry = 1'b0;
@@ -279,7 +279,7 @@ assign w_pc_update_before_entry = 1'b0;
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
-                       !w_pc_update_before_entry & all_operand_ready(w_entry_next);
+                       !w_pc_update_before_entry & all_operand_ready(r_entry);
 assign o_entry       = r_entry;
 
 assign o_issue_succeeded = (r_state == scariv_lsu_pkg::LSU_SCHED_CLEAR);

@@ -75,7 +75,7 @@ module scariv_lsu
     input logic             i_st_requester_empty,
 
     input missu_resolve_t   i_missu_resolve,
-    input logic             i_missu_is_full,   
+    input logic             i_missu_is_full,
     input logic             i_missu_is_empty,
 
     /* write output */
@@ -85,8 +85,10 @@ module scariv_lsu
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
 
-    output scariv_pkg::mispred_t   o_ex2_mispred,
-    output scariv_pkg::done_rpt_t  o_done_report,
+    output scariv_pkg::mispred_t       o_ex2_mispred,
+    output scariv_pkg::done_rpt_t      o_done_report,
+    output scariv_pkg::another_flush_t o_another_flush_report,
+
     br_upd_if.slave                br_upd_if
    );
 
@@ -145,8 +147,8 @@ u_issue_unit
   .i_grp_id     (disp_picked_grp_id    ),
   .i_disp_info  (disp_picked_inst      ),
   .cre_ret_if   (cre_ret_if            ),
-    
-  .i_stall      (1'b0                  ),
+
+  .i_stall      (w_replay_selected     ),
 
   .o_issue        (w_issue_from_iss      ),
   .o_iss_index_oh (w_issue_index_from_iss),
@@ -186,7 +188,7 @@ u_replay_queue
   .br_upd_if (br_upd_if),
 
   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
-  
+
   .i_missu_resolve (i_missu_resolve ),
   .i_missu_is_full (i_missu_is_full ),
 
@@ -299,5 +301,8 @@ assign o_done_report.except_tval         = w_ex3_done_if.payload.except_tval    
 assign o_done_report.fflags_update_valid = w_ex3_done_if.payload.fflags_update_valid;
 assign o_done_report.fflags              = w_ex3_done_if.payload.fflags             ;
 
+assign o_another_flush_report.valid  = w_ex3_done_if.payload.another_flush_valid ;
+assign o_another_flush_report.cmt_id = w_ex3_done_if.payload.another_flush_cmt_id;
+assign o_another_flush_report.grp_id = w_ex3_done_if.payload.another_flush_grp_id;
 
 endmodule // scariv_lsu

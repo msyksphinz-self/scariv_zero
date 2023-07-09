@@ -183,9 +183,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .i_commit (i_commit),
 
-    .o_ex2_mispred (o_ex2_mispred[lsu_idx]),
-    .o_done_report (o_done_report[lsu_idx]),
-    .br_upd_if     (br_upd_if             )
+    .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
+    .o_done_report          (o_done_report         [lsu_idx]),
+    .o_another_flush_report (o_another_flush_report[lsu_idx]),
+    .br_upd_if              (br_upd_if             )
    );
 
 end // block: lsu_loop
@@ -213,6 +214,9 @@ u_ldq
  .cre_ret_if   (ldq_cre_ret_if  ),
 
  .ldq_haz_check_if (w_ldq_haz_check_if),
+
+ .i_ex1_q_updates(w_ex1_q_updates),
+ .i_ex2_q_updates(w_ex2_q_updates),
 
  .i_missu_resolve (w_missu_resolve),
  .i_missu_is_full (w_missu_is_full),
@@ -272,7 +276,7 @@ scariv_stq
  .o_stq_rs2_resolve (w_stq_rs2_resolve),
 
  .o_done_report          (),
- .o_another_flush_report (o_another_flush_report)
+ .o_another_flush_report ()
  );
 
 assign w_l1d_rd_if [L1D_MISSU_PORT].s0_valid = 'h0;

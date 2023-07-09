@@ -21,13 +21,13 @@ module scariv_lsu_replay_queue
     lsu_pipe_haz_if.slave  lsu_pipe_haz_if,
 
     input missu_resolve_t  i_missu_resolve,
-    input logic            i_missu_is_full,   
+    input logic            i_missu_is_full,
 
     // Request from Replay Queue
     lsu_pipe_req_if.master lsu_pipe_req_if
 );
 
-localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / 2;
+localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE + 1;
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;
@@ -73,7 +73,7 @@ assign w_new_replay_queue_info.wr_reg         = lsu_pipe_haz_if.payload.wr_reg  
 assign w_new_replay_queue_info.paddr          = lsu_pipe_haz_if.payload.paddr         ;
 assign w_new_replay_queue_info.hazard_typ     = lsu_pipe_haz_if.payload.hazard_typ    ;
 assign w_new_replay_queue_info.missu_index_oh = lsu_pipe_haz_if.payload.missu_index_oh;
-assign w_new_replay_queue_info.diff_counter   = r_diff_counter;
+assign w_new_replay_queue_info.diff_counter   = w_empty ? 'h0 : r_diff_counter;
 
 // Diff counter from previous Queue inesrtion
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -81,7 +81,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_diff_counter <= 'h0;
     end else begin
         if (w_empty) begin
-            r_diff_counter <= 'h0;
+          r_diff_counter <= 'h1;
+        end else if (w_queue_push) begin
+            r_diff_counter <= 'h1;
         end else begin
             r_diff_counter <= r_diff_counter + 'h1;
         end
@@ -93,15 +95,15 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
     logic w_commit_flush;
     logic w_br_flush;
     logic w_entry_flush;
-    assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_replay_additional_queue[idx].cmt_id, 
-                                                               r_replay_additional_queue[idx].grp_id, 
+    assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_replay_additional_queue[idx].cmt_id,
+                                                               r_replay_additional_queue[idx].grp_id,
                                                                i_commit) & r_replay_additional_queue[idx].valid;
     assign w_br_flush     = scariv_pkg::is_br_flush_target(r_replay_additional_queue[idx].br_mask, br_upd_if.brtag,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_replay_additional_queue[idx].valid;
     assign w_entry_flush  = w_commit_flush | w_br_flush;
 
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
-        if (w_queue_push & 
+        if (w_queue_push &
             (idx == r_replay_queue_head_ptr)) begin
             r_replay_additional_queue[idx].valid   <= 1'b1;
             r_replay_additional_queue[idx].dead    <= 1'b0;
@@ -121,13 +123,15 @@ end endgenerate
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
         r_replay_queue_head_ptr <= 'h0;
-        r_replay_queue_tail_ptr <= 'h0;        
+        r_replay_queue_tail_ptr <= 'h0;
     end else begin
         if (w_queue_push) begin
-            r_replay_queue_head_ptr <= r_replay_queue_head_ptr + 'h1;
+            r_replay_queue_head_ptr <= r_replay_queue_head_ptr == REPLAY_QUEUE_SIZE - 1 ? 'h0 :
+                                       r_replay_queue_head_ptr + 'h1;
         end
         if (w_queue_pop) begin
-            r_replay_queue_tail_ptr <= r_replay_queue_tail_ptr + 'h1;
+            r_replay_queue_tail_ptr <= r_replay_queue_tail_ptr == REPLAY_QUEUE_SIZE - 1 ? 'h0 :
+                                       r_replay_queue_tail_ptr + 'h1;
         end
     end
 end
@@ -159,7 +163,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_prev_diff_counter <= 'h0;
     end else begin
         if (w_queue_pop) begin
-            r_prev_diff_counter <= 'h0;
+            r_prev_diff_counter <= 'h1;
         end else begin
             r_prev_diff_counter <= r_prev_diff_counter + 'h1;
         end
@@ -168,16 +172,19 @@ end
 
 always_comb begin
     if (!w_empty) begin
-        if (w_rd_replay_queue_info.diff_counter != 'h0 && 
+        if (r_replay_additional_queue[r_replay_queue_tail_ptr].dead) begin
+            w_lsu_replay_valid = 1'b1;  // immediately remove from queue
+        end else if (w_rd_replay_queue_info.diff_counter != 'h0 &&
             r_prev_diff_counter == w_rd_replay_queue_info.diff_counter) begin
-            w_lsu_replay_valid = !r_replay_additional_queue[r_replay_queue_tail_ptr].dead;
+            w_lsu_replay_valid = 1'b1;
         end else begin
             case (w_rd_replay_queue_info.hazard_typ)
-                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = 1'b0; 
+                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = 1'b0;
                 EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = 1'b0;
                 EX2_HAZ_L1D_CONFLICT :   w_lsu_replay_valid = 1'b1; // Replay immediately
-                EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = i_missu_is_full;
-                EX2_HAZ_MISSU_ASSIGNED : w_lsu_replay_valid = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == w_rd_replay_queue_info.missu_index_oh);
+                EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = !i_missu_is_full;
+                EX2_HAZ_MISSU_ASSIGNED : w_lsu_replay_valid = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == w_rd_replay_queue_info.missu_index_oh) |
+                                                              ((w_rd_replay_queue_info.missu_index_oh & i_missu_resolve.missu_entry_valids) == 'h0);
                 default : begin
                     w_lsu_replay_valid = 1'b0;
                     // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
@@ -199,7 +206,7 @@ always_comb begin
     lsu_pipe_req_if.payload.paddr          = w_rd_replay_queue_info.paddr         ;
     lsu_pipe_req_if.payload.hazard_typ     = w_rd_replay_queue_info.hazard_typ    ;
     lsu_pipe_req_if.payload.missu_index_oh = w_rd_replay_queue_info.missu_index_oh;
-    
+
 end
 assign lsu_pipe_req_if.valid = w_lsu_replay_valid & ~r_replay_additional_queue[r_replay_queue_tail_ptr].dead;
 
@@ -210,8 +217,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (i_reset_n) begin
         if (!w_empty) begin
             case (w_rd_replay_queue_info.hazard_typ)
-                EX2_HAZ_STQ_NONFWD_HAZ : begin end  
-                EX2_HAZ_RMW_ORDER_HAZ :  begin end 
+                EX2_HAZ_STQ_NONFWD_HAZ : begin end
+                EX2_HAZ_RMW_ORDER_HAZ :  begin end
                 EX2_HAZ_L1D_CONFLICT :   begin end
                 EX2_HAZ_MISSU_FULL :     begin end
                 EX2_HAZ_MISSU_ASSIGNED : begin end
@@ -219,7 +226,10 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                     $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
                 end
             endcase
-        end
+        end // if (!w_empty)
+      if (o_full & lsu_pipe_haz_if.valid) begin
+        $fatal(0, "During Replay Queue full, hazard request come");
+      end
     end
 end
 `endif // SIMULATION
