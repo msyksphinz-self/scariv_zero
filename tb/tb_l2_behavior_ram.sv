@@ -87,6 +87,18 @@ always_comb begin
   actual_line_status = status[actual_line_pos];
 end
 
+// PMA Memory Map
+logic                       w_map_hit;
+scariv_lsu_pkg::map_attr_t  w_map_attributes;
+pma_map
+  u_pma_map
+(
+ .i_pa      (actual_addr),
+ .o_map_hit (w_map_hit),
+ .o_map_attr(w_map_attributes)
+ );
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_state <= IDLE;
@@ -110,7 +122,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         IDLE: begin
           if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD) begin
             if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
-              if (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
+              if (w_map_hit & w_map_attributes.c &
+                  (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
                 status[actual_line_pos] = ST_GIVEN;
               end
               rd_queue.push_back(rd_queue_init);
