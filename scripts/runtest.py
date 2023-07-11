@@ -13,12 +13,13 @@ import argparse
 class BuildResult(Enum):
     SUCCESS = 0
     FAIL = 1
-    
+
 
 class verilator_sim:
 
     manager = Manager()
     result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
+    result_detail_dict = manager.dict()
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -94,7 +95,7 @@ class verilator_sim:
                     f.write(line)
 
             build_result.wait()
-        
+
         if build_result.returncode != 0:
             return BuildResult.FAIL
 
@@ -166,21 +167,27 @@ class verilator_sim:
         print (test["name"] + "\t: ", end="")
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
+            self.result_detail_dict[test['name']] = "error";
             self.result_dict['error'] += 1
         elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
             print ("MATCH", end="\r\n")
+            self.result_detail_dict[test['name']] = "match";
             self.result_dict['match'] += 1
         elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
             print ("TIMEOUT", end="\r\n")
+            self.result_detail_dict[test['name']] = "timeout";
             self.result_dict['timeout'] += 1
         elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
             print ("PASS", end="\r\n")
+            self.result_detail_dict[test['name']] = "pass";
             self.result_dict['pass'] += 1
         elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
             print ("DEADLOCK", end="\r\n")
+            self.result_detail_dict[test['name']] = "deadlock";
             self.result_dict['deadlock'] += 1
         else :
             print ("UNKNOWN", end="\r\n")
+            self.result_detail_dict[test['name']] = "unknown";
             self.result_dict['unknown'] += 1
 
     def execute_test_wrapper (self, args):
@@ -228,7 +235,9 @@ class verilator_sim:
 
         print (self.result_dict)
         with open(base_dir + '/result.json', 'w') as f:
-            json.dump(self.result_dict, f, default=str)
+            json.dump(self.result_detail_dict.copy(), f, indent=4)
+        with open(base_dir + '/result.json', 'a') as f:
+            json.dump(self.result_dict.copy(), f, indent=4)
 
 
 def main():
