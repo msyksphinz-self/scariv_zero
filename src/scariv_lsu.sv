@@ -78,6 +78,8 @@ module scariv_lsu
     input logic             i_missu_is_full,
     input logic             i_missu_is_empty,
 
+    input logic             i_stq_rmw_existed,
+
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
@@ -147,6 +149,8 @@ u_issue_unit
   .i_grp_id     (disp_picked_grp_id    ),
   .i_disp_info  (disp_picked_inst      ),
   .cre_ret_if   (cre_ret_if            ),
+  
+  .i_stq_rmw_existed (i_stq_rmw_existed),
 
   .i_stall      (w_replay_selected     ),
 
@@ -187,7 +191,12 @@ u_replay_queue
   .i_commit  (i_commit),
   .br_upd_if (br_upd_if),
 
+  .rob_info_if (rob_info_if),
+
   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+
+  .i_st_buffer_empty    (i_st_buffer_empty),
+  .i_missu_is_empty     (i_missu_is_empty ),
 
   .i_missu_resolve (i_missu_resolve ),
   .i_missu_is_full (i_missu_is_full ),
@@ -211,6 +220,9 @@ always_comb begin
     w_ex0_replay_issue.wr_reg       = w_lsu_pipe_req_if.payload.wr_reg      ;
     w_ex0_replay_issue.oldest_valid = w_lsu_pipe_req_if.payload.oldest_valid;
     w_ex0_replay_issue.cat          = w_lsu_pipe_req_if.payload.cat         ;
+    w_ex0_replay_issue.paddr_valid  = 1'b1;
+    w_ex0_replay_issue.paddr        = w_lsu_pipe_req_if.payload.paddr;
+
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION
@@ -225,6 +237,8 @@ always_comb begin
     w_ex0_replay_issue.wr_reg       = w_issue_from_iss.wr_reg;
     w_ex0_replay_issue.oldest_valid = w_issue_from_iss.oldest_valid;
     w_ex0_replay_issue.cat          = w_issue_from_iss.cat;
+    w_ex0_replay_issue.paddr_valid  = 1'b0;
+    w_ex0_replay_issue.paddr        = 'h0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
 `endif // SIMULATION
@@ -246,6 +260,9 @@ u_lsu_pipe
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .i_commit  (i_commit),
+   .br_upd_if (br_upd_if),
 
    .csr_info (csr_info),
    .sfence_if(sfence_if),

@@ -44,6 +44,8 @@ module scariv_stq
 
    input logic           i_missu_is_empty,
 
+   output logic          o_stq_rmw_existed,
+
    // STQ Entry rs2 get Notification
    output stq_resolve_t o_stq_rs2_resolve,
 
@@ -81,6 +83,9 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[scariv_conf_pk
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[scariv_conf_pkg::STQ_SIZE] ;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
+
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rmw_existed;
+assign o_stq_rmw_existed = |w_stq_rmw_existed;
 
 // logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_entry_dead_done;
 logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_entry_st_finish;
@@ -402,7 +407,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                                pipe_is_younger_than_stq;
   end // block: rmw_order_haz_loop
 
-
+  assign w_stq_rmw_existed[s_idx] = w_stq_entries[s_idx].is_valid & w_stq_entries[s_idx].is_rmw;
 end // block: stq_loop
 endgenerate
 

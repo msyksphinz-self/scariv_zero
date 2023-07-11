@@ -95,6 +95,7 @@ missu_dc_search_if w_missu_dc_search_if ();
 missu_resolve_t w_missu_resolve;
 logic     w_missu_is_full;
 logic     w_missu_is_empty;
+logic     w_stq_rmw_existed;
 
 stq_resolve_t w_stq_rs2_resolve;
 
@@ -173,6 +174,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .i_st_buffer_empty    (w_st_buffer_if.is_empty),
     .i_st_requester_empty (w_uc_write_if.is_empty ),
+
+    .i_stq_rmw_existed (w_stq_rmw_existed),
 
     .i_missu_resolve (w_missu_resolve),
     .i_missu_is_full (w_missu_is_full),
@@ -264,6 +267,8 @@ scariv_stq
  .ex3_done_if (w_ex3_done_if),
 
  .i_missu_is_empty (w_missu_is_empty),
+
+  .o_stq_rmw_existed (w_stq_rmw_existed),
 
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),

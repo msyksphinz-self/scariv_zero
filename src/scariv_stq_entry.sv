@@ -224,10 +224,8 @@ always_comb begin
     STQ_ISSUED : begin
       if (w_entry_flush) begin
         w_entry_next.state = STQ_DEAD;
-      end else if (w_entry_next.is_valid & i_ex1_q_valid) begin
-        w_entry_next.state           = i_ex1_q_updates.hazard_typ == EX1_HAZ_TLB_MISS  ? STQ_TLB_HAZ :
-                                       i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS ? STQ_WAIT_OLDEST :
-                                       STQ_DONE_EX2;
+      end else if (w_entry_next.is_valid & i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
+        w_entry_next.state           = STQ_DONE_EX2;
         w_entry_next.except_valid    = i_ex1_q_updates.tlb_except_valid;
         w_entry_next.except_type     = i_ex1_q_updates.tlb_except_type;
         w_entry_next.addr            = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :

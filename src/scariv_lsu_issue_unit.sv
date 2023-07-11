@@ -49,6 +49,7 @@ module scariv_lsu_issue_unit
   input logic                           i_st_requester_empty,
   input logic                           i_missu_is_empty,
   input logic                           i_replay_queue_full,
+  input logic                           i_stq_rmw_existed,
 
   done_if.slave                         pipe_done_if,
   
@@ -197,6 +198,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_cmt_id   (i_cmt_id  ),
     .i_grp_id   (w_disp_grp_id  ),
     .i_put_data (w_disp_entry  ),
+    .i_stq_rmw_existed (i_stq_rmw_existed),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),

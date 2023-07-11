@@ -23,6 +23,7 @@ import scariv_lsu_pkg::*;
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
    input scariv_pkg::disp_t   i_put_data,
+   input logic                i_stq_rmw_existed,
 
    output logic               o_entry_valid,
   /* verilator lint_off UNOPTFLAT */
@@ -240,7 +241,8 @@ end // always_comb
 
 
 assign w_init_entry = scariv_lsu_pkg::assign_lsu_issue_entry(i_put_data, i_cmt_id, i_grp_id,
-                                                             w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+                                                             w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred,
+                                                             i_stq_rmw_existed);
 
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
@@ -271,14 +273,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = r_entry.oldest_valid ?
-                        (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid : 1'b1;
+assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid;
 assign w_pc_update_before_entry = 1'b0;
 
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
+                       (r_entry.need_oldest ? r_entry.oldest_valid : 1'b1)  &
                        !w_pc_update_before_entry & all_operand_ready(r_entry);
 assign o_entry       = r_entry;
 

@@ -97,6 +97,7 @@ typedef enum logic [ 2: 0] {
     grp_id_t grp_id;
 
     logic                   is_cond;
+    logic                   need_oldest;
     logic                   oldest_valid;
 
     lsu_issue_haz_reason_t  haz_reason;
@@ -123,7 +124,8 @@ typedef enum logic [ 2: 0] {
 function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                                          cmt_id_t cmt_id,
                                          grp_id_t grp_id,
-                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred,
+                                         logic stq_rmw_existed);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
@@ -139,8 +141,9 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.grp_id = grp_id;
 
   ret.is_cond          = in.is_cond;
-  ret.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
-                     (in.cat == decoder_inst_cat_pkg::INST_CAT_CSU);
+  ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
+                         stq_rmw_existed;
+  ret.oldest_valid     = 1'b0;
 
   ret.is_call          = in.is_call;
   ret.is_ret           = in.is_ret;
@@ -749,6 +752,9 @@ typedef struct packed {
   reg_wr_issue_t         wr_reg;
   logic                  oldest_valid;
   inst_cat_t             cat;
+
+  logic                  paddr_valid;
+  scariv_pkg::paddr_t    paddr;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
 `endif // SIMULATION
