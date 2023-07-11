@@ -140,7 +140,7 @@ assign w_done_tree_grp_id   = w_commit_grp_id_mask & (rob_info_if.done_grp_id & 
 
 assign w_normal_comitted_grp_id = (w_done_tree_grp_id == w_commit_grp_id_mask);
 
-assign w_ready_to_mv_stbuf = (i_commit.cmt_id == r_entry.inst.cmt_id) & w_normal_comitted_grp_id;
+assign w_ready_to_mv_stbuf = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id) & w_normal_comitted_grp_id;
 
 assign o_stq_entry_st_finish = (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & ~r_entry.is_rmw |
                                (r_entry.state == STQ_COMMIT    ) & w_commit_finish & i_stq_outptr_valid & r_entry.is_rmw & (r_entry.except_valid | r_entry.is_lr | r_entry.is_sc & !r_entry.sc_success) |
