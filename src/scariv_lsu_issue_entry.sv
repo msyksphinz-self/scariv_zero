@@ -215,7 +215,9 @@ always_comb begin
             end
           end
           default : begin
+`ifdef SIMULATION
             $fatal(0, "This state must not come");
+`endif // SIMULATION
           end
         endcase
       end
