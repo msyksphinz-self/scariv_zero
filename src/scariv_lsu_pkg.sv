@@ -86,17 +86,14 @@ typedef enum logic [ 2: 0] {
 
   typedef struct packed {
     logic   valid;
-    vaddr_t pc_addr;
     logic [31:0] inst;
     inst_cat_t   cat;
-    logic        is_rvc;
     brtag_t      brtag;
     brmask_t     br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
 
-    logic                   is_cond;
     logic                   need_oldest;
     logic                   oldest_valid;
 
@@ -105,9 +102,10 @@ typedef enum logic [ 2: 0] {
     reg_wr_issue_t         wr_reg;
     reg_rd_issue_t [ 2: 0] rd_regs;
 
-    riscv_pkg::xlen_t except_tval;
 `ifdef SIMULATION
-    logic [63: 0]                     kanata_id;
+    logic         sim_is_rvc;
+    vaddr_t       sim_pc_addr;
+    logic [63: 0] kanata_id;
 `endif // SIMULATION
   } lsu_issue_entry_t;
 
@@ -119,10 +117,8 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
-  ret.pc_addr = in.pc_addr;
 
-  ret.cat = in.cat;
-  ret.is_rvc = in.rvc_inst_valid;
+  ret.cat    = in.cat;
 
   ret.brtag   = in.brtag;
   ret.br_mask = in.br_mask;
@@ -130,7 +126,6 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
-  ret.is_cond          = in.is_cond;
   ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
                          stq_rmw_existed;
   ret.oldest_valid     = 1'b0;
@@ -141,7 +136,9 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.wr_reg.rnid = in.wr_reg.rnid;
 
 `ifdef SIMULATION
-  ret.kanata_id = in.kanata_id;
+  ret.sim_is_rvc  = in.rvc_inst_valid;
+  ret.sim_pc_addr = in.pc_addr;
+  ret.kanata_id   = in.kanata_id;
 `endif // SIMULATION
 
   for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin

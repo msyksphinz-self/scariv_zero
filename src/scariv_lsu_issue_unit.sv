@@ -275,7 +275,7 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
   if (entry.entry.valid) begin
     $fwrite(fp, "    \"scariv_issue_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "valid:%d, ", entry.entry.valid);
-    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.sim_pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
 
     $fwrite(fp, "cmt_id:%d, ", entry.entry.cmt_id);

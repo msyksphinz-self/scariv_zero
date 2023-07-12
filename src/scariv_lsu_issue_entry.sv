@@ -62,7 +62,6 @@ logic    w_dead_next;
 scariv_lsu_pkg::lsu_issue_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
 scariv_lsu_pkg::lsu_issue_entry_t w_entry_next;
-scariv_lsu_pkg::lsu_issue_entry_t w_init_entry;
 
 logic    w_oldest_ready;
 
@@ -127,7 +126,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
       end else if (i_put) begin
-        w_entry_next = w_init_entry;
+        w_entry_next = i_put_entry;
         if (w_load_entry_flush) begin
           w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
           w_dead_next  = 1'b1;
