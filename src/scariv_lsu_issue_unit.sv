@@ -165,18 +165,42 @@ u_inst_selector
    .out  (w_picked_inst_oh)
    );
 
+lsu_issue_entry_t w_input_entry[IN_PORT_SIZE];
+generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
+
+  scariv_pkg::rnid_t w_rs1_rnid;
+  scariv_pkg::reg_t  w_rs1_type;
+  logic w_rs1_rel_hit;
+  logic w_rs1_may_mispred;
+  logic w_rs1_phy_hit;
+  logic w_rs1_mispredicted;
+
+  assign w_rs1_rnid = i_disp_info[idx].rd_regs[0].rnid;
+  assign w_rs1_type = i_disp_info[idx].rd_regs[0].typ ;
+
+  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+                                        .o_valid      (w_rs1_rel_hit), .o_may_mispred (w_rs1_may_mispred));
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+                                        .o_valid      (w_rs1_phy_hit));
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
+                                        .o_mispred    (w_rs1_mispredicted));
+
+  assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], i_cmt_id, i_grp_id[idx],
+                                                      w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred,
+                                                      i_stq_rmw_existed);
+end endgenerate
 
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
-  scariv_pkg::disp_t          w_disp_entry;
-  scariv_pkg::grp_id_t        w_disp_grp_id;
+  lsu_issue_entry_t         w_disp_entry;
+  scariv_pkg::grp_id_t      w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     logic [ENTRY_SIZE-1: 0] target_idx_oh;
     bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
     assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
   end
 
-  bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
+  bit_oh_or #(.T(lsu_issue_entry_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(w_input_entry), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   logic  w_pipe_done_valid;
@@ -193,11 +217,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .rob_info_if (rob_info_if),
 
-    .i_put      (|w_input_valid),
-
-    .i_cmt_id   (i_cmt_id  ),
-    .i_grp_id   (w_disp_grp_id  ),
-    .i_put_data (w_disp_entry  ),
+    .i_put             (|w_input_valid   ),
+    .i_put_entry       (w_disp_entry     ),
+    .i_cmt_id          (i_cmt_id         ),
+    .i_grp_id          (w_disp_grp_id    ),
     .i_stq_rmw_existed (i_stq_rmw_existed),
 
     .o_entry_valid(w_entry_valid[s_idx]),

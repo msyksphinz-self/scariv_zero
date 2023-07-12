@@ -33,7 +33,7 @@ module scariv_lsu_replay_queue
     lsu_pipe_req_if.master lsu_pipe_req_if
 );
 
-localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE + 1;
+localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;

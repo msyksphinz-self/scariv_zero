@@ -116,14 +116,16 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
 end // block: alu_cre_ret_loop
 endgenerate
 
+localparam LSU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
   logic w_inst_lsu_valid;
   assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
-  logic [$clog2(scariv_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
+  logic [$clog2(LSU_ISS_ENTRY_SIZE):0] w_lsu_inst_cnt;
   assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
 
   scariv_credit_return_master
-    #(.MAX_CREDITS(scariv_lsu_pkg::MEM_Q_SIZE))
+    #(.MAX_CREDITS(LSU_ISS_ENTRY_SIZE))
   u_lsu_credit_return
   (
    .i_clk(i_clk),

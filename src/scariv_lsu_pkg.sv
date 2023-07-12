@@ -102,19 +102,9 @@ typedef enum logic [ 2: 0] {
 
     lsu_issue_haz_reason_t  haz_reason;
 
-    logic                   is_call;
-    logic                   is_ret;
-    logic [RAS_W-1: 0]      ras_index;
-    logic                           pred_taken;
-    logic [ 1: 0]                   bim_value;
-    logic                           btb_valid;
-    vaddr_t pred_target_vaddr;
-
     reg_wr_issue_t         wr_reg;
     reg_rd_issue_t [ 2: 0] rd_regs;
 
-    logic                          except_valid;
-    except_t                       except_type;
     riscv_pkg::xlen_t except_tval;
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -145,21 +135,10 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                          stq_rmw_existed;
   ret.oldest_valid     = 1'b0;
 
-  ret.is_call          = in.is_call;
-  ret.is_ret           = in.is_ret;
-  ret.ras_index        = in.ras_index;
-  ret.pred_taken       = in.pred_taken;
-  ret.bim_value        = in.bim_value;
-  ret.btb_valid        = in.btb_valid;
-  ret.pred_target_vaddr = in.pred_target_vaddr;
-
   ret.wr_reg.valid = in.wr_reg.valid;
   ret.wr_reg.typ = in.wr_reg.typ;
   ret.wr_reg.regidx = in.wr_reg.regidx;
   ret.wr_reg.rnid = in.wr_reg.rnid;
-
-  ret.except_valid = 1'b0;
-  ret.except_type  = INST_ADDR_MISALIGN;
 
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;

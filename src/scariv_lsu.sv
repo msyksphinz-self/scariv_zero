@@ -95,7 +95,7 @@ module scariv_lsu
    );
 
 localparam MEM_PORT_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
-
+localparam LSU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 done_if ex3_internal_done_if();
 
 scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
@@ -107,7 +107,7 @@ scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
 scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
 
 scariv_lsu_pkg::lsu_issue_entry_t               w_issue_from_iss;
-logic [scariv_conf_pkg::RV_LSU_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
+logic [LSU_ISS_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
 lsu_pipe_haz_if w_lsu_pipe_haz_if ();
 lsu_pipe_req_if w_lsu_pipe_req_if ();
@@ -134,7 +134,7 @@ u_scariv_disp_pickup
 
 scariv_lsu_issue_unit
 #(
-  .ENTRY_SIZE (scariv_conf_pkg::RV_LSU_ENTRY_SIZE),
+  .ENTRY_SIZE (LSU_ISS_ENTRY_SIZE),
   .IN_PORT_SIZE(MEM_PORT_SIZE)
 )
 u_issue_unit

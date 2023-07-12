@@ -20,9 +20,9 @@ import scariv_lsu_pkg::*;
   rob_info_if.slave           rob_info_if,
 
    input logic                i_put,
+   input lsu_issue_entry_t    i_put_entry,
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
-   input scariv_pkg::disp_t   i_put_data,
    input logic                i_stq_rmw_existed,
 
    output logic               o_entry_valid,
@@ -66,12 +66,13 @@ scariv_lsu_pkg::lsu_issue_entry_t w_init_entry;
 
 logic    w_oldest_ready;
 
-scariv_pkg::rnid_t w_rs_rnid[2];
-scariv_pkg::reg_t  w_rs_type[2];
-logic [ 1: 0] w_rs_rel_hit;
-logic [ 1: 0] w_rs_may_mispred;
-logic [ 1: 0] w_rs_phy_hit;
-logic [ 1: 0] w_rs_mispredicted;
+scariv_pkg::rnid_t w_rs1_rnid;
+scariv_pkg::reg_t  w_rs1_type;
+logic              w_rs1_rel_hit;
+logic              w_rs1_may_mispred;
+logic              w_rs1_phy_hit;
+logic              w_rs1_mispredicted;
+logic              w_rs1_pred_mispredicted;
 
 logic     w_entry_flush;
 logic     w_commit_flush;
@@ -88,35 +89,25 @@ logic w_pc_update_before_entry;
 scariv_lsu_pkg::lsu_sched_state_t r_state;
 scariv_lsu_pkg::lsu_sched_state_t w_state_next;
 
+// Only rs1 operand ready is checked.
 function logic all_operand_ready(scariv_lsu_pkg::lsu_issue_entry_t entry);
   logic     ret;
-  ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
-        (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
-        (!entry.rd_regs[2].valid | entry.rd_regs[2].valid  & (entry.rd_regs[2].ready | entry.rd_regs[2].predict_ready));
+  ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)); // &
+        // (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
+        // (!entry.rd_regs[2].valid | entry.rd_regs[2].valid  & (entry.rd_regs[2].ready | entry.rd_regs[2].predict_ready));
   return ret;
 endfunction // all_operand_ready
 
-generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
-  assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
-  assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
+assign w_rs1_rnid = r_entry.rd_regs[0].rnid;
+assign w_rs1_type = r_entry.rd_regs[0].typ;
+select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+                                      .o_valid   (w_rs1_rel_hit), .o_may_mispred (w_rs1_may_mispred));
+select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+                                      .o_valid   (w_rs1_phy_hit));
+select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
+                                      .o_mispred (w_rs1_mispredicted));
 
-  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
-                                        .o_valid   (w_rs_rel_hit[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
-                                        .o_valid   (w_rs_phy_hit[rs_idx]));
-  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
-                                        .o_mispred (w_rs_mispredicted[rs_idx]));
-end
-endgenerate
-
-logic [ 1: 0] w_rs_pred_mispredicted;
-logic                     w_rs_pred_mispredicted_or;
-generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_pred_mispred_loop
-  assign w_rs_pred_mispredicted[rs_idx] = r_entry.rd_regs[rs_idx].predict_ready & w_rs_mispredicted[rs_idx];
-end
-endgenerate
-assign w_rs_pred_mispredicted_or = |w_rs_pred_mispredicted;
-
+assign w_rs1_pred_mispredicted = r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted;
 
 always_comb begin
   w_state_next  = r_state;
@@ -124,10 +115,8 @@ always_comb begin
   w_issued_next = r_issued;
   w_entry_next  = r_entry;
 
-  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
-    w_entry_next.rd_regs[rs_idx].ready         = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
-    w_entry_next.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
-  end
+  w_entry_next.rd_regs[0].ready         = r_entry.rd_regs[0].ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.rd_regs[0].predict_ready = w_rs1_rel_hit & w_rs1_may_mispred;
 
   if (r_entry.valid) begin
     w_entry_next.oldest_valid = r_entry.oldest_valid | w_oldest_ready;
@@ -152,7 +141,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
+        if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs1_pred_mispredicted) begin
           w_issued_next = 1'b1;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_ISSUED;
         end
@@ -163,7 +152,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (w_rs_pred_mispredicted_or) begin
+        if (w_rs1_pred_mispredicted) begin
           w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
@@ -175,8 +164,6 @@ always_comb begin
                                     r_entry.haz_reason;
           w_state_next            = i_ex1_updates.hazard_typ != EX1_HAZ_NONE  ? scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT :
                                     scariv_lsu_pkg::LSU_SCHED_EX2;
-          w_entry_next.except_valid    = i_ex1_updates.tlb_except_valid;
-          w_entry_next.except_type     = i_ex1_updates.tlb_except_type;
         end else begin
           w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         end
@@ -242,18 +229,13 @@ always_comb begin
 end // always_comb
 
 
-assign w_init_entry = scariv_lsu_pkg::assign_lsu_issue_entry(i_put_data, i_cmt_id, i_grp_id,
-                                                             w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred,
-                                                             i_stq_rmw_existed);
-
-
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
 assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
-assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
+assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_put_entry.br_mask, br_upd_if.brtag,
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush;
 
