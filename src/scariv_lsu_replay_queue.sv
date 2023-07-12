@@ -146,8 +146,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
 end
 
-assign w_replay_additional_queue_tail = r_replay_additional_queue[r_replay_queue_tail_ptr];
-
 ring_fifo
 #(
     .T     (replay_queue_t),
@@ -184,6 +182,7 @@ end
 
 assign w_head_is_oldest = (rob_info_if.cmt_id == w_replay_additional_queue_tail.cmt_id) &
                           ((rob_info_if.done_grp_id & w_replay_additional_queue_tail.grp_id-1) == w_replay_additional_queue_tail.grp_id-1);
+assign w_replay_additional_queue_tail = r_replay_additional_queue[r_replay_queue_tail_ptr];
 
 always_comb begin
     if (!w_empty) begin

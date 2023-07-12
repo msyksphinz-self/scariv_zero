@@ -180,7 +180,8 @@ always_comb begin
       end
       if (w_tree_flush_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
-          w_entry_next.dead [d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
 `ifdef SIMULATION
           w_entry_next.sim_dead_reason[d_idx] = DEAD_PREVINST;
 `endif // SIMULATION
