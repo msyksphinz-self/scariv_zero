@@ -113,19 +113,23 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
     assign w_entry_flush  = w_commit_flush | w_br_flush;
 
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
-        if (w_queue_push &
-            (idx == r_replay_queue_head_ptr)) begin
-            r_replay_additional_queue[idx].valid   <= 1'b1;
-            r_replay_additional_queue[idx].dead    <= 1'b0;
-            r_replay_additional_queue[idx].cmt_id  <= lsu_pipe_haz_if.payload.cmt_id;
-            r_replay_additional_queue[idx].grp_id  <= lsu_pipe_haz_if.payload.grp_id;
-            r_replay_additional_queue[idx].br_mask <= lsu_pipe_haz_if.payload.br_mask;
-        end else if (w_queue_pop &
-                (idx == r_replay_queue_tail_ptr)) begin
-            r_replay_additional_queue[idx].valid  <= 1'b0;
-        end else if (r_replay_additional_queue[idx].valid &
-                     w_entry_flush) begin
-            r_replay_additional_queue[idx].dead <= 1'b1;
+        if (!i_reset_n) begin
+            r_replay_additional_queue[idx].valid <= 1'b0;
+        end else begin
+            if (w_queue_push &
+                (idx == r_replay_queue_head_ptr)) begin
+                r_replay_additional_queue[idx].valid   <= 1'b1;
+                r_replay_additional_queue[idx].dead    <= 1'b0;
+                r_replay_additional_queue[idx].cmt_id  <= lsu_pipe_haz_if.payload.cmt_id;
+                r_replay_additional_queue[idx].grp_id  <= lsu_pipe_haz_if.payload.grp_id;
+                r_replay_additional_queue[idx].br_mask <= lsu_pipe_haz_if.payload.br_mask;
+            end else if (w_queue_pop &
+                    (idx == r_replay_queue_tail_ptr)) begin
+                r_replay_additional_queue[idx].valid  <= 1'b0;
+            end else if (r_replay_additional_queue[idx].valid &
+                         w_entry_flush) begin
+                r_replay_additional_queue[idx].dead <= 1'b1;
+            end
         end
     end
 end endgenerate
