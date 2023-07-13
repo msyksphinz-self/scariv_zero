@@ -246,7 +246,7 @@ always_comb begin
                                          (i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS);
       end // if (w_entry_next.is_valid & i_ex1_q_valid)
       if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
-        w_entry_next.state = STQ_ISSUE_WAIT;
+        // w_entry_next.state = STQ_ISSUE_WAIT;
         w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
         w_entry_next.inst.rd_regs[1].predict_ready = 1'b0;
       end
