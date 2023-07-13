@@ -36,8 +36,10 @@ module scariv_lsu_top
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
-    regread_if.master   ex1_int_regread[scariv_conf_pkg::LSU_INST_NUM * 2-1:0],
-    regread_if.master   ex1_fp_regread [scariv_conf_pkg::LSU_INST_NUM-1: 0],
+    regread_if.master   ex1_int_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
+
+    regread_if.master   int_rs2_regread,
+    regread_if.master   fp_rs2_regread ,
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -146,9 +148,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .disp       (disp                   ),
     .cre_ret_if (iss_cre_ret_if[lsu_idx]),
 
-    .ex1_regread_rs1     (ex1_int_regread[lsu_idx * 2 + 0]),
-    .ex1_int_regread_rs2 (ex1_int_regread[lsu_idx * 2 + 1]),
-    .ex1_fp_regread_rs2  (ex1_fp_regread[lsu_idx]),
+    .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
 
     .i_early_wr(i_early_wr),
     .i_phy_wr  (i_phy_wr),
@@ -176,6 +176,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_st_requester_empty (w_uc_write_if.is_empty ),
 
     .i_stq_rmw_existed (w_stq_rmw_existed),
+    .i_stq_rs2_resolve (w_stq_rs2_resolve),
 
     .i_missu_resolve (w_missu_resolve),
     .i_missu_is_full (w_missu_is_full),
@@ -259,6 +260,9 @@ scariv_stq
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
+
+  .int_rs2_regread (int_rs2_regread),
+  .fp_rs2_regread  (fp_rs2_regread ),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
  .stq_haz_check_if (w_stq_haz_check_if),

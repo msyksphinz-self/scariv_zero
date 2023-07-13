@@ -35,8 +35,6 @@ module scariv_lsu_pipe
  input [MEM_Q_SIZE-1: 0]                i_ex0_replay_index_oh,
 
  regread_if.master                     ex1_regread_rs1,
- regread_if.master                     ex1_int_regread_rs2,
- regread_if.master                     ex1_fp_regread_rs2,
 
  output scariv_pkg::early_wr_t         o_ex1_early_wr,
  output scariv_pkg::phy_wr_t           o_ex3_phy_wr,
@@ -316,16 +314,6 @@ bit_oh_or #(
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
-assign ex1_int_regread_rs2.valid = r_ex1_issue.valid &
-                                   (r_ex1_issue.rd_regs[1].typ == scariv_pkg::GPR) &
-                                   r_ex1_issue.rd_regs[1].valid;
-assign ex1_int_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
-
-assign ex1_fp_regread_rs2.valid = r_ex1_issue.valid &
-                                  (r_ex1_issue.rd_regs[1].typ == scariv_pkg::FPR) &
-                                  r_ex1_issue.rd_regs[1].valid;
-assign ex1_fp_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
-
 riscv_pkg::xlen_t w_ex1_rs1_selected_data;
 assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : ex1_regread_rs1.data;
 
@@ -415,8 +403,6 @@ assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
 assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;
 assign o_ex1_q_updates.vaddr               = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr               = w_ex1_tlb_resp.paddr;
-assign o_ex1_q_updates.st_data_valid       = r_ex1_issue.rd_regs[1].ready;
-assign o_ex1_q_updates.st_data             = ex1_fp_regread_rs2.valid ? ex1_fp_regread_rs2.data : ex1_int_regread_rs2.data ;
 assign o_ex1_q_updates.size                = r_ex1_pipe_ctrl.size;
 assign o_ex1_q_updates.is_rmw              = (r_ex1_pipe_ctrl.op == OP_RMW);
 assign o_ex1_q_updates.rmwop               = r_ex1_pipe_ctrl.rmwop;
@@ -529,8 +515,8 @@ assign lsu_pipe_haz_if.payload.hazard_typ     = o_ex2_q_updates.hazard_typ;
 assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
 assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
 assign lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
-assign lsu_pipe_haz_if.payload.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
-
+assign lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh : 
+                                                stq_haz_check_if.ex2_haz_index;
 
 // ---------------------
 // Misprediction Update

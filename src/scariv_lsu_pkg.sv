@@ -43,6 +43,10 @@ typedef logic [scariv_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
                           scariv_conf_pkg::LDQ_SIZE :
                           scariv_conf_pkg::STQ_SIZE;
 
+localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ? 
+                               scariv_conf_pkg::MISSU_ENTRY_SIZE :
+                               scariv_conf_pkg::STQ_SIZE;
+
 typedef enum logic [ 1: 0] {
   MESI_INVALID   = 0,
   MESI_EXCLUSIVE = 1,
@@ -326,8 +330,6 @@ typedef struct packed {
   logic [MEM_Q_SIZE-1:0]          index_oh;
   scariv_pkg::vaddr_t vaddr;
   scariv_pkg::paddr_t paddr;
-  logic                           st_data_valid;
-  scariv_pkg::alen_t  st_data;
 
   // Atomic Operations
   logic                         is_rmw;
@@ -908,7 +910,7 @@ typedef struct packed {
   scariv_pkg::reg_wr_issue_t wr_reg;
   scariv_pkg::paddr_t        paddr;
   scariv_lsu_pkg::ex2_haz_t  hazard_typ;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+  logic [HAZARD_INDEX_SIZE-1: 0] hazard_index;
 } lsu_replay_queue_t;
 
 endpackage // scariv_lsu_pkg

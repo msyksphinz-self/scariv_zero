@@ -29,8 +29,6 @@ module scariv_lsu
     cre_ret_if.slave                             cre_ret_if,
 
     regread_if.master ex1_regread_rs1,
-    regread_if.master ex1_int_regread_rs2,
-    regread_if.master ex1_fp_regread_rs2,
 
     /* Forwarding path */
     input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -79,6 +77,7 @@ module scariv_lsu
     input logic             i_missu_is_empty,
 
     input logic             i_stq_rmw_existed,
+    input stq_resolve_t     i_stq_rs2_resolve,
 
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_early_wr,
@@ -200,6 +199,7 @@ u_replay_queue
 
   .i_missu_resolve (i_missu_resolve ),
   .i_missu_is_full (i_missu_is_full ),
+  .i_stq_rs2_resolve (i_stq_rs2_resolve),
 
   .o_full (w_replay_queue_full),
 
@@ -273,8 +273,6 @@ u_lsu_pipe
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
    .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_int_regread_rs2(ex1_int_regread_rs2),
-   .ex1_fp_regread_rs2 (ex1_fp_regread_rs2),
 
    .i_mispred_lsu (i_mispred_lsu),
 

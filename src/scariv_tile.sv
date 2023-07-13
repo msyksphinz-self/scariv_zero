@@ -376,8 +376,10 @@ u_scariv_lsu_top
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 
-    .ex1_int_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) +: (scariv_conf_pkg::LSU_INST_NUM * 2)]),
-    .ex1_fp_regread  (fp_regread[(scariv_conf_pkg::FPU_INST_NUM * 3) +: scariv_conf_pkg::LSU_INST_NUM]),
+    .ex1_int_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
+
+    .int_rs2_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) +  scariv_conf_pkg::LSU_INST_NUM]),
+    .fp_rs2_regread  (fp_regread [(scariv_conf_pkg::FPU_INST_NUM * 3)]),
 
     .ptw_if       (w_ptw_if[1 +: scariv_conf_pkg::LSU_INST_NUM]),
     .lsu_access   (w_lsu_access),
@@ -418,10 +420,10 @@ u_scariv_bru (
     .cre_ret_if (bru_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  0]),
     .ex1_regread_rs2(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  1]),
 
     .i_early_wr(w_ex1_early_wr),
@@ -536,7 +538,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
       .ex1_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                       scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                       scariv_conf_pkg::LSU_INST_NUM + 1 +
                                        2 + 1 +
                                        fpu_idx]),
 

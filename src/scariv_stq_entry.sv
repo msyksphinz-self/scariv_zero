@@ -36,6 +36,10 @@ module scariv_stq_entry
    input logic                                i_ex2_q_valid,
    input ex2_q_update_t                       i_ex2_q_updates,
 
+  // rs2 store data interface
+    input logic                               i_rs2_read_accepted,
+    input scariv_pkg::alen_t                  i_rs2_data,
+
    output stq_entry_t                         o_entry,
    output logic                               o_entry_ready,
 
@@ -129,8 +133,7 @@ assign w_dead_state_clear = i_commit.commit &
                             (i_commit.cmt_id == r_entry.inst.cmt_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
-                                w_rs_phy_hit[1] & !w_rs_mispredicted[1] |
-                                i_ex1_q_valid & i_ex1_q_updates.st_data_valid;
+                                w_rs_phy_hit[1] & !w_rs_mispredicted[1];
 
 scariv_pkg::grp_id_t w_normal_comitted_grp_id;
 scariv_pkg::grp_id_t w_commit_grp_id_mask;
@@ -178,11 +181,12 @@ always_comb begin
 
   w_entry_next.inst.rd_regs[1].ready = w_entry_rs2_ready_next | r_entry.inst.rd_regs[1].ready;
   if (~w_entry_next.is_rs2_get) begin
+    if (r_entry.inst.rd_regs[1].ready & i_rs2_read_accepted) begin
+      w_entry_next.rs2_data   = i_rs2_data;
+      w_entry_next.is_rs2_get = 1'b1;      
+    end
     if (w_rs_phy_hit[1]) begin
       w_entry_next.rs2_data   = w_rs2_phy_data;
-      w_entry_next.is_rs2_get = 1'b1;
-    end else if (i_ex1_q_valid & i_ex1_q_updates.st_data_valid) begin
-      w_entry_next.rs2_data   = i_ex1_q_updates.st_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
