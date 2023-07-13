@@ -198,7 +198,7 @@ always_comb begin
             w_lsu_replay_valid = 1'b1;
         end else begin
             case (w_rd_replay_queue_info.hazard_typ)
-                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & ~i_stq_rs2_resolve.index) == 'h0;
+                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & i_stq_rs2_resolve.index) == 'h0;
                 EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = w_head_is_oldest & i_st_buffer_empty & i_missu_is_empty;
                 EX2_HAZ_L1D_CONFLICT :   w_lsu_replay_valid = 1'b1; // Replay immediately
                 EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = !i_missu_is_full;

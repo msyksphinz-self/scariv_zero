@@ -64,11 +64,8 @@ module scariv_stq
    uc_write_if.master             uc_write_if,
 
    // Snoop Interface
-   stq_snoop_if.slave     stq_snoop_if,
-
-   output scariv_pkg::done_rpt_t      o_done_report[scariv_conf_pkg::LSU_INST_NUM],
-   output scariv_pkg::another_flush_t o_another_flush_report[scariv_conf_pkg::LSU_INST_NUM]
-   );
+   stq_snoop_if.slave     stq_snoop_if
+);
 
 // =========================
 // Declarations
@@ -79,12 +76,6 @@ scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [$clog2(scariv_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
-logic [scariv_conf_pkg::STQ_SIZE-1:0] w_entry_ready;
-
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rerun_request[scariv_conf_pkg::LSU_INST_NUM];
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rerun_request_oh[scariv_conf_pkg::LSU_INST_NUM];
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_rerun_request_rev_oh[scariv_conf_pkg::STQ_SIZE] ;
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_stq_replay_conflict[scariv_conf_pkg::STQ_SIZE] ;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 
@@ -313,8 +304,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_rs2_data          (w_stq_entries[s_idx].inst.rd_regs[1].typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data), 
 
      .o_entry (w_stq_entries[s_idx]),
-     .o_entry_ready (w_entry_ready[s_idx]),
-     .i_entry_picked (|w_rerun_request_rev_oh[s_idx] & !(|w_stq_replay_conflict[s_idx])),
 
      .i_missu_is_empty(i_missu_is_empty),
 
@@ -344,14 +333,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                           w_stq_entries[s_idx].inst.rd_regs[1].ready;
 
     assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
-                                  (w_stq_entries[s_idx].is_rs2_get |
-                                   (w_stq_entries[s_idx].state == STQ_DEAD));
+                                  (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
     for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
       assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
-    end
-
-    for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-      assign w_rerun_request[p_idx][s_idx] = w_entry_ready[s_idx] & w_stq_entries[s_idx].pipe_sel_idx_oh[p_idx];
     end
 
     // Forwarding check
@@ -367,8 +351,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                   ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
       assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                             (w_stq_entries[s_idx].state != STQ_DEAD) &
-                                             (w_entry_older_than_fwd | (w_stq_entries[s_idx].state == STQ_COMMIT)) &
+                                             !w_stq_entries[s_idx].dead &
+                                             (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
                                              w_stq_entries[s_idx].paddr_valid &
                                              w_stq_entries[s_idx].inst.rd_regs[1].ready &
                                              w_same_addr_region &
@@ -452,28 +436,6 @@ end
 endgenerate
 
 
-// ===============
-// replay logic
-// ===============
-// generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-//   assign stq_replay_if[p_idx].valid = |w_rerun_request[p_idx];
-//   stq_entry_t w_stq_replay_entry;
-// 
-//   bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_rerun_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rerun_request_oh[p_idx]));
-//   bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_rerun_request_oh[p_idx]), .i_data(w_stq_entries), .o_selected(w_stq_replay_entry));
-// 
-//   assign stq_replay_if[p_idx].issue    = w_stq_replay_entry.inst;
-//   assign stq_replay_if[p_idx].index_oh = w_rerun_request_oh[p_idx];
-// 
-//   for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
-//     assign w_rerun_request_rev_oh[s_idx][p_idx] = w_rerun_request_oh[p_idx][s_idx];
-// 
-//     assign w_stq_replay_conflict[s_idx][p_idx] = stq_replay_if[p_idx].conflict & w_rerun_request[p_idx][s_idx];
-//   end
-// 
-// end // block: pipe_loop
-// endgenerate
-
 // =========================
 // STQ Forwarding Logic
 // =========================
@@ -518,54 +480,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     o_stq_rs2_resolve.index <= w_stq_rs2_get;
   end
 end
-
-// ===============
-// Done Logic
-// ===============
-generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) begin : done_loop
-  logic [scariv_conf_pkg::STQ_SIZE-1:0]  w_stq_done_array;
-  stq_entry_t                          w_stq_done_entry;
-  logic [scariv_conf_pkg::STQ_SIZE-1:0]  w_stq_done_oh;
-
-  for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : q_loop
-    assign w_stq_done_array[s_idx] = (w_stq_entries[s_idx].state == STQ_DONE_EX3) &
-                                     w_stq_entries[s_idx].pipe_sel_idx_oh[d_idx];
-  end
-  bit_extract_msb #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_done_oh (.in(w_stq_done_array), .out(w_stq_done_oh));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_rerun_oh  (.i_oh(w_stq_done_oh), .i_data(w_stq_entries), .o_selected(w_stq_done_entry));
-
-  assign o_done_report[d_idx].valid   = |w_stq_done_oh;
-  assign o_done_report[d_idx].cmt_id  = w_stq_done_entry.inst.cmt_id;
-  assign o_done_report[d_idx].grp_id  = w_stq_done_entry.inst.grp_id;
-  assign o_done_report[d_idx].except_valid = w_stq_done_entry.except_valid;
-  assign o_done_report[d_idx].except_type  = w_stq_done_entry.except_type;
-  assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_stq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
-                                              w_stq_done_entry.addr};
-
-  assign o_another_flush_report[d_idx].valid  = w_stq_done_entry.another_flush_valid;
-  assign o_another_flush_report[d_idx].cmt_id = w_stq_done_entry.another_flush_cmt_id;
-  assign o_another_flush_report[d_idx].grp_id = w_stq_done_entry.another_flush_grp_id;
-
-
-`ifdef SIMULATION
-  // Kanata
-  import "DPI-C" function void log_stage
-    (
-     input longint id,
-     input string  stage
-     );
-
-  always_ff @ (negedge i_clk, negedge i_reset_n) begin
-    if (i_reset_n) begin
-      if (o_done_report[d_idx].valid) begin
-        log_stage (w_stq_done_entry.kanata_id, "DO");
-      end
-    end
-  end
-`endif // SIMULATION
-
-end
-endgenerate
 
 // ==============================
 // After commit, store operation
@@ -723,23 +637,6 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
     $fwrite(fp, "cmt_id:%d, ", entry.inst.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.inst.grp_id);
 
-    $fwrite(fp, "state:\"");
-    unique case(entry.state)
-      STQ_INIT             : $fwrite(fp, "INIT");
-      STQ_TLB_HAZ          : $fwrite(fp, "TLB_HAZ");
-      STQ_ISSUE_WAIT       : $fwrite(fp, "ISSUE_WAIT");
-      STQ_DONE_EX2         : $fwrite(fp, "DONE_EX2");
-      STQ_COMMIT           : $fwrite(fp, "COMMIT");
-      STQ_WAIT_ST_DATA     : $fwrite(fp, "WAIT_ST_DATA");
-      STQ_DEAD             : $fwrite(fp, "DEAD");
-      STQ_WAIT_COMMIT      : $fwrite(fp, "WAIT_COMMIT");
-      STQ_DONE_EX3         : $fwrite(fp, "DONE_EX3");
-      STQ_ISSUED           : $fwrite(fp, "ISSUED");
-      STQ_OLDEST_HAZ       : $fwrite(fp, "OLDEST_HAZ");
-      STQ_WAIT_OLDEST      : $fwrite(fp, "STQ_WAIT_OLDEST");
-      STQ_WAIT_STBUF       : $fwrite(fp, "STQ_WAIT_STBUF");
-      default              : $fatal(0, "State Log lacked. %d\n", entry.state);
-    endcase // unique case (entry.state)
     $fwrite(fp, "\"");
     $fwrite(fp, "},\n");
   end // if (entry.valid)

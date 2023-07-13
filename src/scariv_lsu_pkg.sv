@@ -559,33 +559,24 @@ typedef struct packed {
 } stq_static_info_t;
 
 typedef struct packed {
-  logic           is_valid;
+  logic            is_valid;
   brtag_t          brtag;
   brmask_t         br_mask;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   stq_static_info_t inst;
-  // scariv_pkg::issue_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  stq_state_t        state;
-  // scariv_pkg::vaddr_t  vaddr;
-  // scariv_pkg::paddr_t  paddr;
-  scariv_pkg::maxaddr_t  addr;
-  logic                                 paddr_valid;
-  logic                                 is_rs2_get;
-  scariv_pkg::alen_t                      rs2_data;
 
-  logic              except_valid;
-  scariv_pkg::except_t except_type;
+  logic                 dead;
 
-  logic              another_flush_valid;
-  scariv_pkg::cmt_id_t another_flush_cmt_id;
-  scariv_pkg::grp_id_t another_flush_grp_id;
+  scariv_pkg::maxaddr_t addr;
+  logic                 paddr_valid;
+  logic                 is_rs2_get;
+  scariv_pkg::alen_t    rs2_data;
 
-  logic              is_committed;
-  logic              oldest_ready;
+  logic                except_valid;
+  logic                is_committed;
+  
   // Uncached Access Region
-  logic              is_uc;
-
+  logic                         is_uc;
   // Atomic Operations
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
@@ -593,6 +584,8 @@ typedef struct packed {
   logic                         is_lr;
   logic                         is_sc;
   logic                         sc_success;
+
+  logic st_buf_finished;
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
 `endif // SIMULATION

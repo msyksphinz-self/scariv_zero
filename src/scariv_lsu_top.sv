@@ -282,11 +282,8 @@ scariv_stq
 
  .stq_snoop_if(stq_snoop_if),
 
- .o_stq_rs2_resolve (w_stq_rs2_resolve),
-
- .o_done_report          (),
- .o_another_flush_report ()
- );
+ .o_stq_rs2_resolve (w_stq_rs2_resolve)
+);
 
 assign w_l1d_rd_if [L1D_MISSU_PORT].s0_valid = 'h0;
 
