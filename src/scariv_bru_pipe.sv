@@ -117,8 +117,8 @@ assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 // EX0 brtag flush check
-assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.br_mask, ex3_br_upd_if.brtag,
-                                                      ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex0_issue.valid;
+assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, ex3_br_upd_if.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
+                                                        ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex0_issue.valid;
 
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
@@ -203,7 +203,7 @@ bit_oh_or #(
 );
 
 // EX1 brtag flush check
-assign w_ex1_br_flush  = scariv_pkg::is_br_flush_target(r_ex1_issue.br_mask, ex3_br_upd_if.brtag,
+assign w_ex1_br_flush  = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
                                                       ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex1_issue.valid;
 
 always_comb begin
@@ -241,7 +241,7 @@ assign w_ex2_rs1_pred_hit = r_ex2_issue.rd_regs[0].valid & r_ex2_issue.rd_regs[0
 assign w_ex2_rs2_pred_hit = r_ex2_issue.rd_regs[1].valid & r_ex2_issue.rd_regs[1].predict_ready ? |w_ex2_rs2_fwd_valid : 1'b1;
 
 // EX2 brtag flush check
-assign w_ex2_br_flush  = scariv_pkg::is_br_flush_target(r_ex2_issue.br_mask, ex3_br_upd_if.brtag,
+assign w_ex2_br_flush  = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
                                                       ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex3_issue.valid;
 
 always_comb begin

@@ -37,7 +37,7 @@ int json_fp;
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.u_l1d_mshr.dump_json(json_fp);
 
       // BRU Scheduler
-      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_bru.u_scariv_issue_unit.dump_json("bru", json_fp, 0);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_bru.u_issue_unit.dump_json("bru", json_fp, 0);
 
       // CSU Scheduler
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_issue_unit.dump_json("csu", json_fp, 0);

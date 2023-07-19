@@ -306,6 +306,7 @@ typedef struct packed {
     logic          valid;
 
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
+    logic    cmt_id_msb;
     grp_id_t grp_id;
 
     rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
@@ -568,7 +569,7 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & |(commit.flush_valid);
+  return commit.commit & |(commit.flush_valid & ~commit.dead_id);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
@@ -605,11 +606,34 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
 endfunction // is_commit_flush_target
 
 
-function logic is_br_flush_target(brmask_t entry_br_mask,
-                                  brtag_t brtag,
-                                  logic br_dead,
-                                  logic br_mispredicted);
-  return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
+// function logic is_br_flush_target(brmask_t entry_br_mask,
+//                                   brtag_t brtag,
+//                                   logic br_dead,
+//                                   logic br_mispredicted);
+// logic w_cmt_is_older;
+// logic entry_older;
+// 
+// w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+//                  br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+//                  br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+// entry_older = w_cmt_is_older ||
+//               (br_cmt_id == entry_cmt_id && |(br_flush_valid & entry_grp_id));
+//   return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
+// 
+// endfunction // is_br_flush_target
+
+function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+                                  cmt_id_t br_cmt_id, grp_id_t br_grp_id,
+                                  logic br_dead, logic br_mispredicted);
+  logic w_cmt_is_older;
+  logic entry_older;
+  
+  w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id <= entry_grp_id);
+
+  return entry_older & br_mispredicted;
 
 endfunction // is_br_flush_target
 

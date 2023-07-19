@@ -100,7 +100,7 @@ logic w_ex0_br_flush;
 //
 // EX1 stage
 //
-scariv_lsu_pkg::lsu_pipe_issue_t        r_ex1_issue, r_ex1_issue_next;
+scariv_lsu_pkg::lsu_pipe_issue_t        r_ex1_issue, w_ex1_issue_next;
 logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
 scariv_pkg::vaddr_t      w_ex1_vaddr;
@@ -128,7 +128,7 @@ riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
 //
 // EX2 stage
 //
-scariv_lsu_pkg::lsu_pipe_issue_t       r_ex2_issue, r_ex2_issue_next;
+scariv_lsu_pkg::lsu_pipe_issue_t       r_ex2_issue, w_ex2_issue_next;
 logic [MEM_Q_SIZE-1: 0] r_ex2_index_oh;
 scariv_pkg::maxaddr_t   r_ex2_addr;
 lsu_pipe_ctrl_t         r_ex2_pipe_ctrl;
@@ -178,12 +178,18 @@ assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
 // Pipeline Logic
 //
 always_comb begin
-  r_ex1_issue_next       = w_ex0_issue;
-  r_ex1_issue_next.valid = w_ex0_issue.valid & ~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred & ~w_ex0_commit_flush & ~w_ex0_br_flush;
+  w_ex1_issue_next       = w_ex0_issue;
+  w_ex1_issue_next.valid = w_ex0_issue.valid & ~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred & ~w_ex0_commit_flush & ~w_ex0_br_flush;
+  if (br_upd_if.update) begin
+    w_ex1_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
 
-  r_ex2_issue_next       = r_ex1_issue;
-  r_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
-
+  w_ex2_issue_next       = r_ex1_issue;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
+  if (br_upd_if.update) begin
+    w_ex2_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
+  end
+  
   w_ex3_issue_next       = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & (r_ex2_except_valid | ~w_ex2_haz_detected) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
 end
@@ -211,7 +217,7 @@ assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0]
 assign w_ex0_rs2_mispred = w_ex0_issue.rd_regs[1].valid & w_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, i_commit) & w_ex0_issue.valid;
-assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.br_mask, br_upd_if.brtag,
+assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ex0_issue.valid;
 
 
@@ -226,11 +232,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_uc     <= 1'b0;
   end else begin
-    r_ex1_issue     <= r_ex1_issue_next;
+    r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
 
-    r_ex2_issue     <= r_ex2_issue_next;
+    r_ex2_issue     <= w_ex2_issue_next;
     r_ex2_index_oh  <= r_ex1_index_oh;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
     r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
@@ -435,7 +441,7 @@ assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_D
 assign ex1_l1d_rd_if.s0_lock_valid = 1'b0;
 
 assign w_ex1_commit_flush = scariv_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit) & r_ex1_issue.valid;
-assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.br_mask, br_upd_if.brtag,
+assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex1_issue.valid;
 
 
@@ -504,19 +510,24 @@ assign o_ex2_q_updates.is_sc      = r_ex2_is_sc;
 assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
 
 // Interface to Replay Queue
-assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
-assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
-assign lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
-assign lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
-assign lsu_pipe_haz_if.payload.br_mask        = r_ex2_issue.br_mask;
-assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
-assign lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
-assign lsu_pipe_haz_if.payload.hazard_typ     = o_ex2_q_updates.hazard_typ;
-assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
-assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
-assign lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
-assign lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh : 
+always_comb begin
+  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
+  lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
+  lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
+  lsu_pipe_haz_if.payload.br_mask      = r_ex2_issue.br_mask;
+  if (br_upd_if.update) begin
+    lsu_pipe_haz_if.payload.br_mask[br_upd_if.brtag] = 1'b0;
+  end
+  lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
+  lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
+  lsu_pipe_haz_if.payload.hazard_typ     = o_ex2_q_updates.hazard_typ;
+  lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
+  lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
+  lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
+  lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh : 
                                                 stq_haz_check_if.ex2_haz_index;
+end
 
 // ---------------------
 // Misprediction Update
@@ -666,7 +677,7 @@ always_comb begin
 end // always_comb
 
 assign w_ex2_commit_flush = scariv_pkg::is_commit_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, i_commit) & r_ex2_issue.valid;
-assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.br_mask, br_upd_if.brtag,
+assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex2_issue.valid;
 
 //

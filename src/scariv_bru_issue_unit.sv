@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_issue_unit
+// NAME : scariv_bru_issue_unit
 // TYPE : module
 // ------------------------------------------------------------------------
 // Scheduler for ALU
@@ -7,7 +7,7 @@
 //
 // ------------------------------------------------------------------------
 
-module scariv_issue_unit
+module scariv_bru_issue_unit
   #(
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
@@ -44,7 +44,10 @@ module scariv_issue_unit
  // Commit notification
  input scariv_pkg::commit_blk_t          i_commit,
  // Branch Flush Notification
- br_upd_if.slave                       br_upd_if
+ br_upd_if.slave                       br_upd_if,
+
+ // Branch Tag Clean Interface
+ brtag_if.master                       brtag_if
  );
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
@@ -99,7 +102,7 @@ u_entry_freelist
    .i_push    (|w_entry_finish),
    .i_push_id (w_entry_finish_index),
 
-   .i_pop   (i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}}),
+   .i_pop   (i_disp_valid),
    .o_pop_id(w_entry_load_index),
 
    .o_is_empty()
@@ -109,8 +112,7 @@ u_entry_freelist
 assign w_entry_out_ptr_oh = 'h1;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
-                             (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
+assign w_credit_return_val = (|w_entry_finish)    ? 'h1 : 'h0;
 
 scariv_credit_return_slave
   #(.MAX_CREDITS(ENTRY_SIZE))
@@ -119,11 +121,23 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_entry_finish) | w_ignore_disp),
+ .i_get_return(|w_entry_finish   ),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
  );
+
+scariv_pkg::issue_t w_finished_entry_sel;
+bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_finished_entry (.i_oh(w_entry_finish_oh), .i_data(w_entry), .o_selected(w_finished_entry_sel));
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+        brtag_if.valid <= 1'b0;
+    end else begin
+        brtag_if.valid <= |w_entry_finish;
+        brtag_if.brtag <= w_finished_entry_sel.brtag;
+    end
+end
 
 `ifdef SIMULATION
 /* verilator lint_off WIDTH */
@@ -193,7 +207,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   scariv_pkg::disp_t          w_disp_entry;
   scariv_pkg::grp_id_t        w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (w_entry_load_index[i_idx] == s_idx);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (w_entry_load_index[i_idx] == s_idx);
   end
 
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
@@ -213,10 +227,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .rob_info_if   (rob_info_if),
 
     .i_put      (|w_input_valid),
-    .i_dead_put (1'b0),
-    
-    .i_cmt_id   (i_cmt_id  ),
-    .i_grp_id   (w_disp_grp_id  ),
+    .i_dead_put (w_ignore_disp ),
+
+    .i_cmt_id   (i_cmt_id      ),
+    .i_grp_id   (w_disp_grp_id ),
     .i_put_data (w_disp_entry  ),
 
     .o_entry_valid(w_entry_valid[s_idx]),
@@ -295,7 +309,7 @@ endgenerate
 
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
-    $fwrite(fp, "  \"scariv_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "  \"scariv_bru_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
     $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
@@ -340,4 +354,4 @@ endfunction // dump_perf
 
 `endif // SIMULATION
 
-endmodule // scariv_issue_unit
+endmodule // scariv_bru_issue_unit

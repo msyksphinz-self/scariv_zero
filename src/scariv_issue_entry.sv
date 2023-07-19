@@ -24,6 +24,8 @@ module scariv_issue_entry
    rob_info_if.slave rob_info_if,
 
    input logic                i_put,
+   input logic                i_dead_put,
+
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
    input scariv_pkg::disp_t   i_put_data,
@@ -197,14 +199,14 @@ endgenerate
 
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
-assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
+assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
 assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
-assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
+assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
-assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush;
+assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush | i_dead_put;
 
 assign w_entry_finish = i_out_ptr_valid;
 

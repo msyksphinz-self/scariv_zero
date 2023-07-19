@@ -30,7 +30,7 @@ module scariv_inst_buffer
  input scariv_pkg::inst_buffer_in_t i_s2_inst,
  scariv_front_if.master             ibuf_front_if,
 
- br_upd_if.slave br_upd_fe_if
+ br_upd_if.slave br_upd_if
  );
 
 logic  w_ibuf_front_valid_next;
@@ -133,7 +133,9 @@ scariv_ibuf_pkg::inst_buf_t                 w_inst_buf_data[2];
 logic [$clog2(ic_word_num)+1-1:1]           w_out_inst_q_pc;
 logic                                       w_inst_queue_pop;
 
+logic                                       w_br_flush;
 logic                                       w_flush_pipeline;
+assign w_br_flush = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 
 // ----------------------------
 // Decode Unit Flush Interface
@@ -169,7 +171,7 @@ assign w_head_predict_taken_issued = w_inst_buffer_fire_next & w_predict_taken_v
 assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         w_inst_buf_valid[0] & r_pred_entry_kill_valid ;
-assign w_flush_pipeline = i_flush_valid;
+assign w_flush_pipeline = i_flush_valid | w_br_flush;
 
 assign w_inst_queue_pop = w_ptr_out_fire;
 
@@ -548,14 +550,16 @@ assign w_ibuf_front_valid_next = |w_inst_disp_mask & !r_pred_entry_kill_valid &
                                  !o_decode_flush.valid;
 assign w_inst_buffer_fire_next  = w_ibuf_front_valid_next & ibuf_front_if.ready;
 
+logic ibuf_front_if_valid_raw;
+assign ibuf_front_if.valid = ibuf_front_if_valid_raw & ~w_flush_pipeline;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    ibuf_front_if.valid <= 1'b0;
+    ibuf_front_if_valid_raw <= 1'b0;
   end else begin
     if (w_flush_pipeline) begin
-      ibuf_front_if.valid <= 1'b0;
+      ibuf_front_if_valid_raw <= 1'b0;
     end else if (ibuf_front_if.ready) begin
-      ibuf_front_if.valid   <= w_ibuf_front_valid_next;
+      ibuf_front_if_valid_raw   <= w_ibuf_front_valid_next;
       ibuf_front_if.payload <= w_ibuf_front_payload_next;
     end
   end
@@ -752,15 +756,12 @@ u_iq_call_stash_addr_oh (.i_oh(iq_is_call_valid_oh), .i_data(iq_call_stash_vaddr
 assign iq_is_call_valid_oh = {{scariv_conf_pkg::DISP_SIZE{1'b1}}{(w_ibuf_front_valid_next & ibuf_front_if.ready)}} & w_inst_disp_mask & w_inst_is_call;
 assign iq_is_ret_valid_oh  = {{scariv_conf_pkg::DISP_SIZE{1'b1}}{(w_ibuf_front_valid_next & ibuf_front_if.ready)}} & w_inst_disp_mask & w_inst_is_ret;
 
-logic w_ras_br_flush;
-assign w_ras_br_flush = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
-
 always_comb begin
-  if (w_ras_br_flush) begin
-    if (br_upd_fe_if.is_ret) begin
-      w_ras_index_next = br_upd_fe_if.ras_index - 'h1;
+  if (w_br_flush) begin
+    if (br_upd_if.is_ret) begin
+      w_ras_index_next = br_upd_if.ras_index - 'h1;
     end else begin
-      w_ras_index_next = br_upd_fe_if.ras_index;
+      w_ras_index_next = br_upd_if.ras_index;
     end
   end else begin
     w_ras_index_next = r_ras_index;

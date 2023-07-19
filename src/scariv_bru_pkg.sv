@@ -137,3 +137,18 @@ interface cmt_brtag_if;
   );
 
 endinterface // cmt_brtag_if
+
+interface brtag_if;
+  logic valid;
+  scariv_pkg::brtag_t brtag;
+
+  modport master (
+    output valid,
+    output brtag
+  );
+
+  modport slave (
+    input valid,
+    input brtag
+  );
+endinterface

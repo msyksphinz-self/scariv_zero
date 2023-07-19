@@ -103,11 +103,11 @@ select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (
                                    .o_valid (w_rs_phy_hit[1]), .o_data (w_rs2_phy_data));
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
-assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
+assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
 
-assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp.br_mask, br_upd_if.brtag,
+assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |

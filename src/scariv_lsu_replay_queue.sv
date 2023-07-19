@@ -109,7 +109,7 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
     assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_replay_additional_queue[idx].cmt_id,
                                                                r_replay_additional_queue[idx].grp_id,
                                                                i_commit) & r_replay_additional_queue[idx].valid;
-    assign w_br_flush     = scariv_pkg::is_br_flush_target(r_replay_additional_queue[idx].br_mask, br_upd_if.brtag,
+    assign w_br_flush     = scariv_pkg::is_br_flush_target(r_replay_additional_queue[idx].cmt_id, r_replay_additional_queue[idx].grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_replay_additional_queue[idx].valid;
     assign w_entry_flush  = w_commit_flush | w_br_flush;
 

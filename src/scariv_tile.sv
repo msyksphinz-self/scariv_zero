@@ -76,6 +76,8 @@ logic                          w_fence_i;
 logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
 scariv_pkg::vaddr_t                    w_sc_ras_vaddr;
 
+brtag_if w_brtag_if();
+
 // ----------------------------------
 // Committer Components
 // ----------------------------------
@@ -258,7 +260,7 @@ u_scariv_int_rename (
   .i_brtag  (w_iq_brtag),
   .i_brmask (w_iq_brmask),
 
-  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+  .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
   .rn_front_if  (w_rn_int_front_if),
@@ -283,7 +285,7 @@ scariv_resource_alloc u_scariv_resource_alloc
   .bru_cre_ret_if (bru_cre_ret_if),
   .fpu_cre_ret_if (fpu_cre_ret_if),
 
-  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if */),
+  .br_upd_if (w_ex3_br_upd_if),
 
   .i_commit (w_commit),
   .cmt_brtag_if (w_cmt_brtag_if),
@@ -291,7 +293,9 @@ scariv_resource_alloc u_scariv_resource_alloc
   .o_brtag  (w_iq_brtag),
   .o_brmask (w_iq_brmask),
 
-  .o_resource_ok (w_resource_ok)
+  .o_resource_ok (w_resource_ok),
+
+  .brtag_if (w_brtag_if)
  );
 
 scariv_disp_merge
@@ -350,7 +354,7 @@ generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_i
       .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
       .i_commit  (w_commit),
-      .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+      .br_upd_if (w_ex3_br_upd_if),
 
       .o_done_report (w_alu_done_rpt[alu_idx])
   );
@@ -404,7 +408,7 @@ u_scariv_lsu_top
     .streq_snoop_if (streq_snoop_if),
 
     .i_commit  (w_commit),
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+    .br_upd_if (w_ex3_br_upd_if)
    );
 
 
@@ -436,7 +440,9 @@ u_scariv_bru (
     .o_done_report (w_bru_done_rpt),
     .i_commit      (w_commit),
     .ex3_br_upd_if (w_ex3_br_upd_if),
-    .ex3_br_upd_slave_if (br_upd_fe_if)
+    .ex3_br_upd_slave_if (w_ex3_br_upd_if),
+
+    .brtag_if (w_brtag_if)
 );
 
 
@@ -475,7 +481,7 @@ u_scariv_csu (
     .o_done_report (w_csu_done_rpt),
 
     .i_commit (w_commit),
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+    .br_upd_if (w_ex3_br_upd_if)
 );
 
 
@@ -512,7 +518,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
     .i_brtag  (w_iq_brtag),
     .i_brmask (w_iq_brmask),
 
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+    .br_upd_if (w_ex3_br_upd_if),
 
     .i_phy_wr (w_ex3_phy_wr),
     .rn_front_if  (w_rn_fp_front_if),
@@ -608,7 +614,7 @@ scariv_rob u_rob
 
    .rob_info_if   (w_rob_info_if),
 
-   .ex3_br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+   .ex3_br_upd_if (w_ex3_br_upd_if)
    );
 
 

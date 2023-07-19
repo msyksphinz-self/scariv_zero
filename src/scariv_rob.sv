@@ -116,6 +116,7 @@ function automatic rob_entry_t assign_rob_entry();
 
   ret.valid       = 1'b1;
   ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
+  ret.cmt_id_msb  = w_in_cmt_id[CMT_ENTRY_W];
   ret.grp_id      = w_disp_grp_id;
   ret.pc_addr     = rn_front_if.payload.pc_addr;
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
@@ -150,7 +151,7 @@ function automatic rob_entry_t assign_rob_entry();
     ret.except_type [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] ? rn_front_if.payload.tlb_except_cause[d_idx] : ILLEGAL_INST;
     ret.except_tval [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] & (rn_front_if.payload.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_front_if.payload.tlb_except_tval[d_idx] : 'h0;
     ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
-    ret.dead        [d_idx] = ret.dead[d_idx] | ret.except_valid[d_idx];
+    ret.dead        [d_idx] = ret.dead[d_idx] /* | ret.except_valid[d_idx] */;
 `ifdef SIMULATION
     ret.sim_dead_reason[d_idx] = ret.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
 `endif // SIMULATION
@@ -174,7 +175,7 @@ logic w_load_valid;
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_cmt_id (c_idx[CMT_ENTRY_W-1:0]),
+     .i_cmt_id ({w_in_cmt_id[CMT_ENTRY_W], c_idx[CMT_ENTRY_W-1:0]}),
 
      .i_load_valid (w_load_valid),
      .i_entry_in   (w_entry_in),

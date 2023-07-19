@@ -38,7 +38,9 @@ module scariv_bru
   input scariv_pkg::commit_blk_t i_commit,
 
   br_upd_if.master            ex3_br_upd_if,
-  br_upd_if.slave             ex3_br_upd_slave_if
+  br_upd_if.slave             ex3_br_upd_slave_if,
+
+  brtag_if.master             brtag_if
 );
 
 scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
@@ -69,13 +71,13 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_issue_unit
+scariv_bru_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
     .IS_BRANCH (1'b1),
     .IN_PORT_SIZE(scariv_conf_pkg::BRU_DISP_SIZE)
     )
-u_scariv_issue_unit
+u_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -98,7 +100,8 @@ u_scariv_issue_unit
    .o_iss_index_oh(w_rv0_index_oh),
 
    .i_commit (i_commit),
-   .br_upd_if (ex3_br_upd_slave_if)
+   .br_upd_if (ex3_br_upd_slave_if),
+   .brtag_if  (brtag_if)
    );
 
 

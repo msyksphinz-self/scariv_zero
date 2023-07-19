@@ -119,8 +119,8 @@ logic                                      w_ex0_commit_flush;
 logic                                      w_ex0_br_flush;
 logic                                      w_ex0_flush;
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, i_commit);
-assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(r_ex0_issue.br_mask, br_upd_if.brtag,
-                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
 
 always_comb begin
@@ -274,8 +274,8 @@ bit_oh_or #(
 );
 
 assign w_ex1_commit_flush = scariv_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit);
-assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.br_mask, br_upd_if.brtag,
-                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
 
 always_comb begin
@@ -343,8 +343,8 @@ logic                                      w_ex2_commit_flush;
 logic                                      w_ex2_br_flush;
 logic                                      w_ex2_flush;
 assign w_ex2_commit_flush = scariv_pkg::is_commit_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, i_commit);
-assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.br_mask, br_upd_if.brtag,
-                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
 
 always_comb begin
