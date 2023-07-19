@@ -72,33 +72,13 @@ generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin : 
 end
 endgenerate
 
-  generate
-    for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
-
-      logic w_wr_valid;
-      logic [WIDTH-1: 0] w_wr_data;
-
-      select_oh #(
-          .SEL_WIDTH (scariv_pkg::TGT_BUS_SIZE),
-          .KEY_WIDTH (scariv_pkg::RNID_W),
-          .DATA_WIDTH(WIDTH)
-      ) wr_data_fwd (
-          .i_cmp_key(regread[p_idx].rnid),
-          .i_valid(wr_valid),
-          .i_keys(wr_rnid),
-          .i_data(wr_data),
-          .o_valid(w_wr_valid),
-          .o_data(w_wr_data)
-      );
-
-      always_comb begin
-        regread[p_idx].resp = regread[p_idx].valid;
-        regread[p_idx].data = (REG_TYPE == GPR) & regread[p_idx].rnid == 'h0 ? 'h0       :
-                              w_wr_valid                 ? w_wr_data :
-                              r_phy_regs[regread[p_idx].rnid];
-      end
-    end
-  endgenerate
+generate for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
+  always_comb begin
+    regread[p_idx].resp = regread[p_idx].valid;
+    regread[p_idx].data = (REG_TYPE == GPR) & regread[p_idx].rnid == 'h0 ? 'h0       :
+                          r_phy_regs[regread[p_idx].rnid];
+  end
+end endgenerate
 
 
 endmodule

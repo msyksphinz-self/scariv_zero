@@ -59,6 +59,9 @@ logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 logic                      w_ex1_br_flush;
 logic                      r_ex1_dead;
 
+logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[2];
+riscv_pkg::xlen_t                    w_ex1_rs_fwd_data [2];
+
 logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
 riscv_pkg::xlen_t w_ex2_tgt_data          [scariv_pkg::TGT_BUS_SIZE];
@@ -115,6 +118,27 @@ assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
 assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
+
+generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
+  riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                                (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                                (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                                (r_ex1_issue.rd_regs[rs_idx].rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+  end
+    bit_oh_or #(
+      .T(riscv_pkg::xlen_t),
+      .WORDS(scariv_pkg::TGT_BUS_SIZE)
+  ) u_rs_data_select (
+      .i_oh      (w_ex1_rs_fwd_valid[rs_idx]),
+      .i_data    (w_ex1_tgt_data            ),
+      .o_selected(w_ex1_rs_fwd_data [rs_idx])
+  );
+end endgenerate
+
+
 
 // EX0 brtag flush check
 assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, ex3_br_upd_if.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
@@ -222,8 +246,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_wr_valid <= 1'b0;
   end else begin
-    r_ex2_rs1_data <= ex1_regread_rs1.data;
-    r_ex2_rs2_data <= ex1_regread_rs2.data;
+    r_ex2_rs1_data <= |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] : ex1_regread_rs1.data;
+    r_ex2_rs2_data <= |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex1_regread_rs2.data;
 
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;

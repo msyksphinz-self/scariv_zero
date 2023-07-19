@@ -57,6 +57,9 @@ logic                      w_ex1_commit_flush;
 logic                      w_ex1_br_flush;
 logic                      w_ex1_flush;
 
+logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[2];
+riscv_pkg::xlen_t                    w_ex1_rs_fwd_data[2];
+
 logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
 logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
 riscv_pkg::xlen_t w_ex2_tgt_data          [scariv_pkg::TGT_BUS_SIZE];
@@ -235,6 +238,27 @@ assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
+
+generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
+  riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                                (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                                (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+                                                (r_ex1_issue.rd_regs[rs_idx].rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+  end
+    bit_oh_or #(
+      .T(riscv_pkg::xlen_t),
+      .WORDS(scariv_pkg::TGT_BUS_SIZE)
+  ) u_rs_data_select (
+      .i_oh      (w_ex1_rs_fwd_valid[rs_idx]),
+      .i_data    (w_ex1_tgt_data            ),
+      .o_selected(w_ex1_rs_fwd_data [rs_idx])
+  );
+end endgenerate
+
+
 // -----------------------------
 // EX2 Stage
 // -----------------------------
@@ -301,11 +325,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_div_stall <= 1'b0;
   end else begin
-    r_ex2_rs1_data <= ex1_regread_rs1.data;
+    r_ex2_rs1_data <= |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] : ex1_regread_rs1.data;
     r_ex2_rs2_data <= r_ex1_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
                       r_ex1_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:20]} :
                       r_ex1_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, r_ex1_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
-                      ex1_regread_rs2.data;
+                      |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex1_regread_rs2.data;
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
