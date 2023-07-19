@@ -456,7 +456,7 @@ u_scariv_csu (
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  2]),
 
     .i_early_wr(w_ex1_early_wr),
@@ -545,7 +545,8 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
 
       .ex1_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
                                        scariv_conf_pkg::LSU_INST_NUM + 1 +
-                                       2 + 1 +
+                                       2 +   // BRU
+                                       1 +   // CSU
                                        fpu_idx]),
 
       .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
