@@ -114,7 +114,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `ifdef SIMULATION
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin
       if (w_entry_next.done_grp_id[d_idx] & ~r_entry.done_grp_id[d_idx]) begin
-        r_mstatus[d_idx] <= u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.w_mstatus_next;
+        r_mstatus[d_idx] <= u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.w_mstatus_next;
       end
     end
 `endif // SIMULATION

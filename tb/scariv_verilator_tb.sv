@@ -531,7 +531,7 @@ logic [63: 0]                                                  int_commit_counte
               ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
-                        int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.r_priv),
+                        int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_sim_mstatus[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id][grp_idx],
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_valid_except_grp_id[grp_idx],
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_except_type_selected,

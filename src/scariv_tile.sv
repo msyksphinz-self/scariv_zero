@@ -244,7 +244,7 @@ u_iq_dist
 
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
-u_scariv_int_rename (
+u_int_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
@@ -269,7 +269,7 @@ u_scariv_int_rename (
 );
 
 
-scariv_resource_alloc u_scariv_resource_alloc
+scariv_resource_alloc u_resource_alloc
 (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
@@ -333,7 +333,7 @@ endgenerate
 generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
   scariv_alu #(
       .PORT_BASE(alu_idx)
-  ) u_scariv_alu (
+  ) u_alu (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
@@ -363,7 +363,7 @@ endgenerate
 
 
 scariv_lsu_top
-u_scariv_lsu_top
+u_lsu_top
   (
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
@@ -413,7 +413,7 @@ u_scariv_lsu_top
 
 
 scariv_bru
-u_scariv_bru (
+u_bru (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -447,7 +447,7 @@ u_scariv_bru (
 
 
 scariv_csu
-u_scariv_csu (
+u_csu (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -502,7 +502,7 @@ u_int_phy_registers (
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
   scariv_rename
     #(.REG_TYPE(scariv_pkg::FPR))
-  u_scariv_fp_rename (
+  u_fp_rename (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -532,7 +532,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
   for (genvar fpu_idx = 0; fpu_idx < scariv_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
     scariv_fpu #(
       .PORT_BASE(fpu_idx)
-    ) u_scariv_fpu (
+    ) u_fpu (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
