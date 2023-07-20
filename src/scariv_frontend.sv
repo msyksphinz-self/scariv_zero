@@ -41,9 +41,6 @@ module scariv_frontend
  output logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
  output vaddr_t                    o_sc_ras_vaddr,
 
- // Fetch Target Queue
- br_upd_if.master  br_upd_fe_if,
-
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if
 );
@@ -143,8 +140,6 @@ logic w_s0_int_inserted;
 logic r_s1_int_inserted;
 logic r_s2_int_inserted;
 
-br_upd_if  br_upd_fe_tmp_if();
-
 // ==============
 // TLB
 // ==============
@@ -160,15 +155,9 @@ logic    w_flush_valid;
 logic    w_int_flush_valid;
 logic    r_int_flush_valid;
 
-logic    r_flush_valid;
-cmt_id_t r_flush_cmt_id;
-grp_id_t r_flush_grp_id;
-
 logic    w_flush_valid_next;
 cmt_id_t w_flush_cmt_id_next;
 grp_id_t w_flush_grp_id_next;
-
-logic    w_existed_flush_is_older;
 
 logic    w_inst_buffer_ready;
 
@@ -522,30 +511,7 @@ end
 assign w_commit_flush  = is_flushed_commit(i_commit);
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
-assign w_br_fe_flush   = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
-
-assign w_flush_valid_next  = w_flush_valid;
-assign w_flush_cmt_id_next = w_commit_flush ? i_commit.cmt_id       : br_upd_fe_if.cmt_id;
-assign w_flush_grp_id_next = w_commit_flush ? i_commit.except_valid : br_upd_fe_if.grp_id;
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_flush_valid  <= 1'b0;
-    r_flush_cmt_id <= 'h0;
-    r_flush_grp_id <= 'h0;
-  end else begin
-    if (w_flush_valid_next) begin
-      r_flush_valid  <= w_flush_valid_next;
-      r_flush_cmt_id <= w_flush_cmt_id_next;
-      r_flush_grp_id <= w_flush_grp_id_next;
-    end
-  end
-end
-
-assign w_existed_flush_is_older = inst0_older (r_flush_valid,      r_flush_cmt_id,      r_flush_grp_id,
-                                               w_flush_valid_next, w_flush_cmt_id_next, w_flush_grp_id_next);
-
 
 always_comb begin
   w_s0_int_inserted = w_int_flush_valid;
@@ -752,26 +718,6 @@ u_scariv_inst_buffer
 
 
 // =======================
-// Fetch Target Queue
-// =======================
-scariv_ftq u_ftq
-  (
-   .i_clk     (i_clk    ),
-   .i_reset_n (i_reset_n),
-
-   .i_commit (i_commit),
-
-   .o_is_ftq_empty (w_is_ftq_empty),
-
-   .rn_front_if (rn_front_if),
-   .br_upd_if (br_upd_if),
-
-   .br_upd_fe_if (br_upd_fe_tmp_if)
-   );
-
-br_upd_if_buf u_br_upd_if_buf (.slave_if (br_upd_fe_tmp_if), .master_if (br_upd_fe_if));
-
-// =======================
 // Predictors
 // =======================
 assign w_btb_search_if.s0_valid       = w_s0_ic_req.valid;
@@ -854,7 +800,7 @@ scariv_predictor_gshare u_predictor
    .o_s2_predict_valid        (w_s2_predict_valid_gshare       ),
    .o_s2_predict_target_vaddr (w_s2_predict_target_vaddr_gshare),
 
-   .br_upd_fe_if (br_upd_fe_tmp_if)
+   .br_upd_fe_if (br_upd_if)
    );
 
 endmodule // scariv_frontend

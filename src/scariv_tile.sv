@@ -111,7 +111,6 @@ scariv_pkg::early_wr_t w_ex1_bru_early_wr;
 scariv_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 scariv_pkg::done_rpt_t w_bru_done_rpt;
 br_upd_if w_ex3_br_upd_if();
-br_upd_if br_upd_fe_if ();
 
 // ----------------------------------
 // CSU Components
@@ -227,9 +226,6 @@ scariv_frontend u_frontend (
   .rn_front_if (w_rn_int_front_if),
   .o_sc_ras_index  (w_sc_ras_index),
   .o_sc_ras_vaddr (w_sc_ras_vaddr),
-
-   // Fetch Target Queue
-  .br_upd_fe_if (br_upd_fe_if),
 
   .ptw_if (w_ptw_if[0])
 );
@@ -562,7 +558,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .o_fpnew_phy_wr   (w_fpnew_phy_wr    [fpu_idx]),
 
       .i_commit  (w_commit),
-      .br_upd_if (br_upd_fe_if),
+      .br_upd_if (w_ex3_br_upd_if),
 
       .o_mv_done_report (w_fpu_mv_done_rpt[fpu_idx]),
       .o_fp_done_report (w_fpu_fp_done_rpt[fpu_idx])

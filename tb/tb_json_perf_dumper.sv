@@ -44,8 +44,6 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_lsu_top.u_ldq.dump_perf(perf_fp);
       // STQ
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_lsu_top.u_stq.dump_perf(perf_fp);
-      // Branch
-      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_ftq.dump_branch_perf(perf_fp);
 
     end
   end // else: !if(!w_scariv_reset_n)
