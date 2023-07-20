@@ -64,6 +64,7 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_ldq_no_credits_remained &
                        !w_stq_no_credits_remained &
                        !w_csu_no_credits_remained &
+                       !w_bru_no_credits_remained &
                        !(|w_fpu_no_credits_remained);
 
 
