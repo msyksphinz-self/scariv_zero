@@ -301,7 +301,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_ex2_q_updates(w_ex2_q_updates),
 
      .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_regs[1].typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data), 
+     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data), 
 
      .o_entry (w_stq_entries[s_idx]),
 
@@ -329,8 +329,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
     // If rs2 operand is already ready, store data is fetch directly
     assign w_stq_rs2_read_valids[s_idx] = w_stq_entries[s_idx].is_valid &
                                           !w_stq_entries[s_idx].is_rs2_get &
-                                          w_stq_entries[s_idx].inst.rd_regs[1].valid &
-                                          w_stq_entries[s_idx].inst.rd_regs[1].ready;
+                                          w_stq_entries[s_idx].inst.rd_reg.valid &
+                                          w_stq_entries[s_idx].inst.rd_reg.ready;
 
     assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
                                   (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
@@ -354,7 +354,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                              !w_stq_entries[s_idx].dead &
                                              (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
                                              w_stq_entries[s_idx].paddr_valid &
-                                             w_stq_entries[s_idx].inst.rd_regs[1].ready &
+                                             w_stq_entries[s_idx].inst.rd_reg.ready &
                                              w_same_addr_region &
                                              |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
@@ -401,7 +401,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
     assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                                w_stq_entries[s_idx].paddr_valid &
-                                               !w_stq_entries[s_idx].inst.rd_regs[1].ready &
+                                               !w_stq_entries[s_idx].inst.rd_reg.ready &
                                                stq_haz_check_if[p_idx].ex2_valid &
                                                w_same_addr_region &
                                                pipe_is_younger_than_stq;
@@ -415,11 +415,11 @@ endgenerate
 stq_entry_t w_stq_rs2_req_entry;
 bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh));
 bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
-assign int_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_regs[1].typ == scariv_pkg::GPR);
-assign int_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_regs[1].rnid;
+assign int_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
+assign int_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
 
-assign fp_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_regs[1].typ == scariv_pkg::FPR);
-assign fp_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_regs[1].rnid;
+assign fp_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::FPR);
+assign fp_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
 
 
 // RMW Order Hazard Check Logci
@@ -631,8 +631,8 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
   if (entry.is_valid) begin
     $fwrite(fp, "    \"scariv_stq_entry[%d]\":{", index);
     $fwrite(fp, "valid:%d, ", entry.is_valid);
-    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.pc_addr);
-    $fwrite(fp, "inst:\"%08x\", ", entry.inst.inst);
+    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.inst.sim_pc_addr);
+    $fwrite(fp, "inst:\"%08x\", ", entry.inst.sim_inst);
 
     $fwrite(fp, "cmt_id:%d, ", entry.inst.cmt_id);
     $fwrite(fp, "grp_id:%d, ", entry.inst.grp_id);

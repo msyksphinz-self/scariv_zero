@@ -73,34 +73,25 @@ logic                                              w_br_flush;
 logic                                              w_load_br_flush;
 logic                                              w_ready_to_mv_stbuf;
 
-scariv_pkg::rnid_t                                   w_rs_rnid[2];
-scariv_pkg::reg_t                                    w_rs_type[2];
-logic [ 1: 0]                                      w_rs_rel_hit;
-logic [ 1: 0]                                      w_rs_phy_hit;
-logic [ 1: 0]                                      w_rs_may_mispred;
-logic [ 1: 0]                                      w_rs_mispredicted;
+scariv_pkg::rnid_t                                 w_rs2_rnid;
+scariv_pkg::reg_t                                  w_rs2_type;
+logic                                              w_rs2_rel_hit;
+logic                                              w_rs2_phy_hit;
+logic                                              w_rs2_may_mispred;
+logic                                              w_rs2_mispredicted;
 scariv_pkg::alen_t                                   w_rs2_phy_data;
 logic                                              w_entry_rs2_ready_next;
 
 assign  o_entry = r_entry;
 
-assign w_rs_rnid[0] = i_disp_load ? i_disp.rd_regs[0].rnid : r_entry.inst.rd_regs[0].rnid;
-assign w_rs_rnid[1] = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_regs[1].rnid;
+assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_reg.rnid;
+assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.typ;
 
-assign w_rs_type[0] = i_disp_load ? i_disp.rd_regs[0].typ : r_entry.inst.rd_regs[0].typ;
-assign w_rs_type[1] = i_disp_load ? i_disp.rd_regs[1].typ : r_entry.inst.rd_regs[1].typ;
-
-select_early_wr_bus rs1_rel_select    (.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_early_wr (i_early_wr),
-                                       .o_valid   (w_rs_rel_hit[0]), .o_may_mispred (w_rs_may_mispred[0]));
-select_phy_wr_bus   rs1_phy_select    (.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_phy_wr   (i_phy_wr),
-                                       .o_valid   (w_rs_phy_hit[0]));
-select_mispred_bus  rs1_mispred_select(.i_entry_rnid (w_rs_rnid[0]), .i_entry_type (w_rs_type[0]), .i_mispred  (i_mispred_lsu),
-                                       .o_mispred (w_rs_mispredicted[0]));
-select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (w_rs_type[1]), .i_mispred  (i_mispred_lsu),
-                                       .o_mispred (w_rs_mispredicted[1]));
-assign w_rs_rel_hit[1] = 1'b0;
-select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs_rnid[1]), .i_entry_type (w_rs_type[1]), .i_phy_wr (i_phy_wr),
-                                   .o_valid (w_rs_phy_hit[1]), .o_data (w_rs2_phy_data));
+select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_mispred  (i_mispred_lsu),
+                                       .o_mispred (w_rs2_mispredicted));
+assign w_rs2_rel_hit = 1'b0;
+select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_phy_wr (i_phy_wr),
+                                   .o_valid (w_rs2_phy_hit), .o_data (w_rs2_phy_data));
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -110,8 +101,8 @@ assign w_entry_flush  = w_commit_flush | w_br_flush;
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 
-assign w_entry_rs2_ready_next = r_entry.inst.rd_regs[1].ready |
-                                w_rs_phy_hit[1] & !w_rs_mispredicted[1];
+assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready |
+                                w_rs2_phy_hit & !w_rs2_mispredicted;
 
 assign w_ready_to_mv_stbuf = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
 
@@ -132,25 +123,23 @@ end
 always_comb begin
   w_entry_next = r_entry;
 
-  w_entry_next.inst.rd_regs[1].ready = w_entry_rs2_ready_next | r_entry.inst.rd_regs[1].ready;
+  w_entry_next.inst.rd_reg.ready = w_entry_rs2_ready_next | r_entry.inst.rd_reg.ready;
   if (~w_entry_next.is_rs2_get) begin
-    if (r_entry.inst.rd_regs[1].ready & i_rs2_read_accepted) begin
+    if (r_entry.inst.rd_reg.ready & i_rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
       w_entry_next.is_rs2_get = 1'b1;      
     end
-    if (w_rs_phy_hit[1]) begin
+    if (w_rs2_phy_hit) begin
       w_entry_next.rs2_data   = w_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
-  w_entry_next.inst.rd_regs[0].ready = r_entry.inst.rd_regs[0].ready | w_rs_phy_hit[0];
-  w_entry_next.inst.rd_regs[0].predict_ready = w_rs_rel_hit[0] & w_rs_may_mispred[0];
 
   if (!r_entry.is_valid) begin
     if (i_disp_load) begin
       w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
                                      1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
-                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+                                     w_rs2_rel_hit, w_rs2_phy_hit, w_rs2_may_mispred);
       if (w_entry_flush) begin
         w_entry_next.dead = 1'b1;
       end
@@ -185,8 +174,8 @@ always_comb begin
       w_entry_next.is_sc      = i_ex2_q_updates.is_sc;
       w_entry_next.sc_success = i_ex2_q_updates.sc_success;
     end
-    if (r_entry.inst.rd_regs[0].predict_ready & w_rs_mispredicted[0]) begin
-      w_entry_next.inst.rd_regs[0].predict_ready = 1'b0;
+    if (r_entry.inst.rd_reg.predict_ready & w_rs2_mispredicted) begin
+      w_entry_next.inst.rd_reg.predict_ready = 1'b0;
     end
     if (w_ready_to_mv_stbuf) begin
       w_entry_next.is_committed = 1'b1;
@@ -198,18 +187,13 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                                 scariv_pkg::cmt_id_t cmt_id,
                                                 scariv_pkg::grp_id_t grp_id,
                                                 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
-                                                logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+                                                logic rs2_rel_hit, logic rs2_phy_hit, logic rs2_may_mispred);
   stq_entry_t ret;
 
   ret.is_valid  = 1'b1;
 
-  ret.inst.inst   = in.inst;
-  ret.inst.cat    = in.cat;
   ret.inst.cmt_id = cmt_id;
   ret.inst.grp_id = grp_id;
-
-  ret.brtag   = in.brtag;
-  ret.br_mask = in.br_mask;
 
   ret.addr        = 'h0;
   ret.paddr_valid = 1'b0;
@@ -223,25 +207,35 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.is_committed = 1'b0;
   ret.is_uc = 1'b0;
 
-  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
-    ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
-    ret.inst.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
-    ret.inst.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
-    ret.inst.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
-    ret.inst.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-    ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
-  end
+  // for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+  //   ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+  //   ret.inst.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+  //   ret.inst.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+  //   ret.inst.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+  //   ret.inst.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+  //   ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  // end
 
-  ret.inst.wr_reg.valid  = in.wr_reg.valid;
-  ret.inst.wr_reg.typ    = in.wr_reg.typ;
-  ret.inst.wr_reg.regidx = in.wr_reg.regidx;
-  ret.inst.wr_reg.rnid   = in.wr_reg.rnid;
+  ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
+  ret.inst.rd_reg.typ           = in.rd_regs[1].typ;
+  ret.inst.rd_reg.regidx        = in.rd_regs[1].regidx;
+  ret.inst.rd_reg.rnid          = in.rd_regs[1].rnid;
+  ret.inst.rd_reg.ready         = in.rd_regs[1].ready | rs2_rel_hit & ~rs2_may_mispred | rs2_phy_hit;
+  ret.inst.rd_reg.predict_ready = rs2_rel_hit & rs2_may_mispred;
 
-  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
-    ret.inst.rd_regs[rs_idx].valid = 1'b0;
-  end
+  // ret.inst.wr_reg.valid  = in.wr_reg.valid;
+  // ret.inst.wr_reg.typ    = in.wr_reg.typ;
+  // ret.inst.wr_reg.regidx = in.wr_reg.regidx;
+  // ret.inst.wr_reg.rnid   = in.wr_reg.rnid;
+
+  // for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+  //   ret.inst.rd_regs[rs_idx].valid = 1'b0;
+  // end
 
 `ifdef SIMULATION
+  ret.inst.sim_inst   = in.inst;
+  ret.inst.sim_cat    = in.cat;
+
   ret.kanata_id = in.kanata_id;
 `endif // SIMULATION
 

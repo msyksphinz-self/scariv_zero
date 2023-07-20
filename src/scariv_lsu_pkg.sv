@@ -528,42 +528,42 @@ endfunction // gen_dw
 // ---------
 // STQ
 // ---------
-typedef enum logic[4:0] {
-  STQ_INIT          ,
-  STQ_TLB_HAZ       ,
-  STQ_ISSUE_WAIT    ,
-  STQ_DONE_EX2      ,
-  STQ_COMMIT        ,
-  STQ_WAIT_ST_DATA  ,
-  STQ_DEAD          ,
-  STQ_WAIT_COMMIT   ,
-  STQ_DONE_EX3      ,
-  STQ_ISSUED        ,
-  STQ_OLDEST_HAZ    ,
-  STQ_WAIT_OLDEST   ,
-  STQ_WAIT_STBUF
-} stq_state_t;
+// typedef enum logic[4:0] {
+//   STQ_INIT          ,
+//   STQ_TLB_HAZ       ,
+//   STQ_ISSUE_WAIT    ,
+//   STQ_DONE_EX2      ,
+//   STQ_COMMIT        ,
+//   STQ_WAIT_ST_DATA  ,
+//   STQ_DEAD          ,
+//   STQ_WAIT_COMMIT   ,
+//   STQ_DONE_EX3      ,
+//   STQ_ISSUED        ,
+//   STQ_OLDEST_HAZ    ,
+//   STQ_WAIT_OLDEST   ,
+//   STQ_WAIT_STBUF
+// } stq_state_t;
 
 typedef struct packed {
-  logic [31: 0]          inst;
-  inst_cat_t             cat;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
   logic                  oldest_valid;
-  reg_rd_issue_t [ 2: 0] rd_regs;
-  reg_wr_issue_t         wr_reg;
+  reg_rd_issue_t         rd_reg;
+//  reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
-  logic [63: 0]          kanata_id;
-  vaddr_t pc_addr;
+  logic [31: 0] sim_inst;
+  inst_cat_t    sim_cat;
+  logic [63: 0] sim_kanata_id;
+  vaddr_t       sim_pc_addr;
 `endif // SIMULATION
 } stq_static_info_t;
 
 typedef struct packed {
   logic            is_valid;
-  brtag_t          brtag;
-  brmask_t         br_mask;
-  stq_static_info_t inst;
-  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
+  // brtag_t          brtag;
+  // brmask_t         br_mask;
+  stq_static_info_t             inst;
+  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
 
   logic                 dead;
 
@@ -655,56 +655,59 @@ endfunction // isAMOLogical
 // LDQ
 // ---------
 
-typedef enum logic[3:0] {
-  LDQ_INIT           ,
-  LDQ_EX2_RUN        ,
-  LDQ_MISSU_WAIT     ,
-  LDQ_TLB_HAZ        ,
-  LDQ_ISSUE_WAIT     ,
-  LDQ_CHECK_ST_DEPEND,
-  LDQ_EX3_DONE       ,
-  LDQ_WAIT_COMMIT    ,
-  LDQ_WAIT_ENTRY_CLR ,
-  LDQ_ISSUED         ,
-  LDQ_MISSU_EVICT_HAZ  ,
-  LDQ_MISSU_FULL       ,
-  LDQ_WAIT_OLDEST    ,
-  LDQ_NONFWD_HAZ_WAIT
-} ldq_state_t;
+// typedef enum logic[3:0] {
+//   LDQ_INIT           ,
+//   LDQ_EX2_RUN        ,
+//   LDQ_MISSU_WAIT     ,
+//   LDQ_TLB_HAZ        ,
+//   LDQ_ISSUE_WAIT     ,
+//   LDQ_CHECK_ST_DEPEND,
+//   LDQ_EX3_DONE       ,
+//   LDQ_WAIT_COMMIT    ,
+//   LDQ_WAIT_ENTRY_CLR ,
+//   LDQ_ISSUED         ,
+//   LDQ_MISSU_EVICT_HAZ  ,
+//   LDQ_MISSU_FULL       ,
+//   LDQ_WAIT_OLDEST    ,
+//   LDQ_NONFWD_HAZ_WAIT
+// } ldq_state_t;
 
 typedef struct packed {
-  logic [31: 0]          inst;
-  inst_cat_t             cat;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
   logic                  oldest_valid;
-  reg_rd_issue_t [ 2: 0] rd_regs;
-  reg_wr_issue_t         wr_reg;
+  // reg_rd_issue_t [ 2: 0] rd_regs;
+  // reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
-  vaddr_t pc_addr;
-  logic [63: 0]          kanata_id;
+  vaddr_t       sim_pc_addr;
+  logic [31: 0] sim_inst;
+  inst_cat_t    sim_cat;
+  logic [63: 0] sim_kanata_id;
 `endif // SIMULATION
 } ldq_static_info_t;
 
 
 typedef struct packed {
   logic          is_valid;
-  brtag_t brtag;
-  brmask_t         br_mask;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
+//  brtag_t brtag;
+//  brmask_t         br_mask;
+  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   ldq_static_info_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  ldq_state_t                     state;
+  // ldq_state_t                     state;
   logic                           is_get_data;
   // scariv_pkg::vaddr_t vaddr;
   // scariv_pkg::paddr_t paddr;
   scariv_pkg::maxaddr_t  addr;
   logic                  paddr_valid;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
-  logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
+//  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
+//  logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
-  logic                                 except_valid;
-  scariv_pkg::except_t                    except_type;
+  logic                 dead;
+  logic                 is_committed;
+
+  logic                except_valid;
+  scariv_pkg::except_t except_type;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
