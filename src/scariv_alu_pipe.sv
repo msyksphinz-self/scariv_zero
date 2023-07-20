@@ -167,7 +167,6 @@ always_comb begin
   w_ex1_issue_next = r_ex0_issue;
   w_ex1_issue_next.valid = r_ex0_issue.valid & !w_ex0_flush;
   if (br_upd_if.update) begin
-    w_ex1_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 end
 
@@ -306,7 +305,6 @@ always_comb begin
   w_ex2_issue_next = r_ex1_issue;
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush & (~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred);
   if (br_upd_if.update) begin
-    w_ex2_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 end
 
@@ -375,7 +373,6 @@ always_comb begin
   w_ex3_issue_next = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_flush;
   if (br_upd_if.update) begin
-    w_ex3_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 end
 
@@ -440,7 +437,6 @@ u_scariv_muldiv_pipe
 
    .i_cmt_id   (r_ex2_issue.cmt_id),
    .i_grp_id   (r_ex2_issue.grp_id),
-   .i_br_mask  (r_ex2_issue.br_mask),
    .i_rd_rnid  (r_ex2_issue.wr_reg.rnid),
    .i_rd_type  (r_ex2_issue.wr_reg.typ),
    .i_index_oh (r_ex2_index        ),

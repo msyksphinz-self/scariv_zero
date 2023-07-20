@@ -122,7 +122,6 @@ function automatic rob_entry_t assign_rob_entry();
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
     ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
     ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
-    ret.inst[d_idx].br_mask        = rn_front_if.payload.inst[d_idx].br_mask       ;
     ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
     ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;

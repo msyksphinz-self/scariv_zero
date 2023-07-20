@@ -227,7 +227,6 @@ always_comb begin
 
   // BrMask update
   if (br_upd_if.update) begin
-    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 end
 

@@ -28,7 +28,6 @@ interface br_upd_if;
   scariv_pkg::cmt_id_t                   cmt_id;
   scariv_pkg::grp_id_t                   grp_id;
   scariv_pkg::brtag_t                    brtag;
-  scariv_pkg::brmask_t                   br_mask;
 
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_index;
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
@@ -53,7 +52,6 @@ interface br_upd_if;
     output cmt_id,
     output grp_id,
     output brtag,
-    output br_mask,
     output gshare_index,
     output gshare_bhr
   );
@@ -78,7 +76,6 @@ interface br_upd_if;
     input cmt_id,
     input grp_id,
     input brtag,
-    input br_mask,
     input gshare_index,
     input gshare_bhr
   );
@@ -111,7 +108,6 @@ assign master_if.dead           = slave_if.dead           ;
 assign master_if.cmt_id         = slave_if.cmt_id         ;
 assign master_if.grp_id         = slave_if.grp_id         ;
 assign master_if.brtag          = slave_if.brtag          ;
-assign master_if.br_mask        = slave_if.br_mask        ;
 assign master_if.gshare_index   = slave_if.gshare_index    ;
 assign master_if.gshare_bhr     = slave_if.gshare_bhr      ;
 

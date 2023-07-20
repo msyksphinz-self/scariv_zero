@@ -331,7 +331,6 @@ always_comb begin
 
 //   // BrMask update
 //   if (br_upd_if.update) begin
-//     w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
 //   end
 
 end // always_comb
@@ -361,7 +360,6 @@ function automatic ldq_entry_t assign_ldq_disp (scariv_pkg::disp_t in,
   ret.inst.grp_id    = grp_id;
 
 //  ret.brtag   = in.brtag;
-//  ret.br_mask = in.br_mask;
 
   // ret.state     = LDQ_ISSUE_WAIT;
   ret.is_get_data = 1'b0;

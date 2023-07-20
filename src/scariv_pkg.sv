@@ -76,7 +76,6 @@ typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
 typedef logic [RNID_W-1: 0]    rnid_t;
 typedef logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
-typedef logic [scariv_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask_t;
 
 // ICache Data Types
 typedef logic [$clog2(scariv_conf_pkg::ICACHE_WAYS)-1: 0] ic_ways_idx_t;
@@ -157,7 +156,6 @@ typedef struct packed {
     inst_cat_t    cat;
     inst_subcat_t subcat;
     brtag_t     brtag;
-    brmask_t    br_mask;
 
     // logic [2:0] op;
     // logic imm;
@@ -211,8 +209,7 @@ typedef struct packed {
                                       rnid_t   rs2_rnid,
                                       logic    rs3_active,
                                       rnid_t   rs3_rnid,
-                                      brtag_t  brtag,
-                                      brmask_t br_mask
+                                      brtag_t  brtag
                                       );
     disp_t ret;
     ret = disp;
@@ -226,7 +223,6 @@ typedef struct packed {
     ret.rd_regs[2].ready   = rs3_active;
     ret.rd_regs[2].rnid    = rs3_rnid;
     ret.brtag       = brtag;
-    ret.br_mask     = br_mask;
 
     return ret;
 
@@ -287,7 +283,6 @@ typedef struct packed {
 typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
-  brmask_t           br_mask;
   inst_cat_t         cat;
   brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
@@ -342,7 +337,6 @@ typedef struct packed {
     inst_cat_t   cat;
     logic        is_rvc;
     brtag_t      brtag;
-    brmask_t     br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
@@ -387,7 +381,6 @@ function issue_t assign_issue_common (disp_t in,
   ret.is_rvc = in.rvc_inst_valid;
 
   ret.brtag   = in.brtag;
-  ret.br_mask = in.br_mask;
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -606,7 +599,6 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
 endfunction // is_commit_flush_target
 
 
-// function logic is_br_flush_target(brmask_t entry_br_mask,
 //                                   brtag_t brtag,
 //                                   logic br_dead,
 //                                   logic br_mispredicted);
@@ -618,7 +610,6 @@ endfunction // is_commit_flush_target
 //                  br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
 // entry_older = w_cmt_is_older ||
 //               (br_cmt_id == entry_cmt_id && |(br_flush_valid & entry_grp_id));
-//   return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
 // 
 // endfunction // is_br_flush_target
 
@@ -666,7 +657,6 @@ typedef struct packed {
   grp_id_t           grp_id;
   logic [RAS_W-1: 0] ras_index;
   brtag_t            brtag;
-  brmask_t           br_mask;
 
   logic              btb_valid; // Predicted
   logic [ 1: 0]      bim_value;
@@ -705,7 +695,6 @@ function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.grp_id   = grp_id;
   ret.ras_index = inst.ras_index;
   ret.brtag     = inst.brtag;
-  ret.br_mask   = inst.br_mask;
 
   ret.btb_valid = inst.btb_valid;
   ret.bim_value = inst.bim_value;

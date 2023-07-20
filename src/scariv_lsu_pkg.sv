@@ -93,7 +93,6 @@ typedef enum logic [ 2: 0] {
     logic [31:0] inst;
     inst_cat_t   cat;
     brtag_t      brtag;
-    brmask_t     br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
@@ -125,7 +124,6 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.cat    = in.cat;
 
   ret.brtag   = in.brtag;
-  ret.br_mask = in.br_mask;
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -561,7 +559,6 @@ typedef struct packed {
 typedef struct packed {
   logic            is_valid;
   // brtag_t          brtag;
-  // brmask_t         br_mask;
   stq_static_info_t             inst;
   decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
 
@@ -690,7 +687,6 @@ typedef struct packed {
 typedef struct packed {
   logic          is_valid;
 //  brtag_t brtag;
-//  brmask_t         br_mask;
   // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   ldq_static_info_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
@@ -720,7 +716,6 @@ typedef struct packed {
   logic                  valid;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
-  scariv_pkg::brmask_t   br_mask;
   logic [31: 0]          inst;
   reg_rd_issue_t [ 2: 0] rd_regs;
   reg_wr_issue_t         wr_reg;
@@ -899,7 +894,6 @@ typedef struct packed {
   logic [31: 0]              inst;
   scariv_pkg::cmt_id_t       cmt_id;
   scariv_pkg::grp_id_t       grp_id;
-  brmask_t                   br_mask;
   inst_cat_t                 cat;
   logic                      oldest_valid;
   scariv_pkg::reg_rd_issue_t rd_reg;

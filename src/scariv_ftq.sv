@@ -152,7 +152,6 @@ assign br_upd_fe_if.dead             = w_out_ftq_entry.dead;
 assign br_upd_fe_if.cmt_id           = w_out_ftq_entry.cmt_id;
 assign br_upd_fe_if.grp_id           = w_out_ftq_entry.grp_id;
 assign br_upd_fe_if.brtag            = w_out_ftq_entry.brtag;
-assign br_upd_fe_if.br_mask          = 'h0;
 assign br_upd_fe_if.gshare_index     = w_out_ftq_entry.gshare_index;
 assign br_upd_fe_if.gshare_bhr       = w_out_ftq_entry.gshare_bhr  ;
 

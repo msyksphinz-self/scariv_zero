@@ -181,13 +181,11 @@ always_comb begin
   w_ex1_issue_next       = w_ex0_issue;
   w_ex1_issue_next.valid = w_ex0_issue.valid & ~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred & ~w_ex0_commit_flush & ~w_ex0_br_flush;
   if (br_upd_if.update) begin
-    w_ex1_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 
   w_ex2_issue_next       = r_ex1_issue;
   w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
   if (br_upd_if.update) begin
-    w_ex2_issue_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
   
   w_ex3_issue_next       = r_ex2_issue;
@@ -515,9 +513,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
   lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
   lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
-  lsu_pipe_haz_if.payload.br_mask      = r_ex2_issue.br_mask;
   if (br_upd_if.update) begin
-    lsu_pipe_haz_if.payload.br_mask[br_upd_if.brtag] = 1'b0;
   end
   lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
   lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;

@@ -22,7 +22,6 @@ module scariv_div_unit
 
  input scariv_pkg::cmt_id_t              i_cmt_id,
  input scariv_pkg::grp_id_t              i_grp_id,
- input scariv_pkg::brmask_t              i_br_mask,
  input scariv_pkg::rnid_t                i_rd_rnid,
  input scariv_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
@@ -36,7 +35,6 @@ module scariv_div_unit
 
  output scariv_pkg::cmt_id_t              o_cmt_id,
  output scariv_pkg::grp_id_t              o_grp_id,
- output scariv_pkg::brmask_t              o_br_mask,
  output scariv_pkg::rnid_t                o_rd_rnid,
  output scariv_pkg::reg_t                 o_rd_type,
  output logic [RV_ENTRY_SIZE-1: 0]      o_index_oh
@@ -93,7 +91,6 @@ always_ff @ (posedge i_clk) begin
     o_index_oh <= i_index_oh;
     o_cmt_id   <= i_cmt_id;
     o_grp_id   <= i_grp_id;
-    o_br_mask  <= i_br_mask;
   end
 end
 

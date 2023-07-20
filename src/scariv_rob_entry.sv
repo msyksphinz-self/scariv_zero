@@ -140,7 +140,6 @@ always_comb begin
 `endif // SIMULATION
         end
         // Resolve the branch dependency
-        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
@@ -232,7 +231,6 @@ always_comb begin
 `endif // SIMULATION
         end
         // Resolve the branch dependency
-        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) &
           ~br_upd_if.dead & br_upd_if.mispredict) begin

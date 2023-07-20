@@ -27,7 +27,6 @@ module scariv_rename
 
    // from Resource Allocator
    input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
-   input brmask_t         i_brmask [scariv_conf_pkg::DISP_SIZE],
    input logic            i_resource_ok,
    output logic           o_freelist_ready,
 
@@ -405,8 +404,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                                   rs2_rnid_fwd[d_idx],
                                                   w_active [d_idx * NUM_OPERANDS + 2],
                                                   rs3_rnid_fwd[d_idx],
-                                                  i_brtag[d_idx],
-                                                  i_brmask[d_idx]);
+                                                  i_brtag[d_idx]);
 
 end // block: src_rn_loop
 endgenerate

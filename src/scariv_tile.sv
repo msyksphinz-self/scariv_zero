@@ -163,7 +163,6 @@ logic w_fpu_freelist_ready;
 // ----------------------------------
 
 scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
-scariv_pkg::brmask_t w_iq_brmask [scariv_conf_pkg::DISP_SIZE];
 cmt_brtag_if w_cmt_brtag_if();
 
 // ----------------------------------
@@ -254,7 +253,6 @@ u_int_rename (
   .o_freelist_ready (w_int_freelist_ready),
 
   .i_brtag  (w_iq_brtag),
-  .i_brmask (w_iq_brmask),
 
   .br_upd_if (w_ex3_br_upd_if),
 
@@ -287,7 +285,6 @@ scariv_resource_alloc u_resource_alloc
   .cmt_brtag_if (w_cmt_brtag_if),
 
   .o_brtag  (w_iq_brtag),
-  .o_brmask (w_iq_brmask),
 
   .o_resource_ok (w_resource_ok),
 
@@ -512,7 +509,6 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
     .o_freelist_ready (w_fpu_freelist_ready),
 
     .i_brtag  (w_iq_brtag),
-    .i_brmask (w_iq_brmask),
 
     .br_upd_if (w_ex3_br_upd_if),
 

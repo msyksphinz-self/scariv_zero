@@ -214,7 +214,6 @@ always_comb begin
     w_ex0_replay_issue.valid        = w_lsu_pipe_req_if.valid       ;
     w_ex0_replay_issue.cmt_id       = w_lsu_pipe_req_if.payload.cmt_id      ;
     w_ex0_replay_issue.grp_id       = w_lsu_pipe_req_if.payload.grp_id      ;
-    w_ex0_replay_issue.br_mask      = w_lsu_pipe_req_if.payload.br_mask     ;
     w_ex0_replay_issue.inst         = w_lsu_pipe_req_if.payload.inst        ;
     w_ex0_replay_issue.rd_regs[0]   = w_lsu_pipe_req_if.payload.rd_reg      ;
     w_ex0_replay_issue.wr_reg       = w_lsu_pipe_req_if.payload.wr_reg      ;
@@ -231,7 +230,6 @@ always_comb begin
     w_ex0_replay_issue.valid        = w_issue_from_iss.valid;
     w_ex0_replay_issue.cmt_id       = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id       = w_issue_from_iss.grp_id;
-    w_ex0_replay_issue.br_mask      = w_issue_from_iss.br_mask;
     w_ex0_replay_issue.inst         = w_issue_from_iss.inst;
     w_ex0_replay_issue.rd_regs      = w_issue_from_iss.rd_regs;
     w_ex0_replay_issue.wr_reg       = w_issue_from_iss.wr_reg;

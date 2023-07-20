@@ -57,7 +57,6 @@ typedef struct packed {
     logic                dead;
     scariv_pkg::cmt_id_t cmt_id;
     scariv_pkg::grp_id_t grp_id;
-    scariv_pkg::brmask_t br_mask;
 } replay_additional_queue_t;
 
 replay_queue_t w_new_replay_queue_info;
@@ -123,7 +122,6 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
                 r_replay_additional_queue[idx].dead    <= 1'b0;
                 r_replay_additional_queue[idx].cmt_id  <= lsu_pipe_haz_if.payload.cmt_id;
                 r_replay_additional_queue[idx].grp_id  <= lsu_pipe_haz_if.payload.grp_id;
-                r_replay_additional_queue[idx].br_mask <= lsu_pipe_haz_if.payload.br_mask;
             end else if (w_queue_pop &
                     (idx == r_replay_queue_tail_ptr)) begin
                 r_replay_additional_queue[idx].valid  <= 1'b0;
@@ -216,7 +214,6 @@ always_comb begin
 
     lsu_pipe_req_if.payload.cmt_id         = w_replay_additional_queue_tail.cmt_id;
     lsu_pipe_req_if.payload.grp_id         = w_replay_additional_queue_tail.grp_id;
-    lsu_pipe_req_if.payload.br_mask        = w_replay_additional_queue_tail.br_mask;
     lsu_pipe_req_if.payload.inst           = w_rd_replay_queue_info.inst          ;
     lsu_pipe_req_if.payload.cat            = w_rd_replay_queue_info.cat           ;
     lsu_pipe_req_if.payload.oldest_valid   = w_rd_replay_queue_info.oldest_valid  ;
