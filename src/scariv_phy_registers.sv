@@ -10,28 +10,29 @@ module scariv_phy_registers
   import scariv_pkg::*;
 #(
   parameter REG_TYPE = GPR,
-  parameter RD_PORT_SIZE = 10
+  parameter RD_PORT_SIZE = 10,
+  parameter WR_PORT_SIZE = 5
 )
 (
     input logic i_clk,
     input logic i_reset_n,
 
-    regread_if.slave         regread [          RD_PORT_SIZE],
-    input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE]
+    regread_if.slave         regread  [RD_PORT_SIZE],
+    regwrite_if.slave        regwrite [WR_PORT_SIZE]
 );
 
 localparam WIDTH = REG_TYPE == GPR ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 
   logic [WIDTH-1: 0] r_phy_regs[scariv_pkg::RNID_SIZE];
 
-  logic [scariv_pkg::TGT_BUS_SIZE-1:0] wr_valid;
-  scariv_pkg::rnid_t wr_rnid[scariv_pkg::TGT_BUS_SIZE];
-  logic [WIDTH-1: 0] wr_data[scariv_pkg::TGT_BUS_SIZE];
+  logic [WR_PORT_SIZE-1:0] wr_valid;
+  scariv_pkg::rnid_t wr_rnid[WR_PORT_SIZE];
+  logic [WIDTH-1: 0] wr_data[WR_PORT_SIZE];
 
-generate for (genvar w_idx = 0; w_idx < scariv_pkg::TGT_BUS_SIZE; w_idx++) begin : w_port_loop
-  assign wr_valid[w_idx] = i_phy_wr[w_idx].valid & (i_phy_wr[w_idx].rd_type == REG_TYPE);
-  assign wr_rnid [w_idx] = i_phy_wr[w_idx].rd_rnid;
-  assign wr_data [w_idx] = i_phy_wr[w_idx].rd_data;
+generate for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_port_loop
+  assign wr_valid[w_idx] = regwrite[w_idx].valid;
+  assign wr_rnid [w_idx] = regwrite[w_idx].rnid;
+  assign wr_data [w_idx] = regwrite[w_idx].data;
 end
 endgenerate
 
@@ -44,7 +45,7 @@ generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin : 
     logic w_wr_valid;
     logic [WIDTH-1: 0]  w_wr_data;
     select_oh #(
-        .SEL_WIDTH (scariv_pkg::TGT_BUS_SIZE),
+        .SEL_WIDTH (WR_PORT_SIZE),
         .KEY_WIDTH (scariv_pkg::RNID_W),
         .DATA_WIDTH(WIDTH)
     ) wr_data_select (

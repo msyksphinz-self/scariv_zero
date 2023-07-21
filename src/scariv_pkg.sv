@@ -50,15 +50,24 @@ package scariv_pkg;
   localparam MISSU_ENTRY_SIZE = 8;
   localparam MISSU_ENTRY_W = $clog2(MISSU_ENTRY_SIZE);
 
-  localparam INT_REGPORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
-                               scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
-                               2 +                                    // BRU port
-                               1 +                                    // CSR port
-                               scariv_conf_pkg::FPU_INST_NUM;         // FPU port
+  localparam INT_REGRD_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
+                                  scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
+                                  2 +                                    // BRU port
+                                  1 +                                    // CSR port
+                                  scariv_conf_pkg::FPU_INST_NUM;         // FPU port
 
-  localparam FP_REGPORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
-                              1;                                      // LSU port
+  localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
+                                 1;                                      // LSU port
 
+  localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
+                                  scariv_conf_pkg::LSU_INST_NUM +    // LSU port
+                                  2 +                                // BRU port
+                                  1 +                                // CSR port
+                                  scariv_conf_pkg::FPU_INST_NUM * 2; // FPU port
+
+  localparam FP_REGWR_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM +     // LSU port
+                                 scariv_conf_pkg::FPU_INST_NUM * 2;  // FPU port
+                                 
 localparam RAS_W    = $clog2(scariv_conf_pkg::RAS_ENTRY_SIZE);
 localparam GSHARE_BHT_W = scariv_conf_pkg::GSHARE_BHT_W;
 
