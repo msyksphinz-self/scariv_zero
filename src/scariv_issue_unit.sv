@@ -56,8 +56,8 @@ logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 scariv_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
-logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
+logic [ENTRY_SIZE-1: 0]         r_entry_out_ptr_oh;
 
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
@@ -86,6 +86,9 @@ generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : entry_fin
   end
 end endgenerate
 
+logic [IN_PORT_SIZE-1: 0] w_freelist_pop_valid;
+assign w_freelist_pop_valid = i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}};
+
 scariv_freelist_multiports
   #(.SIZE (ENTRY_SIZE),
     .WIDTH ($clog2(ENTRY_SIZE)),
@@ -99,14 +102,24 @@ u_entry_freelist
    .i_push    (|w_entry_finish),
    .i_push_id (w_entry_finish_index),
 
-   .i_pop   (i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}}),
+   .i_pop   (w_freelist_pop_valid),
    .o_pop_id(w_entry_load_index),
 
    .o_is_empty()
    );
 
 
-assign w_entry_out_ptr_oh = 'h1;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_entry_out_ptr_oh <= 'h1;
+  end else begin
+    if (w_freelist_pop_valid) begin
+      r_entry_out_ptr_oh <= 1 << w_entry_load_index[0];
+    end
+  end
+end
+
+assign w_entry_out_ptr_oh = r_entry_out_ptr_oh;
 
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
 assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
@@ -238,8 +251,6 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 end
 endgenerate
 
-// Allocate selection
-bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_alloc_bit_oh  (.in(~w_entry_valid), .i_ptr_oh('h1), .out(w_entry_in_ptr_oh));
 // Clear selection
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
@@ -296,7 +307,6 @@ endgenerate
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
     $fwrite(fp, "  \"scariv_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
-    $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
     $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
       dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
