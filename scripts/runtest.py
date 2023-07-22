@@ -154,13 +154,15 @@ class verilator_sim:
             else:
                 run_process.wait()
         else:
-            run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
-                                           cwd=base_dir + '/' + testcase)
             if show_stdout:
+                subprocess.check_call(command, bufsize=0, text=True, cwd=base_dir + '/' + testcase)
+            else:
+                run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
+                                           cwd=base_dir + '/' + testcase)
                 for line in iter(run_process.stdout.readline, ""):
                     print(line, end="")
                     sys.stdout.flush()
-            run_process.wait()
+                run_process.wait()
 
         result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
 
@@ -217,21 +219,25 @@ class verilator_sim:
         os.makedirs(base_dir, exist_ok=True)
         os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
-        process = multiprocessing.current_process()
-        if process.daemon:
-            for t in select_test:
-                args_list = (sim_conf, show_stdout, base_dir, testcase, t)
-                self.execute_test_wrapper (args_list)
-
+        if len(select_test) == 1:
+            args_list = (sim_conf, show_stdout, base_dir, testcase, select_test[0])
+            self.execute_test_wrapper (args_list)
         else:
-            with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
-                try:
-                    args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
-                    pool.map(self.execute_test_wrapper, args_list)
-                except KeyboardInterrupt:
-                    print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
-                    pool.terminate()
-                    pool.join()
+            process = multiprocessing.current_process()
+            if process.daemon:
+                for t in select_test:
+                    args_list = (sim_conf, show_stdout, base_dir, testcase, t)
+                    self.execute_test_wrapper (args_list)
+
+            else:
+                with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
+                    try:
+                        args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
+                        pool.map(self.execute_test_wrapper, args_list)
+                    except KeyboardInterrupt:
+                        print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
+                        pool.terminate()
+                        pool.join()
 
         print (self.result_dict)
         with open(base_dir + '/result.json', 'w') as f:
