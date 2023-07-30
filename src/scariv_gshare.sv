@@ -212,4 +212,24 @@ assign o_s2_predict_target_vaddr = w_s2_btb_target_vaddr;
 
 assign gshare_search_if.s2_pred_taken = w_s2_predict_taken;
 
+`ifdef SIMULATION
+int fp;
+initial begin
+  fp = $fopen("gshare.log", "w");
+end
+final begin
+  $fclose(fp);
+end
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (br_upd_fe_if.update & br_upd_fe_if.dead & br_upd_fe_if.is_cond) begin
+      $fwrite(fp, "PC=%08x Result=%d(%s) BHR=%b\n", br_upd_fe_if.pc_vaddr, br_upd_fe_if.taken, 
+                                                     br_upd_fe_if.mispredict ? "MISS" : "SUCC",
+                                                     w_bhr_next);
+    end
+  end
+end
+`endif // SIMULATION
+
 endmodule // scariv_gshare
