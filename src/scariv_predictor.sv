@@ -31,7 +31,8 @@ module scariv_predictor
 
  gshare_search_if.slave gshare_search_if,
 
- br_upd_if.slave  br_upd_fe_if
+ br_upd_if.slave    br_upd_fe_if,
+ cmt_brtag_if.svale cmt_brtag_if
  );
 
 logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
@@ -437,7 +438,7 @@ u_gshare
    .search_btb_if    (search_btb_if   ),
    .gshare_search_if (gshare_search_if),
    .br_upd_fe_if     (br_upd_fe_if    ),
-   .br_upd_fe_mon_if (br_upd_fe_mon_if),
+   .cmt_brtag_if     (cmt_brtag_if    ),
 
    .o_s2_predict_valid        (o_s2_predict_valid       ),
    .o_s2_predict_target_vaddr (o_s2_predict_target_vaddr)

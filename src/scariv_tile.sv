@@ -271,6 +271,7 @@ scariv_frontend u_frontend (
 
   .i_commit (w_commit),
   .br_upd_if (w_ex3_br_upd_if),
+  .cmt_brtag_if (w_cmt_brtag_if),
 
   .csr_info (w_csr_info),
   .int_if   (w_int_if),

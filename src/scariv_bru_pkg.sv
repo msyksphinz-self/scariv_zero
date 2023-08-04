@@ -119,17 +119,35 @@ interface cmt_brtag_if;
   logic          commit;
   scariv_pkg::grp_id_t is_br_inst;
   logic [scariv_conf_pkg::DISP_SIZE-1: 0][$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
+  scariv_pkg::gshare_bht_t gshare_bhr;
+  scariv_pkg::gshare_bht_t gshare_index;
+  logic                    taken;
+  logic [ 1: 0]            bim_value;
+  logic                    is_rvc;
+  logic                    dead;
 
   modport master (
     output commit,
     output is_br_inst,
-    output brtag
+    output brtag,
+    output gshare_bhr,
+    output gshare_index,
+    output taken,
+    output bim_value,
+    output is_rvc,
+    output dead
   );
 
   modport slave (
     input commit,
     input is_br_inst,
-    input brtag
+    input brtag,
+    input gshare_bhr,
+    input gshare_index,
+    input taken,
+    input bim_value,
+    input is_rvc,
+    input dead
   );
 
 endinterface // cmt_brtag_if

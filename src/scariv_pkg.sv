@@ -255,6 +255,7 @@ typedef struct packed {
     grp_id_t                         upd_valid;
     logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     brtag_t        brtag;
+    gshare_bht_t   gshare_bhr;
 
 `ifdef SIMULATION
   logic              mispredicted;
@@ -298,6 +299,7 @@ typedef struct packed {
   logic [RAS_W-1: 0] ras_index;
   logic              is_call;
   logic              is_ret;
+  gshare_bht_t       gshare_bhr;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
   logic [15: 0]      rvc_inst;
@@ -324,9 +326,9 @@ typedef struct packed {
 
     grp_id_t  dead;
     grp_id_t  flush_valid;
-    // Branch update info
-    logic                               is_br_included;
 
+    // Branch update info
+    logic         is_br_included;
     br_upd_info_t br_upd_info;
 
     grp_id_t                  fflags_update_valid;

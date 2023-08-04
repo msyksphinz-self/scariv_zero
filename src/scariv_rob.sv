@@ -128,6 +128,7 @@ function automatic rob_entry_t assign_rob_entry();
     ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
     ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
     ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
+    ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
 `ifdef SIMULATION
     ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
     ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
@@ -351,6 +352,20 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
 end
 endgenerate
 
+gshare_bht_t w_cmt_brtag_gshare_bhr[DISP_SIZE];
+gshare_bht_t w_cmt_brtag_gshare_index[DISP_SIZE];
+generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
+  assign w_cmt_brtag_gshare_bhr[d_idx] = w_out_entry.inst[d_idx].brtag;
+  assign w_cmt_brtag_gshare_index[d_idx] = w_out_entry.inst[d_idx].gshare_index;
+end endgenerate
+
+bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_bhr ), .o_selected (cmt_brtag_if.gshare_bhr));
+assign cmt_brtag_if.pc_vaddr w_out_entry.pc_addr + xxx;
+bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_index), .o_selected (cmt_brtag_if.gshare_index));
+assign cmt_brtag_if.taken = w_out_entry.br_taken;
+assign cmt_brtag_if.bim_value = w_out_entry.br_taken;
+assign cmt_brtag_if.is_rvc    = xxx;
+assign cmt_brtag_if.dead      = xxxx;
 
 `ifdef SIMULATION
 `ifdef MONITOR

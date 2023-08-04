@@ -27,6 +27,8 @@ module scariv_frontend
  input commit_blk_t i_commit,
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
+ // Branch Tag Update Signal
+ cmt_brtag_if.slave cmt_brtag_if,
 
  /* CSR information */
  csr_info_if.slave           csr_info,
@@ -800,7 +802,8 @@ scariv_predictor_gshare u_predictor
    .o_s2_predict_valid        (w_s2_predict_valid_gshare       ),
    .o_s2_predict_target_vaddr (w_s2_predict_target_vaddr_gshare),
 
-   .br_upd_fe_if (br_upd_if)
+   .br_upd_fe_if (br_upd_if),
+   .cmt_brtag_if (cmt_brtag_if)
    );
 
 endmodule // scariv_frontend
