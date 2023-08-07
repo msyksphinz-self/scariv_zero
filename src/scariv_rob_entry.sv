@@ -144,6 +144,8 @@ always_comb begin
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+        w_entry_next.br_upd_info.bim_value = br_upd_if.bim_value;
+        w_entry_next.br_upd_info.br_taken  = br_upd_if.taken;
       end
 
 `ifdef SIMULATION
@@ -232,14 +234,16 @@ always_comb begin
         end
         // Resolve the branch dependency
       end
-      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) &
-          ~br_upd_if.dead & br_upd_if.mispredict) begin
+      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+        w_entry_next.br_upd_info.bim_value    = br_upd_if.bim_value;
+        w_entry_next.br_upd_info.br_taken     = br_upd_if.taken;
+        w_entry_next.dead[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.dead;
+        w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
       end
 `ifdef SIMULATION
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
-        w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
         w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
         w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
       end

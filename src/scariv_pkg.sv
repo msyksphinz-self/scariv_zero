@@ -256,9 +256,11 @@ typedef struct packed {
     logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     brtag_t        brtag;
     gshare_bht_t   gshare_bhr;
-
-`ifdef SIMULATION
+    gshare_bht_t   gshare_index;
+    logic          br_taken;
+    logic [ 1: 0]  bim_value;
   logic              mispredicted;
+`ifdef SIMULATION
   logic [RAS_W-1: 0] ras_index;
   vaddr_t            pred_vaddr;
 `endif // SIMULATION

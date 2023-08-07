@@ -352,20 +352,25 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
 end
 endgenerate
 
-gshare_bht_t w_cmt_brtag_gshare_bhr[DISP_SIZE];
+gshare_bht_t w_cmt_brtag_gshare_bhr  [DISP_SIZE];
 gshare_bht_t w_cmt_brtag_gshare_index[DISP_SIZE];
+grp_id_t     w_cmt_brtag_is_rvc ;
+grp_id_t     w_cmt_brtag_is_dead;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
-  assign w_cmt_brtag_gshare_bhr[d_idx] = w_out_entry.inst[d_idx].brtag;
-  assign w_cmt_brtag_gshare_index[d_idx] = w_out_entry.inst[d_idx].gshare_index;
+  assign w_cmt_brtag_gshare_bhr  [d_idx] = w_out_entry.inst[d_idx].brtag;
+  assign w_cmt_brtag_is_rvc      [d_idx] = w_out_entry.inst[d_idx].rvc_inst_valid;
+  assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
 end endgenerate
 
-bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_bhr ), .o_selected (cmt_brtag_if.gshare_bhr));
-assign cmt_brtag_if.pc_vaddr w_out_entry.pc_addr + xxx;
-bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_index), .o_selected (cmt_brtag_if.gshare_index));
-assign cmt_brtag_if.taken = w_out_entry.br_taken;
-assign cmt_brtag_if.bim_value = w_out_entry.br_taken;
-assign cmt_brtag_if.is_rvc    = xxx;
-assign cmt_brtag_if.dead      = xxxx;
+bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_gshare_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_bhr ), .o_selected (cmt_brtag_if.gshare_bhr));
+assign cmt_brtag_if.pc_vaddr     = w_out_entry.pc_addr;
+assign cmt_brtag_if.gshare_index = w_out_entry.br_upd_info.gshare_index;
+assign cmt_brtag_if.taken        = w_out_entry.br_upd_info.br_taken;
+assign cmt_brtag_if.bim_value    = w_out_entry.br_upd_info.bim_value;
+assign cmt_brtag_if.mispredict   = w_out_entry.br_upd_info.mispredicted;
+
+assign cmt_brtag_if.is_rvc = w_cmt_brtag_is_rvc & ~w_cmt_brtag_is_dead;
+assign cmt_brtag_if.dead   = w_cmt_brtag_is_dead;
 
 `ifdef SIMULATION
 `ifdef MONITOR

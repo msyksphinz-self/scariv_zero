@@ -74,17 +74,16 @@ u_s1_target_vaddr_hit_oh (
 scariv_gshare
 u_gshare
   (
-   .i_clk     (i_clk),
-   .i_reset_n (i_reset_n),
+  .i_clk     (i_clk),
+  .i_reset_n (i_reset_n),
 
-   .search_btb_if    (search_btb_mon_if),
-   .gshare_search_if (gshare_search_if ),
-   .br_upd_fe_if     (br_upd_fe_if     ),
-    .cmt_brtag_if    (cmt_brtag_if     ),
+  .search_btb_if    (search_btb_mon_if),
+  .gshare_search_if (gshare_search_if ),
+  .cmt_brtag_if    (cmt_brtag_if     ),
     
-   .o_s2_predict_valid        (o_s2_predict_valid       ),
-   .o_s2_predict_target_vaddr (o_s2_predict_target_vaddr)
-   );
+  .o_s2_predict_valid        (o_s2_predict_valid       ),
+  .o_s2_predict_target_vaddr (o_s2_predict_target_vaddr)
+);
 
 // Temporary
 assign ras_search_if.s1_is_call = 1'b0;
