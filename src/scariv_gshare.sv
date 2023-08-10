@@ -35,10 +35,15 @@ gshare_bht_t  w_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2];
 
 logic         s1_update_bhr;
 assign s1_update_bhr = r_s1_valid & |(search_btb_if.s1_hit & search_btb_if.s1_is_cond);
-gshare_bht_t  w_cmt_next_bhr;
-assign w_cmt_next_bhr = {cmt_brtag_if.gshare_bhr[GSHARE_BHT_W-2:0], cmt_brtag_if.taken};
 
-assign w_bhr_next = cmt_brtag_if.commit & !cmt_brtag_if.dead ? w_cmt_next_bhr :
+logic w_cmt_brtag_rollback_valid;
+gshare_bht_t  w_cmt_brtag_rollback_bhr;
+
+assign w_cmt_brtag_rollback_bhr   = {cmt_brtag_if.gshare_bhr[GSHARE_BHT_W-2:0], cmt_brtag_if.taken};
+assign w_cmt_brtag_rollback_valid = cmt_brtag_if.commit & !cmt_brtag_if.dead & |cmt_brtag_if.is_br_inst &
+                                    cmt_brtag_if.mispredict;
+
+assign w_bhr_next = w_cmt_brtag_rollback_valid ? w_cmt_brtag_rollback_bhr :
                     // If Branch existed but not predicted (in frontend BHR not updated), update BHR
                     s1_update_bhr ? w_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1] :
                     r_bhr;
@@ -66,11 +71,11 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_i
                              cmt_brtag_if.bim_value - 2'b01;
 
   if (c_idx == 0) begin
-    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] ?
+    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] & search_btb_if.s1_is_cond[c_idx] ?
                                     w_s1_bim_counter[1] ? {r_bhr, 1'b1} : {r_bhr, 1'b0} :
                                     r_bhr;
   end else begin
-    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] ?
+    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] & search_btb_if.s1_is_cond[c_idx] ?
                                     w_s1_bim_counter[1] ? {w_bhr_lane_next[c_idx-1], 1'b1} : {w_bhr_lane_next[c_idx-1], 1'b0} :
                                     w_bhr_lane_next[c_idx-1];
   end
@@ -224,8 +229,8 @@ end
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (cmt_brtag_if.commit & !cmt_brtag_if.dead) begin
-      $fwrite(fp, "%t PC=%08x Result=%d(%s) BHR=%b\n", $time, cmt_brtag_if.pc_vaddr, cmt_brtag_if.taken, 
+    if (cmt_brtag_if.commit & !cmt_brtag_if.dead & |cmt_brtag_if.is_br_inst) begin
+      $fwrite(fp, "%t PC=%08x Result=%d(%s) BHR=%b\n", $time, {cmt_brtag_if.pc_vaddr, 1'b0}, cmt_brtag_if.taken, 
                                                      cmt_brtag_if.mispredict ? "MISS" : "SUCC",
                                                      w_bhr_next);
     end

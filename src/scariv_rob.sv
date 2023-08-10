@@ -126,6 +126,7 @@ function automatic rob_entry_t assign_rob_entry();
     ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
     ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
+    ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
     ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
     ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
     ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
@@ -346,24 +347,22 @@ assign rob_info_if.except_valid = w_out_entry.except_valid;
 
 // Commit Branch Tag Update
 assign cmt_brtag_if.commit     = o_commit.commit;
+assign cmt_brtag_if.cmt_id     = w_out_cmt_entry_id;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
-  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR;
+  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].is_cond;
   assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
 end
 endgenerate
 
-gshare_bht_t w_cmt_brtag_gshare_bhr  [DISP_SIZE];
-gshare_bht_t w_cmt_brtag_gshare_index[DISP_SIZE];
 grp_id_t     w_cmt_brtag_is_rvc ;
 grp_id_t     w_cmt_brtag_is_dead;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
-  assign w_cmt_brtag_gshare_bhr  [d_idx] = w_out_entry.inst[d_idx].brtag;
   assign w_cmt_brtag_is_rvc      [d_idx] = w_out_entry.inst[d_idx].rvc_inst_valid;
   assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
 end endgenerate
 
-bit_oh_or #(.T(gshare_bht_t), .WORDS(DISP_SIZE)) cmt_brtag_gshare_bhr_oh ( .i_oh (cmt_brtag_if.is_br_inst), .i_data (w_cmt_brtag_gshare_bhr ), .o_selected (cmt_brtag_if.gshare_bhr));
 assign cmt_brtag_if.pc_vaddr     = w_out_entry.pc_addr;
+assign cmt_brtag_if.gshare_bhr   = w_out_entry.br_upd_info.gshare_bhr;
 assign cmt_brtag_if.gshare_index = w_out_entry.br_upd_info.gshare_index;
 assign cmt_brtag_if.taken        = w_out_entry.br_upd_info.br_taken;
 assign cmt_brtag_if.bim_value    = w_out_entry.br_upd_info.bim_value;

@@ -299,8 +299,9 @@ typedef struct packed {
   brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
   logic [RAS_W-1: 0] ras_index;
-  logic              is_call;
-  logic              is_ret;
+  logic              is_cond;  // Conditional Branch
+  logic              is_call;  // Call
+  logic              is_ret;   // Ret
   gshare_bht_t       gshare_bhr;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
