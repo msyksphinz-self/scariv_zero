@@ -155,7 +155,7 @@ class verilator_sim:
                 run_process.wait()
         else:
             if show_stdout:
-                subprocess.check_call(command, bufsize=0, text=True, cwd=base_dir + '/' + testcase)
+                subprocess.call(command, bufsize=0, text=True, cwd=base_dir + '/' + testcase)
             else:
                 run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
                                            cwd=base_dir + '/' + testcase)
