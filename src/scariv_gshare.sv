@@ -230,7 +230,7 @@ end
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (cmt_brtag_if.commit & !cmt_brtag_if.dead & |cmt_brtag_if.is_br_inst) begin
-      $fwrite(fp, "%t PC=%08x Result=%d(%s) BHR=%b\n", $time, {cmt_brtag_if.pc_vaddr, 1'b0}, cmt_brtag_if.taken, 
+      $fwrite(fp, "%t PC=%08x Result=%d(%s) BHR=%b\n", $time, cmt_brtag_if.pc_vaddr, cmt_brtag_if.taken, 
                                                      cmt_brtag_if.mispredict ? "MISS" : "SUCC",
                                                      w_bhr_next);
     end

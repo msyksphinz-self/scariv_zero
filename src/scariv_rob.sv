@@ -111,6 +111,24 @@ endgenerate
 riscv_pkg::xlen_t w_sim_mstatus[CMT_ENTRY_SIZE][scariv_conf_pkg::DISP_SIZE];
 `endif // SIMULATION
 
+grp_id_t w_rn_is_cond_arr;
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin: br_loop
+  assign w_rn_is_cond_arr[d_idx] = rn_front_if.payload.inst[d_idx].is_cond &
+                                   rn_front_if.payload.resource_cnt.bru_inst_valid[d_idx];
+end endgenerate
+scariv_pkg::disp_t w_rn_front_if_cond_inst;
+
+bit_oh_or_packed
+  #(.T(scariv_pkg::disp_t),
+    .WORDS(scariv_conf_pkg::DISP_SIZE)
+    )
+u_rn_br_cond_info (
+ .i_oh      (w_rn_is_cond_arr),
+ .i_data    (rn_front_if.payload.inst),
+ .o_selected(w_rn_front_if_cond_inst)
+ );
+
+
 function automatic rob_entry_t assign_rob_entry();
   rob_entry_t ret;
 
@@ -138,7 +156,9 @@ function automatic rob_entry_t assign_rob_entry();
 `endif // SIMULATION
   end // block: inst_loop
 
-  ret.br_upd_info = 'h0;
+  ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
+  ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
+  ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
   ret.fflags_update_valid = 'h0;
 
   ret.is_br_included = rn_front_if.payload.is_br_included;
@@ -361,7 +381,15 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare
   assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
 end endgenerate
 
-assign cmt_brtag_if.pc_vaddr     = w_out_entry.pc_addr;
+rob_static_info_t w_out_entry_br_inst;
+bit_oh_or_packed #(.T(rob_static_info_t), .WORDS(DISP_SIZE)) 
+u_cmt_brtag_pc_addr (
+  .i_oh      (cmt_brtag_if.is_br_inst),
+  .i_data    (w_out_entry.inst       ), 
+  .o_selected(w_out_entry_br_inst    )
+);
+
+assign cmt_brtag_if.pc_vaddr     = w_out_entry_br_inst.pc_addr;
 assign cmt_brtag_if.gshare_bhr   = w_out_entry.br_upd_info.gshare_bhr;
 assign cmt_brtag_if.gshare_index = w_out_entry.br_upd_info.gshare_index;
 assign cmt_brtag_if.taken        = w_out_entry.br_upd_info.br_taken;
