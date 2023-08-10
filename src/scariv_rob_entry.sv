@@ -205,17 +205,6 @@ always_comb begin
 `endif // SIMULATION
         end
       end
-
-
-
-      if (i_kill) begin
-        w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
-        w_entry_next.except_valid[d_idx] = 1'b0;
-        w_entry_next.flush_valid [d_idx] = 1'b0;
-`ifdef SIMULATION
-        w_entry_next.sim_dead_reason[d_idx] = DEAD_EXT_KILL;
-`endif // SIMULATION
-      end
     end
 
     // Branch condition update
@@ -249,6 +238,17 @@ always_comb begin
       end
 `endif // SIMULATION
     end // if (br_upd_if.update)
+
+    for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+      if (i_kill) begin
+        w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+        w_entry_next.except_valid[d_idx] = 1'b0;
+        w_entry_next.flush_valid [d_idx] = 1'b0;
+`ifdef SIMULATION
+        w_entry_next.sim_dead_reason[d_idx] = DEAD_EXT_KILL;
+`endif // SIMULATION
+      end
+    end
 
 `ifdef SIMULATION
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin: life_loop
