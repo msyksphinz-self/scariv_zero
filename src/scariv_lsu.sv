@@ -206,8 +206,12 @@ u_replay_queue
   .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
 
-assign w_replay_selected = w_lsu_pipe_req_if.valid;
-assign w_lsu_pipe_req_if.ready = 1'b1;
+assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 : 
+                           ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
+                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
+                                                              w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
+
+assign w_lsu_pipe_req_if.ready = w_replay_selected;
 
 always_comb begin
   if (w_replay_selected) begin

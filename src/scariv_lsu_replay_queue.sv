@@ -73,7 +73,7 @@ logic w_queue_pop;
 
 assign lsu_pipe_haz_if.full = w_full;
 assign w_queue_push = lsu_pipe_haz_if.valid & !lsu_pipe_haz_if.full;
-assign w_queue_pop  = w_lsu_replay_valid & lsu_pipe_req_if.ready;
+assign w_queue_pop  = w_lsu_replay_valid & (lsu_pipe_req_if.ready | w_replay_additional_queue_tail.dead);
 
 assign w_new_replay_queue_info.inst           = lsu_pipe_haz_if.payload.inst          ;
 assign w_new_replay_queue_info.cat            = lsu_pipe_haz_if.payload.cat           ;
@@ -192,11 +192,12 @@ always_comb begin
         if (w_replay_additional_queue_tail.dead) begin
             w_lsu_replay_valid = 1'b1;  // immediately remove from queue
         end else if (w_rd_replay_queue_info.diff_counter != 'h0 &&
-            r_prev_diff_counter == w_rd_replay_queue_info.diff_counter) begin
+                     r_prev_diff_counter == w_rd_replay_queue_info.diff_counter ||
+                     w_rd_replay_queue_info.diff_counter == 'h0 && (&r_prev_diff_counter) /* Timeout */) begin
             w_lsu_replay_valid = 1'b1;
         end else begin
             case (w_rd_replay_queue_info.hazard_typ)
-                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & i_stq_rs2_resolve.index) == 'h0;
+                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & ~i_stq_rs2_resolve.index) == 'h0;
                 EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = w_head_is_oldest & i_st_buffer_empty & i_missu_is_empty;
                 EX2_HAZ_L1D_CONFLICT :   w_lsu_replay_valid = 1'b1; // Replay immediately
                 EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = !i_missu_is_full;

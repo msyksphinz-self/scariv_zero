@@ -149,7 +149,7 @@ bit_brshift
   #(.WIDTH(ENTRY_SIZE))
 u_age_selector
   (
-   .in   (w_entry_valid & w_entry_ready & {ENTRY_SIZE{~i_stall}}),
+   .in   (w_entry_valid & w_entry_ready),
    .i_sel(w_entry_out_ptr_oh),
    .out  (w_picked_inst)
    );
@@ -245,7 +245,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_issue_succeeded (w_entry_finish   [s_idx]),
     .i_clear_entry     (w_entry_finish_oh[s_idx]),
 
-    .i_entry_picked    (w_picked_inst_oh[s_idx])
+    .i_entry_picked    (w_picked_inst_oh[s_idx] & ~i_stall)
   );
 
   assign w_entry_done[s_idx] = w_entry_done_report[s_idx].valid;
