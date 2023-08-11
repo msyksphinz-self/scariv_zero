@@ -159,9 +159,9 @@ class verilator_sim:
             else:
                 run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
                                            cwd=base_dir + '/' + testcase)
-                for line in iter(run_process.stdout.readline, ""):
-                    print(line, end="")
-                    sys.stdout.flush()
+                # for line in iter(run_process.stdout.readline, ""):
+                #     print(line, end="")
+                #     sys.stdout.flush()
                 run_process.wait()
 
         result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
