@@ -46,4 +46,8 @@ extern "C" {
 
   void spike_update_timer(long long value);
 
+  void initial_gshare(long long bhr_length);
+  void step_gshare (long long rtl_time,
+                    long long rtl_gshare_bhr);
+
 }

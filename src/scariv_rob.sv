@@ -267,7 +267,7 @@ endgenerate
 
 `ifdef SIMULATION
 
-import "DPI-C" function void spike_update_timer (longint value);
+import "DPI-C" function void spike_update_timer (input longint value);
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

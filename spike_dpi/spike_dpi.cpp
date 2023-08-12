@@ -966,6 +966,69 @@ std::map<int, const char *> riscv_excpt_map {
   {28, "Another Flush"}
 };
 
+bool is_cond_branch_inst(uint64_t insn)
+{
+  if ((insn & MASK_BEQ ) == MATCH_BEQ  ||
+      (insn & MASK_BNE ) == MATCH_BNE  || 
+      (insn & MASK_BLT ) == MATCH_BLT  || 
+      (insn & MASK_BGE ) == MATCH_BGE  || 
+      (insn & MASK_BLTU) == MATCH_BLTU ||  
+      (insn & MASK_BGEU) == MATCH_BGEU) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+size_t iss_bhr_length;
+long long iss_bhr;
+
+void initial_gshare(long long bhr_length) 
+{
+  iss_bhr_length = static_cast<size_t>(bhr_length);
+  fprintf (compare_log_fp, "Info : GSHARE length is set %d\n", iss_bhr_length);
+}
+
+// 数値を２進数文字列に変換
+std::string to_binString(unsigned int val)
+{
+    if( !val )
+        return std::string("0");
+    std::string str;
+    while( val != 0 ) {
+        if( (val & 1) == 0 )  // val は偶数か？
+            str.insert(str.begin(), '0');  //  偶数の場合
+        else
+            str.insert(str.begin(), '1');  //  奇数の場合
+        val >>= 1;
+    }
+    return str;
+}
+
+
+void step_gshare (long long rtl_time,
+                  long long rtl_gshare_bhr)
+{
+  processor_t *p = spike_core->get_core(0);
+  auto iss_next_pc = p->get_state()->pc;
+  auto iss_pc      = p->get_state()->prev_pc;
+  auto iss_insn    = p->get_state()->insn;
+
+  if (is_cond_branch_inst(iss_insn.bits())) {
+    bool is_branch_taken = iss_next_pc != iss_pc + 4;
+    iss_bhr = iss_bhr << 1 | is_branch_taken;
+
+    if ((iss_bhr & (1 << iss_bhr) - 1) != rtl_gshare_bhr) {
+      fprintf(compare_log_fp, "Warning : BHR different: RTL = %s, ISS = %s\n",
+                              to_binString(iss_bhr & ((1 << iss_bhr_length)-1)).c_str(), 
+                              to_binString(rtl_gshare_bhr).c_str());
+    } else {
+      fprintf(compare_log_fp, "BHR RTL = %s\n",
+                              to_binString(iss_bhr & ((1 << iss_bhr_length)-1)).c_str());
+    }
+  }
+}
+
 void step_spike(long long rtl_time, long long rtl_pc,
                 int rtl_priv, long long rtl_mstatus,
                 int rtl_exception, int rtl_exception_cause,
@@ -1513,7 +1576,7 @@ void check_mmu_trans (long long rtl_time, long long rtl_va,
 }
 
 
-void spike_update_rtl_timer (long long value)
+void spike_update_timer (long long value)
 {
   processor_t *p = spike_core->get_core(0);
   p->get_mmu()->store_uint64 (0x200bff8, value);
