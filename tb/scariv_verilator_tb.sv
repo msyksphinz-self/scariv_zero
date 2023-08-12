@@ -26,6 +26,8 @@ import "DPI-C" function void step_spike
 
 import "DPI-C" function void step_spike_wo_cmp(input int count);
 
+import "DPI-C" function void stop_sim_deadlock(input int count);
+
 module scariv_tb (
     input logic i_clk,
 

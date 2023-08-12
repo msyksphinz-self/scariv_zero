@@ -16,7 +16,8 @@ extern bool elf_load_finish;
 extern "C" {
   extern FILE *compare_log_fp;
   void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo);
-  void stop_sim(int code);
+  void stop_sim(int code, long long rtl_time);
+  void stop_sim_deadlock(long long rtl_time);
 }
 
 extern "C" {
@@ -42,7 +43,7 @@ static void usage(const char * program_name)
 
 
 extern "C" {
-  void stop_sim(int code);
+  void stop_sim(int code, long long rtl_time);
 }
 
 double sc_time_stamp()
@@ -216,7 +217,7 @@ int main(int argc, char** argv) {
 }
 
 
-void stop_sim(int code)
+void stop_sim(int code, long long rtl_time)
 {
   fprintf(compare_log_fp, "===============================\n");
   fprintf(compare_log_fp, "SIMULATION FINISH : ");
@@ -225,6 +226,7 @@ void stop_sim(int code)
   } else {
     fprintf(compare_log_fp, "FAIL (CODE=%d)\n", code);
   }
+  fprintf(compare_log_fp, "RUNNING TIME : %lld\n", rtl_time);
   fprintf(compare_log_fp, "===============================\n");
 
   // dut->final();
@@ -233,4 +235,19 @@ void stop_sim(int code)
 #endif // DUMP_FST
 
   exit(!(code == 1));
+}
+
+void stop_sim_deadlock(long long rtl_time)
+{
+  fprintf(compare_log_fp, "===============================\n");
+  fprintf(compare_log_fp, "COMMIT DEADLOCKED\n");
+  fprintf(compare_log_fp, "RUNNING TIME : %lld\n", rtl_time);
+  fprintf(compare_log_fp, "===============================\n");
+
+  // dut->final();
+#ifdef DUMP_FST
+  if (dump_fst_enable) tfp->close();
+#endif // DUMP_FST
+
+  exit(0);
 }

@@ -983,7 +983,7 @@ void step_spike(long long time, long long rtl_pc,
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {
-    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012x, Inst=%08x, %s\n",
+    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012llx, Inst=%08x, %s\n",
             time, rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause], rtl_exception_cause,
             rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
@@ -1091,13 +1091,13 @@ void step_spike(long long time, long long rtl_pc,
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*llx\n",
+    fprintf(compare_log_fp, "Wrong PC: RTL = %0*lx, ISS = %0*lx\n",
             g_rv_xlen / 4, xlen_convert(rtl_pc), g_rv_xlen / 4, xlen_convert(iss_pc));
     fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, time);
     }
     return;
   }
@@ -1109,7 +1109,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1127,7 +1127,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1146,7 +1146,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1159,7 +1159,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_gpr_addr,
             g_rv_xlen / 4, rtl_wr_val);
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100);
+    stop_sim(100, time);
   }
 
   // // Dumping for ISS GPR Register Writes
@@ -1184,7 +1184,7 @@ void step_spike(long long time, long long rtl_pc,
                 std::get<0>(iss_rd) / 16,
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
-        stop_sim(100);
+        stop_sim(100, time);
       }
     }
   }
@@ -1205,7 +1205,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_type == 0 ? "GPR" :
             iss_wr_type == 1 ? "FPR" : "Others");
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100);
+    stop_sim(100, time);
   }
   if (rtl_wr_valid && iss_wr_type == 0) { // GPR write
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
@@ -1258,7 +1258,7 @@ void step_spike(long long time, long long rtl_pc,
       fail_count ++;
       if (fail_count >= fail_max) {
         // p->step(10);
-        stop_sim(100);
+        stop_sim(100, time);
       }
       // p->step(10);
       // stop_sim(100);
@@ -1277,7 +1277,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(compare_log_fp, "==========================================\n");
       fail_count ++;
       if (fail_count >= fail_max) {
-        stop_sim(100);
+        stop_sim(100, time);
       }
       return;
     } else {
@@ -1314,7 +1314,7 @@ void record_stq_store(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       for (int b = 0; b < 8; b++) {
         if ((be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != (uint8_t)(l1d_data[i * 8 + b]))) {
           diff_found = true;
@@ -1334,7 +1334,7 @@ void record_stq_store(long long rtl_time,
 
 #ifndef SIM_MAIN
   if (tohost_en && (tohost_addr == paddr) && (l1d_data[0] & 0x1 == 1)) {
-    stop_sim(l1d_data[0]);
+    stop_sim(l1d_data[0], rtl_time);
   }
 #endif // SIM_MAIN
 }
@@ -1353,7 +1353,7 @@ void record_l1d_load(long long rtl_time,
 
   if (size > 64) {
     fprintf (stderr, "Error: this compare system only support up to 512-bit system\n");
-    stop_sim(100);
+    stop_sim(100, rtl_time);
     return;
   }
 
@@ -1376,7 +1376,7 @@ void record_l1d_load(long long rtl_time,
     fprintf(compare_log_fp, "\n");
 #ifndef SIM_MAIN
     if (tohost_en && (tohost_addr == paddr) && (merged_l1d_data[0] & 0x1 == 1)) {
-      stop_sim(merged_l1d_data[0]);
+      stop_sim(merged_l1d_data[0], rtl_time);
     }
 #endif // SIM_MAIN
   }
@@ -1387,7 +1387,7 @@ void record_l1d_load(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       long long be = merge_valid ? merge_be : l1d_be;
       for (int b = 0; b < 8; b++) {
         uint8_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i * 8 + b] : l1d_data[i * 8 + b];
@@ -1432,7 +1432,7 @@ void record_l1d_evict(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       if (((iss_ld_data >> 32 & 0xffffffff) != l1d_data[i*2+1]) |
           ((iss_ld_data       & 0xffffffff) != l1d_data[i*2+0])) {
         diff_found = true;
@@ -1466,7 +1466,7 @@ void step_spike_wo_cmp(int steps)
     auto iss_pc   = p->get_state()->prev_pc;
     auto iss_insn = p->get_state()->insn;
     auto iss_priv = p->get_state()->last_inst_priv;
-    sprintf (spike_out_str, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n",
+    sprintf (spike_out_str, "Spike Result : %ld : PC=[%016lx] (%c) %08lx %s\n",
              instret,
              iss_pc,
              iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
@@ -1490,18 +1490,18 @@ void check_mmu_trans (long long time, long long rtl_va,
     case 1 : acc_type = STORE; break;
     default :
       fprintf (stderr, "rtl_acc_type = %d is not supported\n", rtl_acc_type);
-      stop_sim(1);
+      stop_sim(1, time);
   }
 
   try {
     reg_t iss_paddr = mmu->translate(rtl_va, rtl_len, static_cast<access_type>(rtl_acc_type), 0);
     if (iss_paddr != rtl_pa) {
       char spike_out_str[256];
-      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08llx, ISS=%08llx\n",
+      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08llx, ISS=%08lx\n",
                rtl_pa, iss_paddr);
       fprintf (compare_log_fp, spike_out_str);
       fprintf (stderr, spike_out_str);
-      stop_sim(100);
+      stop_sim(100, time);
     } else {
       // fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
@@ -1521,7 +1521,7 @@ void spike_update_timer (long long value)
 
 
 #ifdef SIM_MAIN
-void stop_sim(int code)
+void stop_sim(int code, long long rtl_time)
 {
   fprintf(compare_log_fp, "stop_ism %d\n", code);
 }

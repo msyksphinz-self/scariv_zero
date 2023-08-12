@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from enum import Enum
+import re
 import docker
 from multiprocessing import Pool, Manager
 import multiprocessing
@@ -18,7 +19,7 @@ class BuildResult(Enum):
 class verilator_sim:
 
     manager = Manager()
-    result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
+    result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0, 'cycle_deleg' : 0})
     result_detail_dict = manager.dict()
 
     def build_sim(self, sim_conf):
@@ -169,27 +170,48 @@ class verilator_sim:
         print (test["name"] + "\t: ", end="")
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
-            self.result_detail_dict[test['name']] = "error";
+            self.result_detail_dict[test['name']] = "error"
             self.result_dict['error'] += 1
         elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
             print ("MATCH", end="\r\n")
-            self.result_detail_dict[test['name']] = "match";
+            self.result_detail_dict[test['name']] = "match"
             self.result_dict['match'] += 1
         elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
             print ("TIMEOUT", end="\r\n")
-            self.result_detail_dict[test['name']] = "timeout";
+            self.result_detail_dict[test['name']] = "timeout"
             self.result_dict['timeout'] += 1
         elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-            print ("PASS", end="\r\n")
-            self.result_detail_dict[test['name']] = "pass";
-            self.result_dict['pass'] += 1
+            if "expected_time" in test and \
+               sim_conf["conf"] in test["expected_time"] :
+                match = re.search(r'RUNNING TIME : (\d+)', result_stdout.decode('utf-8'))
+                if not match:
+                    print ("\nRUNNING TIME can't be get\n")
+                    print ("UNKNOWN", end="\r\n")
+                    self.result_detail_dict[test['name']] = "unknown"
+                    self.result_dict['unknown'] += 1
+                else:
+                    rtl_time = int(match.group(1))
+                    exp_time = int(test["expected_time"][sim_conf["conf"]])
+                    if (float(abs(rtl_time - exp_time)) / float(rtl_time) > 0.05) :
+                        print ("CYCLE DEGRADED", end="\r\n")
+                        print ("\nERROR : Expected Cycle Different. RTL = %d, EXPECTED = %d. Diff = %.2f%%\n" % (rtl_time, exp_time, float(abs(rtl_time - exp_time)) / float(rtl_time) * 100.0))
+                        self.result_detail_dict[test['name']] = "cycle_deleg"
+                        self.result_dict['cycle_deleg'] += 1
+                    else:
+                        print ("PASS", end="\r\n")
+                        self.result_detail_dict[test['name']] = "pass"
+                        self.result_dict['pass'] += 1
+            else:
+                print ("PASS", end="\r\n")
+                self.result_detail_dict[test['name']] = "pass"
+                self.result_dict['pass'] += 1
         elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
             print ("DEADLOCK", end="\r\n")
-            self.result_detail_dict[test['name']] = "deadlock";
+            self.result_detail_dict[test['name']] = "deadlock"
             self.result_dict['deadlock'] += 1
         else :
             print ("UNKNOWN", end="\r\n")
-            self.result_detail_dict[test['name']] = "unknown";
+            self.result_detail_dict[test['name']] = "unknown"
             self.result_dict['unknown'] += 1
 
     def execute_test_wrapper (self, args):
