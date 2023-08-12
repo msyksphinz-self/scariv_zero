@@ -56,19 +56,19 @@ static void help(int exit_code = 1)
   fprintf(compare_log_fp, "                          P -- Name of the MMIO plugin\n");
   fprintf(compare_log_fp, "                          B -- Base memory address of the device\n");
   fprintf(compare_log_fp, "                          A -- String arguments to pass to the plugin\n");
-  fprintf(compare_log_fp, "                          This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "                          This flag can be used multiple rtl_times.\n");
   fprintf(compare_log_fp, "                          The extlib flag for the library must come first.\n");
   fprintf(compare_log_fp, "  --log-cache-miss      Generate a log of cache miss\n");
   fprintf(compare_log_fp, "  --extension=<name>    Specify RoCC Extension\n");
   fprintf(compare_log_fp, "  --extlib=<name>       Shared library to load\n");
-  fprintf(compare_log_fp, "                        This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "                        This flag can be used multiple rtl_times.\n");
   fprintf(compare_log_fp, "  --rbb-port=<port>     Listen on <port> for remote bitbang connection\n");
   fprintf(compare_log_fp, "  --dump-dts            Print device tree string and exit\n");
   fprintf(compare_log_fp, "  --disable-dtb         Don't write the device tree blob into memory\n");
   fprintf(compare_log_fp, "  --kernel=<path>       Load kernel flat image into memory\n");
   fprintf(compare_log_fp, "  --initrd=<path>       Load kernel initrd into memory\n");
   fprintf(compare_log_fp, "  --bootargs=<args>     Provide custom bootargs for kernel [default: console=hvc0 earlycon=sbi]\n");
-  fprintf(compare_log_fp, "  --real-time-clint     Increment clint time at real-time rate\n");
+  fprintf(compare_log_fp, "  --real-rtl_time-clint     Increment clint rtl_time at real-rtl_time rate\n");
   fprintf(compare_log_fp, "  --dm-progsize=<words> Progsize for the debug module [default 2]\n");
   fprintf(compare_log_fp, "  --dm-sba=<bits>       Debug bus master supports up to "
       "<bits> wide accesses [default 0]\n");
@@ -558,7 +558,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   bool log = false;
   bool dump_dts = false;
   bool dtb_enabled = true;
-  bool real_time_clint = false;
+  bool real_rtl_time_clint = false;
   size_t nprocs = 1;
   const char* kernel = NULL;
   reg_t kernel_offset, kernel_size;
@@ -678,7 +678,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   parser.option(0, "kernel", 1, [&](const char* s){kernel = s;});
   parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
   parser.option(0, "bootargs", 1, [&](const char* s){bootargs = s;});
-  parser.option(0, "real-time-clint", 0, [&](const char *s){real_time_clint = true;});
+  parser.option(0, "real-rtl_time-clint", 0, [&](const char *s){real_rtl_time_clint = true;});
   parser.option(0, "extlib", 1, [&](const char *s){
     void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
     if (lib == NULL) {
@@ -744,7 +744,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
     }
   }
 
-  spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_time_clint,
+  spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_rtl_time_clint,
                          initrd_start, initrd_end, bootargs, start_pc, mems, plugin_devices, htif_args,
                          std::move(hartids), dm_config, log_path, dtb_enabled, dtb_file);
 
@@ -966,7 +966,7 @@ std::map<int, const char *> riscv_excpt_map {
   {28, "Another Flush"}
 };
 
-void step_spike(long long time, long long rtl_pc,
+void step_spike(long long rtl_time, long long rtl_pc,
                 int rtl_priv, long long rtl_mstatus,
                 int rtl_exception, int rtl_exception_cause,
                 int rtl_cmt_id, int rtl_grp_id,
@@ -984,7 +984,7 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_exception) {
     fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012llx, Inst=%08x, %s\n",
-            time, rtl_cmt_id, rtl_grp_id,
+            rtl_time, rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause], rtl_exception_cause,
             rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   }
@@ -996,7 +996,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
                        (rtl_exception_cause == 7 ))) { // Store Access Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", rtl_time,
             rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
@@ -1008,7 +1008,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 15) ||  // Store Page Fault
                        (rtl_exception_cause == 12))) {  // Instruction Page Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -1018,7 +1018,7 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 28))) {  // Another Flush
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -1029,7 +1029,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
                        (rtl_exception_cause == 11))) { // ECALL_M
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -1047,7 +1047,7 @@ void step_spike(long long time, long long rtl_pc,
   }
   prev_minstret_access = false;
   prev_instret = instret;
-  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", time,
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", rtl_time,
           instret,
           rtl_pc,
           rtl_priv == 0 ? 'U' : rtl_priv == 2 ? 'S' : 'M',
@@ -1057,11 +1057,11 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
   // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
-  //         time,
+  //         rtl_time,
   //         iss_pc,
   //         p->get_state()->prev_pc,
   //         iss_insn);
-  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
+  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", rtl_time, iss_mstatus, rtl_mstatus);
 
   if (iss_insn.bits() == 0x10500073U) { // WFI
     return; // WFI doesn't update PC -> just skip
@@ -1097,7 +1097,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100, time);
+      stop_sim(100, rtl_time);
     }
     return;
   }
@@ -1109,7 +1109,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100, time);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1127,7 +1127,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100, time);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1146,7 +1146,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100, time);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -1159,7 +1159,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_gpr_addr,
             g_rv_xlen / 4, rtl_wr_val);
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100, time);
+    stop_sim(100, rtl_time);
   }
 
   // // Dumping for ISS GPR Register Writes
@@ -1184,7 +1184,7 @@ void step_spike(long long time, long long rtl_pc,
                 std::get<0>(iss_rd) / 16,
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
-        stop_sim(100, time);
+        stop_sim(100, rtl_time);
       }
     }
   }
@@ -1205,7 +1205,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_type == 0 ? "GPR" :
             iss_wr_type == 1 ? "FPR" : "Others");
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100, time);
+    stop_sim(100, rtl_time);
   }
   if (rtl_wr_valid && iss_wr_type == 0) { // GPR write
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
@@ -1258,7 +1258,7 @@ void step_spike(long long time, long long rtl_pc,
       fail_count ++;
       if (fail_count >= fail_max) {
         // p->step(10);
-        stop_sim(100, time);
+        stop_sim(100, rtl_time);
       }
       // p->step(10);
       // stop_sim(100);
@@ -1277,7 +1277,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(compare_log_fp, "==========================================\n");
       fail_count ++;
       if (fail_count >= fail_max) {
-        stop_sim(100, time);
+        stop_sim(100, rtl_time);
       }
       return;
     } else {
@@ -1476,7 +1476,7 @@ void step_spike_wo_cmp(int steps)
   }
 }
 
-void check_mmu_trans (long long time, long long rtl_va,
+void check_mmu_trans (long long rtl_time, long long rtl_va,
                       int rtl_len, int rtl_acc_type,
                       long long rtl_pa)
 {
@@ -1490,7 +1490,7 @@ void check_mmu_trans (long long time, long long rtl_va,
     case 1 : acc_type = STORE; break;
     default :
       fprintf (stderr, "rtl_acc_type = %d is not supported\n", rtl_acc_type);
-      stop_sim(1, time);
+      stop_sim(1, rtl_time);
   }
 
   try {
@@ -1501,7 +1501,7 @@ void check_mmu_trans (long long time, long long rtl_va,
                rtl_pa, iss_paddr);
       fprintf (compare_log_fp, spike_out_str);
       fprintf (stderr, spike_out_str);
-      stop_sim(100, time);
+      stop_sim(100, rtl_time);
     } else {
       // fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
@@ -1513,7 +1513,7 @@ void check_mmu_trans (long long time, long long rtl_va,
 }
 
 
-void spike_update_timer (long long value)
+void spike_update_rtl_timer (long long value)
 {
   processor_t *p = spike_core->get_core(0);
   p->get_mmu()->store_uint64 (0x200bff8, value);
