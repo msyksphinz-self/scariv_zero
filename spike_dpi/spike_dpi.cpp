@@ -1016,15 +1016,16 @@ void step_gshare (long long rtl_time,
 
   if (is_cond_branch_inst(iss_insn.bits())) {
     bool is_branch_taken = iss_next_pc != iss_pc + 4;
-    iss_bhr = iss_bhr << 1 | is_branch_taken;
+    fprintf (compare_log_fp, "BHR before : %x\n", iss_bhr & ((1 << iss_bhr_length)-1));
+    iss_bhr = (iss_bhr << 1) | is_branch_taken;
+    fprintf (compare_log_fp, "BHR after  : %x\n", iss_bhr & ((1 << iss_bhr_length)-1));
 
-    if ((iss_bhr & (1 << iss_bhr) - 1) != rtl_gshare_bhr) {
+    if ((iss_bhr & (1 << iss_bhr_length) - 1) != rtl_gshare_bhr) {
       fprintf(compare_log_fp, "Warning : BHR different: RTL = %s, ISS = %s\n",
-                              to_binString(iss_bhr & ((1 << iss_bhr_length)-1)).c_str(), 
-                              to_binString(rtl_gshare_bhr).c_str());
-    } else {
-      fprintf(compare_log_fp, "BHR RTL = %s\n",
+                              to_binString(rtl_gshare_bhr).c_str(), 
                               to_binString(iss_bhr & ((1 << iss_bhr_length)-1)).c_str());
+    } else {
+      fprintf(compare_log_fp, "BHR RTL = %s\n", to_binString(rtl_gshare_bhr).c_str());
     }
   }
 }
