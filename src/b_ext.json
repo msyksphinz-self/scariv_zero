@@ -1,0 +1,150 @@
+[
+    {
+        "name":"add.uw r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "unsignd_add_32"]]
+    },
+    {
+        "name":"andn r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01000", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "and_inv"]]
+    },
+    {
+        "name":"clmul r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "carry_less_mul"]]
+    },
+    {
+        "name":"clmulh r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "carry_less_mulh"]]
+    },
+    {
+        "name":"clmulr r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "carry_less_mulr"]]
+    },
+    {
+        "name":"clz r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00000", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "clz"]]
+    },
+    {
+        "name":"clzw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00000", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "clzw"]]
+    },
+    {
+        "name":"cpop r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00010", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "cpop"]]
+    },
+    {
+        "name":"cpopw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00000", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "cpopw"]]
+    },
+    {
+        "name":"ctz r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00001", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "ctz"]]
+    },
+    {
+        "name":"ctzw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00001", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1"]],
+        "alu_ctrl":[["op", "ctzw"]]
+    },
+    {
+        "name":"max r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "signed_max"]]
+    },
+    {
+        "name":"maxu r[11:7],r[19:15],r[24,20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "unsigned_max"]]
+    },
+    {
+        "name":"min r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "signed_min"]]
+    },
+    {
+        "name":"minu r[11:7],r[19:15],r[24,20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "unsigned_min"]]
+    },
+    X X orc.b rd, rs1, rs2 Bitwise OR-Combine, byte granule X
+    X X orn rd, rs1, rs2 OR with inverted operand X
+    X X rev8_rd_, rs Byte-reverse register X
+    X X rol rd, rs1, rs2 Rotate left (Register) X
+    X rolw rd, rs1, rs2 Rotate Left Word (Register) X
+    X X ror rd, rs1, rs2 Rotate right (Register) X
+    X X rori rd, rs1, shamt Rotate right (Immediate) X
+    X roriw rd, rs1, shamt Rotate right Word (Immediate) X
+    X rorw rd, rs1, rs2 Rotate right Word (Register) X
+    X X bclr rd, rs1, rs2 Single-Bit Clear (Register) X
+    X X bclri rd, rs1, imm Single-Bit Clear (Immediate) X
+    X X bext rd, rs1, rs2 Single-Bit Extract (Register) X
+    X X bexti rd, rs1, imm Single-Bit Extract (Immediate) X
+    X X binv rd, rs1, rs2 Single-Bit Invert (Register) X
+    X X binvi rd, rs1, imm Single-Bit Invert (Immediate) X
+    X X bset rd, rs1, rs2 Single-Bit Set (Register) X
+    X X bseti rd, rs1, imm Single-Bit Set (Immediate) X
+    X X sext.b rd, rs Sign-extend byte X
+    X X sext.h rd, rs Sign-extend halfword X
+    X X sh1add rd, rs1, rs2 Shift left by 1 and add X
+    X sh1add.uw rd, rs1, rs2 Shift unsigned word left by 1 and add X
+    X X sh2add rd, rs1, rs2 Shift left by 2 and add X
+    X sh2add.uw rd, rs1, rs2 Shift unsigned word left by 2 and add X
+    X X sh3add rd, rs2, rs2 Shift left by 3 and add X
+    X sh3add.uw rd, rs1, rs2 Shift unsigned word left by 3 and add X
+    X slli.uw rd, rs1, imm Shift-left unsigned word (Immediate) X
+    X X xnor rd, rs1, rs2 Exclusive NOR X
+    X X zext.h rd, rs Zero-extend halfword X
+]
