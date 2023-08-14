@@ -141,6 +141,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   if (rv_amo) {
     strcat(isa_str, "a");
   }
+  strcat(isa_str, "b");
   if (rv_flen >= 32) {
     strcat(isa_str, "f");
   }

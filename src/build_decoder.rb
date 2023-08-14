@@ -34,6 +34,11 @@ if ARGV.size != 4 then
   STDERR.print "Please specify signal fields in JSON file\n"
 end
 
+if isa.include?('b') then
+  File.open("b_ext.json") do |file|
+    $arch_table = $arch_table + JSON.load(file)
+  end
+end
 
 ctrl_fields = []
 
