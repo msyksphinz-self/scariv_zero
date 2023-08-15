@@ -115,6 +115,7 @@
 ../src/scariv_div_unit.sv
 
 ../src/scariv_bitmanip_alu.sv
+../src/scariv_zicond_alu.sv
 
 ../src/scariv_lsu_top.sv
 ../src/scariv_lsu.sv

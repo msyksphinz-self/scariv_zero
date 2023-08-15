@@ -302,7 +302,7 @@ def main():
     sim_conf["isa"] = args.isa
     sim_conf["conf"] = args.conf
 
-    sim_conf["isa_ext"] = sim_conf["isa"][4:10]
+    sim_conf["isa_ext"] = sim_conf["isa"][4:]
     testcase = args.testcase
     sim_conf["parallel"] = int(args.parallel)
     sim_conf["fst_dump"] = args.debug
