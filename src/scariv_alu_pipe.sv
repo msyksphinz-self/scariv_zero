@@ -74,19 +74,20 @@ logic                              w_ex1_rs2_lsu_mispred;
 logic                              w_ex1_rs1_mispred;
 logic                              w_ex1_rs2_mispred;
 
-pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex2_issue;
-scariv_pkg::issue_t                        w_ex2_issue_next;
-logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
-riscv_pkg::xlen_t r_ex2_rs1_data;
-riscv_pkg::xlen_t r_ex2_rs2_data;
-logic                              r_ex2_wr_valid;
+pipe_ctrl_t                r_ex2_pipe_ctrl;
+scariv_pkg::issue_t        r_ex2_issue;
+scariv_pkg::issue_t        w_ex2_issue_next;
+logic [RV_ENTRY_SIZE-1: 0] r_ex2_index;
+riscv_pkg::xlen_t          r_ex2_rs1_data;
+riscv_pkg::xlen_t          r_ex2_rs2_data;
+logic                      r_ex2_wr_valid;
+riscv_pkg::xlen_t          w_ex2_bitmanip_result;
 
-scariv_pkg::issue_t                        r_ex3_issue;
-scariv_pkg::issue_t                        w_ex3_issue_next;
-riscv_pkg::xlen_t r_ex3_result;
-logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
-logic                              r_ex3_wr_valid;
+scariv_pkg::issue_t        r_ex3_issue;
+scariv_pkg::issue_t        w_ex3_issue_next;
+riscv_pkg::xlen_t          r_ex3_result;
+logic [RV_ENTRY_SIZE-1: 0] r_ex3_index;
+logic                      r_ex3_wr_valid;
 
 // ----------------------
 // Multiplier Variables
@@ -411,48 +412,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       /* verilator lint_off WIDTH */
       OP_SIGN_SLT:    r_ex3_result <= $signed(w_ex2_rs1_selected_data) < $signed(w_ex2_rs2_selected_data);
       OP_UNSIGN_SLT:  r_ex3_result <= w_ex2_rs1_selected_data < w_ex2_rs2_selected_data;
-      OP_UNSIGND_ADD_32 :   r_ex3_result <= 
-      OP_AND_INV :          r_ex3_result <= 
-      OP_CARRY_LESS_MUL :   r_ex3_result <= 
-      OP_CARRY_LESS_MULH :  r_ex3_result <= 
-      OP_CARRY_LESS_MULR :  r_ex3_result <= 
-      OP_CLZ :              r_ex3_result <= 
-      OP_CLZW :             r_ex3_result <= 
-      OP_CPOP :             r_ex3_result <= 
-      OP_CPOPW :            r_ex3_result <= 
-      OP_CTZ :              r_ex3_result <= 
-      OP_CTZW :             r_ex3_result <= 
-      OP_SIGNED_MAX :       
-      OP_UNSIGNED_MAX :
-      OP_SIGNED_MIN :
-      OP_UNSIGNED_MIN :
-      OP_BITWISE_OR :
-      OP_INVERTED_OR :
-      OP_BYTE_REVERSE :
-      OP_ROTATE_LEFT :
-      OP_ROTATE_LEFT_WORD :
-      OP_ROTATE_RIGHT :
-      OP_ROTATE_RIGHT_32 :
-      OP_BIT_CLEAR :
-      OP_BIT_EXTRACT :
-      OP_BIT_INVERT :
-      OP_BIT_SET :
-      OP_SIGN_EXTEND_8 :
-      OP_SIGN_EXTEND_16 :
-      OP_SIGNED_SH1ADD :
-      OP_UNSIGNED_SH1ADD_32 :
-      OP_SIGNED_SH2ADD :
-      OP_UNSIGNED_SH2ADD_32 :
-      OP_SIGNED_SH3ADD :
-      OP_UNSIGNED_SH3ADD_32 :
-      OP_UNSIGNED_SHIFT_LEFT_32 :
-      OP_XNOR :
-      OP_ZERO_EXTEND_16 :
-      default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
+      default         r_ex3_result <= w_ex2_bitmanip_result;
+      // default : r_ex3_result <= {riscv_pkg::XLEN_W{1'b0}};
     endcase // case (r_ex2_pipe_ctrl.op)
   end
 end
 
+scariv_bitmanip_alu u_bitmanip_alu (.i_rs1(w_ex2_rs1_selected_data), .i_rs2(w_ex2_rs2_selected_data), .i_op(r_ex2_pipe_ctrl.op), .o_out(w_ex2_bitmanip_result));
 // ----------------------
 // Multiplier Pipeline
 // ----------------------

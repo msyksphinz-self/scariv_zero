@@ -114,6 +114,8 @@
 ../src/scariv_muldiv_pipe.sv
 ../src/scariv_div_unit.sv
 
+../src/scariv_bitmanip_alu.sv
+
 ../src/scariv_lsu_top.sv
 ../src/scariv_lsu.sv
 ../src/scariv_lsu_issue_unit.sv
