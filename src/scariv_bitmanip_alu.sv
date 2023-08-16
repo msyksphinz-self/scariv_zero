@@ -13,6 +13,7 @@ module scariv_bitmanip_alu
  input riscv_pkg::xlen_t  i_rs2,
  input op_t               i_op,
 
+ output logic             o_valid,
  output riscv_pkg::xlen_t o_out
  );
 
@@ -40,6 +41,7 @@ logic [riscv_pkg::XLEN_W*2-1: 0] w_clmul_temp[riscv_pkg::XLEN_W];
 logic [riscv_pkg::XLEN_W*2-1: 0] w_clmul;
 
 always_comb begin
+  o_valid = 1'b1;
   case (i_op)
     OP_UNSIGND_ADD_32         : o_out = i_rs1 + {31'h0, i_rs2[31: 0]};
     OP_AND_INV                : o_out = i_rs1 & ~i_rs2;
@@ -78,7 +80,10 @@ always_comb begin
     OP_UNSIGNED_SHIFT_LEFT_32 : o_out = {{(riscv_pkg::XLEN_W-32){1'b0}}, i_rs1[31: 0]} << i_rs2;
     OP_XNOR                   : o_out = ~(i_rs1 ^ i_rs2);
     OP_ZERO_EXTEND_16         : o_out = {{(riscv_pkg::XLEN_W-16){1'b0}}, i_rs1[15: 0]};
-    default                   : o_out = 'h0;
+    default                   : begin
+      o_out = 'h0;
+      o_valid = 1'b0;
+    end
   endcase // case (i_op)
 end // always_comb
 

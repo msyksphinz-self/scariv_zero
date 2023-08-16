@@ -40,6 +40,12 @@ if isa.include?('b') then
   end
 end
 
+if isa.include?('zicond') then
+  File.open("zicond_ext.json") do |file|
+    $arch_table = $arch_table + JSON.load(file)
+  end
+end
+
 ctrl_fields = []
 
 $arch_table.each{ |arch|
