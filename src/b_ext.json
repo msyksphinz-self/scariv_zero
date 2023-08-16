@@ -142,7 +142,7 @@
         "length":"32", "xlen":["32", "64"],
         "field": ["01101", "01", "11000", "XXXXX", "101", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "byte_reverse"]],
         "comment":"Byte-reverse register"
     },
@@ -179,7 +179,7 @@
         "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "alu_ctrl":[["op", "rotate_right"]],
+        "alu_ctrl":[["op", "rotate_right"], ["imm", "sh"]],
         "comment":"Rotate right (Immediate)"
     },
     {
@@ -187,8 +187,8 @@
         "length":"32", "xlen":["64"],
         "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "rotate_right_32"]],
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "rotate_right_32"], ["imm", "sh"]],
         "comment":"Rotate right Word (Immediate)"
     },
     {
@@ -214,9 +214,9 @@
         "length":"32", "xlen":["32", "64"],
         "field": ["01001", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "bit_clear"]],
-        "comment":"Single-Bit Clear (H[24:20]ediate)"
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_clear"], ["imm", "sh"]],
+        "comment":"Single-Bit Clear (immediate)"
     },
     {
         "name":"bext      r[11:7],r[19:15],r[24:20]",
@@ -232,9 +232,9 @@
         "length":"32", "xlen":["32", "64"],
         "field": ["01001", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "bit_extract"]],
-        "comment":"Single-Bit Extract (H[24:20]ediate)"
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_extract"], ["imm", "sh"]],
+        "comment":"Single-Bit Extract (immediate)"
     },
     {
         "name":"binv      r[11:7],r[19:15],r[24:20]",
@@ -248,11 +248,11 @@
     {
         "name":"binvi     r[11:7],r[19:15],h[24:20]",
         "length":"32", "xlen":["32", "64"],
-        "field": ["01101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "field": ["01101", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "bit_invert"]],
-        "comment":"Single-Bit Invert (H[24:20]ediate)"
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_invert"], ["imm", "sh"]],
+        "comment":"Single-Bit Invert (immediate)"
     },
     {
         "name":"bset      r[11:7],r[19:15],r[24:20]",
@@ -268,9 +268,9 @@
         "length":"32", "xlen":["32", "64"],
         "field": ["00101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "bit_set"]],
-        "comment":"Single-Bit Set (H[24:20]ediate)"
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_set"], ["imm", "sh"]],
+        "comment":"Single-Bit Set (immediate)"
     },
     {
         "name":"sext.b    r[11:7],r[19:15]         ",
@@ -349,9 +349,9 @@
         "length":"32", "xlen":["64"],
         "field": ["00001", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
         "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
-        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "alu_ctrl":[["op", "unsigned_shift_left_32"]],
-        "comment":"Shift-left unsigned word (H[24:20]ediate)"
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "unsigned_shift_left_32"], ["imm", "sh"]],
+        "comment":"Shift-left unsigned word (immediate)"
     },
     {
         "name":"xnor      r[11:7],r[19:15],r[24:20]",

@@ -43,6 +43,8 @@
 ../src/bit_reverse.sv
 ../src/bit_rotate.sv
 ../src/bit_encoder.sv
+../src/bit_clz_32.sv
+../src/bit_clz_64.sv
 ../src/ring_fifo.sv
 ../src/ring_fifo_2ptr.sv
 
