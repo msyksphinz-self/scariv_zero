@@ -367,7 +367,7 @@ assign rob_info_if.except_valid = w_out_entry.except_valid;
 
 // Commit Branch Tag Update
 assign cmt_brtag_if.commit     = o_commit.commit;
-assign cmt_brtag_if.cmt_id     = w_out_cmt_entry_id;
+assign cmt_brtag_if.cmt_id     = w_out_cmt_id;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
   assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].is_cond;
   assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;

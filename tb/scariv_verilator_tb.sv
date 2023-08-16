@@ -553,7 +553,7 @@ logic [63: 0]                                                  int_commit_counte
                         w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
                         w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
 
-            step_gshare ($time / 4, u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.r_bhr);
+            step_gshare ($time / 4, u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.w_bhr_next);
 
           end
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)

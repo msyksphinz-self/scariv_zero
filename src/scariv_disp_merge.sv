@@ -17,6 +17,9 @@ module scariv_disp_merge
 
 assign o_disp.valid            = i_int_disp.valid & i_fp_disp.valid;
 assign o_disp.payload.pc_addr          = i_int_disp.payload.pc_addr;
+`ifdef SIMULATION
+assign o_disp.payload.pc_addr_debug    = i_int_disp.payload.pc_addr_debug;
+`endif // SIMULATION
 assign o_disp.payload.tlb_except_valid = i_int_disp.payload.tlb_except_valid;
 assign o_disp.payload.tlb_except_cause = i_int_disp.payload.tlb_except_cause;
 assign o_disp.payload.tlb_except_tval  = i_int_disp.payload.tlb_except_tval;

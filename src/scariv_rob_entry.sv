@@ -228,8 +228,17 @@ always_comb begin
         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
         w_entry_next.br_upd_info.bim_value    = br_upd_if.bim_value;
         w_entry_next.br_upd_info.br_taken     = br_upd_if.taken;
+        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond = br_upd_if.is_cond;
+        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_call = br_upd_if.is_call;
+        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_ret  = br_upd_if.is_ret;
+        // if (~r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond & br_upd_if.is_cond) begin
+        //   w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr = 
+        //     {r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr[GSHARE_BHT_W-2: 0], 1'b0};
+        //   w_entry_next.br_upd_info.gshare_bhr = w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
+        // end
         w_entry_next.dead[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.dead;
         w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
+        w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
       end
 `ifdef SIMULATION
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
