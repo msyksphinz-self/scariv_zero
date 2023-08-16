@@ -43,7 +43,7 @@ logic [riscv_pkg::XLEN_W*2-1: 0] w_clmul;
 always_comb begin
   o_valid = 1'b1;
   case (i_op)
-    OP_UNSIGND_ADD_32         : o_out = i_rs1 + {31'h0, i_rs2[31: 0]};
+    OP_UNSIGND_ADD_32         : o_out = {31'h0, i_rs1[31: 0]} + i_rs2;
     OP_AND_INV                : o_out = i_rs1 & ~i_rs2;
     OP_CARRY_LESS_MUL         : o_out = w_clmul[riscv_pkg::XLEN_W-1: 0];
     OP_CARRY_LESS_MULH        : o_out = w_clmul[riscv_pkg::XLEN_W*2-1: riscv_pkg::XLEN_W];

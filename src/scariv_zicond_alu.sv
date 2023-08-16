@@ -17,6 +17,7 @@ module scariv_zicond_alu
  output logic             o_valid
  );
 
+`ifdef NEVER
 always_comb begin
   o_valid = 1'b1;
   case (i_op)
@@ -32,5 +33,12 @@ always_comb begin
     end
   endcase // case (i_op)
 end // always_comb
+
+`else // NEVER
+
+assign o_out = 'h0;
+assign o_valid = 1'b0;
+
+`endif // !`ifdef NEVER
 
 endmodule // scariv_zicond_alu
