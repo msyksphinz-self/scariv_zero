@@ -985,13 +985,32 @@ bool is_cond_branch_inst(uint64_t insn)
   }
 }
 
+size_t cond_inst_size(uint64_t insn)
+{
+  if ((insn & MASK_BEQ   ) == MATCH_BEQ    ||
+      (insn & MASK_BNE   ) == MATCH_BNE    ||
+      (insn & MASK_BLT   ) == MATCH_BLT    ||
+      (insn & MASK_BGE   ) == MATCH_BGE    ||
+      (insn & MASK_BLTU  ) == MATCH_BLTU   ||
+      (insn & MASK_BGEU  ) == MATCH_BGEU) {
+    return 4;
+  }
+  if ((insn & MASK_C_BEQZ) == MATCH_C_BEQZ ||
+      (insn & MASK_C_BNEZ) == MATCH_C_BNEZ) {
+    return 2;
+  }
+
+  return 0;
+}
+
+
 size_t iss_bhr_length;
 long long iss_bhr;
 
 void initial_gshare(long long bhr_length)
 {
   iss_bhr_length = static_cast<size_t>(bhr_length);
-  fprintf (compare_log_fp, "Info : GSHARE length is set %d\n", iss_bhr_length);
+  fprintf (compare_log_fp, "Info : GSHARE length is set %ld\n", iss_bhr_length);
 }
 
 // 数値を２進数文字列に変換
@@ -1020,8 +1039,9 @@ void step_gshare (long long rtl_time,
   auto iss_insn    = p->get_state()->insn;
 
   if (is_cond_branch_inst(iss_insn.bits())) {
-    bool is_branch_taken = iss_next_pc != iss_pc + 4;
+    bool is_branch_taken = iss_next_pc != iss_pc + cond_inst_size(iss_insn.bits());
     iss_bhr = (iss_bhr << 1) | is_branch_taken;
+    // fprintf (compare_log_fp, "iss_next_pc = %08lx, iss_pc = %08lx, size = %d\n", iss_next_pc, iss_pc, cond_inst_size(iss_insn.bits()));
 
     fprintf(compare_log_fp, "%lld : ", rtl_time);
     if ((iss_bhr & (1 << iss_bhr_length) - 1) != rtl_gshare_bhr) {
