@@ -17,6 +17,8 @@ module scariv_bitmanip_alu
  output riscv_pkg::xlen_t o_out
  );
 
+`ifdef RV_BITMANIP
+
 localparam XLEN_W_W = $clog2(riscv_pkg::XLEN_W);
 
 riscv_pkg::xlen_t   w_bitwise_or;
@@ -122,5 +124,12 @@ generate for (genvar w_idx = 0; w_idx < riscv_pkg::XLEN_W*2; w_idx++) begin : cl
   end
   assign w_clmul[w_idx] = ^w_clmul_ver_tmp;
 end endgenerate
+
+`else // RV_BITMANIP
+
+assign o_valid = 1'b0;
+assign o_out   = 'h0;
+
+`endif // RV_BITMANIP
 
 endmodule // scariv_bitmanip_alu

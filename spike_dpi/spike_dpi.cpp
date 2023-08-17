@@ -133,7 +133,7 @@ static void read_file_bytes(const char *filename,size_t fileoff,
 }
 
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip)
 {
   argv[0] = "spike_dpi";
   char *isa_str = (char *)malloc(sizeof(char) * 32);
@@ -141,7 +141,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo)
   if (rv_amo) {
     strcat(isa_str, "a");
   }
-  strcat(isa_str, "b");
+  if (rv_bitmanip) {
+    strcat(isa_str, "b");
+  }
   if (rv_flen >= 32) {
     strcat(isa_str, "f");
   }
@@ -970,12 +972,12 @@ std::map<int, const char *> riscv_excpt_map {
 bool is_cond_branch_inst(uint64_t insn)
 {
   if ((insn & MASK_BEQ   ) == MATCH_BEQ    ||
-      (insn & MASK_BNE   ) == MATCH_BNE    || 
-      (insn & MASK_BLT   ) == MATCH_BLT    || 
-      (insn & MASK_BGE   ) == MATCH_BGE    || 
-      (insn & MASK_BLTU  ) == MATCH_BLTU   ||  
+      (insn & MASK_BNE   ) == MATCH_BNE    ||
+      (insn & MASK_BLT   ) == MATCH_BLT    ||
+      (insn & MASK_BGE   ) == MATCH_BGE    ||
+      (insn & MASK_BLTU  ) == MATCH_BLTU   ||
       (insn & MASK_BGEU  ) == MATCH_BGEU   ||
-      (insn & MASK_C_BEQZ) == MATCH_C_BEQZ || 
+      (insn & MASK_C_BEQZ) == MATCH_C_BEQZ ||
       (insn & MASK_C_BNEZ) == MATCH_C_BNEZ) {
     return true;
   } else {
@@ -986,7 +988,7 @@ bool is_cond_branch_inst(uint64_t insn)
 size_t iss_bhr_length;
 long long iss_bhr;
 
-void initial_gshare(long long bhr_length) 
+void initial_gshare(long long bhr_length)
 {
   iss_bhr_length = static_cast<size_t>(bhr_length);
   fprintf (compare_log_fp, "Info : GSHARE length is set %d\n", iss_bhr_length);
@@ -1024,7 +1026,7 @@ void step_gshare (long long rtl_time,
     fprintf(compare_log_fp, "%lld : ", rtl_time);
     if ((iss_bhr & (1 << iss_bhr_length) - 1) != rtl_gshare_bhr) {
       fprintf(compare_log_fp, "Warning : BHR different: RTL = %s, ISS = %s\n",
-                              to_binString(rtl_gshare_bhr).c_str(), 
+                              to_binString(rtl_gshare_bhr).c_str(),
                               to_binString(iss_bhr & ((1 << iss_bhr_length)-1)).c_str());
     } else {
       fprintf(compare_log_fp, "BHR RTL = %s\n", to_binString(rtl_gshare_bhr).c_str());
@@ -1596,7 +1598,7 @@ int main(int argc, char **argv)
 {
   compare_log_fp = fopen("spike_dpi_main.log", "w");
 
-  initial_spike (argv[1], 64, 64, 1);
+  initial_spike (argv[1], 64, 64, 1, 1);
   processor_t *p = spike_core->get_core(0);
 
   // fprintf(compare_log_fp, "INST     CYCLE    PC\n");
@@ -1634,7 +1636,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64, 1);
+  initial_spike(filename, 64, 64, 1, 1);
 
 }
 #endif // VERILATOR

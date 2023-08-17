@@ -60,11 +60,12 @@ class verilator_sim:
         ## Build verilator binary
         build_command = ["make",
                          "rv" + str(sim_conf["xlen"]) + "_build",
-                         "CONF=" + sim_conf["conf"],
-                         "ISA=" + sim_conf["isa_ext"],
-                         "RV_XLEN=" + str(sim_conf["xlen"]),
-                         "RV_FLEN=" + str(sim_conf["flen"]),
-                         "RV_AMO=" + str(sim_conf["amo"])]
+                         "CONF="        +     sim_conf["conf"],
+                         "ISA="         +     sim_conf["isa_ext"],
+                         "RV_XLEN="     + str(sim_conf["xlen"]),
+                         "RV_FLEN="     + str(sim_conf["flen"]),
+                         "RV_AMO="      + str(sim_conf["amo"]),
+                         "RV_BITMANIP=" + str(sim_conf["bitmanip"])]
 
         current_dir = os.path.abspath("../")
         user_id    = os.getuid()
@@ -326,6 +327,10 @@ def main():
             sim_conf["amo"] = 1
         else:
             sim_conf["amo"] = 0
+        if "b" in sim_conf["isa_ext"] :
+            sim_conf["bitmanip"] = 1
+        else:
+            sim_conf["bitmanip"] = 0
 
     sim = verilator_sim()
 

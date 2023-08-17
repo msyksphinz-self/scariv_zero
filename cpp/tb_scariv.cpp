@@ -15,7 +15,7 @@ extern bool elf_load_finish;
 
 extern "C" {
   extern FILE *compare_log_fp;
-  void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo);
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip);
   void stop_sim(int code, long long rtl_time);
   void stop_sim_deadlock(long long rtl_time);
 }
@@ -143,7 +143,12 @@ int main(int argc, char** argv) {
 
   fprintf(compare_log_fp, "initial_spike opening %s ...\n", filename);
   fflush(compare_log_fp);
-  initial_spike(filename, RV_XLEN, RV_FLEN, RV_AMO);
+#if RV_BITMANIP == 1
+  const bool rv_bitmanip_enabled = true;
+#else // RV_BITMANIP
+  const bool rv_bitmanip_enabled = false;
+#endif // RV_BITMANIP
+  initial_spike(filename, RV_XLEN, RV_FLEN, RV_AMO, rv_bitmanip_enabled);
 
   // Format
   dut->i_elf_loader_reset_n = 0;
