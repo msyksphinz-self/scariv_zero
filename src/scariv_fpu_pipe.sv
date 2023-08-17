@@ -173,7 +173,7 @@ assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_mv_early_wr.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
-  riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+  scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
@@ -260,7 +260,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_frm_invalid <= 1'b0;
   end else begin
-    r_ex2_rs1_data <= |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] : 
+    r_ex2_rs1_data <= |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] :
                       (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
     r_ex2_rs2_data <= |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex1_regread_rs2.data;
     r_ex2_rs3_data <= |w_ex1_rs_fwd_valid[2] ? w_ex1_rs_fwd_data[2] : ex1_regread_rs3.data;
