@@ -1,5 +1,7 @@
-VERILATOR_HOME = /usr/local/share/verilator
-# VERILATOR_HOME = /home/kimura/usr/share/verilator
+ifeq ($(VERILATOR_HOME),)
+	VERILATOR_HOME = /usr/local/share/verilator
+endif
+
 CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)
