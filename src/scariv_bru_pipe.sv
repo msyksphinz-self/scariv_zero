@@ -19,9 +19,9 @@ module scariv_bru_pipe
   input logic                       i_clk,
   input logic                       i_reset_n,
 
-  input                             scariv_pkg::issue_t rv0_issue,
-  input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
-  input                             scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+  input scariv_bru_pkg::issue_entry_t rv0_issue,
+  input logic [RV_ENTRY_SIZE-1:0]     rv0_index,
+  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
   // Commit notification
   input scariv_pkg::commit_blk_t      i_commit,
@@ -47,14 +47,14 @@ typedef struct packed {
 
 logic   w_commit_flushed;
 
-scariv_pkg::issue_t                        r_ex0_issue;
-logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
+scariv_bru_pkg::issue_entry_t            r_ex0_issue;
+logic [RV_ENTRY_SIZE-1: 0]               w_ex0_index;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
-logic                      w_ex0_br_flush;
+logic                                    w_ex0_br_flush;
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex1_issue;
-scariv_pkg::issue_t                        w_ex1_issue_next;
+scariv_bru_pkg::issue_entry_t            r_ex1_issue;
+scariv_bru_pkg::issue_entry_t            w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 logic                      w_ex1_br_flush;
 logic                      r_ex1_dead;
@@ -80,8 +80,8 @@ logic                                    w_ex1_rs1_mispred;
 logic                                    w_ex1_rs2_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex2_issue;
-scariv_pkg::issue_t                        w_ex2_issue_next;
+scariv_bru_pkg::issue_entry_t            r_ex2_issue;
+scariv_bru_pkg::issue_entry_t            w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 riscv_pkg::xlen_t            r_ex2_rs1_data;
 riscv_pkg::xlen_t            r_ex2_rs2_data;
@@ -90,8 +90,8 @@ logic                                    r_ex2_wr_valid;
 logic                                    w_ex2_br_flush;
 logic                                    r_ex2_dead;
 
-scariv_pkg::issue_t                        r_ex3_issue;
-scariv_pkg::issue_t                        w_ex3_issue_next;
+scariv_bru_pkg::issue_entry_t            r_ex3_issue;
+scariv_bru_pkg::issue_entry_t            w_ex3_issue_next;
 pipe_ctrl_t                              r_ex3_pipe_ctrl;
 logic                                    r_ex3_result;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex3_index;
@@ -388,6 +388,8 @@ assign ex3_br_upd_if.pred_vaddr    = r_ex3_issue.pred_target_vaddr;
 assign ex3_br_upd_if.cmt_id        = r_ex3_issue.cmt_id;
 assign ex3_br_upd_if.grp_id        = r_ex3_issue.grp_id;
 assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
+assign ex3_br_upd_if.gshare_bhr    = r_ex3_issue.gshare_bhr;
+assign ex3_br_upd_if.gshare_index  = r_ex3_issue.gshare_index;
 
 `ifdef SIMULATION
 `ifdef MONITOR

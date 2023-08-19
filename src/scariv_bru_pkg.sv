@@ -7,6 +7,106 @@
 //
 // ------------------------------------------------------------------------
 
+package scariv_bru_pkg;
+
+typedef struct packed {
+  logic                  valid;
+  scariv_pkg::vaddr_t    pc_addr;
+  logic [31:0]           inst;
+  scariv_pkg::inst_cat_t cat;
+  logic                  is_rvc;
+  scariv_pkg::brtag_t    brtag;
+
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+
+  logic                  is_cond;
+  logic                  is_call;
+  logic                  is_ret;
+
+  logic [scariv_pkg::RAS_W-1: 0] ras_index;
+  logic                          pred_taken;
+  scariv_pkg::gshare_bht_t       gshare_bhr;
+  scariv_pkg::gshare_bht_t       gshare_index;
+  logic [ 1: 0]                  bim_value;
+  logic                          btb_valid;
+  scariv_pkg::vaddr_t            pred_target_vaddr;
+
+  scariv_pkg::reg_wr_issue_t         wr_reg;
+  scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
+
+`ifdef SIMULATION
+  logic [63: 0]                     kanata_id;
+`endif // SIMULATION
+} issue_entry_t;
+
+
+function issue_entry_t assign_issue_common (scariv_pkg::disp_t in,
+                                            scariv_pkg::cmt_id_t cmt_id,
+                                            scariv_pkg::grp_id_t grp_id);
+  issue_entry_t ret;
+
+  ret.valid = in.valid;
+  ret.inst = in.inst;
+  ret.pc_addr = in.pc_addr;
+
+  ret.cat = in.cat;
+  ret.is_rvc  = in.rvc_inst_valid;
+  ret.brtag   = in.brtag;
+
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
+
+  ret.is_cond          = in.is_cond;
+  ret.is_call          = in.is_call;
+  ret.is_ret           = in.is_ret;
+  ret.gshare_bhr       = in.gshare_bhr;
+  ret.gshare_index     = in.gshare_index;
+  ret.ras_index        = in.ras_index;
+  ret.pred_taken       = in.pred_taken;
+  ret.bim_value        = in.bim_value;
+  ret.btb_valid        = in.btb_valid;
+  ret.pred_target_vaddr = in.pred_target_vaddr;
+
+  ret.wr_reg.valid = in.wr_reg.valid;
+  ret.wr_reg.typ = in.wr_reg.typ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid = in.wr_reg.rnid;
+
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+  return ret;
+
+endfunction // assign_issue_common
+
+function issue_entry_t assign_bru_issue (scariv_pkg::disp_t in,
+                                         scariv_pkg::cmt_id_t cmt_id,
+                                         scariv_pkg::grp_id_t grp_id,
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+  issue_entry_t ret;
+  ret = assign_issue_common (in, cmt_id, grp_id);
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
+  return ret;
+
+endfunction  // assign_issue_entry_t
+
+
+endpackage // scariv_bru_pkg
+
 interface br_upd_if;
 
   logic                                update;
@@ -24,7 +124,7 @@ interface br_upd_if;
 `ifdef SIMULATION
   scariv_pkg::vaddr_t                    pred_vaddr;
 `endif // SIMULATION
-  logic                                dead;
+  logic                                  dead;
   scariv_pkg::cmt_id_t                   cmt_id;
   scariv_pkg::grp_id_t                   grp_id;
   scariv_pkg::brtag_t                    brtag;

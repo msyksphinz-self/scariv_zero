@@ -48,7 +48,7 @@ scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::BRU_DISP_SIZE];
 logic [scariv_conf_pkg::BRU_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::BRU_DISP_SIZE];
 
-scariv_pkg::issue_t w_rv0_issue;
+scariv_bru_pkg::issue_entry_t w_rv0_issue;
 
 done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) w_ex3_done_if[1]();
 

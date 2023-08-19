@@ -13,7 +13,6 @@ module scariv_bru_issue_unit
     parameter IN_PORT_SIZE = 2,
     parameter IS_BRANCH = 1'b0,
     parameter EN_OLDEST = 0,
-    parameter NUM_OPERANDS = 2,
     parameter NUM_DONE_PORT = 1
     )
 (
@@ -36,7 +35,7 @@ module scariv_bru_issue_unit
  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
 
- output                                scariv_pkg::issue_t o_issue,
+ output scariv_bru_pkg::issue_entry_t  o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
  input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
@@ -56,7 +55,7 @@ logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-scariv_pkg::issue_t w_entry[ENTRY_SIZE];
+scariv_bru_pkg::issue_entry_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
@@ -127,8 +126,8 @@ u_credit_return_slave
  .cre_ret_if (cre_ret_if)
  );
 
-scariv_pkg::issue_t w_finished_entry_sel;
-bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_finished_entry (.i_oh(w_entry_finish_oh), .i_data(w_entry), .o_selected(w_finished_entry_sel));
+scariv_bru_pkg::issue_entry_t w_finished_entry_sel;
+bit_oh_or #(.T(scariv_bru_pkg::issue_entry_t), .WORDS(ENTRY_SIZE)) u_finished_entry (.i_oh(w_entry_finish_oh), .i_data(w_entry), .o_selected(w_finished_entry_sel));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -213,12 +212,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  scariv_issue_entry
-    #(
-      .IS_BRANCH (IS_BRANCH),
-      .EN_OLDEST(EN_OLDEST),
-      .NUM_OPERANDS(NUM_OPERANDS)
-      )
+  scariv_bru_issue_entry
   u_issue_entry(
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
@@ -258,7 +252,7 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_alloc_bit_oh  (.in(~w_entry
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
-bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_bru_pkg::issue_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 // --------------
@@ -268,7 +262,7 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done)
 
 `ifdef SIMULATION
 typedef struct packed {
-  scariv_pkg::issue_t entry;
+  scariv_bru_pkg::issue_entry_t entry;
   scariv_pkg::sched_state_t state;
 } entry_ptr_t;
 
