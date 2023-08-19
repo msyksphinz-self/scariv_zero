@@ -28,8 +28,11 @@ import "DPI-C" function void step_spike_wo_cmp(input int count);
 
 import "DPI-C" function void stop_sim_deadlock(input int count);
 
-import "DPI-C" function void initial_gshare(input longint bhr_length);
+import "DPI-C" function void initial_gshare(input longint bhr_length,
+                                            input longint cache_block_byte_size);
 import "DPI-C" function void step_gshare (input longint rtl_time,
+                                          input int     rtl_cmt_id,
+                                          input int     rtl_grp_id,
                                           input longint rtl_gshare_bhr);
 
 
@@ -553,7 +556,10 @@ logic [63: 0]                                                  int_commit_counte
                         w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
                         w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
 
-            step_gshare ($time / 4, u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.w_bhr_next);
+            step_gshare ($time,
+                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                         1 << grp_idx,
+                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.w_bhr_next);
 
           end
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
@@ -611,7 +617,8 @@ end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 `endif //  `ifdef NEVER
 
 initial begin
-  initial_gshare (scariv_conf_pkg::GSHARE_BHT_W);
+  initial_gshare (scariv_conf_pkg::GSHARE_BHT_W,
+                  scariv_conf_pkg::scariv_lsu_pkg::ICACHE_DATA_B_W);
 end
 
 endmodule  // scariv_tb

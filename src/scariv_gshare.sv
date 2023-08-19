@@ -14,8 +14,10 @@ module scariv_gshare
  input logic  i_clk,
  input logic  i_reset_n,
 
- // br_upd_if.slave  cmt_brtag_if,
-  cmt_brtag_if.slave cmt_brtag_if,
+ input logic i_s1_valid,
+ input logic i_s2_valid,
+
+ cmt_brtag_if.slave cmt_brtag_if,
 
  btb_search_if.monitor  search_btb_if,
  gshare_search_if.slave gshare_search_if,
@@ -31,30 +33,46 @@ gshare_bht_t  r_s1_bhr;
 gshare_bht_t  r_bhr;      // Branch History Register : 1=Taken / 0:NonTaken
 gshare_bht_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
 /* verilator lint_off UNOPTFLAT */
-gshare_bht_t  w_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2];
+gshare_bht_t  w_s1_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0];
 
-logic         s1_update_bhr;
-assign s1_update_bhr = r_s1_valid & |(search_btb_if.s1_hit & search_btb_if.s1_is_cond);
+logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] w_lane_predict;
+logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] w_s0_pc_vaddr_mask;
+logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] r_s1_pc_vaddr_mask;
+logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] w_s1_cond_hit_valid;
+
+logic         w_s1_update_bhr;
+logic         r_s2_update_bhr;
+gshare_bht_t  r_s2_bhr_lane_last;
+assign w_s1_update_bhr = r_s1_valid & i_s1_valid & |w_s1_cond_hit_valid;
 
 logic w_cmt_brtag_rollback_valid;
 gshare_bht_t  w_cmt_brtag_rollback_bhr;
 
-assign w_cmt_brtag_rollback_bhr   = {cmt_brtag_if.gshare_bhr[GSHARE_BHT_W-2:0], cmt_brtag_if.taken};
+assign w_cmt_brtag_rollback_bhr   = {cmt_brtag_if.gshare_bhr[GSHARE_BHT_W-1:1], cmt_brtag_if.taken};
 assign w_cmt_brtag_rollback_valid = cmt_brtag_if.commit & !cmt_brtag_if.dead & |cmt_brtag_if.is_br_inst &
                                     cmt_brtag_if.mispredict;
 
 assign w_bhr_next = w_cmt_brtag_rollback_valid ? w_cmt_brtag_rollback_bhr :
                     // If Branch existed but not predicted (in frontend BHR not updated), update BHR
-                    s1_update_bhr ? w_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1] :
+                    r_s2_update_bhr ? r_s2_bhr_lane_last :
                     r_bhr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_bhr <= {GSHARE_BHT_W{1'b0}};
+    r_s2_update_bhr <= 1'b0;
   end else begin
     r_bhr <= w_bhr_next;
+
+    r_s1_pc_vaddr_mask <= w_s0_pc_vaddr_mask;
+
+    r_s2_update_bhr <= w_s1_update_bhr;
+    r_s2_bhr_lane_last <= w_s1_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1];
   end
 end
+
+assign w_s0_pc_vaddr_mask = ~((1 << gshare_search_if.s0_pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)-1: 1]) - 1);
+assign w_s1_cond_hit_valid = search_btb_if.s1_hit & search_btb_if.s1_is_cond & r_s1_pc_vaddr_mask;
 
 generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx++) begin : bhr_loop
   logic [ 1: 0] w_s1_bim_counter;
@@ -70,14 +88,14 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_i
                              cmt_brtag_if.taken ? cmt_brtag_if.bim_value + 2'b01 :
                              cmt_brtag_if.bim_value - 2'b01;
 
+  assign w_lane_predict[c_idx] = w_s1_cond_hit_valid[c_idx] ? w_s1_bim_counter[1] : 1'b0;
+
   if (c_idx == 0) begin
-    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] & search_btb_if.s1_is_cond[c_idx] ?
-                                    w_s1_bim_counter[1] ? {r_bhr, 1'b1} : {r_bhr, 1'b0} :
+    assign w_s1_bhr_lane_next[c_idx] = w_s1_cond_hit_valid[c_idx] ? {r_bhr, w_lane_predict[c_idx]} :
                                     r_bhr;
   end else begin
-    assign w_bhr_lane_next[c_idx] = search_btb_if.s1_hit[c_idx] & search_btb_if.s1_is_cond[c_idx] ?
-                                    w_s1_bim_counter[1] ? {w_bhr_lane_next[c_idx-1], 1'b1} : {w_bhr_lane_next[c_idx-1], 1'b0} :
-                                    w_bhr_lane_next[c_idx-1];
+    assign w_s1_bhr_lane_next[c_idx] = w_s1_cond_hit_valid[c_idx] & ~|w_lane_predict[c_idx-1: 0] ?
+                                    {w_s1_bhr_lane_next[c_idx-1], w_lane_predict[c_idx]} : w_s1_bhr_lane_next[c_idx-1];
   end
 
   // data_array_2p
@@ -167,7 +185,7 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_i
       if (c_idx == 0) begin
         gshare_search_if.s2_bhr    [c_idx] <= r_bhr;
       end else begin
-        gshare_search_if.s2_bhr    [c_idx] <= w_bhr_lane_next[c_idx-1];
+        gshare_search_if.s2_bhr    [c_idx] <= w_s1_bhr_lane_next[c_idx];
       end
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -184,7 +202,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_s1_valid <= gshare_search_if.s0_valid;
 
-    gshare_search_if.s2_valid <= r_s1_valid;
+    gshare_search_if.s2_valid <= r_s1_valid & i_s1_valid;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -230,9 +248,11 @@ end
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
     if (cmt_brtag_if.commit & !cmt_brtag_if.dead & |cmt_brtag_if.is_br_inst) begin
-      $fwrite(fp, "%t PC=%08x Result=%d(%s) BHR=%b\n", $time, cmt_brtag_if.pc_vaddr, cmt_brtag_if.taken, 
-                                                     cmt_brtag_if.mispredict ? "MISS" : "SUCC",
-                                                     w_bhr_next);
+      $fwrite(fp, "%t PC=%08x (%d,%d) Result=%d(%s) BHR=%b\n", $time, cmt_brtag_if.pc_vaddr,
+              cmt_brtag_if.cmt_id, cmt_brtag_if.grp_id,
+              cmt_brtag_if.taken,
+              cmt_brtag_if.mispredict ? "MISS" : "SUCC",
+              w_cmt_brtag_rollback_valid ? w_bhr_next : cmt_brtag_if.gshare_bhr);
     end
   end
 end

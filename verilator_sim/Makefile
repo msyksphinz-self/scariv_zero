@@ -43,6 +43,7 @@ VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += -LDFLAGS "-L"$(abspath .)
 VERILATOR_OPTS += -LDFLAGS "-Wl,--export-dynamic"
 # VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
+VERILATOR_OPTS += $(abspath ../spike_dpi/gshare_model.cpp)
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include

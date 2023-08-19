@@ -118,6 +118,7 @@ interface cmt_brtag_if;
 
   logic                    commit;
   scariv_pkg::cmt_id_t     cmt_id;
+  scariv_pkg::grp_id_t     grp_id;
   scariv_pkg::vaddr_t      pc_vaddr;
   scariv_pkg::grp_id_t     is_br_inst;
   logic [scariv_conf_pkg::DISP_SIZE-1: 0][$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
@@ -132,6 +133,7 @@ interface cmt_brtag_if;
   modport master (
     output commit,
     output cmt_id,
+    output grp_id,
     output pc_vaddr,
     output is_br_inst,
     output brtag,
@@ -147,6 +149,7 @@ interface cmt_brtag_if;
   modport slave (
     input commit,
     input cmt_id,
+    input grp_id,
     input pc_vaddr,
     input is_br_inst,
     input brtag,

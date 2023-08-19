@@ -368,6 +368,7 @@ assign rob_info_if.except_valid = w_out_entry.except_valid;
 // Commit Branch Tag Update
 assign cmt_brtag_if.commit     = o_commit.commit;
 assign cmt_brtag_if.cmt_id     = w_out_cmt_id;
+assign cmt_brtag_if.grp_id     = w_out_entry.grp_id & cmt_brtag_if.is_br_inst;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
   assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].is_cond;
   assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
@@ -382,10 +383,10 @@ generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare
 end endgenerate
 
 rob_static_info_t w_out_entry_br_inst;
-bit_oh_or_packed #(.T(rob_static_info_t), .WORDS(DISP_SIZE)) 
+bit_oh_or_packed #(.T(rob_static_info_t), .WORDS(DISP_SIZE))
 u_cmt_brtag_pc_addr (
   .i_oh      (cmt_brtag_if.is_br_inst),
-  .i_data    (w_out_entry.inst       ), 
+  .i_data    (w_out_entry.inst       ),
   .o_selected(w_out_entry_br_inst    )
 );
 

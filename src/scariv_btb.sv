@@ -35,8 +35,8 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
 
   logic va_target_wr_valid;
   assign va_target_wr_valid = update_btb_if.valid &
-                              update_btb_if.taken &
-                              (update_btb_if.mispredict | update_btb_if.is_call | update_btb_if.is_ret) &
+                              /* update_btb_if.taken & */
+                              /*(update_btb_if.mispredict | update_btb_if.is_call | update_btb_if.is_ret) & */
                               (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
   assign update_entry.target_vaddr = update_btb_if.target_vaddr;
