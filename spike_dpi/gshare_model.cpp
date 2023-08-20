@@ -134,7 +134,8 @@ void step_gshare (long long rtl_time,
 
     bool is_branch_taken = iss_next_pc != iss_pc + cond_inst_size(iss_insn.bits());
 
-    fprintf (gshare_log_fp, "GSHARE MODEL : PC = %08lx (%02d,%02d), index = (%4x, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s          ",
+    fprintf (gshare_log_fp, "%lld : GSHARE MODEL : PC = %08lx (%02d,%02d), index = (%4x, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s          ",
+             rtl_time,
              iss_pc,
              rtl_cmt_id, rtl_grp_id,
              static_cast<unsigned int>(bim_array_index), static_cast<unsigned int>(bim_block_internal_index),
