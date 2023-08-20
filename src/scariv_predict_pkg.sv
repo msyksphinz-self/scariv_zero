@@ -23,6 +23,7 @@ typedef struct packed {
   logic is_cond;
   logic is_call;
   logic is_ret;
+  logic is_noncond;
   logic [riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1] pc_tag;
 } btb_inst_info_t;
 
@@ -41,11 +42,13 @@ interface btb_search_if;
   scariv_ic_pkg::ic_block_t          s1_is_cond;
   scariv_ic_pkg::ic_block_t          s1_is_call;
   scariv_ic_pkg::ic_block_t          s1_is_ret;
+  scariv_ic_pkg::ic_block_t          s1_is_noncond;
   scariv_ic_pkg::ic_block_t          s2_hit;
   scariv_ic_pkg::ic_block_vaddr_t    s2_target_vaddr;
   scariv_ic_pkg::ic_block_t          s2_is_cond;
   scariv_ic_pkg::ic_block_t          s2_is_call;
   scariv_ic_pkg::ic_block_t          s2_is_ret;
+  scariv_ic_pkg::ic_block_t          s2_is_noncond;
 
   modport master (
     output s0_valid,
@@ -55,11 +58,13 @@ interface btb_search_if;
     input  s1_is_cond,
     input  s1_is_call,
     input  s1_is_ret,
+    input  s1_is_noncond,
     input  s2_hit,
     input  s2_target_vaddr,
     input  s2_is_cond,
     input  s2_is_call,
-    input  s2_is_ret
+    input  s2_is_ret,
+    input  s2_is_noncond
   );
 
   modport slave (
@@ -70,16 +75,21 @@ interface btb_search_if;
     output s1_is_cond,
     output s1_is_call,
     output s1_is_ret,
+    output s1_is_noncond,
     output s2_hit,
     output s2_target_vaddr,
     output s2_is_cond,
     output s2_is_call,
-    output s2_is_ret
+    output s2_is_ret,
+    output s2_is_noncond
   );
 
   modport monitor (
     input s1_hit,
     input s1_is_cond,
+    input s1_is_call,
+    input s1_is_ret,
+    input s1_is_noncond,
     input s1_target_vaddr,
     input s2_hit,
     input s2_target_vaddr,

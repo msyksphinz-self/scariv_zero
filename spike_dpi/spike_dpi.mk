@@ -1,6 +1,4 @@
-ifeq ($(VERILATOR_HOME),)
-	VERILATOR_HOME = /usr/local/share/verilator
-endif
+VERILATOR_HOME ?= /usr/local/share/verilator
 
 CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv

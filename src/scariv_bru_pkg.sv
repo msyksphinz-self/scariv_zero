@@ -125,6 +125,7 @@ interface cmt_brtag_if;
   scariv_pkg::gshare_bht_t gshare_bhr;
   scariv_pkg::gshare_bht_t gshare_index;
   logic                    taken;
+  logic                    btb_newly_allocated;
   logic                    mispredict;
   logic [ 1: 0]            bim_value;
   logic                    is_rvc;
@@ -140,6 +141,7 @@ interface cmt_brtag_if;
     output gshare_bhr,
     output gshare_index,
     output taken,
+    output btb_newly_allocated,
     output mispredict,
     output bim_value,
     output is_rvc,
@@ -156,6 +158,7 @@ interface cmt_brtag_if;
     input gshare_bhr,
     input gshare_index,
     input taken,
+    input btb_newly_allocated,
     input mispredict,
     input bim_value,
     input is_rvc,

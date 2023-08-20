@@ -67,7 +67,7 @@ package scariv_pkg;
 
   localparam FP_REGWR_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM +     // LSU port
                                  scariv_conf_pkg::FPU_INST_NUM * 2;  // FPU port
-                                 
+
 localparam RAS_W    = $clog2(scariv_conf_pkg::RAS_ENTRY_SIZE);
 localparam GSHARE_BHT_W = scariv_conf_pkg::GSHARE_BHT_W;
 
@@ -259,7 +259,8 @@ typedef struct packed {
     gshare_bht_t   gshare_index;
     logic          br_taken;
     logic [ 1: 0]  bim_value;
-  logic              mispredicted;
+  logic            btb_newly_allocated;
+  logic            mispredicted;
 `ifdef SIMULATION
   logic [RAS_W-1: 0] ras_index;
   vaddr_t            pred_vaddr;
@@ -618,13 +619,13 @@ endfunction // is_commit_flush_target
 //                                   logic br_mispredicted);
 // logic w_cmt_is_older;
 // logic entry_older;
-// 
+//
 // w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
 //                  br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
 //                  br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
 // entry_older = w_cmt_is_older ||
 //               (br_cmt_id == entry_cmt_id && |(br_flush_valid & entry_grp_id));
-// 
+//
 // endfunction // is_br_flush_target
 
 function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
@@ -632,7 +633,7 @@ function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
                                   logic br_dead, logic br_mispredicted);
   logic w_cmt_is_older;
   logic entry_older;
-  
+
   w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
                    br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                    br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;

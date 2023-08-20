@@ -559,7 +559,7 @@ logic [63: 0]                                                  int_commit_counte
             step_gshare ($time,
                          u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
                          1 << grp_idx,
-                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.w_bhr_next);
+                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.sim_cmt_brtag_bhr);
 
           end
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)

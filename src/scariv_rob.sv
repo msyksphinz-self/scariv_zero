@@ -390,12 +390,13 @@ u_cmt_brtag_pc_addr (
   .o_selected(w_out_entry_br_inst    )
 );
 
-assign cmt_brtag_if.pc_vaddr     = w_out_entry_br_inst.pc_addr;
-assign cmt_brtag_if.gshare_bhr   = w_out_entry.br_upd_info.gshare_bhr;
-assign cmt_brtag_if.gshare_index = w_out_entry.br_upd_info.gshare_index;
-assign cmt_brtag_if.taken        = w_out_entry.br_upd_info.br_taken;
-assign cmt_brtag_if.bim_value    = w_out_entry.br_upd_info.bim_value;
-assign cmt_brtag_if.mispredict   = w_out_entry.br_upd_info.mispredicted;
+assign cmt_brtag_if.pc_vaddr            = w_out_entry_br_inst.pc_addr;
+assign cmt_brtag_if.gshare_bhr          = w_out_entry.br_upd_info.gshare_bhr;
+assign cmt_brtag_if.gshare_index        = w_out_entry.br_upd_info.gshare_index;
+assign cmt_brtag_if.taken               = w_out_entry.br_upd_info.br_taken;
+assign cmt_brtag_if.bim_value           = w_out_entry.br_upd_info.bim_value;
+assign cmt_brtag_if.btb_newly_allocated = w_out_entry.br_upd_info.btb_newly_allocated;
+assign cmt_brtag_if.mispredict          = w_out_entry.br_upd_info.mispredicted;
 
 assign cmt_brtag_if.is_rvc = w_cmt_brtag_is_rvc & ~w_cmt_brtag_is_dead;
 assign cmt_brtag_if.dead   = w_cmt_brtag_is_dead;

@@ -238,10 +238,9 @@ always_comb begin
         // BTBが分岐命令だと予測できていなければ、BHRを1ビット左にずらして、
         // gshareモジュールでのアップデートの整合性を保つ
         if (~r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond & br_upd_if.is_cond) begin
-          w_entry_next.br_upd_info.gshare_bhr = {r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr[GSHARE_BHT_W-2: 0], 1'b0};
-        end else begin
-          w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
+          w_entry_next.br_upd_info.btb_newly_allocated = 1'b1;
         end
+        w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
       end // if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
 `ifdef SIMULATION
       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin

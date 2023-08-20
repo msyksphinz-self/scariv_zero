@@ -153,6 +153,8 @@ void step_gshare (long long rtl_time,
     } else {
       fprintf(gshare_log_fp, "// BHR RTL = %s\n", to_binString(rtl_gshare_bhr, iss_bhr_length).c_str());
     }
+    // Option: Override RTL's BHR information
+    iss_bhr = rtl_gshare_bhr;
 
     // Update bim_counter
     bim_array.at(bim_array_index)->bim[bim_block_internal_index] = update_bim (is_branch_taken, bim_counter);

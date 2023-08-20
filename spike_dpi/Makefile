@@ -1,8 +1,6 @@
 .PHONY: riscv_isa_sim
 
-ifeq ($(VERILATOR_HOME),)
-	VERILATOR_HOME = /usr/local/share/verilator
-endif
+VERILATOR_HOME ?= /usr/local/share/verilator
 
 ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR
