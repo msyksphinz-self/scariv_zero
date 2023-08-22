@@ -1,4 +1,5 @@
 #include "spike_dpi.h"
+#include "gshare_model.h"
 #include "tb_elf_loader.h"
 #include <string.h>
 
@@ -25,6 +26,8 @@ int argc;
 const char *argv[20];
 int g_rv_xlen = 0;
 int g_rv_flen = 0;
+
+extern long long iss_bhr;   // defined in gshare_model.cpp
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
@@ -1531,31 +1534,51 @@ void stop_sim(int code, long long rtl_time)
 
 int main(int argc, char **argv)
 {
-  compare_log_fp = fopen("spike_dpi_main.log", "w");
+  option_parser_t parser;
+  bool log;
+  uint64_t sim_cycle;
 
-  initial_spike (argv[1], 64, 64, 1, 1);
+  parser.help(&suggest_help);
+  parser.option('h', "help", 0, [&](const char* s){help(0);});
+  parser.option('l', 0, 0, [&](const char* s){log = true;});
+  parser.option('c', 0, 0, [&](const char* s){sim_cycle = strtoull(s, 0, 0);});
+  auto argv1 = parser.parse(static_cast<const char* const*>(argv));
+
+  std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
+
+  if (log) {
+    fprintf(stderr, "Log open\n");
+    compare_log_fp = fopen("spike_dpi_main.log", "w");
+    fprintf(compare_log_fp, "INST     CYCLE    PC\n");
+  }
+
+  initial_spike (htif_args[0].c_str(), 64, 64, 1, 0);
   processor_t *p = spike_core->get_core(0);
 
-  // fprintf(compare_log_fp, "INST     CYCLE    PC\n");
+  initial_gshare(10, 64);
 
-  for (int i = 0; i < 1000000000; i++) {
+  for (int i = 0; i < sim_cycle; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     auto instret = p->get_state()->minstret;
     auto cycle = p->get_state()->mcycle;
 
-    // fprintf(compare_log_fp, "%10d %10d %08lx\n", instret, cycle, iss_pc);
+    if (log) {
+      fprintf(compare_log_fp, "%10ld %10ld %08lx\n", instret, cycle, iss_pc);
 
-    // for (auto &iss_rd: p->get_state()->log_mem_read) {
-    //   fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-    //           g_rv_xlen / 4, std::get<0>(iss_rd),
-    //           g_rv_xlen / 4, std::get<1>(iss_rd));
-    // }
-    // for (auto &iss_wr: p->get_state()->log_mem_write) {
-    //   fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
-    //           g_rv_xlen / 4, std::get<0>(iss_wr),
-    //           g_rv_xlen / 4, std::get<1>(iss_wr));
-    // }
+      for (auto &iss_rd: p->get_state()->log_mem_read) {
+        fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+                g_rv_xlen / 4, std::get<0>(iss_rd),
+                g_rv_xlen / 4, std::get<1>(iss_rd));
+      }
+      for (auto &iss_wr: p->get_state()->log_mem_write) {
+        fprintf(compare_log_fp, "MW%d(0x%0*lx)<=%0*lx\n", std::get<2>(iss_wr),
+                g_rv_xlen / 4, std::get<0>(iss_wr),
+                g_rv_xlen / 4, std::get<1>(iss_wr));
+      }
+    }
+
+    step_gshare (cycle, 0, 0, iss_bhr);
   }
 
   return 0;

@@ -45,10 +45,4 @@ extern "C" {
                         long long rtl_pa);
 
   void spike_update_timer(long long value);
-
-  void initial_gshare(long long bhr_length);
-  void step_gshare (long long rtl_time,
-                    int rtl_cmt_id, int rtl_grp_id,
-                    long long rtl_gshare_bhr);
-
 }

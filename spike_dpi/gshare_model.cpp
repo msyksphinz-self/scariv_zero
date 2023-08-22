@@ -141,7 +141,7 @@ void step_gshare (long long rtl_time,
              is_branch_taken   ? "    TAKEN" : "NOT TAKEN",
              iss_predict_taken == is_branch_taken ? "MATCH" : "FAIL ");
 
-    iss_bhr = (iss_bhr << 1) | is_branch_taken;
+    iss_bhr = ((iss_bhr << 1) | is_branch_taken) & iss_bhr_mask;
 
     if ((iss_bhr & (1 << iss_bhr_length) - 1) != rtl_gshare_bhr) {
       fprintf(gshare_log_fp, "// Warning : BHR different: RTL = %s, ISS = %s\n",

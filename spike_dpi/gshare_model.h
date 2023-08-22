@@ -2,7 +2,6 @@
 #include <svdpi.h>
 
 extern "C" {
-
   void initial_gshare(long long bhr_length,
                       long long cache_block_byte_size);
   void step_gshare (long long rtl_time,
