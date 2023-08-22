@@ -532,7 +532,10 @@ localparam cycle_interval = 1000;
 logic [63: 0]                                                  total_commit_counter;
 logic [63: 0]                                                  int_commit_counter;
 
-  always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
+`define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
+
+
+always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
       if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
@@ -556,11 +559,23 @@ logic [63: 0]                                                  int_commit_counte
                         w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
                         w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
 
-            step_gshare ($time,
-                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
-                         1 << grp_idx,
-                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.sim_cmt_brtag_bhr);
-
+            for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
+              if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&
+                  `BRANCH_INFO_Q[q_idx].grp_id == 1 << grp_idx) begin
+                step_gshare ($time,
+                             `BRANCH_INFO_Q[q_idx].cmt_id,
+                             `BRANCH_INFO_Q[q_idx].grp_id,
+                             `BRANCH_INFO_Q[q_idx].gshare_bht);
+                if (`BRANCH_INFO_Q[q_idx].mispredict) begin
+                  for (int q_idx_tmp = 0; q_idx_tmp <= q_idx; q_idx_tmp++) begin
+                    `BRANCH_INFO_Q.pop_front();
+                  end
+                end else begin
+                  `BRANCH_INFO_Q.delete(q_idx);
+                end
+                break;
+              end // if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&...
+            end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
           end
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)

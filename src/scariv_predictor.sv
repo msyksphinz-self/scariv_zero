@@ -31,7 +31,7 @@ module scariv_predictor
 
  gshare_search_if.slave gshare_search_if,
 
- br_upd_if.slave    br_upd_fe_if,
+ br_upd_if.slave    br_upd_if,
  cmt_brtag_if.svale cmt_brtag_if
  );
 
@@ -273,8 +273,8 @@ logic                                              w_br_call_dead;
 logic                                              w_br_ret_dead;
 logic                                              r_during_recover;
 
-assign w_br_call_dead = br_upd_fe_if.update & br_upd_fe_if.dead & br_upd_fe_if.is_call;
-assign w_br_ret_dead  = br_upd_fe_if.update & br_upd_fe_if.dead & br_upd_fe_if.is_ret ;
+assign w_br_call_dead = br_upd_if.update & br_upd_if.dead & br_upd_if.is_call;
+assign w_br_ret_dead  = br_upd_if.update & br_upd_if.dead & br_upd_if.is_ret ;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -282,7 +282,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (w_br_call_dead | w_br_ret_dead) begin
       r_during_recover <= 1'b1; // Enter recovering mode
-    end else if (br_upd_fe_if.update & ~br_upd_fe_if.dead) begin
+    end else if (br_upd_if.update & ~br_upd_if.dead) begin
       r_during_recover <= 1'b0; // Leave recovering mode
     end
 
@@ -295,15 +295,15 @@ logic w_ras_flush_valid;
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_ras_commit_flush_valid_oh;
 logic [RAS_W-1: 0]          w_ras_commit_flush_ras_index_oh;
 assign w_ras_commit_flush = is_flushed_commit(i_commit) /* & |(i_commit.flush_valid & i_commit.ras_update) */;
-assign w_ras_br_flush = br_upd_fe_if.update & ~br_upd_fe_if.dead & br_upd_fe_if.mispredict /* &
-                        (br_upd_fe_if.is_call | br_upd_fe_if.is_ret) */;
+assign w_ras_br_flush = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict /* &
+                        (br_upd_if.is_call | br_upd_if.is_ret) */;
 bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) commit_flush_valid_oh (.in(i_commit.flush_valid), .out(w_ras_commit_flush_valid_oh));
 bit_oh_or_packed #(.T(logic [RAS_W-1: 0]), .WORDS(scariv_conf_pkg::DISP_SIZE))
 bit_oh_call_target(.i_oh(w_ras_commit_flush_valid_oh), .i_data(i_commit.ras_index), .o_selected(w_ras_commit_flush_ras_index_oh));
 assign w_ras_flush_valid   = w_ras_commit_flush | w_ras_br_flush;
 
 logic [RAS_W-1: 0]          w_flush_ras_index;
-assign w_flush_ras_index = w_ras_commit_flush ? w_ras_commit_flush_ras_index_oh : br_upd_fe_if.ras_index;
+assign w_flush_ras_index = w_ras_commit_flush ? w_ras_commit_flush_ras_index_oh : br_upd_if.ras_index;
 
 always_comb begin
   w_s2_ras_index_next = r_ras_input_index;
@@ -311,9 +311,9 @@ always_comb begin
   if (w_ras_flush_valid) begin
     w_s2_ras_index_next = w_flush_ras_index;
   // end else if (w_br_call_dead & ~r_during_recover) begin
-  //   w_s2_ras_index_next = br_upd_fe_if.ras_index;
+  //   w_s2_ras_index_next = br_upd_if.ras_index;
   // end else if (w_br_ret_dead & ~r_during_recover) begin
-  //   w_s2_ras_index_next = br_upd_fe_if.ras_index + 'h1;
+  //   w_s2_ras_index_next = br_upd_if.ras_index + 'h1;
   end
 
   w_ras_index_next = w_s2_ras_index_next;
@@ -398,8 +398,8 @@ u_ras
    .o_s2_rd_pa    (w_s2_ras_ret_vaddr),
 
    .i_br_call_cmt_valid     (w_br_call_dead & ~r_during_recover),
-   .i_br_call_cmt_ras_index (br_upd_fe_if.ras_index),
-   .i_br_call_cmt_wr_vpc    (br_upd_fe_if.ras_prev_vaddr[riscv_pkg::VADDR_W-1: 1])
+   .i_br_call_cmt_ras_index (br_upd_if.ras_index),
+   .i_br_call_cmt_wr_vpc    (br_upd_if.ras_prev_vaddr[riscv_pkg::VADDR_W-1: 1])
    );
 
 
@@ -440,7 +440,7 @@ u_gshare
 
    .search_btb_if    (search_btb_if   ),
    .gshare_search_if (gshare_search_if),
-   .br_upd_fe_if     (br_upd_fe_if    ),
+   .br_upd_if        (br_upd_if       ),
    .cmt_brtag_if     (cmt_brtag_if    ),
 
    .o_s2_predict_valid        (o_s2_predict_valid       ),
@@ -460,18 +460,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (w_ras_flush_valid) begin
       r_committed_ras_index <= w_flush_ras_index;
-    end else if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_call) begin
-      if (r_committed_ras_index != br_upd_fe_if.ras_index) begin
+    end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_call) begin
+      if (r_committed_ras_index != br_upd_if.ras_index) begin
         $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
-                  r_committed_ras_index, br_upd_fe_if.ras_index);
+                  r_committed_ras_index, br_upd_if.ras_index);
         $fatal;
       end else begin
         r_committed_ras_index <= r_committed_ras_index + 'h1;
       end
-    end else if (br_upd_fe_if.update & !br_upd_fe_if.dead & br_upd_fe_if.is_ret) begin
-      if (w_committed_ras_index_m1 != br_upd_fe_if.ras_index) begin
+    end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_ret) begin
+      if (w_committed_ras_index_m1 != br_upd_if.ras_index) begin
         $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
-                 w_committed_ras_index_m1, br_upd_fe_if.ras_index);
+                 w_committed_ras_index_m1, br_upd_if.ras_index);
         $fatal;
       end else begin
         r_committed_ras_index <= w_committed_ras_index_m1;

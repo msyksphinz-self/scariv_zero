@@ -131,6 +131,7 @@ interface br_upd_if;
 
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_index;
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
+  logic                                 btb_not_hit;
 
   modport master (
     output update,
@@ -153,7 +154,8 @@ interface br_upd_if;
     output grp_id,
     output brtag,
     output gshare_index,
-    output gshare_bhr
+    output gshare_bhr,
+    output btb_not_hit
   );
 
   modport slave (
@@ -177,7 +179,8 @@ interface br_upd_if;
     input grp_id,
     input brtag,
     input gshare_index,
-    input gshare_bhr
+    input gshare_bhr,
+    input btb_not_hit
   );
 
 endinterface // br_upd_if

@@ -390,6 +390,7 @@ assign ex3_br_upd_if.grp_id        = r_ex3_issue.grp_id;
 assign ex3_br_upd_if.brtag         = r_ex3_issue.brtag;
 assign ex3_br_upd_if.gshare_bhr    = r_ex3_issue.gshare_bhr;
 assign ex3_br_upd_if.gshare_index  = r_ex3_issue.gshare_index;
+assign ex3_br_upd_if.btb_not_hit   = ~r_ex3_issue.btb_valid;
 
 `ifdef SIMULATION
 `ifdef MONITOR
