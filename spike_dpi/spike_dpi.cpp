@@ -1527,6 +1527,12 @@ void spike_update_timer (long long value)
 
 
 #ifdef SIM_MAIN
+static void main_suggest_help()
+{
+  fprintf(stderr, "Try 'spike --help' for more information.\n");
+  exit(1);
+}
+
 void stop_sim(int code, long long rtl_time)
 {
   fprintf(compare_log_fp, "stop_ism %d\n", code);
@@ -1538,10 +1544,9 @@ int main(int argc, char **argv)
   bool log;
   uint64_t sim_cycle;
 
-  parser.help(&suggest_help);
-  parser.option('h', "help", 0, [&](const char* s){help(0);});
+  parser.help(&main_suggest_help);
   parser.option('l', 0, 0, [&](const char* s){log = true;});
-  parser.option('c', 0, 0, [&](const char* s){sim_cycle = strtoull(s, 0, 0);});
+  parser.option('c', 0, 1, [&](const char* s){sim_cycle = strtoull(s, 0, 0);});
   auto argv1 = parser.parse(static_cast<const char* const*>(argv));
 
   std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
@@ -1556,6 +1561,8 @@ int main(int argc, char **argv)
   processor_t *p = spike_core->get_core(0);
 
   initial_gshare(10, 64);
+
+  fprintf (compare_log_fp, "sim_cycle = %ld\n", sim_cycle);
 
   for (int i = 0; i < sim_cycle; i++) {
     p->step(1);
