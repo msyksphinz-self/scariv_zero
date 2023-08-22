@@ -75,26 +75,23 @@ void initial_gshare(long long bhr_length,
   }
 }
 
-// 数値を２進数文字列に変換
 std::string to_binString(unsigned int val, const int length)
 {
-    if( !val )
-        return std::string("0");
-    std::string str;
-    int l = 0;
-    while( val != 0 ) {
-      if( (val & 1) == 0 )  // val は偶数か？
-        str.insert(str.begin(), '0');  //  偶数の場合
-      else
-        str.insert(str.begin(), '1');  //  奇数の場合
-      val >>= 1;
-      l++;
-    }
-    while (l < length) {
+  std::string str;
+  int l = 0;
+  while( val != 0 ) {
+    if( (val & 1) == 0 )
       str.insert(str.begin(), '0');
-      l++;
-    }
-    return str;
+    else
+      str.insert(str.begin(), '1');
+    val >>= 1;
+    l++;
+  }
+  while (l < length) {
+    str.insert(str.begin(), '0');
+    l++;
+  }
+  return str;
 }
 
 
