@@ -35,6 +35,11 @@ import "DPI-C" function void step_gshare (input longint rtl_time,
                                           input int     rtl_grp_id,
                                           input longint rtl_gshare_bhr);
 
+import "DPI-C" function void initial_ras(input longint ras_length);
+import "DPI-C" function void step_ras (input longint rtl_time,
+                                       input int     rtl_cmt_id,
+                                       input int     rtl_grp_id,
+                                       input longint ras_index);
 
 module scariv_tb (
     input logic i_clk,
@@ -576,7 +581,13 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                 break;
               end // if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&...
             end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
-          end
+
+            // RAS check
+            step_ras ($time,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                      1 << grp_idx,
+                      0);
+          end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
 
@@ -634,6 +645,7 @@ end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 initial begin
   initial_gshare (scariv_conf_pkg::GSHARE_BHT_W,
                   scariv_conf_pkg::scariv_lsu_pkg::ICACHE_DATA_B_W);
+  initial_ras (scariv_conf_pkg::RAS_ENTRY_SIZE);
 end
 
 endmodule  // scariv_tb
