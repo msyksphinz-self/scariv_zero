@@ -23,8 +23,7 @@ bool is_call (uint64_t insn)
   if ((insn & MASK_C_JAL) == MATCH_C_JAL) {  // C.JAL x1, imm
     return g_rv_xlen == 32;
   }
-  if (((insn & MASK_C_JALR) == MATCH_C_JALR) &&  // C.JALR x1, 0(rs1)
-      (((insn >>  7) & 0x1f) == 0x1)) {
+  if ((insn & MASK_C_JALR) == MATCH_C_JALR) {  // C.JALR rs1
     return true;
   }
   return false;
