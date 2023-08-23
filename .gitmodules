@@ -3,7 +3,7 @@
 	url = https://github.com/sifive/elf2hex.git
 [submodule "spike_dpi/riscv-isa-sim"]
 	path = spike_dpi/riscv-isa-sim
-	url = git@github.com:msyksphinz-self/riscv-isa-sim.git
+	url = https://github.com/msyksphinz-self/riscv-isa-sim.git
 [submodule "tests/riscv-torture"]
 	path = tests/riscv-torture
 	url = git@github.com:ucb-bar/riscv-torture.git
@@ -16,3 +16,9 @@
 [submodule "tools/espresso-logic"]
 	path = tools/espresso-logic
 	url = https://github.com/classabbyamp/espresso-logic.git
+[submodule "tests/riscv-coremark"]
+	path = tests/riscv-coremark
+	url = https://github.com/riscv-boom/riscv-coremark.git
+[submodule "tests/riscv_arch_tests"]
+	path = tests/riscv_arch_tests
+	url = https://github.com/tenstorrent/riscv_arch_tests.git

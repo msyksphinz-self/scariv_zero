@@ -3,7 +3,7 @@
         "name":"lui        r[11:7],h[31:12]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "01101", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"]],
         "alu_ctrl":[["op", "sign_lui"], ["imm", "s"]]
     },
@@ -11,7 +11,7 @@
         "name":"auipc      r[11:7],h[31:12]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"]],
         "alu_ctrl":[["op", "sign_auipc"], ["imm", "i"]]
     },
@@ -19,7 +19,7 @@
         "name":"add        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_add"] ]
     },
@@ -27,7 +27,7 @@
         "name":"sub        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_sub"] ]
     },
@@ -35,7 +35,7 @@
         "name":"addw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_add_32"] ]
     },
@@ -43,7 +43,7 @@
         "name":"subw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_sub_32"] ]
     },
@@ -51,7 +51,7 @@
         "name":"addi       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sign_add"], ["imm", "i"]]
     },
@@ -59,7 +59,7 @@
         "name":"addiw      r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sign_add_32"], ["imm", "i"]]
     },
@@ -68,7 +68,7 @@
         "name":"ld         r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["op", "load"]]
     },
@@ -77,7 +77,7 @@
         "name":"lw         r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "w"], ["sign", "s"], ["op", "load"]]
     },
@@ -86,7 +86,7 @@
         "name":"lh         r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "h"], ["sign", "s"], ["op", "load"]]
     },
@@ -95,7 +95,7 @@
         "name":"lb         r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "b"], ["sign", "s"], ["op", "load"]]
     },
@@ -104,7 +104,7 @@
         "name":"lwu        r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "w"], ["sign", "u"], ["op", "load"]]
     },
@@ -113,7 +113,7 @@
         "name":"lhu        r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "h"], ["sign", "u"], ["op", "load"]]
     },
@@ -122,7 +122,7 @@
         "name":"lbu        r[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00000", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "r3"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "b"], ["sign", "u"], ["op", "load"]]
     },
@@ -131,7 +131,7 @@
         "name":"sd         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01000", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "dw"], ["op", "store"]]
     },
@@ -140,7 +140,7 @@
         "name":"sw         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01000", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "w"], ["op", "store"]]
     },
@@ -149,7 +149,7 @@
         "name":"sh         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "01000", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "h"], ["op", "store"]]
     },
@@ -158,7 +158,7 @@
         "name":"sb         r[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "01000", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"]],
         "lsu_ctrl":[["size", "b"], ["op", "store"]]
     },
@@ -166,7 +166,7 @@
         "name":"beq        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "eq"] , ["imm", "sb"]]
     },
@@ -174,7 +174,7 @@
         "name":"bne        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ne"], ["imm", "sb"]]
     },
@@ -182,7 +182,7 @@
         "name":"blt        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "lt"], ["imm", "sb"]]
     },
@@ -190,7 +190,7 @@
         "name":"bge        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ge"], ["imm", "sb"]]
     },
@@ -198,7 +198,7 @@
         "name":"bltu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ltu"], ["imm", "sb"]]
     },
@@ -206,7 +206,7 @@
         "name":"bgeu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "geu"], ["imm", "sb"]]
     },
@@ -214,7 +214,7 @@
         "name":"jal        r[11:7],uj[31:12]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg" : [["rd", "r3"]],
         "bru_ctrl" : [["wr_rd", "1"], ["imm", "uj"]]
     },
@@ -222,7 +222,7 @@
         "name":"jalr       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11001", "11"],
-        "inst_cat": [["inst_cat", "br"]],
+        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
         "reg" : [["rd", "r3"], ["r1", "r1"]],
         "bru_ctrl" : [["wr_rd", "1"], ["imm", "i"]]
     },
@@ -230,7 +230,7 @@
         "name":"xor        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "xor"]]
     },
@@ -239,7 +239,7 @@
         "name":"or         r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "or"]]
     },
@@ -247,7 +247,7 @@
         "name":"and        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "and"]]
     },
@@ -255,7 +255,7 @@
         "name":"xori       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "xor"], ["imm", "i"]]
     },
@@ -263,7 +263,7 @@
         "name":"ori        r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "or"], ["imm", "i"]]
     },
@@ -271,7 +271,7 @@
         "name":"andi       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "and"], ["imm", "i"]]
     },
@@ -279,7 +279,7 @@
         "name":"slli       r[11:7],r[19:15],h[25:20]",
         "length":"32", "xlen":["32"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sll"], ["imm", "sh"]]
     },
@@ -287,7 +287,7 @@
         "name":"srli       r[11:7],r[19:15],h[24:20]",
         "length":"32", "xlen":["32"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "srl"], ["imm", "sh"]]
     },
@@ -295,7 +295,7 @@
         "name":"srai       r[11:7],r[19:15],h[24:20]",
         "length":"32", "xlen":["32"],
         "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sra"], ["imm", "sh"]]
     },
@@ -303,7 +303,7 @@
         "name":"slli       r[11:7],r[19:15],h[25:20]",
         "length":"32", "xlen":["64"],
         "field": ["00000", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sll"], ["imm", "sh"]]
     },
@@ -311,7 +311,7 @@
         "name":"srli       r[11:7],r[19:15],h[24:20]",
         "length":"32", "xlen":["64"],
         "field": ["00000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "srl"], ["imm", "sh"]]
     },
@@ -319,7 +319,7 @@
         "name":"srai       r[11:7],r[19:15],h[24:20]",
         "length":"32", "xlen":["64"],
         "field": ["01000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sra"], ["imm", "sh"]]
     },
@@ -327,7 +327,7 @@
         "name":"srl        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "srl"]]
     },
@@ -335,7 +335,7 @@
         "name":"sll        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sll"]]
     },
@@ -343,7 +343,7 @@
         "name":"sra        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sra"]]
     },
@@ -351,7 +351,7 @@
         "name":"slliw      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sll_32"], ["imm", "sh"]]
     },
@@ -359,7 +359,7 @@
         "name":"srliw      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "srl_32"], ["imm", "sh"]]
     },
@@ -367,7 +367,7 @@
         "name":"sraiw      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sra_32"], ["imm", "sh"]]
     },
@@ -375,7 +375,7 @@
         "name":"sllw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sll_32"]]
     },
@@ -383,7 +383,7 @@
         "name":"srlw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "srl_32"]]
     },
@@ -391,7 +391,7 @@
         "name":"sraw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["01000", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sra_32"]]
     },
@@ -399,7 +399,7 @@
         "name":"slti       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "sign_slt"], ["imm", "i"]]
     },
@@ -407,7 +407,7 @@
         "name":"sltiu      r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "alu_ctrl":[["op", "unsign_slt"], ["imm", "i"]]
     },
@@ -415,7 +415,7 @@
         "name":"slt        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "sign_slt"]]
     },
@@ -423,7 +423,7 @@
         "name":"sltu       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "arith"]],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl":[["op", "unsign_slt"]]
     },
@@ -431,7 +431,7 @@
         "name":"csrrw      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
     },
@@ -439,7 +439,7 @@
         "name":"csrrs      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
@@ -447,7 +447,7 @@
         "name":"csrrc      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
         "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
@@ -463,7 +463,7 @@
         "name":"csrrsi     r[11:7],h[31:20],h[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[["rd", "r3"]],
         "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
@@ -471,7 +471,7 @@
         "name":"csrrci     r[11:7],h[31:20],h[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[["rd", "r3"]],
         "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
@@ -479,31 +479,31 @@
         "name":"uret",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_uret", "1"]]
+        "csu_ctrl":[["is_uret", "1"]]
     },
     {
         "name":"sret",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_sret", "1"]]
+        "csu_ctrl":[["is_sret", "1"]]
     },
     {
         "name":"mret",
         "length":"32", "xlen":["32", "64"],
         "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["csr_update", "0"], ["is_mret", "1"]]
+        "csu_ctrl":[["is_mret", "1"]]
     },
     {
         "name":"ecall",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00000", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
         "csu_ctrl": [["is_ecall", "1"]]
     },
@@ -511,7 +511,7 @@
         "name":"ebreak",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00001", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
         "csu_ctrl": [["is_ebreak", "1"]]
     },
@@ -519,7 +519,7 @@
         "name":"fence",
         "length":"32", "xlen":["32", "64"],
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
         "csu_ctrl": [["is_fence", "1"]]
     },
@@ -527,7 +527,7 @@
         "name":"fence.i",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "00000", "00000", "001", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg":[],
         "csu_ctrl": [["is_fence_i", "1"]]
     },
@@ -535,7 +535,7 @@
         "name":"sfence.vma r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
         "reg": [["r1", "r1"], ["r2", "r2"]],
         "csu_ctrl": [["is_sfence_vma", "1"]]
     },
@@ -543,7 +543,7 @@
         "name":"wfi",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "00", "00101", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "0"]],
+        "inst_cat": [["inst_cat", "csu"], ["gen_except", "0"]], "isa_ext": "i",
         "reg": [],
         "csu_ctrl": [["is_wfi", "1"]]
     },
@@ -551,7 +551,7 @@
         "name":"mul        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl" :[["op", "smul"]]
     },
@@ -559,7 +559,7 @@
         "name":"mulh       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulh"]]
     },
@@ -567,7 +567,7 @@
         "name":"mulhsu     r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulhsu"]]
     },
@@ -575,7 +575,7 @@
         "name":"mulhu      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulhu"]]
     },
@@ -583,7 +583,7 @@
         "name":"div        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "sdiv"]]
     },
@@ -591,7 +591,7 @@
         "name":"divu       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "udiv"]]
     },
@@ -599,7 +599,7 @@
         "name":"rem        r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "srem"]]
     },
@@ -607,7 +607,7 @@
         "name":"remu       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "urem"]]
     },
@@ -615,7 +615,7 @@
         "name":"mulw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "mulw"]]
     },
@@ -623,7 +623,7 @@
         "name":"divw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "divw"]]
     },
@@ -631,7 +631,7 @@
         "name":"divuw      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "divuw"]]
     },
@@ -639,7 +639,7 @@
         "name":"remw       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "remw"]]
     },
@@ -647,7 +647,7 @@
         "name":"remuw      r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01110", "11"],
-        "inst_cat": [["inst_cat", "muldiv"]],
+        "inst_cat": [["inst_cat", "muldiv"]], "isa_ext": "m",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "alu_ctrl": [["op", "remuw"]]
     },
@@ -655,184 +655,184 @@
         "name":"lr.w       r[11:7],r[19:15]",
         "length":"32", "xlen":["64", "32"],
         "field":["00010", "XX", "00000", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "w"], ["op", "lr"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["rmwop", "lr32"]]
     },
     {
         "name":"sc.w       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64", "32"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
-        "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "w"], ["op", "sc"]]
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "lsu_ctrl": [["size", "w"], ["op", "rmw"], ["rmwop", "sc32"]]
     },
     {
         "name":"amoswap.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00001", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoswap"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "swap32"]]
     },
     {
         "name":"amoadd.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoadd"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "add32"]]
     },
     {
         "name":"amoxor.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["00100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoxor"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "xor32"]]
     },
     {
         "name":"amoand.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["01100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoand"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "and32"]]
     },
     {
         "name":"amoor.w    r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["01000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amoor"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "or32"]]
     },
     {
         "name":"amomin.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["10000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomin"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "min32"]]
     },
     {
         "name":"amomax.w   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["10100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomax"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "max32"]]
     },
     {
         "name":"amominu.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["11000", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amominu"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "minu32"]]
     },
     {
         "name":"amomaxu.w  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64", "32"],
         "field":["11100", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "w"], ["op", "amomaxu"]]
+        "lsu_ctrl": [["size", "w"], ["sign", "s"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "maxu32"]]
     },
     {
         "name":"lr.d       r[11:7],r[19:15]",
         "length":"32", "xlen":["64"],
         "field":["00010", "XX", "00000", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "lr"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "lr64"]]
     },
     {
         "name":"sc.d       r[11:7],r[19:15],r[24:20]",
         "length":"32", "xlen":["64"],
         "field":["00011", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
-        "reg": [["rd", "r3"], ["r1", "r1"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "sc"]]
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["rmwop", "sc64"]]
     },
     {
         "name":"amoswap.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00001", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoswap"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "swap64"]]
     },
     {
         "name":"amoadd.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoadd"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "add64"]]
     },
     {
         "name":"amoxor.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["00100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoxor"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "xor64"]]
     },
     {
         "name":"amoand.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["01100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoand"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "and64"]]
     },
     {
         "name":"amoor.d    r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["01000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amoor"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "or64"]]
     },
     {
         "name":"amomin.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["10000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomin"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "min64"]]
     },
     {
         "name":"amomax.d   r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["10100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomax"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "max64"]]
     },
     {
         "name":"amominu.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["11000", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amominu"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "minu64"]]
     },
     {
         "name":"amomaxu.d  r[11:7],r[24:20],(r[19:15])",
         "length":"32", "xlen":["64"],
         "field":["11100", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01011", "11"],
-        "inst_cat": [["inst_cat", "lsu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "rmw"]], "isa_ext": "a",
         "reg":[["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "lsu_ctrl": [["size", "dw"], ["op", "amomaxu"]]
+        "lsu_ctrl": [["size", "dw"], ["op", "rmw"], ["is_amo", "1"], ["rmwop", "maxu64"]]
     },
     {
         "comment": "Floating Point Load Word",
         "name":"flw        f[11:7],h[31:20](r[19:15])",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "00001", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "fpu"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "w"], ["sign", "s"], ["op", "load"]]
     },
@@ -840,7 +840,7 @@
         "name":"fsw        f[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "01001", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "fpu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "f2"]],
         "lsu_ctrl":[["size", "w"], ["op", "store"]]
     },
@@ -848,79 +848,79 @@
         "name":"fmadd.s    f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10000", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmadd"], ["use_frm", "1"]]
     },
     {
         "name":"fmsub.s    f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10001", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmsub"], ["use_frm", "1"]]
     },
     {
         "name":"fnmsub.s   f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10010", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmsub"], ["use_frm", "1"]]
     },
     {
         "name":"fnmadd.s   f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10011", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmadd"], ["use_frm", "1"]]
     },
     {
         "name":"fadd.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00000", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fadd"], ["use_frm", "1"]]
     },
     {
         "name":"fsub.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00001", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsub"], ["use_frm", "1"]]
     },
     {
         "name":"fmul.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00010", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmul"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmul"], ["use_frm", "1"]]
     },
     {
         "name":"fdiv.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00011", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fdiv"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fdiv"], ["use_frm", "1"]]
     },
     {
         "name":"fsqrt.s    f[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["01011", "00", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsqrt"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsqrt"], ["use_frm", "1"]]
     },
     {
         "name":"fsgnj.s    f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00100", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fsgnj_s"]]
     },
@@ -928,7 +928,7 @@
         "name":"fsgnjn.s   f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fsgnjn_s"]]
     },
@@ -936,7 +936,7 @@
         "name":"fsgnjx.s   f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fsgnjx_s"]]
     },
@@ -944,7 +944,7 @@
         "name":"fmin.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00101", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmin"]]
     },
@@ -952,7 +952,7 @@
         "name":"fmax.s     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["00101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmax"]]
     },
@@ -960,23 +960,23 @@
         "name":"fcvt.w.s   r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11000", "00", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_w_s"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_w_s"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.wu.s  r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11000", "00", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_wu_s"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_wu_s"], ["use_frm", "1"]]
     },
     {
         "name":"fmv.x.w    r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11100", "00", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fmv_x_w"]]
     },
@@ -984,7 +984,7 @@
         "name":"feq.s      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["10100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "feq"]]
     },
@@ -992,7 +992,7 @@
         "name":"flt.s      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["10100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "flt"]]
     },
@@ -1000,7 +1000,7 @@
         "name":"fle.s      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["10100", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fle"]]
     },
@@ -1008,7 +1008,7 @@
         "name":"fclass.s   f[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11100", "00", "00000", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fclass"]]
     },
@@ -1016,23 +1016,23 @@
         "name":"fcvt.s.w   f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11010", "00", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_s_w"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_s_w"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.s.wu  f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11010", "00", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_s_wu"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_s_wu"], ["use_frm", "1"]]
     },
     {
         "name":"fmv.w.x    f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11110", "00", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fmv_w_x"]]
     },
@@ -1040,39 +1040,39 @@
         "name":"fcvt.l.s   r[11:7],f[19:15]",
         "length":"32", "xlen":["64"], "flen":["32", "64"],
         "field":["11000", "00", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_l_s"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_l_s"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.lu.s  r[11:7],f[19:15]",
         "length":"32", "xlen":["64"], "flen":["32", "64"],
         "field":["11000", "00", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_lu_s"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_lu_s"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.s.l   f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11010", "00", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_l"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_l"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.s.lu  f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["32", "64"],
         "field":["11010", "00", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_lu"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_lu"], ["use_frm", "1"]]
     },
     {
         "name":"fld        f[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00001", "11"],
-        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "fpu"]],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
         "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["op", "load"]]
     },
@@ -1080,7 +1080,7 @@
         "name":"fsd        f[24:20],h[31:25]|h[11:7](r[19:15])",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "01001", "11"],
-        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "fpu"]],
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "_"], ["r1", "r1"], ["r2", "f2"]],
         "lsu_ctrl":[["size", "dw"], ["op", "store"]]
     },
@@ -1088,79 +1088,79 @@
         "name":"fmadd.d    f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10000", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmadd"], ["use_frm", "1"]]
     },
     {
         "name":"fmsub.d    f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10001", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmsub"], ["use_frm", "1"]]
     },
     {
         "name":"fnmsub.d   f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10010", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmsub"], ["use_frm", "1"]]
     },
     {
         "name":"fnmadd.d   f[11:7],f[19:15],f[24:20],f[31:27]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10011", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmadd"], ["use_frm", "1"]]
     },
     {
         "name":"fadd.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00000", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fadd"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fadd"], ["use_frm", "1"]]
     },
     {
         "name":"fsub.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00001", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsub"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsub"], ["use_frm", "1"]]
     },
     {
         "name":"fmul.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmul"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmul"], ["use_frm", "1"]]
     },
     {
         "name":"fdiv.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00011", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fdiv"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fdiv"], ["use_frm", "1"]]
     },
     {
         "name":"fsqrt.d    f[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["01011", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsqrt"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsqrt"], ["use_frm", "1"]]
     },
     {
         "name":"fsgnj.d    f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00100", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "dw"], ["op", "fsgnj_d"]]
     },
@@ -1168,7 +1168,7 @@
         "name":"fsgnjn.d   f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00100", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "dw"], ["op", "fsgnjn_d"]]
     },
@@ -1176,7 +1176,7 @@
         "name":"fsgnjx.d   f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00100", "01", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "dw"], ["op", "fsgnjx_d"]]
     },
@@ -1184,7 +1184,7 @@
         "name":"fmin.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00101", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmin"]]
     },
@@ -1192,7 +1192,7 @@
         "name":"fmax.d     f[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["00101", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmax"]]
     },
@@ -1200,23 +1200,23 @@
         "name":"fcvt.s.d   f[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["01000", "00", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_d"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_s_d"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.d.s   f[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["01000", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_s"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_s"], ["use_frm", "1"]]
     },
     {
         "name":"feq.d      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["10100", "01", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "feq"]]
     },
@@ -1224,7 +1224,7 @@
         "name":"flt.d      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["10100", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "flt"]]
     },
@@ -1232,7 +1232,7 @@
         "name":"fle.d      r[11:7],f[19:15],f[24:20]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["10100", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fle"]]
     },
@@ -1240,7 +1240,7 @@
         "name":"fclass.d   r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11100", "01", "00000", "XXXXX", "001", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fclass"]]
     },
@@ -1248,55 +1248,55 @@
         "name":"fcvt.w.d   r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11000", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_w_d"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_w_d"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.wu.d  r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11000", "01", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_wu_d"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_wu_d"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.d.w   f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11010", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_d_w"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_d_w"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.d.wu  f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11010", "01", "00001", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_d_wu"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fcvt_d_wu"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.l.d   r[11:7],f[19:15]",
         "length":"32", "xlen":["64"], "flen":["64"],
         "field":["11000", "01", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_l_d"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_l_d"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.lu.d  r[11:7],f[19:15]",
         "length":"32", "xlen":["64"], "flen":["64"],
         "field":["11000", "01", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_lu_d"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_lu_d"], ["use_frm", "1"]]
     },
     {
         "name":"fmv.x.d    r[11:7],f[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11100", "01", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
         "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fmv_x_d"]]
     },
@@ -1305,24 +1305,24 @@
         "name":"fcvt.d.l   f[11:7],r[19:15]",
         "length":"32", "xlen":["64"], "flen":["64"],
         "field":["11010", "01", "00010", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_l"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_l"], ["use_frm", "1"]]
     },
     {
         "name":"fcvt.d.lu  f[11:7],r[19:15]",
         "length":"32", "xlen":["64"], "flen":["64"],
         "field":["11010", "01", "00011", "XXXXX", "XXX", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_lu"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fcvt_d_lu"], ["use_frm", "1"]]
     },
     {
         "name":"fmv.d.x    f[11:7],r[19:15]",
         "length":"32", "xlen":["32", "64"], "flen":["64"],
         "field":["11110", "01", "00000", "XXXXX", "000", "XXXXX", "10100", "11"],
-        "inst_cat": [["inst_cat", "fpu"]],
+        "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "r1"]],
-        "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fmv_d_x"]]
+        "fpu_ctrl":[["pipe", "fast"], ["size", "w"], ["op", "fmv_d_x"], ["use_frm", "1"]]
     }
 ]

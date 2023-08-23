@@ -12,11 +12,11 @@ module tb_elf_loader
  input logic                               i_reset_n,
 
  output logic                                o_req_valid,
- output msrh_lsu_pkg::mem_cmd_t                   o_req_cmd,
+ output scariv_lsu_pkg::mem_cmd_t                   o_req_cmd,
  output logic [riscv_pkg::PADDR_W-1:0]       o_req_addr,
- output logic [msrh_lsu_pkg::L2_CMD_TAG_W-1:0]    o_req_tag,
- output logic [msrh_conf_pkg::ICACHE_DATA_W-1:0]   o_req_data,
- output logic [msrh_conf_pkg::ICACHE_DATA_W/8-1:0] o_req_byte_en,
+ output logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    o_req_tag,
+ output logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   o_req_data,
+ output logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] o_req_byte_en,
  input logic                                 i_req_ready
 );
 
@@ -39,12 +39,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_req_valid = req_valid_reg;
-assign o_req_cmd   = msrh_lsu_pkg::M_XWR;
+assign o_req_cmd   = scariv_lsu_pkg::M_XWR;
 assign o_req_addr  = req_bits_addr_reg;
 assign o_req_tag   = 'h0;
-generate for(genvar i = 0; i < msrh_conf_pkg::ICACHE_DATA_W / 32; i++) begin: data_loop
+generate for(genvar i = 0; i < scariv_conf_pkg::ICACHE_DATA_W / 32; i++) begin: data_loop
   assign o_req_data[i*32+:32] = req_bits_data_reg;
-  assign o_req_byte_en[i*4+:4] = {4{(o_req_addr[$clog2(msrh_conf_pkg::ICACHE_DATA_W / 8)-1:2] == i)}};
+  assign o_req_byte_en[i*4+:4] = {4{(o_req_addr[$clog2(scariv_conf_pkg::ICACHE_DATA_W / 8)-1:2] == i)}};
 end
 endgenerate
 

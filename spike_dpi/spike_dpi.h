@@ -2,7 +2,7 @@
 #include <svdpi.h>
 
 extern "C" {
-  void initial_spike (const char *filename, int rv_xlen, int rv_flen);
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip);
   void step_spike(long long time, long long rtl_pc,
                   int rtl_priv, long long rtl_mstatus,
                   int rtl_exception, int rtl_exception_cause,
@@ -10,7 +10,7 @@ extern "C" {
                   int rtl_insn,
                   int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                   int rtl_wr_gpr_rnid, long long rtl_wr_val);
-  void stop_sim(int code);
+  void stop_sim(int code, long long rtl_time);
 
 #ifndef VERILATOR
   void open_log_fp(const char *filename);
@@ -44,4 +44,5 @@ extern "C" {
                         int rtl_len, int rtl_acc_type,
                         long long rtl_pa);
 
+  void spike_update_timer(long long value);
 }

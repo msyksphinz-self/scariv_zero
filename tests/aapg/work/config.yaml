@@ -47,12 +47,12 @@ isa-instruction-distribution:
   rel_rv64i.data: 10
   rel_rv32m: 5
   rel_rv64m: 5
-  rel_rv32a: 0
-  rel_rv64a: 0
+  rel_rv32a: 5
+  rel_rv64a: 5
   rel_rv32f: 0
-  rel_rv64f: 0
+  rel_rv64f: 1
   rel_rv32d: 0
-  rel_rv64d: 0
+  rel_rv64d: 1
 
 # Compressed instructions
 
@@ -60,11 +60,11 @@ isa-instruction-distribution:
   rel_rvc.compute: 10
   rel_rvc.sp: 10
   rel_rvc.data: 10
-  rel_rvc.fdata: 0
+  rel_rvc.fdata: 10
 
   rel_rv32c.compute: 10
   rel_rv32c.ctrl: 1
-  rel_rv32c.fdata: 0
+  rel_rv32c.fdata: 1
 
   rel_rv64c.compute: 10
   rel_rv64c.data: 10

@@ -1,0 +1,18 @@
+[
+    {
+        "name":"czero.eqz r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "11", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "zicond",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "czero_eqz"]]
+    },
+    {
+        "name":"czero.nez r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "11", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "zicond",
+        "reg": [["rd", "rs1", "rs2"]],
+        "alu_ctrl":[["op", "czero_nez"]]
+    }
+]

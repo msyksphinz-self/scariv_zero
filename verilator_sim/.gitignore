@@ -1,3 +1,4 @@
 obj_dir_riscv32/
 obj_dir_riscv64/
 .config_design_rv*
+sim_rv*

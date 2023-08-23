@@ -1,13 +1,10 @@
 .PHONY: riscv_isa_sim
 
-VERILATOR_HOME = /usr/local/share/verilator
-# VERILATOR_HOME = /home/kimura/usr/share/verilator
+VERILATOR_HOME ?= /usr/local/share/verilator
 
 ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR
 endif
-
-VCS_HOME = /dev/shm/shioya/opt/synopsys/vcs/S-2021.09
 
 CFLAGS += -g
 CFLAGS += --std=c++17
@@ -50,16 +47,24 @@ EXE_CFLAGS += -I$(VCS_HOME)/include/
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
 
-all: libspike_dpi_exe.so spike_main
+all: riscv-isa-sim-makefile Makefile
+	$(MAKE) -f spike_dpi.mk libspike_dpi.a
+	$(MAKE) libserialdevice.so
+	$(MAKE) spike_main
 
-libspike_exe_dpi.so: spike_dpi.cpp riscv-isa-sim-makefile
-	g++ -shared -fPIC $(CFLAGS) spike_dpi.cpp -o $@
+libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
+	g++ -shared -fPIC $(EXE_CFLAGS) spike_dpi.cpp -o $@
 
-# spike_main: riscv_isa_sim spike_dpi.o
-spike_main: spike_dpi_exe.o libspike_dpi_exe.so
-	g++ -o $@ $^ $(EXE_CFLAGS)
+libserialdevice.so: serialdevice.cc
+	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
+
+spike_main: spike_dpi_exe.o gshare_model_exe.o libspike_dpi.a
+	g++ -L. -Wl,--export-dynamic -o $@ $^ $(EXE_CFLAGS)
 
 spike_dpi_exe.o: spike_dpi.cpp
+	g++ $^ -c -o $@ $(EXE_CFLAGS)
+
+gshare_model_exe.o: gshare_model.cpp
 	g++ $^ -c -o $@ $(EXE_CFLAGS)
 
 riscv-isa-sim-makefile:
@@ -68,6 +73,10 @@ riscv-isa-sim-makefile:
 	fi
 	touch -f $@
 	make -C riscv-isa-sim -j$(shell nproc)
+	ln -fs riscv-isa-sim/riscv/decode.h
+	ln -fs riscv-isa-sim/config.h
+
+CLEAN_FILES += riscv-isa-sim-makefile
 
 clean:
-	rm -rf riscv-isa-sim-makefile
+	rm -rf $(CLEAN_FILES)

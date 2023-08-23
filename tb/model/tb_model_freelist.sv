@@ -1,9 +1,9 @@
-module tb_model_msrh;
+module tb_model_scariv;
 
 logic w_clk;
 assign w_clk = tb.w_clk;
 
-import msrh_pkg::*;
+import scariv_pkg::*;
 
 // Model of FreeList
 int freelist[DISP_SIZE][$];
@@ -17,9 +17,9 @@ end
 
 
 always_ff @ (negedge i_clk) begin
-  if (tb.u_msrh_tile_wrapper.u_msrh_tile.u_msrh_rename.sc_dips.valid) begin
+  if (tb.u_scariv_tile_wrapper.u_scariv_tile.u_scariv_rename.sc_dips.valid) begin
 
   end
 end
 
-endmodule // tb_model_msrh
+endmodule // tb_model_scariv

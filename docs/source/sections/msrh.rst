@@ -1,7 +1,7 @@
-MSRH RISC-V CPUコア外観
+SCARIV RISC-V CPUコア外観
 =======================
 
-MSRHはRISC-V互換のアウトオブオーダ実行可能なCPUです。
+SCARIVはRISC-V互換のアウトオブオーダ実行可能なCPUです。
 
 マイクロアーキテクチャの詳細は以下の通りです。
 

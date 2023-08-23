@@ -19,7 +19,7 @@ end
 out_sv = File.open("pma_map.sv", "w")
 
 printf(out_sv, "module pma_map\n")
-printf(out_sv, "  import msrh_lsu_pkg::*;\n")
+printf(out_sv, "  import scariv_lsu_pkg::*;\n")
 printf(out_sv, "(\n")
 printf(out_sv, "  input logic [riscv_pkg::PADDR_W-1: 0] i_pa,\n")
 printf(out_sv, "  output logic o_map_hit,\n")
@@ -28,6 +28,7 @@ printf(out_sv, ");\n\n\n")
 
 printf(out_sv, "localparam MAP_TABLE_SIZE = %d;\n", $map_table.size)
 
+printf(out_sv, "/* verilator lint_off UNOPTFLAT */\n");
 printf(out_sv, "logic [MAP_TABLE_SIZE-1: 0] w_hit_addr;\n")
 printf(out_sv, "map_attr_t w_map_attr[MAP_TABLE_SIZE];\n")
 
@@ -50,12 +51,13 @@ $map_table.each_with_index{ |map, map_index|
   end
 
   paddr_bitlen = rv_xlen == 32 ? 34 : 56
-  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa & %d'h%014x) == %d'h%014x;  // Address Region : %x - %x\n",
+  if base_addr == 0 then
+  printf(out_sv, "/* verilator lint_off UNSIGNED */\n", base_addr)
+  end
+  printf(out_sv, "assign w_hit_addr[%2d] = (i_pa >= %d'h%014x) & (i_pa < %d'h%014x);  // Address Region : %x - %x\n",
          map_index,
-         paddr_bitlen,
-         ~(size_byte-1) & ((1 << paddr_bitlen)-1),
-         paddr_bitlen,
-         base_addr & ~(size_byte-1),
+         paddr_bitlen, base_addr,
+         paddr_bitlen, base_addr + size_byte,
          base_addr,
          base_addr + size_byte -1)
   printf(out_sv, "assign w_map_attr[%2d].r = 1'b%01d;\n", map_index, map["attr"]["R"]);

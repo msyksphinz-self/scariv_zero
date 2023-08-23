@@ -1,9 +1,11 @@
-verilator_sim/msrh_tb_*
+verilator_sim/scariv_tb_*
 verilator_sim/obj_dir_*
 verilator_sim/simx.fst
 verilator_sim/*.log
 verilator_sim/log_*
 verilator_sim/.config_*
+verilator_sim/.dts_xlen*_flen*
+verilator_sim/*.fst
 
 questa_sim/*.log
 questa_sim/.dbarInfo
@@ -11,23 +13,28 @@ questa_sim/vsim.dbar
 questa_sim/*.wlf
 questa_sim/work
 
-vivado_*/*.jou
-vivado_*/*.log
-vivado_*/*.wdb
-vivado_*/*.pb
-vivado_*/xsim.dir
-vivado_*/.Xil
-vivado_*/dpi.so
-vivado_*/*.vcd
-vivado_*/*.str
-vivado_*/out.wcfg
-vivado_*/*.dcp
-vivado_*/*.xpr
-vivado_*/*.rpt
+vivado_*/riscv*/*.jou
+vivado_*/riscv*/*.log
+vivado_*/riscv*/*.wdb
+vivado_*/riscv*/*.pb
+vivado_*/riscv*/xsim.dir
+vivado_*/riscv*/.Xil
+vivado_*/riscv*/dpi.so
+vivado_*/riscv*/*.vcd
+vivado_*/riscv*/*.str
+vivado_*/riscv*/out.wcfg
+vivado_*/riscv*/*.dcp
+vivado_*/riscv*/*.xpr
+vivado_*/riscv*/*.rpt
+vivado_*/riscv*/filelist.tcl
+vivado_*/riscv*/*.backup.jou
+vivado_*/riscv*/*.backup.log
 
 spike_dpi/*.so
 spike_dpi/spike_main
 spike_dpi/*.o
+spike_dpi/libspike_dpi.a
+
 
 src/decoder*.sv
 src/pma_map.sv

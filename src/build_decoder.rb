@@ -32,10 +32,22 @@ end
 ctrl_idx = ARGV[0]
 xlen = ARGV[1].to_s
 flen = ARGV[2].to_s
-if ARGV.size != 3 then
+isa  = ARGV[3].to_s
+if ARGV.size != 4 then
   STDERR.print "Please specify signal fields in JSON file\n"
 end
 
+if isa.include?('b') then
+  File.open("b_ext.json") do |file|
+    $arch_table = $arch_table + JSON.load(file)
+  end
+end
+
+if isa.include?('zicond') then
+  File.open("zicond_ext.json") do |file|
+    $arch_table = $arch_table + JSON.load(file)
+  end
+end
 
 ctrl_fields = []
 
@@ -111,6 +123,9 @@ $arch_table.each{ |arch|
     next
   end
   if arch.key?("flen") and not arch["flen"].include?(flen) then
+    next
+  end
+  if arch.key?("isa_ext") and not isa.include?(arch["isa_ext"]) then
     next
   end
   tmp_file.print arch["field"].join.gsub('X', '-')

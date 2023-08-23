@@ -1,4 +1,5 @@
 #include "spike_dpi.h"
+#include "gshare_model.h"
 #include "tb_elf_loader.h"
 #include <string.h>
 
@@ -14,17 +15,9 @@
 #include "extension.h"
 #include "../VERSION"
 
-#ifdef SIM_MAIN
 FILE *compare_log_fp;
-#else // SIM_MAIN
-#ifdef VERILATOR
-extern FILE *compare_log_fp;
-#else // VERILATOR
-FILE     *compare_log_fp;
-#endif // VERILATOR
 extern uint64_t  tohost_addr; // define in tb_elf_loader.cpp
 extern bool    tohost_en;   // define in tb_elf_loader.cpp
-#endif // SIM_MAIN
 
 sim_t *spike_core;
 disassembler_t *disasm;
@@ -33,6 +26,8 @@ int argc;
 const char *argv[20];
 int g_rv_xlen = 0;
 int g_rv_flen = 0;
+
+extern long long iss_bhr;   // defined in gshare_model.cpp
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg);
 static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*>>& mems);
@@ -64,19 +59,19 @@ static void help(int exit_code = 1)
   fprintf(compare_log_fp, "                          P -- Name of the MMIO plugin\n");
   fprintf(compare_log_fp, "                          B -- Base memory address of the device\n");
   fprintf(compare_log_fp, "                          A -- String arguments to pass to the plugin\n");
-  fprintf(compare_log_fp, "                          This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "                          This flag can be used multiple rtl_times.\n");
   fprintf(compare_log_fp, "                          The extlib flag for the library must come first.\n");
   fprintf(compare_log_fp, "  --log-cache-miss      Generate a log of cache miss\n");
   fprintf(compare_log_fp, "  --extension=<name>    Specify RoCC Extension\n");
   fprintf(compare_log_fp, "  --extlib=<name>       Shared library to load\n");
-  fprintf(compare_log_fp, "                        This flag can be used multiple times.\n");
+  fprintf(compare_log_fp, "                        This flag can be used multiple rtl_times.\n");
   fprintf(compare_log_fp, "  --rbb-port=<port>     Listen on <port> for remote bitbang connection\n");
   fprintf(compare_log_fp, "  --dump-dts            Print device tree string and exit\n");
   fprintf(compare_log_fp, "  --disable-dtb         Don't write the device tree blob into memory\n");
   fprintf(compare_log_fp, "  --kernel=<path>       Load kernel flat image into memory\n");
   fprintf(compare_log_fp, "  --initrd=<path>       Load kernel initrd into memory\n");
   fprintf(compare_log_fp, "  --bootargs=<args>     Provide custom bootargs for kernel [default: console=hvc0 earlycon=sbi]\n");
-  fprintf(compare_log_fp, "  --real-time-clint     Increment clint time at real-time rate\n");
+  fprintf(compare_log_fp, "  --real-rtl_time-clint     Increment clint rtl_time at real-rtl_time rate\n");
   fprintf(compare_log_fp, "  --dm-progsize=<words> Progsize for the debug module [default 2]\n");
   fprintf(compare_log_fp, "  --dm-sba=<bits>       Debug bus master supports up to "
       "<bits> wide accesses [default 0]\n");
@@ -117,57 +112,459 @@ static unsigned long atoul_nonzero_safe(const char* s)
   return res;
 }
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen)
+static bool check_file_exists(const char *fileName)
+{
+  std::ifstream infile(fileName);
+  return infile.good();
+}
+
+static std::ifstream::pos_type get_file_size(const char *filename)
+{
+  std::ifstream in(filename, std::ios::ate | std::ios::binary);
+  return in.tellg();
+}
+
+static void read_file_bytes(const char *filename,size_t fileoff,
+                            mem_t* mem, size_t memoff, size_t read_sz)
+{
+  std::ifstream in(filename, std::ios::in | std::ios::binary);
+  in.seekg(fileoff, std::ios::beg);
+
+  std::vector<char> read_buf(read_sz, 0);
+  in.read(&read_buf[0], read_sz);
+  mem->store(memoff, read_sz, (uint8_t*)&read_buf[0]);
+}
+
+
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip)
 {
   argv[0] = "spike_dpi";
-  if (rv_xlen == 32) {
-    if (rv_flen == 0) {
-      argv[1] = "--isa=rv32imac";
-    } else if (rv_flen == 32) {
-      argv[1] = "--isa=rv32imafc";
-    } else if (rv_flen == 64) {
-      argv[1] = "--isa=rv32imafdc";
-    } else {
-      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
-      exit(1);
-    }
-  } else if (rv_xlen == 64) {
-    if (rv_flen == 0) {
-      argv[1] = "--isa=rv64imac";
-    } else if (rv_flen == 32) {
-      argv[1] = "--isa=rv64imafc";
-    } else if (rv_flen == 64) {
-      argv[1] = "--isa=rv64imafdc";
-    } else {
-      fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
-      exit(1);
-    }
-  } else {
+  char *isa_str = (char *)malloc(sizeof(char) * 32);
+  sprintf(isa_str, "rv%dim", rv_xlen);
+  if (rv_amo) {
+    strcat(isa_str, "a");
+  }
+  if (rv_bitmanip) {
+    strcat(isa_str, "b");
+  }
+  if (rv_flen >= 32) {
+    strcat(isa_str, "f");
+  }
+  if (rv_flen >= 64) {
+    strcat(isa_str, "d");
+  }
+  strcat(isa_str, "c");
+  char *spike_isa_argv =(char *)malloc(sizeof(char) * 32);
+  sprintf(spike_isa_argv, "--isa=%s", isa_str);
+  argv[1] = spike_isa_argv;
+  if (!(rv_xlen == 32 || rv_xlen == 64)) {
     fprintf(compare_log_fp, "RV_XLEN should be 32 or 64.\n");
     exit(-1);
+  }
+  if (!(rv_flen == 0 || rv_flen == 32 || rv_flen == 64)) {
+    fprintf(compare_log_fp, "RV_FLEN should be 0, 32 or 64.\n");
+    exit(1);
   }
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
+  // argv[arg_max++] = "-m0x80000000:0x10000,"     \
+  //     "0x0000000000125000:0x1000," \
+  //     "0x0000000000129000:0x1000," \
+  //     "0x000000000012e000:0x1000," \
+  //     "0x000000000012e900:0x1000," \
+  //     "0x000000000016d000:0x1000," \
+  //     "0x000000000017b000:0x1000," \
+  //     "0x0000000000185000:0x1000," \
+  //     "0x0000000000199000:0x1000," \
+  //     "0x00000000001b0000:0x1000," \
+  //     "0x00000000001c0000:0x1000," \
+  //     "0x00000000001e9000:0x1000," \
+  //     "0x00000000001f8000:0x1000," \
+  //     "0x0000000000200000:0x1000," \
+  //     "0x0000000000204000:0x1000," \
+  //     "0x0000000000231000:0x1000," \
+  //     "0x000000000027a000:0x1000," \
+  //     "0x000000000027e000:0x1000," \
+  //     "0x000000000029c000:0x1000," \
+  //     "0x00000000002e9000:0x1000," \
+  //     "0x000000000036b000:0x1000," \
+  //     "0x000000000039b000:0x1000," \
+  //     "0x00000000003d3000:0x1000," \
+  //     "0x000000000044d000:0x1000," \
+  //     "0x00000000004a1000:0x1000," \
+  //     "0x00000000004c7000:0x1000," \
+  //     "0x000000000057f000:0x1000," \
+  //     "0x0000000000599000:0x1000," \
+  //     "0x00000000005c1000:0x1000," \
+  //     "0x0000000000617000:0x1000," \
+  //     "0x0000000000726000:0x1000," \
+  //     "0x000000000072a000:0x1000," \
+  //     "0x000000000073f000:0x1000," \
+  //     "0x00000000007ae000:0x1000," \
+  //     "0x00000000007bcb00:0x1000," \
+  //     "0x00000000008e6000:0x1000," \
+  //     "0x00000000008e6400:0x1000," \
+  //     "0x00000000009e1000:0x1000," \
+  //     "0x00000000009f9000:0x1000," \
+  //     "0x0000000000bc0000:0x1000," \
+  //     "0x0000000000e4a000:0x1000," \
+  //     "0x0000000000f38000:0x1000," \
+  //     "0x0000000000f49000:0x1000," \
+  //     "0x0000000001146000:0x1000," \
+  //     "0x0000000001158000:0x1000," \
+  //     "0x0000000001193000:0x1000," \
+  //     "0x0000000001280000:0x1000," \
+  //     "0x0000000001298000:0x1000," \
+  //     "0x00000000014e8000:0x1000," \
+  //     "0x0000000001616000:0x1000," \
+  //     "0x000000000188c000:0x1000," \
+  //     "0x0000000001967000:0x1000," \
+  //     "0x0000000001b3a000:0x1000," \
+  //     "0x0000000001bb4000:0x1000," \
+  //     "0x0000000001cb3000:0x1000," \
+  //     "0x0000000002526000:0x1000," \
+  //     "0x000000000279d000:0x1000," \
+  //     "0x00000000029b4000:0x1000," \
+  //     "0x0000000002de6000:0x1000," \
+  //     "0x0000000002df0000:0x1000," \
+  //     "0x00000000031dd000:0x1000," \
+  //     "0x0000000003350000:0x1000," \
+  //     "0x0000000003942000:0x1000," \
+  //     "0x0000000003bcc000:0x1000," \
+  //     "0x0000000003d16000:0x1000," \
+  //     "0x0000000004a56f00:0x1000," \
+  //     "0x00000000051d0000:0x1000," \
+  //     "0x0000000005382000:0x1000," \
+  //     "0x0000000005671000:0x1000," \
+  //     "0x0000000005a99000:0x1000," \
+  //     "0x000000000633a000:0x1000," \
+  //     "0x0000000007066000:0x1000," \
+  //     "0x0000000007081000:0x1000," \
+  //     "0x0000000007292000:0x1000," \
+  //     "0x0000000007ab0000:0x1000," \
+  //     "0x0000000007b21000:0x1000," \
+  //     "0x0000000007cc5000:0x1000," \
+  //     "0x0000000007d1a000:0x1000," \
+  //     "0x0000000007ef2f00:0x1000," \
+  //     "0x0000000007fcb100:0x1000," \
+  //     "0x0000000008a4f000:0x1000," \
+  //     "0x000000000ae80000:0x1000," \
+  //     "0x000000000bf50000:0x1000," \
+  //     "0x000000000c770000:0x1000," \
+  //     "0x000000000cc77000:0x1000," \
+  //     "0x000000000ccdf000:0x1000," \
+  //     "0x000000000ce68000:0x1000," \
+  //     "0x000000000d035000:0x1000," \
+  //     "0x000000000d6a7d00:0x1000," \
+  //     "0x000000000ef64000:0x1000," \
+  //     "0x000000000f212000:0x1000," \
+  //     "0x000000000f2df000:0x1000," \
+  //     "0x000000000f388000:0x1000," \
+  //     "0x000000000f579000:0x1000," \
+  //     "0x000000000f8d3000:0x1000," \
+  //     "0x000000000fde8000:0x1000," \
+  //     "0x0000000010925000:0x1000," \
+  //     "0x0000000013e12000:0x1000," \
+  //     "0x00000000155ed000:0x1000," \
+  //     "0x0000000015dc1100:0x1000," \
+  //     "0x0000000017891000:0x1000," \
+  //     "0x0000000017cc8000:0x1000," \
+  //     "0x000000001ab09000:0x1000," \
+  //     "0x000000001ae8f000:0x1000," \
+  //     "0x000000001bd52000:0x1000," \
+  //     "0x000000001d047000:0x1000," \
+  //     "0x000000001d563000:0x1000," \
+  //     "0x000000001e339000:0x1000," \
+  //     "0x000000001ecb2000:0x1000," \
+  //     "0x000000001f1b0000:0x1000," \
+  //     "0x000000001fe0a000:0x1000," \
+  //     "0x000000001fe73900:0x1000," \
+  //     "0x000000001ff0c000:0x1000," \
+  //     "0x000000002182d000:0x1000," \
+  //     "0x0000000027bdf000:0x1000," \
+  //     "0x00000000289f4000:0x1000," \
+  //     "0x0000000030194000:0x1000," \
+  //     "0x00000000324bc000:0x1000," \
+  //     "0x00000000347fdf00:0x1000," \
+  //     "0x0000000037f5a800:0x1000," \
+  //     "0x000000003b9da000:0x1000," \
+  //     "0x000000003d11a000:0x1000," \
+  //     "0x0000000043755000:0x1000," \
+  //     "0x0000000048915000:0x1000," \
+  //     "0x0000000049066000:0x1000," \
+  //     "0x000000004bba9000:0x1000," \
+  //     "0x0000000058448000:0x1000," \
+  //     "0x0000000063f22000:0x1000," \
+  //     "0x0000000065668000:0x1000," \
+  //     "0x0000000066f56000:0x1000," \
+  //     "0x00000000686e7000:0x1000," \
+  //     "0x0000000068893000:0x1000," \
+  //     "0x000000006bdc3000:0x1000," \
+  //     "0x00000000724d9000:0x1000," \
+  //     "0x00000000751a6c00:0x1000," \
+  //     "0x0000000075fbf000:0x1000," \
+  //     "0x000000007764f000:0x1000," \
+  //     "0x000000007a631000:0x1000," \
+  //     "0x0000000080000000:0x1000," \
+  //     "0x0000000080001000:0x1000," \
+  //     "0x0000000080002000:0x1000," \
+  //     "0x0000000080030000:0x1000," \
+  //     "0x0000000085222000:0x1000," \
+  //     "0x0000000091873000:0x1000," \
+  //     "0x0000000092a92000:0x1000," \
+  //     "0x00000000942da000:0x1000," \
+  //     "0x00000000a0886000:0x1000," \
+  //     "0x00000000ac4c3000:0x1000," \
+  //     "0x00000000ae06a000:0x1000," \
+  //     "0x00000000b341b000:0x1000," \
+  //     "0x00000000be39a000:0x1000," \
+  //     "0x00000000c6d90000:0x1000," \
+  //     "0x00000000cdbe3000:0x1000," \
+  //     "0x00000000e26cb000:0x1000," \
+  //     "0x00000000e2c54000:0x1000," \
+  //     "0x00000000eec72000:0x1000," \
+  //     "0x00000000f11c5000:0x1000," \
+  //     "0x0000000102156000:0x1000," \
+  //     "0x000000010a4cc000:0x1000," \
+  //     "0x0000000117989000:0x1000," \
+  //     "0x000000011b3e2300:0x1000," \
+  //     "0x0000000123612c00:0x1000," \
+  //     "0x0000000125fb9000:0x1000," \
+  //     "0x00000001903ea000:0x1000," \
+  //     "0x00000001a1a8f000:0x1000," \
+  //     "0x00000001b8250000:0x1000," \
+  //     "0x00000001d2c67000:0x1000," \
+  //     "0x00000001e7406000:0x1000," \
+  //     "0x00000001f1809500:0x1000," \
+  //     "0x00000001fd7b6500:0x1000," \
+  //     "0x0000000277960000:0x1000," \
+  //     "0x000000028cfb4d00:0x1000," \
+  //     "0x00000002f4ec8600:0x1000," \
+  //     "0x0000000318457000:0x1000," \
+  //     "0x0000000382c81000:0x1000," \
+  //     "0x0000000382c82000:0x1000," \
+  //     "0x00000003ae819000:0x1000," \
+  //     "0x00000003d8129000:0x1000," \
+  //     "0x00000003f8d25000:0x1000," \
+  //     "0x00000004074c8000:0x1000," \
+  //     "0x000000041af0c000:0x1000," \
+  //     "0x000000043c354000:0x1000," \
+  //     "0x000000050673c000:0x1000," \
+  //     "0x000000051b076000:0x1000," \
+  //     "0x000000051c2e2000:0x1000," \
+  //     "0x00000005b895c000:0x1000," \
+  //     "0x000000060e29b000:0x1000," \
+  //     "0x00000006b1e47000:0x1000," \
+  //     "0x00000006c20ad000:0x1000," \
+  //     "0x00000006f1a64700:0x1000," \
+  //     "0x0000000703074000:0x1000," \
+  //     "0x000000076890f000:0x1000," \
+  //     "0x00000007d57ba600:0x1000," \
+  //     "0x00000007fbcae000:0x1000," \
+  //     "0x0000000869955000:0x1000," \
+  //     "0x0000000898878000:0x1000," \
+  //     "0x000000089fa8a000:0x1000," \
+  //     "0x00000008fc03c000:0x1000," \
+  //     "0x0000000a2ab8a000:0x1000," \
+  //     "0x0000000a3cdb5000:0x1000," \
+  //     "0x0000000ac2a5a700:0x1000," \
+  //     "0x0000000ac7b03f00:0x1000," \
+  //     "0x0000000cf073a000:0x1000," \
+  //     "0x0000000e50a3f000:0x1000," \
+  //     "0x0000000effe87000:0x1000," \
+  //     "0x0000000f16567400:0x1000," \
+  //     "0x0000000f5318f000:0x1000," \
+  //     "0x000000100869f000:0x1000," \
+  //     "0x00000012a263c000:0x1000," \
+  //     "0x0000001468a1e000:0x1000," \
+  //     "0x00000014813ba000:0x1000," \
+  //     "0x00000015b3666000:0x1000," \
+  //     "0x00000016e578c000:0x1000," \
+  //     "0x0000001802c8a000:0x1000," \
+  //     "0x00000018b621e000:0x1000," \
+  //     "0x00000018f96fb000:0x1000," \
+  //     "0x000000192c79b000:0x1000," \
+  //     "0x0000001cae7b5000:0x1000," \
+  //     "0x0000001ce9e93c00:0x1000," \
+  //     "0x0000001ec616e000:0x1000," \
+  //     "0x00000022923b2000:0x1000," \
+  //     "0x00000023fe535700:0x1000," \
+  //     "0x00000025da867e00:0x1000," \
+  //     "0x000000281ee84000:0x1000," \
+  //     "0x00000028a5955000:0x1000," \
+  //     "0x0000002d55de4000:0x1000," \
+  //     "0x00000031063e4000:0x1000," \
+  //     "0x00000031970f9000:0x1000," \
+  //     "0x00000031d9975000:0x1000," \
+  //     "0x00000034d96bf300:0x1000," \
+  //     "0x00000037c42fd000:0x1000," \
+  //     "0x00000039270f4000:0x1000," \
+  //     "0x00000039f8022f00:0x1000," \
+  //     "0x00000039f8023000:0x1000," \
+  //     "0x0000003e7b0e9000:0x1000," \
+  //     "0x000000437aee2000:0x1000," \
+  //     "0x000000473f7fd000:0x1000," \
+  //     "0x0000004bbbc98000:0x1000," \
+  //     "0x0000004cf6b6b000:0x1000," \
+  //     "0x000000506dfbd000:0x1000," \
+  //     "0x00000053464db000:0x1000," \
+  //     "0x000000534be78000:0x1000," \
+  //     "0x00000058b33dd500:0x1000," \
+  //     "0x0000005bb5644000:0x1000," \
+  //     "0x0000005fb578b000:0x1000," \
+  //     "0x0000006f87694000:0x1000," \
+  //     "0x00000078c36b7000:0x1000," \
+  //     "0x0000007f4eae2000:0x1000," \
+  //     "0x0000009899ca3400:0x1000," \
+  //     "0x0000009cbe169000:0x1000," \
+  //     "0x000000a39b6a3000:0x1000," \
+  //     "0x000000b1e378d000:0x1000," \
+  //     "0x000000bab9132000:0x1000," \
+  //     "0x000000ce8e0c0500:0x1000," \
+  //     "0x000000ef8160e000:0x1000," \
+  //     "0x000000f8b4323000:0x1000," \
+  //     "0x000000fb9f4ec000:0x1000," \
+  //     "0x0000010df4564000:0x1000," \
+  //     "0x0000013e316afc00:0x1000," \
+  //     "0x0000014e74d6c000:0x1000," \
+  //     "0x00000174dacc1000:0x1000," \
+  //     "0x000001757d8fe000:0x1000," \
+  //     "0x000001c6c0983000:0x1000," \
+  //     "0x000001d815480000:0x1000," \
+  //     "0x000001e1fe63c000:0x1000," \
+  //     "0x000001ea2d89b000:0x1000," \
+  //     "0x000001f149cf3000:0x1000," \
+  //     "0x000001f294755000:0x1000," \
+  //     "0x000001f308651000:0x1000," \
+  //     "0x00000207ebf34000:0x1000," \
+  //     "0x0000022235ca8000:0x1000," \
+  //     "0x00000231c73b0000:0x1000," \
+  //     "0x00000243ff9b0000:0x1000," \
+  //     "0x000002530925f000:0x1000," \
+  //     "0x0000025a9d670700:0x1000," \
+  //     "0x0000026ae0207000:0x1000," \
+  //     "0x0000027803104000:0x1000," \
+  //     "0x0000027cb635c000:0x1000," \
+  //     "0x00000298b2df3000:0x1000," \
+  //     "0x00000315306cd000:0x1000," \
+  //     "0x000003198deed000:0x1000," \
+  //     "0x0000034a6927b400:0x1000," \
+  //     "0x00000363582aa000:0x1000," \
+  //     "0x0000037077788100:0x1000," \
+  //     "0x000003adb1ae7000:0x1000," \
+  //     "0x000003ba08136400:0x1000," \
+  //     "0x000003d275d54000:0x1000," \
+  //     "0x0000046679920000:0x1000," \
+  //     "0x0000047ea94a6000:0x1000," \
+  //     "0x0000048a4f096000:0x1000," \
+  //     "0x00000490983c1000:0x1000," \
+  //     "0x000004b59a043800:0x1000," \
+  //     "0x00000513516d6f00:0x1000," \
+  //     "0x0000055b17546000:0x1000," \
+  //     "0x0000068aae39d000:0x1000," \
+  //     "0x000006ef09d64000:0x1000," \
+  //     "0x0000073cddc45000:0x1000," \
+  //     "0x0000073cddc46000:0x1000," \
+  //     "0x00000759070cc000:0x1000," \
+  //     "0x0000089767036000:0x1000," \
+  //     "0x00000ac2681bd000:0x1000," \
+  //     "0x00000bd1895a0000:0x1000," \
+  //     "0x00000c14cc316000:0x1000," \
+  //     "0x00000c1b22387000:0x1000," \
+  //     "0x00000ffb21bca000:0x1000," \
+  //     "0x00000ffc58f37000:0x1000," \
+  //     "0x00000ffd34ba3000:0x1000," \
+  //     "0x00000ffdaf7f5000:0x1000," \
+  //     "0x00000ffddb75f000:0x1000," \
+  //     "0x0000113c96814000:0x1000," \
+  //     "0x0000115ccc928000:0x1000," \
+  //     "0x000013a0602af800:0x1000," \
+  //     "0x000014d9768f2000:0x1000," \
+  //     "0x000015c3d3c3a000:0x1000," \
+  //     "0x000015d23b75b000:0x1000," \
+  //     "0x0000171620fa9a00:0x1000," \
+  //     "0x0000185c9e780000:0x1000," \
+  //     "0x00001a8b816a2000:0x1000," \
+  //     "0x00001b455878f000:0x1000," \
+  //     "0x00001c0bff9f5000:0x1000," \
+  //     "0x00001e825d3ed000:0x1000," \
+  //     "0x00001ed5587f2000:0x1000," \
+  //     "0x00001f3638994000:0x1000," \
+  //     "0x00001fb371155000:0x1000," \
+  //     "0x0000208cb62fb000:0x1000," \
+  //     "0x0000219d0c41f000:0x1000," \
+  //     "0x0000219d0c41f600:0x1000," \
+  //     "0x000025e3c625e000:0x1000," \
+  //     "0x00002aa19ca4bb00:0x1000," \
+  //     "0x00002c58f06c1000:0x1000," \
+  //     "0x00002c7bac813000:0x1000," \
+  //     "0x00002fa5e979c000:0x1000," \
+  //     "0x000036b69203d000:0x1000," \
+  //     "0x000036bd19e71000:0x1000," \
+  //     "0x000038ae78bbf000:0x1000," \
+  //     "0x000038f30908d000:0x1000," \
+  //     "0x00003bb45bfd0700:0x1000," \
+  //     "0x00003e89ee7fa000:0x1000," \
+  //     "0x00003ec763881000:0x1000," \
+  //     "0x000053663a67a000:0x1000," \
+  //     "0x000057d36ef1d000:0x1000," \
+  //     "0x00005de1f283d000:0x1000," \
+  //     "0x0000643e93d6fb00:0x1000," \
+  //     "0x000068a8c2ee5000:0x1000," \
+  //     "0x00006a94309c8000:0x1000," \
+  //     "0x00006d3cdad2d000:0x1000," \
+  //     "0x000074db44a52000:0x1000," \
+  //     "0x000077f714cee000:0x1000," \
+  //     "0x000097c4895b9000:0x1000," \
+  //     "0x0000a04967453000:0x1000," \
+  //     "0x0000a5bfb7b28000:0x1000," \
+  //     "0x0000a9fc1c762000:0x1000," \
+  //     "0x0000b59016bf9000:0x1000," \
+  //     "0x0000c617ed552000:0x1000," \
+  //     "0x0000cf0e1d02c000:0x1000," \
+  //     "0x0000e948b1f04000:0x1000," \
+  //     "0x0000f2d93c0a2000:0x1000" \
+  //     ;
+
+#ifndef SIM_MAIN
+  argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
+#else // SIM_MAIN
+  argv[arg_max++] = "--extlib=./libserialdevice.so";
+#endif // SIM_MAIN
+  argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
   argv[arg_max++] = "--log-commits";
-  // argv[arg_max++] = "--dtb";
-  // argv[arg_max++] = "msrh.dtb";
+  char *dts_file =(char *)malloc(sizeof(char) * 64);
+#ifndef SIM_MAIN
+  sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
+#else // SIM_MAIN
+  sprintf (dts_file, "../dts/%s.dtb", isa_str);
+#endif // SIM_MAIN
+  argv[arg_max++] = "--dtb";
+  argv[arg_max++] = dts_file;
+#ifndef SIM_MAIN
+  argv[arg_max++] = "--kernel=../../../tests/linux/Image";
+  argv[arg_max++] = "--initrd=../../../tests/linux/spike_rootfs.cpio";
+#else // SIM_MAIN
+  argv[arg_max++] = "--kernel=../tests/linux/Image";
+  argv[arg_max++] = "--initrd=../tests/linux/spike_rootfs.cpio";
+#endif // SIM_MAIN
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
-  // for (int i = 0; i < 20; i++) {
-  //   fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
-  // }
+  for (int i = 0; i < arg_max; i++) {
+    fprintf (stderr, "argv[%d] = %s\n", i, argv[i]);
+  }
   bool debug = false;
   bool halted = false;
   bool histogram = false;
   bool log = false;
   bool dump_dts = false;
   bool dtb_enabled = true;
-  bool real_time_clint = false;
+  bool real_rtl_time_clint = false;
   size_t nprocs = 1;
   const char* kernel = NULL;
   reg_t kernel_offset, kernel_size;
@@ -255,7 +652,6 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
     auto avail = stream.rdbuf()->in_avail();
     std::string args(avail, '\0');
     stream.readsome(&args[0], avail);
-
     plugin_devices.emplace_back(base, new mmio_plugin_device_t(name, args));
   };
 
@@ -280,7 +676,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   parser.option(0, "isa", 1, [&](const char* s){isa = s;});
   parser.option(0, "priv", 1, [&](const char* s){priv = s;});
   parser.option(0, "varch", 1, [&](const char* s){varch = s;});
-  // parser.option(0, "device", 1, device_parser);
+  parser.option(0, "device", 1, device_parser);
   parser.option(0, "extension", 1, [&](const char* s){extension = find_extension(s);});
   parser.option(0, "dump-dts", 0, [&](const char *s){dump_dts = true;});
   parser.option(0, "disable-dtb", 0, [&](const char *s){dtb_enabled = false;});
@@ -288,7 +684,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   parser.option(0, "kernel", 1, [&](const char* s){kernel = s;});
   parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
   parser.option(0, "bootargs", 1, [&](const char* s){bootargs = s;});
-  parser.option(0, "real-time-clint", 0, [&](const char *s){real_time_clint = true;});
+  parser.option(0, "real-rtl_time-clint", 0, [&](const char *s){real_rtl_time_clint = true;});
   parser.option(0, "extlib", 1, [&](const char *s){
     void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
     if (lib == NULL) {
@@ -328,7 +724,33 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   if (mems.empty())
     mems = make_mems("2048");
 
-  spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_time_clint,
+  if (kernel && check_file_exists(kernel)) {
+    kernel_size = get_file_size(kernel);
+    if (isa[2] == '6' && isa[3] == '4')
+      kernel_offset = 0x200000;
+    else
+      kernel_offset = 0x400000;
+    for (auto& m : mems) {
+      if (kernel_size && (kernel_offset + kernel_size) < m.second->size()) {
+         read_file_bytes(kernel, 0, m.second, kernel_offset, kernel_size);
+         break;
+      }
+    }
+  }
+
+  if (initrd && check_file_exists(initrd)) {
+    initrd_size = get_file_size(initrd);
+    for (auto& m : mems) {
+      if (initrd_size && (initrd_size + 0x1000) < m.second->size()) {
+         initrd_end = m.first + m.second->size() - 0x1000;
+         initrd_start = initrd_end - initrd_size;
+         read_file_bytes(initrd, 0, m.second, initrd_start - m.first, initrd_size);
+         break;
+      }
+    }
+  }
+
+  spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_rtl_time_clint,
                          initrd_start, initrd_end, bootargs, start_pc, mems, plugin_devices, htif_args,
                          std::move(hartids), dm_config, log_path, dtb_enabled, dtb_file);
 
@@ -363,7 +785,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen)
   spike_core->spike_dpi_init();
   spike_core->get_core(0)->reset();
   // spike_core->get_core(0)->get_state()->pc = 0x80000000;
-  spike_core->get_core(0)->step(5);
+  // spike_core->get_core(0)->step(5);
   spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MCYCLE),   0);
   spike_core->get_core(0)->set_csr(static_cast<int>(CSR_MINSTRET), 0);
 
@@ -464,8 +886,11 @@ static void merge_overlapping_memory_regions(std::vector<std::pair<reg_t, mem_t*
 }
 
 
-bool inline is_equal_xlen(int64_t val1, int64_t val2)
+bool inline is_equal_xlen(int64_t val1, int64_t val2, int compare_lsb = 0)
 {
+  val1 = val1 & ~((1 << compare_lsb) - 1);
+  val2 = val2 & ~((1 << compare_lsb) - 1);
+
   if (g_rv_xlen == 32) {
     return (val1 & 0xffffffffULL) == (val2 & 0xffffffffULL);
   } else if (g_rv_xlen == 64) {
@@ -547,7 +972,7 @@ std::map<int, const char *> riscv_excpt_map {
   {28, "Another Flush"}
 };
 
-void step_spike(long long time, long long rtl_pc,
+void step_spike(long long rtl_time, long long rtl_pc,
                 int rtl_priv, long long rtl_mstatus,
                 int rtl_exception, int rtl_exception_cause,
                 int rtl_cmt_id, int rtl_grp_id,
@@ -555,11 +980,17 @@ void step_spike(long long time, long long rtl_pc,
                 int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                 int rtl_wr_gpr_rnid, long long rtl_wr_val)
 {
+#ifndef SIM_MAIN
+  svScope g_scope;
+  g_scope = svGetScopeFromName("tb");
+  svSetScope(g_scope);
+#endif // SIM_MAIN
+
   processor_t *p = spike_core->get_core(0);
 
   if (rtl_exception) {
-    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012x, Inst=%08x, %s\n",
-            time, rtl_cmt_id, rtl_grp_id,
+    fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012llx, Inst=%08x, %s\n",
+            rtl_time, rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause], rtl_exception_cause,
             rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   }
@@ -571,7 +1002,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 6 ) ||  // Store Access Misaligned
                        (rtl_exception_cause == 7 ))) { // Store Access Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", rtl_time,
             rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
@@ -583,7 +1014,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 15) ||  // Store Page Fault
                        (rtl_exception_cause == 12))) {  // Instruction Page Fault
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -593,7 +1024,7 @@ void step_spike(long long time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 28))) {  // Another Flush
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -604,7 +1035,7 @@ void step_spike(long long time, long long rtl_pc,
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
                        (rtl_exception_cause == 11))) { // ECALL_M
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", time,
+    fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
@@ -622,7 +1053,7 @@ void step_spike(long long time, long long rtl_pc,
   }
   prev_minstret_access = false;
   prev_instret = instret;
-  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", time,
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", rtl_time,
           instret,
           rtl_pc,
           rtl_priv == 0 ? 'U' : rtl_priv == 2 ? 'S' : 'M',
@@ -632,11 +1063,11 @@ void step_spike(long long time, long long rtl_pc,
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus;
   // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
-  //         time,
+  //         rtl_time,
   //         iss_pc,
   //         p->get_state()->prev_pc,
   //         iss_insn);
-  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", time, iss_mstatus, rtl_mstatus);
+  // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", rtl_time, iss_mstatus, rtl_mstatus);
 
   if (iss_insn.bits() == 0x10500073U) { // WFI
     return; // WFI doesn't update PC -> just skip
@@ -644,9 +1075,19 @@ void step_spike(long long time, long long rtl_pc,
 
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+    uint64_t iss_lsu_addr = std::get<0>(iss_rd);
     fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-            g_rv_xlen / 4, std::get<0>(iss_rd),
+            g_rv_xlen / 4, iss_lsu_addr,
             g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+    if (iss_lsu_addr == 0x200bff8) {
+      fprintf(compare_log_fp, "==========================================\n");
+      fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
+      fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+      fprintf(compare_log_fp, "==========================================\n");
+      p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
+      p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
+      return;
+    }
   }
   for (auto &iss_wr: p->get_state()->log_mem_write) {
     fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
@@ -656,13 +1097,13 @@ void step_spike(long long time, long long rtl_pc,
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
     fprintf(compare_log_fp, "==========================================\n");
-    fprintf(compare_log_fp, "Wrong PC: RTL = %0*llx, ISS = %0*llx\n",
+    fprintf(compare_log_fp, "Wrong PC: RTL = %0*lx, ISS = %0*lx\n",
             g_rv_xlen / 4, xlen_convert(rtl_pc), g_rv_xlen / 4, xlen_convert(iss_pc));
     fprintf(compare_log_fp, "==========================================\n");
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, rtl_time);
     }
     return;
   }
@@ -674,7 +1115,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -683,7 +1124,7 @@ void step_spike(long long time, long long rtl_pc,
 
   // When RTL generate exception, stop to compare mstatus.
   // Because mstatus update timing is too much complex.
-  if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus)) {
+  if (!rtl_exception && !is_equal_xlen(iss_mstatus, rtl_mstatus, 13)) {
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "Wrong MSTATUS: RTL = %0*llx, ISS = %0*lx\n",
             g_rv_xlen / 4, rtl_mstatus,
@@ -692,7 +1133,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -711,7 +1152,7 @@ void step_spike(long long time, long long rtl_pc,
     fail_count ++;
     if (fail_count >= fail_max) {
       // p->step(10);
-      stop_sim(100);
+      stop_sim(100, rtl_time);
     }
     // p->step(10);
     // stop_sim(100);
@@ -724,7 +1165,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_gpr_addr,
             g_rv_xlen / 4, rtl_wr_val);
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100);
+    stop_sim(100, rtl_time);
   }
 
   // // Dumping for ISS GPR Register Writes
@@ -749,7 +1190,7 @@ void step_spike(long long time, long long rtl_pc,
                 std::get<0>(iss_rd) / 16,
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
-        stop_sim(100);
+        stop_sim(100, rtl_time);
       }
     }
   }
@@ -770,7 +1211,7 @@ void step_spike(long long time, long long rtl_pc,
             rtl_wr_type == 0 ? "GPR" :
             iss_wr_type == 1 ? "FPR" : "Others");
     fprintf(compare_log_fp, "==========================================\n");
-    stop_sim(100);
+    stop_sim(100, rtl_time);
   }
   if (rtl_wr_valid && iss_wr_type == 0) { // GPR write
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
@@ -786,6 +1227,14 @@ void step_spike(long long time, long long rtl_pc,
         fprintf(compare_log_fp, "==========================================\n");
         fprintf(compare_log_fp, "RTL MCYCLE Backporting to ISS.\n");
         fprintf(compare_log_fp, "ISS MCYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+        fprintf(compare_log_fp, "==========================================\n");
+        return;
+      } else if (((iss_insn.bits() >> 20) & 0x0fff) == CSR_CYCLE) {
+        p->set_csr(static_cast<int>(CSR_CYCLE), static_cast<reg_t>(rtl_wr_val));
+        p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
+        fprintf(compare_log_fp, "==========================================\n");
+        fprintf(compare_log_fp, "RTL CYCLE Backporting to ISS.\n");
+        fprintf(compare_log_fp, "ISS CYCLE is updated to RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
         return;
       } else if (((iss_insn.bits() >> 20) & 0x0fff) == CSR_MINSTRET) {
@@ -815,7 +1264,7 @@ void step_spike(long long time, long long rtl_pc,
       fail_count ++;
       if (fail_count >= fail_max) {
         // p->step(10);
-        stop_sim(100);
+        stop_sim(100, rtl_time);
       }
       // p->step(10);
       // stop_sim(100);
@@ -834,7 +1283,7 @@ void step_spike(long long time, long long rtl_pc,
       fprintf(compare_log_fp, "==========================================\n");
       fail_count ++;
       if (fail_count >= fail_max) {
-        stop_sim(100);
+        stop_sim(100, rtl_time);
       }
       return;
     } else {
@@ -871,7 +1320,7 @@ void record_stq_store(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       for (int b = 0; b < 8; b++) {
         if ((be >> ((i * 8) + b) & 0x01) && (((iss_ld_data >> (b * 8)) & 0xff) != (uint8_t)(l1d_data[i * 8 + b]))) {
           diff_found = true;
@@ -891,7 +1340,7 @@ void record_stq_store(long long rtl_time,
 
 #ifndef SIM_MAIN
   if (tohost_en && (tohost_addr == paddr) && (l1d_data[0] & 0x1 == 1)) {
-    stop_sim(l1d_data[0]);
+    stop_sim(l1d_data[0], rtl_time);
   }
 #endif // SIM_MAIN
 }
@@ -910,7 +1359,7 @@ void record_l1d_load(long long rtl_time,
 
   if (size > 64) {
     fprintf (stderr, "Error: this compare system only support up to 512-bit system\n");
-    stop_sim(100);
+    stop_sim(100, rtl_time);
     return;
   }
 
@@ -933,7 +1382,7 @@ void record_l1d_load(long long rtl_time,
     fprintf(compare_log_fp, "\n");
 #ifndef SIM_MAIN
     if (tohost_en && (tohost_addr == paddr) && (merged_l1d_data[0] & 0x1 == 1)) {
-      stop_sim(merged_l1d_data[0]);
+      stop_sim(merged_l1d_data[0], rtl_time);
     }
 #endif // SIM_MAIN
   }
@@ -944,7 +1393,7 @@ void record_l1d_load(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       long long be = merge_valid ? merge_be : l1d_be;
       for (int b = 0; b < 8; b++) {
         uint8_t rtl_wr_data0 = merge_valid ? merged_l1d_data[i * 8 + b] : l1d_data[i * 8 + b];
@@ -989,7 +1438,7 @@ void record_l1d_evict(long long rtl_time,
     for (int i = size/8-1; i >= 0; i--) {
       uint64_t iss_ld_data;
       spike_core->read_mem(paddr + i * 8, 8, &iss_ld_data);
-      fprintf(compare_log_fp, "%08x_%08x", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
+      fprintf(compare_log_fp, "%08lx_%08lx", iss_ld_data >> 32 & 0xffffffff, iss_ld_data & 0xffffffff);
       if (((iss_ld_data >> 32 & 0xffffffff) != l1d_data[i*2+1]) |
           ((iss_ld_data       & 0xffffffff) != l1d_data[i*2+0])) {
         diff_found = true;
@@ -1023,7 +1472,7 @@ void step_spike_wo_cmp(int steps)
     auto iss_pc   = p->get_state()->prev_pc;
     auto iss_insn = p->get_state()->insn;
     auto iss_priv = p->get_state()->last_inst_priv;
-    sprintf (spike_out_str, "Spike Result : %ld : PC=[%016llx] (%c) %08x %s\n",
+    sprintf (spike_out_str, "Spike Result : %ld : PC=[%016lx] (%c) %08lx %s\n",
              instret,
              iss_pc,
              iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
@@ -1033,7 +1482,7 @@ void step_spike_wo_cmp(int steps)
   }
 }
 
-void check_mmu_trans (long long time, long long rtl_va,
+void check_mmu_trans (long long rtl_time, long long rtl_va,
                       int rtl_len, int rtl_acc_type,
                       long long rtl_pa)
 {
@@ -1047,18 +1496,18 @@ void check_mmu_trans (long long time, long long rtl_va,
     case 1 : acc_type = STORE; break;
     default :
       fprintf (stderr, "rtl_acc_type = %d is not supported\n", rtl_acc_type);
-      stop_sim(1);
+      stop_sim(1, rtl_time);
   }
 
   try {
     reg_t iss_paddr = mmu->translate(rtl_va, rtl_len, static_cast<access_type>(rtl_acc_type), 0);
     if (iss_paddr != rtl_pa) {
       char spike_out_str[256];
-      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08llx, ISS=%08llx\n",
+      sprintf (spike_out_str, "Error : PA->VA different.\nRTL = %08llx, ISS=%08lx\n",
                rtl_pa, iss_paddr);
       fprintf (compare_log_fp, spike_out_str);
       fprintf (stderr, spike_out_str);
-      stop_sim(100);
+      stop_sim(100, rtl_time);
     } else {
       // fprintf (compare_log_fp, "MMU check passed : VA = %08llx, PA = %08llx\n", rtl_va, rtl_pa);
     }
@@ -1070,39 +1519,73 @@ void check_mmu_trans (long long time, long long rtl_va,
 }
 
 
+void spike_update_timer (long long value)
+{
+  processor_t *p = spike_core->get_core(0);
+  p->get_mmu()->store_uint64 (0x200bff8, value);
+}
+
+
 #ifdef SIM_MAIN
-void stop_sim(int code)
+static void main_suggest_help()
+{
+  fprintf(stderr, "Try 'spike --help' for more information.\n");
+  exit(1);
+}
+
+void stop_sim(int code, long long rtl_time)
 {
   fprintf(compare_log_fp, "stop_ism %d\n", code);
 }
 
 int main(int argc, char **argv)
 {
-  compare_log_fp = fopen("spike_dpi_main.log", "w");
+  option_parser_t parser;
+  bool log;
+  uint64_t sim_cycle;
 
-  initial_spike (argv[1], 64, 64);
+  parser.help(&main_suggest_help);
+  parser.option('l', 0, 0, [&](const char* s){log = true;});
+  parser.option('c', 0, 1, [&](const char* s){sim_cycle = strtoull(s, 0, 0);});
+  auto argv1 = parser.parse(static_cast<const char* const*>(argv));
+
+  std::vector<std::string> htif_args(argv1, (const char* const*)argv + argc);
+
+  if (log) {
+    fprintf(stderr, "Log open\n");
+    compare_log_fp = fopen("spike_dpi_main.log", "w");
+    fprintf(compare_log_fp, "INST     CYCLE    PC\n");
+  }
+
+  initial_spike (htif_args[0].c_str(), 64, 64, 1, 0);
   processor_t *p = spike_core->get_core(0);
 
-  fprintf(compare_log_fp, "INST     CYCLE    PC\n");
+  initial_gshare(10, 64);
 
-  for (int i = 0; i < 100; i++) {
+  fprintf (compare_log_fp, "sim_cycle = %ld\n", sim_cycle);
+
+  for (int i = 0; i < sim_cycle; i++) {
     p->step(1);
     auto iss_pc = p->get_state()->prev_pc;
     auto instret = p->get_state()->minstret;
     auto cycle = p->get_state()->mcycle;
 
-    fprintf(compare_log_fp, "%10d %10d %08lx\n", instret, cycle, iss_pc);
+    if (log) {
+      fprintf(compare_log_fp, "%10ld %10ld %08lx\n", instret, cycle, iss_pc);
 
-    for (auto &iss_rd: p->get_state()->log_mem_read) {
-      fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-              g_rv_xlen / 4, std::get<0>(iss_rd),
-              g_rv_xlen / 4, std::get<1>(iss_rd));
+      for (auto &iss_rd: p->get_state()->log_mem_read) {
+        fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+                g_rv_xlen / 4, std::get<0>(iss_rd),
+                g_rv_xlen / 4, std::get<1>(iss_rd));
+      }
+      for (auto &iss_wr: p->get_state()->log_mem_write) {
+        fprintf(compare_log_fp, "MW%d(0x%0*lx)<=%0*lx\n", std::get<2>(iss_wr),
+                g_rv_xlen / 4, std::get<0>(iss_wr),
+                g_rv_xlen / 4, std::get<1>(iss_wr));
+      }
     }
-    for (auto &iss_wr: p->get_state()->log_mem_write) {
-      fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
-              g_rv_xlen / 4, std::get<0>(iss_wr),
-              g_rv_xlen / 4, std::get<1>(iss_wr));
-    }
+
+    step_gshare (cycle, 0, 0, iss_bhr);
   }
 
   return 0;
@@ -1118,7 +1601,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64);
+  initial_spike(filename, 64, 64, 1, 1);
 
 }
 #endif // VERILATOR

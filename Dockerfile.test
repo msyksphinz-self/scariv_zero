@@ -1,0 +1,17 @@
+FROM msyksphinz/scariv:run_env
+
+RUN ["mkdir", "-p", "/work/scariv/"]
+WORKDIR /work/scariv
+
+WORKDIR /work/scariv/tests/riscv-tests
+RUN ["./configure"]
+RUN ["make", "-j$(nproc)"]
+
+RUN ["mkdir", "-p", "/work/scariv/ccache/"]
+ENV ["CCACHE_DIR", "/work/scariv/ccache/"]
+
+WORKDIR /work/scariv/spike_dpi
+RUN ["make", "-j$(nproc)"]
+
+WORKDIR /work/scariv/verilator_sim
+RUN ["/work/scariv/scripts/runtest.py", "--isa", "rv64imac", "-c", "tiny", "-t", "sanity", "-j$(nproc)"]

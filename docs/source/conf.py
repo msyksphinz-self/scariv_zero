@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'MSRH-MAS'
+project = 'SCARIV-MAS'
 copyright = '2021, msyksphinz'
 author = 'msyksphinz'
 master_doc = 'index'

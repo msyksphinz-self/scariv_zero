@@ -113,7 +113,7 @@ sim_vivado: $(DECODE_FILES) $(FILELIST)
 	$(XSC) $(XSC2_ARGS) | tee sim.log
 	$(XSC) $(XSC_ARGS) | tee -a sim.log
 	$(XSC) $(XSC_LINK_ARGS) | tee -a sim.log
-	$(XVLOG) $(XVLOG_ARGS) ../src/riscv64_pkg.sv ../src/msrh_standard_conf_pkg.sv -f $(FILELIST) $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
+	$(XVLOG) $(XVLOG_ARGS) ../src/riscv64_pkg.sv ../src/scariv_standard_conf_pkg.sv -f $(FILELIST) $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
 	$(XELAB) $(XELAB_ARGS) tb | tee -a sim.log
 	DUMP_TYPE=$(DUMP) $(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
 
