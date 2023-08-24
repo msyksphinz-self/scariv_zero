@@ -18,7 +18,7 @@
     {
 		"name":"vsetvl       r[11:7],r[19:15],r[24:20]",
 	    "length":"32", "xlen":["32", "64"],
-	    "field": ["11XXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "10101", "11"],
+	    "field": ["10XXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "10101", "11"],
     	"inst_cat":[["inst_cat", "csu"]], "isa_ext": "v",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
         "csu_ctrl":[["op", "add"]]
