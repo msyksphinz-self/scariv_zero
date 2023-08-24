@@ -25,9 +25,6 @@ end
 File.open("riscv_decoder.json") do |file|
   $arch_table = JSON.load(file)
 end
-File.open("riscv_rvv_decoder.json") do |file|
-  $arch_table += JSON.load(file)
-end
 
 ctrl_idx = ARGV[0]
 xlen = ARGV[1].to_s
@@ -35,6 +32,12 @@ flen = ARGV[2].to_s
 isa  = ARGV[3].to_s
 if ARGV.size != 4 then
   STDERR.print "Please specify signal fields in JSON file\n"
+end
+
+if isa.include?('v') then
+  File.open("riscv_rvv_decoder.json") do |file|
+    $arch_table += JSON.load(file)
+  end
 end
 
 if isa.include?('b') then

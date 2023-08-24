@@ -1,0 +1,3 @@
+[
+    { "name": "vsetvli01"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vsetvli01/test.elf" , "xlen": 64}
+]

@@ -228,6 +228,8 @@ class verilator_sim:
             test_table = json.load(rv64_tests_fp)
             rv64_bench_fp = open('rv64-bench.json', 'r')
             test_table += json.load(rv64_bench_fp)
+            rv64_rvv_fp = open('rv64-rvv-tests.json', 'r')
+            test_table += json.load(rv64_rvv_fp)
             rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
             test_table += json.load(rv64_aapg_fp)
 

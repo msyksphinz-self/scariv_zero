@@ -4,17 +4,16 @@ CFLAGS += -I./../../riscv-tests/env
 CFLAGS += -I./../../riscv-tests/benchmarks/common
 CFLAGS += -I$(HOME)/riscv-rvvnext/include
 CFLAGS += -march=rv64gcv
-CFLAGS += -ftree-vectorize
-# CFLAGS += -mabi=lp64
-# CFLAGS += -DPREALLOCATE=1
-# CFLAGS += -mcmodel=medany
-# CFLAGS += -static
-# CFLAGS += -std=gnu99
-# CFLAGS += -O3
-# CFLAGS += -ffast-math
-# CFLAGS += -fno-common
-# CFLAGS += -fno-builtin-printf
-# CFLAGS += -fno-tree-loop-distribute-patterns
+CFLAGS += -mabi=lp64
+CFLAGS += -DPREALLOCATE=1
+CFLAGS += -mcmodel=medany
+CFLAGS += -static
+CFLAGS += -std=gnu99
+CFLAGS += -O3
+CFLAGS += -ffast-math
+CFLAGS += -fno-common
+CFLAGS += -fno-builtin-printf
+CFLAGS += -fno-tree-loop-distribute-patterns
 
 SRC_FILES += test.c
 
