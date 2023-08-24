@@ -64,7 +64,7 @@ class verilator_sim:
                          "ISA="         +     sim_conf["isa_ext"],
                          "RV_XLEN="     + str(sim_conf["xlen"]),
                          "RV_FLEN="     + str(sim_conf["flen"]),
-                         "RV_AMO="      + str(sim_conf["amo"]),
+                         "EXT_ISA="      + str(sim_conf["amo"]),
                          "RV_BITMANIP=" + str(sim_conf["bitmanip"])]
 
         current_dir = os.path.abspath("../")

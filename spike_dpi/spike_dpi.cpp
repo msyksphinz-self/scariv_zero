@@ -136,24 +136,24 @@ static void read_file_bytes(const char *filename,size_t fileoff,
 }
 
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa)
 {
   argv[0] = "spike_dpi";
   char *isa_str = (char *)malloc(sizeof(char) * 32);
-  sprintf(isa_str, "rv%dim", rv_xlen);
-  if (rv_amo) {
-    strcat(isa_str, "a");
-  }
-  if (rv_bitmanip) {
-    strcat(isa_str, "b");
-  }
-  if (rv_flen >= 32) {
-    strcat(isa_str, "f");
-  }
-  if (rv_flen >= 64) {
-    strcat(isa_str, "d");
-  }
-  strcat(isa_str, "c");
+  sprintf(isa_str, "rv%d%s", rv_xlen, ext_isa);
+  // if (rv_amo) {
+  //   strcat(isa_str, "a");
+  // }
+  // if (rv_bitmanip) {
+  //   strcat(isa_str, "b");
+  // }
+  // if (rv_flen >= 32) {
+  //   strcat(isa_str, "f");
+  // }
+  // if (rv_flen >= 64) {
+  //   strcat(isa_str, "d");
+  // }
+  // strcat(isa_str, "c");
   char *spike_isa_argv =(char *)malloc(sizeof(char) * 32);
   sprintf(spike_isa_argv, "--isa=%s", isa_str);
   argv[1] = spike_isa_argv;
@@ -1557,7 +1557,7 @@ int main(int argc, char **argv)
     fprintf(compare_log_fp, "INST     CYCLE    PC\n");
   }
 
-  initial_spike (htif_args[0].c_str(), 64, 64, 1, 0);
+  initial_spike (htif_args[0].c_str(), 64, 64, "imafdc");
   processor_t *p = spike_core->get_core(0);
 
   initial_gshare(10, 64);
@@ -1601,7 +1601,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64, 1, 1);
+  initial_spike(filename, 64, 64, "imafdc");
 
 }
 #endif // VERILATOR
