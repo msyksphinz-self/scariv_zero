@@ -2,7 +2,7 @@
 #include <svdpi.h>
 
 extern "C" {
-  void initial_spike (const char *filename, int rv_xlen, int rv_flen, int rv_amo, int rv_bitmanip);
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa);
   void step_spike(long long time, long long rtl_pc,
                   int rtl_priv, long long rtl_mstatus,
                   int rtl_exception, int rtl_exception_cause,
