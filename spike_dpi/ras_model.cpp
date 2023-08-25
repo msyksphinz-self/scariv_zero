@@ -71,9 +71,9 @@ void initial_ras(long long ras_length)
   fprintf (ras_log_fp, "Info : RAS size is set %ld\n", iss_ras_length);
 }
 
-void step_ras (long long rtl_time,
-               int rtl_cmt_id, int rtl_grp_id,
-               long long rtl_ras_index)
+void step_ras (long long rtl_commit_time,
+               int rtl_commit_cmt_id, int rtl_commit_grp_id,
+               long long rtl_commit_ras_index, long long rtl_commit_ras_addr)
 {
   processor_t *p = spike_core->get_core(0);
   auto iss_next_pc = p->get_state()->pc;
@@ -82,24 +82,55 @@ void step_ras (long long rtl_time,
 
   if (is_call(iss_insn.bits())) {
     uint64_t stack_val = iss_pc + inst_size(iss_insn.bits());
-    fprintf (ras_log_fp, "%lld : RAS PUSH : PC = %08lx (%02d,%02d), RAS[%u]<=%08lx\n",
-             rtl_time,
+    fprintf (ras_log_fp, "%lld : CMT RAS PUSH : PC = %08lx (%02d,%02d), RAS[%u]<=%08lx\n",
+             rtl_commit_time,
              iss_pc,
-             rtl_cmt_id, rtl_grp_id,
+             rtl_commit_cmt_id, rtl_commit_grp_id,
              iss_ras_head, stack_val);
 
     iss_ras_stack[iss_ras_head] = stack_val;
     iss_ras_head = (iss_ras_head + 1) % iss_ras_length;
   }
   if (is_ret(iss_insn.bits())) {
-    fprintf (ras_log_fp, "%lld : RAS POP  : PC = %08lx (%02d,%02d), RAS[%u]=>%08lx, TARGET=%08lx : %s\n",
-             rtl_time,
+    fprintf (ras_log_fp, "%lld : CMT RAS POP  : PC = %08lx (%02d,%02d), RAS[%u]=>%08lx, TARGET=%08lx : %s, RTL RAS[%u]=>%08lx : %s\n",
+             rtl_commit_time,
              iss_pc,
-             rtl_cmt_id, rtl_grp_id,
-             iss_ras_head, iss_ras_stack[iss_ras_head-1], iss_next_pc,
-             iss_ras_stack[iss_ras_head-1] != iss_next_pc ? "DIFFERENT" : "MATCH");
+             rtl_commit_cmt_id, rtl_commit_grp_id,
+             iss_ras_head-1, iss_ras_stack[iss_ras_head-1], iss_next_pc,
+             iss_ras_stack[iss_ras_head-1] != iss_next_pc ? "MODEL_DIFF " : "MODEL_MATCH",
+             rtl_commit_ras_index, rtl_commit_ras_addr,
+             iss_ras_stack[iss_ras_head-1] != rtl_commit_ras_addr ? "RTL_MODEL_DIFF " : "RTL_MODEL_MATCH"
+             );
     iss_ras_head = iss_ras_head >= 1 ? iss_ras_head - 1 : iss_ras_length - 1;
   }
 
   return;
+}
+
+
+void rtl_push_ras (long long rtl_time,
+                   long long rtl_pc_vaddr,
+                   long long rtl_ras_index,
+                   long long rtl_ras_value)
+{
+  fprintf (ras_log_fp, "%lld : RTL RAS PUSH : PC = %08llx RAS[%u]<=%08llx\n",
+           rtl_time, rtl_pc_vaddr, rtl_ras_index, rtl_ras_value);
+}
+
+void rtl_pop_ras (long long rtl_time,
+                  long long rtl_pc_vaddr,
+                  long long rtl_ras_index,
+                  long long rtl_ras_value)
+{
+  fprintf (ras_log_fp, "%lld : RTL RAS POP  : PC = %08llx RAS[%u]=>%08llx\n",
+           rtl_time, rtl_pc_vaddr, rtl_ras_index, rtl_ras_value);
+}
+
+void rtl_flush_ras (long long rtl_time,
+                    int rtl_cmt_id, int rtl_grp_id,
+                    long long rtl_pc_vaddr,
+                    long long rtl_ras_index)
+{
+  fprintf (ras_log_fp, "%lld : RTL RAS FLUSH: PC = %08llx (%02d,%02d), RAS_INDEX<=%u\n",
+           rtl_time, rtl_pc_vaddr, rtl_cmt_id, rtl_grp_id, rtl_ras_index);
 }

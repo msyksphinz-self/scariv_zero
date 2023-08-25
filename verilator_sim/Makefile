@@ -133,7 +133,6 @@ build_espresso:
 	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_fpu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_reg.sv: ../src/riscv_decoder.json
 ../src/decoder_vec_ctrl.sv: ../src/riscv_rvv_decoder.json
 	cd ../src && ./build_decoder.rb vec_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_reg.sv: $(DECODE_JSONS)
