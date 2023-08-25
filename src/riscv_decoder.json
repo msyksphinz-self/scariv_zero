@@ -431,121 +431,121 @@
         "name":"csrrw      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
     },
     {
         "name":"csrrs      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "010", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
     {
         "name":"csrrc      r[11:7],h[31:20],r[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[["rd", "r3"], ["r1", "r1"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
     {
         "name":"csrrwi     r[11:7],h[31:20],h[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]],
+        "inst_cat": [["inst_cat", "csu"]],
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rw"]]
     },
     {
         "name":"csrrsi     r[11:7],h[31:20],h[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rs"]]
     },
     {
         "name":"csrrci     r[11:7],h[31:20],h[19:15]",
         "length":"32", "xlen":["32", "64"],
         "field":["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[["rd", "r3"]],
-        "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["csr_update", "1"], ["op", "rc"]]
     },
     {
         "name":"uret",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["is_uret", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_uret", "1"]]
     },
     {
         "name":"sret",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["is_sret", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_sret", "1"]]
     },
     {
         "name":"mret",
         "length":"32", "xlen":["32", "64"],
         "field":["00110", "00", "00010", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl":[["is_mret", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_mret", "1"]]
     },
     {
         "name":"ecall",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00000", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl": [["is_ecall", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_ecall", "1"]]
     },
     {
         "name":"ebreak",
         "length":"32", "xlen":["32", "64"],
         "field":["00000", "00", "00001", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl": [["is_ebreak", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_ebreak", "1"]]
     },
     {
         "name":"fence",
         "length":"32", "xlen":["32", "64"],
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl": [["is_fence", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence", "1"]]
     },
     {
         "name":"fence.i",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "00000", "00000", "001", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg":[],
-        "csu_ctrl": [["is_fence_i", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence_i", "1"]]
     },
     {
         "name":"sfence.vma r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "1"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg": [["r1", "r1"], ["r2", "r2"]],
-        "csu_ctrl": [["is_sfence_vma", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_sfence_vma", "1"]]
     },
     {
         "name":"wfi",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "00", "00101", "00000", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"], ["gen_except", "0"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
         "reg": [],
-        "csu_ctrl": [["is_wfi", "1"]]
+        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_wfi", "1"]]
     },
     {
         "name":"mul        r[11:7],r[19:15],r[24:20]",
