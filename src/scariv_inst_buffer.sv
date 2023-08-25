@@ -48,7 +48,6 @@ scariv_pkg::grp_id_t w_inst_mem_pick_up;
 scariv_pkg::grp_id_t w_inst_bru_pick_up;
 scariv_pkg::grp_id_t w_inst_csu_pick_up;
 scariv_pkg::grp_id_t w_inst_fpu_pick_up;
-scariv_pkg::grp_id_t w_inst_except_pick_up;
 scariv_pkg::grp_id_t w_fetch_except_pick_up;
 scariv_pkg::grp_id_t w_inst_illegal_pick_up;
 
@@ -69,7 +68,6 @@ scariv_pkg::grp_id_t w_inst_disp_mask;
 localparam ic_word_num = scariv_lsu_pkg::ICACHE_DATA_B_W / 2;
 decoder_inst_cat_pkg::inst_cat_t    w_inst_cat   [scariv_conf_pkg::DISP_SIZE];
 decoder_inst_cat_pkg::inst_subcat_t w_inst_subcat[scariv_conf_pkg::DISP_SIZE];
-scariv_pkg::grp_id_t w_inst_gen_except;
 scariv_pkg::grp_id_t w_fetch_except;
 scariv_pkg::grp_id_t w_inst_is_arith;
 scariv_pkg::grp_id_t w_inst_is_muldiv;
@@ -87,8 +85,6 @@ scariv_pkg::grp_id_t w_inst_is_call_ret_lsb;
 
 scariv_pkg::except_t [scariv_conf_pkg::DISP_SIZE-1: 0] w_fetch_except_cause;
 riscv_pkg::xlen_t    [scariv_conf_pkg::DISP_SIZE-1: 0] w_fetch_except_tval;
-
-scariv_pkg::grp_id_t w_inst_gen_except_lsb;
 
 rd_t rd_field_type [scariv_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[scariv_conf_pkg::DISP_SIZE];
@@ -407,14 +403,12 @@ endgenerate
 generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic[ 3: 0] w_raw_cat;
   logic [ 1: 0] w_raw_subcat;
-  logic        w_raw_gen_except;
   decoder_inst_cat
   u_decoder_inst_cat
     (
      .inst(w_expand_inst[w_idx]),
      .inst_cat(w_raw_cat),
-     .inst_subcat(w_raw_subcat),
-     .gen_except(w_raw_gen_except)
+     .inst_subcat(w_raw_subcat)
      );
   assign w_inst_cat   [w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
   assign w_inst_subcat[w_idx] = decoder_inst_cat_pkg::inst_subcat_t'(w_raw_subcat);
@@ -465,8 +459,6 @@ logic          w_inst_fpu_illegal;
 
   assign w_inst_illegal  [w_idx] = w_expanded_valid[w_idx] &
                                    ((w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT__ ) | w_inst_fpu_illegal);
-
-  assign w_inst_gen_except[w_idx]  = w_expanded_valid[w_idx] & w_raw_gen_except;
 end // block: word_loop
 endgenerate
 
@@ -476,7 +468,6 @@ assign w_inst_mem_pick_up    = w_inst_is_ld | w_inst_is_st;
 assign w_inst_bru_pick_up    = w_inst_is_br;
 assign w_inst_csu_pick_up    = w_inst_is_csu;
 assign w_inst_fpu_pick_up    = w_inst_is_fpu;
-assign w_inst_except_pick_up = w_inst_gen_except;
 assign w_fetch_except_pick_up = w_fetch_except;
 assign w_inst_illegal_pick_up = w_inst_illegal;
 
