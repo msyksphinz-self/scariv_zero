@@ -5,6 +5,7 @@
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv
 ../src/decoder_fpu_ctrl.sv
+../src/decoder_vec_ctrl.sv
 
 ../src/recurse_pkg.sv
 ../src/scariv_pkg.sv
@@ -15,6 +16,7 @@
 ../src/scariv_fpu_pkg.sv
 ../src/scariv_predict_pkg.sv
 ../src/scariv_ibuf_pkg.sv
+../src/scariv_vec_pkg.sv
 
 ../src/l2_if.sv
 ../src/scariv_front_pkg.sv
@@ -160,6 +162,8 @@
 ../src/scariv_btb.sv
 ../src/scariv_pred_ras.sv
 ../src/scariv_ftq.sv
+
+../src/scariv_vec_csr.sv
 
 ../src/l2_if_arbiter.sv
 ../src/l2_if_req_splitter_with_others.sv

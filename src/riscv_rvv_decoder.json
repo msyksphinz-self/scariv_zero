@@ -13,7 +13,7 @@
 	    "field": ["11XXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "10101", "11"],
     	"inst_cat":[["inst_cat", "csu"]], "isa_ext": "v",
         "reg": [["rd", "r3"]],
-        "csu_ctrl":[["op", "add"]]
+        "csu_ctrl":[["op", "vsetvl"]]
     },
     {
 		"name":"vsetvl       r[11:7],r[19:15],r[24:20]",
@@ -21,7 +21,7 @@
 	    "field": ["10XXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "10101", "11"],
     	"inst_cat":[["inst_cat", "csu"]], "isa_ext": "v",
         "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
-        "csu_ctrl":[["op", "add"]]
+        "csu_ctrl":[["op", "vsetvl"]]
     },
     {
 		"name":"vadd.vv      v[11:7],v[24:20],v[19:15]vm[25:25]",

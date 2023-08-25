@@ -37,6 +37,8 @@ module scariv_csu_pipe
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
 
+  vec_csr_if.slave                  vec_csr_if,
+
   /* SFENCE update information */
   sfence_if.master                  sfence_if,
   /* FENCE.I update */
@@ -173,6 +175,9 @@ assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::X
 assign read_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
+logic [$clog2(scariv_vec_pkg::VLENBMAX)-1: 0] w_ex2_vlmax;
+assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(r_ex2_issue.inst[22:20], r_ex2_issue.inst[25:23]);
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_result    <= 'h0;
@@ -196,7 +201,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     endcase // case (r_ex2_pipe_ctrl.op)
 
     /* verilator lint_off WIDTH */
-    r_ex3_csr_rd_data <= (read_if.addr == `SYSREG_ADDR_MINSTRET) ? read_if.data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
+    r_ex3_csr_rd_data <= r_ex2_pipe_ctrl.op == OP_VSETVL ? (w_ex2_rs1_selected_data < w_ex2_vlmax ? w_ex2_rs1_selected_data : w_ex2_vlmax) :
+                         (read_if.addr == `SYSREG_ADDR_MINSTRET) ? read_if.data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
                          read_if.data;
   end
 end
@@ -249,6 +255,11 @@ assign write_if.valid = r_ex3_issue.valid &
                           r_ex3_issue.rd_regs[0].valid & (r_ex3_issue.rd_regs[0].regidx == 5'h0));
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
+
+assign vec_csr_if.write.valid = r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_VSETVL);
+assign vec_csr_if.write.vtype = r_ex3_issue.inst[30:20];
+assign vec_csr_if.write.vill  = 1'b0;
+assign vec_csr_if.write.vl    = r_ex3_result;
 
 // ------------
 // SFENCE Update
