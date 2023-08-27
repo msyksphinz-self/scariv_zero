@@ -137,14 +137,14 @@ function automatic rob_entry_t assign_rob_entry();
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
     ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
     ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
-    ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
-    ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
+    // ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
+    // ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
-    ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
-    ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
-    ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
-    ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
-    ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
+    // ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
+    // ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
+    // ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
+    // ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
+    // ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
 `ifdef SIMULATION
     ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
     ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
@@ -153,9 +153,9 @@ function automatic rob_entry_t assign_rob_entry();
 `endif // SIMULATION
   end // block: inst_loop
 
-  ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
-  ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
-  ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
+  // ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
+  // ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
+  // ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
   ret.fflags_update_valid = 'h0;
 
   ret.is_br_included = rn_front_if.payload.is_br_included;
@@ -256,11 +256,11 @@ assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_a
 assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
 
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
-  assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
-  assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
-end
-endgenerate
+// generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
+//   assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
+//   assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
+// end
+// endgenerate
 
 `ifdef SIMULATION
 
