@@ -378,7 +378,9 @@ endgenerate
 grp_id_t     w_cmt_brtag_is_rvc ;
 grp_id_t     w_cmt_brtag_is_dead;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
+`ifdef SIMULATION
   assign w_cmt_brtag_is_rvc      [d_idx] = w_out_entry.inst[d_idx].rvc_inst_valid;
+`endif // SIMULATION
   assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
 end endgenerate
 
