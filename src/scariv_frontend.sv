@@ -27,8 +27,6 @@ module scariv_frontend
  input commit_blk_t i_commit,
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
- // Branch Tag Update Signal
- cmt_brtag_if.slave cmt_brtag_if,
 
  /* CSR information */
  csr_info_if.slave           csr_info,

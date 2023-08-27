@@ -143,16 +143,16 @@ always_comb begin
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
-        w_entry_next.br_upd_info.bim_value = br_upd_if.bim_value;
-        w_entry_next.br_upd_info.br_taken  = br_upd_if.taken;
+      //   w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+      //   w_entry_next.br_upd_info.bim_value = br_upd_if.bim_value;
+      //   w_entry_next.br_upd_info.br_taken  = br_upd_if.taken;
       end
 
-`ifdef SIMULATION
-      w_entry_next.br_upd_info.mispredicted = 1'b0;
-      w_entry_next.br_upd_info.ras_index    = 'h0;
-      w_entry_next.br_upd_info.pred_vaddr   = 'h0;
-`endif // SIMULATION
+      // `ifdef SIMULATION
+      //       w_entry_next.br_upd_info.mispredicted = 1'b0;
+      //       w_entry_next.br_upd_info.ras_index    = 'h0;
+      //       w_entry_next.br_upd_info.pred_vaddr   = 'h0;
+      // `endif // SIMULATION
     end // if (br_upd_if.update)
 
 `ifdef SIMULATION
@@ -225,29 +225,27 @@ always_comb begin
       end
       if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
         w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
-        w_entry_next.br_upd_info.bim_value    = br_upd_if.bim_value;
-        w_entry_next.br_upd_info.br_taken     = br_upd_if.taken;
-
-        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond = br_upd_if.is_cond;
-        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_call = br_upd_if.is_call;
-        w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_ret  = br_upd_if.is_ret;
-        w_entry_next.dead[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.dead;
-        w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
-
-        // BTBが分岐命令だと予測できていなければ、BHRを1ビット左にずらして、
-        // gshareモジュールでのアップデートの整合性を保つ
-        if (~r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond & br_upd_if.is_cond) begin
-          w_entry_next.br_upd_info.btb_newly_allocated = 1'b1;
-        end
-        w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
+//         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+//         w_entry_next.br_upd_info.bim_value    = br_upd_if.bim_value;
+//         w_entry_next.br_upd_info.br_taken     = br_upd_if.taken;
+//
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond = br_upd_if.is_cond;
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_call = br_upd_if.is_call;
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_ret  = br_upd_if.is_ret;
+//         w_entry_next.dead[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.dead;
+//         w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
+//
+//         if (~r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond & br_upd_if.is_cond) begin
+//           w_entry_next.br_upd_info.btb_newly_allocated = 1'b1;
+//         end
+//         w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
       end // if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
-`ifdef SIMULATION
-      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
-        w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
-        w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
-      end
-`endif // SIMULATION
+// `ifdef SIMULATION
+//       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
+//         w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
+//         w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
+//       end
+// `endif // SIMULATION
     end // if (br_upd_if.update)
 
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
