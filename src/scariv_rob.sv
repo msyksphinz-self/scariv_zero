@@ -33,9 +33,6 @@ module scariv_rob
    // Interrupt Request information
    interrupt_if.slave  int_if,
 
-   // Branch Tag Update Signal
-   cmt_brtag_if.master cmt_brtag_if,
-
    // ROB notification interface
    rob_info_if.master rob_info_if
    );
@@ -364,44 +361,6 @@ assign rob_info_if.grp_id       = w_out_entry.grp_id;
 assign rob_info_if.done_grp_id  = w_out_entry.done_grp_id;
 assign rob_info_if.upd_pc_valid = w_out_entry.br_upd_info.upd_valid;
 assign rob_info_if.except_valid = w_out_entry.except_valid;
-
-// Commit Branch Tag Update
-assign cmt_brtag_if.commit     = o_commit.commit;
-assign cmt_brtag_if.cmt_id     = w_out_cmt_id;
-assign cmt_brtag_if.grp_id     = w_out_entry.grp_id & cmt_brtag_if.is_br_inst;
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
-  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].is_cond;
-  assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
-end
-endgenerate
-
-grp_id_t     w_cmt_brtag_is_rvc ;
-grp_id_t     w_cmt_brtag_is_dead;
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
-`ifdef SIMULATION
-  assign w_cmt_brtag_is_rvc      [d_idx] = w_out_entry.inst[d_idx].rvc_inst_valid;
-`endif // SIMULATION
-  assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
-end endgenerate
-
-rob_static_info_t w_out_entry_br_inst;
-bit_oh_or_packed #(.T(rob_static_info_t), .WORDS(DISP_SIZE))
-u_cmt_brtag_pc_addr (
-  .i_oh      (cmt_brtag_if.is_br_inst),
-  .i_data    (w_out_entry.inst       ),
-  .o_selected(w_out_entry_br_inst    )
-);
-
-assign cmt_brtag_if.pc_vaddr            = w_out_entry_br_inst.pc_addr;
-assign cmt_brtag_if.gshare_bhr          = w_out_entry.br_upd_info.gshare_bhr;
-assign cmt_brtag_if.gshare_index        = w_out_entry.br_upd_info.gshare_index;
-assign cmt_brtag_if.taken               = w_out_entry.br_upd_info.br_taken;
-assign cmt_brtag_if.bim_value           = w_out_entry.br_upd_info.bim_value;
-assign cmt_brtag_if.btb_newly_allocated = w_out_entry.br_upd_info.btb_newly_allocated;
-assign cmt_brtag_if.mispredict          = w_out_entry.br_upd_info.mispredicted;
-
-assign cmt_brtag_if.is_rvc = w_cmt_brtag_is_rvc & ~w_cmt_brtag_is_dead;
-assign cmt_brtag_if.dead   = w_cmt_brtag_is_dead;
 
 `ifdef SIMULATION
 `ifdef MONITOR

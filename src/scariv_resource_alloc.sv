@@ -33,8 +33,6 @@ module scariv_resource_alloc
    br_upd_if.slave                br_upd_if,
 
    input scariv_pkg::commit_blk_t   i_commit,
-   // Branch Tag Update Signal
-   cmt_brtag_if.slave             cmt_brtag_if,
 
    output logic o_resource_ok,
 
@@ -247,114 +245,6 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
 end // block: fpu_cre_ret_loop
 endgenerate
 
-
-// /* verilator lint_off UNOPTFLAT */
-// 
-// brtag_t r_br_tag_current_idx;
-// 
-// generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
-//   always_comb begin
-//     // for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-//     //   if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
-//     //   end
-//     // end
-//     if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
-//     end
-//     end
-//   end
-// end
-// endgenerate
-// 
-// 
-// assign w_br_tag_temp_idx[0] = r_br_tag_current_idx;
-// 
-// generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-// 
-//   logic w_is_br_inst;
-//   assign w_is_br_inst = w_iq_fire &
-//                         ibuf_front_if.payload.inst[d_idx].valid & (ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
-// 
-//   assign w_br_tag_temp_idx   [d_idx+1] = !w_is_br_inst ? w_br_tag_temp_idx   [d_idx] : w_br_tag_temp_idx[d_idx] + 'h1;
-// 
-//   assign o_brtag[d_idx]  = w_br_tag_temp_idx   [d_idx];
-// end // block: branch_loop
-// endgenerate
-
-// /* verilator lint_off UNOPTFLAT */
-// brtag_t  w_br_tag_temp_idx   [scariv_conf_pkg::DISP_SIZE+1];
-// 
-// logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_brtag_freelist_pop_id;
-// brtag_t r_br_tag_current_idx;
-// 
-// logic r_initial_pop_state;
-// logic r_initial_pop_valid;
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     r_initial_pop_state <= 1'b0;
-//     r_initial_pop_valid <= 1'b0;
-//   end else begin
-//     if (w_commit_flush) begin
-//       r_initial_pop_state <= 1'b0;
-//     end else begin
-//       r_initial_pop_state <= 1'b1;
-//     end
-//     r_initial_pop_valid <= ~r_initial_pop_state;
-//   end
-// end
-// 
-// scariv_freelist
-//   #(.SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
-//     .WIDTH ($clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)),
-//     .INIT(0)
-//     )
-// u_brtag_freelist
-//   (
-//    .i_clk    (i_clk),
-//    .i_reset_n(i_reset_n & ~w_commit_flush),
-// 
-//    .i_push    (br_upd_if.update),
-//    .i_push_id (br_upd_if.brtag),
-// 
-//    .i_pop   (|w_iq_fire & |ibuf_front_if.payload.resource_cnt.bru_inst_valid),
-//    .o_pop_id(w_brtag_freelist_pop_id),
-// 
-//    .o_is_empty()
-//    );
-// 
-//  generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
-//   always_comb begin
-//     if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
-//     end
-//     end
-//   end
-// end
-// endgenerate  
-// 
-// assign w_br_tag_temp_idx   [0] = w_brtag_freelist_pop_id;
-// 
-// generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-// 
-//   logic w_is_br_inst;
-//   assign w_is_br_inst = w_iq_fire & ibuf_front_if.payload.resource_cnt.bru_inst_valid[d_idx];
-// 
-//   assign w_br_tag_temp_idx   [d_idx+1] = !w_is_br_inst ? w_br_tag_temp_idx   [d_idx] : w_brtag_freelist_pop_id;
-// 
-//   assign o_brtag[d_idx]  = w_br_tag_temp_idx   [d_idx];
-// end // block: branch_loop
-// endgenerate
-// 
-// 
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     r_br_tag_current_idx <= 'h0;
-//   end else begin
-//     if (w_commit_flush) begin
-//       r_br_tag_current_idx <= 'h0;
-//     end else begin
-//       r_br_tag_current_idx <= w_br_tag_temp_idx   [scariv_conf_pkg::DISP_SIZE];
-//     end
-//   end
-// end
 
 logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_brtag_freelist_pop_id;
 brtag_t r_br_tag_current_idx;
