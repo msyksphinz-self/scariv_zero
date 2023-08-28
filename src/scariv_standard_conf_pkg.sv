@@ -44,4 +44,8 @@ package scariv_conf_pkg;
 
   localparam FPNEW_LATENCY = 4;
 
+  localparam VEC_VSETVL_DISP_SIZE = 1;
+  localparam VEC_ARITH_DISP_SIZE  = 2;
+  localparam VEC_MEM_DISP_SIZE    = 2;
+
 endpackage // scariv_conf_pkg

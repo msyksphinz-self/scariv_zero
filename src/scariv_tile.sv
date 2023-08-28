@@ -642,6 +642,31 @@ end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
 
+generate if (scariv_vec_pkg::VLEN != 0) begin : vpu
+  scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
+  vlvtype_req_if                     w_vlvtype_req_if();
+  vlvtype_commit_if                  w_vlvtype_commit_if();
+  vlvtype_upd_if                     w_vlvtype_upd_if();
+
+  assign w_vlvtype_req_if.valid = |w_ibuf_front_if.payload.is_br_included;
+
+  scariv_vec_vlvtype_rename
+  u_vec_vlvtype_rename
+    (
+     .i_clk     (i_clk    ),
+     .i_reset_n (i_reset_n),
+
+     .vlvtype_req_if    (w_vlvtype_req_if   ),
+     .vlvtype_commit_if (w_vlvtype_commit_if),
+     .i_brtag           (),
+
+     .br_upd_if (w_ex3_br_upd_if),
+
+     .vlvtype_upd_if (w_vlvtype_upd_if)
+   );
+
+end endgenerate
+
 scariv_rob u_rob
   (
    .i_clk    (i_clk),

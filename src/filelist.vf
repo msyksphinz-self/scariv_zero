@@ -164,6 +164,9 @@
 ../src/scariv_ftq.sv
 
 ../src/scariv_vec_csr.sv
+../src/scariv_vec_vlvtype_rename.sv
+../src/scariv_vec_vlvtype_snapshots.sv
+
 
 ../src/l2_if_arbiter.sv
 ../src/l2_if_req_splitter_with_others.sv
