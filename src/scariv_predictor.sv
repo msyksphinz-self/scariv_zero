@@ -11,6 +11,7 @@
 
 module scariv_predictor
   import scariv_pkg::*;
+  import scariv_ic_pkg::*;
   import scariv_predict_pkg::*;
   import scariv_lsu_pkg::*;
 (
@@ -25,17 +26,21 @@ module scariv_predictor
 
  btb_update_if.slave update_btb_if,
  btb_search_if.slave search_btb_if,
+ btb_search_if.monitor search_btb_mon_if,
  output vaddr_t o_s1_btb_target_vaddr,
 
  ras_search_if.master ras_search_if,
 
  gshare_search_if.slave gshare_search_if,
 
- br_upd_if.slave    br_upd_if,
- cmt_brtag_if.svale cmt_brtag_if
+ // Feedback into Frontend
+ output logic   o_s2_predict_valid,
+ output vaddr_t o_s2_predict_target_vaddr,
+
+ br_upd_if.slave    br_upd_if
  );
 
-logic [ICACHE_DATA_B_W/2-1: 0] w_s1_btb_hit_oh;
+ic_block_t w_s1_btb_hit_oh;
 
 scariv_btb u_btb
   (
@@ -46,12 +51,14 @@ scariv_btb u_btb
    .search_btb_if (search_btb_if)
    );
 
+bit_extract_lsb #(.WIDTH($bits(ic_block_t))) u_s1_btb_extract_lsb_oh (.in(search_btb_if.s1_hit), .out(w_s1_btb_hit_oh));
+
 bit_oh_or_packed
   #(.T(vaddr_t),
-    .WORDS(ICACHE_DATA_B_W/2)
+    .WORDS($bits(ic_block_t))
     )
 u_s1_target_vaddr_hit_oh (
- .i_oh      (search_btb_if.s1_hit),
+ .i_oh      (w_s1_btb_hit_oh),
  .i_data    (search_btb_if.s1_target_vaddr),
  .o_selected(o_s1_btb_target_vaddr)
  );
@@ -61,43 +68,43 @@ typedef enum logic {
   STD_CALL = 1'b1
 } call_size_t;
 
-logic [ICACHE_DATA_B_W/2-1: 0]    w_rvc_call_be;
-logic [ICACHE_DATA_B_W/2-1: 0]    w_std_call_be;
-call_size_t w_call_size_array[ICACHE_DATA_B_W/2];
+ic_block_t   w_rvc_call_be;
+ic_block_t   w_std_call_be;
+call_size_t  w_call_size_array[ICACHE_DATA_B_W/2];
 
-logic [ICACHE_DATA_B_W/2-1: 0]    w_rvc_noncond_be;
-logic [ICACHE_DATA_B_W/2-1: 0]    w_std_noncond_be;
+ic_block_t   w_rvc_noncond_be;
+ic_block_t   w_std_noncond_be;
 
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_call_be;
-logic [ICACHE_DATA_B_W/2-1:0]     w_s1_call_be_lsb;
+ic_block_t   w_s1_call_be;
+ic_block_t   w_s1_call_be_lsb;
 
-logic [ICACHE_DATA_B_W / 2-1: 0]  w_s1_call_valid;
-logic [ICACHE_DATA_B_W / 2-1: 0]  w_s1_ret_valid;
+ic_block_t   w_s1_call_valid;
+ic_block_t   w_s1_ret_valid;
 
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be;
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s1_ret_be_lsb;
+ic_block_t   w_s1_ret_be;
+ic_block_t   w_s1_ret_be_lsb;
 
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_call_be;
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_noncond_be;
-vaddr_t                 w_s2_call_vaddr;
-logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_next_pc;
-logic [ICACHE_DATA_B_W/2-1: 0]    w_s2_ret_be;
-logic [riscv_pkg::VADDR_W-1: 1]   w_s2_ras_ret_vaddr;
+ic_block_t   w_s2_call_be;
+ic_block_t   w_s2_noncond_be;
+vaddr_t      w_s2_call_vaddr;
+ic_vaddr_h_t w_s2_ras_next_pc;
+ic_block_t   w_s2_ret_be;
+ic_vaddr_h_t w_s2_ras_ret_vaddr;
 
-// logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_next_pc;
-// logic [riscv_pkg::VADDR_W-1: 1] w_sc_ras_ret_vaddr;
+// ic_vaddr_h_t w_sc_ras_next_pc;
+// ic_vaddr_h_t w_sc_ras_ret_vaddr;
 
-logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid;
-logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_call_valid_oh;
-logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_ret_valid;
-logic [ICACHE_DATA_B_W / 2-1: 0] w_s2_ret_valid_oh;
+ic_block_t  w_s2_call_valid;
+ic_block_t  w_s2_call_valid_oh;
+ic_block_t  w_s2_ret_valid;
+ic_block_t  w_s2_ret_valid_oh;
 
 logic [31: 0]                    w_s2_inst_array_32bit[ICACHE_DATA_B_W/2];
 logic [31: 0]                    w_s2_inst_array_oh;
 logic [$clog2(ICACHE_DATA_B_W/2)-1: 0] w_s2_call_enc;
-logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_target_vaddr;
-logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_offset;
-logic [riscv_pkg::VADDR_W-1: 1]        w_s2_call_pc;
+ic_vaddr_h_t        w_s2_call_target_vaddr;
+ic_vaddr_h_t        w_s2_call_offset;
+ic_vaddr_h_t        w_s2_call_pc;
 
 // grp_id_t w_sc_grp_valid;
 // grp_id_t w_sc_call_be;
@@ -265,8 +272,6 @@ logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_wr_index;
 logic                                              w_cmt_update_ras_idx;
 logic                                              w_cmt_dead_valid;
 
-logic [ICACHE_DATA_B_W/2-1: 0]       w_s1_pred_hit_oh;
-
 logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_s2_ras_index_next;
 
 logic                                              w_br_call_dead;
@@ -337,32 +342,39 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-// RATの各ステージにおける役割
-// S0: 現在のPCからBTBを引く -> S1で結果を得る
-// S1: BTBのどこかにCALL(/RETは行わない)命令が含まれていると、まずBTBで予測して予測ジャンプを行う
-// S2: RETの場合はRASからPOPして予測アドレスとして使用する. 次のRETに備えてras_indexをdecrementする
-// 注意: Instruction Bufferに入っている命令のフラッシュはCommit Reportによっては行われない(消える可能性がある)
-//       Commit Reportか、BR Reportによってしかるべき場所までras_indexを元に戻す必要がある
+// ----------------------------------------
+// Extracting Call/Ret for 1st instruction
+// ----------------------------------------
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s1_btb_hit_select (.in(search_btb_if.s1_hit &
+                                                                    (ras_search_if.s1_is_call | ras_search_if.s1_is_ret) &
+                                                                    search_btb_if.s1_pc_vaddr_mask), .out(w_s1_btb_hit_oh));
+assign w_s1_call_valid = {(ICACHE_DATA_B_W/2){i_s1_valid}} & w_s1_btb_hit_oh & ras_search_if.s1_is_call;
+assign w_s1_ret_valid  = {(ICACHE_DATA_B_W/2){i_s1_valid}} & w_s1_btb_hit_oh & ras_search_if.s1_is_ret;
 
-assign w_s1_call_valid = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_call_be & w_s1_pred_hit_oh) ? w_s1_call_be : 'h0);
-assign w_s1_ret_valid  = {(ICACHE_DATA_B_W/2){i_s1_valid}} & (|(w_s1_ret_be  & w_s1_pred_hit_oh) ? w_s1_ret_be  : 'h0);
-
-logic [ICACHE_DATA_B_W/2-1: 0] w_s2_ras_be;
+ic_block_t w_s2_ras_be;
 assign w_s2_ras_be = ({w_s2_call_valid_oh, 2'b00} - 'h1) & ({w_s2_ret_valid_oh, 2'b00} - 'h1);
 
-assign ras_search_if.s1_is_call   = w_s1_call_be_lsb;
-assign ras_search_if.s1_is_ret    = 1'b0;
+assign ras_search_if.s1_is_call   = search_btb_if.s1_is_call;
+assign ras_search_if.s1_is_ret    = search_btb_if.s1_is_ret;
 assign ras_search_if.s1_ras_vaddr = 'h0;
 assign ras_search_if.s1_ras_index = 'h0;
 
-assign ras_search_if.s2_is_call           = w_s2_call_valid;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    ras_search_if.s2_is_call <= 'h0;
+    ras_search_if.s2_is_ret  <= 'h0;
+  end else begin
+    ras_search_if.s2_is_call <= w_s1_call_valid;
+    ras_search_if.s2_is_ret  <= w_s1_ret_valid;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign ras_search_if.s2_call_target_vaddr = w_s2_call_target_vaddr;
-assign ras_search_if.s2_is_ret            = w_s2_ret_valid;
 generate for (genvar be_idx = 0; be_idx < ICACHE_DATA_B_W / 2; be_idx++) begin : s2_be_loop
   assign ras_search_if.s2_ras_be[be_idx*2+0] = w_s2_ras_be[be_idx];
   assign ras_search_if.s2_ras_be[be_idx*2+1] = w_s2_ras_be[be_idx];
 end
 endgenerate
+
 assign ras_search_if.s2_ras_vaddr         = w_s2_ras_ret_vaddr;
 assign ras_search_if.s2_ras_index         = /* |w_s2_ret_valid ? w_ras_index_next : */w_s2_ras_index_next;
 
@@ -403,17 +415,64 @@ u_ras
    );
 
 
-// ----------------------------------------
-// Extracting Call/Ret for 1st instruction
-// ----------------------------------------
-bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in(w_s1_call_be | w_s1_ret_be), .out(w_s1_pred_hit_oh));
+`ifdef SIMULATION
 
-logic [ICACHE_DATA_B_W/2-1: 0] w_s2_noncond_call_ret_be_oh;
+import "DPI-C" function void rtl_push_ras (input longint rtl_time,
+                                           input longint rtl_pc_vaddr,
+                                           input longint rtl_index,
+                                           input longint rtl_addr);
+
+import "DPI-C" function void rtl_pop_ras (input longint rtl_time,
+                                          input longint rtl_pc_vaddr,
+                                          input longint rtl_index,
+                                          input longint rtl_addr);
+
+import "DPI-C" function void rtl_flush_ras (input longint rtl_time,
+                                            input int     rtl_cmt_id,
+                                            input int     rtl_grp_id,
+                                            input longint rtl_pc_vaddr,
+                                            input longint rtl_ras_index);
+
+function logic [$clog2($bits(ic_block_t))-1: 0] encoder_func(logic [$bits(ic_block_t)-1: 0] in);
+  for (int i = 0; i < $bits(ic_block_t); i++) begin
+    if (in[i]) return i;
+  end
+  return 0;
+endfunction // encoder_func
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (u_ras.i_wr_valid) begin
+      rtl_push_ras ($time, i_s2_ic_resp.vaddr + encoder_func(w_s2_call_valid_oh) << 1,
+                    u_ras.i_wr_index, {u_ras.i_wr_pa, 1'b0});
+    end
+    if (u_ras.i_s2_rd_valid) begin
+      rtl_pop_ras ($time, i_s2_ic_resp.vaddr + encoder_func(w_s2_ret_valid_oh) << 1,
+                   u_ras.i_s2_rd_index, {u_ras.o_s2_rd_pa, 1'b0});
+    end
+
+    if (w_ras_br_flush) begin
+      rtl_flush_ras ($time, br_upd_if.cmt_id, br_upd_if.grp_id,
+                     br_upd_if.pc_vaddr, br_upd_if.ras_index);
+    end
+    if (w_ras_commit_flush) begin
+      rtl_flush_ras ($time, i_commit.cmt_id, w_ras_commit_flush_valid_oh,
+                     'h0, w_ras_commit_flush_ras_index_oh);
+    end
+  end
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+`endif // SIMULATION
+
+
+bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s1_pred_hit_select (.in((w_s1_call_be | w_s1_ret_be) & search_btb_if.s1_pc_vaddr_mask), .out(w_s1_btb_hit_oh));
+
+ic_block_t w_s2_noncond_call_ret_be_oh;
 
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_pred_hit_select (.in(w_s2_noncond_be | w_s2_call_be | w_s2_ret_be), .out(w_s2_noncond_call_ret_be_oh));
 
-assign w_s2_call_valid = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_call_be & w_s2_noncond_call_ret_be_oh;
-assign w_s2_ret_valid  = {(ICACHE_DATA_B_W/2){i_s2_valid}} & w_s2_ret_be  & w_s2_noncond_call_ret_be_oh;
+assign w_s2_call_valid = ras_search_if.s2_is_call;
+assign w_s2_ret_valid  = ras_search_if.s2_is_ret;
 
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_call_valid_oh (.in(w_s2_call_valid), .out(w_s2_call_valid_oh));
 bit_extract_lsb #(.WIDTH(ICACHE_DATA_B_W/2)) s2_ret_valid_oh  (.in(w_s2_ret_valid ), .out(w_s2_ret_valid_oh ));
@@ -438,10 +497,9 @@ u_gshare
    .i_s1_valid (i_s1_valid),
    .i_s2_valid (i_s2_valid),
 
-   .search_btb_if    (search_btb_if   ),
-   .gshare_search_if (gshare_search_if),
-   .br_upd_if        (br_upd_if       ),
-   .cmt_brtag_if     (cmt_brtag_if    ),
+   .search_btb_if    (search_btb_mon_if),
+   .gshare_search_if (gshare_search_if ),
+   .br_upd_if        (br_upd_if        ),
 
    .o_s2_predict_valid        (o_s2_predict_valid       ),
    .o_s2_predict_target_vaddr (o_s2_predict_target_vaddr)
@@ -450,36 +508,36 @@ u_gshare
 
 
 
-`ifdef SIMULATION
-logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_committed_ras_index;
-logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_committed_ras_index_m1;
-assign w_committed_ras_index_m1 = r_committed_ras_index - 1;
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_committed_ras_index <= 'h0;
-  end else begin
-    if (w_ras_flush_valid) begin
-      r_committed_ras_index <= w_flush_ras_index;
-    end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_call) begin
-      if (r_committed_ras_index != br_upd_if.ras_index) begin
-        $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
-                  r_committed_ras_index, br_upd_if.ras_index);
-        $fatal;
-      end else begin
-        r_committed_ras_index <= r_committed_ras_index + 'h1;
-      end
-    end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_ret) begin
-      if (w_committed_ras_index_m1 != br_upd_if.ras_index) begin
-        $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
-                 w_committed_ras_index_m1, br_upd_if.ras_index);
-        $fatal;
-      end else begin
-        r_committed_ras_index <= w_committed_ras_index_m1;
-      end
-    end
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-`endif // SIMULATION
+// `ifdef SIMULATION
+// logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_committed_ras_index;
+// logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_committed_ras_index_m1;
+// assign w_committed_ras_index_m1 = r_committed_ras_index - 1;
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//     r_committed_ras_index <= 'h0;
+//   end else begin
+//     if (w_ras_flush_valid) begin
+//       r_committed_ras_index <= w_flush_ras_index;
+//     end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_call) begin
+//       if (r_committed_ras_index != br_upd_if.ras_index) begin
+//         $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
+//                   r_committed_ras_index, br_upd_if.ras_index);
+//         $fatal;
+//       end else begin
+//         r_committed_ras_index <= r_committed_ras_index + 'h1;
+//       end
+//     end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_ret) begin
+//       if (w_committed_ras_index_m1 != br_upd_if.ras_index) begin
+//         $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
+//                  w_committed_ras_index_m1, br_upd_if.ras_index);
+//         $fatal;
+//       end else begin
+//         r_committed_ras_index <= w_committed_ras_index_m1;
+//       end
+//     end
+//   end // else: !if(!i_reset_n)
+// end // always_ff @ (posedge i_clk, negedge i_reset_n)
+// `endif // SIMULATION
 
 endmodule // scariv_predictor
 

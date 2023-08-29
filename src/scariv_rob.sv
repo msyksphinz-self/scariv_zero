@@ -33,9 +33,6 @@ module scariv_rob
    // Interrupt Request information
    interrupt_if.slave  int_if,
 
-   // Branch Tag Update Signal
-   cmt_brtag_if.master cmt_brtag_if,
-
    // ROB notification interface
    rob_info_if.master rob_info_if,
 
@@ -145,13 +142,12 @@ function automatic rob_entry_t assign_rob_entry();
     ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
     ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
     ret.inst[d_idx].subcat         = rn_front_if.payload.inst[d_idx].subcat        ;
-    ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
-    ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
-    ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
-    ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
-    ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
-    ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
+    // ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
+    // ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
+    // ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
+    // ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
+    // ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
 `ifdef SIMULATION
     ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
     ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
@@ -160,9 +156,9 @@ function automatic rob_entry_t assign_rob_entry();
 `endif // SIMULATION
   end // block: inst_loop
 
-  ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
-  ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
-  ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
+  // ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
+  // ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
+  // ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
   ret.fflags_update_valid = 'h0;
 
   ret.is_br_included = rn_front_if.payload.is_br_included;
@@ -263,11 +259,11 @@ assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_a
 assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & o_commit.grp_id;
 assign o_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
 
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
-  assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
-  assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
-end
-endgenerate
+// generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
+//   assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
+//   assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
+// end
+// endgenerate
 
 `ifdef SIMULATION
 
@@ -369,46 +365,9 @@ assign rob_info_if.done_grp_id  = w_out_entry.done_grp_id;
 assign rob_info_if.upd_pc_valid = w_out_entry.br_upd_info.upd_valid;
 assign rob_info_if.except_valid = w_out_entry.except_valid;
 
-// Commit Branch Tag Update
-assign cmt_brtag_if.commit     = o_commit.commit;
-assign cmt_brtag_if.cmt_id     = w_out_cmt_id;
-assign cmt_brtag_if.grp_id     = w_out_entry.grp_id & cmt_brtag_if.is_br_inst;
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
-  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].is_cond;
-  assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
-end
-endgenerate
-
-grp_id_t     w_cmt_brtag_is_rvc ;
-grp_id_t     w_cmt_brtag_is_dead;
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_gshare_loop
-  assign w_cmt_brtag_is_rvc      [d_idx] = w_out_entry.inst[d_idx].rvc_inst_valid;
-  assign w_cmt_brtag_is_dead     [d_idx] = w_out_entry.dead[d_idx];
-end endgenerate
-
-rob_static_info_t w_out_entry_br_inst;
-bit_oh_or_packed #(.T(rob_static_info_t), .WORDS(DISP_SIZE))
-u_cmt_brtag_pc_addr (
-  .i_oh      (cmt_brtag_if.is_br_inst),
-  .i_data    (w_out_entry.inst       ),
-  .o_selected(w_out_entry_br_inst    )
-);
-
-assign cmt_brtag_if.pc_vaddr            = w_out_entry_br_inst.pc_addr;
-assign cmt_brtag_if.gshare_bhr          = w_out_entry.br_upd_info.gshare_bhr;
-assign cmt_brtag_if.gshare_index        = w_out_entry.br_upd_info.gshare_index;
-assign cmt_brtag_if.taken               = w_out_entry.br_upd_info.br_taken;
-assign cmt_brtag_if.bim_value           = w_out_entry.br_upd_info.bim_value;
-assign cmt_brtag_if.btb_newly_allocated = w_out_entry.br_upd_info.btb_newly_allocated;
-assign cmt_brtag_if.mispredict          = w_out_entry.br_upd_info.mispredicted;
-
-assign cmt_brtag_if.is_rvc = w_cmt_brtag_is_rvc & ~w_cmt_brtag_is_dead;
-assign cmt_brtag_if.dead   = w_cmt_brtag_is_dead;
-
 // ------------------------------
 // Commit Information for Vector
 // ------------------------------
-
 grp_id_t w_cmt_entry_vsetvl;
 
 generate for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop

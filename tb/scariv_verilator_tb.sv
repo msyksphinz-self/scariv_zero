@@ -39,7 +39,8 @@ import "DPI-C" function void initial_ras(input longint ras_length);
 import "DPI-C" function void step_ras (input longint rtl_time,
                                        input int     rtl_cmt_id,
                                        input int     rtl_grp_id,
-                                       input longint ras_index);
+                                       input longint rtl_ras_index,
+                                       input longint rtl_ras_addr);
 
 module scariv_tb (
     input logic i_clk,
@@ -586,7 +587,8 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
             step_ras ($time,
                       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
                       1 << grp_idx,
-                      0);
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.ras_index,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.pred_vaddr);
           end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)

@@ -87,7 +87,7 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_issue_unit
+scariv_csu_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_CSU_ENTRY_SIZE),
     .IN_PORT_SIZE(scariv_conf_pkg::CSU_DISP_SIZE),

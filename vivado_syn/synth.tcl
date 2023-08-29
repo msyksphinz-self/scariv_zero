@@ -4,7 +4,8 @@ set RTL_ROOT_DIR ../../src
 set TOP_NAME scariv_tile_wrapper
 
 # set DEVICE_NAME xc7z045ffg900
-set DEVICE_NAME xc7z030fbg484
+# set DEVICE_NAME xc7z030fbg484
+set DEVICE_NAME xczu7ev-ffvc1156-2-e
 
 create_project -in_memory -part $DEVICE_NAME $PROJ_NAME $PROJ_DIR
 save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr

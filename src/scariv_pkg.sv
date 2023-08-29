@@ -253,14 +253,14 @@ typedef struct packed {
 
   typedef struct packed {
     grp_id_t                         upd_valid;
-    logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
-    brtag_t        brtag;
-    gshare_bht_t   gshare_bhr;
-    gshare_bht_t   gshare_index;
-    logic          br_taken;
-    logic [ 1: 0]  bim_value;
-  logic            btb_newly_allocated;
-  logic            mispredicted;
+    // logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    // brtag_t        brtag;
+    // gshare_bht_t   gshare_bhr;
+    // gshare_bht_t   gshare_index;
+    // logic          br_taken;
+    // logic [ 1: 0]  bim_value;
+    // logic            btb_newly_allocated;
+    // logic            mispredicted;
 `ifdef SIMULATION
   logic [RAS_W-1: 0] ras_index;
   vaddr_t            pred_vaddr;
@@ -298,13 +298,12 @@ typedef struct packed {
   vaddr_t            pc_addr;
   inst_cat_t         cat;
   inst_subcat_t      subcat;
-  brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
-  logic [RAS_W-1: 0] ras_index;
-  logic              is_cond;  // Conditional Branch
-  logic              is_call;  // Call
-  logic              is_ret;   // Ret
-  gshare_bht_t       gshare_bhr;
+  // logic [RAS_W-1: 0] ras_index;
+  // logic              is_cond;  // Conditional Branch
+  // logic              is_call;  // Call
+  // logic              is_ret;   // Ret
+  // gshare_bht_t       gshare_bhr;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
   logic [15: 0]      rvc_inst;

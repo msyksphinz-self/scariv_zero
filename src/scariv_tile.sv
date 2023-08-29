@@ -174,7 +174,6 @@ logic w_fpu_freelist_ready;
 // ----------------------------------
 
 scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
-cmt_brtag_if w_cmt_brtag_if();
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -271,7 +270,6 @@ scariv_frontend u_frontend (
 
   .i_commit (w_commit),
   .br_upd_if (w_ex3_br_upd_if),
-  .cmt_brtag_if (w_cmt_brtag_if),
 
   .csr_info (w_csr_info),
   .int_if   (w_int_if),
@@ -337,7 +335,6 @@ scariv_resource_alloc u_resource_alloc
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_commit (w_commit),
-  .cmt_brtag_if (w_cmt_brtag_if),
 
   .o_brtag  (w_iq_brtag),
 
@@ -694,7 +691,6 @@ scariv_rob u_rob
    .o_commit (w_commit),
    .fflags_update_if (w_fflags_update_if),
    .o_commit_rnid_update (w_commit_rnid_update),
-   .cmt_brtag_if (w_cmt_brtag_if),
 
    .rob_info_if   (w_rob_info_if),
    .vlvtype_commit_if (w_vlvtype_commit),

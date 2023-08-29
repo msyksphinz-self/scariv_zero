@@ -35,9 +35,10 @@ endpackage // scariv_predict_pkg
 
 interface btb_search_if;
 
-  logic                                                 s0_valid;
-  scariv_pkg::vaddr_t                                     s0_pc_vaddr;
+  logic                              s0_valid;
+  scariv_pkg::vaddr_t                s0_pc_vaddr;
   scariv_ic_pkg::ic_block_t          s1_hit;
+  scariv_ic_pkg::ic_block_t          s1_pc_vaddr_mask;
   scariv_ic_pkg::ic_block_vaddr_t    s1_target_vaddr;
   scariv_ic_pkg::ic_block_t          s1_is_cond;
   scariv_ic_pkg::ic_block_t          s1_is_call;
@@ -54,6 +55,7 @@ interface btb_search_if;
     output s0_valid,
     output s0_pc_vaddr,
     input  s1_hit,
+    input  s1_pc_vaddr_mask,
     input  s1_target_vaddr,
     input  s1_is_cond,
     input  s1_is_call,
@@ -71,6 +73,7 @@ interface btb_search_if;
     input s0_valid,
     input s0_pc_vaddr,
     output s1_hit,
+    output s1_pc_vaddr_mask,
     output s1_target_vaddr,
     output s1_is_cond,
     output s1_is_call,
