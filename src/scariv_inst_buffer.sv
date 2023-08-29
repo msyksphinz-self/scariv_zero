@@ -402,7 +402,7 @@ endgenerate
 
 generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
   logic[ 3: 0] w_raw_cat;
-  logic [ 1: 0] w_raw_subcat;
+  logic [ 2: 0] w_raw_subcat;
   decoder_inst_cat
   u_decoder_inst_cat
     (

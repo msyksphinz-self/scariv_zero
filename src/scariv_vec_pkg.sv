@@ -91,16 +91,16 @@ interface vlvtype_commit_if;
   import scariv_vec_pkg::*;
 
   logic             valid;
-  vlvtype_ren_idx_t index;
+// vlvtype_ren_idx_t index;
 
   modport master (
-    output valid,
-    output index
+    output valid
+   //  output index
   );
 
   modport slave (
-    input valid,
-    input index
+    input valid
+    // input index
   );
 
 endinterface // vlvtype_commit_if
@@ -112,6 +112,7 @@ interface vlvtype_req_if;
   import scariv_vec_pkg::*;
 
   logic             valid;
+  logic             checkpt_push_valid;
   logic             ready;
   logic             full;
   vlvtype_ren_idx_t index;
@@ -119,14 +120,16 @@ interface vlvtype_req_if;
 
   modport master (
     output valid,
+    output checkpt_push_valid,
     input  ready,
     input  full,
-    input index,
+    input  index,
     input  vlvtype
   );
 
   modport slave (
     input  valid,
+    input  checkpt_push_valid,
     output ready,
     output full,
     output index,

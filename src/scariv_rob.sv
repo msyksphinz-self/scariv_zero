@@ -37,7 +37,10 @@ module scariv_rob
    cmt_brtag_if.master cmt_brtag_if,
 
    // ROB notification interface
-   rob_info_if.master rob_info_if
+   rob_info_if.master rob_info_if,
+
+   // Vector VSET instruction update
+   vlvtype_commit_if.master vlvtype_commit_if
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
@@ -141,6 +144,7 @@ function automatic rob_entry_t assign_rob_entry();
     ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
     ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
     ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
+    ret.inst[d_idx].subcat         = rn_front_if.payload.inst[d_idx].subcat        ;
     ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
     ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
@@ -400,6 +404,19 @@ assign cmt_brtag_if.mispredict          = w_out_entry.br_upd_info.mispredicted;
 
 assign cmt_brtag_if.is_rvc = w_cmt_brtag_is_rvc & ~w_cmt_brtag_is_dead;
 assign cmt_brtag_if.dead   = w_cmt_brtag_is_dead;
+
+// ------------------------------
+// Commit Information for Vector
+// ------------------------------
+
+grp_id_t w_cmt_entry_vsetvl;
+
+generate for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
+  assign w_cmt_entry_vsetvl[d_idx] = (w_out_entry.inst[d_idx].cat    == decoder_inst_cat_pkg::INST_CAT_CSU) &
+                                     (w_out_entry.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
+end endgenerate
+
+assign vlvtype_commit_if.valid = o_commit.commit & |w_cmt_entry_vsetvl;
 
 `ifdef SIMULATION
 `ifdef MONITOR

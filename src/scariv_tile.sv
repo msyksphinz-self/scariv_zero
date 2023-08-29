@@ -641,14 +641,22 @@ end else begin // block: fpu
 end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
+vlvtype_commit_if w_vlvtype_commit();
 
 generate if (scariv_vec_pkg::VLEN != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
   vlvtype_req_if                     w_vlvtype_req_if();
-  vlvtype_commit_if                  w_vlvtype_commit_if();
   vlvtype_upd_if                     w_vlvtype_upd_if();
 
-  assign w_vlvtype_req_if.valid = |w_ibuf_front_if.payload.is_br_included;
+  scariv_pkg::grp_id_t w_ibuf_is_subcat_vset;
+
+  for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
+    assign w_ibuf_is_subcat_vset[d_idx] = (w_ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
+                                          (w_ibuf_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
+  end
+
+  assign w_vlvtype_req_if.valid              = |w_ibuf_is_subcat_vset;
+  assign w_vlvtype_req_if.checkpt_push_valid = |w_ibuf_front_if.payload.is_br_included;
 
   scariv_vec_vlvtype_rename
   u_vec_vlvtype_rename
@@ -657,9 +665,10 @@ generate if (scariv_vec_pkg::VLEN != 0) begin : vpu
      .i_reset_n (i_reset_n),
 
      .vlvtype_req_if    (w_vlvtype_req_if   ),
-     .vlvtype_commit_if (w_vlvtype_commit_if),
-     .i_brtag           (),
+     .vlvtype_commit_if (w_vlvtype_commit),
+     .i_brtag           (w_ibuf_front_if.payload.inst[0].brtag),
 
+     .i_commit  (w_commit),
      .br_upd_if (w_ex3_br_upd_if),
 
      .vlvtype_upd_if (w_vlvtype_upd_if)
@@ -688,6 +697,7 @@ scariv_rob u_rob
    .cmt_brtag_if (w_cmt_brtag_if),
 
    .rob_info_if   (w_rob_info_if),
+   .vlvtype_commit_if (w_vlvtype_commit),
 
    .ex3_br_upd_if (w_ex3_br_upd_if)
    );

@@ -297,6 +297,7 @@ typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
   inst_cat_t         cat;
+  inst_subcat_t      subcat;
   brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
   logic [RAS_W-1: 0] ras_index;
