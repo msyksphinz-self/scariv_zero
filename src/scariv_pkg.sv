@@ -262,8 +262,8 @@ typedef struct packed {
     // logic            btb_newly_allocated;
     // logic            mispredicted;
 `ifdef SIMULATION
-  logic [RAS_W-1: 0] ras_index;
-  vaddr_t            pred_vaddr;
+  logic [RAS_W-1: 0] sim_ras_index;
+  vaddr_t            sim_pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
 

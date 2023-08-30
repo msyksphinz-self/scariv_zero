@@ -651,7 +651,7 @@ endgenerate
 logic [ 63: 0] r_kanata_cycle_count;
 scariv_pkg::grp_id_t w_valid_grp_id;
 generate for (genvar g_idx = 0; g_idx < scariv_conf_pkg::DISP_SIZE; g_idx++) begin : sim_grp_loop
-  assign w_valid_grp_id[g_idx] = ibuf_front_if.payload.inst[g_idx].valid;
+  assign w_valid_grp_id[g_idx] = w_ibuf_front_payload_next.inst[g_idx].valid;
 end
 endgenerate
 
@@ -659,8 +659,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_kanata_cycle_count <= 'h0;
   end else begin
-    if (ibuf_front_if.valid & ibuf_front_if.ready) begin
-      r_kanata_cycle_count <= r_kanata_cycle_count + $countones(u_inst_queue.r_valids);
+    if (w_ibuf_front_valid_next & ibuf_front_if.ready) begin
+      r_kanata_cycle_count <= r_kanata_cycle_count + $countones(w_valid_grp_id);
     end
   end
 end
@@ -812,16 +812,62 @@ u_ras
 
    .i_wr_valid (|iq_is_call_valid_oh   ),
    .i_wr_index (r_ras_index            ),
-   .i_wr_pa    (iq_call_stash_vaddr_oh ),
+   .i_wr_pa    (iq_call_stash_vaddr_oh[riscv_pkg::VADDR_W-1: 1] ),
 
    .i_s2_rd_valid (|iq_is_ret_valid_oh),
    .i_s2_rd_index (r_ras_index-1      ),
-   .o_s2_rd_pa    (w_iq_ras_ret_vaddr ),
+   .o_s2_rd_pa    (w_iq_ras_ret_vaddr[riscv_pkg::VADDR_W-1: 1] ),
 
    .i_br_call_cmt_valid     ('h0),
    .i_br_call_cmt_ras_index ('h0),
    .i_br_call_cmt_wr_vpc    ('h0)
    );
+assign w_iq_ras_ret_vaddr[0] = 1'b0;
+
+`ifdef SIMULATION
+
+import "DPI-C" function void rtl_push_ras (input longint rtl_time,
+                                           input longint rtl_pc_vaddr,
+                                           input longint rtl_index,
+                                           input longint rtl_addr);
+
+import "DPI-C" function void rtl_pop_ras (input longint rtl_time,
+                                          input longint rtl_pc_vaddr,
+                                          input longint rtl_index,
+                                          input longint rtl_addr);
+
+import "DPI-C" function void rtl_flush_ras (input longint rtl_time,
+                                            input int     rtl_cmt_id,
+                                            input int     rtl_grp_id,
+                                            input longint rtl_pc_vaddr,
+                                            input longint rtl_ras_index);
+
+function logic [$clog2($bits(ic_block_t))-1: 0] encoder_func(logic [$bits(ic_block_t)-1: 0] in);
+  for (int i = 0; i < $bits(ic_block_t); i++) begin
+    if (in[i]) return i;
+  end
+  return 0;
+endfunction // encoder_func
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (u_ras.i_wr_valid) begin
+      rtl_push_ras ($time, w_ibuf_front_payload_next.pc_addr_debug + encoder_func(iq_is_call_valid_oh) << 1,
+                    u_ras.i_wr_index, {u_ras.i_wr_pa, 1'b0});
+    end
+    if (u_ras.i_s2_rd_valid) begin
+      rtl_pop_ras ($time, w_ibuf_front_payload_next.pc_addr_debug + encoder_func(iq_is_ret_valid_oh) << 1,
+                   u_ras.i_s2_rd_index, {u_ras.o_s2_rd_pa, 1'b0});
+    end
+
+    if (w_br_flush) begin
+      rtl_flush_ras ($time, br_upd_if.cmt_id, br_upd_if.grp_id,
+                     br_upd_if.pc_vaddr, br_upd_if.ras_index);
+    end
+  end
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+`endif // SIMULATION
 
 
 `ifdef SIMULATION
