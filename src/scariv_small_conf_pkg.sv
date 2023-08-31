@@ -13,7 +13,7 @@ package scariv_conf_pkg;
   localparam DISP_SIZE = 3;
 
   localparam ALU_INST_NUM = 1;
-  localparam LSU_INST_NUM = 1;
+  localparam LSU_INST_NUM = 2;
   localparam FPU_INST_NUM = 1;
 
   localparam ARITH_DISP_SIZE = 2;
@@ -25,9 +25,9 @@ package scariv_conf_pkg;
 
   localparam RV_ALU_ENTRY_SIZE = 16;
 
-  localparam RV_LSU_ENTRY_SIZE = 16;
-  localparam LDQ_SIZE = 8;
-  localparam STQ_SIZE = 8;
+  localparam RV_LSU_ENTRY_SIZE = 32;
+  localparam LDQ_SIZE = 24;
+  localparam STQ_SIZE = 24;
 
   localparam RV_CSU_ENTRY_SIZE = 4;
   localparam RV_BRU_ENTRY_SIZE = 8;
@@ -35,7 +35,7 @@ package scariv_conf_pkg;
 
   localparam MISSU_ENTRY_SIZE = 4;
 
-  localparam CMT_ENTRY_SIZE = 16;
+  localparam CMT_ENTRY_SIZE = 32;
 
   localparam USING_VM = 1'b1;
 

@@ -587,8 +587,8 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
             step_ras ($time,
                       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
                       1 << grp_idx,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.ras_index,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.pred_vaddr);
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_ras_index,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_pred_vaddr);
           end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)

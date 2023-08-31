@@ -551,7 +551,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (r_out_entry_d1.grp_id[i]) begin
           retire_inst (r_out_entry_d1.inst[i].kanata_id,
-                       r_out_entry_d1.flush_valid[i] | r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+                       r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
         end
       end
     end

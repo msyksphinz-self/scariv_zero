@@ -108,6 +108,8 @@ class verilator_sim:
             run_command += ["--dump"]
             run_command += ["--dump_start", str(sim_conf["dump_start_time"])]
 
+        if sim_conf["kanata"] :
+            run_command += ["-k"]
         run_command += ["-c", str(sim_conf["cycle"])]
         run_command += ["-e", test["elf"]]
         run_command += ["-o", output_file]
@@ -284,7 +286,7 @@ def main():
     parser.add_argument('-t', '--testcase', dest='testcase', action='store',
 	                default='testcase',
 	                help="Testcase of run")
-    parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
+    parser.add_argument('-k', '--kanata', dest="kanata", action='store_true',
 	                default=False, help="Generate Katana Log file")
     parser.add_argument('-j', dest="parallel", action='store',
 	                default=1, help="Num of Parallel Jobs")
@@ -303,13 +305,14 @@ def main():
     sim_conf["isa"] = args.isa
     sim_conf["conf"] = args.conf
 
-    sim_conf["isa_ext"] = sim_conf["isa"][4:]
     testcase = args.testcase
-    sim_conf["parallel"] = int(args.parallel)
-    sim_conf["fst_dump"] = args.debug
+    sim_conf["isa_ext"]         = sim_conf["isa"][4:]
+    sim_conf["parallel"]        = int(args.parallel)
+    sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start
-    sim_conf["cycle"]    = args.cycle
-    sim_conf["use_docker"] = args.docker
+    sim_conf["cycle"]           = args.cycle
+    sim_conf["kanata"]          = args.kanata
+    sim_conf["use_docker"]      = args.docker
 
 
     if not (sim_conf["isa"][0:4] == "rv32" or sim_conf["isa"][0:4] == "rv64") :

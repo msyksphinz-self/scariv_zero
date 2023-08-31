@@ -150,8 +150,8 @@ always_comb begin
 
       // `ifdef SIMULATION
       //       w_entry_next.br_upd_info.mispredicted = 1'b0;
-      //       w_entry_next.br_upd_info.ras_index    = 'h0;
-      //       w_entry_next.br_upd_info.pred_vaddr   = 'h0;
+      //       w_entry_next.br_upd_info.sim_ras_index    = 'h0;
+      //       w_entry_next.br_upd_info.sim_pred_vaddr   = 'h0;
       // `endif // SIMULATION
     end // if (br_upd_if.update)
 
@@ -240,12 +240,12 @@ always_comb begin
 //         end
 //         w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
       end // if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
-// `ifdef SIMULATION
-//       if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
-//         w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
-//         w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
-//       end
-// `endif // SIMULATION
+`ifdef SIMULATION
+      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
+        w_entry_next.br_upd_info.sim_ras_index    = br_upd_if.ras_index;
+        w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_if.pred_vaddr;
+      end
+`endif // SIMULATION
     end // if (br_upd_if.update)
 
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
