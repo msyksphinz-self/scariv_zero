@@ -265,11 +265,11 @@ class verilator_sim:
                         pool.join()
 
         print (self.result_dict)
-        with open(base_dir + '/result.json', 'w') as f:
+        with open(base_dir + '/' + testcase + '/result.json', 'w') as f:
             json.dump(self.result_detail_dict.copy(), f, indent=4)
-        with open(base_dir + '/result.json', 'a') as f:
+        with open(base_dir + '/' + testcase + '/result.json', 'a') as f:
             json.dump(self.result_dict.copy(), f, indent=4)
-        print ("Result : " + base_dir + '/result.json')
+        print ("Result : " + base_dir + '/' + testcase + '/result.json')
         if len(select_test) == 1:
             output_file = os.path.basename(select_test[0]["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
             print("Detail log : " + base_dir + '/' + select_test[0]["name"] + '/' + output_file)
