@@ -508,7 +508,8 @@ endfunction
 import "DPI-C" function void retire_inst
 (
  input longint id,
- input int retire
+ input longint retire_id,
+ input int     retire
 );
 import "DPI-C" function void log_stage
 (
@@ -544,14 +545,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [63: 0] kanata_retire_id;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
+    kanata_retire_id = 'h0;
+  end else begin
     if (r_commit_d1) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (r_out_entry_d1.grp_id[i]) begin
-          retire_inst (r_out_entry_d1.inst[i].kanata_id,
+          retire_inst (r_out_entry_d1.inst[i].kanata_id, kanata_retire_id,
                        r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+          if (!(r_out_entry_d1.dead[i] | r_dead_grp_d1[i])) begin
+            kanata_retire_id = kanata_retire_id + 1;
+          end
         end
       end
     end
