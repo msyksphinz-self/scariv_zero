@@ -1283,7 +1283,7 @@ void step_spike(long long rtl_time, long long rtl_pc,
       if (abs(iss_wr_val - rtl_wr_val) == 1) {
         float128_t f128_rtl_val;
         f128_rtl_val.v[0] = rtl_wr_val;
-        f128_rtl_val.v[1] = 0;
+        f128_rtl_val.v[1] = 0xffffffffffffffff;
         fprintf(compare_log_fp, "Small Approximation error. Backpropagating to ISS\n");
         p->get_state()->FPR.write(rtl_wr_gpr_addr, f128_rtl_val);
         fprintf(compare_log_fp, "==========================================\n");
