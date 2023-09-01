@@ -391,9 +391,9 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
   end // always_comb
 
   assign w_predict_taken_valid_array[w_idx] = w_expanded_valid[w_idx] &
-                                              (w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken | // BIM
-                                               w_expand_ras_info[w_idx].is_call |  // RAS
-                                               w_expand_ras_info[w_idx].is_ret);  // RAS
+                                              (w_expand_pred_info[w_idx].btb_valid & w_expand_pred_info[w_idx].pred_taken); // | // BIM
+                                               /* w_expand_ras_info[w_idx].is_call |  // RAS
+                                                w_expand_ras_info[w_idx].is_ret);  // RAS */
 
 end
 endgenerate
@@ -518,7 +518,7 @@ scariv_pkg::grp_id_t w_bru_predict_disp_valid;
 scariv_pkg::grp_id_t w_disp_special_limit_valid;
 scariv_pkg::grp_id_t w_disp_special_limit_valid_oh;
 
-assign w_bru_predict_disp_valid = (w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp | w_predict_taken_valid_array);
+assign w_bru_predict_disp_valid = (w_inst_disp_mask_tmp - 1) & (w_inst_bru_disp & (w_predict_taken_valid_array | w_inst_is_call | w_inst_is_ret));
 
 assign w_disp_special_limit_valid = w_bru_predict_disp_valid | (w_inst_csu_disp & (w_inst_disp_mask_tmp - 1));
 

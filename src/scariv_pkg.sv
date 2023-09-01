@@ -643,6 +643,21 @@ function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
 
 endfunction // is_br_flush_target
 
+function logic is_br_flush_target_wo_itself(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+                                            cmt_id_t br_cmt_id, grp_id_t br_grp_id,
+                                            logic br_dead, logic br_mispredicted);
+logic                                             w_cmt_is_older;
+  logic entry_older;
+
+  w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id < entry_grp_id);
+
+  return entry_older & br_mispredicted;
+
+endfunction // is_br_flush_target
+
 // RNID Update signals
 typedef struct packed {
   logic                                                      commit;

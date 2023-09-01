@@ -141,7 +141,7 @@ end endgenerate
 
 
 // EX0 brtag flush check
-assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, ex3_br_upd_if.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
+assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
                                                         ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex0_issue.valid;
 
 always_comb begin

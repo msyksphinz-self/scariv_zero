@@ -19,7 +19,7 @@ package scariv_conf_pkg;
   localparam ARITH_DISP_SIZE = 4;
   localparam MULDIV_DISP_SIZE = ARITH_DISP_SIZE / ALU_INST_NUM;
   localparam MEM_DISP_SIZE   = 4;
-  localparam BRU_DISP_SIZE   = 1;
+  localparam BRU_DISP_SIZE   = 2;
   localparam CSU_DISP_SIZE   = 1;
   localparam FPU_DISP_SIZE   = 4;
 
