@@ -60,9 +60,7 @@ l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
 scariv_front_if w_ibuf_front_if();
-scariv_front_if w_ibuf_dist_front_if[2]();  // Int/FP
 scariv_front_if w_rn_int_front_if ();
-scariv_front_if w_rn_fp_front_if ();
 scariv_front_if w_rn_front_if ();
 
 scariv_pkg::early_wr_t w_ex1_early_wr[scariv_pkg::REL_BUS_SIZE];
@@ -164,9 +162,6 @@ cre_ret_if #(.MAX_INC(scariv_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[scariv_conf_pkg::FPU_INST_NUM]();
-
-logic w_int_freelist_ready;
-logic w_fpu_freelist_ready;
 
 
 // ----------------------------------
@@ -283,27 +278,19 @@ scariv_frontend u_frontend (
 );
 
 
-scariv_disp_distribute
-u_iq_dist
-(
- .i_disp (w_ibuf_front_if),
- .o_disp (w_ibuf_dist_front_if)
- );
-
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
 u_int_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .ibuf_front_if (w_ibuf_dist_front_if[0]),
+  .ibuf_front_if (w_ibuf_front_if),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
   .i_commit             (w_commit),
   .i_commit_rnid_update (w_commit_rnid_update),
 
-  .i_resource_ok (w_resource_ok & w_fpu_freelist_ready),
-  .o_freelist_ready (w_int_freelist_ready),
+  .i_resource_ok (w_resource_ok),
 
   .i_brtag  (w_iq_brtag),
 
@@ -342,14 +329,6 @@ scariv_resource_alloc u_resource_alloc
 
   .brtag_if (w_brtag_if)
  );
-
-scariv_disp_merge
-u_sc_merge
-  (
-   .i_int_disp (w_rn_int_front_if),
-   .i_fp_disp  (w_rn_fp_front_if),
-   .o_disp     (w_rn_front_if)
-   );
 
 localparam ALU_PORT_SIZE = scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM;
 localparam FPU_PORT_SIZE = scariv_conf_pkg::FPU_DISP_SIZE / scariv_conf_pkg::FPU_INST_NUM;
@@ -546,31 +525,6 @@ u_int_phy_registers (
 
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
-  scariv_rename
-    #(.REG_TYPE(scariv_pkg::FPR))
-  u_fp_rename (
-    .i_clk(i_clk),
-    .i_reset_n(i_reset_n),
-
-    .ibuf_front_if (w_ibuf_dist_front_if[1]),
-    .i_sc_new_cmt_id (w_sc_new_cmt_id),
-
-    .i_commit             (w_commit),
-    .i_commit_rnid_update (w_commit_rnid_update),
-
-    .i_resource_ok (w_resource_ok & w_int_freelist_ready),
-    .o_freelist_ready (w_fpu_freelist_ready),
-
-    .i_brtag  (w_iq_brtag),
-
-    .br_upd_if (w_ex3_br_upd_if),
-
-    .i_phy_wr (w_ex3_phy_wr),
-    .rn_front_if  (w_rn_fp_front_if),
-    .i_sc_ras_index (w_sc_ras_index),
-    .i_sc_ras_vaddr (w_sc_ras_vaddr)
-  );
-
   // =========================
   // FPU: Flaoting Point Unit
   // =========================
@@ -631,10 +585,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
      .regwrite(fp_regwrite),
      .regread(fp_regread)
      );
-end else begin // block: fpu
-  assign w_rn_fp_front_if.valid = 1'b1;
-  assign w_ibuf_dist_front_if[1].ready = 1'b1;
-  assign w_fpu_freelist_ready = 1'b1;
+
 end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 

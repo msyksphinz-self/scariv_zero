@@ -239,7 +239,7 @@ typedef struct packed {
 
 
   function disp_t merge_scariv_front_if (disp_t int_disp,
-                                 disp_t fp_disp);
+                                         disp_t fp_disp);
     disp_t ret;
     ret = int_disp;
     ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
