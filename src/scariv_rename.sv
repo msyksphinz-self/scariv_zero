@@ -64,7 +64,7 @@ assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 scariv_rename_sub
   #(.REG_TYPE (GPR))
-u_rename
+u_ipr_rename
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
@@ -84,10 +84,10 @@ u_rename
    .i_commit_rnid_update (i_commit_rnid_update)
    );
 
-generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
+generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
   scariv_rename_sub
     #(.REG_TYPE (scariv_pkg::FPR))
-  u_rename
+  u_fpr_rename
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),

@@ -60,7 +60,6 @@ l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
 scariv_front_if w_ibuf_front_if();
-scariv_front_if w_rn_int_front_if ();
 scariv_front_if w_rn_front_if ();
 
 scariv_pkg::early_wr_t w_ex1_early_wr[scariv_pkg::REL_BUS_SIZE];
@@ -270,7 +269,7 @@ scariv_frontend u_frontend (
   .int_if   (w_int_if),
 
   .ibuf_front_if(w_ibuf_front_if),
-  .rn_front_if (w_rn_int_front_if),
+  .rn_front_if (w_rn_front_if),
   .o_sc_ras_index  (w_sc_ras_index),
   .o_sc_ras_vaddr (w_sc_ras_vaddr),
 
@@ -297,7 +296,7 @@ u_int_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .rn_front_if  (w_rn_int_front_if),
+  .rn_front_if  (w_rn_front_if),
   .i_sc_ras_index (w_sc_ras_index),
   .i_sc_ras_vaddr (w_sc_ras_vaddr)
 );
