@@ -48,14 +48,6 @@ int json_fp;
   end // always_ff @ (negedge w_clk, negedge w_scariv_reset_n)
 
 
-  if (riscv_pkg::FLEN_W != 0) begin
-    always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
-      if (w_scariv_reset_n) begin
-        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_rename.dump_json("fp", json_fp);
-      end
-    end
-  end
-
   // ALU Scheduler
   if (scariv_conf_pkg::ALU_INST_NUM > 0)
     always_ff @ (negedge w_clk, negedge w_scariv_reset_n)

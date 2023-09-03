@@ -239,7 +239,7 @@ typedef struct packed {
 
 
   function disp_t merge_scariv_front_if (disp_t int_disp,
-                                 disp_t fp_disp);
+                                         disp_t fp_disp);
     disp_t ret;
     ret = int_disp;
     ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
@@ -262,8 +262,8 @@ typedef struct packed {
     // logic            btb_newly_allocated;
     // logic            mispredicted;
 `ifdef SIMULATION
-  logic [RAS_W-1: 0] ras_index;
-  vaddr_t            pred_vaddr;
+  logic [RAS_W-1: 0] sim_ras_index;
+  vaddr_t            sim_pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
 
@@ -638,6 +638,21 @@ function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
                    br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                    br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id <= entry_grp_id);
+
+  return entry_older & br_mispredicted;
+
+endfunction // is_br_flush_target
+
+function logic is_br_flush_target_wo_itself(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+                                            cmt_id_t br_cmt_id, grp_id_t br_grp_id,
+                                            logic br_dead, logic br_mispredicted);
+logic                                             w_cmt_is_older;
+  logic entry_older;
+
+  w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id < entry_grp_id);
 
   return entry_older & br_mispredicted;
 

@@ -342,8 +342,8 @@ assign w_is_active_except = 1'b1;
 assign w_except_dead_grp_id = w_is_active_except ?  // active flush itself doesn't include dead instruction
                               {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0} :  // so, 1-bit left shift
                               w_dead_grp_id_except_tmp;                           // otherwise, except itself includes dead instruction
-assign w_dead_grp_id = w_except_dead_grp_id |
-                       {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
+assign w_dead_grp_id = w_except_dead_grp_id; //  |
+// {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
 
 // Killing all uncommitted instructions
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -523,7 +523,8 @@ endfunction
 import "DPI-C" function void retire_inst
 (
  input longint id,
- input int retire
+ input longint retire_id,
+ input int     retire
 );
 import "DPI-C" function void log_stage
 (
@@ -559,14 +560,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+logic [63: 0] kanata_retire_id;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
+    kanata_retire_id = 'h0;
+  end else begin
     if (r_commit_d1) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (r_out_entry_d1.grp_id[i]) begin
-          retire_inst (r_out_entry_d1.inst[i].kanata_id,
-                       r_out_entry_d1.flush_valid[i] | r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+          retire_inst (r_out_entry_d1.inst[i].kanata_id, kanata_retire_id,
+                       r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+          if (!(r_out_entry_d1.dead[i] | r_dead_grp_d1[i])) begin
+            kanata_retire_id = kanata_retire_id + 1;
+          end
         end
       end
     end

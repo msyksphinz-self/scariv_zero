@@ -95,6 +95,7 @@
 ../src/scariv_ic_pref.sv
 
 ../src/scariv_rename.sv
+../src/scariv_rename_sub.sv
 ../src/scariv_resource_alloc.sv
 ../src/scariv_freelist.sv
 ../src/scariv_freelist_multiports.sv

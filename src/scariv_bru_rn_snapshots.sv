@@ -50,14 +50,17 @@ generate for(genvar r_idx =  0; r_idx < 32; r_idx++) begin : register_loop
 end
 endgenerate
 
-generate for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
-  always_ff @ (posedge i_clk) begin
-    if (|i_load) begin
-      r_snapshots[i_brtag[0]][i_idx] <= w_tmp_snapshots[scariv_conf_pkg::DISP_SIZE][i_idx];
+generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin
+    for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
+      always_ff @ (posedge i_clk) begin
+        if (i_load[d_idx]) begin
+          r_snapshots[i_brtag[d_idx]][i_idx] <= w_tmp_snapshots[d_idx+1][i_idx];
+        end
+      end
     end
   end
-end
-endgenerate
+end endgenerate
 
 generate for(genvar i =  0; i < 32; i++) begin : o_loop
   assign o_rn_list[i] = r_snapshots[br_upd_if.brtag][i];

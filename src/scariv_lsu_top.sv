@@ -133,7 +133,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
   scariv_lsu
   #(
     .LSU_PIPE_IDX(lsu_idx),
-    .PORT_BASE(lsu_idx * 2)
+    .PORT_BASE(lsu_idx * (scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM))
     )
   u_scariv_lsu
   (
@@ -181,7 +181,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_missu_resolve (w_missu_resolve),
     .i_missu_is_full (w_missu_is_full),
     .i_missu_is_empty (w_missu_is_empty),
-   
+
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 

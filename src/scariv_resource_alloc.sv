@@ -246,12 +246,12 @@ end // block: fpu_cre_ret_loop
 endgenerate
 
 
-logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_brtag_freelist_pop_id;
+logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_brtag_freelist_pop_id[scariv_conf_pkg::DISP_SIZE];
 brtag_t r_br_tag_current_idx;
-scariv_freelist
+scariv_brtag_freelist
   #(.SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
     .WIDTH ($clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)),
-    .INIT(0)
+    .PORTS (scariv_conf_pkg::DISP_SIZE)
     )
 u_brtag_freelist
 (
@@ -260,14 +260,14 @@ u_brtag_freelist
 
   .i_push    (brtag_if.valid),
   .i_push_id (brtag_if.brtag),
-  .i_pop     (|w_iq_fire & |ibuf_front_if.payload.resource_cnt.bru_inst_valid),
+  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_inst_valid),
   .o_pop_id  (w_brtag_freelist_pop_id),
   .o_is_empty()
 );
 
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-  assign o_brtag[d_idx]  = w_brtag_freelist_pop_id;
+  assign o_brtag[d_idx]  = w_brtag_freelist_pop_id[d_idx];
 end endgenerate
 
 endmodule // scariv_resource_alloc

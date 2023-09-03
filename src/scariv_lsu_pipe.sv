@@ -187,7 +187,7 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
   if (br_upd_if.update) begin
   end
-  
+
   w_ex3_issue_next       = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & (r_ex2_except_valid | ~w_ex2_haz_detected) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
 end
@@ -456,7 +456,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_addr         <= w_ex1_ld_except_valid | w_ex1_st_except_valid ? w_ex1_vaddr : w_ex1_addr;
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
     r_ex2_except_type  <= w_ex1_tlb_except_type;
-    
+
     r_ex2_is_lr <= r_ex1_issue.valid & w_ex1_is_lr;
     r_ex2_is_sc <= r_ex1_issue.valid & w_ex1_is_sc;
   end // else: !if(!i_reset_n)
@@ -482,7 +482,9 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~ex1_l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
 
-assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 & !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
+assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
+                                        !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
+                                        !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 // L1D replace information
@@ -521,7 +523,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
   lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
-  lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh : 
+  lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
                                                 stq_haz_check_if.ex2_haz_index;
 end
 
