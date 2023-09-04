@@ -4,6 +4,7 @@
 ../src/decoder_lsu_ctrl.sv
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv
+../src/decoder_csu_sched.sv
 ../src/decoder_fpu_ctrl.sv
 
 ../src/recurse_pkg.sv
@@ -97,6 +98,7 @@
 ../src/scariv_resource_alloc.sv
 ../src/scariv_freelist.sv
 ../src/scariv_freelist_multiports.sv
+../src/scariv_brtag_freelist.sv
 ../src/scariv_rename_map.sv
 ../src/scariv_inflight_list.sv
 ../src/scariv_bru_rn_snapshots.sv
@@ -149,6 +151,8 @@
 ../src/scariv_bru_pipe.sv
 
 ../src/scariv_csu.sv
+../src/scariv_csu_issue_unit.sv
+../src/scariv_csu_issue_entry.sv
 ../src/scariv_csu_pipe.sv
 ../src/scariv_csr.sv
 
