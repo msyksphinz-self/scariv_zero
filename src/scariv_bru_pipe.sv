@@ -21,7 +21,7 @@ module scariv_bru_pipe
 
   input scariv_bru_pkg::issue_entry_t rv0_issue,
   input logic [RV_ENTRY_SIZE-1:0]     rv0_index,
-  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_XPR_BUS_SIZE],
 
   // Commit notification
   input scariv_pkg::commit_blk_t      i_commit,
@@ -33,6 +33,8 @@ module scariv_bru_pipe
 
   output                            scariv_pkg::early_wr_t o_ex1_early_wr,
   output                            scariv_pkg::phy_wr_t o_ex3_phy_wr,
+
+  ren_update_if.master              ren_xpr_update_if,
 
   output scariv_pkg::done_rpt_t     o_done_report,
   br_upd_if.master                  ex3_br_upd_if
@@ -59,12 +61,12 @@ logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 logic                      w_ex1_br_flush;
 logic                      r_ex1_dead;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[2];
+logic [scariv_pkg::TGT_XPR_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[2];
 riscv_pkg::xlen_t                    w_ex1_rs_fwd_data [2];
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-riscv_pkg::xlen_t w_ex2_tgt_data          [scariv_pkg::TGT_BUS_SIZE];
+logic [scariv_pkg::TGT_XPR_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+logic [scariv_pkg::TGT_XPR_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
+riscv_pkg::xlen_t w_ex2_tgt_data          [scariv_pkg::TGT_XPR_BUS_SIZE];
 riscv_pkg::xlen_t w_ex2_rs1_fwd_data;
 riscv_pkg::xlen_t w_ex2_rs2_fwd_data;
 
@@ -120,8 +122,8 @@ assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
 assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
-  riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
-  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_XPR_BUS_SIZE];
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_XPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                                 (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
@@ -130,7 +132,7 @@ generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   end
     bit_oh_or #(
       .T(riscv_pkg::xlen_t),
-      .WORDS(scariv_pkg::TGT_BUS_SIZE)
+      .WORDS(scariv_pkg::TGT_XPR_BUS_SIZE)
   ) u_rs_data_select (
       .i_oh      (w_ex1_rs_fwd_valid[rs_idx]),
       .i_data    (w_ex1_tgt_data            ),
@@ -194,7 +196,7 @@ assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
-  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_XPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                           (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
@@ -210,7 +212,7 @@ endgenerate
 
 bit_oh_or #(
     .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_XPR_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -219,7 +221,7 @@ bit_oh_or #(
 
 bit_oh_or #(
     .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_XPR_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -313,6 +315,9 @@ assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
                                r_ex3_issue.pc_addr} + (r_ex3_issue.is_rvc ? 'h2 : 'h4);
+
+assign ren_xpr_update_if.valid = o_ex3_phy_wr.valid;
+assign ren_xpr_update_if.rnid  = r_ex3_issue.wr_reg.rnid;
 
 assign o_done_report.valid    = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
 assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;

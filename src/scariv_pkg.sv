@@ -22,16 +22,20 @@ package scariv_pkg;
 
   localparam MAX_ADDR_W = VADDR_W > PADDR_W ? VADDR_W : PADDR_W;
 
-  localparam REL_BUS_SIZE = ALU_INST_NUM +
-                            LSU_INST_NUM +
-                            1 +              // BRU
-                            1 +              // CSU
-                            FPU_INST_NUM;    // FPU: Now rel is only FPU Move Port
-  localparam TGT_BUS_SIZE = ALU_INST_NUM +
-                            LSU_INST_NUM +
-                            1 +               // BRU
-                            1 +               // CSU
-                            FPU_INST_NUM * 2; // FPU
+  localparam REL_XPR_BUS_SIZE = ALU_INST_NUM +
+                                LSU_INST_NUM +
+                                1 +              // BRU
+                                1 +              // CSU
+                                0;
+  localparam REL_FPR_BUS_SIZE = LSU_INST_NUM +
+                                FPU_INST_NUM;    // FPU: Now rel is only FPU Move Port
+  localparam TGT_XPR_BUS_SIZE = ALU_INST_NUM +
+                                LSU_INST_NUM +
+                                1 +               // BRU
+                                1 +               // CSU
+                                FPU_INST_NUM * 2;
+  localparam TGT_FPR_BUS_SIZE = LSU_INST_NUM +
+                                FPU_INST_NUM * 2; // FPU
   localparam CMT_BUS_SIZE = ALU_INST_NUM +    // ALU
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU
@@ -759,5 +763,23 @@ typedef struct packed {
 } inst_buffer_in_t;
 
 endpackage
+
+interface ren_update_if;
+  import scariv_pkg::*;
+
+  logic  valid;
+  rnid_t rnid;
+
+  modport master (
+    output valid,
+    output rnid
+  );
+
+  modport slave (
+    input valid,
+    input rnid
+  );
+
+endinterface // ren_update_t
 
 `default_nettype wire

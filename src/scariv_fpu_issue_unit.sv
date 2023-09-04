@@ -1,13 +1,13 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_issue_unit
+// NAME : scariv_fpu_issue_unit
 // TYPE : module
 // ------------------------------------------------------------------------
-// Scheduler for ALU
+// Scheduler for FPU
 // ------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------
 
-module scariv_issue_unit
+module scariv_fpu_issue_unit
   #(
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
@@ -24,17 +24,18 @@ module scariv_issue_unit
  rob_info_if.slave                     rob_info_if,
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input scariv_pkg::cmt_id_t  i_cmt_id,
- input scariv_pkg::grp_id_t  i_grp_id[IN_PORT_SIZE],
- scariv_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
+ input scariv_pkg::cmt_id_t            i_cmt_id,
+ input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
+ scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
 
  cre_ret_if.slave                      cre_ret_if,
 
  input logic                           i_stall,
 
  /* Forwarding path */
- input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
- input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
+ input scariv_pkg::early_wr_t i_fpr_early_wr[scariv_pkg::REL_FPR_BUS_SIZE],
+ input scariv_pkg::phy_wr_t   i_fpr_phy_wr  [scariv_pkg::TGT_FPR_BUS_SIZE],
+ input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
 
  output                                scariv_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
@@ -212,7 +213,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  scariv_issue_entry
+  scariv_fpu_issue_entry
     #(
       .IS_BRANCH (IS_BRANCH),
       .EN_OLDEST(EN_OLDEST),
@@ -236,8 +237,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr(i_phy_wr),
+    .i_fpr_early_wr(i_fpr_early_wr),
+    .i_fpr_phy_wr  (i_fpr_phy_wr),
+    .i_xpr_phy_wr  (i_xpr_phy_wr),
+
     .i_mispred_lsu(i_mispred_lsu),
 
     .i_commit  (i_commit),

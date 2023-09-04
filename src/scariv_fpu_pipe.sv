@@ -27,7 +27,7 @@ module scariv_fpu_pipe
 
     input scariv_pkg::issue_t ex0_issue,
     input logic [RV_ENTRY_SIZE-1:0] ex0_index,
-    input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+    input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_FPR_BUS_SIZE],
 
     regread_if.master ex1_regread_int_rs1,
 
@@ -40,6 +40,12 @@ module scariv_fpu_pipe
     output scariv_pkg::early_wr_t o_ex1_mv_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
     output scariv_pkg::done_rpt_t o_mv_done_report,
+
+    ren_update_if.master          ren_mv_xpr_update_if,
+    ren_update_if.master          ren_mv_fpr_update_if,
+
+    ren_update_if.master          ren_fpnew_xpr_update_if,
+    ren_update_if.master          ren_fpnew_fpr_update_if,
 
     output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
     output scariv_pkg::done_rpt_t o_fp_done_report
@@ -54,15 +60,15 @@ scariv_pkg::issue_t                         r_ex1_issue;
 logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
 logic                                     w_ex1_frm_invalid;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_int_fwd_valid;
+logic [scariv_pkg::TGT_FPR_BUS_SIZE-1:0] w_ex1_rs_int_fwd_valid;
 riscv_pkg::xlen_t                    w_ex1_rs_int_fwd_data ;
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[3];
+logic [scariv_pkg::TGT_FPR_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[3];
 scariv_pkg::alen_t                   w_ex1_rs_fwd_data [3];
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs3_fwd_valid;
-scariv_pkg::alen_t w_ex2_tgt_data          [scariv_pkg::TGT_BUS_SIZE];
+logic [scariv_pkg::TGT_FPR_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+logic [scariv_pkg::TGT_FPR_BUS_SIZE-1:0] w_ex2_rs2_fwd_valid;
+logic [scariv_pkg::TGT_FPR_BUS_SIZE-1:0] w_ex2_rs3_fwd_valid;
+scariv_pkg::alen_t w_ex2_tgt_data          [scariv_pkg::TGT_FPR_BUS_SIZE];
 scariv_pkg::alen_t w_ex2_rs1_fwd_data;
 scariv_pkg::alen_t w_ex2_rs2_fwd_data;
 scariv_pkg::alen_t w_ex2_rs3_fwd_data;
@@ -173,8 +179,8 @@ assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_mv_early_wr.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
-  scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
-  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_FPR_BUS_SIZE];
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_FPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                                 (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
@@ -182,7 +188,7 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
   end
     bit_oh_or #(
       .T(scariv_pkg::alen_t),
-      .WORDS(scariv_pkg::TGT_BUS_SIZE)
+      .WORDS(scariv_pkg::TGT_FPR_BUS_SIZE)
   ) u_rs_data_select (
       .i_oh      (w_ex1_rs_fwd_valid[rs_idx]),
       .i_data    (w_ex1_tgt_data            ),
@@ -199,7 +205,7 @@ assign w_ex1_frm_invalid = r_ex1_pipe_ctrl.use_frm & ((r_ex1_issue.inst[14:12] =
 // -----------------------------
 
 generate
-  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_FPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                           (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
@@ -219,7 +225,7 @@ endgenerate
 
 bit_oh_or #(
     .T(scariv_pkg::alen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_FPR_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -228,7 +234,7 @@ bit_oh_or #(
 
 bit_oh_or #(
     .T(scariv_pkg::alen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_FPR_BUS_SIZE)
 ) u_rs2_data_select (
     .i_oh(w_ex2_rs2_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -237,7 +243,7 @@ bit_oh_or #(
 
 bit_oh_or #(
     .T(scariv_pkg::alen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_FPR_BUS_SIZE)
 ) u_rs3_data_select (
     .i_oh(w_ex2_rs3_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -438,6 +444,12 @@ always_comb begin
   o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
   o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
 
+  ren_mv_xpr_update_if.valid = o_ex3_mv_phy_wr.valid & (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR);
+  ren_mv_xpr_update_if.rnid  = r_ex3_issue.wr_reg.rnid;
+
+  ren_mv_fpr_update_if.valid = o_ex3_mv_phy_wr.valid & (r_ex3_issue.wr_reg.typ == scariv_pkg::FPR);
+  ren_mv_fpr_update_if.rnid  = r_ex3_issue.wr_reg.rnid;
+
   o_mv_done_report.valid               = r_ex3_issue.valid & r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
   o_mv_done_report.cmt_id              = r_ex3_issue.cmt_id;
   o_mv_done_report.grp_id              = r_ex3_issue.grp_id;
@@ -450,6 +462,12 @@ always_comb begin
   o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
   o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
   o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
+
+  ren_fpnew_xpr_update_if.valid = o_fpnew_phy_wr.valid & (w_fpnew_reg_type == scariv_pkg::GPR);
+  ren_fpnew_xpr_update_if.rnid  = w_fpnew_rnid;
+
+  ren_fpnew_fpr_update_if.valid = o_fpnew_phy_wr.valid & (w_fpnew_reg_type == scariv_pkg::FPR);
+  ren_fpnew_fpr_update_if.rnid  = w_fpnew_rnid;
 
   w_ex3_done_report_illegal = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FPNEW) & r_ex3_frm_invalid;
 

@@ -20,26 +20,26 @@ module scariv_lsu_issue_unit
 (
   input logic                           i_clk,
   input logic                           i_reset_n,
-  
+
   // ROB notification interface
   rob_info_if.slave                     rob_info_if,
-  
+
   input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
   input scariv_pkg::cmt_id_t            i_cmt_id,
   input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
   scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
-  
+
   cre_ret_if.slave                      cre_ret_if,
-  
+
   input logic                           i_stall,
-  
+
   /* Forwarding path */
-  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
-  
+  input scariv_pkg::early_wr_t i_xpr_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+  input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
+
   output scariv_lsu_pkg::lsu_issue_entry_t o_issue,
   output [ENTRY_SIZE-1:0]                  o_iss_index_oh,
-  
+
   input scariv_pkg::mispred_t           i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
   input ex1_q_update_t                  i_ex1_updates,
@@ -52,9 +52,9 @@ module scariv_lsu_issue_unit
   input logic                           i_stq_rmw_existed,
 
   done_if.slave                         pipe_done_if,
-  
+
   output scariv_pkg::done_rpt_t         o_done_report,
-  
+
   // Commit notification
   input scariv_pkg::commit_blk_t          i_commit,
   // Branch Flush Notification
@@ -178,9 +178,9 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
   assign w_rs1_rnid = i_disp_info[idx].rd_regs[0].rnid;
   assign w_rs1_type = i_disp_info[idx].rd_regs[0].typ ;
 
-  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_xpr_early_wr),
                                         .o_valid      (w_rs1_rel_hit), .o_may_mispred (w_rs1_may_mispred));
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_xpr_phy_wr),
                                         .o_valid      (w_rs1_phy_hit));
   select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
                                         .o_mispred    (w_rs1_mispredicted));
@@ -227,15 +227,15 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr(i_phy_wr),
+    .i_xpr_early_wr(i_xpr_early_wr),
+    .i_xpr_phy_wr  (i_xpr_phy_wr),
 
     .i_mispred_lsu (i_mispred_lsu),
     .i_ex1_updates (i_ex1_updates),
     .i_tlb_resolve        (i_tlb_resolve       ),
     .i_ex2_updates        (i_ex2_updates       ),
     .i_st_buffer_empty    (i_st_buffer_empty   ),
-    .i_st_requester_empty (i_st_requester_empty),  
+    .i_st_requester_empty (i_st_requester_empty),
     .i_replay_queue_full  (i_replay_queue_full ),
     .i_missu_is_empty     (i_missu_is_empty    ),
 

@@ -27,7 +27,7 @@ module scariv_lsu_pipe
  input scariv_pkg::commit_blk_t        i_commit,
  br_upd_if.slave                       br_upd_if,
 
- input scariv_pkg::phy_wr_t             ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+ input scariv_pkg::phy_wr_t             ex1_i_xpr_phy_wr[scariv_pkg::TGT_XPR_BUS_SIZE],
 
  input scariv_pkg::mispred_t            i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
@@ -36,8 +36,14 @@ module scariv_lsu_pipe
 
  regread_if.master                     ex1_regread_rs1,
 
- output scariv_pkg::early_wr_t         o_ex1_early_wr,
- output scariv_pkg::phy_wr_t           o_ex3_phy_wr,
+ output scariv_pkg::early_wr_t         o_ex1_xpr_early_wr,
+ output scariv_pkg::phy_wr_t           o_ex3_xpr_phy_wr,
+
+ output scariv_pkg::early_wr_t         o_ex1_fpr_early_wr,
+ output scariv_pkg::phy_wr_t           o_ex3_fpr_phy_wr,
+
+ ren_update_if.master                  ren_xpr_update_if,
+ ren_update_if.master                  ren_fpr_update_if,
 
  l1d_rd_if.master                      ex1_l1d_rd_if,
  output scariv_pkg::mispred_t          o_ex2_mispred,
@@ -121,8 +127,8 @@ logic w_ex1_commit_flush;
 logic w_ex1_br_flush;
 
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
-riscv_pkg::xlen_t                  w_ex1_tgt_data[scariv_pkg::TGT_BUS_SIZE];
+logic [scariv_pkg::TGT_XPR_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
+riscv_pkg::xlen_t                  w_ex1_tgt_data[scariv_pkg::TGT_XPR_BUS_SIZE];
 riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
 
 //
@@ -297,18 +303,18 @@ assign w_ex0_index_oh = i_ex0_replay_index_oh;
 //
 // EX1 stage pipeline
 //
-generate for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-  assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                        (r_ex1_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                        (r_ex1_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
+generate for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_XPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rd_regs[0].valid & ex1_i_xpr_phy_wr[tgt_idx].valid &
+                                        (r_ex1_issue.rd_regs[0].typ  == ex1_i_xpr_phy_wr[tgt_idx].rd_type) &
+                                        (r_ex1_issue.rd_regs[0].rnid == ex1_i_xpr_phy_wr[tgt_idx].rd_rnid) &
                                         (r_ex1_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
-  assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+  assign w_ex1_tgt_data[tgt_idx] = ex1_i_xpr_phy_wr[tgt_idx].rd_data;
 end
 endgenerate
 
 bit_oh_or #(
     .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_XPR_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex1_rs1_fwd_valid),
     .i_data(w_ex1_tgt_data),
@@ -370,11 +376,21 @@ select_mispred_bus ex1_rs2_mispred_select
 assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
 assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
-                                    ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
-assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
-assign o_ex1_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+assign o_ex1_xpr_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
+                                        (r_ex1_issue.wr_reg.typ == scariv_pkg::GPR) &
+                                        ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+assign o_ex1_xpr_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
+assign o_ex1_xpr_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
+assign o_ex1_xpr_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+
+generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu_ex1_early_wr
+  assign o_ex1_fpr_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
+                                         (r_ex1_issue.wr_reg.typ == scariv_pkg::FPR) &
+                                         ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+  assign o_ex1_fpr_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
+  assign o_ex1_fpr_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
+  assign o_ex1_fpr_early_wr.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+end endgenerate
 
 logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
@@ -707,16 +723,29 @@ assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_i
 assign o_ex3_cmt_id = r_ex3_issue.cmt_id;
 assign o_ex3_grp_id = r_ex3_issue.grp_id;
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
-                              r_ex3_issue.wr_reg.valid &
-                              (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
-                               r_ex3_issue.wr_reg.typ == scariv_pkg::FPR ? 1'b1 :
-                               1'b1) &
-                              ~r_ex3_mis_valid;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
+assign o_ex3_xpr_phy_wr.valid   = r_ex3_issue.valid &
+                                  r_ex3_issue.wr_reg.valid &
+                                  (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR) & (r_ex3_issue.wr_reg.regidx != 'h0) &
+                                  ~r_ex3_mis_valid;
+assign o_ex3_xpr_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign o_ex3_xpr_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+assign o_ex3_xpr_phy_wr.rd_data = r_ex3_aligned_data;
 
+assign ren_xpr_update_if.valid = o_ex3_xpr_phy_wr.valid;
+assign ren_xpr_update_if.rnid  = r_ex3_issue.wr_reg.rnid;
+
+generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu_ex3_phy_wr
+  assign o_ex3_fpr_phy_wr.valid   = r_ex3_issue.valid &
+                                    r_ex3_issue.wr_reg.valid &
+                                    (r_ex3_issue.wr_reg.typ == scariv_pkg::FPR) &
+                                    ~r_ex3_mis_valid;
+  assign o_ex3_fpr_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  assign o_ex3_fpr_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
+  assign o_ex3_fpr_phy_wr.rd_data = r_ex3_aligned_data;
+
+  assign ren_fpr_update_if.valid = o_ex3_fpr_phy_wr.valid;
+  assign ren_fpr_update_if.rnid  = r_ex3_issue.wr_reg.rnid;
+end endgenerate // block: fpu_ex3_phy_wr
 
 `ifdef SIMULATION
 // Kanata

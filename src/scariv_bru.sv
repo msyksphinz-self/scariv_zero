@@ -24,13 +24,15 @@ module scariv_bru
   regread_if.master ex1_regread_rs2,
 
   /* Forwarding path */
-  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-  input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+  input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_XPR_BUS_SIZE],
   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
   /* write output */
   output scariv_pkg::early_wr_t o_ex1_early_wr,
   output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+
+  ren_update_if.master          ren_xpr_update_if,
 
   output scariv_pkg::done_rpt_t o_done_report,
 
@@ -125,6 +127,8 @@ u_bru_pipe
 
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
+
+   .ren_xpr_update_if (ren_xpr_update_if),
 
    .o_done_report (o_done_report),
    .ex3_br_upd_if (ex3_br_upd_if)

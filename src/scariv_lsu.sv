@@ -31,8 +31,8 @@ module scariv_lsu
     regread_if.master ex1_regread_rs1,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+    input scariv_pkg::early_wr_t i_xpr_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+    input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
     input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
     // STQ Forwarding checker
@@ -80,8 +80,14 @@ module scariv_lsu
     input stq_resolve_t     i_stq_rs2_resolve,
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+    output scariv_pkg::early_wr_t o_ex1_xpr_early_wr,
+    output scariv_pkg::phy_wr_t   o_ex3_xpr_phy_wr,
+
+    output scariv_pkg::early_wr_t o_ex1_fpr_early_wr,
+    output scariv_pkg::phy_wr_t   o_ex3_fpr_phy_wr,
+
+    ren_update_if.master          ren_xpr_update_if,
+    ren_update_if.master          ren_fpr_update_if,
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -148,7 +154,7 @@ u_issue_unit
   .i_grp_id     (disp_picked_grp_id    ),
   .i_disp_info  (disp_picked_inst      ),
   .cre_ret_if   (cre_ret_if            ),
-  
+
   .i_stq_rmw_existed (i_stq_rmw_existed),
 
   .i_stall      (w_replay_selected     ),
@@ -174,8 +180,8 @@ u_issue_unit
 
   // .request_if (request_if),
 
-  .i_early_wr    (i_early_wr),
-  .i_phy_wr      (i_phy_wr  ),
+  .i_xpr_early_wr    (i_xpr_early_wr),
+  .i_xpr_phy_wr      (i_xpr_phy_wr  ),
   .i_mispred_lsu (i_mispred_lsu)
 );
 
@@ -206,7 +212,7 @@ u_replay_queue
   .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
 
-assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 : 
+assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
                            scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
@@ -269,7 +275,7 @@ u_lsu_pipe
    .csr_info (csr_info),
    .sfence_if(sfence_if),
 
-   .ex1_i_phy_wr (i_phy_wr),
+   .ex1_i_xpr_phy_wr (i_xpr_phy_wr),
 
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
@@ -278,8 +284,14 @@ u_lsu_pipe
 
    .i_mispred_lsu (i_mispred_lsu),
 
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .o_ex1_xpr_early_wr(o_ex1_xpr_early_wr),
+   .o_ex3_xpr_phy_wr  (o_ex3_xpr_phy_wr),
+
+   .o_ex1_fpr_early_wr(o_ex1_fpr_early_wr),
+   .o_ex3_fpr_phy_wr  (o_ex3_fpr_phy_wr),
+
+   .ren_xpr_update_if (ren_xpr_update_if),
+   .ren_fpr_update_if (ren_fpr_update_if),
 
    .ex1_l1d_rd_if (l1d_rd_if),
    .o_ex2_mispred (o_ex2_mispred),
@@ -302,7 +314,7 @@ u_lsu_pipe
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),
    .o_ex2_q_updates  (o_ex2_q_updates ),
-    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
    .ex3_done_if (w_ex3_done_if),
    .o_ex3_cmt_id (w_ex3_cmt_id),

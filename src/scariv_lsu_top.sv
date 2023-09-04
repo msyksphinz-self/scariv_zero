@@ -51,12 +51,18 @@ module scariv_lsu_top
     l2_resp_if.slave  l1d_ext_resp,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+    input scariv_pkg::early_wr_t i_xpr_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+    input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
+    input scariv_pkg::phy_wr_t   i_fpr_phy_wr  [scariv_pkg::TGT_FPR_BUS_SIZE],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr[scariv_conf_pkg::LSU_INST_NUM],
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr  [scariv_conf_pkg::LSU_INST_NUM],
+    output scariv_pkg::early_wr_t o_ex1_xpr_early_wr[scariv_conf_pkg::LSU_INST_NUM],
+    output scariv_pkg::phy_wr_t   o_ex3_xpr_phy_wr  [scariv_conf_pkg::LSU_INST_NUM],
+    output scariv_pkg::early_wr_t o_ex1_fpr_early_wr[scariv_conf_pkg::LSU_INST_NUM],
+    output scariv_pkg::phy_wr_t   o_ex3_fpr_phy_wr  [scariv_conf_pkg::LSU_INST_NUM],
+
+    ren_update_if.master          ren_xpr_update_if[scariv_conf_pkg::LSU_INST_NUM-1:0],
+    ren_update_if.master          ren_fpr_update_if[scariv_conf_pkg::LSU_INST_NUM-1:0],
 
     output scariv_pkg::done_rpt_t      o_done_report          [scariv_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
     output scariv_pkg::another_flush_t o_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
@@ -150,8 +156,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr  (i_phy_wr),
+    .i_xpr_early_wr(i_xpr_early_wr),
+    .i_xpr_phy_wr  (i_xpr_phy_wr),
     .i_mispred_lsu (o_ex2_mispred),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
@@ -182,8 +188,13 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_missu_is_full (w_missu_is_full),
     .i_missu_is_empty (w_missu_is_empty),
 
-    .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
-    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
+    .o_ex1_xpr_early_wr(o_ex1_xpr_early_wr[lsu_idx]),
+    .o_ex3_xpr_phy_wr  (o_ex3_xpr_phy_wr  [lsu_idx]),
+    .o_ex1_fpr_early_wr(o_ex1_fpr_early_wr[lsu_idx]),
+    .o_ex3_fpr_phy_wr  (o_ex3_fpr_phy_wr  [lsu_idx]),
+
+    .ren_xpr_update_if (ren_xpr_update_if [lsu_idx]),
+    .ren_fpr_update_if (ren_fpr_update_if [lsu_idx]),
 
     .i_commit (i_commit),
 
@@ -253,8 +264,8 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
- .i_early_wr    (i_early_wr),
- .i_phy_wr      (i_phy_wr  ),
+ .i_xpr_phy_wr  (i_xpr_phy_wr ),
+ .i_fpr_phy_wr  (i_fpr_phy_wr ),
  .i_mispred_lsu (o_ex2_mispred),
 
  .i_tlb_resolve  (w_tlb_resolve  ),

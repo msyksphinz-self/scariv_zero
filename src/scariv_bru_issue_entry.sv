@@ -31,8 +31,8 @@ module scariv_bru_issue_entry
    output scariv_bru_pkg::issue_entry_t o_entry,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t i_early_wr   [scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t   i_phy_wr     [scariv_pkg::TGT_BUS_SIZE],
+   input scariv_pkg::early_wr_t i_early_wr   [scariv_pkg::REL_XPR_BUS_SIZE],
+   input scariv_pkg::phy_wr_t   i_phy_wr     [scariv_pkg::TGT_XPR_BUS_SIZE],
    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic       i_entry_picked,

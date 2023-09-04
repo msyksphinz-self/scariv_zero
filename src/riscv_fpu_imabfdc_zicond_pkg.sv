@@ -1,1 +1,5 @@
-riscv_fpu_imfdc_pkg.sv
+package riscv_fpu_pkg;
+
+parameter FLEN_W = 64;
+
+endpackage // riscv_fpu_pkg

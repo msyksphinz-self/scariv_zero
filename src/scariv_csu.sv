@@ -20,13 +20,15 @@ module scariv_csu
   regread_if.master                          ex1_regread_rs1,
 
   /* Forwarding path */
-  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-  input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+  input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_XPR_BUS_SIZE],
   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
   /* write output */
   output scariv_pkg::early_wr_t o_ex1_early_wr,
   output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+
+  ren_update_if.master          ren_xpr_update_if,
 
   /* CSR information */
   csr_info_if.master          csr_info,
@@ -137,6 +139,8 @@ u_csu_pipe
 
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
+
+   .ren_xpr_update_if (ren_xpr_update_if),
 
    .i_status_priv (csr_info.priv),
    .i_mstatus     (csr_info.mstatus),

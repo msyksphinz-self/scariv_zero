@@ -22,7 +22,9 @@ module scariv_rename
    scariv_front_if.slave      ibuf_front_if,
    input scariv_pkg::cmt_id_t i_sc_new_cmt_id,
 
-   input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+   ren_update_if.slave ren_xpr_update_if[scariv_pkg::TGT_XPR_BUS_SIZE],
+   ren_update_if.slave ren_fpr_update_if[scariv_pkg::TGT_FPR_BUS_SIZE],
+
    scariv_front_if.master           rn_front_if,
 
    // from Resource Allocator
@@ -74,7 +76,7 @@ u_ipr_rename
    .i_ibuf_front_fire    (w_ibuf_front_fire),
    .i_ibuf_front_payload (ibuf_front_if.payload),
 
-   .i_phy_wr  (i_phy_wr),
+   .ren_update_if  (ren_xpr_update_if),
    .i_brtag   (i_brtag),
    .br_upd_if (br_upd_if),
 
@@ -97,7 +99,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
      .i_ibuf_front_fire    (w_ibuf_front_fire),
      .i_ibuf_front_payload (ibuf_front_if.payload),
 
-     .i_phy_wr  (i_phy_wr),
+     .ren_update_if  (ren_fpr_update_if),
      .i_brtag   (i_brtag),
      .br_upd_if (br_upd_if),
 

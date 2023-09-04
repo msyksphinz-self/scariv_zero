@@ -23,12 +23,14 @@ module scariv_csu_pipe
 
   input scariv_pkg::issue_t           rv0_issue,
   input logic [RV_ENTRY_SIZE-1:0]   rv0_index,
-  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_XPR_BUS_SIZE],
 
   regread_if.master                 ex1_regread_rs1,
 
   output scariv_pkg::early_wr_t       o_ex1_early_wr,
   output scariv_pkg::phy_wr_t         o_ex3_phy_wr,
+
+  ren_update_if.master                ren_xpr_update_if,
 
   /* CSR information */
   input riscv_common_pkg::priv_t               i_status_priv,
@@ -69,8 +71,8 @@ pipe_ctrl_t                              r_ex1_pipe_ctrl;
 scariv_pkg::issue_t                        r_ex1_issue;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
-riscv_pkg::xlen_t      w_ex2_tgt_data          [scariv_pkg::TGT_BUS_SIZE];
+logic [scariv_pkg::TGT_XPR_BUS_SIZE-1:0] w_ex2_rs1_fwd_valid;
+riscv_pkg::xlen_t      w_ex2_tgt_data          [scariv_pkg::TGT_XPR_BUS_SIZE];
 riscv_pkg::xlen_t      w_ex2_rs1_fwd_data;
 riscv_pkg::xlen_t      w_ex2_csr_rd_data;
 riscv_pkg::xlen_t      w_ex2_rs1_selected_data;
@@ -129,7 +131,7 @@ assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
 
 generate
-  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_XPR_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                           (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
@@ -141,7 +143,7 @@ endgenerate
 
 bit_oh_or #(
     .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
+    .WORDS(scariv_pkg::TGT_XPR_BUS_SIZE)
 ) u_rs1_data_select (
     .i_oh(w_ex2_rs1_fwd_valid),
     .i_data(w_ex2_tgt_data),
@@ -205,6 +207,9 @@ assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
+
+assign ren_xpr_update_if.valid = o_ex3_phy_wr.valid;
+assign ren_xpr_update_if.rnid  = o_ex3_phy_wr.rd_rnid;
 
 logic w_ex3_sfence_vma_illegal;
 logic w_ex3_sret_tsr_illegal;

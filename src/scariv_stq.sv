@@ -21,8 +21,8 @@ module scariv_stq
     cre_ret_if.slave                                   cre_ret_if,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t                 i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t                   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   input scariv_pkg::phy_wr_t                   i_xpr_phy_wr [scariv_pkg::TGT_XPR_BUS_SIZE],
+   input scariv_pkg::phy_wr_t                   i_fpr_phy_wr [scariv_pkg::TGT_FPR_BUS_SIZE],
    input scariv_pkg::mispred_t                  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
@@ -288,8 +288,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_disp            (w_disp_entry      ),
      .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
 
-     .i_early_wr (i_early_wr),
-     .i_phy_wr   (i_phy_wr),
+     .i_xpr_phy_wr   (i_xpr_phy_wr),
+     .i_fpr_phy_wr   (i_fpr_phy_wr),
      .i_mispred_lsu (i_mispred_lsu),
 
      .i_ex1_q_valid   (|w_ex1_q_valid),
@@ -301,7 +301,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_ex2_q_updates(w_ex2_q_updates),
 
      .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data), 
+     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data),
 
      .o_entry (w_stq_entries[s_idx]),
 

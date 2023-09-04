@@ -32,8 +32,8 @@ module scariv_bru_issue_unit
  input logic                           i_stall,
 
  /* Forwarding path */
- input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
- input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+ input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+ input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
 
  output scariv_bru_pkg::issue_entry_t  o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,

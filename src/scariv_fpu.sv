@@ -33,14 +33,21 @@ module scariv_fpu #(
     regread_if.master ex1_regread_rs3,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+    input scariv_pkg::early_wr_t i_fpr_early_wr[scariv_pkg::REL_FPR_BUS_SIZE],
+    input scariv_pkg::phy_wr_t   i_fpr_phy_wr  [scariv_pkg::TGT_FPR_BUS_SIZE],
+    input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
     input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_mv_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
     output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
+
+    ren_update_if.master          ren_mv_xpr_update_if,
+    ren_update_if.master          ren_mv_fpr_update_if,
+
+    ren_update_if.master          ren_fpnew_xpr_update_if,
+    ren_update_if.master          ren_fpnew_fpr_update_if,
 
     output scariv_pkg::done_rpt_t o_mv_done_report,
     output scariv_pkg::done_rpt_t o_fp_done_report,
@@ -82,14 +89,14 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_issue_unit
+scariv_fpu_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_FPU_ENTRY_SIZE),
     .IN_PORT_SIZE(FPU_PORT_SIZE),
     .NUM_OPERANDS (3),
     .NUM_DONE_PORT (2)
     )
-u_scariv_issue_unit
+u_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -104,8 +111,9 @@ u_scariv_issue_unit
 
    .i_stall    (1'b0),
 
-   .i_early_wr(i_early_wr),
-   .i_phy_wr  (i_phy_wr),
+   .i_fpr_early_wr(i_fpr_early_wr),
+   .i_fpr_phy_wr  (i_fpr_phy_wr),
+   .i_xpr_phy_wr  (i_xpr_phy_wr),
    .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue(w_ex0_issue),
@@ -129,7 +137,7 @@ u_fpu
 
    .ex0_issue(w_ex0_issue),
    .ex0_index(w_ex0_index_oh),
-   .ex1_i_phy_wr(i_phy_wr),
+   .ex1_i_phy_wr(i_fpr_phy_wr),
 
    .ex1_regread_int_rs1(ex1_regread_int_rs1),
 
@@ -142,6 +150,12 @@ u_fpu
    .o_ex1_mv_early_wr(o_ex1_mv_early_wr),
    .o_ex3_mv_phy_wr  (o_ex3_mv_phy_wr  ),
    .o_mv_done_report (o_mv_done_report ),
+
+   .ren_mv_xpr_update_if (ren_mv_xpr_update_if),
+   .ren_mv_fpr_update_if (ren_mv_fpr_update_if),
+
+   .ren_fpnew_xpr_update_if (ren_fpnew_xpr_update_if),
+   .ren_fpnew_fpr_update_if (ren_fpnew_fpr_update_if),
 
    .o_fpnew_phy_wr   (o_fpnew_phy_wr   ),
    .o_fp_done_report (o_fp_done_report )

@@ -31,8 +31,8 @@ import scariv_lsu_pkg::*;
    output scariv_lsu_pkg::lsu_issue_entry_t o_entry,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   input scariv_pkg::early_wr_t i_xpr_early_wr[scariv_pkg::REL_XPR_BUS_SIZE],
+   input scariv_pkg::phy_wr_t   i_xpr_phy_wr  [scariv_pkg::TGT_XPR_BUS_SIZE],
 
    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
@@ -99,9 +99,9 @@ endfunction // all_operand_ready
 
 assign w_rs1_rnid = r_entry.rd_regs[0].rnid;
 assign w_rs1_type = r_entry.rd_regs[0].typ;
-select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_xpr_early_wr),
                                       .o_valid   (w_rs1_rel_hit), .o_may_mispred (w_rs1_may_mispred));
-select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_xpr_phy_wr),
                                       .o_valid   (w_rs1_phy_hit));
 select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
                                       .o_mispred (w_rs1_mispredicted));

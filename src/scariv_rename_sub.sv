@@ -8,7 +8,9 @@
 
 module scariv_rename_sub
   import scariv_pkg::*;
-  #(parameter REG_TYPE = GPR)
+  #(parameter REG_TYPE = GPR,
+    localparam REN_UPD_NUM = REG_TYPE == GPR ? scariv_pkg::TGT_XPR_BUS_SIZE : scariv_pkg::TGT_FPR_BUS_SIZE
+    )
 (
  input logic i_clk,
  input logic i_reset_n,
@@ -18,8 +20,7 @@ module scariv_rename_sub
  input logic                     i_ibuf_front_fire,
  input scariv_front_pkg::front_t i_ibuf_front_payload,
 
- input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
-
+ ren_update_if.slave ren_update_if[REN_UPD_NUM],
  // from Resource Allocator
  input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
 
@@ -381,7 +382,7 @@ u_inflight_map
    .i_update_fetch_rnid  (w_rd_rnid  ),
    .i_update_fetch_data  (w_rd_data  ),
 
-   .i_phy_wr (i_phy_wr)
+   .ren_update_if (ren_update_if)
 );
 
 // Map List Queue
