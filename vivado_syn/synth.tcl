@@ -43,7 +43,7 @@ read_xdc ../synth_constraints.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
 synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
-    -flatten_hierarchy rebuilt \
+    -flatten_hierarchy none \
     -include_dir ../../src/fpnew/src/common_cells/include \
     -include_dir ../../src \
     -verilog_define $::env(RV_DEFINE)
