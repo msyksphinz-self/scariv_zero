@@ -40,7 +40,7 @@ module scariv_rename
    input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
    );
 
-logic [ 1: 0] w_freelist_ready;
+logic [ 2: 0] w_freelist_ready;
 logic         w_ibuf_front_fire;
 
 logic         w_commit_flush;
@@ -49,6 +49,7 @@ logic         w_flush_valid;
 
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_ipr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_fpr_disp_inst;
+disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_vpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
 
@@ -107,15 +108,49 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
      .i_commit_rnid_update (i_commit_rnid_update)
      );
 
-  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    assign w_ibuf_merge_disp_inst[d_idx]  = merge_scariv_front_if (w_ibuf_ipr_disp_inst[d_idx], w_ibuf_fpr_disp_inst[d_idx]);
-  end
-
 end else begin // block: fpu
   assign w_freelist_ready[1] = 1'b1;
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    assign w_ibuf_merge_disp_inst[d_idx]  = w_ibuf_ipr_disp_inst[d_idx];
+    assign w_ibuf_fpr_disp_inst[d_idx]  = 'h0;
   end
+end endgenerate
+
+
+generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
+  scariv_rename_sub
+    #(.REG_TYPE (scariv_pkg::VPR))
+  u_vpr_rename
+    (
+     .i_clk     (i_clk    ),
+     .i_reset_n (i_reset_n),
+
+     .o_freelist_ready (w_freelist_ready[2]),
+
+     .i_ibuf_front_fire    (w_ibuf_front_fire),
+     .i_ibuf_front_payload (ibuf_front_if.payload),
+
+     .i_phy_wr  (i_phy_wr),
+     .i_brtag   (i_brtag),
+     .br_upd_if (br_upd_if),
+
+     .o_disp_inst (w_ibuf_vpr_disp_inst),
+
+     .i_commit             (i_commit            ),
+     .i_commit_rnid_update (i_commit_rnid_update)
+     );
+
+end else begin // block: vpr
+  assign w_freelist_ready[2] = 1'b1;
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    assign w_ibuf_vpr_disp_inst[d_idx]  = 'h0;
+  end
+end endgenerate
+
+// Merge dispatched instruction
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  assign w_ibuf_merge_disp_inst[d_idx]  = merge_scariv_front_if (w_ibuf_ipr_disp_inst[d_idx],
+                                                                 w_ibuf_fpr_disp_inst[d_idx],
+                                                                 w_ibuf_vpr_disp_inst[d_idx]);
 end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

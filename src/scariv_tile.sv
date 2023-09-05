@@ -590,7 +590,7 @@ endgenerate
 
 vlvtype_commit_if w_vlvtype_commit();
 
-generate if (scariv_vec_pkg::VLEN != 0) begin : vpu
+generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
   vlvtype_req_if                     w_vlvtype_req_if();
   vlvtype_upd_if                     w_vlvtype_upd_if();

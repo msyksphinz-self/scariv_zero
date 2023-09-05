@@ -1,7 +1,7 @@
 package scariv_vec_pkg;
 
-parameter VLEN = 128;
-parameter VLENB = VLEN / 8;
+parameter VLEN_W = 128;
+parameter VLENB = VLEN_W / 8;
 parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;

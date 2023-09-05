@@ -97,9 +97,10 @@ typedef logic [scariv_conf_pkg::ICACHE_DATA_W/8-1: 0] ic_strb_t;
     logic [31:0] inst;
   } inst_buf_t;
 
-  typedef enum logic {
+  typedef enum logic [ 1: 0] {
     GPR,
-    FPR
+    FPR,
+    VPR
   } reg_t;
 
 typedef struct packed {
@@ -238,14 +239,15 @@ typedef struct packed {
   endfunction  // assign_disp_rename
 
 
-  function disp_t merge_scariv_front_if (disp_t int_disp,
-                                         disp_t fp_disp);
+  function disp_t merge_scariv_front_if (disp_t xpr_disp,
+                                         disp_t fpr_disp,
+                                         disp_t vpr_disp);
     disp_t ret;
-    ret = int_disp;
-    ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
-    ret.rd_regs[0] = int_disp.rd_regs[0].typ == GPR ? int_disp.rd_regs[0] : fp_disp.rd_regs[0];
-    ret.rd_regs[1] = int_disp.rd_regs[1].typ == GPR ? int_disp.rd_regs[1] : fp_disp.rd_regs[1];
-    ret.rd_regs[2] = int_disp.rd_regs[2].typ == GPR ? int_disp.rd_regs[2] : fp_disp.rd_regs[2];
+    ret = xpr_disp;
+    ret.wr_reg = xpr_disp.wr_reg.typ == GPR ? xpr_disp.wr_reg : fpr_disp.wr_reg;
+    ret.rd_regs[0] = xpr_disp.rd_regs[0].typ == GPR ? xpr_disp.rd_regs[0] : xpr_disp.rd_regs[0].typ == FPR ? fpr_disp.rd_regs[0] : vpr_disp.rd_regs[0];
+    ret.rd_regs[1] = xpr_disp.rd_regs[1].typ == GPR ? xpr_disp.rd_regs[1] : xpr_disp.rd_regs[1].typ == FPR ? fpr_disp.rd_regs[1] : vpr_disp.rd_regs[1];
+    ret.rd_regs[2] = xpr_disp.rd_regs[2].typ == GPR ? xpr_disp.rd_regs[2] : xpr_disp.rd_regs[2].typ == FPR ? fpr_disp.rd_regs[2] : vpr_disp.rd_regs[2];
 
     return ret;
 

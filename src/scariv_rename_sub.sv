@@ -33,8 +33,8 @@ module scariv_rename_sub
  input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
  );
 
-localparam NUM_OPERANDS = REG_TYPE == FPR ? 3 :
-                          2;   // REG_TYPE == INT
+localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 : // REG_TYPE == INT
+                          3;
 
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                   w_all_freelist_ready;
