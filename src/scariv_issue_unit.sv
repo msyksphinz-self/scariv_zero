@@ -156,7 +156,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end
 
     if ($countones(w_entry_valid) + $countones(u_entry_freelist.r_active_bits) != ENTRY_SIZE) begin
-      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contraction\n",
+      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contradiction\n",
              $countones(w_entry_valid), $countones(u_entry_freelist.r_active_bits));
     end
   end
@@ -227,7 +227,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_put      (|w_input_valid),
     .i_dead_put (1'b0),
-    
+
     .i_cmt_id   (i_cmt_id  ),
     .i_grp_id   (w_disp_grp_id  ),
     .i_put_data (w_disp_entry  ),
