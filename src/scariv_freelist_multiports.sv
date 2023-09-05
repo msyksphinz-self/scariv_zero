@@ -30,18 +30,37 @@ logic [SIZE-1: 0]         r_active_bits;
 
 logic [$clog2(SIZE)-1:0]  r_head_ptr;
 logic [$clog2(SIZE)-1:0]  r_tail_ptr;
+logic [$clog2(SIZE)-1:0]  w_head_ptr_next;
+logic [$clog2(SIZE)-1:0]  w_tail_ptr_next;
 
 logic [$clog2(SIZE)-1:0]  w_head_ptr[PORTS];
 logic [$clog2(SIZE)-1:0]  w_tail_ptr[PORTS];
 
-generate for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
-  assign w_head_ptr[p_idx] = r_head_ptr + p_idx;
-  assign w_tail_ptr[p_idx] = r_tail_ptr + p_idx;
-end
-endgenerate
+generate if (SIZE == 1 << $clog2(SIZE)) begin : size_2pow
+  for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
+    assign w_head_ptr[p_idx] = r_head_ptr + p_idx;
+    assign w_tail_ptr[p_idx] = r_tail_ptr + p_idx;
+  end
+  assign w_head_ptr_next = r_head_ptr + $countones(i_pop);
+  assign w_tail_ptr_next = r_tail_ptr + $countones(i_push);
+end else if (PORTS == 1) begin : single_port
+  for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
+    assign w_head_ptr[p_idx] = r_head_ptr;
+    assign w_tail_ptr[p_idx] = r_tail_ptr;
+  end
+  assign w_head_ptr_next = r_head_ptr < SIZE-1 ? r_head_ptr + 1 : 'h0;
+  assign w_tail_ptr_next = r_tail_ptr < SIZE-1 ? r_tail_ptr + 1 : 'h0;
+end else begin : multi_port
+  for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
+    assign w_head_ptr[p_idx] = r_head_ptr + p_idx < SIZE ? r_head_ptr + p_idx : r_head_ptr + p_idx - SIZE;
+    assign w_tail_ptr[p_idx] = r_tail_ptr + p_idx < SIZE ? r_tail_ptr + p_idx : r_tail_ptr + p_idx - SIZE;
+  end
+  wire [$clog2(SIZE): 0] w_head_ptr_update = r_head_ptr + $countones(i_pop);
+  wire [$clog2(SIZE): 0] w_tail_ptr_update = r_tail_ptr + $countones(i_push);
 
-
-
+  assign w_head_ptr_next = w_head_ptr_update < SIZE-1 ? w_head_ptr_update : w_head_ptr_update - SIZE;
+  assign w_tail_ptr_next = w_tail_ptr_update < SIZE-1 ? w_tail_ptr_update : w_tail_ptr_update - SIZE;
+end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -54,10 +73,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
   end else begin
     if (|i_push) begin
-      r_tail_ptr <= r_tail_ptr + $countones(i_push);
+      r_tail_ptr <= w_tail_ptr_next;
     end
     if (|i_pop) begin
-      r_head_ptr <= r_head_ptr + $countones(i_pop);
+      r_head_ptr <= w_head_ptr_next;
     end
 
     for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
