@@ -74,10 +74,10 @@ riscv_pkg::xlen_t w_ex2_rs2_selected_data;
 logic                                    w_ex2_rs1_pred_hit;
 logic                                    w_ex2_rs2_pred_hit;
 
-logic                                    w_ex1_rs1_lsu_mispred;
-logic                                    w_ex1_rs2_lsu_mispred;
-logic                                    w_ex1_rs1_mispred;
-logic                                    w_ex1_rs2_mispred;
+logic                                    w_ex0_rs1_lsu_mispred;
+logic                                    w_ex0_rs2_lsu_mispred;
+logic                                    w_ex0_rs1_mispred;
+logic                                    w_ex0_rs2_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
 scariv_bru_pkg::issue_entry_t            r_ex2_issue;
@@ -144,8 +144,12 @@ end endgenerate
 assign w_ex0_br_flush  = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
                                                         ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & r_ex0_issue.valid;
 
+assign w_ex0_rs1_mispred = r_ex0_issue.rd_regs[0].valid & r_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
+assign w_ex0_rs2_mispred = r_ex0_issue.rd_regs[1].valid & r_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
+
 always_comb begin
   w_ex1_issue_next = r_ex0_issue;
+  w_ex1_issue_next.valid = r_ex0_issue.valid & !w_ex0_br_flush & (~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred);
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -155,7 +159,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= 'h0;
     r_ex1_dead <= 1'b0;
   end else begin
-    r_ex1_issue <= r_ex0_issue;
+    r_ex1_issue <= w_ex1_issue_next;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_dead <= r_ex0_issue.valid & (w_ex0_br_flush | w_commit_flushed);
@@ -164,31 +168,28 @@ end
 
 select_mispred_bus rs1_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rd_regs[0].rnid),
- .i_entry_type (r_ex1_issue.rd_regs[0].typ),
+ .i_entry_rnid (r_ex0_issue.rd_regs[0].rnid),
+ .i_entry_type (r_ex0_issue.rd_regs[0].typ),
  .i_mispred    (i_mispred_lsu),
 
- .o_mispred    (w_ex1_rs1_lsu_mispred)
+ .o_mispred    (w_ex0_rs1_lsu_mispred)
  );
 
 
 select_mispred_bus rs2_mispred_select
 (
- .i_entry_rnid (r_ex1_issue.rd_regs[1].rnid),
- .i_entry_type (r_ex1_issue.rd_regs[1].typ),
+ .i_entry_rnid (r_ex0_issue.rd_regs[1].rnid),
+ .i_entry_type (r_ex0_issue.rd_regs[1].typ),
  .i_mispred    (i_mispred_lsu),
 
- .o_mispred    (w_ex1_rs2_lsu_mispred)
+ .o_mispred    (w_ex0_rs2_lsu_mispred)
  );
 
 assign w_commit_flushed = scariv_pkg::is_flushed_commit(i_commit);
 
 
-assign w_ex1_rs1_mispred = r_ex1_issue.rd_regs[0].valid & r_ex1_issue.rd_regs[0].predict_ready ? w_ex1_rs1_lsu_mispred : 1'b0;
-assign w_ex1_rs2_mispred = r_ex1_issue.rd_regs[1].valid & r_ex1_issue.rd_regs[1].predict_ready ? w_ex1_rs2_lsu_mispred : 1'b0;
-
-assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid &
-                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred;
+assign o_ex1_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid; /*  &
+                              ~w_ex1_rs1_mispred & ~w_ex1_rs2_mispred; */
 assign o_ex1_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
 assign o_ex1_early_wr.may_mispred = 1'b0;
@@ -307,14 +308,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
-                              r_ex3_pipe_ctrl.wr_rd & (r_ex3_issue.wr_reg.regidx != 'h0) &
-                              r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+                              r_ex3_pipe_ctrl.wr_rd & (r_ex3_issue.wr_reg.regidx != 'h0);
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
                                r_ex3_issue.pc_addr} + (r_ex3_issue.is_rvc ? 'h2 : 'h4);
 
-assign o_done_report.valid    = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign o_done_report.valid    = r_ex3_issue.valid;
 assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id   = r_ex3_issue.grp_id;
 assign o_done_report.except_valid  = 1'b0;
@@ -364,7 +364,7 @@ assign w_ex3_bim_hit = r_ex3_issue.btb_valid &
                         (r_ex3_result & r_ex3_issue.pred_taken &
                          (r_ex3_br_vaddr == r_ex3_issue.pred_target_vaddr)));
 
-assign ex3_br_upd_if.update        = r_ex3_issue.valid & r_ex3_rs1_pred_hit & r_ex3_rs2_pred_hit;
+assign ex3_br_upd_if.update        = r_ex3_issue.valid;
 assign ex3_br_upd_if.is_cond       = r_ex3_pipe_ctrl.is_cond;
 assign ex3_br_upd_if.is_call       = r_ex3_issue.is_call;
 assign ex3_br_upd_if.is_ret        = r_ex3_issue.is_ret;
