@@ -36,8 +36,17 @@ logic [$clog2(SIZE)-1:0]  w_tail_ptr;
 logic [$clog2(SIZE)-1:0]  w_head_ptr_offset[PORTS+1];
 
 assign w_head_ptr_offset[0] = r_head_ptr;
-generate for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
-  assign w_head_ptr_offset[p_idx + 1] = w_head_ptr_offset[p_idx] + (i_pop[p_idx] ? 'h1 : 'h0);
+generate if (SIZE == 1 << $clog2(SIZE)) begin : size_2pow
+  for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
+    assign w_head_ptr_offset[p_idx + 1] = w_head_ptr_offset[p_idx] + (i_pop[p_idx] ? 'h1 : 'h0);
+  end
+end else if (PORTS == 1) begin : single_port
+  assign w_head_ptr_offset[1] = w_head_ptr_offset[0] < SIZE-1 ? w_head_ptr_offset[0] + 'h1 : 'h0;
+end else begin : multi_ports
+  for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
+    wire [$clog2(SIZE)-1: 0] w_head_ptr_update = w_head_ptr_offset[p_idx] + (i_pop[p_idx] ? 'h1 : 'h0);
+    assign w_head_ptr_offset[p_idx + 1] = w_head_ptr_update < SIZE ? w_head_ptr_update : 'h0;
+  end
 end endgenerate
 
 assign w_tail_ptr = r_tail_ptr;
@@ -53,12 +62,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
   end else begin
     if (i_push) begin
-      r_tail_ptr <= w_tail_ptr + 1'b1;
+      r_tail_ptr <= w_tail_ptr < SIZE-1 ? w_tail_ptr + 1'b1 : 'h0;
       r_freelist[w_tail_ptr] <= i_push_id;
       r_active_bits[w_tail_ptr] <= 1'b1;
     end
     if (|i_pop) begin
-      r_head_ptr <= r_head_ptr + $countones(i_pop);
+      r_head_ptr <= w_head_ptr_offset[PORTS];
     end
 
     for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
