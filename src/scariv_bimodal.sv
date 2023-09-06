@@ -29,14 +29,14 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
   logic bim_update_hit;
   assign bim_update_hit = update_bim_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
 
-  logic [BTB_ENTRY_SIZE-1: 0] r_bim_valids;
+  logic [scariv_conf_pkg::BTB_ENTRY_SIZE-1: 0] r_bim_valids;
   logic                       r_s1_bim_valids;
   logic [ 1: 0]               w_s1_counter_tmp;
 
   data_array_2p
     #(
       .WIDTH (2),
-      .ADDR_W ($clog2(BTB_ENTRY_SIZE))
+      .ADDR_W ($clog2(scariv_conf_pkg::BTB_ENTRY_SIZE))
       )
   bim_array
     (
@@ -53,7 +53,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      r_bim_valids <= {BTB_ENTRY_SIZE{1'b0}};
+      r_bim_valids <= {scariv_conf_pkg::BTB_ENTRY_SIZE{1'b0}};
       r_s1_bim_valids <= 1'b0;
     end else begin
       if (bim_update_hit) begin
