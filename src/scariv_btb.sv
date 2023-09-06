@@ -55,7 +55,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
   data_array_2p
     #(
       .WIDTH ($bits(btb_inst_info_t)),
-      .ADDR_W ($clog2(BTB_ENTRY_SIZE))
+      .ADDR_W ($clog2(scariv_conf_pkg::BTB_ENTRY_SIZE))
       )
   btb_info_array
     (
@@ -73,7 +73,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
   data_array_2p
     #(
       .WIDTH ($bits(btb_target_va_t)),
-      .ADDR_W ($clog2(BTB_ENTRY_SIZE))
+      .ADDR_W ($clog2(scariv_conf_pkg::BTB_ENTRY_SIZE))
       )
   btb_target_va_array
     (
@@ -89,7 +89,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
    );
 
   logic   r_s1_btb_valid;
-  logic [BTB_ENTRY_SIZE-1: 0] r_btb_valids;
+  logic [scariv_conf_pkg::BTB_ENTRY_SIZE-1: 0] r_btb_valids;
 
   assign search_btb_s1_hit[b_idx] = r_s1_search_valid &
                                     w_s1_info_entry.valid &
@@ -99,7 +99,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      r_btb_valids <= {BTB_ENTRY_SIZE{1'b0}};
+      r_btb_valids <= {scariv_conf_pkg::BTB_ENTRY_SIZE{1'b0}};
       r_s1_btb_valid <= 1'b0;
     end else begin
       if (info_update_valid) begin
