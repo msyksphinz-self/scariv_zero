@@ -148,7 +148,7 @@ u_issue_unit
   .i_grp_id     (disp_picked_grp_id    ),
   .i_disp_info  (disp_picked_inst      ),
   .cre_ret_if   (cre_ret_if            ),
-  
+
   .i_stq_rmw_existed (i_stq_rmw_existed),
 
   .i_stall      (w_replay_selected     ),
@@ -206,7 +206,7 @@ u_replay_queue
   .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
 
-assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 : 
+assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
                            scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
@@ -274,7 +274,7 @@ u_lsu_pipe
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
-   .ex1_regread_rs1(ex1_regread_rs1),
+   .ex0_regread_rs1(ex1_regread_rs1),
 
    .i_mispred_lsu (i_mispred_lsu),
 

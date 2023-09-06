@@ -116,8 +116,8 @@ u_bru_pipe
    .rv0_index('h0),
    .ex1_i_phy_wr(i_phy_wr),
 
-   .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_regread_rs2(ex1_regread_rs2),
+   .ex0_regread_rs1(ex1_regread_rs1),
+   .ex0_regread_rs2(ex1_regread_rs2),
 
    .i_commit (i_commit),
 

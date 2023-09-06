@@ -234,8 +234,8 @@ assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_v
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
-assign o_entry       = w_entry_next;
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry);
+assign o_entry       = r_entry;
 
 assign o_issue_succeeded = (r_state == scariv_pkg::SCHED_CLEAR);
 

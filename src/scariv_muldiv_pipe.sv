@@ -229,7 +229,7 @@ assign w_br_flush     = scariv_pkg::is_br_flush_target(w_div_cmt_id, w_div_grp_i
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
-assign o_stall = !w_div_ready | r_mul_valid_pipe[MUL_STEP-1-2];
+assign o_stall = !w_div_ready | r_mul_valid_pipe[MUL_STEP-1-1];
 
 scariv_div_unit
   #(
