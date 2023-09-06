@@ -72,6 +72,7 @@ write_verilog -force -mode design ${TOP_NAME}.synth.v
 
 write_verilog -force -mode design -cell scariv_stq_entry scariv_stq_entry.synth.v
 
-report_timing -file ${TOP_NAME}_timing_synth.rpt
+report_timing_summary -max_paths 100 -nworst 500 -file ${TOP_NAME}_timing_summary_synth.rpt
+report_timing -max_paths 100 -nworst 500 -file ${TOP_NAME}_timing_synth.rpt
 
 exit
