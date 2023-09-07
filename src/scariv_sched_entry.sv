@@ -281,8 +281,8 @@ endgenerate
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
-assign o_entry       = w_entry_next;
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry);
+assign o_entry       = r_entry;
 
 assign o_entry_wait_complete = (r_state == scariv_pkg::WAIT_COMPLETE);
 

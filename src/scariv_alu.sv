@@ -126,13 +126,13 @@ u_alu
 
    .o_muldiv_stall(w_muldiv_stall),
 
-   .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_regread_rs2(ex1_regread_rs2),
+   .ex0_regread_rs1(ex1_regread_rs1),
+   .ex0_regread_rs2(ex1_regread_rs2),
 
    .i_mispred_lsu (i_mispred_lsu),
 
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .o_ex0_early_wr(o_ex1_early_wr),
+   .o_ex2_phy_wr (o_ex3_phy_wr),
 
    .o_done_report (o_done_report)
    );

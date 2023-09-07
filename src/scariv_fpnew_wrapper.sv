@@ -532,6 +532,12 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       o_valid     <= 1'b0;
+      o_result    <= 'h0;
+      o_fflags    <= 'h0;
+      o_cmt_id    <= 'h0;
+      o_grp_id    <= 'h0;
+      o_rnid      <= 'h0;
+      o_reg_type  <= scariv_pkg::FPR;
     end else begin
       o_valid  <= w_fma32_out_valid |
                     w_noncomp32_out_valid |
@@ -550,7 +556,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         if (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) begin
           o_result <= w_noncomp32_class_mask;
         end else begin
-          o_result ={{32{(w_noncomp32_aux.op == fpnew_pkg::MINMAX)}}, w_noncomp32_result};
+          o_result <= {{32{(w_noncomp32_aux.op == fpnew_pkg::MINMAX)}}, w_noncomp32_result};
         end
         o_fflags      <= w_noncomp32_out_fflags;
         o_cmt_id      <= w_noncomp32_aux.cmt_id;
@@ -603,7 +609,13 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
 end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      o_valid      <= 1'b0;
+      o_valid     <= 1'b0;
+      o_result    <= 'h0;
+      o_fflags    <= 'h0;
+      o_cmt_id    <= 'h0;
+      o_grp_id    <= 'h0;
+      o_rnid      <= 'h0;
+      o_reg_type  <= scariv_pkg::FPR;
     end else begin
       o_valid  <= w_fma32_out_valid |
                   w_noncomp32_out_valid |

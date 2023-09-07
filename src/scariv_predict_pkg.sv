@@ -9,12 +9,10 @@
 
 package scariv_predict_pkg;
 
-localparam BTB_ENTRY_SIZE = 1024;
-
 localparam BTB_ENTRY_FIELD_MSB = $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W/2);
 
 localparam BTB_ENTRY_BIT_LSB   = BTB_ENTRY_FIELD_MSB + 1;
-localparam BTB_ENTRY_BIT_MSB   = $clog2(BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
+localparam BTB_ENTRY_BIT_MSB   = $clog2(scariv_conf_pkg::BTB_ENTRY_SIZE) - 1 + BTB_ENTRY_BIT_LSB;
 
 typedef logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_idx_t;
 

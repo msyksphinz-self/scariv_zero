@@ -177,7 +177,7 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_i
   // Data SRAM is not formatted.
   // First access, default is set to TAKEN.
   logic r_s1_rd_index_valid;
-  logic [BTB_ENTRY_SIZE-1: 0] r_data_array_init_valid;
+  logic [scariv_conf_pkg::BTB_ENTRY_SIZE-1: 0] r_data_array_init_valid;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
