@@ -116,42 +116,42 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           ram[actual_line_pos][byte_idx*8+:8] = i_req_data[byte_idx*8+:8];
         end
       end
-    end else begin
-      // Read request
-      case(r_state)
-        IDLE: begin
-          if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD) begin
-            if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
-              if (w_map_hit & w_map_attributes.c &
-                  (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
-                status[actual_line_pos] = ST_GIVEN;
-              end
-              rd_queue.push_back(rd_queue_init);
-            end else begin
-              r_state <= SNOOP;
-              o_snoop_req_valid <= 1'b1;
-              o_snoop_req_paddr <= i_req_addr;
-              r_req_paddr_pos <= actual_line_pos;
-              r_req_tag <= i_req_tag;
-            end // else: !if((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT)
-          end // if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD)
-        end // case: IDLE
-        SNOOP : begin
-          o_snoop_req_valid <= 1'b0;
-          o_snoop_req_paddr <= 'h0;
-          if (i_snoop_resp_valid) begin
-            r_state <= IDLE;
-            status[r_req_paddr_pos] = ST_GIVEN;
-            for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
-              if (i_snoop_resp_be[byte_idx]) begin
-                ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];
-              end
+    end
+
+    // Read request
+    case(r_state)
+      IDLE: begin
+        if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD) begin
+          if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
+            if (w_map_hit & w_map_attributes.c &
+                (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
+              status[actual_line_pos] = ST_GIVEN;
             end
-            rd_queue.push_back(rd_queue_ram);
-          end // else: !if(i_snoop_resp_valid)
-        end // case: SNOOP
-      endcase // case (r_state)
-    end // else: !if(req_fire && i_req_cmd == scariv_lsu_pkg::M_XWR)
+            rd_queue.push_back(rd_queue_init);
+          end else begin
+            r_state <= SNOOP;
+            o_snoop_req_valid <= 1'b1;
+            o_snoop_req_paddr <= i_req_addr;
+            r_req_paddr_pos <= actual_line_pos;
+            r_req_tag <= i_req_tag;
+          end // else: !if((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT)
+        end // if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD)
+      end // case: IDLE
+      SNOOP : begin
+        o_snoop_req_valid <= 1'b0;
+        o_snoop_req_paddr <= 'h0;
+        if (i_snoop_resp_valid) begin
+          r_state <= IDLE;
+          status[r_req_paddr_pos] = ST_GIVEN;
+          for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
+            if (i_snoop_resp_be[byte_idx]) begin
+              ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];
+            end
+          end
+          rd_queue.push_back(rd_queue_ram);
+        end // else: !if(i_snoop_resp_valid)
+      end // case: SNOOP
+    endcase // case (r_state)
 
     for (int i = 0; i < rd_queue.size(); i++) begin
       if (rd_queue[i].sim_timer > 0) begin
