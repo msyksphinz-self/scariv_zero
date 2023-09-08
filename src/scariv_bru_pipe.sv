@@ -84,6 +84,8 @@ pipe_ctrl_t                              r_ex2_pipe_ctrl;
 scariv_bru_pkg::issue_entry_t            r_ex2_issue;
 scariv_bru_pkg::issue_entry_t            w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
+riscv_pkg::xlen_t                        r_ex2_wr_data;
+riscv_pkg::xlen_t                        w_ex2_wr_data;
 scariv_pkg::vaddr_t                      r_ex2_br_vaddr;
 logic                                    r_ex2_wr_valid;
 logic                                    w_ex2_br_flush;
@@ -255,18 +257,28 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
       OP_GE   : r_ex2_result <= $signed(w_ex1_rs1_selected_data) >= $signed(w_ex1_rs2_selected_data);
       OP_LTU  : r_ex2_result <=         w_ex1_rs1_selected_data <           w_ex1_rs2_selected_data;
       OP_GEU  : r_ex2_result <=         w_ex1_rs1_selected_data >=          w_ex1_rs2_selected_data;
+      OP_SIGN_AUIPC : r_ex2_result <= 1'b0;
       OP__    : r_ex2_result <= 1'b1;   // Unconditional Jump
       default : r_ex2_result <= 1'bx;
     endcase
+
+    if (r_ex1_pipe_ctrl.op == OP_SIGN_AUIPC) begin
+      r_ex2_wr_data <= {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex1_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                        r_ex1_issue.pc_addr} +
+                       {{(riscv_pkg::XLEN_W-32){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:12], 12'h000};
+    end
   end
 end
+
+assign w_ex2_wr_data = r_ex2_pipe_ctrl.op == OP_SIGN_AUIPC ? r_ex2_wr_data :
+                       {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                        r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
 
 assign o_ex3_phy_wr.valid   = r_ex2_issue.valid &
                               r_ex2_pipe_ctrl.wr_rd & (r_ex2_issue.wr_reg.regidx != 'h0);
 assign o_ex3_phy_wr.rd_rnid = r_ex2_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex2_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
-                               r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
+assign o_ex3_phy_wr.rd_data = w_ex2_wr_data;
 
 assign o_done_report.valid    = r_ex2_issue.valid;
 assign o_done_report.cmt_id   = r_ex2_issue.cmt_id;
@@ -318,7 +330,7 @@ assign w_ex2_bim_hit  = r_ex2_issue.btb_valid &
                          (r_ex2_result & r_ex2_issue.pred_taken &
                           (r_ex2_br_vaddr == r_ex2_issue.pred_target_vaddr)));
 
-assign ex3_br_upd_if.update        = r_ex2_issue.valid;
+assign ex3_br_upd_if.update        = r_ex2_issue.valid & (r_ex2_pipe_ctrl.op != OP_SIGN_AUIPC);
 assign ex3_br_upd_if.is_cond       = r_ex2_pipe_ctrl.is_cond;
 assign ex3_br_upd_if.is_call       = r_ex2_issue.is_call;
 assign ex3_br_upd_if.is_ret        = r_ex2_issue.is_ret;
@@ -337,6 +349,16 @@ assign ex3_br_upd_if.target_vaddr  = r_ex2_result ? r_ex2_br_vaddr :
                                      r_ex2_issue.is_rvc ? r_ex2_issue.pc_addr + 'h2 : r_ex2_issue.pc_addr + 'h4;
 `ifdef SIMULATION
 assign ex3_br_upd_if.pred_vaddr    = r_ex2_issue.pred_target_vaddr;
+
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    if (ex3_br_upd_if.update & ex3_br_upd_if.mispredict & r_ex2_pipe_ctrl.op == OP_SIGN_AUIPC) begin
+      $fatal(0, "In branch, ex3_br_upd_if.update and ex3_br_upd_if.mispredict must not be asserted in same time.\n");
+    end
+  end
+end
+
 `endif // SIMULATION
 
 assign ex3_br_upd_if.cmt_id        = r_ex2_issue.cmt_id;

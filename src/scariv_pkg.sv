@@ -194,18 +194,19 @@ typedef struct packed {
 
 
   typedef struct packed {
-    logic [ALU_INST_NUM-1: 0][$clog2(ARITH_DISP_SIZE): 0] alu_inst_cnt;
+    logic [ALU_INST_NUM-1: 0][$clog2(ARITH_DISP_SIZE): 0]      alu_inst_cnt;
     logic [ALU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] alu_inst_valid;
-    logic [$clog2(MULDIV_DISP_SIZE): 0]                   muldiv_inst_cnt;
-    logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]   lsu_inst_cnt;
-    logic [$clog2(LDQ_SIZE): 0]                           ld_inst_cnt;
-    logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 lsu_inst_valid;
-    logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 bru_inst_valid;
-    logic [$clog2(CSU_DISP_SIZE): 0]                      csu_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 csu_inst_valid;
-    logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]   fpu_inst_cnt;
+    logic [$clog2(MULDIV_DISP_SIZE): 0]                        muldiv_inst_cnt;
+    logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]        lsu_inst_cnt;
+    logic [$clog2(LDQ_SIZE): 0]                                ld_inst_cnt;
+    logic [$clog2(STQ_SIZE): 0]                                st_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    lsu_inst_valid;
+    logic [$clog2(BRU_DISP_SIZE): 0]                           bru_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    bru_inst_valid;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    bru_branch_valid;
+    logic [$clog2(CSU_DISP_SIZE): 0]                           csu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    csu_inst_valid;
+    logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]        fpu_inst_cnt;
     logic [FPU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
   } resource_cnt_t;
 
