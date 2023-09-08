@@ -43,9 +43,10 @@ read_xdc ../synth_constraints.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
 synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
-    -flatten_hierarchy none \
+    -flatten_hierarchy rebuilt \
     -include_dir ../../src/fpnew/src/common_cells/include \
     -include_dir ../../src \
+    -retiming \
     -verilog_define $::env(RV_DEFINE)
 write_checkpoint -force ${TOP_NAME}.dcp
 report_utilization -file ${TOP_NAME}_utilization_synth.rpt -pb ${TOP_NAME}_utilization_synth.pb
