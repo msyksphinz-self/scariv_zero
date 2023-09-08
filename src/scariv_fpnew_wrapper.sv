@@ -221,7 +221,7 @@ fpnew_fma
   #(
     .FpFormat   (fpnew_pkg::FP32),
     .NumPipeRegs(scariv_conf_pkg::FPNEW_LATENCY),
-    .PipeConfig (fpnew_pkg::BEFORE),
+    .PipeConfig (fpnew_pkg::DISTRIBUTED),
     .TagType    (aux_fpnew_t),
     .AuxType    (logic)
     )
@@ -264,7 +264,7 @@ assign w_fma32_out_fflags = {w_fma32_fflags.NV,
 fpnew_noncomp #(
     .FpFormat   (fpnew_pkg::FP32),
     .NumPipeRegs(scariv_conf_pkg::FPNEW_LATENCY),
-    .PipeConfig (fpnew_pkg::BEFORE),
+    .PipeConfig (fpnew_pkg::DISTRIBUTED),
     .TagType    (aux_fpnew_t),
     .AuxType    (logic)
 ) fpnew_noncomp32 (
@@ -332,7 +332,7 @@ fpnew_opgroup_multifmt_slice /* #(
 ) */
   #(
     .NumPipeRegs(scariv_conf_pkg::FPNEW_LATENCY),
-    .PipeConfig (fpnew_pkg::BEFORE),
+    .PipeConfig (fpnew_pkg::DISTRIBUTED),
     .TagType    (aux_fpnew_t)
     ) fpnew_cvt (
   .clk_i           ( i_clk     ),
@@ -376,7 +376,7 @@ fpnew_divsqrt_multi
   #(
     .FpFmtConfig (FpFmtConfig      ),
     .NumPipeRegs (32/2             ),
-    .PipeConfig  (fpnew_pkg::BEFORE),
+    .PipeConfig  (fpnew_pkg::DISTRIBUTED),
     .TagType     (aux_fpnew_t      ),
     .AuxType     (logic            )
     )
@@ -444,7 +444,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
     #(
       .FpFormat   (fpnew_pkg::FP64),
       .NumPipeRegs(scariv_conf_pkg::FPNEW_LATENCY),
-      .PipeConfig (fpnew_pkg::BEFORE),
+      .PipeConfig (fpnew_pkg::DISTRIBUTED),
       .TagType    (aux_fpnew_t),
       .AuxType    (logic)
       )
@@ -493,7 +493,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   fpnew_noncomp #(
       .FpFormat   (fpnew_pkg::FP64),
       .NumPipeRegs(scariv_conf_pkg::FPNEW_LATENCY),
-      .PipeConfig (fpnew_pkg::BEFORE),
+      .PipeConfig (fpnew_pkg::DISTRIBUTED),
       .TagType    (aux_fpnew_t),
       .AuxType    (logic)
   ) fpnew_noncomp64 (
