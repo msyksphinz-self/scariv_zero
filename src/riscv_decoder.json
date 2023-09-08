@@ -11,9 +11,9 @@
         "name":"auipc      r[11:7],h[31:12]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "00101", "11"],
-        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "auipc"]], "isa_ext": "i",
         "reg": [["rd", "r3"]],
-        "alu_ctrl":[["op", "sign_auipc"], ["imm", "i"]]
+        "bru_ctrl":[["wr_rd", "1"], ["op", "sign_auipc"], ["imm", "i"]]
     },
     {
         "name":"add        r[11:7],r[19:15],r[24:20]",
@@ -166,7 +166,7 @@
         "name":"beq        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "eq"] , ["imm", "sb"]]
     },
@@ -174,7 +174,7 @@
         "name":"bne        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "001", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ne"], ["imm", "sb"]]
     },
@@ -182,7 +182,7 @@
         "name":"blt        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "100", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "lt"], ["imm", "sb"]]
     },
@@ -190,7 +190,7 @@
         "name":"bge        r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "101", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ge"], ["imm", "sb"]]
     },
@@ -198,7 +198,7 @@
         "name":"bltu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "110", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "ltu"], ["imm", "sb"]]
     },
@@ -206,7 +206,7 @@
         "name":"bgeu       r[19:15],r[24:20],u[31:31]|u[7:7]|u[30:25]|u[11:8]<<1"           ,
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "111", "XXXXX", "11000", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg":[["r1", "r1"], ["r2", "r2"]],
         "bru_ctrl":[["is_cond", "1"], ["op", "geu"], ["imm", "sb"]]
     },
@@ -214,7 +214,7 @@
         "name":"jal        r[11:7],uj[31:12]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "XXX", "XXXXX", "11011", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg" : [["rd", "r3"]],
         "bru_ctrl" : [["wr_rd", "1"], ["imm", "uj"]]
     },
@@ -222,7 +222,7 @@
         "name":"jalr       r[11:7],r[19:15],h[31:20]",
         "length":"32", "xlen":["32", "64"],
         "field": ["XXXXX", "XX", "XXXXX", "XXXXX", "000", "XXXXX", "11001", "11"],
-        "inst_cat": [["inst_cat", "br"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "br"], ["inst_subcat", "branch"]], "isa_ext": "i",
         "reg" : [["rd", "r3"], ["r1", "r1"]],
         "bru_ctrl" : [["wr_rd", "1"], ["imm", "i"]]
     },

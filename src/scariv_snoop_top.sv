@@ -163,13 +163,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       WAIT_RESP : begin
         mshr_snoop_if.req_s0_valid <= 1'b0;
         if (mshr_snoop_if.resp_s1_valid) begin
-          if (mshr_snoop_if.s1_hit_index == 'h0) begin
+          // if (mshr_snoop_if.s1_hit_index == 'h0) begin
             r_mshr_state <= IDLE;
             r_resp_valid[MSHR_INDEX] <= 1'b1;
-          end else begin
-            r_mshr_state <= WAIT_HAZ_RESOLVE;
-            r_mshr_haz_entry_index <= mshr_snoop_if.s1_hit_index;
-          end
+          // end else begin
+          //   r_mshr_state <= WAIT_HAZ_RESOLVE;
+          //   r_mshr_haz_entry_index <= mshr_snoop_if.s1_hit_index;
+          // end
         end
       end
       WAIT_HAZ_RESOLVE : begin

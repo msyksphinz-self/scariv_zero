@@ -74,6 +74,7 @@ scariv_pkg::grp_id_t w_inst_is_muldiv;
 scariv_pkg::grp_id_t w_inst_is_ld;
 scariv_pkg::grp_id_t w_inst_is_st;
 scariv_pkg::grp_id_t w_inst_is_br;
+scariv_pkg::grp_id_t w_inst_is_br_branch;
 scariv_pkg::grp_id_t w_inst_is_csu;
 scariv_pkg::grp_id_t w_inst_is_fpu;
 scariv_pkg::grp_id_t w_inst_illegal;
@@ -442,13 +443,14 @@ logic          w_inst_fpu_illegal;
                               w_inst_st_fpu_illegal |
                               w_inst_arith_fpu_illegal;
 
-  assign w_inst_is_arith [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH );
-  assign w_inst_is_muldiv[w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_MULDIV);
-  assign w_inst_is_ld    [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
-  assign w_inst_is_st    [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
-  assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
-  assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
-  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU   );
+  assign w_inst_is_arith     [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH );
+  assign w_inst_is_muldiv    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_MULDIV);
+  assign w_inst_is_ld        [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
+  assign w_inst_is_st        [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
+  assign w_inst_is_br        [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
+  assign w_inst_is_br_branch [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_subcat[w_idx] == decoder_inst_cat_pkg::INST_SUBCAT_BRANCH);
+  assign w_inst_is_csu       [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
+  assign w_inst_is_fpu       [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU   );
 
   logic          w_is_std_call;
   logic          w_is_std_ret;
@@ -626,8 +628,9 @@ assign w_ibuf_front_payload_next.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
 assign w_ibuf_front_payload_next.resource_cnt.st_inst_cnt = w_inst_st_cnt;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_bru_inst_cnt (.in(w_inst_bru_disped), .out(w_inst_bru_cnt));
-assign w_ibuf_front_payload_next.resource_cnt.bru_inst_cnt   = w_inst_bru_cnt;
-assign w_ibuf_front_payload_next.resource_cnt.bru_inst_valid = w_inst_bru_disped;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_cnt     = w_inst_bru_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_valid   = w_inst_bru_disped;
+assign w_ibuf_front_payload_next.resource_cnt.bru_branch_valid = w_inst_bru_disped & w_inst_is_br_branch;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_csu_inst_cnt (.in(w_inst_csu_disped), .out(w_inst_csu_cnt));
 assign w_ibuf_front_payload_next.resource_cnt.csu_inst_cnt   = w_inst_csu_cnt;

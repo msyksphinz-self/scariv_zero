@@ -260,7 +260,7 @@ u_brtag_freelist
 
   .i_push    (brtag_if.valid),
   .i_push_id (brtag_if.brtag),
-  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_inst_valid),
+  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_branch_valid),
   .o_pop_id  (w_brtag_freelist_pop_id),
   .o_is_empty()
 );
