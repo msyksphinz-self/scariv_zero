@@ -14,7 +14,8 @@ typedef struct packed {
   scariv_pkg::vaddr_t    pc_addr;
   logic [riscv_pkg::VADDR_W-1: 1] basicblk_pc_vaddr;
   logic [31:0]           inst;
-  decoder_inst_cat_pkg::inst_cat_t cat;
+  decoder_inst_cat_pkg::inst_cat_t    cat;
+  decoder_inst_cat_pkg::inst_subcat_t subcat;
   logic                  is_rvc;
   scariv_pkg::brtag_t    brtag;
 
@@ -53,7 +54,8 @@ function issue_entry_t assign_issue_common (scariv_pkg::disp_t in,
   ret.pc_addr = in.pc_addr;
   ret.basicblk_pc_vaddr = basicblk_pc_vaddr;
 
-  ret.cat = in.cat;
+  ret.cat    = in.cat;
+  ret.subcat = in.subcat;
   ret.is_rvc  = in.rvc_inst_valid;
   ret.brtag   = in.brtag;
 

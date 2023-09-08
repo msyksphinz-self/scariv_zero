@@ -343,9 +343,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     case (r_ex1_pipe_ctrl.op)
       OP_SIGN_LUI:    r_ex2_result <= {{(riscv_pkg::XLEN_W-32){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:12], 12'h000};
-      OP_SIGN_AUIPC:  r_ex2_result <= {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex1_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
-                                       r_ex1_issue.pc_addr} +
-                                      {{(riscv_pkg::XLEN_W-32){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:12], 12'h000};
       OP_SIGN_ADD:    r_ex2_result <= w_ex1_rs1_selected_data + w_ex1_rs2_selected_data;
       OP_SIGN_SUB:    r_ex2_result <= w_ex1_rs1_selected_data - w_ex1_rs2_selected_data;
 `ifdef RV64
