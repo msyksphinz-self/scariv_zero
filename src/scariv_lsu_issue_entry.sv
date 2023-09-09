@@ -65,13 +65,14 @@ scariv_lsu_pkg::lsu_issue_entry_t w_entry_next;
 
 logic    w_oldest_ready;
 
-scariv_pkg::rnid_t w_rs1_rnid;
-scariv_pkg::reg_t  w_rs1_type;
-logic              w_rs1_rel_hit;
-logic              w_rs1_may_mispred;
-logic              w_rs1_phy_hit;
-logic              w_rs1_mispredicted;
-logic              w_rs1_pred_mispredicted;
+scariv_pkg::rnid_t        w_rs1_rnid;
+scariv_pkg::reg_t         w_rs1_type;
+scariv_pkg::rel_bus_idx_t w_rs1_rel_index;
+logic                     w_rs1_rel_hit;
+logic                     w_rs1_may_mispred;
+logic                     w_rs1_phy_hit;
+logic                     w_rs1_mispredicted;
+logic                     w_rs1_pred_mispredicted;
 
 logic     w_entry_flush;
 logic     w_commit_flush;
@@ -99,8 +100,8 @@ endfunction // all_operand_ready
 
 assign w_rs1_rnid = r_entry.rd_regs[0].rnid;
 assign w_rs1_type = r_entry.rd_regs[0].typ;
-select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
-                                      .o_valid   (w_rs1_rel_hit), .o_may_mispred (w_rs1_may_mispred));
+select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+                                         .o_valid   (w_rs1_rel_hit), .o_hit_index (w_rs1_rel_index), .o_may_mispred (w_rs1_may_mispred));
 select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
                                       .o_valid   (w_rs1_phy_hit));
 select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
@@ -114,8 +115,13 @@ always_comb begin
   w_issued_next = r_issued;
   w_entry_next  = r_entry;
 
-  w_entry_next.rd_regs[0].ready         = r_entry.rd_regs[0].ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
-  w_entry_next.rd_regs[0].predict_ready = w_rs1_rel_hit & w_rs1_may_mispred;
+  w_entry_next.rd_regs[0].ready            = r_entry.rd_regs[0].ready | (w_rs1_rel_hit & ~w_rs1_may_mispred) | w_rs1_phy_hit;
+  w_entry_next.rd_regs[0].predict_ready[0] = w_rs1_rel_hit;
+  w_entry_next.rd_regs[0].predict_ready[1] = r_entry.rd_regs[0].predict_ready[0];
+
+  if (w_entry_next.rd_regs[0].predict_ready[0]) begin
+    w_entry_next.rd_regs[0].early_index    = w_rs1_rel_index;
+  end
 
   if (r_entry.valid) begin
     w_entry_next.oldest_valid = r_entry.oldest_valid | w_oldest_ready;

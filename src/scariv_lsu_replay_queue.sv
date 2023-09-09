@@ -26,7 +26,7 @@ module scariv_lsu_replay_queue
     input missu_resolve_t  i_missu_resolve,
     input logic            i_missu_is_full,
     input logic            i_missu_is_empty,
-    
+
     input logic            i_st_buffer_empty,
     input stq_resolve_t    i_stq_rs2_resolve,
 
@@ -75,15 +75,18 @@ assign lsu_pipe_haz_if.full = w_full;
 assign w_queue_push = lsu_pipe_haz_if.valid & !lsu_pipe_haz_if.full;
 assign w_queue_pop  = w_lsu_replay_valid & (lsu_pipe_req_if.ready | w_replay_additional_queue_tail.dead);
 
-assign w_new_replay_queue_info.inst           = lsu_pipe_haz_if.payload.inst          ;
-assign w_new_replay_queue_info.cat            = lsu_pipe_haz_if.payload.cat           ;
-assign w_new_replay_queue_info.oldest_valid   = lsu_pipe_haz_if.payload.oldest_valid  ;
-assign w_new_replay_queue_info.rd_reg         = lsu_pipe_haz_if.payload.rd_reg        ;
-assign w_new_replay_queue_info.wr_reg         = lsu_pipe_haz_if.payload.wr_reg        ;
-assign w_new_replay_queue_info.paddr          = lsu_pipe_haz_if.payload.paddr         ;
-assign w_new_replay_queue_info.hazard_typ     = lsu_pipe_haz_if.payload.hazard_typ    ;
-assign w_new_replay_queue_info.hazard_index   = lsu_pipe_haz_if.payload.hazard_index;
-assign w_new_replay_queue_info.diff_counter   = w_empty ? 'h0 : r_diff_counter;
+always_comb begin
+  w_new_replay_queue_info.inst                 = lsu_pipe_haz_if.payload.inst          ;
+  w_new_replay_queue_info.cat                  = lsu_pipe_haz_if.payload.cat           ;
+  w_new_replay_queue_info.oldest_valid         = lsu_pipe_haz_if.payload.oldest_valid  ;
+  w_new_replay_queue_info.rd_reg               = lsu_pipe_haz_if.payload.rd_reg        ;
+  w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
+  w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
+  w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
+  w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
+  w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
+  w_new_replay_queue_info.diff_counter         = w_empty ? 'h0 : r_diff_counter;
+end
 
 // Diff counter from previous Queue inesrtion
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
