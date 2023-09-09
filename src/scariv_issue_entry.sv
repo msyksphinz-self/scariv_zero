@@ -65,6 +65,7 @@ logic    w_oldest_ready;
 scariv_pkg::rnid_t w_rs_rnid[NUM_OPERANDS];
 scariv_pkg::reg_t  w_rs_type[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_rel_hit;
+scariv_pkg::rel_bus_idx_t w_rs_rel_index[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_may_mispred;
 logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
 logic [NUM_OPERANDS-1: 0] w_rs_mispredicted;
@@ -96,14 +97,13 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
   assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
   assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
 
-  select_early_wr_bus rs_rel_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
-                                        .o_valid   (w_rs_rel_hit[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
+  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
+                                           .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
   select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
   select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
                                         .o_mispred (w_rs_mispredicted[rs_idx]));
-end
-endgenerate
+end endgenerate
 
 logic [NUM_OPERANDS-1: 0] w_rs_pred_mispredicted;
 logic                     w_rs_pred_mispredicted_or;
@@ -121,8 +121,13 @@ always_comb begin
   w_entry_next  = r_entry;
 
   for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
-    w_entry_next.rd_regs[rs_idx].ready         = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
-    w_entry_next.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
+    w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready[0] = w_rs_rel_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
+
+    if (w_entry_next.rd_regs[rs_idx].predict_ready[0]) begin
+      w_entry_next.rd_regs[rs_idx].early_index    = w_rs_rel_index[rs_idx];
+    end
   end
 
   case (r_state)
@@ -192,7 +197,7 @@ generate if (NUM_OPERANDS == 3) begin : init_entry_op3
                                                      w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
 end else begin
   assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
 end
 endgenerate
 

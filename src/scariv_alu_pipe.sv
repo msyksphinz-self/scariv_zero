@@ -45,7 +45,7 @@ typedef struct packed {
   imm_t imm;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t        r_ex0_issue;
+scariv_pkg::issue_t        w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
 pipe_ctrl_t                w_ex0_pipe_ctrl;
 
@@ -122,13 +122,13 @@ assign o_muldiv_stall = w_ex2_muldiv_stall | r_ex2_div_stall | r_ex1_div_stall;
 logic                                      w_ex0_commit_flush;
 logic                                      w_ex0_br_flush;
 logic                                      w_ex0_flush;
-assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, i_commit);
-assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(r_ex0_issue.cmt_id, r_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, i_commit);
+assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
 
 always_comb begin
-  r_ex0_issue = rv0_issue;
+  w_ex0_issue = rv0_issue;
   w_ex0_index = rv0_index;
 end
 
@@ -137,16 +137,16 @@ end
 // ---------------------
 
 decoder_alu_ctrl u_pipe_ctrl (
-    .inst(r_ex0_issue.inst),
+    .inst(w_ex0_issue.inst),
     .op  (w_ex0_pipe_ctrl.op),
     .imm (w_ex0_pipe_ctrl.imm)
 );
 
-assign ex0_regread_rs1.valid = r_ex0_issue.valid & r_ex0_issue.rd_regs[0].valid;
-assign ex0_regread_rs1.rnid  = r_ex0_issue.rd_regs[0].rnid;
+assign ex0_regread_rs1.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[0].valid;
+assign ex0_regread_rs1.rnid  = w_ex0_issue.rd_regs[0].rnid;
 
-assign ex0_regread_rs2.valid = r_ex0_issue.valid & r_ex0_issue.rd_regs[1].valid;
-assign ex0_regread_rs2.rnid  = r_ex0_issue.rd_regs[1].rnid;
+assign ex0_regread_rs2.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[1].valid;
+assign ex0_regread_rs2.rnid  = w_ex0_issue.rd_regs[1].rnid;
 
 assign w_ex0_muldiv_type_valid = (w_ex0_pipe_ctrl.op == OP_SMUL  ) |
                                  (w_ex0_pipe_ctrl.op == OP_MULH  ) |
@@ -165,7 +165,7 @@ assign w_ex0_muldiv_type_valid = (w_ex0_pipe_ctrl.op == OP_SMUL  ) |
 `endif // RV64
                                  1'b0;
 
-assign w_ex0_muldiv_valid = r_ex0_issue.valid & w_ex0_muldiv_type_valid & !w_ex0_flush;
+assign w_ex0_muldiv_valid = w_ex0_issue.valid & w_ex0_muldiv_type_valid & !w_ex0_flush;
 
 assign w_ex0_div_stall = (w_ex0_pipe_ctrl.op == OP_SDIV  ) |
                          (w_ex0_pipe_ctrl.op == OP_UDIV  ) |
@@ -179,34 +179,25 @@ assign w_ex0_div_stall = (w_ex0_pipe_ctrl.op == OP_SDIV  ) |
 `endif // RV64
                          1'b0;
 
-assign w_ex0_rs1_mispred = r_ex0_issue.rd_regs[0].valid & r_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
-assign w_ex0_rs2_mispred = r_ex0_issue.rd_regs[1].valid & r_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
+assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
+assign w_ex0_rs2_mispred = w_ex0_issue.rd_regs[1].valid & w_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
 
-assign o_ex0_early_wr.valid = r_ex0_issue.valid & r_ex0_issue.wr_reg.valid &
+assign o_ex0_early_wr.valid = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid &
                               ~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred &
                               ~w_ex0_muldiv_valid;
 
-assign o_ex0_early_wr.rd_rnid = r_ex0_issue.wr_reg.rnid;
-assign o_ex0_early_wr.rd_type = r_ex0_issue.wr_reg.typ;
+assign o_ex0_early_wr.rd_rnid = w_ex0_issue.wr_reg.rnid;
+assign o_ex0_early_wr.rd_type = w_ex0_issue.wr_reg.typ;
 assign o_ex0_early_wr.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex0_rs_loop
   riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = r_ex0_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                                (r_ex0_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                                (r_ex0_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                                (r_ex0_issue.rd_regs[rs_idx].rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = w_ex0_issue.rd_regs[rs_idx].valid &
+                                                 w_ex0_issue.rd_regs[rs_idx].predict_ready[1];
     assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
-    bit_oh_or #(
-      .T(riscv_pkg::xlen_t),
-      .WORDS(scariv_pkg::TGT_BUS_SIZE)
-  ) u_rs_data_select (
-      .i_oh      (w_ex0_rs_fwd_valid[rs_idx]),
-      .i_data    (w_ex0_tgt_data            ),
-      .o_selected(w_ex0_rs_fwd_data [rs_idx])
-  );
+  assign w_ex0_rs_fwd_data [rs_idx] = w_ex0_tgt_data[w_ex0_issue.rd_regs[rs_idx].early_index];
 end endgenerate // block: ex1_rs_loop
 
 // ---------------------
@@ -220,8 +211,8 @@ assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
 
 
 always_comb begin
-  w_ex1_issue_next = r_ex0_issue;
-  w_ex1_issue_next.valid = r_ex0_issue.valid & !w_ex0_flush & (~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred);
+  w_ex1_issue_next = w_ex0_issue;
+  w_ex1_issue_next.valid = w_ex0_issue.valid & !w_ex0_flush & (~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred);
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -250,9 +241,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_div_stall <= w_ex0_div_stall;
 
     r_ex1_rs1_data <= |w_ex0_rs_fwd_valid[0] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
-    r_ex1_rs2_data <= w_ex0_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){r_ex0_issue.inst[31]}}, r_ex0_issue.inst[31:20]} :
-                      w_ex0_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){r_ex0_issue.inst[31]}}, r_ex0_issue.inst[31:20]} :
-                      w_ex0_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, r_ex0_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
+    r_ex1_rs2_data <= w_ex0_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
+                      w_ex0_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
+                      w_ex0_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, w_ex0_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
                       |w_ex0_rs_fwd_valid[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
 
     r_ex1_wr_valid <= o_ex0_early_wr.valid;
@@ -266,8 +257,8 @@ end
 
 select_mispred_bus rs1_mispred_select
 (
- .i_entry_rnid (r_ex0_issue.rd_regs[0].rnid),
- .i_entry_type (r_ex0_issue.rd_regs[0].typ),
+ .i_entry_rnid (w_ex0_issue.rd_regs[0].rnid),
+ .i_entry_type (w_ex0_issue.rd_regs[0].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex0_rs1_lsu_mispred)
@@ -276,8 +267,8 @@ select_mispred_bus rs1_mispred_select
 
 select_mispred_bus rs2_mispred_select
 (
- .i_entry_rnid (r_ex0_issue.rd_regs[1].rnid),
- .i_entry_type (r_ex0_issue.rd_regs[1].typ),
+ .i_entry_rnid (w_ex0_issue.rd_regs[1].rnid),
+ .i_entry_type (w_ex0_issue.rd_regs[1].typ),
  .i_mispred    (i_mispred_lsu),
 
  .o_mispred    (w_ex0_rs2_lsu_mispred)
@@ -291,20 +282,11 @@ select_mispred_bus rs2_mispred_select
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                                (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                                (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                                (r_ex1_issue.rd_regs[rs_idx].rnid != 'h0);   // GPR[x0] always zero
+    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid &
+                                                 r_ex1_issue.rd_regs[rs_idx].predict_ready[0];
     assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
-    bit_oh_or #(
-      .T(riscv_pkg::xlen_t),
-      .WORDS(scariv_pkg::TGT_BUS_SIZE)
-  ) u_rs_data_select (
-      .i_oh      (w_ex1_rs_fwd_valid[rs_idx]),
-      .i_data    (w_ex1_tgt_data            ),
-      .o_selected(w_ex1_rs_fwd_data [rs_idx])
-  );
+  assign w_ex1_rs_fwd_data [rs_idx] = w_ex1_tgt_data[r_ex1_issue.rd_regs[rs_idx].early_index];
 end endgenerate // block: ex1_rs_loop
 
 assign w_ex1_rs1_selected_data = |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] : r_ex1_rs1_data;
@@ -469,8 +451,8 @@ import "DPI-C" function void log_stage
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (r_ex0_issue.valid) begin
-      log_stage (r_ex0_issue.kanata_id, "EX0");
+    if (w_ex0_issue.valid) begin
+      log_stage (w_ex0_issue.kanata_id, "EX0");
     end
     if (r_ex1_issue.valid) begin
       log_stage (r_ex1_issue.kanata_id, "EX1");
