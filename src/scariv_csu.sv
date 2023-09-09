@@ -106,9 +106,7 @@ u_scariv_issue_unit
 
    .i_stall (1'b0),
 
-   .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
-   .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
@@ -130,8 +128,6 @@ u_csu_pipe
    .i_commit (i_commit),
 
    .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index_oh),
-   .ex1_i_phy_wr(i_phy_wr),
 
    .ex1_regread_rs1(ex1_regread_rs1),
 
