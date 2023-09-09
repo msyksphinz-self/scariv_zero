@@ -51,7 +51,6 @@ scariv_bru_pkg::issue_entry_t            w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0]               w_ex0_index;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
 logic                                    w_ex0_br_flush;
-logic [scariv_pkg::TGT_BUS_SIZE-1:0]     w_ex0_rs_fwd_valid[2];
 riscv_pkg::xlen_t                        w_ex0_rs_fwd_data [2];
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
@@ -63,7 +62,6 @@ logic                                    r_ex1_dead;
 riscv_pkg::xlen_t                        r_ex1_rs1_data;
 riscv_pkg::xlen_t                        r_ex1_rs2_data;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0]     w_ex1_rs_fwd_valid[2];
 riscv_pkg::xlen_t                        w_ex1_rs_fwd_data [2];
 
 riscv_pkg::xlen_t                        w_ex1_rs1_selected_data;
@@ -113,8 +111,6 @@ assign ex0_regread_rs2.rnid  = w_ex0_issue.rd_regs[1].rnid;
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex0_rs_loop
   riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = w_ex0_issue.rd_regs[rs_idx].valid &
-                                                 w_ex0_issue.rd_regs[rs_idx].predict_ready[1];
     assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
   assign w_ex0_rs_fwd_data [rs_idx] = w_ex0_tgt_data[w_ex0_issue.rd_regs[rs_idx].early_index];
@@ -149,8 +145,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_dead <= w_ex0_issue.valid & (w_ex0_br_flush | w_commit_flushed);
 
-    r_ex1_rs1_data <= |w_ex0_rs_fwd_valid[0] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
-    r_ex1_rs2_data <= |w_ex0_rs_fwd_valid[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
+    r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
+    r_ex1_rs2_data <= w_ex0_issue.rd_regs[1].predict_ready[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -184,8 +180,6 @@ assign o_ex1_early_wr.may_mispred = 1'b0;
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid &
-                                                 r_ex1_issue.rd_regs[rs_idx].predict_ready[0];
     assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
   assign w_ex1_rs_fwd_data [rs_idx] = w_ex1_tgt_data[r_ex1_issue.rd_regs[rs_idx].early_index];
@@ -200,8 +194,8 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_br_flush;
 end
 
-assign w_ex1_rs1_selected_data = |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] : r_ex1_rs1_data;
-assign w_ex1_rs2_selected_data = |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : r_ex1_rs2_data;
+assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs_fwd_data[0] : r_ex1_rs1_data;
+assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_rs_fwd_data[1] : r_ex1_rs2_data;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
