@@ -122,7 +122,7 @@ always_comb begin
 
   for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
     w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
-    w_entry_next.rd_regs[rs_idx].predict_ready[0] = w_rs_rel_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready[0] = r_entry.rd_regs[rs_idx].valid & w_rs_rel_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
 
     if (w_entry_next.rd_regs[rs_idx].predict_ready[0]) begin
