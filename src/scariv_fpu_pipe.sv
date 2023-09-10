@@ -49,6 +49,10 @@ scariv_pkg::issue_t                       w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0]                w_ex0_index;
 pipe_ctrl_t                               w_ex0_pipe_ctrl;
 
+logic [ 2: 0]                             w_ex0_rs_lsu_mispred;
+logic [ 2: 0]                             w_ex0_rs_mispred;
+logic [ 2: 0]                             r_ex1_rs_mispred;
+
 pipe_ctrl_t                               r_ex1_pipe_ctrl;
 scariv_pkg::issue_t                         r_ex1_issue;
 logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
@@ -117,6 +121,21 @@ decoder_fpu_ctrl u_pipe_ctrl (
   .use_frm (w_ex0_pipe_ctrl.use_frm )
 );
 
+generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex0_mispred_loop
+   select_mispred_bus rs1_mispred_select
+   (
+    .i_entry_rnid (w_ex0_issue.rd_regs[rs_idx].rnid),
+    .i_entry_type (w_ex0_issue.rd_regs[rs_idx].typ),
+    .i_mispred    (i_mispred_lsu),
+
+    .o_mispred    (w_ex0_rs_lsu_mispred[rs_idx])
+    );
+
+  assign w_ex0_rs_mispred[rs_idx] = w_ex0_issue.rd_regs[rs_idx].valid &
+                                    w_ex0_issue.rd_regs[rs_idx].predict_ready ? w_ex0_rs_lsu_mispred[rs_idx] : 1'b0;
+end
+endgenerate
+
 // ---------------------
 // EX1
 // ---------------------
@@ -138,10 +157,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= 'h0;
     r_ex1_index <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
+    r_ex1_rs_mispred <= 'h0;
   end else begin
     r_ex1_issue <= w_ex0_issue;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
+    r_ex1_rs_mispred <= w_ex0_rs_mispred;
   end
 end
 
@@ -166,7 +187,7 @@ endgenerate
 // EX1 :
 // -----------------------------
 assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
-                                 &(~w_ex1_rs_mispred);
+                                 &(~(w_ex1_rs_mispred | r_ex1_rs_mispred));
 
 assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
 assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
@@ -271,7 +292,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
 
-    r_ex2_rs_mispred <= w_ex1_rs_mispred;
+    r_ex2_rs_mispred <= r_ex1_rs_mispred | w_ex1_rs_mispred;
 
     r_ex2_frm_invalid <= w_ex1_frm_invalid;
   end
