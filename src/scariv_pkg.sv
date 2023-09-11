@@ -447,7 +447,7 @@ function issue_t assign_issue_op2 (disp_t in,
     ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
     ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
     ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-    ret.rd_regs[rs_idx].predict_ready[0] = rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = in.rd_regs[rs_idx].valid & rs_rel_hit[rs_idx];
     ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
     if (ret.rd_regs[rs_idx].predict_ready[0]) begin
       ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];

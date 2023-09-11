@@ -382,11 +382,13 @@ assign w_dead_grp_id = w_except_dead_grp_id; //  |
 // end
 
 // ROB Notification Information
-assign rob_info_if.cmt_id       = w_out_cmt_id;
-assign rob_info_if.grp_id       = w_out_entry.grp_id;
-assign rob_info_if.done_grp_id  = w_out_entry.done_grp_id;
-assign rob_info_if.upd_pc_valid = w_out_entry.br_upd_info.upd_valid;
-assign rob_info_if.except_valid = w_out_entry.except_valid;
+always_ff @ (posedge i_clk) begin
+  rob_info_if.cmt_id       <= w_out_cmt_id;
+  rob_info_if.grp_id       <= w_out_entry.grp_id;
+  rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
+  rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
+  rob_info_if.except_valid <= w_out_entry.except_valid;
+end
 
 `ifdef SIMULATION
 `ifdef MONITOR

@@ -378,9 +378,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   logic pipe_is_younger_than_rmw;
 
     assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
-                                                                       w_stq_entries[s_idx].inst.grp_id,
-                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
-                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
+                                                                         w_stq_entries[s_idx].inst.grp_id,
+                                                                         rmw_order_check_if[p_idx].ex2_cmt_id,
+                                                                         rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                                      w_stq_entries[s_idx].is_rmw &
                                                      rmw_order_check_if[p_idx].ex2_valid &

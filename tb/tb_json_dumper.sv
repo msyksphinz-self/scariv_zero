@@ -26,7 +26,7 @@ int json_fp;
       // Inst Buffer
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_inst_buffer.dump_json(json_fp);
       // Rename --> Dispatch
-      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_int_rename.dump_json("int", json_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rename.dump_json("int", json_fp);
 
       // LSU LDQ
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_lsu_top.u_ldq.dump_json(json_fp);

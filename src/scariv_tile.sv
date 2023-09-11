@@ -217,7 +217,8 @@ assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_ex3_bru_phy_wr.rd_rnid;
 assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_ex3_bru_phy_wr.rd_data;
 
 // CSU
-assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+// assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+assign w_ex1_early_wr[CSU_INST_PORT_BASE] = 'h0;
 assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
 assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 
@@ -280,7 +281,7 @@ scariv_frontend u_frontend (
 
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
-u_int_rename (
+u_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 

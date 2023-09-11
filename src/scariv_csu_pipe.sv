@@ -110,10 +110,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
-assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
-assign o_ex1_early_wr.may_mispred = 1'b0;
+// assign o_ex1_early_wr.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+// assign o_ex1_early_wr.rd_rnid     = r_ex1_issue.wr_reg.rnid;
+// assign o_ex1_early_wr.rd_type     = r_ex1_issue.wr_reg.typ;
+// assign o_ex1_early_wr.may_mispred = 1'b0;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
