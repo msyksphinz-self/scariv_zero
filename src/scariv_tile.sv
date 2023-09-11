@@ -281,7 +281,7 @@ scariv_frontend u_frontend (
 
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
-u_int_rename (
+u_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 

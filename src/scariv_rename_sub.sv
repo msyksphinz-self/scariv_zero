@@ -88,6 +88,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
   logic                 w_push_freelist;
   logic                 except_flush_valid;
+  logic                 is_active_flush;
   rnid_t   w_push_freelist_id;
 
   // When instruction commit normally, return old RNID
@@ -103,16 +104,21 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   //            silent flush (actually normally exit) => old ID
   assign except_flush_valid = r_commit_rnid_update_dly.commit &
                               r_commit_rnid_update_dly.except_valid[d_idx] &
-                              (r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH) &
-                              (r_commit_rnid_update_dly.except_type != scariv_pkg::ANOTHER_FLUSH);
+                              (r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH);
+  // Another Flush generate flush even though it is (actually) dead.
+  // Another Flush is not marked as dead, but it is actually dead.
+  // Freelist must be receive new ID
+  assign is_active_flush = r_commit_rnid_update_dly.except_valid[d_idx] &
+                           (r_commit_rnid_update_dly.except_type == scariv_pkg::ANOTHER_FLUSH);
 
   always_comb begin
     if (r_commit_rnid_update_dly.commit &
-        !(r_commit_rnid_update_dly.dead_id[d_idx] | except_flush_valid)) begin
+        (r_commit_rnid_update_dly.dead_id[d_idx] | except_flush_valid | is_active_flush)) begin
+      // Must be roll back
+      w_push_freelist_id = r_commit_rnid_update_dly.rd_rnid[d_idx];
+    end else begin
       // old ID push
       w_push_freelist_id = r_commit_rnid_update_dly.old_rnid[d_idx];
-    end else begin
-      w_push_freelist_id = r_commit_rnid_update_dly.rd_rnid[d_idx];
     end
   end
 

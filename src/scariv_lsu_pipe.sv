@@ -183,7 +183,7 @@ always_comb begin
   end
 
   w_ex2_issue_next       = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_haz_detected & ~w_ex1_commit_flush & ~w_ex1_br_flush;
   if (br_upd_if.update) begin
   end
 
