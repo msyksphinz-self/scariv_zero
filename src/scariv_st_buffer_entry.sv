@@ -226,8 +226,8 @@ always_comb begin
       w_entry_next.amo_op_done = 1'b1;
 
       for (integer idx = 0; idx < riscv_pkg::XLEN_W; idx+=8) begin
-        if (paddr_partial + idx < ST_BUF_WIDTH) begin
-          w_entry_next.data[(paddr_partial + idx) +: 8] = amo_op_if.result[idx +: 8];
+        if (paddr_partial[$clog2(ST_BUF_WIDTH)-1: 0] + idx < ST_BUF_WIDTH) begin
+          w_entry_next.data[(paddr_partial[$clog2(ST_BUF_WIDTH)-1: 0] + idx) +: 8] = amo_op_if.result[idx +: 8];
         end
       end
     end
