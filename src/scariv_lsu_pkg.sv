@@ -405,7 +405,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic          lock_valid;
+  logic          high_priority;
   scariv_pkg::paddr_t paddr;
 } dc_read_req_t;
 
@@ -726,6 +726,7 @@ typedef struct packed {
   logic                  oldest_valid;
   inst_cat_t             cat;
 
+  logic                  l1d_high_priority;
   logic                  paddr_valid;
   scariv_pkg::paddr_t    paddr;
 `ifdef SIMULATION

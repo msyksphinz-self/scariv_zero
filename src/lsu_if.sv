@@ -2,7 +2,7 @@ interface l1d_rd_if;
 
   logic             s0_valid;
   scariv_pkg::paddr_t s0_paddr;
-  logic             s0_lock_valid;
+  logic             s0_high_priority;
 
   logic                                    s1_hit;
   logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
@@ -20,7 +20,7 @@ interface l1d_rd_if;
   modport master(
     output s0_valid,
     output s0_paddr,
-    output s0_lock_valid,
+    output s0_high_priority,
 
     input  s1_hit,
     input  s1_hit_way,
@@ -37,7 +37,7 @@ interface l1d_rd_if;
   modport slave(
     input  s0_valid,
     input  s0_paddr,
-    input  s0_lock_valid,
+    input  s0_high_priority,
 
     output s1_hit,
     output s1_hit_way,
@@ -943,13 +943,13 @@ interface lsu_pipe_haz_if;
   modport master (
     output valid,
     output payload,
-    input  full 
+    input  full
   );
 
   modport slave (
     input  valid,
     input  payload,
-    output full 
+    output full
   );
 
 
@@ -972,5 +972,5 @@ interface lsu_pipe_req_if;
     output ready,
     input  payload
   );
-  
+
 endinterface // lsu_repaly_if

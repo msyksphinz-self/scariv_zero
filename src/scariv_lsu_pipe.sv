@@ -409,7 +409,7 @@ assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
                                 w_ex1_readmem_op & !w_ex1_haz_detected;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
-assign ex1_l1d_rd_if.s0_lock_valid = 1'b0;
+assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
 
 assign w_ex1_commit_flush = scariv_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit) & r_ex1_issue.valid;
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,

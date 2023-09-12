@@ -54,7 +54,11 @@ def main():
                         a["amo"] = 1
                     else:
                         a["amo"] = 0
-                    a["use_docker"] = True
+                    if "b" in isa :
+                        a["bitmanip"] = 1
+                    else:
+                        a["bitmanip"] = 0
+                    a["use_docker"] = False
                     a["conf"] = c
                 pool.map(run_regress, args_list)
             except KeyboardInterrupt:
