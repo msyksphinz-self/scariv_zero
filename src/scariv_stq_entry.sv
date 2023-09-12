@@ -108,7 +108,7 @@ assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready |
 scariv_pkg::grp_id_t w_prev_grp_id_mask;
 assign w_prev_grp_id_mask = r_entry.inst.grp_id-1;
 assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
-                             |(rob_info_if.done_grp_id & r_entry.inst.grp_id) &
+                             |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
 assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed &
