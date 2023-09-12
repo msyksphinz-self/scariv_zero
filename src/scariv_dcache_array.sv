@@ -46,6 +46,8 @@ localparam TAG_SIZE = scariv_lsu_pkg::DCACHE_TAG_HIGH - scariv_lsu_pkg::DCACHE_T
 localparam DCACHE_WORDS_PER_BANK = scariv_conf_pkg::DCACHE_WORDS / scariv_conf_pkg::DCACHE_BANKS;
 
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid;
+logic [READ_PORT_NUM-1:0] w_s0_dc_read_priority;
+logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_with_priority;
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_oh;
 scariv_lsu_pkg::dc_read_req_t w_s0_dc_selected_read_req;
 logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_norm_valid_oh;
@@ -85,6 +87,7 @@ logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]       w_update_tag_addr[READ_PORT_NUM
 // Selection of Request from LSU ports
 generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
   assign w_s0_dc_read_req_valid[p_idx] = i_dc_read_req[p_idx].valid;
+  assign w_s0_dc_read_priority [p_idx] = i_dc_read_req[p_idx].valid & i_dc_read_req[p_idx].high_priority;
 
   logic w_s0_dc_read_tag_same;
   logic r_s1_dc_read_tag_same;
@@ -154,7 +157,8 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
 end
 endgenerate
 
-bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_norm_valid_oh));
+assign w_s0_dc_read_req_valid_with_priority = w_s0_dc_read_priority == 'h0 ? w_s0_dc_read_req_valid : w_s0_dc_read_priority;
+bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid_with_priority), .out(w_s0_dc_read_req_norm_valid_oh));
 assign w_s0_dc_read_req_valid_oh = w_s0_dc_read_req_norm_valid_oh;
 bit_oh_or #(.T(scariv_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 

@@ -544,10 +544,10 @@ logic [63: 0]                                                  int_commit_counte
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
         for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
-          if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &
-              ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id[grp_idx]) begin
+          if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &
+              ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
                         int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
@@ -589,17 +589,17 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                       1 << grp_idx,
                       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_ras_index,
                       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_pred_vaddr);
-          end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &...
+          end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
 
       // Counting up instruction
       cycle_counter <= cycle_counter + 1;
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
-        total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
-                                                     ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id);
-        int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
-                                                             ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id);
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
+        total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
+                                                     ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
+        int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
+                                                             ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
       end
       if (((cycle_counter % cycle_interval) == 0) && (cycle_counter != 0)) begin
         $display ("%10d : %10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",

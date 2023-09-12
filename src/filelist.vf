@@ -64,6 +64,7 @@
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv
 ../src/select_release_bus.sv
+../src/select_early_wr_bus_oh.sv
 ../src/select_phy_wr_bus.sv
 ../src/select_phy_wr_data.sv
 ../src/select_mispred_bus.sv

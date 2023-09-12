@@ -101,11 +101,11 @@ ic_data_t w_pref_wr_data ;
 logic     w_pref_wr_fire;
 assign w_pref_wr_fire = w_pref_wr_valid & w_pref_wr_ready;
 
-assign w_is_req_tag_normal_fetch = ic_l2_req.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign w_is_req_tag_pre_fetch    = ic_l2_req.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+assign w_is_req_tag_normal_fetch = ic_l2_req.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_req_tag_pre_fetch    = ic_l2_req.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
-assign w_is_resp_tag_normal_fetch = ic_l2_resp.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
-assign w_is_resp_tag_pre_fetch    = ic_l2_resp.tag         == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
+assign w_is_resp_tag_normal_fetch = ic_l2_resp.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
+assign w_is_resp_tag_pre_fetch    = ic_l2_resp.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
 assign w_s2_replace_addr = r_s2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
@@ -150,7 +150,8 @@ generate for(genvar way = 0; way < scariv_conf_pkg::ICACHE_WAYS; way++) begin : 
 
   logic                    w_ram_wr;
   logic                    w_ram_rd;
-  assign w_ram_wr = (r_replace_way[w_tag_ram_addr] == way) &
+  assign w_ram_wr = (r_ic_state == ICResp) &
+                    (r_replace_way[w_tag_ram_addr] == way) &
                     (ic_l2_normal_resp_fire | w_pref_wr_fire);
   assign w_ram_rd = w_s0_req_fire | ic_l2_normal_resp_fire | w_pref_wr_fire;
 

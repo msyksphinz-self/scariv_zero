@@ -217,7 +217,8 @@ assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_ex3_bru_phy_wr.rd_rnid;
 assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_ex3_bru_phy_wr.rd_data;
 
 // CSU
-assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+// assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+assign w_ex1_early_wr[CSU_INST_PORT_BASE] = 'h0;
 assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
 assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 
@@ -228,7 +229,8 @@ assign int_regwrite[CSU_INT_REGWR_PORT_BASE].data  = w_ex3_csu_phy_wr.rd_data;
 
 // FPU
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_loop
-  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx]     = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+0] = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+1] = 'h0;   // Now, FPNew early wakeup is not used.
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
   assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
@@ -279,7 +281,7 @@ scariv_frontend u_frontend (
 
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
-u_int_rename (
+u_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 

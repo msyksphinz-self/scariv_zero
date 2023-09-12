@@ -43,7 +43,7 @@ typedef logic [scariv_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
                           scariv_conf_pkg::LDQ_SIZE :
                           scariv_conf_pkg::STQ_SIZE;
 
-localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ? 
+localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ?
                                scariv_conf_pkg::MISSU_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
 
@@ -79,7 +79,7 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_STQ_NONFWD_HAZ
 } ex2_haz_t;
 
-  typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT, 
+  typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT,
                                 LSU_SCHED_EX2, LSU_SCHED_CLEAR } lsu_sched_state_t;
 
   typedef enum logic [ 1: 0] {
@@ -115,7 +115,7 @@ typedef enum logic [ 2: 0] {
 function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                                          cmt_id_t cmt_id,
                                          grp_id_t grp_id,
-                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred,
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
                                          logic stq_rmw_existed);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
@@ -143,16 +143,20 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.kanata_id   = in.kanata_id;
 `endif // SIMULATION
 
-  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+  for (int rs_idx = 0; rs_idx < 1; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
     ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
     ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
     ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
     ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index;
+    end
   end
 
-  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+  for (int rs_idx = 1; rs_idx < 3; rs_idx++) begin
     ret.rd_regs[rs_idx].valid = 1'b0;
   end
 
@@ -401,7 +405,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic          lock_valid;
+  logic          high_priority;
   scariv_pkg::paddr_t paddr;
 } dc_read_req_t;
 
@@ -571,7 +575,7 @@ typedef struct packed {
 
   logic                except_valid;
   logic                is_committed;
-  
+
   // Uncached Access Region
   logic                         is_uc;
   // Atomic Operations
@@ -722,6 +726,7 @@ typedef struct packed {
   logic                  oldest_valid;
   inst_cat_t             cat;
 
+  logic                  l1d_high_priority;
   logic                  paddr_valid;
   scariv_pkg::paddr_t    paddr;
 `ifdef SIMULATION

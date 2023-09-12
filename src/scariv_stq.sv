@@ -301,7 +301,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_ex2_q_updates(w_ex2_q_updates),
 
      .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data), 
+     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data),
 
      .o_entry (w_stq_entries[s_idx]),
 
@@ -378,9 +378,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   logic pipe_is_younger_than_rmw;
 
     assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
-                                                                       w_stq_entries[s_idx].inst.grp_id,
-                                                                       rmw_order_check_if[p_idx].ex2_cmt_id,
-                                                                       rmw_order_check_if[p_idx].ex2_grp_id);
+                                                                         w_stq_entries[s_idx].inst.grp_id,
+                                                                         rmw_order_check_if[p_idx].ex2_cmt_id,
+                                                                         rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                                      w_stq_entries[s_idx].is_rmw &
                                                      rmw_order_check_if[p_idx].ex2_valid &
@@ -517,15 +517,18 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                              w_stq_cmt_entry.addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)
 
+  logic [$clog2(scariv_conf_pkg::STQ_SIZE)-1: 0] w_shifted_out_ptr;
+  bit_encoder #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_encoder_ptr (.i_in(w_shifted_out_ptr_oh), .o_out(w_shifted_out_ptr));
   stq_entry_t w_stq_cmt_entry;
-  bit_oh_or
-    #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
-  select_cmt_oh
-    (
-     .i_oh(w_shifted_out_ptr_oh),
-     .i_data(w_stq_entries),
-     .o_selected(w_stq_cmt_entry)
-     );
+  assign w_stq_cmt_entry = w_stq_entries[w_shifted_out_ptr];
+  // bit_oh_or
+  //   #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
+  // select_cmt_oh
+  //   (
+  //    .i_oh(w_shifted_out_ptr_oh),
+  //    .i_data(w_stq_entries),
+  //    .o_selected(w_stq_cmt_entry)
+  //    );
 
   logic [scariv_lsu_pkg::ST_BUF_WIDTH / 8-1:0] w_strb_origin;
   always_comb begin

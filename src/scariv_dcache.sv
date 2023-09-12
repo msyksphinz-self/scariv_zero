@@ -78,7 +78,7 @@ generate for (genvar bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; ban
 
     assign w_dc_read_req [p_idx].valid = l1d_rd_if[p_idx].s0_valid & w_rd_bank_valid;
     assign w_dc_read_req [p_idx].paddr = l1d_rd_if[p_idx].s0_paddr;
-    assign w_dc_read_req [p_idx].lock_valid = l1d_rd_if[p_idx].s0_lock_valid;
+    assign w_dc_read_req [p_idx].high_priority = l1d_rd_if[p_idx].s0_high_priority;
 
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin

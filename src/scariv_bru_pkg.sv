@@ -83,7 +83,7 @@ endfunction // assign_issue_common
 function issue_entry_t assign_bru_issue (scariv_pkg::disp_t in,
                                          scariv_pkg::cmt_id_t cmt_id,
                                          scariv_pkg::grp_id_t grp_id,
-                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2]);
   issue_entry_t ret;
   ret = assign_issue_common (in, cmt_id, grp_id);
 
@@ -93,7 +93,11 @@ function issue_entry_t assign_bru_issue (scariv_pkg::disp_t in,
     ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
     ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
     ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
+    end
   end
 
   for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin

@@ -175,10 +175,10 @@ always_comb begin
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       if (w_done_rpt_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
-          w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
+          w_entry_next.except_valid[d_idx] = r_entry.except_valid[d_idx] | w_done_rpt_except_valid[d_idx];
           w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
           w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
-          w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
+          w_entry_next.flush_valid [d_idx] = r_entry.flush_valid [d_idx] | w_done_rpt_except_valid[d_idx];
 
           w_entry_next.fflags_update_valid [d_idx] = w_done_rpt_fflags_update_valid [d_idx];
           w_entry_next.fflags              [d_idx] = w_done_rpt_fflags              [d_idx];

@@ -90,8 +90,6 @@ scariv_lsu_pkg::lsu_pipe_issue_t        w_ex0_issue;
 logic [MEM_Q_SIZE-1: 0]  w_ex0_index_oh;
 lsu_pipe_ctrl_t          w_ex0_pipe_ctrl;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex0_rs1_fwd_valid;
-riscv_pkg::xlen_t                    w_ex0_tgt_data[scariv_pkg::TGT_BUS_SIZE];
 riscv_pkg::xlen_t                    w_ex0_rs1_fwd_data;
 riscv_pkg::xlen_t                    w_ex0_rs1_selected_data;
 
@@ -124,8 +122,6 @@ logic w_ex1_commit_flush;
 logic w_ex1_br_flush;
 
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs1_fwd_valid;
-riscv_pkg::xlen_t                  w_ex1_tgt_data[scariv_pkg::TGT_BUS_SIZE];
 riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
 
 //
@@ -187,7 +183,7 @@ always_comb begin
   end
 
   w_ex2_issue_next       = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_commit_flush & ~w_ex1_br_flush;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & ~w_ex1_haz_detected & ~w_ex1_commit_flush & ~w_ex1_br_flush;
   if (br_upd_if.update) begin
   end
 
@@ -222,24 +218,13 @@ assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ex0_issue.valid;
 
 
-generate for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex0_rs_tgt_loop
-  assign w_ex0_rs1_fwd_valid[tgt_idx] = w_ex0_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                        (w_ex0_issue.rd_regs[0].typ  == scariv_pkg::GPR) &
-                                        (w_ex0_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                        (w_ex0_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
+riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex0_rs_tgt_loop
   assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
-end endgenerate
+end
+assign w_ex0_rs1_fwd_data  = w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
 
-bit_oh_or #(
-    .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
-) u_ex0_rs1_data_select (
-    .i_oh(w_ex0_rs1_fwd_valid),
-    .i_data(w_ex0_tgt_data),
-    .o_selected(w_ex0_rs1_fwd_data)
-);
-
-assign w_ex0_rs1_selected_data = |w_ex0_rs1_fwd_valid ? w_ex0_rs1_fwd_data : ex0_regread_rs1.data;
+assign w_ex0_rs1_selected_data = w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs1_fwd_data : ex0_regread_rs1.data;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -321,27 +306,16 @@ assign w_ex0_index_oh = i_ex0_replay_index_oh;
 //
 // EX1 stage pipeline
 //
-generate for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-  assign w_ex1_rs1_fwd_valid[tgt_idx] = r_ex1_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                        (r_ex1_issue.rd_regs[0].typ  == scariv_pkg::GPR) &
-                                        (r_ex1_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid) &
-                                        (r_ex1_issue.rd_regs[0].rnid != 'h0);   // GPR[x0] always zero
+riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex1_rs_tgt_loop
   assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
-end endgenerate
-
-bit_oh_or #(
-    .T(riscv_pkg::xlen_t),
-    .WORDS(scariv_pkg::TGT_BUS_SIZE)
-) u_rs1_data_select (
-    .i_oh(w_ex1_rs1_fwd_valid),
-    .i_data(w_ex1_tgt_data),
-    .o_selected(w_ex1_rs1_fwd_data)
-);
+end
+assign w_ex1_rs1_fwd_data  = w_ex1_tgt_data[r_ex1_issue.rd_regs[0].early_index];
 
 assign ex0_regread_rs1.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[0].valid;
 assign ex0_regread_rs1.rnid  = w_ex0_issue.rd_regs[0].rnid;
 
-assign w_ex1_rs1_selected_data = |w_ex1_rs1_fwd_valid ? w_ex1_rs1_fwd_data : r_ex1_rs1;
+assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs1_fwd_data : r_ex1_rs1;
 
 assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 
@@ -435,7 +409,7 @@ assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
                                 w_ex1_readmem_op & !w_ex1_haz_detected;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
-assign ex1_l1d_rd_if.s0_lock_valid = 1'b0;
+assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
 
 assign w_ex1_commit_flush = scariv_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit) & r_ex1_issue.valid;
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,

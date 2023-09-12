@@ -215,32 +215,34 @@ assign w_lsu_pipe_req_if.ready = w_replay_selected;
 
 always_comb begin
   if (w_replay_selected) begin
-    w_ex0_replay_issue.valid        = w_lsu_pipe_req_if.valid       ;
-    w_ex0_replay_issue.cmt_id       = w_lsu_pipe_req_if.payload.cmt_id      ;
-    w_ex0_replay_issue.grp_id       = w_lsu_pipe_req_if.payload.grp_id      ;
-    w_ex0_replay_issue.inst         = w_lsu_pipe_req_if.payload.inst        ;
-    w_ex0_replay_issue.rd_regs[0]   = w_lsu_pipe_req_if.payload.rd_reg      ;
-    w_ex0_replay_issue.wr_reg       = w_lsu_pipe_req_if.payload.wr_reg      ;
-    w_ex0_replay_issue.oldest_valid = w_lsu_pipe_req_if.payload.oldest_valid;
-    w_ex0_replay_issue.cat          = w_lsu_pipe_req_if.payload.cat         ;
-    w_ex0_replay_issue.paddr_valid  = 1'b1;
-    w_ex0_replay_issue.paddr        = w_lsu_pipe_req_if.payload.paddr;
+    w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
+    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.payload.cmt_id      ;
+    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.payload.grp_id      ;
+    w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
+    w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
+    w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_replay_issue.oldest_valid      = w_lsu_pipe_req_if.payload.oldest_valid;
+    w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
+    w_ex0_replay_issue.l1d_high_priority = w_lsu_pipe_req_if.payload.hazard_typ == EX2_HAZ_L1D_CONFLICT;
+    w_ex0_replay_issue.paddr_valid       = 1'b1;
+    w_ex0_replay_issue.paddr             = w_lsu_pipe_req_if.payload.paddr;
 
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION
     w_ex0_replay_index_oh           = 'h0;
   end else begin
-    w_ex0_replay_issue.valid        = w_issue_from_iss.valid;
-    w_ex0_replay_issue.cmt_id       = w_issue_from_iss.cmt_id;
-    w_ex0_replay_issue.grp_id       = w_issue_from_iss.grp_id;
-    w_ex0_replay_issue.inst         = w_issue_from_iss.inst;
-    w_ex0_replay_issue.rd_regs      = w_issue_from_iss.rd_regs;
-    w_ex0_replay_issue.wr_reg       = w_issue_from_iss.wr_reg;
-    w_ex0_replay_issue.oldest_valid = w_issue_from_iss.oldest_valid;
-    w_ex0_replay_issue.cat          = w_issue_from_iss.cat;
-    w_ex0_replay_issue.paddr_valid  = 1'b0;
-    w_ex0_replay_issue.paddr        = 'h0;
+    w_ex0_replay_issue.valid             = w_issue_from_iss.valid;
+    w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
+    w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
+    w_ex0_replay_issue.inst              = w_issue_from_iss.inst;
+    w_ex0_replay_issue.rd_regs           = w_issue_from_iss.rd_regs;
+    w_ex0_replay_issue.wr_reg            = w_issue_from_iss.wr_reg;
+    w_ex0_replay_issue.oldest_valid      = w_issue_from_iss.oldest_valid;
+    w_ex0_replay_issue.cat               = w_issue_from_iss.cat;
+    w_ex0_replay_issue.l1d_high_priority = 1'b0;
+    w_ex0_replay_issue.paddr_valid       = 1'b0;
+    w_ex0_replay_issue.paddr             = 'h0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
 `endif // SIMULATION

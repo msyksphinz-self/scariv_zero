@@ -104,13 +104,24 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_gr
 assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready |
                                 w_rs2_phy_hit & !w_rs2_mispredicted;
 
-assign w_ready_to_mv_stbuf = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
+// assign w_ready_to_mv_stbuf = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
+scariv_pkg::grp_id_t w_prev_grp_id_mask;
+assign w_prev_grp_id_mask = r_entry.inst.grp_id-1;
+assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
+                             |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
+                             ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & ~r_entry.except_valid & ~r_entry.st_buf_finished &
+assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed &
+                           ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : 1'b1) &
+                           ~r_entry.st_buf_finished &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);
 assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.is_uc & ~r_entry.except_valid;
 
-assign o_stq_entry_st_finish = r_entry.is_valid & (r_entry.st_buf_finished | r_entry.dead) & i_stq_outptr_valid;
+assign o_stq_entry_st_finish = r_entry.is_valid &
+                               (r_entry.st_buf_finished |
+                                r_entry.is_committed & r_entry.is_sc & ~r_entry.sc_success |
+                                r_entry.dead) &
+                               i_stq_outptr_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -127,7 +138,7 @@ always_comb begin
   if (~w_entry_next.is_rs2_get) begin
     if (r_entry.inst.rd_reg.ready & i_rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
-      w_entry_next.is_rs2_get = 1'b1;      
+      w_entry_next.is_rs2_get = 1'b1;
     end
     if (w_rs2_phy_hit) begin
       w_entry_next.rs2_data   = w_rs2_phy_data;
@@ -166,7 +177,7 @@ always_comb begin
       w_entry_next.rmwop   = i_ex1_q_updates.rmwop;
 
       w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid | (i_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS);
-        
+
       w_entry_next.dead = i_ex1_q_updates.tlb_except_valid;
     end else if (r_entry.is_rmw & i_ex2_q_valid) begin
       w_entry_next.is_amo     = i_ex2_q_updates.is_amo;

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from enum import Enum
+import math
 import re
 import docker
 from multiprocessing import Pool, Manager
@@ -21,6 +22,7 @@ class verilator_sim:
     manager = Manager()
     result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0, 'cycle_deleg' : 0})
     result_detail_dict = manager.dict()
+    test_count = manager.Value('i', 0)
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -169,52 +171,60 @@ class verilator_sim:
                 run_process.wait()
 
         result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+        if "expected_time" in test and \
+           sim_conf["conf"] in test["expected_time"] :
+            expected_time = test["expected_time"][sim_conf["conf"]]
+        else:
+            expected_time = 0
 
-        print (test["name"] + "\t: ", end="")
+        self.show_results(test["name"], result_stdout, expected_time)
+
+    def show_results(self, testname, result_stdout, expected_time):
+        self.test_count.value += 1
+        print ("%*d / %d : %-*s : " % (int(math.log10(self.test_length)+1), self.test_count.value, self.test_length, self.max_testname_length, testname), end="")
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
-            self.result_detail_dict[test['name']] = "error"
+            self.result_detail_dict[testname] = "error"
             self.result_dict['error'] += 1
         elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
             print ("MATCH", end="\r\n")
-            self.result_detail_dict[test['name']] = "match"
+            self.result_detail_dict[testname] = "match"
             self.result_dict['match'] += 1
         elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
             print ("TIMEOUT", end="\r\n")
-            self.result_detail_dict[test['name']] = "timeout"
+            self.result_detail_dict[testname] = "timeout"
             self.result_dict['timeout'] += 1
         elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-            if "expected_time" in test and \
-               sim_conf["conf"] in test["expected_time"] :
+            if expected_time != 0:
                 match = re.search(r'RUNNING TIME : (\d+)', result_stdout.decode('utf-8'))
                 if not match:
                     print ("\nRUNNING TIME can't be get\n")
                     print ("UNKNOWN", end="\r\n")
-                    self.result_detail_dict[test['name']] = "unknown"
+                    self.result_detail_dict[testname] = "unknown"
                     self.result_dict['unknown'] += 1
                 else:
                     rtl_time = int(match.group(1))
-                    exp_time = int(test["expected_time"][sim_conf["conf"]])
+                    exp_time = int(expected_time)
                     if (float(abs(rtl_time - exp_time)) / float(rtl_time) > 0.05) :
                         print ("CYCLE DEGRADED", end="\r\n")
                         print ("\nERROR : Expected Cycle Different. RTL = %d, EXPECTED = %d. Diff = %.2f%%\n" % (rtl_time, exp_time, float(abs(rtl_time - exp_time)) / float(rtl_time) * 100.0))
-                        self.result_detail_dict[test['name']] = "cycle_deleg"
+                        self.result_detail_dict[testname] = "cycle_deleg"
                         self.result_dict['cycle_deleg'] += 1
                     else:
                         print ("PASS", end="\r\n")
-                        self.result_detail_dict[test['name']] = "pass"
+                        self.result_detail_dict[testname] = "pass"
                         self.result_dict['pass'] += 1
             else:
                 print ("PASS", end="\r\n")
-                self.result_detail_dict[test['name']] = "pass"
+                self.result_detail_dict[testname] = "pass"
                 self.result_dict['pass'] += 1
         elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
             print ("DEADLOCK", end="\r\n")
-            self.result_detail_dict[test['name']] = "deadlock"
+            self.result_detail_dict[testname] = "deadlock"
             self.result_dict['deadlock'] += 1
         else :
             print ("UNKNOWN", end="\r\n")
-            self.result_detail_dict[test['name']] = "unknown"
+            self.result_detail_dict[testname] = "unknown"
             self.result_dict['unknown'] += 1
 
     def execute_test_wrapper (self, args):
@@ -238,7 +248,8 @@ class verilator_sim:
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
                                              (x["skip"] != 1 if "skip" in x else True)) , test_table))
-        # max_length = max(map(lambda x: len(x["name"]), select_test))
+        self.max_testname_length = max(map(lambda x: len(x["name"]), select_test))
+        self.test_length = len(select_test)
 
         show_stdout = len(select_test) == 1
 
