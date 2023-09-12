@@ -689,18 +689,24 @@ endinterface // stq_snoop_if
 interface mshr_snoop_if;
   logic               req_s0_valid;
   scariv_pkg::paddr_t req_s0_paddr;
-  logic               resp_s1_valid;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index;
+  logic                                        resp_s1_valid;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
 
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_valid;
+  // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index;
+  // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_evict_index;
+  // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]   entry_valid;
 
   modport master (
     output req_s0_valid,
     output req_s0_paddr,
 
     input  resp_s1_valid,
-    input  s1_hit_index,
-    input  entry_valid
+    input  resp_s1_be,
+    input  resp_s1_data
+    // input  s1_hit_index,
+    // input  s1_hit_evict_index,
+    // input  entry_valid
   );
 
   modport slave (
@@ -708,8 +714,11 @@ interface mshr_snoop_if;
     input  req_s0_paddr,
 
     output resp_s1_valid,
-    output s1_hit_index,
-    output entry_valid
+    output resp_s1_be,
+    output resp_s1_data
+    // output s1_hit_index,
+    // output s1_hit_evict_index,
+    // output entry_valid
   );
 
 endinterface // mshr_snoop_if
