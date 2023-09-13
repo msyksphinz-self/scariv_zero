@@ -66,7 +66,7 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 
 logic                                    w_missu_resolve_vld;
 assign w_missu_resolve_vld = i_missu_resolve.valid &
-                           (i_missu_resolve.resolve_index_oh == r_entry.missu_index_oh);
+                             (i_missu_resolve.resolve_index_oh == r_entry.missu_index_oh);
 
 riscv_pkg::xlen_t w_amo_op_result;
 riscv_pkg::xlen_t r_amo_l1d_data;
@@ -196,12 +196,19 @@ always_comb begin
       end
     end
     ST_BUF_WAIT_REFILL: begin
-      if (w_missu_resolve_vld) begin
+      if (r_entry.is_rmw) begin
+        if (|(r_entry.missu_index_oh & ~i_missu_resolve.missu_entry_valids)) begin
+          // Finish MISSU L1D update
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end else begin
+        if (w_missu_resolve_vld) begin
           w_state_next = ST_BUF_L1D_MERGE;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh)) begin
-        // cleared dependent entry
-        w_state_next = ST_BUF_RD_L1D;
-      end
+        end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh)) begin
+          // cleared dependent entry
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end // else: !if(r_entry.is_rmw)
     end
     ST_BUF_WAIT_FULL: begin
       if (!i_st_missu_resp.full) begin
