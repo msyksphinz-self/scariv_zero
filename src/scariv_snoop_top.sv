@@ -54,9 +54,9 @@ state_t                                      r_mshr_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_mshr_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_mshr_be;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_mshr_haz_entry_index;
-// logic                                          w_mshr_haz_solved;
+logic                                          w_mshr_haz_solved;
 
-// assign w_mshr_haz_solved = (r_mshr_haz_entry_index & mshr_snoop_if.entry_valid) == 'h0;
+assign w_mshr_haz_solved = (r_mshr_haz_entry_index & mshr_snoop_if.entry_valid) == 'h0;
 
 state_t                                      r_stbuf_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_stbuf_data;
@@ -87,15 +87,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       IDLE : begin
         if (w_snoop_if_fire) begin
           r_l1d_state <= WAIT_RESP;
-          r_resp_valid[L1D_INDEX] <= 1'b0;
+          r_resp_valid[L1D_INDEX]   <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
           l1d_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
-          r_l1d_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
-        // end else if ((r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
-        //   r_l1d_state <= WAIT_RESP;
-        //   r_resp_valid[L1D_INDEX] <= 1'b0;
-        //   l1d_snoop_if.req_s0_valid <= 1'b1;
-        //   l1d_snoop_if.req_s0_paddr <= r_l1d_paddr;
+          r_l1d_paddr               <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
+        end else if ((r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
+          r_l1d_state               <= WAIT_RESP;
+          r_resp_valid[L1D_INDEX]   <= 1'b0;
+          l1d_snoop_if.req_s0_valid <= 1'b1;
+          l1d_snoop_if.req_s0_paddr <= r_l1d_paddr;
         end
       end // case: IDLE
       WAIT_RESP : begin
@@ -163,31 +163,26 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       WAIT_RESP : begin
         if (mshr_snoop_if.resp_s1_valid) begin
           mshr_snoop_if.req_s0_valid <= 1'b0;
+          if (mshr_snoop_if.resp_s1_hit_index != 'h0 &&
+              !mshr_snoop_if.resp_s1_evict_valid) begin
+            r_mshr_state           <= WAIT_HAZ_RESOLVE;
+            r_mshr_haz_entry_index <= mshr_snoop_if.resp_s1_hit_index;
+            r_mshr_be    <= 'h0;
+          end else begin
+            r_resp_valid[MSHR_INDEX]   <= 1'b1;
+            r_mshr_state <= IDLE;
+            r_mshr_data  <= mshr_snoop_if.resp_s1_data;
+            r_mshr_be    <= mshr_snoop_if.resp_s1_be;
+          end
+        end // if (mshr_snoop_if.resp_s1_valid)
+      end // case: WAIT_RESP
+      WAIT_HAZ_RESOLVE : begin
+        if (w_mshr_haz_solved) begin
           r_mshr_state <= IDLE;
-          r_mshr_data <= mshr_snoop_if.resp_s1_data;
-          r_mshr_be   <= mshr_snoop_if.resp_s1_be;
           r_resp_valid[MSHR_INDEX] <= 1'b1;
-          // if (mshr_snoop_if.s1_hit_evict_index != 'h0) begin
-          //   r_mshr_state <= IDLE;
-          //   r_resp_valid[MSHR_INDEX] <= 1'b1;
-          //   r_mshr_data;
-          //   r_mshr_be;
-          // if (mshr_snoop_if.s1_hit_index == 'h0) begin
-          //   r_mshr_state <= IDLE;
-          //   r_resp_valid[MSHR_INDEX] <= 1'b1;
-          // end else begin
-          //   r_mshr_state <= WAIT_HAZ_RESOLVE;
-          //   r_mshr_haz_entry_index <= mshr_snoop_if.s1_hit_index;
-          // end
+          r_mshr_haz_entry_index <= 'h0;
         end
       end
-      // WAIT_HAZ_RESOLVE : begin
-      //   if (w_mshr_haz_solved) begin
-      //     r_mshr_state <= IDLE;
-      //     r_resp_valid[MSHR_INDEX] <= 1'b1;
-      //     r_mshr_haz_entry_index <= 'h0;
-      //   end
-      // end
       default : begin
 `ifdef SIMULATION
         $fatal(0, "default state reached.");

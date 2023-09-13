@@ -496,8 +496,8 @@ endgenerate
 // --------------------------
 // MISSU Snoop Search
 // --------------------------
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_hit_array_next;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_evict_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_snoop_missu_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_snoop_missu_evict_hit_array_next;
 logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] w_snoop_missu_evict_hit_enc_next;
 
 generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : snoop_missu_loop
@@ -508,18 +508,17 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
                                                 mshr_snoop_if.req_s0_paddr  [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
   assign w_snoop_missu_evict_hit_array_next[e_idx] = w_snoop_missu_hit_array_next[e_idx] &
                                                      w_missu_entry_evict_ready   [e_idx];
-  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  //   if (!i_reset_n) begin
-  //     // mshr_snoop_if.s1_hit_evict_index[e_idx] <= 1'b0;
-  //     // mshr_snoop_if.s1_hit_index      [e_idx] <= 1'b0;
-  //     // mshr_snoop_if.entry_valid       [e_idx] <= 1'b0;
-  //
-  //   end else begin
-  //     // mshr_snoop_if.s1_hit_evict_index[e_idx] <= w_snoop_missu_evict_hit_array_next[e_idx];
-  //     // mshr_snoop_if.s1_hit_index      [e_idx] <= w_snoop_missu_hit_array_next[e_idx];
-  //     // mshr_snoop_if.entry_valid       [e_idx] <= w_missu_entries[e_idx].valid;
-  //   end
-  // end
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      // mshr_snoop_if.s1_hit_evict_index[e_idx] <= 1'b0;
+      mshr_snoop_if.resp_s1_hit_index [e_idx] <= 1'b0;
+      mshr_snoop_if.entry_valid       [e_idx] <= 1'b0;
+    end else begin
+      // mshr_snoop_if.s1_hit_evict_index[e_idx] <= w_snoop_missu_evict_hit_array_next[e_idx];
+      mshr_snoop_if.resp_s1_hit_index [e_idx] <= w_snoop_missu_hit_array_next[e_idx];
+      mshr_snoop_if.entry_valid       [e_idx] <= w_missu_entries[e_idx].valid;
+    end
+  end
 end endgenerate
 
 encoder #(.SIZE(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_hit_enc (.i_in(w_snoop_missu_evict_hit_array_next), .o_out(w_snoop_missu_evict_hit_enc_next));
@@ -539,6 +538,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     mshr_snoop_if.resp_s1_valid <= mshr_snoop_if.req_s0_valid &
                                    ~(w_l1d_wr_s0_valid | r_l1d_wr_s1_valid | r_l1d_wr_s2_valid); // If L1D wr response with eviction, MSHR entry should be search on next cycle.
+    mshr_snoop_if.resp_s1_evict_valid <= |w_snoop_missu_evict_hit_array_next;
     mshr_snoop_if.resp_s1_be   <= {scariv_lsu_pkg::DCACHE_DATA_B_W{|w_snoop_missu_evict_hit_array_next}};
     mshr_snoop_if.resp_s1_data <= w_missu_entries[w_snoop_missu_evict_hit_enc_next].data;
   end
