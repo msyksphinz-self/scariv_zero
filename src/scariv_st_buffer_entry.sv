@@ -143,6 +143,7 @@ always_comb begin
           w_entry_next.missu_index_oh = i_missu_search_hit;
         end
       end else if (i_l1d_rd_s1_conflict) begin
+        w_entry_next.l1d_high_priority = 1'b1;
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_MISSU_REFILL;

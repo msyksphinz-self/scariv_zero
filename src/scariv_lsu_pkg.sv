@@ -816,9 +816,9 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
-
+  logic                                                l1d_high_priority;
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
   logic                                                is_amo;

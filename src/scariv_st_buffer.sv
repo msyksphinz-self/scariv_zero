@@ -202,9 +202,9 @@ select_l1d_rd_entry_oh
    .o_selected(w_l1d_rd_entry)
    );
 
-assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
-assign l1d_rd_if.s0_high_priority = 1'b0;
-assign l1d_rd_if.s0_paddr = w_l1d_rd_entry.paddr;
+assign l1d_rd_if.s0_valid         = |w_entry_l1d_rd_req;
+assign l1d_rd_if.s0_high_priority = w_l1d_rd_entry.l1d_high_priority;
+assign l1d_rd_if.s0_paddr         = w_l1d_rd_entry.paddr;
 
 // -----------------
 // MISSU entry search
