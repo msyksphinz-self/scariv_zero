@@ -125,8 +125,10 @@ rmw_order_check_if w_rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
-missu_pa_search_if        w_missu_pa_search_if();
+missu_pa_search_if      w_missu_pa_search_if();
 uc_write_if             w_uc_write_if();
+
+st_req_info_if          w_st_req_info_if();
 
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -309,6 +311,8 @@ u_l1d_mshr
 
  .mshr_snoop_if(mshr_snoop_if),
 
+ .st_req_info_if (w_st_req_info_if),
+
  .missu_pa_search_if (w_missu_pa_search_if),
  .missu_dc_search_if (w_missu_dc_search_if)
  );
@@ -321,6 +325,8 @@ u_scariv_store_requester
    .i_reset_n (i_reset_n),
 
    .fwd_check_if  (w_streq_fwd_check),
+
+   .st_req_info_if (w_st_req_info_if),
 
    .l1d_evict_if  (w_l1d_evict_if),
    .uc_write_if   (w_uc_write_if),

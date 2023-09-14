@@ -985,3 +985,20 @@ interface lsu_pipe_req_if;
   );
 
 endinterface // lsu_repaly_if
+
+
+interface st_req_info_if;
+logic               busy;
+scariv_pkg::paddr_t paddr;
+
+modport master (
+  output busy,
+  output paddr
+);
+
+modport monitor (
+  input busy,
+  input paddr
+);
+
+endinterface // st_req_info_if

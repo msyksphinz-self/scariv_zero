@@ -34,6 +34,9 @@ module scariv_l1d_mshr
    // Search MISSU entry
    missu_pa_search_if.slave   missu_pa_search_if,
 
+   // Store Requestor Monitor
+   st_req_info_if.monitor st_req_info_if,
+
    // Snoop Interface
    mshr_snoop_if.slave  mshr_snoop_if,
 
@@ -343,10 +346,14 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
        .i_sent         (w_ext_req_sent),
        .i_evict_sent   (w_evict_sent),
 
+       .o_ext_req_ready (w_missu_ready_to_send[e_idx]),
+
        .o_wr_req_valid         (w_wr_req_valid   [e_idx]),
        .i_wr_accepted          (w_wr_req_valid_oh[e_idx]),
        .i_wr_conflicted        (1'b0),
        .s2_l1d_wr_resp_payload (l1d_wr_if.s2_wr_resp),
+
+       .st_req_info_if (st_req_info_if),
 
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
 
@@ -366,8 +373,6 @@ localparam TAG_FILLER_W = scariv_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(scariv_conf_
 
 // selection of external memory request
 generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : missu_sel_loop
-  assign w_missu_ready_to_send[e_idx] = w_missu_entries[e_idx].valid & !w_missu_entries[e_idx].sent;
-
   assign w_missu_ready_to_evict[e_idx] = w_missu_entries[e_idx].valid &
                                          w_missu_entry_evict_ready[e_idx];
 end
