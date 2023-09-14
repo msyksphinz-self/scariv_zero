@@ -537,7 +537,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_l1d_wr_s2_valid <= r_l1d_wr_s1_valid;
 
     mshr_snoop_if.resp_s1_valid <= mshr_snoop_if.req_s0_valid &
-                                   ~(w_l1d_wr_s0_valid | r_l1d_wr_s1_valid | r_l1d_wr_s2_valid); // If L1D wr response with eviction, MSHR entry should be search on next cycle.
+                                   (|w_snoop_missu_evict_hit_array_next |
+                                    ~(w_l1d_wr_s0_valid | r_l1d_wr_s1_valid | r_l1d_wr_s2_valid)); // If L1D wr response with eviction, MSHR entry should be search on next cycle.
     mshr_snoop_if.resp_s1_evict_valid <= |w_snoop_missu_evict_hit_array_next;
     mshr_snoop_if.resp_s1_be   <= {scariv_lsu_pkg::DCACHE_DATA_B_W{|w_snoop_missu_evict_hit_array_next}};
     mshr_snoop_if.resp_s1_data <= w_missu_entries[w_snoop_missu_evict_hit_enc_next].data;
