@@ -113,7 +113,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed &
+assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & !r_entry.dead &
                            ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : 1'b1) &
                            ~r_entry.st_buf_finished &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);
