@@ -232,16 +232,10 @@ class verilator_sim:
 
     def run_sim(self, sim_conf, testcase):
         test_table = json
-        if sim_conf["xlen"] == 32 :
-            json_open = open('rv32-tests.json', 'r')
+        print ("parallel = " + str(sim_conf["parallel"]))
+        for t in sim_conf["testlist"]:
+            json_open = open(t, 'r')
             test_table = json.load(json_open)
-        elif sim_conf["xlen"] == 64 :
-            rv64_tests_fp = open('rv64-tests.json', 'r')
-            test_table = json.load(rv64_tests_fp)
-            rv64_bench_fp = open('rv64-bench.json', 'r')
-            test_table += json.load(rv64_bench_fp)
-            rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
-            test_table += json.load(rv64_aapg_fp)
 
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
@@ -297,6 +291,8 @@ def main():
     parser.add_argument('-t', '--testcase', dest='testcase', action='store',
 	                default='testcase',
 	                help="Testcase of run")
+    parser.add_argument('-l', '--testlist', dest="testlist", action="store",
+	                default="default", help="Test list to run")
     parser.add_argument('-k', '--kanata', dest="kanata", action='store_true',
 	                default=False, help="Generate Katana Log file")
     parser.add_argument('-j', dest="parallel", action='store',
@@ -325,6 +321,15 @@ def main():
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
 
+    if args.testlist == "default":
+        if sim_conf["xlen"] == 32 :
+            sim_conf["testlist"] = 'rv32-tests.json'
+        elif sim_conf["xlen"] == 64 :
+            sim_conf["testlist"] = ['rv64-tests.json',
+                                    'rv64-bench.json',
+                                    '../tests/rv64-aapg.json']
+    else:
+        sim_conf["testlist"] = args.testlist
 
     if not (sim_conf["isa"][0:4] == "rv32" or sim_conf["isa"][0:4] == "rv64") :
         print ("isa option need to start from \"rv32\" or \"rv64\"")
