@@ -12,12 +12,6 @@ import runtest
 def run_regress_wrapper (args):
     return run_regress(*args)
 
-
-def run_regress(sim_conf):
-    sim = runtest.verilator_sim()
-    sim.build_sim(sim_conf)
-    sim.run_sim(sim_conf, "aapg")
-
 def main():
     parser = argparse.ArgumentParser(description='Compile design and execute tests')
     parser.add_argument('-j', dest="parallel", action='store',
@@ -46,7 +40,9 @@ def main():
                      "-C", "../tests/aapg",
                      "DIR=" + dir_name,
                      "NUM_GEN=" + str(num_tests),
-                     "CONFIG_YAML=" + config_name + ".yaml"]
+                     "CONFIG_YAML=" + config_name + ".yaml",
+                     "ISA=rv64imafdc",
+                     "ABI=lp64"]
     build_result = subprocess.Popen(build_command, text=True)
     build_result.wait()
     if build_result.returncode != 0:
@@ -54,10 +50,10 @@ def main():
 
     # Generate test case json list
     json_testlist = []
-    with open("aapg_" + dir_name + ".json", 'w') as f:
+    with open("aapg_priv_" + args.priv_mode + "_" + dir_name + ".json", 'w') as f:
         for i in range(num_tests):
             json_testlist += [{"name": "config_{:05d}".format(i),
-                              "group": ["aapg"],
+                              "group": ["aapg_priv_" + args.priv_mode + "_" + dir_name],
                               "elf": "../../../tests/aapg/" + dir_name + "/bin/out_" + config_name + "_{:05d}.riscv".format(i),
                               "xlen": 64}]
         f.write(json.dumps(json_testlist, indent=0))
@@ -83,8 +79,11 @@ def main():
     sim_conf["parallel"] = sim_conf['parallel']
     sim_conf["conf"] = "standard"
     sim_conf["kanata"] = False
-    sim_conf["testlist"] = ["aapg_" + dir_name + ".json"]
-    run_regress(sim_conf)
+    sim_conf["testlist"] = ["aapg_priv_" + args.priv_mode + "_" + dir_name + ".json"]
+
+    sim = runtest.verilator_sim()
+    sim.build_sim(sim_conf)
+    sim.run_sim(sim_conf, "aapg_priv_" + args.priv_mode + "_" + dir_name)
 
 if __name__ == "__main__":
     main()

@@ -20,10 +20,10 @@ priv-mode:
 #                           by aapg. Actual may vary.
 #       regs_not_use:       Comma separated list of RISC-V registers to not use for
 #                           reading/writing in the random generated instructions
-#                           
+#
 # ---------------------------------------------------------------------------------
 general:
-  total_instructions: 1000
+  total_instructions: 10000
   regs_not_use: x1,x2
   custom_trap_handler: true
   code_start_address: 0x80000000
@@ -32,49 +32,49 @@ general:
 
 # ---------------------------------------------------------------------------------
 # Distribution of instructions according to ISA extensions
-# Specify the relative frequency of each set 
-# E.g. : A relative frequency of 1 each means each instruction will be 
+# Specify the relative frequency of each set
+# E.g. : A relative frequency of 1 each means each instruction will be
 # generated equal number of times in the total instructions. Specify 0 to disable.
 # ---------------------------------------------------------------------------------
 isa-instruction-distribution:
   rel_sys: 0
   rel_sys.csr: 0
-  rel_rv32i.ctrl: 0
-  rel_rv32i.compute: 1
-  rel_rv32i.data: 0
-  rel_rv32i.fence: 0
-  rel_rv64i.compute: 0
-  rel_rv64i.data: 0
-  rel_rv32m: 0
-  rel_rv64m: 0
-  rel_rv32a: 0
-  rel_rv64a: 0
+  rel_rv32i.ctrl: 1
+  rel_rv32i.compute: 10
+  rel_rv32i.data: 10
+  rel_rv32i.fence: 10
+  rel_rv64i.compute: 10
+  rel_rv64i.data: 10
+  rel_rv32m: 5
+  rel_rv64m: 5
+  rel_rv32a: 5
+  rel_rv64a: 5
   rel_rv32f: 0
-  rel_rv64f: 0
+  rel_rv64f: 1
   rel_rv32d: 0
-  rel_rv64d: 0
+  rel_rv64d: 1
 
 # Compressed instructions
 
-  rel_rvc.ctrl: 0
-  rel_rvc.compute: 0
-  rel_rvc.sp: 0
-  rel_rvc.data: 0
-  rel_rvc.fdata: 0
+  rel_rvc.ctrl: 1
+  rel_rvc.compute: 10
+  rel_rvc.sp: 10
+  rel_rvc.data: 10
+  rel_rvc.fdata: 10
 
-  rel_rv32c.compute: 0
-  rel_rv32c.ctrl: 0
-  rel_rv32c.fdata: 0
+  rel_rv32c.compute: 10
+  rel_rv32c.ctrl: 1
+  rel_rv32c.fdata: 1
 
-  rel_rv64c.compute: 0
-  rel_rv64c.data: 0
+  rel_rv64c.compute: 10
+  rel_rv64c.data: 10
 
 float-rounding:
-  rne: 10
-  rtz: 10
-  rdn: 10
-  rup: 10
-  rmm: 10
+  rne: 0
+  rtz: 0
+  rdn: 0
+  rup: 0
+  rmm: 0
 
 branch-control:
   backward-probability: 0.5
@@ -97,9 +97,9 @@ recursion-options:
 # Options:
 #       enable:         Force all memory accesses instructions to only load/store
 #                       to the specified list of address sections
-#                       
+#
 # Section Template: Specify legal access zones using the following template
-#       section_name:  section_low,section_high (HEX)     
+#       section_name:  section_low,section_high (HEX)
 # ---------------------------------------------------------------------------------
 access-sections:
   begin_signature: 0x80091000,0x80095000,rw
@@ -108,7 +108,7 @@ access-sections:
 # ---------------------------------------------------------------------------------
 # CSR sections
 # Specify which CSRs will be accessed by the random program
-# Options:              
+# Options:
 #       sections:
 #                 start-value1:end-value1, value2, start-value3:end-value3 (HEX)
 #                 (Any Combination)
@@ -120,8 +120,8 @@ csr-sections:
 # ---------------------------------------------------------------------------------
 # User template sections
 # Allows users to specify call to a custom function with number of times to call
-# User should ensure that function does not modify 
-#                       
+# User should ensure that function does not modify
+#
 # Section Template: Specify user template function calls with the number of times
 #       function_name: '{number_of_times:"function_body"}'
 # ---------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ user-functions:
 # Switching Privledge modes in AAPG
 #       switching_modes:  true/false (Do not provide any user defined functions when
 #                         shifting mdoes is true)
-#       num_switches:     # of times privlege modes has to shift (This is randomised 
+#       num_switches:     # of times privlege modes has to shift (This is randomised
 #                         and shifting may result in same mode)
 # ---------------------------------------------------------------------------------
 switch-priv-modes:
@@ -206,10 +206,10 @@ program-macro:
   ecause14: "random"
 
 # ---------------------------------------------------------------------------------
-# Self Checking 
+# Self Checking
 # If self_checking flag is enabled during the gen command, the below section is used
-# Options:              
-#       rate: The interval at which checksums are added to the test. 
+# Options:
+#       rate: The interval at which checksums are added to the test.
 #             If rate = 10, checksums will be added every 10 instructions
 # ---------------------------------------------------------------------------------
 

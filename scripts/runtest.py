@@ -231,11 +231,12 @@ class verilator_sim:
         return self.execute_test(*args)
 
     def run_sim(self, sim_conf, testcase):
-        test_table = json
+        test_table = []
         print ("parallel = " + str(sim_conf["parallel"]))
         for t in sim_conf["testlist"]:
             json_open = open(t, 'r')
-            test_table = json.load(json_open)
+            t = json.load(json_open)
+            test_table += t
 
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
@@ -321,6 +322,8 @@ def main():
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
 
+    sim_conf["xlen"] = int(sim_conf["isa"][2:4])
+
     if args.testlist == "default":
         if sim_conf["xlen"] == 32 :
             sim_conf["testlist"] = 'rv32-tests.json'
@@ -335,7 +338,6 @@ def main():
         print ("isa option need to start from \"rv32\" or \"rv64\"")
         exit
     else:
-        sim_conf["xlen"] = int(sim_conf["isa"][2:4])
         if "d" in sim_conf["isa_ext"] :
             sim_conf["flen"] = 64
         elif "f" in sim_conf["isa_ext"] :
