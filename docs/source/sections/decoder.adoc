@@ -1,0 +1,124 @@
+== 命令デコーダ
+
+=== RVC命令の展開機能
+
+RISC-VにはRVCと呼ばれる16ビット短縮命令が定義されています。 RVCはRISC-V
+ISAアルファベットでは'C'と定義されています。
+
+RVC命令の命令識別は、命令ビットの下位2ビットにより識別できます。
+
+* 00 : RVC命令 Quadrant 0
+* 01 : RVC命令 Quadrant 1
+* 10 : RVC命令 Quadrant 2
+* 11 : 通常命令 32ビット以上
+
+それぞれのRVC命令は、32ビットの命令に等価変換することができます。
+それぞれのRVC命令について、等価な32ビット命令を示します。
+
+[cols=",,",options="header",]
+|===
+|RVC命令 |Quadrant |展開命令
+|[.title-ref]#c.addi4spn rd', nzuimm# |00 |[.title-ref]#addi rd, x2,
+nzuimm#
+
+|[.title-ref]#c.fld rd', offset(rs1')# |00 |[.title-ref]#fld rd,
+offset(rs1)#
+
+|[.title-ref]#c.lw rd', offset(rs1')# |00 |[.title-ref]#lw rd,
+offset(rs1)#
+
+|[.title-ref]#c.flw rd', offset(rs1')# |00 |[.title-ref]#flw rd,
+offset(rs1)#
+
+|[.title-ref]#c.ld rd', offset(rs1')# |00 |[.title-ref]#ld rd,
+offset(rs1)#
+
+|[.title-ref]#c.fsd rd', offset(rs1')# |00 |[.title-ref]#fsd rs2,
+offset(rs1)#
+
+|[.title-ref]#c.sw rd', offset(rs1')# |00 |[.title-ref]#sw rs2,
+offset(rs1)#
+
+|[.title-ref]#c.fsw rd', offset(rs1')# |00 |[.title-ref]#fsw rs2,
+offset(rs1)#
+
+|[.title-ref]#c.sd rd', offset(rs1')# |00 |[.title-ref]#sd rs2,
+offset(rs1)#
+
+|[.title-ref]#c.nop# |01 |[.title-ref]#nop#
+
+|[.title-ref]#c.addi rd, nzimm# |01 |[.title-ref]#addi rd, rd, nzimm#
+
+|[.title-ref]#c.jal offset# |01 |[.title-ref]#jal x1, offset#
+
+|[.title-ref]#c.addiw rd, imm# |01 |[.title-ref]#addiw rd, rd, imm#
+
+|[.title-ref]#c.li rd, uimm# |01 |[.title-ref]#addi rd, x0, imm#
+
+|[.title-ref]#c.addi16sp rd',nzimm# |01 |[.title-ref]#addi x2, x2,
+nzimm#
+
+|[.title-ref]#c.lui rd, nzimm# |01 |[.title-ref]#lui rd, nzimm#
+
+|[.title-ref]#c.srli rd', uimm# |01 |[.title-ref]#srli rd, rd, shamt#
+
+|[.title-ref]#c.srli64 rd', uimm# |01 |[.title-ref]#srli rd, rd, shamt#
+
+|[.title-ref]#c.srai rd', uimm# |01 |[.title-ref]#srai rd, rd, shamt#
+
+|[.title-ref]#c.srai64 rd', uimm# |01 |[.title-ref]#srai rd, rd, shamt#
+
+|[.title-ref]#c.andi rd', uimm# |01 |[.title-ref]#andi rd, rd, imm#
+
+|[.title-ref]#c.sub rd', rd'# |01 |[.title-ref]#sub rd, rd, rs2#
+
+|[.title-ref]#c.xor rd', rd'# |01 |[.title-ref]#xor rd, rd, rs2#
+
+|[.title-ref]#c.or rd', rd'# |01 |[.title-ref]#or rd, rd, rs2#
+
+|[.title-ref]#c.and rd', rd'# |01 |[.title-ref]#and rd, rd, rs2#
+
+|[.title-ref]#c.subw rd', rs2# |01 |[.title-ref]#subw rd, rd, rs2#
+
+|[.title-ref]#c.addw rd', rs2# |01 |[.title-ref]#addw rd, rd, rs2#
+
+|[.title-ref]#c.j offset# |01 |[.title-ref]#jal x0, offset#
+
+|[.title-ref]#c.beqz rs1, offset# |01 |[.title-ref]#beq rs1, x0, offset#
+
+|[.title-ref]#c.bnez rs1, offset# |10 |[.title-ref]#bne rs1, x0, offset#
+
+|[.title-ref]#c.slli rd, uimm# |10 |[.title-ref]#slli rd, rd, shamt#
+
+|[.title-ref]#c.fldsp rd, offset(x2)# |10 |[.title-ref]#fld rd,
+offset(x2)#
+
+|[.title-ref]#c.lwsp rd, offset# |10 |[.title-ref]#lw rd, offset(x2)#
+
+|[.title-ref]#c.flwsp rd, offset# |10 |[.title-ref]#flw rd, offset(x2)#
+
+|[.title-ref]#c.ldsp rd, offset(x2)# |10 |[.title-ref]#ld rd,
+offset(x2)#
+
+|[.title-ref]#c.jr rd# |10 |[.title-ref]#jalr x0, 0(rs1)#
+
+|[.title-ref]#c.mv rd, rs2# |10 |[.title-ref]#add rd, x0, rs2#
+
+|[.title-ref]#c.ebreak# |10 |[.title-ref]#ebreak#
+
+|[.title-ref]#c.jalr rs1# |10 |[.title-ref]#jalr x1, 0(rs1)#
+
+|[.title-ref]#c.add rd, rs2# |10 |[.title-ref]#add rd, rd, rs2#
+
+|[.title-ref]#c.fsdsp rs2, offset(x2)# |10 |[.title-ref]#fsd rs2,
+offset(sp)#
+
+|[.title-ref]#c.swsp rs2, offset(x2)# |10 |[.title-ref]#sw rs2,
+offset(sp)#
+
+|[.title-ref]#c.fswsp rs2, offset(x2)# |10 |[.title-ref]#fsw rs2,
+offset(sp)#
+
+|[.title-ref]#c.sdsp rs2, offset(x2)# |10 |[.title-ref]#sd rs2,
+offset(sp)#
+|===
