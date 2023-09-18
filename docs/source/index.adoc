@@ -7,19 +7,32 @@
 :toc: left
 :toclevels: 4
 
-include::sections/msrh.adoc[]
+include::sections/msrh.adoc[SCARIV RISC-V CPUコア外観]
 
-include::sections/frontend.adoc[]
-include::sections/bpd.adoc[]
-include::sections/decoder.adoc[]
-include::sections/rename.adoc[]
-include::sections/scheduler.adoc[]
-include::sections/committer.adoc[]
-include::sections/csr.adoc[]
-include::sections/ldst.adoc[]
-include::sections/tlb.adoc[]
-include::sections/l2.adoc[]
-include::sections/branch.adoc[]
-include::sections/memory_map.adoc[]
-include::sections/parameters.adoc[]
-include::sections/terminology.adoc[]
+include::sections/frontend.adoc[フロントエンド]
+
+include::sections/bpd.adoc[分岐予測]
+
+include::sections/decoder.adoc[命令デコーダ]
+
+include::sections/rename.adoc[レジスタリネーム]
+
+include::sections/scheduler.adoc[命令発行スケジューラ]
+
+include::sections/committer.adoc[ROBと命令コミット]
+
+include::sections/csr.adoc[CSR命令とその他の制御命令]
+
+include::sections/ldst.adoc[メモリアクセス]
+
+include::sections/tlb.adoc[TLB]
+
+include::sections/l2.adoc[L2キャッシュインタフェース]
+
+include::sections/branch.adoc[分岐命令]
+
+include::sections/memory_map.adoc[メモリマップ]
+
+include::sections/parameters.adoc[コンフィグレーション]
+
+include::sections/terminology.adoc[用語集]
