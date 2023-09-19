@@ -324,7 +324,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
       end
       ICInvalidate: begin
-        if (ic_l2_normal_resp_fire) begin
+        if (ic_l2_normal_resp_fire |
+            r_s2_working_pref_hit & ic_l2_pref_resp_fire) begin
           r_ic_state <= ICInit;
           r_ic_req_tag <= r_ic_req_tag + 'h1;
         end
