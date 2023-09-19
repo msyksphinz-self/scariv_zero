@@ -32,13 +32,15 @@ module scariv_l1d_mshr
    l1d_evict_if.master l1d_evict_if,
 
    // Search MISSU entry
-   missu_pa_search_if.slave   missu_pa_search_if,
+   missu_pa_search_if.slave    missu_pa_search_if,
+   mshr_stbuf_search_if.master mshr_stbuf_search_if,
 
    // Store Requestor Monitor
    st_req_info_if.monitor st_req_info_if,
 
    // Snoop Interface
-   mshr_snoop_if.slave  mshr_snoop_if,
+   snoop_info_if.monitor snoop_info_if,
+   mshr_snoop_if.slave   mshr_snoop_if,
 
    // MISSU search interface (from DCache)
    missu_dc_search_if.slave missu_dc_search_if
@@ -350,12 +352,14 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
 
        .o_wr_req_valid         (w_wr_req_valid   [e_idx]),
        .i_wr_accepted          (w_wr_req_valid_oh[e_idx]),
-       .i_wr_conflicted        (1'b0),
+       .i_wr_conflicted        (l1d_wr_if.s1_wr_resp.s1_conflict),
        .s2_l1d_wr_resp_payload (l1d_wr_if.s2_wr_resp),
 
        .st_req_info_if (st_req_info_if),
 
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
+
+       .i_busy_by_snoop (snoop_info_if.busy),
 
        .o_entry        (w_missu_entries[e_idx]),
        .o_evict_ready  (w_missu_entry_evict_ready[e_idx]),
@@ -409,8 +413,11 @@ bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTR
 select_l1d_wr_req_entry (.i_oh(w_wr_req_valid_oh), .i_data(w_missu_entries), .o_selected(w_wr_missu_entry_sel));
 
 assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_missu_entry_sel.paddr;
-assign l1d_wr_if.s0_wr_req.s0_data  = w_wr_missu_entry_sel.data;
-assign l1d_wr_if.s0_wr_req.s0_be    = {scariv_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::DCACHE_DATA_B_W; b_idx++) begin : l1d_wr_be_loop
+  assign l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8]  = mshr_stbuf_search_if.stbuf_be[b_idx] ? mshr_stbuf_search_if.stbuf_data[b_idx*8 +: 8] :
+                                                      w_wr_missu_entry_sel.data[b_idx*8 +: 8];
+  assign l1d_wr_if.s0_wr_req.s0_be  [b_idx       ]  = 1'b1;
+end endgenerate
 assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_missu_entry_sel.way;
 assign l1d_wr_if.s0_wr_req.s0_mesi  = scariv_lsu_pkg::MESI_EXCLUSIVE;
 
@@ -426,8 +433,10 @@ assign missu_dc_search_if.missu_entry = w_missu_entries[missu_dc_search_if.index
 
 // Notification to MISSU resolve to LDQ
 // Note: Now searching from MISSU means L1D will be written and resolve confliction
-assign o_missu_resolve.valid            = w_ext_rd_resp_valid;
-assign o_missu_resolve.resolve_index_oh = 1 << w_ext_rd_resp_tag;
+assign mshr_stbuf_search_if.mshr_index_oh = w_wr_req_valid_oh;
+
+assign o_missu_resolve.valid              = w_ext_rd_resp_valid;
+assign o_missu_resolve.resolve_index_oh   = 1 << w_ext_rd_resp_tag;
 assign o_missu_resolve.missu_entry_valids = w_missu_valids;
 assign o_missu_is_full  = &w_missu_valids;
 assign o_missu_is_empty = ~|w_missu_valids;

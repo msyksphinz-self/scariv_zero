@@ -64,6 +64,7 @@ module scariv_lsu_top
     output scariv_pkg::mispred_t  o_ex2_mispred[scariv_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
+    snoop_info_if.monitor snoop_info_if,
     l1d_snoop_if.slave   l1d_snoop_if,
     stq_snoop_if.slave   stq_snoop_if,
     mshr_snoop_if.slave  mshr_snoop_if,
@@ -84,9 +85,10 @@ localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT     + 1;
 localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
-l1d_wr_if  w_l1d_wr_if();
+l1d_wr_if  w_l1d_stbuf_wr_if();
 l1d_wr_if  w_l1d_merge_if();
 l1d_wr_if  w_miss_l1d_wr_if();
+l1d_wr_if  w_snoop_wr_if();
 // LSU Pipeline + ST-Buffer
 l1d_missu_if w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
 fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
@@ -126,6 +128,7 @@ lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
 missu_pa_search_if      w_missu_pa_search_if();
+mshr_stbuf_search_if    w_mshr_stbuf_search_if();
 uc_write_if             w_uc_write_if();
 
 st_req_info_if          w_st_req_info_if();
@@ -309,9 +312,12 @@ u_l1d_mshr
 
  .l1d_evict_if  (w_l1d_evict_if),
 
- .mshr_snoop_if(mshr_snoop_if),
+ .snoop_info_if (snoop_info_if),
+ .mshr_snoop_if (mshr_snoop_if),
 
  .st_req_info_if (w_st_req_info_if),
+
+ .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
 
  .missu_pa_search_if (w_missu_pa_search_if),
  .missu_dc_search_if (w_missu_dc_search_if)
@@ -345,17 +351,19 @@ u_st_buffer
    .st_buffer_if        (w_st_buffer_if),
    .l1d_rd_if           (w_l1d_rd_if[L1D_ST_RD_PORT]),
    .l1d_missu_stq_miss_if (w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM]),
-   .l1d_wr_if           (w_l1d_wr_if),
-   .l1d_merge_if        (w_l1d_merge_if),
+   .l1d_stbuf_wr_if       (w_l1d_stbuf_wr_if),
+   .l1d_mshr_wr_if        (w_miss_l1d_wr_if),
 
+   .snoop_info_if  (snoop_info_if),
    .stbuf_snoop_if (stbuf_snoop_if),
 
    .rmw_order_check_if  (w_rmw_order_check_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
-   .missu_pa_search_if    (w_missu_pa_search_if),
+   .missu_pa_search_if  (w_missu_pa_search_if),
 
-   .i_missu_resolve       (w_missu_resolve)
+   .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
+   .i_missu_resolve      (w_missu_resolve)
    );
 
 
@@ -416,7 +424,7 @@ end
 // ---------------------------
 logic r_snoop_resp_valid;
 
-assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid & (l1d_snoop_if.req_s0_cmd == SNOOP_READ);
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_high_priority = 1'b0;
 
@@ -425,8 +433,15 @@ assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? S
                                      w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit      ? STATUS_HIT :
                                      w_l1d_rd_if[L1D_SNOOP_PORT].s1_miss     ? STATUS_MISS :
                                      STATUS_NONE;
+assign l1d_snoop_if.resp_s1_ways   = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit_way;
 assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
 assign l1d_snoop_if.resp_s1_data   = w_l1d_rd_if[L1D_SNOOP_PORT].s1_data;
+
+assign w_snoop_wr_if.s0_valid           = l1d_snoop_if.req_s0_valid & (l1d_snoop_if.req_s0_cmd == SNOOP_INVALID);
+assign w_snoop_wr_if.s0_wr_req.s0_way   = l1d_snoop_if.req_s0_ways;
+assign w_snoop_wr_if.s0_wr_req.s0_paddr = l1d_snoop_if.req_s0_paddr;
+assign w_snoop_wr_if.s0_wr_req.s0_data  = 'h0;
+assign w_snoop_wr_if.s0_wr_req.s0_mesi  = scariv_lsu_pkg::MESI_INVALID;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -444,10 +459,12 @@ u_scariv_dcache
    .i_reset_n(i_reset_n),
 
    .l1d_rd_if       (w_l1d_rd_if),
-   .stbuf_l1d_wr_if (w_l1d_wr_if),
+   .stbuf_l1d_wr_if (w_l1d_stbuf_wr_if),
 
    .stbuf_l1d_merge_if (w_l1d_merge_if  ),
    .missu_l1d_wr_if    (w_miss_l1d_wr_if),
+
+   .snoop_wr_if        (w_snoop_wr_if),
 
    .missu_dc_search_if (w_missu_dc_search_if)
    );

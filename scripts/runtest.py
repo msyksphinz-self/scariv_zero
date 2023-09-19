@@ -22,6 +22,7 @@ class verilator_sim:
     manager = Manager()
     result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0, 'cycle_deleg' : 0})
     result_detail_dict = manager.dict()
+    test_table = []
     test_count = manager.Value('i', 0)
 
     def build_sim(self, sim_conf):
@@ -231,16 +232,16 @@ class verilator_sim:
         return self.execute_test(*args)
 
     def run_sim(self, sim_conf, testcase):
-        test_table = []
+        self.test_table
         print ("parallel = " + str(sim_conf["parallel"]))
         for t in sim_conf["testlist"]:
             json_open = open(t, 'r')
             t = json.load(json_open)
-            test_table += t
+            self.test_table += t
 
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
-                                             (x["skip"] != 1 if "skip" in x else True)) , test_table))
+                                             (x["skip"] != 1 if "skip" in x else True)) , self.test_table))
         self.max_testname_length = max(map(lambda x: len(x["name"]), select_test))
         self.test_length = len(select_test)
 
@@ -274,6 +275,8 @@ class verilator_sim:
         with open(base_dir + '/' + testcase + '/result.json', 'w') as f:
             json.dump(self.result_detail_dict.copy(), f, indent=4)
         with open(base_dir + '/' + testcase + '/result.json', 'a') as f:
+            json.dump(self.result_dict.copy(), f, indent=4)
+        with open(base_dir + '/' + testcase + '/rerun.json', 'a') as f:
             json.dump(self.result_dict.copy(), f, indent=4)
         print ("Result : " + base_dir + '/' + testcase + '/result.json')
         if len(select_test) == 1:

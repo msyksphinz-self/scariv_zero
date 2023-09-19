@@ -16,6 +16,9 @@ module scariv_snoop_top
    // Cache Coherent Interface
    snoop_if.slave snoop_if,
 
+   // Snoop Information
+   snoop_info_if.master snoop_info_if,
+
    // Internal Broadcast Interface
    stq_snoop_if.master   stq_snoop_if,
    mshr_snoop_if.master  mshr_snoop_if,
@@ -27,7 +30,8 @@ module scariv_snoop_top
   typedef enum logic [ 1: 0] {
      IDLE = 0,
      WAIT_RESP = 1,
-     WAIT_HAZ_RESOLVE = 2
+     WAIT_HAZ_RESOLVE = 2,
+     INVALIDATE_L1D_LINE = 3
   } state_t;
 
   typedef enum logic [ 2: 0] {
@@ -69,8 +73,14 @@ logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_streq_be;
 logic                  w_snoop_if_fire;
 assign w_snoop_if_fire = snoop_if.req_valid/* & snoop_if.resp_ready*/;
 
+logic                  r_snoop_busy;
+
+assign snoop_info_if.busy = r_snoop_busy;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
+    r_snoop_busy <= 1'b0;
+
     l1d_snoop_if.req_s0_valid <= 1'b0;
     stq_snoop_if.req_s0_valid <= 1'b0;
 
@@ -82,6 +92,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_resp_valid <= 'h0;
   end else begin
+    if (!r_snoop_busy & w_snoop_if_fire) begin
+      r_snoop_busy <= 1'b1;
+    end else if (r_snoop_busy & (r_l1d_state == IDLE)) begin
+      r_snoop_busy <= 1'b0;
+    end
+
     // L1D state machine
     case (r_l1d_state)
       IDLE : begin
@@ -89,12 +105,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           r_l1d_state <= WAIT_RESP;
           r_resp_valid[L1D_INDEX]   <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
+          l1d_snoop_if.req_s0_cmd   <= SNOOP_READ;
           l1d_snoop_if.req_s0_paddr <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
           r_l1d_paddr               <= {snoop_if.req_payload.paddr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)], {$clog2(DCACHE_DATA_B_W){1'b0}}};
         end else if ((r_mshr_state == WAIT_HAZ_RESOLVE) & w_mshr_haz_solved) begin
           r_l1d_state               <= WAIT_RESP;
           r_resp_valid[L1D_INDEX]   <= 1'b0;
           l1d_snoop_if.req_s0_valid <= 1'b1;
+          l1d_snoop_if.req_s0_cmd   <= SNOOP_READ;
           l1d_snoop_if.req_s0_paddr <= r_l1d_paddr;
         end
       end // case: IDLE
@@ -104,9 +122,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             // L1D conflicted, replay
             l1d_snoop_if.req_s0_valid <= 1'b1;
           end else begin
-            r_l1d_state <= IDLE;
-            l1d_snoop_if.req_s0_valid <= 1'b0;
-            r_resp_valid[L1D_INDEX] <= 1'b1;
+            if (l1d_snoop_if.resp_s1_status == STATUS_HIT) begin
+              r_l1d_state <= INVALIDATE_L1D_LINE;
+              l1d_snoop_if.req_s0_valid <= 1'b1;
+              l1d_snoop_if.req_s0_cmd <= SNOOP_INVALID;
+              l1d_snoop_if.req_s0_ways <= l1d_snoop_if.resp_s1_ways;
+            end else begin
+              r_l1d_state <= IDLE;
+              r_resp_valid[L1D_INDEX]   <= 1'b1;
+            end
 
             r_l1d_data <= l1d_snoop_if.resp_s1_data;
             r_l1d_be   <= l1d_snoop_if.resp_s1_status == STATUS_HIT ?
@@ -116,7 +140,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end else begin
           l1d_snoop_if.req_s0_valid <= 1'b0;
         end
-      end
+      end // case: WAIT_RESP
+      INVALIDATE_L1D_LINE : begin
+        if (l1d_snoop_if.resp_s1_valid) begin
+          if (l1d_snoop_if.resp_s1_status == STATUS_L1D_CONFLICT) begin
+            // L1D conflicted, replay
+            l1d_snoop_if.req_s0_valid <= 1'b1;
+          end else begin
+            r_l1d_state <= IDLE;
+            r_resp_valid[L1D_INDEX] <= 1'b1;
+          end
+        end else begin
+          l1d_snoop_if.req_s0_valid <= 1'b0;
+        end // else: !if(l1d_snoop_if.resp_s1_valid)
+      end // case: INVALIDATE_L1D_LINE
       default : begin
 `ifdef SIMULATION
         $fatal(0, "default state reached.");

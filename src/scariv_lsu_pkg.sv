@@ -798,6 +798,10 @@ typedef struct packed {
   logic [DCACHE_DATA_B_W-1: 0] be;
 } snoop_resp_t;
 
+typedef enum logic {
+  SNOOP_READ,
+  SNOOP_INVALID
+} l1d_snp_cmd_t;
 
 // -----------------------
 // Store Buffer Interface
@@ -842,7 +846,8 @@ typedef enum logic [ 3: 0] {
   ST_BUF_L1D_MERGE     = 9,
   ST_BUF_L1D_MERGE2    = 10,
   ST_BUF_WAIT_FINISH   = 11,
-  ST_BUF_AMO_OPERATION = 12
+  ST_BUF_AMO_OPERATION = 12,
+  ST_BUF_WAIT_L1D_MERGE= 13
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (

@@ -301,8 +301,8 @@ generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : 
        .i_wr         (w_s0_dc_tag_wr_valid & (w_s0_dc_tag_way == way)),
        .i_addr       (w_s0_tag_addr),
        .i_tag_valid  (1'b1),
-       .i_tag        ({r_s1_wr_mesi,   i_dc_wr_req.s0_paddr[riscv_pkg::PADDR_W-1:scariv_lsu_pkg::DCACHE_TAG_LOW]}),
-       .o_tag        ({w_s1_mesi[way], w_s1_tag[way]}),
+       .i_tag        ({i_dc_wr_req.s0_mesi, i_dc_wr_req.s0_paddr[riscv_pkg::PADDR_W-1:scariv_lsu_pkg::DCACHE_TAG_LOW]}),
+       .o_tag        ({w_s1_mesi[way],      w_s1_tag[way]}),
        .o_tag_valid  (w_s1_tag_valid[way])
        );
 

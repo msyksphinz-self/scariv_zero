@@ -33,6 +33,8 @@ module scariv_l1d_mshr_entry
    // UC forward hit
    input logic i_uc_fwd_hit,
 
+   input logic i_busy_by_snoop,
+
    output scariv_lsu_pkg::mshr_entry_t o_entry,
    output logic o_evict_ready,
 
@@ -94,10 +96,14 @@ always_comb begin
         w_entry_next.get_data = 1'b1;
         w_count_fin_next = 'h0;
         if (!r_entry.is_uc) begin
-          w_state_next = WRITE_L1D;
+          if (!i_busy_by_snoop) begin
+            w_state_next = WRITE_L1D;
+          end
         end else begin
           w_state_next = WAIT_GET_UC_DATA;
         end
+      end else if (r_entry.get_data & !i_busy_by_snoop) begin // if (i_ext_load_fin)
+        w_state_next = WRITE_L1D;
       end
     end
     WRITE_L1D : begin
