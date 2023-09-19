@@ -1,17 +1,17 @@
 
 [
-    { "name": "dhrystone"       , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/dhrystone.riscv" , "xlen": 64, "expected_time": {"standard": 569606}},
-    { "name": "median"          , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/median.riscv"    , "xlen": 64},
-    { "name": "mm"              , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/mm.riscv"        , "xlen": 64},
-    { "name": "mt-matmul"       , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/mt-matmul.riscv" , "xlen": 64},
-    { "name": "mt-vvadd"        , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/mt-vvadd.riscv"  , "xlen": 64},
-    { "name": "multiply"        , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/multiply.riscv"  , "xlen": 64},
-    { "name": "pmp"             , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/pmp.riscv"       , "xlen": 64},
-    { "name": "qsort"           , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/qsort.riscv"     , "xlen": 64},
-    { "name": "rsort"           , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/rsort.riscv"     , "xlen": 64},
-    { "name": "spmv"            , "group": ["bench"], "elf": "../../../tests/riscv-tests/benchmarks/spmv.riscv"      , "xlen": 64},
+    { "name": "dhrystone"       , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/dhrystone.riscv" , "xlen": 64, "expected_time": {"standard": 569606}},
+    { "name": "median"          , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/median.riscv"    , "xlen": 64},
+    { "name": "mm"              , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/mm.riscv"        , "xlen": 64},
+    { "name": "mt-matmul"       , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/mt-matmul.riscv" , "xlen": 64},
+    { "name": "mt-vvadd"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/mt-vvadd.riscv"  , "xlen": 64},
+    { "name": "multiply"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/multiply.riscv"  , "xlen": 64},
+    { "name": "pmp"             , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/pmp.riscv"       , "xlen": 64},
+    { "name": "qsort"           , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/qsort.riscv"     , "xlen": 64},
+    { "name": "rsort"           , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/rsort.riscv"     , "xlen": 64},
+    { "name": "spmv"            , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/spmv.riscv"      , "xlen": 64},
 
-    { "name": "coremark"        , "group": ["bench"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64, "expected_time": {"standard": 1408022}},
+    { "name": "coremark"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64, "expected_time": {"standard": 1408022}},
 
     { "name": "linux_hifive"    , "group": ["linux"], "elf": "../../../tests/linux/fw_jump.elf"  , "xlen": 64}
 ]

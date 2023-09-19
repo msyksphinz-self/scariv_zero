@@ -329,10 +329,10 @@ def main():
 
     if args.testlist == "default":
         if sim_conf["xlen"] == 32 :
-            sim_conf["testlist"] = 'rv32-tests.json'
+            sim_conf["testlist"] = '../tests/rv32-tests.json'
         elif sim_conf["xlen"] == 64 :
-            sim_conf["testlist"] = ['rv64-tests.json',
-                                    'rv64-bench.json',
+            sim_conf["testlist"] = ['../tests/rv64-tests.json',
+                                    '../tests/rv64-bench.json',
                                     '../tests/rv64-aapg.json']
     else:
         sim_conf["testlist"] = args.testlist
