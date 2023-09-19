@@ -253,7 +253,29 @@ assign sfence_if.vaddr     = r_ex3_result[riscv_pkg::VADDR_W-1:0];
 // ---------------
 // FENCE_I update
 // ---------------
-assign o_fence_i = r_ex3_issue.valid & r_ex3_pipe_ctrl.is_fence_i;
+logic                r_fencei_commit_wait;
+logic                w_fencei_commit_match;
+scariv_pkg::cmt_id_t r_fencei_cmt_id;
+scariv_pkg::grp_id_t r_fencei_grp_id;
+assign w_fencei_commit_match = r_fencei_commit_wait & i_commit.commit &
+                               (i_commit.cmt_id == r_fencei_cmt_id) &
+                               |(i_commit.grp_id & r_fencei_grp_id);
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fencei_commit_wait <= 'h0;
+  end else begin
+    if (w_fencei_commit_match) begin
+      r_fencei_commit_wait <= 1'b0;
+    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_fence_i) begin
+      r_fencei_commit_wait <= 1'b1;
+      r_fencei_cmt_id <= r_ex3_issue.cmt_id;
+      r_fencei_grp_id <= r_ex3_issue.grp_id;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+assign o_fence_i = w_fencei_commit_match;
 
 `ifdef SIMULATION
 
