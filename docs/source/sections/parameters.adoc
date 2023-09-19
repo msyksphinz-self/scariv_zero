@@ -1,0 +1,96 @@
+== コンフィグレーション
+
+SCARIVはコア内の様々な部分をパラメタライズしており、性能・面積の要求に応じて柔軟に構成を変更することができます。
+
+デフォルトでは以下の10種類が定義されており、用途に応じて使い分けることができます。
+
+.SCARIVのデフォルトコア構成
+[width="68%",cols="36%,32%,32%",options="header",]
+|===
+|Config |RV32 |RV64
+|Tiny |rv32_tiny |rv64_tiny
+|Small |rv32_small |rv64_small
+|Standard |rv32_standard |rv64standard
+|Big |rv32_big |rv64_big
+|Giant |rv32_giant |rv64_giant
+|===
+
+それぞれのコンフィグレーションは、
+[.title-ref]#scariv_[コンフィグレーション名]_conf_pkg.sv#
+というファイル名で格納されています。
+各パラメータの意味を以下に示します。
+
+.コンフィグレーションにおける各パラメータの意味
+[width="100%",cols="18%,72%,10%",options="header",]
+|===
+|パラメータ |説明 |Standard構成
+|[.title-ref]#ICACHE_DATA_W# |命令キャッシュの1キャッシュラインビット数
+|256
+
+|[.title-ref]#DCACHE_DATA_W#
+|データキャッシュの1キャッシュラインあたりのビット数 |256
+
+|[.title-ref]#ICACHE_WORDS#
+|命令キャッシュのライン数([.title-ref]#ICACHE_DATA_W# x
+[.title-ref]#ICACHE_WORDS# が命令キャッシュサイズとなる |64
+
+|[.title-ref]#DCACHE_WORDS# |データキャッシュのライン数
+([.title-ref]#DCACHE_DAWA_W# x [.title-ref]#DCACHE_WORDS#
+がデータキャッシュサイズとなる |64
+
+|[.title-ref]#ICACHE_WAYS# |命令キャッシュのウェイ数 (工事中) |4
+
+|[.title-ref]#DCACHE_WAYS# |データキャッシュのウェイ数 |4
+
+|[.title-ref]#DCACHE_BANKS# |データキャッシュのバンク数 |4
+
+|[.title-ref]#DISP_SIZE#
+|フロントエンドの1サイクル当たりの命令ディスパッチ数 |5
+
+|[.title-ref]#ALU_INST_NUM# |ALUパイプライン数 (同時実行可能なALU命令数)
+|2
+
+|[.title-ref]#LSU_INST_NUM# |LSUパイプライン数 (同時実行可能なLSU命令数)
+|2
+
+|[.title-ref]#FPU_INST_NUM# |FPUパイプライン数 (同時実行可能なFPU命令数)
+|2
+
+|[.title-ref]#ARITH_DISP_SIZE# |1サイクルにディスパッチ可能なALU命令数
+|4
+
+|[.title-ref]#MULDIV_DISP_SIZE#
+|1サイクルにディスパッチ可能な乗除算命令数 (工事中) |
+
+|[.title-ref]#MEM_DISP_SIZE#
+|1サイクルにディスパッチ可能なメモリアクセス命令数 |4
+
+|[.title-ref]#BRU_DISP_SIZE# |1サイクルにディスパッチ可能な分岐命令数
+(工事中) |1
+
+|[.title-ref]#CSU_DISP_SIZE# |1サイクルにディスパッチ可能なCSR命令数
+(工事中) |1
+
+|[.title-ref]#FPU_DISP_SIZE# |1サイクルにディスパッチ可能なFPU命令数 |4
+
+|[.title-ref]#RV_ALU_ENTRY_SIZE# |ALU命令のスケジューラエントリ数
+([.title-ref]#ALU_INST_NUM# x
+`RV_ALU_ENTRY_SIZE`分のALUエントリが用意される) |32
+
+|[.title-ref]#LDQ_SIZE# |ロード命令用スケジューラエントリ数 |16
+
+|[.title-ref]#STQ_SIZE# |ストア命令用スケジューラエントリ数 |16
+
+|[.title-ref]#RV_CSU_ENTRY_SIZE# |CSR命令用スケジューラエントリ数 |8
+
+|[.title-ref]#RV_BRU_ENTRY_SIZE# |分岐命令用スケジューラエントリ数 |16
+
+|[.title-ref]#RV_FPU_ENTRY_SIZE# |FPU命令用スケジューラエントリ数 |16
+
+|[.title-ref]#CMT_ENTRY_SIZE# |ROBエントリ数 |32
+
+|[.title-ref]#USING_VM# |VMサポート可否 (サポート=1, 非サポート=0) |1
+
+|[.title-ref]#RAS_ENTRY_SIZE# |分岐予測用RAS (Return Address
+Stack)のサイズ |32
+|===

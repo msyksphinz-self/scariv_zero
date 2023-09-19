@@ -1,0 +1,38 @@
+= SCARIV RISC-V CPUコアのドキュメントにようこそ！
+
+:doctype: manpage
+//:doctype: book
+//:doctype: report
+
+:toc: left
+:toclevels: 4
+
+include::sections/msrh.adoc[]
+
+include::sections/frontend.adoc[]
+
+include::sections/bpd.adoc[]
+
+include::sections/decoder.adoc[]
+
+include::sections/rename.adoc[]
+
+include::sections/scheduler.adoc[]
+
+include::sections/committer.adoc[]
+
+include::sections/csr.adoc[]
+
+include::sections/ldst.adoc[]
+
+include::sections/tlb.adoc[]
+
+include::sections/l2.adoc[]
+
+include::sections/branch.adoc[]
+
+include::sections/memory_map.adoc[]
+
+include::sections/parameters.adoc[]
+
+include::sections/terminology.adoc[]
