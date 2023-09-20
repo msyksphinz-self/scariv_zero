@@ -24,6 +24,7 @@ class verilator_sim:
     result_detail_dict = manager.dict()
     test_table = []
     test_count = manager.Value('i', 0)
+    rerun_test_array = manager.list()
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -178,11 +179,15 @@ class verilator_sim:
         else:
             expected_time = 0
 
-        self.show_results(test["name"], result_stdout, expected_time)
+        result_str = self.show_results(test["name"], result_stdout, expected_time)
+
+        self.rerun_test_array += [{"name": test["name"], "elf": test["elf"], "group": test["group"] + [result_str]}]
+
 
     def show_results(self, testname, result_stdout, expected_time):
         self.test_count.value += 1
         print ("%*d / %d : %-*s : " % (int(math.log10(self.test_length)+1), self.test_count.value, self.test_length, self.max_testname_length, testname), end="")
+
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
             self.result_detail_dict[testname] = "error"
@@ -227,6 +232,8 @@ class verilator_sim:
             print ("UNKNOWN", end="\r\n")
             self.result_detail_dict[testname] = "unknown"
             self.result_dict['unknown'] += 1
+
+        return self.result_detail_dict[testname]
 
     def execute_test_wrapper (self, args):
         return self.execute_test(*args)
@@ -276,8 +283,8 @@ class verilator_sim:
             json.dump(self.result_detail_dict.copy(), f, indent=4)
         with open(base_dir + '/' + testcase + '/result.json', 'a') as f:
             json.dump(self.result_dict.copy(), f, indent=4)
-        with open(base_dir + '/' + testcase + '/rerun.json', 'a') as f:
-            json.dump(self.result_dict.copy(), f, indent=4)
+        with open(base_dir + '/' + testcase + '/rerun.json', 'w') as f:
+            json.dump(self.rerun_test_array.__deepcopy__({}), f, indent=4)
         print ("Result : " + base_dir + '/' + testcase + '/result.json')
         if len(select_test) == 1:
             output_file = os.path.basename(select_test[0]["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
