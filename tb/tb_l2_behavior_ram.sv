@@ -64,7 +64,10 @@ always_comb begin
   rd_queue_init.sim_timer = 10;
 end
 
-assign rd_queue_ram.data      = i_snoop_resp_data;
+generate for (genvar byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
+  assign rd_queue_ram.data[byte_idx*8+:8] = i_snoop_resp_be[byte_idx] ? i_snoop_resp_data[byte_idx*8+:8] :
+                                            ram[r_req_paddr_pos][byte_idx*8+:8];
+end endgenerate
 assign rd_queue_ram.tag       = r_req_tag;
 assign rd_queue_ram.sim_timer = 10;
 
