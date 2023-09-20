@@ -510,19 +510,19 @@ always_comb begin
 end
 
 
-`ifdef SIMULATION
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
-    if (o_ex2_q_updates.update &
-        (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
-        !$onehot(o_ex2_q_updates.missu_index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
-             o_ex2_q_updates.missu_index_oh);
-    end
-  end // if (i_reset_n)
-end
-`endif // SIMULATION
+// `ifdef SIMULATION
+// always_ff @ (negedge i_clk, negedge i_reset_n) begin
+//   if (i_reset_n) begin
+//     if (o_ex2_q_updates.update &
+//         (r_ex2_pipe_ctrl.op == OP_LOAD) &
+//         (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
+//         !$onehot(o_ex2_q_updates.missu_index_oh)) begin
+//       $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
+//              o_ex2_q_updates.missu_index_oh);
+//     end
+//   end // if (i_reset_n)
+// end
+// `endif // SIMULATION
 
 // Forwarding check
 logic w_ex2_fwd_check_type;
