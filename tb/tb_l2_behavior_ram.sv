@@ -152,7 +152,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         o_snoop_req_paddr <= 'h0;
         if (i_snoop_resp_valid) begin
           r_state <= IDLE;
-          if (r_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_IC) begin
+          if (r_req_tag[TAG_W-1 -: 2] != scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
             status[r_req_paddr_pos] = ST_INIT;
           end
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
