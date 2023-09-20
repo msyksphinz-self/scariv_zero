@@ -336,13 +336,13 @@ def main():
 
     if args.testlist == "default":
         if sim_conf["xlen"] == 32 :
-            sim_conf["testlist"] = '../tests/rv32-tests.json'
+            sim_conf["testlist"] = ['../tests/rv32-tests.json']
         elif sim_conf["xlen"] == 64 :
             sim_conf["testlist"] = ['../tests/rv64-tests.json',
                                     '../tests/rv64-bench.json',
                                     '../tests/rv64-aapg.json']
     else:
-        sim_conf["testlist"] = args.testlist
+        sim_conf["testlist"] = [args.testlist]
 
     if not (sim_conf["isa"][0:4] == "rv32" or sim_conf["isa"][0:4] == "rv64") :
         print ("isa option need to start from \"rv32\" or \"rv64\"")
