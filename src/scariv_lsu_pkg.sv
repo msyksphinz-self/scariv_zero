@@ -259,6 +259,7 @@ typedef struct packed {
 typedef struct packed {
   scariv_pkg::paddr_t paddr;
   logic             is_uc;
+  dc_ways_idx_t     way;
 } missu_req_t;
 
 typedef struct packed {
@@ -269,13 +270,13 @@ typedef struct packed {
 } missu_resp_t;
 
 typedef struct packed {
-  logic          valid;
+  logic               valid;
   scariv_pkg::paddr_t paddr;
-  logic                          is_uc;
-  logic                          sent;
-  logic                          get_data;
-  dc_data_t                      data;
-  dc_ways_idx_t way;
+  logic               is_uc;
+  logic               sent;
+  logic               get_data;
+  dc_data_t           data;
+  dc_ways_idx_t       way;
 } mshr_entry_t;
 
 function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
@@ -285,6 +286,7 @@ function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
 
   ret.valid = valid;
   ret.is_uc = req.is_uc;
+  ret.way   = req.way;
   if (req.is_uc) begin
     ret.paddr = req.paddr;
   end else begin

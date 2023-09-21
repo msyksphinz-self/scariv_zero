@@ -261,7 +261,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_missu_stq_miss_if.load = |w_entry_missu_req; /* & w_s2_conflict_evict_addrxo; */
-assign l1d_missu_stq_miss_if.req_payload.paddr               = w_missu_target_entry.paddr;
+assign l1d_missu_stq_miss_if.req_payload.paddr = w_missu_target_entry.paddr;
+assign l1d_missu_stq_miss_if.req_payload.way   = w_missu_target_entry.l1d_way;
 
 
 // --------------------------------------------

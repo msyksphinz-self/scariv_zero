@@ -460,6 +460,7 @@ assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_f
                                         !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
+assign l1d_missu_if.req_payload.way   = ex1_l1d_rd_if.s1_hit_way;
 // L1D replace information
 
 // Interface to EX2 updates

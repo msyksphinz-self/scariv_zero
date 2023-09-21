@@ -150,6 +150,7 @@ always_comb begin
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_MISSU_REFILL;
+        w_entry_next.l1d_way = i_l1d_s1_way;
       end else begin
         if (r_entry.is_rmw & r_entry.is_amo & !r_entry.amo_op_done) begin
           w_state_next = ST_BUF_AMO_OPERATION;

@@ -143,7 +143,7 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
   encoder #(.SIZE(scariv_conf_pkg::DCACHE_WAYS)) hit_encoder (.i_in(w_s1_tag_hit), .o_out(w_s1_tag_hit_idx));
 
   assign o_dc_read_resp[p_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
-  assign o_dc_read_resp[p_idx].hit_way  = w_s1_tag_hit_idx;
+  assign o_dc_read_resp[p_idx].hit_way  = (|w_s1_tag_hit) ? w_s1_tag_hit_idx : r_replace_target[0];
   assign o_dc_read_resp[p_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[p_idx].conflict =  r_s1_wr_req_valid |
                                            r_s1_dc_rd_wr_conflict[p_idx] |
