@@ -11,7 +11,7 @@
     { "name": "rsort"           , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/rsort.riscv"     , "xlen": 64},
     { "name": "spmv"            , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/spmv.riscv"      , "xlen": 64},
 
-    { "name": "coremark"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64, "expected_time": {"standard": 1408022}},
+    { "name": "coremark"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64, "expected_time": {"standard": 1334822}},
 
     { "name": "linux_hifive"    , "group": ["linux"], "elf": "../../../tests/linux/fw_jump.elf"  , "xlen": 64}
 ]
