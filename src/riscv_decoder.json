@@ -519,25 +519,25 @@
         "name":"fence",
         "length":"32", "xlen":["32", "64"],
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg":[],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "is_fence"]]
     },
     {
         "name":"fence.i",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "00000", "00000", "001", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg":[],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence_i", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "fence_i"]]
     },
     {
         "name":"sfence.vma r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["r1", "r1"], ["r2", "r2"]],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_sfence_vma", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "sfence_vma"]]
     },
     {
         "name":"wfi",

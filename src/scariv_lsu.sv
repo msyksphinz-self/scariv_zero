@@ -90,6 +90,11 @@ module scariv_lsu
     output scariv_pkg::done_rpt_t      o_done_report,
     output scariv_pkg::another_flush_t o_another_flush_report,
 
+    /* SFENCE update information */
+    sfence_if.master            sfence_if,
+    /* FENCE.I update */
+    output logic                o_fence_i,
+
     br_upd_if.slave                br_upd_if
    );
 
@@ -304,7 +309,10 @@ u_lsu_pipe
    .o_ex1_q_updates  (o_ex1_q_updates ),
    .o_tlb_resolve    (o_tlb_resolve   ),
    .o_ex2_q_updates  (o_ex2_q_updates ),
-    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+
+   .sfence_if (sfence_if),
+   .o_fence_i (o_fence_i),
 
    .ex3_done_if (w_ex3_done_if),
    .o_ex3_cmt_id (w_ex3_cmt_id),

@@ -66,6 +66,11 @@ module scariv_lsu_pipe
   // Interface for Replay Queue
   lsu_pipe_haz_if.master                 lsu_pipe_haz_if,
 
+  /* SFENCE update information */
+  sfence_if.master                  sfence_if,
+  /* FENCE.I update */
+  output logic                      o_fence_i,
+
   output scariv_pkg::cmt_id_t          o_ex3_cmt_id,
   output scariv_pkg::grp_id_t          o_ex3_grp_id,
  done_if.master                        ex3_done_if,
@@ -353,17 +358,25 @@ logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
 scariv_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_cmd &
-                               (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+logic w_ex3_sfence_vma_illegal;
+assign w_ex3_sfence_vma_illegal = r_ex3_pipe_ctrl.is_sfence_vma & csr_info.mstatus[`MSTATUS_TVM];
+
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld) |
+                               r_ex3_pipe_ctrl.is_fence_i    |
+                               r_ex3_pipe_ctrl.is_fence      |
+                               r_ex3_pipe_ctrl.is_sfence_vma |
+                               w_ex3_sfence_vma_illegal      |
+                               0;
 assign w_ex1_st_except_valid = w_ex1_writemem_cmd &
                                (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
-assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? scariv_pkg::LOAD_ADDR_MISALIGN :
-                               w_ex1_tlb_resp.pf.ld ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                               w_ex1_tlb_resp.ae.ld ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ma.st ? scariv_pkg::STAMO_ADDR_MISALIGN:
-                               w_ex1_tlb_resp.pf.st ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ae.st ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                               scariv_pkg::except_t'('h0);
+assign w_ex1_tlb_except_type = w_ex3_sfence_vma_illegal ? scariv_pkg::ILLEGAL_INST   :
+                               w_ex1_tlb_resp.ma.ld     ? scariv_pkg::LOAD_ADDR_MISALIGN :
+                               w_ex1_tlb_resp.pf.ld     ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               w_ex1_tlb_resp.ae.ld     ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
+                               w_ex1_tlb_resp.ma.st     ? scariv_pkg::STAMO_ADDR_MISALIGN:
+                               w_ex1_tlb_resp.pf.st     ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
+                               w_ex1_tlb_resp.ae.st     ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               scariv_pkg::SILENT_FLUSH;
 
 assign w_ex1_haz_detected = o_ex1_q_updates.hazard_typ != EX1_HAZ_NONE;
 
@@ -674,7 +687,8 @@ assign ex3_done_if.done          = r_ex3_issue.valid;
 assign ex3_done_if.index_oh      = 'h0;
 assign ex3_done_if.payload.except_valid  = r_ex3_except_valid;
 assign ex3_done_if.payload.except_type   = r_ex3_except_type;
-assign ex3_done_if.payload.except_tval   = r_ex3_addr;
+assign ex3_done_if.payload.except_tval   = w_ex3_sfence_vma_illegal ? r_ex3_issue.inst :
+                                           r_ex3_addr;
 assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
 assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
@@ -690,6 +704,71 @@ assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
+
+
+// ------------
+// SFENCE Update
+// ------------
+logic r_sfence_vma_commit_wait;
+scariv_pkg::cmt_id_t r_sfence_vma_cmt_id;
+scariv_pkg::grp_id_t r_sfence_vma_grp_id;
+logic                                r_sfence_vma_is_rs1_x0;
+logic                                r_sfence_vma_is_rs2_x0;
+scariv_pkg::vaddr_t      r_sfence_vma_vaddr;
+
+logic                                w_sfence_vma_sfence_commit_match;
+assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &
+                                          (i_commit.cmt_id == r_sfence_vma_cmt_id) &
+                                          |(i_commit.grp_id & r_sfence_vma_grp_id);
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sfence_vma_commit_wait <= 'h0;
+  end else begin
+    if (w_sfence_vma_sfence_commit_match) begin
+      r_sfence_vma_commit_wait <= 1'b0;
+    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal) begin
+      r_sfence_vma_commit_wait <= 1'b1;
+      r_sfence_vma_cmt_id <= r_ex3_issue.cmt_id;
+      r_sfence_vma_grp_id <= r_ex3_issue.grp_id;
+      r_sfence_vma_is_rs1_x0 <= r_ex3_issue.rd_regs[0].regidx == 'h0;
+      r_sfence_vma_is_rs2_x0 <= r_ex3_issue.rd_regs[1].regidx == 'h0;
+      r_sfence_vma_vaddr     <= r_ex3_result[riscv_pkg::VADDR_W-1:0];
+    end
+  end // else: !if(i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign sfence_if.valid     = r_sfence_vma_commit_wait & w_sfence_vma_sfence_commit_match;
+assign sfence_if.is_rs1_x0 = r_ex3_issue.rd_regs[0].regidx == 'h0;
+assign sfence_if.is_rs2_x0 = r_ex3_issue.rd_regs[1].regidx == 'h0;
+assign sfence_if.vaddr     = r_ex3_result[riscv_pkg::VADDR_W-1:0];
+
+// ---------------
+// FENCE_I update
+// ---------------
+logic                r_fencei_commit_wait;
+logic                w_fencei_commit_match;
+scariv_pkg::cmt_id_t r_fencei_cmt_id;
+scariv_pkg::grp_id_t r_fencei_grp_id;
+assign w_fencei_commit_match = r_fencei_commit_wait & i_commit.commit &
+                               (i_commit.cmt_id == r_fencei_cmt_id) &
+                               |(i_commit.grp_id & r_fencei_grp_id);
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fencei_commit_wait <= 'h0;
+  end else begin
+    if (w_fencei_commit_match) begin
+      r_fencei_commit_wait <= 1'b0;
+    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_fence_i) begin
+      r_fencei_commit_wait <= 1'b1;
+      r_fencei_cmt_id <= r_ex3_issue.cmt_id;
+      r_fencei_grp_id <= r_ex3_issue.grp_id;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+assign o_fence_i = w_fencei_commit_match;
 
 
 `ifdef SIMULATION
