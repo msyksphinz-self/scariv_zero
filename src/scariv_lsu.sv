@@ -20,7 +20,7 @@ module scariv_lsu
     /* CSR information */
     csr_info_if.slave                     csr_info,
     /* SFENCE update information */
-    sfence_if.slave                       sfence_if,
+    sfence_if.slave                       sfence_if_slave,
     /* ROB notification interface */
     rob_info_if.slave                     rob_info_if,
 
@@ -91,7 +91,7 @@ module scariv_lsu
     output scariv_pkg::another_flush_t o_another_flush_report,
 
     /* SFENCE update information */
-    sfence_if.master            sfence_if,
+    sfence_if.master            sfence_if_master,
     /* FENCE.I update */
     output logic                o_fence_i,
 
@@ -274,7 +274,7 @@ u_lsu_pipe
    .br_upd_if (br_upd_if),
 
    .csr_info (csr_info),
-   .sfence_if(sfence_if),
+   .sfence_if_slave(sfence_if_slave),
 
    .ex1_i_phy_wr (i_phy_wr),
 
@@ -311,7 +311,7 @@ u_lsu_pipe
    .o_ex2_q_updates  (o_ex2_q_updates ),
    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
-   .sfence_if (sfence_if),
+   .sfence_if_master (sfence_if_master),
    .o_fence_i (o_fence_i),
 
    .ex3_done_if (w_ex3_done_if),

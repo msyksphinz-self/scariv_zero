@@ -521,7 +521,7 @@
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
         "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg":[],
-        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "is_fence"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "fence"]]
     },
     {
         "name":"fence.i",

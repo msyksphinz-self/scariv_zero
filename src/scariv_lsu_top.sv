@@ -24,9 +24,6 @@ module scariv_lsu_top
     /* CSR information */
     csr_info_if.slave                     csr_info,
 
-    /* SFENCE update information */
-    sfence_if.slave  sfence_if,
-
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
@@ -139,7 +136,7 @@ uc_write_if             w_uc_write_if();
 
 st_req_info_if          w_st_req_info_if();
 
-sfence_if                                  sfence_if[scariv_conf_pkg::LSU_INST_NUM];
+sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM];
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fence_i;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_valid;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;
@@ -168,7 +165,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .csr_info (csr_info),
     .rob_info_if (rob_info_if),
-    .sfence_if   (sfence_if),
+    .sfence_if_slave (sfence_if),
 
     .disp_valid (disp_valid             ),
     .disp       (disp                   ),
@@ -211,7 +208,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 
-    .sfence_if (w_sfence_if[lsu_idx]),
+    .sfence_if_master (w_sfence_if_inst[lsu_idx]),
     .o_fence_i (w_fence_i[lsu_idx]),
 
     .i_commit (i_commit),
@@ -222,10 +219,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .br_upd_if              (br_upd_if             )
    );
 
-  assign sfence_if_valid    [lsu_idx] = w_sfence_if[lsu_idx].valid;
-  assign sfence_if_is_rs1_x0[lsu_idx] = w_sfence_if[lsu_idx].is_rs1_x0;
-  assign sfence_if_is_rs2_x0[lsu_idx] = w_sfence_if[lsu_idx].is_rs2_x0;
-  assign sfence_if_vaddr    [lsu_idx] = w_sfence_if[lsu_idx].vaddr;
+  assign w_sfence_if_valid    [lsu_idx] = w_sfence_if_inst[lsu_idx].valid;
+  assign w_sfence_if_is_rs1_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs1_x0;
+  assign w_sfence_if_is_rs2_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs2_x0;
+  assign w_sfence_if_vaddr    [lsu_idx] = w_sfence_if_inst[lsu_idx].vaddr;
 
 end // block: lsu_loop
 endgenerate

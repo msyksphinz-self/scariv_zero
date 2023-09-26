@@ -396,7 +396,6 @@ u_lsu_top
     .i_reset_n(i_reset_n),
 
     .rob_info_if   (w_rob_info_if),
-    .sfence_if     (w_sfence_if),
 
     .csr_info (w_csr_info),
 
@@ -435,6 +434,9 @@ u_lsu_top
     .mshr_snoop_if  (mshr_snoop_if ),
     .stbuf_snoop_if (stbuf_snoop_if),
     .streq_snoop_if (streq_snoop_if),
+
+    .sfence_if (w_sfence_if),
+    .o_fence_i (w_fence_i),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -503,9 +505,6 @@ u_csu (
     .rob_info_if (w_rob_info_if),
 
     .fflags_update_if (w_fflags_update_if),
-
-    .sfence_if (w_sfence_if),
-    .o_fence_i (w_fence_i),
 
     .o_done_report (w_csu_done_rpt),
 
