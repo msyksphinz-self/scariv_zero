@@ -507,38 +507,6 @@ u_gshare
 
 
 
-
-// `ifdef SIMULATION
-// logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] r_committed_ras_index;
-// logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_committed_ras_index_m1;
-// assign w_committed_ras_index_m1 = r_committed_ras_index - 1;
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     r_committed_ras_index <= 'h0;
-//   end else begin
-//     if (w_ras_flush_valid) begin
-//       r_committed_ras_index <= w_flush_ras_index;
-//     end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_call) begin
-//       if (r_committed_ras_index != br_upd_if.ras_index) begin
-//         $display ("CALL : expected ras_index different. Expectd=%0d, RTL=%0d",
-//                   r_committed_ras_index, br_upd_if.ras_index);
-//         $fatal;
-//       end else begin
-//         r_committed_ras_index <= r_committed_ras_index + 'h1;
-//       end
-//     end else if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_ret) begin
-//       if (w_committed_ras_index_m1 != br_upd_if.ras_index) begin
-//         $display("RET : expected ras_index different. Expectd=%0d, RTL=%0d",
-//                  w_committed_ras_index_m1, br_upd_if.ras_index);
-//         $fatal;
-//       end else begin
-//         r_committed_ras_index <= w_committed_ras_index_m1;
-//       end
-//     end
-//   end // else: !if(!i_reset_n)
-// end // always_ff @ (posedge i_clk, negedge i_reset_n)
-// `endif // SIMULATION
-
 endmodule // scariv_predictor
 
 // `default_nettype wire

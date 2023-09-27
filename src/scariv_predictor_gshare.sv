@@ -18,6 +18,9 @@ module scariv_predictor_gshare
 
  input commit_blk_t i_commit,
 
+ input logic   i_s0_valid,
+ input vaddr_t i_s0_vaddr,
+
  input logic i_s1_valid,
  input logic i_s2_valid,
  input scariv_ic_pkg::ic_resp_t i_s2_ic_resp,
@@ -30,6 +33,11 @@ module scariv_predictor_gshare
  ras_search_if.master ras_search_if,
 
  gshare_search_if.slave gshare_search_if,
+
+ // Feedback into Frontend for s0 stage
+ output logic   o_s1_predict_valid,
+ output logic   o_s1_predict_taken,
+ output vaddr_t o_s1_predict_target_vaddr,
 
  // Feedback into Frontend
  output logic   o_s2_predict_valid,
@@ -92,5 +100,24 @@ assign ras_search_if.s1_is_call = 1'b0;
 assign ras_search_if.s1_is_ret  = 1'b0;
 assign ras_search_if.s2_is_call = 1'b0;
 assign ras_search_if.s2_is_ret  = 1'b0;
+
+logic [ 1: 0] w_s1_predict_bimodal;
+
+scariv_fetch_target_buffer
+u_ftb
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_s0_valid (i_s0_valid),
+   .i_s0_pc    (i_s0_vaddr),
+
+   .o_s1_predict_valid        (o_s1_predict_valid  ),
+   .o_s1_predict_taken        (o_s1_predict_taken  ),
+   .o_s1_predict_target_vaddr (o_s1_predict_target_vaddr  ),
+   .o_s1_predict_bimodal      (w_s1_predict_bimodal),
+
+   .br_upd_if (br_upd_if)
+   );
 
 endmodule // scariv_predictor_gshare

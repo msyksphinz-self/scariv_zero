@@ -89,6 +89,7 @@ except_t r_s1_tlb_except_cause;
 vaddr_t  w_s1_btb_target_vaddr;
 
 logic    w_s1_predict_valid;
+logic    w_s1_predict_taken;
 vaddr_t  w_s1_predict_target_vaddr;
 
 // ==============
@@ -393,7 +394,7 @@ always_comb begin
       w_s0_vaddr_next = (w_s2_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
     end
-  end else if (w_s1_predict_valid & !r_s1_clear) begin
+  end else if (w_s1_predict_valid & w_s1_predict_taken & !r_s1_clear) begin
     if (!w_s0_req_ready) begin
       w_s0_vaddr_next = w_s1_predict_target_vaddr;
     end else begin
@@ -747,10 +748,6 @@ assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 assign w_gshare_search_if.s0_valid    = w_s0_ic_req.valid;
 assign w_gshare_search_if.s0_pc_vaddr = w_s0_vaddr;
 
-assign w_s1_predict_valid = 1'b0;
-assign w_s1_predict_target_vaddr = 'h0;
-
-
 ic_block_t w_s2_btb_gshare_hit_array_tree;
 ic_block_t w_s2_call_ret_tree;
 assign w_s2_btb_gshare_hit_array_tree = 'h0;
@@ -783,6 +780,9 @@ scariv_predictor_gshare u_predictor
 
    .i_commit  (i_commit),
 
+   .i_s0_valid   (w_s0_ic_req.valid),
+   .i_s0_vaddr   (w_s0_ic_req.vaddr),
+
    .i_s1_valid   (w_s1_inst_valid),
    .i_s2_valid   (w_s2_inst_valid & w_inst_buffer_ready),
 
@@ -796,6 +796,10 @@ scariv_predictor_gshare u_predictor
    .ras_search_if (w_ras_search_if),
 
    .gshare_search_if (w_gshare_search_if),
+
+   .o_s1_predict_valid        (w_s1_predict_valid       ),
+   .o_s1_predict_taken        (w_s1_predict_taken       ),
+   .o_s1_predict_target_vaddr (w_s1_predict_target_vaddr),
 
    .o_s2_predict_valid        (w_s2_predict_valid_gshare       ),
    .o_s2_predict_target_vaddr (w_s2_predict_target_vaddr_gshare),
