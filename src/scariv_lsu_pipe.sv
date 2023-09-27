@@ -343,7 +343,7 @@ assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop ==
 assign w_ex1_writemem_cmd = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
 
 
-assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & ~r_ex1_issue.paddr_valid;
+assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & (w_ex1_writemem_cmd | w_ex1_readmem_cmd) & ~r_ex1_issue.paddr_valid;
 assign w_ex1_tlb_req.cmd         = w_ex1_readmem_cmd ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
@@ -367,21 +367,21 @@ logic r_ex2_sfence_vma_illegal;
 logic r_ex3_sfence_vma_illegal;
 assign w_ex1_sfence_vma_illegal = (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) & csr_info.mstatus[`MSTATUS_TVM];
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_cmd & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld) |
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_ex1_st_except_valid = w_ex1_writemem_cmd & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
                                (r_ex1_pipe_ctrl.op == OP_FENCE_I)    |
                                (r_ex1_pipe_ctrl.op == OP_FENCE)      |
                                (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) |
-                               w_ex1_sfence_vma_illegal      |
-                               0;
-assign w_ex1_st_except_valid = w_ex1_writemem_cmd &
-                               (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
-assign w_ex1_tlb_except_type = w_ex1_sfence_vma_illegal ? scariv_pkg::ILLEGAL_INST   :
-                               w_ex1_tlb_resp.ma.ld     ? scariv_pkg::LOAD_ADDR_MISALIGN :
-                               w_ex1_tlb_resp.pf.ld     ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                               w_ex1_tlb_resp.ae.ld     ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ma.st     ? scariv_pkg::STAMO_ADDR_MISALIGN:
-                               w_ex1_tlb_resp.pf.st     ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ae.st     ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               w_ex1_sfence_vma_illegal              |
+                               'h0;
+
+assign w_ex1_tlb_except_type = w_ex1_sfence_vma_illegal                  ? scariv_pkg::ILLEGAL_INST   :
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.ma.ld ? scariv_pkg::LOAD_ADDR_MISALIGN :
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.pf.ld ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.ae.ld ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.ma.st ? scariv_pkg::STAMO_ADDR_MISALIGN:
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.pf.st ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.ae.st ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
                                scariv_pkg::SILENT_FLUSH;
 
 assign w_ex1_haz_detected = o_ex1_q_updates.hazard_typ != EX1_HAZ_NONE;
