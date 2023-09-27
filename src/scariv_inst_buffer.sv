@@ -48,6 +48,8 @@ scariv_pkg::grp_id_t w_inst_mem_pick_up;
 scariv_pkg::grp_id_t w_inst_bru_pick_up;
 scariv_pkg::grp_id_t w_inst_csu_pick_up;
 scariv_pkg::grp_id_t w_inst_fpu_pick_up;
+scariv_pkg::grp_id_t w_inst_valu_pick_up;
+scariv_pkg::grp_id_t w_inst_vlsu_pick_up;
 scariv_pkg::grp_id_t w_fetch_except_pick_up;
 scariv_pkg::grp_id_t w_inst_illegal_pick_up;
 
@@ -59,6 +61,8 @@ scariv_pkg::grp_id_t w_inst_st_disp;
 scariv_pkg::grp_id_t w_inst_bru_disp;
 scariv_pkg::grp_id_t w_inst_csu_disp;
 scariv_pkg::grp_id_t w_inst_fpu_disp;
+scariv_pkg::grp_id_t w_inst_valu_disp;
+scariv_pkg::grp_id_t w_inst_vlsu_disp;
 scariv_pkg::grp_id_t w_inst_illegal_disp;
 scariv_pkg::grp_id_t w_fetch_except_disp;
 
@@ -76,6 +80,8 @@ scariv_pkg::grp_id_t w_inst_is_st;
 scariv_pkg::grp_id_t w_inst_is_br;
 scariv_pkg::grp_id_t w_inst_is_csu;
 scariv_pkg::grp_id_t w_inst_is_fpu;
+scariv_pkg::grp_id_t w_inst_is_valu;
+scariv_pkg::grp_id_t w_inst_is_vlsu;
 scariv_pkg::grp_id_t w_inst_illegal;
 
 scariv_pkg::grp_id_t w_inst_is_call;
@@ -108,6 +114,8 @@ scariv_pkg::grp_id_t w_inst_st_disped;
 scariv_pkg::grp_id_t w_inst_bru_disped;
 scariv_pkg::grp_id_t w_inst_csu_disped;
 scariv_pkg::grp_id_t w_inst_fpu_disped;
+scariv_pkg::grp_id_t w_inst_valu_disped;
+scariv_pkg::grp_id_t w_inst_vlsu_disped;
 
 logic w_inst_buf_empty;
 logic w_inst_buf_full;
@@ -448,7 +456,9 @@ logic          w_inst_fpu_illegal;
   assign w_inst_is_st    [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
   assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
   assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
-  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU   );
+  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU );
+  assign w_inst_is_valu  [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VALU);
+  assign w_inst_is_vlsu  [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VLSU);
 
   logic          w_is_std_call;
   logic          w_is_std_ret;
@@ -470,6 +480,8 @@ assign w_inst_mem_pick_up    = w_inst_is_ld | w_inst_is_st;
 assign w_inst_bru_pick_up    = w_inst_is_br;
 assign w_inst_csu_pick_up    = w_inst_is_csu;
 assign w_inst_fpu_pick_up    = w_inst_is_fpu;
+assign w_inst_valu_pick_up   = w_inst_is_valu;
+assign w_inst_vlsu_pick_up   = w_inst_is_vlsu;
 assign w_fetch_except_pick_up = w_fetch_except;
 assign w_inst_illegal_pick_up = w_inst_illegal;
 
@@ -481,10 +493,15 @@ bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::MEM_DISP
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::BRU_DISP_SIZE  ))  u_bru_disp_pick_up    (.in(w_inst_bru_pick_up   ),  .out(w_inst_bru_disp    ));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::CSU_DISP_SIZE  ))  u_csu_disp_pick_up    (.in(w_inst_csu_pick_up   ),  .out(w_inst_csu_disp    ));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::FPU_DISP_SIZE  ))  u_fpu_disp_pick_up    (.in(w_inst_fpu_pick_up   ),  .out(w_inst_fpu_disp    ));
+bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::VALU_DISP_SIZE ))  u_valu_disp_pick_up   (.in(w_inst_valu_pick_up  ),  .out(w_inst_valu_disp   ));
+bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::VLSU_DISP_SIZE ))  u_vlsu_disp_pick_up   (.in(w_inst_vlsu_pick_up  ),  .out(w_inst_vlsu_disp   ));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(1                             ))  u_illegal_disp_pick_up(.in(w_inst_illegal_pick_up), .out(w_inst_illegal_disp));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(1                             ))  u_except_disp_pick_up (.in(w_fetch_except_pick_up), .out(w_fetch_except_disp));
 
-assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp | w_inst_fpu_disp | w_inst_illegal_disp | w_fetch_except_disp;
+assign w_inst_disp_or = w_inst_arith_disp | w_inst_mem_disp | w_inst_bru_disp | w_inst_csu_disp |
+                        w_inst_fpu_disp |
+                        w_inst_valu_disp | w_inst_vlsu_disp |
+                        w_inst_illegal_disp | w_fetch_except_disp;
 
 logic [scariv_conf_pkg::DISP_SIZE: 0] w_inst_disp_mask_tmp;
 bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1, ~w_inst_disp_or}), .out(w_inst_disp_mask_tmp));
@@ -580,6 +597,8 @@ bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::MEM_DISP
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::BRU_DISP_SIZE   )) u_bru_disped_pick_up     (.in(w_inst_bru_disp     & w_inst_disp_mask), .out(w_inst_bru_disped    ));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::CSU_DISP_SIZE   )) u_csu_disped_pick_up     (.in(w_inst_csu_disp     & w_inst_disp_mask), .out(w_inst_csu_disped    ));
 bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::FPU_DISP_SIZE   )) u_fpu_disped_pick_up     (.in(w_inst_fpu_disp     & w_inst_disp_mask), .out(w_inst_fpu_disped    ));
+bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::VALU_DISP_SIZE  )) u_valu_disped_pick_up    (.in(w_inst_valu_disp    & w_inst_disp_mask), .out(w_inst_valu_disped   ));
+bit_pick_up #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .NUM(scariv_conf_pkg::VLSU_DISP_SIZE  )) u_vlsu_disped_pick_up    (.in(w_inst_vlsu_disp    & w_inst_disp_mask), .out(w_inst_vlsu_disped   ));
 
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_muldiv_cnt;
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_mem_cnt;
@@ -588,6 +607,8 @@ logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_st_cnt;
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_bru_cnt;
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_csu_cnt;
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_fpu_cnt;
+logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_valu_cnt;
+logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_vlsu_cnt;
 
 generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_rsrc_loop
   localparam alu_lane_width = scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM;
@@ -648,6 +669,15 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   assign w_ibuf_front_payload_next.resource_cnt.fpu_inst_valid[f_idx] = w_lane_disped_valid_or;
 end
 endgenerate
+
+bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_valu_inst_cnt (.in(w_inst_valu_disped), .out(w_inst_valu_cnt));
+assign w_ibuf_front_payload_next.resource_cnt.valu_inst_cnt   = w_inst_valu_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.valu_inst_valid = w_inst_valu_disped;
+
+bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_vlsu_inst_cnt (.in(w_inst_vlsu_disped), .out(w_inst_vlsu_cnt));
+assign w_ibuf_front_payload_next.resource_cnt.vlsu_inst_cnt   = w_inst_vlsu_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.vlsu_inst_valid = w_inst_vlsu_disped;
+
 
 `ifdef SIMULATION
 logic [ 63: 0] r_kanata_cycle_count;

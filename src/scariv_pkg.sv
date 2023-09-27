@@ -36,7 +36,10 @@ package scariv_pkg;
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU
                             1 +               // CSU
-                            FPU_INST_NUM * 2; // FPU
+                            FPU_INST_NUM * 2 +// FPU
+                            1 +               // VALU
+                            1 +               // VLSU
+                            0;
 
   typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
@@ -56,7 +59,8 @@ package scariv_pkg;
                                   scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
                                   2 +                                    // BRU port
                                   1 +                                    // CSR port
-                                  scariv_conf_pkg::FPU_INST_NUM;         // FPU port
+                                  scariv_conf_pkg::FPU_INST_NUM +        // FPU port
+                                  scariv_conf_pkg::VEC_ALU_INST_NUM;     // VEC port
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                                  1;                                      // LSU port
@@ -197,19 +201,23 @@ typedef struct packed {
 
 
   typedef struct packed {
-    logic [ALU_INST_NUM-1: 0][$clog2(ARITH_DISP_SIZE): 0] alu_inst_cnt;
+    logic [ALU_INST_NUM-1: 0][$clog2(ARITH_DISP_SIZE): 0]      alu_inst_cnt;
     logic [ALU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] alu_inst_valid;
-    logic [$clog2(MULDIV_DISP_SIZE): 0]                   muldiv_inst_cnt;
-    logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]   lsu_inst_cnt;
-    logic [$clog2(LDQ_SIZE): 0]                           ld_inst_cnt;
-    logic [$clog2(STQ_SIZE): 0]                           st_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 lsu_inst_valid;
-    logic [$clog2(BRU_DISP_SIZE): 0]                      bru_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 bru_inst_valid;
-    logic [$clog2(CSU_DISP_SIZE): 0]                      csu_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                 csu_inst_valid;
-    logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]   fpu_inst_cnt;
+    logic [$clog2(MULDIV_DISP_SIZE): 0]                        muldiv_inst_cnt;
+    logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]        lsu_inst_cnt;
+    logic [$clog2(LDQ_SIZE): 0]                                ld_inst_cnt;
+    logic [$clog2(STQ_SIZE): 0]                                st_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    lsu_inst_valid;
+    logic [$clog2(BRU_DISP_SIZE): 0]                           bru_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    bru_inst_valid;
+    logic [$clog2(CSU_DISP_SIZE): 0]                           csu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    csu_inst_valid;
+    logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]        fpu_inst_cnt;
     logic [FPU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
+    logic [$clog2(VALU_DISP_SIZE): 0]                          valu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    valu_inst_valid;
+    logic [$clog2(VLSU_DISP_SIZE): 0]                          vlsu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    vlsu_inst_valid;
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t   disp,

@@ -69,6 +69,8 @@ logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
 csr_rd_if w_csr_read ();
 csr_wr_if w_csr_write();
 
+csr_rd_if  w_vec_csr_read_if ();
+csr_wr_if  w_vec_csr_write_if();
 vec_csr_if w_vec_csr_if();
 
 
@@ -141,6 +143,8 @@ u_csu_pipe
    .read_if (w_csr_read),
    .write_if (w_csr_write),
 
+   .read_vec_if  (w_vec_csr_read_if),
+   .write_vec_if (w_vec_csr_write_if),
    .vec_csr_if (w_vec_csr_if),
 
    .sfence_if (sfence_if),
@@ -174,6 +178,9 @@ u_vec_csr
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+
+   .read_csr_vec_if  (w_vec_csr_read_if),
+   .write_csr_vec_if (w_vec_csr_write_if),
 
    .vec_csr_if (w_vec_csr_if)
    );

@@ -33,6 +33,10 @@ package scariv_conf_pkg;
   localparam RV_BRU_ENTRY_SIZE = 12;
   localparam RV_FPU_ENTRY_SIZE = 4;
 
+  localparam VEC_ALU_INST_NUM = 1;
+  localparam RV_VEC_ALU_ENTRY_SIZE = 32;
+  localparam VALU_DISP_SIZE = 1;
+
   localparam MISSU_ENTRY_SIZE = 2;
 
   localparam CMT_ENTRY_SIZE = 32;

@@ -35,6 +35,10 @@ module scariv_csu_pipe
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
 
+  /* Vector Register RW Interface */
+  csr_rd_if.master                  read_vec_if,
+  csr_wr_if.master                  write_vec_if,
+
   vec_csr_if.slave                  vec_csr_if,
 
   /* SFENCE update information */
@@ -140,8 +144,14 @@ assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::X
 assign read_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
+assign read_vec_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
+assign read_vec_if.addr  = r_ex2_issue.inst[31:20];
+
 logic [$clog2(scariv_vec_pkg::VLENBMAX)-1: 0] w_ex2_vlmax;
 assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(r_ex2_issue.inst[22:20], r_ex2_issue.inst[25:23]);
+
+riscv_pkg::xlen_t csr_read_data;
+assign csr_read_data = !read_if.resp_error ? read_if.data : read_vec_if.data;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -153,22 +163,22 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= r_ex2_issue;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
-    r_ex3_csr_illegal <= read_if.resp_error;
+    r_ex3_csr_illegal <= read_if.resp_error & read_vec_if.resp_error;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
-      OP_RS: r_ex3_result <= read_if.data | w_ex2_rs1_selected_data;
-      OP_RC: r_ex3_result <= read_if.data & ~w_ex2_rs1_selected_data;
+      OP_RS: r_ex3_result <= csr_read_data | w_ex2_rs1_selected_data;
+      OP_RC: r_ex3_result <= csr_read_data & ~w_ex2_rs1_selected_data;
       OP__ : r_ex3_result <= 'h0;
       default : r_ex3_result <= w_ex2_rs1_selected_data;
     endcase // case (r_ex2_pipe_ctrl.op)
 
     /* verilator lint_off WIDTH */
     r_ex3_csr_rd_data <= r_ex2_pipe_ctrl.op == OP_VSETVL ? (w_ex2_rs1_selected_data < w_ex2_vlmax ? w_ex2_rs1_selected_data : w_ex2_vlmax) :
-                         (read_if.addr == `SYSREG_ADDR_MINSTRET) ? read_if.data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
-                         read_if.data;
-  end
-end
+                         (read_if.addr == `SYSREG_ADDR_MINSTRET) ? csr_read_data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
+                         csr_read_data;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;

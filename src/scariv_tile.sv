@@ -43,6 +43,8 @@ localparam LSU_DONE_PORT_BASE = scariv_conf_pkg::ALU_INST_NUM;
 localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 localparam FPU_DONE_PORT_BASE = CSU_DONE_PORT_BASE + 1;
+localparam VALU_DONE_PORT_BASE = FPU_DONE_PORT_BASE + 1;
+localparam VLSU_DONE_PORT_BASE = VALU_DONE_PORT_BASE + 1;
 
 localparam ALU_INT_REGWR_PORT_BASE = 0;
 localparam LSU_INT_REGWR_PORT_BASE = scariv_conf_pkg::ALU_INST_NUM;
@@ -140,6 +142,19 @@ scariv_pkg::done_rpt_t w_fpu_fp_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
 
+// ----------------------------------
+// VEC Components
+// ----------------------------------
+scariv_pkg::grp_id_t   w_disp_valu_valids ;
+scariv_pkg::early_wr_t w_ex1_valu_early_wr;
+scariv_pkg::phy_wr_t   w_ex3_valu_phy_wr  ;
+scariv_pkg::done_rpt_t w_valu_done_rpt    ;
+
+scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
+scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
+scariv_pkg::phy_wr_t   w_ex3_vlsu_phy_wr  ;
+scariv_pkg::done_rpt_t w_vlsu_done_rpt    ;
+
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
@@ -161,6 +176,8 @@ cre_ret_if #(.MAX_INC(scariv_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[scariv_conf_pkg::FPU_INST_NUM]();
+cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_VALU_ENTRY_SIZE)) valu_cre_ret_if();
+cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_VLSU_ENTRY_SIZE)) vlsu_cre_ret_if();
 
 
 // ----------------------------------
@@ -233,10 +250,13 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+1] = 'h0;   // Now, FPNew early wakeup is not used.
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpu_fp_done_rpt [f_idx];
+  assign w_done_rpt    [FPU_DONE_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
+  assign w_done_rpt    [FPU_DONE_PORT_BASE + f_idx*2+1] = w_fpu_fp_done_rpt [f_idx];
 end
 endgenerate
+
+assign w_done_rpt[VALU_DONE_PORT_BASE] = w_valu_done_rpt;
+assign w_done_rpt[VLSU_DONE_PORT_BASE] = w_vlsu_done_rpt;
 
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_wr_loop
   assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
@@ -319,6 +339,8 @@ scariv_resource_alloc u_resource_alloc
   .csu_cre_ret_if (csu_cre_ret_if),
   .bru_cre_ret_if (bru_cre_ret_if),
   .fpu_cre_ret_if (fpu_cre_ret_if),
+  .valu_cre_ret_if(valu_cre_ret_if),
+  .vlsu_cre_ret_if(vlsu_cre_ret_if),
 
   .br_upd_if (w_ex3_br_upd_if),
 
@@ -351,6 +373,12 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
     assign w_disp_fpu_valids[f_idx][d_idx] = w_rn_front_if.valid & w_rn_front_if.payload.inst[d_idx].valid & !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
                                              w_rn_front_if.payload.resource_cnt.fpu_inst_valid[f_idx][d_idx];
   end
+
+  assign w_disp_valu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                     (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_VALU);
+  assign w_disp_vlsu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                     (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_VLSU);
+
 end
 endgenerate
 
@@ -622,6 +650,36 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .vlvtype_upd_if (w_vlvtype_upd_if)
    );
+
+  scariv_vec_alu
+    #(.PORT_BASE(0))
+  u_vec_alu
+    (
+     .i_clk    (i_clk),
+     .i_reset_n(i_reset_n),
+
+     .rob_info_if(w_rob_info_if),
+
+     .disp_valid(w_disp_valu_valids[0]),
+     .disp(w_rn_front_if),
+     .cre_ret_if(valu_cre_ret_if),
+
+     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
+                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                  2 +   // BRU
+                                  1 +   // CSU
+                                  scariv_conf_pkg::FPU_INST_NUM]),
+
+     .i_phy_wr(w_ex3_phy_wr),
+
+     .o_ex1_early_wr(w_ex1_valu_early_wr),
+     .o_ex3_phy_wr  (w_ex3_valu_phy_wr  ),
+
+     .o_done_report(w_valu_done_rpt),
+
+     .i_commit (w_commit),
+     .br_upd_if(w_ex3_br_upd_if)
+     );
 
 end endgenerate
 
