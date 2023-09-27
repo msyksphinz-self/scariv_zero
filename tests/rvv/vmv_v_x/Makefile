@@ -15,7 +15,7 @@ CFLAGS += -fno-common
 CFLAGS += -fno-builtin-printf
 CFLAGS += -fno-tree-loop-distribute-patterns
 
-SRC_FILES += test.c
+SRC_FILES += test.S
 
 all:
 	riscv64-unknown-elf-gcc $(CFLAGS) -o test.elf $(SRC_FILES) $(COMMON_DIR)/syscalls.c $(COMMON_DIR)/crt.S -static -nostdlib -nostartfiles -lm -lgcc -T $(COMMON_DIR)/test.ld
