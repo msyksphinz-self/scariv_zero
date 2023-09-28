@@ -147,7 +147,7 @@ fflags_update_if w_fflags_update_if();
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
-scariv_pkg::phy_wr_t   w_ex3_valu_phy_wr  ;
+vec_regwrite_if        w_valu_vec_phy_wr_if()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt    ;
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
@@ -672,8 +672,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .i_phy_wr(w_ex3_phy_wr),
 
-     .o_ex1_early_wr(w_ex1_valu_early_wr),
-     .o_ex3_phy_wr  (w_ex3_valu_phy_wr  ),
+     .vec_phy_wr_if (w_valu_vec_phy_wr_if),
 
      .o_done_report(w_valu_done_rpt),
 

@@ -1,10 +1,11 @@
 package scariv_vec_pkg;
 
-parameter VLEN_W = 128;
+parameter VLEN_W = riscv_vec_conf_pkg::VLEN_W;
 parameter VLENB = VLEN_W / 8;
 parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;
+typedef logic [$clog2(riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W)-1: 0] vec_pos_t;
 
 parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
@@ -137,3 +138,26 @@ interface vlvtype_req_if;
   );
 
 endinterface // vlvtype_resolve_if
+
+
+interface vec_regwrite_if;
+  logic              valid;
+  scariv_pkg::rnid_t rd_rnid;
+  scariv_vec_pkg::vec_pos_t  rd_pos;
+  logic [riscv_vec_conf_pkg::DLEN_W-1: 0] rd_data;
+
+  modport master (
+    output valid,
+    output rd_rnid,
+    output rd_pos,
+    output rd_data
+  );
+
+  modport slave (
+    input valid,
+    input rd_rnid,
+    input rd_pos,
+    input rd_data
+  );
+
+endinterface // vec_regwrite_if

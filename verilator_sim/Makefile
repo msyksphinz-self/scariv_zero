@@ -5,6 +5,7 @@ endif
 
 RV_XLEN = 64
 RV_FLEN = 64
+RV_VLEN = 512
 RV_AMO  = 1
 RV_BITMANIP = 0
 
@@ -20,9 +21,8 @@ VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
 
-# VERILATOR_OPTS += -CFLAGS "-g"
-# VERILATOR_OPTS += -LDFLAGS "-lelf"
-VERILATOR_OPTS += -O3
+# VERILATOR_OPTS += -CFLAGS "-g -O0"
+VERILATOR_OPTS += -CFLAGS "-O3"
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
@@ -85,7 +85,7 @@ VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
-VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
+VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\" -DRV_VLEN=$(RV_VLEN)"
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
@@ -189,6 +189,7 @@ rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(R
 		$(VERILATOR_OPTS_RV64) \
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
+		../src/riscv_vec_v512_d128_conf_pkg.sv \
 		../src/riscv64_pkg.sv \
 		../src/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)

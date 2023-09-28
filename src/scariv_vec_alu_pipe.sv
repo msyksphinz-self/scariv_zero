@@ -26,12 +26,9 @@ module scariv_vec_alu_pipe
     input scariv_pkg::issue_t  i_ex0_issue,
     input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
-    output logic o_muldiv_stall,
-
     regread_if.master ex0_regread_rs1,
 
-    output scariv_pkg::early_wr_t o_ex0_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex2_phy_wr,
+    vec_regwrite_if.master vec_phy_wr_if,
 
     output scariv_pkg::done_rpt_t o_done_report
 );
@@ -55,15 +52,10 @@ riscv_pkg::xlen_t r_ex1_rs1_data;
 
 riscv_pkg::xlen_t w_ex1_rs1_selected_data;
 
-pipe_ctrl_t                        r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                r_ex2_issue;
-scariv_pkg::issue_t                w_ex2_issue_next;
-
-logic                              r_ex2_wr_valid;
-logic                              w_ex2_muldiv_stall;
-riscv_pkg::xlen_t                  r_ex2_result;
-
-assign o_muldiv_stall = 1'b0;
+pipe_ctrl_t         r_ex2_pipe_ctrl;
+scariv_pkg::issue_t r_ex2_issue;
+scariv_pkg::issue_t w_ex2_issue_next;
+logic               r_ex2_wr_valid;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -81,11 +73,6 @@ decoder_vec_ctrl u_pipe_ctrl (
 
 assign ex0_regread_rs1.valid = i_ex0_issue.valid & i_ex0_issue.rd_regs[0].valid;
 assign ex0_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
-
-assign o_ex0_early_wr.valid       = i_ex0_issue.valid & i_ex0_issue.wr_reg.typ == scariv_pkg::VPR;
-assign o_ex0_early_wr.rd_rnid     = i_ex0_issue.wr_reg.rnid;
-assign o_ex0_early_wr.rd_type     = scariv_pkg::VPR;
-assign o_ex0_early_wr.may_mispred = 1'b0;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -134,23 +121,18 @@ end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex2_result <= 'h0;
     r_ex2_issue <= 'h0;
-
     r_ex2_wr_valid <= 1'b0;
   end else begin
-    r_ex2_result <= 'h0;
     r_ex2_issue <= w_ex2_issue_next;
-
     r_ex2_wr_valid <= r_ex1_issue.wr_reg.valid;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 always_comb begin
-  o_ex2_phy_wr.valid   = r_ex2_wr_valid;
-  o_ex2_phy_wr.rd_rnid = r_ex2_issue.wr_reg.rnid;
-  o_ex2_phy_wr.rd_type = r_ex2_issue.wr_reg.typ;
-  o_ex2_phy_wr.rd_data = r_ex2_result;
+  vec_phy_wr_if.valid   = r_ex2_wr_valid;
+  vec_phy_wr_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
+  vec_phy_wr_if.rd_data = 'h0;
 
   o_done_report.valid  = r_ex2_issue.valid;
   o_done_report.cmt_id = r_ex2_issue.cmt_id;

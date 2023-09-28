@@ -23,14 +23,13 @@ module scariv_vec_alu #(
     scariv_front_if.watch      disp,
     cre_ret_if.slave           cre_ret_if,
 
-    regread_if.master ex1_regread_rs1,
+    regread_if.master            ex1_regread_rs1,
 
     /* Forwarding path */
     input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+    vec_regwrite_if.master vec_phy_wr_if,
 
     output scariv_pkg::done_rpt_t o_done_report,
     // Commit notification
@@ -126,12 +125,9 @@ u_alu
    .i_ex0_issue (w_ex0_issue),
    .ex1_i_phy_wr(i_phy_wr),
 
-   .o_muldiv_stall(),
-
    .ex0_regread_rs1(ex1_regread_rs1),
 
-   .o_ex0_early_wr(o_ex1_early_wr),
-   .o_ex2_phy_wr  (o_ex3_phy_wr),
+   .vec_phy_wr_if (vec_phy_wr_if),
 
    .o_done_report (o_done_report)
    );

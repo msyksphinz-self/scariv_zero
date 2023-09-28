@@ -292,7 +292,9 @@ def main():
     parser.add_argument('-i', '--isa', dest='isa', action='store',
 	                default='rv32imc',
 	                help='ISA of design comfiguration')
-
+    parser.add_argument('--vlen', dest='vlen', action='store',
+	                default=128,
+	                help='Defalut Vector Length')
     parser.add_argument('-c', '--conf', dest='conf', action='store',
 	                default='standard',
 	                help="Configuration of design : tiny, small, standard, big, giant")
@@ -320,6 +322,7 @@ def main():
 
     testcase = args.testcase
     sim_conf["isa_ext"]         = sim_conf["isa"][4:]
+    sim_conf["vlen"]            = args.vlen
     sim_conf["parallel"]        = int(args.parallel)
     sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start

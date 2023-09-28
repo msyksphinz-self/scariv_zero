@@ -136,7 +136,7 @@ static void read_file_bytes(const char *filename,size_t fileoff,
 }
 
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa, int rv_vlen)
 {
   argv[0] = "spike_dpi";
   char *isa_str = (char *)malloc(sizeof(char) * 32);
@@ -552,6 +552,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "--kernel=../tests/linux/Image";
   argv[arg_max++] = "--initrd=../tests/linux/spike_rootfs.cpio";
 #endif // SIM_MAIN
+  char *varch_str =(char *)malloc(sizeof(char) * 64);
+  sprintf(varch_str, "--varch=vlen:%d,elen:%d", rv_vlen, rv_xlen);
+  argv[arg_max++] = varch_str;
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -1566,7 +1569,7 @@ int main(int argc, char **argv)
     fprintf(compare_log_fp, "INST     CYCLE    PC\n");
   }
 
-  initial_spike (htif_args[0].c_str(), 64, 64, "imafdc");
+  initial_spike (htif_args[0].c_str(), 64, 64, "imafdc", 128);
   processor_t *p = spike_core->get_core(0);
 
   initial_gshare(10, 64);
@@ -1610,7 +1613,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64, "imafdc");
+  initial_spike(filename, 64, 64, "imafdc", 128);
 
 }
 #endif // VERILATOR
