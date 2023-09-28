@@ -116,7 +116,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                                          cmt_id_t cmt_id,
                                          grp_id_t grp_id,
                                          logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
-                                         logic stq_rmw_existed);
+                                         logic stq_rmw_existed, logic oldest_valid);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
@@ -129,7 +129,8 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.grp_id = grp_id;
 
   ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
-                         stq_rmw_existed;
+                         stq_rmw_existed |
+                         oldest_valid;
   ret.oldest_valid     = 1'b0;
 
   ret.wr_reg.valid = in.wr_reg.valid;
