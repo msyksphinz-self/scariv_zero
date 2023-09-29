@@ -19,12 +19,13 @@ package scariv_conf_pkg;
   localparam ARITH_DISP_SIZE = 4;
   localparam MULDIV_DISP_SIZE = ARITH_DISP_SIZE / ALU_INST_NUM;
   localparam MEM_DISP_SIZE   = 4;
-  localparam BRU_DISP_SIZE   = 1;
+  localparam BRU_DISP_SIZE   = 2;
   localparam CSU_DISP_SIZE   = 1;
   localparam FPU_DISP_SIZE   = 4;
 
   localparam RV_ALU_ENTRY_SIZE = 32;
 
+  localparam RV_LSU_ENTRY_SIZE = 32;
   localparam LDQ_SIZE = 24;
   localparam STQ_SIZE = 24;
 
@@ -38,6 +39,7 @@ package scariv_conf_pkg;
 
   localparam USING_VM = 1'b1;
 
+  localparam BTB_ENTRY_SIZE = 128;
   localparam RAS_ENTRY_SIZE = 32;
   localparam GSHARE_BHT_W   = 10;
 

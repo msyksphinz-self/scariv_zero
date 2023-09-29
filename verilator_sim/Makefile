@@ -6,6 +6,7 @@ endif
 RV_XLEN = 64
 RV_FLEN = 64
 RV_AMO  = 1
+RV_BITMANIP = 0
 
 DEBUG = on
 
@@ -42,6 +43,8 @@ VERILATOR_OPTS += -LDFLAGS "-lpthread"
 VERILATOR_OPTS += -LDFLAGS "-L"$(abspath .)
 VERILATOR_OPTS += -LDFLAGS "-Wl,--export-dynamic"
 # VERILATOR_OPTS += $(abspath ../spike_dpi/spike_dpi.cpp)
+VERILATOR_OPTS += $(abspath ../spike_dpi/gshare_model.cpp)
+VERILATOR_OPTS += $(abspath ../spike_dpi/ras_model.cpp)
 VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
@@ -49,6 +52,13 @@ VERILATOR_OPTS += -I../tb
 VERILATOR_OPTS += -I${VERILATOR_HOME}/include/vltstd
 
 VERILATOR_OPTS += +define+RV_AMO=$(RV_AMO)
+ifeq ($(findstring "b",$(ISA)),"b")
+	VERILATOR_OPTS += +define+RV_BITMANIP=1
+endif
+ifeq ($(findstring "v",$(ISA)),"v")
+	VERILATOR_OPTS += +define+RV_VECTOR=1
+endif
+
 
 ifeq ($(LINT),on)
 	VERILATOR_OPTS += --lint-only
@@ -75,7 +85,7 @@ VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
-VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DRV_AMO=$(RV_AMO)"
+VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
@@ -96,9 +106,16 @@ DECODE_FILES += ../src/decoder_alu_ctrl.sv
 DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_bru_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_ctrl.sv
+DECODE_FILES += ../src/decoder_csu_sched.sv
+DECODE_FILES += ../src/decoder_lsu_sched.sv
 DECODE_FILES += ../src/decoder_fpu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
+
+DECODE_JSONS = ../src/riscv_decoder.json
+DECODE_JSONS = ../src/riscv_rvv_decoder.json
+DECODE_JSONS = ../src/b_ext.json
+DECODE_JSONS = ../src/zicond_ext.json
 
 build_decode_v: build_espresso
 	$(MAKE) $(DECODE_FILES)
@@ -106,31 +123,37 @@ build_decode_v: build_espresso
 build_espresso:
 	$(MAKE) -C ../tools/espresso-logic/espresso-src
 
-../src/decoder_inst_cat.sv: ../src/riscv_decoder.json
+../src/decoder_inst_cat.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb inst_cat $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_alu_ctrl.sv: ../src/riscv_decoder.json
+../src/decoder_alu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb alu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_lsu_ctrl.sv: ../src/riscv_decoder.json
+../src/decoder_lsu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb lsu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_bru_ctrl.sv: ../src/riscv_decoder.json
+../src/decoder_bru_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb bru_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_csu_ctrl.sv: ../src/riscv_decoder.json
+../src/decoder_csu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_fpu_ctrl.sv: ../src/riscv_decoder.json
+../src/decoder_csu_sched.sv: $(DECODE_JSONS)
+	cd ../src && ./build_decoder.rb csu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_lsu_sched.sv: $(DECODE_JSONS)
+	cd ../src && ./build_decoder.rb lsu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_fpu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_reg.sv: ../src/riscv_decoder.json
+../src/decoder_vec_ctrl.sv: ../src/riscv_rvv_decoder.json
+	cd ../src && ./build_decoder.rb vec_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_reg.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
 	cd ../src && ../scripts/build_memory_map.rb $< $(RV_XLEN)
 
 FILELIST = sim_filelist.f
 
-.config_design_xlen32_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
+.config_design_xlen32_flen$(RV_FLEN): $(DECODE_JSONS) ../src/pma_memory_map.json
 	make -B RV_XLEN=32 RV_FLEN=$(RV_FLEN) ISA=$(ISA) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@
 
-.config_design_xlen64_flen$(RV_FLEN): ../src/riscv_decoder.json ../src/pma_memory_map.json
+.config_design_xlen64_flen$(RV_FLEN): $(DECODE_JSONS) ../src/pma_memory_map.json
 	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) ISA=$(ISA) build_decode_v > /dev/null 2>&1
 	rm -rf .config_design_*
 	touch $@

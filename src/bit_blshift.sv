@@ -8,7 +8,7 @@ module bit_blshift
  output logic [WIDTH-1:0] out
 );
 
-
+/* verilator lint_off UNOPTFLAT */
 logic [WIDTH-1:0]         in_reversed;
 logic [WIDTH-1:0]         rslt;
 

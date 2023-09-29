@@ -1,0 +1,20 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "tiny rv64imac dhrystone",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/verilator_sim"
+            },
+            "command": "../scripts/runtest.py --isa rv64imac --conf tiny -t dhrystone -d",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

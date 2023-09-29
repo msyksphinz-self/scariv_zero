@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+from enum import Enum
+import math
+import re
 import docker
 from multiprocessing import Pool, Manager
 import multiprocessing
@@ -9,11 +12,19 @@ import subprocess
 import json
 import argparse
 
+class BuildResult(Enum):
+    SUCCESS = 0
+    FAIL = 1
+
 
 class verilator_sim:
 
     manager = Manager()
-    result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0})
+    result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0, 'cycle_deleg' : 0})
+    result_detail_dict = manager.dict()
+    test_table = []
+    test_count = manager.Value('i', 0)
+    rerun_test_array = manager.list()
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -41,22 +52,24 @@ class verilator_sim:
                     print(message, end='')
             build_result.wait()
         else:
-            build_result = subprocess.Popen(build_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            # build_result = subprocess.Popen(build_command, stdout=subprocess.STDOUT, stderr=subprocess.STDOUT, text=True)
+            build_result = subprocess.Popen(build_command, text=True)
+            build_result.wait()
+            # for line in iter(build_result.stdout.readline, ""):
+            #     print(line, end="\r")
 
-            for line in iter(build_result.stdout.readline, ""):
-                print(line, end="\r")
-
-            # if build_result.returncode != 0 :
-            #     exit()
+            if build_result.returncode != 0:
+                return BuildResult.FAIL
 
         ## Build verilator binary
         build_command = ["make",
                          "rv" + str(sim_conf["xlen"]) + "_build",
-                         "CONF=" + sim_conf["conf"],
-                         "ISA=" + sim_conf["isa_ext"],
-                         "RV_XLEN=" + str(sim_conf["xlen"]),
-                         "RV_FLEN=" + str(sim_conf["flen"]),
-                         "RV_AMO=" + str(sim_conf["amo"])]
+                         "CONF="        +     sim_conf["conf"],
+                         "ISA="         +     sim_conf["isa_ext"],
+                         "RV_XLEN="     + str(sim_conf["xlen"]),
+                         "RV_FLEN="     + str(sim_conf["flen"]),
+                         "EXT_ISA="      + str(sim_conf["amo"]),
+                         "RV_BITMANIP=" + str(sim_conf["bitmanip"])]
 
         current_dir = os.path.abspath("../")
         user_id    = os.getuid()
@@ -89,8 +102,8 @@ class verilator_sim:
 
             build_result.wait()
 
-            # if build_result.returncode != 0 :
-            #     exit()
+        if build_result.returncode != 0:
+            return BuildResult.FAIL
 
     def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
         output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -99,6 +112,8 @@ class verilator_sim:
             run_command += ["--dump"]
             run_command += ["--dump_start", str(sim_conf["dump_start_time"])]
 
+        if sim_conf["kanata"] :
+            run_command += ["-k"]
         run_command += ["-c", str(sim_conf["cycle"])]
         run_command += ["-e", test["elf"]]
         run_command += ["-o", output_file]
@@ -147,56 +162,95 @@ class verilator_sim:
             else:
                 run_process.wait()
         else:
-            run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
-                                           cwd=base_dir + '/' + testcase)
             if show_stdout:
-                for line in iter(run_process.stdout.readline, ""):
-                    print(line, end="")
-                    sys.stdout.flush()
-            run_process.wait()
+                subprocess.call(command, bufsize=0, text=True, cwd=base_dir + '/' + testcase)
+            else:
+                run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
+                                           cwd=base_dir + '/' + testcase)
+                # for line in iter(run_process.stdout.readline, ""):
+                #     print(line, end="")
+                #     sys.stdout.flush()
+                run_process.wait()
 
         result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
+        if "expected_time" in test and \
+           sim_conf["conf"] in test["expected_time"] :
+            expected_time = test["expected_time"][sim_conf["conf"]]
+        else:
+            expected_time = 0
 
-        print (test["name"] + "\t: ", end="")
+        result_str = self.show_results(test["name"], result_stdout, expected_time)
+
+        self.rerun_test_array += [{"name": test["name"], "elf": test["elf"], "group": test["group"] + [result_str]}]
+
+
+    def show_results(self, testname, result_stdout, expected_time):
+        self.test_count.value += 1
+        print ("%*d / %d : %-*s : " % (int(math.log10(self.test_length)+1), self.test_count.value, self.test_length, self.max_testname_length, testname), end="")
+
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
+            self.result_detail_dict[testname] = "error"
             self.result_dict['error'] += 1
         elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
             print ("MATCH", end="\r\n")
+            self.result_detail_dict[testname] = "match"
             self.result_dict['match'] += 1
         elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
             print ("TIMEOUT", end="\r\n")
+            self.result_detail_dict[testname] = "timeout"
             self.result_dict['timeout'] += 1
         elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
-            print ("PASS", end="\r\n")
-            self.result_dict['pass'] += 1
+            if expected_time != 0:
+                match = re.search(r'RUNNING TIME : (\d+)', result_stdout.decode('utf-8'))
+                if not match:
+                    print ("\nRUNNING TIME can't be get\n")
+                    print ("UNKNOWN", end="\r\n")
+                    self.result_detail_dict[testname] = "unknown"
+                    self.result_dict['unknown'] += 1
+                else:
+                    rtl_time = int(match.group(1))
+                    exp_time = int(expected_time)
+                    if (float(abs(rtl_time - exp_time)) / float(rtl_time) > 0.05) :
+                        print ("CYCLE DEGRADED", end="\r\n")
+                        print ("\nERROR : Expected Cycle Different. RTL = %d, EXPECTED = %d. Diff = %.2f%%\n" % (rtl_time, exp_time, float(abs(rtl_time - exp_time)) / float(rtl_time) * 100.0))
+                        self.result_detail_dict[testname] = "cycle_deleg"
+                        self.result_dict['cycle_deleg'] += 1
+                    else:
+                        print ("PASS", end="\r\n")
+                        self.result_detail_dict[testname] = "pass"
+                        self.result_dict['pass'] += 1
+            else:
+                print ("PASS", end="\r\n")
+                self.result_detail_dict[testname] = "pass"
+                self.result_dict['pass'] += 1
         elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
             print ("DEADLOCK", end="\r\n")
+            self.result_detail_dict[testname] = "deadlock"
             self.result_dict['deadlock'] += 1
         else :
             print ("UNKNOWN", end="\r\n")
+            self.result_detail_dict[testname] = "unknown"
             self.result_dict['unknown'] += 1
+
+        return self.result_detail_dict[testname]
 
     def execute_test_wrapper (self, args):
         return self.execute_test(*args)
 
     def run_sim(self, sim_conf, testcase):
-        test_table = json
-        if sim_conf["xlen"] == 32 :
-            json_open = open('rv32-tests.json', 'r')
-            test_table = json.load(json_open)
-        elif sim_conf["xlen"] == 64 :
-            rv64_tests_fp = open('rv64-tests.json', 'r')
-            test_table = json.load(rv64_tests_fp)
-            rv64_bench_fp = open('rv64-bench.json', 'r')
-            test_table += json.load(rv64_bench_fp)
-            rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
-            test_table += json.load(rv64_aapg_fp)
+        self.test_table
+        print ("parallel = " + str(sim_conf["parallel"]))
+        for t in sim_conf["testlist"]:
+            json_open = open(t, 'r')
+            t = json.load(json_open)
+            self.test_table += t
 
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
-                                             (x["skip"] != 1 if "skip" in x else True)) , test_table))
-        # max_length = max(map(lambda x: len(x["name"]), select_test))
+                                             (x["skip"] != 1 if "skip" in x else True)) , self.test_table))
+        self.max_testname_length = max(map(lambda x: len(x["name"]), select_test))
+        self.test_length = len(select_test)
 
         show_stdout = len(select_test) == 1
 
@@ -204,26 +258,37 @@ class verilator_sim:
         os.makedirs(base_dir, exist_ok=True)
         os.makedirs(base_dir + "/" + testcase, exist_ok=True)
 
-        process = multiprocessing.current_process()
-        if process.daemon:
-            for t in select_test:
-                args_list = (sim_conf, show_stdout, base_dir, testcase, t)
-                self.execute_test_wrapper (args_list)
-
+        if len(select_test) == 1:
+            args_list = (sim_conf, show_stdout, base_dir, testcase, select_test[0])
+            self.execute_test_wrapper (args_list)
         else:
-            with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
-                try:
-                    args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
-                    pool.map(self.execute_test_wrapper, args_list)
-                except KeyboardInterrupt:
-                    print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
-                    pool.terminate()
-                    pool.join()
+            process = multiprocessing.current_process()
+            if process.daemon:
+                for t in select_test:
+                    args_list = (sim_conf, show_stdout, base_dir, testcase, t)
+                    self.execute_test_wrapper (args_list)
+
+            else:
+                with Pool(maxtasksperchild=sim_conf["parallel"]) as pool:
+                    try:
+                        args_list = [(sim_conf, show_stdout, base_dir, testcase, t) for t in select_test]
+                        pool.map(self.execute_test_wrapper, args_list)
+                    except KeyboardInterrupt:
+                        print("Caught KeyboardInterrupt, terminating workers", end="\r\n")
+                        pool.terminate()
+                        pool.join()
 
         print (self.result_dict)
-        with open(base_dir + '/result.json', 'w') as f:
-            json.dump(self.result_dict, f, default=str)
-
+        with open(base_dir + '/' + testcase + '/result.json', 'w') as f:
+            json.dump(self.result_detail_dict.copy(), f, indent=4)
+        with open(base_dir + '/' + testcase + '/result.json', 'a') as f:
+            json.dump(self.result_dict.copy(), f, indent=4)
+        with open(base_dir + '/' + testcase + '/rerun.json', 'w') as f:
+            json.dump(self.rerun_test_array.__deepcopy__({}), f, indent=4)
+        print ("Result : " + base_dir + '/' + testcase + '/result.json')
+        if len(select_test) == 1:
+            output_file = os.path.basename(select_test[0]["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
+            print("Detail log : " + base_dir + '/' + select_test[0]["name"] + '/' + output_file)
 
 def main():
     parser = argparse.ArgumentParser(description='Compile design and execute tests')
@@ -237,7 +302,9 @@ def main():
     parser.add_argument('-t', '--testcase', dest='testcase', action='store',
 	                default='testcase',
 	                help="Testcase of run")
-    parser.add_argument('-k', '--kanata', dest="katana", action='store_true',
+    parser.add_argument('-l', '--testlist', dest="testlist", action="store",
+	                default="default", help="Test list to run")
+    parser.add_argument('-k', '--kanata', dest="kanata", action='store_true',
 	                default=False, help="Generate Katana Log file")
     parser.add_argument('-j', dest="parallel", action='store',
 	                default=1, help="Num of Parallel Jobs")
@@ -256,20 +323,31 @@ def main():
     sim_conf["isa"] = args.isa
     sim_conf["conf"] = args.conf
 
-    sim_conf["isa_ext"] = sim_conf["isa"][4:10]
     testcase = args.testcase
-    sim_conf["parallel"] = int(args.parallel)
-    sim_conf["fst_dump"] = args.debug
+    sim_conf["isa_ext"]         = sim_conf["isa"][4:]
+    sim_conf["parallel"]        = int(args.parallel)
+    sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start
-    sim_conf["cycle"]    = args.cycle
-    sim_conf["use_docker"] = args.docker
+    sim_conf["cycle"]           = args.cycle
+    sim_conf["kanata"]          = args.kanata
+    sim_conf["use_docker"]      = args.docker
 
+    sim_conf["xlen"] = int(sim_conf["isa"][2:4])
+
+    if args.testlist == "default":
+        if sim_conf["xlen"] == 32 :
+            sim_conf["testlist"] = ['../tests/rv32-tests.json']
+        elif sim_conf["xlen"] == 64 :
+            sim_conf["testlist"] = ['../tests/rv64-tests.json',
+                                    '../tests/rv64-bench.json',
+                                    '../tests/rv64-aapg.json']
+    else:
+        sim_conf["testlist"] = [args.testlist]
 
     if not (sim_conf["isa"][0:4] == "rv32" or sim_conf["isa"][0:4] == "rv64") :
         print ("isa option need to start from \"rv32\" or \"rv64\"")
         exit
     else:
-        sim_conf["xlen"] = int(sim_conf["isa"][2:4])
         if "d" in sim_conf["isa_ext"] :
             sim_conf["flen"] = 64
         elif "f" in sim_conf["isa_ext"] :
@@ -280,10 +358,15 @@ def main():
             sim_conf["amo"] = 1
         else:
             sim_conf["amo"] = 0
+        if "b" in sim_conf["isa_ext"] :
+            sim_conf["bitmanip"] = 1
+        else:
+            sim_conf["bitmanip"] = 0
 
     sim = verilator_sim()
 
-    sim.build_sim(sim_conf)
+    if sim.build_sim(sim_conf) == BuildResult.FAIL:
+        return
     sim.run_sim(sim_conf, testcase)
 
 if __name__ == "__main__":

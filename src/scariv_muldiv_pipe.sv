@@ -25,7 +25,6 @@ module scariv_muldiv_pipe
 
  input scariv_pkg::cmt_id_t              i_cmt_id,
  input scariv_pkg::grp_id_t              i_grp_id,
- input scariv_pkg::brmask_t              i_br_mask,
  input scariv_pkg::rnid_t                i_rd_rnid,
  input scariv_pkg::reg_t                 i_rd_type,
  input logic [RV_ENTRY_SIZE-1: 0]      i_index_oh,
@@ -72,7 +71,6 @@ logic                                  neg_out_pipe      [MUL_STEP: 1];
 op_t  op_pipe                                            [MUL_STEP: 1];
 scariv_pkg::cmt_id_t                     r_cmt_id          [MUL_STEP: 1];
 scariv_pkg::grp_id_t                     r_grp_id          [MUL_STEP: 1];
-scariv_pkg::brmask_t                     r_br_mask         [MUL_STEP: 1];
 
 scariv_pkg::rnid_t                          r_mul_rd_rnid [MUL_STEP: 1];
 scariv_pkg::reg_t                           r_mul_rd_type [MUL_STEP: 1];
@@ -89,7 +87,6 @@ scariv_pkg::grp_id_t            w_div_grp_id;
 scariv_pkg::rnid_t w_div_rd_rnid;
 scariv_pkg::reg_t               w_div_rd_type;
 logic [RV_ENTRY_SIZE-1: 0]    w_div_index_oh;
-scariv_pkg::brmask_t            w_div_br_mask;
 
 logic                         w_flush_valid_load;
 logic                         w_commit_flush_load;
@@ -139,27 +136,22 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
   logic w_mul_br_flush;
   logic w_mul_flush_valid;
 
-  scariv_pkg::brmask_t w_br_mask_next;
 
   if (s_idx != 0) begin
     assign w_mul_commit_flush = scariv_pkg::is_commit_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], i_commit);
-    assign w_mul_br_flush     = scariv_pkg::is_br_flush_target(r_br_mask[s_idx], br_upd_if.brtag,
+    assign w_mul_br_flush     = scariv_pkg::is_br_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], br_upd_if.cmt_id, br_upd_if.grp_id,
                                                              br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
     assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
 
     always_comb begin
-      w_br_mask_next = r_br_mask[s_idx];
       if (br_upd_if.update) begin
-        w_br_mask_next[br_upd_if.brtag] = 1'b0;
       end
     end
   end else begin
     assign w_mul_flush_valid  = 1'b0;
 
     always_comb begin
-      w_br_mask_next = i_br_mask;
       if (br_upd_if.update) begin
-        w_br_mask_next[br_upd_if.brtag] = 1'b0;
       end
     end
   end
@@ -183,7 +175,6 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         neg_out_pipe     [1] <= (i_op == OP_MULH || i_op == OP_SMUL) ? i_rs2[riscv_pkg::XLEN_W-1] : 1'b0;
         r_cmt_id         [1] <= i_cmt_id;
         r_grp_id         [1] <= i_grp_id;
-        r_br_mask        [1] <= w_br_mask_next;
 
         r_mul_rd_rnid [1] <= i_rd_rnid;
         r_mul_rd_type [1] <= i_rd_type;
@@ -211,7 +202,6 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
         neg_out_pipe     [s_idx+1] <= neg_out_pipe     [s_idx];
         r_cmt_id         [s_idx+1] <= r_cmt_id         [s_idx];
         r_grp_id         [s_idx+1] <= r_grp_id         [s_idx];
-        r_br_mask        [s_idx+1] <= w_br_mask_next;
 
         r_mul_rd_rnid [s_idx+1] <= r_mul_rd_rnid [s_idx];
         r_mul_rd_type [s_idx+1] <= r_mul_rd_type [s_idx];
@@ -230,16 +220,16 @@ endgenerate
 // ================
 
 assign w_commit_flush_load = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit);
-assign w_br_flush_load     = scariv_pkg::is_br_flush_target(i_br_mask, br_upd_if.brtag,
+assign w_br_flush_load     = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_flush_valid_load = w_commit_flush_load | w_br_flush_load;
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(w_div_cmt_id, w_div_grp_id, i_commit);
-assign w_br_flush     = scariv_pkg::is_br_flush_target(w_div_br_mask, br_upd_if.brtag,
+assign w_br_flush     = scariv_pkg::is_br_flush_target(w_div_cmt_id, w_div_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
-assign o_stall = !w_div_ready | r_mul_valid_pipe[MUL_STEP-1-2];
+assign o_stall = !w_div_ready | r_mul_valid_pipe[MUL_STEP-1-1];
 
 scariv_div_unit
   #(
@@ -258,7 +248,6 @@ u_scariv_div_unit
 
    .i_cmt_id   (i_cmt_id  ),
    .i_grp_id   (i_grp_id  ),
-   .i_br_mask  (i_br_mask ),
    .i_rd_rnid  (i_rd_rnid ),
    .i_rd_type  (i_rd_type ),
    .i_index_oh (i_index_oh),
@@ -272,7 +261,6 @@ u_scariv_div_unit
 
    .o_cmt_id   (w_div_cmt_id  ),
    .o_grp_id   (w_div_grp_id  ),
-   .o_br_mask  (w_div_br_mask ),
    .o_rd_rnid  (w_div_rd_rnid ),
    .o_rd_type  (w_div_rd_type ),
    .o_index_oh (w_div_index_oh)

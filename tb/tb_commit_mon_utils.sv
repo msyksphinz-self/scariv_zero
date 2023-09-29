@@ -43,7 +43,9 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
     r_timeout_counter <= 'h0;
     r_finish_valid <= 1'b0;
   end else begin
-    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
+    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit & 
+        (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
+         ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id) != 'h0) begin
       r_timeout_counter <= 'h0;
     end else begin
       r_timeout_counter <= r_timeout_counter + 'h1;
@@ -65,6 +67,7 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
         end // if (rob_entries[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id].valid &...
       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
       step_spike_wo_cmp(10);
+      stop_sim_deadlock($time / 4);
       r_finish_valid <= 1'b1;
     end
   end

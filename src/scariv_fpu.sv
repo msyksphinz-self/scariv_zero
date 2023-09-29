@@ -42,11 +42,12 @@ module scariv_fpu #(
     output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
     output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
 
-    output scariv_pkg::done_rpt_t o_done_report,
+    output scariv_pkg::done_rpt_t o_mv_done_report,
+    output scariv_pkg::done_rpt_t o_fp_done_report,
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
-    br_upd_if.slave              br_upd_if
+    br_upd_if.slave                br_upd_if
 );
 
 localparam FPU_PORT_SIZE = scariv_conf_pkg::FPU_DISP_SIZE / scariv_conf_pkg::FPU_INST_NUM;
@@ -63,10 +64,8 @@ scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::disp_t disp_picked_inst[FPU_PORT_SIZE];
 logic [FPU_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[FPU_PORT_SIZE];
-scariv_pkg::issue_t w_rv0_issue;
-logic [scariv_conf_pkg::RV_FPU_ENTRY_SIZE-1:0] w_rv0_index_oh;
-
-done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_FPU_ENTRY_SIZE)) w_fpu_done_if [2]();
+scariv_pkg::issue_t w_ex0_issue;
+logic [scariv_conf_pkg::RV_FPU_ENTRY_SIZE-1:0] w_ex0_index_oh;
 
 scariv_disp_pickup
   #(
@@ -83,14 +82,14 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_FPU_ENTRY_SIZE),
     .IN_PORT_SIZE(FPU_PORT_SIZE),
     .NUM_OPERANDS (3),
     .NUM_DONE_PORT (2)
     )
-u_scariv_scheduler
+u_scariv_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -109,13 +108,11 @@ u_scariv_scheduler
    .i_phy_wr  (i_phy_wr),
    .i_mispred_lsu (i_mispred_lsu),
 
-   .o_issue(w_rv0_issue),
-   .o_iss_index_oh(w_rv0_index_oh),
+   .o_issue(w_ex0_issue),
+   .o_iss_index_oh(w_ex0_index_oh),
 
-   .pipe_done_if  (w_fpu_done_if),
    .i_commit      (i_commit),
-   .br_upd_if     (br_upd_if),
-   .o_done_report (o_done_report)
+   .br_upd_if     (br_upd_if)
    );
 
 
@@ -130,8 +127,8 @@ u_fpu
 
    .csr_info (csr_info),
 
-   .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index_oh),
+   .ex0_issue(w_ex0_issue),
+   .ex0_index(w_ex0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
 
    .ex1_regread_int_rs1(ex1_regread_int_rs1),
@@ -144,10 +141,10 @@ u_fpu
 
    .o_ex1_mv_early_wr(o_ex1_mv_early_wr),
    .o_ex3_mv_phy_wr  (o_ex3_mv_phy_wr  ),
-   .ex3_mv_done_if   (w_fpu_done_if[0] ),
+   .o_mv_done_report (o_mv_done_report ),
 
-   .o_fpnew_phy_wr  (o_fpnew_phy_wr  ),
-   .fpnew_done_if   (w_fpu_done_if[1] )
+   .o_fpnew_phy_wr   (o_fpnew_phy_wr   ),
+   .o_fp_done_report (o_fp_done_report )
    );
 
 

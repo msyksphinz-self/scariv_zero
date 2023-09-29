@@ -43,6 +43,10 @@ typedef logic [scariv_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
                           scariv_conf_pkg::LDQ_SIZE :
                           scariv_conf_pkg::STQ_SIZE;
 
+localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ?
+                               scariv_conf_pkg::MISSU_ENTRY_SIZE :
+                               scariv_conf_pkg::STQ_SIZE;
+
 typedef enum logic [ 1: 0] {
   MESI_INVALID   = 0,
   MESI_EXCLUSIVE = 1,
@@ -69,12 +73,97 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_NONE,
   EX2_HAZ_L1D_CONFLICT,
   EX2_HAZ_MISSU_ASSIGNED,
-  EX2_HAZ_MISSU_CONFLICT,
   EX2_HAZ_MISSU_FULL,
   EX2_HAZ_MISSU_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
   EX2_HAZ_STQ_NONFWD_HAZ
 } ex2_haz_t;
+
+  typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT,
+                                LSU_SCHED_EX2, LSU_SCHED_CLEAR } lsu_sched_state_t;
+
+  typedef enum logic [ 1: 0] {
+    LSU_ISSUE_HAZ_TLB_MISS,
+    LSU_ISSUE_HAZ_UC_ACCESS,
+    LSU_ISSUE_HAZ_REPLAY_FULL
+  } lsu_issue_haz_reason_t;
+
+  typedef struct packed {
+    logic   valid;
+    logic [31:0] inst;
+    inst_cat_t   cat;
+    brtag_t      brtag;
+
+    cmt_id_t cmt_id;
+    grp_id_t grp_id;
+
+    logic                   need_oldest;
+    logic                   oldest_valid;
+
+    lsu_issue_haz_reason_t  haz_reason;
+
+    reg_wr_issue_t         wr_reg;
+    reg_rd_issue_t [ 2: 0] rd_regs;
+
+`ifdef SIMULATION
+    logic         sim_is_rvc;
+    vaddr_t       sim_pc_addr;
+    logic [63: 0] kanata_id;
+`endif // SIMULATION
+  } lsu_issue_entry_t;
+
+function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
+                                         cmt_id_t cmt_id,
+                                         grp_id_t grp_id,
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
+                                         logic stq_rmw_existed, logic oldest_valid);
+  lsu_issue_entry_t ret;
+  ret.valid = in.valid;
+  ret.inst = in.inst;
+
+  ret.cat    = in.cat;
+
+  ret.brtag   = in.brtag;
+
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
+
+  ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
+                         stq_rmw_existed |
+                         oldest_valid;
+  ret.oldest_valid     = 1'b0;
+
+  ret.wr_reg.valid = in.wr_reg.valid;
+  ret.wr_reg.typ = in.wr_reg.typ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid = in.wr_reg.rnid;
+
+`ifdef SIMULATION
+  ret.sim_is_rvc  = in.rvc_inst_valid;
+  ret.sim_pc_addr = in.pc_addr;
+  ret.kanata_id   = in.kanata_id;
+`endif // SIMULATION
+
+  for (int rs_idx = 0; rs_idx < 1; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index;
+    end
+  end
+
+  for (int rs_idx = 1; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
+  return ret;
+
+endfunction  // assign_issue_t
 
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
@@ -171,23 +260,24 @@ typedef struct packed {
 typedef struct packed {
   scariv_pkg::paddr_t paddr;
   logic             is_uc;
+  dc_ways_idx_t     way;
 } missu_req_t;
 
 typedef struct packed {
   logic                          full;
   logic                          evict_conflict;
-  logic                          conflict;
+  logic                          allocated;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
 } missu_resp_t;
 
 typedef struct packed {
-  logic          valid;
+  logic               valid;
   scariv_pkg::paddr_t paddr;
-  logic                          is_uc;
-  logic                          sent;
-  logic                          get_data;
-  dc_data_t                      data;
-  dc_ways_idx_t way;
+  logic               is_uc;
+  logic               sent;
+  logic               get_data;
+  dc_data_t           data;
+  dc_ways_idx_t       way;
 } mshr_entry_t;
 
 function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
@@ -197,6 +287,7 @@ function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
 
   ret.valid = valid;
   ret.is_uc = req.is_uc;
+  ret.way   = req.way;
   if (req.is_uc) begin
     ret.paddr = req.paddr;
   end else begin
@@ -244,8 +335,6 @@ typedef struct packed {
   logic [MEM_Q_SIZE-1:0]          index_oh;
   scariv_pkg::vaddr_t vaddr;
   scariv_pkg::paddr_t paddr;
-  logic                           st_data_valid;
-  scariv_pkg::alen_t  st_data;
 
   // Atomic Operations
   logic                         is_rmw;
@@ -256,8 +345,9 @@ typedef struct packed {
   logic                                     update;
   ex2_haz_t                                 hazard_typ;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
-  logic [MEM_Q_SIZE-1:0]                    index_oh;
-  logic [scariv_conf_pkg::STQ_SIZE-1:0]       hazard_index;
+  scariv_pkg::cmt_id_t                      cmt_id;
+  scariv_pkg::grp_id_t                      grp_id;
+  logic [scariv_conf_pkg::STQ_SIZE-1:0]     hazard_index;
   logic                                     is_amo;
   logic                                     is_lr;
   logic                                     is_sc;
@@ -318,7 +408,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic          lock_valid;
+  logic          high_priority;
   scariv_pkg::paddr_t paddr;
 } dc_read_req_t;
 
@@ -443,64 +533,54 @@ endfunction // gen_dw
 // ---------
 // STQ
 // ---------
-typedef enum logic[4:0] {
-  STQ_INIT          ,
-  STQ_TLB_HAZ       ,
-  STQ_ISSUE_WAIT    ,
-  STQ_DONE_EX2      ,
-  STQ_COMMIT        ,
-  STQ_WAIT_ST_DATA  ,
-  STQ_DEAD          ,
-  STQ_WAIT_COMMIT   ,
-  STQ_DONE_EX3      ,
-  STQ_ISSUED        ,
-  STQ_OLDEST_HAZ    ,
-  STQ_WAIT_OLDEST   ,
-  STQ_WAIT_STBUF
-} stq_state_t;
+// typedef enum logic[4:0] {
+//   STQ_INIT          ,
+//   STQ_TLB_HAZ       ,
+//   STQ_ISSUE_WAIT    ,
+//   STQ_DONE_EX2      ,
+//   STQ_COMMIT        ,
+//   STQ_WAIT_ST_DATA  ,
+//   STQ_DEAD          ,
+//   STQ_WAIT_COMMIT   ,
+//   STQ_DONE_EX3      ,
+//   STQ_ISSUED        ,
+//   STQ_OLDEST_HAZ    ,
+//   STQ_WAIT_OLDEST   ,
+//   STQ_WAIT_STBUF
+// } stq_state_t;
 
 typedef struct packed {
-  logic [31: 0]          inst;
-  inst_cat_t             cat;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
   logic                  oldest_valid;
-  reg_rd_issue_t [ 2: 0] rd_regs;
-  reg_wr_issue_t         wr_reg;
+  reg_rd_issue_t         rd_reg;
+//  reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
-  logic [63: 0]          kanata_id;
-  vaddr_t pc_addr;
+  logic [31: 0] sim_inst;
+  inst_cat_t    sim_cat;
+  logic [63: 0] sim_kanata_id;
+  vaddr_t       sim_pc_addr;
 `endif // SIMULATION
 } stq_static_info_t;
 
 typedef struct packed {
-  logic           is_valid;
-  brtag_t          brtag;
-  brmask_t         br_mask;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
-  stq_static_info_t inst;
-  // scariv_pkg::issue_t inst;
-  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  stq_state_t        state;
-  // scariv_pkg::vaddr_t  vaddr;
-  // scariv_pkg::paddr_t  paddr;
-  scariv_pkg::maxaddr_t  addr;
-  logic                                 paddr_valid;
-  logic                                 is_rs2_get;
-  scariv_pkg::alen_t                      rs2_data;
+  logic            is_valid;
+  // brtag_t          brtag;
+  stq_static_info_t             inst;
+  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
 
-  logic              except_valid;
-  scariv_pkg::except_t except_type;
+  logic                 dead;
 
-  logic              another_flush_valid;
-  scariv_pkg::cmt_id_t another_flush_cmt_id;
-  scariv_pkg::grp_id_t another_flush_grp_id;
+  scariv_pkg::maxaddr_t addr;
+  logic                 paddr_valid;
+  logic                 is_rs2_get;
+  scariv_pkg::alen_t    rs2_data;
 
-  logic              is_committed;
-  logic              oldest_ready;
+  logic                except_valid;
+  logic                is_committed;
+
   // Uncached Access Region
-  logic              is_uc;
-
+  logic                         is_uc;
   // Atomic Operations
   logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
@@ -508,6 +588,8 @@ typedef struct packed {
   logic                         is_lr;
   logic                         is_sc;
   logic                         sc_success;
+
+  logic st_buf_finished;
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
 `endif // SIMULATION
@@ -577,55 +659,58 @@ endfunction // isAMOLogical
 // LDQ
 // ---------
 
-typedef enum logic[3:0] {
-  LDQ_INIT           ,
-  LDQ_EX2_RUN        ,
-  LDQ_MISSU_CONFLICT   ,
-  LDQ_TLB_HAZ        ,
-  LDQ_ISSUE_WAIT     ,
-  LDQ_CHECK_ST_DEPEND,
-  LDQ_EX3_DONE       ,
-  LDQ_WAIT_COMMIT    ,
-  LDQ_WAIT_ENTRY_CLR ,
-  LDQ_ISSUED         ,
-  LDQ_MISSU_EVICT_HAZ  ,
-  LDQ_MISSU_FULL       ,
-  LDQ_WAIT_OLDEST    ,
-  LDQ_NONFWD_HAZ_WAIT
-} ldq_state_t;
+// typedef enum logic[3:0] {
+//   LDQ_INIT           ,
+//   LDQ_EX2_RUN        ,
+//   LDQ_MISSU_WAIT     ,
+//   LDQ_TLB_HAZ        ,
+//   LDQ_ISSUE_WAIT     ,
+//   LDQ_CHECK_ST_DEPEND,
+//   LDQ_EX3_DONE       ,
+//   LDQ_WAIT_COMMIT    ,
+//   LDQ_WAIT_ENTRY_CLR ,
+//   LDQ_ISSUED         ,
+//   LDQ_MISSU_EVICT_HAZ  ,
+//   LDQ_MISSU_FULL       ,
+//   LDQ_WAIT_OLDEST    ,
+//   LDQ_NONFWD_HAZ_WAIT
+// } ldq_state_t;
 
 typedef struct packed {
-  logic [31: 0]          inst;
-  inst_cat_t             cat;
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
   logic                  oldest_valid;
-  reg_rd_issue_t [ 2: 0] rd_regs;
-  reg_wr_issue_t         wr_reg;
+  // reg_rd_issue_t [ 2: 0] rd_regs;
+  // reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
-  vaddr_t pc_addr;
-  logic [63: 0]          kanata_id;
+  vaddr_t       sim_pc_addr;
+  logic [31: 0] sim_inst;
+  inst_cat_t    sim_cat;
+  logic [63: 0] sim_kanata_id;
 `endif // SIMULATION
 } ldq_static_info_t;
 
 
 typedef struct packed {
   logic          is_valid;
-  brtag_t brtag;
-  brmask_t         br_mask;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
+//  brtag_t brtag;
+  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]  pipe_sel_idx_oh;
   ldq_static_info_t inst;
   decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  ldq_state_t                     state;
+  // ldq_state_t                     state;
   logic                           is_get_data;
   // scariv_pkg::vaddr_t vaddr;
   // scariv_pkg::paddr_t paddr;
   scariv_pkg::maxaddr_t  addr;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
-  logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
+  logic                  paddr_valid;
+//  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
+//  logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
-  logic                                 except_valid;
-  scariv_pkg::except_t                    except_type;
+  logic                 dead;
+  logic                 is_committed;
+
+  logic                except_valid;
+  scariv_pkg::except_t except_type;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -643,6 +728,10 @@ typedef struct packed {
   reg_wr_issue_t         wr_reg;
   logic                  oldest_valid;
   inst_cat_t             cat;
+
+  logic                  l1d_high_priority;
+  logic                  paddr_valid;
+  scariv_pkg::paddr_t    paddr;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
 `endif // SIMULATION
@@ -712,6 +801,10 @@ typedef struct packed {
   logic [DCACHE_DATA_B_W-1: 0] be;
 } snoop_resp_t;
 
+typedef enum logic {
+  SNOOP_READ,
+  SNOOP_INVALID
+} l1d_snp_cmd_t;
 
 // -----------------------
 // Store Buffer Interface
@@ -730,9 +823,9 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
-
+  logic                                                l1d_high_priority;
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
   logic                                                is_amo;
@@ -756,7 +849,8 @@ typedef enum logic [ 3: 0] {
   ST_BUF_L1D_MERGE     = 9,
   ST_BUF_L1D_MERGE2    = 10,
   ST_BUF_WAIT_FINISH   = 11,
-  ST_BUF_AMO_OPERATION = 12
+  ST_BUF_AMO_OPERATION = 12,
+  ST_BUF_WAIT_L1D_MERGE= 13
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (
@@ -807,5 +901,19 @@ endfunction // mem_offset
 function automatic logic is_cache_addr_same(scariv_pkg::paddr_t pa0, scariv_pkg::paddr_t pa1);
   return pa0[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)] == pa1[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)];
 endfunction // is_cache_addr_same
+
+// LSU Replay Queue
+typedef struct packed {
+  logic [31: 0]              inst;
+  scariv_pkg::cmt_id_t       cmt_id;
+  scariv_pkg::grp_id_t       grp_id;
+  inst_cat_t                 cat;
+  logic                      oldest_valid;
+  scariv_pkg::reg_rd_issue_t rd_reg;
+  scariv_pkg::reg_wr_issue_t wr_reg;
+  scariv_pkg::paddr_t        paddr;
+  scariv_lsu_pkg::ex2_haz_t  hazard_typ;
+  logic [HAZARD_INDEX_SIZE-1: 0] hazard_index;
+} lsu_replay_queue_t;
 
 endpackage // scariv_lsu_pkg

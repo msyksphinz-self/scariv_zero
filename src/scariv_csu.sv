@@ -39,11 +39,6 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
-  /* SFENCE update information */
-  sfence_if.master            sfence_if,
-  /* FENCE.I update */
-  output logic                      o_fence_i,
-
   // CLINT connection
   clint_if.slave clint_if,
   // PLIC connection
@@ -61,8 +56,6 @@ scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::CSU_DISP_SIZE];
 
 scariv_pkg::issue_t w_rv0_issue;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
-
-done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_CSU_ENTRY_SIZE)) w_ex3_done_if[1]();
 
 logic         w_ex3_done;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
@@ -87,13 +80,13 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_csu_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_CSU_ENTRY_SIZE),
     .IN_PORT_SIZE(scariv_conf_pkg::CSU_DISP_SIZE),
     .EN_OLDEST(1'b1)
     )
-u_scariv_scheduler
+u_scariv_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -108,17 +101,13 @@ u_scariv_scheduler
 
    .i_stall (1'b0),
 
-   .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
-   .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .pipe_done_if  (w_ex3_done_if),
    .i_commit      (i_commit),
-   .br_upd_if     (br_upd_if),
-   .o_done_report (o_done_report)
+   .br_upd_if     (br_upd_if)
    );
 
 
@@ -134,8 +123,6 @@ u_csu_pipe
    .i_commit (i_commit),
 
    .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index_oh),
-   .ex1_i_phy_wr(i_phy_wr),
 
    .ex1_regread_rs1(ex1_regread_rs1),
 
@@ -146,10 +133,8 @@ u_csu_pipe
    .i_mstatus     (csr_info.mstatus),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
-   .sfence_if (sfence_if),
-   .o_fence_i (o_fence_i),
 
-   .ex3_done_if   (w_ex3_done_if[0])
+   .o_done_report (o_done_report)
    );
 
 

@@ -1,12 +1,12 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_scheduler
+// NAME : scariv_issue_unit
 // TYPE : module
 // ------------------------------------------------------------------------
 // SCARIV Instruction Scheduler
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
-module scariv_scheduler
+module scariv_issue_unit
   #(
     parameter IS_STORE = 0,
     parameter IS_BRANCH = 1'b0,
@@ -178,7 +178,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
   bit_oh_or #(.T(scariv_pkg::done_payload_t), .WORDS(NUM_DONE_PORT)) u_done_port (.i_oh(w_pipe_done_valid), .i_data(w_done_payloads), .o_selected(w_done_payload_oh));
 
-  scariv_sched_entry
+  scariv_issue_entry
     #(
       .IS_STORE(IS_STORE),
       .IS_BRANCH (IS_BRANCH),
@@ -242,7 +242,7 @@ typedef struct packed {
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
-    $fwrite(fp, "    \"scariv_sched_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "    \"scariv_issue_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "valid:%d, ", entry.entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
@@ -276,7 +276,7 @@ endgenerate
 
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
-    $fwrite(fp, "  \"scariv_scheduler_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "  \"scariv_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
     $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
@@ -321,4 +321,4 @@ endfunction // dump_perf
 
 `endif // SIMULATION
 
-endmodule // scariv_scheduler
+endmodule // scariv_issue_unit

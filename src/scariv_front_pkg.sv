@@ -24,9 +24,9 @@ interface scariv_front_if;
   logic                     ready;
   scariv_front_pkg::front_t payload;
 
-`ifdef SIMULATION
-  assign payload.pc_addr_debug = {payload.pc_addr, 1'b0};
-`endif // SIMULATION
+// `ifdef SIMULATION
+//   assign payload.pc_addr_debug = {payload.pc_addr, 1'b0};
+// `endif // SIMULATION
 
   modport master(
     output valid,

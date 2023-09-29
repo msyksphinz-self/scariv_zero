@@ -26,17 +26,19 @@ package scariv_pkg;
                             LSU_INST_NUM +
                             1 +              // BRU
                             1 +              // CSU
-                            FPU_INST_NUM;    // FPU: Now rel is only FPU Move Port
+                            FPU_INST_NUM * 2; // FPU: Now rel is only FPU Move Port
   localparam TGT_BUS_SIZE = ALU_INST_NUM +
                             LSU_INST_NUM +
-                            1 +              // BRU
-                            1 +              // CSU
-                            FPU_INST_NUM * 2;    // FPU
+                            1 +               // BRU
+                            1 +               // CSU
+                            FPU_INST_NUM * 2; // FPU
   localparam CMT_BUS_SIZE = ALU_INST_NUM +    // ALU
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU
                             1 +               // CSU
-                            FPU_INST_NUM;     // FPU
+                            FPU_INST_NUM * 2; // FPU
+
+  typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
   localparam FLIST_SIZE = CMT_ENTRY_SIZE;
   localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
@@ -50,14 +52,23 @@ package scariv_pkg;
   localparam MISSU_ENTRY_SIZE = 8;
   localparam MISSU_ENTRY_W = $clog2(MISSU_ENTRY_SIZE);
 
-  localparam INT_REGPORT_NUM = scariv_conf_pkg::LSU_INST_NUM * 2 +    // ALU port
-                               scariv_conf_pkg::ALU_INST_NUM * 2 +    // LSU port
-                               2 +                                  // BRU port
-                               1 +                                  // CSR port
-                               scariv_conf_pkg::FPU_INST_NUM;         // FPU port
+  localparam INT_REGRD_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
+                                  scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
+                                  2 +                                    // BRU port
+                                  1 +                                    // CSR port
+                                  scariv_conf_pkg::FPU_INST_NUM;         // FPU port
 
-  localparam FP_REGPORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
-                              scariv_conf_pkg::LSU_INST_NUM;          // LSU port
+  localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
+                                 1;                                      // LSU port
+
+  localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
+                                  scariv_conf_pkg::LSU_INST_NUM +    // LSU port
+                                  2 +                                // BRU port
+                                  1 +                                // CSR port
+                                  scariv_conf_pkg::FPU_INST_NUM * 2; // FPU port
+
+  localparam FP_REGWR_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM +     // LSU port
+                                 scariv_conf_pkg::FPU_INST_NUM * 2;  // FPU port
 
 localparam RAS_W    = $clog2(scariv_conf_pkg::RAS_ENTRY_SIZE);
 localparam GSHARE_BHT_W = scariv_conf_pkg::GSHARE_BHT_W;
@@ -76,7 +87,6 @@ typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
 typedef logic [DISP_SIZE-1: 0] grp_id_t;
 typedef logic [RNID_W-1: 0]    rnid_t;
 typedef logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
-typedef logic [scariv_conf_pkg::RV_BRU_ENTRY_SIZE-1:0]         brmask_t;
 
 // ICache Data Types
 typedef logic [$clog2(scariv_conf_pkg::ICACHE_WAYS)-1: 0] ic_ways_idx_t;
@@ -157,7 +167,6 @@ typedef struct packed {
     inst_cat_t    cat;
     inst_subcat_t subcat;
     brtag_t     brtag;
-    brmask_t    br_mask;
 
     // logic [2:0] op;
     // logic imm;
@@ -211,8 +220,7 @@ typedef struct packed {
                                       rnid_t   rs2_rnid,
                                       logic    rs3_active,
                                       rnid_t   rs3_rnid,
-                                      brtag_t  brtag,
-                                      brmask_t br_mask
+                                      brtag_t  brtag
                                       );
     disp_t ret;
     ret = disp;
@@ -226,7 +234,6 @@ typedef struct packed {
     ret.rd_regs[2].ready   = rs3_active;
     ret.rd_regs[2].rnid    = rs3_rnid;
     ret.brtag       = brtag;
-    ret.br_mask     = br_mask;
 
     return ret;
 
@@ -234,7 +241,7 @@ typedef struct packed {
 
 
   function disp_t merge_scariv_front_if (disp_t int_disp,
-                                 disp_t fp_disp);
+                                         disp_t fp_disp);
     disp_t ret;
     ret = int_disp;
     ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
@@ -248,13 +255,17 @@ typedef struct packed {
 
   typedef struct packed {
     grp_id_t                         upd_valid;
-    logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
-    brtag_t        brtag;
-
+    // logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
+    // brtag_t        brtag;
+    // gshare_bht_t   gshare_bhr;
+    // gshare_bht_t   gshare_index;
+    // logic          br_taken;
+    // logic [ 1: 0]  bim_value;
+    // logic            btb_newly_allocated;
+    // logic            mispredicted;
 `ifdef SIMULATION
-  logic              mispredicted;
-  logic [RAS_W-1: 0] ras_index;
-  vaddr_t            pred_vaddr;
+  logic [RAS_W-1: 0] sim_ras_index;
+  vaddr_t            sim_pred_vaddr;
 `endif // SIMULATION
   } br_upd_info_t;
 
@@ -280,20 +291,22 @@ typedef struct packed {
   logic [4:0]        regidx;
   rnid_t rnid;
   logic              ready;
-  logic              predict_ready;
+  logic [1:0]        predict_ready;
+  rel_bus_idx_t      early_index;
 } reg_rd_issue_t;
 
 // Instruction's static information from decoder
 typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
-  brmask_t           br_mask;
-  inst_cat_t         cat;
-  brtag_t            brtag;
+  // inst_cat_t         cat;
+  // brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
-  logic [RAS_W-1: 0] ras_index;
-  logic              is_call;
-  logic              is_ret;
+  // logic [RAS_W-1: 0] ras_index;
+  // logic              is_cond;  // Conditional Branch
+  // logic              is_call;  // Call
+  // logic              is_ret;   // Ret
+  // gshare_bht_t       gshare_bhr;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
   logic [15: 0]      rvc_inst;
@@ -311,6 +324,7 @@ typedef struct packed {
     logic          valid;
 
     logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
+    logic    cmt_id_msb;
     grp_id_t grp_id;
 
     rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
@@ -324,9 +338,9 @@ typedef struct packed {
 
     grp_id_t  dead;
     grp_id_t  flush_valid;
-    // Branch update info
-    logic                               is_br_included;
 
+    // Branch update info
+    logic         is_br_included;
     br_upd_info_t br_upd_info;
 
     grp_id_t                  fflags_update_valid;
@@ -346,7 +360,6 @@ typedef struct packed {
     inst_cat_t   cat;
     logic        is_rvc;
     brtag_t      brtag;
-    brmask_t     br_mask;
 
     cmt_id_t cmt_id;
     grp_id_t grp_id;
@@ -391,7 +404,6 @@ function issue_t assign_issue_common (disp_t in,
   ret.is_rvc = in.rvc_inst_valid;
 
   ret.brtag   = in.brtag;
-  ret.br_mask = in.br_mask;
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
@@ -429,7 +441,7 @@ endfunction // assign_issue_common
 function issue_t assign_issue_op2 (disp_t in,
                                    cmt_id_t cmt_id,
                                    grp_id_t grp_id,
-                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred);
+                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, rel_bus_idx_t rs_rel_index[2]);
   issue_t ret;
   ret = assign_issue_common (in, cmt_id, grp_id);
 
@@ -439,7 +451,11 @@ function issue_t assign_issue_op2 (disp_t in,
     ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
     ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
     ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-    ret.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = in.rd_regs[rs_idx].valid & rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
+    end
   end
 
   for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
@@ -487,7 +503,6 @@ typedef struct packed {
 
 
   typedef enum logic [ 2: 0] { INIT, WAIT, ISSUED, DONE, WAIT_COMPLETE, DEAD, SCHED_CLEAR } sched_state_t;
-
   typedef struct packed {
     logic  valid;
     rnid_t rd_rnid;
@@ -511,14 +526,14 @@ typedef struct packed {
 
 
   typedef struct packed {
-    logic     valid;
-    cmt_id_t  cmt_id;
-    grp_id_t  grp_id;
-    logic     except_valid;
-    except_t  except_type;
+    logic             valid;
+    cmt_id_t          cmt_id;
+    grp_id_t          grp_id;
+    logic             except_valid;
+    except_t          except_type;
     riscv_pkg::xlen_t except_tval;
-    logic     fflags_update_valid;
-    fflags_t  fflags;
+    logic             fflags_update_valid;
+    fflags_t          fflags;
   } done_rpt_t;
 
 // For flushing another instruction
@@ -574,7 +589,7 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & |(commit.flush_valid);
+  return commit.commit & |(commit.flush_valid & ~commit.dead_id);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
@@ -603,18 +618,55 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
                    commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                    commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & (entry_grp_id-1)));
+                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & entry_grp_id)
+                 /* |(commit.flush_valid & (entry_grp_id-1))*/);
 
   return is_flushed_commit(commit) & entry_older;
 
 endfunction // is_commit_flush_target
 
 
-function logic is_br_flush_target(brmask_t entry_br_mask,
-                                  brtag_t brtag,
-                                  logic br_dead,
-                                  logic br_mispredicted);
-  return |(entry_br_mask & (1 << brtag)) & (br_dead | br_mispredicted);
+//                                   brtag_t brtag,
+//                                   logic br_dead,
+//                                   logic br_mispredicted);
+// logic w_cmt_is_older;
+// logic entry_older;
+//
+// w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+//                  br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+//                  br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+// entry_older = w_cmt_is_older ||
+//               (br_cmt_id == entry_cmt_id && |(br_flush_valid & entry_grp_id));
+//
+// endfunction // is_br_flush_target
+
+function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+                                  cmt_id_t br_cmt_id, grp_id_t br_grp_id,
+                                  logic br_dead, logic br_mispredicted);
+  logic w_cmt_is_older;
+  logic entry_older;
+
+  w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id <= entry_grp_id);
+
+  return entry_older & br_mispredicted;
+
+endfunction // is_br_flush_target
+
+function logic is_br_flush_target_wo_itself(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+                                            cmt_id_t br_cmt_id, grp_id_t br_grp_id,
+                                            logic br_dead, logic br_mispredicted);
+logic                                             w_cmt_is_older;
+  logic entry_older;
+
+  w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                   br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                   br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+  entry_older = w_cmt_is_older | (br_cmt_id == entry_cmt_id) & (br_grp_id < entry_grp_id);
+
+  return entry_older & br_mispredicted;
 
 endfunction // is_br_flush_target
 
@@ -647,7 +699,6 @@ typedef struct packed {
   grp_id_t           grp_id;
   logic [RAS_W-1: 0] ras_index;
   brtag_t            brtag;
-  brmask_t           br_mask;
 
   logic              btb_valid; // Predicted
   logic [ 1: 0]      bim_value;
@@ -670,9 +721,9 @@ typedef struct packed {
 
 } ftq_entry_t;
 
-function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
-                                      grp_id_t grp_id,
-                                      disp_t inst);
+function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
+                                                grp_id_t grp_id,
+                                                disp_t inst);
   ftq_entry_t ret;
 
   ret.valid    = 1'b1;
@@ -686,7 +737,6 @@ function ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.grp_id   = grp_id;
   ret.ras_index = inst.ras_index;
   ret.brtag     = inst.brtag;
-  ret.br_mask   = inst.br_mask;
 
   ret.btb_valid = inst.btb_valid;
   ret.bim_value = inst.bim_value;

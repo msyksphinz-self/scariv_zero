@@ -1,0 +1,374 @@
+[
+    {
+        "name":"add.uw r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "00", "XXXXX", "XXXXX", "000", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsignd_add_32"]]
+    },
+    {
+        "name":"andn r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01000", "00", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "and_inv"]]
+    },
+    {
+        "name":"clmul r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "carry_less_mul"]]
+    },
+    {
+        "name":"clmulh r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "011", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "carry_less_mulh"]]
+    },
+    {
+        "name":"clmulr r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "carry_less_mulr"]]
+    },
+    {
+        "name":"clz r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00000", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "clz"]]
+    },
+    {
+        "name":"clzw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00000", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "clzw"]]
+    },
+    {
+        "name":"cpop r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00010", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "cpop"]]
+    },
+    {
+        "name":"cpopw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00010", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "cpopw"]]
+    },
+    {
+        "name":"ctz r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00001", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "ctz"]]
+    },
+    {
+        "name":"ctzw r[11:7],r[19:15]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00001", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "ctzw"]]
+    },
+    {
+        "name":"max r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "signed_max"]]
+    },
+    {
+        "name":"maxu r[11:7],r[19:15],r[24,20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "111", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsigned_max"]]
+    },
+    {
+        "name":"min r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "signed_min"]]
+    },
+    {
+        "name":"minu r[11:7],r[19:15],r[24,20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "01", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsigned_min"]]
+    },
+    {
+        "name":"orc.b     r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00101", "00", "00111", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "bitwise_or"]],
+        "comment":"Bitwise OR-Combine, byte granule"
+    },
+    {
+        "name":"orn       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01000", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "inverted_or"]],
+        "comment":"OR with inverted operand"
+    },
+    {
+        "name":"rev8      r[11:7],r[19:15]         ",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01101", "01", "11000", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "byte_reverse"]],
+        "comment":"Byte-reverse register"
+    },
+    {
+        "name":"rol       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "rotate_left"]],
+        "comment":"Rotate left (Register)"
+    },
+    {
+        "name":"rolw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "rotate_left_word"]],
+        "comment":"Rotate Left Word (Register)"
+    },
+    {
+        "name":"ror       r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "rotate_right"]],
+        "comment":"Rotate right (Register)"
+    },
+    {
+        "name":"rori      r[11:7],r[19:15],h[25:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "rotate_right"], ["imm", "sh"]],
+        "comment":"Rotate right (Immediate)"
+    },
+    {
+        "name":"roriw     r[11:7],r[19:15],h[25:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "rotate_right_32"], ["imm", "sh"]],
+        "comment":"Rotate right Word (Immediate)"
+    },
+    {
+        "name":"rorw      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["01100", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "rotate_right_32"]],
+        "comment":"Rotate right Word (Register)"
+    },
+    {
+        "name":"bclr      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01001", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "bit_clear"]],
+        "comment":"Single-Bit Clear (Register)"
+    },
+    {
+        "name":"bclri     r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01001", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_clear"], ["imm", "sh"]],
+        "comment":"Single-Bit Clear (immediate)"
+    },
+    {
+        "name":"bext      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01001", "00", "XXXXX", "XXXXX", "101", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "bit_extract"]],
+        "comment":"Single-Bit Extract (Register)"
+    },
+    {
+        "name":"bexti     r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01001", "00", "XXXXX", "XXXXX", "101", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_extract"], ["imm", "sh"]],
+        "comment":"Single-Bit Extract (immediate)"
+    },
+    {
+        "name":"binv      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "bit_invert"]],
+        "comment":"Single-Bit Invert (Register)"
+    },
+    {
+        "name":"binvi     r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01101", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_invert"], ["imm", "sh"]],
+        "comment":"Single-Bit Invert (immediate)"
+    },
+    {
+        "name":"bset      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "bit_set"]],
+        "comment":"Single-Bit Set (Register)"
+    },
+    {
+        "name":"bseti     r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "bit_set"], ["imm", "sh"]],
+        "comment":"Single-Bit Set (immediate)"
+    },
+    {
+        "name":"sext.b    r[11:7],r[19:15]         ",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00100", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sign_extend_8"]],
+        "comment":"Sign-extend byte"
+    },
+    {
+        "name":"sext.h    r[11:7],r[19:15]         ",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01100", "00", "00101", "XXXXX", "001", "XXXXX", "00100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "sign_extend_16"]],
+        "comment":"Sign-extend halfword"
+    },
+    {
+        "name":"sh1add    r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "signed_sh1add"]],
+        "comment":"Shift left by 1 and add"
+    },
+    {
+        "name":"sh1add.uw r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsigned_sh1add_32"]],
+        "comment":"Shift unsigned word left by 1 and add"
+    },
+    {
+        "name":"sh2add    r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "signed_sh2add"]],
+        "comment":"Shift left by 2 and add"
+    },
+    {
+        "name":"sh2add.uw r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsigned_sh2add_32"]],
+        "comment":"Shift unsigned word left by 2 and add"
+    },
+    {
+        "name":"sh3add    r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "signed_sh3add"]],
+        "comment":"Shift left by 3 and add"
+    },
+    {
+        "name":"sh3add.uw r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["00100", "00", "XXXXX", "XXXXX", "110", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "unsigned_sh3add_32"]],
+        "comment":"Shift unsigned word left by 3 and add"
+    },
+    {
+        "name":"slli.uw   r[11:7],r[19:15],h[24:20]",
+        "length":"32", "xlen":["64"],
+        "field": ["00001", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "00110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "alu_ctrl":[["op", "unsigned_shift_left_32"], ["imm", "sh"]],
+        "comment":"Shift-left unsigned word (immediate)"
+    },
+    {
+        "name":"xnor      r[11:7],r[19:15],r[24:20]",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["01000", "00", "XXXXX", "XXXXX", "100", "XXXXX", "01100", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "xnor"]],
+        "comment":"Exclusive NOR"
+    },
+    {
+        "name":"zext.h    r[11:7],r[19:15]         ",
+        "length":"32", "xlen":["32", "64"],
+        "field": ["00001", "00", "00000", "XXXXX", "100", "XXXXX", "01110", "11"],
+        "inst_cat": [["inst_cat", "arith"]], "isa_ext": "b",
+        "reg": [["rd", "r3"], ["r1", "r1"], ["r2", "r2"]],
+        "alu_ctrl":[["op", "zero_extend_16"]],
+        "comment":"Zero-extend halfword"
+    }
+]

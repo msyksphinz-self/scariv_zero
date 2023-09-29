@@ -2,7 +2,7 @@ interface l1d_rd_if;
 
   logic             s0_valid;
   scariv_pkg::paddr_t s0_paddr;
-  logic             s0_lock_valid;
+  logic             s0_high_priority;
 
   logic                                    s1_hit;
   logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
@@ -20,7 +20,7 @@ interface l1d_rd_if;
   modport master(
     output s0_valid,
     output s0_paddr,
-    output s0_lock_valid,
+    output s0_high_priority,
 
     input  s1_hit,
     input  s1_hit_way,
@@ -37,7 +37,7 @@ interface l1d_rd_if;
   modport slave(
     input  s0_valid,
     input  s0_paddr,
-    input  s0_lock_valid,
+    input  s0_high_priority,
 
     output s1_hit,
     output s1_hit_way,
@@ -157,6 +157,26 @@ modport slave (
 );
 
 endinterface // missu_evict_search_if
+
+
+interface mshr_stbuf_search_if;
+  logic [scariv_pkg::MISSU_ENTRY_SIZE-1: 0]    mshr_index_oh;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] stbuf_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  stbuf_data;
+
+  modport master (
+    output mshr_index_oh,
+    input  stbuf_be,
+    input  stbuf_data
+  );
+
+  modport slave (
+    input  mshr_index_oh,
+    output stbuf_be,
+    output stbuf_data
+  );
+
+endinterface // mshr_stbuf_search_if
 
 
 interface l1d_srq_if;
@@ -578,6 +598,19 @@ interface sfence_if;
 endinterface // sfence_if
 
 
+interface snoop_info_if;
+  logic     busy;
+
+  modport master (
+    output busy
+  );
+
+  modport monitor (
+    input busy
+  );
+
+endinterface // snoop_info_if
+
 interface snoop_if;
   logic     req_valid;
   logic     resp_valid;
@@ -628,30 +661,39 @@ endinterface // snoop_unit_if
 
 
 interface l1d_snoop_if;
-  logic                           req_s0_valid;
-  scariv_pkg::paddr_t req_s0_paddr ;
+  logic                                        req_s0_valid;
+  scariv_lsu_pkg::l1d_snp_cmd_t                req_s0_cmd;
+  scariv_pkg::paddr_t                          req_s0_paddr ;
+  logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]    req_s0_ways;
 
-  logic                                      resp_s1_valid;
+  logic                                        resp_s1_valid;
   scariv_lsu_pkg::lsu_status_t                 resp_s1_status;
   logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
   logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]    resp_s1_ways;
 
   modport master (
     output req_s0_valid,
+    output req_s0_cmd,
     output req_s0_paddr,
+    output req_s0_ways,
     input  resp_s1_valid,
     input  resp_s1_status,
     input  resp_s1_data,
-    input  resp_s1_be
+    input  resp_s1_be,
+    input  resp_s1_ways
   );
 
   modport slave (
     input  req_s0_valid,
+    input  req_s0_cmd,
     input  req_s0_paddr,
+    input  req_s0_ways,
     output resp_s1_valid,
     output resp_s1_status,
     output resp_s1_data,
-    output resp_s1_be
+    output resp_s1_be,
+    output resp_s1_ways
   );
 
 endinterface // l1d_snoop_if
@@ -689,17 +731,25 @@ endinterface // stq_snoop_if
 interface mshr_snoop_if;
   logic               req_s0_valid;
   scariv_pkg::paddr_t req_s0_paddr;
-  logic               resp_s1_valid;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index;
+  logic                                        resp_s1_valid;
+  logic                                        resp_s1_evict_valid;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
 
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] resp_s1_hit_index;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_valid;
+
+  // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_evict_index;
 
   modport master (
     output req_s0_valid,
     output req_s0_paddr,
 
     input  resp_s1_valid,
-    input  s1_hit_index,
+    input  resp_s1_be,
+    input  resp_s1_data,
+    input  resp_s1_hit_index,
+    input  resp_s1_evict_valid,
     input  entry_valid
   );
 
@@ -708,7 +758,10 @@ interface mshr_snoop_if;
     input  req_s0_paddr,
 
     output resp_s1_valid,
-    output s1_hit_index,
+    output resp_s1_be,
+    output resp_s1_data,
+    output resp_s1_hit_index,
+    output resp_s1_evict_valid,
     output entry_valid
   );
 
@@ -748,7 +801,7 @@ interface streq_snoop_if;
   logic                           req_s0_valid;
   scariv_pkg::paddr_t req_s0_paddr ;
 
-  logic                                      resp_s1_valid;
+  logic                                        resp_s1_valid;
   logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
   logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
 
@@ -912,6 +965,7 @@ endinterface // uc_write_if
 interface lrsc_if;
 
 logic    lr_update_valid;
+/* verilator lint_off UNOPTFLAT */
 logic    sc_check_valid;
 scariv_pkg::paddr_t paddr;
 logic    sc_success;
@@ -931,3 +985,62 @@ modport slave (
 );
 
 endinterface // lrsc_if
+
+// LSU Pipeline to Replay Queue Interface
+interface lsu_pipe_haz_if;
+  logic                              valid;
+  logic [31: 0]                      inst;
+  scariv_lsu_pkg::lsu_replay_queue_t payload;
+  logic                              full;
+
+  modport master (
+    output valid,
+    output payload,
+    input  full
+  );
+
+  modport slave (
+    input  valid,
+    input  payload,
+    output full
+  );
+
+
+endinterface // lsu_pipe_haz_if
+
+
+interface lsu_pipe_req_if;
+  logic                      valid;
+  logic                      ready;
+  scariv_lsu_pkg::lsu_replay_queue_t payload;
+
+  modport master (
+    output valid,
+    input  ready,
+    output payload
+  );
+
+  modport slave (
+    input  valid,
+    output ready,
+    input  payload
+  );
+
+endinterface // lsu_repaly_if
+
+
+interface st_req_info_if;
+logic               busy;
+scariv_pkg::paddr_t paddr;
+
+modport master (
+  output busy,
+  output paddr
+);
+
+modport monitor (
+  input busy,
+  input paddr
+);
+
+endinterface // st_req_info_if

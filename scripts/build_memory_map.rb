@@ -28,6 +28,7 @@ printf(out_sv, ");\n\n\n")
 
 printf(out_sv, "localparam MAP_TABLE_SIZE = %d;\n", $map_table.size)
 
+printf(out_sv, "/* verilator lint_off UNOPTFLAT */\n");
 printf(out_sv, "logic [MAP_TABLE_SIZE-1: 0] w_hit_addr;\n")
 printf(out_sv, "map_attr_t w_map_attr[MAP_TABLE_SIZE];\n")
 

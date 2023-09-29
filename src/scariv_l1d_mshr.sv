@@ -32,10 +32,15 @@ module scariv_l1d_mshr
    l1d_evict_if.master l1d_evict_if,
 
    // Search MISSU entry
-   missu_pa_search_if.slave   missu_pa_search_if,
+   missu_pa_search_if.slave    missu_pa_search_if,
+   mshr_stbuf_search_if.master mshr_stbuf_search_if,
+
+   // Store Requestor Monitor
+   st_req_info_if.monitor st_req_info_if,
 
    // Snoop Interface
-   mshr_snoop_if.slave  mshr_snoop_if,
+   snoop_info_if.monitor snoop_info_if,
+   mshr_snoop_if.slave   mshr_snoop_if,
 
    // MISSU search interface (from DCache)
    missu_dc_search_if.slave missu_dc_search_if
@@ -243,17 +248,17 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : port_loop
   assign w_resp_evict_conflict[p_idx] = (|w_hit_missu_same_evict_pa) |  // 3. hazard
                                         (|w_hit_port_same_evict_pa);   // 4. hazard
 
-  assign w_missu_index_oh[p_idx] = |w_l1d_missu_loads_no_conflicts[p_idx] ? w_load_picked_valid[w_l1d_missu_picked_index[p_idx]] : // Success Load
-                                 |w_hit_missu_same_pa        ? w_hit_missu_same_pa                   :                               // 1. hazard
-                                 |w_hit_port_same_pa       ? hit_port_same_pa_entry_idx_oh       :                               // 2. hazard
-                                 |w_hit_missu_same_evict_pa  ? w_hit_missu_same_evict_pa             :                               // 3. hazard
-                                 |w_hit_port_same_evict_pa ? w_hit_port_same_evict_pa_idx_oh     :                               // 4. hazard
-                                 'h0;
+  assign w_missu_index_oh[p_idx] = w_l1d_missu_loads_no_conflicts[p_idx] ? w_load_picked_valid[w_l1d_missu_picked_index[p_idx]] : // Success Load
+                                   |w_hit_missu_same_pa                  ? w_hit_missu_same_pa                   :                // 1. hazard
+                                   |w_hit_port_same_pa                   ? hit_port_same_pa_entry_idx_oh         :                // 2. hazard
+                                   |w_hit_missu_same_evict_pa            ? w_hit_missu_same_evict_pa             :                // 3. hazard
+                                   |w_hit_port_same_evict_pa             ? w_hit_port_same_evict_pa_idx_oh       :                // 4. hazard
+                                   'h0;
 
   assign l1d_missu[p_idx].resp_payload.full           = (w_valid_load_index[p_idx] > w_l1d_missu_valid_load_cnt);
   assign l1d_missu[p_idx].resp_payload.evict_conflict = w_resp_evict_conflict[p_idx];
-  assign l1d_missu[p_idx].resp_payload.conflict       = w_resp_conflict[p_idx];
-  assign l1d_missu[p_idx].resp_payload.missu_index_oh   = w_missu_index_oh[p_idx];
+  assign l1d_missu[p_idx].resp_payload.allocated      = w_l1d_missu_loads_no_conflicts[p_idx] | w_resp_conflict[p_idx];
+  assign l1d_missu[p_idx].resp_payload.missu_index_oh = w_missu_index_oh[p_idx];
 
 end // block: port_loop
 endgenerate
@@ -267,8 +272,8 @@ generate for (genvar p_idx = 0; p_idx < REQ_PORT_NUM; p_idx++) begin : lsu_req_l
     w_l1d_missu_loads[p_idx] = l1d_missu[p_idx].load;
     w_l1d_req_payloads[p_idx] = l1d_missu[p_idx].req_payload;
     w_l1d_missu_loads_no_conflicts[p_idx] = w_l1d_missu_loads[p_idx] &
-                                          !w_resp_conflict[p_idx] &
-                                          !w_resp_evict_conflict[p_idx];
+                                            !w_resp_conflict[p_idx] &
+                                            !w_resp_evict_conflict[p_idx];
   end
 
   bit_pick_1_index
@@ -343,12 +348,18 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
        .i_sent         (w_ext_req_sent),
        .i_evict_sent   (w_evict_sent),
 
+       .o_ext_req_ready (w_missu_ready_to_send[e_idx]),
+
        .o_wr_req_valid         (w_wr_req_valid   [e_idx]),
        .i_wr_accepted          (w_wr_req_valid_oh[e_idx]),
-       .i_wr_conflicted        (1'b0),
+       .i_wr_conflicted        (l1d_wr_if.s1_wr_resp.s1_conflict),
        .s2_l1d_wr_resp_payload (l1d_wr_if.s2_wr_resp),
 
+       .st_req_info_if (st_req_info_if),
+
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
+
+       .i_busy_by_snoop (snoop_info_if.busy),
 
        .o_entry        (w_missu_entries[e_idx]),
        .o_evict_ready  (w_missu_entry_evict_ready[e_idx]),
@@ -366,8 +377,6 @@ localparam TAG_FILLER_W = scariv_lsu_pkg::L2_CMD_TAG_W - 2 - $clog2(scariv_conf_
 
 // selection of external memory request
 generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : missu_sel_loop
-  assign w_missu_ready_to_send[e_idx] = w_missu_entries[e_idx].valid & !w_missu_entries[e_idx].sent;
-
   assign w_missu_ready_to_evict[e_idx] = w_missu_entries[e_idx].valid &
                                          w_missu_entry_evict_ready[e_idx];
 end
@@ -404,8 +413,11 @@ bit_oh_or #(.T(scariv_lsu_pkg::mshr_entry_t), .WORDS(scariv_conf_pkg::MISSU_ENTR
 select_l1d_wr_req_entry (.i_oh(w_wr_req_valid_oh), .i_data(w_missu_entries), .o_selected(w_wr_missu_entry_sel));
 
 assign l1d_wr_if.s0_wr_req.s0_paddr = w_wr_missu_entry_sel.paddr;
-assign l1d_wr_if.s0_wr_req.s0_data  = w_wr_missu_entry_sel.data;
-assign l1d_wr_if.s0_wr_req.s0_be    = {scariv_lsu_pkg::DCACHE_DATA_B_W{1'b1}};
+generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::DCACHE_DATA_B_W; b_idx++) begin : l1d_wr_be_loop
+  assign l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8]  = mshr_stbuf_search_if.stbuf_be[b_idx] ? mshr_stbuf_search_if.stbuf_data[b_idx*8 +: 8] :
+                                                      w_wr_missu_entry_sel.data[b_idx*8 +: 8];
+  assign l1d_wr_if.s0_wr_req.s0_be  [b_idx       ]  = 1'b1;
+end endgenerate
 assign l1d_wr_if.s0_wr_req.s0_way   = w_wr_missu_entry_sel.way;
 assign l1d_wr_if.s0_wr_req.s0_mesi  = scariv_lsu_pkg::MESI_EXCLUSIVE;
 
@@ -421,8 +433,10 @@ assign missu_dc_search_if.missu_entry = w_missu_entries[missu_dc_search_if.index
 
 // Notification to MISSU resolve to LDQ
 // Note: Now searching from MISSU means L1D will be written and resolve confliction
-assign o_missu_resolve.valid            = w_ext_rd_resp_valid;
-assign o_missu_resolve.resolve_index_oh = 1 << w_ext_rd_resp_tag;
+assign mshr_stbuf_search_if.mshr_index_oh = w_wr_req_valid_oh;
+
+assign o_missu_resolve.valid              = w_ext_rd_resp_valid;
+assign o_missu_resolve.resolve_index_oh   = 1 << w_ext_rd_resp_tag;
 assign o_missu_resolve.missu_entry_valids = w_missu_valids;
 assign o_missu_is_full  = &w_missu_valids;
 assign o_missu_is_empty = ~|w_missu_valids;
@@ -496,31 +510,52 @@ endgenerate
 // --------------------------
 // MISSU Snoop Search
 // --------------------------
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_hit_array_next;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_snoop_missu_evict_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_snoop_missu_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         w_snoop_missu_evict_hit_array_next;
+logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1: 0] w_snoop_missu_evict_hit_enc_next;
+
 generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : snoop_missu_loop
   assign w_snoop_missu_hit_array_next[e_idx] = mshr_snoop_if.req_s0_valid &
                                                w_missu_entries[e_idx].valid &
                                                !w_entry_finish[e_idx] &
                                                (w_missu_entries[e_idx].paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
                                                 mshr_snoop_if.req_s0_paddr  [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+  assign w_snoop_missu_evict_hit_array_next[e_idx] = w_snoop_missu_hit_array_next[e_idx] &
+                                                     w_missu_entry_evict_ready   [e_idx];
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
-      mshr_snoop_if.s1_hit_index[e_idx] <= 1'b0;
-      mshr_snoop_if.entry_valid [e_idx] <= 1'b0;
+      // mshr_snoop_if.s1_hit_evict_index[e_idx] <= 1'b0;
+      mshr_snoop_if.resp_s1_hit_index [e_idx] <= 1'b0;
+      mshr_snoop_if.entry_valid       [e_idx] <= 1'b0;
     end else begin
-      mshr_snoop_if.s1_hit_index[e_idx] <= w_snoop_missu_hit_array_next[e_idx];
-      mshr_snoop_if.entry_valid [e_idx] <= w_missu_entries[e_idx].valid;
+      // mshr_snoop_if.s1_hit_evict_index[e_idx] <= w_snoop_missu_evict_hit_array_next[e_idx];
+      mshr_snoop_if.resp_s1_hit_index [e_idx] <= w_snoop_missu_hit_array_next[e_idx];
+      mshr_snoop_if.entry_valid       [e_idx] <= w_missu_entries[e_idx].valid;
     end
   end
-end
-endgenerate
+end endgenerate
+
+encoder #(.SIZE(scariv_conf_pkg::MISSU_ENTRY_SIZE)) u_hit_enc (.i_in(w_snoop_missu_evict_hit_array_next), .o_out(w_snoop_missu_evict_hit_enc_next));
+
+logic w_l1d_wr_s0_valid  = l1d_wr_if.s0_valid;
+logic r_l1d_wr_s1_valid;
+logic r_l1d_wr_s2_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     mshr_snoop_if.resp_s1_valid <= 1'b0;
+    r_l1d_wr_s1_valid <= 1'b0;
+    r_l1d_wr_s2_valid <= 1'b0;
   end else begin
-    mshr_snoop_if.resp_s1_valid <= mshr_snoop_if.req_s0_valid;
+    r_l1d_wr_s1_valid <= w_l1d_wr_s0_valid;
+    r_l1d_wr_s2_valid <= r_l1d_wr_s1_valid;
+
+    mshr_snoop_if.resp_s1_valid <= mshr_snoop_if.req_s0_valid &
+                                   (|w_snoop_missu_evict_hit_array_next |
+                                    ~(w_l1d_wr_s0_valid | r_l1d_wr_s1_valid | r_l1d_wr_s2_valid)); // If L1D wr response with eviction, MSHR entry should be search on next cycle.
+    mshr_snoop_if.resp_s1_evict_valid <= |w_snoop_missu_evict_hit_array_next;
+    mshr_snoop_if.resp_s1_be   <= {scariv_lsu_pkg::DCACHE_DATA_B_W{|w_snoop_missu_evict_hit_array_next}};
+    mshr_snoop_if.resp_s1_data <= w_missu_entries[w_snoop_missu_evict_hit_enc_next].data;
   end
 end
 

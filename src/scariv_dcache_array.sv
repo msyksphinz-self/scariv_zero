@@ -46,6 +46,8 @@ localparam TAG_SIZE = scariv_lsu_pkg::DCACHE_TAG_HIGH - scariv_lsu_pkg::DCACHE_T
 localparam DCACHE_WORDS_PER_BANK = scariv_conf_pkg::DCACHE_WORDS / scariv_conf_pkg::DCACHE_BANKS;
 
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid;
+logic [READ_PORT_NUM-1:0] w_s0_dc_read_priority;
+logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_with_priority;
 logic [READ_PORT_NUM-1:0] w_s0_dc_read_req_valid_oh;
 scariv_lsu_pkg::dc_read_req_t w_s0_dc_selected_read_req;
 logic [READ_PORT_NUM-1:0]       w_s0_dc_read_req_norm_valid_oh;
@@ -85,6 +87,7 @@ logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]       w_update_tag_addr[READ_PORT_NUM
 // Selection of Request from LSU ports
 generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
   assign w_s0_dc_read_req_valid[p_idx] = i_dc_read_req[p_idx].valid;
+  assign w_s0_dc_read_priority [p_idx] = i_dc_read_req[p_idx].valid & i_dc_read_req[p_idx].high_priority;
 
   logic w_s0_dc_read_tag_same;
   logic r_s1_dc_read_tag_same;
@@ -109,7 +112,8 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
 
   logic [scariv_conf_pkg::DCACHE_WAYS-1 : 0] w_s1_tag_hit;
   for(genvar way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin : dcache_way_loop
-    assign w_s1_tag_hit[way_idx] = (r_s1_dc_lsu_tag_addr == w_s1_tag[way_idx]) & w_s1_tag_valid[way_idx];
+    assign w_s1_tag_hit[way_idx] = (r_s1_dc_lsu_tag_addr == w_s1_tag[way_idx]) & w_s1_tag_valid[way_idx] &
+                                   (w_s1_mesi[way_idx] != scariv_lsu_pkg::MESI_INVALID);
   end
 
 `ifdef SIMULATION
@@ -139,7 +143,7 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
   encoder #(.SIZE(scariv_conf_pkg::DCACHE_WAYS)) hit_encoder (.i_in(w_s1_tag_hit), .o_out(w_s1_tag_hit_idx));
 
   assign o_dc_read_resp[p_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
-  assign o_dc_read_resp[p_idx].hit_way  = w_s1_tag_hit_idx;
+  assign o_dc_read_resp[p_idx].hit_way  = (|w_s1_tag_hit) ? w_s1_tag_hit_idx : r_replace_target[0];
   assign o_dc_read_resp[p_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[p_idx].conflict =  r_s1_wr_req_valid |
                                            r_s1_dc_rd_wr_conflict[p_idx] |
@@ -154,7 +158,8 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
 end
 endgenerate
 
-bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid), .out(w_s0_dc_read_req_norm_valid_oh));
+assign w_s0_dc_read_req_valid_with_priority = w_s0_dc_read_priority == 'h0 ? w_s0_dc_read_req_valid : w_s0_dc_read_priority;
+bit_extract_lsb #(.WIDTH(READ_PORT_NUM)) u_bit_req_sel (.in(w_s0_dc_read_req_valid_with_priority), .out(w_s0_dc_read_req_norm_valid_oh));
 assign w_s0_dc_read_req_valid_oh = w_s0_dc_read_req_norm_valid_oh;
 bit_oh_or #(.T(scariv_lsu_pkg::dc_read_req_t), .WORDS(READ_PORT_NUM)) select_rerun_oh  (.i_oh(w_s0_dc_read_req_valid_oh), .i_data(i_dc_read_req), .o_selected(w_s0_dc_selected_read_req));
 
@@ -285,7 +290,7 @@ generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : 
 
   tag_array
     #(
-      .TAG_W(TAG_SIZE),
+      .TAG_W($bits(scariv_lsu_pkg::mesi_t) + TAG_SIZE),
       .WORDS(DCACHE_WORDS_PER_BANK)
       )
   tag (
@@ -296,8 +301,8 @@ generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : 
        .i_wr         (w_s0_dc_tag_wr_valid & (w_s0_dc_tag_way == way)),
        .i_addr       (w_s0_tag_addr),
        .i_tag_valid  (1'b1),
-       .i_tag        (i_dc_wr_req.s0_paddr[riscv_pkg::PADDR_W-1:scariv_lsu_pkg::DCACHE_TAG_LOW]),
-       .o_tag        (w_s1_tag[way]),
+       .i_tag        ({i_dc_wr_req.s0_mesi, i_dc_wr_req.s0_paddr[riscv_pkg::PADDR_W-1:scariv_lsu_pkg::DCACHE_TAG_LOW]}),
+       .o_tag        ({w_s1_mesi[way],      w_s1_tag[way]}),
        .o_tag_valid  (w_s1_tag_valid[way])
        );
 
@@ -309,7 +314,7 @@ generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : 
   logic [$bits(scariv_lsu_pkg::mesi_t)-1: 0] w_mesi_be;
   assign w_mesi_be = {$bits(scariv_lsu_pkg::mesi_t){1'b1}};
 
-  localparam dcache_w = $bits(scariv_lsu_pkg::mesi_t) + scariv_conf_pkg::DCACHE_DATA_W;
+  localparam dcache_w = scariv_conf_pkg::DCACHE_DATA_W;
 
   data_array
     #(
@@ -321,9 +326,9 @@ generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : 
         .i_reset_n (i_reset_n),
         .i_wr      (w_s1_wr_data_valid & (r_s1_dc_tag_way == way)  ),
         .i_addr    (w_data_addr                                    ),
-        .i_be      ({w_mesi_be,      r_s1_wr_be}    ),
-        .i_data    ({r_s1_wr_mesi,   r_s1_wr_data}  ),
-        .o_data    ({w_s1_mesi[way], w_s1_data[way]})
+        .i_be      (r_s1_wr_be                                     ),
+        .i_data    (r_s1_wr_data                                   ),
+        .o_data    (w_s1_data[way]                                 )
         );
 
   // always_ff @ (posedge i_clk, negedge i_reset_n) begin

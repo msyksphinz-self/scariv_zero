@@ -50,14 +50,22 @@ generate for(genvar r_idx =  0; r_idx < 32; r_idx++) begin : register_loop
 end
 endgenerate
 
-generate for (genvar i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
+generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin
+  logic [scariv_conf_pkg::DISP_SIZE-1: 0]          w_input_hit;
+  logic [$clog2(scariv_conf_pkg::DISP_SIZE+1)-1: 0]  w_input_hit_enc;
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin
+    assign w_input_hit[d_idx] = i_load[d_idx] & i_brtag[d_idx] == b_idx;
+  end
+  bit_encoder #(.WIDTH(scariv_conf_pkg::DISP_SIZE+1)) u_encoder (.i_in({w_input_hit, 1'b0}), .o_out(w_input_hit_enc));
+
   always_ff @ (posedge i_clk) begin
-    if (|i_load) begin
-      r_snapshots[i_brtag[0]][i_idx] <= w_tmp_snapshots[scariv_conf_pkg::DISP_SIZE][i_idx];
+    if (|w_input_hit) begin
+      for (int i_idx = 0; i_idx < 32; i_idx++) begin : reg_loop
+        r_snapshots[b_idx][i_idx] <= w_tmp_snapshots[w_input_hit_enc][i_idx];
+      end
     end
   end
-end
-endgenerate
+end endgenerate
 
 generate for(genvar i =  0; i < 32; i++) begin : o_loop
   assign o_rn_list[i] = r_snapshots[br_upd_if.brtag][i];

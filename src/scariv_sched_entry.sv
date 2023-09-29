@@ -1,12 +1,12 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_sched_entry
+// NAME : scariv_issue_entry
 // TYPE : module
 // ------------------------------------------------------------------------
 // SCARIV Scheduler Entry
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
-module scariv_sched_entry
+module scariv_issue_entry
   #(
     parameter IS_STORE = 1'b0,
     parameter IS_BRANCH = 1'b0,
@@ -227,7 +227,6 @@ always_comb begin
 
   // BrMask update
   if (br_upd_if.update) begin
-    w_entry_next.br_mask[br_upd_if.brtag] = 1'b0;
   end
 end
 
@@ -242,12 +241,12 @@ end
 endgenerate
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
-assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.br_mask, br_upd_if.brtag,
+assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
 assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
-assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_put_data.br_mask, br_upd_if.brtag,
+assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush;
 
@@ -282,8 +281,8 @@ endgenerate
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(w_entry_next);
-assign o_entry       = w_entry_next;
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry);
+assign o_entry       = r_entry;
 
 assign o_entry_wait_complete = (r_state == scariv_pkg::WAIT_COMPLETE);
 
@@ -316,4 +315,4 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
 end
 `endif // SIMULATION
 
-endmodule // scariv_sched_entry
+endmodule // scariv_issue_entry

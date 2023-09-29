@@ -26,6 +26,22 @@ import "DPI-C" function void step_spike
 
 import "DPI-C" function void step_spike_wo_cmp(input int count);
 
+import "DPI-C" function void stop_sim_deadlock(input int count);
+
+import "DPI-C" function void initial_gshare(input longint bhr_length,
+                                            input longint cache_block_byte_size);
+import "DPI-C" function void step_gshare (input longint rtl_time,
+                                          input int     rtl_cmt_id,
+                                          input int     rtl_grp_id,
+                                          input longint rtl_gshare_bhr);
+
+import "DPI-C" function void initial_ras(input longint ras_length);
+import "DPI-C" function void step_ras (input longint rtl_time,
+                                       input int     rtl_cmt_id,
+                                       input int     rtl_grp_id,
+                                       input longint rtl_ras_index,
+                                       input longint rtl_ras_addr);
+
 module scariv_tb (
     input logic i_clk,
 
@@ -522,16 +538,19 @@ localparam cycle_interval = 1000;
 logic [63: 0]                                                  total_commit_counter;
 logic [63: 0]                                                  int_commit_counter;
 
-  always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
+`define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
+
+
+always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
         for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
-          if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &
-              ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id[grp_idx]) begin
+          if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &
+              ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
-                        int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.r_priv),
+                        int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_sim_mstatus[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id][grp_idx],
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_valid_except_grp_id[grp_idx],
                         u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_except_type_selected,
@@ -545,17 +564,42 @@ logic [63: 0]                                                  int_commit_counte
                         committed_rob_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
                         w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
                         w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
-          end
+
+            for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
+              if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&
+                  `BRANCH_INFO_Q[q_idx].grp_id == 1 << grp_idx) begin
+                step_gshare ($time,
+                             `BRANCH_INFO_Q[q_idx].cmt_id,
+                             `BRANCH_INFO_Q[q_idx].grp_id,
+                             `BRANCH_INFO_Q[q_idx].gshare_bht);
+                if (`BRANCH_INFO_Q[q_idx].mispredict) begin
+                  for (int q_idx_tmp = 0; q_idx_tmp <= q_idx; q_idx_tmp++) begin
+                    `BRANCH_INFO_Q.pop_front();
+                  end
+                end else begin
+                  `BRANCH_INFO_Q.delete(q_idx);
+                end
+                break;
+              end // if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&...
+            end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
+
+            // RAS check
+            step_ras ($time,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                      1 << grp_idx,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_ras_index,
+                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_pred_vaddr);
+          end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
 
       // Counting up instruction
       cycle_counter <= cycle_counter + 1;
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
-        total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
-                                                     ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id);
-        int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
-                                                             ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id);
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
+        total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
+                                                     ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
+        int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
+                                                             ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
       end
       if (((cycle_counter % cycle_interval) == 0) && (cycle_counter != 0)) begin
         $display ("%10d : %10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",
@@ -599,5 +643,11 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
   end // else: !if(!i_scariv_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 `endif //  `ifdef NEVER
+
+initial begin
+  initial_gshare (scariv_conf_pkg::GSHARE_BHT_W,
+                  scariv_conf_pkg::scariv_lsu_pkg::ICACHE_DATA_B_W);
+  initial_ras (scariv_conf_pkg::RAS_ENTRY_SIZE);
+end
 
 endmodule  // scariv_tb

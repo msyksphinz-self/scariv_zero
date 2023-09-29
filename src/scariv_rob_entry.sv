@@ -40,13 +40,18 @@ except_t                               w_done_rpt_except_type[scariv_conf_pkg::D
 riscv_pkg::xlen_t         w_done_rpt_except_tval[scariv_conf_pkg::DISP_SIZE];
 grp_id_t                               w_done_rpt_fflags_update_valid;
 scariv_pkg::fflags_t                     w_done_rpt_fflags     [scariv_conf_pkg::DISP_SIZE];
+cmt_id_t w_cmt_id;
+cmt_id_t w_in_cmt_id;
+assign w_cmt_id    = {r_entry.cmt_id_msb,    i_cmt_id[CMT_ENTRY_W-1:0]};
+assign w_in_cmt_id = {i_entry_in.cmt_id_msb, i_cmt_id[CMT_ENTRY_W-1:0]};
+
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
   logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_valid;
   done_rpt_t                w_done_rpt_selected;
   for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
     assign w_done_rpt_tmp_valid[c_idx] = i_done_rpt[c_idx].valid &
-                                         i_done_rpt[c_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id &&
+                                         i_done_rpt[c_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0] &&
                                          i_done_rpt[c_idx].grp_id == (1 << d_idx);
   end
   assign w_done_rpt_valid[d_idx] = |w_done_rpt_tmp_valid;
@@ -72,7 +77,7 @@ grp_id_t w_another_flush_valid;
 grp_id_t w_another_tree_flush_valid;
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
   assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
-                                            (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) ? i_another_flush_report[l_idx].grp_id : 'h0;
+                                            (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? i_another_flush_report[l_idx].grp_id : 'h0;
 end
 endgenerate
 
@@ -109,7 +114,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `ifdef SIMULATION
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin
       if (w_entry_next.done_grp_id[d_idx] & ~r_entry.done_grp_id[d_idx]) begin
-        r_mstatus[d_idx] <= u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.w_mstatus_next;
+        r_mstatus[d_idx] <= u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.w_mstatus_next;
       end
     end
 `endif // SIMULATION
@@ -125,8 +130,8 @@ always_comb begin
     w_entry_next = i_entry_in;
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (is_br_flush_target (i_entry_in.inst[d_idx].br_mask, br_upd_if.brtag,
-                                br_upd_if.dead, br_upd_if.mispredict)) begin
+        if (is_br_flush_target_wo_itself (w_in_cmt_id, 1 << d_idx, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                          br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           w_entry_next.flush_valid [d_idx] = 1'b0;
@@ -135,18 +140,19 @@ always_comb begin
 `endif // SIMULATION
         end
         // Resolve the branch dependency
-        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
-      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.taken;
+      //   w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+      //   w_entry_next.br_upd_info.bim_value = br_upd_if.bim_value;
+      //   w_entry_next.br_upd_info.br_taken  = br_upd_if.taken;
       end
 
-`ifdef SIMULATION
-      w_entry_next.br_upd_info.mispredicted = 1'b0;
-      w_entry_next.br_upd_info.ras_index    = 'h0;
-      w_entry_next.br_upd_info.pred_vaddr   = 'h0;
-`endif // SIMULATION
+      // `ifdef SIMULATION
+      //       w_entry_next.br_upd_info.mispredicted = 1'b0;
+      //       w_entry_next.br_upd_info.sim_ras_index    = 'h0;
+      //       w_entry_next.br_upd_info.sim_pred_vaddr   = 'h0;
+      // `endif // SIMULATION
     end // if (br_upd_if.update)
 
 `ifdef SIMULATION
@@ -169,10 +175,10 @@ always_comb begin
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       if (w_done_rpt_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
-          w_entry_next.except_valid[d_idx] = w_done_rpt_except_valid[d_idx];
+          w_entry_next.except_valid[d_idx] = r_entry.except_valid[d_idx] | w_done_rpt_except_valid[d_idx];
           w_entry_next.except_type [d_idx] = w_done_rpt_except_type [d_idx];
           w_entry_next.except_tval [d_idx] = w_done_rpt_except_tval [d_idx];
-          w_entry_next.flush_valid [d_idx] = w_done_rpt_except_valid[d_idx];
+          w_entry_next.flush_valid [d_idx] = r_entry.flush_valid [d_idx] | w_done_rpt_except_valid[d_idx];
 
           w_entry_next.fflags_update_valid [d_idx] = w_done_rpt_fflags_update_valid [d_idx];
           w_entry_next.fflags              [d_idx] = w_done_rpt_fflags              [d_idx];
@@ -180,7 +186,8 @@ always_comb begin
       end
       if (w_tree_flush_valid[d_idx]) begin
         if (!r_entry.dead[d_idx]) begin
-          w_entry_next.dead [d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+          w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
 `ifdef SIMULATION
           w_entry_next.sim_dead_reason[d_idx] = DEAD_PREVINST;
 `endif // SIMULATION
@@ -191,23 +198,12 @@ always_comb begin
         if (!r_entry.dead[d_idx]) begin
           w_entry_next.except_valid[d_idx] = r_entry.grp_id[d_idx];
           w_entry_next.except_type [d_idx] = ANOTHER_FLUSH;
-          w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+          // w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
           w_entry_next.flush_valid [d_idx] = r_entry.grp_id[d_idx];
 `ifdef SIMULATION
           w_entry_next.sim_dead_reason[d_idx] = DEAD_ANOTHERFLUSH;
 `endif // SIMULATION
         end
-      end
-
-
-
-      if (i_kill) begin
-        w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
-        w_entry_next.except_valid[d_idx] = 1'b0;
-        w_entry_next.flush_valid [d_idx] = 1'b0;
-`ifdef SIMULATION
-        w_entry_next.sim_dead_reason[d_idx] = DEAD_EXT_KILL;
-`endif // SIMULATION
       end
     end
 
@@ -215,8 +211,8 @@ always_comb begin
     if (br_upd_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (r_entry.inst[d_idx].valid &
-            is_br_flush_target (r_entry.inst[d_idx].br_mask, br_upd_if.brtag,
-                                br_upd_if.dead, br_upd_if.mispredict)) begin
+            is_br_flush_target_wo_itself (w_cmt_id, 1 << d_idx, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                          br_upd_if.dead, br_upd_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           w_entry_next.except_valid[d_idx] = 1'b0;
@@ -226,21 +222,42 @@ always_comb begin
 `endif // SIMULATION
         end
         // Resolve the branch dependency
-        w_entry_next.inst[d_idx].br_mask[br_upd_if.brtag] = 1'b0;
       end
-      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) &
-          ~br_upd_if.dead & br_upd_if.mispredict) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = 1'b1;
-        w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
-      end
+      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.taken;
+//         w_entry_next.br_upd_info.upd_br_vaddr[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.target_vaddr;
+//         w_entry_next.br_upd_info.bim_value    = br_upd_if.bim_value;
+//         w_entry_next.br_upd_info.br_taken     = br_upd_if.taken;
+//
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond = br_upd_if.is_cond;
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_call = br_upd_if.is_call;
+//         w_entry_next.inst[encoder_grp_id(br_upd_if.grp_id)].is_ret  = br_upd_if.is_ret;
+//         w_entry_next.dead[encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.dead;
+//         w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
+//
+//         if (~r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].is_cond & br_upd_if.is_cond) begin
+//           w_entry_next.br_upd_info.btb_newly_allocated = 1'b1;
+//         end
+//         w_entry_next.br_upd_info.gshare_bhr = r_entry.inst[encoder_grp_id(br_upd_if.grp_id)].gshare_bhr;
+      end // if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
 `ifdef SIMULATION
-      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == i_cmt_id) & ~br_upd_if.dead) begin
-        w_entry_next.br_upd_info.mispredicted = br_upd_if.mispredict;
-        w_entry_next.br_upd_info.ras_index    = br_upd_if.ras_index;
-        w_entry_next.br_upd_info.pred_vaddr   = br_upd_if.pred_vaddr;
+      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
+        w_entry_next.br_upd_info.sim_ras_index    = br_upd_if.ras_index;
+        w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_if.pred_vaddr;
       end
 `endif // SIMULATION
     end // if (br_upd_if.update)
+
+    for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+      if (i_kill) begin
+        w_entry_next.dead        [d_idx] = r_entry.grp_id[d_idx];
+        w_entry_next.except_valid[d_idx] = 1'b0;
+        w_entry_next.flush_valid [d_idx] = 1'b0;
+`ifdef SIMULATION
+        w_entry_next.sim_dead_reason[d_idx] = DEAD_EXT_KILL;
+`endif // SIMULATION
+      end
+    end
 
 `ifdef SIMULATION
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin: life_loop

@@ -4,10 +4,10 @@
 ../src/decoder_lsu_ctrl.sv
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv
+../src/decoder_csu_sched.sv
 ../src/decoder_fpu_ctrl.sv
 
 ../src/recurse_pkg.sv
-
 ../src/scariv_pkg.sv
 ../src/scariv_lsu_pkg.sv
 ../src/scariv_ic_pkg.sv
@@ -19,7 +19,7 @@
 
 ../src/l2_if.sv
 ../src/scariv_front_pkg.sv
-../src/regread_if.sv
+../src/reg_if.sv
 ../src/lsu_if.sv
 ../src/scariv_if.sv
 ../src/fpu_if.sv
@@ -44,6 +44,8 @@
 ../src/bit_reverse.sv
 ../src/bit_rotate.sv
 ../src/bit_encoder.sv
+../src/bit_clz_32.sv
+../src/bit_clz_64.sv
 ../src/ring_fifo.sv
 ../src/ring_fifo_2ptr.sv
 
@@ -60,6 +62,7 @@
 ../src/select_latest_1bit.sv
 ../src/select_oh.sv
 ../src/select_release_bus.sv
+../src/select_early_wr_bus_oh.sv
 ../src/select_phy_wr_bus.sv
 ../src/select_phy_wr_data.sv
 ../src/select_mispred_bus.sv
@@ -92,9 +95,11 @@
 ../src/scariv_ic_pref.sv
 
 ../src/scariv_rename.sv
+../src/scariv_rename_sub.sv
 ../src/scariv_resource_alloc.sv
 ../src/scariv_freelist.sv
 ../src/scariv_freelist_multiports.sv
+../src/scariv_brtag_freelist.sv
 ../src/scariv_rename_map.sv
 ../src/scariv_inflight_list.sv
 ../src/scariv_bru_rn_snapshots.sv
@@ -102,11 +107,8 @@
 ../src/scariv_entry_selector.sv
 ../src/scariv_disp_distribute.sv
 
-../src/scariv_scheduler.sv
-../src/scariv_sched_entry.sv
-
-../src/scariv_alu_scheduler.sv
-../src/scariv_alu_sched_entry.sv
+../src/scariv_issue_unit.sv
+../src/scariv_issue_entry.sv
 
 ../src/scariv_phy_registers.sv
 
@@ -118,8 +120,14 @@
 ../src/scariv_muldiv_pipe.sv
 ../src/scariv_div_unit.sv
 
+../src/scariv_bitmanip_alu.sv
+../src/scariv_zicond_alu.sv
+
 ../src/scariv_lsu_top.sv
 ../src/scariv_lsu.sv
+../src/scariv_lsu_issue_unit.sv
+../src/scariv_lsu_issue_entry.sv
+../src/scariv_lsu_replay_queue.sv
 ../src/scariv_lsu_pipe.sv
 ../src/scariv_l1d_mshr.sv
 ../src/scariv_l1d_mshr_entry.sv
@@ -139,9 +147,13 @@
 ../src/scariv_snoop_top.sv
 
 ../src/scariv_bru.sv
+../src/scariv_bru_issue_unit.sv
+../src/scariv_bru_issue_entry.sv
 ../src/scariv_bru_pipe.sv
 
 ../src/scariv_csu.sv
+../src/scariv_csu_issue_unit.sv
+../src/scariv_csu_issue_entry.sv
 ../src/scariv_csu_pipe.sv
 ../src/scariv_csr.sv
 
@@ -178,3 +190,5 @@
 ../src/scariv_plic_reg_priority.sv
 ../src/scariv_plic_reg_threshold.sv
 ../src/scariv_plic_regs.sv
+../src/scariv_bootrom.sv
+>>>>>>> 7c61e93a86aac954229e6fb21fe8b2620666e576

@@ -33,9 +33,6 @@ module scariv_rob
    // Interrupt Request information
    interrupt_if.slave  int_if,
 
-   // Branch Tag Update Signal
-   cmt_brtag_if.master cmt_brtag_if,
-
    // ROB notification interface
    rob_info_if.master rob_info_if
    );
@@ -76,8 +73,14 @@ assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
 assign w_in_valid  = rn_front_if.valid;
 assign w_out_valid = w_entry_all_done[w_out_cmt_entry_id];
 
+/* verilator lint_off UNOPTFLAT */
+commit_blk_t     w_commit;
+fflags_update_if w_fflags_update_if();
+cmt_rnid_upd_t   w_commit_rnid_update;
+
 logic                                      w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(o_commit);
+assign w_flush_valid = scariv_pkg::is_flushed_commit(w_commit) |
+                       scariv_pkg::is_flushed_commit(o_commit);
 
 inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_clear (1'b0),
@@ -86,7 +89,7 @@ inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
 
 assign rn_front_if.ready = 1'b1;
 assign w_ignore_disp = w_flush_valid & (rn_front_if.valid & rn_front_if.ready);
-assign w_credit_return_val = (o_commit.commit ? 'h1 : 'h0) /* +
+assign w_credit_return_val = (w_commit.commit ? 'h1 : 'h0) /* +
                              (w_ignore_disp   ? 'h1 : 'h0) */ ;
 
 scariv_credit_return_slave
@@ -96,7 +99,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return(o_commit.commit | w_ignore_disp),
+ .i_get_return(w_commit.commit | w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -111,23 +114,43 @@ endgenerate
 riscv_pkg::xlen_t w_sim_mstatus[CMT_ENTRY_SIZE][scariv_conf_pkg::DISP_SIZE];
 `endif // SIMULATION
 
+grp_id_t w_rn_is_cond_arr;
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin: br_loop
+  assign w_rn_is_cond_arr[d_idx] = rn_front_if.payload.inst[d_idx].is_cond &
+                                   rn_front_if.payload.resource_cnt.bru_inst_valid[d_idx];
+end endgenerate
+scariv_pkg::disp_t w_rn_front_if_cond_inst;
+
+bit_oh_or_packed
+  #(.T(scariv_pkg::disp_t),
+    .WORDS(scariv_conf_pkg::DISP_SIZE)
+    )
+u_rn_br_cond_info (
+ .i_oh      (w_rn_is_cond_arr),
+ .i_data    (rn_front_if.payload.inst),
+ .o_selected(w_rn_front_if_cond_inst)
+ );
+
+
 function automatic rob_entry_t assign_rob_entry();
   rob_entry_t ret;
 
   ret.valid       = 1'b1;
   ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
+  ret.cmt_id_msb  = w_in_cmt_id[CMT_ENTRY_W];
   ret.grp_id      = w_disp_grp_id;
   ret.pc_addr     = rn_front_if.payload.pc_addr;
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
     ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
     ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
-    ret.inst[d_idx].br_mask        = rn_front_if.payload.inst[d_idx].br_mask       ;
-    ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
-    ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
+    // ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
+    // ret.inst[d_idx].brtag          = rn_front_if.payload.inst[d_idx].brtag         ;
     ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
-    ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
-    ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
-    ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
+    // ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
+    // ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
+    // ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
+    // ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
+    // ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
 `ifdef SIMULATION
     ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
     ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
@@ -142,7 +165,9 @@ function automatic rob_entry_t assign_rob_entry();
 `endif // LITEX_SIMULATION
   end // block: inst_loop
 
-  ret.br_upd_info = 'h0;
+  // ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
+  // ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
+  // ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
   ret.fflags_update_valid = 'h0;
 
   ret.is_br_included = rn_front_if.payload.is_br_included;
@@ -156,7 +181,7 @@ function automatic rob_entry_t assign_rob_entry();
     ret.except_type [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] ? rn_front_if.payload.tlb_except_cause[d_idx] : ILLEGAL_INST;
     ret.except_tval [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] & (rn_front_if.payload.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_front_if.payload.tlb_except_tval[d_idx] : 'h0;
     ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
-    ret.dead        [d_idx] = ret.dead[d_idx] | ret.except_valid[d_idx];
+    ret.dead        [d_idx] = ret.dead[d_idx] /* | ret.except_valid[d_idx] */;
 `ifdef SIMULATION
     ret.sim_dead_reason[d_idx] = ret.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
 `endif // SIMULATION
@@ -180,7 +205,7 @@ logic w_load_valid;
      .i_clk (i_clk),
      .i_reset_n (i_reset_n),
 
-     .i_cmt_id (c_idx[CMT_ENTRY_W-1:0]),
+     .i_cmt_id ({w_in_cmt_id[CMT_ENTRY_W], c_idx[CMT_ENTRY_W-1:0]}),
 
      .i_load_valid (w_load_valid),
      .i_entry_in   (w_entry_in),
@@ -227,36 +252,39 @@ assign w_int_type = int_if.m_external_int_valid ? riscv_common_pkg::MACHINE_EXTE
                     int_if.s_software_int_valid ? riscv_common_pkg::SUPER_SOFT_INT       :
                     'h0;
 
-assign o_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
-assign o_commit.cmt_id       = w_out_cmt_id;
-assign o_commit.grp_id       = w_out_entry.grp_id;
-assign o_commit.except_valid = w_valid_except_grp_id | w_int_valid;
-assign o_commit.int_valid    = w_int_valid;
-assign o_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
+assign w_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
+assign w_commit.cmt_id       = w_out_cmt_id;
+assign w_commit.grp_id       = w_out_entry.grp_id;
+assign w_commit.except_valid = w_valid_except_grp_id | w_int_valid;
+assign w_commit.int_valid    = w_int_valid;
+assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
 /* verilator lint_off WIDTH */
-assign o_commit.tval          = (o_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
-                                 o_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
+assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
+                                 w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
                                 w_except_tval_selected;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
-assign o_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
-assign o_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id | {DISP_SIZE{w_int_valid}}) & o_commit.grp_id;
-assign o_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
+assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
+assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id | {DISP_SIZE{w_int_valid}) & w_commit.grp_id;
+assign w_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
 
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_ras_loop
-  assign o_commit.ras_index [d_idx] = w_out_entry.inst[d_idx].ras_index;
-  assign o_commit.ras_update[d_idx] = w_out_entry.inst[d_idx].is_call | w_out_entry.inst[d_idx].is_ret;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_commit.commit <= 1'b0;
+  end else begin
+    o_commit <= w_commit;
+  end
 end
-endgenerate
+
 
 `ifdef SIMULATION
 
-import "DPI-C" function void spike_update_timer (longint value);
+import "DPI-C" function void spike_update_timer (input longint value);
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (o_commit.commit & w_out_entry.int_inserted) begin
+    if (w_commit.commit & w_out_entry.int_inserted) begin
       spike_update_timer (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_clint.w_mtime_next);
     end
   end
@@ -273,18 +301,26 @@ assign w_valid_except_grp_id = w_out_entry.except_valid & w_cmt_pc_upd_valid_oh;
 bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_type), .o_selected(w_except_type_selected));
 bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_tval), .o_selected(w_except_tval_selected));
 
-assign o_commit_rnid_update.commit     = o_commit.commit;
+assign w_commit_rnid_update.commit     = w_commit.commit;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
-  assign o_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
-  assign o_commit_rnid_update.old_rnid  [d_idx] = w_out_entry.inst[d_idx].wr_reg.old_rnid;
-  assign o_commit_rnid_update.rd_rnid   [d_idx] = w_out_entry.inst[d_idx].wr_reg.rnid;
-  assign o_commit_rnid_update.rd_regidx [d_idx] = w_out_entry.inst[d_idx].wr_reg.regidx;
-  assign o_commit_rnid_update.rd_typ    [d_idx] = w_out_entry.inst[d_idx].wr_reg.typ;
+  assign w_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
+  assign w_commit_rnid_update.old_rnid  [d_idx] = w_out_entry.inst[d_idx].wr_reg.old_rnid;
+  assign w_commit_rnid_update.rd_rnid   [d_idx] = w_out_entry.inst[d_idx].wr_reg.rnid;
+  assign w_commit_rnid_update.rd_regidx [d_idx] = w_out_entry.inst[d_idx].wr_reg.regidx;
+  assign w_commit_rnid_update.rd_typ    [d_idx] = w_out_entry.inst[d_idx].wr_reg.typ;
 end
 endgenerate
-assign o_commit_rnid_update.dead_id        = o_commit.dead_id;
-assign o_commit_rnid_update.except_valid   = o_commit.except_valid;
-assign o_commit_rnid_update.except_type    = o_commit.except_type;
+assign w_commit_rnid_update.dead_id        = w_commit.dead_id;
+assign w_commit_rnid_update.except_valid   = w_commit.except_valid;
+assign w_commit_rnid_update.except_type    = w_commit.except_type;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    o_commit_rnid_update.commit <= 1'b0;
+  end else begin
+    o_commit_rnid_update <= w_commit_rnid_update;
+  end
+end
 
 
 grp_id_t w_fflags_update_valid_oh;
@@ -295,8 +331,17 @@ bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w
 // --------------------------
 // FFLAGS update when commit
 // --------------------------
-assign fflags_update_if.valid  = o_commit.commit & (|w_out_entry.fflags_update_valid);
-assign fflags_update_if.fflags = w_fflags_sel;
+assign w_fflags_update_if.valid  = w_commit.commit & (|w_out_entry.fflags_update_valid);
+assign w_fflags_update_if.fflags = w_fflags_sel;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    fflags_update_if.valid <= 1'b0;
+  end else begin
+    fflags_update_if.valid  <= w_fflags_update_if.valid;
+    fflags_update_if.fflags <= w_fflags_update_if.fflags;
+  end
+end
 
 // --------------------------------------------------
 // Notification of RAS Recovery by dead instruction
@@ -326,37 +371,30 @@ assign w_is_active_except = 1'b1;
 assign w_except_dead_grp_id = w_is_active_except ?  // active flush itself doesn't include dead instruction
                               {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0} :  // so, 1-bit left shift
                               w_dead_grp_id_except_tmp;                           // otherwise, except itself includes dead instruction
-assign w_dead_grp_id = w_except_dead_grp_id |
-                       {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
+assign w_dead_grp_id = w_except_dead_grp_id; //  |
+// {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
 
 // Killing all uncommitted instructions
 // always_ff @ (posedge i_clk, negedge i_reset_n) begin
 //   if (!i_reset_n) begin
 //     r_killing_uncmts <= 1'b0;
 //   end else begin
-//     if (o_commit.commit & (|o_commit.except_valid) & !r_killing_uncmts) begin
+//     if (w_commit.commit & (|w_commit.except_valid) & !r_killing_uncmts) begin
 //       r_killing_uncmts <= 1'b1;
-//     end else if (r_killing_uncmts & !o_commit.commit) begin  // Commit finished
+//     end else if (r_killing_uncmts & !w_commit.commit) begin  // Commit finished
 //       r_killing_uncmts <= 1'b0;
 //     end
 //   end
 // end
 
 // ROB Notification Information
-assign rob_info_if.cmt_id       = w_out_cmt_id;
-assign rob_info_if.grp_id       = w_out_entry.grp_id;
-assign rob_info_if.done_grp_id  = w_out_entry.done_grp_id;
-assign rob_info_if.upd_pc_valid = w_out_entry.br_upd_info.upd_valid;
-assign rob_info_if.except_valid = w_out_entry.except_valid;
-
-// Commit Branch Tag Update
-assign cmt_brtag_if.commit     = o_commit.commit;
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : brtag_loop
-  assign cmt_brtag_if.is_br_inst[d_idx] = w_out_entry.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR;
-  assign cmt_brtag_if.brtag     [d_idx] = w_out_entry.inst[d_idx].brtag;
+always_ff @ (posedge i_clk) begin
+  rob_info_if.cmt_id       <= w_out_cmt_id;
+  rob_info_if.grp_id       <= w_out_entry.grp_id;
+  rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
+  rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
+  rob_info_if.except_valid <= w_out_entry.except_valid;
 end
-endgenerate
-
 
 `ifdef SIMULATION
 `ifdef MONITOR
@@ -456,12 +494,12 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         r_rob_entry_count <= r_rob_entry_count + $countones(w_entry_valids);
       end
 
-      if (o_commit.commit) begin
+      if (w_commit.commit) begin
         r_commit_count <= r_commit_count + 'h1;
-        r_inst_count   <= r_inst_count + $countones(o_commit.grp_id & ~o_commit.dead_id);
-        r_dead_count   <= r_dead_count + $countones(o_commit.grp_id &  o_commit.dead_id);
+        r_inst_count   <= r_inst_count + $countones(w_commit.grp_id & ~w_commit.dead_id);
+        r_dead_count   <= r_dead_count + $countones(w_commit.grp_id &  w_commit.dead_id);
         for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
-          if ((o_commit.grp_id & o_commit.dead_id >> grp_idx) & 'h1) begin
+          if ((w_commit.grp_id & w_commit.dead_id >> grp_idx) & 'h1) begin
             case (w_out_entry.sim_dead_reason[grp_idx])
               DEAD_EXC          : r_dead_reason_count.dead_exc          = r_dead_reason_count.dead_exc          + 'h1;
               DEAD_BRANCH       : r_dead_reason_count.dead_branch       = r_dead_reason_count.dead_branch       + 'h1;
@@ -469,10 +507,10 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
               DEAD_ANOTHERFLUSH : r_dead_reason_count.dead_anotherflush = r_dead_reason_count.dead_anotherflush + 'h1;
               DEAD_EXT_KILL     : r_dead_reason_count.dead_ext_kill     = r_dead_reason_count.dead_ext_kill     + 'h1;
               default           : ;
-            endcase // case (o_commit.dead_reason[grp_idx])
+            endcase // case (w_commit.dead_reason[grp_idx])
           end
         end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
-      end // if (o_commit.commit)
+      end // if (w_commit.commit)
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
@@ -504,7 +542,8 @@ endfunction
 import "DPI-C" function void retire_inst
 (
  input longint id,
- input int retire
+ input longint retire_id,
+ input int     retire
 );
 import "DPI-C" function void log_stage
 (
@@ -514,7 +553,7 @@ import "DPI-C" function void log_stage
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (o_commit.commit) begin
+    if (w_commit.commit) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (w_out_entry.grp_id[i]) begin
           log_stage (w_out_entry.inst[i].kanata_id, "CMT");
@@ -534,20 +573,26 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_out_entry_d1 <= 'h0;
     r_dead_grp_d1  <= 'h0;
   end else begin
-    r_commit_d1 <= o_commit.commit;
+    r_commit_d1 <= w_commit.commit;
     r_out_entry_d1 <= w_out_entry;
     r_dead_grp_d1  <= w_dead_grp_id;
   end
 end
 
+logic [63: 0] kanata_retire_id;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
+    kanata_retire_id = 'h0;
+  end else begin
     if (r_commit_d1) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (r_out_entry_d1.grp_id[i]) begin
-          retire_inst (r_out_entry_d1.inst[i].kanata_id,
-                       r_out_entry_d1.flush_valid[i] | r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+          retire_inst (r_out_entry_d1.inst[i].kanata_id, kanata_retire_id,
+                       r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
+          if (!(r_out_entry_d1.dead[i] | r_dead_grp_d1[i])) begin
+            kanata_retire_id = kanata_retire_id + 1;
+          end
         end
       end
     end

@@ -18,7 +18,11 @@ modport slave(
 
 endinterface // done_if
 
-
+module connect_done_if (done_if.slave slave, done_if.master master);
+  assign  master.done     = slave.done    ; 
+  assign  master.index_oh = slave.index_oh;
+  assign  master.payload  = slave.payload ;
+endmodule
 
 //
 // ROB Information Notification IF

@@ -22,6 +22,7 @@ module scariv_resource_alloc
    // -------------------------------
    cre_ret_if.master rob_cre_ret_if,
    cre_ret_if.master alu_cre_ret_if[scariv_conf_pkg::ALU_INST_NUM],
+   cre_ret_if.master lsu_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
    cre_ret_if.master ldq_cre_ret_if,
    cre_ret_if.master stq_cre_ret_if,
    cre_ret_if.master csu_cre_ret_if,
@@ -32,13 +33,12 @@ module scariv_resource_alloc
    br_upd_if.slave                br_upd_if,
 
    input scariv_pkg::commit_blk_t   i_commit,
-   // Branch Tag Update Signal
-   cmt_brtag_if.slave             cmt_brtag_if,
 
    output logic o_resource_ok,
 
    output brtag_t o_brtag  [scariv_conf_pkg::DISP_SIZE],
-   output brmask_t         o_brmask [scariv_conf_pkg::DISP_SIZE]
+
+   brtag_if.slave  brtag_if
    );
 
 logic                                     w_commit_flush;
@@ -114,28 +114,29 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
 end // block: alu_cre_ret_loop
 endgenerate
 
+localparam LSU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_cre_ret_loop
-//   logic w_inst_lsu_valid;
-//   assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
-//   logic [$clog2(scariv_lsu_pkg::MEM_Q_SIZE):0] w_lsu_inst_cnt;
-//   assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
-//
-//   scariv_credit_return_master
-//     #(.MAX_CREDITS(scariv_lsu_pkg::MEM_Q_SIZE))
-//   u_lsu_credit_return
-//   (
-//    .i_clk(i_clk),
-//    .i_reset_n(i_reset_n),
-//
-//    .i_get_credit(~w_flush_valid & w_inst_lsu_valid & ibuf_front_if.ready),
-//    .i_credit_val(w_lsu_inst_cnt),
-//
-//    .o_credits(),
-//    .o_no_credits(w_lsu_no_credits_remained[l_idx]),
-//
-//    .cre_ret_if (lsu_cre_ret_if[l_idx])
-//    );
-  assign w_lsu_no_credits_remained[l_idx] = 1'b0;
+  logic w_inst_lsu_valid;
+  assign w_inst_lsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
+  logic [$clog2(LSU_ISS_ENTRY_SIZE):0] w_lsu_inst_cnt;
+  assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
+
+  scariv_credit_return_master
+    #(.MAX_CREDITS(LSU_ISS_ENTRY_SIZE))
+  u_lsu_credit_return
+  (
+   .i_clk(i_clk),
+   .i_reset_n(i_reset_n),
+
+   .i_get_credit(~w_flush_valid & w_inst_lsu_valid & ibuf_front_if.ready),
+   .i_credit_val(w_lsu_inst_cnt),
+
+   .o_credits(),
+   .o_no_credits(w_lsu_no_credits_remained[l_idx]),
+
+  .cre_ret_if (lsu_cre_ret_if[l_idx])
+  );
 end
 endgenerate
 
@@ -245,64 +246,28 @@ end // block: fpu_cre_ret_loop
 endgenerate
 
 
-brmask_t    r_br_mask_valid;
-brmask_t    w_br_mask_valid_next;
-/* verilator lint_off UNOPTFLAT */
-brmask_t    w_br_mask_temp_valid[scariv_conf_pkg::DISP_SIZE+1];
-
-brtag_t w_br_tag_temp_idx[scariv_conf_pkg::DISP_SIZE+1];
+logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] w_brtag_freelist_pop_id[scariv_conf_pkg::DISP_SIZE];
 brtag_t r_br_tag_current_idx;
+scariv_brtag_freelist
+  #(.SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
+    .WIDTH ($clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)),
+    .PORTS (scariv_conf_pkg::DISP_SIZE)
+    )
+u_brtag_freelist
+(
+  .i_clk    (i_clk),
+  .i_reset_n(i_reset_n),
 
-generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; b_idx++) begin : branch_loop
-  always_comb begin
-    w_br_mask_valid_next[b_idx] = r_br_mask_valid[b_idx];
-    // for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-    //   if (cmt_brtag_if.commit & cmt_brtag_if.is_br_inst[d_idx] & cmt_brtag_if.brtag[d_idx] == b_idx) begin
-    //     w_br_mask_valid_next[b_idx] = 1'b0;
-    //   end
-    // end
-    if (br_upd_if.update & (br_upd_if.brtag == b_idx)) begin
-      w_br_mask_valid_next[b_idx] = 1'b0;
-    end
-    if (br_upd_if.update & br_upd_if.mispredict & ~br_upd_if.dead & ~br_upd_if.br_mask[b_idx]) begin
-      w_br_mask_valid_next[b_idx] = 1'b0;
-    end
-  end
-end
-endgenerate
+  .i_push    (brtag_if.valid),
+  .i_push_id (brtag_if.brtag),
+  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_inst_valid),
+  .o_pop_id  (w_brtag_freelist_pop_id),
+  .o_is_empty()
+);
 
-
-assign w_br_mask_temp_valid[0] = w_br_mask_valid_next;
-assign w_br_tag_temp_idx[0] = r_br_tag_current_idx;
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
-
-  logic w_is_br_inst;
-  assign w_is_br_inst = w_iq_fire &
-                        ibuf_front_if.payload.inst[d_idx].valid & (ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
-
-  assign w_br_mask_temp_valid[d_idx+1] = !w_is_br_inst ? w_br_mask_temp_valid[d_idx] : w_br_mask_temp_valid[d_idx] | (1 << w_br_tag_temp_idx[d_idx]);
-  assign w_br_tag_temp_idx   [d_idx+1] = !w_is_br_inst ? w_br_tag_temp_idx   [d_idx] : w_br_tag_temp_idx[d_idx] + 'h1;
-
-  assign o_brtag[d_idx]  = w_br_tag_temp_idx   [d_idx];
-  assign o_brmask[d_idx] = w_br_mask_temp_valid[d_idx];
-end // block: branch_loop
-endgenerate
-
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_br_mask_valid     <= 'h0;
-    r_br_tag_current_idx <= 'h0;
-  end else begin
-    if (w_commit_flush) begin
-      r_br_mask_valid <= 'h0;
-    end else begin
-      r_br_mask_valid      <= w_br_mask_temp_valid[scariv_conf_pkg::DISP_SIZE];
-      r_br_tag_current_idx <= w_br_tag_temp_idx[scariv_conf_pkg::DISP_SIZE];
-    end
-  end
-end
-
+  assign o_brtag[d_idx]  = w_brtag_freelist_pop_id[d_idx];
+end endgenerate
 
 endmodule // scariv_resource_alloc

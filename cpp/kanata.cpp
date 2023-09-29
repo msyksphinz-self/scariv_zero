@@ -68,7 +68,7 @@ void log_stage (long long id, const char *stage)
 }
 
 
-void retire_inst (long long id, bool dead)
+void retire_inst (long long id, long long retire_id, bool dead)
 {
   if (!kanata_enable) return;
   decltype(stage_map)::iterator it = stage_map.find(id);
@@ -77,5 +77,5 @@ void retire_inst (long long id, bool dead)
     fprintf (kanata_fp, "E\t%lld\t0\t%s\n", id, it->second);
     free (it->second);
   }
-  fprintf (kanata_fp, "R\t%lld\t%lld\t%d\n", id, id, dead);
+  fprintf (kanata_fp, "R\t%lld\t%lld\t%d\n", id, retire_id, dead);
 }

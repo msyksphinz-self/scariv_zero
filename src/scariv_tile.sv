@@ -44,6 +44,15 @@ localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + scariv_conf_pkg::LSU_INST_N
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 localparam FPU_DONE_PORT_BASE = CSU_DONE_PORT_BASE + 1;
 
+localparam ALU_INT_REGWR_PORT_BASE = 0;
+localparam LSU_INT_REGWR_PORT_BASE = scariv_conf_pkg::ALU_INST_NUM;
+localparam BRU_INT_REGWR_PORT_BASE = LSU_INT_REGWR_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
+localparam CSU_INT_REGWR_PORT_BASE = BRU_INT_REGWR_PORT_BASE + 1;
+localparam FPU_INT_REGWR_PORT_BASE = CSU_INT_REGWR_PORT_BASE + 1;
+
+localparam LSU_FP_REGWR_PORT_BASE = 0;
+localparam FPU_FP_REGWR_PORT_BASE = LSU_FP_REGWR_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
+
 // ----------------------------------
 // Global Components
 // ----------------------------------
@@ -51,17 +60,16 @@ l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
 scariv_front_if w_ibuf_front_if();
-scariv_front_if w_ibuf_dist_front_if[2]();  // Int/FP
-scariv_front_if w_rn_int_front_if ();
-scariv_front_if w_rn_fp_front_if ();
 scariv_front_if w_rn_front_if ();
 
 scariv_pkg::early_wr_t w_ex1_early_wr[scariv_pkg::REL_BUS_SIZE];
 scariv_pkg::phy_wr_t   w_ex3_phy_wr  [scariv_pkg::TGT_BUS_SIZE];
 scariv_pkg::cmt_id_t   w_sc_new_cmt_id;
 
-regread_if #(.REG_TYPE(scariv_pkg::GPR)) int_regread[scariv_pkg::INT_REGPORT_NUM] ();
-regread_if #(.REG_TYPE(scariv_pkg::FPR)) fp_regread [scariv_pkg::FP_REGPORT_NUM ] ();
+regread_if  #(.REG_TYPE(scariv_pkg::GPR)) int_regread[scariv_pkg::INT_REGRD_PORT_NUM] ();
+regread_if  #(.REG_TYPE(scariv_pkg::FPR)) fp_regread [scariv_pkg::FP_REGRD_PORT_NUM ] ();
+regwrite_if #(.REG_TYPE(scariv_pkg::GPR)) int_regwrite[scariv_pkg::INT_REGWR_PORT_NUM] ();
+regwrite_if #(.REG_TYPE(scariv_pkg::FPR)) fp_regwrite [scariv_pkg::FP_REGWR_PORT_NUM ] ();
 
 scariv_pkg::done_rpt_t w_done_rpt[scariv_pkg::CMT_BUS_SIZE];
 
@@ -75,6 +83,8 @@ logic                          w_fence_i;
 
 logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
 scariv_pkg::vaddr_t                    w_sc_ras_vaddr;
+
+brtag_if w_brtag_if();
 
 // ----------------------------------
 // Committer Components
@@ -109,7 +119,6 @@ scariv_pkg::early_wr_t w_ex1_bru_early_wr;
 scariv_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 scariv_pkg::done_rpt_t w_bru_done_rpt;
 br_upd_if w_ex3_br_upd_if();
-br_upd_if br_upd_fe_if ();
 
 // ----------------------------------
 // CSU Components
@@ -124,15 +133,18 @@ scariv_pkg::done_rpt_t w_csu_done_rpt;
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_fpu_valids [scariv_conf_pkg::FPU_INST_NUM];
 scariv_pkg::early_wr_t w_ex1_fpu_early_wr[scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr  [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_fpnew_phy_wr      [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::done_rpt_t w_fpu_done_rpt    [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr[scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::phy_wr_t   w_fpnew_phy_wr    [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::done_rpt_t w_fpu_mv_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
+scariv_pkg::done_rpt_t w_fpu_fp_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
 
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
+snoop_info_if  w_snoop_info_if();
+
 l1d_snoop_if   l1d_snoop_if  ();
 stq_snoop_if   stq_snoop_if  ();
 mshr_snoop_if  mshr_snoop_if ();
@@ -145,14 +157,12 @@ streq_snoop_if streq_snoop_if();
 logic                                w_resource_ok;
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::CMT_ENTRY_SIZE   )) rob_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_ALU_ENTRY_SIZE)) alu_cre_ret_if[scariv_conf_pkg::ALU_INST_NUM]();
+cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_LSU_ENTRY_SIZE)) lsu_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM]();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::LDQ_SIZE         )) ldq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::STQ_SIZE         )) stq_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) bru_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_CSU_ENTRY_SIZE)) csu_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[scariv_conf_pkg::FPU_INST_NUM]();
-
-logic w_int_freelist_ready;
-logic w_fpu_freelist_ready;
 
 
 // ----------------------------------
@@ -160,8 +170,6 @@ logic w_fpu_freelist_ready;
 // ----------------------------------
 
 scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
-scariv_pkg::brmask_t w_iq_brmask [scariv_conf_pkg::DISP_SIZE];
-cmt_brtag_if w_cmt_brtag_if();
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -174,6 +182,13 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
 end
 endgenerate
 
+generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_wr_loop
+  assign int_regwrite[a_idx].valid = w_ex3_alu_phy_wr[a_idx].valid;
+  assign int_regwrite[a_idx].rnid  = w_ex3_alu_phy_wr[a_idx].rd_rnid ;
+  assign int_regwrite[a_idx].data  = w_ex3_alu_phy_wr[a_idx].rd_data ;
+end endgenerate
+
+
 // LSU
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
   assign w_ex1_early_wr[LSU_INST_PORT_BASE + l_idx] = w_ex1_lsu_early_wr[l_idx];
@@ -182,25 +197,64 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) 
 end
 endgenerate
 
+generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_wr_loop
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].valid = w_ex3_lsu_phy_wr[l_idx].valid & (w_ex3_lsu_phy_wr[l_idx].rd_type == scariv_pkg::GPR);
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].rnid  = w_ex3_lsu_phy_wr[l_idx].rd_rnid;
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].data  = w_ex3_lsu_phy_wr[l_idx].rd_data;
+
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].valid = w_ex3_lsu_phy_wr[l_idx].valid & (w_ex3_lsu_phy_wr[l_idx].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].rnid  = w_ex3_lsu_phy_wr[l_idx].rd_rnid;
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].data  = w_ex3_lsu_phy_wr[l_idx].rd_data;
+end
+endgenerate
+
+
 // BRU
 assign w_ex1_early_wr[BRU_INST_PORT_BASE] = w_ex1_bru_early_wr;
 assign w_ex3_phy_wr  [BRU_INST_PORT_BASE] = w_ex3_bru_phy_wr  ;
 assign w_done_rpt    [BRU_DONE_PORT_BASE] = w_bru_done_rpt;
 
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].valid = w_ex3_bru_phy_wr.valid;
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_ex3_bru_phy_wr.rd_rnid;
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_ex3_bru_phy_wr.rd_data;
+
 // CSU
-assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+// assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
+assign w_ex1_early_wr[CSU_INST_PORT_BASE] = 'h0;
 assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
 assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
 
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].valid = w_ex3_csu_phy_wr.valid;
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].rnid  = w_ex3_csu_phy_wr.rd_rnid;
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].data  = w_ex3_csu_phy_wr.rd_data;
+
+
 // FPU
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_loop
-  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx]     = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+0] = w_ex1_fpu_early_wr[f_idx];
+  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+1] = 'h0;   // Now, FPNew early wakeup is not used.
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
   assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx]     = w_fpu_done_rpt    [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
+  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpu_fp_done_rpt [f_idx];
 end
 endgenerate
 
+generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_wr_loop
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_ex3_fpumv_phy_wr[f_idx].rd_rnid ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].data  = w_ex3_fpumv_phy_wr[f_idx].rd_data ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].valid = w_fpnew_phy_wr    [f_idx].valid & (w_fpnew_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_fpnew_phy_wr    [f_idx].rd_rnid ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].data  = w_fpnew_phy_wr    [f_idx].rd_data ;
+
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_ex3_fpumv_phy_wr[f_idx].rd_rnid ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].data  = w_ex3_fpumv_phy_wr[f_idx].rd_data ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].valid = w_fpnew_phy_wr    [f_idx].valid & (w_fpnew_phy_wr[f_idx].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_fpnew_phy_wr    [f_idx].rd_rnid ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].data  = w_fpnew_phy_wr    [f_idx].rd_data ;
+end endgenerate
 
 scariv_frontend u_frontend (
   .i_clk(i_clk),
@@ -219,52 +273,40 @@ scariv_frontend u_frontend (
   .int_if   (w_int_if),
 
   .ibuf_front_if(w_ibuf_front_if),
-  .rn_front_if (w_rn_int_front_if),
+  .rn_front_if (w_rn_front_if),
   .o_sc_ras_index  (w_sc_ras_index),
   .o_sc_ras_vaddr (w_sc_ras_vaddr),
-
-   // Fetch Target Queue
-  .br_upd_fe_if (br_upd_fe_if),
 
   .ptw_if (w_ptw_if[0])
 );
 
 
-scariv_disp_distribute
-u_iq_dist
-(
- .i_disp (w_ibuf_front_if),
- .o_disp (w_ibuf_dist_front_if)
- );
-
 scariv_rename
   #(.REG_TYPE(scariv_pkg::GPR))
-u_scariv_int_rename (
+u_rename (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
 
-  .ibuf_front_if (w_ibuf_dist_front_if[0]),
+  .ibuf_front_if (w_ibuf_front_if),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
   .i_commit             (w_commit),
   .i_commit_rnid_update (w_commit_rnid_update),
 
-  .i_resource_ok (w_resource_ok & w_fpu_freelist_ready),
-  .o_freelist_ready (w_int_freelist_ready),
+  .i_resource_ok (w_resource_ok),
 
   .i_brtag  (w_iq_brtag),
-  .i_brmask (w_iq_brmask),
 
-  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+  .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .rn_front_if  (w_rn_int_front_if),
+  .rn_front_if  (w_rn_front_if),
   .i_sc_ras_index (w_sc_ras_index),
   .i_sc_ras_vaddr (w_sc_ras_vaddr)
 );
 
 
-scariv_resource_alloc u_scariv_resource_alloc
+scariv_resource_alloc u_resource_alloc
 (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
@@ -273,30 +315,23 @@ scariv_resource_alloc u_scariv_resource_alloc
 
   .rob_cre_ret_if (rob_cre_ret_if),
   .alu_cre_ret_if (alu_cre_ret_if),
+  .lsu_cre_ret_if (lsu_cre_ret_if),
   .ldq_cre_ret_if (ldq_cre_ret_if),
   .stq_cre_ret_if (stq_cre_ret_if),
   .csu_cre_ret_if (csu_cre_ret_if),
   .bru_cre_ret_if (bru_cre_ret_if),
   .fpu_cre_ret_if (fpu_cre_ret_if),
 
-  .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if */),
+  .br_upd_if (w_ex3_br_upd_if),
 
   .i_commit (w_commit),
-  .cmt_brtag_if (w_cmt_brtag_if),
 
   .o_brtag  (w_iq_brtag),
-  .o_brmask (w_iq_brmask),
 
-  .o_resource_ok (w_resource_ok)
+  .o_resource_ok (w_resource_ok),
+
+  .brtag_if (w_brtag_if)
  );
-
-scariv_disp_merge
-u_sc_merge
-  (
-   .i_int_disp (w_rn_int_front_if),
-   .i_fp_disp  (w_rn_fp_front_if),
-   .o_disp     (w_rn_front_if)
-   );
 
 localparam ALU_PORT_SIZE = scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM;
 localparam FPU_PORT_SIZE = scariv_conf_pkg::FPU_DISP_SIZE / scariv_conf_pkg::FPU_INST_NUM;
@@ -325,7 +360,7 @@ endgenerate
 generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_idx++) begin : alu_loop
   scariv_alu #(
       .PORT_BASE(alu_idx)
-  ) u_scariv_alu (
+  ) u_alu (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
@@ -346,7 +381,7 @@ generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_i
       .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
       .i_commit  (w_commit),
-      .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
+      .br_upd_if (w_ex3_br_upd_if),
 
       .o_done_report (w_alu_done_rpt[alu_idx])
   );
@@ -355,24 +390,26 @@ endgenerate
 
 
 scariv_lsu_top
-u_scariv_lsu_top
+u_lsu_top
   (
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
     .rob_info_if   (w_rob_info_if),
-    .sfence_if     (w_sfence_if),
 
     .csr_info (w_csr_info),
 
     .disp_valid (w_disp_lsu_valids),
     .disp (w_rn_front_if),
-    // .sch_cre_ret_if (lsu_cre_ret_if),
+
+    .iss_cre_ret_if (lsu_cre_ret_if),
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 
-    .ex1_int_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) +: (scariv_conf_pkg::LSU_INST_NUM * 2)]),
-    .ex1_fp_regread  (fp_regread[(scariv_conf_pkg::FPU_INST_NUM * 3) +: scariv_conf_pkg::LSU_INST_NUM]),
+    .ex1_int_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
+
+    .int_rs2_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) +  scariv_conf_pkg::LSU_INST_NUM]),
+    .fp_rs2_regread  (fp_regread [(scariv_conf_pkg::FPU_INST_NUM * 3)]),
 
     .ptw_if       (w_ptw_if[1 +: scariv_conf_pkg::LSU_INST_NUM]),
     .lsu_access   (w_lsu_access),
@@ -390,19 +427,24 @@ u_scariv_lsu_top
     .o_another_flush_report(w_lsu_another_flush_rpt),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
+    .snoop_info_if (w_snoop_info_if),
+
     .l1d_snoop_if   (l1d_snoop_if  ),
     .stq_snoop_if   (stq_snoop_if  ),
     .mshr_snoop_if  (mshr_snoop_if ),
     .stbuf_snoop_if (stbuf_snoop_if),
     .streq_snoop_if (streq_snoop_if),
 
+    .sfence_if (w_sfence_if),
+    .o_fence_i (w_fence_i),
+
     .i_commit  (w_commit),
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+    .br_upd_if (w_ex3_br_upd_if)
    );
 
 
 scariv_bru
-u_scariv_bru (
+u_bru (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -413,10 +455,10 @@ u_scariv_bru (
     .cre_ret_if (bru_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  0]),
     .ex1_regread_rs2(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  1]),
 
     .i_early_wr(w_ex1_early_wr),
@@ -429,12 +471,14 @@ u_scariv_bru (
     .o_done_report (w_bru_done_rpt),
     .i_commit      (w_commit),
     .ex3_br_upd_if (w_ex3_br_upd_if),
-    .ex3_br_upd_slave_if (br_upd_fe_if)
+    .ex3_br_upd_slave_if (w_ex3_br_upd_if),
+
+    .brtag_if (w_brtag_if)
 );
 
 
 scariv_csu
-u_scariv_csu (
+u_csu (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
@@ -443,7 +487,7 @@ u_scariv_csu (
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  2]),
 
     .i_early_wr(w_ex1_early_wr),
@@ -462,64 +506,36 @@ u_scariv_csu (
 
     .fflags_update_if (w_fflags_update_if),
 
-    .sfence_if (w_sfence_if),
-    .o_fence_i (w_fence_i),
-
     .o_done_report (w_csu_done_rpt),
 
     .i_commit (w_commit),
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+    .br_upd_if (w_ex3_br_upd_if)
 );
 
 
 scariv_phy_registers
   #(
     .REG_TYPE(scariv_pkg::GPR),
-    .RD_PORT_SIZE(scariv_pkg::INT_REGPORT_NUM)
+    .RD_PORT_SIZE(scariv_pkg::INT_REGRD_PORT_NUM),
+    .WR_PORT_SIZE(scariv_pkg::INT_REGWR_PORT_NUM)
     )
 u_int_phy_registers (
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
 
-    .i_phy_wr(w_ex3_phy_wr),
+    .regwrite(int_regwrite),
     .regread(int_regread)
 );
 
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
-  scariv_rename
-    #(.REG_TYPE(scariv_pkg::FPR))
-  u_scariv_fp_rename (
-    .i_clk(i_clk),
-    .i_reset_n(i_reset_n),
-
-    .ibuf_front_if (w_ibuf_dist_front_if[1]),
-    .i_sc_new_cmt_id (w_sc_new_cmt_id),
-
-    .i_commit             (w_commit),
-    .i_commit_rnid_update (w_commit_rnid_update),
-
-    .i_resource_ok (w_resource_ok & w_int_freelist_ready),
-    .o_freelist_ready (w_fpu_freelist_ready),
-
-    .i_brtag  (w_iq_brtag),
-    .i_brmask (w_iq_brmask),
-
-    .br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/),
-
-    .i_phy_wr (w_ex3_phy_wr),
-    .rn_front_if  (w_rn_fp_front_if),
-    .i_sc_ras_index (w_sc_ras_index),
-    .i_sc_ras_vaddr (w_sc_ras_vaddr)
-  );
-
   // =========================
   // FPU: Flaoting Point Unit
   // =========================
   for (genvar fpu_idx = 0; fpu_idx < scariv_conf_pkg::FPU_INST_NUM; fpu_idx++) begin : fpu_loop
     scariv_fpu #(
       .PORT_BASE(fpu_idx)
-    ) u_scariv_fpu (
+    ) u_fpu (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
 
@@ -531,8 +547,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
       .ex1_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                       scariv_conf_pkg::LSU_INST_NUM * 2 +
-                                       2 + 1 +
+                                       scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                       2 +   // BRU
+                                       1 +   // CSU
                                        fpu_idx]),
 
       .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
@@ -544,13 +561,14 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .i_mispred_lsu (w_ex2_mispred_lsu),
 
       .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr  [fpu_idx]),
-      .o_fpnew_phy_wr   (w_fpnew_phy_wr      [fpu_idx]),
+      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr[fpu_idx]),
+      .o_fpnew_phy_wr   (w_fpnew_phy_wr    [fpu_idx]),
 
       .i_commit  (w_commit),
-      .br_upd_if (br_upd_fe_if),
+      .br_upd_if (w_ex3_br_upd_if),
 
-      .o_done_report (w_fpu_done_rpt[fpu_idx])
+      .o_mv_done_report (w_fpu_mv_done_rpt[fpu_idx]),
+      .o_fp_done_report (w_fpu_fp_done_rpt[fpu_idx])
     );
   end
 
@@ -560,20 +578,18 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
   scariv_phy_registers
     #(
       .REG_TYPE(scariv_pkg::FPR),
-      .RD_PORT_SIZE(scariv_pkg::FP_REGPORT_NUM)
+      .RD_PORT_SIZE(scariv_pkg::FP_REGRD_PORT_NUM),
+      .WR_PORT_SIZE(scariv_pkg::FP_REGWR_PORT_NUM)
       )
   u_fp_phy_registers
     (
      .i_clk(i_clk),
      .i_reset_n(i_reset_n),
 
-     .i_phy_wr(w_ex3_phy_wr),
+     .regwrite(fp_regwrite),
      .regread(fp_regread)
      );
-end else begin // block: fpu
-  assign w_rn_fp_front_if.valid = 1'b1;
-  assign w_ibuf_dist_front_if[1].ready = 1'b1;
-  assign w_fpu_freelist_ready = 1'b1;
+
 end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
@@ -596,11 +612,10 @@ scariv_rob u_rob
    .o_commit (w_commit),
    .fflags_update_if (w_fflags_update_if),
    .o_commit_rnid_update (w_commit_rnid_update),
-   .cmt_brtag_if (w_cmt_brtag_if),
 
    .rob_info_if   (w_rob_info_if),
 
-   .ex3_br_upd_if (br_upd_fe_if /* w_ex3_br_upd_if*/)
+   .ex3_br_upd_if (w_ex3_br_upd_if)
    );
 
 
@@ -625,6 +640,8 @@ scariv_snoop_top u_snoop_top
  .i_reset_n (i_reset_n),
 
  .snoop_if       (snoop_if),
+
+ .snoop_info_if (w_snoop_info_if),
 
  .l1d_snoop_if   (l1d_snoop_if  ),
  .stq_snoop_if   (stq_snoop_if  ),

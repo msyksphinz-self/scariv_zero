@@ -38,7 +38,9 @@ module scariv_bru
   input scariv_pkg::commit_blk_t i_commit,
 
   br_upd_if.master            ex3_br_upd_if,
-  br_upd_if.slave             ex3_br_upd_slave_if
+  br_upd_if.slave             ex3_br_upd_slave_if,
+
+  brtag_if.master             brtag_if
 );
 
 scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
@@ -46,13 +48,11 @@ scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::BRU_DISP_SIZE];
 logic [scariv_conf_pkg::BRU_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::BRU_DISP_SIZE];
 
-scariv_pkg::issue_t w_rv0_issue;
-scariv_pkg::brmask_t w_rv0_index_oh;
+scariv_bru_pkg::issue_entry_t w_rv0_issue;
 
 done_if #(.RV_ENTRY_SIZE(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)) w_ex3_done_if[1]();
 
 logic              w_ex3_done;
-scariv_pkg::brmask_t w_ex3_index;
 
 scariv_disp_pickup
   #(
@@ -69,13 +69,13 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_scheduler
+scariv_bru_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
     .IS_BRANCH (1'b1),
     .IN_PORT_SIZE(scariv_conf_pkg::BRU_DISP_SIZE)
     )
-u_scariv_scheduler
+u_issue_unit
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
@@ -95,14 +95,11 @@ u_scariv_scheduler
    .i_mispred_lsu (i_mispred_lsu),
 
    .o_issue(w_rv0_issue),
-   .o_iss_index_oh(w_rv0_index_oh),
-
-   .pipe_done_if(w_ex3_done_if),
+   .o_iss_index_oh(),
 
    .i_commit (i_commit),
    .br_upd_if (ex3_br_upd_slave_if),
-
-   .o_done_report (o_done_report)
+   .brtag_if  (brtag_if)
    );
 
 
@@ -116,11 +113,11 @@ u_bru_pipe
    .i_reset_n(i_reset_n),
 
    .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index_oh),
+   .rv0_index('h0),
    .ex1_i_phy_wr(i_phy_wr),
 
-   .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_regread_rs2(ex1_regread_rs2),
+   .ex0_regread_rs1(ex1_regread_rs1),
+   .ex0_regread_rs2(ex1_regread_rs2),
 
    .i_commit (i_commit),
 
@@ -129,7 +126,7 @@ u_bru_pipe
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
 
-   .ex3_done_if   (w_ex3_done_if[0]),
+   .o_done_report (o_done_report),
    .ex3_br_upd_if (ex3_br_upd_if)
    );
 

@@ -25,6 +25,7 @@ package scariv_conf_pkg;
 
   localparam RV_ALU_ENTRY_SIZE = 32;
 
+  localparam RV_LSU_ENTRY_SIZE = 32;
   localparam LDQ_SIZE = 24;
   localparam STQ_SIZE = 24;
 
@@ -38,6 +39,7 @@ package scariv_conf_pkg;
 
   localparam USING_VM = 1'b1;
 
+  localparam BTB_ENTRY_SIZE = 256;
   localparam RAS_ENTRY_SIZE = 64;
   localparam GSHARE_BHT_W   = 11;
 

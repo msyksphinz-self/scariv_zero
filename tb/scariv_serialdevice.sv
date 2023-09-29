@@ -24,7 +24,6 @@ module scariv_serialdevice #(
 );
 
 assign o_req_ready = 1'b1;
-assign o_resp_valid = 1'b0;
 
 integer                       device_fp;
 
