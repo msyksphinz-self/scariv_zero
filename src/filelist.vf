@@ -190,5 +190,5 @@
 ../src/scariv_plic_reg_priority.sv
 ../src/scariv_plic_reg_threshold.sv
 ../src/scariv_plic_regs.sv
+
 ../src/scariv_bootrom.sv
->>>>>>> 7c61e93a86aac954229e6fb21fe8b2620666e576

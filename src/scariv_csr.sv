@@ -586,15 +586,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_mie <= 'h0;
-  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MIE) begin
-    r_mie <= write_if.data;
-  end
-end
-
-=======
 xlen_t w_medeleg_mask;
 assign w_medeleg_mask = (1 << scariv_pkg::INST_ADDR_MISALIGN) |
                         (1 << scariv_pkg::BREAKPOINT        ) |
@@ -620,8 +611,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE           ) begin r_mie           <= write_if.data; end end
->>>>>>> 7c61e93a86aac954229e6fb21fe8b2620666e576
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mie <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE) begin
+    r_mie <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_mtvec.raw_bit <= 'h0;
