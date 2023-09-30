@@ -16,21 +16,23 @@ module scariv_vec_alu_pipe
   parameter RV_ENTRY_SIZE = 32
   )
 (
-    input logic i_clk,
-    input logic i_reset_n,
+ input logic i_clk,
+ input logic i_reset_n,
 
-    // Commit notification
-    input scariv_pkg::commit_blk_t i_commit,
-    br_upd_if.slave              br_upd_if,
+ // Commit notification
+ input scariv_pkg::commit_blk_t i_commit,
+ br_upd_if.slave              br_upd_if,
 
-    input scariv_pkg::issue_t  i_ex0_issue,
-    input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+ input scariv_pkg::issue_t  i_ex0_issue,
+ input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
-    regread_if.master ex0_regread_rs1,
+ regread_if.master      ex0_xpr_regread_rs1,
+ regread_if.master      ex0_fpr_regread_rs1,
 
-    vec_regwrite_if.master vec_phy_wr_if,
+ vec_regread_if.master  vec_phy_rd_if[2],
+ vec_regwrite_if.master vec_phy_wr_if,
 
-    output scariv_pkg::done_rpt_t o_done_report
+ output scariv_pkg::done_rpt_t o_done_report
 );
 
 typedef struct packed {
@@ -49,13 +51,14 @@ logic               w_ex1_commit_flush;
 logic               w_ex1_br_flush;
 logic               w_ex1_flush;
 riscv_pkg::xlen_t r_ex1_rs1_data;
-
+scariv_vec_pkg::dlen_t r_ex1_vpr_rs1_data[2];
 riscv_pkg::xlen_t w_ex1_rs1_selected_data;
 
 pipe_ctrl_t         r_ex2_pipe_ctrl;
 scariv_pkg::issue_t r_ex2_issue;
 scariv_pkg::issue_t w_ex2_issue_next;
 logic               r_ex2_wr_valid;
+scariv_vec_pkg::dlen_t r_ex2_vec_result;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -71,8 +74,11 @@ decoder_vec_ctrl u_pipe_ctrl (
     .op  (w_ex0_pipe_ctrl.op)
 );
 
-assign ex0_regread_rs1.valid = i_ex0_issue.valid & i_ex0_issue.rd_regs[0].valid;
-assign ex0_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
+assign ex0_xpr_regread_rs1.valid = i_ex0_issue.valid & (i_ex0_issue.rd_regs[0].typ == scariv_pkg::GPR) & i_ex0_issue.rd_regs[0].valid;
+assign ex0_xpr_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
+
+assign ex0_fpr_regread_rs1.valid = i_ex0_issue.valid & (i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR) & i_ex0_issue.rd_regs[0].valid;
+assign ex0_fpr_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -95,13 +101,15 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= w_ex1_issue_next;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
 
-    r_ex1_rs1_data <= ex0_regread_rs1.data;
-  end
-end
-
+    r_ex1_rs1_data <= i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR ? ex0_fpr_regread_rs1.data :
+                      ex0_xpr_regread_rs1.data;
+    r_ex1_vpr_rs1_data[0] <= vec_phy_rd_if[0].data;
+    r_ex1_vpr_rs1_data[1] <= vec_phy_rd_if[1].data;
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 // -----------------------------
-// EX2 Stage
+// EX2
 // -----------------------------
 
 assign w_ex1_rs1_selected_data = r_ex1_rs1_data;
@@ -126,13 +134,36 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_wr_valid <= r_ex1_issue.wr_reg.valid;
+
+    case (r_ex1_pipe_ctrl.op)
+      OP_MV_V_V : r_ex2_vec_result <= r_ex1_vpr_rs1_data[0];
+      OP_MV_V_X : r_ex2_vec_result <= r_ex1_rs1_data;
+      OP_MV_V_F : r_ex2_vec_result <= r_ex1_rs1_data;
+      OP_MV_V_I : r_ex2_vec_result <= r_ex1_rs1_data;
+      OP_MV_X_S : r_ex2_vec_result <= r_ex1_rs1_data;
+    // OP_MV_S_X : r_ex2_vec_result <=
+    // OP_MV_F_S : r_ex2_vec_result <=
+    // OP_MV_S_F : r_ex2_vec_result <=
+    // OP_ADD    : r_ex2_vec_result <=
+    // OP_SUB    : r_ex2_vec_result <=
+    // OP_MINU   : r_ex2_vec_result <=
+    // OP_MIN    : r_ex2_vec_result <=
+    // OP_MAXU   : r_ex2_vec_result <=
+    // OP_MAX    : r_ex2_vec_result <=
+    // OP_AND    : r_ex2_vec_result <=
+    // OP_OR     : r_ex2_vec_result <=
+    // OP_XOR    : r_ex2_vec_result <=
+    // OP_VRGATHER :
+      default : r_ex2_vec_result <= 'h0;
+    endcase // case (r_ex1_pipe_ctrl.op)
+
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 always_comb begin
   vec_phy_wr_if.valid   = r_ex2_wr_valid;
   vec_phy_wr_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
-  vec_phy_wr_if.rd_data = 'h0;
+  vec_phy_wr_if.rd_data = r_ex2_vec_result;
 
   o_done_report.valid  = r_ex2_issue.valid;
   o_done_report.cmt_id = r_ex2_issue.cmt_id;

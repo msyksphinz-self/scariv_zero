@@ -63,7 +63,8 @@ package scariv_pkg;
                                   scariv_conf_pkg::VEC_ALU_INST_NUM;     // VEC port
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
-                                 1;                                      // LSU port
+                                 1 +                                     // LSU port
+                                 scariv_conf_pkg::VEC_ALU_INST_NUM;      // VEC port
 
   localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
                                   scariv_conf_pkg::LSU_INST_NUM +    // LSU port

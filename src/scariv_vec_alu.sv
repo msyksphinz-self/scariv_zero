@@ -23,11 +23,14 @@ module scariv_vec_alu #(
     scariv_front_if.watch      disp,
     cre_ret_if.slave           cre_ret_if,
 
-    regread_if.master            ex1_regread_rs1,
+    regread_if.master            ex1_xpr_regread_rs1,
+    regread_if.master            ex1_fpr_regread_rs1,
 
     /* Forwarding path */
     input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
 
+    /* read output */
+    vec_regread_if.master  vec_phy_rd_if[2],
     /* write output */
     vec_regwrite_if.master vec_phy_wr_if,
 
@@ -125,8 +128,10 @@ u_alu
    .i_ex0_issue (w_ex0_issue),
    .ex1_i_phy_wr(i_phy_wr),
 
-   .ex0_regread_rs1(ex1_regread_rs1),
+   .ex0_xpr_regread_rs1(ex1_xpr_regread_rs1),
+   .ex0_fpr_regread_rs1(ex1_fpr_regread_rs1),
 
+   .vec_phy_rd_if (vec_phy_rd_if),
    .vec_phy_wr_if (vec_phy_wr_if),
 
    .o_done_report (o_done_report)

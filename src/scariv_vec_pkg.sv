@@ -5,7 +5,14 @@ parameter VLENB = VLEN_W / 8;
 parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;
-typedef logic [$clog2(riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W)-1: 0] vec_pos_t;
+parameter VEC_STEP_W = riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
+
+typedef logic [$clog2(VEC_STEP_W)-1: 0]         vec_pos_t;
+typedef logic [riscv_vec_conf_pkg::VLEN_W-1: 0] vlen_t;
+typedef logic [riscv_vec_conf_pkg::DLEN_W-1: 0] dlen_t;
+
+parameter VEC_RNID_SIZE = 128;
+parameter VEC_RNID_W    = $clog2(VEC_RNID_SIZE);
 
 parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
@@ -140,11 +147,30 @@ interface vlvtype_req_if;
 endinterface // vlvtype_resolve_if
 
 
+interface vec_regread_if;
+
+  localparam WIDTH = riscv_vec_conf_pkg::DLEN_W;
+
+  logic                      valid;
+  scariv_pkg::rnid_t         rnid;
+  scariv_vec_pkg::vec_pos_t  pos;
+  logic [WIDTH-1: 0]         data;
+
+  modport master(output valid, output rnid, output pos, input data);
+
+  modport slave(input valid, input rnid, input pos, output data);
+
+endinterface // vec_regread_if
+
+
 interface vec_regwrite_if;
-  logic              valid;
-  scariv_pkg::rnid_t rd_rnid;
-  scariv_vec_pkg::vec_pos_t  rd_pos;
-  logic [riscv_vec_conf_pkg::DLEN_W-1: 0] rd_data;
+
+  localparam WIDTH = riscv_vec_conf_pkg::DLEN_W;
+
+  logic                     valid;
+  scariv_pkg::rnid_t        rd_rnid;
+  scariv_vec_pkg::vec_pos_t rd_pos;
+  logic [WIDTH-1: 0]        rd_data;
 
   modport master (
     output valid,
