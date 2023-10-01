@@ -255,7 +255,7 @@ typedef struct packed {
                                          disp_t vpr_disp);
     disp_t ret;
     ret = xpr_disp;
-    ret.wr_reg = xpr_disp.wr_reg.typ == GPR ? xpr_disp.wr_reg : fpr_disp.wr_reg;
+    ret.wr_reg     = xpr_disp.wr_reg.typ     == GPR ? xpr_disp.wr_reg     : xpr_disp.wr_reg.typ     == FPR ? fpr_disp.wr_reg     : vpr_disp.wr_reg;
     ret.rd_regs[0] = xpr_disp.rd_regs[0].typ == GPR ? xpr_disp.rd_regs[0] : xpr_disp.rd_regs[0].typ == FPR ? fpr_disp.rd_regs[0] : vpr_disp.rd_regs[0];
     ret.rd_regs[1] = xpr_disp.rd_regs[1].typ == GPR ? xpr_disp.rd_regs[1] : xpr_disp.rd_regs[1].typ == FPR ? fpr_disp.rd_regs[1] : vpr_disp.rd_regs[1];
     ret.rd_regs[2] = xpr_disp.rd_regs[2].typ == GPR ? xpr_disp.rd_regs[2] : xpr_disp.rd_regs[2].typ == FPR ? fpr_disp.rd_regs[2] : vpr_disp.rd_regs[2];

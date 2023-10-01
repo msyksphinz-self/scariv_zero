@@ -710,15 +710,24 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                                       {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       w_ibuf_front_payload_next.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;
-      w_ibuf_front_payload_next.inst[d_idx].wr_reg.typ     = rd_field_type[d_idx] == RD_R3 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].wr_reg.typ     = /* rd_field_type[d_idx] == RD_R3 ? scariv_pkg::GPR : */
+                                                             rd_field_type[d_idx] == RD_FD ? scariv_pkg::FPR :
+                                                             rd_field_type[d_idx] == RD_V3 ? scariv_pkg::VPR :
+                                                             scariv_pkg::GPR;
       w_ibuf_front_payload_next.inst[d_idx].wr_reg.regidx  = w_expand_inst[d_idx][11: 7];
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].valid  = rs1_field_type[d_idx] != R1__;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].typ    = rs1_field_type[d_idx] == R1_R1 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].typ    = /* rs1_field_type[d_idx] == R1_R1 ? scariv_pkg::GPR : */
+                                                                rs1_field_type[d_idx] == R1_F1 ? scariv_pkg::FPR :
+                                                                rs1_field_type[d_idx] == R1_V1 ? scariv_pkg::VPR :
+                                                                scariv_pkg::GPR;
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR : scariv_pkg::FPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = /* rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR : */
+                                                                rs1_field_type[d_idx] == R2_F2 ? scariv_pkg::FPR :
+                                                                rs1_field_type[d_idx] == R2_V2 ? scariv_pkg::VPR :
+                                                                scariv_pkg::GPR;
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;

@@ -26,6 +26,7 @@ int argc;
 const char *argv[20];
 int g_rv_xlen = 0;
 int g_rv_flen = 0;
+int g_rv_vlen = 0;
 
 extern long long iss_bhr;   // defined in gshare_model.cpp
 
@@ -168,6 +169,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
+  g_rv_vlen = rv_vlen;
   // argv[arg_max++] = "-m0x80000000:0x10000,"     \
   //     "0x0000000000125000:0x1000," \
   //     "0x0000000000129000:0x1000," \
@@ -981,7 +983,8 @@ void step_spike(long long rtl_time, long long rtl_pc,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
-                int rtl_wr_gpr_rnid, long long rtl_wr_val)
+                int rtl_wr_gpr_rnid, long long rtl_wr_val,
+                const uint8_t* rtl_wr_vec_val)
 {
 #ifndef SIM_MAIN
   svScope g_scope;
@@ -1301,6 +1304,76 @@ void step_spike(long long rtl_time, long long rtl_pc,
     } else {
       fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_flen / 4, rtl_wr_val);
     }
+  } else if (rtl_wr_valid && (iss_wr_type == 2 || rtl_wr_type == 2)) { // VPR write
+    bool diff_found = false;
+    for (int b = 0; b < 8; b++) {
+      if (rtl_wr_vec_val[b] != static_cast<uint8_t *>(p->VU.reg_file)[rtl_wr_gpr_addr * (g_rv_vlen/8) + b]) {
+        diff_found = true;
+      }
+    }
+    if (diff_found) {
+      fprintf (compare_log_fp, "==========================================\n");
+      fprintf (compare_log_fp, "Wrong VPR[%02d](%d): \n", rtl_wr_gpr_addr ,rtl_wr_gpr_rnid);
+      fprintf (compare_log_fp, "ISS[%02d] = ", rtl_wr_gpr_addr);
+      for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+        fprintf (compare_log_fp, "%02x", static_cast<uint8_t *>(p->VU.reg_file)[rtl_wr_gpr_addr * (g_rv_vlen/8) + b]);
+        if (b % 4 == 0) {
+          fprintf (compare_log_fp, "_");
+        }
+      }
+      fprintf (compare_log_fp, "\n");
+
+      fprintf(compare_log_fp, "RTL[%02d] = ", rtl_wr_gpr_addr);
+      for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+        fprintf (compare_log_fp, "%02x", rtl_wr_vec_val[b]);
+        if (b % 4 == 0) {
+          fprintf (compare_log_fp, "_");
+        }
+      }
+      fprintf (compare_log_fp, "\n");
+
+      fprintf(compare_log_fp, "          ");
+      for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+        if (rtl_wr_vec_val[b] != static_cast<uint8_t *>(p->VU.reg_file)[rtl_wr_gpr_addr * (g_rv_vlen/8) + b]) {
+          fprintf (compare_log_fp, "~~");
+        } else {
+          fprintf (compare_log_fp, "  ");
+        }
+        if (b % 4 == 0) {
+          fprintf (compare_log_fp, " ");
+        }
+      }
+      fprintf (compare_log_fp, "\n");
+
+      stop_sim (100, rtl_time);
+    } else {
+      fprintf (compare_log_fp, "VPR[%02d](%d) <= ", rtl_wr_gpr_addr ,rtl_wr_gpr_rnid);
+      for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+        fprintf (compare_log_fp, "%02x", rtl_wr_vec_val[b]);
+        if (b % 4 == 0) {
+          fprintf (compare_log_fp, "_");
+        }
+      }
+      fprintf (compare_log_fp, "\n");
+    }
+
+
+
+    // if (!is_equal_vlen(iss_wr_val, rtl_wr_val)) {
+    //   fprintf(compare_log_fp, "==========================================\n");
+    //   fprintf(compare_log_fp, "Wrong VPR[%02d](%d): RTL = %0*llx, ISS = %0*lx\n",
+    //           rtl_wr_gpr_addr, rtl_wr_gpr_rnid,
+    //           g_rv_flen / 4, rtl_wr_val,
+    //           g_rv_flen / 4, iss_wr_val);
+    //   fprintf(compare_log_fp, "==========================================\n");
+    //   fail_count ++;
+    //   if (fail_count >= fail_max) {
+    //     stop_sim(100, rtl_time);
+    //   }
+    //   return;
+    // } else {
+    //   fprintf(compare_log_fp, "VPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_flen / 4, rtl_wr_val);
+    // }
   }
 
 }

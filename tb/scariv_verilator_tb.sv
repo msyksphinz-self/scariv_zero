@@ -21,7 +21,8 @@ import "DPI-C" function void step_spike
    input int     rtl_wr_typ,
    input int     rtl_wr_gpr,
    input int     rtl_wr_rnid,
-   input longint rtl_wr_val
+   input longint rtl_wr_val,
+   input byte    rtl_wr_vec_val[riscv_vec_conf_pkg::VLEN_W/8]
    );
 
 import "DPI-C" function void step_spike_wo_cmp(input int count);
@@ -541,6 +542,15 @@ logic [63: 0]                                                  int_commit_counte
 `define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
 
 
+byte                                                           w_physical_vec_data_rnid[scariv_pkg::DISP_SIZE][riscv_vec_conf_pkg::VLEN_W/8];
+generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin : vpu
+  for (genvar grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
+    for (genvar idx = 0; idx < riscv_vec_conf_pkg::VLEN_W/8; idx++) begin : array_loop
+      assign w_physical_vec_data_rnid[grp_idx][idx] = w_physical_vec_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid][idx*8 +: 8];
+    end
+  end
+end endgenerate
+
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
@@ -563,7 +573,8 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                         committed_rob_entry.inst[grp_idx].wr_reg.rnid,
                         committed_rob_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
                         w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
-                        w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
+                        w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid],
+                        w_physical_vec_data_rnid[grp_idx]);
 
             for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
               if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&

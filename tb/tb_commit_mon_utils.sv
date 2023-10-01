@@ -25,15 +25,21 @@ committed_entry
 );
 
 
-logic [riscv_pkg::XLEN_W-1: 0] w_physical_int_data [scariv_pkg::RNID_SIZE + 32];
-logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::RNID_SIZE + 32];
+logic [riscv_pkg::XLEN_W-1: 0]     w_physical_int_data [scariv_pkg::RNID_SIZE + 32];
+logic [riscv_pkg::FLEN_W-1: 0]     w_physical_fp_data  [scariv_pkg::RNID_SIZE + 32];
+logic [riscv_vec_conf_pkg::VLEN_W-1: 0] w_physical_vec_data [scariv_pkg::RNID_SIZE + 32];
+
 generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin: reg_loop
   assign w_physical_int_data[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_int_phy_registers.r_phy_regs[r_idx];
   if (riscv_pkg::FLEN_W != 0) begin
     assign w_physical_fp_data [r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.r_phy_regs[r_idx];
   end
-end
-endgenerate
+  if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+    for (genvar step_idx = 0; step_idx < scariv_vec_pkg::VEC_STEP_W; step_idx++) begin
+      assign w_physical_vec_data [r_idx][step_idx * riscv_vec_conf_pkg::DLEN_W +: riscv_vec_conf_pkg::DLEN_W] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.vpu.u_vec_registers.r_phy_regs[step_idx][r_idx];
+    end
+  end
+end endgenerate
 
 logic [11 : 0] r_timeout_counter;
 logic          r_finish_valid;
@@ -43,7 +49,7 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
     r_timeout_counter <= 'h0;
     r_finish_valid <= 1'b0;
   end else begin
-    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit & 
+    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit &
         (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id &
          ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id) != 'h0) begin
       r_timeout_counter <= 'h0;
