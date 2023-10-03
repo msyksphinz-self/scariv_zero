@@ -36,6 +36,8 @@ package scariv_conf_pkg;
   localparam MISSU_ENTRY_SIZE = 4;
 
   localparam CMT_ENTRY_SIZE = 16;
+  localparam XPR_PRF_SIZE_PER_GRP = 16;
+  localparam FPR_PRF_SIZE_PER_GRP = 8;
 
   localparam USING_VM = 1'b1;
 

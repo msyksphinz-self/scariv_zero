@@ -40,9 +40,13 @@ package scariv_pkg;
 
   typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
-  localparam FLIST_SIZE = CMT_ENTRY_SIZE;
-  localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
-  localparam RNID_W = $clog2(RNID_SIZE);
+  localparam XPR_FLIST_SIZE = XPR_PRF_SIZE_PER_GRP;
+  localparam FPR_FLIST_SIZE = FPR_PRF_SIZE_PER_GRP;
+  localparam XPR_RNID_SIZE = XPR_FLIST_SIZE * DISP_SIZE + 32;
+  localparam XPR_RNID_W = $clog2(XPR_RNID_SIZE);
+  localparam FPR_RNID_SIZE = FPR_FLIST_SIZE * DISP_SIZE + 32;
+  localparam FPR_RNID_W = $clog2(FPR_RNID_SIZE);
+  localparam MAX_RNID_W = XPR_RNID_W > FPR_RNID_W ? XPR_RNID_W : FPR_RNID_W;
 
   localparam CMT_ENTRY_W = $clog2(CMT_ENTRY_SIZE);
 
@@ -83,9 +87,9 @@ typedef logic [riscv_pkg::VADDR_W-1: 0] vaddr_t;
 typedef logic [riscv_pkg::PADDR_W-1: 0] paddr_t;
 typedef logic [MAX_ADDR_W-1: 0]         maxaddr_t;
 
-typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
-typedef logic [DISP_SIZE-1: 0] grp_id_t;
-typedef logic [RNID_W-1: 0]    rnid_t;
+typedef logic [CMT_ID_W-1: 0]   cmt_id_t;
+typedef logic [DISP_SIZE-1: 0]  grp_id_t;
+typedef logic [MAX_RNID_W-1: 0] rnid_t;
 typedef logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
 
 // ICache Data Types
@@ -669,8 +673,8 @@ endfunction // is_br_flush_target
 typedef struct packed {
   logic                                                      commit;
   grp_id_t                                         rnid_valid;
-  logic [scariv_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
-  logic [scariv_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
+  logic [scariv_conf_pkg::DISP_SIZE-1:0][MAX_RNID_W-1:0] old_rnid;
+  logic [scariv_conf_pkg::DISP_SIZE-1:0][MAX_RNID_W-1:0] rd_rnid;
   logic [scariv_conf_pkg::DISP_SIZE-1:0][ 4: 0]      rd_regidx;
   reg_t [scariv_conf_pkg::DISP_SIZE-1:0]             rd_typ;
   // logic                                                      is_br_included;
