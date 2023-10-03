@@ -507,6 +507,7 @@ u_csu (
 
     .disp_valid(w_disp_csu_valids),
     .disp(w_rn_front_if),
+    .i_vlvtype_ren_idx (r_vlvtype_ren_idx),
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
@@ -531,6 +532,8 @@ u_csu (
 
     .sfence_if (w_sfence_if),
     .o_fence_i (w_fence_i),
+
+    .vlvtype_upd_if (w_vlvtype_upd_if),
 
     .o_done_report (w_csu_done_rpt),
 
@@ -620,11 +623,14 @@ end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
 vlvtype_commit_if w_vlvtype_commit();
+vlvtype_upd_if    w_vlvtype_upd_if();
+scariv_vec_pkg::vlvtype_ren_idx_t r_vlvtype_ren_idx;
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
   vlvtype_req_if                     w_vlvtype_req_if();
-  vlvtype_upd_if                     w_vlvtype_upd_if();
+
+  scariv_vec_pkg::vlvtype_t r_rn_vlvtype;
 
   scariv_pkg::grp_id_t w_ibuf_is_subcat_vset;
 
@@ -635,6 +641,14 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   assign w_vlvtype_req_if.valid              = |w_ibuf_is_subcat_vset;
   assign w_vlvtype_req_if.checkpt_push_valid = |w_ibuf_front_if.payload.is_br_included;
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_rn_vlvtype <= 'h0;
+    end else begin
+      r_rn_vlvtype      <= w_vlvtype_req_if.vlvtype;
+      r_vlvtype_ren_idx <= w_vlvtype_req_if.index;
+    end
+  end
 
   scariv_vec_vlvtype_rename
   u_vec_vlvtype_rename
@@ -652,6 +666,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vlvtype_upd_if (w_vlvtype_upd_if)
    );
 
+
+
   scariv_vec_alu
     #(.PORT_BASE(0))
   u_vec_alu
@@ -663,6 +679,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .disp_valid(w_disp_valu_valids[0]),
      .disp(w_rn_front_if),
+     .i_vlvtype (r_rn_vlvtype),
+
      .cre_ret_if(valu_cre_ret_if),
 
      .ex1_xpr_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +

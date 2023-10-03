@@ -21,7 +21,7 @@ module scariv_csu_pipe
 
   input scariv_pkg::commit_blk_t      i_commit,
 
-  input scariv_pkg::issue_t           rv0_issue,
+  input scariv_csu_pkg::issue_t           rv0_issue,
 
   regread_if.master                 ex1_regread_rs1,
 
@@ -40,6 +40,7 @@ module scariv_csu_pipe
   csr_wr_if.master                  write_vec_if,
 
   vec_csr_if.slave                  vec_csr_if,
+  vlvtype_upd_if.master             vlvtype_upd_if,
 
   /* SFENCE update information */
   sfence_if.master                  sfence_if,
@@ -64,21 +65,21 @@ typedef struct packed {
   logic csr_update;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t                        r_ex0_issue;
+scariv_csu_pkg::issue_t                        r_ex0_issue;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
 csr_update_t                             w_ex0_csr_update;
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex1_issue;
+scariv_csu_pkg::issue_t                        r_ex1_issue;
 
 riscv_pkg::xlen_t      w_ex2_rs1_selected_data;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex2_issue;
+scariv_csu_pkg::issue_t                        r_ex2_issue;
 riscv_pkg::xlen_t            r_ex2_rs1_data;
 
 pipe_ctrl_t                              r_ex3_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex3_issue;
+scariv_csu_pkg::issue_t                        r_ex3_issue;
 riscv_pkg::xlen_t           r_ex3_result;
 riscv_pkg::xlen_t           r_ex3_csr_rd_data;
 logic                                    r_ex3_csr_illegal;
@@ -230,9 +231,14 @@ assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 
 assign vec_csr_if.write.valid = r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_VSETVL);
-assign vec_csr_if.write.vtype = r_ex3_issue.inst[30:20];
+assign vec_csr_if.write.vtype = r_ex3_issue.inst[20 +: $bits(scariv_vec_pkg::vtype_t)];
 assign vec_csr_if.write.vill  = 1'b0;
 assign vec_csr_if.write.vl    = r_ex3_result;
+
+assign vlvtype_upd_if.valid         = vec_csr_if.write.valid;
+assign vlvtype_upd_if.vlvtype.vl    = r_ex3_result;
+assign vlvtype_upd_if.vlvtype.vtype = r_ex3_issue.inst[20 +: $bits(scariv_vec_pkg::vtype_t)];
+assign vlvtype_upd_if.index         = r_ex3_issue.vlvtype_ren_idx;
 
 // ------------
 // SFENCE Update

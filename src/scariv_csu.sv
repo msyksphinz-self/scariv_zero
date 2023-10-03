@@ -13,9 +13,10 @@ module scariv_csu
   input logic i_clk,
   input logic i_reset_n,
 
-  input scariv_pkg::grp_id_t disp_valid,
-  scariv_front_if.watch                              disp,
-  cre_ret_if.slave                       cre_ret_if,
+  input scariv_pkg::grp_id_t              disp_valid,
+  scariv_front_if.watch                   disp,
+  input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
+  cre_ret_if.slave                        cre_ret_if,
 
   regread_if.master                          ex1_regread_rs1,
 
@@ -42,7 +43,9 @@ module scariv_csu
   /* SFENCE update information */
   sfence_if.master            sfence_if,
   /* FENCE.I update */
-  output logic                      o_fence_i,
+  output logic                o_fence_i,
+
+  vlvtype_upd_if.master       vlvtype_upd_if,
 
   // CLINT connection
   clint_if.slave clint_if,
@@ -59,7 +62,7 @@ scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::CSU_DISP_SIZE];
 logic [scariv_conf_pkg::CSU_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::CSU_DISP_SIZE];
 
-scariv_pkg::issue_t w_rv0_issue;
+scariv_csu_pkg::issue_t w_rv0_issue;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic         w_ex3_done;
@@ -106,6 +109,8 @@ u_scariv_issue_unit
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
+   .i_vlvtype_ren_idx (i_vlvtype_ren_idx),
+
    .cre_ret_if  (cre_ret_if),
 
    .i_stall (1'b0),
@@ -146,6 +151,7 @@ u_csu_pipe
    .read_vec_if  (w_vec_csr_read_if),
    .write_vec_if (w_vec_csr_write_if),
    .vec_csr_if (w_vec_csr_if),
+   .vlvtype_upd_if (vlvtype_upd_if),
 
    .sfence_if (sfence_if),
    .o_fence_i (o_fence_i),

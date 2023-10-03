@@ -19,9 +19,11 @@ module scariv_vec_alu #(
     /* ROB notification interface */
     rob_info_if.slave          rob_info_if,
 
-    input scariv_pkg::grp_id_t disp_valid,
-    scariv_front_if.watch      disp,
-    cre_ret_if.slave           cre_ret_if,
+    input scariv_pkg::grp_id_t      disp_valid,
+    scariv_front_if.watch           disp,
+    input scariv_vec_pkg::vlvtype_t i_vlvtype,
+
+    cre_ret_if.slave             cre_ret_if,
 
     regread_if.master            ex1_xpr_regread_rs1,
     regread_if.master            ex1_fpr_regread_rs1,
@@ -81,7 +83,7 @@ generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin 
   assign w_mispred_lsu[idx] = 'h0;
 end endgenerate
 
-scariv_issue_unit
+scariv_valu_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_VALU_ENTRY_SIZE),
     .IN_PORT_SIZE(VEC_ALU_PORT_SIZE)
@@ -97,6 +99,8 @@ u_scariv_issue_unit
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (w_disp_picked_grp_id),
    .i_disp_info (w_disp_picked_inst),
+   .i_vlvtype   (i_vlvtype),
+
    .cre_ret_if  (cre_ret_if),
 
    .i_stall    (1'b0),

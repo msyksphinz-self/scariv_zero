@@ -1,13 +1,13 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_csu_issue_unit
+// NAME : scariv_valu_issue_unit
 // TYPE : module
 // ------------------------------------------------------------------------
-// Scheduler for CSU
+// Scheduler for Vector ALU
 // ------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------
 
-module scariv_csu_issue_unit
+module scariv_valu_issue_unit
   #(
     parameter ENTRY_SIZE = 32,
     parameter IN_PORT_SIZE = 2,
@@ -27,20 +27,23 @@ module scariv_csu_issue_unit
  input scariv_pkg::cmt_id_t            i_cmt_id,
  input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
  scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
- input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
+ input scariv_vec_pkg::vlvtype_t       i_vlvtype,
 
  cre_ret_if.slave                      cre_ret_if,
 
  input logic                           i_stall,
 
  /* Forwarding path */
- input scariv_pkg::phy_wr_t            i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+ input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
+ input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
 
- output scariv_csu_pkg::issue_t            o_issue,
+ output                                scariv_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
+ input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+
  // Commit notification
- input scariv_pkg::commit_blk_t        i_commit,
+ input scariv_pkg::commit_blk_t          i_commit,
  // Branch Flush Notification
  br_upd_if.slave                       br_upd_if
  );
@@ -51,7 +54,7 @@ logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-scariv_csu_pkg::issue_t w_entry[ENTRY_SIZE];
+scariv_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
@@ -154,7 +157,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end
 
     if ($countones(w_entry_valid) + $countones(u_entry_freelist.r_active_bits) != ENTRY_SIZE) begin
-      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contraction\n",
+      $fatal(0, "Number of valid Entries = %d Number of remained freelists = %d, has contradiction\n",
              $countones(w_entry_valid), $countones(u_entry_freelist.r_active_bits));
     end
   end
@@ -198,12 +201,6 @@ u_inst_selector
    .out  (w_picked_inst_oh)
    );
 
-logic [IN_PORT_SIZE-1: 0] w_disp_oldest_valid;
-
-generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : disp_oldest_loop
-  decoder_csu_sched u_csu_sched (.inst(i_disp_info[p_idx].inst), .oldest(w_disp_oldest_valid[p_idx]));
-end endgenerate
-
 
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
@@ -216,9 +213,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
-  scariv_csu_issue_entry
+  scariv_valu_issue_entry
     #(
       .IS_BRANCH (IS_BRANCH),
+      .EN_OLDEST(EN_OLDEST),
       .NUM_OPERANDS(NUM_OPERANDS)
       )
   u_issue_entry(
@@ -231,18 +229,18 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_put      (|w_input_valid),
     .i_dead_put (1'b0),
 
-    .i_cmt_id   (i_cmt_id  ),
-    .i_grp_id   (w_disp_grp_id  ),
-    .i_put_data (w_disp_entry  ),
-    .i_vlvtype_ren_idx (i_vlvtype_ren_idx),
-
-    .i_inst_oldest (|(w_disp_oldest_valid & w_input_valid)),
+    .i_cmt_id   (i_cmt_id     ),
+    .i_grp_id   (w_disp_grp_id),
+    .i_put_data (w_disp_entry ),
+    .i_vlvtype  (i_vlvtype    ),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
+    .i_early_wr(i_early_wr),
     .i_phy_wr(i_phy_wr),
+    .i_mispred_lsu(i_mispred_lsu),
 
     .i_commit  (i_commit),
     .br_upd_if (br_upd_if),
@@ -259,7 +257,7 @@ endgenerate
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
-bit_oh_or #(.T(scariv_csu_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 // --------------
@@ -269,14 +267,14 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done)
 
 `ifdef SIMULATION
 typedef struct packed {
-  scariv_csu_pkg::issue_t entry;
+  scariv_pkg::issue_t entry;
   scariv_pkg::sched_state_t state;
 } entry_ptr_t;
 
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
 
   if (entry.entry.valid) begin
-    $fwrite(fp, "    \"scariv_issue_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "    \"scariv_valu_issue_entry[%d]\" : {", index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "valid:%d, ", entry.entry.valid);
     $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.entry.pc_addr);
     $fwrite(fp, "inst:\"%08x\", ", entry.entry.inst);
@@ -310,7 +308,7 @@ endgenerate
 
 function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
-    $fwrite(fp, "  \"scariv_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
+    $fwrite(fp, "  \"scariv_valu_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
       dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
@@ -354,4 +352,4 @@ endfunction // dump_perf
 
 `endif // SIMULATION
 
-endmodule // scariv_csu_issue_unit
+endmodule // scariv_valu_issue_unit

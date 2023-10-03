@@ -18,11 +18,19 @@ parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
 typedef logic [$clog2(VLVTYPE_REN_SIZE)-1: 0] vlvtype_ren_idx_t;
 
+typedef enum logic [ 2: 0] {
+   EW8  = 0,
+   EW16 = 1,
+   EW32 = 2,
+   EW64 = 3
+} ew_t;
+
+
 typedef struct packed {
-  logic [ 2: 0]  vlmul;
-  logic [ 2: 0]  vsew;
-  logic          vta;
-  logic          vma;
+  logic          vma;    // bit[    7]
+  logic          vta;    // bit[    6]
+  ew_t           vsew;   // bit[ 5: 3]
+  logic [ 2: 0]  vlmul;  // bit[ 2: 0]
 } vtype_t;
 
 typedef struct packed {
@@ -46,6 +54,131 @@ function automatic vlenbmax_t calc_vlmax(logic [ 2: 0] vlmul,
   return (VLENB << vlmul) >> vsew;
 
 endfunction
+
+
+typedef struct packed {
+  logic                 valid;
+  scariv_pkg::vaddr_t    pc_addr;
+  logic [31:0]          inst;
+  scariv_pkg::inst_cat_t cat;
+  scariv_pkg::brtag_t      brtag;
+
+  scariv_pkg::cmt_id_t     cmt_id;
+  scariv_pkg::grp_id_t     grp_id;
+
+  scariv_pkg::reg_wr_issue_t         wr_reg;
+  scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
+
+  logic             except_valid;
+  scariv_pkg::except_t          except_type;
+  scariv_pkg::xlen_t except_tval;
+
+  logic      fflags_update_valid;
+  scariv_pkg::fflags_t   fflags;
+
+  vlvtype_t vlvtype;
+`ifdef SIMULATION
+  logic [63: 0] kanata_id;
+`endif // SIMULATION
+} issue_t;
+
+
+function issue_t assign_issue_common (scariv_pkg::disp_t in,
+                                      scariv_pkg::cmt_id_t cmt_id,
+                                      scariv_pkg::grp_id_t grp_id,
+                                      vlvtype_t vlvtype);
+  issue_t ret;
+
+  ret.valid = in.valid;
+  ret.inst  = in.inst;
+  ret.pc_addr = in.pc_addr;
+
+  ret.cat   = in.cat;
+  ret.brtag = in.brtag;
+
+  ret.cmt_id = cmt_id;
+  ret.grp_id = grp_id;
+
+  ret.wr_reg.valid = in.wr_reg.valid;
+  ret.wr_reg.typ = in.wr_reg.typ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid = in.wr_reg.rnid;
+
+  ret.vlvtype = vlvtype;
+
+  ret.except_valid = 1'b0;
+  ret.except_type  = scariv_pkg::INST_ADDR_MISALIGN;
+
+  ret.fflags_update_valid = 1'b0;
+  ret.fflags = 'h0;
+
+`ifdef SIMULATION
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+  return ret;
+
+endfunction // assign_issue_common
+
+
+function issue_t assign_issue_op2 (scariv_pkg::disp_t in,
+                                   scariv_pkg::cmt_id_t cmt_id,
+                                   scariv_pkg::grp_id_t grp_id,
+                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
+                                   vlvtype_t vlvtype);
+  issue_t ret;
+  ret = assign_issue_common (in, cmt_id, grp_id, vlvtype);
+
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = in.rd_regs[rs_idx].valid & rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
+    end
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
+  return ret;
+
+endfunction // assign_issue_op2
+
+
+function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
+                                   scariv_pkg::cmt_id_t cmt_id,
+                                   scariv_pkg::grp_id_t grp_id,
+                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
+                                   vlvtype_t vlvtype);
+  issue_t ret;
+  ret = assign_issue_common (in, cmt_id, grp_id, vlvtype);
+
+  for (int rs_idx = 0; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
+    ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
+    ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
+    ret.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
+    ret.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[0] = in.rd_regs[rs_idx].valid & rs_rel_hit[rs_idx];
+    ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
+    if (ret.rd_regs[rs_idx].predict_ready[0]) begin
+      ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
+    end
+  end
+
+  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
+    ret.rd_regs[rs_idx].valid = 1'b0;
+  end
+
+  return ret;
+
+endfunction // assign_issue_op3
+
 
 endpackage // scariv_vec_pkg
 

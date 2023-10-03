@@ -1,14 +1,15 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_csu_issue_entry
+// NAME : scariv_valu_issue_entry
 // TYPE : module
 // ------------------------------------------------------------------------
-// Scheduler entry for CSU
+// Scheduler entry for ALU
 // ------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------
 
-module scariv_csu_issue_entry
+module scariv_valu_issue_entry
   #(
+    parameter EN_OLDEST = 1'b0,
     parameter IS_BRANCH = 1'b0,
     parameter NUM_OPERANDS = 2
     )
@@ -25,19 +26,20 @@ module scariv_csu_issue_entry
    input logic                i_put,
    input logic                i_dead_put,
 
-   input scariv_pkg::cmt_id_t i_cmt_id,
-   input scariv_pkg::grp_id_t i_grp_id,
-   input scariv_pkg::disp_t   i_put_data,
-   input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
-   input logic                i_inst_oldest,
+   input scariv_pkg::cmt_id_t      i_cmt_id,
+   input scariv_pkg::grp_id_t      i_grp_id,
+   input scariv_pkg::disp_t        i_put_data,
+   input scariv_vec_pkg::vlvtype_t i_vlvtype,
 
    output logic               o_entry_valid,
    /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
-   output scariv_csu_pkg::issue_t o_entry,
+   output scariv_vec_pkg::issue_t o_entry,
 
    /* Forwarding path */
+   input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic       i_entry_picked,
 
@@ -54,17 +56,20 @@ logic    r_issued;
 logic    w_issued_next;
 logic    r_dead;
 logic    w_dead_next;
-scariv_csu_pkg::issue_t r_entry;
+scariv_vec_pkg::issue_t r_entry;
 /* verilator lint_off UNOPTFLAT */
-scariv_csu_pkg::issue_t w_entry_next;
-scariv_csu_pkg::issue_t w_init_entry;
+scariv_vec_pkg::issue_t w_entry_next;
+scariv_vec_pkg::issue_t w_init_entry;
 
 logic    w_oldest_ready;
 
 scariv_pkg::rnid_t w_rs_rnid[NUM_OPERANDS];
 scariv_pkg::reg_t  w_rs_type[NUM_OPERANDS];
-logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
+logic [NUM_OPERANDS-1: 0] w_rs_rel_hit;
 scariv_pkg::rel_bus_idx_t w_rs_rel_index[NUM_OPERANDS];
+logic [NUM_OPERANDS-1: 0] w_rs_may_mispred;
+logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
+logic [NUM_OPERANDS-1: 0] w_rs_mispredicted;
 
 logic     w_entry_flush;
 logic     w_commit_flush;
@@ -81,7 +86,7 @@ logic w_pc_update_before_entry;
 scariv_pkg::sched_state_t r_state;
 scariv_pkg::sched_state_t w_state_next;
 
-function logic all_operand_ready(scariv_csu_pkg::issue_t entry);
+function logic all_operand_ready(scariv_vec_pkg::issue_t entry);
   logic     ret;
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
         (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
@@ -93,10 +98,22 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
   assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
   assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
 
+  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
+                                           .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
   select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
-  assign w_rs_rel_index[rs_idx] = 'h0;
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
+                                        .o_mispred (w_rs_mispredicted[rs_idx]));
 end endgenerate
+
+logic [NUM_OPERANDS-1: 0] w_rs_pred_mispredicted;
+logic                     w_rs_pred_mispredicted_or;
+generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_pred_mispred_loop
+  assign w_rs_pred_mispredicted[rs_idx] = r_entry.rd_regs[rs_idx].predict_ready & w_rs_mispredicted[rs_idx];
+end
+endgenerate
+assign w_rs_pred_mispredicted_or = |w_rs_pred_mispredicted;
+
 
 always_comb begin
   w_state_next  = r_state;
@@ -105,8 +122,13 @@ always_comb begin
   w_entry_next  = r_entry;
 
   for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
-    w_entry_next.rd_regs[rs_idx].ready         = r_entry.rd_regs[rs_idx].ready | w_rs_phy_hit[rs_idx];
-    w_entry_next.rd_regs[rs_idx].predict_ready = 'h0;
+    w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready[0] = r_entry.rd_regs[rs_idx].valid & w_rs_rel_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
+
+    if (w_entry_next.rd_regs[rs_idx].predict_ready[0]) begin
+      w_entry_next.rd_regs[rs_idx].early_index    = w_rs_rel_index[rs_idx];
+    end
   end
 
   case (r_state)
@@ -115,8 +137,6 @@ always_comb begin
         w_state_next = scariv_pkg::INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
-        w_entry_next.oldest_valid = i_inst_oldest;
-        w_entry_next.vlvtype_ren_idx = i_vlvtype_ren_idx;
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
           w_dead_next  = 1'b1;
@@ -132,7 +152,7 @@ always_comb begin
       end else begin
         if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
           w_state_next = scariv_pkg::DONE;
-        end else if (o_entry_valid & o_entry_ready & i_entry_picked) begin
+        end else if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
           w_issued_next = 1'b1;
           w_state_next = scariv_pkg::ISSUED;
         end
@@ -143,7 +163,15 @@ always_comb begin
         w_state_next = scariv_pkg::SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        w_state_next = scariv_pkg::SCHED_CLEAR;
+        if (w_rs_pred_mispredicted_or) begin
+          w_state_next = scariv_pkg::WAIT;
+          w_issued_next = 1'b0;
+          w_entry_next.rd_regs[0].predict_ready = 1'b0;
+          w_entry_next.rd_regs[1].predict_ready = 1'b0;
+          w_entry_next.rd_regs[2].predict_ready = 1'b0;
+        end else begin
+          w_state_next = scariv_pkg::SCHED_CLEAR;
+        end
       end
     end // case: scariv_pkg::ISSUED
     scariv_pkg::SCHED_CLEAR : begin
@@ -165,7 +193,17 @@ always_comb begin
 end // always_comb
 
 
-assign w_init_entry = scariv_csu_pkg::assign_issue_entry(i_put_data, i_cmt_id, i_grp_id, 'h0, w_rs_phy_hit, 'h0);
+generate if (NUM_OPERANDS == 3) begin : init_entry_op3
+  assign w_init_entry = scariv_vec_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
+                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred,
+                                                         i_vlvtype);
+end else begin
+  assign w_init_entry = scariv_vec_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
+                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
+                                                         i_vlvtype);
+end
+endgenerate
+
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -195,10 +233,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = ~r_entry.oldest_valid  ? 1'b1 :
-                        (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
-assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
+generate if (EN_OLDEST == 1'b1) begin
+  assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                          ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+  assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
+end else begin
+  assign w_oldest_ready = 1'b1;
+  assign w_pc_update_before_entry = 1'b0;
+end
+endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
@@ -208,4 +251,4 @@ assign o_entry       = r_entry;
 
 assign o_issue_succeeded = (r_state == scariv_pkg::SCHED_CLEAR);
 
-endmodule // scariv_csu_issue_entry
+endmodule // scariv_valu_issue_entry
