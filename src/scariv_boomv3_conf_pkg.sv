@@ -36,9 +36,12 @@ package scariv_conf_pkg;
   localparam MISSU_ENTRY_SIZE = 2;
 
   localparam CMT_ENTRY_SIZE = 32;
+  localparam XPR_PRF_SIZE_PER_GRP = 24;
+  localparam FPR_PRF_SIZE_PER_GRP = 16;
 
   localparam USING_VM = 1'b1;
 
+  localparam BTB_ENTRY_SIZE = 64;
   localparam RAS_ENTRY_SIZE = 16;
   localparam GSHARE_BHT_W   = 9;
 

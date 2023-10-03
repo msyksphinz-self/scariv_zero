@@ -136,7 +136,7 @@ uc_write_if             w_uc_write_if();
 
 st_req_info_if          w_st_req_info_if();
 
-sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM];
+sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM]();
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fence_i;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_valid;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;

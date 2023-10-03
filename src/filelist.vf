@@ -5,6 +5,7 @@
 ../src/decoder_bru_ctrl.sv
 ../src/decoder_csu_ctrl.sv
 ../src/decoder_csu_sched.sv
+../src/decoder_lsu_sched.sv
 ../src/decoder_fpu_ctrl.sv
 
 ../src/recurse_pkg.sv
