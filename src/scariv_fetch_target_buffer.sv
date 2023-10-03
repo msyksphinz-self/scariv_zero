@@ -56,7 +56,7 @@ logic [FTB_ENTRY_WAY_SIZE-1: 0]                 w_s0_tag_hit;
 ftb_entry_t w_s0_ftb_way_sel_entry;
 
 generate for (genvar w_idx = 0; w_idx < FTB_ENTRY_WAY_SIZE; w_idx++) begin : s0_index_loop
-  assign w_s0_ftb_target_entries[w_idx] = r_ftb_entries[w_idx][w_s0_ftb_index];
+  assign w_s0_ftb_target_entries[w_idx] = r_ftb_entries[w_s0_ftb_index][w_idx];
 
   assign w_s0_tag_hit[w_idx] = w_s0_ftb_target_entries[w_idx].pc_tag == i_s0_pc[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)];
 end endgenerate
@@ -83,11 +83,11 @@ logic w_ftb_update_valid;
 logic [$clog2(FTB_ENTRY_SIZE_PER_WAY)-1: 0] w_ftb_update_index;
 logic [$clog2(FTB_ENTRY_WAY_SIZE)-1: 0]     w_ftb_update_way;
 assign w_ftb_update_valid = br_upd_if.update & !br_upd_if.dead & ~(br_upd_if.is_call | br_upd_if.is_ret);
-assign w_ftb_update_index = br_upd_if.pc_vaddr[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
+assign w_ftb_update_index = br_upd_if.basicblk_pc_vaddr[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
 assign w_ftb_update_way = br_upd_if.pc_vaddr[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
 ftb_entry_t w_ftb_update_entry;
 assign w_ftb_update_entry.partial_target_vaddr = br_upd_if.target_vaddr[15: 0];
-assign w_ftb_update_entry.pc_tag               = br_upd_if.pc_vaddr[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)];
+assign w_ftb_update_entry.pc_tag               = br_upd_if.basicblk_pc_vaddr[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)];
 assign w_ftb_update_entry.bimodal              = (((br_upd_if.bim_value == 2'b11) & !br_upd_if.mispredict &  br_upd_if.taken |
                                                    (br_upd_if.bim_value == 2'b00) & !br_upd_if.mispredict & !br_upd_if.taken)) ? br_upd_if.bim_value :
                                                  br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
