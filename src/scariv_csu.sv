@@ -40,11 +40,6 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
-  /* SFENCE update information */
-  sfence_if.master            sfence_if,
-  /* FENCE.I update */
-  output logic                o_fence_i,
-
   vlvtype_upd_if.master       vlvtype_upd_if,
 
   // CLINT connection
@@ -152,9 +147,6 @@ u_csu_pipe
    .write_vec_if (w_vec_csr_write_if),
    .vec_csr_if (w_vec_csr_if),
    .vlvtype_upd_if (vlvtype_upd_if),
-
-   .sfence_if (sfence_if),
-   .o_fence_i (o_fence_i),
 
    .o_done_report (o_done_report)
    );

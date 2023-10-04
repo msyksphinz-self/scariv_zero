@@ -21,8 +21,11 @@ module scariv_st_buffer
  // Interface of Missed Data for Store
  l1d_missu_if.master l1d_missu_stq_miss_if,
  // Write Data to DCache
- l1d_wr_if.master l1d_wr_if,
- l1d_wr_if.master l1d_merge_if,
+ l1d_wr_if.master l1d_stbuf_wr_if,
+ // Watch for write successfuly with merged data
+ l1d_wr_if.watch  l1d_mshr_wr_if,
+ // MSHR to STBuf: Write Merge Interface
+ mshr_stbuf_search_if.slave mshr_stbuf_search_if,
 
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave  stbuf_fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -34,6 +37,7 @@ module scariv_st_buffer
  missu_pa_search_if.master   missu_pa_search_if,
 
  // Snoop Interface
+ snoop_info_if.monitor snoop_info_if,
  stbuf_snoop_if.slave  stbuf_snoop_if,
 
  // MISSU Resolve Notofication
@@ -58,8 +62,7 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_rd_req_oh;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_wr_req_oh;
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req;
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_req_oh;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_l1d_merge_hit;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_refused;
@@ -81,6 +84,7 @@ logic [ST_BUF_ENTRY_SIZE-1: 0]          w_ex2_rmw_order_haz_vld[scariv_conf_pkg:
 // STQ All Entries
 // ----------------------
 st_buffer_entry_t w_entries[ST_BUF_ENTRY_SIZE];
+st_buffer_state_t w_state  [ST_BUF_ENTRY_SIZE];
 
 
 assign w_st_buffer_allocated = st_buffer_if.valid &
@@ -149,23 +153,26 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_l1d_wr_req         (w_entry_l1d_wr_req   [e_idx]),
      .i_l1d_wr_accepted    (w_entry_l1d_wr_req_oh[e_idx]),
 
-     .i_l1d_wr_s1_resp_hit      (l1d_wr_if.s1_wr_resp.s1_hit),
-     .i_l1d_wr_s1_resp_conflict (l1d_wr_if.s1_wr_resp.s1_conflict),
+     .i_l1d_wr_s1_resp_hit      (l1d_stbuf_wr_if.s1_wr_resp.s1_hit),
+     .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
 
+     .i_snoop_busy     (snoop_info_if.busy),
      .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
      .i_missu_resolve (i_missu_resolve),
 
      .amo_op_if (w_amo_op_if[e_idx]),
 
+     .l1d_mshr_wr_if   (l1d_mshr_wr_if),
      .o_ready_to_merge (w_ready_to_merge),
-     .o_l1d_merge_req  (w_entry_l1d_merge_req[e_idx]),
+     .i_mshr_l1d_wr_merged (w_entry_l1d_merge_hit[e_idx]),
      .o_entry(w_entries[e_idx]),
+     .o_state(w_state  [e_idx]),
      .o_entry_finish (w_entry_finish[e_idx]),
      .i_finish_accepted(w_out_ptr_oh[e_idx])
      );
 
   // Search Merging
-  assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge &
+  assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge & ~w_entry_l1d_merge_hit[e_idx] &
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
   assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~w_ready_to_merge &
@@ -177,6 +184,11 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
                                                    w_entries[e_idx].is_rmw &
                                                    rmw_order_check_if[p_idx].ex2_valid;
   end // block: rmw_order_haz_loop
+
+  // MSHR L1D update & Merge
+  assign w_entry_l1d_merge_hit[e_idx] = w_entries[e_idx].valid & (w_state[e_idx] == ST_BUF_WAIT_REFILL) &
+                                        ~w_entries[e_idx].is_rmw &
+                                        |(w_entries[e_idx].missu_index_oh & mshr_stbuf_search_if.mshr_index_oh);
 
 end // block: entry_loop
 endgenerate
@@ -202,9 +214,9 @@ select_l1d_rd_entry_oh
    .o_selected(w_l1d_rd_entry)
    );
 
-assign l1d_rd_if.s0_valid = |w_entry_l1d_rd_req;
-assign l1d_rd_if.s0_high_priority = 1'b0;
-assign l1d_rd_if.s0_paddr = w_l1d_rd_entry.paddr;
+assign l1d_rd_if.s0_valid         = |w_entry_l1d_rd_req;
+assign l1d_rd_if.s0_high_priority = w_l1d_rd_entry.l1d_high_priority;
+assign l1d_rd_if.s0_paddr         = w_l1d_rd_entry.paddr;
 
 // -----------------
 // MISSU entry search
@@ -249,7 +261,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign l1d_missu_stq_miss_if.load = |w_entry_missu_req; /* & w_s2_conflict_evict_addrxo; */
-assign l1d_missu_stq_miss_if.req_payload.paddr               = w_missu_target_entry.paddr;
+assign l1d_missu_stq_miss_if.req_payload.paddr = w_missu_target_entry.paddr;
+assign l1d_missu_stq_miss_if.req_payload.way   = w_missu_target_entry.l1d_way;
 
 
 // --------------------------------------------
@@ -267,39 +280,24 @@ select_l1d_wr_entry_oh
    );
 
 always_comb begin
-  l1d_wr_if.s0_valid                   = |w_entry_l1d_wr_req_oh;
-  l1d_wr_if.s0_wr_req.s0_way           = w_l1d_wr_entry.l1d_way;
-  l1d_wr_if.s0_wr_req.s0_paddr         = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
-  l1d_wr_if.s0_wr_req.s0_data          = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
-  l1d_wr_if.s0_wr_req.s0_mesi          = scariv_lsu_pkg::MESI_MODIFIED;
+  l1d_stbuf_wr_if.s0_valid                   = |w_entry_l1d_wr_req_oh;
+  l1d_stbuf_wr_if.s0_wr_req.s0_way           = w_l1d_wr_entry.l1d_way;
+  l1d_stbuf_wr_if.s0_wr_req.s0_paddr         = {w_l1d_wr_entry.paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {($clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)){1'b0}}};
+  l1d_stbuf_wr_if.s0_wr_req.s0_data          = {multiply_dc_stbuf_width{w_l1d_wr_entry.data}};
+  l1d_stbuf_wr_if.s0_wr_req.s0_mesi          = scariv_lsu_pkg::MESI_MODIFIED;
 end
 
 generate if (multiply_dc_stbuf_width == 1) begin
-  assign l1d_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb;
+  assign l1d_stbuf_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb;
   end else begin
   /* verilator lint_off WIDTH */
-  assign l1d_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
+  assign l1d_stbuf_wr_if.s0_wr_req.s0_be    = w_l1d_wr_entry.strb << {w_l1d_wr_entry.paddr[$clog2(ST_BUF_WIDTH/8) +: $clog2(multiply_dc_stbuf_width)], {$clog2(ST_BUF_WIDTH/8){1'b0}}};
   end
 endgenerate
 
 // --------------------------------------------
 // L1D Merge Interface
 // --------------------------------------------
-st_buffer_entry_t  w_l1d_merge_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_l1d_merge_req_sel (.in(w_entry_l1d_merge_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_l1d_merge_req_oh));
-bit_oh_or
-  #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
-select_l1d_merge_entry_oh
-  (
-   .i_oh(w_entry_l1d_merge_req_oh),
-   .i_data(w_entries),
-   .o_selected(w_l1d_merge_entry)
-   );
-
-assign l1d_merge_if.s0_valid = |w_entry_l1d_merge_req;
-assign l1d_merge_if.s0_wr_req.s0_paddr = w_l1d_merge_entry.paddr;
-assign l1d_merge_if.s0_wr_req.s0_mesi  = scariv_lsu_pkg::MESI_MODIFIED;
-
 logic [DCACHE_DATA_B_W-1: 0] w_entries_be  [ST_BUF_ENTRY_SIZE];
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0] w_entries_data[ST_BUF_ENTRY_SIZE];
   generate if (multiply_dc_stbuf_width == 1) begin
@@ -321,14 +319,14 @@ generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : l1d_me
   logic [ 7: 0]                  w_st_buf_byte_data [ST_BUF_ENTRY_SIZE];
   logic [ 7: 0]                  w_st_buf_byte_sel_data;
   for (genvar s_idx = 0; s_idx < ST_BUF_ENTRY_SIZE; s_idx++) begin : stbuf_loop
-    assign w_st_buf_byte_valid[s_idx] = w_entry_l1d_merge_req[s_idx] & w_entries_be[s_idx][b_idx];
+    assign w_st_buf_byte_valid[s_idx] = w_entry_l1d_merge_hit[s_idx] & w_entries_be[s_idx][b_idx];
     assign w_st_buf_byte_data [s_idx] = w_entries_data[s_idx][b_idx*8 +: 8];
   end
 
   bit_oh_or #(.T(logic[7:0]), .WORDS(ST_BUF_ENTRY_SIZE)) select_be_data(.i_oh(w_st_buf_byte_valid), .i_data(w_st_buf_byte_data), .o_selected(w_st_buf_byte_sel_data));
 
-  assign l1d_merge_if.s0_wr_req.s0_data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
-  assign l1d_merge_if.s0_wr_req.s0_be[b_idx]           = |w_st_buf_byte_valid;
+  assign mshr_stbuf_search_if.stbuf_data[b_idx*8 +: 8]  = w_st_buf_byte_sel_data;
+  assign mshr_stbuf_search_if.stbuf_be  [b_idx]         = |w_st_buf_byte_valid;
 end // block: l1d_merge_loop
 endgenerate
 
@@ -423,7 +421,7 @@ import "DPI-C" function void record_stq_store
 
 byte l1d_array[scariv_lsu_pkg::DCACHE_DATA_B_W];
   generate for (genvar idx = 0; idx < scariv_lsu_pkg::DCACHE_DATA_B_W; idx++) begin : array_loop
-    assign l1d_array[idx] = l1d_wr_if.s0_wr_req.s0_data[idx*8+:8];
+    assign l1d_array[idx] = l1d_stbuf_wr_if.s0_wr_req.s0_data[idx*8+:8];
   end
 endgenerate
 
@@ -437,13 +435,13 @@ byte sim_s1_l1d_array[scariv_lsu_pkg::DCACHE_DATA_B_W];
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
 
-    sim_s1_valid <= l1d_wr_if.s0_valid;
-    sim_s1_paddr <= l1d_wr_if.s0_wr_req.s0_paddr;
-    sim_s1_data  <= l1d_wr_if.s0_wr_req.s0_data;
-    sim_s1_be    <= l1d_wr_if.s0_wr_req.s0_be;
-    sim_s1_way   <= l1d_wr_if.s0_wr_req.s0_way;
+    sim_s1_valid <= l1d_stbuf_wr_if.s0_valid;
+    sim_s1_paddr <= l1d_stbuf_wr_if.s0_wr_req.s0_paddr;
+    sim_s1_data  <= l1d_stbuf_wr_if.s0_wr_req.s0_data;
+    sim_s1_be    <= l1d_stbuf_wr_if.s0_wr_req.s0_be;
+    sim_s1_way   <= l1d_stbuf_wr_if.s0_wr_req.s0_way;
     sim_s1_l1d_array <= l1d_array;
-    if (l1d_wr_if.s1_resp_valid & !l1d_wr_if.s1_wr_resp.s1_conflict) begin
+    if (l1d_stbuf_wr_if.s1_resp_valid & !l1d_stbuf_wr_if.s1_wr_resp.s1_conflict) begin
       /* verilator lint_off WIDTH */
       record_stq_store($time,
                        sim_s1_paddr,

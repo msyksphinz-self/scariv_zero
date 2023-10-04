@@ -354,7 +354,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                              !w_stq_entries[s_idx].dead &
                                              (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
                                              w_stq_entries[s_idx].paddr_valid &
-                                             w_stq_entries[s_idx].inst.rd_reg.ready &
+                                             w_stq_entries[s_idx].is_rs2_get &
                                              w_same_addr_region &
                                              |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
@@ -400,8 +400,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                 stq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
     assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                               !w_stq_entries[s_idx].dead &
                                                w_stq_entries[s_idx].paddr_valid &
-                                               !w_stq_entries[s_idx].inst.rd_reg.ready &
+                                               !w_stq_entries[s_idx].is_rs2_get &
                                                stq_haz_check_if[p_idx].ex2_valid &
                                                w_same_addr_region &
                                                pipe_is_younger_than_stq;

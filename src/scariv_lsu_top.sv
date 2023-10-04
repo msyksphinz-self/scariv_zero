@@ -24,9 +24,6 @@ module scariv_lsu_top
     /* CSR information */
     csr_info_if.slave                     csr_info,
 
-    /* SFENCE update information */
-    sfence_if.slave  sfence_if,
-
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
@@ -64,11 +61,18 @@ module scariv_lsu_top
     output scariv_pkg::mispred_t  o_ex2_mispred[scariv_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
+    snoop_info_if.monitor snoop_info_if,
     l1d_snoop_if.slave   l1d_snoop_if,
     stq_snoop_if.slave   stq_snoop_if,
     mshr_snoop_if.slave  mshr_snoop_if,
     stbuf_snoop_if.slave stbuf_snoop_if,
     streq_snoop_if.slave streq_snoop_if,
+
+    /* SFENCE update information */
+    sfence_if.master            sfence_if,
+    /* FENCE.I update */
+    output logic                o_fence_i,
+
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -84,9 +88,10 @@ localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT     + 1;
 localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
-l1d_wr_if  w_l1d_wr_if();
+l1d_wr_if  w_l1d_stbuf_wr_if();
 l1d_wr_if  w_l1d_merge_if();
 l1d_wr_if  w_miss_l1d_wr_if();
+l1d_wr_if  w_snoop_wr_if();
 // LSU Pipeline + ST-Buffer
 l1d_missu_if w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
 fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
@@ -125,8 +130,26 @@ rmw_order_check_if w_rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
-missu_pa_search_if        w_missu_pa_search_if();
+missu_pa_search_if      w_missu_pa_search_if();
+mshr_stbuf_search_if    w_mshr_stbuf_search_if();
 uc_write_if             w_uc_write_if();
+
+st_req_info_if          w_st_req_info_if();
+
+sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM]();
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fence_i;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_valid;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs2_x0;
+scariv_pkg::vaddr_t w_sfence_if_vaddr[scariv_conf_pkg::LSU_INST_NUM];
+
+assign o_fence_i = |w_fence_i;
+
+assign sfence_if.valid     = |w_sfence_if_valid;
+assign sfence_if.is_rs1_x0 = |w_sfence_if_is_rs1_x0;
+assign sfence_if.is_rs2_x0 = |w_sfence_if_is_rs2_x0;
+bit_oh_or #(.T(scariv_pkg::vaddr_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_sfence_vaddr_merge (.i_oh(w_sfence_if_valid), .i_data(w_sfence_if_vaddr), .o_selected(sfence_if.vaddr));
+
 
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -142,7 +165,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .csr_info (csr_info),
     .rob_info_if (rob_info_if),
-    .sfence_if   (sfence_if),
+    .sfence_if_slave (sfence_if),
 
     .disp_valid (disp_valid             ),
     .disp       (disp                   ),
@@ -185,6 +208,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 
+    .sfence_if_master (w_sfence_if_inst[lsu_idx]),
+    .o_fence_i (w_fence_i[lsu_idx]),
+
     .i_commit (i_commit),
 
     .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
@@ -192,6 +218,11 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_another_flush_report (o_another_flush_report[lsu_idx]),
     .br_upd_if              (br_upd_if             )
    );
+
+  assign w_sfence_if_valid    [lsu_idx] = w_sfence_if_inst[lsu_idx].valid;
+  assign w_sfence_if_is_rs1_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs1_x0;
+  assign w_sfence_if_is_rs2_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs2_x0;
+  assign w_sfence_if_vaddr    [lsu_idx] = w_sfence_if_inst[lsu_idx].vaddr;
 
 end // block: lsu_loop
 endgenerate
@@ -307,7 +338,12 @@ u_l1d_mshr
 
  .l1d_evict_if  (w_l1d_evict_if),
 
- .mshr_snoop_if(mshr_snoop_if),
+ .snoop_info_if (snoop_info_if),
+ .mshr_snoop_if (mshr_snoop_if),
+
+ .st_req_info_if (w_st_req_info_if),
+
+ .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
 
  .missu_pa_search_if (w_missu_pa_search_if),
  .missu_dc_search_if (w_missu_dc_search_if)
@@ -321,6 +357,8 @@ u_scariv_store_requester
    .i_reset_n (i_reset_n),
 
    .fwd_check_if  (w_streq_fwd_check),
+
+   .st_req_info_if (w_st_req_info_if),
 
    .l1d_evict_if  (w_l1d_evict_if),
    .uc_write_if   (w_uc_write_if),
@@ -339,17 +377,19 @@ u_st_buffer
    .st_buffer_if        (w_st_buffer_if),
    .l1d_rd_if           (w_l1d_rd_if[L1D_ST_RD_PORT]),
    .l1d_missu_stq_miss_if (w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM]),
-   .l1d_wr_if           (w_l1d_wr_if),
-   .l1d_merge_if        (w_l1d_merge_if),
+   .l1d_stbuf_wr_if       (w_l1d_stbuf_wr_if),
+   .l1d_mshr_wr_if        (w_miss_l1d_wr_if),
 
+   .snoop_info_if  (snoop_info_if),
    .stbuf_snoop_if (stbuf_snoop_if),
 
    .rmw_order_check_if  (w_rmw_order_check_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
-   .missu_pa_search_if    (w_missu_pa_search_if),
+   .missu_pa_search_if  (w_missu_pa_search_if),
 
-   .i_missu_resolve       (w_missu_resolve)
+   .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
+   .i_missu_resolve      (w_missu_resolve)
    );
 
 
@@ -410,7 +450,7 @@ end
 // ---------------------------
 logic r_snoop_resp_valid;
 
-assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid;
+assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_valid = l1d_snoop_if.req_s0_valid & (l1d_snoop_if.req_s0_cmd == SNOOP_READ);
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_paddr = l1d_snoop_if.req_s0_paddr;
 assign w_l1d_rd_if [L1D_SNOOP_PORT].s0_high_priority = 1'b0;
 
@@ -419,8 +459,15 @@ assign l1d_snoop_if.resp_s1_status = w_l1d_rd_if[L1D_SNOOP_PORT].s1_conflict ? S
                                      w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit      ? STATUS_HIT :
                                      w_l1d_rd_if[L1D_SNOOP_PORT].s1_miss     ? STATUS_MISS :
                                      STATUS_NONE;
+assign l1d_snoop_if.resp_s1_ways   = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit_way;
 assign l1d_snoop_if.resp_s1_be     = w_l1d_rd_if[L1D_SNOOP_PORT].s1_hit ? {DCACHE_DATA_B_W{1'b1}} : {DCACHE_DATA_B_W{1'b0}};
 assign l1d_snoop_if.resp_s1_data   = w_l1d_rd_if[L1D_SNOOP_PORT].s1_data;
+
+assign w_snoop_wr_if.s0_valid           = l1d_snoop_if.req_s0_valid & (l1d_snoop_if.req_s0_cmd == SNOOP_INVALID);
+assign w_snoop_wr_if.s0_wr_req.s0_way   = l1d_snoop_if.req_s0_ways;
+assign w_snoop_wr_if.s0_wr_req.s0_paddr = l1d_snoop_if.req_s0_paddr;
+assign w_snoop_wr_if.s0_wr_req.s0_data  = 'h0;
+assign w_snoop_wr_if.s0_wr_req.s0_mesi  = scariv_lsu_pkg::MESI_INVALID;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -438,10 +485,12 @@ u_scariv_dcache
    .i_reset_n(i_reset_n),
 
    .l1d_rd_if       (w_l1d_rd_if),
-   .stbuf_l1d_wr_if (w_l1d_wr_if),
+   .stbuf_l1d_wr_if (w_l1d_stbuf_wr_if),
 
    .stbuf_l1d_merge_if (w_l1d_merge_if  ),
    .missu_l1d_wr_if    (w_miss_l1d_wr_if),
+
+   .snoop_wr_if        (w_snoop_wr_if),
 
    .missu_dc_search_if (w_missu_dc_search_if)
    );

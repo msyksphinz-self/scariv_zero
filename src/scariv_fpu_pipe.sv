@@ -197,8 +197,9 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
   scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
-                                                (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                                (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                                 (r_ex1_issue.rd_regs[rs_idx].typ == scariv_pkg::GPR ? r_ex1_issue.rd_regs[rs_idx].regidx != 'h0 : 1'b1) &
+                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                                 (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
     assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
   end
     bit_oh_or #(
@@ -222,15 +223,18 @@ assign w_ex1_frm_invalid = r_ex1_pipe_ctrl.use_frm & ((r_ex1_issue.inst[14:12] =
 generate
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
     assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                          (r_ex2_issue.rd_regs[0].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[0].regidx != 'h0 : 1'b1) &
                                           (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                           (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
 
     assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[1].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                          (r_ex2_issue.rd_regs[1].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[1].regidx != 'h0 : 1'b1) &
                                           (r_ex2_issue.rd_regs[1].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                           (r_ex2_issue.rd_regs[1].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 
     assign w_ex2_rs3_fwd_valid[tgt_idx] =  r_ex2_issue.rd_regs[2].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                           (r_ex2_issue.rd_regs[2].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[2].regidx != 'h0 : 1'b1) &
                                            (r_ex2_issue.rd_regs[2].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
                                            (r_ex2_issue.rd_regs[2].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
 

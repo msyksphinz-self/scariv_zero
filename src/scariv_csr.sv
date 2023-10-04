@@ -582,8 +582,31 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_medeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG       ) begin r_medeleg       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG       ) begin r_mideleg       <= write_if.data; end end
+xlen_t w_medeleg_mask;
+assign w_medeleg_mask = (1 << scariv_pkg::INST_ADDR_MISALIGN) |
+                        (1 << scariv_pkg::BREAKPOINT        ) |
+                        (1 << scariv_pkg::ECALL_U           ) |
+                        (1 << scariv_pkg::ECALL_S           ) |
+                        (1 << scariv_pkg::INST_PAGE_FAULT   ) |
+                        (1 << scariv_pkg::LOAD_PAGE_FAULT   ) |
+                        (1 << scariv_pkg::STAMO_PAGE_FAULT  );
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_medeleg <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MEDELEG) begin
+    r_medeleg <= r_medeleg & ~w_medeleg_mask | write_if.data & w_medeleg_mask;
+  end
+end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_mideleg <= 'h0;
+  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIDELEG) begin
+    r_mideleg <= write_if.data;
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MIE           ) begin r_mie           <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

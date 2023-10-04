@@ -41,15 +41,19 @@ module scariv_st_buffer_entry
  input logic     i_l1d_wr_s1_resp_hit,
  input logic     i_l1d_wr_s1_resp_conflict,
 
+ input logic           i_snoop_busy,
  input missu_resp_t    i_st_missu_resp,
  input missu_resolve_t i_missu_resolve,
 
  // Atomic Operation
  amo_op_if.master amo_op_if,
 
+ l1d_wr_if.watch     l1d_mshr_wr_if,
+
  output logic             o_ready_to_merge,
- output logic             o_l1d_merge_req,
+ input  logic             i_mshr_l1d_wr_merged,
  output st_buffer_entry_t o_entry,
+ output st_buffer_state_t o_state,
  output logic             o_entry_finish,
  input logic              i_finish_accepted
  );
@@ -64,9 +68,8 @@ logic         w_l1d_rd_req_next;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 
-logic                                    w_missu_resolve_vld;
-assign w_missu_resolve_vld = i_missu_resolve.valid &
-                           (i_missu_resolve.resolve_index_oh == r_entry.missu_index_oh);
+logic                                      w_missu_resolve_vld;
+assign w_missu_resolve_vld = |(~i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh);
 
 riscv_pkg::xlen_t w_amo_op_result;
 riscv_pkg::xlen_t r_amo_l1d_data;
@@ -143,9 +146,11 @@ always_comb begin
           w_entry_next.missu_index_oh = i_missu_search_hit;
         end
       end else if (i_l1d_rd_s1_conflict) begin
+        w_entry_next.l1d_high_priority = 1'b1;
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_l1d_rd_s1_miss) begin
         w_state_next = ST_BUF_MISSU_REFILL;
+        w_entry_next.l1d_way = i_l1d_s1_way;
       end else begin
         if (r_entry.is_rmw & r_entry.is_amo & !r_entry.amo_op_done) begin
           w_state_next = ST_BUF_AMO_OPERATION;
@@ -191,16 +196,27 @@ always_comb begin
       end
     end // case: ST_BUF_MISSU_REFILL
     ST_BUF_WAIT_EVICT : begin
-      if (w_missu_resolve_vld | |(~i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh)) begin
+      if (w_missu_resolve_vld) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end
     ST_BUF_WAIT_REFILL: begin
-      if (w_missu_resolve_vld) begin
+      if (r_entry.is_rmw) begin
+        if (w_missu_resolve_vld) begin
+          // Finish MISSU L1D update
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end else begin
+        if (i_mshr_l1d_wr_merged) begin
           w_state_next = ST_BUF_L1D_MERGE;
-      end else if (~|(i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh)) begin
-        // cleared dependent entry
-        w_state_next = ST_BUF_RD_L1D;
+        end else if (w_missu_resolve_vld) begin
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end // else: !if(r_entry.is_rmw)
+    end
+    ST_BUF_WAIT_L1D_MERGE : begin
+      if (!i_snoop_busy) begin
+        w_state_next = ST_BUF_L1D_MERGE;
       end
     end
     ST_BUF_WAIT_FULL: begin
@@ -209,7 +225,11 @@ always_comb begin
       end
     end
     ST_BUF_L1D_MERGE : begin
-      w_state_next = ST_BUF_L1D_MERGE2;
+      // ST_BUF_L1D_MERGE and ST_BUF_L1D_MERGE2 are needed to
+      // Keep lifetime for fowarding during L1D update
+      if (!l1d_mshr_wr_if.s1_wr_resp.s1_conflict) begin
+        w_state_next = ST_BUF_L1D_MERGE2;
+      end
     end
     ST_BUF_L1D_MERGE2 : begin
       w_state_next = ST_BUF_WAIT_FINISH;
@@ -237,6 +257,7 @@ always_comb begin
 end // always_comb
 
 assign o_entry = r_entry;
+assign o_state = r_state;
 assign o_ready_to_merge = r_entry.valid &
                           !r_entry.is_rmw &
                           (r_state != ST_BUF_L1D_UPDATE) &
@@ -247,7 +268,6 @@ assign o_ready_to_merge = r_entry.valid &
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_missu_req    = r_entry.valid & (r_state == ST_BUF_MISSU_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
-assign o_l1d_merge_req = r_entry.valid & (r_state == ST_BUF_L1D_MERGE);
 
 // ------------------
 // Atomic Operations

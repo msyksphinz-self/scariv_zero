@@ -25,19 +25,22 @@ committed_entry
 );
 
 
-logic [riscv_pkg::XLEN_W-1: 0]     w_physical_int_data [scariv_pkg::RNID_SIZE + 32];
-logic [riscv_pkg::FLEN_W-1: 0]     w_physical_fp_data  [scariv_pkg::RNID_SIZE + 32];
-logic [riscv_vec_conf_pkg::VLEN_W-1: 0] w_physical_vec_data [scariv_pkg::RNID_SIZE + 32];
-
-generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin: reg_loop
+logic [riscv_pkg::XLEN_W-1: 0] w_physical_int_data [scariv_pkg::XPR_RNID_SIZE + 32];
+logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::FPR_RNID_SIZE + 32];
+generate for (genvar r_idx = 0; r_idx < scariv_pkg::XPR_RNID_SIZE; r_idx++) begin: reg_loop
   assign w_physical_int_data[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_int_phy_registers.r_phy_regs[r_idx];
-  if (riscv_pkg::FLEN_W != 0) begin
+end endgenerate
+
+generate if (riscv_pkg::FLEN_W != 0) begin
+  for (genvar r_idx = 0; r_idx < scariv_pkg::FPR_RNID_SIZE; r_idx++) begin: reg_loop
     assign w_physical_fp_data [r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.r_phy_regs[r_idx];
   end
-  if (riscv_vec_conf_pkg::VLEN_W != 0) begin
-    for (genvar step_idx = 0; step_idx < scariv_vec_pkg::VEC_STEP_W; step_idx++) begin
-      assign w_physical_vec_data [r_idx][step_idx * riscv_vec_conf_pkg::DLEN_W +: riscv_vec_conf_pkg::DLEN_W] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.vpu.u_vec_registers.r_phy_regs[step_idx][r_idx];
-    end
+end endgenerate
+
+logic [riscv_vec_conf_pkg::VLEN_W-1: 0] w_physical_vec_data [scariv_pkg::RNID_SIZE + 32];
+generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+  for (genvar step_idx = 0; step_idx < scariv_vec_pkg::VEC_STEP_W; step_idx++) begin
+    assign w_physical_vec_data [r_idx][step_idx * riscv_vec_conf_pkg::DLEN_W +: riscv_vec_conf_pkg::DLEN_W] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.vpu.u_vec_registers.r_phy_regs[step_idx][r_idx];
   end
 end endgenerate
 
@@ -87,85 +90,3 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
     end
   end
 end
-
-// always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
-//   if (!w_scariv_reset_n) begin
-//   end else begin
-//     if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.w_l1d_wr_if.valid &
-//         (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.w_l1d_wr_if.paddr == 'h8000_1000) |
-//         (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.w_l1d_wr_if.paddr == 'h8000_3000)) begin
-//       $write("===============================\n");
-//       $write("SIMULATION FINISH : ");
-//       if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.w_l1d_wr_if.data[31: 0] == 32'h1) begin
-//         $write("PASS\n");
-//       end else begin
-//         $write("FAIL(%x)\n", u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_lsu_top.w_l1d_wr_if.data[31: 0]);
-//       end
-//       $write("===============================\n");
-//       $finish;
-//     end
-//   end // else: !if(!w_scariv_reset_n)
-// end // always_ff @ (negedge w_clk, negedge w_scariv_reset_n)
-
-// ==========================
-// FreeList Checker
-// ==========================
-
-// logic [scariv_pkg::RNID_W-1: 0] rename_map_model[32];
-int rename_map_model[32];
-
-initial begin
-  for(int i = 0; i < 32; i++) begin
-    rename_map_model[i] = i;
-  end
-end
-
-
-logic [scariv_pkg::FLIST_SIZE-1:0][scariv_pkg::RNID_W-1: 0] freelist_model[5];
-
-initial begin
-  for (int d = 0; d < 5; d++) begin
-    for (int i = 0; i < 32; i++) begin
-      /* verilator lint_off WIDTH */
-      freelist_model[d][i] = 32 + d * scariv_pkg::FLIST_SIZE + i;
-    end
-  end
-end
-
-// always @ (negedge w_clk, negedge w_scariv_reset_n) begin
-//   if (w_scariv_reset_n) begin
-//     if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
-//       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
-//         if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx]) begin
-//           if (committed_rob_entry.inst[grp_idx].rd_valid &&
-//               (committed_rob_entry.inst[grp_idx].rd_regidx != 0)) begin
-//           logic [scariv_pkg::RNID_W-1: 0] poped_rnid;
-//             poped_rnid = freelist_model[grp_idx][0];
-//             for(int i = 0; i < scariv_pkg::FLIST_SIZE-1; i++) begin
-//               freelist_model[grp_idx][i] = freelist_model[grp_idx][i+1];
-//             end
-//             freelist_model[grp_idx][scariv_pkg::FLIST_SIZE-1] = committed_rob_entry.inst[grp_idx].rd_old_rnid;
-//
-//             if (rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx] !=
-//                 committed_rob_entry.inst[grp_idx].rd_old_rnid) begin
-//               $fatal(0, "Error: Returned rnid different %d != %d",
-//                      rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx],
-//                      committed_rob_entry.inst[grp_idx].rd_old_rnid);
-//
-//             end
-//
-//             if (poped_rnid != committed_rob_entry.inst[grp_idx].rd_rnid) begin
-//               $fatal(0, "Error: (%02d, %02d) Destination rnid different %d != %d",
-//                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
-//                      1 << grp_idx,
-//                      poped_rnid,
-//                      committed_rob_entry.inst[grp_idx].rd_rnid);
-//             end
-//
-//             rename_map_model[committed_rob_entry.inst[grp_idx].rd_regidx] <= poped_rnid;
-//           end // if (committed_rob_entry.inst[grp_idx].rd_valid)
-//         end // if (committed_rob_entry.grp_id[grp_idx] & !w_dead_grp_id[grp_idx])
-//       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
-//     end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
-//   end // if (i_reset_n)
-// end // always_ff @ (negedge i_clk, negedge i_reset_n)

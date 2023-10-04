@@ -15,6 +15,9 @@ module scariv_store_requestor
    // Forward check interface from LSU Pipeline
    fwd_check_if.slave  fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
+   // Store Requestor Monitor
+   st_req_info_if.master st_req_info_if,
+
    uc_write_if.slave  uc_write_if,
    l1d_evict_if.slave l1d_evict_if,
 
@@ -140,6 +143,11 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+// --------------------
+// Status broadcasting
+// --------------------
+assign st_req_info_if.busy  = r_l1d_evict_req_valid;
+assign st_req_info_if.paddr = r_ext_evict_payload.paddr;
 
 `ifdef SIMULATION
 `ifdef VERILATOR

@@ -9,7 +9,10 @@
 
 module scariv_commit_map
   import scariv_pkg::*;
-  #(parameter REG_TYPE = GPR)
+  #(parameter REG_TYPE = GPR,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    localparam RNID_W = $clog2(RNID_SIZE),
+    parameter type rnid_t = logic [RNID_W-1: 0])
 (
  input logic                    i_clk,
  input logic                    i_reset_n,
@@ -17,7 +20,7 @@ module scariv_commit_map
  // Commit notification
  input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update,
 
- output scariv_pkg::rnid_t o_rnid_map[32]
+ output rnid_t o_rnid_map[32]
  );
 
 scariv_pkg::rnid_t         r_commit_map[32];

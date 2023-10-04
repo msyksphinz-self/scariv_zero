@@ -27,7 +27,7 @@ module scariv_inst_buffer
  output decode_flush_t    o_decode_flush,
 
  output logic                       o_inst_ready,
- input scariv_pkg::inst_buffer_in_t i_s2_inst,
+ input scariv_pkg::inst_buffer_in_t i_f2_inst,
  scariv_front_if.master             ibuf_front_if,
 
  br_upd_if.slave br_upd_if
@@ -94,7 +94,7 @@ riscv_pkg::xlen_t    [scariv_conf_pkg::DISP_SIZE-1: 0] w_fetch_except_tval;
 
 rd_t rd_field_type [scariv_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[scariv_conf_pkg::DISP_SIZE];
-r2_t rs2_field_type[scariv_conf_pkg::DISP_SIZE];
+r2_t rf2_field_type[scariv_conf_pkg::DISP_SIZE];
 r3_t rs3_field_type[scariv_conf_pkg::DISP_SIZE];
 
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
@@ -172,7 +172,7 @@ scariv_pkg::grp_id_t w_rvc_valid;
 /* verilator lint_off WIDTH */
 assign w_head_all_inst_issued      = w_inst_buffer_fire_next & ((w_head_start_pos_next + w_out_inst_q_pc) >= ic_word_num);
 assign w_head_predict_taken_issued = w_inst_buffer_fire_next & w_predict_taken_valid & w_ibuf_front_payload_next.is_br_included;
-assign w_ptr_in_fire  = i_s2_inst.valid & o_inst_ready;
+assign w_ptr_in_fire  = i_f2_inst.valid & o_inst_ready;
 assign w_ptr_out_fire = w_head_all_inst_issued | w_head_predict_taken_issued |
                         w_inst_buf_valid[0] & r_pred_entry_kill_valid ;
 assign w_flush_pipeline = i_flush_valid | w_br_flush;
@@ -231,32 +231,32 @@ u_inst_queue
 
 
 always_comb begin
-  w_inst_buf_load.data    = i_s2_inst.inst;
-  w_inst_buf_load.pc      = i_s2_inst.pc;
-  w_inst_buf_load.byte_en = i_s2_inst.byte_en;
-  w_inst_buf_load.tlb_except_valid = i_s2_inst.tlb_except_valid;
-  w_inst_buf_load.tlb_except_cause = i_s2_inst.tlb_except_cause;
+  w_inst_buf_load.data    = i_f2_inst.inst;
+  w_inst_buf_load.pc      = i_f2_inst.pc;
+  w_inst_buf_load.byte_en = i_f2_inst.byte_en;
+  w_inst_buf_load.tlb_except_valid = i_f2_inst.tlb_except_valid;
+  w_inst_buf_load.tlb_except_cause = i_f2_inst.tlb_except_cause;
 
   for (int b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-    w_inst_buf_load.pred_info[b_idx].pred_taken        = gshare_search_if.s2_pred_taken[b_idx];
-    w_inst_buf_load.pred_info[b_idx].is_cond           = btb_search_if.s2_is_cond      [b_idx];
-    w_inst_buf_load.pred_info[b_idx].bim_value         = gshare_search_if.s2_bim_value [b_idx];
-    w_inst_buf_load.pred_info[b_idx].btb_valid         = btb_search_if.s2_hit          [b_idx];
-    w_inst_buf_load.pred_info[b_idx].pred_target_vaddr = btb_search_if.s2_target_vaddr [b_idx];
-    w_inst_buf_load.pred_info[b_idx].gshare_index      = gshare_search_if.s2_index     [b_idx];
-    w_inst_buf_load.pred_info[b_idx].gshare_bhr        = gshare_search_if.s2_bhr       [b_idx];
+    w_inst_buf_load.pred_info[b_idx].pred_taken        = gshare_search_if.f2_pred_taken[b_idx];
+    w_inst_buf_load.pred_info[b_idx].is_cond           = btb_search_if.f2_is_cond      [b_idx];
+    w_inst_buf_load.pred_info[b_idx].bim_value         = gshare_search_if.f2_bim_value [b_idx];
+    w_inst_buf_load.pred_info[b_idx].btb_valid         = btb_search_if.f2_hit          [b_idx];
+    w_inst_buf_load.pred_info[b_idx].pred_target_vaddr = btb_search_if.f2_target_vaddr [b_idx];
+    w_inst_buf_load.pred_info[b_idx].gshare_index      = gshare_search_if.f2_index     [b_idx];
+    w_inst_buf_load.pred_info[b_idx].gshare_bhr        = gshare_search_if.f2_bhr       [b_idx];
 
-    w_inst_buf_load.ras_info[b_idx].is_call           = ras_search_if.s2_is_call[b_idx];
-    w_inst_buf_load.ras_info[b_idx].is_ret            = ras_search_if.s2_is_ret [b_idx];
-    // w_inst_buf_load.ras_info[b_idx].ras_index         = ras_search_if.s2_ras_be [b_idx/2] & ras_search_if.s2_is_ret [b_idx] ? ras_search_if.s2_ras_index - 1 :
-    // ras_search_if.s2_ras_index;
-    w_inst_buf_load.ras_info[b_idx].pred_target_vaddr = ras_search_if.s2_is_call[b_idx] ? {ras_search_if.s2_call_target_vaddr, 1'b0} : {ras_search_if.s2_ras_vaddr, 1'b0};
+    w_inst_buf_load.ras_info[b_idx].is_call           = ras_search_if.f2_is_call[b_idx];
+    w_inst_buf_load.ras_info[b_idx].is_ret            = ras_search_if.f2_is_ret [b_idx];
+    // w_inst_buf_load.ras_info[b_idx].ras_index         = ras_search_if.f2_ras_be [b_idx/2] & ras_search_if.f2_is_ret [b_idx] ? ras_search_if.f2_ras_index - 1 :
+    // ras_search_if.f2_ras_index;
+    w_inst_buf_load.ras_info[b_idx].pred_target_vaddr = ras_search_if.f2_is_call[b_idx] ? {ras_search_if.f2_call_target_vaddr, 1'b0} : {ras_search_if.f2_ras_vaddr, 1'b0};
   end // block: pred_loop
 
 `ifdef SIMULATION
-  w_inst_buf_load.pc_dbg           = {i_s2_inst.pc, 1'b0};
+  w_inst_buf_load.pc_dbg           = {i_f2_inst.pc, 1'b0};
 `endif // SIMULATION
-  w_inst_buf_load.int_inserted = i_s2_inst.int_inserted;
+  w_inst_buf_load.int_inserted = i_f2_inst.int_inserted;
 // end else if ((w_head_all_inst_issued |
 //               w_head_predict_taken_issued |
 //               w_inst_buf_load.valid & w_inst_buf_load.dead) & (r_inst_buffer_outptr == idx)) begin
@@ -264,7 +264,7 @@ always_comb begin
 //   w_inst_buf_load.dead   = 1'b0;
 // end else if (w_head_predict_taken_issued & (w_pred_lsb_index == idx)) begin
 //   w_inst_buf_load.dead = 1'b1;
-//       end // if (i_s2_inst.valid & o_inst_ready)
+//       end // if (i_f2_inst.valid & o_inst_ready)
 //     end // else: !if(!i_reset_n)
 //   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 //
@@ -429,7 +429,7 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
      .inst(w_expand_inst[w_idx]),
      .rd(rd_field_type [w_idx]),
      .r1(rs1_field_type[w_idx]),
-     .r2(rs2_field_type[w_idx]),
+     .r2(rf2_field_type[w_idx]),
      .r3(rs3_field_type[w_idx])
      );
 
@@ -723,11 +723,11 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                                                 scariv_pkg::GPR;
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = /* rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR : */
-                                                                rs1_field_type[d_idx] == R2_F2 ? scariv_pkg::FPR :
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rf2_field_type[d_idx] != R2__;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rf2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR :
                                                                 rs1_field_type[d_idx] == R2_V2 ? scariv_pkg::VPR :
                                                                 scariv_pkg::GPR;
+
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;
@@ -855,9 +855,9 @@ u_ras
    .i_wr_index (r_ras_index            ),
    .i_wr_pa    (iq_call_stash_vaddr_oh[riscv_pkg::VADDR_W-1: 1] ),
 
-   .i_s2_rd_valid (|iq_is_ret_valid_oh),
-   .i_s2_rd_index (r_ras_index-1      ),
-   .o_s2_rd_pa    (w_iq_ras_ret_vaddr[riscv_pkg::VADDR_W-1: 1] ),
+   .i_f2_rd_valid (|iq_is_ret_valid_oh),
+   .i_f2_rd_index (r_ras_index-1      ),
+   .o_f2_rd_pa    (w_iq_ras_ret_vaddr[riscv_pkg::VADDR_W-1: 1] ),
 
    .i_br_call_cmt_valid     ('h0),
    .i_br_call_cmt_ras_index ('h0),
@@ -896,9 +896,9 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       rtl_push_ras ($time, w_ibuf_front_payload_next.pc_addr_debug + encoder_func(iq_is_call_valid_oh) << 1,
                     u_ras.i_wr_index, {u_ras.i_wr_pa, 1'b0});
     end
-    if (u_ras.i_s2_rd_valid) begin
+    if (u_ras.i_f2_rd_valid) begin
       rtl_pop_ras ($time, w_ibuf_front_payload_next.pc_addr_debug + encoder_func(iq_is_ret_valid_oh) << 1,
-                   u_ras.i_s2_rd_index, {u_ras.o_s2_rd_pa, 1'b0});
+                   u_ras.i_f2_rd_index, {u_ras.o_f2_rd_pa, 1'b0});
     end
 
     if (w_br_flush) begin
@@ -941,9 +941,9 @@ function void dump_json(int fp);
       $fwrite(fp, "      rs1_type   : \"%d\",", ibuf_front_if.payload.inst[d_idx].rd_regs[0].typ);
       $fwrite(fp, "      rs1_regidx : %d,", ibuf_front_if.payload.inst[d_idx].rd_regs[0].regidx);
 
-      $fwrite(fp, "      rs2_valid  : %d,", ibuf_front_if.payload.inst[d_idx].rd_regs[1].valid);
-      $fwrite(fp, "      rs2_type   : \"%d\",", ibuf_front_if.payload.inst[d_idx].rd_regs[1].typ);
-      $fwrite(fp, "      rs2_regidx : %d,", ibuf_front_if.payload.inst[d_idx].rd_regs[1].regidx);
+      $fwrite(fp, "      rf2_valid  : %d,", ibuf_front_if.payload.inst[d_idx].rd_regs[1].valid);
+      $fwrite(fp, "      rf2_type   : \"%d\",", ibuf_front_if.payload.inst[d_idx].rd_regs[1].typ);
+      $fwrite(fp, "      rf2_regidx : %d,", ibuf_front_if.payload.inst[d_idx].rd_regs[1].regidx);
 
       $fwrite(fp, "      \"cat[d_idx]\" : \"%d\",", ibuf_front_if.payload.inst[d_idx].cat);
       $fwrite(fp, "    },\n");

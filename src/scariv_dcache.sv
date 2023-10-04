@@ -24,6 +24,8 @@ module scariv_dcache
    l1d_wr_if.slave stbuf_l1d_merge_if,
    l1d_wr_if.slave missu_l1d_wr_if,
 
+   l1d_wr_if.slave snoop_wr_if,
+
    // MISSU search interface
    missu_dc_search_if.master missu_dc_search_if
    );
@@ -183,27 +185,40 @@ bit_oh_or_packed #(.T(dc_wr_resp_t), .WORDS(scariv_conf_pkg::DCACHE_BANKS))
 s2_resp_bit_or (.i_data(w_s0_dc_wr_resp_bank), .i_oh(r_s2_wr_bank_valid), .o_selected(w_s2_wr_selected_resp));
 
 
-assign w_s0_dc_wr_req.s0_valid            = w_s0_merge_valid | stbuf_l1d_wr_if.s0_valid;
-assign w_s0_dc_wr_req.s0_tag_update_valid = w_s0_merge_valid;
-assign w_s0_dc_wr_req.s0_paddr            = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_paddr :
+assign w_s0_dc_wr_req.s0_valid            = w_s0_merge_valid | stbuf_l1d_wr_if.s0_valid | snoop_wr_if.s0_valid;
+assign w_s0_dc_wr_req.s0_tag_update_valid = w_s0_merge_valid | snoop_wr_if.s0_valid;
+assign w_s0_dc_wr_req.s0_paddr            = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_paddr     :
+                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_paddr :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_paddr;
-assign w_s0_dc_wr_req.s0_data             = missu_l1d_wr_if.s0_valid ? w_s0_merge_data :
+assign w_s0_dc_wr_req.s0_data             = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_data     :
+                                            missu_l1d_wr_if.s0_valid ? w_s0_merge_data :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_data;
-assign w_s0_dc_wr_req.s0_be               = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_be :
+assign w_s0_dc_wr_req.s0_be               = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_be     :
+                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_be :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_be;
-assign w_s0_dc_wr_req.s0_mesi             = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_mesi :
+assign w_s0_dc_wr_req.s0_mesi             = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_mesi     :
+                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_mesi :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_mesi;
-assign w_s0_dc_wr_req.s0_way              = missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_way :
+assign w_s0_dc_wr_req.s0_way              = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_way     :
+                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_way :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_way;
-logic w_s0_st_wr_confilct;
-assign w_s0_st_wr_confilct = w_s0_merge_valid & stbuf_l1d_wr_if.s0_valid;
+logic w_s0_st_wr_conflict;
+logic w_s0_missu_wr_conflict;
+assign w_s0_st_wr_conflict    = (w_s0_merge_valid | snoop_wr_if.s0_valid) & stbuf_l1d_wr_if.s0_valid;
+assign w_s0_missu_wr_conflict = (                   snoop_wr_if.s0_valid) & missu_l1d_wr_if.s0_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     stbuf_l1d_wr_if.s1_resp_valid          <= 1'b0;
     stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
+
+    missu_l1d_wr_if.s1_resp_valid          <= 1'b0;
+    missu_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
   end else begin
     stbuf_l1d_wr_if.s1_resp_valid          <= stbuf_l1d_wr_if.s0_valid;
-    stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_st_wr_confilct;
+    stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_st_wr_conflict;
+
+    missu_l1d_wr_if.s1_resp_valid          <= missu_l1d_wr_if.s0_valid;
+    missu_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_missu_wr_conflict;
   end
 end
 assign stbuf_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
@@ -214,7 +229,9 @@ assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_ev
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
 
 
-assign missu_l1d_wr_if.s1_wr_resp = stbuf_l1d_wr_if.s1_wr_resp;
+assign missu_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
+assign missu_l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
+assign missu_l1d_wr_if.s2_done            = 1'b0;
 assign missu_l1d_wr_if.s2_done    = stbuf_l1d_wr_if.s2_done;
 assign missu_l1d_wr_if.s2_wr_resp = stbuf_l1d_wr_if.s2_wr_resp;
 
@@ -307,9 +324,32 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : perf_port_
 end // block: port_loop
 endgenerate
 
+integer total_valids[scariv_conf_pkg::DCACHE_BANKS][scariv_conf_pkg::DCACHE_WAYS];
+
+generate for (genvar bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; bank_idx++) begin
+  for (genvar way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin
+    assign total_valids[bank_idx][way_idx] = $countones(bank_loop[bank_idx].u_dcache_array.dc_way_loop[way_idx].tag.r_tag_valids);
+  end // else: !if(!i_reset_n)
+end endgenerate
+
+function integer calc_valids();
+  int ret = 0;
+  for (int bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; bank_idx++) begin
+    for (int way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin
+      ret = ret + total_valids[bank_idx][way_idx];
+    end
+  end
+  return ret;
+
+endfunction // calc_valids
+
+
 function void dump_perf (int fp);
 
   $fwrite(fp, "  \"dcache\" : {\n");
+  $fwrite(fp, "    \"filled : %d, words : %d, size : %dKB},\n", calc_valids(),
+          scariv_conf_pkg::DCACHE_WORDS * scariv_conf_pkg::DCACHE_WAYS,
+          (scariv_conf_pkg::DCACHE_WORDS * scariv_conf_pkg::DCACHE_WAYS * scariv_conf_pkg::ICACHE_DATA_W) / 8 / 1024 );
   for (int p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
     $fwrite(fp, "    \"port[%1d]\" : {", p_idx);
     $fwrite(fp, "    \"req\" : %5d, ", r_req_valid_count[p_idx]);

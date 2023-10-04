@@ -166,6 +166,7 @@ u_inst_selector
    );
 
 lsu_issue_entry_t w_input_entry[IN_PORT_SIZE];
+logic [IN_PORT_SIZE-1: 0] w_disp_oldest_valid;
 generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
 
   scariv_pkg::rnid_t        w_rs1_rnid;
@@ -187,8 +188,11 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
                                         .o_mispred    (w_rs1_mispredicted));
 
   assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], i_cmt_id, i_grp_id[idx],
-                                                      w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred, w_rs1_rel_index,
-                                                      i_stq_rmw_existed);
+                                                     w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred, w_rs1_rel_index,
+                                                     i_stq_rmw_existed, w_disp_oldest_valid[idx]);
+
+  decoder_lsu_sched u_csu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
+
 end endgenerate
 
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
