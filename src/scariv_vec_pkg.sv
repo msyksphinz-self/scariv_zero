@@ -76,7 +76,9 @@ typedef struct packed {
   logic      fflags_update_valid;
   scariv_pkg::fflags_t   fflags;
 
-  vlvtype_t vlvtype;
+  logic             vlvtype_ready;
+  vlvtype_ren_idx_t vlvtype_index;
+  vlvtype_t         vlvtype;
 `ifdef SIMULATION
   logic [63: 0] kanata_id;
 `endif // SIMULATION
@@ -85,8 +87,7 @@ typedef struct packed {
 
 function issue_t assign_issue_common (scariv_pkg::disp_t in,
                                       scariv_pkg::cmt_id_t cmt_id,
-                                      scariv_pkg::grp_id_t grp_id,
-                                      vlvtype_t vlvtype);
+                                      scariv_pkg::grp_id_t grp_id);
   issue_t ret;
 
   ret.valid = in.valid;
@@ -103,8 +104,6 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.wr_reg.typ = in.wr_reg.typ;
   ret.wr_reg.regidx = in.wr_reg.regidx;
   ret.wr_reg.rnid = in.wr_reg.rnid;
-
-  ret.vlvtype = vlvtype;
 
   ret.except_valid = 1'b0;
   ret.except_type  = scariv_pkg::INST_ADDR_MISALIGN;
@@ -123,10 +122,9 @@ endfunction // assign_issue_common
 function issue_t assign_issue_op2 (scariv_pkg::disp_t in,
                                    scariv_pkg::cmt_id_t cmt_id,
                                    scariv_pkg::grp_id_t grp_id,
-                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
-                                   vlvtype_t vlvtype);
+                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2]);
   issue_t ret;
-  ret = assign_issue_common (in, cmt_id, grp_id, vlvtype);
+  ret = assign_issue_common (in, cmt_id, grp_id);
 
   for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
@@ -156,7 +154,7 @@ function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
                                    logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
                                    vlvtype_t vlvtype);
   issue_t ret;
-  ret = assign_issue_common (in, cmt_id, grp_id, vlvtype);
+  ret = assign_issue_common (in, cmt_id, grp_id);
 
   for (int rs_idx = 0; rs_idx < 3; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
@@ -212,15 +210,27 @@ interface vlvtype_upd_if;
   logic             valid;
   vlvtype_t         vlvtype;
   vlvtype_ren_idx_t index;
+`ifdef SIMULATION
+  scariv_pkg::cmt_id_t sim_cmt_id;
+  scariv_pkg::grp_id_t sim_grp_id;
+`endif // SIMULATION
 
   modport master (
     output valid,
+`ifdef SIMULATION
+    output sim_cmt_id,
+    output sim_grp_id,
+`endif // SIMULATION
     output vlvtype,
     output index
   );
 
   modport slave (
     input valid,
+`ifdef SIMULATION
+    input sim_cmt_id,
+    input sim_grp_id,
+`endif // SIMULATION
     input vlvtype,
     input index
   );
@@ -247,6 +257,24 @@ interface vlvtype_commit_if;
 endinterface // vlvtype_commit_if
 
 
+interface vlvtype_info_if;
+
+  import scariv_vec_pkg::*;
+
+  vlvtype_t         vlvtype;
+  vlvtype_ren_idx_t index;
+  vlvtype_ren_idx_t vsetvl_index;
+  logic             ready;
+
+  modport monitor (
+    input vlvtype,
+    input index,
+    input vsetvl_index,
+    input ready
+  );
+
+endinterface // vlvtype_resolve_if
+
 
 interface vlvtype_req_if;
 
@@ -256,6 +284,7 @@ interface vlvtype_req_if;
   logic             checkpt_push_valid;
   logic             ready;
   logic             full;
+  vlvtype_ren_idx_t vsetvl_index;
   vlvtype_ren_idx_t index;
   vlvtype_t         vlvtype;
 
@@ -264,6 +293,7 @@ interface vlvtype_req_if;
     output checkpt_push_valid,
     input  ready,
     input  full,
+    input  vsetvl_index,
     input  index,
     input  vlvtype
   );
@@ -273,6 +303,7 @@ interface vlvtype_req_if;
     input  checkpt_push_valid,
     output ready,
     output full,
+    output vsetvl_index,
     output index,
     output vlvtype
   );

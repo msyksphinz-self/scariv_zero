@@ -507,7 +507,7 @@ u_csu (
 
     .disp_valid(w_disp_csu_valids),
     .disp(w_rn_front_if),
-    .i_vlvtype_ren_idx (r_vlvtype_ren_idx),
+    .i_vlvtype_ren_idx (r_rn_vlvtype_info_if.vsetvl_index),
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
@@ -624,7 +624,7 @@ endgenerate
 
 vlvtype_commit_if w_vlvtype_commit();
 vlvtype_upd_if    w_vlvtype_upd_if();
-scariv_vec_pkg::vlvtype_ren_idx_t r_vlvtype_ren_idx;
+vlvtype_info_if   r_rn_vlvtype_info_if();
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
@@ -632,23 +632,20 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   scariv_vec_pkg::vlvtype_t r_rn_vlvtype;
 
-  scariv_pkg::grp_id_t w_ibuf_is_subcat_vset;
+  scariv_pkg::grp_id_t w_rn_is_subcat_vset;
 
   for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
-    assign w_ibuf_is_subcat_vset[d_idx] = (w_ibuf_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
-                                          (w_ibuf_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
+    assign w_rn_is_subcat_vset[d_idx] = (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
+                                        (w_rn_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
   end
 
-  assign w_vlvtype_req_if.valid              = |w_ibuf_is_subcat_vset;
-  assign w_vlvtype_req_if.checkpt_push_valid = |w_ibuf_front_if.payload.is_br_included;
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_rn_vlvtype <= 'h0;
-    end else begin
-      r_rn_vlvtype      <= w_vlvtype_req_if.vlvtype;
-      r_vlvtype_ren_idx <= w_vlvtype_req_if.index;
-    end
-  end
+  assign w_vlvtype_req_if.valid              = |w_rn_is_subcat_vset;
+  assign w_vlvtype_req_if.checkpt_push_valid = |w_rn_front_if.payload.is_br_included;
+
+  assign r_rn_vlvtype_info_if.vlvtype      = w_vlvtype_req_if.vlvtype;
+  assign r_rn_vlvtype_info_if.index        = w_vlvtype_req_if.index;
+  assign r_rn_vlvtype_info_if.vsetvl_index = w_vlvtype_req_if.vsetvl_index;
+  assign r_rn_vlvtype_info_if.ready        = w_vlvtype_req_if.ready;
 
   scariv_vec_vlvtype_rename
   u_vec_vlvtype_rename
@@ -658,7 +655,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .vlvtype_req_if    (w_vlvtype_req_if   ),
      .vlvtype_commit_if (w_vlvtype_commit),
-     .i_brtag           (w_ibuf_front_if.payload.inst[0].brtag),
+     .i_brtag           (w_rn_front_if.payload.inst[0].brtag),
 
      .i_commit  (w_commit),
      .br_upd_if (w_ex3_br_upd_if),
@@ -679,7 +676,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .disp_valid(w_disp_valu_valids[0]),
      .disp(w_rn_front_if),
-     .i_vlvtype (r_rn_vlvtype),
+     .vlvtype_info_if (r_rn_vlvtype_info_if),
+     .vlvtype_upd_if  (w_vlvtype_upd_if),
 
      .cre_ret_if(valu_cre_ret_if),
 

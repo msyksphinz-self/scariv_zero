@@ -21,7 +21,8 @@ module scariv_vec_alu #(
 
     input scariv_pkg::grp_id_t      disp_valid,
     scariv_front_if.watch           disp,
-    input scariv_vec_pkg::vlvtype_t i_vlvtype,
+    vlvtype_info_if.monitor         vlvtype_info_if,
+    vlvtype_upd_if.slave            vlvtype_upd_if,
 
     cre_ret_if.slave             cre_ret_if,
 
@@ -99,7 +100,8 @@ u_scariv_issue_unit
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (w_disp_picked_grp_id),
    .i_disp_info (w_disp_picked_inst),
-   .i_vlvtype   (i_vlvtype),
+   .vlvtype_info_if (vlvtype_info_if),
+   .vlvtype_upd_if  (vlvtype_upd_if),
 
    .cre_ret_if  (cre_ret_if),
 

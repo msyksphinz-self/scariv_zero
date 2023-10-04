@@ -403,7 +403,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : 
                                      (w_out_entry.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
 end endgenerate
 
-assign vlvtype_commit_if.valid = o_commit.commit & |w_cmt_entry_vsetvl;
+assign vlvtype_commit_if.valid = o_commit.commit & |(w_cmt_entry_vsetvl & ~o_commit.dead_id);
 
 `ifdef SIMULATION
 `ifdef MONITOR

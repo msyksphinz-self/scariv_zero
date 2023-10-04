@@ -236,6 +236,10 @@ assign vec_csr_if.write.vill  = 1'b0;
 assign vec_csr_if.write.vl    = r_ex3_result;
 
 assign vlvtype_upd_if.valid         = vec_csr_if.write.valid;
+`ifdef SIMULATION
+assign vlvtype_upd_if.sim_cmt_id    = r_ex3_issue.cmt_id;
+assign vlvtype_upd_if.sim_grp_id    = r_ex3_issue.grp_id;
+`endif // SIMULATION
 assign vlvtype_upd_if.vlvtype.vl    = r_ex3_result;
 assign vlvtype_upd_if.vlvtype.vtype = r_ex3_issue.inst[20 +: $bits(scariv_vec_pkg::vtype_t)];
 assign vlvtype_upd_if.index         = r_ex3_issue.vlvtype_ren_idx;

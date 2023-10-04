@@ -33,59 +33,68 @@ vlvtype_ren_size_t r_table_ready;
 vlvtype_ren_idx_t r_head_ptr;
 vlvtype_ren_idx_t r_tail_ptr;
 vlvtype_ren_idx_t w_vlvtype_restore_index;
+vlvtype_ren_idx_t r_curr_index;
 
-logic                                 w_commi_flush;
+logic                                 w_commit_flush;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_head_ptr <= 'h0;
+    r_curr_index <= 'h0;
   end else begin
-    if (w_commi_flush) begin
-      r_head_ptr <= 'h0;
+    if (w_commit_flush) begin
+      r_head_ptr   <= 'h0;
+      r_curr_index <= 'h0;
     end else if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
-      r_head_ptr <= w_vlvtype_restore_index;
+      r_head_ptr   <= w_vlvtype_restore_index;
+      r_curr_index <= w_vlvtype_restore_index - 1;
     end else if (vlvtype_req_if.valid) begin
-      r_head_ptr <= r_head_ptr++;
+      r_head_ptr <= r_head_ptr + 1;
+      r_curr_index <= r_head_ptr;
     end
 
-    if (w_commi_flush) begin
+    if (w_commit_flush) begin
       r_tail_ptr <= 'h0;
     end else if (vlvtype_commit_if.valid) begin
-      r_tail_ptr <= r_tail_ptr++;
+      r_tail_ptr <= r_tail_ptr + 1;
     end
 
   end
 end
 
-assign vlvtype_req_if.ready   = r_table_ready[r_head_ptr];
-assign vlvtype_req_if.full    = &r_table_valid;
-assign vlvtype_req_if.index   = r_head_ptr;
-assign vlvtype_req_if.vlvtype = r_vlvtype_table[r_head_ptr];
+assign vlvtype_req_if.ready        = r_table_ready[r_curr_index];
+assign vlvtype_req_if.full         = &r_table_valid;
+assign vlvtype_req_if.vsetvl_index = r_head_ptr;
+assign vlvtype_req_if.index        = r_curr_index;
+assign vlvtype_req_if.vlvtype      = r_vlvtype_table[r_curr_index];
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_table_ready <= 'h0;
     r_table_valid <= 'h0;
   end else begin
-    if (w_commi_flush) begin
+    if (w_commit_flush) begin
       r_table_ready <= 'h0;
       r_table_valid <= 'h0;
     end else begin
       if (vlvtype_commit_if.valid) begin
-        r_table_valid[r_tail_ptr] <= 1'b0;
-      end else if (vlvtype_req_if.valid) begin
+        r_table_valid[r_tail_ptr-1] <= 1'b0;
+        r_table_ready[r_tail_ptr-1] <= 1'b0;
+      end
+      if (vlvtype_req_if.valid) begin
         r_table_valid[r_head_ptr] <= 1'b1;
+        r_table_ready[r_head_ptr] <= 1'b0;
       end
 
       if (vlvtype_upd_if.valid) begin
         r_table_ready  [vlvtype_upd_if.index] <= 1'b1;
         r_vlvtype_table[vlvtype_upd_if.index] <= vlvtype_upd_if.vlvtype;
       end
-    end // else: !if(w_commi_flush)
+    end // else: !if(w_commit_flush)
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign w_commi_flush = is_flushed_commit(i_commit);
+assign w_commit_flush = is_flushed_commit(i_commit);
 
 scariv_vec_vlvtype_snapshots
 u_snapshots

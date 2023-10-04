@@ -27,7 +27,8 @@ module scariv_valu_issue_unit
  input scariv_pkg::cmt_id_t            i_cmt_id,
  input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
  scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
- input scariv_vec_pkg::vlvtype_t       i_vlvtype,
+ vlvtype_info_if.monitor               vlvtype_info_if,
+ vlvtype_upd_if.slave                  vlvtype_upd_if,
 
  cre_ret_if.slave                      cre_ret_if,
 
@@ -232,7 +233,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_cmt_id   (i_cmt_id     ),
     .i_grp_id   (w_disp_grp_id),
     .i_put_data (w_disp_entry ),
-    .i_vlvtype  (i_vlvtype    ),
+    .vlvtype_info_if (vlvtype_info_if),
+    .vlvtype_upd_if  (vlvtype_upd_if),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),

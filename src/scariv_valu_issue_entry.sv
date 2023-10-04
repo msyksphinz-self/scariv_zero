@@ -29,7 +29,8 @@ module scariv_valu_issue_entry
    input scariv_pkg::cmt_id_t      i_cmt_id,
    input scariv_pkg::grp_id_t      i_grp_id,
    input scariv_pkg::disp_t        i_put_data,
-   input scariv_vec_pkg::vlvtype_t i_vlvtype,
+   vlvtype_info_if.monitor         vlvtype_info_if,
+   vlvtype_upd_if.slave            vlvtype_upd_if,
 
    output logic               o_entry_valid,
    /* verilator lint_off UNOPTFLAT */
@@ -115,6 +116,9 @@ endgenerate
 assign w_rs_pred_mispredicted_or = |w_rs_pred_mispredicted;
 
 
+logic vlvtype_upd_valid;
+assign vlvtype_upd_valid = vlvtype_upd_if.valid & (vlvtype_upd_if.index == r_entry.vlvtype_index);
+
 always_comb begin
   w_state_next  = r_state;
   w_dead_next   = r_dead;
@@ -125,6 +129,9 @@ always_comb begin
     w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[0] = r_entry.rd_regs[rs_idx].valid & w_rs_rel_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
+
+    w_entry_next.vlvtype_ready = r_entry.vlvtype_ready | vlvtype_upd_valid;
+    w_entry_next.vlvtype       = vlvtype_upd_valid ? vlvtype_upd_if.vlvtype : r_entry.vlvtype;
 
     if (w_entry_next.rd_regs[rs_idx].predict_ready[0]) begin
       w_entry_next.rd_regs[rs_idx].early_index    = w_rs_rel_index[rs_idx];
@@ -137,6 +144,11 @@ always_comb begin
         w_state_next = scariv_pkg::INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
+
+        w_entry_next.vlvtype_ready = vlvtype_info_if.ready;
+        w_entry_next.vlvtype_index = vlvtype_info_if.index;
+        w_entry_next.vlvtype       = vlvtype_info_if.vlvtype;
+
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
           w_dead_next  = 1'b1;
@@ -195,14 +207,11 @@ end // always_comb
 
 generate if (NUM_OPERANDS == 3) begin : init_entry_op3
   assign w_init_entry = scariv_vec_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
-                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred,
-                                                         i_vlvtype);
+                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
 end else begin
   assign w_init_entry = scariv_vec_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
-                                                         i_vlvtype);
-end
-endgenerate
+                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
+end endgenerate
 
 
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
@@ -246,7 +255,7 @@ endgenerate
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
-                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry);
+                       w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry) & r_entry.vlvtype_ready;
 assign o_entry       = r_entry;
 
 assign o_issue_succeeded = (r_state == scariv_pkg::SCHED_CLEAR);
