@@ -70,6 +70,7 @@ stq_entry_t                          w_entry_next;
 logic                                              w_entry_flush;
 logic                                              w_commit_flush;
 logic                                              w_br_flush;
+logic                                              w_rob_except_flush;
 logic                                              w_load_br_flush;
 logic                                              w_ready_to_mv_stbuf;
 
@@ -79,7 +80,7 @@ logic                                              w_rs2_rel_hit;
 logic                                              w_rs2_phy_hit;
 logic                                              w_rs2_may_mispred;
 logic                                              w_rs2_mispredicted;
-scariv_pkg::alen_t                                   w_rs2_phy_data;
+scariv_pkg::alen_t                                 w_rs2_phy_data;
 logic                                              w_entry_rs2_ready_next;
 
 assign  o_entry = r_entry;
@@ -93,10 +94,11 @@ assign w_rs2_rel_hit = 1'b0;
 select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_phy_wr (i_phy_wr),
                                    .o_valid (w_rs2_phy_hit), .o_data (w_rs2_phy_data));
 
+assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & |(rob_info_if.except_valid & rob_info_if.done_grp_id & r_entry.inst.grp_id);
 assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
-assign w_entry_flush  = w_commit_flush | w_br_flush;
+assign w_entry_flush  = w_commit_flush | w_br_flush | w_rob_except_flush;
 
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
@@ -111,7 +113,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed &
+assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & !r_entry.dead &
                            ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : 1'b1) &
                            ~r_entry.st_buf_finished &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);

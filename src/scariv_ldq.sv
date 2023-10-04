@@ -181,7 +181,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   //   end
   // end
   // done_if w_ex3_done_sel_if();
-  // 
+  //
   // // Selection of EX3 Update signal
   // ex3_done_if_select
   //   #(.ENTRY_SIZE(scariv_conf_pkg::LDQ_SIZE))
@@ -261,6 +261,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
     assign w_ex2_same_dw = |(scariv_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
                              scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].addr[2:0]));
     assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
+                                                 !w_ldq_entries[l_idx].dead &
                                                  w_ldq_entries[l_idx].is_valid &
                                                  ld_is_younger_than_st &
                                                  w_ldq_entries[l_idx].is_get_data &
@@ -275,17 +276,17 @@ endgenerate
 // generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
 //   assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
 //   ldq_entry_t w_ldq_replay_entry;
-// 
+//
 //   bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
 //   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
-// 
+//
 //   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
-// 
+//
 //   assign ldq_replay_if[p_idx].index_oh = w_run_request_oh[p_idx];
-// 
+//
 //   for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
 //     assign w_run_request_rev_oh[l_idx][p_idx] = w_run_request_oh[p_idx][l_idx];
-// 
+//
 //     assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_run_request[p_idx][l_idx];
 //   end
 // end
@@ -298,14 +299,14 @@ endgenerate
 //   logic [scariv_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
 //   ldq_entry_t                              w_ldq_done_entry;
 //   logic [scariv_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
-// 
+//
 //   for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : q_loop
 //     assign w_ldq_done_array[l_idx] = (w_ldq_entries[l_idx].state == LDQ_EX3_DONE) &
 //                                      w_ldq_entries[l_idx].pipe_sel_idx_oh[d_idx];
 //   end
 //   bit_extract_msb #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_done_oh (.in(w_ldq_done_array), .out(w_ldq_done_oh));
 //   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_done_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
-// 
+//
 //   assign o_done_report[d_idx].valid   = |w_ldq_done_array;
 //   assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.inst.cmt_id;
 //   assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.inst.grp_id;
@@ -313,7 +314,7 @@ endgenerate
 //   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
 //   assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
 //                                               w_ldq_done_entry.addr};
-// 
+//
 // `ifdef SIMULATION
 //   // Kanata
 //   import "DPI-C" function void log_stage
@@ -321,7 +322,7 @@ endgenerate
 //      input longint id,
 //      input string  stage
 //      );
-// 
+//
 //   always_ff @ (negedge i_clk, negedge i_reset_n) begin
 //     if (i_reset_n) begin
 //       if (o_done_report[d_idx].valid) begin
@@ -330,7 +331,7 @@ endgenerate
 //     end
 //   end
 // `endif // SIMULATION
-// 
+//
 // end
 // endgenerate
 

@@ -64,7 +64,10 @@ always_comb begin
   rd_queue_init.sim_timer = 10;
 end
 
-assign rd_queue_ram.data      = i_snoop_resp_data;
+generate for (genvar byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
+  assign rd_queue_ram.data[byte_idx*8+:8] = i_snoop_resp_be[byte_idx] ? i_snoop_resp_data[byte_idx*8+:8] :
+                                            ram[r_req_paddr_pos][byte_idx*8+:8];
+end endgenerate
 assign rd_queue_ram.tag       = r_req_tag;
 assign rd_queue_ram.sim_timer = 10;
 
@@ -86,6 +89,14 @@ line_status_t  actual_line_status;
 always_comb begin
   actual_line_status = status[actual_line_pos];
 end
+
+`ifdef SIMULATION
+localparam DEBUG_LINE_SIZE = 128;
+line_status_t [DEBUG_LINE_SIZE-1: 0] sim_line_status_set;
+generate for (genvar i = 0; i < DEBUG_LINE_SIZE; i++) begin
+  assign sim_line_status_set[i] = status[(actual_line_pos & ~(DEBUG_LINE_SIZE-1)) + i];
+end endgenerate
+`endif // SIMULATION
 
 // PMA Memory Map
 logic                       w_map_hit;
@@ -111,6 +122,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
         status[actual_line_pos] = ST_INIT;
       end
+      // $display("%t write(%x): line update %08x status[%08x] = %d", $time, i_req_tag, actual_line_pos, actual_line_pos, status[actual_line_pos]);
       for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
         if (i_req_byte_en[byte_idx]) begin
           ram[actual_line_pos][byte_idx*8+:8] = i_req_data[byte_idx*8+:8];
@@ -122,6 +134,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     case(r_state)
       IDLE: begin
         if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XRD) begin
+          // $display("%t read (%x): data read %08x, status[%08x]=%d", $time, i_req_tag, actual_addr, actual_line_pos, status[actual_line_pos]);
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
             if (w_map_hit & w_map_attributes.c &
                 (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
@@ -142,7 +155,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         o_snoop_req_paddr <= 'h0;
         if (i_snoop_resp_valid) begin
           r_state <= IDLE;
-          status[r_req_paddr_pos] = ST_GIVEN;
+          if (r_req_tag[TAG_W-1 -: 2] != scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
+            status[r_req_paddr_pos] = ST_INIT;
+          end
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
             if (i_snoop_resp_be[byte_idx]) begin
               ram[r_req_paddr_pos][byte_idx*8+:8] = i_snoop_resp_data[byte_idx*8+:8];

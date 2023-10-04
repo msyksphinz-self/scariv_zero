@@ -116,7 +116,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                                          cmt_id_t cmt_id,
                                          grp_id_t grp_id,
                                          logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
-                                         logic stq_rmw_existed);
+                                         logic stq_rmw_existed, logic oldest_valid);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
@@ -129,7 +129,8 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.grp_id = grp_id;
 
   ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
-                         stq_rmw_existed;
+                         stq_rmw_existed |
+                         oldest_valid;
   ret.oldest_valid     = 1'b0;
 
   ret.wr_reg.valid = in.wr_reg.valid;
@@ -259,6 +260,7 @@ typedef struct packed {
 typedef struct packed {
   scariv_pkg::paddr_t paddr;
   logic             is_uc;
+  dc_ways_idx_t     way;
 } missu_req_t;
 
 typedef struct packed {
@@ -269,13 +271,13 @@ typedef struct packed {
 } missu_resp_t;
 
 typedef struct packed {
-  logic          valid;
+  logic               valid;
   scariv_pkg::paddr_t paddr;
-  logic                          is_uc;
-  logic                          sent;
-  logic                          get_data;
-  dc_data_t                      data;
-  dc_ways_idx_t way;
+  logic               is_uc;
+  logic               sent;
+  logic               get_data;
+  dc_data_t           data;
+  dc_ways_idx_t       way;
 } mshr_entry_t;
 
 function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
@@ -285,6 +287,7 @@ function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
 
   ret.valid = valid;
   ret.is_uc = req.is_uc;
+  ret.way   = req.way;
   if (req.is_uc) begin
     ret.paddr = req.paddr;
   end else begin
@@ -798,6 +801,10 @@ typedef struct packed {
   logic [DCACHE_DATA_B_W-1: 0] be;
 } snoop_resp_t;
 
+typedef enum logic {
+  SNOOP_READ,
+  SNOOP_INVALID
+} l1d_snp_cmd_t;
 
 // -----------------------
 // Store Buffer Interface
@@ -816,9 +823,9 @@ typedef struct packed {
   logic [riscv_pkg::PADDR_W-1: 0]                      paddr;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]              missu_index_oh;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
-
+  logic                                                l1d_high_priority;
   logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
   logic                                                is_amo;
@@ -842,7 +849,8 @@ typedef enum logic [ 3: 0] {
   ST_BUF_L1D_MERGE     = 9,
   ST_BUF_L1D_MERGE2    = 10,
   ST_BUF_WAIT_FINISH   = 11,
-  ST_BUF_AMO_OPERATION = 12
+  ST_BUF_AMO_OPERATION = 12,
+  ST_BUF_WAIT_L1D_MERGE= 13
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (

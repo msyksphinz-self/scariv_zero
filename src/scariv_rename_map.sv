@@ -12,7 +12,10 @@ module scariv_rename_map
   import scariv_pkg::*;
   import scariv_conf_pkg::*;
 #(parameter REG_TYPE = GPR,
-  localparam NUM_OPERANDS = (REG_TYPE == GPR) ? 2 : 3)
+  localparam NUM_OPERANDS = (REG_TYPE == GPR) ? 2 : 3,
+  localparam RNID_W = REG_TYPE == GPR ? XPR_RNID_W : FPR_RNID_W,
+  parameter type rnid_t = logic [RNID_W-1: 0]
+  )
 (
    input logic                     i_clk,
    input logic                     i_reset_n,
@@ -37,6 +40,8 @@ module scariv_rename_map
 
    output rnid_t      o_rn_list[32]
    );
+
+
 
 rnid_t                r_map[32];
 

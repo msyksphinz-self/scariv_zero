@@ -9,7 +9,11 @@
 
 module scariv_bru_rn_snapshots    //
   import scariv_pkg::*;
-  (
+  #(parameter REG_TYPE = GPR,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    localparam RNID_W = $clog2(RNID_SIZE),
+    parameter type rnid_t = logic [RNID_W-1: 0])
+(
    input logic         i_clk,
    input logic         i_reset_n,
 

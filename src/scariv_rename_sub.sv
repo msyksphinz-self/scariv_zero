@@ -8,7 +8,10 @@
 
 module scariv_rename_sub
   import scariv_pkg::*;
-  #(parameter REG_TYPE = GPR)
+  #(parameter REG_TYPE = GPR,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    localparam RNID_W = $clog2(RNID_SIZE),
+    parameter type rnid_t = logic [RNID_W-1: 0])
 (
  input logic i_clk,
  input logic i_reset_n,
@@ -33,8 +36,9 @@ module scariv_rename_sub
  input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
  );
 
-localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 : // REG_TYPE == INT
-                          3;
+localparam NUM_OPERANDS = REG_TYPE == FPR ? 3 :
+                          2;   // REG_TYPE == INT
+localparam FLIST_SIZE = REG_TYPE == GPR ? XPR_FLIST_SIZE : FPR_FLIST_SIZE;
 
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                   w_all_freelist_ready;
@@ -68,7 +72,7 @@ logic [ 4: 0]                             w_rd_regidx[scariv_conf_pkg::DISP_SIZE
 grp_id_t     w_rd_data;
 
 // Current rename map information to stack
-logic                                     w_restore_valid;
+logic                        w_restore_valid;
 rnid_t                       w_rn_list[32];
 rnid_t                       w_restore_rn_list[32];
 rnid_t                       w_restore_queue_list[32];
@@ -401,6 +405,7 @@ endgenerate
 
 
 scariv_bru_rn_snapshots
+  #(.REG_TYPE(REG_TYPE))
 u_scariv_bru_rn_snapshots
   (
    .i_clk (i_clk),
@@ -436,7 +441,7 @@ u_commit_map
 
 rnid_t w_rnid_list[RNID_SIZE];
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : rn_loop
-  for (genvar f_idx = 0; f_idx < scariv_pkg::FLIST_SIZE; f_idx++) begin : flist_loop
+  for (genvar f_idx = 0; f_idx < FLIST_SIZE; f_idx++) begin : flist_loop
     assign w_rnid_list[d_idx * FLIST_SIZE + f_idx] = free_loop[d_idx].u_freelist.r_freelist[f_idx];
   end
 end
@@ -453,8 +458,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         if (f1_idx != f2_idx) begin
           if (w_rnid_list[f1_idx] !='h0 && (w_rnid_list[f1_idx] == w_rnid_list[f2_idx])) begin
             $fatal(0, "Index %d(%2d, %2d) and %d(%2d, %2d) are same ID: %3d\n",
-                   f1_idx[$clog2(RNID_SIZE)-1: 0], f1_idx[$clog2(RNID_SIZE)-1: 0] / scariv_pkg::FLIST_SIZE, f1_idx[$clog2(RNID_SIZE)-1: 0] % scariv_pkg::FLIST_SIZE,
-                   f2_idx[$clog2(RNID_SIZE)-1: 0], f2_idx[$clog2(RNID_SIZE)-1: 0] / scariv_pkg::FLIST_SIZE, f2_idx[$clog2(RNID_SIZE)-1: 0] % scariv_pkg::FLIST_SIZE,
+                   f1_idx[$clog2(RNID_SIZE)-1: 0], f1_idx[$clog2(RNID_SIZE)-1: 0] / FLIST_SIZE, f1_idx[$clog2(RNID_SIZE)-1: 0] % FLIST_SIZE,
+                   f2_idx[$clog2(RNID_SIZE)-1: 0], f2_idx[$clog2(RNID_SIZE)-1: 0] / FLIST_SIZE, f2_idx[$clog2(RNID_SIZE)-1: 0] % FLIST_SIZE,
                    w_rnid_list[f1_idx]);
           end
         end

@@ -21,7 +21,7 @@ module scariv_lsu_pipe
  /* CSR information */
  csr_info_if.slave                     csr_info,
  /* SFENCE update information */
- sfence_if.slave                       sfence_if,
+ sfence_if.slave                       sfence_if_slave,
 
  // Commit notification
  input scariv_pkg::commit_blk_t        i_commit,
@@ -65,6 +65,11 @@ module scariv_lsu_pipe
 
   // Interface for Replay Queue
   lsu_pipe_haz_if.master                 lsu_pipe_haz_if,
+
+  /* SFENCE update information */
+  sfence_if.master                  sfence_if_master,
+  /* FENCE.I update */
+  output logic                      o_fence_i,
 
   output scariv_pkg::cmt_id_t          o_ex3_cmt_id,
   output scariv_pkg::grp_id_t          o_ex3_grp_id,
@@ -161,6 +166,7 @@ logic w_ex2_br_flush;
 // EX3 stage
 //
 scariv_lsu_pkg::lsu_pipe_issue_t r_ex3_issue, w_ex3_issue_next;
+lsu_pipe_ctrl_t                  r_ex3_pipe_ctrl;
 scariv_pkg::alen_t               r_ex3_aligned_data;
 logic                            r_ex3_mis_valid;
 logic                            r_ex3_except_valid;
@@ -249,8 +255,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
 
     r_ex2_is_uc     <= !w_ex1_tlb_resp.cacheable;
+    r_ex2_sfence_vma_illegal <= w_ex1_sfence_vma_illegal;
 
     r_ex3_issue     <= w_ex3_issue_next;
+    r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
+    r_ex3_sfence_vma_illegal <= r_ex2_sfence_vma_illegal;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -266,7 +275,7 @@ u_tlb
  .i_reset_n(i_reset_n),
 
  .i_kill(1'b0),
- .sfence_if(sfence_if),
+ .sfence_if(sfence_if_slave),
 
  .i_csr_update (csr_info.update),
  .i_status_prv(csr_info.mstatus[`MSTATUS_MPRV] ? csr_info.mstatus[`MSTATUS_MPP] : csr_info.priv),
@@ -334,7 +343,7 @@ assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop ==
 assign w_ex1_writemem_cmd = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
 
 
-assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & ~r_ex1_issue.paddr_valid;
+assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & (w_ex1_writemem_cmd | w_ex1_readmem_cmd) & ~r_ex1_issue.paddr_valid;
 assign w_ex1_tlb_req.cmd         = w_ex1_readmem_cmd ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
@@ -353,17 +362,27 @@ logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
 scariv_pkg::except_t w_ex1_tlb_except_type;
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_cmd &
-                               (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = w_ex1_writemem_cmd &
-                               (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st);
-assign w_ex1_tlb_except_type = w_ex1_tlb_resp.ma.ld ? scariv_pkg::LOAD_ADDR_MISALIGN :
-                               w_ex1_tlb_resp.pf.ld ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                               w_ex1_tlb_resp.ae.ld ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ma.st ? scariv_pkg::STAMO_ADDR_MISALIGN:
-                               w_ex1_tlb_resp.pf.st ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
-                               w_ex1_tlb_resp.ae.st ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
-                               scariv_pkg::except_t'('h0);
+logic w_ex1_sfence_vma_illegal;
+logic r_ex2_sfence_vma_illegal;
+logic r_ex3_sfence_vma_illegal;
+assign w_ex1_sfence_vma_illegal = (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) & csr_info.mstatus[`MSTATUS_TVM];
+
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_ex1_st_except_valid = w_ex1_writemem_cmd & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
+                               (r_ex1_pipe_ctrl.op == OP_FENCE_I)    |
+                               (r_ex1_pipe_ctrl.op == OP_FENCE)      |
+                               (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) |
+                               w_ex1_sfence_vma_illegal              |
+                               'h0;
+
+assign w_ex1_tlb_except_type = w_ex1_sfence_vma_illegal                  ? scariv_pkg::ILLEGAL_INST   :
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.ma.ld ? scariv_pkg::LOAD_ADDR_MISALIGN :
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.pf.ld ? scariv_pkg::LOAD_PAGE_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               w_ex1_readmem_cmd  & w_ex1_tlb_resp.ae.ld ? scariv_pkg::LOAD_ACC_FAULT     :  // PF and AE same time, PF is at first
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.ma.st ? scariv_pkg::STAMO_ADDR_MISALIGN:
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.pf.st ? scariv_pkg::STAMO_PAGE_FAULT   :  // PF and AE same time, PF is at first
+                               w_ex1_writemem_cmd & w_ex1_tlb_resp.ae.st ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
+                               scariv_pkg::SILENT_FLUSH;
 
 assign w_ex1_haz_detected = o_ex1_q_updates.hazard_typ != EX1_HAZ_NONE;
 
@@ -460,6 +479,7 @@ assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_f
                                         !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
+assign l1d_missu_if.req_payload.way   = ex1_l1d_rd_if.s1_hit_way;
 // L1D replace information
 
 // Interface to EX2 updates
@@ -510,19 +530,19 @@ always_comb begin
 end
 
 
-`ifdef SIMULATION
-always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
-    if (o_ex2_q_updates.update &
-        (r_ex2_pipe_ctrl.op == OP_LOAD) &
-        (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
-        !$onehot(o_ex2_q_updates.missu_index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
-             o_ex2_q_updates.missu_index_oh);
-    end
-  end // if (i_reset_n)
-end
-`endif // SIMULATION
+// `ifdef SIMULATION
+// always_ff @ (negedge i_clk, negedge i_reset_n) begin
+//   if (i_reset_n) begin
+//     if (o_ex2_q_updates.update &
+//         (r_ex2_pipe_ctrl.op == OP_LOAD) &
+//         (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
+//         !$onehot(o_ex2_q_updates.missu_index_oh)) begin
+//       $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
+//              o_ex2_q_updates.missu_index_oh);
+//     end
+//   end // if (i_reset_n)
+// end
+// `endif // SIMULATION
 
 // Forwarding check
 logic w_ex2_fwd_check_type;
@@ -673,7 +693,8 @@ assign ex3_done_if.done          = r_ex3_issue.valid;
 assign ex3_done_if.index_oh      = 'h0;
 assign ex3_done_if.payload.except_valid  = r_ex3_except_valid;
 assign ex3_done_if.payload.except_type   = r_ex3_except_type;
-assign ex3_done_if.payload.except_tval   = r_ex3_addr;
+assign ex3_done_if.payload.except_tval   = r_ex3_sfence_vma_illegal ? r_ex3_issue.inst :
+                                           r_ex3_addr;
 assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
 assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;
@@ -689,6 +710,71 @@ assign o_ex3_phy_wr.valid   = r_ex3_issue.valid &
 assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_aligned_data;
+
+
+// ------------
+// SFENCE Update
+// ------------
+logic r_sfence_vma_commit_wait;
+scariv_pkg::cmt_id_t r_sfence_vma_cmt_id;
+scariv_pkg::grp_id_t r_sfence_vma_grp_id;
+logic                                r_sfence_vma_is_rs1_x0;
+logic                                r_sfence_vma_is_rs2_x0;
+scariv_pkg::vaddr_t      r_sfence_vma_vaddr;
+
+logic                                w_sfence_vma_sfence_commit_match;
+assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &
+                                          (i_commit.cmt_id == r_sfence_vma_cmt_id) &
+                                          |(i_commit.grp_id & r_sfence_vma_grp_id);
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sfence_vma_commit_wait <= 'h0;
+  end else begin
+    if (w_sfence_vma_sfence_commit_match) begin
+      r_sfence_vma_commit_wait <= 1'b0;
+    end else if (r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_SFENCE_VMA) & ~r_ex3_sfence_vma_illegal) begin
+      r_sfence_vma_commit_wait <= 1'b1;
+      r_sfence_vma_cmt_id <= r_ex3_issue.cmt_id;
+      r_sfence_vma_grp_id <= r_ex3_issue.grp_id;
+      r_sfence_vma_is_rs1_x0 <= r_ex3_issue.rd_regs[0].regidx == 'h0;
+      r_sfence_vma_is_rs2_x0 <= r_ex3_issue.rd_regs[1].regidx == 'h0;
+      r_sfence_vma_vaddr     <= r_ex3_addr[riscv_pkg::VADDR_W-1:0];
+    end
+  end // else: !if(i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign sfence_if_master.valid     = r_sfence_vma_commit_wait & w_sfence_vma_sfence_commit_match;
+assign sfence_if_master.is_rs1_x0 = r_sfence_vma_is_rs1_x0;
+assign sfence_if_master.is_rs2_x0 = r_sfence_vma_is_rs2_x0;
+assign sfence_if_master.vaddr     = r_sfence_vma_vaddr[riscv_pkg::VADDR_W-1:0];
+
+// ---------------
+// FENCE_I update
+// ---------------
+logic                r_fencei_commit_wait;
+logic                w_fencei_commit_match;
+scariv_pkg::cmt_id_t r_fencei_cmt_id;
+scariv_pkg::grp_id_t r_fencei_grp_id;
+assign w_fencei_commit_match = r_fencei_commit_wait & i_commit.commit &
+                               (i_commit.cmt_id == r_fencei_cmt_id) &
+                               |(i_commit.grp_id & r_fencei_grp_id);
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fencei_commit_wait <= 'h0;
+  end else begin
+    if (w_fencei_commit_match) begin
+      r_fencei_commit_wait <= 1'b0;
+    end else if (r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_FENCE_I)) begin
+      r_fencei_commit_wait <= 1'b1;
+      r_fencei_cmt_id <= r_ex3_issue.cmt_id;
+      r_fencei_grp_id <= r_ex3_issue.grp_id;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+assign o_fence_i = w_fencei_commit_match;
 
 
 `ifdef SIMULATION

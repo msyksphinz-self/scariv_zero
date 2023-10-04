@@ -22,7 +22,9 @@ class verilator_sim:
     manager = Manager()
     result_dict = manager.dict({'pass': 0, 'match': 0, 'timeout': 0, 'error': 0, 'deadlock': 0, 'unknown': 0, 'cycle_deleg' : 0})
     result_detail_dict = manager.dict()
+    test_table = []
     test_count = manager.Value('i', 0)
+    rerun_test_array = manager.list()
 
     def build_sim(self, sim_conf):
         # Make spike-dpi
@@ -179,11 +181,15 @@ class verilator_sim:
         else:
             expected_time = 0
 
-        self.show_results(test["name"], result_stdout, expected_time)
+        result_str = self.show_results(test["name"], result_stdout, expected_time)
+
+        self.rerun_test_array += [{"name": test["name"], "elf": test["elf"], "group": test["group"] + [result_str]}]
+
 
     def show_results(self, testname, result_stdout, expected_time):
         self.test_count.value += 1
         print ("%*d / %d : %-*s : " % (int(math.log10(self.test_length)+1), self.test_count.value, self.test_length, self.max_testname_length, testname), end="")
+
         if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
             print ("ERROR", end="\r\n")
             self.result_detail_dict[testname] = "error"
@@ -229,27 +235,20 @@ class verilator_sim:
             self.result_detail_dict[testname] = "unknown"
             self.result_dict['unknown'] += 1
 
+        return self.result_detail_dict[testname]
+
     def execute_test_wrapper (self, args):
         return self.execute_test(*args)
 
     def run_sim(self, sim_conf, testcase):
-        test_table = json
-        if sim_conf["xlen"] == 32 :
-            json_open = open('rv32-tests.json', 'r')
-            test_table = json.load(json_open)
-        elif sim_conf["xlen"] == 64 :
-            rv64_tests_fp = open('rv64-tests.json', 'r')
-            test_table = json.load(rv64_tests_fp)
-            rv64_bench_fp = open('rv64-bench.json', 'r')
-            test_table += json.load(rv64_bench_fp)
-            rv64_rvv_fp = open('rv64-rvv-tests.json', 'r')
-            test_table += json.load(rv64_rvv_fp)
-            rv64_aapg_fp = open('../tests/rv64-aapg.json', 'r')
-            test_table += json.load(rv64_aapg_fp)
+        for t in sim_conf["testlist"]:
+            json_open = open(t, 'r')
+            t = json.load(json_open)
+            self.test_table += t
 
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
-                                             (x["skip"] != 1 if "skip" in x else True)) , test_table))
+                                             (x["skip"] != 1 if "skip" in x else True)) , self.test_table))
         self.max_testname_length = max(map(lambda x: len(x["name"]), select_test))
         self.test_length = len(select_test)
 
@@ -284,6 +283,8 @@ class verilator_sim:
             json.dump(self.result_detail_dict.copy(), f, indent=4)
         with open(base_dir + '/' + testcase + '/result.json', 'a') as f:
             json.dump(self.result_dict.copy(), f, indent=4)
+        with open(base_dir + '/' + testcase + '/rerun.json', 'w') as f:
+            json.dump(self.rerun_test_array.__deepcopy__({}), f, indent=4)
         print ("Result : " + base_dir + '/' + testcase + '/result.json')
         if len(select_test) == 1:
             output_file = os.path.basename(select_test[0]["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -306,6 +307,8 @@ def main():
     parser.add_argument('-t', '--testcase', dest='testcase', action='store',
 	                default='testcase',
 	                help="Testcase of run")
+    parser.add_argument('-l', '--testlist', dest="testlist", action="store",
+	                default="default", help="Test list to run")
     parser.add_argument('-k', '--kanata', dest="kanata", action='store_true',
 	                default=False, help="Generate Katana Log file")
     parser.add_argument('-j', dest="parallel", action='store',
@@ -336,12 +339,22 @@ def main():
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
 
+    sim_conf["xlen"] = int(sim_conf["isa"][2:4])
+
+    if args.testlist == "default":
+        if sim_conf["xlen"] == 32 :
+            sim_conf["testlist"] = ['../tests/rv32-tests.json']
+        elif sim_conf["xlen"] == 64 :
+            sim_conf["testlist"] = ['../tests/rv64-tests.json',
+                                    '../tests/rv64-bench.json',
+                                    '../tests/rv64-aapg.json']
+    else:
+        sim_conf["testlist"] = [args.testlist]
 
     if not (sim_conf["isa"][0:4] == "rv32" or sim_conf["isa"][0:4] == "rv64") :
         print ("isa option need to start from \"rv32\" or \"rv64\"")
         exit
     else:
-        sim_conf["xlen"] = int(sim_conf["isa"][2:4])
         if "d" in sim_conf["isa_ext"] :
             sim_conf["flen"] = 64
         elif "f" in sim_conf["isa_ext"] :

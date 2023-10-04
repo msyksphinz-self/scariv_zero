@@ -1456,21 +1456,28 @@ void record_l1d_load(long long rtl_time,
     }
   }
   fprintf(compare_log_fp, "\n");
-  if (merge_valid) {
-    fprintf(compare_log_fp, "%lld : L1D Merged      : %llx(%05d) : ", rtl_time, paddr, ram_addr);
-    for (int i = size-1; i >= 0; i--) {
-      fprintf(compare_log_fp, "%02x", merged_l1d_data[i]);
-      if (i % 4 == 0 && i != 0) {
-        fprintf(compare_log_fp, "_");
-      }
-    }
-    fprintf(compare_log_fp, "\n");
+//   if (merge_valid) {
+//     fprintf(compare_log_fp, "%lld : L1D Merged      : %llx(%05d) : ", rtl_time, paddr, ram_addr);
+//     for (int i = size-1; i >= 0; i--) {
+//       fprintf(compare_log_fp, "%02x", merged_l1d_data[i]);
+//       if (i % 4 == 0 && i != 0) {
+//         fprintf(compare_log_fp, "_");
+//       }
+//     }
+//     fprintf(compare_log_fp, "\n");
+// #ifndef SIM_MAIN
+//     if (tohost_en && (tohost_addr == paddr) && (merged_l1d_data[0] & 0x1 == 1)) {
+//       stop_sim(merged_l1d_data[0], rtl_time);
+//     }
+// #endif // SIM_MAIN
+//   }
+
 #ifndef SIM_MAIN
-    if (tohost_en && (tohost_addr == paddr) && (merged_l1d_data[0] & 0x1 == 1)) {
-      stop_sim(merged_l1d_data[0], rtl_time);
+    if (tohost_en && (tohost_addr == paddr) && (l1d_data[0] & 0x1 == 1)) {
+      stop_sim(l1d_data[0], rtl_time);
     }
 #endif // SIM_MAIN
-  }
+
 
   bool diff_found = false;
   fprintf(compare_log_fp, "%lld : Load ISS Check  : %llx        : ", rtl_time, paddr);

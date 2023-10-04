@@ -159,6 +159,8 @@ scariv_pkg::done_rpt_t w_vlsu_done_rpt    ;
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
+snoop_info_if  w_snoop_info_if();
+
 l1d_snoop_if   l1d_snoop_if  ();
 stq_snoop_if   stq_snoop_if  ();
 mshr_snoop_if  mshr_snoop_if ();
@@ -423,7 +425,6 @@ u_lsu_top
     .i_reset_n(i_reset_n),
 
     .rob_info_if   (w_rob_info_if),
-    .sfence_if     (w_sfence_if),
 
     .csr_info (w_csr_info),
 
@@ -455,11 +456,16 @@ u_lsu_top
     .o_another_flush_report(w_lsu_another_flush_rpt),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
+    .snoop_info_if (w_snoop_info_if),
+
     .l1d_snoop_if   (l1d_snoop_if  ),
     .stq_snoop_if   (stq_snoop_if  ),
     .mshr_snoop_if  (mshr_snoop_if ),
     .stbuf_snoop_if (stbuf_snoop_if),
     .streq_snoop_if (streq_snoop_if),
+
+    .sfence_if (w_sfence_if),
+    .o_fence_i (w_fence_i),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -529,9 +535,6 @@ u_csu (
     .rob_info_if (w_rob_info_if),
 
     .fflags_update_if (w_fflags_update_if),
-
-    .sfence_if (w_sfence_if),
-    .o_fence_i (w_fence_i),
 
     .vlvtype_upd_if (w_vlvtype_upd_if),
 
@@ -765,6 +768,8 @@ scariv_snoop_top u_snoop_top
  .i_reset_n (i_reset_n),
 
  .snoop_if       (snoop_if),
+
+ .snoop_info_if (w_snoop_info_if),
 
  .l1d_snoop_if   (l1d_snoop_if  ),
  .stq_snoop_if   (stq_snoop_if  ),
