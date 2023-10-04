@@ -137,6 +137,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
      .o_missu_req      (w_entry_missu_req   [e_idx]),
      .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
 
+     .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
      .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
      .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
      .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
