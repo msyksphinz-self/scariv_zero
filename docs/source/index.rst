@@ -24,6 +24,7 @@ SCARIV RISC-V CPUコアのドキュメントにようこそ！
    sections/tlb
    sections/l2
    sections/branch
+   sections/vec_vlvtype
    sections/memory_map
    sections/parameters
    sections/terminology
