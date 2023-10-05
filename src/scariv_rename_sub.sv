@@ -9,7 +9,9 @@
 module scariv_rename_sub
   import scariv_pkg::*;
   #(parameter REG_TYPE = GPR,
-    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE :
+                            REG_TYPE == FPR ? FPR_RNID_SIZE :
+                            scariv_vec_pkg::VEC_RNID_SIZE,
     localparam RNID_W = $clog2(RNID_SIZE),
     parameter type rnid_t = logic [RNID_W-1: 0])
 (
@@ -36,8 +38,9 @@ module scariv_rename_sub
  input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
  );
 
-localparam NUM_OPERANDS = REG_TYPE == FPR ? 3 :
-                          2;   // REG_TYPE == INT
+localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 :
+                          REG_TYPE == FPR ? 3 :
+                          3;   // REG_TYPE == VPR
 localparam FLIST_SIZE = REG_TYPE == GPR ? XPR_FLIST_SIZE : FPR_FLIST_SIZE;
 
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;

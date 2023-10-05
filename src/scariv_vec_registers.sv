@@ -22,11 +22,13 @@ module scariv_vec_registers
 
 localparam WIDTH = riscv_vec_conf_pkg::DLEN_W;
 
-logic [scariv_vec_pkg::VEC_STEP_W-1: 0][WIDTH-1: 0] r_phy_regs[scariv_pkg::RNID_SIZE];
+typedef logic [scariv_vec_pkg::VEC_RNID_W-1: 0] rnid_t;
+
+logic [scariv_vec_pkg::VEC_STEP_W-1: 0][WIDTH-1: 0] r_phy_regs[scariv_vec_pkg::VEC_RNID_SIZE];
 
 logic [WR_PORT_SIZE-1:0]  wr_valid;
 scariv_vec_pkg::vec_pos_t wr_pos [WR_PORT_SIZE];
-scariv_pkg::rnid_t        wr_rnid[WR_PORT_SIZE];
+rnid_t                    wr_rnid[WR_PORT_SIZE];
 logic [WIDTH-1: 0]        wr_data[WR_PORT_SIZE];
 
 generate for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_port_loop
@@ -37,17 +39,17 @@ generate for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_port_lo
 end endgenerate
 
 
-generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin : reg_loop
+generate for (genvar r_idx = 0; r_idx < scariv_vec_pkg::VEC_RNID_SIZE; r_idx++) begin : reg_loop
   logic w_wr_valid;
   logic [WIDTH-1: 0]        w_wr_data;
   scariv_vec_pkg::vec_pos_t w_wr_pos;
 
   select_oh #(
       .SEL_WIDTH (WR_PORT_SIZE),
-      .KEY_WIDTH (scariv_pkg::RNID_W),
+      .KEY_WIDTH (scariv_vec_pkg::VEC_RNID_W),
       .DATA_WIDTH(WIDTH)
   ) wr_data_select (
-      .i_cmp_key (r_idx[scariv_pkg::RNID_W-1:0]),
+      .i_cmp_key (r_idx[scariv_vec_pkg::VEC_RNID_W-1:0]),
       .i_valid   (wr_valid),
       .i_keys    (wr_rnid),
       .i_data    (wr_data),
@@ -60,7 +62,7 @@ generate for (genvar r_idx = 0; r_idx < scariv_pkg::RNID_SIZE; r_idx++) begin : 
       .KEY_WIDTH ($bits(scariv_vec_pkg::vec_pos_t)),
       .DATA_WIDTH(WIDTH)
   ) wr_pos_select (
-      .i_cmp_key (r_idx[scariv_pkg::RNID_W-1:0]),
+      .i_cmp_key (r_idx[scariv_vec_pkg::VEC_RNID_W-1:0]),
       .i_valid   (wr_valid),
       .i_keys    (wr_pos),
       .i_data    (wr_data),
