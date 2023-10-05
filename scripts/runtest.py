@@ -347,7 +347,8 @@ def main():
         elif sim_conf["xlen"] == 64 :
             sim_conf["testlist"] = ['../tests/rv64-tests.json',
                                     '../tests/rv64-bench.json',
-                                    '../tests/rv64-aapg.json']
+                                    '../tests/rv64-aapg.json',
+                                    '../tests/rv64-rvv-tests.json']
     else:
         sim_conf["testlist"] = [args.testlist]
 
