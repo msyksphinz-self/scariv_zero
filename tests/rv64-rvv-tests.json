@@ -1,5 +1,7 @@
 [
     { "name": "vsetvli01"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vsetvli01/test.elf" , "xlen": 64},
+    { "name": "vmv_v_i"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vmv_v_i/test.elf"   , "xlen": 64},
     { "name": "vmv_v_x"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vmv_v_x/test.elf"   , "xlen": 64},
+    { "name": "vmv_v_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vmv_v_v/test.elf"   , "xlen": 64},
     { "name": "vfmv_v_x"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vfmv_v_x/test.elf"  , "xlen": 64}
 ]

@@ -67,14 +67,15 @@ typedef struct packed {
   scariv_pkg::grp_id_t     grp_id;
 
   scariv_pkg::reg_wr_issue_t         wr_reg;
+  scariv_pkg::reg_wr_issue_t         wr_old_reg;
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
 
-  logic             except_valid;
-  scariv_pkg::except_t          except_type;
-  scariv_pkg::xlen_t except_tval;
+  logic                except_valid;
+  scariv_pkg::except_t except_type;
+  scariv_pkg::xlen_t   except_tval;
 
-  logic      fflags_update_valid;
-  scariv_pkg::fflags_t   fflags;
+  logic                fflags_update_valid;
+  scariv_pkg::fflags_t fflags;
 
   logic             vlvtype_ready;
   vlvtype_ren_idx_t vlvtype_index;
@@ -104,6 +105,11 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.wr_reg.typ = in.wr_reg.typ;
   ret.wr_reg.regidx = in.wr_reg.regidx;
   ret.wr_reg.rnid = in.wr_reg.rnid;
+
+  ret.wr_old_reg.valid  = in.wr_reg.valid;
+  ret.wr_old_reg.typ    = in.wr_reg.typ;
+  ret.wr_old_reg.regidx = in.wr_reg.regidx;
+  ret.wr_old_reg.rnid   = in.wr_reg.old_rnid;
 
   ret.except_valid = 1'b0;
   ret.except_type  = scariv_pkg::INST_ADDR_MISALIGN;
@@ -351,3 +357,21 @@ interface vec_regwrite_if;
   );
 
 endinterface // vec_regwrite_if
+
+
+interface vec_phy_fwd_if;
+
+  logic                     valid;
+  scariv_pkg::rnid_t        rd_rnid;
+
+  modport master (
+    output valid,
+    output rd_rnid
+  );
+
+  modport slave (
+    input valid,
+    input rd_rnid
+  );
+
+endinterface // vec_phy_fwd_if

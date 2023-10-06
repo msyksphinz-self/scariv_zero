@@ -542,13 +542,17 @@ logic [63: 0]                                                  int_commit_counte
 `define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
 
 
-byte                                                           w_physical_vec_data_rnid[scariv_pkg::DISP_SIZE][riscv_vec_conf_pkg::VLEN_W/8];
+byte w_physical_vec_data_rnid[scariv_pkg::DISP_SIZE-1: 0][riscv_vec_conf_pkg::VLEN_W/8-1: 0];
+logic [riscv_vec_conf_pkg::VLEN_W-1: 0] w_physical_vec_data_rnid_grp0;
+
 generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin : vpu
   for (genvar grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
     for (genvar idx = 0; idx < riscv_vec_conf_pkg::VLEN_W/8; idx++) begin : array_loop
       assign w_physical_vec_data_rnid[grp_idx][idx] = w_physical_vec_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid][idx*8 +: 8];
     end
   end
+
+  assign w_physical_vec_data_rnid_grp0 = w_physical_vec_data[committed_rob_entry.inst[0].wr_reg.rnid];
 end endgenerate
 
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin

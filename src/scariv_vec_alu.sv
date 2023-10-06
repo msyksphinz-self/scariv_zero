@@ -34,6 +34,7 @@ module scariv_vec_alu #(
 
     /* read output */
     vec_regread_if.master  vec_phy_rd_if[2],
+    vec_regread_if.master  vec_phy_old_wr_if,
     /* write output */
     vec_regwrite_if.master vec_phy_wr_if,
 
@@ -58,6 +59,7 @@ scariv_pkg::disp_t            w_disp_picked_inst[VEC_ALU_PORT_SIZE];
 logic [VEC_ALU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_ALU_PORT_SIZE];
 scariv_pkg::issue_t           w_ex0_issue;
+vec_phy_fwd_if                w_vec_phy_fwd_if();
 
 scariv_disp_pickup
   #(
@@ -110,6 +112,7 @@ u_scariv_issue_unit
    .i_early_wr    (w_early_wr_zero),
    .i_phy_wr      (i_phy_wr),
    .i_mispred_lsu (w_mispred_lsu),
+   .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
    .o_issue(w_ex0_issue),
    .o_iss_index_oh(),
@@ -138,7 +141,9 @@ u_alu
    .ex0_fpr_regread_rs1(ex1_fpr_regread_rs1),
 
    .vec_phy_rd_if (vec_phy_rd_if),
+   .vec_phy_old_wr_if (vec_phy_old_wr_if),
    .vec_phy_wr_if (vec_phy_wr_if),
+   .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
    .o_done_report (o_done_report)
    );

@@ -37,6 +37,7 @@ module scariv_valu_issue_unit
  /* Forwarding path */
  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+ vec_phy_fwd_if.slave         vec_phy_fwd_if,
 
  output                                scariv_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
@@ -243,6 +244,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_early_wr(i_early_wr),
     .i_phy_wr(i_phy_wr),
     .i_mispred_lsu(i_mispred_lsu),
+    .vec_phy_fwd_if(vec_phy_fwd_if),
 
     .i_commit  (i_commit),
     .br_upd_if (br_upd_if),

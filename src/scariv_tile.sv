@@ -147,7 +147,7 @@ fflags_update_if w_fflags_update_if();
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
-vec_regread_if         w_valu_vec_phy_rd_if[2]()  ;
+vec_regread_if         w_valu_vec_phy_rd_if[3]()  ;
 vec_regwrite_if        w_valu_vec_phy_wr_if[1]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt    ;
 
@@ -695,7 +695,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .i_phy_wr(w_ex3_phy_wr),
 
-     .vec_phy_rd_if (w_valu_vec_phy_rd_if),
+     .vec_phy_rd_if     (w_valu_vec_phy_rd_if[0:1]),
+     .vec_phy_old_wr_if (w_valu_vec_phy_rd_if[2]),
      .vec_phy_wr_if (w_valu_vec_phy_wr_if[0]),
 
      .o_done_report(w_valu_done_rpt),
@@ -706,7 +707,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   scariv_vec_registers
     #(
-      .RD_PORT_SIZE(2),
+      .RD_PORT_SIZE(2 + 1),
       .WR_PORT_SIZE(1)
       )
   u_vec_registers
