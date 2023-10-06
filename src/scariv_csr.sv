@@ -903,7 +903,8 @@ always_comb begin
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
 
       // CSRWrite (SYSREG_ADDR_MEPC,   epc);
-      w_mcause_next = 1 << (riscv_pkg::XLEN_W - 1) | int_encoded;
+      w_mcause_next[riscv_pkg::XLEN_W-1]    = 1'b1;
+      w_mcause_next[riscv_pkg::XLEN_W-2: 0] = int_encoded;
       w_mtval_next = 'h0;
 
       // CSRRead  (SYSREG_ADDR_MTVEC, &tvec);
@@ -960,8 +961,9 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
 
       w_priv_next = riscv_common_pkg::PRIV_S;
-    end else if (i_commit.except_type != scariv_pkg::SILENT_FLUSH &&
-                 i_commit.except_type != scariv_pkg::ANOTHER_FLUSH) begin
+    end else if (~|(i_commit.except_valid & i_commit.dead_id) &
+                 (i_commit.except_type != scariv_pkg::SILENT_FLUSH) &
+                 (i_commit.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */
