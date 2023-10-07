@@ -42,7 +42,7 @@
     {
 		"name":"vfmv.v.f       v[11:7],f[24:20]",
 		"length":"32", "xlen":["32", "64"],
-	    "field": ["01000", "01", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
+	    "field": ["01011", "11", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "f2"]],
 		"inst_cat":[["inst_cat", "valu"]],
         "vec_ctrl":[["op", "mv_v_f"]]
@@ -403,70 +403,80 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "add"]]
 	},
     {
 		"name":"vsub.vx        v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "sub"]]
 	},
     {
 		"name":"vrsub.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "rsub"]]
 	},
     {
 		"name":"vminu.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00010", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "minu"]]
 	},
     {
 		"name":"vmin.vx        v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00010", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "min"]]
 	},
     {
 		"name":"vmaxu.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00011", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "maxu"]]
 	},
     {
 		"name":"vmax.vx        v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00011", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "max"]]
 	},
     {
 		"name":"vand.vx        v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00100", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "and"]]
 	},
     {
 		"name":"vor.vx         v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00101", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "or"]]
 	},
     {
 		"name":"vxor.vx        v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00101", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "xor"]]
 	},
     {
 		"name":"vrgather.vx    v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -739,35 +749,40 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "add"]]
 	},
     {
 		"name":"vrsub.vi       v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "rsub"]]
 	},
     {
 		"name":"vand.vi        v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00100", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "and"]]
 	},
     {
 		"name":"vor.vi         v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00101", "0X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "or"]]
 	},
     {
 		"name":"vxor.vi        v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00101", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["op", "xor"]]
 	},
     {
 		"name":"vrgather.vi    v[11:7],v[24:20],simm5,vm[25:25]",

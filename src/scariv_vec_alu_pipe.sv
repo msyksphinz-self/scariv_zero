@@ -175,15 +175,16 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
   scariv_vec_alu_datapath
   u_vec_alu_datapath
     (
-     .i_op      (r_ex1_pipe_ctrl.op),
-     .i_sew     (r_ex1_issue.vlvtype.vtype.vsew),
-     .i_vs1     (r_ex1_vpr_rs_data[0][d_idx*64 +: 64]),
-     .i_vs2     (r_ex1_vpr_rs_data[1][d_idx*64 +: 64]),
-     .i_rs1     (r_ex1_rs1_data),
-     .i_wr_old  (r_ex1_vpr_wr_old_data[d_idx*64 +: 64]),
-     .i_en_mask (w_ex1_en_mask),
-     .i_v0      ('h0),
-     .o_res     (w_ex1_vec_result [d_idx*64 +: 64])
+     .i_op        (r_ex1_pipe_ctrl.op                            ),
+     .i_sew       (r_ex1_issue.vlvtype.vtype.vsew                ),
+     .i_vs1       (r_ex1_vpr_rs_data[0][d_idx*64 +: 64]          ),
+     .i_rs1_valid (r_ex1_issue.rd_regs[0].typ != scariv_pkg::VPR ),
+     .i_rs1       (r_ex1_rs1_data                                ),
+     .i_vs2       (r_ex1_vpr_rs_data[1][d_idx*64 +: 64]          ),
+     .i_wr_old    (r_ex1_vpr_wr_old_data[d_idx*64 +: 64]         ),
+     .i_en_mask   (w_ex1_en_mask                                 ),
+     .i_v0        ('h0                                           ),
+     .o_res       (w_ex1_vec_result [d_idx*64 +: 64]             )
      );
 end endgenerate // block: datapath_loop
 

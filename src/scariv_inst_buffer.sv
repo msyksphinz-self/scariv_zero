@@ -94,7 +94,7 @@ riscv_pkg::xlen_t    [scariv_conf_pkg::DISP_SIZE-1: 0] w_fetch_except_tval;
 
 rd_t rd_field_type [scariv_conf_pkg::DISP_SIZE];
 r1_t rs1_field_type[scariv_conf_pkg::DISP_SIZE];
-r2_t rf2_field_type[scariv_conf_pkg::DISP_SIZE];
+r2_t rs2_field_type[scariv_conf_pkg::DISP_SIZE];
 r3_t rs3_field_type[scariv_conf_pkg::DISP_SIZE];
 
 logic [$clog2(ic_word_num)-1:0] r_head_start_pos;
@@ -429,7 +429,7 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
      .inst(w_expand_inst[w_idx]),
      .rd(rd_field_type [w_idx]),
      .r1(rs1_field_type[w_idx]),
-     .r2(rf2_field_type[w_idx]),
+     .r2(rs2_field_type[w_idx]),
      .r3(rs3_field_type[w_idx])
      );
 
@@ -723,9 +723,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                                                 scariv_pkg::GPR;
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[0].regidx = w_expand_inst[d_idx][19:15];
 
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rf2_field_type[d_idx] != R2__;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rf2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR :
-                                                                rs1_field_type[d_idx] == R2_V2 ? scariv_pkg::VPR :
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR :
+                                                                rs2_field_type[d_idx] == R2_V2 ? scariv_pkg::VPR :
                                                                 scariv_pkg::GPR;
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];

@@ -677,7 +677,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .rob_info_if(w_rob_info_if),
 
-     .disp_valid(w_disp_valu_valids[0]),
+     .disp_valid(w_disp_valu_valids),
      .disp(w_rn_front_if),
      .vlvtype_info_if (r_rn_vlvtype_info_if),
      .vlvtype_upd_if  (w_vlvtype_upd_if),
