@@ -16,10 +16,12 @@ def main():
     parser = argparse.ArgumentParser(description='Compile design and execute tests')
     parser.add_argument('-j', dest="parallel", action='store',
                         default=1, help="Num of Parallel Jobs")
+    parser.add_argument('-c', '--conf', dest="conf_yaml", action='store',
+                        required=True, help="Config File")
     parser.add_argument('-n', dest="num_tests", action='store',
                         default=100, help="Num of Tsets")
-    parser.add_argument('--priv', dest="priv_mode", action='store',
-                        default="m", help="Running Mode (m/s/u)")
+    # parser.add_argument('--priv', dest="priv_mode", action='store',
+    #                     default="m", help="Running Mode (m/s/u)")
 
     args = parser.parse_args()
 
@@ -34,13 +36,14 @@ def main():
     dir_name = datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
     num_tests = int(args.num_tests)
 
-    config_name = "config_priv_" + args.priv_mode
+    # config_name = "config_priv_" + args.priv_mode
+    config_file = args.conf_yaml
 
     build_command = ["make",
                      "-C", "../tests/aapg",
                      "DIR=" + dir_name,
                      "NUM_GEN=" + str(num_tests),
-                     "CONFIG_YAML=" + config_name + ".yaml",
+                     "CONFIG_YAML=" + os.path.realpath(config_file),
                      "ISA=rv64imafdc",
                      "ABI=lp64"]
     build_result = subprocess.Popen(build_command, text=True)
@@ -50,11 +53,11 @@ def main():
 
     # Generate test case json list
     json_testlist = []
-    with open("aapg_priv_" + args.priv_mode + "_" + dir_name + ".json", 'w') as f:
+    with open("aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name + ".json", 'w') as f:
         for i in range(num_tests):
             json_testlist += [{"name": "config_{:05d}".format(i),
-                              "group": ["aapg_priv_" + args.priv_mode + "_" + dir_name],
-                              "elf": "../../../tests/aapg/" + dir_name + "/bin/out_" + config_name + "_{:05d}.riscv".format(i),
+                              "group": ["aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name],
+                              "elf": "../../../tests/aapg/" + dir_name + "/bin/out_" + os.path.basename(config_file).replace('.yaml', '') + "_{:05d}.riscv".format(i),
                               "xlen": 64}]
         f.write(json.dumps(json_testlist, indent=0))
 
@@ -79,11 +82,11 @@ def main():
     sim_conf["parallel"] = sim_conf['parallel']
     sim_conf["conf"] = "standard"
     sim_conf["kanata"] = False
-    sim_conf["testlist"] = ["aapg_priv_" + args.priv_mode + "_" + dir_name + ".json"]
+    sim_conf["testlist"] = ["aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name + ".json"]
 
     sim = runtest.verilator_sim()
     sim.build_sim(sim_conf)
-    sim.run_sim(sim_conf, "aapg_priv_" + args.priv_mode + "_" + dir_name)
+    sim.run_sim(sim_conf, "aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name)
 
 if __name__ == "__main__":
     main()
