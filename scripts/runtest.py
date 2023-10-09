@@ -328,6 +328,8 @@ def main():
     sim_conf["parallel"]        = int(args.parallel)
     sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start
+    if sim_conf["dump_start_time"] != 0:
+        sim_conf["fst_dump"] = True
     sim_conf["cycle"]           = args.cycle
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
