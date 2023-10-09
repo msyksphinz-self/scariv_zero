@@ -102,7 +102,6 @@ pipe_ctrl_t                        r_ex3_pipe_ctrl;
 scariv_pkg::alen_t                   w_ex2_res_data;
 scariv_pkg::alen_t                   r_ex3_res_data;
 logic                              r_ex3_frm_invalid;
-logic                              w_ex3_done_report_illegal;
 
 always_comb begin
   w_ex0_issue = ex0_issue;
@@ -427,6 +426,7 @@ scariv_pkg::cmt_id_t       w_fpnew_cmt_id;
 scariv_pkg::grp_id_t       w_fpnew_grp_id;
 scariv_pkg::rnid_t         w_fpnew_rnid;
 scariv_pkg::reg_t          w_fpnew_reg_type;
+logic                      w_fpnew_frm_invalid;
 
 scariv_fpnew_wrapper
 u_scariv_fpnew_wrapper
@@ -434,12 +434,13 @@ u_scariv_fpnew_wrapper
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_valid (r_ex2_issue.valid & !r_ex2_frm_invalid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
+   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_cmt_id    (r_ex2_issue.cmt_id),
    .i_grp_id    (r_ex2_issue.grp_id),
    .i_rnid      (r_ex2_issue.wr_reg.rnid),
+   .i_frm_invalid (r_ex2_frm_invalid),
    .i_reg_type  (r_ex2_issue.wr_reg.typ),
    .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
 
@@ -453,6 +454,7 @@ u_scariv_fpnew_wrapper
    .o_cmt_id     (w_fpnew_cmt_id       ),
    .o_grp_id     (w_fpnew_grp_id       ),
    .o_rnid       (w_fpnew_rnid         ),
+   .o_frm_invalid (w_fpnew_frm_invalid),
    .o_reg_type   (w_fpnew_reg_type     )
    );
 
@@ -476,14 +478,10 @@ always_comb begin
   o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
   o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
 
-  w_ex3_done_report_illegal = r_ex3_issue.valid & (r_ex3_pipe_ctrl.pipe == PIPE_FPNEW) & r_ex3_frm_invalid;
-
-  o_fp_done_report.valid               = w_fpnew_result_valid | w_ex3_done_report_illegal;
-  o_fp_done_report.cmt_id              = w_ex3_done_report_illegal ? r_ex3_issue.cmt_id :
-                                         w_fpnew_cmt_id;
-  o_fp_done_report.grp_id              = w_ex3_done_report_illegal ? r_ex3_issue.grp_id :
-                                         w_fpnew_grp_id;
-  o_fp_done_report.except_valid        = w_ex3_done_report_illegal;
+  o_fp_done_report.valid               = w_fpnew_result_valid;
+  o_fp_done_report.cmt_id              = w_fpnew_cmt_id;
+  o_fp_done_report.grp_id              = w_fpnew_grp_id;
+  o_fp_done_report.except_valid        = w_fpnew_frm_invalid;
   o_fp_done_report.except_type         = scariv_pkg::ILLEGAL_INST;
   o_fp_done_report.fflags_update_valid = w_fpnew_result_valid;
   o_fp_done_report.fflags              = w_fpnew_result_fflags;
