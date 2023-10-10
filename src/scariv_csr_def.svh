@@ -203,6 +203,23 @@
 `define SYSREG_ADDR_PMPADDR15 12'h3bf
 `define SYSREG_ADDR_STATS 12'h0c0
 
+`define SYSREG_ADDR_SCONTEXT      12'h5a8
+`define SYSREG_ADDR_TSELECT       12'h7a0
+`define SYSREG_ADDR_TDATA1        12'h7a1
+// `define SYSREG_ADDR_MCONTROL      12'h7a1
+// `define SYSREG_ADDR_MCONTROL6     12'h7a1
+// `define SYSREG_ADDR_ICOUNT        12'h7a1
+// `define SYSREG_ADDR_ITRIGGER      12'h7a1
+// `define SYSREG_ADDR_ETRIGGER      12'h7a1
+// `define SYSREG_ADDR_TMEXTTRIGGER  12'h7a1
+`define SYSREG_ADDR_TDATA2        12'h7a2
+`define SYSREG_ADDR_TDATA3        12'h7a3
+// `define SYSREG_ADDR_TEXT          12'h7a3
+`define SYSREG_ADDR_TINFO         12'h7a4
+`define SYSREG_ADDR_TCONTROL      12'h7a5
+`define SYSREG_ADDR_MCONTEXT      12'h7a8
+`define SYSREG_ADDR_MSCONTEXT     12'h7aa
+
 `define MSTATUS_SIE  1
 `define MSTATUS_SPIE 5
 `define MSTATUS_SPP  8

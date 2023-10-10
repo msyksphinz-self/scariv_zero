@@ -1033,7 +1033,8 @@ void step_spike(long long rtl_time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 8 ) ||  // ECALL_U
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
-                       (rtl_exception_cause == 11))) { // ECALL_M
+                       (rtl_exception_cause == 11) ||  // ECALL_M
+                       (rtl_exception_cause == 3))) {  // BREAKPOINT
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
