@@ -231,6 +231,7 @@ always_comb begin
     w_ex0_replay_issue.l1d_high_priority = w_lsu_pipe_req_if.payload.hazard_typ == EX2_HAZ_L1D_CONFLICT;
     w_ex0_replay_issue.paddr_valid       = 1'b1;
     w_ex0_replay_issue.paddr             = w_lsu_pipe_req_if.payload.paddr;
+    w_ex0_replay_issue.is_uc             = w_lsu_pipe_req_if.payload.is_uc;
 
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
@@ -248,6 +249,7 @@ always_comb begin
     w_ex0_replay_issue.l1d_high_priority = 1'b0;
     w_ex0_replay_issue.paddr_valid       = 1'b0;
     w_ex0_replay_issue.paddr             = 'h0;
+    w_ex0_replay_issue.is_uc             = 1'b0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
 `endif // SIMULATION

@@ -48,6 +48,7 @@ typedef struct packed {
     scariv_pkg::reg_rd_issue_t       rd_reg;
     scariv_pkg::reg_wr_issue_t       wr_reg;
     scariv_pkg::paddr_t              paddr;
+    logic                            is_uc;
     scariv_lsu_pkg::ex2_haz_t        hazard_typ;
     logic [HAZARD_INDEX_SIZE-1: 0]   hazard_index;
     logic [REPLAY_QUEUE_W-1: 0]      diff_counter;
@@ -83,6 +84,7 @@ always_comb begin
   w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
   w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
   w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
+  w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
   w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
   w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
   w_new_replay_queue_info.diff_counter         = w_empty ? 'h0 : r_diff_counter;
@@ -224,6 +226,7 @@ always_comb begin
     lsu_pipe_req_if.payload.rd_reg         = w_rd_replay_queue_info.rd_reg        ;
     lsu_pipe_req_if.payload.wr_reg         = w_rd_replay_queue_info.wr_reg        ;
     lsu_pipe_req_if.payload.paddr          = w_rd_replay_queue_info.paddr         ;
+    lsu_pipe_req_if.payload.is_uc          = w_rd_replay_queue_info.is_uc         ;
     lsu_pipe_req_if.payload.hazard_typ     = w_rd_replay_queue_info.hazard_typ    ;
     lsu_pipe_req_if.payload.hazard_index = w_rd_replay_queue_info.hazard_index;
 

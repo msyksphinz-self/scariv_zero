@@ -254,7 +254,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
     r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
 
-    r_ex2_is_uc     <= !w_ex1_tlb_resp.cacheable;
+    r_ex2_is_uc     <= r_ex1_issue.paddr_valid ? r_ex1_issue.is_uc : !w_ex1_tlb_resp.cacheable;
     r_ex2_sfence_vma_illegal <= w_ex1_sfence_vma_illegal;
 
     r_ex3_issue     <= w_ex3_issue_next;
@@ -516,6 +516,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
   lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
+  lsu_pipe_haz_if.payload.is_uc          = r_ex2_is_uc;
   lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
                                                 stq_haz_check_if.ex2_haz_index;
 end
