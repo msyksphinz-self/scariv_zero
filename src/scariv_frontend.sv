@@ -240,6 +240,12 @@ always_comb begin
           end else begin
             w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
           end
+        BREAKPOINT        :
+          if (csr_info.medeleg[BREAKPOINT]) begin
+            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
+          end else begin
+            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
+          end
         INST_ACC_FAULT :
           if (csr_info.medeleg[INST_ACC_FAULT]) begin
             w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];

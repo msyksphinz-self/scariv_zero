@@ -527,6 +527,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   //     "0x0000f2d93c0a2000:0x1000" \
   //     ;
 
+  argv[arg_max++] = "-m0x80000000:0x80000000,0x0:0x1000";
 #ifndef SIM_MAIN
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
 #else // SIM_MAIN
@@ -539,11 +540,10 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "--log-commits";
   char *dts_file =(char *)malloc(sizeof(char) * 64);
 #ifndef SIM_MAIN
-  sprintf (dts_file, "../../../dts/%s.dtb", isa_str);
+  sprintf (dts_file, "--dtb=../../../dts/%s.dtb", isa_str);
 #else // SIM_MAIN
-  sprintf (dts_file, "../dts/%s.dtb", isa_str);
+  sprintf (dts_file, "--dtb=../dts/%s.dtb", isa_str);
 #endif // SIM_MAIN
-  argv[arg_max++] = "--dtb";
   argv[arg_max++] = dts_file;
 #ifndef SIM_MAIN
   argv[arg_max++] = "--kernel=../../../tests/linux/Image";
@@ -1033,7 +1033,8 @@ void step_spike(long long rtl_time, long long rtl_pc,
 
   if (rtl_exception & ((rtl_exception_cause == 8 ) ||  // ECALL_U
                        (rtl_exception_cause == 9 ) ||  // ECALL_S
-                       (rtl_exception_cause == 11))) { // ECALL_M
+                       (rtl_exception_cause == 11) ||  // ECALL_M
+                       (rtl_exception_cause == 3))) {  // BREAKPOINT
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],

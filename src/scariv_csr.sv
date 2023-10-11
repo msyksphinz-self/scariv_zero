@@ -163,6 +163,24 @@ xlen_t r_pmpaddr14;
 xlen_t r_pmpaddr15;
 xlen_t r_stats;
 
+// Debug CSR
+xlen_t r_scontext;
+xlen_t r_tselect;
+xlen_t r_tdata1;
+xlen_t r_mcontrol;
+xlen_t r_mcontrol6;
+xlen_t r_icount;
+xlen_t r_itrigger;
+xlen_t r_etrigger;
+xlen_t r_tmexttrigger;
+xlen_t r_tdata2;
+xlen_t r_tdata3;
+xlen_t r_text;
+xlen_t r_tinfo;
+xlen_t r_tcontrol;
+xlen_t r_mcontext;
+xlen_t r_mscontext;
+
 always_comb begin
   w_rd_ill_address = 1'b0;
   case (read_if.addr)
@@ -374,6 +392,38 @@ always_comb begin
     `SYSREG_ADDR_PMPADDR14      : read_if.data = r_pmpaddr14;
     `SYSREG_ADDR_PMPADDR15      : read_if.data = r_pmpaddr15;
     `SYSREG_ADDR_STATS          : read_if.data = r_stats;
+
+    `SYSREG_ADDR_SCONTEXT       : read_if.data = r_scontext;
+    `SYSREG_ADDR_TSELECT        : read_if.data = r_tselect;
+    `SYSREG_ADDR_TDATA1         : begin
+      logic [riscv_pkg::XLEN_W-6: 0] data;
+      case (r_tdata1[riscv_pkg::XLEN_W-1 -: 4])
+        'h0     : data = r_tdata1;
+        'h1     : data = r_mcontrol;
+        'h2     : data = r_mcontrol6;
+        'h3     : data = r_icount;
+        'h4     : data = r_itrigger;
+        'h5     : data = r_etrigger;
+        'h6     : data = r_tmexttrigger;
+        default : data = 0;
+      endcase // case (r_tdata1[riscv_pkg::XLEN_W -: 4])
+      read_if.data = {r_tdata1[riscv_pkg::XLEN_W-1 -: 4],
+                      r_tdata1[riscv_pkg::XLEN_W - 5],
+                      data};
+    end // case: `SYSREG_ADDR_TDATA1
+    `SYSREG_ADDR_TDATA2         : read_if.data = r_tdata2;
+    `SYSREG_ADDR_TDATA3         : begin
+      case (r_tdata1[riscv_pkg::XLEN_W-1 -: 4])
+        'h0, 'h1                : read_if.data = r_tdata3;
+        'h2, 'h3, 'h4, 'h5, 'h6 : read_if.data = r_text;
+        default                 : read_if.data = 'h0;
+      endcase // case (r_tdata1[riscv_pkg::XLEN_W-1 -: 4])
+    end
+    `SYSREG_ADDR_TINFO          : read_if.data = r_tinfo;
+    `SYSREG_ADDR_TCONTROL       : read_if.data = r_tcontrol;
+    `SYSREG_ADDR_MCONTEXT       : read_if.data = r_mcontext;
+    `SYSREG_ADDR_MSCONTEXT      : read_if.data = r_mscontext;
+
     default : begin
       read_if.data = {riscv_pkg::XLEN_W{1'bx}};
       w_rd_ill_address = 1'b1;
@@ -800,6 +850,42 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmp
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpaddr14     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPADDR14     ) begin r_pmpaddr14     <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpaddr15     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPADDR15     ) begin r_pmpaddr15     <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_stats         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_STATS         ) begin r_stats         <= write_if.data; end end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_scontext     <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_SCONTEXT    ) begin r_scontext     <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_tselect      <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TSELECT     ) begin r_tselect      <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_tdata1       <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TDATA1) begin
+    case (write_if.data[riscv_pkg::XLEN_W-1 -: 4])
+      'h0 : r_tdata1      [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h1 : r_mcontrol    [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h2 : r_mcontrol6   [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h3 : r_icount      [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h4 : r_itrigger    [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h5 : r_etrigger    [riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+      'h6 : r_tmexttrigger[riscv_pkg::XLEN_W-6: 0] <= write_if.data[riscv_pkg::XLEN_W-6: 0];
+    endcase // case (write_if.data[riscv_pkg::XLEN_W -: 4])
+    r_tdata1[riscv_pkg::XLEN_W-1 -: 4] <= write_if.data[riscv_pkg::XLEN_W-1 -: 4];
+  end // if (write_if.valid & write_if.addr == `SYSREG_ADDR_TDATA1)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_tdata2       <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TDATA2      ) begin r_tdata2       <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_tdata3       <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TDATA3) begin
+    case (r_tdata1[riscv_pkg::XLEN_W-1 -: 4])
+      'h0, 'h1                : r_tdata3 <= write_if.data;
+      'h2, 'h3, 'h4, 'h5, 'h6 : r_text   <= write_if.data;
+    endcase // case (r_tdata1[riscv_pkg::XLEN_W-1 -: 4])
+  end
+end
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_tinfo        <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TINFO       ) begin r_tinfo        <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_tcontrol     <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_TCONTROL    ) begin r_tcontrol     <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mcontext     <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MCONTEXT    ) begin r_mcontext     <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscontext    <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MSCONTEXT   ) begin r_mscontext    <= write_if.data; end end
+
 
 assign csr_info.update  = i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid);
 assign csr_info.mstatus = w_mstatus;

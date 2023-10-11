@@ -136,7 +136,7 @@
     { "name": "rv64ui-v-xor"         , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64ui-v-xor"          , "xlen": 64},
     { "name": "rv64ui-v-xori"        , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64ui-v-xori"         , "xlen": 64},
     { "name": "rv64mi-p-access"      , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-access"       , "skip": 1, "xlen": 64},
-    { "name": "rv64mi-p-breakpoint"  , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-breakpoint"   , "skip": 1, "xlen": 64},
+    { "name": "rv64mi-p-breakpoint"  , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-breakpoint"   , "xlen": 64},
     { "name": "rv64mi-p-csr"         , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-csr"          , "xlen": 64},
     { "name": "rv64mi-p-illegal"     , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-illegal"      , "xlen": 64},
     { "name": "rv64mi-p-ma_addr"     , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64mi-p-ma_addr"      , "xlen": 64},
