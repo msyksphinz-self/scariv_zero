@@ -24,6 +24,7 @@ module scariv_fpnew_wrapper
    input scariv_pkg::grp_id_t i_grp_id,
    input scariv_pkg::rnid_t   i_rnid,
    input scariv_pkg::reg_t    i_reg_type,
+   input logic                i_frm_invalid,
    input logic [ 2: 0]        i_rnd_mode,
 
    input scariv_pkg::alen_t    i_rs1,
@@ -36,6 +37,7 @@ module scariv_fpnew_wrapper
    output scariv_pkg::cmt_id_t o_cmt_id,
    output scariv_pkg::grp_id_t o_grp_id,
    output scariv_pkg::rnid_t   o_rnid,
+   output logic                o_frm_invalid,
    output scariv_pkg::reg_t    o_reg_type
    );
 
@@ -51,6 +53,7 @@ typedef struct packed {
   scariv_pkg::grp_id_t   grp_id;
   scariv_pkg::reg_t      reg_type;
   scariv_pkg::rnid_t     rnid;
+  logic                  frm_invalid;
   logic                  output_is_fp32;
 } aux_fpnew_t;
 
@@ -105,6 +108,7 @@ assign w_aux_fpnew_in.op          = w_fpnew_op;
 assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
+assign w_aux_fpnew_in.frm_invalid = i_frm_invalid;
 assign w_aux_fpnew_in.cmt_id = i_cmt_id;
 assign w_aux_fpnew_in.grp_id = i_grp_id;
 assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP32) : 1'b0;
@@ -134,8 +138,8 @@ endgenerate
 generate if (riscv_fpu_pkg::FLEN_W == 64) begin
   assign w_fdiv_rs[0] = i_pipe_ctrl.size == SIZE_DW ? i_rs1 :
                         &i_rs1[63:32] ? i_rs1 : 64'hffffffff7fc00000;
-  assign w_fdiv_rs[1] = i_pipe_ctrl.size == SIZE_DW ? i_rs2 :
-                        i_pipe_ctrl.op == OP_FSQRT ? w_fdiv_rs[0] :
+  assign w_fdiv_rs[1] = i_pipe_ctrl.op == OP_FSQRT ? w_fdiv_rs[0] :
+                        i_pipe_ctrl.size == SIZE_DW ? i_rs2 :
                         &i_rs2[63:32] ? i_rs2 : 64'hffffffff7fc00000;
   assign w_fdiv_boxed = 2'b11;
 end else begin
@@ -368,6 +372,7 @@ assign w_cast_out_fflags = {w_cast_status.NV,
 
 logic                 w_fdiv_in_valid;
 logic                 w_fdiv_ready;
+logic                 w_fdiv_out_ready;
 assign w_fdiv_in_valid = i_valid & w_fdiv_valid;
 
 localparam FpFmtConfig = riscv_fpu_pkg::FLEN_W == 32 ? 5'b10000 : 5'b11000;
@@ -404,7 +409,7 @@ fdiv
  .aux_o           (                  ),  // output AuxType
  // Output handshake
  .out_valid_o     (w_fdiv_out_valid),  // output logic
- .out_ready_i     (1'b1              ),  // input  logic
+ .out_ready_i     (w_fdiv_out_ready),  // input  logic
  // Indication of valid data in flight
  .busy_o          (                  )   // output logic
  );
@@ -537,20 +542,22 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
       o_cmt_id    <= 'h0;
       o_grp_id    <= 'h0;
       o_rnid      <= 'h0;
+      o_frm_invalid <= 1'b0;
       o_reg_type  <= scariv_pkg::FPR;
     end else begin
       o_valid  <= w_fma32_out_valid |
-                    w_noncomp32_out_valid |
-                    w_fma64_out_valid |
-                    w_noncomp64_out_valid |
-                    w_cast_out_valid |
-                    w_fdiv_out_valid;
+                  w_noncomp32_out_valid |
+                  w_fma64_out_valid |
+                  w_noncomp64_out_valid |
+                  w_cast_out_valid |
+                  w_fdiv_out_valid;
       if (w_fma32_out_valid) begin
         o_result      <= {{32{1'b1}}, w_fma32_result};
         o_fflags      <= w_fma32_out_fflags;
         o_cmt_id      <= w_fma32_aux.cmt_id;
         o_grp_id      <= w_fma32_aux.grp_id;
         o_rnid        <= w_fma32_aux.rnid;
+        o_frm_invalid <= w_fma32_aux.frm_invalid;
         o_reg_type    <= w_fma32_aux.reg_type;
       end else if (w_noncomp32_out_valid) begin
         if (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) begin
@@ -562,6 +569,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= w_noncomp32_aux.cmt_id;
         o_grp_id      <= w_noncomp32_aux.grp_id;
         o_rnid        <= w_noncomp32_aux.rnid;
+        o_frm_invalid <= w_noncomp32_aux.frm_invalid;
         o_reg_type    <= w_noncomp32_aux.reg_type;
       end else if (w_fma64_out_valid) begin // if (w_noncomp32_out_valid)
         o_result      <= w_fma64_result;
@@ -569,6 +577,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= w_fma64_aux.cmt_id;
         o_grp_id      <= w_fma64_aux.grp_id;
         o_rnid        <= w_fma64_aux.rnid;
+        o_frm_invalid <= w_fma64_aux.frm_invalid;
         o_reg_type    <= w_fma64_aux.reg_type;
       end else if (w_noncomp64_out_valid) begin
         if (w_noncomp64_aux.op == fpnew_pkg::CLASSIFY) begin
@@ -580,6 +589,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= w_noncomp64_aux.cmt_id;
         o_grp_id      <= w_noncomp64_aux.grp_id;
         o_rnid        <= w_noncomp64_aux.rnid;
+        o_frm_invalid <= w_noncomp64_aux.frm_invalid;
         o_reg_type    <= w_noncomp64_aux.reg_type;
       end else if (w_cast_out_valid) begin // if (w_noncomp64_out_valid)
         o_result      <= w_cast_aux.output_is_fp32 ? {{32{1'b1}}, w_cast_result[31: 0]} : w_cast_result;
@@ -587,6 +597,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= w_cast_aux.cmt_id;
         o_grp_id      <= w_cast_aux.grp_id;
         o_rnid        <= w_cast_aux.rnid;
+        o_frm_invalid <= w_cast_aux.frm_invalid;
         o_reg_type    <= w_cast_aux.reg_type;
       end else if (w_fdiv_out_valid) begin
         o_result      <= {{32{1'b1}}, w_fdiv_result};
@@ -594,6 +605,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= w_fdiv_aux.cmt_id;
         o_grp_id      <= w_fdiv_aux.grp_id;
         o_rnid        <= w_fdiv_aux.rnid;
+        o_frm_invalid <= w_fdiv_aux.frm_invalid;
         o_reg_type    <= w_fdiv_aux.reg_type;
       end else begin
         o_result      <= 'h0;
@@ -601,10 +613,18 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
         o_cmt_id      <= 'h0;
         o_grp_id      <= 'h0;
         o_rnid        <= 'h0;
+        o_frm_invalid <= 1'b0;
         o_reg_type    <= scariv_pkg::FPR;
       end
     end
   end // always_comb
+
+  assign w_fdiv_out_ready = ~(w_fma32_out_valid     |
+                              w_noncomp32_out_valid |
+                              w_fma64_out_valid     |
+                              w_noncomp64_out_valid |
+                              w_cast_out_valid      );
+
 
 end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -615,6 +635,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
       o_cmt_id    <= 'h0;
       o_grp_id    <= 'h0;
       o_rnid      <= 'h0;
+      o_frm_invalid <= 1'b0;
       o_reg_type  <= scariv_pkg::FPR;
     end else begin
       o_valid  <= w_fma32_out_valid |
@@ -627,6 +648,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
         o_cmt_id      <= w_fma32_aux.cmt_id;
         o_grp_id      <= w_fma32_aux.grp_id;
         o_rnid        <= w_fma32_aux.rnid;
+        o_frm_invalid <= w_fma32_aux.frm_invalid;
         o_reg_type    <= w_fma32_aux.reg_type;
       end else if (w_noncomp32_out_valid) begin
         if (w_noncomp32_aux.op == fpnew_pkg::CLASSIFY) begin
@@ -638,6 +660,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
         o_cmt_id      <= w_noncomp32_aux.cmt_id;
         o_grp_id      <= w_noncomp32_aux.grp_id;
         o_rnid        <= w_noncomp32_aux.rnid;
+        o_frm_invalid <= w_noncomp32_aux.frm_invalid;
         o_reg_type    <= w_noncomp32_aux.reg_type;
       end else if (w_cast_out_valid) begin
         o_result      <= w_cast_result;
@@ -645,6 +668,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
         o_cmt_id      <= w_cast_aux.cmt_id;
         o_grp_id      <= w_cast_aux.grp_id;
         o_rnid        <= w_cast_aux.rnid;
+        o_frm_invalid <= w_cast_aux.frm_invalid;
         o_reg_type    <= w_cast_aux.reg_type;
       end else if (w_fdiv_out_valid) begin
         if (scariv_pkg::ALEN_W == 64) begin
@@ -656,6 +680,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
         o_cmt_id      <= w_fdiv_aux.cmt_id;
         o_grp_id      <= w_fdiv_aux.grp_id;
         o_rnid        <= w_fdiv_aux.rnid;
+        o_frm_invalid <= w_fdiv_aux.frm_invalid;
         o_reg_type    <= w_fdiv_aux.reg_type;
       end else begin
         o_result      <= 'h0;
@@ -663,10 +688,15 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin : block_32 // block: fma64
         o_cmt_id      <= 'h0;
         o_grp_id      <= 'h0;
         o_rnid        <= 'h0;
+        o_frm_invalid <= 1'b0;
         o_reg_type    <= scariv_pkg::FPR;
       end // else: !if(w_fdiv_out_valid)
     end
   end // always_comb
+
+  assign w_fdiv_out_ready = ~(w_fma32_out_valid     |
+                              w_noncomp32_out_valid |
+                              w_cast_out_valid      );
 
 end // block: block_32
 endgenerate

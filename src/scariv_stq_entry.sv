@@ -114,7 +114,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
 assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & !r_entry.dead &
-                           ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : 1'b1) &
+                           ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : ~r_entry.is_lr) &
                            ~r_entry.st_buf_finished &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);
 assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.is_uc & ~r_entry.except_valid;
@@ -122,6 +122,7 @@ assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.
 assign o_stq_entry_st_finish = r_entry.is_valid &
                                (r_entry.st_buf_finished |
                                 r_entry.is_committed & r_entry.is_sc & ~r_entry.sc_success |
+                                r_entry.is_committed & r_entry.is_lr |
                                 r_entry.dead) &
                                i_stq_outptr_valid;
 

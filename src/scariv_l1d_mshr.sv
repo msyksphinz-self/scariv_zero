@@ -56,6 +56,7 @@ logic                                             w_in_valid;
 logic                                             w_out_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_entry_finish;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_missu_valids;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_updating;
 
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;
 logic [REQ_PORT_NUM-1: 0]   w_resp_evict_conflict;
@@ -359,6 +360,8 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
 
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
 
+       .o_l1d_wr_updating (w_l1d_wr_updating[e_idx]),
+
        .i_busy_by_snoop (snoop_info_if.busy),
 
        .o_entry        (w_missu_entries[e_idx]),
@@ -487,18 +490,22 @@ endgenerate
 // MISSU search from ST-Buffer
 // --------------------------
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_stbuf_missu_hit_array_next;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_stbuf_missu_update_hit_array_next;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_stbuf_missu_evict_hit_array_next;
 generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx++) begin : stbuf_missu_loop
   assign w_stbuf_missu_hit_array_next[e_idx] = missu_pa_search_if.s0_valid &
-                                             w_missu_entries[e_idx].valid &
-                                             !w_entry_finish[e_idx] &
-                                             (w_missu_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
-                                              missu_pa_search_if.s0_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+                                               w_missu_entries[e_idx].valid &
+                                               !w_entry_finish[e_idx] &
+                                               (w_missu_entries[e_idx].paddr [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)] ==
+                                                missu_pa_search_if.s0_paddr  [riscv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)]);
+  assign w_stbuf_missu_update_hit_array_next[e_idx] = w_stbuf_missu_hit_array_next[e_idx] & w_l1d_wr_updating[e_idx];
+
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       missu_pa_search_if.s1_hit_index_oh[e_idx] <= 1'b0;
     end else begin
-      missu_pa_search_if.s1_hit_index_oh[e_idx] <= w_stbuf_missu_hit_array_next[e_idx];
+      missu_pa_search_if.s1_hit_index_oh       [e_idx] <= w_stbuf_missu_hit_array_next[e_idx];
+      missu_pa_search_if.s1_hit_update_index_oh[e_idx] <= w_stbuf_missu_update_hit_array_next[e_idx];
     end
   end
 

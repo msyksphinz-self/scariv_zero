@@ -254,7 +254,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
     r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
 
-    r_ex2_is_uc     <= !w_ex1_tlb_resp.cacheable;
+    r_ex2_is_uc     <= r_ex1_issue.paddr_valid ? r_ex1_issue.is_uc : !w_ex1_tlb_resp.cacheable;
     r_ex2_sfence_vma_illegal <= w_ex1_sfence_vma_illegal;
 
     r_ex3_issue     <= w_ex3_issue_next;
@@ -516,6 +516,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
   lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
+  lsu_pipe_haz_if.payload.is_uc          = r_ex2_is_uc;
   lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
                                                 stq_haz_check_if.ex2_haz_index;
 end
@@ -694,7 +695,7 @@ assign ex3_done_if.index_oh      = 'h0;
 assign ex3_done_if.payload.except_valid  = r_ex3_except_valid;
 assign ex3_done_if.payload.except_type   = r_ex3_except_type;
 assign ex3_done_if.payload.except_tval   = r_ex3_sfence_vma_illegal ? r_ex3_issue.inst :
-                                           r_ex3_addr;
+                                           {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
 assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
 assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign ex3_done_if.payload.another_flush_grp_id = ldq_haz_check_if.ex3_haz_grp_id;

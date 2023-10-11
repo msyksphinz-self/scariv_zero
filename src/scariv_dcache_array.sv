@@ -205,6 +205,9 @@ for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : dcache_wa
   assign w_s1_wr_tag_hit[way] = (r_s1_dc_tag_addr[riscv_pkg::PADDR_W-1:scariv_lsu_pkg::DCACHE_TAG_LOW] == w_s1_tag[way]) &
                                 w_s1_tag_valid[way];
   assign w_s2_evicted_data[way] = w_s1_data[way];  // Actually this is evicted data at s2 stage
+  always_ff @ (posedge i_clk) begin
+    w_s2_evicted_mesi[way] <= w_s1_mesi[way];;
+  end
 end
 
 assign o_dc_wr_resp.s1_hit  = |w_s1_wr_tag_hit;

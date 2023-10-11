@@ -50,7 +50,7 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
   assign update_info_entry.is_call     = update_btb_if.is_call;
   assign update_info_entry.is_ret      = update_btb_if.is_ret;
   assign update_info_entry.is_noncond  = !update_btb_if.is_cond & !update_btb_if.is_call & !update_btb_if.is_ret;
-  assign update_info_entry.pc_tag      = update_btb_if.pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
+  assign update_info_entry.pc_tag      = w_update_pc_vaddr[riscv_pkg::VADDR_W-1:BTB_ENTRY_BIT_MSB+1];
 
   data_array_2p
     #(

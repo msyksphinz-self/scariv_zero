@@ -33,6 +33,8 @@ module scariv_l1d_mshr_entry
    // UC forward hit
    input logic i_uc_fwd_hit,
 
+   output logic o_l1d_wr_updating,
+
    input logic i_busy_by_snoop,
 
    output scariv_lsu_pkg::mshr_entry_t o_entry,
@@ -121,7 +123,8 @@ always_comb begin
     WRITE_L1D_TEMP2 : begin
       // Prevent forwarding after this stage
       w_entry_next.get_data = 1'b0;
-      if (s2_l1d_wr_resp_payload.s2_evicted_valid) begin
+      if (s2_l1d_wr_resp_payload.s2_evicted_valid &
+          (s2_l1d_wr_resp_payload.s2_evicted_mesi != scariv_lsu_pkg::MESI_INVALID)) begin
         w_state_next = EVICT_REQ;
         w_entry_next.paddr = s2_l1d_wr_resp_payload.s2_evicted_paddr;
         w_entry_next.data  = s2_l1d_wr_resp_payload.s2_evicted_data;
@@ -162,6 +165,7 @@ assign o_ext_req_ready = (r_state == READY_REQ) & !w_hit_st_requestor_busy;
 assign o_wr_req_valid = r_state == WRITE_L1D;
 assign o_evict_ready  = r_state == EVICT_REQ;
 
+assign o_l1d_wr_updating = r_state inside {WRITE_L1D, WRITE_L1D_TEMP, WRITE_L1D_TEMP2};
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

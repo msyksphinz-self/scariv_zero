@@ -732,6 +732,7 @@ typedef struct packed {
   logic                  l1d_high_priority;
   logic                  paddr_valid;
   scariv_pkg::paddr_t    paddr;
+  logic                  is_uc;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
 `endif // SIMULATION
@@ -912,6 +913,7 @@ typedef struct packed {
   scariv_pkg::reg_rd_issue_t rd_reg;
   scariv_pkg::reg_wr_issue_t wr_reg;
   scariv_pkg::paddr_t        paddr;
+  logic                      is_uc;
   scariv_lsu_pkg::ex2_haz_t  hazard_typ;
   logic [HAZARD_INDEX_SIZE-1: 0] hazard_index;
 } lsu_replay_queue_t;

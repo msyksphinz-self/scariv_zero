@@ -628,8 +628,7 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
                    commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                    commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & entry_grp_id)
-                 /* |(commit.flush_valid & (entry_grp_id-1))*/);
+                (commit.cmt_id == entry_cmt_id && |((commit.flush_valid & ~commit.dead_id) <= entry_grp_id));
 
   return is_flushed_commit(commit) & entry_older;
 
