@@ -27,5 +27,15 @@
     { "name": "vrsub_v_i"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vrsub_v_i/test.elf"  , "xlen": 64},
     { "name": "vand_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vand_v_i/test.elf"   , "xlen": 64},
     { "name": "vor_v_i"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vor_v_i/test.elf"    , "xlen": 64},
-    { "name": "vxor_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vxor_v_i/test.elf"   , "xlen": 64}
+    { "name": "vxor_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vxor_v_i/test.elf"   , "xlen": 64},
+
+    { "name": "vsll_v_v"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsll_v_v/test.elf"   , "xlen": 64},
+    { "name": "vsll_v_x"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsll_v_x/test.elf"   , "xlen": 64},
+    { "name": "vsll_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsll_v_i/test.elf"   , "xlen": 64},
+    { "name": "vsrl_v_v"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsrl_v_v/test.elf"   , "xlen": 64},
+    { "name": "vsrl_v_x"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsrl_v_x/test.elf"   , "xlen": 64},
+    { "name": "vsrl_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsrl_v_i/test.elf"   , "xlen": 64},
+    { "name": "vsra_v_v"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsra_v_v/test.elf"   , "xlen": 64},
+    { "name": "vsra_v_x"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsra_v_x/test.elf"   , "xlen": 64},
+    { "name": "vsra_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsra_v_i/test.elf"   , "xlen": 64}
 ]

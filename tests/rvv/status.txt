@@ -36,10 +36,10 @@ vsaddu.vv       |
 vsadd.vv        |
 vssubu.vv       |
 vssub.vv        |
-vsll.vv         |
+vsll.vv         | v
 vsmul.vv        |
-vsrl.vv         |
-vsra.vv         |
+vsrl.vv         | v
+vsra.vv         | v
 vssrl.vv        |
 vssra.vv        |
 vnsrl.vv        |
@@ -84,10 +84,10 @@ vsaddu.vx       |
 vsadd.vx        |
 vssubu.vx       |
 vssub.vx        |
-vsll.vx         |
+vsll.vx         | v
 vsmul.vx        |
-vsrl.vx         |
-vsra.vx         |
+vsrl.vx         | v
+vsra.vx         | v
 vssrl.vx        |
 vssra.vx        |
 vnsrl.vx        |
@@ -120,9 +120,9 @@ vmsgtu.vi       |
 vmsgt.vi        |
 vsaddu.vi       |
 vsadd.vi        |
-vsll.vi         |
-vsrl.vi         |
-vsra.vi         |
+vsll.vi         | v
+vsrl.vi         | v
+vsra.vi         | v
 vssrl.vi        |
 vssra.vi        |
 vnsrl.vi        |

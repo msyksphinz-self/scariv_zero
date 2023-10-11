@@ -128,6 +128,33 @@ always_comb begin
         default             :                             w_res = 'h0;
       endcase // unique case (i_sew)
     end
+    OP_SLL : begin
+      unique case (i_sew)
+        scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_res.w8 [b] = w_vs2.w8 [b] << w_vs1.w8 [b][ 2: 0];
+        scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_res.w16[b] = w_vs2.w16[b] << w_vs1.w16[b][ 3: 0];
+        scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_res.w32[b] = w_vs2.w32[b] << w_vs1.w32[b][ 4: 0];
+        scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_res.w64[b] = w_vs2.w64[b] << w_vs1.w64[b][ 5: 0];
+        default             :                             w_res = 'h0;
+      endcase // unique case (i_sew)
+    end
+    OP_SRL : begin
+      unique case (i_sew)
+        scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_res.w8 [b] = w_vs2.w8 [b] >> w_vs1.w8 [b][ 2: 0];
+        scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_res.w16[b] = w_vs2.w16[b] >> w_vs1.w16[b][ 3: 0];
+        scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_res.w32[b] = w_vs2.w32[b] >> w_vs1.w32[b][ 4: 0];
+        scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_res.w64[b] = w_vs2.w64[b] >> w_vs1.w64[b][ 5: 0];
+        default             :                             w_res = 'h0;
+      endcase // unique case (i_sew)
+    end
+    OP_SRA : begin
+      unique case (i_sew)
+        scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_res.w8 [b] = $signed(w_vs2.w8 [b]) >> w_vs1.w8 [b][ 2: 0];
+        scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_res.w16[b] = $signed(w_vs2.w16[b]) >> w_vs1.w16[b][ 3: 0];
+        scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_res.w32[b] = $signed(w_vs2.w32[b]) >> w_vs1.w32[b][ 4: 0];
+        scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_res.w64[b] = $signed(w_vs2.w64[b]) >> w_vs1.w64[b][ 5: 0];
+        default             :                             w_res = 'h0;
+      endcase // unique case (i_sew)
+    end
     OP_AND  : begin w_res.w64[0] = w_vs2.w64[0] & w_vs1.w64[0]; end
     OP_OR   : begin w_res.w64[0] = w_vs2.w64[0] | w_vs1.w64[0]; end
     OP_XOR  : begin w_res.w64[0] = w_vs2.w64[0] ^ w_vs1.w64[0]; end
