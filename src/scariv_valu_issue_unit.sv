@@ -39,7 +39,7 @@ module scariv_valu_issue_unit
  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
  vec_phy_fwd_if.slave         vec_phy_fwd_if,
 
- output                                scariv_pkg::issue_t o_issue,
+ output                                scariv_vec_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
  input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
@@ -55,8 +55,12 @@ logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
+logic [ENTRY_SIZE-1:0] r_picked_inst_oh;
+logic [ENTRY_SIZE-1:0] w_picked_inst_locked_oh;
+logic r_issue_entry_lock;
+logic [ENTRY_SIZE-1:0] w_entry_dead;
 
-scariv_pkg::issue_t w_entry[ENTRY_SIZE];
+scariv_vec_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
@@ -249,9 +253,11 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_commit  (i_commit),
     .br_upd_if (br_upd_if),
 
-    .i_entry_picked    (w_picked_inst_oh  [s_idx]),
-    .o_issue_succeeded (w_entry_finish    [s_idx]),
-    .i_clear_entry     (w_entry_finish_oh [s_idx])
+    .o_dead (w_entry_dead[s_idx]),
+
+    .i_entry_picked    (w_picked_inst_locked_oh[s_idx]),
+    .o_issue_succeeded (w_entry_finish         [s_idx]),
+    .i_clear_entry     (w_entry_finish_oh      [s_idx])
   );
 
 end
@@ -261,8 +267,25 @@ endgenerate
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
-bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_vec_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_locked_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
+
+assign w_picked_inst_locked_oh = r_issue_entry_lock ? r_picked_inst_oh : w_picked_inst_oh;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_issue_entry_lock <= 1'b0;
+  end else begin
+    if (o_issue.valid & o_issue.vec_step_index == 'h0) begin
+      r_picked_inst_oh <= w_picked_inst_oh;
+      r_issue_entry_lock <= 1'b1;
+    end else if (o_issue.valid & (o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1 |
+                                  |(w_entry_dead & r_picked_inst_oh))) begin
+      r_picked_inst_oh <= w_picked_inst_oh;
+      r_issue_entry_lock <= 1'b0;
+    end
+  end
+end
 
 // --------------
 // Done signals
@@ -271,7 +294,7 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done)
 
 `ifdef SIMULATION
 typedef struct packed {
-  scariv_pkg::issue_t entry;
+  scariv_vec_pkg::issue_t entry;
   scariv_pkg::sched_state_t state;
 } entry_ptr_t;
 

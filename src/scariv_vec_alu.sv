@@ -58,7 +58,7 @@ scariv_pkg::disp_t            w_disp_inst[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::disp_t            w_disp_picked_inst[VEC_ALU_PORT_SIZE];
 logic [VEC_ALU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_ALU_PORT_SIZE];
-scariv_pkg::issue_t           w_ex0_issue;
+scariv_vec_pkg::issue_t       w_ex0_issue;
 vec_phy_fwd_if                w_vec_phy_fwd_if();
 
 scariv_disp_pickup

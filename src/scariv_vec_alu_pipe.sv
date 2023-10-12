@@ -86,12 +86,12 @@ assign ex0_fpr_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_vec_rd_loop
   assign vec_phy_rd_if[rs_idx].valid = i_ex0_issue.valid & (i_ex0_issue.rd_regs[rs_idx].typ == scariv_pkg::VPR) & i_ex0_issue.rd_regs[rs_idx].valid;
   assign vec_phy_rd_if[rs_idx].rnid  = i_ex0_issue.rd_regs[rs_idx].rnid;
-  assign vec_phy_rd_if[rs_idx].pos   = 'h0;
+  assign vec_phy_rd_if[rs_idx].pos   = i_ex0_issue.vec_step_index;
 end endgenerate
 
 assign vec_phy_old_wr_if.valid = i_ex0_issue.valid & (i_ex0_issue.wr_old_reg.typ == scariv_pkg::VPR) & i_ex0_issue.wr_old_reg.rnid;
 assign vec_phy_old_wr_if.rnid  = i_ex0_issue.wr_old_reg.rnid;
-assign vec_phy_old_wr_if.pos   = 'h0;
+assign vec_phy_old_wr_if.pos   = i_ex0_issue.vec_step_index;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -206,11 +206,12 @@ always_comb begin
   vec_phy_wr_if.valid   = r_ex2_wr_valid;
   vec_phy_wr_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
   vec_phy_wr_if.rd_data = r_ex2_vec_result;
+  vec_phy_wr_if.rd_pos  = r_ex2_issue.vec_step_index;
 
   vec_phy_fwd_if.valid   = r_ex2_wr_valid;
   vec_phy_fwd_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
 
-  o_done_report.valid  = r_ex2_issue.valid;
+  o_done_report.valid  = r_ex2_issue.valid & (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
   o_done_report.cmt_id = r_ex2_issue.cmt_id;
   o_done_report.grp_id = r_ex2_issue.grp_id;
   o_done_report.fflags_update_valid = 1'b0;

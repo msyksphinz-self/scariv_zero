@@ -70,6 +70,8 @@ typedef struct packed {
   scariv_pkg::reg_wr_issue_t         wr_old_reg;
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
 
+  vec_pos_t            vec_step_index;
+
   logic                except_valid;
   scariv_pkg::except_t except_type;
   scariv_pkg::xlen_t   except_tval;
