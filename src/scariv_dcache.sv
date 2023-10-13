@@ -227,6 +227,7 @@ assign stbuf_l1d_wr_if.s2_done            = 1'b0;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s2_wr_selected_resp.s2_evicted_valid;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_evicted_data;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
+assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_mesi  = w_s2_wr_selected_resp.s2_evicted_mesi;
 
 
 assign missu_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;

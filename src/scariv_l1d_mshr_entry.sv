@@ -123,7 +123,8 @@ always_comb begin
     WRITE_L1D_TEMP2 : begin
       // Prevent forwarding after this stage
       w_entry_next.get_data = 1'b0;
-      if (s2_l1d_wr_resp_payload.s2_evicted_valid) begin
+      if (s2_l1d_wr_resp_payload.s2_evicted_valid &
+          (s2_l1d_wr_resp_payload.s2_evicted_mesi != scariv_lsu_pkg::MESI_INVALID)) begin
         w_state_next = EVICT_REQ;
         w_entry_next.paddr = s2_l1d_wr_resp_payload.s2_evicted_paddr;
         w_entry_next.data  = s2_l1d_wr_resp_payload.s2_evicted_data;
