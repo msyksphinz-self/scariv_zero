@@ -171,7 +171,7 @@ always_comb begin
       w_entry_next.dead = 1'b1;
     end else if (i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
       w_entry_next.except_valid = i_ex1_q_updates.tlb_except_valid;
-      w_entry_next.addr         = i_ex1_q_updates.paddr;
+      w_entry_next.addr         = r_entry.paddr_valid ? r_entry.addr : i_ex1_q_updates.paddr;
       w_entry_next.paddr_valid  = i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
       w_entry_next.size         = i_ex1_q_updates.size;
       w_entry_next.is_uc        = i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE ? i_ex1_q_updates.tlb_uc : r_entry.is_uc;
