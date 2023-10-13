@@ -151,7 +151,7 @@ always_comb begin
 
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (i_ex1_q_valid) begin
+    end else if (i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
       w_entry_next.addr        = r_entry.paddr_valid ? r_entry.addr :
                                  i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
                                  i_ex1_q_updates.paddr;
