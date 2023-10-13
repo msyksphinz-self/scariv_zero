@@ -49,7 +49,7 @@ module scariv_ldq_entry
 
  input logic                                     i_ldq_outptr_valid,
  output logic                                    o_entry_finish
- 
+
  // done_if.slave   ex3_done_if
  );
 
@@ -105,7 +105,7 @@ assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_i
 
 // assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
 //                        all_operand_ready(r_entry);
-// 
+//
 // assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
 //                         ((rob_info_if.done_grp_id & r_entry.inst.grp_id-1) == r_entry.inst.grp_id-1);
 
@@ -136,7 +136,7 @@ always_comb begin
 
   if (!r_entry.is_valid) begin
     if (i_disp_load) begin
-        w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, 
+        w_entry_next = assign_ldq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
                                        1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM));
         if (w_load_flush) begin
           w_entry_next.dead = 1'b1;
@@ -152,7 +152,8 @@ always_comb begin
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
     end else if (i_ex1_q_valid) begin
-      w_entry_next.addr        = i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
+      w_entry_next.addr        = r_entry.paddr_valid ? r_entry.addr :
+                                 i_ex1_q_updates.tlb_except_valid ? i_ex1_q_updates.vaddr :
                                  i_ex1_q_updates.paddr;
       w_entry_next.paddr_valid = !i_ex1_q_updates.tlb_except_valid;
       w_entry_next.size        = i_ex1_q_updates.size;
@@ -183,16 +184,16 @@ always_comb begin
 //           w_entry_next.inst.rd_regs[rs_idx].ready         = i_disp.rd_regs[rs_idx].ready | w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx] | w_rs_phy_hit[rs_idx];
 //           w_entry_next.inst.rd_regs[rs_idx].predict_ready = w_rs_rel_hit[rs_idx] & w_rs_may_mispred[rs_idx];
 //         end
-// 
+//
 //         for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
 //           w_entry_next.inst.rd_regs[rs_idx].valid = 1'b0;
 //         end
-// 
+//
 //         w_entry_next.inst.wr_reg.valid  = i_disp.wr_reg.valid;
 //         w_entry_next.inst.wr_reg.typ    = i_disp.wr_reg.typ;
 //         w_entry_next.inst.wr_reg.regidx = i_disp.wr_reg.regidx;
 //         w_entry_next.inst.wr_reg.rnid   = i_disp.wr_reg.rnid;
-// 
+//
 //         if (w_load_flush) begin
 //           w_entry_next.state    = LDQ_WAIT_ENTRY_CLR;
 //         end else begin
@@ -226,7 +227,7 @@ always_comb begin
 //     //       // w_entry_next.pipe_sel_idx_oh = i_ex1_q_updates.pipe_sel_idx_oh;
 //     //       // w_entry_next.inst            = i_ex1_q_updates.inst;
 //     //       w_entry_next.size            = i_ex1_q_updates.size;
-//     // 
+//     //
 //     //       for (int p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
 //     //         w_ex2_ldq_entries_recv_next[p_idx] =  i_ex1_q_valid &
 //     //                                               (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE) &
