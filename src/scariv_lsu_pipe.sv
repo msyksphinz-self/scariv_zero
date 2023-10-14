@@ -367,8 +367,8 @@ logic r_ex2_sfence_vma_illegal;
 logic r_ex3_sfence_vma_illegal;
 assign w_ex1_sfence_vma_illegal = (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) & csr_info.mstatus[`MSTATUS_TVM];
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = w_ex1_writemem_cmd & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & w_ex1_tlb_req.valid & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_ex1_st_except_valid = w_ex1_writemem_cmd & w_ex1_tlb_req.valid & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
                                (r_ex1_pipe_ctrl.op == OP_FENCE_I)    |
                                (r_ex1_pipe_ctrl.op == OP_FENCE)      |
                                (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) |
@@ -504,7 +504,7 @@ assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
 
 // Interface to Replay Queue
 always_comb begin
-  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
   lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
   lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;

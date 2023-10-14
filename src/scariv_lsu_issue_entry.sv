@@ -63,7 +63,9 @@ scariv_lsu_pkg::lsu_issue_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
 scariv_lsu_pkg::lsu_issue_entry_t w_entry_next;
 
+logic    w_inst_oldest_ready;
 logic    w_oldest_ready;
+logic    r_oldest_ready;
 
 scariv_pkg::rnid_t        w_rs1_rnid;
 scariv_pkg::reg_t         w_rs1_type;
@@ -124,7 +126,7 @@ always_comb begin
   end
 
   if (r_entry.valid) begin
-    w_entry_next.oldest_valid = r_entry.oldest_valid | w_oldest_ready;
+    w_entry_next.oldest_valid = r_entry.oldest_valid | w_inst_oldest_ready;
   end
 
   case (r_state)
@@ -197,7 +199,7 @@ always_comb begin
             end
           end
           LSU_ISSUE_HAZ_UC_ACCESS : begin
-            if (w_oldest_ready & i_st_buffer_empty & i_st_requester_empty) begin
+            if (w_inst_oldest_ready & i_st_buffer_empty & i_st_requester_empty) begin
               w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
             end
           end
@@ -252,23 +254,29 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_state <= scariv_lsu_pkg::LSU_SCHED_INIT;
     r_issued <= 1'b0;
     r_dead   <= 1'b0;
+
+    r_oldest_ready <= 1'b0;
   end else begin
     r_entry <= w_entry_next;
 
     r_state <= w_state_next;
     r_issued <= w_issued_next;
     r_dead   <= w_dead_next;
+
+    r_oldest_ready <= i_put ? 1'b0 : w_oldest_ready;
   end // else: !if(!i_reset_n)
 end
 
-assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1) & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid;
+assign w_inst_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
+                             ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_oldest_ready = r_entry.oldest_valid &  & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid;
+
 assign w_pc_update_before_entry = 1'b0;
 
 
 assign o_entry_valid = r_entry.valid;
 assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
-                       (r_entry.need_oldest ? r_entry.oldest_valid : 1'b1)  &
+                       (r_entry.need_oldest ? r_oldest_ready : 1'b1)  &
                        !w_pc_update_before_entry & all_operand_ready(r_entry);
 assign o_entry       = r_entry;
 
