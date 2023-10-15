@@ -96,7 +96,7 @@ def main():
                                "xlen": 64}]
         f.write(json.dumps(json_testlist, indent=0))
 
-    # sim.run_sim(sim_conf, group_name)
+    sim.run_sim(sim_conf, group_name)
 
 if __name__ == "__main__":
     main()
