@@ -29,7 +29,7 @@ def main():
 
     sim_conf["parallel"] = int(args.parallel)
     sim_conf["fst_dump"] = False
-    sim_conf["cycle"] = 1000000
+    sim_conf["cycle"] = 100000000
 
     t_delta = datetime.timedelta(hours=9)
     JST = datetime.timezone(t_delta, 'JST')
@@ -50,16 +50,6 @@ def main():
     build_result.wait()
     if build_result.returncode != 0:
         return BuildResult.FAIL
-
-    # Generate test case json list
-    json_testlist = []
-    with open("aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name + ".json", 'w') as f:
-        for i in range(num_tests):
-            json_testlist += [{"name": "config_{:05d}".format(i),
-                              "group": ["aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name],
-                              "elf": "../../../tests/aapg/" + dir_name + "/bin/out_" + os.path.basename(config_file).replace('.yaml', '') + "_{:05d}.riscv".format(i),
-                              "xlen": 64}]
-        f.write(json.dumps(json_testlist, indent=0))
 
     sim_conf["isa"] = "rv64imafdc"
     sim_conf["isa_ext"] = sim_conf["isa"][4:10]
@@ -82,11 +72,31 @@ def main():
     sim_conf["parallel"] = sim_conf['parallel']
     sim_conf["conf"] = "standard"
     sim_conf["kanata"] = False
-    sim_conf["testlist"] = ["aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name + ".json"]
+
 
     sim = runtest.verilator_sim()
     sim.build_sim(sim_conf)
-    sim.run_sim(sim_conf, "aapg_" + os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name)
+
+    # Generate test case json list
+    json_testlist = []
+    base_dir = "sim_" + sim_conf["isa"] + "_" + sim_conf["conf"]
+    group_name = os.path.splitext(os.path.basename(config_file))[0] + "_" + dir_name
+    json_testlist_name = base_dir + '/' + group_name + '/' + group_name + ".json"
+
+    sim_conf["testlist"] = [json_testlist_name]
+
+    bin_files = os.listdir("../tests/aapg/" + dir_name + "/bin/")
+
+    os.makedirs(base_dir + '/' + group_name)
+    with open(json_testlist_name, 'w') as f:
+        for bin in bin_files:
+            json_testlist += [{"name": bin.replace('.riscv',''),
+                               "group": [group_name],
+                               "elf": "../../../tests/aapg/" + dir_name + "/bin/" +  bin,
+                               "xlen": 64}]
+        f.write(json.dumps(json_testlist, indent=0))
+
+    # sim.run_sim(sim_conf, group_name)
 
 if __name__ == "__main__":
     main()
