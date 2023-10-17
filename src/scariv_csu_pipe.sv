@@ -50,24 +50,25 @@ typedef struct packed {
   logic csr_update;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t                        r_ex0_issue;
-pipe_ctrl_t                              w_ex0_pipe_ctrl;
-csr_update_t                             w_ex0_csr_update;
+scariv_pkg::issue_t    r_ex0_issue;
+pipe_ctrl_t            w_ex0_pipe_ctrl;
+csr_update_t           w_ex0_csr_update;
 
-pipe_ctrl_t                              r_ex1_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex1_issue;
+pipe_ctrl_t            r_ex1_pipe_ctrl;
+scariv_pkg::issue_t    r_ex1_issue;
 
 riscv_pkg::xlen_t      w_ex2_rs1_selected_data;
 
-pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex2_issue;
-riscv_pkg::xlen_t            r_ex2_rs1_data;
+pipe_ctrl_t            r_ex2_pipe_ctrl;
+scariv_pkg::issue_t    r_ex2_issue;
+riscv_pkg::xlen_t      r_ex2_rs1_data;
+logic                  w_ex2_is_fs_illegal;
 
-pipe_ctrl_t                              r_ex3_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex3_issue;
-riscv_pkg::xlen_t           r_ex3_result;
-riscv_pkg::xlen_t           r_ex3_csr_rd_data;
-logic                                    r_ex3_csr_illegal;
+pipe_ctrl_t            r_ex3_pipe_ctrl;
+scariv_pkg::issue_t    r_ex3_issue;
+riscv_pkg::xlen_t      r_ex3_result;
+riscv_pkg::xlen_t      r_ex3_csr_rd_data;
+logic                  r_ex3_csr_illegal;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -127,6 +128,11 @@ assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::X
 assign read_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
+assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
+                             ((r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FFLAGS) |
+                              (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FRM   ) |
+                              (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_result    <= 'h0;
@@ -137,7 +143,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= r_ex2_issue;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
-    r_ex3_csr_illegal <= read_if.resp_error;
+    r_ex3_csr_illegal <= read_if.resp_error | w_ex2_is_fs_illegal;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
