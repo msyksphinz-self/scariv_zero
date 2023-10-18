@@ -17,6 +17,10 @@ module scariv_fpnew_wrapper
    input logic               i_clk,
    input logic               i_reset_n,
 
+   // Commit notification
+   input scariv_pkg::commit_blk_t i_commit,
+   br_upd_if.slave                br_upd_if,
+
    input logic                i_valid,
    output logic               o_ready,
    input pipe_ctrl_t          i_pipe_ctrl,
@@ -101,6 +105,9 @@ fpnew_pkg::status_t                      w_fdiv_status;
 fpnew_pkg::classmask_e                   w_fdiv_class_mask;
 logic [ 4: 0]                            w_fdiv_out_fflags;
 aux_fpnew_t                              w_fdiv_aux;
+
+logic                                    w_commit_flush;
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
 aux_fpnew_t w_aux_fpnew_in;
 
@@ -244,7 +251,7 @@ fma32
  // Input Handshake
  .in_valid_i      (w_fma32_in_valid ),  // input  logic
  .in_ready_o      (w_fma32_ready    ),  // output logic
- .flush_i         (1'b0             ),  // input  logic
+ .flush_i         (w_commit_flush   ),  // input  logic
  // Output signals
  .result_o        (w_fma32_result   ),  // output logic [WIDTH-1:0]
  .status_o        (w_fma32_fflags   ),  // output fpnew_pkg::status_t
@@ -285,7 +292,7 @@ fpnew_noncomp #(
   .aux_i           (                        ), // Remember whether operation was vectorial
   .in_valid_i      ( w_noncomp32_in_valid   ),
   .in_ready_o      (                        ),
-  .flush_i         ( 1'b0                   ),
+  .flush_i         ( w_commit_flush         ),
   .result_o        ( w_noncomp32_result     ),
   .status_o        ( w_noncomp32_status     ),
   .extension_bit_o (                        ),
@@ -353,7 +360,7 @@ fpnew_opgroup_multifmt_slice /* #(
   .tag_i           ( w_aux_fpnew_in   ),
   .in_valid_i      ( w_cvt_in_valid  ),
   .in_ready_o      (                 ),
-  .flush_i         ( 1'b0            ),
+  .flush_i         ( w_commit_flush  ),
   .result_o        ( w_cast_result   ),
   .status_o        ( w_cast_status   ),
   .extension_bit_o (  ),
@@ -400,7 +407,7 @@ fdiv
  // Input Handshake
  .in_valid_i      (w_fdiv_in_valid ),  // input  logic
  .in_ready_o      (w_fdiv_ready    ),  // output logic
- .flush_i         (1'b0              ),  // input  logic
+ .flush_i         (w_commit_flush  ),  // input  logic
  // Output signals
  .result_o        (w_fdiv_result   ),  // output logic [WIDTH-1:0]
  .status_o        (w_fdiv_out_fflags),  // output fpnew_pkg::status_t
@@ -468,7 +475,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
    // Input Handshake
    .in_valid_i      (w_fma64_in_valid ),  // input  logic
    .in_ready_o      (w_fma64_ready    ),  // output logic
-   .flush_i         (1'b0             ),  // input  logic
+   .flush_i         (w_commit_flush   ),  // input  logic
    // Output signals
    .result_o        (w_fma64_result   ),  // output logic [WIDTH-1:0]
    .status_o        (w_fma64_fflags   ),  // output fpnew_pkg::status_t
@@ -515,7 +522,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
     .aux_i           (                        ), // Remember whether operation was vectorial
     .in_valid_i      ( w_noncomp64_in_valid   ),
     .in_ready_o      (                        ),
-    .flush_i         ( 1'b0                   ),
+    .flush_i         ( w_commit_flush         ),
     .result_o        ( w_noncomp64_result     ),
     .status_o        ( w_noncomp64_status     ),
     .extension_bit_o (                        ),
