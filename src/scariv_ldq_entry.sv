@@ -86,13 +86,13 @@ logic [ 1: 0]                                    w_rs_mispredicted;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
 
 
-assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id, i_commit);
+assign w_load_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_flush = w_load_commit_flush | w_load_br_flush;
