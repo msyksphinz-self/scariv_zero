@@ -207,42 +207,48 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "mseq"]]
 	},
     {
 		"name":"vmsne.vv      v[11:7],v[24:20],v[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msne"]]
 	},
     {
 		"name":"vmsltu.vv     v[11:7],v[24:20],v[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01101", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msltu"]]
 	},
     {
 		"name":"vmslt.vv      v[11:7],v[24:20],v[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01101", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "mslt"]]
 	},
     {
 		"name":"vmsleu.vv     v[11:7],v[24:20],v[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msleu"]]
 	},
     {
 		"name":"vmsle.vv      v[11:7],v[24:20],v[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msle"]]
 	},
     {
 		"name":"vsaddu.vv     v[11:7],v[24:20],v[19:15]vm[25:25]",
@@ -542,56 +548,64 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "mseq"]]
 	},
     {
 		"name":"vmsne.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msne"]]
 	},
     {
 		"name":"vmsltu.vx      v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01101", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msltu"]]
 	},
     {
 		"name":"vmslt.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01101", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "mslt"]]
 	},
     {
 		"name":"vmsleu.vx      v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msleu"]]
 	},
     {
 		"name":"vmsle.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msle"]]
 	},
     {
 		"name":"vmsgtu.vx      v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01111", "0X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msgtu"]]
 	},
     {
 		"name":"vmsgt.vx       v[11:7],v[24:20],r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01111", "1X", "XXXXX", "XXXXX", "100", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msgt"]]
 	},
     {
 		"name":"vsaddu.vx      v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -830,42 +844,48 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "0X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "mseq"]]
 	},
     {
 		"name":"vmsne.vi       v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msne"]]
 	},
     {
 		"name":"vmsleu.vi      v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msleu"]]
 	},
     {
 		"name":"vmsle.vi       v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msle"]]
 	},
     {
 		"name":"vmsgtu.vi      v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01111", "0X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msgtu"]]
 	},
     {
 		"name":"vmsgt.vi       v[11:7],v[24:20],simm5,vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01111", "1X", "XXXXX", "XXXXX", "011", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r2", "v2"]],
-		"inst_cat":[["inst_cat", "valu"]]
+		"inst_cat":[["inst_cat", "valu"]],
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "msgt"]]
 	},
     {
 		"name":"vsaddu.vi      v[11:7],v[24:20],simm5,vm[25:25]",

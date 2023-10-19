@@ -9,6 +9,7 @@
 module scariv_rename_sub
   import scariv_pkg::*;
   #(parameter REG_TYPE = GPR,
+    parameter TARGET_SIZE = 1,
     localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE :
                             REG_TYPE == FPR ? FPR_RNID_SIZE :
                             scariv_vec_pkg::VEC_RNID_SIZE,
@@ -23,7 +24,7 @@ module scariv_rename_sub
  input logic                     i_ibuf_front_fire,
  input scariv_front_pkg::front_t i_ibuf_front_payload,
 
- input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+ input rnid_update_t i_update_phy[TARGET_SIZE],
 
  // from Resource Allocator
  input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
@@ -42,6 +43,7 @@ localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 :
                           REG_TYPE == FPR ? 3 :
                           3;   // REG_TYPE == VPR
 localparam FLIST_SIZE = REG_TYPE == GPR ? XPR_FLIST_SIZE : FPR_FLIST_SIZE;
+localparam NUM_INFLIGHT_OPS = REG_TYPE == GPR ? 2 : REG_TYPE == FPR ? 3 : 4 /* VPR */;
 
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                   w_all_freelist_ready;
@@ -61,7 +63,7 @@ rnid_t                       rs2_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rs3_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rd_old_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 
-logic [scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_active;
+logic [scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS-1: 0] w_active;
 
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
@@ -357,12 +359,13 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
   assign o_disp_inst[d_idx] = assign_disp_rename (i_ibuf_front_payload.inst[d_idx],
                                                   w_rd_rnid[d_idx],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 3],
                                                   rd_old_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 0],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 0],
                                                   rs1_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 1],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 1],
                                                   rs2_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 2],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 2],
                                                   rs3_rnid_fwd[d_idx],
                                                   i_brtag[d_idx]);
 
@@ -370,18 +373,23 @@ end // block: src_rn_loop
 endgenerate
 
 
-rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
+rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS];
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
-  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 0] = rs1_rnid_fwd[d_idx];
-  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 1] = rs2_rnid_fwd[d_idx];
-  if (NUM_OPERANDS >= 3) begin
-    assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 2] = rs3_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 0] = rs1_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 1] = rs2_rnid_fwd[d_idx];
+  if (NUM_INFLIGHT_OPS >= 3) begin
+    assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 2] = rs3_rnid_fwd[d_idx];
   end
-end
-endgenerate
+  if (REG_TYPE == VPR) begin
+    assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 3] = rd_old_rnid_fwd[d_idx];
+  end
+end endgenerate
 
 scariv_inflight_list
-  #(.REG_TYPE(REG_TYPE))
+  #(.REG_TYPE     (REG_TYPE),
+    .TARGET_SIZE  (TARGET_SIZE),
+    .NUM_INFLIGHT_OPS (NUM_INFLIGHT_OPS)
+    )
 u_inflight_map
   (
    .i_clk     (i_clk),
@@ -394,7 +402,7 @@ u_inflight_map
    .i_update_fetch_rnid  (w_rd_rnid  ),
    .i_update_fetch_data  (w_rd_data  ),
 
-   .i_phy_wr (i_phy_wr)
+   .i_update_phy (i_update_phy)
 );
 
 // Map List Queue

@@ -321,6 +321,8 @@ u_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
+  .valu_vec_phy_wr_if (w_valu_vec_phy_wr_if),
+
   .rn_front_if  (w_rn_front_if),
   .i_sc_ras_index (w_sc_ras_index),
   .i_sc_ras_vaddr (w_sc_ras_vaddr)

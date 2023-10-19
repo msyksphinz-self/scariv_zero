@@ -163,6 +163,7 @@ typedef struct packed {
     logic [4:0]        regidx;
     rnid_t rnid;
     rnid_t old_rnid;
+    logic old_ready;
 } reg_wr_disp_t;
 
   typedef struct packed {
@@ -227,6 +228,7 @@ typedef struct packed {
 
   function disp_t assign_disp_rename (disp_t   disp,
                                       rnid_t   rd_rnid,
+                                      logic    rd_old_active,
                                       rnid_t   rd_old_rnid,
                                       logic    rs1_active,
                                       rnid_t   rs1_rnid,
@@ -239,8 +241,9 @@ typedef struct packed {
     disp_t ret;
     ret = disp;
 
-    ret.wr_reg.rnid     = rd_rnid;
-    ret.wr_reg.old_rnid = rd_old_rnid;
+    ret.wr_reg.rnid      = rd_rnid;
+    ret.wr_reg.old_rnid  = rd_old_rnid;
+    ret.wr_reg.old_ready = rd_old_active;
     ret.rd_regs[0].ready   = rs1_active;
     ret.rd_regs[0].rnid    = rs1_rnid;
     ret.rd_regs[1].ready   = rs2_active;
@@ -252,6 +255,12 @@ typedef struct packed {
     return ret;
 
   endfunction  // assign_disp_rename
+
+
+typedef struct packed {
+  logic   valid;
+  rnid_t  rnid;
+} rnid_update_t;
 
 
   function disp_t merge_scariv_front_if (disp_t xpr_disp,

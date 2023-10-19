@@ -23,7 +23,8 @@ module scariv_rename
    input scariv_pkg::cmt_id_t i_sc_new_cmt_id,
 
    input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
-   scariv_front_if.master           rn_front_if,
+   vec_regwrite_if.slave      valu_vec_phy_wr_if[1],
+   scariv_front_if.master     rn_front_if,
 
    // from Resource Allocator
    input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
@@ -62,9 +63,16 @@ assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredic
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
 
+rnid_update_t w_xpr_update_phy[scariv_pkg::TGT_BUS_SIZE];
+for (genvar t_idx = 0; t_idx < scariv_pkg::TGT_BUS_SIZE; t_idx++) begin : target_loop
+  assign w_xpr_update_phy[t_idx].valid = i_phy_wr[t_idx].valid & (i_phy_wr[t_idx].rd_type == scariv_pkg::GPR);
+  assign w_xpr_update_phy[t_idx].rnid  = i_phy_wr[t_idx].rd_rnid;
+end
 
 scariv_rename_sub
-  #(.REG_TYPE (GPR))
+  #(.REG_TYPE (GPR),
+    .TARGET_SIZE (scariv_pkg::TGT_BUS_SIZE)
+    )
 u_ipr_rename
   (
    .i_clk     (i_clk    ),
@@ -75,7 +83,7 @@ u_ipr_rename
    .i_ibuf_front_fire    (w_ibuf_front_fire),
    .i_ibuf_front_payload (ibuf_front_if.payload),
 
-   .i_phy_wr  (i_phy_wr),
+   .i_update_phy (w_xpr_update_phy),
    .i_brtag   (i_brtag),
    .br_upd_if (br_upd_if),
 
@@ -86,8 +94,17 @@ u_ipr_rename
    );
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
+
+  rnid_update_t w_fpr_update_phy[scariv_pkg::TGT_BUS_SIZE];
+  for (genvar t_idx = 0; t_idx < scariv_pkg::TGT_BUS_SIZE; t_idx++) begin : target_loop
+    assign w_fpr_update_phy[t_idx].valid = i_phy_wr[t_idx].valid & (i_phy_wr[t_idx].rd_type == scariv_pkg::FPR);
+    assign w_fpr_update_phy[t_idx].rnid  = i_phy_wr[t_idx].rd_rnid;
+  end
+
   scariv_rename_sub
-    #(.REG_TYPE (scariv_pkg::FPR))
+    #(.REG_TYPE (scariv_pkg::FPR),
+      .TARGET_SIZE (scariv_pkg::TGT_BUS_SIZE)
+      )
   u_fpr_rename
     (
      .i_clk     (i_clk    ),
@@ -98,9 +115,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
      .i_ibuf_front_fire    (w_ibuf_front_fire),
      .i_ibuf_front_payload (ibuf_front_if.payload),
 
-     .i_phy_wr  (i_phy_wr),
-     .i_brtag   (i_brtag),
-     .br_upd_if (br_upd_if),
+     .i_update_phy (w_fpr_update_phy),
+     .i_brtag      (i_brtag),
+     .br_upd_if    (br_upd_if),
 
      .o_disp_inst (w_ibuf_fpr_disp_inst),
 
@@ -117,8 +134,16 @@ end endgenerate
 
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
+
+  rnid_update_t w_vpr_update_phy[1];
+  for (genvar t_idx = 0; t_idx < 1; t_idx++) begin : target_loop
+    assign w_vpr_update_phy[t_idx].valid = valu_vec_phy_wr_if[t_idx].valid;
+    assign w_vpr_update_phy[t_idx].rnid  = valu_vec_phy_wr_if[t_idx].rd_rnid;
+  end
+
   scariv_rename_sub
-    #(.REG_TYPE (scariv_pkg::VPR))
+    #(.REG_TYPE (scariv_pkg::VPR),
+      .TARGET_SIZE (1))  // target + old rnid
   u_vpr_rename
     (
      .i_clk     (i_clk    ),
@@ -129,9 +154,9 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
      .i_ibuf_front_fire    (w_ibuf_front_fire),
      .i_ibuf_front_payload (ibuf_front_if.payload),
 
-     .i_phy_wr  (i_phy_wr),
-     .i_brtag   (i_brtag),
-     .br_upd_if (br_upd_if),
+     .i_update_phy (w_vpr_update_phy),
+     .i_brtag      (i_brtag),
+     .br_upd_if    (br_upd_if),
 
      .o_disp_inst (w_ibuf_vpr_disp_inst),
 

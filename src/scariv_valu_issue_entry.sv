@@ -94,7 +94,8 @@ function logic all_operand_ready(scariv_vec_pkg::issue_t entry);
   logic     ret;
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
         (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
-        (!entry.rd_regs[2].valid | entry.rd_regs[2].valid  & (entry.rd_regs[2].ready | entry.rd_regs[2].predict_ready));
+        (!entry.rd_regs[2].valid | entry.rd_regs[2].valid  & (entry.rd_regs[2].ready | entry.rd_regs[2].predict_ready)) &
+        (!entry.wr_old_reg.valid | entry.wr_old_reg.valid  & entry.wr_old_reg.ready);
   return ret;
 endfunction // all_operand_ready
 
@@ -111,6 +112,13 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
   select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
                                         .o_mispred (w_rs_mispredicted[rs_idx]));
 end endgenerate
+
+scariv_pkg::rnid_t w_wr_old_rnid;
+logic w_wr_old_phy_hit;
+
+assign w_wr_old_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.wr_old_reg.rnid;
+assign w_wr_old_phy_hit = (w_wr_old_rnid == vec_phy_fwd_if.rd_rnid) & vec_phy_fwd_if.valid;
+
 
 logic [NUM_OPERANDS-1: 0] w_rs_pred_mispredicted;
 logic                     w_rs_pred_mispredicted_or;
@@ -145,12 +153,16 @@ always_comb begin
     end
   end
 
+  w_entry_next.wr_old_reg.ready = r_entry.wr_old_reg.ready | w_wr_old_phy_hit;
+
   case (r_state)
     scariv_pkg::INIT : begin
       if (w_entry_flush) begin
         w_state_next = scariv_pkg::INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
+
+        w_entry_next.wr_old_reg.ready = i_put_data.wr_reg.old_ready | w_wr_old_phy_hit;
 
         w_entry_next.vlvtype_ready = vlvtype_info_if.ready | vlvtype_upd_load_valid;
         w_entry_next.vlvtype_index = vlvtype_info_if.index;
@@ -192,7 +204,8 @@ always_comb begin
           w_entry_next.rd_regs[1].predict_ready = 1'b0;
           w_entry_next.rd_regs[2].predict_ready = 1'b0;
         end else begin
-          if (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) begin
+          if (scariv_vec_pkg::VEC_STEP_W == 1 ||
+              r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) begin
             w_state_next = scariv_pkg::SCHED_CLEAR;
           end else begin
             w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
@@ -268,7 +281,8 @@ endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & ((r_state == scariv_pkg::WAIT) | (r_state == scariv_pkg::ISSUED)) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & ((r_state == scariv_pkg::WAIT) |
+                                        (r_state == scariv_pkg::ISSUED && scariv_vec_pkg::VEC_STEP_W > 1)) & !w_entry_flush &
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry) & r_entry.vlvtype_ready;
 assign o_entry       = r_entry;
 assign o_dead        = r_dead;

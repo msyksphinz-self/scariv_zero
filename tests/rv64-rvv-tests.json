@@ -39,5 +39,26 @@
     { "name": "vsra_v_x"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsra_v_x/test.elf"   , "xlen": 64},
     { "name": "vsra_v_i"         , "group" : ["rvv"], "elf": "../../../tests/rvv/vsra_v_i/test.elf"   , "xlen": 64},
 
+	{ "name": "vmseq_v_i"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmseq_v_i/test.elf"  , "xlen": 64},
+	{ "name": "vmseq_v_v"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmseq_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vmseq_v_x"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmseq_v_x/test.elf"  , "xlen": 64},
+	{ "name": "vmsgt_v_i"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsgt_v_i/test.elf"  , "xlen": 64},
+	{ "name": "vmsgt_v_x"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsgt_v_x/test.elf"  , "xlen": 64},
+	{ "name": "vmsgtu_v_i" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsgtu_v_i/test.elf" , "xlen": 64},
+	{ "name": "vmsgtu_v_x" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsgtu_v_x/test.elf" , "xlen": 64},
+	{ "name": "vmsle_v_i"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsle_v_i/test.elf"  , "xlen": 64},
+	{ "name": "vmsle_v_v"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsle_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vmsle_v_x"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsle_v_x/test.elf"  , "xlen": 64},
+	{ "name": "vmsleu_v_i" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsleu_v_i/test.elf" , "xlen": 64},
+	{ "name": "vmsleu_v_v" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsleu_v_v/test.elf" , "xlen": 64},
+	{ "name": "vmsleu_v_x" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsleu_v_x/test.elf" , "xlen": 64},
+	{ "name": "vmslt_v_v"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmslt_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vmslt_v_x"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmslt_v_x/test.elf"  , "xlen": 64},
+	{ "name": "vmsltu_v_v" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsltu_v_v/test.elf" , "xlen": 64},
+	{ "name": "vmsltu_v_x" 		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsltu_v_x/test.elf" , "xlen": 64},
+	{ "name": "vmsne_v_i"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsne_v_i/test.elf"  , "xlen": 64},
+	{ "name": "vmsne_v_v"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsne_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vmsne_v_x"  		 , "group" : ["rvv"], "elf": "../../../tests/rvv/vmsne_v_x/test.elf"  , "xlen": 64},
+
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64}
 ]

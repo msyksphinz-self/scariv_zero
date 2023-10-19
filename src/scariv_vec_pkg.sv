@@ -5,6 +5,7 @@ parameter VLENB = VLEN_W / 8;
 parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;
+typedef logic [VLENB-1: 0]            vlenb_t;
 parameter VEC_STEP_W = riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
 
 typedef logic [$clog2(VEC_STEP_W)-1: 0]         vec_pos_t;
@@ -67,7 +68,7 @@ typedef struct packed {
   scariv_pkg::grp_id_t     grp_id;
 
   scariv_pkg::reg_wr_issue_t         wr_reg;
-  scariv_pkg::reg_wr_issue_t         wr_old_reg;
+  scariv_pkg::reg_rd_issue_t         wr_old_reg;
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
 
   vec_pos_t            vec_step_index;
