@@ -42,17 +42,18 @@ logic          w_ex0_commit_flush;
 logic          w_ex0_br_flush;
 logic          w_ex0_flush;
 
-pipe_ctrl_t         r_ex1_pipe_ctrl;
+pipe_ctrl_t             r_ex1_pipe_ctrl;
 scariv_vec_pkg::issue_t r_ex1_issue;
 scariv_vec_pkg::issue_t w_ex1_issue_next;
-logic               w_ex1_commit_flush;
-logic               w_ex1_br_flush;
-logic               w_ex1_flush;
-riscv_pkg::xlen_t r_ex1_rs1_data;
-scariv_vec_pkg::dlen_t r_ex1_vpr_rs_data[2];
-scariv_vec_pkg::dlen_t r_ex1_vpr_wr_old_data;
-riscv_pkg::xlen_t w_ex1_rs1_selected_data;
-scariv_vec_pkg::dlen_t r_ex1_vpr_wr_old_data_step0;
+logic                   w_ex1_commit_flush;
+logic                   w_ex1_br_flush;
+logic                   w_ex1_flush;
+riscv_pkg::xlen_t       r_ex1_rs1_data;
+scariv_vec_pkg::dlen_t  r_ex1_vpr_rs_data[2];
+scariv_vec_pkg::dlen_t  r_ex1_vpr_wr_old_data;
+riscv_pkg::xlen_t       w_ex1_rs1_selected_data;
+scariv_vec_pkg::dlen_t  r_ex1_vpr_wr_old_data_step0;
+logic                   w_ex1_is_vmask_inst;
 
 pipe_ctrl_t             r_ex2_pipe_ctrl;
 scariv_vec_pkg::issue_t r_ex2_issue;
@@ -60,6 +61,7 @@ scariv_vec_pkg::issue_t w_ex2_issue_next;
 logic                   r_ex2_wr_valid;
 scariv_vec_pkg::dlen_t  r_ex2_vec_result;
 scariv_vec_pkg::dlen_t  r_ex2_vec_mask_result;
+logic                   r_ex2_is_vmask_inst;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -148,8 +150,11 @@ end
 scariv_vec_pkg::dlen_t w_ex1_vec_result;
 logic [riscv_pkg::XLEN_W/8-1: 0] w_ex1_vec_mask_lane[riscv_vec_conf_pkg::DLEN_W/64];
 
+assign w_ex1_is_vmask_inst = r_ex1_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VMASK;
+
 generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++) begin : datapath_loop
   logic [ 7: 0] w_ex1_en_mask;
+  logic [riscv_vec_conf_pkg::DLEN_W-1: 0] w_ex1_mm_mask;
   logic [ 3: 0] temp_vl;
   logic [ 7: 0] w_ex1_vr_mask_old_data;
 
@@ -163,6 +168,20 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
   assign w_vl_ew32 = d_idx * 2 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
   assign w_vl_ew64 = d_idx * 1 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
 
+
+  always_comb begin
+    if (d_idx == 0) begin
+      unique case (r_ex1_issue.vlvtype.vtype.vsew)
+        scariv_vec_pkg::EW8  : begin w_ex1_mm_mask = (1 << r_ex1_issue.vlvtype.vl) - 1; end
+        scariv_vec_pkg::EW16 : begin w_ex1_mm_mask = (1 << r_ex1_issue.vlvtype.vl) - 1; end
+        scariv_vec_pkg::EW32 : begin w_ex1_mm_mask = (1 << r_ex1_issue.vlvtype.vl) - 1; end
+        scariv_vec_pkg::EW64 : begin w_ex1_mm_mask = (1 << r_ex1_issue.vlvtype.vl) - 1; end
+        default              : begin w_ex1_mm_mask = 'h0; end
+      endcase // unique case (r_ex1_issue.vlvtype.vtype.vsew)
+    end else begin
+      w_ex1_mm_mask = 'h0;
+    end // else: !if(d_idx == 0)
+  end // always_comb
 
   always_comb begin
     unique case (r_ex1_issue.vlvtype.vtype.vsew)
@@ -192,23 +211,25 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
         w_ex1_vr_mask_old_data = 'h0;
       end
     endcase // unique case (i_sew)
-  end
+  end // always_comb
 
   scariv_vec_alu_datapath
   u_vec_alu_datapath
     (
-     .i_op          (r_ex1_pipe_ctrl.op                            ),
-     .i_sew         (r_ex1_issue.vlvtype.vtype.vsew                ),
-     .i_vs1         (r_ex1_vpr_rs_data[0][d_idx*64 +: 64]          ),
-     .i_rs1_valid   (r_ex1_issue.rd_regs[0].typ != scariv_pkg::VPR ),
-     .i_rs1         (r_ex1_rs1_data                                ),
-     .i_vs2         (r_ex1_vpr_rs_data[1][d_idx*64 +: 64]          ),
-     .i_wr_old      (r_ex1_vpr_wr_old_data[d_idx*64 +: 64]         ),
-     .i_wr_mask_old (w_ex1_vr_mask_old_data                        ),
-     .i_en_mask     (w_ex1_en_mask                                 ),
-     .i_v0          ('h0                                           ),
-     .o_alu_res     (w_ex1_vec_result [d_idx*64 +: 64]             ),
-     .o_mask_res    (w_ex1_vec_mask_lane [d_idx]                   )
+     .i_op            (r_ex1_pipe_ctrl.op                            ),
+     .i_is_vmask_op   (w_ex1_is_vmask_inst                           ),
+     .i_sew           (r_ex1_issue.vlvtype.vtype.vsew                ),
+     .i_vs1           (r_ex1_vpr_rs_data[0][d_idx*64 +: 64]          ),
+     .i_rs1_valid     (r_ex1_issue.rd_regs[0].typ != scariv_pkg::VPR ),
+     .i_rs1           (r_ex1_rs1_data                                ),
+     .i_vs2           (r_ex1_vpr_rs_data[1][d_idx*64 +: 64]          ),
+     .i_wr_old        (r_ex1_vpr_wr_old_data[d_idx*64 +: 64]         ),
+     .i_wr_mask_old   (w_ex1_vr_mask_old_data                        ),
+     .i_en_mask       (w_ex1_en_mask                                 ),
+     .i_mm_mask       (w_ex1_mm_mask                                 ),
+     .i_v0            ('h0                                           ),
+     .o_alu_res       (w_ex1_vec_result [d_idx*64 +: 64]             ),
+     .o_mask_res      (w_ex1_vec_mask_lane [d_idx]                   )
      );
 end endgenerate // block: datapath_loop
 
@@ -248,6 +269,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
+    r_ex2_is_vmask_inst <= w_ex1_is_vmask_inst;
 
     r_ex2_wr_valid <= r_ex1_issue.wr_reg.valid;
 
@@ -320,7 +342,7 @@ always_comb begin
   vec_phy_fwd_if.valid   = vec_phy_wr_if.valid;
   vec_phy_fwd_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
 
-  o_done_report.valid  = r_ex2_issue.valid & (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+  o_done_report.valid  = r_ex2_issue.valid & (r_ex2_is_vmask_inst | (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1));
   o_done_report.cmt_id = r_ex2_issue.cmt_id;
   o_done_report.grp_id = r_ex2_issue.grp_id;
   o_done_report.fflags_update_valid = 1'b0;

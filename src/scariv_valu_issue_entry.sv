@@ -205,6 +205,7 @@ always_comb begin
           w_entry_next.rd_regs[2].predict_ready = 1'b0;
         end else begin
           if (scariv_vec_pkg::VEC_STEP_W == 1 ||
+              r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VMASK ||
               r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) begin
             w_state_next = scariv_pkg::SCHED_CLEAR;
           end else begin

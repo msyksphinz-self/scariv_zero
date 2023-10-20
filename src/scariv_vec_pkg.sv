@@ -62,6 +62,7 @@ typedef struct packed {
   scariv_pkg::vaddr_t    pc_addr;
   logic [31:0]          inst;
   scariv_pkg::inst_cat_t cat;
+  scariv_pkg::inst_subcat_t subcat;
   scariv_pkg::brtag_t      brtag;
 
   scariv_pkg::cmt_id_t     cmt_id;
@@ -98,8 +99,9 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.inst  = in.inst;
   ret.pc_addr = in.pc_addr;
 
-  ret.cat   = in.cat;
-  ret.brtag = in.brtag;
+  ret.cat    = in.cat;
+  ret.subcat = in.subcat;
+  ret.brtag  = in.brtag;
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;

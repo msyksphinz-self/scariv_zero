@@ -1,45 +1,45 @@
-                  basic
+                  v512d128 v256d256
 -------------------------------------------
-vsetvli         | v
+vsetvli         | v        v
 vsetivli        |
 vsetvl          |
-vmv.v.v         | v
-vmv.v.x         | v
-vfmv.v.f        | v
-vmv.v.i         | v
+vmv.v.v         | v        v
+vmv.v.x         | v        v
+vfmv.v.f        | v        v
+vmv.v.i         | v        v
 vmv.x.s         |
 vmv.s.x         |
 vfmv.f.s        |
 vfmv.s.f        |
-vadd.vv         | v
-vsub.vv         | v
-vminu.vv        | v
-vmin.vv         | v
-vmaxu.vv        | v
-vmax.vv         | v
-vand.vv         | v
-vor.vv          | v
-vxor.vv         | v
+vadd.vv         | v        v
+vsub.vv         | v        v
+vminu.vv        | v        v
+vmin.vv         | v        v
+vmaxu.vv        | v        v
+vmax.vv         | v        v
+vand.vv         | v        v
+vor.vv          | v        v
+vxor.vv         | v        v
 vrgather.vv     |
 vadc.vv         |
 vmadc.vv        |
 vsbc.vv         |
 vmsbc.vv        |
 vmerge.vv       |
-vmseq.vv        |
-vmsne.vv        |
-vmsltu.vv       |
-vmslt.vv        |
-vmsleu.vv       |
-vmsle.vv        |
+vmseq.vv        | v        v
+vmsne.vv        | v        v
+vmsltu.vv       | v        v
+vmslt.vv        | v        v
+vmsleu.vv       | v        v
+vmsle.vv        | v        v
 vsaddu.vv       |
 vsadd.vv        |
 vssubu.vv       |
 vssub.vv        |
-vsll.vv         | v
+vsll.vv         | v        v
 vsmul.vv        |
-vsrl.vv         | v
-vsra.vv         | v
+vsrl.vv         | v        v
+vsra.vv         | v        v
 vssrl.vv        |
 vssra.vv        |
 vnsrl.vv        |
@@ -54,16 +54,16 @@ vqmaccu.vv      |
 vqmacc.vv       |
 vqmaccus.vv     |
 vqmaccsu.vv     |
-vadd.vx         | v
-vsub.vx         | v
-vrsub.vx        | v
-vminu.vx        | v
-vmin.vx         | v
-vmaxu.vx        | v
-vmax.vx         | v
-vand.vx         | v
-vor.vx          | v
-vxor.vx         | v
+vadd.vx         | v        v
+vsub.vx         | v        v
+vrsub.vx        | v        v
+vminu.vx        | v        v
+vmin.vx         | v        v
+vmaxu.vx        | v        v
+vmax.vx         | v        v
+vand.vx         | v        v
+vor.vx          | v        v
+vxor.vx         | v        v
 vrgather.vx     |
 vslideup.vx     |
 vslidedown.vx   |
@@ -72,22 +72,22 @@ vmadc.vx        |
 vsbc.vx         |
 vmsbc.vx        |
 vmerge.vx       |
-vmseq.vx        |
-vmsne.vx        |
-vmsltu.vx       |
-vmslt.vx        |
-vmsleu.vx       |
-vmsle.vx        |
-vmsgtu.vx       |
-vmsgt.vx        |
+vmseq.vx        | v        v
+vmsne.vx        | v        v
+vmsltu.vx       | v        v
+vmslt.vx        | v        v
+vmsleu.vx       | v        v
+vmsle.vx        | v        v
+vmsgtu.vx       | v        v
+vmsgt.vx        | v        v
 vsaddu.vx       |
 vsadd.vx        |
 vssubu.vx       |
 vssub.vx        |
-vsll.vx         | v
+vsll.vx         | v        v
 vsmul.vx        |
-vsrl.vx         | v
-vsra.vx         | v
+vsrl.vx         | v        v
+vsra.vx         | v        v
 vssrl.vx        |
 vssra.vx        |
 vnsrl.vx        |
@@ -102,27 +102,27 @@ vqmaccu.vx      |
 vqmacc.vx       |
 vqmaccus.vx     |
 vqmaccsu.vx     |
-vadd.vi         | v
-vrsub.vi        | v
-vand.vi         | v
-vor.vi          | v
-vxor.vi         | v
+vadd.vi         | v        v
+vrsub.vi        | v        v
+vand.vi         | v        v
+vor.vi          | v        v
+vxor.vi         | v        v
 vrgather.vi     |
 vslideup.vi     |
 vslidedown.vi   |
 vadc.vi         |
 vmadc.vi        |
-vmseq.vi        |
-vmsne.vi        |
-vmsleu.vi       |
-vmsle.vi        |
-vmsgtu.vi       |
-vmsgt.vi        |
+vmseq.vi        | v        v
+vmsne.vi        | v        v
+vmsleu.vi       | v        v
+vmsle.vi        | v        v
+vmsgtu.vi       | v        v
+vmsgt.vi        | v        v
 vsaddu.vi       |
 vsadd.vi        |
-vsll.vi         | v
-vsrl.vi         | v
-vsra.vi         | v
+vsll.vi         | v        v
+vsrl.vi         | v        v
+vsra.vi         | v        v
 vssrl.vi        |
 vssra.vi        |
 vnsrl.vi        |
