@@ -107,7 +107,8 @@ logic [ 4: 0]                            w_fdiv_out_fflags;
 aux_fpnew_t                              w_fdiv_aux;
 
 logic                                    w_commit_flush;
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+logic                                    w_in_br_flush;
+logic                                    w_in_flush;
 
 aux_fpnew_t w_aux_fpnew_in;
 
@@ -225,8 +226,13 @@ always_comb begin
 
 end // always_comb
 
-assign w_fma32_in_valid     = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
-assign w_noncomp32_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_in_br_flush  = scariv_pkg::is_br_flush_target(w_aux_fpnew_in.cmt_id, w_aux_fpnew_in.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & i_valid;
+assign w_in_flush     = w_commit_flush | w_in_br_flush;
+
+assign w_fma32_in_valid     = i_valid & ~w_in_flush & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
+assign w_noncomp32_in_valid = i_valid & ~w_in_flush & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
 
 fpnew_fma
   #(
@@ -251,7 +257,7 @@ fma32
  // Input Handshake
  .in_valid_i      (w_fma32_in_valid ),  // input  logic
  .in_ready_o      (w_fma32_ready    ),  // output logic
- .flush_i         (w_commit_flush   ),  // input  logic
+ .flush_i         (w_commit_flush          ),  // input  logic
  // Output signals
  .result_o        (w_fma32_result   ),  // output logic [WIDTH-1:0]
  .status_o        (w_fma32_fflags   ),  // output fpnew_pkg::status_t
@@ -320,7 +326,7 @@ logic                 w_cast_out_valid;
 logic [63: 0]         w_cast_result;
 fpnew_pkg::status_t   w_cast_status;
 
-assign w_cvt_in_valid = i_valid & w_cvt_valid;
+assign w_cvt_in_valid = i_valid & ~w_in_flush & w_cvt_valid;
 assign w_multifmt_rs[0] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs1[31: 0]} : */i_rs1;
 assign w_multifmt_rs[1] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs2[31: 0]} : */i_rs2;
 assign w_multifmt_rs[2] = /* w_src_fp_fmt == fpnew_pkg::FP32 ? {{32{1'b1}}, i_rs3[31: 0]} : */i_rs3;
@@ -380,7 +386,7 @@ assign w_cast_out_fflags = {w_cast_status.NV,
 logic                 w_fdiv_in_valid;
 logic                 w_fdiv_ready;
 logic                 w_fdiv_out_ready;
-assign w_fdiv_in_valid = i_valid & w_fdiv_valid;
+assign w_fdiv_in_valid = i_valid & ~w_in_flush & w_fdiv_valid;
 
 localparam FpFmtConfig = riscv_fpu_pkg::FLEN_W == 32 ? 5'b10000 : 5'b11000;
 
@@ -449,8 +455,8 @@ generate if (riscv_fpu_pkg::FLEN_W == 64) begin : fma64
   assign w_fma64_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2 : i_rs3;
   assign w_fma64_boxed[2:0] = 3'b111;
 
-  assign w_fma64_in_valid     = i_valid & w_fma_valid     & (i_pipe_ctrl.size == SIZE_DW);
-  assign w_noncomp64_in_valid = i_valid & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_DW);
+  assign w_fma64_in_valid     = i_valid & ~w_in_flush & w_fma_valid     & (i_pipe_ctrl.size == SIZE_DW);
+  assign w_noncomp64_in_valid = i_valid & ~w_in_flush & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_DW);
 
   fpnew_fma
     #(
