@@ -52,7 +52,7 @@ logic [63: 0]                 r_cycle;    // These registers are always 64-bit
 logic [63: 0]                 r_instret;  // These registers are always 64-bit
 logic [63: 0]                 r_time;     // These registers are always 64-bit
 
-logic [63: 0]                 r_hpmcounter [31: 3];
+// logic [63: 0]                 r_hpmcounter [31: 3];
 
 xlen_t r_ustatus;
 xlen_t r_uie;
@@ -112,35 +112,35 @@ xlen_t r_mibase;
 xlen_t r_mibound;
 xlen_t r_mdbase;
 xlen_t r_mdbound;
-xlen_t r_mhpevent3;
-xlen_t r_mhpevent4;
-xlen_t r_mhpevent5;
-xlen_t r_mhpevent6;
-xlen_t r_mhpevent7;
-xlen_t r_mhpevent8;
-xlen_t r_mhpevent9;
-xlen_t r_mhpevent10;
-xlen_t r_mhpevent11;
-xlen_t r_mhpevent12;
-xlen_t r_mhpevent13;
-xlen_t r_mhpevent14;
-xlen_t r_mhpevent15;
-xlen_t r_mhpevent16;
-xlen_t r_mhpevent17;
-xlen_t r_mhpevent18;
-xlen_t r_mhpevent19;
-xlen_t r_mhpevent20;
-xlen_t r_mhpevent21;
-xlen_t r_mhpevent22;
-xlen_t r_mhpevent23;
-xlen_t r_mhpevent24;
-xlen_t r_mhpevent25;
-xlen_t r_mhpevent26;
-xlen_t r_mhpevent27;
-xlen_t r_mhpevent28;
-xlen_t r_mhpevent29;
-xlen_t r_mhpevent30;
-xlen_t r_mhpevent31;
+// xlen_t r_mhpevent3;
+// xlen_t r_mhpevent4;
+// xlen_t r_mhpevent5;
+// xlen_t r_mhpevent6;
+// xlen_t r_mhpevent7;
+// xlen_t r_mhpevent8;
+// xlen_t r_mhpevent9;
+// xlen_t r_mhpevent10;
+// xlen_t r_mhpevent11;
+// xlen_t r_mhpevent12;
+// xlen_t r_mhpevent13;
+// xlen_t r_mhpevent14;
+// xlen_t r_mhpevent15;
+// xlen_t r_mhpevent16;
+// xlen_t r_mhpevent17;
+// xlen_t r_mhpevent18;
+// xlen_t r_mhpevent19;
+// xlen_t r_mhpevent20;
+// xlen_t r_mhpevent21;
+// xlen_t r_mhpevent22;
+// xlen_t r_mhpevent23;
+// xlen_t r_mhpevent24;
+// xlen_t r_mhpevent25;
+// xlen_t r_mhpevent26;
+// xlen_t r_mhpevent27;
+// xlen_t r_mhpevent28;
+// xlen_t r_mhpevent29;
+// xlen_t r_mhpevent30;
+// xlen_t r_mhpevent31;
 xlen_t r_pmpcfg0;
 xlen_t r_pmpcfg1;
 xlen_t r_pmpcfg2;
@@ -201,69 +201,69 @@ always_comb begin
     `SYSREG_ADDR_CYCLE          : read_if.data = r_cycle  [riscv_pkg::XLEN_W-1: 0];
     // `SYSREG_ADDR_TIME           : read_if.data = r_time   [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_INSTRET        : read_if.data = r_instret[riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER3    : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER4    : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER5    : read_if.data = r_hpmcounter[ 5][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER6    : read_if.data = r_hpmcounter[ 6][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER7    : read_if.data = r_hpmcounter[ 7][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER8    : read_if.data = r_hpmcounter[ 8][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER9    : read_if.data = r_hpmcounter[ 9][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER10   : read_if.data = r_hpmcounter[10][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER11   : read_if.data = r_hpmcounter[11][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER12   : read_if.data = r_hpmcounter[12][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER13   : read_if.data = r_hpmcounter[13][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER14   : read_if.data = r_hpmcounter[14][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER15   : read_if.data = r_hpmcounter[15][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER16   : read_if.data = r_hpmcounter[16][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER17   : read_if.data = r_hpmcounter[17][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER18   : read_if.data = r_hpmcounter[18][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER19   : read_if.data = r_hpmcounter[19][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER20   : read_if.data = r_hpmcounter[20][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER21   : read_if.data = r_hpmcounter[21][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER22   : read_if.data = r_hpmcounter[22][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER23   : read_if.data = r_hpmcounter[23][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER24   : read_if.data = r_hpmcounter[24][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER25   : read_if.data = r_hpmcounter[25][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER26   : read_if.data = r_hpmcounter[26][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER27   : read_if.data = r_hpmcounter[27][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER28   : read_if.data = r_hpmcounter[28][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER29   : read_if.data = r_hpmcounter[29][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER30   : read_if.data = r_hpmcounter[30][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_HPMCOUNTER31   : read_if.data = r_hpmcounter[31][riscv_pkg::XLEN_W-1: 0];
-`ifdef RV32
-    `SYSREG_ADDR_CYCLEH         : read_if.data = r_cycle          [63:32];
-    // `SYSREG_ADDR_TIMEH          : read_if.data = r_time           [63:32];
-    `SYSREG_ADDR_INSTRETH       : read_if.data = r_instret        [63:32];
-    `SYSREG_ADDR_HPMCOUNTERH3   : read_if.data = r_hpmcounter[ 3][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH4   : read_if.data = r_hpmcounter[ 4][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH5   : read_if.data = r_hpmcounter[ 5][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH6   : read_if.data = r_hpmcounter[ 6][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH7   : read_if.data = r_hpmcounter[ 7][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH8   : read_if.data = r_hpmcounter[ 8][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH9   : read_if.data = r_hpmcounter[ 9][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH10  : read_if.data = r_hpmcounter[10][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH11  : read_if.data = r_hpmcounter[11][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH12  : read_if.data = r_hpmcounter[12][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH13  : read_if.data = r_hpmcounter[13][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH14  : read_if.data = r_hpmcounter[14][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH15  : read_if.data = r_hpmcounter[15][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH16  : read_if.data = r_hpmcounter[16][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH17  : read_if.data = r_hpmcounter[17][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH18  : read_if.data = r_hpmcounter[18][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH19  : read_if.data = r_hpmcounter[19][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH20  : read_if.data = r_hpmcounter[20][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH21  : read_if.data = r_hpmcounter[21][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH22  : read_if.data = r_hpmcounter[22][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH23  : read_if.data = r_hpmcounter[23][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH24  : read_if.data = r_hpmcounter[24][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH25  : read_if.data = r_hpmcounter[25][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH26  : read_if.data = r_hpmcounter[26][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH27  : read_if.data = r_hpmcounter[27][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH28  : read_if.data = r_hpmcounter[28][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH29  : read_if.data = r_hpmcounter[29][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH30  : read_if.data = r_hpmcounter[30][63:32];
-    `SYSREG_ADDR_HPMCOUNTERH31  : read_if.data = r_hpmcounter[31][63:32];
-`endif // RV32
+//     `SYSREG_ADDR_HPMCOUNTER3    : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER4    : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER5    : read_if.data = r_hpmcounter[ 5][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER6    : read_if.data = r_hpmcounter[ 6][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER7    : read_if.data = r_hpmcounter[ 7][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER8    : read_if.data = r_hpmcounter[ 8][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER9    : read_if.data = r_hpmcounter[ 9][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER10   : read_if.data = r_hpmcounter[10][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER11   : read_if.data = r_hpmcounter[11][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER12   : read_if.data = r_hpmcounter[12][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER13   : read_if.data = r_hpmcounter[13][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER14   : read_if.data = r_hpmcounter[14][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER15   : read_if.data = r_hpmcounter[15][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER16   : read_if.data = r_hpmcounter[16][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER17   : read_if.data = r_hpmcounter[17][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER18   : read_if.data = r_hpmcounter[18][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER19   : read_if.data = r_hpmcounter[19][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER20   : read_if.data = r_hpmcounter[20][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER21   : read_if.data = r_hpmcounter[21][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER22   : read_if.data = r_hpmcounter[22][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER23   : read_if.data = r_hpmcounter[23][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER24   : read_if.data = r_hpmcounter[24][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER25   : read_if.data = r_hpmcounter[25][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER26   : read_if.data = r_hpmcounter[26][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER27   : read_if.data = r_hpmcounter[27][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER28   : read_if.data = r_hpmcounter[28][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER29   : read_if.data = r_hpmcounter[29][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER30   : read_if.data = r_hpmcounter[30][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_HPMCOUNTER31   : read_if.data = r_hpmcounter[31][riscv_pkg::XLEN_W-1: 0];
+// `ifdef RV32
+//     `SYSREG_ADDR_CYCLEH         : read_if.data = r_cycle          [63:32];
+//     // `SYSREG_ADDR_TIMEH          : read_if.data = r_time           [63:32];
+//     `SYSREG_ADDR_INSTRETH       : read_if.data = r_instret        [63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH3   : read_if.data = r_hpmcounter[ 3][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH4   : read_if.data = r_hpmcounter[ 4][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH5   : read_if.data = r_hpmcounter[ 5][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH6   : read_if.data = r_hpmcounter[ 6][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH7   : read_if.data = r_hpmcounter[ 7][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH8   : read_if.data = r_hpmcounter[ 8][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH9   : read_if.data = r_hpmcounter[ 9][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH10  : read_if.data = r_hpmcounter[10][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH11  : read_if.data = r_hpmcounter[11][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH12  : read_if.data = r_hpmcounter[12][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH13  : read_if.data = r_hpmcounter[13][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH14  : read_if.data = r_hpmcounter[14][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH15  : read_if.data = r_hpmcounter[15][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH16  : read_if.data = r_hpmcounter[16][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH17  : read_if.data = r_hpmcounter[17][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH18  : read_if.data = r_hpmcounter[18][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH19  : read_if.data = r_hpmcounter[19][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH20  : read_if.data = r_hpmcounter[20][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH21  : read_if.data = r_hpmcounter[21][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH22  : read_if.data = r_hpmcounter[22][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH23  : read_if.data = r_hpmcounter[23][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH24  : read_if.data = r_hpmcounter[24][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH25  : read_if.data = r_hpmcounter[25][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH26  : read_if.data = r_hpmcounter[26][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH27  : read_if.data = r_hpmcounter[27][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH28  : read_if.data = r_hpmcounter[28][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH29  : read_if.data = r_hpmcounter[29][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH30  : read_if.data = r_hpmcounter[30][63:32];
+//     `SYSREG_ADDR_HPMCOUNTERH31  : read_if.data = r_hpmcounter[31][63:32];
+// `endif // RV32
     `SYSREG_ADDR_SSTATUS        : read_if.data = riscv_pkg::map_sstatus(r_mstatus);
     `SYSREG_ADDR_SEDELEG        : read_if.data = r_sedeleg;
     `SYSREG_ADDR_SIDELEG        : read_if.data = r_sideleg;
@@ -313,64 +313,64 @@ always_comb begin
     `SYSREG_ADDR_MDBOUND        : read_if.data = r_mdbound;
     `SYSREG_ADDR_MCYCLE         : read_if.data = r_cycle   [riscv_pkg::XLEN_W-1: 0];
     `SYSREG_ADDR_MINSTRET       : read_if.data = r_instret [riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER3   : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER4   : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER5   : read_if.data = r_hpmcounter[ 5][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER6   : read_if.data = r_hpmcounter[ 6][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER7   : read_if.data = r_hpmcounter[ 7][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER8   : read_if.data = r_hpmcounter[ 8][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER9   : read_if.data = r_hpmcounter[ 9][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER10  : read_if.data = r_hpmcounter[10][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER11  : read_if.data = r_hpmcounter[11][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER12  : read_if.data = r_hpmcounter[12][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER13  : read_if.data = r_hpmcounter[13][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER14  : read_if.data = r_hpmcounter[14][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER15  : read_if.data = r_hpmcounter[15][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER16  : read_if.data = r_hpmcounter[16][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER17  : read_if.data = r_hpmcounter[17][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER18  : read_if.data = r_hpmcounter[18][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER19  : read_if.data = r_hpmcounter[19][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER20  : read_if.data = r_hpmcounter[20][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER21  : read_if.data = r_hpmcounter[21][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER22  : read_if.data = r_hpmcounter[22][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER23  : read_if.data = r_hpmcounter[23][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER24  : read_if.data = r_hpmcounter[24][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER25  : read_if.data = r_hpmcounter[25][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER26  : read_if.data = r_hpmcounter[26][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER27  : read_if.data = r_hpmcounter[27][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER28  : read_if.data = r_hpmcounter[28][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER29  : read_if.data = r_hpmcounter[29][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER30  : read_if.data = r_hpmcounter[30][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPMCOUNTER31  : read_if.data = r_hpmcounter[31][riscv_pkg::XLEN_W-1: 0];
-    `SYSREG_ADDR_MHPEVENT3      : read_if.data = r_mhpevent3;
-    `SYSREG_ADDR_MHPEVENT4      : read_if.data = r_mhpevent4;
-    `SYSREG_ADDR_MHPEVENT5      : read_if.data = r_mhpevent5;
-    `SYSREG_ADDR_MHPEVENT6      : read_if.data = r_mhpevent6;
-    `SYSREG_ADDR_MHPEVENT7      : read_if.data = r_mhpevent7;
-    `SYSREG_ADDR_MHPEVENT8      : read_if.data = r_mhpevent8;
-    `SYSREG_ADDR_MHPEVENT9      : read_if.data = r_mhpevent9;
-    `SYSREG_ADDR_MHPEVENT10     : read_if.data = r_mhpevent10;
-    `SYSREG_ADDR_MHPEVENT11     : read_if.data = r_mhpevent11;
-    `SYSREG_ADDR_MHPEVENT12     : read_if.data = r_mhpevent12;
-    `SYSREG_ADDR_MHPEVENT13     : read_if.data = r_mhpevent13;
-    `SYSREG_ADDR_MHPEVENT14     : read_if.data = r_mhpevent14;
-    `SYSREG_ADDR_MHPEVENT15     : read_if.data = r_mhpevent15;
-    `SYSREG_ADDR_MHPEVENT16     : read_if.data = r_mhpevent16;
-    `SYSREG_ADDR_MHPEVENT17     : read_if.data = r_mhpevent17;
-    `SYSREG_ADDR_MHPEVENT18     : read_if.data = r_mhpevent18;
-    `SYSREG_ADDR_MHPEVENT19     : read_if.data = r_mhpevent19;
-    `SYSREG_ADDR_MHPEVENT20     : read_if.data = r_mhpevent20;
-    `SYSREG_ADDR_MHPEVENT21     : read_if.data = r_mhpevent21;
-    `SYSREG_ADDR_MHPEVENT22     : read_if.data = r_mhpevent22;
-    `SYSREG_ADDR_MHPEVENT23     : read_if.data = r_mhpevent23;
-    `SYSREG_ADDR_MHPEVENT24     : read_if.data = r_mhpevent24;
-    `SYSREG_ADDR_MHPEVENT25     : read_if.data = r_mhpevent25;
-    `SYSREG_ADDR_MHPEVENT26     : read_if.data = r_mhpevent26;
-    `SYSREG_ADDR_MHPEVENT27     : read_if.data = r_mhpevent27;
-    `SYSREG_ADDR_MHPEVENT28     : read_if.data = r_mhpevent28;
-    `SYSREG_ADDR_MHPEVENT29     : read_if.data = r_mhpevent29;
-    `SYSREG_ADDR_MHPEVENT30     : read_if.data = r_mhpevent30;
-    `SYSREG_ADDR_MHPEVENT31     : read_if.data = r_mhpevent31;
+//     `SYSREG_ADDR_MHPMCOUNTER3   : read_if.data = r_hpmcounter[ 3][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER4   : read_if.data = r_hpmcounter[ 4][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER5   : read_if.data = r_hpmcounter[ 5][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER6   : read_if.data = r_hpmcounter[ 6][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER7   : read_if.data = r_hpmcounter[ 7][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER8   : read_if.data = r_hpmcounter[ 8][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER9   : read_if.data = r_hpmcounter[ 9][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER10  : read_if.data = r_hpmcounter[10][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER11  : read_if.data = r_hpmcounter[11][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER12  : read_if.data = r_hpmcounter[12][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER13  : read_if.data = r_hpmcounter[13][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER14  : read_if.data = r_hpmcounter[14][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER15  : read_if.data = r_hpmcounter[15][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER16  : read_if.data = r_hpmcounter[16][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER17  : read_if.data = r_hpmcounter[17][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER18  : read_if.data = r_hpmcounter[18][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER19  : read_if.data = r_hpmcounter[19][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER20  : read_if.data = r_hpmcounter[20][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER21  : read_if.data = r_hpmcounter[21][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER22  : read_if.data = r_hpmcounter[22][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER23  : read_if.data = r_hpmcounter[23][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER24  : read_if.data = r_hpmcounter[24][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER25  : read_if.data = r_hpmcounter[25][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER26  : read_if.data = r_hpmcounter[26][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER27  : read_if.data = r_hpmcounter[27][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER28  : read_if.data = r_hpmcounter[28][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER29  : read_if.data = r_hpmcounter[29][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER30  : read_if.data = r_hpmcounter[30][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPMCOUNTER31  : read_if.data = r_hpmcounter[31][riscv_pkg::XLEN_W-1: 0];
+//     `SYSREG_ADDR_MHPEVENT3      : read_if.data = r_mhpevent3;
+//     `SYSREG_ADDR_MHPEVENT4      : read_if.data = r_mhpevent4;
+//     `SYSREG_ADDR_MHPEVENT5      : read_if.data = r_mhpevent5;
+//     `SYSREG_ADDR_MHPEVENT6      : read_if.data = r_mhpevent6;
+//     `SYSREG_ADDR_MHPEVENT7      : read_if.data = r_mhpevent7;
+//     `SYSREG_ADDR_MHPEVENT8      : read_if.data = r_mhpevent8;
+//     `SYSREG_ADDR_MHPEVENT9      : read_if.data = r_mhpevent9;
+//     `SYSREG_ADDR_MHPEVENT10     : read_if.data = r_mhpevent10;
+//     `SYSREG_ADDR_MHPEVENT11     : read_if.data = r_mhpevent11;
+//     `SYSREG_ADDR_MHPEVENT12     : read_if.data = r_mhpevent12;
+//     `SYSREG_ADDR_MHPEVENT13     : read_if.data = r_mhpevent13;
+//     `SYSREG_ADDR_MHPEVENT14     : read_if.data = r_mhpevent14;
+//     `SYSREG_ADDR_MHPEVENT15     : read_if.data = r_mhpevent15;
+//     `SYSREG_ADDR_MHPEVENT16     : read_if.data = r_mhpevent16;
+//     `SYSREG_ADDR_MHPEVENT17     : read_if.data = r_mhpevent17;
+//     `SYSREG_ADDR_MHPEVENT18     : read_if.data = r_mhpevent18;
+//     `SYSREG_ADDR_MHPEVENT19     : read_if.data = r_mhpevent19;
+//     `SYSREG_ADDR_MHPEVENT20     : read_if.data = r_mhpevent20;
+//     `SYSREG_ADDR_MHPEVENT21     : read_if.data = r_mhpevent21;
+//     `SYSREG_ADDR_MHPEVENT22     : read_if.data = r_mhpevent22;
+//     `SYSREG_ADDR_MHPEVENT23     : read_if.data = r_mhpevent23;
+//     `SYSREG_ADDR_MHPEVENT24     : read_if.data = r_mhpevent24;
+//     `SYSREG_ADDR_MHPEVENT25     : read_if.data = r_mhpevent25;
+//     `SYSREG_ADDR_MHPEVENT26     : read_if.data = r_mhpevent26;
+//     `SYSREG_ADDR_MHPEVENT27     : read_if.data = r_mhpevent27;
+//     `SYSREG_ADDR_MHPEVENT28     : read_if.data = r_mhpevent28;
+//     `SYSREG_ADDR_MHPEVENT29     : read_if.data = r_mhpevent29;
+//     `SYSREG_ADDR_MHPEVENT30     : read_if.data = r_mhpevent30;
+//     `SYSREG_ADDR_MHPEVENT31     : read_if.data = r_mhpevent31;
     `SYSREG_ADDR_PMPCFG0        : read_if.data = r_pmpcfg0;
     `SYSREG_ADDR_PMPCFG1        : read_if.data = r_pmpcfg1;
     `SYSREG_ADDR_PMPCFG2        : read_if.data = r_pmpcfg2;
@@ -771,64 +771,64 @@ assign read_if.resp_error = read_if.valid & (w_rd_mcsr_ill_access | w_rd_scsr_il
                                              w_rd_fpu_ill_access |
                                              w_rd_ill_address);
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 3] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_hpmcounter[ 3] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 4] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_hpmcounter[ 4] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 5] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER5  ) begin r_hpmcounter[ 5] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 6] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER6  ) begin r_hpmcounter[ 6] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 7] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER7  ) begin r_hpmcounter[ 7] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 8] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER8  ) begin r_hpmcounter[ 8] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 9] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER9  ) begin r_hpmcounter[ 9] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[10] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER10 ) begin r_hpmcounter[10] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[11] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER11 ) begin r_hpmcounter[11] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[12] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER12 ) begin r_hpmcounter[12] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[13] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER13 ) begin r_hpmcounter[13] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[14] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER14 ) begin r_hpmcounter[14] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[15] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER15 ) begin r_hpmcounter[15] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[16] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER16 ) begin r_hpmcounter[16] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[17] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER17 ) begin r_hpmcounter[17] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[18] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER18 ) begin r_hpmcounter[18] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[19] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER19 ) begin r_hpmcounter[19] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[20] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER20 ) begin r_hpmcounter[20] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[21] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER21 ) begin r_hpmcounter[21] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[22] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER22 ) begin r_hpmcounter[22] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[23] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER23 ) begin r_hpmcounter[23] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[24] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER24 ) begin r_hpmcounter[24] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[25] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER25 ) begin r_hpmcounter[25] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[26] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER26 ) begin r_hpmcounter[26] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[27] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER27 ) begin r_hpmcounter[27] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[28] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER28 ) begin r_hpmcounter[28] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[29] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER29 ) begin r_hpmcounter[29] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[30] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER30 ) begin r_hpmcounter[30] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[31] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER31 ) begin r_hpmcounter[31] <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent3     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT3     ) begin r_mhpevent3     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent4     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT4     ) begin r_mhpevent4     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent5     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT5     ) begin r_mhpevent5     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent6     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT6     ) begin r_mhpevent6     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent7     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT7     ) begin r_mhpevent7     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent8     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT8     ) begin r_mhpevent8     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent9     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT9     ) begin r_mhpevent9     <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent10    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT10    ) begin r_mhpevent10    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent11    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT11    ) begin r_mhpevent11    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent12    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT12    ) begin r_mhpevent12    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent13    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT13    ) begin r_mhpevent13    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent14    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT14    ) begin r_mhpevent14    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent15    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT15    ) begin r_mhpevent15    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent16    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT16    ) begin r_mhpevent16    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent17    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT17    ) begin r_mhpevent17    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent18    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT18    ) begin r_mhpevent18    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent19    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT19    ) begin r_mhpevent19    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent20    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT20    ) begin r_mhpevent20    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent21    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT21    ) begin r_mhpevent21    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent22    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT22    ) begin r_mhpevent22    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent23    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT23    ) begin r_mhpevent23    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent24    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT24    ) begin r_mhpevent24    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent25    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT25    ) begin r_mhpevent25    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent26    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT26    ) begin r_mhpevent26    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent27    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT27    ) begin r_mhpevent27    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent28    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT28    ) begin r_mhpevent28    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent29    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT29    ) begin r_mhpevent29    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent30    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT30    ) begin r_mhpevent30    <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent31    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT31    ) begin r_mhpevent31    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 3] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER3  ) begin r_hpmcounter[ 3] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 4] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER4  ) begin r_hpmcounter[ 4] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 5] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER5  ) begin r_hpmcounter[ 5] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 6] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER6  ) begin r_hpmcounter[ 6] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 7] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER7  ) begin r_hpmcounter[ 7] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 8] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER8  ) begin r_hpmcounter[ 8] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[ 9] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER9  ) begin r_hpmcounter[ 9] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[10] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER10 ) begin r_hpmcounter[10] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[11] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER11 ) begin r_hpmcounter[11] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[12] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER12 ) begin r_hpmcounter[12] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[13] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER13 ) begin r_hpmcounter[13] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[14] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER14 ) begin r_hpmcounter[14] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[15] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER15 ) begin r_hpmcounter[15] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[16] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER16 ) begin r_hpmcounter[16] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[17] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER17 ) begin r_hpmcounter[17] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[18] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER18 ) begin r_hpmcounter[18] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[19] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER19 ) begin r_hpmcounter[19] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[20] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER20 ) begin r_hpmcounter[20] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[21] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER21 ) begin r_hpmcounter[21] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[22] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER22 ) begin r_hpmcounter[22] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[23] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER23 ) begin r_hpmcounter[23] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[24] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER24 ) begin r_hpmcounter[24] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[25] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER25 ) begin r_hpmcounter[25] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[26] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER26 ) begin r_hpmcounter[26] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[27] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER27 ) begin r_hpmcounter[27] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[28] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER28 ) begin r_hpmcounter[28] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[29] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER29 ) begin r_hpmcounter[29] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[30] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER30 ) begin r_hpmcounter[30] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hpmcounter[31] <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPMCOUNTER31 ) begin r_hpmcounter[31] <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent3     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT3     ) begin r_mhpevent3     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent4     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT4     ) begin r_mhpevent4     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent5     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT5     ) begin r_mhpevent5     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent6     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT6     ) begin r_mhpevent6     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent7     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT7     ) begin r_mhpevent7     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent8     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT8     ) begin r_mhpevent8     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent9     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT9     ) begin r_mhpevent9     <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent10    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT10    ) begin r_mhpevent10    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent11    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT11    ) begin r_mhpevent11    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent12    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT12    ) begin r_mhpevent12    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent13    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT13    ) begin r_mhpevent13    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent14    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT14    ) begin r_mhpevent14    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent15    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT15    ) begin r_mhpevent15    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent16    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT16    ) begin r_mhpevent16    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent17    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT17    ) begin r_mhpevent17    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent18    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT18    ) begin r_mhpevent18    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent19    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT19    ) begin r_mhpevent19    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent20    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT20    ) begin r_mhpevent20    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent21    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT21    ) begin r_mhpevent21    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent22    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT22    ) begin r_mhpevent22    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent23    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT23    ) begin r_mhpevent23    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent24    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT24    ) begin r_mhpevent24    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent25    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT25    ) begin r_mhpevent25    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent26    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT26    ) begin r_mhpevent26    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent27    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT27    ) begin r_mhpevent27    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent28    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT28    ) begin r_mhpevent28    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent29    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT29    ) begin r_mhpevent29    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent30    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT30    ) begin r_mhpevent30    <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mhpevent31    <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MHPEVENT31    ) begin r_mhpevent31    <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpcfg0       <= 'h1f; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPCFG0       ) begin r_pmpcfg0       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpcfg1       <= 'h1f; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPCFG1       ) begin r_pmpcfg1       <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_pmpcfg2       <= 'h1f; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_PMPCFG2       ) begin r_pmpcfg2       <= write_if.data; end end
