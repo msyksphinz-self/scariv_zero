@@ -19,6 +19,9 @@ module scariv_vec_alu_pipe
  input logic i_clk,
  input logic i_reset_n,
 
+ /* CSR information */
+ csr_info_if.slave  csr_info,
+
  // Commit notification
  input scariv_pkg::commit_blk_t i_commit,
  br_upd_if.slave                br_upd_if,
@@ -29,7 +32,7 @@ module scariv_vec_alu_pipe
  regread_if.master      ex0_xpr_regread_rs1,
  regread_if.master      ex0_fpr_regread_rs1,
 
- vec_regread_if.master  vec_phy_rd_if[2],
+ vec_regread_if.master  vec_phy_rd_if[3],
  vec_regread_if.master  vec_phy_old_wr_if,
  vec_regwrite_if.master vec_phy_wr_if,
  vec_phy_fwd_if.master  vec_phy_fwd_if,
@@ -49,11 +52,14 @@ logic                   w_ex1_commit_flush;
 logic                   w_ex1_br_flush;
 logic                   w_ex1_flush;
 riscv_pkg::xlen_t       r_ex1_rs1_data;
-scariv_vec_pkg::dlen_t  r_ex1_vpr_rs_data[2];
+scariv_vec_pkg::dlen_t  r_ex1_vpr_rs_data[3];
 scariv_vec_pkg::dlen_t  r_ex1_vpr_wr_old_data;
 riscv_pkg::xlen_t       w_ex1_rs1_selected_data;
 scariv_vec_pkg::dlen_t  r_ex1_vpr_wr_old_data_step0;
 logic                   w_ex1_is_vmask_inst;
+scariv_vec_pkg::dlen_t  w_fpnew_calc_result;
+fpnew_pkg::status_t     w_fpnew_status;
+fpnew_pkg::status_t     w_fpnew_out_valid;
 
 pipe_ctrl_t             r_ex2_pipe_ctrl;
 scariv_vec_pkg::issue_t r_ex2_issue;
@@ -84,7 +90,7 @@ assign ex0_xpr_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
 assign ex0_fpr_regread_rs1.valid = i_ex0_issue.valid & (i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR) & i_ex0_issue.rd_regs[0].valid;
 assign ex0_fpr_regread_rs1.rnid  = i_ex0_issue.rd_regs[0].rnid;
 
-generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_vec_rd_loop
+generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : rs_vec_rd_loop
   assign vec_phy_rd_if[rs_idx].valid = i_ex0_issue.valid & (i_ex0_issue.rd_regs[rs_idx].typ == scariv_pkg::VPR) & i_ex0_issue.rd_regs[rs_idx].valid;
   assign vec_phy_rd_if[rs_idx].rnid  = i_ex0_issue.rd_regs[rs_idx].rnid;
   assign vec_phy_rd_if[rs_idx].pos   = i_ex0_issue.vec_step_index;
@@ -120,6 +126,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
                       i_ex0_issue.inst[19:15];
     r_ex1_vpr_rs_data[0] <= vec_phy_rd_if[0].data;
     r_ex1_vpr_rs_data[1] <= vec_phy_rd_if[1].data;
+    r_ex1_vpr_rs_data[2] <= vec_phy_rd_if[2].data;
     r_ex1_vpr_wr_old_data <= vec_phy_old_wr_if.data;
 
     if (i_ex0_issue.vec_step_index == 'h0) begin
@@ -232,6 +239,132 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
      .o_mask_res      (w_ex1_vec_mask_lane [d_idx]                   )
      );
 end endgenerate // block: datapath_loop
+
+
+logic                   w_ex1_fpnew_valid;
+fpnew_pkg::operation_e  w_ex1_fpnew_op;
+logic                   w_ex1_fpnew_op_mod;
+fpnew_pkg::fp_format_e  w_ex1_fpnew_dst_fp_fmt;
+fpnew_pkg::fp_format_e  w_ex1_fpnew_src_fp_fmt;
+fpnew_pkg::int_format_e w_ex1_fpnew_int_fmt;
+logic                   w_ex1_fpnew_src_int;
+logic                   w_ex1_fpnew_dst_fp;
+logic [ 2: 0]           w_ex1_fpnew_rnd_mode;
+
+always_comb begin
+  case (r_ex1_pipe_ctrl.op)
+    OP_FMADD     : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::FMADD   };
+    OP_FMSUB     : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b1, fpnew_pkg::FMADD   };
+    OP_FNMSUB    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::FNMSUB  };
+    OP_FNMADD    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b1, fpnew_pkg::FNMSUB  };
+    OP_FADD      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::ADD     };
+    OP_FSUB      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b1, fpnew_pkg::ADD     };
+    OP_FMUL      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::MUL     };
+    OP_FDIV      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::DIV     };
+    // OP_FSQRT     : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::SQRT    };
+    // OP_FSGNJ_S   : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    // OP_FSGNJN_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    // OP_FSGNJX_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    OP_FMIN      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::MINMAX  };
+    OP_FMAX      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::MINMAX  };
+    // OP_FCVT_W_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2I     };
+    // OP_FCVT_WU_S : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::F2I     };
+    OP_FEQ       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
+    OP_FLT       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
+    OP_FLE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
+    // OP_FCLASS    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CLASSIFY};
+    // OP_FCVT_S_W  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
+    // OP_FCVT_S_WU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
+    // OP_FSGNJ_D   : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    // OP_FSGNJN_D  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    // OP_FSGNJX_D  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
+    // OP_FCVT_S_D  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2F     };
+    // OP_FCVT_D_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2F     };
+    // OP_FCVT_W_D  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2I     };
+    // OP_FCVT_WU_D : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::F2I     };
+    // OP_FCVT_D_W  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
+    // OP_FCVT_D_WU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
+    // OP_FCVT_L_D  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2I     };
+    // OP_FCVT_LU_D : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::F2I     };
+    // OP_FCVT_D_L  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
+    // OP_FCVT_D_LU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
+    // OP_FCVT_L_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2I     };
+    // OP_FCVT_LU_S : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::F2I     };
+    // OP_FCVT_S_L  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
+    // OP_FCVT_S_LU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
+    default      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::FMADD   };
+  endcase // case (i_op)
+
+  // case (i_pipe_ctrl.op)
+  //   OP_FCVT_W_S  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_WU_S : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_S_W  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_S_WU : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_S_D  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  //   OP_FCVT_D_S  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP32};
+  //   OP_FCVT_W_D  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  //   OP_FCVT_WU_D : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT32, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  //   OP_FCVT_D_W  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
+  //   OP_FCVT_D_WU : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT32, fpnew_pkg::FP64, fpnew_pkg::FP32};
+  //   OP_FCVT_L_D  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  //   OP_FCVT_LU_D : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  //   OP_FCVT_D_L  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
+  //   OP_FCVT_D_LU : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP64, fpnew_pkg::FP64};
+  //   OP_FCVT_L_S  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_LU_S : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_S_L  : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b0, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   OP_FCVT_S_LU : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b1, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP32};
+  //   default      : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b0, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
+  // endcase // case (i_pipe_ctrl.op)
+
+  w_ex1_fpnew_rnd_mode = r_ex1_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex1_issue.inst[14:12];
+end // always_comb
+
+logic [ 2: 0][riscv_vec_conf_pkg::DLEN_W-1: 0] w_fpnew_ex1_rs_data;
+assign w_fpnew_ex1_rs_data[0] = r_ex1_vpr_rs_data[0];
+assign w_fpnew_ex1_rs_data[1] = r_ex1_vpr_rs_data[1];
+assign w_fpnew_ex1_rs_data[2] = r_ex1_vpr_rs_data[2];
+
+// --------------
+// FPU Pipeline
+// --------------
+fpnew_top
+  #(
+    // FPU configuration
+    .Features       (fpnew_pkg::RV64D_Xsflt),
+    .Implementation (fpnew_pkg::DEFAULT_NOREGS),
+    .TagType        (logic)
+    )
+u_fpnew_top
+(
+ .clk_i  (i_clk),
+ .rst_ni (i_reset_n),
+ // Input signals
+ .operands_i    (w_fpnew_ex1_rs_data    ),
+ .rnd_mode_i    (w_ex1_fpnew_rnd_mode   ),
+ .op_i          (w_ex1_fpnew_op         ),
+ .op_mod_i      (w_ex1_fpnew_op_mod     ),
+ .src_fmt_i     (w_ex1_fpnew_src_fp_fmt ),
+ .dst_fmt_i     (w_ex1_fpnew_dst_fp_fmt ),
+ .int_fmt_i     (w_ex1_fpnew_int_fmt    ),
+ .vectorial_op_i(1'b1                   ),
+ .tag_i         (1'b0                   ),
+ // Input Handshake
+ .in_valid_i (w_ex1_fpnew_valid ),
+ .in_ready_o (                  ),
+ .flush_i    (w_ex1_commit_flush),
+ // Output signals
+ .result_o (w_fpnew_calc_result),
+ .status_o (w_fpnew_status     ),
+ .tag_o    (                   ),
+ // Output handshake
+ .out_valid_o (w_fpnew_out_valid),
+ .out_ready_i (                 ),
+ // Indication of valid data in flight
+ .busy_o ()
+);
+
+
 
 scariv_vec_pkg::dlen_t w_ex1_vec_mask_result;
 

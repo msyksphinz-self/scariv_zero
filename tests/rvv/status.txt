@@ -144,14 +144,14 @@ vasub.vv        |
 VWXUNARY0.vv    |
 VMUNARY0.vv     |
 vcompress.vv    |
-vmandnot.vv     |
-vmand.vv        |
-vmor.vv         |
-vmxor.vv        |
-vmornot.vv      |
-vmnand.vv       |
-vmnor.vv        |
-vmxnor.vv       |
+vmandnot.mm     | v        v
+vmand.mm        | v        v
+vmor.mm         | v        v
+vmxor.mm        | v        v
+vmornot.mm      | v        v
+vmnand.mm       | v        v
+vmnor.mm        | v        v
+vmxnor.mm       | v        v
 vdivu.vv        |
 vdiv.vv         |
 vremu.vv        |

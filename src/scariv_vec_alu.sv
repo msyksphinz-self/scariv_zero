@@ -16,6 +16,9 @@ module scariv_vec_alu #(
     input logic i_clk,
     input logic i_reset_n,
 
+   /* CSR information */
+   csr_info_if.slave  csr_info,
+
     /* ROB notification interface */
     rob_info_if.slave          rob_info_if,
 
@@ -33,7 +36,7 @@ module scariv_vec_alu #(
     input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
 
     /* read output */
-    vec_regread_if.master  vec_phy_rd_if[2],
+    vec_regread_if.master  vec_phy_rd_if[3],
     vec_regread_if.master  vec_phy_old_wr_if,
     /* write output */
     vec_regwrite_if.master vec_phy_wr_if,
@@ -126,10 +129,12 @@ scariv_vec_alu_pipe
   #(
     .RV_ENTRY_SIZE(scariv_conf_pkg::RV_VALU_ENTRY_SIZE)
     )
-u_alu
+u_alu_pipe
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+   .csr_info (csr_info),
 
    .i_commit  (i_commit),
    .br_upd_if (br_upd_if),

@@ -19,6 +19,17 @@ parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
 typedef logic [$clog2(VLVTYPE_REN_SIZE)-1: 0] vlvtype_ren_idx_t;
 
+
+// Vector FPU configuration
+localparam fpnew_pkg::fpu_features_t FPNEW_VEC_CONFIG = '{
+  Width:         unsigned'(riscv_vec_conf_pkg::DLEN_W),
+  EnableVectors: 1'b1,
+  EnableNanBox:  1'b1,
+  FpFmtMask:     5'b11000,
+  IntFmtMask:    4'b0011
+};
+
+
 typedef enum logic [ 2: 0] {
    EW8  = 0,
    EW16 = 1,
