@@ -392,7 +392,7 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.grp_id       <= w_out_entry.grp_id;
   rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
   rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
-  rob_info_if.except_valid <= w_out_entry.except_valid;
+  rob_info_if.except_valid <= w_out_entry.except_valid & ~w_out_entry.dead;
 
   // rob_info_if.cmt_id       <= rob_info_if_pre.cmt_id;
   // rob_info_if.grp_id       <= rob_info_if_pre.grp_id;
