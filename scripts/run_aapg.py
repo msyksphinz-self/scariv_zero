@@ -33,7 +33,7 @@ def main():
 
     t_delta = datetime.timedelta(hours=9)
     JST = datetime.timezone(t_delta, 'JST')
-    dir_name = datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
+    dir_name = "generated/" + datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
     num_tests = int(args.num_tests)
 
     # config_name = "config_priv_" + args.priv_mode
