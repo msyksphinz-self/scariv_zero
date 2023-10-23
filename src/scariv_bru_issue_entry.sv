@@ -192,12 +192,12 @@ assign w_init_entry = scariv_bru_pkg::assign_bru_issue(i_put_data, i_cmt_id, i_g
                                                        w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
 
 
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.cmt_id, r_entry.grp_id, i_commit) & r_entry.valid;
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_entry.valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
-assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_cmt_id, i_grp_id, i_commit) & i_put;
+assign w_load_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & i_put;
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush | i_dead_put;

@@ -127,6 +127,9 @@ u_fpu
 
    .csr_info (csr_info),
 
+   .i_commit      (i_commit),
+   .br_upd_if     (br_upd_if),
+
    .ex0_issue(w_ex0_issue),
    .ex0_index(w_ex0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),

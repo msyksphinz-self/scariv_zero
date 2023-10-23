@@ -219,7 +219,7 @@ select_mispred_bus ex0_rs2_mispred_select
 assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
 assign w_ex0_rs2_mispred = w_ex0_issue.rd_regs[1].valid & w_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
 
-assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, i_commit) & w_ex0_issue.valid;
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & w_ex0_issue.valid;
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ex0_issue.valid;
 
@@ -367,8 +367,8 @@ logic r_ex2_sfence_vma_illegal;
 logic r_ex3_sfence_vma_illegal;
 assign w_ex1_sfence_vma_illegal = (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) & csr_info.mstatus[`MSTATUS_TVM];
 
-assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
-assign w_ex1_st_except_valid = w_ex1_writemem_cmd & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
+assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & w_ex1_tlb_req.valid & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
+assign w_ex1_st_except_valid = w_ex1_writemem_cmd & w_ex1_tlb_req.valid & (w_ex1_tlb_resp.pf.st | w_ex1_tlb_resp.ae.st | w_ex1_tlb_resp.ma.st) |
                                (r_ex1_pipe_ctrl.op == OP_FENCE_I)    |
                                (r_ex1_pipe_ctrl.op == OP_FENCE)      |
                                (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) |
@@ -430,7 +430,7 @@ assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_D
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
 
-assign w_ex1_commit_flush = scariv_pkg::is_commit_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, i_commit) & r_ex1_issue.valid;
+assign w_ex1_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_ex1_issue.valid;
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex1_issue.valid;
 
@@ -504,7 +504,7 @@ assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
 
 // Interface to Replay Queue
 always_comb begin
-  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
   lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
   lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
@@ -668,7 +668,7 @@ always_comb begin
   end
 end // always_comb
 
-assign w_ex2_commit_flush = scariv_pkg::is_commit_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, i_commit) & r_ex2_issue.valid;
+assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_ex2_issue.valid;
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex2_issue.valid;
 

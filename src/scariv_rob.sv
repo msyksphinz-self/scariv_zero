@@ -49,6 +49,8 @@ logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_except_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
+logic [DISP_SIZE-1:0]              w_frontend_exception_valid;
+logic [DISP_SIZE-1:0]              w_frontend_exception_tree_valid;
 
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 except_t                            w_except_type_selected;
@@ -110,6 +112,8 @@ u_credit_return_slave
 
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : disp_loop
   assign w_disp_grp_id[d_idx] = rn_front_if.payload.inst[d_idx].valid;
+  assign w_frontend_exception_valid[d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] | rn_front_if.payload.inst[d_idx].illegal_valid;
+  assign w_frontend_exception_tree_valid[d_idx] = |w_frontend_exception_valid[d_idx: 0];
 end
 endgenerate
 
@@ -173,8 +177,8 @@ function automatic rob_entry_t assign_rob_entry();
 
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     // If TLB Exception detected before execution, this instruction already done.
-    ret.done_grp_id [d_idx] = (rn_front_if.payload.tlb_except_valid[d_idx] | rn_front_if.payload.inst[d_idx].illegal_valid) ? w_disp_grp_id[d_idx] : 1'b0;
-    ret.except_valid[d_idx] = (rn_front_if.payload.tlb_except_valid[d_idx] | rn_front_if.payload.inst[d_idx].illegal_valid) & w_disp_grp_id[d_idx];
+    ret.done_grp_id [d_idx] = w_frontend_exception_tree_valid[d_idx] ? w_disp_grp_id[d_idx] : 1'b0;
+    ret.except_valid[d_idx] = w_frontend_exception_tree_valid[d_idx] & w_disp_grp_id[d_idx];
     ret.except_type [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] ? rn_front_if.payload.tlb_except_cause[d_idx] : ILLEGAL_INST;
     ret.except_tval [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] & (rn_front_if.payload.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_front_if.payload.tlb_except_tval[d_idx] : 'h0;
     ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
@@ -385,12 +389,19 @@ assign w_dead_grp_id = w_except_dead_grp_id; //  |
 // end
 
 // ROB Notification Information
+// rob_info_if rob_info_if_pre();
 always_ff @ (posedge i_clk) begin
   rob_info_if.cmt_id       <= w_out_cmt_id;
   rob_info_if.grp_id       <= w_out_entry.grp_id;
   rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
   rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
-  rob_info_if.except_valid <= w_out_entry.except_valid;
+  rob_info_if.except_valid <= w_out_entry.except_valid & ~w_out_entry.dead;
+
+  // rob_info_if.cmt_id       <= rob_info_if_pre.cmt_id;
+  // rob_info_if.grp_id       <= rob_info_if_pre.grp_id;
+  // rob_info_if.done_grp_id  <= rob_info_if_pre.done_grp_id;
+  // rob_info_if.upd_pc_valid <= rob_info_if_pre.upd_pc_valid;
+  // rob_info_if.except_valid <= rob_info_if_pre.except_valid;
 end
 
 // ------------------------------

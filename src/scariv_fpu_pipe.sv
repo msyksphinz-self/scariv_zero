@@ -25,6 +25,10 @@ module scariv_fpu_pipe
     /* CSR information */
     csr_info_if.slave  csr_info,
 
+    // Commit notification
+    input scariv_pkg::commit_blk_t i_commit,
+    br_upd_if.slave                br_upd_if,
+
     input scariv_pkg::issue_t ex0_issue,
     input logic [RV_ENTRY_SIZE-1:0] ex0_index,
     input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
@@ -54,7 +58,8 @@ logic [ 2: 0]                             w_ex0_rs_mispred;
 logic [ 2: 0]                             r_ex1_rs_mispred;
 
 pipe_ctrl_t                               r_ex1_pipe_ctrl;
-scariv_pkg::issue_t                         r_ex1_issue;
+scariv_pkg::issue_t                       r_ex1_issue;
+scariv_pkg::issue_t                       w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
 logic                                     w_ex1_frm_invalid;
 
@@ -81,26 +86,27 @@ scariv_pkg::alen_t w_ex2_rs3_selected_data;
 logic [ 2: 0]                      w_ex1_rs_lsu_mispred;
 logic [ 2: 0]                      w_ex1_rs_mispred;
 
-pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                         r_ex2_issue;
+pipe_ctrl_t                        r_ex2_pipe_ctrl;
+scariv_pkg::issue_t                r_ex2_issue;
+scariv_pkg::issue_t                w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
-scariv_pkg::alen_t                   r_ex2_rs1_data;
-scariv_pkg::alen_t                   r_ex2_rs2_data;
-scariv_pkg::alen_t                   r_ex2_rs3_data;
+scariv_pkg::alen_t                 r_ex2_rs1_data;
+scariv_pkg::alen_t                 r_ex2_rs2_data;
+scariv_pkg::alen_t                 r_ex2_rs3_data;
 logic                              r_ex2_wr_valid;
 logic [ 2: 0]                      r_ex2_rs_mispred;
 logic                              r_ex2_frm_invalid;
 
 
-scariv_pkg::issue_t                  r_ex3_issue;
+scariv_pkg::issue_t                r_ex3_issue;
 logic                              w_fpnew_result_valid;
-scariv_pkg::alen_t                   w_fpnew_result_data;
+scariv_pkg::alen_t                 w_fpnew_result_data;
 logic [ 4: 0]                      w_fpnew_result_fflags;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex3_index;
 logic                              r_ex3_wr_valid;
 pipe_ctrl_t                        r_ex3_pipe_ctrl;
-scariv_pkg::alen_t                   w_ex2_res_data;
-scariv_pkg::alen_t                   r_ex3_res_data;
+scariv_pkg::alen_t                 w_ex2_res_data;
+scariv_pkg::alen_t                 r_ex3_res_data;
 logic                              r_ex3_frm_invalid;
 
 always_comb begin
@@ -151,6 +157,19 @@ assign ex1_regread_rs3.rnid  = r_ex1_issue.rd_regs[2].rnid;
 assign ex1_regread_int_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR);
 assign ex1_regread_int_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
 
+logic                                      w_ex0_commit_flush;
+logic                                      w_ex0_br_flush;
+logic                                      w_ex0_flush;
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
+
+always_comb begin
+  w_ex1_issue_next = w_ex0_issue;
+  w_ex1_issue_next.valid = w_ex0_issue.valid & !w_ex0_flush & (~|w_ex0_rs_mispred);
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex1_issue <= 'h0;
@@ -158,7 +177,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= 'h0;
     r_ex1_rs_mispred <= 'h0;
   end else begin
-    r_ex1_issue <= w_ex0_issue;
+    r_ex1_issue <= w_ex1_issue_next;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_rs_mispred <= w_ex0_rs_mispred;
@@ -268,6 +287,20 @@ bit_oh_or #(
     .o_selected(w_ex2_rs3_fwd_data)
 );
 
+logic                                      w_ex1_commit_flush;
+logic                                      w_ex1_br_flush;
+logic                                      w_ex1_flush;
+assign w_ex1_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
+
+
+always_comb begin
+  w_ex2_issue_next = r_ex1_issue;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex2_rs1_data <= 'h0;
@@ -289,7 +322,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_rs2_data <= |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex1_regread_rs2.data;
     r_ex2_rs3_data <= |w_ex1_rs_fwd_valid[2] ? w_ex1_rs_fwd_data[2] : ex1_regread_rs3.data;
 
-    r_ex2_issue <= r_ex1_issue;
+    r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
@@ -400,6 +433,20 @@ always_comb begin
   endcase // case (r_ex3_pipe_ctrl.op)
 end // always_comb
 
+logic                                      w_ex2_commit_flush;
+logic                                      w_ex2_br_flush;
+logic                                      w_ex2_flush;
+assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
+
+always_comb begin
+  w_ex2_issue_next = r_ex1_issue;
+  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
+end
+
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     // r_ex3_result <= 'h0;
@@ -433,6 +480,9 @@ u_scariv_fpnew_wrapper
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+
+   .i_commit  (i_commit),
+   .br_upd_if (br_upd_if),
 
    .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .o_ready (),
