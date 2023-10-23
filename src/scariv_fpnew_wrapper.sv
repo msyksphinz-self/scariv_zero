@@ -22,7 +22,6 @@ module scariv_fpnew_wrapper
    br_upd_if.slave                br_upd_if,
 
    input logic                i_valid,
-   output logic               o_ready,
    input pipe_ctrl_t          i_pipe_ctrl,
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
@@ -34,6 +33,8 @@ module scariv_fpnew_wrapper
    input scariv_pkg::alen_t    i_rs1,
    input scariv_pkg::alen_t    i_rs2,
    input scariv_pkg::alen_t    i_rs3,
+
+   output logic                o_busy,
 
    output logic                o_valid,
    output scariv_pkg::alen_t   o_result,
@@ -48,7 +49,7 @@ module scariv_fpnew_wrapper
 logic     w_fma64_ready;
 logic     w_fma32_ready;
 
-assign o_ready = w_fma64_ready & w_fma32_ready;
+// assign o_ready = w_fma64_ready & w_fma32_ready;
 
 typedef struct packed {
   fpnew_pkg::operation_e op;
@@ -309,7 +310,7 @@ u_fpnew_top
    .simd_mask_i   (1'b0           ),
    // Input Handshake
    .in_valid_i (i_valid ),
-   .in_ready_o (o_ready ),
+   .in_ready_o ( ),
    .flush_i    (w_commit_flush),
    // Output signals
    .result_o (w_result        ),
@@ -319,7 +320,7 @@ u_fpnew_top
    .out_valid_o (w_fpnew_out_valid),
    .out_ready_i (1'b1   ),
    // Indication of valid data in flight
-   .busy_o ()
+   .busy_o (o_busy)
    );
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

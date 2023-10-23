@@ -25,6 +25,8 @@ module scariv_fpu_pipe
     /* CSR information */
     csr_info_if.slave  csr_info,
 
+    output logic o_fpnew_block,
+
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
     br_upd_if.slave                br_upd_if,
@@ -109,6 +111,8 @@ scariv_pkg::alen_t                 w_ex2_res_data;
 scariv_pkg::alen_t                 r_ex3_res_data;
 logic                              r_ex3_frm_invalid;
 
+logic                              w_fpnew_busy;
+
 always_comb begin
   w_ex0_issue = ex0_issue;
   w_ex0_index = ex0_index;
@@ -164,6 +168,9 @@ assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
+
+assign o_fpnew_block = w_fpnew_busy |
+                       r_ex1_pipe_ctrl.op inside {OP_FDIV_S, OP_FDIV_D, OP_FSQRT_S, OP_FSQRT_D};
 
 always_comb begin
   w_ex1_issue_next = w_ex0_issue;
@@ -485,7 +492,6 @@ u_scariv_fpnew_wrapper
    .br_upd_if (br_upd_if),
 
    .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
-   .o_ready (),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_cmt_id    (r_ex2_issue.cmt_id),
    .i_grp_id    (r_ex2_issue.grp_id),
@@ -493,6 +499,8 @@ u_scariv_fpnew_wrapper
    .i_frm_invalid (r_ex2_frm_invalid),
    .i_reg_type  (r_ex2_issue.wr_reg.typ),
    .i_rnd_mode  (r_ex2_issue.inst[14:12] == 3'b111 ? csr_info.fcsr[ 7: 5] : r_ex2_issue.inst[14:12]),
+
+   .o_busy (w_fpnew_busy),
 
    .i_rs1 (w_ex2_rs1_selected_data),
    .i_rs2 (w_ex2_rs2_selected_data),

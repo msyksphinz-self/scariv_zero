@@ -64,8 +64,10 @@ scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::disp_t disp_picked_inst[FPU_PORT_SIZE];
 logic [FPU_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[FPU_PORT_SIZE];
-scariv_pkg::issue_t w_ex0_issue;
+scariv_pkg::issue_t                            w_ex0_issue;
 logic [scariv_conf_pkg::RV_FPU_ENTRY_SIZE-1:0] w_ex0_index_oh;
+
+logic                                          w_fpnew_block;
 
 scariv_disp_pickup
   #(
@@ -102,7 +104,7 @@ u_scariv_issue_unit
    .i_disp_info (disp_picked_inst),
    .cre_ret_if  (cre_ret_if),
 
-   .i_stall    (1'b0),
+   .i_stall    (w_fpnew_block),
 
    .i_early_wr(i_early_wr),
    .i_phy_wr  (i_phy_wr),
@@ -126,6 +128,8 @@ u_fpu
    .i_reset_n(i_reset_n),
 
    .csr_info (csr_info),
+
+   .o_fpnew_block (w_fpnew_block),
 
    .i_commit      (i_commit),
    .br_upd_if     (br_upd_if),
