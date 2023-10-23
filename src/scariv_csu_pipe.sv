@@ -57,25 +57,25 @@ typedef struct packed {
   logic csr_update;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t    r_ex0_issue;
-pipe_ctrl_t            w_ex0_pipe_ctrl;
-csr_update_t           w_ex0_csr_update;
+scariv_csu_pkg::issue_t r_ex0_issue;
+pipe_ctrl_t             w_ex0_pipe_ctrl;
+csr_update_t            w_ex0_csr_update;
 
-pipe_ctrl_t            r_ex1_pipe_ctrl;
-scariv_pkg::issue_t    r_ex1_issue;
+pipe_ctrl_t             r_ex1_pipe_ctrl;
+scariv_csu_pkg::issue_t r_ex1_issue;
 
-riscv_pkg::xlen_t      w_ex2_rs1_selected_data;
+riscv_pkg::xlen_t       w_ex2_rs1_selected_data;
 
-pipe_ctrl_t            r_ex2_pipe_ctrl;
-scariv_pkg::issue_t    r_ex2_issue;
-riscv_pkg::xlen_t      r_ex2_rs1_data;
-logic                  w_ex2_is_fs_illegal;
+pipe_ctrl_t             r_ex2_pipe_ctrl;
+scariv_csu_pkg::issue_t r_ex2_issue;
+riscv_pkg::xlen_t       r_ex2_rs1_data;
+logic                   w_ex2_is_fs_illegal;
 
-pipe_ctrl_t            r_ex3_pipe_ctrl;
-scariv_pkg::issue_t    r_ex3_issue;
-riscv_pkg::xlen_t      r_ex3_result;
-riscv_pkg::xlen_t      r_ex3_csr_rd_data;
-logic                  r_ex3_csr_illegal;
+pipe_ctrl_t             r_ex3_pipe_ctrl;
+scariv_csu_pkg::issue_t r_ex3_issue;
+riscv_pkg::xlen_t       r_ex3_result;
+riscv_pkg::xlen_t       r_ex3_csr_rd_data;
+logic                   r_ex3_csr_illegal;
 
 always_comb begin
   r_ex0_issue = rv0_issue;

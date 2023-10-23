@@ -349,6 +349,7 @@ u_fpnew_top
  .int_fmt_i     (w_ex1_fpnew_int_fmt    ),
  .vectorial_op_i(1'b1                   ),
  .tag_i         (1'b0                   ),
+ .simd_mask_i   (1'b0                   ),
  // Input Handshake
  .in_valid_i (w_ex1_fpnew_valid ),
  .in_ready_o (                  ),
