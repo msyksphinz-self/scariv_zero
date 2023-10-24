@@ -725,6 +725,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].valid  = rs2_field_type[d_idx] != R2__;
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].typ    = rs2_field_type[d_idx] == R2_R2 ? scariv_pkg::GPR :
+                                                                rs2_field_type[d_idx] == R2_F2 ? scariv_pkg::FPR :
                                                                 rs2_field_type[d_idx] == R2_V2 ? scariv_pkg::VPR :
                                                                 scariv_pkg::GPR;
 
