@@ -6,7 +6,8 @@ parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;
 typedef logic [VLENB-1: 0]            vlenb_t;
-parameter VEC_STEP_W = riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
+parameter VEC_STEP_W = riscv_vec_conf_pkg::DLEN_W == 0 ? 1 :
+                       riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
 
 typedef logic [$clog2(VEC_STEP_W)-1: 0]         vec_pos_t;
 typedef logic [riscv_vec_conf_pkg::VLEN_W-1: 0] vlen_t;

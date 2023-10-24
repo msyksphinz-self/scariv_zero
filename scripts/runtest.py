@@ -297,10 +297,10 @@ def main():
 	                default='rv32imc',
 	                help='ISA of design comfiguration')
     parser.add_argument('--vlen', dest='vlen', action='store',
-	                default=128,
+	                default=0,
 	                help='Vector Datapath Length')
     parser.add_argument('--dlen', dest='dlen', action='store',
-	                default=128,
+	                default=0,
 	                help='Defalut Vector Length')
     parser.add_argument('-c', '--conf', dest='conf', action='store',
 	                default='standard',

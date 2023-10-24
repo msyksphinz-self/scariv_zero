@@ -69,5 +69,7 @@
 	{ "name": "vmxnor_m_m"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vmxnor_m_m/test.elf" , "xlen": 64},
 	{ "name": "vmxor_m_m"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vmxor_m_m/test.elf"  , "xlen": 64},
 
+	{ "name": "vfadd_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfadd_v_v/test.elf"  , "xlen": 64},
+
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64}
 ]

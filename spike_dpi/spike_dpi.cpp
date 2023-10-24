@@ -555,7 +555,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "--initrd=../tests/linux/spike_rootfs.cpio";
 #endif // SIM_MAIN
   char *varch_str =(char *)malloc(sizeof(char) * 64);
-  sprintf(varch_str, "--varch=vlen:%d,elen:%d", rv_vlen, rv_xlen);
+  sprintf(varch_str, "--varch=vlen:%d,elen:%d", rv_vlen, rv_vlen < rv_xlen ? rv_vlen : rv_xlen);
   argv[arg_max++] = varch_str;
   argv[arg_max++] = filename;
   argc = arg_max;
