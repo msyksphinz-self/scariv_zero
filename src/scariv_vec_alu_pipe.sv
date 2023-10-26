@@ -496,7 +496,7 @@ always_comb begin
   vec_phy_fwd_if[0].valid   = vec_phy_wr_if[0].valid;
   vec_phy_fwd_if[0].rd_rnid = r_ex2_issue.wr_reg.rnid;
 
-  o_done_report[0].valid  = r_ex2_issue.valid & (r_ex2_is_vmask_inst | (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1));
+  o_done_report[0].valid  = r_ex2_issue.valid & ~r_ex2_fpnew_valid & (r_ex2_is_vmask_inst | (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1));
   o_done_report[0].cmt_id = r_ex2_issue.cmt_id;
   o_done_report[0].grp_id = r_ex2_issue.grp_id;
   o_done_report[0].fflags_update_valid = 1'b0;
