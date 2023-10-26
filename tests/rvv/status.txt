@@ -213,9 +213,9 @@ vwmaccu.vx      |
 vwmacc.vx       |
 vwmaccus.vx     |
 vwmaccsu.vx     |
-vfadd.vv        |
+vfadd.vv        | v
 vfredsum.vv     |
-vfsub.vv        |
+vfsub.vv        | v
 vfredosum.vv    |
 vfmin.vv        |
 vfredmin.vv     |
@@ -232,28 +232,28 @@ vmfne.vx        |
 vfdiv.vx        |
 VFUNARY0.vx     |
 VFUNARY1.vx     |
-vfmul.vx        |
-vfrsub.vx       |
-vfmadd.vx       |
-vfnmadd.vx      |
-vfmsub.vx       |
-vfnmsub.vx      |
-vfmacc.vx       |
-vfnmacc.vx      |
-vfmsac.vx       |
-vfnmsac.vx      |
-vfwadd.vx       |
-vfwredsum.vx    |
-vfwsub.vx       |
-vfwredosum.vx   |
+vfmul.vv        | v
+vfrsub.vv       |
+vfmadd.vv       | v
+vfnmadd.vv      | v
+vfmsub.vv       | v
+vfnmsub.vv      | v
+vfmacc.vv       | v
+vfnmacc.vv      | v
+vfmsac.vv       | v
+vfnmsac.vv      |
+vfwadd.vv       |
+vfwredsum.vv    |
+vfwsub.vv       |
+vfwredosum.vv   |
 vfwadd.wv       |
 vfwsub.wv       |
-vfwmul.vx       |
-vfdot.vx        |
-vfwmacc.vx      |
-vfwnmacc.vx     |
-vfwmsac.vx      |
-vfwnmsac.vx     |
+vfwmul.vv       |
+vfdot.vv        |
+vfwmacc.vv      |
+vfwnmacc.vv     |
+vfwmsac.vv      |
+vfwnmsac.vv     |
 vfadd.vf        |
 vfredsum.vf     |
 vfsub.vf        |

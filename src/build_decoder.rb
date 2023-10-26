@@ -35,9 +35,9 @@ if ARGV.size != 4 then
 end
 
 # if isa.include?('v') then
-  File.open("riscv_rvv_decoder.json") do |file|
-    $arch_table += JSON.load(file)
-  end
+File.open("riscv_rvv_decoder.json") do |file|
+  $arch_table += JSON.load(file)
+end
 # end
 
 if isa.include?('b') then

@@ -27,4 +27,17 @@ import decoder_fpu_ctrl_pkg::*;
     PipeConfig: fpnew_pkg::DISTRIBUTED
   };
 
+
+typedef struct packed {
+  fpnew_pkg::operation_e op;
+  logic                  op_mod;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  scariv_pkg::reg_t      reg_type;
+  scariv_pkg::rnid_t     rnid;
+  logic                  frm_invalid;
+  logic                  output_is_fp32;
+} aux_fpnew_t;
+
+
 endpackage // scariv_fpu_pkg

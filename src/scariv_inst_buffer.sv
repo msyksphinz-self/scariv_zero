@@ -732,8 +732,11 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[1].regidx = w_expand_inst[d_idx][24:20];
 
       w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].valid  = rs3_field_type[d_idx] != R3__;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].typ    = scariv_pkg::FPR;
-      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].regidx = w_expand_inst[d_idx][31:27];
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].typ    = rs3_field_type[d_idx] == R3_F3 ? scariv_pkg::FPR :
+                                                                rs3_field_type[d_idx] == R3_V3 ? scariv_pkg::VPR :
+                                                                scariv_pkg::GPR;
+      w_ibuf_front_payload_next.inst[d_idx].rd_regs[2].regidx = rs3_field_type[d_idx] == R3_V3 ? w_expand_inst[d_idx][11: 7] :
+                                                                w_expand_inst[d_idx][31:27];  // FPR
 
       w_ibuf_front_payload_next.inst[d_idx].cat        = w_inst_cat[d_idx];
       w_ibuf_front_payload_next.inst[d_idx].subcat     = w_inst_subcat[d_idx];

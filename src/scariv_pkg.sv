@@ -37,7 +37,7 @@ package scariv_pkg;
                             1 +               // BRU
                             1 +               // CSU
                             FPU_INST_NUM * 2 +// FPU
-                            1 +               // VALU
+                            2 +               // VALU
                             1 +               // VLSU
                             0;
 

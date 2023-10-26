@@ -41,7 +41,7 @@ module scariv_valu_issue_entry
    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-   vec_phy_fwd_if.slave         vec_phy_fwd_if,
+   vec_phy_fwd_if.slave         vec_phy_fwd_if[2],
 
    input logic       i_entry_picked,
 
@@ -72,7 +72,7 @@ logic [NUM_OPERANDS-1: 0] w_rs_rel_hit;
 scariv_pkg::rel_bus_idx_t w_rs_rel_index[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_may_mispred;
 logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
-logic [NUM_OPERANDS-1: 0] w_rs_vec_phy_hit;
+logic [ 1: 0]             w_rs_vec_phy_hit[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_mispredicted;
 
 logic     w_entry_flush;
@@ -107,17 +107,21 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
                                            .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
   select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
-  assign w_rs_vec_phy_hit[rs_idx] = (w_rs_type[rs_idx] == scariv_pkg::VPR) &
-                                    (w_rs_rnid[rs_idx] == vec_phy_fwd_if.rd_rnid) & vec_phy_fwd_if.valid;
+  for (genvar fwd_idx = 0; fwd_idx < 2; fwd_idx++) begin
+    assign w_rs_vec_phy_hit[rs_idx][fwd_idx] = (w_rs_type[rs_idx] == scariv_pkg::VPR) &
+                                               (w_rs_rnid[rs_idx] == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
+  end
   select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
                                         .o_mispred (w_rs_mispredicted[rs_idx]));
 end endgenerate
 
 scariv_pkg::rnid_t w_wr_old_rnid;
-logic w_wr_old_phy_hit;
+logic [ 1: 0]  w_wr_old_phy_hit;
 
 assign w_wr_old_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.wr_old_reg.rnid;
-assign w_wr_old_phy_hit = (w_wr_old_rnid == vec_phy_fwd_if.rd_rnid) & vec_phy_fwd_if.valid;
+generate for (genvar fwd_idx = 0; fwd_idx < 2; fwd_idx++) begin : old_wr_hit_loop
+  assign w_wr_old_phy_hit[fwd_idx] = (w_wr_old_rnid == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
+end endgenerate
 
 
 logic [NUM_OPERANDS-1: 0] w_rs_pred_mispredicted;
@@ -141,7 +145,7 @@ always_comb begin
   w_entry_next  = r_entry;
 
   for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
-    w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx] | w_rs_vec_phy_hit[rs_idx];
+    w_entry_next.rd_regs[rs_idx].ready            = r_entry.rd_regs[rs_idx].ready | (w_rs_rel_hit[rs_idx] & ~w_rs_may_mispred[rs_idx]) | w_rs_phy_hit[rs_idx] | |w_rs_vec_phy_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[0] = r_entry.rd_regs[rs_idx].valid & w_rs_rel_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
 
@@ -153,7 +157,7 @@ always_comb begin
     end
   end
 
-  w_entry_next.wr_old_reg.ready = r_entry.wr_old_reg.ready | w_wr_old_phy_hit;
+  w_entry_next.wr_old_reg.ready = r_entry.wr_old_reg.ready | (|w_wr_old_phy_hit);
 
   case (r_state)
     scariv_pkg::INIT : begin
@@ -162,7 +166,7 @@ always_comb begin
       end else if (i_put) begin
         w_entry_next = w_init_entry;
 
-        w_entry_next.wr_old_reg.ready = i_put_data.wr_reg.old_ready | w_wr_old_phy_hit;
+        w_entry_next.wr_old_reg.ready = i_put_data.wr_reg.old_ready | (|w_wr_old_phy_hit);
 
         w_entry_next.vlvtype_ready = vlvtype_info_if.ready | vlvtype_upd_load_valid;
         w_entry_next.vlvtype_index = vlvtype_info_if.index;
@@ -235,7 +239,7 @@ end // always_comb
 
 generate if (NUM_OPERANDS == 3) begin : init_entry_op3
   assign w_init_entry = scariv_vec_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
-                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
+                                                         w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
 end else begin
   assign w_init_entry = scariv_vec_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
                                                          w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);

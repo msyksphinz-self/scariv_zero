@@ -1661,7 +1661,7 @@
         "vec_ctrl":[["op", "feq"]]
 	},
     {
-		"name":"vmfle.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vmfle.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
@@ -1669,7 +1669,7 @@
         "vec_ctrl":[["op", "fle"]]
 	},
     {
-		"name":"vmflt.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vmflt.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01101", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
@@ -1677,7 +1677,7 @@
         "vec_ctrl":[["op", "flt"]]
 	},
     {
-		"name":"vmfne.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vmfne.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
@@ -1685,7 +1685,7 @@
         "vec_ctrl":[["op", "fne"]]
 	},
     {
-		"name":"vfdiv.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfdiv.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10000", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
@@ -1707,7 +1707,7 @@
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]]
 	},
     {
-		"name":"vfmul.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfmul.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10010", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
@@ -1715,73 +1715,73 @@
         "vec_ctrl":[["op", "fmul"]]
 	},
     {
-		"name":"vfrsub.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfrsub.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10011", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]]
 	},
     {
-		"name":"vfmadd.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfmadd.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10100", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fmadd"]]
 	},
     {
-		"name":"vfnmadd.vx     v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfnmadd.vv     v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10100", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fnmadd"]]
 	},
     {
-		"name":"vfmsub.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfmsub.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10101", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fmsub"]]
 	},
     {
-		"name":"vfnmsub.vx     v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfnmsub.vv     v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10101", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fnmsub"]]
 	},
     {
-		"name":"vfmacc.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfmacc.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10110", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fmacc"]]
 	},
     {
-		"name":"vfnmacc.vx     v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfnmacc.vv     v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10110", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fnmacc"]]
 	},
     {
-		"name":"vfmsac.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfmsac.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10111", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fmsac"]]
 	},
     {
-		"name":"vfnmsac.vx     v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfnmsac.vv     v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["10111", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
-        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
+        "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"], ["r3", "v3"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
         "vec_ctrl":[["op", "fnmsac"]]
 	},
@@ -1793,14 +1793,14 @@
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]]
 	},
     {
-		"name":"vfwredsum.vx   v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfwredsum.vv   v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["11000", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]]
 	},
     {
-		"name":"vfwsub.vx      v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vfwsub.vv      v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["11001", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],

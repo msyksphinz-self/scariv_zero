@@ -69,7 +69,14 @@
 	{ "name": "vmxnor_m_m"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vmxnor_m_m/test.elf" , "xlen": 64},
 	{ "name": "vmxor_m_m"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vmxor_m_m/test.elf"  , "xlen": 64},
 
-	{ "name": "vfadd_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfadd_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vfmadd_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfmadd_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vfmsub_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfmsub_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vfnmadd_v_v"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vfnmadd_v_v/test.elf" , "xlen": 64},
+	{ "name": "vfnmsub_v_v"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vfnmsub_v_v/test.elf" , "xlen": 64},
+	{ "name": "vfmacc_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfmacc_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vfmsac_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vfmsac_v_v/test.elf"  , "xlen": 64},
+	{ "name": "vfnmacc_v_v"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vfnmacc_v_v/test.elf" , "xlen": 64},
+	{ "name": "vfnmsac_v_v"       , "group" : ["rvv"], "elf": "../../../tests/rvv/vfnmsac_v_v/test.elf" , "xlen": 64},
 
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64}
 ]

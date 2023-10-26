@@ -31,6 +31,28 @@ localparam fpnew_pkg::fpu_features_t FPNEW_VEC_CONFIG = '{
 };
 
 
+localparam fpnew_pkg::fpu_implementation_t FPNEW_VEC_IMPL = '{
+  // PipeRegs:   '{default: scariv_conf_pkg::FPNEW_LATENCY},
+    PipeRegs:   '{default: {32'h4, 32'h4, 32'h4, 32'h4, 32'h4}},   // FP32,
+  UnitTypes:  '{'{default: fpnew_pkg::MERGED}, // ADDMUL
+                '{default: fpnew_pkg::MERGED}, // DIVSQRT
+                '{default: fpnew_pkg::PARALLEL}, // NONCOMP
+                '{default: fpnew_pkg::MERGED}},  // CONV
+  PipeConfig: fpnew_pkg::DISTRIBUTED
+};
+
+
+typedef struct packed {
+  fpnew_pkg::operation_e op;
+  logic                  op_mod;
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  scariv_pkg::reg_t      reg_type;
+  scariv_pkg::rnid_t     rnid;
+  vec_pos_t              step_index;
+} aux_fpnew_t;
+
+
 typedef enum logic [ 2: 0] {
    EW8  = 0,
    EW16 = 1,
@@ -174,8 +196,7 @@ endfunction // assign_issue_op2
 function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
                                    scariv_pkg::cmt_id_t cmt_id,
                                    scariv_pkg::grp_id_t grp_id,
-                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
-                                   vlvtype_t vlvtype);
+                                   logic [ 2: 0] rs_rel_hit, logic [ 2: 0] rs_phy_hit, logic [ 2: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[3]);
   issue_t ret;
   ret = assign_issue_common (in, cmt_id, grp_id);
 
@@ -190,10 +211,6 @@ function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
     if (ret.rd_regs[rs_idx].predict_ready[0]) begin
       ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
     end
-  end
-
-  for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
-    ret.rd_regs[rs_idx].valid = 1'b0;
   end
 
   return ret;

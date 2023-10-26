@@ -39,9 +39,9 @@ module scariv_vec_alu #(
     vec_regread_if.master  vec_phy_rd_if[3],
     vec_regread_if.master  vec_phy_old_wr_if,
     /* write output */
-    vec_regwrite_if.master vec_phy_wr_if,
+    vec_regwrite_if.master vec_phy_wr_if[2],
 
-    output scariv_pkg::done_rpt_t o_done_report,
+    output scariv_pkg::done_rpt_t o_done_report[2],
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
     br_upd_if.slave                br_upd_if
@@ -62,7 +62,7 @@ scariv_pkg::disp_t            w_disp_picked_inst[VEC_ALU_PORT_SIZE];
 logic [VEC_ALU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_ALU_PORT_SIZE];
 scariv_vec_pkg::issue_t       w_ex0_issue;
-vec_phy_fwd_if                w_vec_phy_fwd_if();
+vec_phy_fwd_if                w_vec_phy_fwd_if[2]();
 
 scariv_disp_pickup
   #(
@@ -92,7 +92,8 @@ end endgenerate
 scariv_valu_issue_unit
   #(
     .ENTRY_SIZE  (scariv_conf_pkg::RV_VALU_ENTRY_SIZE),
-    .IN_PORT_SIZE(VEC_ALU_PORT_SIZE)
+    .IN_PORT_SIZE(VEC_ALU_PORT_SIZE),
+    .NUM_OPERANDS(3)
     )
 u_scariv_issue_unit
   (

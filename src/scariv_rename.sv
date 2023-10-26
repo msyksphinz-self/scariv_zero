@@ -23,7 +23,7 @@ module scariv_rename
    input scariv_pkg::cmt_id_t i_sc_new_cmt_id,
 
    input scariv_pkg::phy_wr_t i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
-   vec_regwrite_if.slave      valu_vec_phy_wr_if[1],
+   vec_regwrite_if.slave      valu_vec_phy_wr_if[2],
    scariv_front_if.master     rn_front_if,
 
    // from Resource Allocator
@@ -135,15 +135,15 @@ end endgenerate
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
 
-  rnid_update_t w_vpr_update_phy[1];
-  for (genvar t_idx = 0; t_idx < 1; t_idx++) begin : target_loop
+  rnid_update_t w_vpr_update_phy[2];
+  for (genvar t_idx = 0; t_idx < 2; t_idx++) begin : target_loop
     assign w_vpr_update_phy[t_idx].valid = valu_vec_phy_wr_if[t_idx].valid;
     assign w_vpr_update_phy[t_idx].rnid  = valu_vec_phy_wr_if[t_idx].rd_rnid;
   end
 
   scariv_rename_sub
     #(.REG_TYPE (scariv_pkg::VPR),
-      .TARGET_SIZE (1))  // target + old rnid
+      .TARGET_SIZE (2))
   u_vpr_rename
     (
      .i_clk     (i_clk    ),

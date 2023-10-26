@@ -37,9 +37,9 @@ module scariv_valu_issue_unit
  /* Forwarding path */
  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
- vec_phy_fwd_if.slave         vec_phy_fwd_if,
+ vec_phy_fwd_if.slave         vec_phy_fwd_if[2],
 
- output                                scariv_vec_pkg::issue_t o_issue,
+ output scariv_vec_pkg::issue_t        o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
  input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],

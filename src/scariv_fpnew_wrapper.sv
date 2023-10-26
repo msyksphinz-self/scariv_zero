@@ -51,17 +51,6 @@ logic     w_fma32_ready;
 
 // assign o_ready = w_fma64_ready & w_fma32_ready;
 
-typedef struct packed {
-  fpnew_pkg::operation_e op;
-  logic                  op_mod;
-  scariv_pkg::cmt_id_t   cmt_id;
-  scariv_pkg::grp_id_t   grp_id;
-  scariv_pkg::reg_t      reg_type;
-  scariv_pkg::rnid_t     rnid;
-  logic                  frm_invalid;
-  logic                  output_is_fp32;
-} aux_fpnew_t;
-
 logic                                    w_fma32_in_valid;
 logic                                    w_noncomp32_in_valid;
 
@@ -71,8 +60,8 @@ logic                                    w_fdiv_valid;
 
 fpnew_pkg::operation_e                   w_fpnew_op;
 logic                                    w_fpnew_op_mod;
-aux_fpnew_t                              w_fpnew_in_aux;
-aux_fpnew_t                              w_fpnew_out_aux;
+scariv_fpu_pkg::aux_fpnew_t              w_fpnew_in_aux;
+scariv_fpu_pkg::aux_fpnew_t              w_fpnew_out_aux;
 
 logic [2:0][31:0]                        w_fma32_rs;
 logic [2: 0]                             w_fma32_boxed;
@@ -80,7 +69,7 @@ logic [31: 0]                            w_fma32_result;
 fpnew_pkg::status_t                      w_fma32_fflags;
 logic                                    w_fma32_out_valid;
 logic [ 4: 0]                            w_fma32_out_fflags;
-aux_fpnew_t                              w_fma32_aux;
+scariv_fpu_pkg::aux_fpnew_t                   w_fma32_aux;
 
 logic [ 1: 0][31: 0]                     w_noncomp32_rs;
 logic [ 1: 0]                            w_noncomp32_boxed;
@@ -89,7 +78,7 @@ logic [31: 0]                            w_noncomp32_result;
 fpnew_pkg::status_t                      w_noncomp32_status;
 fpnew_pkg::classmask_e                   w_noncomp32_class_mask;
 logic [ 4: 0]                            w_noncomp32_out_fflags;
-aux_fpnew_t                              w_noncomp32_aux;
+scariv_fpu_pkg::aux_fpnew_t              w_noncomp32_aux;
 
 fpnew_pkg::fp_format_e                   w_dst_fp_fmt;
 fpnew_pkg::fp_format_e                   w_src_fp_fmt;
@@ -97,7 +86,7 @@ fpnew_pkg::int_format_e                  w_int_fmt;
 logic                                    w_out_fp;
 logic                                    w_cvt_valid;
 logic [ 4: 0]                            w_cast_out_fflags;
-aux_fpnew_t                              w_cast_aux;
+scariv_fpu_pkg::aux_fpnew_t              w_cast_aux;
 
 /* verilator lint_off UNOPTFLAT */
 logic [ 1: 0][riscv_fpu_pkg::FLEN_W-1: 0]    w_fdiv_rs;
@@ -107,14 +96,14 @@ logic [riscv_fpu_pkg::FLEN_W-1: 0]           w_fdiv_result;
 fpnew_pkg::status_t                      w_fdiv_status;
 fpnew_pkg::classmask_e                   w_fdiv_class_mask;
 logic [ 4: 0]                            w_fdiv_out_fflags;
-aux_fpnew_t                              w_fdiv_aux;
+scariv_fpu_pkg::aux_fpnew_t              w_fdiv_aux;
 
 logic                                    w_commit_flush;
 logic                                    w_in_br_flush;
 logic                                    w_in_flush;
 
-aux_fpnew_t w_aux_fpnew_in;
-aux_fpnew_t w_aux_fpnew_out;
+scariv_fpu_pkg::aux_fpnew_t w_aux_fpnew_in;
+scariv_fpu_pkg::aux_fpnew_t w_aux_fpnew_out;
 
 assign w_aux_fpnew_in.op          = w_fpnew_op;
 assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
@@ -291,7 +280,7 @@ fpnew_top
     // FPU configuration
     .Features       (scariv_fpu_pkg::SCARIV_FPNEW_FEATURE),
     .Implementation (scariv_fpu_pkg::SCARIV_FPNEW_IMPL),
-    .TagType        (aux_fpnew_t)
+    .TagType        (scariv_fpu_pkg::aux_fpnew_t)
     )
 u_fpnew_top
   (
@@ -554,7 +543,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 //   logic                                   w_fma64_in_valid;
 //   scariv_pkg::cmt_id_t                    w_fma64_cmt_id;
 //   scariv_pkg::grp_id_t                    w_fma64_grp_id;
-//   aux_fpnew_t                             w_fma64_aux;
+//   scariv_fpu_pkg::aux_fpnew_t                  w_fma64_aux;
 //
 //   logic                                   w_noncomp64_in_valid;
 //   logic                                   w_noncomp64_out_valid;
@@ -564,7 +553,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 //   logic [ 4: 0]                           w_noncomp64_out_fflags;
 //   scariv_pkg::cmt_id_t                    w_noncomp64_cmt_id;
 //   scariv_pkg::grp_id_t                    w_noncomp64_grp_id;
-//   aux_fpnew_t                             w_noncomp64_aux;
+//   scariv_fpu_pkg::aux_fpnew_t                  w_noncomp64_aux;
 //
 //   assign w_fma64_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0   : i_rs1;
 //   assign w_fma64_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1 : i_rs2;

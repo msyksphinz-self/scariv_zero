@@ -43,8 +43,8 @@ localparam LSU_DONE_PORT_BASE = scariv_conf_pkg::ALU_INST_NUM;
 localparam BRU_DONE_PORT_BASE = LSU_INST_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
 localparam CSU_DONE_PORT_BASE = BRU_DONE_PORT_BASE + 1;
 localparam FPU_DONE_PORT_BASE = CSU_DONE_PORT_BASE + 1;
-localparam VALU_DONE_PORT_BASE = FPU_DONE_PORT_BASE + 1;
-localparam VLSU_DONE_PORT_BASE = VALU_DONE_PORT_BASE + 1;
+localparam VALU_DONE_PORT_BASE = FPU_DONE_PORT_BASE + scariv_conf_pkg::FPU_INST_NUM * 2;
+localparam VLSU_DONE_PORT_BASE = VALU_DONE_PORT_BASE + 2;
 
 localparam ALU_INT_REGWR_PORT_BASE = 0;
 localparam LSU_INT_REGWR_PORT_BASE = scariv_conf_pkg::ALU_INST_NUM;
@@ -148,8 +148,8 @@ fflags_update_if w_fflags_update_if();
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
 vec_regread_if         w_valu_vec_phy_rd_if[4]()  ;
-vec_regwrite_if        w_valu_vec_phy_wr_if[1]()  ;
-scariv_pkg::done_rpt_t w_valu_done_rpt    ;
+vec_regwrite_if        w_valu_vec_phy_wr_if[2]()  ;
+scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
 scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
@@ -258,8 +258,9 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
 end
 endgenerate
 
-assign w_done_rpt[VALU_DONE_PORT_BASE] = w_valu_done_rpt;
-assign w_done_rpt[VLSU_DONE_PORT_BASE] = w_vlsu_done_rpt;
+assign w_done_rpt[VALU_DONE_PORT_BASE+0] = w_valu_done_rpt[0];
+assign w_done_rpt[VALU_DONE_PORT_BASE+1] = w_valu_done_rpt[1];
+assign w_done_rpt[VLSU_DONE_PORT_BASE  ] = w_vlsu_done_rpt;
 
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_wr_loop
   assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
@@ -700,7 +701,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .vec_phy_rd_if     (w_valu_vec_phy_rd_if[0:2]),
      .vec_phy_old_wr_if (w_valu_vec_phy_rd_if[3]),
-     .vec_phy_wr_if (w_valu_vec_phy_wr_if[0]),
+     .vec_phy_wr_if (w_valu_vec_phy_wr_if),
 
      .o_done_report(w_valu_done_rpt),
 
@@ -711,7 +712,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_registers
     #(
       .RD_PORT_SIZE(3 + 1),
-      .WR_PORT_SIZE(1)
+      .WR_PORT_SIZE(2)
       )
   u_vec_registers
     (
