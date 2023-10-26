@@ -254,9 +254,9 @@ vfwmacc.vv      |
 vfwnmacc.vv     |
 vfwmsac.vv      |
 vfwnmsac.vv     |
-vfadd.vf        |
+vfadd.vf        | v        v
 vfredsum.vf     |
-vfsub.vf        |
+vfsub.vf        | v        v
 vfredosum.vf    |
 vfmin.vf        |
 vfredmin.vf     |
@@ -276,14 +276,14 @@ vfdiv.vf        |
 vfrdiv.vf       |
 vfmul.vf        |
 vfrsub.vf       |
-vfmadd.vf       |
-vfnmadd.vf      |
-vfmsub.vf       |
-vfnmsub.vf      |
-vfmacc.vf       |
-vfnmacc.vf      |
-vfmsac.vf       |
-vfnmsac.vf      |
+vfmadd.vf       | v        v
+vfnmadd.vf      | v        v
+vfmsub.vf       | v        v
+vfnmsub.vf      | v        v
+vfmacc.vf       | v        v
+vfnmacc.vf      | v        v
+vfmsac.vf       | v        v
+vfnmsac.vf      | v        v
 vfwadd.vf       |
 vfwredsum.vf    |
 vfwsub.vf       |

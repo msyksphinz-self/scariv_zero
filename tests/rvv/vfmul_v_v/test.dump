@@ -178,7 +178,7 @@ Disassembly of section .text.init:
 Disassembly of section .text:
 
 0000000080002000 <main>:
-    80002000:	4781                	li	a5,0
+    80002000:	4785                	li	a5,1
     80002002:	06400593          	li	a1,100
     80002006:	06300613          	li	a2,99
     8000200a:	05077757          	vsetvli	a4,a4,e32,m1,ta,mu

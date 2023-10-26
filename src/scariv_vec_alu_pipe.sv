@@ -124,7 +124,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_rs1_data <= i_ex0_issue.rd_regs[0].valid & (i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR) ? ex0_fpr_regread_rs1.data :
                       i_ex0_issue.rd_regs[0].valid & (i_ex0_issue.rd_regs[0].typ == scariv_pkg::GPR) ? ex0_xpr_regread_rs1.data :
                       i_ex0_issue.inst[19:15];
-    r_ex1_vpr_rs_data[0] <= vec_phy_rd_if[0].data;
+    r_ex1_vpr_rs_data[0] <= (i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR) & (i_ex0_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32) ? {(riscv_vec_conf_pkg::DLEN_W/32){ex0_fpr_regread_rs1.data[31: 0]}} :
+                            (i_ex0_issue.rd_regs[0].typ == scariv_pkg::FPR) & (i_ex0_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW64) ? {(riscv_vec_conf_pkg::DLEN_W/64){ex0_fpr_regread_rs1.data[63: 0]}} :
+                            vec_phy_rd_if[0].data;
     r_ex1_vpr_rs_data[1] <= vec_phy_rd_if[1].data;
     r_ex1_vpr_rs_data[2] <= vec_phy_rd_if[2].data;
     r_ex1_vpr_wr_old_data <= vec_phy_old_wr_if.data;
@@ -327,9 +329,15 @@ always_comb begin
 end // always_comb
 
 logic [ 2: 0][riscv_vec_conf_pkg::DLEN_W-1: 0] w_fpnew_ex1_rs_data;
-assign w_fpnew_ex1_rs_data[0] = w_ex1_fpnew_op == fpnew_pkg::ADD ? 'h0                  : r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[0] : r_ex1_vpr_rs_data[0];
-assign w_fpnew_ex1_rs_data[1] = w_ex1_fpnew_op == fpnew_pkg::ADD ? r_ex1_vpr_rs_data[1] : r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[2] : r_ex1_vpr_rs_data[1];
-assign w_fpnew_ex1_rs_data[2] = w_ex1_fpnew_op == fpnew_pkg::ADD ? r_ex1_vpr_rs_data[0] : r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[1] : r_ex1_vpr_rs_data[2];
+assign w_fpnew_ex1_rs_data[0] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? 'h0                  :
+                                r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[0] :
+                                r_ex1_vpr_rs_data[0];
+assign w_fpnew_ex1_rs_data[1] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[1] :
+                                r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[2] :
+                                r_ex1_vpr_rs_data[1];
+assign w_fpnew_ex1_rs_data[2] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[0] :
+                                r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[1] :
+                                r_ex1_vpr_rs_data[2];
 
 assign w_ex1_fpnew_src_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::FP32  : fpnew_pkg::FP64;
 assign w_ex1_fpnew_dst_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::FP32  : fpnew_pkg::FP64;
