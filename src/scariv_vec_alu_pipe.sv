@@ -255,7 +255,7 @@ fpnew_pkg::fp_format_e  w_ex1_fpnew_src_fp_fmt;
 fpnew_pkg::int_format_e w_ex1_fpnew_int_fmt;
 logic                   w_ex1_fpnew_src_int;
 logic                   w_ex1_fpnew_dst_fp;
-logic [ 2: 0]           w_ex1_fpnew_rnd_mode;
+fpnew_pkg::roundmode_e  w_ex1_fpnew_rnd_mode;
 
 logic                   r_ex2_fpnew_valid;
 
@@ -273,13 +273,13 @@ always_comb begin
     OP_FSGNJ     : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJN    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
     OP_FSGNJX    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::SGNJ    };
-    OP_FMIN      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::MINMAX  };
-    OP_FMAX      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::MINMAX  };
+    OP_FMIN      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::MINMAX  };
+    OP_FMAX      : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::MINMAX  };
     // OP_FCVT_W_S  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::F2I     };
     // OP_FCVT_WU_S : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::F2I     };
-    OP_FEQ       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
-    OP_FLT       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
-    OP_FLE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CMP     };
+    OP_FEQ       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FLT       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FLE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
     // OP_FCLASS    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CLASSIFY};
     // OP_FCVT_S_W  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
     // OP_FCVT_S_WU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
@@ -325,15 +325,20 @@ always_comb begin
   //   default      : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b0, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
   // endcase // case (i_pipe_ctrl.op)
 
-  w_ex1_fpnew_rnd_mode = csr_info.fcsr[ 7: 5];
+  w_ex1_fpnew_rnd_mode = r_ex1_pipe_ctrl.op inside {OP_FSGNJ,  OP_FMIN} ? fpnew_pkg::RNE :
+                         r_ex1_pipe_ctrl.op inside {OP_FSGNJN, OP_FMAX} ? fpnew_pkg::RTZ :
+                         r_ex1_pipe_ctrl.op == OP_FSGNJX                ? fpnew_pkg::RDN :
+                         csr_info.fcsr[ 7: 5];
 end // always_comb
 
 logic [ 2: 0][riscv_vec_conf_pkg::DLEN_W-1: 0] w_fpnew_ex1_rs_data;
 assign w_fpnew_ex1_rs_data[0] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? 'h0                  :
-                                r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[0] :
+                                // r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[0] :
+                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX}           ? r_ex1_vpr_rs_data[1] :
                                 r_ex1_vpr_rs_data[0];
 assign w_fpnew_ex1_rs_data[1] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[1] :
                                 r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[2] :
+                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX}           ? r_ex1_vpr_rs_data[0] :
                                 r_ex1_vpr_rs_data[1];
 assign w_fpnew_ex1_rs_data[2] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[0] :
                                 r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[1] :
