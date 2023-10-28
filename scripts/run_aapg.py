@@ -33,7 +33,7 @@ def main():
 
     t_delta = datetime.timedelta(hours=9)
     JST = datetime.timezone(t_delta, 'JST')
-    dir_name = "generated/" + datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
+    dir_name = datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
     num_tests = int(args.num_tests)
 
     # config_name = "config_priv_" + args.priv_mode
@@ -41,7 +41,7 @@ def main():
 
     build_command = ["make",
                      "-C", "../tests/aapg",
-                     "DIR=" + dir_name,
+                     "DIR=" + "generated/" + dir_name,
                      "NUM_GEN=" + str(num_tests),
                      "CONFIG_YAML=" + os.path.realpath(config_file),
                      "ISA=rv64imafdc",
@@ -85,14 +85,14 @@ def main():
 
     sim_conf["testlist"] = [json_testlist_name]
 
-    bin_files = os.listdir("../tests/aapg/" + dir_name + "/bin/")
+    bin_files = os.listdir("../tests/aapg/generated/" + dir_name + "/bin/")
 
     os.makedirs(base_dir + '/' + group_name)
     with open(json_testlist_name, 'w') as f:
         for bin in bin_files:
             json_testlist += [{"name": bin.replace('.riscv',''),
                                "group": [group_name],
-                               "elf": "../../../tests/aapg/" + dir_name + "/bin/" +  bin,
+                               "elf": "../../../tests/aapg/generated/" + dir_name + "/bin/" +  bin,
                                "xlen": 64}]
         f.write(json.dumps(json_testlist, indent=0))
 
