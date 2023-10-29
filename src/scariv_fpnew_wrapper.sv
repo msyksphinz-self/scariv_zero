@@ -59,7 +59,7 @@ typedef struct packed {
   scariv_pkg::reg_t      reg_type;
   scariv_pkg::rnid_t     rnid;
   logic                  frm_invalid;
-  logic                  output_is_fp32;
+  logic                  output_is_int32;
 } aux_fpnew_t;
 
 logic                                    w_fma32_in_valid;
@@ -123,7 +123,7 @@ assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.frm_invalid = i_frm_invalid;
 assign w_aux_fpnew_in.cmt_id = i_cmt_id;
 assign w_aux_fpnew_in.grp_id = i_grp_id;
-assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP32) : 1'b0;
+assign w_aux_fpnew_in.output_is_int32 = i_pipe_ctrl.op inside {OP_FCVT_W_S, OP_FCVT_W_D};
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
@@ -346,7 +346,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                  w_fpnew_fflags.UF,
                  w_fpnew_fflags.NX};
 
-    o_result      <= w_result;
+    o_result      <= w_aux_fpnew_out.output_is_int32 ? {{32{w_result[31]}}, w_result[31: 0]} : w_result;
     o_cmt_id      <= w_aux_fpnew_out.cmt_id;
     o_grp_id      <= w_aux_fpnew_out.grp_id;
     o_rnid        <= w_aux_fpnew_out.rnid;
