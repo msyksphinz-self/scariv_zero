@@ -3,7 +3,7 @@ NUM_GEN = 100
 
 gen_tests:
 	mkdir -p $(DIR)
-	cd $(DIR) && cp -r ../work/common/ . && cd ../
+	cd $(DIR) && cp -r ../../work/common/ . && cd -
 	echo $(CONFIG_YAML)
 	aapg gen --config_file $(CONFIG_YAML) --setup_dir $(DIR) --output_dir $(DIR)/asm --num_programs $(NUM_GEN)
 	mkdir -p $(DIR)/bin/

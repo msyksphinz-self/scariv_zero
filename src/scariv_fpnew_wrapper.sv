@@ -112,7 +112,7 @@ assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.frm_invalid = i_frm_invalid;
 assign w_aux_fpnew_in.cmt_id = i_cmt_id;
 assign w_aux_fpnew_in.grp_id = i_grp_id;
-assign w_aux_fpnew_in.output_is_fp32 = w_out_fp ? (w_dst_fp_fmt == fpnew_pkg::FP32) : 1'b0;
+assign w_aux_fpnew_in.output_is_int32 = i_pipe_ctrl.op inside {OP_FCVT_W_S, OP_FCVT_W_D};
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
 assign w_fma32_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1[31: 0] : i_rs2[31: 0];
@@ -264,9 +264,14 @@ assign w_fma32_in_valid     = i_valid & ~w_in_flush & w_fma_valid     & (i_pipe_
 assign w_noncomp32_in_valid = i_valid & ~w_in_flush & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
 
 logic [ 2: 0][63: 0] w_fpnew_rs;
-assign w_fpnew_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0   : i_rs1;
-assign w_fpnew_rs[1] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs1 : i_rs2;
-assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD) ? i_rs2 : i_rs3;
+assign w_fpnew_rs[0] = (w_fpnew_op == fpnew_pkg::ADD)                 ? 'h0   :
+                       (w_fpnew_op == fpnew_pkg::DIV) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 :
+                       i_rs1;
+assign w_fpnew_rs[1] = (w_fpnew_op == fpnew_pkg::SQRT) ? ((i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 : i_rs1) :
+                       (w_fpnew_op == fpnew_pkg::ADD ) ? i_rs1 :
+                       (w_fpnew_op == fpnew_pkg::DIV ) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs2[63:32] ? 64'hffffffff7fc00000 :
+                       i_rs2;
+assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD)  ? i_rs2 : i_rs3;
 logic [riscv_fpu_pkg::FLEN_W-1: 0] w_result;
 
 fpnew_pkg::status_t                w_fpnew_fflags;
@@ -330,7 +335,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                  w_fpnew_fflags.UF,
                  w_fpnew_fflags.NX};
 
-    o_result      <= w_result;
+    o_result      <= w_aux_fpnew_out.output_is_int32 ? {{32{w_result[31]}}, w_result[31: 0]} : w_result;
     o_cmt_id      <= w_aux_fpnew_out.cmt_id;
     o_grp_id      <= w_aux_fpnew_out.grp_id;
     o_rnid        <= w_aux_fpnew_out.rnid;
