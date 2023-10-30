@@ -1654,12 +1654,12 @@
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]]
 	},
     {
-		"name":"vmfeq.vx       v[11:7],rs2,r[19:15]vm[25:25]",
+		"name":"vmfeq.vv       v[11:7],rs2,r[19:15]vm[25:25]",
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["01100", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "feq"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "feq"]]
 	},
     {
 		"name":"vmfle.vv       v[11:7],rs2,r[19:15]vm[25:25]",
@@ -1667,7 +1667,7 @@
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fle"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fle"]]
 	},
     {
 		"name":"vmflt.vv       v[11:7],rs2,r[19:15]vm[25:25]",
@@ -1675,7 +1675,7 @@
 	    "field": ["01101", "1X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "flt"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "flt"]]
 	},
     {
 		"name":"vmfne.vv       v[11:7],rs2,r[19:15]vm[25:25]",
@@ -1683,7 +1683,7 @@
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "001", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "v1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fne"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fne"]]
 	},
     {
 		"name":"vfdiv.vv       v[11:7],rs2,r[19:15]vm[25:25]",
@@ -1967,7 +1967,7 @@
 	    "field": ["01100", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "feq"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "feq"]]
 	},
     {
 		"name":"vmfle.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -1975,7 +1975,7 @@
 	    "field": ["01100", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fle"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fle"]]
 	},
     {
 		"name":"vmflt.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -1983,7 +1983,7 @@
 	    "field": ["01101", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "flt"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "flt"]]
 	},
     {
 		"name":"vmfne.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -1991,7 +1991,7 @@
 	    "field": ["01110", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fne"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fne"]]
 	},
     {
 		"name":"vmfgt.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -1999,7 +1999,7 @@
 	    "field": ["01110", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fgt"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fgt"]]
 	},
     {
 		"name":"vmfge.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",
@@ -2007,7 +2007,7 @@
 	    "field": ["01111", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "10101", "11"],
         "reg": [["rd", "v3"], ["r1", "f1"], ["r2", "v2"]],
 		"inst_cat":[["inst_cat", "valu"], ["inst_subcat", "varith"]],
-        "vec_ctrl":[["op", "fge"]]
+        "vec_ctrl":[["is_mask_inst", "1"], ["op", "fge"]]
 	},
     {
 		"name":"vfdiv.vf   v[11:7],v[24:20],r[19:15]vm[25:25]",

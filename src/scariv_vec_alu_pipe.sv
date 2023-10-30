@@ -96,9 +96,9 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : rs_vec_rd_loop
   assign vec_phy_rd_if[rs_idx].pos   = i_ex0_issue.vec_step_index;
 end endgenerate
 
-assign vec_phy_old_wr_if.valid = i_ex0_issue.valid & (i_ex0_issue.wr_old_reg.typ == scariv_pkg::VPR) & i_ex0_issue.wr_old_reg.rnid;
+assign vec_phy_old_wr_if.valid = i_ex0_issue.valid & (i_ex0_issue.wr_old_reg.typ == scariv_pkg::VPR);
 assign vec_phy_old_wr_if.rnid  = i_ex0_issue.wr_old_reg.rnid;
-assign vec_phy_old_wr_if.pos   = i_ex0_issue.vec_step_index;
+assign vec_phy_old_wr_if.pos   = w_ex0_pipe_ctrl.is_mask_inst ? 'h0 : i_ex0_issue.vec_step_index;
 
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
@@ -280,6 +280,9 @@ always_comb begin
     OP_FEQ       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
     OP_FLT       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
     OP_FLE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FNE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FGT       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
+    OP_FGE       : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b1, 1'b0, fpnew_pkg::CMP     };
     // OP_FCLASS    : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::CLASSIFY};
     // OP_FCVT_S_W  : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b0, fpnew_pkg::I2F     };
     // OP_FCVT_S_WU : {w_ex1_fpnew_valid, w_ex1_fpnew_op_mod, w_ex1_fpnew_op} = {1'b0, 1'b1, fpnew_pkg::I2F     };
@@ -325,7 +328,10 @@ always_comb begin
   //   default      : {w_ex1_fpnew_dst_fp, w_ex1_fpnew_src_int, w_ex1_fpnew_int_fmt, w_ex1_fpnew_dst_fp_fmt, w_ex1_fpnew_src_fp_fmt} = {1'b0, 1'b1, fpnew_pkg::INT64, fpnew_pkg::FP32, fpnew_pkg::FP64};
   // endcase // case (i_pipe_ctrl.op)
 
-  w_ex1_fpnew_rnd_mode = r_ex1_pipe_ctrl.op inside {OP_FSGNJ,  OP_FMIN} ? fpnew_pkg::RNE :
+  w_ex1_fpnew_rnd_mode = r_ex1_pipe_ctrl.op inside {OP_FGE, OP_FLE}     ? fpnew_pkg::RNE :
+                         r_ex1_pipe_ctrl.op inside {OP_FGT, OP_FLT}     ? fpnew_pkg::RTZ :
+                         r_ex1_pipe_ctrl.op inside {OP_FEQ, OP_FNE}     ? fpnew_pkg::RDN :
+                         r_ex1_pipe_ctrl.op inside {OP_FSGNJ,  OP_FMIN} ? fpnew_pkg::RNE :
                          r_ex1_pipe_ctrl.op inside {OP_FSGNJN, OP_FMAX} ? fpnew_pkg::RTZ :
                          r_ex1_pipe_ctrl.op == OP_FSGNJX                ? fpnew_pkg::RDN :
                          csr_info.fcsr[ 7: 5];
@@ -334,11 +340,11 @@ end // always_comb
 logic [ 2: 0][riscv_vec_conf_pkg::DLEN_W-1: 0] w_fpnew_ex1_rs_data;
 assign w_fpnew_ex1_rs_data[0] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? 'h0                  :
                                 // r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[0] :
-                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX}           ? r_ex1_vpr_rs_data[1] :
+                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX, OP_FLE, OP_FLT} ? r_ex1_vpr_rs_data[1] :
                                 r_ex1_vpr_rs_data[0];
 assign w_fpnew_ex1_rs_data[1] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[1] :
                                 r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[2] :
-                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX}           ? r_ex1_vpr_rs_data[0] :
+                                r_ex1_pipe_ctrl.op inside {OP_FSGNJ, OP_FSGNJN, OP_FSGNJX, OP_FLE, OP_FLT} ? r_ex1_vpr_rs_data[0] :
                                 r_ex1_vpr_rs_data[1];
 assign w_fpnew_ex1_rs_data[2] = r_ex1_pipe_ctrl.op inside {OP_FADD, OP_FSUB}                         ? r_ex1_vpr_rs_data[0] :
                                 r_ex1_pipe_ctrl.op inside {OP_FMADD, OP_FMSUB, OP_FNMADD, OP_FNMSUB} ? r_ex1_vpr_rs_data[1] :
@@ -348,13 +354,15 @@ assign w_ex1_fpnew_src_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg
 assign w_ex1_fpnew_dst_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::FP32  : fpnew_pkg::FP64;
 assign w_ex1_fpnew_int_fmt    = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::INT32 : fpnew_pkg::INT64;
 
-assign w_ex1_fpnew_tag_in.op          = w_ex1_fpnew_op;
-assign w_ex1_fpnew_tag_in.op_mod      = w_ex1_fpnew_op_mod;
-assign w_ex1_fpnew_tag_in.reg_type    = r_ex1_issue.wr_reg.typ;
-assign w_ex1_fpnew_tag_in.rnid        = r_ex1_issue.wr_reg.rnid;
-assign w_ex1_fpnew_tag_in.cmt_id      = r_ex1_issue.cmt_id;
-assign w_ex1_fpnew_tag_in.grp_id      = r_ex1_issue.grp_id;
-assign w_ex1_fpnew_tag_in.step_index  = r_ex1_issue.vec_step_index;
+assign w_ex1_fpnew_tag_in.op           = r_ex1_pipe_ctrl.op;
+assign w_ex1_fpnew_tag_in.reg_type     = r_ex1_issue.wr_reg.typ;
+assign w_ex1_fpnew_tag_in.rnid         = r_ex1_issue.wr_reg.rnid;
+assign w_ex1_fpnew_tag_in.cmt_id       = r_ex1_issue.cmt_id;
+assign w_ex1_fpnew_tag_in.grp_id       = r_ex1_issue.grp_id;
+assign w_ex1_fpnew_tag_in.vsew         = r_ex1_issue.vlvtype.vtype.vsew;
+assign w_ex1_fpnew_tag_in.is_mask_inst = r_ex1_pipe_ctrl.is_mask_inst;
+assign w_ex1_fpnew_tag_in.old_wr_data  = r_ex1_vpr_wr_old_data;
+assign w_ex1_fpnew_tag_in.step_index   = r_ex1_issue.vec_step_index;
 
 // --------------
 // FPU Pipeline
@@ -396,6 +404,64 @@ u_fpnew_top
  .busy_o ()
 );
 
+
+logic [riscv_vec_conf_pkg::DLEN_W-1: 0]     w_fpnew_mask_result;
+
+always_comb begin
+  w_fpnew_mask_result = 'h0;
+  case (w_fpnew_tag_out.vsew)
+    scariv_vec_pkg::EW32 : begin
+      for (int d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 32; d_idx++) begin
+        w_fpnew_mask_result [d_idx] = w_fpnew_tag_out.op == OP_FNE ? ~w_fpnew_calc_result[32*d_idx] : w_fpnew_calc_result[32*d_idx];
+      end
+    end
+    scariv_vec_pkg::EW64 : begin
+      for (int d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++) begin
+        w_fpnew_mask_result [d_idx] = w_fpnew_tag_out.op == OP_FNE ? ~w_fpnew_calc_result[64*d_idx] : w_fpnew_calc_result[64*d_idx];
+      end
+    end
+    default : begin
+      w_fpnew_mask_result = 'h0;
+    end
+  endcase // case (r_ex1_issue.vlvtype.vtype.vsew)
+end // always_comb
+
+scariv_vec_pkg::dlen_t w_fpnew_mask_wr_result;
+scariv_vec_pkg::dlen_t r_fpnew_mask_wr_result;
+scariv_vec_pkg::dlen_t w_fpnew_mask_wr_result_next;
+
+generate if (scariv_vec_pkg::VEC_STEP_W == 1) begin : fpnew_mask_vstep_1
+  always_comb begin
+    case (w_fpnew_tag_out.vsew)
+      scariv_vec_pkg::EW32 :
+        w_fpnew_mask_wr_result_next = {w_fpnew_tag_out.old_wr_data[riscv_vec_conf_pkg::DLEN_W   -1: scariv_vec_pkg::VLENB/4],
+                                       w_fpnew_mask_result[riscv_vec_conf_pkg::DLEN_W/32-1: 0]};
+      scariv_vec_pkg::EW64 :
+        w_fpnew_mask_wr_result_next = {w_fpnew_tag_out.old_wr_data[riscv_vec_conf_pkg::DLEN_W   -1: scariv_vec_pkg::VLENB/8],
+                                       w_fpnew_mask_result[riscv_vec_conf_pkg::DLEN_W/64-1: 0]};
+      default : w_fpnew_mask_wr_result_next = 'h0;
+    endcase // case (w_fpnew_tag_out.vsew)
+  end // always_comb
+end else begin : mask_vstep_n0 // if (scariv_vec_pkg::VEC_STEP_W == 1)
+  always_comb begin
+    case (w_fpnew_tag_out.vsew)
+      scariv_vec_pkg::EW32 :
+        w_fpnew_mask_wr_result_next = {w_fpnew_tag_out.old_wr_data[riscv_vec_conf_pkg::DLEN_W   -1: scariv_vec_pkg::VLENB/4],
+                                       w_fpnew_mask_result        [riscv_vec_conf_pkg::DLEN_W/32-1: 0],
+                                       r_fpnew_mask_wr_result     [scariv_vec_pkg::VLENB/4 -1: riscv_vec_conf_pkg::DLEN_W/32]};
+      scariv_vec_pkg::EW64 :
+        w_fpnew_mask_wr_result_next = {w_fpnew_tag_out.old_wr_data[riscv_vec_conf_pkg::DLEN_W   -1: scariv_vec_pkg::VLENB/8],
+                                       w_fpnew_mask_result        [riscv_vec_conf_pkg::DLEN_W/64-1: 0],
+                                       r_fpnew_mask_wr_result     [scariv_vec_pkg::VLENB/8 -1: riscv_vec_conf_pkg::DLEN_W/64]};
+      default : w_fpnew_mask_wr_result_next = 'h0;
+    endcase // case (w_fpnew_tag_out.vsew)
+  end // always_comb
+
+  always_ff @ (posedge i_clk) begin
+    r_fpnew_mask_wr_result <= w_fpnew_mask_wr_result_next;
+  end
+
+end endgenerate
 
 
 scariv_vec_pkg::dlen_t w_ex1_vec_mask_result;
@@ -444,7 +510,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-generate if (scariv_vec_pkg::VEC_STEP_W == 1) begin : mask_vstep_0
+generate if (scariv_vec_pkg::VEC_STEP_W == 1) begin : mask_vstep_1
   always_ff @(posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_ex2_vec_mask_result <= 'h0;
@@ -517,8 +583,9 @@ always_comb begin
 
   vec_phy_wr_if[1].valid   = w_fpnew_out_valid;
   vec_phy_wr_if[1].rd_rnid = w_fpnew_tag_out.rnid;
-  vec_phy_wr_if[1].rd_data = w_fpnew_calc_result;
-  vec_phy_wr_if[1].rd_pos  = w_fpnew_tag_out.step_index;
+  vec_phy_wr_if[1].rd_data = w_fpnew_tag_out.is_mask_inst ? ((w_fpnew_tag_out.step_index == scariv_vec_pkg::VEC_STEP_W-1) ? w_fpnew_mask_wr_result_next : 'h0) :
+                             w_fpnew_calc_result;
+  vec_phy_wr_if[1].rd_pos  = w_fpnew_tag_out.is_mask_inst & (w_fpnew_tag_out.step_index == scariv_vec_pkg::VEC_STEP_W-1) ? 'h0 : w_fpnew_tag_out.step_index;
 
   vec_phy_fwd_if[1].valid   = vec_phy_wr_if[1].valid;
   vec_phy_fwd_if[1].rd_rnid = w_fpnew_tag_out.rnid;

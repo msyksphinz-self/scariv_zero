@@ -42,23 +42,26 @@ localparam fpnew_pkg::fpu_implementation_t FPNEW_VEC_IMPL = '{
 };
 
 
-typedef struct packed {
-  fpnew_pkg::operation_e op;
-  logic                  op_mod;
-  scariv_pkg::cmt_id_t   cmt_id;
-  scariv_pkg::grp_id_t   grp_id;
-  scariv_pkg::reg_t      reg_type;
-  scariv_pkg::rnid_t     rnid;
-  vec_pos_t              step_index;
-} aux_fpnew_t;
-
-
 typedef enum logic [ 2: 0] {
    EW8  = 0,
    EW16 = 1,
    EW32 = 2,
    EW64 = 3
 } ew_t;
+
+
+typedef struct packed {
+  decoder_vec_ctrl_pkg::op_t op;
+
+  scariv_pkg::cmt_id_t   cmt_id;
+  scariv_pkg::grp_id_t   grp_id;
+  scariv_pkg::reg_t      reg_type;
+  scariv_pkg::rnid_t     rnid;
+  ew_t                   vsew;
+  logic                  is_mask_inst;
+  dlen_t                 old_wr_data;
+  vec_pos_t              step_index;
+} aux_fpnew_t;
 
 
 typedef struct packed {

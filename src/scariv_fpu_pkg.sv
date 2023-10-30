@@ -36,7 +36,7 @@ typedef struct packed {
   scariv_pkg::reg_t      reg_type;
   scariv_pkg::rnid_t     rnid;
   logic                  frm_invalid;
-  logic                  output_is_fp32;
+  logic                  output_is_int32;
 } aux_fpnew_t;
 
 
