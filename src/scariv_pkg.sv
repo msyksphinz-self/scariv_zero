@@ -303,18 +303,11 @@ typedef struct packed {
 typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
-  // inst_cat_t         cat;
-  // brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
-  // logic [RAS_W-1: 0] ras_index;
-  // logic              is_cond;  // Conditional Branch
-  // logic              is_call;  // Call
-  // logic              is_ret;   // Ret
-  // gshare_bht_t       gshare_bhr;
+  logic [31: 0]      inst;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
   logic [15: 0]      rvc_inst;
-  logic [31: 0]      inst;
   logic [63: 0]      kanata_id;
 `endif // SIMULATION
 } rob_static_info_t;
@@ -745,10 +738,10 @@ function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.notify_valid = 1'b0;
   ret.done      = 1'b0;
   ret.dead      = 1'b0;
+  ret.inst      = inst.rvc_inst_valid ? inst.rvc_inst : inst.inst;
 
 `ifdef SIMULATION
   ret.pred_target_vaddr = inst.pred_target_vaddr;
-  ret.inst = inst.inst;
 `endif // SIMULATION
 
   return ret;
