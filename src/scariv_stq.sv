@@ -328,6 +328,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
     // If rs2 operand is already ready, store data is fetch directly
     assign w_stq_rs2_read_valids[s_idx] = w_stq_entries[s_idx].is_valid &
+                                          !w_stq_entries[s_idx].dead &
                                           !w_stq_entries[s_idx].is_rs2_get &
                                           w_stq_entries[s_idx].inst.rd_reg.valid &
                                           w_stq_entries[s_idx].inst.rd_reg.ready;
