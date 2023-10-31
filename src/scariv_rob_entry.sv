@@ -61,7 +61,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                 .o_selected(w_done_rpt_selected));
   assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.except_valid;
   assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.except_type;
-  assign w_done_rpt_except_tval [d_idx] = w_done_rpt_selected.except_tval;
+  assign w_done_rpt_except_tval [d_idx] = w_done_rpt_selected.except_type == ILLEGAL_INST ? r_entry.inst[d_idx].inst :  w_done_rpt_selected.except_tval;
 
   assign w_done_rpt_fflags_update_valid[d_idx] = w_done_rpt_selected.fflags_update_valid;
   assign w_done_rpt_fflags             [d_idx] = w_done_rpt_selected.fflags;
