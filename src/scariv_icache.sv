@@ -231,6 +231,7 @@ end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_f2_valid      <= 1'b0;
+    r_f2_normal_miss <= 1'b0;
     r_f2_vaddr  <= 'h0;
   end else begin
     if (i_flush_valid) begin
@@ -240,6 +241,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
 
     r_f2_hit    <= r_f1_valid & w_f1_hit;
+    r_f2_normal_miss <= r_f1_valid &
+                        ((r_ic_state == ICInit) & !i_flush_valid & !w_f1_hit |
+                         (r_ic_state != ICInit));
     r_f2_vaddr  <= r_f1_vaddr;
   end
 end
@@ -261,9 +265,9 @@ cache_data_sel
 assign ic_l2_normal_req_fire  = ic_l2_req.valid  & ic_l2_req.ready  & w_is_req_tag_normal_fetch;
 assign ic_l2_normal_resp_fire = ic_l2_resp.valid & ic_l2_resp.ready & w_is_resp_tag_normal_fetch;
 
-assign o_f2_resp.valid = !i_flush_valid & r_f2_valid &
+assign o_f2_resp.valid = !i_flush_valid & r_f2_valid /*  &
                          (r_f2_pref_paddr_hit |
-                          r_f2_hit & (r_ic_state == ICInit));
+                          r_f2_hit & (r_ic_state == ICInit)) */;
 
 assign o_f2_resp.vaddr = r_f2_vaddr [VADDR_W-1: 1];
 assign o_f2_resp.data  = r_f2_pref_paddr_hit ? r_f2_pref_hit_data :
@@ -361,18 +365,6 @@ assign ic_l2_resp.ready = 1'b1;
 
 
 assign o_f0_ready = (r_ic_state == ICInit);
-
-// Missed Signal at f2
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_f2_normal_miss <= 1'b0;
-  end else begin
-    r_f2_normal_miss <= r_f1_valid &
-                        ((r_ic_state == ICInit) & !i_flush_valid & !w_f1_hit |
-                         (r_ic_state != ICInit));
-  end
-end
-
 
 // =======================
 // Instruction Prefetcher

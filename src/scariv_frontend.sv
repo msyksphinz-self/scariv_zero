@@ -647,7 +647,7 @@ end
 
 
 // assign w_f0_ic_req.valid = (r_if_state != INIT) & (w_if_state_next == FETCH_REQ);
-assign w_f0_ic_req.valid = r_f0_valid & !w_flush_valid & !w_f2_ic_resp.miss;
+assign w_f0_ic_req.valid = r_f0_valid & !w_flush_valid & w_tlb_ready;
 
 assign w_f0_ic_req.vaddr = w_f0_vaddr;
 
