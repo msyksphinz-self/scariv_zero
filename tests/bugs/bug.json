@@ -1,0 +1,3 @@
+[
+    { "name": "20231101", "group": ["bug", "nightly"], "elf": "../../../tests/bugs/out_cclass_rv64imafdc_test_all_00005.riscv" , "xlen": 64}
+]
