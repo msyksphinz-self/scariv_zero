@@ -9,4 +9,4 @@ gen_tests:
 	mkdir -p $(DIR)/bin/
 	mkdir -p $(DIR)/objdump
 	mkdir -p $(DIR)/log
-	$(MAKE) -C $(DIR) ISA=$(ISA) ABI=$(ABI) SPIKE_ISA=$(ISA)
+	$(MAKE) -C $(DIR) ISA=$(ISA) ABI=$(ABI) SPIKE_ISA=$(ISA) build objdump
