@@ -180,7 +180,7 @@ assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                      r_ex3_csr_illegal |
                                      (write_if.valid & write_if.resp_error);
 
-assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? scariv_pkg::ILLEGAL_INST :
+assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
                                    r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
                                    r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
                                    r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
