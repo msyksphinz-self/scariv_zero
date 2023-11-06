@@ -73,6 +73,11 @@ module scariv_lsu_top
     /* FENCE.I update */
     output logic                o_fence_i,
 
+    // ----------------------
+    // Vector LSU interface
+    // ----------------------
+    l1d_rd_if.slave             vlsu_l1d_rd_if,
+    l1d_missu_if.slave          vlsu_l1d_missu_if,
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -84,8 +89,9 @@ localparam L1D_SNOOP_PORT    = 0;
 localparam L1D_PTW_PORT      = L1D_SNOOP_PORT   + 1;
 localparam L1D_LS_PORT_BASE  = L1D_PTW_PORT     + 1;
 localparam L1D_MISSU_PORT    = L1D_LS_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
-localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT     + 1;
-localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
+localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT   + 1;
+localparam L1D_VLSU_RD_PORT  = L1D_ST_RD_PORT   + 1;
+localparam L1D_RD_PORT_NUM   = L1D_VLSU_RD_PORT + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_stbuf_wr_if();
@@ -476,6 +482,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_snoop_resp_valid <= l1d_snoop_if.req_s0_valid;
   end
 end
+
+
+// ----------------------
+// Vector LSU interface
+// ----------------------
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_valid = vlsu_l1d_rd_if.s0_valid;
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_paddr = vlsu_l1d_rd_if.s0_paddr;
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_high_priority = 1'b0;
+
+assign vlsu_l1d_rd_if.s1_conflict = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_conflict;
+assign vlsu_l1d_rd_if.s1_miss     = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_miss;
+assign vlsu_l1d_rd_if.s1_hit      = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_hit;
+assign vlsu_l1d_rd_if.s1_hit_way  = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_hit_way;
+assign vlsu_l1d_rd_if.s1_data     = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_data;
+
 
 scariv_dcache
   #(.RD_PORT_NUM (L1D_RD_PORT_NUM))

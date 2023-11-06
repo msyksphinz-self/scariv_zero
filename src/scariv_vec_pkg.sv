@@ -51,7 +51,7 @@ typedef enum logic [ 2: 0] {
 
 
 typedef struct packed {
-  decoder_vec_ctrl_pkg::op_t op;
+  decoder_valu_ctrl_pkg::op_t op;
 
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;

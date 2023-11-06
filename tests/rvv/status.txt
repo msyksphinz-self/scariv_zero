@@ -1,5 +1,38 @@
                   v512d128 v256d256
 -------------------------------------------
+vsaddu.vv       |
+vsadd.vv        |
+vssubu.vv       |
+vssub.vv        |
+vsaddu.vx       |
+vsadd.vx        |
+vssubu.vx       |
+vssub.vx        |
+vsaddu.vi       |
+vsadd.vi        |
+vaaddu.vv       |
+vaadd.vv        |
+vasubu.vv       |
+vasub.vv        |
+vaaddu.vx       |
+vaadd.vx        |
+vasubu.vx       |
+vasub.vx        |
+vsmul.vv        |
+vsmul.vx        |
+vssrl.vv        |
+vssra.vv        |
+vssrl.vx        |
+vssra.vx        |
+vssrl.vi        |
+vssra.vi        |
+vnclipu.wv      |
+vnclip.wv       |
+vnclipu.wx      |
+vnclip.wx       |
+vnclipu.wi      |
+vnclip.wi       |
+
 vsetvli         | v        v
 vsetivli        |
 vsetvl          |
@@ -32,20 +65,11 @@ vmsltu.vv       | v        v
 vmslt.vv        | v        v
 vmsleu.vv       | v        v
 vmsle.vv        | v        v
-vsaddu.vv       |
-vsadd.vv        |
-vssubu.vv       |
-vssub.vv        |
 vsll.vv         | v        v
-vsmul.vv        |
 vsrl.vv         | v        v
 vsra.vv         | v        v
-vssrl.vv        |
-vssra.vv        |
 vnsrl.vv        |
 vnsra.vv        |
-vnclipu.vv      |
-vnclip.vv       |
 vwredsumu.vv    |
 vwredsum.vv     |
 vdotu.vv        |
@@ -80,20 +104,11 @@ vmsleu.vx       | v        v
 vmsle.vx        | v        v
 vmsgtu.vx       | v        v
 vmsgt.vx        | v        v
-vsaddu.vx       |
-vsadd.vx        |
-vssubu.vx       |
-vssub.vx        |
 vsll.vx         | v        v
-vsmul.vx        |
 vsrl.vx         | v        v
 vsra.vx         | v        v
-vssrl.vx        |
-vssra.vx        |
 vnsrl.vx        |
 vnsra.vx        |
-vnclipu.vx      |
-vnclip.vx       |
 vwredsumu.vx    |
 vwredsum.vx     |
 vdotu.vx        |
@@ -118,17 +133,11 @@ vmsleu.vi       | v        v
 vmsle.vi        | v        v
 vmsgtu.vi       | v        v
 vmsgt.vi        | v        v
-vsaddu.vi       |
-vsadd.vi        |
 vsll.vi         | v        v
 vsrl.vi         | v        v
 vsra.vi         | v        v
-vssrl.vi        |
-vssra.vi        |
 vnsrl.vi        |
 vnsra.vi        |
-vnclipu.vi      |
-vnclip.vi       |
 vredsum.vv      |
 vredand.vv      |
 vredor.vv       |
@@ -137,10 +146,6 @@ vredminu.vv     |
 vredmin.vv      |
 vredmaxu.vv     |
 vredmax.vv      |
-vaaddu.vv       |
-vaadd.vv        |
-vasubu.vv       |
-vasub.vv        |
 VWXUNARY0.vv    |
 VMUNARY0.vv     |
 vcompress.vv    |
@@ -179,10 +184,6 @@ vwmaccu.vv      |
 vwmacc.vv       |
 vwmaccus.vv     |
 vwmaccsu.vv     |
-vaaddu.vx       |
-vaadd.vx        |
-vasubu.vx       |
-vasub.vx        |
 vslide1up.vx    |
 vslide1down.vx  |
 VRXUNARY0.vx    |
@@ -225,11 +226,11 @@ vfsgnj.vv       |
 vfsgnjn.vv      |
 vfsgnjx.vv      |
 VWFUNARY0.vx    |
-vmfeq.vx        |
-vmfle.vx        |
-vmflt.vx        |
-vmfne.vx        |
-vfdiv.vx        |
+vmfeq.vv        | v        v
+vmfle.vv        | v        v
+vmflt.vv        | v        v
+vmfne.vv        | v        v
+vfdiv.vv        | v        v
 VFUNARY0.vx     |
 VFUNARY1.vx     |
 vfmul.vv        | v        v
@@ -266,12 +267,12 @@ vfsgnj.vf       |
 vfsgnjn.vf      |
 vfsgnjx.vf      |
 vfmv.vf         |
-vmfeq.vf        |
-vmfle.vf        |
-vmflt.vf        |
-vmfne.vf        |
-vmfgt.vf        |
-vmfge.vf        |
+vmfeq.vf        | v        v
+vmfle.vf        | v        v
+vmflt.vf        | v        v
+vmfne.vf        | v        v
+vmfgt.vf        | v        v
+vmfge.vf        | v        v
 vfdiv.vf        |
 vfrdiv.vf       |
 vfmul.vf        |

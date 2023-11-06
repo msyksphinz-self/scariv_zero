@@ -11,7 +11,7 @@
 // ------------------------------------------------------------------------
 
 module scariv_vec_alu_datapath
-  import decoder_vec_ctrl_pkg::*;
+  import decoder_valu_ctrl_pkg::*;
 
 (
  input op_t                        i_op,

@@ -109,7 +109,8 @@ DECODE_FILES += ../src/decoder_csu_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_sched.sv
 DECODE_FILES += ../src/decoder_lsu_sched.sv
 DECODE_FILES += ../src/decoder_fpu_ctrl.sv
-DECODE_FILES += ../src/decoder_vec_ctrl.sv
+DECODE_FILES += ../src/decoder_valu_ctrl.sv
+DECODE_FILES += ../src/decoder_vlsu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
 
@@ -140,8 +141,10 @@ build_espresso:
 	cd ../src && ./build_decoder.rb lsu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_fpu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_vec_ctrl.sv: ../src/riscv_rvv_decoder.json
-	cd ../src && ./build_decoder.rb vec_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_valu_ctrl.sv: ../src/riscv_rvv_decoder.json
+	cd ../src && ./build_decoder.rb valu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_vlsu_ctrl.sv: ../src/riscv_rvv_decoder.json
+	cd ../src && ./build_decoder.rb vlsu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_reg.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb

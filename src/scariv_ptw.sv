@@ -8,12 +8,15 @@
 
 module scariv_ptw
   import scariv_lsu_pkg::*;
-  (
+#(
+  localparam PTW_PORT_NUM = 1 + scariv_conf_pkg::LSU_INST_NUM + 1
+  )
+(
    input logic i_clk,
    input logic i_reset_n,
 
    // Page Table Walk I/O
-   tlb_ptw_if.slave ptw_if[1 + scariv_conf_pkg::LSU_INST_NUM],
+   tlb_ptw_if.slave ptw_if[PTW_PORT_NUM],
 
    // Interface to check LSU L1D
    lsu_access_if.master lsu_access,
@@ -22,8 +25,6 @@ module scariv_ptw
    l2_req_if.master ptw_req,
    l2_resp_if.slave ptw_resp
    );
-
-localparam PTW_PORT_NUM = 1 + scariv_conf_pkg::LSU_INST_NUM;
 
 typedef enum logic [ 2: 0] {
   IDLE = 0,

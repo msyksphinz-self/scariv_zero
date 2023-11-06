@@ -78,7 +78,9 @@ scariv_pkg::done_rpt_t w_done_rpt[scariv_pkg::CMT_BUS_SIZE];
 csr_info_if w_csr_info ();
 interrupt_if w_int_if();
 rob_info_if w_rob_info_if();
-tlb_ptw_if  w_ptw_if[1 + scariv_conf_pkg::LSU_INST_NUM]();
+tlb_ptw_if  w_ptw_if[1 +   // Frontend
+                     scariv_conf_pkg::LSU_INST_NUM  // LSU
+                     + 1]();  // Vector LSU
 lsu_access_if w_lsu_access();
 sfence_if     w_sfence_if();
 logic                          w_fence_i;
@@ -147,8 +149,8 @@ fflags_update_if w_fflags_update_if();
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
-vec_regread_if         w_valu_vec_phy_rd_if[4]()  ;
-vec_regwrite_if        w_valu_vec_phy_wr_if[2]()  ;
+vec_regread_if         w_vec_phy_rd_if[7]()  ;
+vec_regwrite_if        w_vec_phy_wr_if[3]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
@@ -188,6 +190,12 @@ cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_VLSU_ENTRY_SIZE)) vlsu_cre_ret_if();
 // ----------------------------------
 
 scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
+
+// ----------------------------------
+// L1D VLSU to Scalar Interface
+// ----------------------------------
+l1d_rd_if            vlsu_l1d_rd_if   ();
+l1d_missu_if         vlsu_l1d_missu_if();
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -322,7 +330,7 @@ u_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .valu_vec_phy_wr_if (w_valu_vec_phy_wr_if),
+  .valu_vec_phy_wr_if (w_vec_phy_wr_if),
 
   .rn_front_if  (w_rn_front_if),
   .i_sc_ras_index (w_sc_ras_index),
@@ -469,6 +477,9 @@ u_lsu_top
 
     .sfence_if (w_sfence_if),
     .o_fence_i (w_fence_i),
+
+    .vlsu_l1d_rd_if    (vlsu_l1d_rd_if   ),
+    .vlsu_l1d_missu_if (vlsu_l1d_missu_if),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -670,6 +681,12 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
    );
 
 
+  localparam VALU_READ_PORT_IDX = scariv_conf_pkg::ALU_INST_NUM * 2 +
+                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                  2 +   // BRU
+                                  1 +   // CSU
+                                  scariv_conf_pkg::FPU_INST_NUM;
+  localparam VALU_VPR_READ_PORT_IDX = 0;
 
   scariv_vec_alu
     #(.PORT_BASE(0))
@@ -688,20 +705,16 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .cre_ret_if(valu_cre_ret_if),
 
-     .ex1_xpr_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                      scariv_conf_pkg::LSU_INST_NUM + 1 +
-                                      2 +   // BRU
-                                      1 +   // CSU
-                                      scariv_conf_pkg::FPU_INST_NUM]),
+     .ex1_xpr_regread_rs1(int_regread[VALU_READ_PORT_IDX]),
 
      .ex1_fpr_regread_rs1(fp_regread[scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                                      1]),                                    // LSU port
 
      .i_phy_wr(w_ex3_phy_wr),
 
-     .vec_phy_rd_if     (w_valu_vec_phy_rd_if[0:2]),
-     .vec_phy_old_wr_if (w_valu_vec_phy_rd_if[3]),
-     .vec_phy_wr_if (w_valu_vec_phy_wr_if),
+     .vec_phy_rd_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +: 3]),
+     .vec_phy_old_wr_if (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  3]),
+     .vec_phy_wr_if     (w_vec_phy_wr_if[0:1]),
 
      .o_done_report(w_valu_done_rpt),
 
@@ -709,18 +722,59 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .br_upd_if(w_ex3_br_upd_if)
      );
 
+
+  localparam VLSU_XPR_READ_PORT_IDX = VALU_READ_PORT_IDX + 1;
+  localparam VLSU_VPR_READ_PORT_IDX = VALU_VPR_READ_PORT_IDX + 4;
+
+  scariv_vec_lsu
+    #(.PORT_BASE(0))
+  u_vec_lsu
+    (
+     .i_clk    (i_clk),
+     .i_reset_n(i_reset_n),
+
+     .csr_info   (w_csr_info   ),
+     .sfence_if  (w_sfence_if  ),
+     .rob_info_if(w_rob_info_if),
+     .ptw_if     (w_ptw_if[1 + scariv_conf_pkg::LSU_INST_NUM]),
+
+     .disp_valid      (w_disp_vlsu_valids),
+     .disp            (w_rn_front_if),
+     .vlvtype_info_if (r_rn_vlvtype_info_if),
+     .vlvtype_upd_if  (w_vlvtype_upd_if),
+
+     .cre_ret_if(vlsu_cre_ret_if),
+
+     .ex1_xpr_regread_rs1(int_regread[VLSU_XPR_READ_PORT_IDX]),
+
+     .i_phy_wr(w_ex3_phy_wr),
+
+     .vec_phy_rd_if     (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +: 2]),
+     .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  2]),
+     .vec_phy_wr_if     (w_vec_phy_wr_if[2]),
+
+     .l1d_rd_if    (vlsu_l1d_rd_if   ),
+     .l1d_missu_if (vlsu_l1d_missu_if),
+
+     .o_done_report(w_vlsu_done_rpt),
+
+     .i_commit (w_commit),
+     .br_upd_if(w_ex3_br_upd_if)
+     );
+
+
   scariv_vec_registers
     #(
-      .RD_PORT_SIZE(3 + 1),
-      .WR_PORT_SIZE(2)
+      .RD_PORT_SIZE(VLSU_VPR_READ_PORT_IDX + 3),
+      .WR_PORT_SIZE(3)
       )
   u_vec_registers
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
 
-     .regread (w_valu_vec_phy_rd_if),
-     .regwrite(w_valu_vec_phy_wr_if)
+     .regread (w_vec_phy_rd_if),
+     .regwrite(w_vec_phy_wr_if)
      );
 
 

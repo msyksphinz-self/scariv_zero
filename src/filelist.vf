@@ -7,7 +7,8 @@
 ../src/decoder_csu_sched.sv
 ../src/decoder_lsu_sched.sv
 ../src/decoder_fpu_ctrl.sv
-../src/decoder_vec_ctrl.sv
+../src/decoder_valu_ctrl.sv
+../src/decoder_vlsu_ctrl.sv
 
 ../src/recurse_pkg.sv
 ../src/scariv_pkg.sv

@@ -11,7 +11,7 @@
 // ------------------------------------------------------------------------
 
 module scariv_vec_alu_pipe
-  import decoder_vec_ctrl_pkg::*;
+  import decoder_valu_ctrl_pkg::*;
 #(
   parameter RV_ENTRY_SIZE = 32
   )

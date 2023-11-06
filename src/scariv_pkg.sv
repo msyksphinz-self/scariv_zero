@@ -64,7 +64,8 @@ package scariv_pkg;
                                   2 +                                    // BRU port
                                   1 +                                    // CSR port
                                   scariv_conf_pkg::FPU_INST_NUM +        // FPU port
-                                  scariv_conf_pkg::VEC_ALU_INST_NUM;     // VEC port
+                                  scariv_conf_pkg::VEC_ALU_INST_NUM +    // VALU port
+                                  1;                                     // VLSU port
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                                  1 +                                     // LSU port
