@@ -143,7 +143,7 @@ typedef struct packed {
   logic                  valid;
   scariv_pkg::vaddr_t    pc_addr;
   logic [31: 0]          inst;
-  scariv_pkg::inst_cat_t cat;
+  decoder_inst_cat_pkg::inst_cat_t cat;
   logic                  is_rvc;
   scariv_pkg::brtag_t    brtag;
 

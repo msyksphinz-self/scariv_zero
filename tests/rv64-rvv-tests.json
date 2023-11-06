@@ -114,5 +114,7 @@
 	{ "name": "vmfne_v_f"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vmfne_v_f/test.elf"  , "xlen": 64},
 	{ "name": "vmfne_v_v"        , "group" : ["rvv"], "elf": "../../../tests/rvv/vmfne_v_v/test.elf"  , "xlen": 64},
 
+    { "name": "vle32_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vle32_v/test.elf"   , "xlen": 64},
+
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64}
 ]

@@ -98,8 +98,8 @@ typedef struct packed {
   logic                 valid;
   scariv_pkg::vaddr_t    pc_addr;
   logic [31:0]          inst;
-  scariv_pkg::inst_cat_t cat;
-  scariv_pkg::inst_subcat_t subcat;
+  decoder_inst_cat_pkg::inst_cat_t    cat;
+  decoder_inst_cat_pkg::inst_subcat_t subcat;
   scariv_pkg::brtag_t      brtag;
 
   scariv_pkg::cmt_id_t     cmt_id;
@@ -113,7 +113,7 @@ typedef struct packed {
 
   logic                except_valid;
   scariv_pkg::except_t except_type;
-  scariv_pkg::xlen_t   except_tval;
+  riscv_pkg::xlen_t   except_tval;
 
   logic                fflags_update_valid;
   scariv_pkg::fflags_t fflags;

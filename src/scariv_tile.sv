@@ -651,7 +651,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   scariv_pkg::grp_id_t w_rn_is_subcat_vset;
 
-  for (genvar d_idx = 0; d_idx < scariv_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
     assign w_rn_is_subcat_vset[d_idx] = (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
                                         (w_rn_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
   end

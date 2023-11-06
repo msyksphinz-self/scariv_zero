@@ -84,7 +84,6 @@
 ../src/scariv_tile_wrapper.sv
 ../src/scariv_inst_buffer.sv
 ../src/scariv_disp_pickup.sv
-../src/scariv_disp_merge.sv
 ../src/scariv_ptw.sv
 ../src/scariv_rvc_expander.sv
 

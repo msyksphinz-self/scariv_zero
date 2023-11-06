@@ -46,8 +46,8 @@ data_64bit_t w_wr_old;
 data_64bit_t w_alu_masked_res;
 data_64bit_t w_alu_res;
 
-scariv_pkg::xlen_t w_mask_res;
-scariv_pkg::xlen_t w_mask_masked_res;
+riscv_pkg::xlen_t w_mask_res;
+riscv_pkg::xlen_t w_mask_masked_res;
 
 assign w_vs1    = i_rs1_valid ? w_rs1 : i_vs1;
 assign w_vs2    = i_vs2;
