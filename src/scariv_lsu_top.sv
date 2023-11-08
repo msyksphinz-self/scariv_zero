@@ -137,6 +137,7 @@ uc_write_if             w_uc_write_if();
 st_req_info_if          w_st_req_info_if();
 
 sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM]();
+sfence_if                                  w_sfence_if_slave();
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fence_i;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_valid;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;
@@ -150,6 +151,10 @@ assign sfence_if.is_rs1_x0 = |w_sfence_if_is_rs1_x0;
 assign sfence_if.is_rs2_x0 = |w_sfence_if_is_rs2_x0;
 bit_oh_or #(.T(scariv_pkg::vaddr_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_sfence_vaddr_merge (.i_oh(w_sfence_if_valid), .i_data(w_sfence_if_vaddr), .o_selected(sfence_if.vaddr));
 
+assign w_sfence_if_slave.valid     = w_sfence_if_slave.valid;
+assign w_sfence_if_slave.is_rs1_x0 = w_sfence_if_slave.is_rs1_x0;
+assign w_sfence_if_slave.is_rs2_x0 = w_sfence_if_slave.is_rs2_x0;
+assign w_sfence_if_slave.vaddr     = w_sfence_if_slave.vaddr;
 
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -165,7 +170,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .csr_info (csr_info),
     .rob_info_if (rob_info_if),
-    .sfence_if_slave (sfence_if),
+    .sfence_if_slave (w_sfence_if_slave),
 
     .disp_valid (disp_valid             ),
     .disp       (disp                   ),

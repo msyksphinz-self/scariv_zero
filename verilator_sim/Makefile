@@ -49,7 +49,8 @@ VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
-VERILATOR_OPTS += -I${VERILATOR_HOME}/include/vltstd
+# VERILATOR_OPTS += -I${VERILATOR_ROOT}/share/verilator/include/vltstd
+VERILATOR_OPTS += -I${VERILATOR_ROOT}/include/vltstd
 
 VERILATOR_OPTS += +define+RV_AMO=$(RV_AMO)
 ifeq ($(findstring "b",$(ISA)),"b")

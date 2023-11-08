@@ -448,11 +448,6 @@ assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
 
-always_comb begin
-  w_ex2_issue_next = r_ex1_issue;
-  w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_flush;
-end
-
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
