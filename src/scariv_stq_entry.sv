@@ -114,7 +114,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
 assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & !r_entry.dead &
-                           ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : 1'b1) &
+                           ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : ~r_entry.is_lr) &
                            ~r_entry.st_buf_finished &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);
 assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.is_uc & ~r_entry.except_valid;
@@ -122,6 +122,7 @@ assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.
 assign o_stq_entry_st_finish = r_entry.is_valid &
                                (r_entry.st_buf_finished |
                                 r_entry.is_committed & r_entry.is_sc & ~r_entry.sc_success |
+                                r_entry.is_committed & r_entry.is_lr |
                                 r_entry.dead) &
                                i_stq_outptr_valid;
 
@@ -168,7 +169,7 @@ always_comb begin
   end else begin
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
+    end else if (~r_entry.paddr_valid & i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
       w_entry_next.except_valid = i_ex1_q_updates.tlb_except_valid;
       w_entry_next.addr         = i_ex1_q_updates.paddr;
       w_entry_next.paddr_valid  = i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
@@ -203,22 +204,15 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                                 logic rs2_rel_hit, logic rs2_phy_hit, logic rs2_may_mispred);
   stq_entry_t ret;
 
+  ret = 'h0;
+
   ret.is_valid  = 1'b1;
 
   ret.inst.cmt_id = cmt_id;
   ret.inst.grp_id = grp_id;
 
-  ret.addr        = 'h0;
-  ret.paddr_valid = 1'b0;
-
-  ret.is_rs2_get  = 1'b0;
-
-  ret.except_valid = 1'b0;
-
   ret.inst.oldest_valid = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) &
                           (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW);
-  ret.is_committed = 1'b0;
-  ret.is_uc = 1'b0;
 
   // for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
   //   ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;

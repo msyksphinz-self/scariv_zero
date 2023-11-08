@@ -244,6 +244,7 @@ interface missu_pa_search_if;
 logic                                 s0_valid;
 scariv_pkg::paddr_t       s0_paddr;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_update_index_oh;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
 
@@ -251,6 +252,7 @@ modport master (
   output s0_valid,
   output s0_paddr,
   input  s1_hit_index_oh,
+  input  s1_hit_update_index_oh,
   input  s1_evict_hit_index_oh,
   input  s1_evict_sent
 );
@@ -259,6 +261,7 @@ modport slave (
   input  s0_valid,
   input  s0_paddr,
   output s1_hit_index_oh,
+  output s1_hit_update_index_oh,
   output s1_evict_hit_index_oh,
   output s1_evict_sent
 );

@@ -35,11 +35,6 @@ module scariv_csu_pipe
   csr_rd_if.master                  read_if,
   csr_wr_if.master                  write_if,
 
-  /* SFENCE update information */
-  sfence_if.master                  sfence_if,
-  /* FENCE.I update */
-  output logic                      o_fence_i,
-
   output scariv_pkg::done_rpt_t     o_done_report
 );
 
@@ -52,30 +47,28 @@ typedef struct packed {
   logic is_uret;
   logic is_ecall;
   logic is_ebreak;
-  logic is_fence;
-  logic is_fence_i;
-  logic is_sfence_vma;
   logic csr_update;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t                        r_ex0_issue;
-pipe_ctrl_t                              w_ex0_pipe_ctrl;
-csr_update_t                             w_ex0_csr_update;
+scariv_pkg::issue_t    r_ex0_issue;
+pipe_ctrl_t            w_ex0_pipe_ctrl;
+csr_update_t           w_ex0_csr_update;
 
-pipe_ctrl_t                              r_ex1_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex1_issue;
+pipe_ctrl_t            r_ex1_pipe_ctrl;
+scariv_pkg::issue_t    r_ex1_issue;
 
 riscv_pkg::xlen_t      w_ex2_rs1_selected_data;
 
-pipe_ctrl_t                              r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex2_issue;
-riscv_pkg::xlen_t            r_ex2_rs1_data;
+pipe_ctrl_t            r_ex2_pipe_ctrl;
+scariv_pkg::issue_t    r_ex2_issue;
+riscv_pkg::xlen_t      r_ex2_rs1_data;
+logic                  w_ex2_is_fs_illegal;
 
-pipe_ctrl_t                              r_ex3_pipe_ctrl;
-scariv_pkg::issue_t                        r_ex3_issue;
-riscv_pkg::xlen_t           r_ex3_result;
-riscv_pkg::xlen_t           r_ex3_csr_rd_data;
-logic                                    r_ex3_csr_illegal;
+pipe_ctrl_t            r_ex3_pipe_ctrl;
+scariv_pkg::issue_t    r_ex3_issue;
+riscv_pkg::xlen_t      r_ex3_result;
+riscv_pkg::xlen_t      r_ex3_csr_rd_data;
+logic                  r_ex3_csr_illegal;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -89,9 +82,6 @@ decoder_csu_ctrl u_pipe_ctrl (
   .is_uret       (w_ex0_pipe_ctrl.is_uret      ),
   .is_ecall      (w_ex0_pipe_ctrl.is_ecall     ),
   .is_ebreak     (w_ex0_pipe_ctrl.is_ebreak    ),
-  .is_fence      (w_ex0_pipe_ctrl.is_fence     ),
-  .is_fence_i    (w_ex0_pipe_ctrl.is_fence_i   ),
-  .is_sfence_vma (w_ex0_pipe_ctrl.is_sfence_vma),
   .is_wfi        (),
   .csr_update    (w_ex0_csr_update             )
 );
@@ -138,6 +128,11 @@ assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::X
 assign read_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_if.addr  = r_ex2_issue.inst[31:20];
 
+assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
+                             ((r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FFLAGS) |
+                              (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FRM   ) |
+                              (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_result    <= 'h0;
@@ -148,7 +143,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= r_ex2_issue;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
-    r_ex3_csr_illegal <= read_if.resp_error;
+    r_ex3_csr_illegal <= read_if.resp_error | w_ex2_is_fs_illegal;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
@@ -169,10 +164,8 @@ assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
 assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
 
-logic w_ex3_sfence_vma_illegal;
 logic w_ex3_sret_tsr_illegal;
 
-assign w_ex3_sfence_vma_illegal = r_ex3_pipe_ctrl.is_sfence_vma & i_mstatus[`MSTATUS_TVM];
 assign w_ex3_sret_tsr_illegal   = r_ex3_pipe_ctrl.is_sret       & i_mstatus[`MSTATUS_TSR];
 
 assign o_done_report.valid    = r_ex3_issue.valid;
@@ -183,22 +176,21 @@ assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                      r_ex3_pipe_ctrl.is_sret |
                                      r_ex3_pipe_ctrl.is_uret |
                                      r_ex3_pipe_ctrl.is_ecall |
-                                     r_ex3_pipe_ctrl.is_fence_i |
-                                     r_ex3_pipe_ctrl.is_fence |
-                                     r_ex3_pipe_ctrl.is_sfence_vma |
-                                     r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | /* w_ex3_sret_tsr_illegal (cover by pipe.is_sret)*/
+                                     r_ex3_pipe_ctrl.is_ebreak |
+                                     r_ex3_csr_illegal |
                                      (write_if.valid & write_if.resp_error);
 
-assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? scariv_pkg::ILLEGAL_INST :
+assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
                                    r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
                                    r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
                                    r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? scariv_pkg::ECALL_U :
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
+                                   r_ex3_pipe_ctrl.is_ebreak ? scariv_pkg::BREAKPOINT :
                                    scariv_pkg::SILENT_FLUSH;
 
-assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sfence_vma_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
+assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
                                    'h0;
 
 // ------------
@@ -212,70 +204,6 @@ assign write_if.valid = r_ex3_issue.valid &
                           r_ex3_issue.rd_regs[0].valid & (r_ex3_issue.rd_regs[0].regidx == 5'h0));
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
-
-// ------------
-// SFENCE Update
-// ------------
-logic r_sfence_vma_commit_wait;
-scariv_pkg::cmt_id_t r_sfence_vma_cmt_id;
-scariv_pkg::grp_id_t r_sfence_vma_grp_id;
-logic                                r_sfence_vma_is_rs1_x0;
-logic                                r_sfence_vma_is_rs2_x0;
-scariv_pkg::vaddr_t      r_sfence_vma_vaddr;
-
-logic                                w_sfence_vma_sfence_commit_match;
-assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &
-                                          (i_commit.cmt_id == r_sfence_vma_cmt_id) &
-                                          |(i_commit.grp_id & r_sfence_vma_grp_id);
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_sfence_vma_commit_wait <= 'h0;
-  end else begin
-    if (w_sfence_vma_sfence_commit_match) begin
-      r_sfence_vma_commit_wait <= 1'b0;
-    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_sfence_vma & ~w_ex3_sfence_vma_illegal) begin
-      r_sfence_vma_commit_wait <= 1'b1;
-      r_sfence_vma_cmt_id <= r_ex3_issue.cmt_id;
-      r_sfence_vma_grp_id <= r_ex3_issue.grp_id;
-      r_sfence_vma_is_rs1_x0 <= r_ex3_issue.rd_regs[0].regidx == 'h0;
-      r_sfence_vma_is_rs2_x0 <= r_ex3_issue.rd_regs[1].regidx == 'h0;
-      r_sfence_vma_vaddr     <= r_ex3_result[riscv_pkg::VADDR_W-1:0];
-    end
-  end // else: !if(i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
-assign sfence_if.valid     = r_sfence_vma_commit_wait & w_sfence_vma_sfence_commit_match;
-assign sfence_if.is_rs1_x0 = r_ex3_issue.rd_regs[0].regidx == 'h0;
-assign sfence_if.is_rs2_x0 = r_ex3_issue.rd_regs[1].regidx == 'h0;
-assign sfence_if.vaddr     = r_ex3_result[riscv_pkg::VADDR_W-1:0];
-
-// ---------------
-// FENCE_I update
-// ---------------
-logic                r_fencei_commit_wait;
-logic                w_fencei_commit_match;
-scariv_pkg::cmt_id_t r_fencei_cmt_id;
-scariv_pkg::grp_id_t r_fencei_grp_id;
-assign w_fencei_commit_match = r_fencei_commit_wait & i_commit.commit &
-                               (i_commit.cmt_id == r_fencei_cmt_id) &
-                               |(i_commit.grp_id & r_fencei_grp_id);
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_fencei_commit_wait <= 'h0;
-  end else begin
-    if (w_fencei_commit_match) begin
-      r_fencei_commit_wait <= 1'b0;
-    end else if (r_ex3_issue.valid & r_ex3_pipe_ctrl.is_fence_i) begin
-      r_fencei_commit_wait <= 1'b1;
-      r_fencei_cmt_id <= r_ex3_issue.cmt_id;
-      r_fencei_grp_id <= r_ex3_issue.grp_id;
-    end
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
-
-
-assign o_fence_i = w_fencei_commit_match;
 
 `ifdef SIMULATION
 

@@ -1,124 +1,53 @@
 == 命令デコーダ
 
-=== RVC命令の展開機能
+SCARIVのパイプラインでは、命令のデコードは大きく分けて2か所で行われます。
 
-RISC-VにはRVCと呼ばれる16ビット短縮命令が定義されています。 RVCはRISC-V
-ISAアルファベットでは'C'と定義されています。
+=== 命令バッファ内での簡易デコード
 
-RVC命令の命令識別は、命令ビットの下位2ビットにより識別できます。
+命令バッファ内でのデコードは、命令の分類の抽出、参照レジスタアドレスの抽出、ディスパッチグループの生成のために行われます。
+また、RVC命令の展開もデコード中に行われます。
 
-* 00 : RVC命令 Quadrant 0
-* 01 : RVC命令 Quadrant 1
-* 10 : RVC命令 Quadrant 2
-* 11 : 通常命令 32ビット以上
+==== 簡易デコードの実装詳細
 
-それぞれのRVC命令は、32ビットの命令に等価変換することができます。
-それぞれのRVC命令について、等価な32ビット命令を示します。
+命令の簡易デコードのためのデコーダはJSONファイルで記述される命令の定義に基づきます。
+命令の分類は大きく2種類に分けられており、1つ目がディスパッチされるバックエンドモジュールを示しており、2つ目がその中でより細かな分類を示しています。
 
-[cols=",,",options="header",]
-|===
-|RVC命令 |Quadrant |展開命令
-|[.title-ref]#c.addi4spn rd', nzuimm# |00 |[.title-ref]#addi rd, x2,
-nzuimm#
+リスト <<riscv_decoder>> に、JSONで記述されたデコーダの一部を示します。
 
-|[.title-ref]#c.fld rd', offset(rs1')# |00 |[.title-ref]#fld rd,
-offset(rs1)#
+[[riscv_decoder]]
+[source,json]
+.riscv_decoder.json
+----
+    {
+        "comment": "Load DoubleWord instruction",
+        "name":"ld         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "xlen":["64"],
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",  // <1>
+        "reg": [["rd", "r3"], ["r1", "r1"]],                                       // <2>
+        "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["op", "load"]]
+    },
+----
+<1> 命令の分類が `arith=(ALU)` であり、命令のサブ分類が `int` であることを示します。
+<2> レジスタの読み込み`r1`がr1フィールドであることを示しており、レジスタの書き込み`rd`がr3フィールドから取られることを示しています。
 
-|[.title-ref]#c.lw rd', offset(rs1')# |00 |[.title-ref]#lw rd,
-offset(rs1)#
+=== バックエンド実行パイプライン内でのデコード
 
-|[.title-ref]#c.flw rd', offset(rs1')# |00 |[.title-ref]#flw rd,
-offset(rs1)#
+命令の発行後、バックエンドのパイプラインで命令の詳細デコードが行われます。
+このデコードは、各バックエンドに特化されています。
 
-|[.title-ref]#c.ld rd', offset(rs1')# |00 |[.title-ref]#ld rd,
-offset(rs1)#
-
-|[.title-ref]#c.fsd rd', offset(rs1')# |00 |[.title-ref]#fsd rs2,
-offset(rs1)#
-
-|[.title-ref]#c.sw rd', offset(rs1')# |00 |[.title-ref]#sw rs2,
-offset(rs1)#
-
-|[.title-ref]#c.fsw rd', offset(rs1')# |00 |[.title-ref]#fsw rs2,
-offset(rs1)#
-
-|[.title-ref]#c.sd rd', offset(rs1')# |00 |[.title-ref]#sd rs2,
-offset(rs1)#
-
-|[.title-ref]#c.nop# |01 |[.title-ref]#nop#
-
-|[.title-ref]#c.addi rd, nzimm# |01 |[.title-ref]#addi rd, rd, nzimm#
-
-|[.title-ref]#c.jal offset# |01 |[.title-ref]#jal x1, offset#
-
-|[.title-ref]#c.addiw rd, imm# |01 |[.title-ref]#addiw rd, rd, imm#
-
-|[.title-ref]#c.li rd, uimm# |01 |[.title-ref]#addi rd, x0, imm#
-
-|[.title-ref]#c.addi16sp rd',nzimm# |01 |[.title-ref]#addi x2, x2,
-nzimm#
-
-|[.title-ref]#c.lui rd, nzimm# |01 |[.title-ref]#lui rd, nzimm#
-
-|[.title-ref]#c.srli rd', uimm# |01 |[.title-ref]#srli rd, rd, shamt#
-
-|[.title-ref]#c.srli64 rd', uimm# |01 |[.title-ref]#srli rd, rd, shamt#
-
-|[.title-ref]#c.srai rd', uimm# |01 |[.title-ref]#srai rd, rd, shamt#
-
-|[.title-ref]#c.srai64 rd', uimm# |01 |[.title-ref]#srai rd, rd, shamt#
-
-|[.title-ref]#c.andi rd', uimm# |01 |[.title-ref]#andi rd, rd, imm#
-
-|[.title-ref]#c.sub rd', rd'# |01 |[.title-ref]#sub rd, rd, rs2#
-
-|[.title-ref]#c.xor rd', rd'# |01 |[.title-ref]#xor rd, rd, rs2#
-
-|[.title-ref]#c.or rd', rd'# |01 |[.title-ref]#or rd, rd, rs2#
-
-|[.title-ref]#c.and rd', rd'# |01 |[.title-ref]#and rd, rd, rs2#
-
-|[.title-ref]#c.subw rd', rs2# |01 |[.title-ref]#subw rd, rd, rs2#
-
-|[.title-ref]#c.addw rd', rs2# |01 |[.title-ref]#addw rd, rd, rs2#
-
-|[.title-ref]#c.j offset# |01 |[.title-ref]#jal x0, offset#
-
-|[.title-ref]#c.beqz rs1, offset# |01 |[.title-ref]#beq rs1, x0, offset#
-
-|[.title-ref]#c.bnez rs1, offset# |10 |[.title-ref]#bne rs1, x0, offset#
-
-|[.title-ref]#c.slli rd, uimm# |10 |[.title-ref]#slli rd, rd, shamt#
-
-|[.title-ref]#c.fldsp rd, offset(x2)# |10 |[.title-ref]#fld rd,
-offset(x2)#
-
-|[.title-ref]#c.lwsp rd, offset# |10 |[.title-ref]#lw rd, offset(x2)#
-
-|[.title-ref]#c.flwsp rd, offset# |10 |[.title-ref]#flw rd, offset(x2)#
-
-|[.title-ref]#c.ldsp rd, offset(x2)# |10 |[.title-ref]#ld rd,
-offset(x2)#
-
-|[.title-ref]#c.jr rd# |10 |[.title-ref]#jalr x0, 0(rs1)#
-
-|[.title-ref]#c.mv rd, rs2# |10 |[.title-ref]#add rd, x0, rs2#
-
-|[.title-ref]#c.ebreak# |10 |[.title-ref]#ebreak#
-
-|[.title-ref]#c.jalr rs1# |10 |[.title-ref]#jalr x1, 0(rs1)#
-
-|[.title-ref]#c.add rd, rs2# |10 |[.title-ref]#add rd, rd, rs2#
-
-|[.title-ref]#c.fsdsp rs2, offset(x2)# |10 |[.title-ref]#fsd rs2,
-offset(sp)#
-
-|[.title-ref]#c.swsp rs2, offset(x2)# |10 |[.title-ref]#sw rs2,
-offset(sp)#
-
-|[.title-ref]#c.fswsp rs2, offset(x2)# |10 |[.title-ref]#fsw rs2,
-offset(sp)#
-
-|[.title-ref]#c.sdsp rs2, offset(x2)# |10 |[.title-ref]#sd rs2,
-offset(sp)#
-|===
+[[riscv_decoder_detail]]
+[source,json]
+.riscv_decoder.json
+----
+    {
+        "comment": "Load DoubleWord instruction",
+        "name":"ld         r[11:7],h[31:20](r[19:15])",
+        "length":"32", "xlen":["64"],
+        "field":["XXXXX", "XX", "XXXXX", "XXXXX", "011", "XXXXX", "00000", "11"],
+        "inst_cat": [["inst_cat", "ld"], ["inst_subcat", "int"]], "isa_ext": "i",
+        "reg": [["rd", "r3"], ["r1", "r1"]],
+        "lsu_ctrl":[["size", "dw"], ["sign", "s"], ["op", "load"]]  // <1>
+    },
+----
+<1> バックエンド・パイプラインで使用されるデコード情報です。`lsu_ctrl`なので、LSU内のパイプラインで使用されます。命令の詳細な情報をデコードします。

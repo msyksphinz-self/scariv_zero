@@ -39,11 +39,6 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
-  /* SFENCE update information */
-  sfence_if.master            sfence_if,
-  /* FENCE.I update */
-  output logic                      o_fence_i,
-
   // CLINT connection
   clint_if.slave clint_if,
   // PLIC connection
@@ -138,8 +133,6 @@ u_csu_pipe
    .i_mstatus     (csr_info.mstatus),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
-   .sfence_if (sfence_if),
-   .o_fence_i (o_fence_i),
 
    .o_done_report (o_done_report)
    );

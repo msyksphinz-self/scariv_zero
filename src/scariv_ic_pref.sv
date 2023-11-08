@@ -33,11 +33,11 @@ module scariv_ic_pref
  input ic_data_t i_pref_l2_resp_data,
 
  // Instruction Fetch search
- input logic      i_s0_pref_search_valid,
- input vaddr_t    i_s0_pref_search_vaddr,
- output logic     o_s1_pref_search_hit,
- output ic_data_t o_s1_pref_search_data,
- output logic     o_s1_pref_search_working_hit, // Currently same address is fetching now, will be come response
+ input logic      i_f0_pref_search_valid,
+ input vaddr_t    i_f0_pref_search_vaddr,
+ output logic     o_f1_pref_search_hit,
+ output ic_data_t o_f1_pref_search_data,
+ output logic     o_f1_pref_search_working_hit, // Currently same address is fetching now, will be come response
 
  // Write ICCache Interface
  output logic     o_ic_wr_valid,
@@ -117,27 +117,27 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-logic w_s0_pref_search_hit;
-logic w_s0_pref_search_working_hit;
-logic w_s0_pref_search_working_hit_and_l2_return;
+logic w_f0_pref_search_hit;
+logic w_f0_pref_search_working_hit;
+logic w_f0_pref_search_working_hit_and_l2_return;
 
-assign w_s0_pref_search_hit = i_s0_pref_search_valid &
+assign w_f0_pref_search_hit = i_f0_pref_search_valid &
                               r_prefetched_valid &
-                              (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
+                              (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
                                r_prefetched_vaddr    [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
 
-assign w_s0_pref_search_working_hit = i_s0_pref_search_valid &
+assign w_f0_pref_search_working_hit = i_f0_pref_search_valid &
                                       (r_pref_state == ICResp) &
-                                      (i_s0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
+                                      (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
                                        r_pref_vaddr          [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
 
-assign w_s0_pref_search_working_hit_and_l2_return = w_s0_pref_search_working_hit & i_pref_l2_resp_valid;
+assign w_f0_pref_search_working_hit_and_l2_return = w_f0_pref_search_working_hit & i_pref_l2_resp_valid;
 
 always_ff @ (posedge i_clk) begin
   // Search
-  o_s1_pref_search_hit         <= w_s0_pref_search_hit | w_s0_pref_search_working_hit_and_l2_return;
-  o_s1_pref_search_data        <= w_s0_pref_search_working_hit_and_l2_return ? i_pref_l2_resp_data : r_prefetched_data;
-  o_s1_pref_search_working_hit <= w_s0_pref_search_working_hit & ~i_pref_l2_resp_valid;
+  o_f1_pref_search_hit         <= w_f0_pref_search_hit | w_f0_pref_search_working_hit_and_l2_return;
+  o_f1_pref_search_data        <= w_f0_pref_search_working_hit_and_l2_return ? i_pref_l2_resp_data : r_prefetched_data;
+  o_f1_pref_search_working_hit <= w_f0_pref_search_working_hit & ~i_pref_l2_resp_valid;
 end
 
 // =========================
@@ -153,8 +153,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     case (r_pref_wr_state)
       PrefWrInit : begin
-        if (w_s0_pref_search_hit) begin
-          r_pref_search_vaddr <= i_s0_pref_search_vaddr;
+        if (w_f0_pref_search_hit) begin
+          r_pref_search_vaddr <= i_f0_pref_search_vaddr;
           r_pref_wr_state     <= PrefWrWait;
         end
       end

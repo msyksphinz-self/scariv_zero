@@ -40,9 +40,13 @@ package scariv_pkg;
 
   typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
-  localparam FLIST_SIZE = CMT_ENTRY_SIZE;
-  localparam RNID_SIZE = FLIST_SIZE * DISP_SIZE + 32;
-  localparam RNID_W = $clog2(RNID_SIZE);
+  localparam XPR_FLIST_SIZE = XPR_PRF_SIZE_PER_GRP;
+  localparam FPR_FLIST_SIZE = FPR_PRF_SIZE_PER_GRP;
+  localparam XPR_RNID_SIZE = XPR_FLIST_SIZE * DISP_SIZE + 32;
+  localparam XPR_RNID_W = $clog2(XPR_RNID_SIZE);
+  localparam FPR_RNID_SIZE = FPR_FLIST_SIZE * DISP_SIZE + 32;
+  localparam FPR_RNID_W = $clog2(FPR_RNID_SIZE);
+  localparam MAX_RNID_W = XPR_RNID_W > FPR_RNID_W ? XPR_RNID_W : FPR_RNID_W;
 
   localparam CMT_ENTRY_W = $clog2(CMT_ENTRY_SIZE);
 
@@ -83,9 +87,9 @@ typedef logic [riscv_pkg::VADDR_W-1: 0] vaddr_t;
 typedef logic [riscv_pkg::PADDR_W-1: 0] paddr_t;
 typedef logic [MAX_ADDR_W-1: 0]         maxaddr_t;
 
-typedef logic [CMT_ID_W-1: 0]  cmt_id_t;
-typedef logic [DISP_SIZE-1: 0] grp_id_t;
-typedef logic [RNID_W-1: 0]    rnid_t;
+typedef logic [CMT_ID_W-1: 0]   cmt_id_t;
+typedef logic [DISP_SIZE-1: 0]  grp_id_t;
+typedef logic [MAX_RNID_W-1: 0] rnid_t;
 typedef logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1:0] brtag_t;
 
 // ICache Data Types
@@ -299,18 +303,11 @@ typedef struct packed {
 typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
-  // inst_cat_t         cat;
-  // brtag_t            brtag;
   reg_wr_disp_t      wr_reg;
-  // logic [RAS_W-1: 0] ras_index;
-  // logic              is_cond;  // Conditional Branch
-  // logic              is_call;  // Call
-  // logic              is_ret;   // Ret
-  // gshare_bht_t       gshare_bhr;
+  logic [31: 0]      inst;
 `ifdef SIMULATION
   logic              rvc_inst_valid;
   logic [15: 0]      rvc_inst;
-  logic [31: 0]      inst;
   logic [63: 0]      kanata_id;
 `endif // SIMULATION
 } rob_static_info_t;
@@ -613,8 +610,7 @@ function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
                    commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                    commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
   entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |(commit.flush_valid & entry_grp_id)
-                 /* |(commit.flush_valid & (entry_grp_id-1))*/);
+                (commit.cmt_id == entry_cmt_id && |((commit.flush_valid & ~commit.dead_id) <= entry_grp_id));
 
   return is_flushed_commit(commit) & entry_older;
 
@@ -669,8 +665,8 @@ endfunction // is_br_flush_target
 typedef struct packed {
   logic                                                      commit;
   grp_id_t                                         rnid_valid;
-  logic [scariv_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] old_rnid;
-  logic [scariv_conf_pkg::DISP_SIZE-1:0][RNID_W-1:0] rd_rnid;
+  logic [scariv_conf_pkg::DISP_SIZE-1:0][MAX_RNID_W-1:0] old_rnid;
+  logic [scariv_conf_pkg::DISP_SIZE-1:0][MAX_RNID_W-1:0] rd_rnid;
   logic [scariv_conf_pkg::DISP_SIZE-1:0][ 4: 0]      rd_regidx;
   reg_t [scariv_conf_pkg::DISP_SIZE-1:0]             rd_typ;
   // logic                                                      is_br_included;
@@ -742,10 +738,10 @@ function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.notify_valid = 1'b0;
   ret.done      = 1'b0;
   ret.dead      = 1'b0;
+  ret.inst      = inst.rvc_inst_valid ? inst.rvc_inst : inst.inst;
 
 `ifdef SIMULATION
   ret.pred_target_vaddr = inst.pred_target_vaddr;
-  ret.inst = inst.inst;
 `endif // SIMULATION
 
   return ret;

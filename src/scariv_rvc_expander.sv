@@ -211,7 +211,7 @@ always_comb begin
       end else begin
         if (i_rvc_inst[11:7] == 'h0 && i_rvc_inst[6:2] == 'h0) begin
           // `c.ebreak`                      10        `ebreak`
-          out_32bit = {7'b000_0000, 5'b00001, x0, 3'b000, x0, 7'b111_0011} | (1 << 20);
+          out_32bit = {7'b000_0000, 5'b00001, x0, 3'b000, x0, 7'b111_0011};
         end else if (i_rvc_inst[11:7] != 'h0 && i_rvc_inst[6:2] == 'h0) begin
           // `c.jalr     rs1`                10        `jalr x1, 0(rs1)`
           out_32bit = {7'b000_0000, 5'b00000, rd, 3'b000, ra, 7'b110_0111};

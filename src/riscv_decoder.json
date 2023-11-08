@@ -519,25 +519,25 @@
         "name":"fence",
         "length":"32", "xlen":["32", "64"],
         "field": ["0000X", "XX", "XXXXX", "00000", "000", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg":[],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "fence"]]
     },
     {
         "name":"fence.i",
         "length":"32", "xlen":["32", "64"],
         "field": ["00000", "00", "00000", "00000", "001", "XXXXX", "00011", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg":[],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_fence_i", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "fence_i"]]
     },
     {
         "name":"sfence.vma r[19:15],r[24:20]",
         "length":"32", "xlen":["32", "64"],
         "field":["00010", "01", "XXXXX", "XXXXX", "000", "00000", "11100", "11"],
-        "inst_cat": [["inst_cat", "csu"]], "isa_ext": "i",
+        "inst_cat": [["inst_cat", "st"], ["inst_subcat", "int"]], "isa_ext": "i",
         "reg": [["r1", "r1"], ["r2", "r2"]],
-        "csu_sched": [["oldest", "1"]], "csu_ctrl":[["is_sfence_vma", "1"]]
+        "lsu_sched": [["oldest", "1"]], "lsu_ctrl":[["op", "sfence_vma"]]
     },
     {
         "name":"wfi",
@@ -850,7 +850,7 @@
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10000", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmadd_s"], ["use_frm", "1"]]
     },
     {
         "name":"fmsub.s    f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -858,7 +858,7 @@
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10001", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmsub_s"], ["use_frm", "1"]]
     },
     {
         "name":"fnmsub.s   f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -866,7 +866,7 @@
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10010", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmsub_s"], ["use_frm", "1"]]
     },
     {
         "name":"fnmadd.s   f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -874,7 +874,7 @@
         "field":["XXXXX", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10011", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fnmadd_s"], ["use_frm", "1"]]
     },
     {
         "name":"fadd.s     f[11:7],f[19:15],f[24:20]",
@@ -882,7 +882,7 @@
         "field":["00000", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fadd_s"], ["use_frm", "1"]]
     },
     {
         "name":"fsub.s     f[11:7],f[19:15],f[24:20]",
@@ -890,7 +890,7 @@
         "field":["00001", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsub_s"], ["use_frm", "1"]]
     },
     {
         "name":"fmul.s     f[11:7],f[19:15],f[24:20]",
@@ -898,7 +898,7 @@
         "field":["00010", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmul"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmul_s"], ["use_frm", "1"]]
     },
     {
         "name":"fdiv.s     f[11:7],f[19:15],f[24:20]",
@@ -906,7 +906,7 @@
         "field":["00011", "00", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fdiv"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fdiv_s"], ["use_frm", "1"]]
     },
     {
         "name":"fsqrt.s    f[11:7],f[19:15]",
@@ -914,7 +914,7 @@
         "field":["01011", "00", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsqrt"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fsqrt_s"], ["use_frm", "1"]]
     },
     {
         "name":"fsgnj.s    f[11:7],f[19:15],f[24:20]",
@@ -946,7 +946,7 @@
         "field":["00101", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmin"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmin_s"]]
     },
     {
         "name":"fmax.s     f[11:7],f[19:15],f[24:20]",
@@ -954,7 +954,7 @@
         "field":["00101", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmax"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fmax_s"]]
     },
     {
         "name":"fcvt.w.s   r[11:7],f[19:15]",
@@ -986,7 +986,7 @@
         "field":["10100", "00", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "feq"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "feq_s"]]
     },
     {
         "name":"flt.s      r[11:7],f[19:15],f[24:20]",
@@ -994,7 +994,7 @@
         "field":["10100", "00", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "flt"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "flt_s"]]
     },
     {
         "name":"fle.s      r[11:7],f[19:15],f[24:20]",
@@ -1002,7 +1002,7 @@
         "field":["10100", "00", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fle"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fle_s"]]
     },
     {
         "name":"fclass.s   f[11:7],f[19:15]",
@@ -1010,7 +1010,7 @@
         "field":["11100", "00", "00000", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "f",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fclass"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "w"], ["op", "fclass_s"]]
     },
     {
         "name":"fcvt.s.w   f[11:7],r[19:15]",
@@ -1090,7 +1090,7 @@
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10000", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmadd_d"], ["use_frm", "1"]]
     },
     {
         "name":"fmsub.d    f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -1098,7 +1098,7 @@
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10001", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmsub_d"], ["use_frm", "1"]]
     },
     {
         "name":"fnmsub.d   f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -1106,7 +1106,7 @@
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10010", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmsub_d"], ["use_frm", "1"]]
     },
     {
         "name":"fnmadd.d   f[11:7],f[19:15],f[24:20],f[31:27]",
@@ -1114,7 +1114,7 @@
         "field":["XXXXX", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10011", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"], ["r3", "f3"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fnmadd_d"], ["use_frm", "1"]]
     },
     {
         "name":"fadd.d     f[11:7],f[19:15],f[24:20]",
@@ -1122,7 +1122,7 @@
         "field":["00000", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fadd"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fadd_d"], ["use_frm", "1"]]
     },
     {
         "name":"fsub.d     f[11:7],f[19:15],f[24:20]",
@@ -1130,7 +1130,7 @@
         "field":["00001", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsub"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsub_d"], ["use_frm", "1"]]
     },
     {
         "name":"fmul.d     f[11:7],f[19:15],f[24:20]",
@@ -1138,7 +1138,7 @@
         "field":["00010", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmul"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmul_d"], ["use_frm", "1"]]
     },
     {
         "name":"fdiv.d     f[11:7],f[19:15],f[24:20]",
@@ -1146,7 +1146,7 @@
         "field":["00011", "01", "XXXXX", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fdiv"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fdiv_d"], ["use_frm", "1"]]
     },
     {
         "name":"fsqrt.d    f[11:7],f[19:15]",
@@ -1154,7 +1154,7 @@
         "field":["01011", "01", "00000", "XXXXX", "XXX", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsqrt"], ["use_frm", "1"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fsqrt_d"], ["use_frm", "1"]]
     },
     {
         "name":"fsgnj.d    f[11:7],f[19:15],f[24:20]",
@@ -1186,7 +1186,7 @@
         "field":["00101", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmin"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmin_d"]]
     },
     {
         "name":"fmax.d     f[11:7],f[19:15],f[24:20]",
@@ -1194,7 +1194,7 @@
         "field":["00101", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "fd"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmax"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fmax_d"]]
     },
     {
         "name":"fcvt.s.d   f[11:7],f[19:15]",
@@ -1218,7 +1218,7 @@
         "field":["10100", "01", "XXXXX", "XXXXX", "010", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "feq"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "feq_d"]]
     },
     {
         "name":"flt.d      r[11:7],f[19:15],f[24:20]",
@@ -1226,7 +1226,7 @@
         "field":["10100", "01", "XXXXX", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "flt"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "flt_d"]]
     },
     {
         "name":"fle.d      r[11:7],f[19:15],f[24:20]",
@@ -1234,7 +1234,7 @@
         "field":["10100", "01", "XXXXX", "XXXXX", "000", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"], ["r2", "f2"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fle"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fle_d"]]
     },
     {
         "name":"fclass.d   r[11:7],f[19:15]",
@@ -1242,7 +1242,7 @@
         "field":["11100", "01", "00000", "XXXXX", "001", "XXXXX", "10100", "11"],
         "inst_cat": [["inst_cat", "fpu"]], "isa_ext": "d",
         "reg": [["rd", "r3"], ["r1", "f1"]],
-        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fclass"]]
+        "fpu_ctrl":[["pipe", "fpnew"], ["size", "dw"], ["op", "fclass_d"]]
     },
     {
         "name":"fcvt.w.d   r[11:7],f[19:15]",

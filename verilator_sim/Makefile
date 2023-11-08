@@ -49,7 +49,8 @@ VERILATOR_OPTS += --cc
 VERILATOR_OPTS += -I../src
 VERILATOR_OPTS += -I../src/fpnew/src/common_cells/include
 VERILATOR_OPTS += -I../tb
-VERILATOR_OPTS += -I${VERILATOR_HOME}/include/vltstd
+# VERILATOR_OPTS += -I${VERILATOR_ROOT}/share/verilator/include/vltstd
+VERILATOR_OPTS += -I${VERILATOR_ROOT}/include/vltstd
 
 VERILATOR_OPTS += +define+RV_AMO=$(RV_AMO)
 ifeq ($(findstring "b",$(ISA)),"b")
@@ -107,6 +108,7 @@ DECODE_FILES += ../src/decoder_lsu_ctrl.sv
 DECODE_FILES += ../src/decoder_bru_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_sched.sv
+DECODE_FILES += ../src/decoder_lsu_sched.sv
 DECODE_FILES += ../src/decoder_fpu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
@@ -134,6 +136,8 @@ build_espresso:
 	cd ../src && ./build_decoder.rb csu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_csu_sched.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb csu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_lsu_sched.sv: $(DECODE_JSONS)
+	cd ../src && ./build_decoder.rb lsu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_fpu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_vec_ctrl.sv: ../src/riscv_rvv_decoder.json

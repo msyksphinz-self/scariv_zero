@@ -23,6 +23,7 @@ module scariv_st_buffer_entry
  output logic o_missu_req, // Refill request to MISSU
  input logic  i_missu_accepted,
 
+ input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_update_hit,
  input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_hit,
  input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_search_hit,
  input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_sent,
@@ -120,15 +121,25 @@ always_comb begin
         w_state_next = ST_BUF_RD_L1D;
         w_l1d_rd_req_next = 1'b1;
         w_entry_next = i_entry;
+
+        if (i_snoop_busy) begin
+          w_state_next = ST_BUF_WAIT_SNOOP;
+        end
       end
     end
     ST_BUF_RD_L1D: begin
-      if (i_l1d_rd_accepted) begin
+      if (i_snoop_busy) begin
+        w_state_next = ST_BUF_WAIT_SNOOP;
+      end else if (i_l1d_rd_accepted) begin
         w_state_next = ST_BUF_RESP_L1D;
       end
     end
     ST_BUF_RESP_L1D: begin
-      if (i_missu_search_hit != 'h0) begin
+      if (i_snoop_busy) begin
+        w_state_next = ST_BUF_WAIT_SNOOP;
+      end else if (i_missu_search_update_hit != 'h0) begin
+        w_state_next = ST_BUF_RD_L1D;
+      end else if (i_missu_search_hit != 'h0) begin
         if (i_missu_resolve.valid &
             (i_missu_resolve.resolve_index_oh == i_missu_search_hit)) begin
           // MISSU hit and resolve immediately : replay again
@@ -214,9 +225,9 @@ always_comb begin
         end
       end // else: !if(r_entry.is_rmw)
     end
-    ST_BUF_WAIT_L1D_MERGE : begin
+    ST_BUF_WAIT_SNOOP : begin
       if (!i_snoop_busy) begin
-        w_state_next = ST_BUF_L1D_MERGE;
+        w_state_next = ST_BUF_RD_L1D;
       end
     end
     ST_BUF_WAIT_FULL: begin

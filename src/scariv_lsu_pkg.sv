@@ -116,7 +116,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
                                          cmt_id_t cmt_id,
                                          grp_id_t grp_id,
                                          logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
-                                         logic stq_rmw_existed);
+                                         logic stq_rmw_existed, logic oldest_valid);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
@@ -129,7 +129,8 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.grp_id = grp_id;
 
   ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
-                         stq_rmw_existed;
+                         stq_rmw_existed |
+                         oldest_valid;
   ret.oldest_valid     = 1'b0;
 
   ret.wr_reg.valid = in.wr_reg.valid;
@@ -731,6 +732,7 @@ typedef struct packed {
   logic                  l1d_high_priority;
   logic                  paddr_valid;
   scariv_pkg::paddr_t    paddr;
+  logic                  is_uc;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
 `endif // SIMULATION
@@ -849,7 +851,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_L1D_MERGE2    = 10,
   ST_BUF_WAIT_FINISH   = 11,
   ST_BUF_AMO_OPERATION = 12,
-  ST_BUF_WAIT_L1D_MERGE= 13
+  ST_BUF_WAIT_SNOOP    = 13
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (
@@ -911,6 +913,7 @@ typedef struct packed {
   scariv_pkg::reg_rd_issue_t rd_reg;
   scariv_pkg::reg_wr_issue_t wr_reg;
   scariv_pkg::paddr_t        paddr;
+  logic                      is_uc;
   scariv_lsu_pkg::ex2_haz_t  hazard_typ;
   logic [HAZARD_INDEX_SIZE-1: 0] hazard_index;
 } lsu_replay_queue_t;

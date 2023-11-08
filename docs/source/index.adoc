@@ -3,11 +3,12 @@
 :doctype: manpage
 //:doctype: book
 //:doctype: report
+:imagesdir: sections
 
 :toc: left
 :toclevels: 4
 
-include::sections/msrh.adoc[]
+include::sections/scariv.adoc[]
 
 include::sections/frontend.adoc[]
 

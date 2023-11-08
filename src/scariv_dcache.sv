@@ -227,6 +227,7 @@ assign stbuf_l1d_wr_if.s2_done            = 1'b0;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_valid = w_s2_wr_selected_resp.s2_evicted_valid;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_data  = w_s2_wr_selected_resp.s2_evicted_data;
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_paddr = w_s2_wr_selected_resp.s2_evicted_paddr;
+assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_mesi  = w_s2_wr_selected_resp.s2_evicted_mesi;
 
 
 assign missu_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
@@ -324,9 +325,32 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : perf_port_
 end // block: port_loop
 endgenerate
 
+integer total_valids[scariv_conf_pkg::DCACHE_BANKS][scariv_conf_pkg::DCACHE_WAYS];
+
+generate for (genvar bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; bank_idx++) begin
+  for (genvar way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin
+    assign total_valids[bank_idx][way_idx] = $countones(bank_loop[bank_idx].u_dcache_array.dc_way_loop[way_idx].tag.r_tag_valids);
+  end // else: !if(!i_reset_n)
+end endgenerate
+
+function automatic integer calc_valids();
+  int ret = 0;
+  for (int bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; bank_idx++) begin
+    for (int way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin
+      ret = ret + total_valids[bank_idx][way_idx];
+    end
+  end
+  return ret;
+
+endfunction // calc_valids
+
+
 function void dump_perf (int fp);
 
   $fwrite(fp, "  \"dcache\" : {\n");
+  $fwrite(fp, "    \"filled : %d, words : %d, size : %dKB},\n", calc_valids(),
+          scariv_conf_pkg::DCACHE_WORDS * scariv_conf_pkg::DCACHE_WAYS,
+          (scariv_conf_pkg::DCACHE_WORDS * scariv_conf_pkg::DCACHE_WAYS * scariv_conf_pkg::ICACHE_DATA_W) / 8 / 1024 );
   for (int p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : port_loop
     $fwrite(fp, "    \"port[%1d]\" : {", p_idx);
     $fwrite(fp, "    \"req\" : %5d, ", r_req_valid_count[p_idx]);

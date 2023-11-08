@@ -24,9 +24,6 @@ module scariv_lsu_top
     /* CSR information */
     csr_info_if.slave                     csr_info,
 
-    /* SFENCE update information */
-    sfence_if.slave  sfence_if,
-
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
@@ -70,6 +67,12 @@ module scariv_lsu_top
     mshr_snoop_if.slave  mshr_snoop_if,
     stbuf_snoop_if.slave stbuf_snoop_if,
     streq_snoop_if.slave streq_snoop_if,
+
+    /* SFENCE update information */
+    sfence_if.master            sfence_if,
+    /* FENCE.I update */
+    output logic                o_fence_i,
+
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -133,6 +136,26 @@ uc_write_if             w_uc_write_if();
 
 st_req_info_if          w_st_req_info_if();
 
+sfence_if                                  w_sfence_if_inst[scariv_conf_pkg::LSU_INST_NUM]();
+sfence_if                                  w_sfence_if_slave();
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fence_i;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_valid;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs2_x0;
+scariv_pkg::vaddr_t w_sfence_if_vaddr[scariv_conf_pkg::LSU_INST_NUM];
+
+assign o_fence_i = |w_fence_i;
+
+assign sfence_if.valid     = |w_sfence_if_valid;
+assign sfence_if.is_rs1_x0 = |w_sfence_if_is_rs1_x0;
+assign sfence_if.is_rs2_x0 = |w_sfence_if_is_rs2_x0;
+bit_oh_or #(.T(scariv_pkg::vaddr_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_sfence_vaddr_merge (.i_oh(w_sfence_if_valid), .i_data(w_sfence_if_vaddr), .o_selected(sfence_if.vaddr));
+
+assign w_sfence_if_slave.valid     = w_sfence_if_slave.valid;
+assign w_sfence_if_slave.is_rs1_x0 = w_sfence_if_slave.is_rs1_x0;
+assign w_sfence_if_slave.is_rs2_x0 = w_sfence_if_slave.is_rs2_x0;
+assign w_sfence_if_slave.vaddr     = w_sfence_if_slave.vaddr;
+
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
   scariv_lsu
@@ -147,7 +170,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .csr_info (csr_info),
     .rob_info_if (rob_info_if),
-    .sfence_if   (sfence_if),
+    .sfence_if_slave (w_sfence_if_slave),
 
     .disp_valid (disp_valid             ),
     .disp       (disp                   ),
@@ -190,6 +213,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
     .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
 
+    .sfence_if_master (w_sfence_if_inst[lsu_idx]),
+    .o_fence_i (w_fence_i[lsu_idx]),
+
     .i_commit (i_commit),
 
     .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
@@ -197,6 +223,11 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_another_flush_report (o_another_flush_report[lsu_idx]),
     .br_upd_if              (br_upd_if             )
    );
+
+  assign w_sfence_if_valid    [lsu_idx] = w_sfence_if_inst[lsu_idx].valid;
+  assign w_sfence_if_is_rs1_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs1_x0;
+  assign w_sfence_if_is_rs2_x0[lsu_idx] = w_sfence_if_inst[lsu_idx].is_rs2_x0;
+  assign w_sfence_if_vaddr    [lsu_idx] = w_sfence_if_inst[lsu_idx].vaddr;
 
 end // block: lsu_loop
 endgenerate

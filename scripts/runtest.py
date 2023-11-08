@@ -167,9 +167,10 @@ class verilator_sim:
             else:
                 run_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, text=True,
                                            cwd=base_dir + '/' + testcase)
-                # for line in iter(run_process.stdout.readline, ""):
-                #     print(line, end="")
-                #     sys.stdout.flush()
+                for line in iter(run_process.stdout.readline, ""):
+                    # print(line, end="\r")
+                    with open(base_dir + '/' + testcase + '/' + 'stdout_' + os.path.basename(test["elf"]) + ".log", 'a') as f:
+                        f.write(line)
                 run_process.wait()
 
         result_stdout = subprocess.check_output(["cat", output_file], cwd=base_dir + '/' + testcase)
@@ -328,6 +329,8 @@ def main():
     sim_conf["parallel"]        = int(args.parallel)
     sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start
+    if sim_conf["dump_start_time"] != 0:
+        sim_conf["fst_dump"] = True
     sim_conf["cycle"]           = args.cycle
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
