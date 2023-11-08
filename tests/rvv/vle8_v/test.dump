@@ -184,10 +184,10 @@ Disassembly of section .text:
     8000200a:	06400593          	li	a1,100
     8000200e:	06300613          	li	a2,99
     80002012:	40f5873b          	subw	a4,a1,a5
-    80002016:	05077757          	vsetvli	a4,a4,e32,m1,ta,mu
+    80002016:	04077757          	vsetvli	a4,a4,e8,m1,ta,mu
     8000201a:	5e07cc57          	vmv.v.x	v24,a5
     8000201e:	5e05ccd7          	vmv.v.x	v25,a1
-    80002022:	02086f07          	vle32.v	v30,(a6)
+    80002022:	02080f07          	vle8.v	v30,(a6)
     80002026:	97ba                	add	a5,a5,a4
     80002028:	983a                	add	a6,a6,a4
     8000202a:	fef654e3          	bge	a2,a5,80002012 <main+0x12>

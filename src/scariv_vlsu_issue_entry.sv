@@ -41,7 +41,7 @@ module scariv_vlsu_issue_entry
    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
-   vec_phy_fwd_if.slave         vec_phy_fwd_if[1],
+   vec_phy_fwd_if.slave         vec_phy_fwd_if[3],
 
    input logic       i_entry_picked,
 
@@ -72,7 +72,7 @@ logic [NUM_OPERANDS-1: 0] w_rs_rel_hit;
 scariv_pkg::rel_bus_idx_t w_rs_rel_index[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_may_mispred;
 logic [NUM_OPERANDS-1: 0] w_rs_phy_hit;
-logic [ 0: 0]             w_rs_vec_phy_hit[NUM_OPERANDS];
+logic [ 2: 0]             w_rs_vec_phy_hit[NUM_OPERANDS];
 logic [NUM_OPERANDS-1: 0] w_rs_mispredicted;
 
 logic     w_entry_flush;
@@ -107,7 +107,7 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
                                            .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
   select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
-  for (genvar fwd_idx = 0; fwd_idx < 1; fwd_idx++) begin
+  for (genvar fwd_idx = 0; fwd_idx < 3; fwd_idx++) begin
     assign w_rs_vec_phy_hit[rs_idx][fwd_idx] = (w_rs_type[rs_idx] == scariv_pkg::VPR) &
                                                (w_rs_rnid[rs_idx] == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
   end

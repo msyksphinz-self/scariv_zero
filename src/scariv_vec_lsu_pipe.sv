@@ -42,6 +42,9 @@ module scariv_vec_lsu_pipe
  /* EX2 L1D MSHR control */
  l1d_missu_if.master    l1d_missu_if,
 
+ /* Interface for Replay Queue */
+ lsu_pipe_haz_if.master lsu_pipe_haz_if,
+
  output scariv_pkg::done_rpt_t o_done_report
  );
 
@@ -75,6 +78,8 @@ logic                    r_ex2_except_valid;
 scariv_pkg::except_t     r_ex2_except_type;
 logic                    w_ex2_br_flush;
 logic                    w_ex2_l1d_missed;
+logic                    w_ex2_l1d_conflicted;
+logic                    w_ex2_hazard;
 logic                    r_ex2_is_uc;
 scariv_lsu_pkg::dc_data_t w_ex2_l1d_data;
 
@@ -228,13 +233,29 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign w_ex2_l1d_data   = l1d_rd_if.s1_data;
-assign w_ex2_l1d_missed = r_ex2_issue.valid & l1d_rd_if.s1_miss & ~l1d_rd_if.s1_conflict;
+assign w_ex2_l1d_missed     = r_ex2_issue.valid & l1d_rd_if.s1_miss & ~l1d_rd_if.s1_conflict;
+assign w_ex2_l1d_conflicted = r_ex2_issue.valid & l1d_rd_if.s1_conflict;
+assign w_ex2_hazard         = w_ex2_l1d_missed | w_ex2_l1d_conflicted;
 
 assign l1d_missu_if.load              = w_ex2_l1d_missed &
                                         !r_ex2_except_valid & !(l1d_rd_if.s1_conflict | l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 assign l1d_missu_if.req_payload.way   = l1d_rd_if.s1_hit_way;
+
+// Interface to Replay Queue
+assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & w_ex2_hazard & ~w_commit_flush & ~w_ex2_br_flush;
+assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
+assign lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
+assign lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
+assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
+assign lsu_pipe_haz_if.payload.oldest_valid   = 1'b0;
+assign lsu_pipe_haz_if.payload.hazard_typ     = l1d_rd_if.s1_conflict ? EX2_HAZ_L1D_CONFLICT : EX2_HAZ_MISSU_ASSIGNED;
+assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
+assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
+assign lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
+assign lsu_pipe_haz_if.payload.is_uc          = 1'b0;
+assign lsu_pipe_haz_if.payload.hazard_index   = l1d_missu_if.resp_payload.missu_index_oh;
 
 // ---------------------
 // EX3
@@ -244,7 +265,7 @@ assign w_ex2_br_flush = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2
 
 always_comb begin
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & r_ex2_except_valid & ~w_commit_flush & ~w_ex2_br_flush;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_hazard & ~w_commit_flush & ~w_ex2_br_flush;
 end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -254,8 +275,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= w_ex3_issue_next;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
     r_ex3_addr      <= r_ex2_addr;
-    r_ex3_mis_valid <= w_ex2_l1d_missed;
-    r_ex3_aligned_data <= w_ex2_l1d_data >> r_ex2_addr[$clog2(DCACHE_DATA_B_W)-1: 0];
+    r_ex3_mis_valid <= w_ex2_hazard;
+    r_ex3_aligned_data <= w_ex2_l1d_data >> {r_ex2_addr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
 
     r_ex3_except_valid <= r_ex2_except_valid;
     r_ex3_except_type  <= r_ex2_except_type;
@@ -279,5 +300,7 @@ assign vec_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid & ~r
 assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
+assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid;
+assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_reg.rnid;
 
 endmodule // scariv_vec_lsu_pipe

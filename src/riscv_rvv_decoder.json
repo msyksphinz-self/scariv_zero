@@ -2194,7 +2194,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"]],
         "vlsu_ctrl":[["op", "load"], ["size", "b"]]
 	},
     {
@@ -2202,7 +2202,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "r2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "b"]]
 	},
     {
@@ -2210,7 +2210,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "any"]]
 	},
     {
@@ -2218,7 +2218,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "b"]]
 	},
     {
@@ -2226,7 +2226,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2234,7 +2234,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "000", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "b"]]
 	},
     {
@@ -2242,7 +2242,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "000", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2250,7 +2250,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"]],
         "vlsu_ctrl":[["op", "load"], ["size", "h"]]
 	},
     {
@@ -2258,7 +2258,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "r2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "h"]]
 	},
     {
@@ -2266,7 +2266,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "any"]]
 	},
     {
@@ -2274,7 +2274,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "h"]]
 	},
     {
@@ -2282,7 +2282,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2290,7 +2290,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "101", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "h"]]
 	},
     {
@@ -2298,7 +2298,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "101", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "load"], ["size", "any"]]
 	},
     {
@@ -2306,7 +2306,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "110", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"]],
         "vlsu_ctrl":[["op", "load"], ["size", "w"]]
 	},
     {
@@ -2314,7 +2314,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "110", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "r2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "w"]]
 	},
     {
@@ -2322,7 +2322,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "110", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "any"]]
 	},
     {
@@ -2330,7 +2330,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "110", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "w"]]
 	},
     {
@@ -2338,7 +2338,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "1X", "XXXXX", "XXXXX", "110", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2346,7 +2346,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "110", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "w"]]
 	},
     {
@@ -2354,7 +2354,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "110", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2362,7 +2362,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "111", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"]],
         "vlsu_ctrl":[["op", "load"], ["size", "dw"]]
 	},
     {
@@ -2370,7 +2370,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "111", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "r2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "dw"]]
 	},
     {
@@ -2378,7 +2378,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "111", "XXXXX", "00001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "v3"], ["r1", "r1"], ["r2", "v2"]],
         "vlsu_ctrl":[["op", "load"], ["size", "any"]]
 	},
     {
@@ -2386,7 +2386,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "0X", "XXXXX", "XXXXX", "111", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "dw"]]
 	},
     {
@@ -2394,7 +2394,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00000", "1X", "XXXXX", "XXXXX", "111", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
 	},
     {
@@ -2402,7 +2402,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "0X", "XXXXX", "XXXXX", "111", "XXXXX", "01001", "11"],
 		"inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "r2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "dw"]]
 	},
     {
@@ -2410,7 +2410,7 @@
 		"length":"32", "xlen":["32", "64"],
 	    "field": ["00001", "1X", "XXXXX", "XXXXX", "111", "XXXXX", "01001", "11"],
 	    "inst_cat":[["inst_cat", "vlsu"]], "isa_ext": "v",
-        "reg": [["rd", "v3"]],
+        "reg": [["rd", "_"], ["r1", "r1"], ["r2", "v2"], ["r3", "v3"]],
         "vlsu_ctrl":[["op", "store"], ["size", "any"]]
     }
 ]

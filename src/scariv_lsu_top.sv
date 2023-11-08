@@ -78,6 +78,7 @@ module scariv_lsu_top
     // ----------------------
     l1d_rd_if.slave             vlsu_l1d_rd_if,
     l1d_missu_if.slave          vlsu_l1d_missu_if,
+    output missu_resolve_t      o_missu_resolve,
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -99,8 +100,8 @@ l1d_wr_if  w_l1d_merge_if();
 l1d_wr_if  w_miss_l1d_wr_if();
 l1d_wr_if  w_snoop_wr_if();
 // LSU Pipeline + ST-Buffer
-l1d_missu_if w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
-fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
+l1d_missu_if w_l1d_missu_if   [scariv_lsu_pkg::MSHR_REQ_PORT_NUM] ();
+fwd_check_if w_ex2_fwd_check  [scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
@@ -323,6 +324,12 @@ scariv_stq
 );
 
 assign w_l1d_rd_if [L1D_MISSU_PORT].s0_valid = 'h0;
+
+assign w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].load = vlsu_l1d_missu_if.load;
+assign w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].req_payload = vlsu_l1d_missu_if.req_payload;
+assign vlsu_l1d_missu_if.resp_payload = w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].resp_payload;
+
+assign o_missu_resolve = w_missu_resolve;
 
 scariv_l1d_mshr
 u_l1d_mshr

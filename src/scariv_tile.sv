@@ -194,8 +194,9 @@ scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
 // ----------------------------------
 // L1D VLSU to Scalar Interface
 // ----------------------------------
-l1d_rd_if            vlsu_l1d_rd_if   ();
-l1d_missu_if         vlsu_l1d_missu_if();
+l1d_rd_if                       vlsu_l1d_rd_if   ();
+l1d_missu_if                    vlsu_l1d_missu_if();
+scariv_lsu_pkg::missu_resolve_t w_missu_resolve;
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -480,6 +481,7 @@ u_lsu_top
 
     .vlsu_l1d_rd_if    (vlsu_l1d_rd_if   ),
     .vlsu_l1d_missu_if (vlsu_l1d_missu_if),
+    .o_missu_resolve   (w_missu_resolve  ),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -651,6 +653,9 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   scariv_pkg::grp_id_t w_rn_is_subcat_vset;
 
+  vec_phy_fwd_if  w_vec_valu_phy_fwd_if[2]();
+  vec_phy_fwd_if  w_vec_vlsu_phy_fwd_if[1]();
+
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
     assign w_rn_is_subcat_vset[d_idx] = (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
                                         (w_rn_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
@@ -715,6 +720,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_phy_rd_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +: 3]),
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  3]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[0:1]),
+     .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
+     .vec_vlsu_phy_fwd_if (w_vec_vlsu_phy_fwd_if),
 
      .o_done_report(w_valu_done_rpt),
 
@@ -753,8 +760,12 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  2]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[2]),
 
-     .l1d_rd_if    (vlsu_l1d_rd_if   ),
-     .l1d_missu_if (vlsu_l1d_missu_if),
+     .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
+     .vec_vlsu_phy_fwd_if (w_vec_vlsu_phy_fwd_if),
+
+     .l1d_rd_if       (vlsu_l1d_rd_if   ),
+     .l1d_missu_if    (vlsu_l1d_missu_if),
+     .i_missu_resolve (w_missu_resolve  ),
 
      .o_done_report(w_vlsu_done_rpt),
 

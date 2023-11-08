@@ -6,7 +6,7 @@
 	.type	main, @function
 main:
 
-VLOAD_V(vle32.v, e32)
+VLOAD_V(vle16.v, e16)
 
 	li	a0, 0
 	jr	ra

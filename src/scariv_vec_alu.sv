@@ -40,6 +40,9 @@ module scariv_vec_alu #(
     vec_regread_if.master  vec_phy_old_wr_if,
     /* write output */
     vec_regwrite_if.master vec_phy_wr_if[2],
+    // Vector Forwarding Notification Path
+    vec_phy_fwd_if.master  vec_valu_phy_fwd_if[2],
+    vec_phy_fwd_if.slave   vec_vlsu_phy_fwd_if[1],
 
     output scariv_pkg::done_rpt_t o_done_report[2],
     // Commit notification
@@ -62,7 +65,7 @@ scariv_pkg::disp_t            w_disp_picked_inst[VEC_ALU_PORT_SIZE];
 logic [VEC_ALU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_ALU_PORT_SIZE];
 scariv_vec_pkg::issue_t       w_ex0_issue;
-vec_phy_fwd_if                w_vec_phy_fwd_if[2]();
+vec_phy_fwd_if                w_vec_phy_fwd_if[3]();
 
 scariv_disp_pickup
   #(
@@ -88,6 +91,9 @@ scariv_pkg::mispred_t  w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
 generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin : mispred_zero_fill
   assign w_mispred_lsu[idx] = 'h0;
 end endgenerate
+
+assign w_vec_phy_fwd_if[2].valid   = vec_vlsu_phy_fwd_if[0].valid;
+assign w_vec_phy_fwd_if[2].rd_rnid = vec_vlsu_phy_fwd_if[0].rd_rnid;
 
 scariv_valu_issue_unit
   #(
@@ -149,10 +155,15 @@ u_alu_pipe
    .vec_phy_rd_if (vec_phy_rd_if),
    .vec_phy_old_wr_if (vec_phy_old_wr_if),
    .vec_phy_wr_if (vec_phy_wr_if),
-   .vec_phy_fwd_if (w_vec_phy_fwd_if),
+   .vec_phy_fwd_if (w_vec_phy_fwd_if[ 0: 1]),
 
    .o_done_report (o_done_report)
    );
 
+assign vec_valu_phy_fwd_if[0].valid   = w_vec_phy_fwd_if[0].valid;
+assign vec_valu_phy_fwd_if[0].rd_rnid = w_vec_phy_fwd_if[0].rd_rnid;
+
+assign vec_valu_phy_fwd_if[1].valid   = w_vec_phy_fwd_if[1].valid;
+assign vec_valu_phy_fwd_if[1].rd_rnid = w_vec_phy_fwd_if[1].rd_rnid;
 
 endmodule  // scariv_vec_alu

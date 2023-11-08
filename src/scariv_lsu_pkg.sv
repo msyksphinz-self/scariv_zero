@@ -47,6 +47,8 @@ localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_p
                                scariv_conf_pkg::MISSU_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
 
+localparam MSHR_REQ_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM + 1 + 1;  // LSU pipeline + ST-Buffer + Vector
+
 typedef enum logic [ 1: 0] {
   MESI_INVALID   = 0,
   MESI_EXCLUSIVE = 1,

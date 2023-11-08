@@ -41,12 +41,16 @@ module scariv_vec_lsu #(
    // --------------------
    l1d_rd_if.master             l1d_rd_if,
    l1d_missu_if.master          l1d_missu_if,
+   input scariv_lsu_pkg::missu_resolve_t i_missu_resolve,
 
    /* read output */
    vec_regread_if.master  vec_phy_rd_if[2],
    vec_regread_if.master  vec_phy_old_wr_if,
    /* write output */
    vec_regwrite_if.master vec_phy_wr_if,
+   // Vector Forwarding Notification Path
+   vec_phy_fwd_if.slave   vec_valu_phy_fwd_if[2],
+   vec_phy_fwd_if.master  vec_vlsu_phy_fwd_if[1],
 
    output scariv_pkg::done_rpt_t o_done_report,
    // Commit notification
@@ -61,7 +65,12 @@ scariv_pkg::disp_t            w_disp_picked_inst[VEC_LSU_PORT_SIZE];
 logic [VEC_LSU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_LSU_PORT_SIZE];
 scariv_vec_pkg::issue_t       w_ex0_issue;
-vec_phy_fwd_if                w_vec_phy_fwd_if[1]();
+scariv_vec_pkg::issue_t       w_ex0_replay_issue;
+scariv_vec_pkg::issue_t       w_issue_from_iss;
+vec_phy_fwd_if                w_vec_phy_fwd_if[3]();
+lsu_pipe_haz_if               w_lsu_pipe_haz_if ();
+lsu_pipe_req_if               w_lsu_pipe_req_if ();
+logic                         w_replay_selected;
 
 done_if                       w_ex3_done_if();
 
@@ -119,13 +128,51 @@ u_issue_unit
    .i_mispred_lsu (w_mispred_lsu),
    .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
-   .o_issue(w_ex0_issue),
+   .o_issue(w_issue_from_iss),
    .o_iss_index_oh(),
 
    .i_commit      (i_commit),
    .br_upd_if     (br_upd_if)
    );
 
+
+assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
+                           ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
+                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
+                                                              w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
+
+assign w_lsu_pipe_req_if.ready = w_replay_selected;
+
+always_comb begin
+  if (w_replay_selected) begin
+    w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
+    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.payload.cmt_id      ;
+    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.payload.grp_id      ;
+    w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
+    w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
+    w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
+`ifdef SIMULATION
+    w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
+`endif // SIMULATION
+  end else begin
+    w_ex0_replay_issue.valid             = w_issue_from_iss.valid;
+    w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
+    w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
+    w_ex0_replay_issue.inst              = w_issue_from_iss.inst;
+    w_ex0_replay_issue.rd_regs           = w_issue_from_iss.rd_regs;
+    w_ex0_replay_issue.wr_reg            = w_issue_from_iss.wr_reg;
+    w_ex0_replay_issue.cat               = w_issue_from_iss.cat;
+`ifdef SIMULATION
+    w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
+`endif // SIMULATION
+  end
+end // always_comb
+
+assign w_vec_phy_fwd_if[1].valid   = vec_valu_phy_fwd_if[0].valid;
+assign w_vec_phy_fwd_if[1].rd_rnid = vec_valu_phy_fwd_if[0].rd_rnid;
+assign w_vec_phy_fwd_if[2].valid   = vec_valu_phy_fwd_if[1].valid;
+assign w_vec_phy_fwd_if[2].rd_rnid = vec_valu_phy_fwd_if[1].rd_rnid;
 
 scariv_vec_lsu_pipe
 u_lsu_pipe
@@ -140,7 +187,7 @@ u_lsu_pipe
    .i_commit  (i_commit),
    .br_upd_if (br_upd_if),
 
-   .i_ex0_issue (w_ex0_issue),
+   .i_ex0_issue (w_ex0_replay_issue),
    .ex1_i_phy_wr(i_phy_wr),
 
    .ex0_xpr_regread_rs1(ex1_xpr_regread_rs1),
@@ -148,14 +195,48 @@ u_lsu_pipe
    .vec_phy_rd_if (vec_phy_rd_if),
    .vec_phy_old_wr_if (vec_phy_old_wr_if),
    .vec_phy_wr_if (vec_phy_wr_if),
-   .vec_phy_fwd_if (w_vec_phy_fwd_if),
+   .vec_phy_fwd_if (w_vec_phy_fwd_if[0:0]),
 
    .o_tlb_resolve (),
 
    .l1d_rd_if    (l1d_rd_if),
    .l1d_missu_if (l1d_missu_if),
 
+   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+
    .o_done_report (o_done_report)
    );
+
+
+assign vec_vlsu_phy_fwd_if[0].valid   = w_vec_phy_fwd_if[0].valid;
+assign vec_vlsu_phy_fwd_if[0].rd_rnid = w_vec_phy_fwd_if[0].rd_rnid;
+
+// Replay Queue
+scariv_lsu_replay_queue
+u_replay_queue
+(
+ .i_clk     (i_clk    ),
+ .i_reset_n (i_reset_n),
+
+ .i_commit  (i_commit),
+ .br_upd_if (br_upd_if),
+
+ .rob_info_if (rob_info_if),
+
+ .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+
+ .i_st_buffer_empty    (1'b0),
+ .i_missu_is_empty     (1'b0),
+
+ .i_missu_resolve   (i_missu_resolve ),
+ .i_missu_is_full   (1'b0 ),
+ .i_stq_rs2_resolve (1'b0),
+
+ .o_full (),
+
+ .lsu_pipe_req_if (w_lsu_pipe_req_if)
+);
+
+
 
 endmodule  // scariv_vec_lsu
