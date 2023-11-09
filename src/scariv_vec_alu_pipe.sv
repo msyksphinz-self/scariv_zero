@@ -334,7 +334,7 @@ always_comb begin
                          r_ex1_pipe_ctrl.op inside {OP_FSGNJ,  OP_FMIN} ? fpnew_pkg::RNE :
                          r_ex1_pipe_ctrl.op inside {OP_FSGNJN, OP_FMAX} ? fpnew_pkg::RTZ :
                          r_ex1_pipe_ctrl.op == OP_FSGNJX                ? fpnew_pkg::RDN :
-                         csr_info.fcsr[ 7: 5];
+                         fpnew_pkg::roundmode_e'(csr_info.fcsr[ 7: 5]);
 end // always_comb
 
 logic [ 2: 0][riscv_vec_conf_pkg::DLEN_W-1: 0] w_fpnew_ex1_rs_data;

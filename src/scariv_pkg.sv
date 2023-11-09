@@ -324,6 +324,8 @@ typedef struct packed {
 typedef struct packed {
   logic              valid;
   vaddr_t            pc_addr;
+  inst_cat_t         cat;
+  inst_subcat_t      subcat;
   reg_wr_disp_t      wr_reg;
   logic [31: 0]      inst;
 `ifdef SIMULATION
