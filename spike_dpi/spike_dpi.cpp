@@ -1307,7 +1307,7 @@ void step_spike(long long rtl_time, long long rtl_pc,
     }
   } else if (rtl_wr_valid && (iss_wr_type == 2 || rtl_wr_type == 2)) { // VPR write
     bool diff_found = false;
-    for (int b = 0; b < 8; b++) {
+    for (int b = 0; b < g_rv_vlen / 8; b++) {
       if (rtl_wr_vec_val[b] != static_cast<uint8_t *>(p->VU.reg_file)[rtl_wr_gpr_addr * (g_rv_vlen/8) + b]) {
         diff_found = true;
       }
