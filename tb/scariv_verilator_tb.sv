@@ -661,7 +661,7 @@ end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 
 initial begin
   initial_gshare (scariv_conf_pkg::GSHARE_BHT_W,
-                  scariv_conf_pkg::scariv_lsu_pkg::ICACHE_DATA_B_W);
+                  scariv_lsu_pkg::ICACHE_DATA_B_W);
   initial_ras (scariv_conf_pkg::RAS_ENTRY_SIZE);
 end
 

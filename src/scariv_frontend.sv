@@ -647,11 +647,11 @@ end
 
 
 // assign w_f0_ic_req.valid = (r_if_state != INIT) & (w_if_state_next == FETCH_REQ);
-assign w_f0_ic_req.valid = r_f0_valid & !w_flush_valid;
+assign w_f0_ic_req.valid = r_f0_valid & !w_flush_valid & w_tlb_ready;
 
 assign w_f0_ic_req.vaddr = w_f0_vaddr;
 
-assign w_f2_inst_valid = w_f2_ic_resp.valid & r_f2_valid & !r_f2_clear & !r_f2_tlb_miss;
+assign w_f2_inst_valid = w_f2_ic_resp.valid & r_f2_valid & !r_f2_clear & !r_f2_tlb_miss & ~w_f2_ic_resp.miss;
 assign w_f1_inst_valid =                      r_f1_valid & !r_f1_clear & !r_f1_tlb_miss;
 
 scariv_icache u_scariv_icache

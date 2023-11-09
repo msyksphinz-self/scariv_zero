@@ -694,7 +694,7 @@ assign ex3_done_if.done          = r_ex3_issue.valid;
 assign ex3_done_if.index_oh      = 'h0;
 assign ex3_done_if.payload.except_valid  = r_ex3_except_valid;
 assign ex3_done_if.payload.except_type   = r_ex3_except_type;
-assign ex3_done_if.payload.except_tval   = r_ex3_sfence_vma_illegal ? r_ex3_issue.inst :
+assign ex3_done_if.payload.except_tval   = /* r_ex3_sfence_vma_illegal ? r_ex3_issue.inst : */
                                            {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
 assign ex3_done_if.payload.another_flush_valid  = ldq_haz_check_if.ex3_haz_valid;
 assign ex3_done_if.payload.another_flush_cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;

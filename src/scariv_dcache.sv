@@ -333,7 +333,7 @@ generate for (genvar bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; ban
   end // else: !if(!i_reset_n)
 end endgenerate
 
-function integer calc_valids();
+function automatic integer calc_valids();
   int ret = 0;
   for (int bank_idx = 0; bank_idx < scariv_conf_pkg::DCACHE_BANKS; bank_idx++) begin
     for (int way_idx = 0; way_idx < scariv_conf_pkg::DCACHE_WAYS; way_idx++) begin

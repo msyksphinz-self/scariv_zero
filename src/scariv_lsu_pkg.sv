@@ -853,7 +853,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_L1D_MERGE2    = 10,
   ST_BUF_WAIT_FINISH   = 11,
   ST_BUF_AMO_OPERATION = 12,
-  ST_BUF_WAIT_L1D_MERGE= 13
+  ST_BUF_WAIT_SNOOP    = 13
 } st_buffer_state_t;
 
 function st_buffer_entry_t assign_st_buffer (

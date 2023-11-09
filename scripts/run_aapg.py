@@ -16,8 +16,10 @@ def main():
     parser = argparse.ArgumentParser(description='Compile design and execute tests')
     parser.add_argument('-j', dest="parallel", action='store',
                         default=1, help="Num of Parallel Jobs")
-    parser.add_argument('-c', '--conf', dest="conf_yaml", action='store',
+    parser.add_argument('-y', '--conf_yaml', dest="conf_yaml", action='store',
                         required=True, help="Config File")
+    parser.add_argument('-c', '--conf', dest="hw_conf", action='store',
+                        default="standard", help="Hardware Configuration")
     parser.add_argument('-n', dest="num_tests", action='store',
                         default=100, help="Num of Tsets")
     # parser.add_argument('--priv', dest="priv_mode", action='store',
@@ -70,7 +72,7 @@ def main():
         sim_conf["bitmanip"] = 0
     sim_conf["use_docker"] = False
     sim_conf["parallel"] = sim_conf['parallel']
-    sim_conf["conf"] = "standard"
+    sim_conf["conf"] = args.hw_conf
     sim_conf["kanata"] = False
 
 

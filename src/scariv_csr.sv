@@ -56,10 +56,10 @@ logic [63: 0]                 r_time;     // These registers are always 64-bit
 
 xlen_t r_ustatus;
 xlen_t r_uie;
-tvec_t              r_utvec;
-xlen_t r_vstart;
-xlen_t r_vxsat;
-xlen_t r_vxrm;
+tvec_t r_utvec;
+// xlen_t r_vstart;
+// xlen_t r_vxsat;
+// xlen_t r_vxrm;
 xlen_t r_uscratch;
 xlen_t r_uepc;
 xlen_t r_ucause;
@@ -78,17 +78,17 @@ xlen_t r_scause, w_scause_next;
 xlen_t r_stval, w_stval_next;
 xlen_t r_sip;
 xlen_t r_satp;
-xlen_t r_hstatus;
-xlen_t r_hedeleg;
-xlen_t r_hideleg;
-xlen_t r_hie;
-tvec_t              r_htvec;
-xlen_t r_hscratch;
-xlen_t r_hepc;
-xlen_t r_hcause;
-xlen_t r_hbadaddr;
-xlen_t r_hip;
-xlen_t r_hptbr;
+// xlen_t r_hstatus;
+// xlen_t r_hedeleg;
+// xlen_t r_hideleg;
+// xlen_t r_hie;
+// tvec_t              r_htvec;
+// xlen_t r_hscratch;
+// xlen_t r_hepc;
+// xlen_t r_hcause;
+// xlen_t r_hbadaddr;
+// xlen_t r_hip;
+// xlen_t r_hptbr;
 xlen_t r_mvendorid;
 xlen_t r_marchid;
 xlen_t r_mimpid;
@@ -187,9 +187,9 @@ always_comb begin
     `SYSREG_ADDR_USTATUS        : read_if.data = r_ustatus;
     `SYSREG_ADDR_UIE            : read_if.data = r_uie;
     `SYSREG_ADDR_UTVEC          : read_if.data = r_utvec.raw_bit;
-    `SYSREG_ADDR_VSTART         : read_if.data = r_vstart;
-    `SYSREG_ADDR_VXSAT          : read_if.data = r_vxsat;
-    `SYSREG_ADDR_VXRM           : read_if.data = r_vxrm;
+//     `SYSREG_ADDR_VSTART         : read_if.data = r_vstart;
+//     `SYSREG_ADDR_VXSAT          : read_if.data = r_vxsat;
+//     `SYSREG_ADDR_VXRM           : read_if.data = r_vxrm;
     `SYSREG_ADDR_USCRATCH       : read_if.data = r_uscratch;
     `SYSREG_ADDR_UEPC           : read_if.data = r_uepc;
     `SYSREG_ADDR_UCAUSE         : read_if.data = r_ucause;
@@ -277,17 +277,17 @@ always_comb begin
     `SYSREG_ADDR_STVAL          : read_if.data = r_stval;
     `SYSREG_ADDR_SIP            : read_if.data = r_sip;
     `SYSREG_ADDR_SATP           : read_if.data = r_satp;
-    `SYSREG_ADDR_HSTATUS        : read_if.data = r_hstatus;
-    `SYSREG_ADDR_HEDELEG        : read_if.data = r_hedeleg;
-    `SYSREG_ADDR_HIDELEG        : read_if.data = r_hideleg;
-    `SYSREG_ADDR_HIE            : read_if.data = r_hie;
-    `SYSREG_ADDR_HTVEC          : read_if.data = r_htvec.raw_bit;
-    `SYSREG_ADDR_HSCRATCH       : read_if.data = r_hscratch;
-    `SYSREG_ADDR_HEPC           : read_if.data = r_hepc;
-    `SYSREG_ADDR_HCAUSE         : read_if.data = r_hcause;
-    `SYSREG_ADDR_HBADADDR       : read_if.data = r_hbadaddr;
-    `SYSREG_ADDR_HIP            : read_if.data = r_hip;
-    `SYSREG_ADDR_HPTBR          : read_if.data = r_hptbr;
+    // `SYSREG_ADDR_HSTATUS        : read_if.data = r_hstatus;
+    // `SYSREG_ADDR_HEDELEG        : read_if.data = r_hedeleg;
+    // `SYSREG_ADDR_HIDELEG        : read_if.data = r_hideleg;
+    // `SYSREG_ADDR_HIE            : read_if.data = r_hie;
+    // `SYSREG_ADDR_HTVEC          : read_if.data = r_htvec.raw_bit;
+    // `SYSREG_ADDR_HSCRATCH       : read_if.data = r_hscratch;
+    // `SYSREG_ADDR_HEPC           : read_if.data = r_hepc;
+    // `SYSREG_ADDR_HCAUSE         : read_if.data = r_hcause;
+    // `SYSREG_ADDR_HBADADDR       : read_if.data = r_hbadaddr;
+    // `SYSREG_ADDR_HIP            : read_if.data = r_hip;
+    // `SYSREG_ADDR_HPTBR          : read_if.data = r_hptbr;
     `SYSREG_ADDR_MVENDORID      : read_if.data = r_mvendorid;
     `SYSREG_ADDR_MARCHID        : read_if.data = r_marchid;
     `SYSREG_ADDR_MIMPID         : read_if.data = r_mimpid;
@@ -440,9 +440,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_utvec.raw_bit <= write_if.data;
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vstart        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VSTART        ) begin r_vstart        <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxsat         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXSAT         ) begin r_vxsat         <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxrm          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXRM          ) begin r_vxrm          <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vstart        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VSTART        ) begin r_vstart        <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxsat         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXSAT         ) begin r_vxsat         <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_vxrm          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_VXRM          ) begin r_vxrm          <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_uscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_USCRATCH      ) begin r_uscratch      <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_uepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UEPC          ) begin r_uepc          <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_ucause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_UCAUSE        ) begin r_ucause        <= write_if.data; end end
@@ -551,23 +551,23 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSTATUS       ) begin r_hstatus       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEDELEG       ) begin r_hedeleg       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIDELEG       ) begin r_hideleg       <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIE           ) begin r_hie           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_htvec.raw_bit <= 'h0;
-  end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HTVEC) begin
-    r_htvec.raw_bit <= write_if.data;
-  end
-end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSCRATCH      ) begin r_hscratch      <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEPC          ) begin r_hepc          <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hcause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HCAUSE        ) begin r_hcause        <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hbadaddr      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HBADADDR      ) begin r_hbadaddr      <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIP           ) begin r_hip           <= write_if.data; end end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hptbr         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPTBR         ) begin r_hptbr         <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hstatus       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSTATUS       ) begin r_hstatus       <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hedeleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEDELEG       ) begin r_hedeleg       <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hideleg       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIDELEG       ) begin r_hideleg       <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hie           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIE           ) begin r_hie           <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin
+//   if (!i_reset_n) begin
+//     r_htvec.raw_bit <= 'h0;
+//   end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HTVEC) begin
+//     r_htvec.raw_bit <= write_if.data;
+//   end
+// end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HSCRATCH      ) begin r_hscratch      <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hepc          <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HEPC          ) begin r_hepc          <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hcause        <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HCAUSE        ) begin r_hcause        <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hbadaddr      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HBADADDR      ) begin r_hbadaddr      <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HIP           ) begin r_hip           <= write_if.data; end end
+// always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_hptbr         <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_HPTBR         ) begin r_hptbr         <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mvendorid     <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MVENDORID     ) begin r_mvendorid     <= write_if.data; end end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
