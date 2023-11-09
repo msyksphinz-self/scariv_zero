@@ -158,10 +158,10 @@ assign sfence_if.is_rs1_x0 = |w_sfence_if_is_rs1_x0;
 assign sfence_if.is_rs2_x0 = |w_sfence_if_is_rs2_x0;
 bit_oh_or #(.T(scariv_pkg::vaddr_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_sfence_vaddr_merge (.i_oh(w_sfence_if_valid), .i_data(w_sfence_if_vaddr), .o_selected(sfence_if.vaddr));
 
-assign w_sfence_if_slave.valid     = w_sfence_if_slave.valid;
-assign w_sfence_if_slave.is_rs1_x0 = w_sfence_if_slave.is_rs1_x0;
-assign w_sfence_if_slave.is_rs2_x0 = w_sfence_if_slave.is_rs2_x0;
-assign w_sfence_if_slave.vaddr     = w_sfence_if_slave.vaddr;
+assign w_sfence_if_slave.valid     = w_sfence_if.valid;
+assign w_sfence_if_slave.is_rs1_x0 = w_sfence_if.is_rs1_x0;
+assign w_sfence_if_slave.is_rs2_x0 = w_sfence_if.is_rs2_x0;
+assign w_sfence_if_slave.vaddr     = w_sfence_if.vaddr;
 
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
