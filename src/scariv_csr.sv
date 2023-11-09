@@ -747,12 +747,12 @@ assign w_wr_mcsr_ill_access = (write_if.addr[9:8] == 2'b11) & ((r_priv == riscv_
 assign w_wr_scsr_ill_access = (write_if.addr[9:8] == 2'b01) & ((r_priv == riscv_common_pkg::PRIV_U));
 assign w_wr_mcsr_ill_write  = (write_if.addr[11:10] == 2'b11);
 
-assign write_if.resp_error = write_if.valid & ((write_if.addr == `SYSREG_ADDR_CYCLE   ) |
-                                               (write_if.addr == `SYSREG_ADDR_TIME    ) |
-                                               (write_if.addr == `SYSREG_ADDR_INSTRET ) |
-                                               (write_if.addr == `SYSREG_ADDR_CYCLEH  ) |
-                                               (write_if.addr == `SYSREG_ADDR_INSTRETH) |
-                                               w_wr_mcsr_ill_access | w_wr_scsr_ill_access | w_wr_mcsr_ill_write
+assign write_if.resp_error = write_if.valid & (/* (write_if.addr == `SYSREG_ADDR_CYCLE   ) |
+                                                (write_if.addr == `SYSREG_ADDR_TIME    ) |
+                                                (write_if.addr == `SYSREG_ADDR_INSTRET ) |
+                                                (write_if.addr == `SYSREG_ADDR_CYCLEH  ) |
+                                                (write_if.addr == `SYSREG_ADDR_INSTRETH) | */
+                                               w_wr_mcsr_ill_access | w_wr_scsr_ill_access /* | w_wr_mcsr_ill_write */
                                                );
 
 assign w_rd_satp_tvm_1      = (read_if.addr == `SYSREG_ADDR_SATP) & r_mstatus[`MSTATUS_TVM] & (r_priv == riscv_common_pkg::PRIV_S);
