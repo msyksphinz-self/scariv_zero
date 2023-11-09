@@ -35,9 +35,9 @@ module scariv_predictor_gshare
  gshare_search_if.slave gshare_search_if,
 
  // Feedback into Frontend for s0 stage
- output logic   o_s1_predict_valid,
- output logic   o_s1_predict_taken,
- output vaddr_t o_s1_predict_target_vaddr,
+ output logic   o_f1_predict_valid,
+ output logic   o_f1_predict_taken,
+ output vaddr_t o_f1_predict_target_vaddr,
 
  // Feedback into Frontend
  output logic   o_f2_predict_valid,
@@ -112,10 +112,10 @@ u_ftb
    .i_f0_valid (i_f0_valid),
    .i_f0_pc    (i_f0_vaddr),
 
-   .o_s1_predict_valid        (o_s1_predict_valid  ),
-   .o_s1_predict_taken        (o_s1_predict_taken  ),
-   .o_s1_predict_target_vaddr (o_s1_predict_target_vaddr  ),
-   .o_s1_predict_bimodal      (w_s1_predict_bimodal),
+   .o_f1_predict_valid        (o_f1_predict_valid  ),
+   .o_f1_predict_taken        (o_f1_predict_taken  ),
+   .o_f1_predict_target_vaddr (o_f1_predict_target_vaddr  ),
+   .o_f1_predict_bimodal      (w_s1_predict_bimodal),
 
    .br_upd_if (br_upd_if)
    );

@@ -18,13 +18,13 @@ module scariv_fetch_target_buffer
    input logic i_clk,
    input logic i_reset_n,
 
-   input logic   i_s0_valid,
-   input vaddr_t i_s0_pc,
+   input logic   i_f0_valid,
+   input vaddr_t i_f0_pc,
 
-   output logic         o_s1_predict_valid,
-   output logic         o_s1_predict_taken,
-   output vaddr_t       o_s1_predict_target_vaddr,
-   output logic [ 1: 0] o_s1_predict_bimodal,
+   output logic         o_f1_predict_valid,
+   output logic         o_f1_predict_taken,
+   output vaddr_t       o_f1_predict_target_vaddr,
+   output logic [ 1: 0] o_f1_predict_bimodal,
 
    br_upd_if.slave br_upd_if
    );
@@ -46,32 +46,32 @@ localparam FTB_ENTRY_SIZE = 64;
 localparam FTB_ENTRY_WAY_SIZE = 4;
 localparam FTB_ENTRY_SIZE_PER_WAY = FTB_ENTRY_SIZE / FTB_ENTRY_WAY_SIZE;
 
-logic [$clog2(FTB_ENTRY_SIZE_PER_WAY)-1: 0] w_s0_ftb_index;
-assign w_s0_ftb_index = i_s0_pc[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
+logic [$clog2(FTB_ENTRY_SIZE_PER_WAY)-1: 0] w_f0_ftb_index;
+assign w_f0_ftb_index = i_f0_pc[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
 
 ftb_entry_t r_ftb_entries[FTB_ENTRY_SIZE_PER_WAY][FTB_ENTRY_WAY_SIZE];
 
-ftb_entry_t w_s0_ftb_target_entries[FTB_ENTRY_WAY_SIZE];
-logic [FTB_ENTRY_WAY_SIZE-1: 0]                 w_s0_tag_hit;
-ftb_entry_t w_s0_ftb_way_sel_entry;
+ftb_entry_t w_f0_ftb_target_entries[FTB_ENTRY_WAY_SIZE];
+logic [FTB_ENTRY_WAY_SIZE-1: 0]                 w_f0_tag_hit;
+ftb_entry_t w_f0_ftb_way_sel_entry;
 
-generate for (genvar w_idx = 0; w_idx < FTB_ENTRY_WAY_SIZE; w_idx++) begin : s0_index_loop
-  assign w_s0_ftb_target_entries[w_idx] = r_ftb_entries[w_s0_ftb_index][w_idx];
+generate for (genvar w_idx = 0; w_idx < FTB_ENTRY_WAY_SIZE; w_idx++) begin : f0_index_loop
+  assign w_f0_ftb_target_entries[w_idx] = r_ftb_entries[w_f0_ftb_index][w_idx];
 
-  assign w_s0_tag_hit[w_idx] = w_s0_ftb_target_entries[w_idx].pc_tag == i_s0_pc[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)];
+  assign w_f0_tag_hit[w_idx] = w_f0_ftb_target_entries[w_idx].pc_tag == i_f0_pc[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)];
 end endgenerate
 
-bit_oh_or #(.T(ftb_entry_t), .WORDS(FTB_ENTRY_WAY_SIZE)) s0_way_selected_entry(.i_oh(w_s0_tag_hit), .i_data(w_s0_ftb_target_entries), .o_selected(w_s0_ftb_way_sel_entry));
+bit_oh_or #(.T(ftb_entry_t), .WORDS(FTB_ENTRY_WAY_SIZE)) f0_way_selected_entry(.i_oh(w_f0_tag_hit), .i_data(w_f0_ftb_target_entries), .o_selected(w_f0_ftb_way_sel_entry));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_s1_predict_valid <= 1'b0;
+    o_f1_predict_valid <= 1'b0;
   end else begin
-    o_s1_predict_valid        <= |w_s0_tag_hit & i_s0_valid &
-                                 (w_s0_ftb_way_sel_entry.pc_tag == i_s0_pc[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)]);
-    o_s1_predict_taken        <= w_s0_ftb_way_sel_entry.bimodal[1];
-    o_s1_predict_target_vaddr <= {i_s0_pc[riscv_pkg::VADDR_W-1: 16], w_s0_ftb_way_sel_entry.partial_target_vaddr[15: 0]};
-    o_s1_predict_bimodal      <= w_s0_ftb_way_sel_entry.bimodal;
+    o_f1_predict_valid        <= |w_f0_tag_hit & i_f0_valid &
+                                 (w_f0_ftb_way_sel_entry.pc_tag == i_f0_pc[riscv_pkg::VADDR_W-1:$clog2(FTB_ENTRY_SIZE_PER_WAY)]);
+    o_f1_predict_taken        <= w_f0_ftb_way_sel_entry.bimodal[1];
+    o_f1_predict_target_vaddr <= {i_f0_pc[riscv_pkg::VADDR_W-1: 16], w_f0_ftb_way_sel_entry.partial_target_vaddr[15: 0]};
+    o_f1_predict_bimodal      <= w_f0_ftb_way_sel_entry.bimodal;
   end
 end
 

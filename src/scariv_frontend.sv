@@ -400,7 +400,7 @@ always_comb begin
       w_f0_vaddr_next = (w_f2_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
     end
-  end else if (w_f1_predict_valid & w_f1_predict_taken & !r_s1_clear) begin
+  end else if (w_f1_predict_valid & w_f1_predict_taken & !r_f1_clear) begin
     if (!w_f0_req_ready) begin
       w_f0_vaddr_next = w_f1_predict_target_vaddr;
     end else begin
@@ -786,11 +786,11 @@ scariv_predictor_gshare u_predictor
 
    .i_commit  (i_commit),
 
-   .i_s0_valid   (w_f0_ic_req.valid),
-   .i_s0_vaddr   (w_f0_ic_req.vaddr),
+   .i_f0_valid   (w_f0_ic_req.valid),
+   .i_f0_vaddr   (w_f0_ic_req.vaddr),
 
-   .i_s1_valid   (w_f1_inst_valid),
-   .i_s2_valid   (w_f2_inst_valid & w_inst_buffer_ready),
+   .i_f1_valid   (w_f1_inst_valid),
+   .i_f2_valid   (w_f2_inst_valid & w_inst_buffer_ready),
 
    .i_f2_ic_resp (w_f2_ic_resp),
 
@@ -803,12 +803,12 @@ scariv_predictor_gshare u_predictor
 
    .gshare_search_if (w_gshare_search_if),
 
-   .o_s1_predict_valid        (w_f1_predict_valid       ),
-   .o_s1_predict_taken        (w_f1_predict_taken       ),
-   .o_s1_predict_target_vaddr (w_f1_predict_target_vaddr),
+   .o_f1_predict_valid        (w_f1_predict_valid       ),
+   .o_f1_predict_taken        (w_f1_predict_taken       ),
+   .o_f1_predict_target_vaddr (w_f1_predict_target_vaddr),
 
-   .o_s2_predict_valid        (w_f2_predict_valid_gshare       ),
-   .o_s2_predict_target_vaddr (w_f2_predict_target_vaddr_gshare),
+   .o_f2_predict_valid        (w_f2_predict_valid_gshare       ),
+   .o_f2_predict_target_vaddr (w_f2_predict_target_vaddr_gshare),
 
    .br_upd_if (br_upd_if)
    );
