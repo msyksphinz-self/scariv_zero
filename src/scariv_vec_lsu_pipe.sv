@@ -45,6 +45,9 @@ module scariv_vec_lsu_pipe
  /* Interface for Replay Queue */
  lsu_pipe_haz_if.master lsu_pipe_haz_if,
 
+ vlsu_lsq_req_if.master vlsu_ldq_req_if,
+ vlsu_lsq_req_if.master vlsu_stq_req_if,
+
  output scariv_pkg::done_rpt_t o_done_report
  );
 
@@ -302,5 +305,15 @@ assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
 assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid;
 assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_reg.rnid;
+
+assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_LOAD;
+assign vlsu_ldq_req_if.paddr  = r_ex3_addr;
+assign vlsu_ldq_req_if.cmt_id = r_ex3_issue.cmt_id;
+assign vlsu_ldq_req_if.grp_id = r_ex3_issue.grp_id;
+
+assign vlsu_stq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_STORE;
+assign vlsu_stq_req_if.paddr  = r_ex3_addr;
+assign vlsu_stq_req_if.cmt_id = r_ex3_issue.cmt_id;
+assign vlsu_stq_req_if.grp_id = r_ex3_issue.grp_id;
 
 endmodule // scariv_vec_lsu_pipe

@@ -74,6 +74,10 @@ logic                         w_replay_selected;
 
 done_if                       w_ex3_done_if();
 
+vlsu_lsq_req_if               w_vlsu_ldq_req_if();
+vlsu_lsq_req_if               w_vlsu_stq_req_if();
+
+
 scariv_disp_pickup
   #(
     .PORT_BASE(0),
@@ -204,6 +208,9 @@ u_lsu_pipe
 
    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
+   .vlsu_ldq_req_if (w_vlsu_ldq_req_if),
+   .vlsu_stq_req_if (w_vlsu_stq_req_if),
+
    .o_done_report (o_done_report)
    );
 
@@ -236,6 +243,33 @@ u_replay_queue
 
  .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
+
+
+scariv_vlsu_ldq
+u_ldq
+(
+ .i_clk     (i_clk    ),
+ .i_reset_n (i_reset_n),
+
+ .vlsu_ldq_req_if (w_vlsu_ldq_req_if),
+ .rob_info_if     (rob_info_if      ),
+ .i_commit        (i_commit         ),
+ .br_upd_if       (br_upd_if        )
+);
+
+
+scariv_vlsu_stq
+u_stq
+(
+ .i_clk     (i_clk    ),
+ .i_reset_n (i_reset_n),
+
+ .vlsu_stq_req_if (w_vlsu_stq_req_if),
+ .rob_info_if     (rob_info_if      ),
+ .i_commit        (i_commit         ),
+ .br_upd_if       (br_upd_if        )
+);
+
 
 
 

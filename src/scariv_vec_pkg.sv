@@ -20,6 +20,16 @@ parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
 typedef logic [$clog2(VLVTYPE_REN_SIZE)-1: 0] vlvtype_ren_idx_t;
 
+parameter LDQ_BANK_SIZE = 4;
+parameter STQ_BANK_SIZE = 4;
+
+parameter VLSU_LDQ_ENTRY_SIZE = 32;
+parameter VLSU_LDQ_BANK_SIZE = 4;
+parameter VLSU_LDQ_SIZE = VLSU_LDQ_ENTRY_SIZE / VLSU_LDQ_BANK_SIZE;
+
+parameter VLSU_STQ_ENTRY_SIZE = 32;
+parameter VLSU_STQ_BANK_SIZE = 4;
+parameter VLSU_STQ_SIZE = VLSU_STQ_ENTRY_SIZE / VLSU_STQ_BANK_SIZE;
 
 // Vector FPU configuration
 localparam fpnew_pkg::fpu_features_t FPNEW_VEC_CONFIG = '{
@@ -412,3 +422,26 @@ interface vec_phy_fwd_if;
   );
 
 endinterface // vec_phy_fwd_if
+
+
+interface vlsu_lsq_req_if;
+  logic                valid;
+  scariv_pkg::paddr_t  paddr;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+
+  modport master (
+    output valid,
+    output paddr,
+    output cmt_id,
+    output grp_id
+  );
+
+  modport slave (
+    input valid,
+    input paddr,
+    input cmt_id,
+    input grp_id
+  );
+
+endinterface // vlsu_lsq_req_if
