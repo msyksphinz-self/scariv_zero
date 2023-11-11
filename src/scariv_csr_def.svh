@@ -230,6 +230,7 @@
 
 `define MSTATUS_MIE  3
 `define MSTATUS_MPIE 7
+`define MSTATUS_VS   10: 9
 `define MSTATUS_MPP  12:11
 `define MSTATUS_FS   14:13
 `define MSTATUS_XS   16:15

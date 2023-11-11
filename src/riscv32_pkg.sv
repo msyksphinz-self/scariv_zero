@@ -21,7 +21,7 @@ import riscv_fpu_pkg::*;
     return {mstatus [riscv_pkg::XLEN_W-1],
             8'b0000_0000,
             1'b0, 1'b0, 1'b0, mstatus[19], mstatus[18],
-            1'b0, mstatus[16:15], mstatus[14:13], mstatus[12:11], 2'b00,
+            1'b0, mstatus[16:15], mstatus[14:13], mstatus[12:11], mstatus[10: 9],
             mstatus[8], 1'b0, 1'b0, mstatus[5], 1'b0, 1'b0, 1'b0, mstatus[1], 1'b0};
   endfunction
 

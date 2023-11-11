@@ -937,7 +937,7 @@ assign w_delegate = scariv_conf_pkg::USING_VM & (r_priv <= riscv_common_pkg::PRI
 
 always_comb begin
   w_mstatus = r_mstatus;
-  w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);
+  w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]) | (&w_mstatus[`MSTATUS_VS]);
 end
 
 
@@ -1124,6 +1124,7 @@ always_comb begin
         end
 
         w_mstatus_next[`MSTATUS_FS] = write_if.data[`MSTATUS_FS];
+        w_mstatus_next[`MSTATUS_VS] = write_if.data[`MSTATUS_VS];
       end // case: `SYSREG_ADDR_MSTATUS
 
       `SYSREG_ADDR_SSTATUS : begin
@@ -1132,6 +1133,7 @@ always_comb begin
         w_mstatus_next[`MSTATUS_SPP ] = write_if.data[`MSTATUS_SPP ];
         w_mstatus_next[`MSTATUS_XS  ] = write_if.data[`MSTATUS_XS  ];
         w_mstatus_next[`MSTATUS_FS  ] = write_if.data[`MSTATUS_FS  ];
+        w_mstatus_next[`MSTATUS_VS  ] = write_if.data[`MSTATUS_VS  ];
         w_mstatus_next[`MSTATUS_MPP ] = write_if.data[`MSTATUS_MPP ];
         w_mstatus_next[`MSTATUS_MXR ] = write_if.data[`MSTATUS_MXR ];
         w_mstatus_next[`MSTATUS_SUM ] = write_if.data[`MSTATUS_SUM ];
