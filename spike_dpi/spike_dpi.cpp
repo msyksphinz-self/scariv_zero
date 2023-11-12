@@ -1190,11 +1190,17 @@ void step_spike(long long rtl_time, long long rtl_pc,
       // magic number "16" is category of register write
       if (std::get<0>(iss_rd) < 32 * 16) {
         fprintf(compare_log_fp, "==========================================\n");
-        fprintf(compare_log_fp, "ISS Writes GPR but RTL NOT");
-        int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd)];
+        switch (std::get<0>(iss_rd) % 16) {
+          case 0 : fprintf(compare_log_fp, "ISS Writes GPR but RTL NOT"); break;
+          case 1 : fprintf(compare_log_fp, "ISS Writes FPR but RTL NOT"); break;
+          case 2 : fprintf(compare_log_fp, "ISS Writes VPR but RTL NOT"); break;
+          default : continue;
+        }
+        int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd) / 16];
 
-        fprintf(compare_log_fp, "  GPR[%ld]<=%0*lx\n",
+        fprintf(compare_log_fp, "  GPR[%ld,%ld]<=%0*lx\n",
                 std::get<0>(iss_rd) / 16,
+                std::get<0>(iss_rd),
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
         stop_sim(100, rtl_time);

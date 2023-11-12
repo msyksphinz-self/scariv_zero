@@ -119,5 +119,10 @@
     { "name": "vle32_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vle32_v/test.elf"   , "xlen": 64},
     { "name": "vle64_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vle64_v/test.elf"   , "xlen": 64},
 
+    { "name": "vse8_v"           , "group" : ["rvv"], "elf": "../../../tests/rvv/vse8_v/test.elf"    , "xlen": 64},
+    { "name": "vse16_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vse16_v/test.elf"   , "xlen": 64},
+    { "name": "vse32_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vse32_v/test.elf"   , "xlen": 64},
+    { "name": "vse64_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vse64_v/test.elf"   , "xlen": 64},
+
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64}
 ]
