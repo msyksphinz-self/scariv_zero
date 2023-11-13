@@ -20,9 +20,6 @@ parameter VLVTYPE_REN_SIZE = 8;
 parameter VLVTYPE_REN_W = $clog2(VLVTYPE_REN_SIZE);
 typedef logic [$clog2(VLVTYPE_REN_SIZE)-1: 0] vlvtype_ren_idx_t;
 
-parameter LDQ_BANK_SIZE = 4;
-parameter STQ_BANK_SIZE = 4;
-
 parameter VLSU_LDQ_ENTRY_SIZE = 32;
 parameter VLSU_LDQ_BANK_SIZE = 4;
 parameter VLSU_LDQ_SIZE = VLSU_LDQ_ENTRY_SIZE / VLSU_LDQ_BANK_SIZE;
@@ -429,19 +426,22 @@ interface vlsu_lsq_req_if;
   scariv_pkg::paddr_t  paddr;
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
+  scariv_pkg::rnid_t   vs3_phy_idx;
 
   modport master (
     output valid,
     output paddr,
     output cmt_id,
-    output grp_id
+    output grp_id,
+    output vs3_phy_idx
   );
 
   modport slave (
     input valid,
     input paddr,
     input cmt_id,
-    input grp_id
+    input grp_id,
+    input vs3_phy_idx
   );
 
 endinterface // vlsu_lsq_req_if

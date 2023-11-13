@@ -19,7 +19,8 @@ module scariv_freelist_multiports_oh
  input logic [PORTS-1: 0] i_pop,
  output logic [WIDTH-1:0] o_pop_id[PORTS],
 
- output logic             o_is_empty
+ output logic             o_is_empty,
+ output logic             o_is_full
  );
 
 logic [WIDTH-1: 0]        r_active_bits;
@@ -34,7 +35,9 @@ always_comb begin
   for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
     w_active_bits_next = w_active_bits_next | i_push_id[p_idx];
   end
-  w_active_bits_next = w_poped_bit[PORTS];
+  if (|i_pop) begin
+    w_active_bits_next = r_active_bits ^ w_poped_bit[PORTS];
+  end
 end // always_comb
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -52,6 +55,7 @@ generate for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : out_loop
   assign w_poped_bit[p_idx+1] = w_poped_bit[p_idx] ^ o_pop_id[p_idx];
 end endgenerate
 
-assign o_is_empty = r_active_bits == 'h0;
+assign o_is_empty = &r_active_bits;
+assign o_is_full  = r_active_bits == 'h0;
 
 endmodule // scariv_freelist_multiports_oh

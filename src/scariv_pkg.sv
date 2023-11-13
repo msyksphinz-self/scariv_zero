@@ -314,7 +314,7 @@ typedef struct packed {
   logic              valid;
   reg_t              typ;
   logic [4:0]        regidx;
-  rnid_t rnid;
+  rnid_t             rnid;
   logic              ready;
   logic [1:0]        predict_ready;
   rel_bus_idx_t      early_index;

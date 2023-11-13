@@ -838,14 +838,14 @@ logic                                     is_rmw;
 decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
 logic                                     is_amo;
 
-logic                                     is_empty;
 
 `ifdef SIMULATION
-scariv_pkg::cmt_id_t cmt_id;
-scariv_pkg::grp_id_t grp_id;
+scariv_pkg::cmt_id_t                      cmt_id;
+scariv_pkg::grp_id_t                      grp_id;
 `endif // SIMULATION
 
-scariv_lsu_pkg::st_buffer_resp_t resp;
+logic                                     is_empty;
+scariv_lsu_pkg::st_buffer_resp_t          resp;
 
 modport master (
   output valid,

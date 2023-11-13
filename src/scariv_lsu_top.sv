@@ -79,6 +79,7 @@ module scariv_lsu_top
     l1d_rd_if.slave             vlsu_l1d_rd_if,
     l1d_missu_if.slave          vlsu_l1d_missu_if,
     output missu_resolve_t      o_missu_resolve,
+    st_buffer_if.slave          vlsu_st_buffer_if,
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -136,6 +137,7 @@ rmw_order_check_if w_rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
+st_buffer_if            w_scalar_st_buffer_if();
 st_buffer_if            w_st_buffer_if();
 missu_pa_search_if      w_missu_pa_search_if();
 mshr_stbuf_search_if    w_mshr_stbuf_search_if();
@@ -207,7 +209,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
     .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
 
-    .i_st_buffer_empty    (w_st_buffer_if.is_empty),
+    .i_st_buffer_empty    (w_scalar_st_buffer_if.is_empty),
     .i_st_requester_empty (w_uc_write_if.is_empty ),
 
     .i_stq_rmw_existed (w_stq_rmw_existed),
@@ -272,7 +274,7 @@ u_ldq
 
  .ex3_done_if (w_ex3_done_if),
 
- .st_buffer_if (w_st_buffer_if),
+ .st_buffer_if (w_scalar_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
 
  .i_commit (i_commit),
@@ -320,7 +322,7 @@ scariv_stq
  .i_commit (i_commit),
  .br_upd_if (br_upd_if),
 
- .st_buffer_if (w_st_buffer_if),
+ .st_buffer_if (w_scalar_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
 
  .stq_snoop_if(stq_snoop_if),
@@ -385,6 +387,42 @@ u_scariv_store_requester
 
    .l1d_ext_wr_req(w_l1d_ext_req[1])
    );
+
+always_comb begin
+  w_scalar_st_buffer_if.resp     = w_st_buffer_if.resp;
+  w_scalar_st_buffer_if.is_empty = w_st_buffer_if.is_empty;
+
+  vlsu_st_buffer_if.resp  = w_st_buffer_if.is_empty;
+  if (w_scalar_st_buffer_if.valid) begin
+    w_st_buffer_if.valid    = w_scalar_st_buffer_if.valid   ;
+    w_st_buffer_if.paddr    = w_scalar_st_buffer_if.paddr   ;
+    w_st_buffer_if.strb     = w_scalar_st_buffer_if.strb    ;
+    w_st_buffer_if.data     = w_scalar_st_buffer_if.data    ;
+    w_st_buffer_if.is_rmw   = w_scalar_st_buffer_if.is_rmw  ;
+    w_st_buffer_if.rmwop    = w_scalar_st_buffer_if.rmwop   ;
+    w_st_buffer_if.is_amo   = w_scalar_st_buffer_if.is_amo  ;
+`ifdef SIMULATION
+    w_st_buffer_if.cmt_id   = w_scalar_st_buffer_if.cmt_id  ;
+    w_st_buffer_if.grp_id   = w_scalar_st_buffer_if.grp_id  ;
+`endif // SIMULATION
+
+    vlsu_st_buffer_if.resp  = scariv_lsu_pkg::ST_BUF_FULL;
+  end else begin
+    w_st_buffer_if.valid    = vlsu_st_buffer_if.valid   ;
+    w_st_buffer_if.paddr    = vlsu_st_buffer_if.paddr   ;
+    w_st_buffer_if.strb     = vlsu_st_buffer_if.strb    ;
+    w_st_buffer_if.data     = vlsu_st_buffer_if.data    ;
+    w_st_buffer_if.is_rmw   = vlsu_st_buffer_if.is_rmw  ;
+    w_st_buffer_if.rmwop    = vlsu_st_buffer_if.rmwop   ;
+    w_st_buffer_if.is_amo   = vlsu_st_buffer_if.is_amo  ;
+`ifdef SIMULATION
+    w_st_buffer_if.cmt_id   = vlsu_st_buffer_if.cmt_id  ;
+    w_st_buffer_if.grp_id   = vlsu_st_buffer_if.grp_id  ;
+`endif // SIMULATION
+
+    vlsu_st_buffer_if.resp  = w_st_buffer_if.resp;
+  end // else: !if(w_scalar_st_buffer_if.valid)
+end // always_comb
 
 scariv_st_buffer
 u_st_buffer

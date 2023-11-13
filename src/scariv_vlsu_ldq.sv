@@ -26,10 +26,13 @@ module scariv_vlsu_ldq
  br_upd_if.slave                br_upd_if
  );
 
-typedef logic [scariv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W) + $clog2(VLSU_LDQ_BANK_SIZE)] vldq_paddr_t;
+typedef logic [scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)] vldq_paddr_t;
 function automatic vldq_paddr_t to_vldq_paddr (scariv_pkg::paddr_t paddr);
-  return paddr[scariv_pkg::PADDR_W-1: $clog2(scariv_lsu_pkg::DCACHE_DATA_B_W) + $clog2(VLSU_LDQ_BANK_SIZE)];
+  return paddr[scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)];
 endfunction // vldq_paddr
+function automatic scariv_pkg::paddr_t to_paddr (logic [$clog2(VLSU_LDQ_BANK_SIZE)-1: 0] bank_idx, vldq_paddr_t paddr);
+  return {paddr, bank_idx, {$clog2(VLSU_LDQ_BANK_SIZE){1'b0}}};
+endfunction // to_paddr
 
 typedef struct packed {
   logic                valid;
@@ -46,16 +49,16 @@ logic                w_commit_flush;
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
-generate for (genvar bank_idx = 0; bank_idx < LDQ_BANK_SIZE; bank_idx++) begin : bank_loop
+generate for (genvar bank_idx = 0; bank_idx < VLSU_LDQ_BANK_SIZE; bank_idx++) begin : bank_loop
 
   logic [VLSU_LDQ_SIZE-1: 0] w_entry_load_index  [1];
   logic [VLSU_LDQ_SIZE-1: 0] w_entry_finish_index[1];
 
-  logic                      w_vlsu_ldq_freelist_emtpy;
+  logic                      w_vlsu_ldq_freelist_full;
   logic                      w_freelist_pop_valid;
   assign w_freelist_pop_valid = vlsu_ldq_req_if.valid &
-                                vlsu_ldq_req_if.paddr[$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W) +: $clog2(VLSU_LDQ_BANK_SIZE)] == bank_idx[$clog2(VLSU_LDQ_BANK_SIZE)-1: 0] &
-                                ~w_vlsu_ldq_freelist_emtpy;
+                                vlsu_ldq_req_if.paddr[$clog2(riscv_vec_conf_pkg::DLEN_W/8) +: $clog2(VLSU_LDQ_BANK_SIZE)] == bank_idx[$clog2(VLSU_LDQ_BANK_SIZE)-1: 0] &
+                                ~w_vlsu_ldq_freelist_full;
 
   scariv_freelist_multiports_oh
     #(
@@ -71,7 +74,8 @@ generate for (genvar bank_idx = 0; bank_idx < LDQ_BANK_SIZE; bank_idx++) begin :
      .i_pop     (w_freelist_pop_valid),
      .o_pop_id  (w_entry_load_index  ),
 
-     .o_is_empty (w_vlsu_ldq_freelist_emtpy)
+     .o_is_empty (),
+     .o_is_full  (w_vlsu_ldq_freelist_full)
      );
 
 

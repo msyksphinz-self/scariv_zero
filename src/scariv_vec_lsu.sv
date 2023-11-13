@@ -44,7 +44,7 @@ module scariv_vec_lsu #(
    input scariv_lsu_pkg::missu_resolve_t i_missu_resolve,
 
    /* read output */
-   vec_regread_if.master  vec_phy_rd_if[2],
+   vec_regread_if.master  vec_phy_rd_if[3],
    vec_regread_if.master  vec_phy_old_wr_if,
    /* write output */
    vec_regwrite_if.master vec_phy_wr_if,
@@ -55,7 +55,9 @@ module scariv_vec_lsu #(
    output scariv_pkg::done_rpt_t o_done_report,
    // Commit notification
    input scariv_pkg::commit_blk_t i_commit,
-   br_upd_if.slave                br_upd_if
+   br_upd_if.slave                br_upd_if,
+
+   st_buffer_if.master            st_buffer_if
 );
 
 localparam VEC_LSU_PORT_SIZE = scariv_conf_pkg::VLSU_DISP_SIZE;
@@ -196,7 +198,7 @@ u_lsu_pipe
 
    .ex0_xpr_regread_rs1(ex1_xpr_regread_rs1),
 
-   .vec_phy_rd_if (vec_phy_rd_if),
+   .vec_phy_rd_if (vec_phy_rd_if[0:1]),
    .vec_phy_old_wr_if (vec_phy_old_wr_if),
    .vec_phy_wr_if (vec_phy_wr_if),
    .vec_phy_fwd_if (w_vec_phy_fwd_if[0:0]),
@@ -267,7 +269,9 @@ u_stq
  .vlsu_stq_req_if (w_vlsu_stq_req_if),
  .rob_info_if     (rob_info_if      ),
  .i_commit        (i_commit         ),
- .br_upd_if       (br_upd_if        )
+ .br_upd_if       (br_upd_if        ),
+ .vec_vs3_rd_if   (vec_phy_rd_if[2] ),
+ .st_buffer_if    (st_buffer_if     )
 );
 
 

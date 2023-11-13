@@ -147,11 +147,15 @@ fflags_update_if w_fflags_update_if();
 // ----------------------------------
 // VEC Components
 // ----------------------------------
+localparam VPR_READ_PORT_NUM = 4 +  // from VALU
+                               4 +  // from VLSU
+                               0;
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
-vec_regread_if         w_vec_phy_rd_if[7]()  ;
+vec_regread_if         w_vec_phy_rd_if[8]()  ;
 vec_regwrite_if        w_vec_phy_wr_if[3]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
+st_buffer_if           w_vlsu_st_buffer_if();
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
 scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
@@ -479,9 +483,10 @@ u_lsu_top
     .sfence_if (w_sfence_if),
     .o_fence_i (w_fence_i),
 
-    .vlsu_l1d_rd_if    (vlsu_l1d_rd_if   ),
-    .vlsu_l1d_missu_if (vlsu_l1d_missu_if),
-    .o_missu_resolve   (w_missu_resolve  ),
+    .vlsu_l1d_rd_if    (vlsu_l1d_rd_if     ),
+    .vlsu_l1d_missu_if (vlsu_l1d_missu_if  ),
+    .o_missu_resolve   (w_missu_resolve    ),
+    .vlsu_st_buffer_if (w_vlsu_st_buffer_if),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -756,8 +761,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .i_phy_wr(w_ex3_phy_wr),
 
-     .vec_phy_rd_if     (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +: 2]),
-     .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  2]),
+     .vec_phy_rd_if     (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +: 3]),
+     .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  3]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[2]),
 
      .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
@@ -770,13 +775,15 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .o_done_report(w_vlsu_done_rpt),
 
      .i_commit (w_commit),
-     .br_upd_if(w_ex3_br_upd_if)
+     .br_upd_if(w_ex3_br_upd_if),
+
+     .st_buffer_if (w_vlsu_st_buffer_if)
      );
 
 
   scariv_vec_registers
     #(
-      .RD_PORT_SIZE(VLSU_VPR_READ_PORT_IDX + 3),
+      .RD_PORT_SIZE(VPR_READ_PORT_NUM),
       .WR_PORT_SIZE(3)
       )
   u_vec_registers

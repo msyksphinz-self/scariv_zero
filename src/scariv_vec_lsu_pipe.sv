@@ -315,5 +315,6 @@ assign vlsu_stq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decode
 assign vlsu_stq_req_if.paddr  = r_ex3_addr;
 assign vlsu_stq_req_if.cmt_id = r_ex3_issue.cmt_id;
 assign vlsu_stq_req_if.grp_id = r_ex3_issue.grp_id;
+assign vlsu_stq_req_if.vs3_phy_idx = r_ex3_issue.rd_regs[2].rnid;
 
 endmodule // scariv_vec_lsu_pipe
