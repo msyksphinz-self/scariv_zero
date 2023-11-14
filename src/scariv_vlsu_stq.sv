@@ -27,9 +27,9 @@ module scariv_vlsu_stq
  st_buffer_if.master            st_buffer_if
  );
 
-typedef logic [scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_STQ_BANK_SIZE)] vstq_paddr_t;
+typedef logic [riscv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_STQ_BANK_SIZE)] vstq_paddr_t;
 function automatic vstq_paddr_t to_vstq_paddr (scariv_pkg::paddr_t paddr);
-  return paddr[scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_STQ_BANK_SIZE)];
+  return paddr[riscv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_STQ_BANK_SIZE)];
 endfunction // vstq_paddr
 function automatic scariv_pkg::paddr_t to_paddr (logic [$clog2(VLSU_LDQ_BANK_SIZE)-1: 0] bank_idx, vstq_paddr_t paddr);
   return {paddr, bank_idx, {$clog2(riscv_vec_conf_pkg::DLEN_W/8){1'b0}}};

@@ -78,7 +78,7 @@ assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
 // EX0
 // ---------------------
 
-decoder_vec_ctrl u_pipe_ctrl (
+decoder_valu_ctrl u_pipe_ctrl (
     .inst         (i_ex0_issue.inst),
     .op           (w_ex0_pipe_ctrl.op          ),
     .is_mask_inst (w_ex0_pipe_ctrl.is_mask_inst)

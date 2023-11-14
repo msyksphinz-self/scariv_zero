@@ -26,9 +26,9 @@ module scariv_vlsu_ldq
  br_upd_if.slave                br_upd_if
  );
 
-typedef logic [scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)] vldq_paddr_t;
+typedef logic [riscv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)] vldq_paddr_t;
 function automatic vldq_paddr_t to_vldq_paddr (scariv_pkg::paddr_t paddr);
-  return paddr[scariv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)];
+  return paddr[riscv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_LDQ_BANK_SIZE)];
 endfunction // vldq_paddr
 function automatic scariv_pkg::paddr_t to_paddr (logic [$clog2(VLSU_LDQ_BANK_SIZE)-1: 0] bank_idx, vldq_paddr_t paddr);
   return {paddr, bank_idx, {$clog2(VLSU_LDQ_BANK_SIZE){1'b0}}};
