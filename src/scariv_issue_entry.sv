@@ -242,7 +242,7 @@ endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & (r_state == scariv_pkg::WAIT) &
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry);
 assign o_entry       = r_entry;
 
