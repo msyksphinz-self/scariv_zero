@@ -31,6 +31,8 @@ module scariv_resource_alloc
    cre_ret_if.master valu_cre_ret_if,
    cre_ret_if.master vlsu_cre_ret_if,
 
+   vlvtype_req_if.slave  vlvtype_req_if,
+
    // Branch Tag Update Signal
    br_upd_if.slave                br_upd_if,
 
@@ -69,7 +71,8 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_bru_no_credits_remained &
                        !(|w_fpu_no_credits_remained) &
                        !w_valu_no_credits_remained &
-                       !w_vlsu_no_credits_remained;
+                       !w_vlsu_no_credits_remained &
+                       !vlvtype_req_if.full;
 
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);

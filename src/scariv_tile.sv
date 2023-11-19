@@ -201,6 +201,7 @@ scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
 l1d_rd_if                       vlsu_l1d_rd_if   ();
 l1d_missu_if                    vlsu_l1d_missu_if();
 scariv_lsu_pkg::missu_resolve_t w_missu_resolve;
+vlvtype_req_if                  w_vlvtype_req_if();
 
 // ----------------------------------
 // Merging Forwarding / Done signals
@@ -360,6 +361,8 @@ scariv_resource_alloc u_resource_alloc
   .fpu_cre_ret_if (fpu_cre_ret_if),
   .valu_cre_ret_if(valu_cre_ret_if),
   .vlsu_cre_ret_if(vlsu_cre_ret_if),
+
+  .vlvtype_req_if (w_vlvtype_req_if),
 
   .br_upd_if (w_ex3_br_upd_if),
 
@@ -652,7 +655,6 @@ vlvtype_info_if   r_rn_vlvtype_info_if();
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
-  vlvtype_req_if                     w_vlvtype_req_if();
 
   scariv_vec_pkg::vlvtype_t r_rn_vlvtype;
 
@@ -666,7 +668,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
                                         (w_rn_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
   end
 
-  assign w_vlvtype_req_if.valid              = |w_rn_is_subcat_vset;
+  assign w_vlvtype_req_if.valid              = w_rn_front_if.valid & w_rn_front_if.ready & (|w_rn_is_subcat_vset);
   assign w_vlvtype_req_if.checkpt_push_valid = |w_rn_front_if.payload.is_br_included;
 
   assign r_rn_vlvtype_info_if.vlvtype      = w_vlvtype_req_if.vlvtype;

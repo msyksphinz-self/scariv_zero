@@ -56,6 +56,10 @@ typedef enum logic [ 2: 0] {
    EW64 = 3
 } ew_t;
 
+localparam FpnewNumLanes = fpnew_pkg::max_num_lanes(scariv_vec_pkg::FPNEW_VEC_CONFIG.Width,
+                                                    scariv_vec_pkg::FPNEW_VEC_CONFIG.FpFmtMask,
+                                                    scariv_vec_pkg::FPNEW_VEC_CONFIG.EnableVectors);
+typedef logic [FpnewNumLanes-1: 0] fpnew_lane_t;
 
 typedef struct packed {
   decoder_valu_ctrl_pkg::op_t op;
@@ -68,6 +72,9 @@ typedef struct packed {
   logic                  is_mask_inst;
   dlen_t                 old_wr_data;
   vec_pos_t              step_index;
+  fpnew_lane_t           simd_mask;
+  vlenbmax_t             vl;
+  logic                  vcomp_fin;
 } aux_fpnew_t;
 
 
@@ -117,6 +124,7 @@ typedef struct packed {
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
 
   vec_pos_t            vec_step_index;
+  logic                vcomp_fin;
 
   logic                except_valid;
   scariv_pkg::except_t except_type;
@@ -149,6 +157,9 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
 
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
+
+  ret.vec_step_index = 'h0;
+  ret.vcomp_fin      = 'h0;
 
   ret.wr_reg.valid = in.wr_reg.valid;
   ret.wr_reg.typ = in.wr_reg.typ;

@@ -48,7 +48,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end else if (br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict) begin
       r_head_ptr   <= w_vlvtype_restore_index;
       r_curr_index <= w_vlvtype_restore_index - 1;
-    end else if (vlvtype_req_if.valid) begin
+    end else if (vlvtype_req_if.valid & !vlvtype_req_if.full) begin
       r_head_ptr <= r_head_ptr + 1;
       r_curr_index <= r_head_ptr;
     end
@@ -78,10 +78,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_table_valid <= 'h0;
     end else begin
       if (vlvtype_commit_if.valid) begin
-        r_table_valid[r_tail_ptr-1] <= 1'b0;
-        r_table_ready[r_tail_ptr-1] <= 1'b0;
+        r_table_valid[r_tail_ptr] <= 1'b0;
+        r_table_ready[r_tail_ptr] <= 1'b0;
       end
-      if (vlvtype_req_if.valid) begin
+      if (vlvtype_req_if.valid & !vlvtype_req_if.full) begin
         r_table_valid[r_head_ptr] <= 1'b1;
         r_table_ready[r_head_ptr] <= 1'b0;
       end
