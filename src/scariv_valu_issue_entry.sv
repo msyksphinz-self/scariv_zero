@@ -172,6 +172,7 @@ always_comb begin
         w_entry_next.vlvtype_index = vlvtype_info_if.index;
         w_entry_next.vlvtype       = vlvtype_upd_load_valid ? vlvtype_upd_if.vlvtype : vlvtype_info_if.vlvtype;
         w_entry_next.vec_step_index = 'h0;
+        w_entry_next.vcomp_fin = scariv_vec_pkg::VEC_STEP_W == 1;
 
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
