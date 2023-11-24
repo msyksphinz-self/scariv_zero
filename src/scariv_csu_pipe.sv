@@ -70,12 +70,14 @@ pipe_ctrl_t             r_ex2_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex2_issue;
 riscv_pkg::xlen_t       r_ex2_rs1_data;
 logic                   w_ex2_is_fs_illegal;
+logic                   w_ex2_lmul_change;
 
 pipe_ctrl_t             r_ex3_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex3_issue;
 riscv_pkg::xlen_t       r_ex3_result;
 riscv_pkg::xlen_t       r_ex3_csr_rd_data;
 logic                   r_ex3_csr_illegal;
+logic                   r_ex3_lmul_change;
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -138,7 +140,7 @@ assign read_if.addr  = r_ex2_issue.inst[31:20];
 assign read_vec_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_vec_if.addr  = r_ex2_issue.inst[31:20];
 
-logic [$clog2(scariv_vec_pkg::VLENBMAX)-1: 0] w_ex2_vlmax;
+scariv_vec_pkg::vlenbmax_t w_ex2_vlmax;
 assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(r_ex2_issue.inst[22:20], r_ex2_issue.inst[25:23]);
 
 riscv_pkg::xlen_t csr_read_data;
@@ -148,6 +150,8 @@ assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
                              ((r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FFLAGS) |
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FRM   ) |
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
+
+assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL & (vec_csr_if.info.vlmul != r_ex2_issue.inst[22:20]);
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -173,6 +177,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_csr_rd_data <= r_ex2_pipe_ctrl.op == OP_VSETVL ? (w_ex2_rs1_selected_data < w_ex2_vlmax ? w_ex2_rs1_selected_data : w_ex2_vlmax) :
                          (read_if.addr == `SYSREG_ADDR_MINSTRET) ? csr_read_data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
                          csr_read_data;
+
+    r_ex3_lmul_change <= w_ex2_lmul_change;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -189,22 +195,24 @@ assign o_done_report.valid    = r_ex3_issue.valid;
 assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id   = r_ex3_issue.grp_id;
 assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
-                                     r_ex3_pipe_ctrl.is_mret |
-                                     r_ex3_pipe_ctrl.is_sret |
-                                     r_ex3_pipe_ctrl.is_uret |
-                                     r_ex3_pipe_ctrl.is_ecall |
-                                     r_ex3_pipe_ctrl.is_ebreak |
-                                     r_ex3_csr_illegal |
+                                     r_ex3_pipe_ctrl.is_mret    |
+                                     r_ex3_pipe_ctrl.is_sret    |
+                                     r_ex3_pipe_ctrl.is_uret    |
+                                     r_ex3_pipe_ctrl.is_ecall   |
+                                     r_ex3_pipe_ctrl.is_ebreak  |
+                                     r_ex3_csr_illegal          |
+                                     r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change |
                                      (write_if.valid & write_if.resp_error);
 
 assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
-                                   r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
-                                   r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
-                                   r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? scariv_pkg::ECALL_U :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
-                                   r_ex3_pipe_ctrl.is_ebreak ? scariv_pkg::BREAKPOINT :
+                                   r_ex3_pipe_ctrl.is_mret                                                             ? scariv_pkg::MRET         :
+                                   r_ex3_pipe_ctrl.is_sret                                                             ? scariv_pkg::SRET         :
+                                   r_ex3_pipe_ctrl.is_uret                                                             ? scariv_pkg::URET         :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U)              ? scariv_pkg::ECALL_U      :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S)              ? scariv_pkg::ECALL_S      :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M)              ? scariv_pkg::ECALL_M      :
+                                   r_ex3_pipe_ctrl.is_ebreak                                                           ? scariv_pkg::BREAKPOINT   :
+                                   r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change                                 ? scariv_pkg::LMUL_CHANGE  :
                                    scariv_pkg::SILENT_FLUSH;
 
 assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :

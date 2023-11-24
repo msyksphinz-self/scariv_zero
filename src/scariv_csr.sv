@@ -1023,6 +1023,9 @@ always_comb begin
       w_stval_next = i_commit.tval;
     end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::URET)) begin // if (i_commit.except_type == scariv_pkg::SRET)
       w_mtval_next = 'h0;
+    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::LMUL_CHANGE)) begin
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
+                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]} + 'h4;
     end else if (w_delegate) begin
       w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]};

@@ -908,8 +908,6 @@ endfunction // is_cache_addr_same
 // LSU Replay Queue
 typedef struct packed {
   logic [31: 0]              inst;
-  scariv_pkg::cmt_id_t       cmt_id;
-  scariv_pkg::grp_id_t       grp_id;
   inst_cat_t                 cat;
   logic                      oldest_valid;
   scariv_pkg::reg_rd_issue_t rd_reg;

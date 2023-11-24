@@ -34,14 +34,20 @@ module scariv_ss_router
 
    // PLIC
    l2_req_if.master plic_req,
-   l2_resp_if.slave plic_resp
+   l2_resp_if.slave plic_resp,
+
+   // L2
+   l2_req_if.master lmul_exc_rom_req,
+   l2_resp_if.slave lmul_exc_rom_resp
    );
+
+localparam SPLIT_ARB_NUM = 3;
 
 localparam EXTENDED_TAG_W = scariv_lsu_pkg::L2_CMD_TAG_W + $clog2(3);
 
 l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if[3]();
 l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_selected();
-l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_splitted[3]();
+l2_req_if #(.TAG_W(EXTENDED_TAG_W)) w_req_if_splitted[SPLIT_ARB_NUM + 1]();
 
 assign w_req_if[0].valid   = core_ic_req.valid;
 assign w_req_if[0].tag     = {2'b00, core_ic_req.tag};
@@ -58,13 +64,15 @@ assign w_req_if[2].tag     = {2'b10, core_ptw_req.tag};
 assign w_req_if[2].payload = core_ptw_req.payload;
 assign core_ptw_req.ready  = w_req_if[2].ready;
 
-scariv_pkg::paddr_t w_base_addr_list[2];
-scariv_pkg::paddr_t w_mask_list[2];
+scariv_pkg::paddr_t w_base_addr_list[SPLIT_ARB_NUM];
+scariv_pkg::paddr_t w_mask_list     [SPLIT_ARB_NUM];
 always_comb begin
   w_base_addr_list[0] = 'h0200_0000; // CLINT
   w_mask_list     [0] = 'h003f_ffff; // CLINT
   w_base_addr_list[1] = 'h0c00_0000; // PLIC
   w_mask_list     [1] = 'h00ff_ffff; // PLIC
+  w_base_addr_list[2] = 'h0000_2000; // PLIC
+  w_mask_list     [2] = 'h0000_0fff; // PLIC
 end
 
 
@@ -77,7 +85,7 @@ u_req_arbiter
    .l2_req_master_if(w_req_if_selected)
 );
 l2_if_req_splitter_with_others
-  #(.ARB_NUM(2))
+  #(.ARB_NUM(SPLIT_ARB_NUM))
 u_req_splitter
   (
    .l2_req_slave_if (w_req_if_selected),
@@ -97,15 +105,18 @@ assign plic_req.tag     = w_req_if_splitted[1].tag;
 assign plic_req.payload = w_req_if_splitted[1].payload;
 assign w_req_if_splitted[1].ready = plic_req.ready;
 
-assign l2_req.valid   = w_req_if_splitted[2].valid;
-assign l2_req.tag     = w_req_if_splitted[2].tag;
-assign l2_req.payload = w_req_if_splitted[2].payload;
-assign w_req_if_splitted[2].ready = l2_req.ready;
+assign lmul_exc_rom_req.valid   = w_req_if_splitted[2].valid;
+assign lmul_exc_rom_req.tag     = w_req_if_splitted[2].tag;
+assign lmul_exc_rom_req.payload = w_req_if_splitted[2].payload;
+assign w_req_if_splitted[2].ready = lmul_exc_rom_req.ready;
+
+assign l2_req.valid   = w_req_if_splitted[SPLIT_ARB_NUM].valid;
+assign l2_req.tag     = w_req_if_splitted[SPLIT_ARB_NUM].tag;
+assign l2_req.payload = w_req_if_splitted[SPLIT_ARB_NUM].payload;
+assign w_req_if_splitted[SPLIT_ARB_NUM].ready = l2_req.ready;
 
 
-
-
-l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if[3]();
+l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if[SPLIT_ARB_NUM+1]();
 l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if_selected();
 l2_resp_if #(.TAG_W(EXTENDED_TAG_W)) w_resp_if_splitted[3]();
 
@@ -119,13 +130,18 @@ assign w_resp_if[1].tag   = plic_resp.tag;
 assign w_resp_if[1].payload = plic_resp.payload;
 assign plic_resp.ready = w_resp_if[1].ready;
 
-assign w_resp_if[2].valid   = l2_resp.valid;
-assign w_resp_if[2].tag     = l2_resp.tag;
-assign w_resp_if[2].payload = l2_resp.payload;
-assign l2_resp.ready = w_resp_if[2].ready;
+assign w_resp_if[2].valid   = lmul_exc_rom_resp.valid;
+assign w_resp_if[2].tag     = lmul_exc_rom_resp.tag;
+assign w_resp_if[2].payload = lmul_exc_rom_resp.payload;
+assign lmul_exc_rom_resp.ready = w_resp_if[2].ready;
+
+assign w_resp_if[SPLIT_ARB_NUM].valid   = l2_resp.valid;
+assign w_resp_if[SPLIT_ARB_NUM].tag     = l2_resp.tag;
+assign w_resp_if[SPLIT_ARB_NUM].payload = l2_resp.payload;
+assign l2_resp.ready = w_resp_if[SPLIT_ARB_NUM].ready;
 
 l2_if_resp_arbiter
-  #(.ARB_NUM(3))
+  #(.ARB_NUM(SPLIT_ARB_NUM+1))
 u_resp_arbiter
   (
    .l2_resp_slave_if (w_resp_if),

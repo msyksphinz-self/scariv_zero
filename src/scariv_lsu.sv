@@ -113,8 +113,8 @@ scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
 scariv_lsu_pkg::lsu_issue_entry_t               w_issue_from_iss;
 logic [LSU_ISS_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
-lsu_pipe_haz_if w_lsu_pipe_haz_if ();
-lsu_pipe_req_if w_lsu_pipe_req_if ();
+lsu_pipe_haz_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_haz_if ();
+lsu_pipe_req_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_req_if ();
 
 done_if              w_ex3_done_if();
 scariv_pkg::cmt_id_t w_ex3_cmt_id;
@@ -187,6 +187,7 @@ u_issue_unit
 
 // Replay Queue
 scariv_lsu_replay_queue
+  #(.queue_base_t(scariv_lsu_pkg::lsu_replay_queue_t))
 u_replay_queue
 (
   .i_clk (i_clk),
@@ -213,7 +214,7 @@ u_replay_queue
 
 assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
-                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
+                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.cmt_id, w_lsu_pipe_req_if.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
 
 assign w_lsu_pipe_req_if.ready = w_replay_selected;
@@ -221,8 +222,8 @@ assign w_lsu_pipe_req_if.ready = w_replay_selected;
 always_comb begin
   if (w_replay_selected) begin
     w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
-    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.payload.cmt_id      ;
-    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.payload.grp_id      ;
+    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.cmt_id      ;
+    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.grp_id      ;
     w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
     w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
     w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;

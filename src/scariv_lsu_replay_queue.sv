@@ -9,6 +9,7 @@
 
 module scariv_lsu_replay_queue
   import scariv_lsu_pkg::*;
+#(parameter type queue_base_t = logic)
 (
     input logic i_clk,
     input logic i_reset_n,
@@ -42,17 +43,18 @@ logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;
 logic w_head_is_oldest;
 
 typedef struct packed {
-    logic [31: 0]                    inst;
-    decoder_inst_cat_pkg::inst_cat_t cat;
-    logic                            oldest_valid;
-    scariv_pkg::reg_rd_issue_t       rd_reg;
-    scariv_pkg::reg_wr_issue_t       wr_reg;
-    scariv_pkg::paddr_t              paddr;
-    logic                            is_uc;
-    scariv_lsu_pkg::ex2_haz_t        hazard_typ;
-    logic [HAZARD_INDEX_SIZE-1: 0]   hazard_index;
-    logic [REPLAY_QUEUE_W-1: 0]      diff_counter;
-} replay_queue_t;
+  queue_base_t info;
+  // logic [31: 0]  inst;
+  // decoder_inst_cat_pkg::inst_cat_t cat;
+  // logic                            oldest_valid;
+  // scariv_pkg::reg_rd_issue_t       rd_reg;
+  // scariv_pkg::reg_wr_issue_t       wr_reg;
+  // scariv_pkg::paddr_t              paddr;
+  // logic                            is_uc;
+  // scariv_lsu_pkg::ex2_haz_t        hazard_typ;
+  // logic [HAZARD_INDEX_SIZE-1: 0]   hazard_index;
+  logic [REPLAY_QUEUE_W-1: 0] diff_counter;
+} queue_t;
 typedef struct packed {
     logic                valid;
     logic                dead;
@@ -60,8 +62,8 @@ typedef struct packed {
     scariv_pkg::grp_id_t grp_id;
 } replay_additional_queue_t;
 
-replay_queue_t w_new_replay_queue_info;
-replay_queue_t w_rd_replay_queue_info;
+queue_t w_new_replay_queue_info;
+queue_t w_rd_replay_queue_info;
 replay_additional_queue_t r_replay_additional_queue[REPLAY_QUEUE_SIZE];
 replay_additional_queue_t w_replay_additional_queue_tail;
 
@@ -77,17 +79,18 @@ assign w_queue_push = lsu_pipe_haz_if.valid & !lsu_pipe_haz_if.full;
 assign w_queue_pop  = w_lsu_replay_valid & (lsu_pipe_req_if.ready | w_replay_additional_queue_tail.dead);
 
 always_comb begin
-  w_new_replay_queue_info.inst                 = lsu_pipe_haz_if.payload.inst          ;
-  w_new_replay_queue_info.cat                  = lsu_pipe_haz_if.payload.cat           ;
-  w_new_replay_queue_info.oldest_valid         = lsu_pipe_haz_if.payload.oldest_valid  ;
-  w_new_replay_queue_info.rd_reg               = lsu_pipe_haz_if.payload.rd_reg        ;
-  w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
-  w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
-  w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
-  w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
-  w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
-  w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
-  w_new_replay_queue_info.diff_counter         = w_empty ? 'h0 : r_diff_counter;
+  w_new_replay_queue_info.info         = lsu_pipe_haz_if.payload;
+  w_new_replay_queue_info.diff_counter = w_empty ? 'h0 : r_diff_counter;
+  // w_new_replay_queue_info.inst                 = lsu_pipe_haz_if.payload.inst          ;
+  // w_new_replay_queue_info.cat                  = lsu_pipe_haz_if.payload.cat           ;
+  // w_new_replay_queue_info.oldest_valid         = lsu_pipe_haz_if.payload.oldest_valid  ;
+  // w_new_replay_queue_info.rd_reg               = lsu_pipe_haz_if.payload.rd_reg        ;
+  // w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
+  // w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
+  // w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
+  // w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
+  // w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
+  // w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
 end
 
 // Diff counter from previous Queue inesrtion
@@ -123,8 +126,8 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
                 (idx == r_replay_queue_head_ptr)) begin
                 r_replay_additional_queue[idx].valid   <= 1'b1;
                 r_replay_additional_queue[idx].dead    <= 1'b0;
-                r_replay_additional_queue[idx].cmt_id  <= lsu_pipe_haz_if.payload.cmt_id;
-                r_replay_additional_queue[idx].grp_id  <= lsu_pipe_haz_if.payload.grp_id;
+                r_replay_additional_queue[idx].cmt_id  <= lsu_pipe_haz_if.cmt_id;
+                r_replay_additional_queue[idx].grp_id  <= lsu_pipe_haz_if.grp_id;
             end else if (w_queue_pop &
                     (idx == r_replay_queue_tail_ptr)) begin
                 r_replay_additional_queue[idx].valid  <= 1'b0;
@@ -154,7 +157,7 @@ end
 
 ring_fifo
 #(
-    .T     (replay_queue_t),
+    .T     (queue_t),
     .DEPTH (REPLAY_QUEUE_SIZE)
 )
 u_replay_queue
@@ -199,16 +202,16 @@ always_comb begin
                      w_rd_replay_queue_info.diff_counter == 'h0 && (&r_prev_diff_counter) /* Timeout */) begin
             w_lsu_replay_valid = 1'b1;
         end else begin
-            case (w_rd_replay_queue_info.hazard_typ)
-                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & ~i_stq_rs2_resolve.index) == 'h0;
+            case (w_rd_replay_queue_info.info.hazard_typ)
+                EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.info.hazard_index & ~i_stq_rs2_resolve.index) == 'h0;
                 EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = w_head_is_oldest & i_st_buffer_empty & i_missu_is_empty;
                 EX2_HAZ_L1D_CONFLICT :   w_lsu_replay_valid = 1'b1; // Replay immediately
                 EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = !i_missu_is_full;
-                EX2_HAZ_MISSU_ASSIGNED : w_lsu_replay_valid = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == w_rd_replay_queue_info.hazard_index) |
-                                                              ((w_rd_replay_queue_info.hazard_index & i_missu_resolve.missu_entry_valids) == 'h0);
+                EX2_HAZ_MISSU_ASSIGNED : w_lsu_replay_valid = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == w_rd_replay_queue_info.info.hazard_index) |
+                                                              ((w_rd_replay_queue_info.info.hazard_index & i_missu_resolve.missu_entry_valids) == 'h0);
                 default : begin
                     w_lsu_replay_valid = 1'b0;
-                    // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
+                    // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
                 end
             endcase
         end
@@ -216,19 +219,11 @@ always_comb begin
         w_lsu_replay_valid = 1'b0;
     end
 
-    lsu_pipe_req_if.payload.cmt_id         = w_replay_additional_queue_tail.cmt_id;
-    lsu_pipe_req_if.payload.grp_id         = w_replay_additional_queue_tail.grp_id;
-    lsu_pipe_req_if.payload.inst           = w_rd_replay_queue_info.inst          ;
-    lsu_pipe_req_if.payload.cat            = w_rd_replay_queue_info.cat           ;
-    lsu_pipe_req_if.payload.oldest_valid   = w_rd_replay_queue_info.oldest_valid  ;
-    lsu_pipe_req_if.payload.rd_reg         = w_rd_replay_queue_info.rd_reg        ;
-    lsu_pipe_req_if.payload.wr_reg         = w_rd_replay_queue_info.wr_reg        ;
-    lsu_pipe_req_if.payload.paddr          = w_rd_replay_queue_info.paddr         ;
-    lsu_pipe_req_if.payload.is_uc          = w_rd_replay_queue_info.is_uc         ;
-    lsu_pipe_req_if.payload.hazard_typ     = w_rd_replay_queue_info.hazard_typ    ;
-    lsu_pipe_req_if.payload.hazard_index = w_rd_replay_queue_info.hazard_index;
+    lsu_pipe_req_if.cmt_id  = w_replay_additional_queue_tail.cmt_id;
+    lsu_pipe_req_if.grp_id  = w_replay_additional_queue_tail.grp_id;
+    lsu_pipe_req_if.payload = w_rd_replay_queue_info.info          ;
+end // always_comb
 
-end
 assign lsu_pipe_req_if.valid = w_lsu_replay_valid & ~w_replay_additional_queue_tail.dead;
 
 assign o_full = w_full;
@@ -237,14 +232,14 @@ assign o_full = w_full;
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (i_reset_n) begin
         if (!w_empty) begin
-            case (w_rd_replay_queue_info.hazard_typ)
+            case (w_rd_replay_queue_info.info.hazard_typ)
                 EX2_HAZ_STQ_NONFWD_HAZ : begin end
                 EX2_HAZ_RMW_ORDER_HAZ :  begin end
                 EX2_HAZ_L1D_CONFLICT :   begin end
                 EX2_HAZ_MISSU_FULL :     begin end
                 EX2_HAZ_MISSU_ASSIGNED : begin end
                 default : begin
-                    $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
+                    $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
                 end
             endcase
         end // if (!w_empty)

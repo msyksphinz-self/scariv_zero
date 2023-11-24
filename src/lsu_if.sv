@@ -990,21 +990,27 @@ modport slave (
 endinterface // lrsc_if
 
 // LSU Pipeline to Replay Queue Interface
-interface lsu_pipe_haz_if;
-  logic                              valid;
-  logic [31: 0]                      inst;
-  scariv_lsu_pkg::lsu_replay_queue_t payload;
-  logic                              full;
+interface lsu_pipe_haz_if #(parameter type T=logic);
+  logic                valid;
+  logic [31: 0]        inst;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+  T                    payload;
+  logic                full;
 
   modport master (
     output valid,
     output payload,
+    output cmt_id,
+    output grp_id,
     input  full
   );
 
   modport slave (
     input  valid,
     input  payload,
+    input  cmt_id,
+    input  grp_id,
     output full
   );
 
@@ -1012,20 +1018,26 @@ interface lsu_pipe_haz_if;
 endinterface // lsu_pipe_haz_if
 
 
-interface lsu_pipe_req_if;
-  logic                      valid;
-  logic                      ready;
-  scariv_lsu_pkg::lsu_replay_queue_t payload;
+interface lsu_pipe_req_if #(parameter type T=logic);
+  logic                valid;
+  logic                ready;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+  T                    payload;
 
   modport master (
     output valid,
     input  ready,
+    output cmt_id,
+    output grp_id,
     output payload
   );
 
   modport slave (
     input  valid,
     output ready,
+    input  cmt_id,
+    input  grp_id,
     input  payload
   );
 

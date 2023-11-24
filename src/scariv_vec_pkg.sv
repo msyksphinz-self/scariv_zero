@@ -4,8 +4,8 @@ parameter VLEN_W = riscv_vec_conf_pkg::VLEN_W;
 parameter VLENB = VLEN_W / 8;
 parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
-typedef logic [$clog2(VLENBMAX)-1: 0] vlenbmax_t;
-typedef logic [VLENB-1: 0]            vlenb_t;
+typedef logic [$clog2(VLENBMAX): 0] vlenbmax_t;
+typedef logic [VLENB-1: 0]          vlenb_t;
 parameter VEC_STEP_W = riscv_vec_conf_pkg::DLEN_W == 0 ? 1 :
                        riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
 
@@ -27,6 +27,8 @@ parameter VLSU_LDQ_SIZE = VLSU_LDQ_ENTRY_SIZE / VLSU_LDQ_BANK_SIZE;
 parameter VLSU_STQ_ENTRY_SIZE = 32;
 parameter VLSU_STQ_BANK_SIZE = 4;
 parameter VLSU_STQ_SIZE = VLSU_STQ_ENTRY_SIZE / VLSU_STQ_BANK_SIZE;
+
+parameter LMUL_CHANGE_HANDLER_BASE_ADDR = 'h02000;
 
 // Vector FPU configuration
 localparam fpnew_pkg::fpu_features_t FPNEW_VEC_CONFIG = '{
@@ -97,8 +99,9 @@ typedef struct packed {
   vlenbmax_t     vl;
 } csr_write_t;
 typedef struct packed {
-  vlenbmax_t vl;
-  vlenbmax_t vlmax;
+  vlenbmax_t    vl;
+  vlenbmax_t    vlmax;
+  logic [ 2: 0] vlmul;
 } csr_info_t;
 
 function automatic vlenbmax_t calc_vlmax(logic [ 2: 0] vlmul,
@@ -238,6 +241,20 @@ function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
 
 endfunction // assign_issue_op3
 
+
+// VLSU Replay Queue
+typedef struct packed {
+  logic [31: 0]                  inst;
+  decoder_inst_cat_pkg::inst_cat_t cat;
+  logic                          oldest_valid;
+  scariv_pkg::reg_rd_issue_t     rd_reg;
+  scariv_pkg::reg_wr_issue_t     wr_reg;
+  scariv_pkg::paddr_t            paddr;
+  logic                          is_uc;
+  scariv_lsu_pkg::ex2_haz_t      hazard_typ;
+  logic [scariv_lsu_pkg::HAZARD_INDEX_SIZE-1: 0] hazard_index;
+  vec_pos_t                      vec_step_index;
+} vlsu_replay_queue_t;
 
 endpackage // scariv_vec_pkg
 

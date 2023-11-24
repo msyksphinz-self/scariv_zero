@@ -42,6 +42,9 @@ l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_resp_clint_if();
 l2_req_if  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_req_plic_if ();
 l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_resp_plic_if();
 
+l2_req_if  #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_req_lmul_exc_rom_if ();
+l2_resp_if #(.TAG_W(scariv_lsu_pkg::L2_CMD_TAG_W + 2)) w_resp_lmul_exc_rom_if();
+
 scariv_tile
 u_tile
   (
@@ -97,9 +100,40 @@ u_router
 
    // PLIC
    .plic_req  (w_req_plic_if),
-   .plic_resp (w_resp_plic_if)
+   .plic_resp (w_resp_plic_if),
+
+   // LMUL_EXC_HANDLER_ROM
+   .lmul_exc_rom_req  (w_req_lmul_exc_rom_if),
+   .lmul_exc_rom_resp (w_resp_lmul_exc_rom_if)
    );
 
+
+scariv_rom
+#(
+  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
+  .ADDR_W   (riscv_pkg::PADDR_W),
+  .BASE_ADDR('h2000),
+  .SIZE     ('h1_0000),
+  .HEX_FILE_BASE ("../../../src/lmul_exc_handler/lmul_exc_rom")
+) u_lmul_exc_handler (
+  .i_clk    (i_clk),
+  .i_reset_n(i_reset_n),
+
+  // clint
+  .i_req_valid   (w_req_lmul_exc_rom_if.valid           ),
+  .i_req_cmd     (w_req_lmul_exc_rom_if.payload.cmd     ),
+  .i_req_addr    (w_req_lmul_exc_rom_if.payload.addr    ),
+  .i_req_tag     (w_req_lmul_exc_rom_if.tag             ),
+  .i_req_data    (w_req_lmul_exc_rom_if.payload.data    ),
+  .i_req_byte_en (w_req_lmul_exc_rom_if.payload.byte_en ),
+  .o_req_ready   (w_req_lmul_exc_rom_if.ready           ),
+
+  .o_resp_valid  (w_resp_lmul_exc_rom_if.valid        ),
+  .o_resp_tag    (w_resp_lmul_exc_rom_if.tag          ),
+  .o_resp_data   (w_resp_lmul_exc_rom_if.payload.data ),
+  .i_resp_ready  (w_resp_lmul_exc_rom_if.ready        )
+);
 
 
 scariv_clint

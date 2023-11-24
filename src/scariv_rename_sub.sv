@@ -113,7 +113,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   //            silent flush (actually normally exit) => old ID
   assign except_flush_valid = r_commit_rnid_update_dly.commit &
                               r_commit_rnid_update_dly.except_valid[d_idx] &
-                              (r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH);
+                              ((r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH) &
+                               (r_commit_rnid_update_dly.except_type != scariv_pkg::LMUL_CHANGE));
   // Another Flush generate flush even though it is (actually) dead.
   // Another Flush is not marked as dead, but it is actually dead.
   // Freelist must be receive new ID

@@ -297,31 +297,31 @@ vfwmacc.vf      |
 vfwnmacc.vf     |
 vfwmsac.vf      |
 vfwnmsac.vf     |
-vle8.v          |
+vle8.v          | v        v
 vlse8.v         |
 vlxei8.v        |
-vse8.v          |
+vse8.v          | v        v
 vsuxei8.v       |
 vsse8.v         |
 vsxei8.v        |
-vle16.v         |
+vle16.v         | v        v
 vlse16.v        |
 vlxei16.v       |
-vse16.v         |
+vse16.v         | v        v
 vsuxei16.v      |
 vsse16.v        |
 vsxei16.v       |
-vle32.v         |
+vle32.v         | v        v
 vlse32.v        |
 vlxei32.v       |
-vse32.v         |
+vse32.v         | v        v
 vsuxei32.v      |
 vsse32.v        |
 vsxei32.v       |
-vle64.v         |
+vle64.v         | v        v
 vlse64.v        |
 vlxei64.v       |
-vse64.v         |
+vse64.v         | v        v
 vsuxei64.v      |
 vsse64.v        |
 vsxei64.v       |

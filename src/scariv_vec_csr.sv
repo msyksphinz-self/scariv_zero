@@ -22,10 +22,10 @@ module scariv_vec_csr
 riscv_pkg::xlen_t             r_vstart;
 logic [$clog2(VLENBMAX)-1: 0] r_vl;
 typedef struct packed {
-  logic [ 2: 0]  vlmul;
-  logic [ 2: 0]  vsew;
-  logic          vta;
   logic          vma;
+  logic          vta;
+  logic [ 2: 0]  vsew;
+  logic [ 2: 0]  vlmul;
 } vtype_t;
 vtype_t          r_vtype;
 logic            r_vill;
@@ -41,6 +41,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     vec_csr_if.info.vl    <= r_vl;
     vec_csr_if.info.vlmax <= w_vlmax;
+    vec_csr_if.info.vlmul <= r_vtype.vlmul;
   end
 end
 

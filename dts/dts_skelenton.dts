@@ -34,6 +34,11 @@
     };
   };
 
+  lmul_change_ram@2000 {
+    device_type = "memory";
+    reg = <0x0 0x00002000 0x0 0x00001000>;
+  };
+
   uart@54000000 {
     interrupts = <0x0a>;
     interrupt-parent = <0x03>;

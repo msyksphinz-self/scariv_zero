@@ -33,6 +33,7 @@ module scariv_vlsu_issue_unit
  cre_ret_if.slave                      cre_ret_if,
 
  input logic                           i_stall,
+ input logic                           i_replay_queue_full,
 
  /* Forwarding path */
  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -257,7 +258,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_entry_picked    (w_picked_inst_locked_oh[s_idx]),
     .o_issue_succeeded (w_entry_finish         [s_idx]),
-    .i_clear_entry     (w_entry_finish_oh      [s_idx])
+    .i_clear_entry     (w_entry_finish_oh      [s_idx]),
+
+    .i_replay_queue_full (i_replay_queue_full)
   );
 
 end
@@ -276,7 +279,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_issue_entry_lock <= 1'b0;
   end else begin
-    if ((scariv_vec_pkg::VEC_STEP_W > 1) & o_issue.valid & o_issue.vec_step_index == 'h0) begin
+    if (i_replay_queue_full) begin
+      r_picked_inst_oh   <= 'h0;
+      r_issue_entry_lock <= 1'b0;
+    end else if ((scariv_vec_pkg::VEC_STEP_W > 1) & o_issue.valid & o_issue.vec_step_index == 'h0) begin
       r_picked_inst_oh <= w_picked_inst_oh;
       r_issue_entry_lock <= 1'b1;
     end else if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |

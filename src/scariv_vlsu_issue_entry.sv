@@ -52,7 +52,9 @@ module scariv_vlsu_issue_entry
 
    output logic      o_dead,
    output logic      o_issue_succeeded,
-   input logic       i_clear_entry
+   input logic       i_clear_entry,
+
+   input logic       i_replay_queue_full
    );
 
 logic    r_issued;
@@ -87,8 +89,17 @@ logic     w_entry_finish;
 // When previous instruction generates exception or jump
 logic w_pc_update_before_entry;
 
-scariv_pkg::sched_state_t r_state;
-scariv_pkg::sched_state_t w_state_next;
+typedef enum logic [ 2: 0] {
+  INIT        = 0,
+  WAIT        = 1,
+  ISSUED      = 2,
+  ISSUED_EX2  = 3,
+  SCHED_CLEAR = 4
+} state_t;
+
+
+state_t r_state;
+state_t w_state_next;
 
 function logic all_operand_ready(scariv_vec_pkg::issue_t entry);
   logic     ret;
@@ -160,9 +171,9 @@ always_comb begin
   w_entry_next.wr_old_reg.ready = r_entry.wr_old_reg.ready | (|w_wr_old_phy_hit);
 
   case (r_state)
-    scariv_pkg::INIT : begin
+    INIT : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::INIT;
+        w_state_next = INIT;
       end else if (i_put) begin
         w_entry_next = w_init_entry;
 
@@ -174,53 +185,64 @@ always_comb begin
         w_entry_next.vec_step_index = 'h0;
 
         if (w_load_entry_flush) begin
-          w_state_next = scariv_pkg::SCHED_CLEAR;
+          w_state_next = SCHED_CLEAR;
           w_dead_next  = 1'b1;
         end else begin
-          w_state_next = scariv_pkg::WAIT;
+          w_state_next = WAIT;
           w_dead_next  = 1'b0;
         end
       end
     end
-    scariv_pkg::WAIT : begin
+    WAIT : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::SCHED_CLEAR;
+        w_state_next = SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
-          w_state_next = scariv_pkg::DONE;
-        end else if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
+        /* if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
+          w_state_next = DONE;
+        end else */ if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
           w_issued_next = 1'b1;
-          w_state_next = scariv_pkg::ISSUED;
+          w_state_next = ISSUED;
           w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
         end
       end
     end
-    scariv_pkg::ISSUED : begin
+    ISSUED : begin
       if (w_entry_flush) begin
-        w_state_next = scariv_pkg::SCHED_CLEAR;
+        w_state_next = SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
         if (w_rs_pred_mispredicted_or) begin
-          w_state_next = scariv_pkg::WAIT;
+          w_state_next = WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
           w_entry_next.rd_regs[1].predict_ready = 1'b0;
           w_entry_next.rd_regs[2].predict_ready = 1'b0;
+        end else if (i_replay_queue_full) begin
+          w_state_next = WAIT;
+          w_entry_next.vec_step_index = 'h0;
         end else begin
           if (scariv_vec_pkg::VEC_STEP_W == 1 ||
               r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VMASK ||
               r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) begin
-            w_state_next = scariv_pkg::SCHED_CLEAR;
+            w_state_next = ISSUED_EX2;
           end else begin
             w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
           end
         end
       end
-    end // case: scariv_pkg::ISSUED
-    scariv_pkg::SCHED_CLEAR : begin
+    end // case: ISSUED
+    ISSUED_EX2 : begin
+      if (i_replay_queue_full) begin
+        w_state_next = WAIT;
+        w_entry_next.vec_step_index = 'h0;
+      end else begin
+        w_state_next = SCHED_CLEAR;
+      end
+    end
+    SCHED_CLEAR : begin
       if (i_clear_entry) begin
-        w_state_next = scariv_pkg::INIT;
+        w_state_next = INIT;
         w_entry_next.valid = 1'b0;
       end
     end
@@ -262,7 +284,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
 
-    r_state <= scariv_pkg::INIT;
+    r_state <= INIT;
     r_issued <= 1'b0;
     r_dead   <= 1'b0;
   end else begin
@@ -286,12 +308,12 @@ endgenerate
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & ((r_state == scariv_pkg::WAIT) |
-                                        (r_state == scariv_pkg::ISSUED && scariv_vec_pkg::VEC_STEP_W > 1)) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & ((r_state == WAIT) |
+                                        (r_state == ISSUED && scariv_vec_pkg::VEC_STEP_W > 1)) & !w_entry_flush &
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry) & r_entry.vlvtype_ready;
 assign o_entry       = r_entry;
 assign o_dead        = r_dead;
 
-assign o_issue_succeeded = (r_state == scariv_pkg::SCHED_CLEAR);
+assign o_issue_succeeded = (r_state == SCHED_CLEAR);
 
 endmodule // scariv_vlsu_issue_entry

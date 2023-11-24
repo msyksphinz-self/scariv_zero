@@ -532,10 +532,13 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "-m0x80000000:0x80000000,0x0:0x1000";
 #ifndef SIM_MAIN
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
+  argv[arg_max++] = "--extlib=../../../spike_dpi/liblmul_change_rom.so";
 #else // SIM_MAIN
   argv[arg_max++] = "--extlib=./libserialdevice.so";
+  argv[arg_max++] = "--extlib=./liblmul_change_rom.so";
 #endif // SIM_MAIN
   argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
+  argv[arg_max++] = "--device=lmul_change_rom,8192,lmul_change_rom";   //  = 0x0000_2000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
@@ -974,7 +977,8 @@ std::map<int, const char *> riscv_excpt_map {
   {25, "SRET Flush"},
   {26, "URET Flush"},
   {27, "CSR Update Flush"},
-  {28, "Another Flush"}
+  {28, "Another Flush"},
+  {29, "LMUL change"}
 };
 
 void step_spike(long long rtl_time, long long rtl_pc,
@@ -1013,6 +1017,17 @@ void step_spike(long long rtl_time, long long rtl_pc,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
+    return;
+  }
+
+  if (rtl_exception & (rtl_exception_cause == 29)) {
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", rtl_time,
+            rtl_cmt_id, rtl_grp_id,
+            riscv_excpt_map[rtl_exception_cause],
+            rtl_exception_cause),
+    fprintf(compare_log_fp, "==========================================\n");
+    p->step(1);
     return;
   }
 
@@ -1080,26 +1095,29 @@ void step_spike(long long rtl_time, long long rtl_pc,
     return; // WFI doesn't update PC -> just skip
   }
 
-  for (auto &iss_rd: p->get_state()->log_mem_read) {
-    int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
-    uint64_t iss_lsu_addr = std::get<0>(iss_rd);
-    fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-            g_rv_xlen / 4, iss_lsu_addr,
-            g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
-    if (iss_lsu_addr == 0x200bff8) {
-      fprintf(compare_log_fp, "==========================================\n");
-      fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
-      fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
-      fprintf(compare_log_fp, "==========================================\n");
-      p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
-      p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
-      return;
+  if (((p->get_state()->insn.bits() & 0x7f) != 0x07) &   // Not Vector Load
+      ((p->get_state()->insn.bits() & 0x7f) != 0x27)) {  // Not Vector Store
+    for (auto &iss_rd: p->get_state()->log_mem_read) {
+      int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+      uint64_t iss_lsu_addr = std::get<0>(iss_rd);
+      fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+              g_rv_xlen / 4, iss_lsu_addr,
+              g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+      if (iss_lsu_addr == 0x200bff8) {
+        fprintf(compare_log_fp, "==========================================\n");
+        fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
+        fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+        fprintf(compare_log_fp, "==========================================\n");
+        p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
+        p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
+        return;
+      }
     }
-  }
-  for (auto &iss_wr: p->get_state()->log_mem_write) {
-    fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
-            g_rv_xlen / 4, std::get<0>(iss_wr),
-            g_rv_xlen / 4, std::get<1>(iss_wr));
+    for (auto &iss_wr: p->get_state()->log_mem_write) {
+      fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
+              g_rv_xlen / 4, std::get<0>(iss_wr),
+              g_rv_xlen / 4, std::get<1>(iss_wr));
+    }
   }
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
