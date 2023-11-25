@@ -174,7 +174,6 @@
 
 ../src/scariv_vec_csr.sv
 ../src/scariv_vec_vlvtype_rename.sv
-../src/scariv_vec_vlvtype_snapshots.sv
 ../src/scariv_valu_issue_unit.sv
 ../src/scariv_valu_issue_entry.sv
 ../src/scariv_vec_alu.sv
