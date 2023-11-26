@@ -182,8 +182,10 @@ always_comb begin
     w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.cmt_id      ;
     w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.grp_id      ;
     w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
+    w_ex0_replay_issue.vlvtype           = w_lsu_pipe_req_if.payload.vlvtype     ;
     w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
     w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_replay_issue.wr_old_reg        = w_lsu_pipe_req_if.payload.wr_old_reg  ;
     w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
     w_ex0_replay_issue.vec_step_index    = w_lsu_pipe_req_if.payload.vec_step_index;
 `ifdef SIMULATION
@@ -214,6 +216,7 @@ u_lsu_pipe
 
    .i_ex0_issue           (w_ex0_replay_issue             ),
    .i_ex0_replay_selected (w_replay_selected              ),
+   .i_ex0_replay_haz_1st_req (w_lsu_pipe_req_if.payload.haz_1st_req),
    .i_ex0_replay_paddr    (w_lsu_pipe_req_if.payload.paddr),
 
    .ex1_i_phy_wr(i_phy_wr),

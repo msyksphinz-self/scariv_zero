@@ -27,6 +27,7 @@ module scariv_vec_lsu_pipe
 
  input scariv_vec_pkg::issue_t  i_ex0_issue,
  input logic                    i_ex0_replay_selected,
+ input logic                    i_ex0_replay_haz_1st_req,
  input scariv_pkg::paddr_t      i_ex0_replay_paddr,
  input scariv_pkg::phy_wr_t     ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
@@ -75,10 +76,13 @@ logic                    w_ex1_st_except_valid;
 scariv_pkg::except_t     w_ex1_tlb_except_type;
 
 logic                    r_ex1_replay_selected;
+logic                    r_ex1_replay_haz_1st_req;
 scariv_pkg::paddr_t      r_ex1_replay_paddr;
 
 scariv_vec_pkg::issue_t  r_ex2_issue;
 scariv_vec_pkg::issue_t  w_ex2_issue_next;
+logic                    r_ex2_replay_selected;
+logic                    r_ex2_replay_haz_1st_req;
 scariv_pkg::maxaddr_t    r_ex2_addr;
 decoder_vlsu_ctrl_pkg::pipe_ctrl_t              r_ex2_pipe_ctrl;
 logic                    r_ex2_except_valid;
@@ -101,6 +105,7 @@ scariv_pkg::maxaddr_t    r_ex3_addr;
 logic                    r_ex3_mis_valid;
 scariv_vec_pkg::dlen_t   r_ex3_aligned_data;
 logic                    r_ex3_vec_step_success;
+scariv_vec_pkg::dlenb_t  r_ex3_mask;
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
@@ -144,6 +149,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
 
     r_ex1_replay_selected <= i_ex0_replay_selected;
+    r_ex1_replay_haz_1st_req     <= i_ex0_replay_haz_1st_req;
     r_ex1_replay_paddr    <= i_ex0_replay_paddr;
 
     r_ex1_rs1_data        <= ex0_xpr_regread_rs1.data;
@@ -241,6 +247,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_addr         <= w_ex1_ld_except_valid | w_ex1_st_except_valid ? w_ex1_vaddr : w_ex1_addr;
     r_ex2_is_uc        <= !w_ex1_tlb_resp.cacheable;
 
+    r_ex2_replay_selected <= r_ex1_replay_selected;
+    r_ex2_replay_haz_1st_req     <= r_ex1_replay_haz_1st_req;
+
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
     r_ex2_except_type  <= w_ex1_tlb_except_type;
   end // else: !if(!i_reset_n)
@@ -257,28 +266,33 @@ assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 assign l1d_missu_if.req_payload.way   = l1d_rd_if.s1_hit_way;
 
-assign w_ex2_vec_step_success = r_ex2_issue.vec_step_index == 'h0 ? ~w_ex2_hazard : ~w_ex2_hazard & r_ex3_vec_step_success;
+assign w_ex2_vec_step_success = (r_ex2_issue.vec_step_index == 'h0) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? ~w_ex2_hazard :
+                                ~w_ex2_hazard & r_ex3_vec_step_success;
 
 // Interface to Replay Queue
 assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & ~i_replay_queue_full & ~w_ex2_vec_step_success & ~w_commit_flush & ~w_ex2_br_flush;
 assign lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
 assign lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
 assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
+assign lsu_pipe_haz_if.payload.vlvtype        = r_ex2_issue.vlvtype;
 assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
 assign lsu_pipe_haz_if.payload.oldest_valid   = 1'b0;
 assign lsu_pipe_haz_if.payload.hazard_typ     = l1d_rd_if.s1_conflict ? EX2_HAZ_L1D_CONFLICT : EX2_HAZ_MISSU_ASSIGNED;
 assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
 assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
+assign lsu_pipe_haz_if.payload.wr_old_reg     = r_ex2_issue.wr_old_reg;
 assign lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
 assign lsu_pipe_haz_if.payload.is_uc          = 1'b0;
 assign lsu_pipe_haz_if.payload.hazard_index   = l1d_missu_if.resp_payload.missu_index_oh;
+assign lsu_pipe_haz_if.payload.haz_1st_req    = (r_ex2_issue.vec_step_index == 'h0) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? w_ex2_hazard :
+                                                r_ex3_vec_step_success & ~w_ex2_vec_step_success;
 assign lsu_pipe_haz_if.payload.vec_step_index = r_ex2_issue.vec_step_index;
 
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew8;
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew16;
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew32;
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew64;
-scariv_vec_pkg::dlen_t     w_ex2_mask;
+scariv_vec_pkg::dlenb_t    w_ex2_mask;
 
 assign w_ex2_vl_ew8  = r_ex2_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W /  8);
 assign w_ex2_vl_ew16 = r_ex2_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 16);
@@ -298,19 +312,19 @@ always_comb begin
   unique case (r_ex2_issue.vlvtype.vtype.vsew)
     scariv_vec_pkg::EW8 : begin
       w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew8 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew8 : 0, riscv_vec_conf_pkg::DLEN_W /  8);
-      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew8  + riscv_vec_conf_pkg::DLEN_W  / 8 ? {(riscv_vec_conf_pkg::DLEN_W /  8){1'b1}} : (1 << w_ex2_temp_vl) - 1;
+      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew8  + riscv_vec_conf_pkg::DLEN_W /  8 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*1)) - 1;
     end
     scariv_vec_pkg::EW16: begin
       w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew16 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew16 : 0, riscv_vec_conf_pkg::DLEN_W / 16);
-      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew16 + riscv_vec_conf_pkg::DLEN_W / 16 ? {(riscv_vec_conf_pkg::DLEN_W / 16){1'b1}} : (1 << w_ex2_temp_vl) - 1;
+      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew16 + riscv_vec_conf_pkg::DLEN_W / 16 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*2)) - 1;
     end
     scariv_vec_pkg::EW32: begin
       w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew32 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew32 : 0, riscv_vec_conf_pkg::DLEN_W / 32);
-      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew32 + riscv_vec_conf_pkg::DLEN_W / 32 ? {(riscv_vec_conf_pkg::DLEN_W / 32){1'b1}} : (1 << w_ex2_temp_vl) - 1;
+      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew32 + riscv_vec_conf_pkg::DLEN_W / 32 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*4)) - 1;
     end
     scariv_vec_pkg::EW64: begin
       w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew64 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew64 : 0, riscv_vec_conf_pkg::DLEN_W / 64);
-      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew64 + riscv_vec_conf_pkg::DLEN_W / 64 ? {(riscv_vec_conf_pkg::DLEN_W / 64){1'b1}} : (1 << w_ex2_temp_vl) - 1;
+      w_ex2_mask    = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew64 + riscv_vec_conf_pkg::DLEN_W / 64 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*8)) - 1;
     end
     default             : begin
       w_ex2_temp_vl = 'h0;
@@ -341,34 +355,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
     r_ex3_addr      <= r_ex2_addr;
     r_ex3_mis_valid <= w_ex2_hazard;
-    unique case (r_ex2_issue.vlvtype.vtype.vsew)
-      scariv_vec_pkg::EW8 : begin
-        for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/8; b_idx++) begin
-          r_ex3_aligned_data[b_idx* 8+: 8] <= w_ex2_mask[b_idx] ? w_ex2_aligned_data[b_idx* 8+: 8] : vec_phy_old_wr_if.data[b_idx* 8+: 8];
-        end
-      end
-      scariv_vec_pkg::EW16 : begin
-        for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/16; b_idx++) begin
-          r_ex3_aligned_data[b_idx*16+:16] <= w_ex2_mask[b_idx] ? w_ex2_aligned_data[b_idx*16+:16] : vec_phy_old_wr_if.data[b_idx*16+:16];
-        end
-      end
-      scariv_vec_pkg::EW32 : begin
-        for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/32; b_idx++) begin
-          r_ex3_aligned_data[b_idx*32+:32] <= w_ex2_mask[b_idx] ? w_ex2_aligned_data[b_idx*32+:32] : vec_phy_old_wr_if.data[b_idx*32+:32];
-        end
-      end
-      scariv_vec_pkg::EW64 : begin
-        for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/64; b_idx++) begin
-          r_ex3_aligned_data[b_idx*64+:64] <= w_ex2_mask[b_idx] ? w_ex2_aligned_data[b_idx*64+:64] : vec_phy_old_wr_if.data[b_idx*64+:64];
-        end
-      end
-      default : begin
-        r_ex3_aligned_data <= 'h0;
-      end
-    endcase // unique case (r_ex2_issue.vlvtype.vtype.vsew)
+    r_ex3_mask      <= w_ex2_mask;
+
+    for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/8; b_idx++) begin
+      r_ex3_aligned_data[b_idx* 8+: 8] <= w_ex2_mask[b_idx] ? w_ex2_aligned_data[b_idx* 8+: 8] : vec_phy_old_wr_if.data[b_idx* 8+: 8];
+    end
 
     if (r_ex2_issue.valid) begin
-      if (r_ex2_issue.vec_step_index == 'h0) begin
+      if (r_ex2_issue.vec_step_index == 'h0 | r_ex2_replay_selected & r_ex2_replay_haz_1st_req) begin
         r_ex3_vec_step_success <= w_ex3_issue_next.valid;
       end else begin
         r_ex3_vec_step_success <= r_ex3_vec_step_success & w_ex3_issue_next.valid;
@@ -398,7 +392,7 @@ assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign vec_phy_wr_if.rd_pos  = r_ex3_issue.vec_step_index;
 assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
-assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid;
+assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_reg.rnid;
 
 assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_LOAD;
@@ -411,5 +405,8 @@ assign vlsu_stq_req_if.paddr  = r_ex3_addr;
 assign vlsu_stq_req_if.cmt_id = r_ex3_issue.cmt_id;
 assign vlsu_stq_req_if.grp_id = r_ex3_issue.grp_id;
 assign vlsu_stq_req_if.vs3_phy_idx = r_ex3_issue.rd_regs[2].rnid;
+assign vlsu_stq_req_if.vs3_pos     = r_ex3_issue.vec_step_index;
+assign vlsu_stq_req_if.strb        = r_ex3_mask;
+
 
 endmodule // scariv_vec_lsu_pipe

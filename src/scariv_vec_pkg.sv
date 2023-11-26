@@ -6,6 +6,7 @@ parameter VLENBMAX = VLENB * 8;
 parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX): 0] vlenbmax_t;
 typedef logic [VLENB-1: 0]          vlenb_t;
+typedef logic [riscv_vec_conf_pkg::DLEN_W/8-1: 0] dlenb_t;
 parameter VEC_STEP_W = riscv_vec_conf_pkg::DLEN_W == 0 ? 1 :
                        riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
 
@@ -246,13 +247,16 @@ endfunction // assign_issue_op3
 typedef struct packed {
   logic [31: 0]                  inst;
   decoder_inst_cat_pkg::inst_cat_t cat;
+  vlvtype_t                      vlvtype;
   logic                          oldest_valid;
   scariv_pkg::reg_rd_issue_t     rd_reg;
   scariv_pkg::reg_wr_issue_t     wr_reg;
+  scariv_pkg::reg_rd_issue_t     wr_old_reg;
   scariv_pkg::paddr_t            paddr;
   logic                          is_uc;
   scariv_lsu_pkg::ex2_haz_t      hazard_typ;
   logic [scariv_lsu_pkg::HAZARD_INDEX_SIZE-1: 0] hazard_index;
+  logic                                          haz_1st_req;
   vec_pos_t                      vec_step_index;
 } vlsu_replay_queue_t;
 
@@ -455,13 +459,17 @@ interface vlsu_lsq_req_if;
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
   scariv_pkg::rnid_t   vs3_phy_idx;
+  scariv_vec_pkg::vec_pos_t vs3_pos;
+  scariv_vec_pkg::dlenb_t   strb;
 
   modport master (
     output valid,
     output paddr,
     output cmt_id,
     output grp_id,
-    output vs3_phy_idx
+    output vs3_phy_idx,
+    output vs3_pos,
+    output strb
   );
 
   modport slave (
@@ -469,7 +477,9 @@ interface vlsu_lsq_req_if;
     input paddr,
     input cmt_id,
     input grp_id,
-    input vs3_phy_idx
+    input vs3_phy_idx,
+    input vs3_pos,
+    input strb
   );
 
 endinterface // vlsu_lsq_req_if

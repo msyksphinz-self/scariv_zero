@@ -40,6 +40,8 @@ typedef struct packed {
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
   scariv_pkg::rnid_t   vs3_phy_idx;
+  vec_pos_t            vs3_pos;
+  dlenb_t              strb;
   vstq_paddr_t         paddr;
   logic                is_committed;
 `ifdef SIMULATION
@@ -64,6 +66,15 @@ logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0]           w_vlsu_stq_bank_idx;
 vlsu_stq_entry_t                                  w_vlsu_stq_vs3_entry;
 logic [VLSU_STQ_BANK_SIZE-1:0][VLSU_STQ_SIZE-1:0] w_stbuf_req_valid;
 logic                                             w_commit_flush;
+
+logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0] w_vs3_regread_bank_accepted_index;
+logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0] r_vs3_regread_bank_accepted_index_d1;
+logic [VLSU_STQ_BANK_SIZE-1: 0]         w_vs3_regread_bank_accepted;
+
+logic                                   st_buffer_proceed_valid;
+
+assign st_buffer_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL);
+
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
@@ -95,6 +106,21 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
      .o_is_full  (w_vlsu_stq_freelist_full)
      );
 
+  function automatic logic [$clog2(VLSU_STQ_SIZE)-1:0] rr (logic [VLSU_STQ_SIZE-1:0] req, logic [VLSU_STQ_SIZE-1:0] curr);
+    logic [$clog2(VLSU_STQ_SIZE)-1:0] index;
+
+    for (int i = 1; i <= VLSU_STQ_SIZE; i++) begin
+      index = (curr + i) % VLSU_STQ_SIZE;
+      if (req[index]) begin
+        return index;
+      end
+    end
+    return 0;
+  endfunction // rr
+
+  logic [$clog2(VLSU_STQ_SIZE)-1: 0] r_regread_req_index_d1;
+  logic [$clog2(VLSU_STQ_SIZE)-1: 0] w_vs3_regread_accepted_index;
+  logic [VLSU_STQ_SIZE-1: 0]         w_vs3_regread_accepted;
 
   for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_loop
 
@@ -125,10 +151,16 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
             w_vlsu_stq_entry_next.cmt_id       = vlsu_stq_req_if.cmt_id;
             w_vlsu_stq_entry_next.grp_id       = vlsu_stq_req_if.grp_id;
             w_vlsu_stq_entry_next.vs3_phy_idx  = vlsu_stq_req_if.vs3_phy_idx;
+            w_vlsu_stq_entry_next.vs3_pos      = vlsu_stq_req_if.vs3_pos;
+            w_vlsu_stq_entry_next.strb         = vlsu_stq_req_if.strb;
             w_vlsu_stq_entry_next.paddr        = to_vstq_paddr(vlsu_stq_req_if.paddr);
             w_vlsu_stq_entry_next.is_committed = 1'b0;
 
             w_state_next = WAIT_COMMIT;
+
+`ifdef SIMULATION
+            w_vlsu_stq_entry_next.sim_paddr    = vlsu_stq_req_if.paddr;
+`endif // SIMULATION
           end
         end
         WAIT_COMMIT : begin
@@ -139,7 +171,9 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
           end
         end
         READ_VS3 : begin
-          w_state_next = COMMIT_MV_STBUF;
+          if (st_buffer_proceed_valid & w_vs3_regread_accepted[stq_idx] & w_vs3_regread_bank_accepted[bank_idx]) begin
+            w_state_next = COMMIT_MV_STBUF;
+          end
         end
         COMMIT_MV_STBUF : begin
           if (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL) begin
@@ -171,6 +205,18 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
   end // block: stq_loop
 
   assign w_vs3_regread_req [bank_idx] = |(w_vs3_regread_req_bank);
+
+  always_ff @ (posedge i_clk, posedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_regread_req_index_d1 <= VLSU_STQ_SIZE-1;
+    end else if (|(w_vs3_regread_req_bank)) begin
+      r_regread_req_index_d1 <= w_vs3_regread_accepted_index;
+    end
+  end
+
+  assign w_vs3_regread_accepted_index = rr(w_vs3_regread_req_bank, r_regread_req_index_d1);
+  assign w_vs3_regread_accepted = 1 << w_vs3_regread_accepted_index;
+
   bit_oh_or
     #(
       .T(vlsu_stq_entry_t),
@@ -178,26 +224,52 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
       )
   bit_oh_entry
     (
-     .i_oh      (w_vs3_regread_req_bank             ),
+     .i_oh      (w_vs3_regread_accepted             ),
      .i_data    (r_vlsu_stq_entries       [bank_idx]),
      .o_selected(w_vlsu_stq_vs3_entry_bank[bank_idx])
      );
 end endgenerate
 
-bit_oh_or #(.T(vlsu_stq_entry_t), .WORDS(VLSU_STQ_BANK_SIZE)) bit_oh_vs3 (.i_oh(w_vs3_regread_req), .i_data(w_vlsu_stq_vs3_entry_bank), .o_selected(w_vlsu_stq_vs3_entry));
-bit_encoder #(.WIDTH(VLSU_STQ_BANK_SIZE)) bit_oh_bank (.i_in(w_vs3_regread_req), .o_out(w_vlsu_stq_bank_idx));
+function automatic logic [$clog2(VLSU_STQ_BANK_SIZE)-1:0] rr (logic [VLSU_STQ_BANK_SIZE-1:0] req, logic [VLSU_STQ_BANK_SIZE-1:0] curr);
+  logic [$clog2(VLSU_STQ_BANK_SIZE)-1:0] index;
+
+  for (int i = 1; i <= VLSU_STQ_BANK_SIZE; i++) begin
+    index = (curr + i) % VLSU_STQ_BANK_SIZE;
+    if (req[index]) begin
+      return index;
+    end
+  end
+  return 0;
+endfunction // rr
+
+assign w_vs3_regread_bank_accepted_index = rr(w_vs3_regread_req, r_vs3_regread_bank_accepted_index_d1);
+assign w_vs3_regread_bank_accepted = 1 << w_vs3_regread_bank_accepted_index;
+
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_vs3_regread_bank_accepted_index_d1 <= VLSU_STQ_BANK_SIZE-1;
+  end else if (|(w_vs3_regread_req)) begin
+    r_vs3_regread_bank_accepted_index_d1 <= w_vs3_regread_bank_accepted_index;
+  end
+end
+
+bit_oh_or #(.T(vlsu_stq_entry_t), .WORDS(VLSU_STQ_BANK_SIZE)) bit_oh_vs3 (.i_oh(w_vs3_regread_bank_accepted), .i_data(w_vlsu_stq_vs3_entry_bank), .o_selected(w_vlsu_stq_vs3_entry));
+bit_encoder #(.WIDTH(VLSU_STQ_BANK_SIZE)) bit_oh_bank (.i_in(w_vs3_regread_bank_accepted), .o_out(w_vlsu_stq_bank_idx));
 
 assign vec_vs3_rd_if.valid = |w_vs3_regread_req;
 assign vec_vs3_rd_if.rnid  = w_vlsu_stq_vs3_entry.vs3_phy_idx;
+assign vec_vs3_rd_if.pos   = w_vlsu_stq_vs3_entry.vs3_pos;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     st_buffer_if.valid <= 1'b0;
   end else begin
-    st_buffer_if.valid <= vec_vs3_rd_if.valid;
-    st_buffer_if.paddr <= to_paddr(w_vlsu_stq_bank_idx, w_vlsu_stq_vs3_entry.paddr);
-    st_buffer_if.strb  <= {(riscv_vec_conf_pkg::DLEN_W/8){1'b1}};
-    st_buffer_if.data  <= vec_vs3_rd_if.data;
+    if (st_buffer_proceed_valid) begin
+      st_buffer_if.valid <= vec_vs3_rd_if.valid;
+      st_buffer_if.paddr <= to_paddr(w_vlsu_stq_bank_idx, w_vlsu_stq_vs3_entry.paddr);
+      st_buffer_if.strb  <= w_vlsu_stq_vs3_entry.strb;
+      st_buffer_if.data  <= vec_vs3_rd_if.data;
+    end
   end
 end
 
