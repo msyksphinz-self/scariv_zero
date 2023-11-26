@@ -108,7 +108,7 @@ u_router
    );
 
 
-scariv_rom
+scariv_ram
 #(
   .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
