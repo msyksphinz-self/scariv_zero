@@ -387,20 +387,20 @@ assign o_done_report.except_tval          = {{(riscv_pkg::XLEN_W-riscv_pkg::VADD
 assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id               = r_ex3_issue.grp_id;
 
-assign vec_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid & ~r_ex3_mis_valid;
+assign vec_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_issue.wr_reg.valid & ~r_ex3_mis_valid;
 assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign vec_phy_wr_if.rd_pos  = r_ex3_issue.vec_step_index;
 assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
-assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & r_ex3_vec_step_success & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_reg.rnid;
 
-assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_LOAD;
+assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_LOAD;
 assign vlsu_ldq_req_if.paddr  = r_ex3_addr;
 assign vlsu_ldq_req_if.cmt_id = r_ex3_issue.cmt_id;
 assign vlsu_ldq_req_if.grp_id = r_ex3_issue.grp_id;
 
-assign vlsu_stq_req_if.valid  = r_ex3_issue.valid & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_STORE;
+assign vlsu_stq_req_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == decoder_vlsu_ctrl_pkg::OP_STORE;
 assign vlsu_stq_req_if.paddr  = r_ex3_addr;
 assign vlsu_stq_req_if.cmt_id = r_ex3_issue.cmt_id;
 assign vlsu_stq_req_if.grp_id = r_ex3_issue.grp_id;
