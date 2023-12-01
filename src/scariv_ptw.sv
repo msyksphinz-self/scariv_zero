@@ -9,7 +9,8 @@
 module scariv_ptw
   import scariv_lsu_pkg::*;
 #(
-  localparam PTW_PORT_NUM = 1 + scariv_conf_pkg::LSU_INST_NUM + 1
+  localparam PTW_PORT_NUM = 1 + scariv_conf_pkg::LSU_INST_NUM + 1,
+  parameter dummy = 1
   )
 (
    input logic i_clk,
