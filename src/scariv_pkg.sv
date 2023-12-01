@@ -221,9 +221,9 @@ typedef struct packed {
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    csu_inst_valid;
     logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]        fpu_inst_cnt;
     logic [FPU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
-    logic [$clog2(VALU_DISP_SIZE): 0]                          valu_inst_cnt;
+    logic [$clog2(scariv_conf_pkg::VALU_DISP_SIZE): 0]         valu_inst_cnt;
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    valu_inst_valid;
-    logic [$clog2(VLSU_DISP_SIZE): 0]                          vlsu_inst_cnt;
+    logic [$clog2(scariv_conf_pkg::VLSU_DISP_SIZE): 0]         vlsu_inst_cnt;
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    vlsu_inst_valid;
   } resource_cnt_t;
 

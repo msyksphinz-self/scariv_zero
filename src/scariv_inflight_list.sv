@@ -12,7 +12,9 @@ module scariv_inflight_list
   #(parameter REG_TYPE = GPR,
     parameter TARGET_SIZE = 1,
     parameter NUM_INFLIGHT_OPS = 2,
-    localparam RNID_SIZE = REG_TYPE == GPR ? XPR_RNID_SIZE : FPR_RNID_SIZE,
+    localparam RNID_SIZE = REG_TYPE == GPR ? XPR_RNID_SIZE :
+                           REG_TYPE == FPR ? FPR_RNID_SIZE :
+                           scariv_vec_pkg::VEC_RNID_SIZE,
     localparam RNID_W = $clog2(RNID_SIZE),
     parameter type rnid_t = logic [RNID_W-1: 0])
 (
