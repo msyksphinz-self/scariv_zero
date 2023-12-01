@@ -23,6 +23,8 @@ module scariv_vlsu_issue_entry
    // ROB notification interface
    rob_info_if.slave rob_info_if,
 
+   input logic                i_stall,
+
    input logic                i_put,
    input logic                i_dead_put,
 
@@ -200,7 +202,7 @@ always_comb begin
       end else begin
         /* if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
           w_state_next = DONE;
-        end else */ if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or) begin
+        end else */ if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or & ~i_stall) begin
           w_issued_next = 1'b1;
           w_state_next = ISSUED;
           w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
@@ -211,7 +213,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = SCHED_CLEAR;
         w_dead_next  = 1'b1;
-      end else begin
+      end else if (~i_stall) begin
         if (w_rs_pred_mispredicted_or) begin
           w_state_next = WAIT;
           w_issued_next = 1'b0;

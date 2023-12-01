@@ -192,7 +192,7 @@ bit_brshift
   #(.WIDTH(ENTRY_SIZE))
 u_age_selector
   (
-   .in   (w_entry_valid & w_entry_ready & {ENTRY_SIZE{~i_stall}}),
+   .in   (w_entry_valid & w_entry_ready),
    .i_sel(w_entry_out_ptr_oh),
    .out  (w_picked_inst)
    );
@@ -232,6 +232,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx] ),
     .rob_info_if   (rob_info_if),
+
+    .i_stall    (i_stall),
 
     .i_put      (|w_input_valid),
     .i_dead_put (1'b0),
