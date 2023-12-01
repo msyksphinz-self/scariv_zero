@@ -34,21 +34,27 @@ package scariv_conf_pkg;
   localparam RV_FPU_ENTRY_SIZE = 4;
 
   localparam VEC_ALU_INST_NUM = 1;
-  localparam RV_VEC_ALU_ENTRY_SIZE = 32;
+  localparam RV_VALU_ENTRY_SIZE = 32;
+  localparam RV_VLSU_ENTRY_SIZE = 32;
   localparam VALU_DISP_SIZE = 1;
+  localparam VLSU_DISP_SIZE = 1;
 
-  localparam MISSU_ENTRY_SIZE = 2;
+  localparam MISSU_ENTRY_SIZE = 4;
 
   localparam CMT_ENTRY_SIZE = 32;
-  localparam XPR_PRF_SIZE_PER_GRP = 24;
-  localparam FPR_PRF_SIZE_PER_GRP = 16;
 
   localparam USING_VM = 1'b1;
+  localparam XPR_PRF_SIZE_PER_GRP = 24;
+  localparam FPR_PRF_SIZE_PER_GRP = 16;
 
   localparam BTB_ENTRY_SIZE = 64;
   localparam RAS_ENTRY_SIZE = 16;
   localparam GSHARE_BHT_W   = 9;
 
   localparam FPNEW_LATENCY = 4;
+
+  localparam VEC_VSETVL_DISP_SIZE = 1;
+  localparam VEC_ARITH_DISP_SIZE  = 2;
+  localparam VEC_MEM_DISP_SIZE    = 2;
 
 endpackage // scariv_conf_pkg
