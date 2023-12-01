@@ -246,6 +246,13 @@ u_lsu_pipe
 assign vec_vlsu_phy_fwd_if[0].valid   = w_vec_phy_fwd_if[0].valid;
 assign vec_vlsu_phy_fwd_if[0].rd_rnid = w_vec_phy_fwd_if[0].rd_rnid;
 
+scariv_lsu_pkg::missu_resolve_t r_missu_resolve_d1;
+always_ff @ (posedge i_clk) begin
+  r_missu_resolve_d1.valid <= i_missu_resolve.valid;
+  r_missu_resolve_d1.resolve_index_oh <= i_missu_resolve.resolve_index_oh;
+end
+assign r_missu_resolve_d1.missu_entry_valids = i_missu_resolve.missu_entry_valids;
+
 // Replay Queue
 scariv_lsu_replay_queue
   #(.queue_base_t(scariv_vec_pkg::vlsu_replay_queue_t))
@@ -264,7 +271,7 @@ u_replay_queue
  .i_st_buffer_empty    (1'b0),
  .i_missu_is_empty     (1'b0),
 
- .i_missu_resolve   (i_missu_resolve ),
+ .i_missu_resolve   (r_missu_resolve_d1),
  .i_missu_is_full   (1'b0 ),
  .i_stq_rs2_resolve (1'b0),
 

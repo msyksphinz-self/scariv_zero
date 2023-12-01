@@ -125,6 +125,7 @@
     { "name": "vse64_v"          , "group" : ["rvv"], "elf": "../../../tests/rvv/vse64_v/test.elf"   , "xlen": 64},
 
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64},
-    { "name": "rvv_memcpy_lmul8" , "group" : ["rvv"], "elf": "../../../tests/rvv/rvv_memcpy_lmul8/test.elf"   , "xlen": 64}
+    { "name": "rvv_memcpy_lmul8" , "group" : ["rvv"], "elf": "../../../tests/rvv/rvv_memcpy_lmul8/test.elf"   , "xlen": 64},
+    { "name": "vvadd"            , "group" : ["rvv"], "elf": "../../../tests/rvv/vvadd/test.elf"   , "xlen": 64}
 
 ]
