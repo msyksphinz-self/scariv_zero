@@ -26,11 +26,11 @@ module scariv_fpu #(
     cre_ret_if.slave                       cre_ret_if,
 
 
-    regread_if.master ex1_regread_int_rs1,
+    regread_if.master ex0_regread_int_rs1,
 
-    regread_if.master ex1_regread_rs1,
-    regread_if.master ex1_regread_rs2,
-    regread_if.master ex1_regread_rs3,
+    regread_if.master ex0_regread_rs1,
+    regread_if.master ex0_regread_rs2,
+    regread_if.master ex0_regread_rs3,
 
     /* Forwarding path */
     input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -138,11 +138,11 @@ u_fpu
    .ex0_index(w_ex0_index_oh),
    .ex1_i_phy_wr(i_phy_wr),
 
-   .ex1_regread_int_rs1(ex1_regread_int_rs1),
+   .ex0_regread_int_rs1(ex0_regread_int_rs1),
 
-   .ex1_regread_rs1(ex1_regread_rs1),
-   .ex1_regread_rs2(ex1_regread_rs2),
-   .ex1_regread_rs3(ex1_regread_rs3),
+   .ex0_regread_rs1(ex0_regread_rs1),
+   .ex0_regread_rs2(ex0_regread_rs2),
+   .ex0_regread_rs3(ex0_regread_rs3),
 
    .i_mispred_lsu (i_mispred_lsu),
 

@@ -76,10 +76,15 @@ end
 endgenerate
 
 generate for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
-  always_comb begin
-    regread[p_idx].resp = regread[p_idx].valid;
-    regread[p_idx].data = (REG_TYPE == GPR) & regread[p_idx].rnid == 'h0 ? 'h0       :
-                          r_phy_regs[regread[p_idx].rnid];
+  // always_comb begin
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      regread[p_idx].resp <= 1'b0;
+    end else begin
+      regread[p_idx].resp <= regread[p_idx].valid;
+      regread[p_idx].data <= (REG_TYPE == GPR) & regread[p_idx].rnid == 'h0 ? 'h0 :
+                             r_phy_regs[regread[p_idx].rnid];
+    end
   end
 end endgenerate
 

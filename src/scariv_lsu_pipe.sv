@@ -113,6 +113,7 @@ logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
 riscv_pkg::xlen_t        r_ex1_rs1;
 riscv_pkg::xlen_t        w_ex1_rs1_selected_data;
+riscv_pkg::xlen_t        r_ex1_rs1_fwd_data;
 
 scariv_pkg::vaddr_t      w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
@@ -127,7 +128,7 @@ logic w_ex1_commit_flush;
 logic w_ex1_br_flush;
 
 
-riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
+// riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
 
 //
 // EX2 stage
@@ -228,9 +229,8 @@ riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
 for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex0_rs_tgt_loop
   assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
 end
-assign w_ex0_rs1_fwd_data  = w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
-
-assign w_ex0_rs1_selected_data = w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs1_fwd_data : ex0_regread_rs1.data;
+// assign w_ex0_rs1_fwd_data  = w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
+// assign w_ex0_rs1_selected_data = w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs1_fwd_data : ex0_regread_rs1.data;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -243,7 +243,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_uc     <= 1'b0;
   end else begin
-    r_ex1_rs1 <= w_ex0_rs1_selected_data;
+    // r_ex1_rs1 <= w_ex0_rs1_selected_data;
+    r_ex1_rs1_fwd_data <= w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
 
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
@@ -319,12 +320,15 @@ riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
 for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex1_rs_tgt_loop
   assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
 end
-assign w_ex1_rs1_fwd_data  = w_ex1_tgt_data[r_ex1_issue.rd_regs[0].early_index];
+// assign w_ex1_rs1_fwd_data  = w_ex1_tgt_data[r_ex1_issue.rd_regs[0].early_index];
 
 assign ex0_regread_rs1.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[0].valid;
 assign ex0_regread_rs1.rnid  = w_ex0_issue.rd_regs[0].rnid;
 
-assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs1_fwd_data : r_ex1_rs1;
+// assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs1_fwd_data : r_ex1_rs1;
+assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_tgt_data[r_ex1_issue.rd_regs[0].early_index] :
+                                 r_ex1_issue.rd_regs[0].predict_ready[1] ? r_ex1_rs1_fwd_data :
+                                 ex0_regread_rs1.data;
 
 assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 

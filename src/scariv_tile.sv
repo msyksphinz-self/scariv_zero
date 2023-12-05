@@ -546,15 +546,15 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .disp(w_rn_front_if),
       .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
-      .ex1_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
+      .ex0_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
                                        scariv_conf_pkg::LSU_INST_NUM + 1 +
                                        2 +   // BRU
                                        1 +   // CSU
                                        fpu_idx]),
 
-      .ex1_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
-      .ex1_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
-      .ex1_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
+      .ex0_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
+      .ex0_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
+      .ex0_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
 
       .i_early_wr(w_ex1_early_wr),
       .i_phy_wr  (w_ex3_phy_wr),
