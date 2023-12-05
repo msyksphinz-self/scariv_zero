@@ -13,6 +13,7 @@ CFLAGS += -I$(abspath riscv-isa-sim)
 CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
 CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
 CFLAGS += -I$(abspath ../cpp/)
+CFLAGS += -I$(realpath ../sniper/snipersim/sift)
 CFLAGS += $(abspath riscv-isa-sim)/libspike_main.a
 CFLAGS += $(abspath riscv-isa-sim)/libriscv.a
 CFLAGS += $(abspath riscv-isa-sim)/libdisasm.a
@@ -32,7 +33,9 @@ EXE_CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 EXE_CFLAGS += -I$(abspath riscv-isa-sim)/
 EXE_CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
 EXE_CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
+EXE_CFLAGS += -I$(realpath ../sniper/snipersim/sift)
 EXE_CFLAGS += -I$(abspath ../cpp/)
+EXE_CFLAGS += -L$(realpath ../sniper/snipersim/sift)
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libspike_main.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libriscv.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libdisasm.a
@@ -46,6 +49,8 @@ EXE_CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 EXE_CFLAGS += -I$(VCS_HOME)/include/
 EXE_CFLAGS += -ldl
 EXE_CFLAGS += -lpthread
+EXE_CFLAGS += -lsift
+EXE_CFLAGS += -lz
 
 all: riscv-isa-sim-makefile Makefile
 	$(MAKE) -f spike_dpi.mk libspike_dpi.a
@@ -56,7 +61,7 @@ libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
 	g++ -shared -fPIC $(EXE_CFLAGS) spike_dpi.cpp -o $@
 
 libserialdevice.so: serialdevice.cc
-	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
+	g++ -o $@ -fPIC -shared $^ $(CFLAGS)
 
 spike_main: spike_dpi_exe.o gshare_model_exe.o libspike_dpi.a
 	g++ -L. -Wl,--export-dynamic -o $@ $^ $(EXE_CFLAGS)
@@ -69,7 +74,7 @@ gshare_model_exe.o: gshare_model.cpp
 
 riscv-isa-sim-makefile:
 	@if [ ! -e $@ ]; then \
-		cd riscv-isa-sim && ./configure --enable-commitlog --without-boost --without-boost-asio --without-boost-regex; \
+		cd riscv-isa-sim && ./configure --enable-commitlog --with-sift=$(realpath ../sniper/snipersim) --without-boost --without-boost-asio --without-boost-regex; \
 	fi
 	touch -f $@
 	make -C riscv-isa-sim -j$(shell nproc)

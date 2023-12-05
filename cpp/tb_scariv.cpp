@@ -21,6 +21,7 @@ extern "C" {
   void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char *ext_isa);
   void stop_sim(int code, long long rtl_time);
   void stop_sim_deadlock(long long rtl_time);
+  void delete_spike ();
 }
 
 extern "C" {
@@ -241,6 +242,8 @@ void stop_sim(int code, long long rtl_time)
 #ifdef DUMP_FST
   if (dump_fst_enable) tfp->close();
 #endif // DUMP_FST
+
+  delete_spike();
 
   exit(!(code == 1));
 }

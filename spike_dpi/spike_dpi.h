@@ -11,6 +11,7 @@ extern "C" {
                   int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                   int rtl_wr_gpr_rnid, long long rtl_wr_val);
   void stop_sim(int code, long long rtl_time);
+  void delete_spike ();
 
 #ifndef VERILATOR
   void open_log_fp(const char *filename);

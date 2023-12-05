@@ -752,7 +752,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
 
   spike_core = new sim_t(isa, priv, varch, nprocs, halted, real_rtl_time_clint,
                          initrd_start, initrd_end, bootargs, start_pc, mems, plugin_devices, htif_args,
-                         std::move(hartids), dm_config, log_path, dtb_enabled, dtb_file);
+                         std::move(hartids), dm_config, log_path, dtb_enabled, dtb_file, "log.sift");
 
   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
   std::unique_ptr<jtag_dtm_t> jtag_dtm(
@@ -796,6 +796,10 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   return;
 }
 
+void delete_spike ()
+{
+  delete spike_core;
+}
 
 static std::vector<std::pair<reg_t, mem_t*>> make_mems(const char* arg)
 {
@@ -1604,6 +1608,8 @@ int main(int argc, char **argv)
 
     step_gshare (cycle, 0, 0, iss_bhr);
   }
+
+  delete_spike();
 
   return 0;
 }
