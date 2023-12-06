@@ -36,6 +36,13 @@ generate for (genvar r_idx = 0; r_idx < RD_PORT_SIZE; r_idx++) begin : w_rd_loop
 
   for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_wr_loop
 
+    logic w_wr_valid;
+    if (REG_TYPE == GPR) begin
+      assign w_wr_valid = regwrite[w_idx].valid & (regwrite[w_idx].rnid != 'h0);
+    end else begin
+      assign w_wr_valid = regwrite[w_idx].valid;
+    end
+
     data_array_2p
       #(
         .WIDTH (WIDTH ),
@@ -46,7 +53,7 @@ generate for (genvar r_idx = 0; r_idx < RD_PORT_SIZE; r_idx++) begin : w_rd_loop
       .i_clk     (i_clk    ),
       .i_reset_n (i_reset_n),
 
-      .i_wr      (regwrite[w_idx].valid),
+      .i_wr      (w_wr_valid          ),
       .i_wr_addr (regwrite[w_idx].rnid),
       .i_wr_data (regwrite[w_idx].data),
 
