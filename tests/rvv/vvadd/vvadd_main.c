@@ -37,8 +37,9 @@ int main( int argc, char* argv[] )
 {
   int results_data[DATA_SIZE];
 
-  // preload (DATA_SIZE, input1_data);
-  // preload (DATA_SIZE, input2_data);
+  preload (DATA_SIZE, input1_data);
+  preload (DATA_SIZE, input2_data);
+  preload (DATA_SIZE, results_data);
 
   // Do the vvadd
   setStats(1);

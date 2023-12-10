@@ -60,6 +60,8 @@ logic [ENTRY_SIZE-1:0] w_picked_inst_locked_oh;
 logic r_issue_entry_lock;
 logic [ENTRY_SIZE-1:0] w_entry_dead;
 
+logic                  w_iss_br_flush;
+
 scariv_vec_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
@@ -73,8 +75,8 @@ logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 
-logic                           w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
+logic                           w_commit_flush;
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
 logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
@@ -94,7 +96,7 @@ generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : entry_fin
 end endgenerate
 
 logic [IN_PORT_SIZE-1: 0] w_freelist_pop_valid;
-assign w_freelist_pop_valid = i_disp_valid & ~{IN_PORT_SIZE{w_flush_valid}};
+assign w_freelist_pop_valid = i_disp_valid & ~{IN_PORT_SIZE{w_commit_flush}};
 
 scariv_freelist_multiports
   #(.SIZE (ENTRY_SIZE),
@@ -128,7 +130,7 @@ end
 
 assign w_entry_out_ptr_oh = r_entry_out_ptr_oh;
 
-assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
+assign w_ignore_disp = w_commit_flush & (|i_disp_valid);
 assign w_credit_return_val = ((|w_entry_finish)    ? 'h1 : 'h0) +
                              (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
 
@@ -213,7 +215,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   scariv_pkg::disp_t          w_disp_entry;
   scariv_pkg::grp_id_t        w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (w_entry_load_index[i_idx] == s_idx);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_commit_flush & (w_entry_load_index[i_idx] == s_idx);
   end
 
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(i_disp_info), .o_selected(w_disp_entry));
@@ -272,11 +274,17 @@ assign o_iss_index_oh = w_picked_inst_oh;
 
 assign w_picked_inst_locked_oh = r_issue_entry_lock ? r_picked_inst_oh : w_picked_inst_oh;
 
+assign w_iss_br_flush = scariv_pkg::is_br_flush_target(o_issue.cmt_id, o_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & o_issue.valid;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_issue_entry_lock <= 1'b0;
   end else begin
-    if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
+    if (w_iss_br_flush | w_commit_flush) begin
+      r_picked_inst_oh   <= 'h0;
+      r_issue_entry_lock <= 1'b0;
+    end else if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
                                   (o_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? o_issue.vcomp_fin : (o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) |
                                   |(w_entry_dead & r_picked_inst_oh))) begin
       r_picked_inst_oh <= w_picked_inst_oh;

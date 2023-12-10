@@ -7,6 +7,7 @@ parameter VLENBMAX_W = $clog2(VLENBMAX);
 typedef logic [$clog2(VLENBMAX): 0] vlenbmax_t;
 typedef logic [VLENB-1: 0]          vlenb_t;
 typedef logic [riscv_vec_conf_pkg::DLEN_W/8-1: 0] dlenb_t;
+parameter DLENB = riscv_vec_conf_pkg::DLEN_W/8;
 parameter VEC_STEP_W = riscv_vec_conf_pkg::DLEN_W == 0 ? 1 :
                        riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W;
 
@@ -242,6 +243,12 @@ function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
 
 endfunction // assign_issue_op3
 
+typedef struct packed {
+  scariv_pkg::paddr_t        paddr;
+  logic [ 1: 0]              req_splitted;
+  logic                      haz_1st_req;
+  logic [$clog2(DLENB)-1: 0] reg_offset;
+} vlsu_replay_info_t;
 
 // VLSU Replay Queue
 typedef struct packed {
@@ -252,13 +259,13 @@ typedef struct packed {
   scariv_pkg::reg_rd_issue_t     rd_reg;
   scariv_pkg::reg_wr_issue_t     wr_reg;
   scariv_pkg::reg_rd_issue_t     wr_old_reg;
-  scariv_pkg::paddr_t            paddr;
   logic                          is_uc;
   scariv_lsu_pkg::ex2_haz_t      hazard_typ;
   logic [scariv_lsu_pkg::HAZARD_INDEX_SIZE-1: 0] hazard_index;
-  logic                                          haz_1st_req;
   vec_pos_t                      vec_step_index;
+  vlsu_replay_info_t             replay_info;
 } vlsu_replay_queue_t;
+
 
 endpackage // scariv_vec_pkg
 

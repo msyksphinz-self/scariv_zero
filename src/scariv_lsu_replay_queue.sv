@@ -32,7 +32,9 @@ module scariv_lsu_replay_queue
     input stq_resolve_t    i_stq_rs2_resolve,
 
     // Request from Replay Queue
-    lsu_pipe_req_if.master lsu_pipe_req_if
+    lsu_pipe_req_if.master lsu_pipe_req_if,
+
+    input logic            i_pipe_stall
 );
 
 localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
@@ -217,12 +219,15 @@ always_comb begin
   if (!w_empty) begin
     if (w_replay_additional_queue_tail.dead) begin
       w_lsu_replay_valid = 1'b1;  // immediately remove from queue
-    end else if (w_replay_additional_queue_tail.valid & w_replay_additional_queue_tail.resolved) begin
-      w_lsu_replay_valid = 1'b1;
-    end else if (w_rd_replay_queue_info.diff_counter != 'h0 &&
-                 r_prev_diff_counter == w_rd_replay_queue_info.diff_counter ||
-                 w_rd_replay_queue_info.diff_counter == 'h0 && (&r_prev_diff_counter) /* Timeout */) begin
-      w_lsu_replay_valid = 1'b1;
+    end else if (w_replay_additional_queue_tail.valid & ~i_pipe_stall) begin
+      if (w_replay_additional_queue_tail.resolved |
+          (w_rd_replay_queue_info.diff_counter != 'h0 &&
+           r_prev_diff_counter == w_rd_replay_queue_info.diff_counter ||
+           w_rd_replay_queue_info.diff_counter == 'h0 && (&r_prev_diff_counter) /* Timeout */)) begin
+        w_lsu_replay_valid = 1'b1;
+      end else begin
+        w_lsu_replay_valid = 1'b0;
+      end
     end else begin
       w_lsu_replay_valid = 1'b0;
     end

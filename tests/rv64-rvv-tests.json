@@ -126,6 +126,11 @@
 
     { "name": "vadd_v_v_chain"   , "group" : ["rvv"], "elf": "../../../tests/rvv/vadd_v_v_chain/test.elf"   , "xlen": 64},
     { "name": "rvv_memcpy_lmul8" , "group" : ["rvv"], "elf": "../../../tests/rvv/rvv_memcpy_lmul8/test.elf"   , "xlen": 64},
-    { "name": "vvadd"            , "group" : ["rvv"], "elf": "../../../tests/rvv/vvadd/test.elf"   , "xlen": 64}
+    { "name": "vvadd"            , "group" : ["rvv"], "elf": "../../../tests/rvv/vvadd/test.elf"   , "xlen": 64},
+
+    { "name": "vle8_v_misalign"  , "group" : ["rvv"], "elf": "../../../tests/rvv/vle8_v_misalign/test.elf" , "xlen": 64},
+    { "name": "vle16_v_misalign" , "group" : ["rvv"], "elf": "../../../tests/rvv/vle16_v_misalign/test.elf", "xlen": 64},
+    { "name": "vle32_v_misalign" , "group" : ["rvv"], "elf": "../../../tests/rvv/vle32_v_misalign/test.elf", "xlen": 64},
+    { "name": "vle64_v_misalign" , "group" : ["rvv"], "elf": "../../../tests/rvv/vle64_v_misalign/test.elf", "xlen": 64}
 
 ]

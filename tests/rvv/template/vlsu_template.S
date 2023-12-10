@@ -1,6 +1,12 @@
-#define VLOAD_V(op, eew, eew_width) \
+#define E8_WIDTH  (0)
+#define E16_WIDTH (1)
+#define E32_WIDTH (2)
+#define E64_WIDTH (3)
+
+#define VLOAD_V(op, eew, eew_width, data, offset) \
    	li		a5, 0                   ; \
-    la      a6, initial_data        ; \
+    la      a6, data                ; \
+    addi    a6, a6, offset          ; \
 	li		a1, 100                 ; \
 	li		a2, 99                  ; \
 1:                                  ; \
@@ -13,9 +19,9 @@
 	ble	    a5, a2, 1b
 
 
-#define VSTORE_V(op, eew, eew_width) \
+#define VSTORE_V(op, eew, eew_width, data) \
    	li		a5, 0                   ; \
-    la      a6, initial_data        ; \
+    la      a6, data                ; \
 	li		a1, 100                 ; \
 	li		a2, 99                  ; \
 1:                                  ; \

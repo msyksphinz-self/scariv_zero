@@ -75,6 +75,8 @@ lsu_pipe_req_if #(.T(scariv_vec_pkg::vlsu_replay_queue_t)) w_lsu_pipe_req_if ();
 logic                         w_replay_selected;
 logic                         w_replay_queue_full;
 
+logic                         w_lsu_Pipe_stall;
+
 done_if                       w_ex3_done_if();
 
 vlsu_lsq_req_if               w_vlsu_ldq_req_if();
@@ -128,7 +130,7 @@ u_issue_unit
 
    .cre_ret_if  (cre_ret_if),
 
-   .i_stall    (w_lsu_pipe_req_if.valid & w_replay_selected),
+   .i_stall    (w_lsu_pipe_req_if.valid & w_replay_selected | w_lsu_Pipe_stall),
    .i_replay_queue_full  (w_replay_queue_full ),
 
    .i_early_wr    (w_early_wr_zero),
@@ -216,8 +218,9 @@ u_lsu_pipe
 
    .i_ex0_issue           (w_ex0_replay_issue             ),
    .i_ex0_replay_selected (w_replay_selected              ),
-   .i_ex0_replay_haz_1st_req (w_lsu_pipe_req_if.payload.haz_1st_req),
-   .i_ex0_replay_paddr    (w_lsu_pipe_req_if.payload.paddr),
+   .i_ex0_replay_info     (w_lsu_pipe_req_if.payload.replay_info),
+
+   .o_pipe_stall (w_lsu_Pipe_stall),
 
    .ex1_i_phy_wr(i_phy_wr),
 
@@ -277,7 +280,8 @@ u_replay_queue
 
  .o_full (w_replay_queue_full),
 
- .lsu_pipe_req_if (w_lsu_pipe_req_if)
+ .lsu_pipe_req_if (w_lsu_pipe_req_if),
+ .i_pipe_stall    (w_lsu_Pipe_stall)
 );
 
 

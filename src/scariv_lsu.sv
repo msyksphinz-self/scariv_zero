@@ -209,7 +209,9 @@ u_replay_queue
 
   .o_full (w_replay_queue_full),
 
-  .lsu_pipe_req_if (w_lsu_pipe_req_if)
+  .lsu_pipe_req_if (w_lsu_pipe_req_if),
+
+  .i_pipe_stall (1'b0)
 );
 
 assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
