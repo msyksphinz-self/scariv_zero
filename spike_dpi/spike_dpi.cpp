@@ -1114,9 +1114,30 @@ void step_spike(long long rtl_time, long long rtl_pc,
       }
     }
     for (auto &iss_wr: p->get_state()->log_mem_write) {
-      fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
+      fprintf(compare_log_fp, "MW%d(0x%0*lx)<=%0*lx\n", std::get<2>(iss_wr),
               g_rv_xlen / 4, std::get<0>(iss_wr),
               g_rv_xlen / 4, std::get<1>(iss_wr));
+    }
+  } else {
+    if (p->get_state()->log_mem_read.size() != 0) {
+      fprintf (compare_log_fp, "MR%d : ", std::get<2>(p->get_state()->log_mem_read[0]));
+      for (auto &iss_rd: p->get_state()->log_mem_read) {
+        int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+        uint64_t iss_lsu_addr = std::get<0>(iss_rd);
+        fprintf (compare_log_fp, "(0x%0*lx)=>%0*lx, ",
+                 g_rv_xlen / 4, iss_lsu_addr,
+                 g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+      }
+      fprintf (compare_log_fp, "\n");
+    }
+    if (p->get_state()->log_mem_write.size() != 0) {
+      fprintf (compare_log_fp, "MW%d : ", std::get<2>(p->get_state()->log_mem_write[0]));
+      for (auto &iss_wr: p->get_state()->log_mem_write) {
+        fprintf(compare_log_fp, "(0x%0*lx)<=%0*lx, ",
+                g_rv_xlen / 4, std::get<0>(iss_wr),
+                g_rv_xlen / 4, std::get<1>(iss_wr));
+      }
+      fprintf (compare_log_fp, "\n");
     }
   }
 
