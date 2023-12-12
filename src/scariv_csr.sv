@@ -540,7 +540,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_scounteren.raw_bit <= write_if.data[31: 0];
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSCRATCH      ) begin r_sscratch      <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sscratch <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_SSCRATCH) begin
+    r_sscratch <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -1026,6 +1032,10 @@ always_comb begin
     end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::LMUL_CHANGE)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]} + 'h4;
+      w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
+      w_mstatus_next[`MSTATUS_MPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
+      w_priv_next = riscv_common_pkg::PRIV_M;
     end else if (w_delegate) begin
       w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]};

@@ -151,7 +151,8 @@ assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FRM   ) |
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
 
-assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL & (vec_csr_if.info.vlmul != r_ex2_issue.inst[22:20]);
+assign vec_csr_if.index  = r_ex2_issue.vlvtype_ren_idx-1;
+assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL & (vec_csr_if.vlvtype.vtype.vlmul != r_ex2_issue.inst[22:20]);
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -230,12 +231,7 @@ assign write_if.valid = r_ex3_issue.valid &
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 
-assign vec_csr_if.write.valid = r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_VSETVL);
-assign vec_csr_if.write.vtype = r_ex3_issue.inst[20 +: $bits(scariv_vec_pkg::vtype_t)];
-assign vec_csr_if.write.vill  = 1'b0;
-assign vec_csr_if.write.vl    = r_ex3_csr_rd_data;
-
-assign vlvtype_upd_if.valid         = vec_csr_if.write.valid;
+assign vlvtype_upd_if.valid         = r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_VSETVL);
 `ifdef SIMULATION
 assign vlvtype_upd_if.sim_cmt_id    = r_ex3_issue.cmt_id;
 assign vlvtype_upd_if.sim_grp_id    = r_ex3_issue.grp_id;
