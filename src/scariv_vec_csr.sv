@@ -14,9 +14,7 @@ module scariv_vec_csr
    input logic i_reset_n,
 
    csr_rd_if.slave  read_csr_vec_if,
-   csr_wr_if.slave  write_csr_vec_if,
-
-   vec_csr_if.master vec_csr_if
+   csr_wr_if.slave  write_csr_vec_if
    );
 
 riscv_pkg::xlen_t             r_vstart;
@@ -35,31 +33,7 @@ riscv_pkg::xlen_t r_vxrm;
 riscv_pkg::xlen_t r_vcsr;
 riscv_pkg::xlen_t r_vxsat;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    vec_csr_if.info <= 'h0;
-  end else begin
-    vec_csr_if.info.vl    <= r_vl;
-    vec_csr_if.info.vlmax <= w_vlmax;
-    vec_csr_if.info.vlmul <= r_vtype.vlmul;
-  end
-end
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_vl <= 'h0;
-    r_vtype <= 'h0;
-  end else begin
-    if (vec_csr_if.write.valid) begin
-      r_vl    <= vec_csr_if.write.vl;
-      r_vtype <= vec_csr_if.write.vtype;
-      r_vill  <= vec_csr_if.write.vill;
-    end
-  end
-end
-
 assign w_vlmax = (VLENB << r_vtype.vlmul) >> r_vtype.vsew;
-
 
 always_comb begin
   read_csr_vec_if.resp_error = 1'b0;

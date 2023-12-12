@@ -418,7 +418,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     vlvtype_commit_if.valid <= 1'b0;
   end else begin
-    vlvtype_commit_if.valid <= o_commit.commit & |(w_cmt_entry_vsetvl /* & ~o_commit.dead_id */);
+    vlvtype_commit_if.valid <= w_commit.commit & |(w_cmt_entry_vsetvl /* & ~o_commit.dead_id */);
+    vlvtype_commit_if.dead  <= |(w_cmt_entry_vsetvl & o_commit.dead_id);
   end
 end
 

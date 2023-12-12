@@ -80,6 +80,7 @@ module scariv_lsu_top
     l1d_missu_if.slave          vlsu_l1d_missu_if,
     output missu_resolve_t      o_missu_resolve,
     st_buffer_if.slave          vlsu_st_buffer_if,
+    vstq_haz_check_if.master    vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],     // VSTQ Hazard Check
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -201,6 +202,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .ldq_haz_check_if (w_ldq_haz_check_if[lsu_idx]),
     .stq_haz_check_if (w_stq_haz_check_if[lsu_idx]),
     .missu_fwd_if (w_missu_fwd_if[lsu_idx]),
+
+    .vstq_haz_check_if (vstq_haz_check_if[lsu_idx]),
 
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),

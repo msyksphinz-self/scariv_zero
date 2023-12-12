@@ -24,7 +24,8 @@ module scariv_vlsu_stq
  // vs3 read port Interface
  vec_regread_if.master          vec_vs3_rd_if,
  // Store Buffer Interface
- st_buffer_if.master            st_buffer_if
+ st_buffer_if.master            st_buffer_if,
+ vstq_haz_check_if.slave        vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM]     // VSTQ Hazard Check
  );
 
 typedef logic [riscv_pkg::PADDR_W-1: $clog2(riscv_vec_conf_pkg::DLEN_W/8) + $clog2(VLSU_STQ_BANK_SIZE)] vstq_paddr_t;
@@ -72,6 +73,8 @@ logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0] r_vs3_regread_bank_accepted_index_d1;
 logic [VLSU_STQ_BANK_SIZE-1: 0]         w_vs3_regread_bank_accepted;
 
 logic                                   st_buffer_proceed_valid;
+
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_vlsu_haz_check_hit[VLSU_STQ_BANK_SIZE][VLSU_STQ_SIZE];
 
 assign st_buffer_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL);
 
@@ -193,6 +196,18 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
     assign w_stbuf_req_valid     [bank_idx][stq_idx] = r_state[bank_idx][stq_idx] == COMMIT_MV_STBUF;
     assign w_entry_finish_index  [0]       [stq_idx] = r_state[bank_idx][stq_idx] == FINISH;
 
+    // Scalar Load to VSTQ hazard check
+    for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; spipe_idx++) begin : sload_vstq_haz_loop
+      logic vstq_is_younger_than_sload;
+      assign vstq_is_younger_than_sload = scariv_pkg::id0_is_older_than_id1 (vstq_haz_check_if[spipe_idx].ex2_cmt_id,
+                                                                             vstq_haz_check_if[spipe_idx].ex2_grp_id,
+                                                                             r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
+                                                                             r_vlsu_stq_entries[bank_idx][stq_idx].grp_id);
+      assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = vstq_is_younger_than_sload &
+                                                                  {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                                                   r_vlsu_stq_entries[bank_idx][stq_idx].paddr, bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0]};
+    end
+
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
       if (!i_reset_n) begin
         r_vlsu_stq_entries[bank_idx][stq_idx].valid <= 1'b0;
@@ -273,5 +288,19 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
+
+// Scalar Load to VSTQ Hazard Check
+generate for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; spipe_idx++) begin : sload_vstq_haz_loop
+  logic [VLSU_STQ_BANK_SIZE-1: 0] w_bank_vlsu_haz_check_hit;
+  for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) begin : bank_loop
+    logic [VLSU_STQ_SIZE-1: 0] w_spipe_vlsu_haz_check_hit;
+    for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_idx;
+      assign w_spipe_vlsu_haz_check_hit[stq_idx] = w_vlsu_haz_check_hit[bank_idx][stq_idx];
+    end
+    assign w_bank_vlsu_haz_check_hit[bank_idx] = |w_spipe_vlsu_haz_check_hit;
+  end
+
+  assign vstq_haz_check_if[spipe_idx].ex2_haz_valid = vstq_haz_check_if[spipe_idx].ex2_valid & (|w_bank_vlsu_haz_check_hit);
+end endgenerate // block: sload_vstq_haz_loop
 
 endmodule // scariv_vlsu_stq

@@ -39,7 +39,7 @@ module scariv_csu_pipe
   csr_rd_if.master                  read_vec_if,
   csr_wr_if.master                  write_vec_if,
 
-  vec_csr_if.slave                  vec_csr_if,
+  vec_csr_if.master                 vec_csr_if,
   vlvtype_upd_if.master             vlvtype_upd_if,
 
   output scariv_pkg::done_rpt_t     o_done_report

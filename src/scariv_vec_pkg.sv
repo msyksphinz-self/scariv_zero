@@ -277,17 +277,17 @@ interface vec_csr_if;
 
   import scariv_vec_pkg::*;
 
-  csr_write_t write;
-  csr_info_t  info;
+  vlvtype_ren_idx_t index;
+  vlvtype_t         vlvtype;
 
   modport master (
-    input  write,
-    output info
+    output index,
+    input  vlvtype
   );
 
   modport slave (
-    output write,
-    input  info
+    input  index,
+    output vlvtype
   );
 
 endinterface // vec_csr_if
@@ -331,16 +331,16 @@ interface vlvtype_commit_if;
   import scariv_vec_pkg::*;
 
   logic             valid;
-// vlvtype_ren_idx_t index;
+  logic             dead;
 
   modport master (
-    output valid
-   //  output index
+    output valid,
+    output dead
   );
 
   modport slave (
-    input valid
-    // input index
+    input valid,
+    input dead
   );
 
 endinterface // vlvtype_commit_if
@@ -490,3 +490,31 @@ interface vlsu_lsq_req_if;
   );
 
 endinterface // vlsu_lsq_req_if
+
+
+interface vstq_haz_check_if;
+logic                        ex2_valid;
+scariv_pkg::paddr_t          ex2_paddr;
+scariv_pkg::cmt_id_t         ex2_cmt_id;
+scariv_pkg::grp_id_t         ex2_grp_id;
+logic                        ex2_haz_valid;
+
+modport master
+  (
+   output ex2_valid,
+   output ex2_paddr,
+   output ex2_cmt_id,
+   output ex2_grp_id,
+   input  ex2_haz_valid
+   );
+
+modport slave
+  (
+   input  ex2_valid,
+   input  ex2_paddr,
+   input  ex2_cmt_id,
+   input  ex2_grp_id,
+   output ex2_haz_valid
+   );
+
+endinterface // vstq_haz_check_if

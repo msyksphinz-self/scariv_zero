@@ -156,6 +156,7 @@ vec_regread_if         w_vec_phy_rd_if[8]()  ;
 vec_regwrite_if        w_vec_phy_wr_if[3]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
 st_buffer_if           w_vlsu_st_buffer_if();
+vstq_haz_check_if      w_vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
 scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
@@ -490,6 +491,7 @@ u_lsu_top
     .vlsu_l1d_missu_if (vlsu_l1d_missu_if  ),
     .o_missu_resolve   (w_missu_resolve    ),
     .vlsu_st_buffer_if (w_vlsu_st_buffer_if),
+    .vstq_haz_check_if (w_vstq_haz_check_if),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -560,6 +562,7 @@ u_csu (
 
     .fflags_update_if (w_fflags_update_if),
 
+    .vec_csr_if     (w_vec_csr_if),
     .vlvtype_upd_if (w_vlvtype_upd_if),
 
     .o_done_report (w_csu_done_rpt),
@@ -651,6 +654,7 @@ endgenerate
 
 vlvtype_commit_if w_vlvtype_commit();
 vlvtype_upd_if    w_vlvtype_upd_if();
+vec_csr_if        w_vec_csr_if();
 vlvtype_info_if   r_rn_vlvtype_info_if();
 
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
@@ -689,6 +693,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .i_commit  (w_commit),
      .br_upd_if (w_ex3_br_upd_if),
 
+     .vec_csr_if     (w_vec_csr_if),
      .vlvtype_upd_if (w_vlvtype_upd_if)
    );
 
@@ -779,7 +784,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .i_commit (w_commit),
      .br_upd_if(w_ex3_br_upd_if),
 
-     .st_buffer_if (w_vlsu_st_buffer_if)
+     .st_buffer_if      (w_vlsu_st_buffer_if),
+     .vstq_haz_check_if (w_vstq_haz_check_if)
      );
 
 

@@ -61,6 +61,9 @@ module scariv_lsu
     // STQ Hazard Check
     stq_haz_check_if.master stq_haz_check_if,
 
+    // VSTQ Hazard Check
+    vstq_haz_check_if.master  vstq_haz_check_if,
+
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if,
 
@@ -304,6 +307,8 @@ u_lsu_pipe
    .rmw_order_check_if (rmw_order_check_if),
 
    .stq_haz_check_if (stq_haz_check_if),
+
+   .vstq_haz_check_if (vstq_haz_check_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),

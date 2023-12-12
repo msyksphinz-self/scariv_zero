@@ -57,7 +57,8 @@ module scariv_vec_lsu #(
    input scariv_pkg::commit_blk_t i_commit,
    br_upd_if.slave                br_upd_if,
 
-   st_buffer_if.master            st_buffer_if
+   st_buffer_if.master            st_buffer_if,
+   vstq_haz_check_if.slave        vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM]     // VSTQ Hazard Check
 );
 
 localparam VEC_LSU_PORT_SIZE = scariv_conf_pkg::VLSU_DISP_SIZE;
@@ -309,7 +310,8 @@ u_stq
  .i_commit        (i_commit         ),
  .br_upd_if       (br_upd_if        ),
  .vec_vs3_rd_if   (vec_phy_rd_if[2] ),
- .st_buffer_if    (st_buffer_if     )
+ .st_buffer_if    (st_buffer_if     ),
+ .vstq_haz_check_if (vstq_haz_check_if)
 );
 
 

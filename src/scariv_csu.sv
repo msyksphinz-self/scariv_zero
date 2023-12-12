@@ -40,6 +40,7 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
+  vec_csr_if.master           vec_csr_if,
   vlvtype_upd_if.master       vlvtype_upd_if,
 
   // CLINT connection
@@ -69,7 +70,6 @@ csr_wr_if w_csr_write();
 
 csr_rd_if  w_vec_csr_read_if ();
 csr_wr_if  w_vec_csr_write_if();
-vec_csr_if w_vec_csr_if();
 
 
 scariv_disp_pickup
@@ -145,7 +145,7 @@ u_csu_pipe
 
    .read_vec_if  (w_vec_csr_read_if),
    .write_vec_if (w_vec_csr_write_if),
-   .vec_csr_if (w_vec_csr_if),
+   .vec_csr_if   (vec_csr_if),
    .vlvtype_upd_if (vlvtype_upd_if),
 
    .o_done_report (o_done_report)
@@ -178,9 +178,7 @@ u_vec_csr
    .i_reset_n (i_reset_n),
 
    .read_csr_vec_if  (w_vec_csr_read_if),
-   .write_csr_vec_if (w_vec_csr_write_if),
-
-   .vec_csr_if (w_vec_csr_if)
+   .write_csr_vec_if (w_vec_csr_write_if)
    );
 
 
