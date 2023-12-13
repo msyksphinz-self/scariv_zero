@@ -136,6 +136,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     rn_front_if.payload.tlb_except_cause <= ibuf_front_if.payload.tlb_except_cause;
     rn_front_if.payload.tlb_except_tval  <= ibuf_front_if.payload.tlb_except_tval;
     rn_front_if.payload.resource_cnt     <= ibuf_front_if.payload.resource_cnt;
+    rn_front_if.payload.basicblk_pc_vaddr<= ibuf_front_if.payload.basicblk_pc_vaddr;
 
     rn_front_if.payload.int_inserted <= ibuf_front_if.payload.int_inserted;
     r_disp_inst <= w_ibuf_merge_disp_inst;
