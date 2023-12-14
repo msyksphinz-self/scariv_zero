@@ -28,12 +28,12 @@ module scariv_gshare
  );
 
 logic         r_f1_valid;
-gshare_bht_t  r_f1_bhr;
+gshare_hist_len_t  r_f1_bhr;
 
-gshare_bht_t  r_bhr;      // Branch History Register : 1=Taken / 0:NonTaken
-gshare_bht_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
+gshare_hist_len_t  r_bhr;      // Branch History Register : 1=Taken / 0:NonTaken
+gshare_hist_len_t  w_bhr_next; // Branch History Register : 1=Taken / 0:NonTaken
 /* verilator lint_off UNOPTFLAT */
-gshare_bht_t  w_f1_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0];
+gshare_hist_len_t  w_f1_bhr_lane_next[scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0];
 
 logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] w_f1_lane_predict;
 logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] w_f0_pc_vaddr_mask;
@@ -45,29 +45,29 @@ logic [scariv_lsu_pkg::ICACHE_DATA_B_W / 2-1 : 0] r_f1_call_ret_hit_valid;
 
 logic         w_f1_update_bhr;
 logic         r_f2_update_bhr;
-gshare_bht_t  r_f2_bhr_lane_last;
+gshare_hist_len_t  r_f2_bhr_lane_last;
 assign w_f1_update_bhr = r_f1_valid & i_f1_valid & |w_f1_cond_hit_valid;
 
 logic        w_br_upd_noncond_rollback_valid;
-gshare_bht_t w_br_upd_noncond_rollback_bhr;
+gshare_hist_len_t w_br_upd_noncond_rollback_bhr;
 
 logic        w_br_upd_rollback_valid;
-gshare_bht_t w_br_upd_rollback_bhr;
+gshare_hist_len_t w_br_upd_rollback_bhr;
 
 logic        w_br_upd_btb_newly_allocated_valid;
-gshare_bht_t w_br_upd_btb_newly_allocated_bhr;
+gshare_hist_len_t w_br_upd_btb_newly_allocated_bhr;
 
 assign w_br_upd_noncond_rollback_bhr   = br_upd_if.gshare_bhr;
 assign w_br_upd_noncond_rollback_valid = br_upd_if.update & !br_upd_if.dead & !br_upd_if.is_cond &
                                          br_upd_if.mispredict;
 
-assign w_br_upd_rollback_bhr   = {br_upd_if.gshare_bhr[GSHARE_BHT_W-1:1], br_upd_if.taken};
+assign w_br_upd_rollback_bhr   = {br_upd_if.gshare_bhr[GSHARE_HIST_LEN-1:1], br_upd_if.taken};
 assign w_br_upd_rollback_valid = br_upd_if.update & !br_upd_if.dead & br_upd_if.is_cond &
                                  br_upd_if.mispredict;
 
 assign w_br_upd_btb_newly_allocated_valid = br_upd_if.update & !br_upd_if.dead & br_upd_if.is_cond &
                                             br_upd_if.btb_not_hit;
-assign w_br_upd_btb_newly_allocated_bhr   = {br_upd_if.gshare_bhr[GSHARE_BHT_W-2:0], br_upd_if.taken};
+assign w_br_upd_btb_newly_allocated_bhr   = {br_upd_if.gshare_bhr[GSHARE_HIST_LEN-2:0], br_upd_if.taken};
 
 assign w_bhr_next = w_br_upd_noncond_rollback_valid    ? w_br_upd_noncond_rollback_bhr    :
                     w_br_upd_btb_newly_allocated_valid ? w_br_upd_btb_newly_allocated_bhr :
@@ -78,7 +78,7 @@ assign w_bhr_next = w_br_upd_noncond_rollback_valid    ? w_br_upd_noncond_rollba
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_bhr <= {GSHARE_BHT_W{1'b0}};
+    r_bhr <= {GSHARE_HIST_LEN{1'b0}};
     r_f2_update_bhr <= 1'b0;
   end else begin
     r_bhr <= w_bhr_next;
@@ -94,19 +94,22 @@ assign w_f0_pc_vaddr_mask = ~((1 << gshare_search_if.f0_pc_vaddr[$clog2(scariv_l
 assign w_f1_cond_hit_valid     = search_btb_if.f1_hit & search_btb_if.f1_is_cond & r_f1_pc_vaddr_mask;
 assign r_f1_call_ret_hit_valid = search_btb_if.f1_hit & (search_btb_if.f1_is_call | search_btb_if.f1_is_ret | search_btb_if.f1_is_noncond) & r_f1_pc_vaddr_mask;
 
+gshare_hist_len_t  w_f0_xor_rd_index_raw;
+gshare_bht_t       w_f0_xor_rd_index;
+gshare_bht_t       r_f1_xor_rd_index;
+logic [ 1: 0] w_update_counter;
+
+assign w_f0_xor_rd_index_raw = r_bhr ^ gshare_search_if.f0_pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_HIST_LEN];
+assign w_f0_xor_rd_index     = fold_hash_index(w_f0_xor_rd_index_raw);
+
+assign w_update_counter =  (((br_upd_if.bim_value == 2'b11) & !br_upd_if.mispredict &  br_upd_if.taken |
+                             (br_upd_if.bim_value == 2'b00) & !br_upd_if.mispredict & !br_upd_if.taken)) ? br_upd_if.bim_value :
+                           br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
+                           br_upd_if.bim_value - 2'b01;
+
 generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_idx++) begin : bhr_loop
   logic [ 1: 0] w_f1_bim_counter;
   logic [ 1: 0] r_f1_bim_counter_dram;
-  logic [ 1: 0] w_update_counter;
-
-  gshare_bht_t  w_f0_xor_rd_index;
-  gshare_bht_t  r_f1_xor_rd_index;
-  assign w_f0_xor_rd_index = r_bhr ^ gshare_search_if.f0_pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W) +: GSHARE_BHT_W];
-
-  assign w_update_counter =  (((br_upd_if.bim_value == 2'b11) & !br_upd_if.mispredict &  br_upd_if.taken |
-                               (br_upd_if.bim_value == 2'b00) & !br_upd_if.mispredict & !br_upd_if.taken)) ? br_upd_if.bim_value :
-                             br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
-                             br_upd_if.bim_value - 2'b01;
 
   assign w_f1_lane_predict   [c_idx] = w_f1_cond_hit_valid[c_idx] ? w_f1_bim_counter[1] : 1'b0;
 
@@ -267,7 +270,7 @@ final begin
   $fclose(fp);
 end
 
-gshare_bht_t sim_br_upd_gshare_bht;
+gshare_hist_len_t sim_br_upd_gshare_bht;
 assign sim_br_upd_gshare_bht =  w_br_upd_noncond_rollback_valid    ? w_br_upd_noncond_rollback_bhr    :
                                 w_br_upd_btb_newly_allocated_valid ? w_br_upd_btb_newly_allocated_bhr :
                                 w_br_upd_rollback_valid            ? w_br_upd_rollback_bhr            :
@@ -276,7 +279,7 @@ assign sim_br_upd_gshare_bht =  w_br_upd_noncond_rollback_valid    ? w_br_upd_no
 typedef struct packed {
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
-  gshare_bht_t         gshare_bht;
+  gshare_hist_len_t         gshare_bht;
   logic                mispredict;
 } branch_info_t;
 

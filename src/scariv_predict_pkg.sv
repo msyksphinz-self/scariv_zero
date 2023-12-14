@@ -35,6 +35,16 @@ typedef struct packed {
   scariv_pkg::vaddr_t                                   target_vaddr;
 } ubtb_info_t;
 
+function automatic logic [scariv_conf_pkg::GSHARE_BHT_W-1: 0] fold_hash_index (input logic [scariv_conf_pkg::GSHARE_HIST_LEN-1: 0] in);
+  integer chunks = (scariv_conf_pkg::GSHARE_HIST_LEN + scariv_conf_pkg::GSHARE_BHT_W - 1) / scariv_conf_pkg::GSHARE_BHT_W;
+  logic [scariv_conf_pkg::GSHARE_BHT_W-1: 0] ret;
+  ret = 0;
+  for (int i = 0; i < chunks; i++) begin
+    ret = ret ^ in[i* scariv_conf_pkg::GSHARE_BHT_W +: scariv_conf_pkg::GSHARE_BHT_W];
+  end
+  return ret;
+endfunction // fold_hash_index
+
 endpackage // scariv_predict_pkg
 
 interface btb_search_if;

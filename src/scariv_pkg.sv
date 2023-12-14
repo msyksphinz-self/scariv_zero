@@ -75,9 +75,10 @@ package scariv_pkg;
                                  scariv_conf_pkg::FPU_INST_NUM * 2;  // FPU port
 
 localparam RAS_W    = $clog2(scariv_conf_pkg::RAS_ENTRY_SIZE);
-localparam GSHARE_BHT_W = scariv_conf_pkg::GSHARE_BHT_W;
-
+localparam GSHARE_BHT_W    = scariv_conf_pkg::GSHARE_BHT_W;
+localparam GSHARE_HIST_LEN = scariv_conf_pkg::GSHARE_HIST_LEN;
 typedef logic [GSHARE_BHT_W-1: 0] gshare_bht_t;
+typedef logic [GSHARE_HIST_LEN-1: 0] gshare_hist_len_t;
 
 localparam ALEN_W = riscv_pkg::XLEN_W > riscv_fpu_pkg::FLEN_W ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 typedef logic [ALEN_W-1: 0]   alen_t;
@@ -187,8 +188,8 @@ typedef struct packed {
     logic                           btb_valid;
     vaddr_t                         pred_target_vaddr;
 
-    gshare_bht_t  gshare_index;
-    gshare_bht_t  gshare_bhr;
+    gshare_hist_len_t  gshare_index;
+    gshare_hist_len_t  gshare_bhr;
 
     reg_wr_disp_t         wr_reg;
     reg_rd_disp_t [ 2: 0] rd_regs;
@@ -261,8 +262,8 @@ typedef struct packed {
     grp_id_t                         upd_valid;
     // logic [DISP_SIZE-1: 0][riscv_pkg::VADDR_W-1:0] upd_br_vaddr;
     // brtag_t        brtag;
-    // gshare_bht_t   gshare_bhr;
-    // gshare_bht_t   gshare_index;
+    // gshare_hist_len_t   gshare_bhr;
+    // gshare_hist_len_t   gshare_index;
     // logic          br_taken;
     // logic [ 1: 0]  bim_value;
     // logic            btb_newly_allocated;
@@ -694,8 +695,8 @@ typedef struct packed {
   logic              btb_valid; // Predicted
   logic [ 1: 0]      bim_value;
 
-  gshare_bht_t  gshare_index;
-  gshare_bht_t  gshare_bhr;
+  gshare_hist_len_t  gshare_index;
+  gshare_hist_len_t  gshare_bhr;
 
   vaddr_t pc_vaddr;
   vaddr_t target_vaddr;

@@ -27,8 +27,8 @@ typedef struct packed {
 
   logic [scariv_pkg::RAS_W-1: 0] ras_index;
   logic                          pred_taken;
-  scariv_pkg::gshare_bht_t       gshare_bhr;
-  scariv_pkg::gshare_bht_t       gshare_index;
+  scariv_pkg::gshare_hist_len_t       gshare_bhr;
+  scariv_pkg::gshare_hist_len_t       gshare_index;
   logic [ 1: 0]                  bim_value;
   logic                          btb_valid;
   scariv_pkg::vaddr_t            pred_target_vaddr;
@@ -138,9 +138,9 @@ interface br_upd_if;
   scariv_pkg::grp_id_t                   grp_id;
   scariv_pkg::brtag_t                    brtag;
 
-  logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_index;
-  logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
-  logic                                 btb_not_hit;
+  scariv_pkg::gshare_bht_t      gshare_index;
+  scariv_pkg::gshare_hist_len_t gshare_bhr;
+  logic                         btb_not_hit;
 
   modport master (
     output update,
@@ -237,8 +237,8 @@ interface cmt_brtag_if;
   scariv_pkg::vaddr_t      pc_vaddr;
   scariv_pkg::grp_id_t     is_br_inst;
   logic [scariv_conf_pkg::DISP_SIZE-1: 0][$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE)-1: 0] brtag;
-  scariv_pkg::gshare_bht_t gshare_bhr;
-  scariv_pkg::gshare_bht_t gshare_index;
+  scariv_pkg::gshare_hist_len_t gshare_bhr;
+  scariv_pkg::gshare_hist_len_t gshare_index;
   logic                    taken;
   logic                    btb_newly_allocated;
   logic                    mispredict;

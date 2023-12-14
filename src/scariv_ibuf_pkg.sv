@@ -15,8 +15,8 @@ typedef struct packed {
   logic             btb_valid;
   logic             is_cond;
   scariv_pkg::vaddr_t pred_target_vaddr;
-  scariv_pkg::gshare_bht_t gshare_index;
-  scariv_pkg::gshare_bht_t gshare_bhr;
+  scariv_pkg::gshare_hist_len_t gshare_index;
+  scariv_pkg::gshare_hist_len_t gshare_bhr;
 } pred_info_t;
 
 
