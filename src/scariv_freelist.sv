@@ -43,12 +43,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
   end else begin
     if (i_push) begin
-      r_tail_ptr <= r_tail_ptr + 'h1;
+      if (r_tail_ptr == SIZE-1) begin
+        r_tail_ptr <= 'h0;
+      end else begin
+        r_tail_ptr <= r_tail_ptr + 'h1;
+      end
       r_active_bits[r_tail_ptr] <= 1'b1;
       r_freelist[r_tail_ptr] <= i_push_id;
     end
     if (i_pop) begin
-      r_head_ptr <= r_head_ptr + 'h1;
+      if (head_ptr == SIZE-1) begin
+        r_head_ptr <= 'h0;
+      end else begin
+        r_head_ptr <= r_head_ptr + 'h1;
+      end
       r_active_bits[r_head_ptr] <= 1'b0;
 `ifdef SIMULATION
       // delete poped ID for debug
