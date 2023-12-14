@@ -52,7 +52,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_freelist[r_tail_ptr] <= i_push_id;
     end
     if (i_pop) begin
-      if (head_ptr == SIZE-1) begin
+      if (r_head_ptr == SIZE-1) begin
         r_head_ptr <= 'h0;
       end else begin
         r_head_ptr <= r_head_ptr + 'h1;
