@@ -3,6 +3,7 @@ package scariv_front_pkg;
 typedef struct packed {
   /* verilator lint_off UNOPTFLAT */
   scariv_pkg::cmt_id_t           cmt_id;
+  logic [riscv_pkg::VADDR_W-1:1] basicblk_pc_vaddr;
   logic [riscv_pkg::VADDR_W-1:1] pc_addr;
   scariv_pkg::grp_id_t                                   tlb_except_valid;
   scariv_pkg::except_t [scariv_conf_pkg::DISP_SIZE-1: 0] tlb_except_cause;
@@ -13,6 +14,7 @@ typedef struct packed {
   logic                          is_br_included; // When Branch Instruction is included
   logic                          int_inserted;
 `ifdef SIMULATION
+  scariv_pkg::vaddr_t            basicblk_pc_vaddr_debug;
   scariv_pkg::vaddr_t            pc_addr_debug;
 `endif // SIMULATION
 } front_t;

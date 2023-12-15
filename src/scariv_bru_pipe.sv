@@ -303,6 +303,7 @@ assign ex3_br_upd_if.mispredict    = r_ex2_issue.is_call   ? ~w_ex2_call_hit :
 
 assign ex3_br_upd_if.bim_value     = r_ex2_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = /* r_ex2_issue.is_rvc ? */ r_ex2_issue.pc_addr /* : r_ex2_issue.pc_addr + 'h2 */;
+assign ex3_br_upd_if.basicblk_pc_vaddr  = r_ex2_issue.basicblk_pc_vaddr;
 assign ex3_br_upd_if.target_vaddr  = r_ex2_result ? r_ex2_br_vaddr :
                                      r_ex2_issue.is_rvc ? r_ex2_issue.pc_addr + 'h2 : r_ex2_issue.pc_addr + 'h4;
 `ifdef SIMULATION

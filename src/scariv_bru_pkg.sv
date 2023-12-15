@@ -12,6 +12,7 @@ package scariv_bru_pkg;
 typedef struct packed {
   logic                  valid;
   scariv_pkg::vaddr_t    pc_addr;
+  logic [riscv_pkg::VADDR_W-1: 1] basicblk_pc_vaddr;
   logic [31:0]           inst;
   decoder_inst_cat_pkg::inst_cat_t cat;
   logic                  is_rvc;
@@ -43,12 +44,14 @@ typedef struct packed {
 
 function issue_entry_t assign_issue_common (scariv_pkg::disp_t in,
                                             scariv_pkg::cmt_id_t cmt_id,
-                                            scariv_pkg::grp_id_t grp_id);
+                                            scariv_pkg::grp_id_t grp_id,
+                                            logic [riscv_pkg::VADDR_W-1:1] basicblk_pc_vaddr);
   issue_entry_t ret;
 
   ret.valid = in.valid;
   ret.inst = in.inst;
   ret.pc_addr = in.pc_addr;
+  ret.basicblk_pc_vaddr = basicblk_pc_vaddr;
 
   ret.cat = in.cat;
   ret.is_rvc  = in.rvc_inst_valid;
@@ -83,9 +86,10 @@ endfunction // assign_issue_common
 function issue_entry_t assign_bru_issue (scariv_pkg::disp_t in,
                                          scariv_pkg::cmt_id_t cmt_id,
                                          scariv_pkg::grp_id_t grp_id,
-                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2]);
+                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index[2],
+                                         logic [riscv_pkg::VADDR_W-1:1]  i_basicblk_pc_vaddr);
   issue_entry_t ret;
-  ret = assign_issue_common (in, cmt_id, grp_id);
+  ret = assign_issue_common (in, cmt_id, grp_id, i_basicblk_pc_vaddr);
 
   for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
@@ -123,6 +127,7 @@ interface br_upd_if;
   logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] ras_index;
   logic [ 1: 0]                        bim_value;
   scariv_pkg::vaddr_t                    pc_vaddr;
+  logic [riscv_pkg::VADDR_W-1:1]         basicblk_pc_vaddr;
   scariv_pkg::vaddr_t                    target_vaddr;
   scariv_pkg::vaddr_t                    ras_prev_vaddr;
 `ifdef SIMULATION
@@ -149,6 +154,7 @@ interface br_upd_if;
     output bim_value,
     output dead,
     output pc_vaddr,
+    output basicblk_pc_vaddr,
     output target_vaddr,
     output ras_prev_vaddr,
 `ifdef SIMULATION
@@ -174,6 +180,7 @@ interface br_upd_if;
     input bim_value,
     input dead,
     input pc_vaddr,
+    input basicblk_pc_vaddr,
     input target_vaddr,
     input ras_prev_vaddr,
 `ifdef SIMULATION
@@ -206,6 +213,7 @@ assign master_if.is_rvc         = slave_if.is_rvc         ;
 assign master_if.ras_index      = slave_if.ras_index      ;
 assign master_if.bim_value      = slave_if.bim_value      ;
 assign master_if.pc_vaddr       = slave_if.pc_vaddr       ;
+assign master_if.basicblk_pc_vaddr = slave_if.basicblk_pc_vaddr;
 assign master_if.target_vaddr   = slave_if.target_vaddr   ;
 assign master_if.ras_prev_vaddr = slave_if.ras_prev_vaddr ;
 `ifdef SIMULATION

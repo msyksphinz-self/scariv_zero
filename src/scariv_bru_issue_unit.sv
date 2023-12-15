@@ -23,9 +23,10 @@ module scariv_bru_issue_unit
  rob_info_if.slave                     rob_info_if,
 
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
- input scariv_pkg::cmt_id_t  i_cmt_id,
- input scariv_pkg::grp_id_t  i_grp_id[IN_PORT_SIZE],
- scariv_pkg::disp_t                      i_disp_info[IN_PORT_SIZE],
+ input scariv_pkg::cmt_id_t            i_cmt_id,
+ input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
+ scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
+ input logic [riscv_pkg::VADDR_W-1:1]  i_basicblk_pc_vaddr,
 
  cre_ret_if.slave                      cre_ret_if,
 
@@ -226,6 +227,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_cmt_id   (i_cmt_id      ),
     .i_grp_id   (w_disp_grp_id ),
     .i_put_data (w_disp_entry  ),
+    .i_basicblk_pc_vaddr (i_basicblk_pc_vaddr),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),

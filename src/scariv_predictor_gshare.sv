@@ -18,6 +18,9 @@ module scariv_predictor_gshare
 
  input commit_blk_t i_commit,
 
+ input logic   i_f0_valid,
+ input vaddr_t i_f0_vaddr,
+
  input logic i_f1_valid,
  input logic i_f2_valid,
  input scariv_ic_pkg::ic_resp_t i_f2_ic_resp,
@@ -30,6 +33,9 @@ module scariv_predictor_gshare
  ras_search_if.master ras_search_if,
 
  gshare_search_if.slave gshare_search_if,
+
+ // Feedback into Frontend for s0 stage
+ ubtb_search_if.master  f1_ubtb_predict_if,
 
  // Feedback into Frontend
  output logic   o_f2_predict_valid,
@@ -92,5 +98,19 @@ assign ras_search_if.f1_is_call = 1'b0;
 assign ras_search_if.f1_is_ret  = 1'b0;
 assign ras_search_if.f2_is_call = 1'b0;
 assign ras_search_if.f2_is_ret  = 1'b0;
+
+scariv_fetch_target_buffer
+u_ftb
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_f0_valid (i_f0_valid),
+   .i_f0_pc    (i_f0_vaddr),
+
+   .f1_ubtb_predict_if (f1_ubtb_predict_if),
+
+   .br_upd_if (br_upd_if)
+   );
 
 endmodule // scariv_predictor_gshare

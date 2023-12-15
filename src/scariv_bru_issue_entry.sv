@@ -24,6 +24,7 @@ module scariv_bru_issue_entry
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
    input scariv_pkg::disp_t   i_put_data,
+   input logic [riscv_pkg::VADDR_W-1:1]  i_basicblk_pc_vaddr,
 
    output logic               o_entry_valid,
    /* verilator lint_off UNOPTFLAT */
@@ -189,7 +190,8 @@ end // always_comb
 
 
 assign w_init_entry = scariv_bru_pkg::assign_bru_issue(i_put_data, i_cmt_id, i_grp_id,
-                                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
+                                                       w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
+                                                       i_basicblk_pc_vaddr);
 
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_entry.valid;

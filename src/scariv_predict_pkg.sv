@@ -29,6 +29,12 @@ typedef struct packed {
   scariv_pkg::vaddr_t target_vaddr;
 } btb_target_va_t;
 
+typedef struct packed {
+  logic [$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)-1: 0] pc_offset;
+  logic                                                 taken;
+  scariv_pkg::vaddr_t                                   target_vaddr;
+} ubtb_info_t;
+
 endpackage // scariv_predict_pkg
 
 interface btb_search_if;
@@ -288,3 +294,11 @@ interface gshare_search_if;
 
 
 endinterface // gshare_search_if
+
+interface ubtb_search_if;
+  logic                           predict_valid;
+  scariv_predict_pkg::ubtb_info_t ubtb_info;
+
+  modport master (output predict_valid, ubtb_info);
+  modport slave  (input  predict_valid, ubtb_info);
+endinterface // ubtb_search_if
