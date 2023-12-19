@@ -277,6 +277,9 @@ scariv_frontend u_frontend (
   .o_sc_ras_index  (w_sc_ras_index),
   .o_sc_ras_vaddr (w_sc_ras_vaddr),
 
+  .i_bru_disp_valid (w_disp_bru_valids),
+  .bru_disp_if      (w_rn_front_if    ),
+
   .ptw_if (w_ptw_if[0])
 );
 

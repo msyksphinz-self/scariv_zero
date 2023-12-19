@@ -29,6 +29,22 @@ typedef struct packed {
   scariv_pkg::vaddr_t target_vaddr;
 } btb_target_va_t;
 
+typedef struct packed {
+  logic [$clog2(scariv_conf_pkg::ICACHE_DATA_W/8)-1: 0] pc_offset;
+  logic                                                 taken;
+  scariv_pkg::vaddr_t                                   target_vaddr;
+} ubtb_info_t;
+
+function automatic logic [scariv_conf_pkg::GSHARE_BHT_W-1: 0] fold_hash_index (input logic [scariv_conf_pkg::GSHARE_HIST_LEN-1: 0] in);
+  integer chunks = (scariv_conf_pkg::GSHARE_HIST_LEN + scariv_conf_pkg::GSHARE_BHT_W - 1) / scariv_conf_pkg::GSHARE_BHT_W;
+  logic [scariv_conf_pkg::GSHARE_BHT_W-1: 0] ret;
+  ret = 0;
+  for (int i = 0; i < chunks; i++) begin
+    ret = ret ^ in[i* scariv_conf_pkg::GSHARE_BHT_W +: scariv_conf_pkg::GSHARE_BHT_W];
+  end
+  return ret;
+endfunction // fold_hash_index
+
 endpackage // scariv_predict_pkg
 
 interface btb_search_if;
@@ -252,11 +268,11 @@ interface gshare_search_if;
   logic                  f0_valid;
   scariv_pkg::vaddr_t      f0_pc_vaddr;
 
-  logic                                                                     f2_valid;
-  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]                              f2_pred_taken;
-  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]                       f2_bim_value;
-  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_BHT_W-1: 0] f2_index;
-  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_BHT_W-1: 0] f2_bhr;
+  logic                                                                            f2_valid;
+  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]                                   f2_pred_taken;
+  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]                            f2_bim_value;
+  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_BHT_W-1: 0]    f2_index;
+  logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_HIST_LEN-1: 0] f2_bhr;
 
   modport master (
     output f0_valid,
@@ -288,3 +304,11 @@ interface gshare_search_if;
 
 
 endinterface // gshare_search_if
+
+interface ubtb_search_if;
+  logic                           predict_valid;
+  scariv_predict_pkg::ubtb_info_t ubtb_info;
+
+  modport master (output predict_valid, ubtb_info);
+  modport slave  (input  predict_valid, ubtb_info);
+endinterface // ubtb_search_if

@@ -88,8 +88,7 @@
 ../src/simple_arbiter.sv
 ../src/scariv_frontend.sv
 
-../src/scariv_predictor.sv
-../src/scariv_gshare.sv
+../src/scariv_gshare2.sv
 ../src/scariv_predictor_gshare.sv
 
 ../src/scariv_icache.sv

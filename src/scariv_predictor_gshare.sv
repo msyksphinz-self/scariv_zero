@@ -35,13 +35,15 @@ module scariv_predictor_gshare
  gshare_search_if.slave gshare_search_if,
 
  // Feedback into Frontend for s0 stage
- output logic   o_f1_predict_valid,
- output logic   o_f1_predict_taken,
- output vaddr_t o_f1_predict_target_vaddr,
+ ubtb_search_if.master  f1_ubtb_predict_if,
 
  // Feedback into Frontend
  output logic   o_f2_predict_valid,
  output vaddr_t o_f2_predict_target_vaddr,
+
+ // BRU dispatch valid
+ input scariv_pkg::grp_id_t i_bru_disp_valid,
+ scariv_front_if.watch      bru_disp_if,
 
  br_upd_if.slave      br_upd_if
  );
@@ -87,6 +89,9 @@ u_gshare
   .i_f1_valid (i_f1_valid),
   .i_f2_valid (i_f2_valid),
 
+  .i_bru_disp_valid (i_bru_disp_valid),
+  .bru_disp_if      (bru_disp_if     ),
+
   .search_btb_if    (search_btb_mon_if),
   .gshare_search_if (gshare_search_if ),
   .br_upd_if        (br_upd_if        ),
@@ -101,8 +106,6 @@ assign ras_search_if.f1_is_ret  = 1'b0;
 assign ras_search_if.f2_is_call = 1'b0;
 assign ras_search_if.f2_is_ret  = 1'b0;
 
-logic [ 1: 0] w_s1_predict_bimodal;
-
 scariv_fetch_target_buffer
 u_ftb
   (
@@ -112,10 +115,7 @@ u_ftb
    .i_f0_valid (i_f0_valid),
    .i_f0_pc    (i_f0_vaddr),
 
-   .o_f1_predict_valid        (o_f1_predict_valid  ),
-   .o_f1_predict_taken        (o_f1_predict_taken  ),
-   .o_f1_predict_target_vaddr (o_f1_predict_target_vaddr  ),
-   .o_f1_predict_bimodal      (w_s1_predict_bimodal),
+   .f1_ubtb_predict_if (f1_ubtb_predict_if),
 
    .br_upd_if (br_upd_if)
    );

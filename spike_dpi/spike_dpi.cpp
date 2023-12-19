@@ -1581,7 +1581,7 @@ int main(int argc, char **argv)
   initial_spike (htif_args[0].c_str(), 64, 64, "imafdc");
   processor_t *p = spike_core->get_core(0);
 
-  initial_gshare(10, 64);
+  initial_gshare(10, 1 << 10, 64);
 
   fprintf (compare_log_fp, "sim_cycle = %ld\n", sim_cycle);
 

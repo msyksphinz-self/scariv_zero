@@ -10,6 +10,7 @@ FILE *gshare_log_fp;
 extern sim_t *spike_core;
 
 size_t iss_bhr_length;
+size_t iss_bht_length;
 size_t iss_cache_block_byte_size;
 long long iss_bhr;
 
@@ -55,17 +56,20 @@ size_t cond_inst_size(uint64_t insn)
 
 
 void initial_gshare(long long bhr_length,
+                    long long bht_length,
                     long long cache_block_byte_size)
 {
   gshare_log_fp = fopen("gshare_check.log", "w");
 
   iss_bhr_length = static_cast<size_t>(bhr_length);
+  iss_bht_length = static_cast<size_t>(bht_length);
   iss_cache_block_byte_size = static_cast<size_t>(cache_block_byte_size);
 
   fprintf (gshare_log_fp, "Info : GSHARE length is set %ld\n", iss_bhr_length);
+  fprintf (gshare_log_fp, "Info : GSHARE BHT length is set %ld\n", iss_bht_length);
   fprintf (gshare_log_fp, "Info : Cache Block Size is set %ld\n", iss_cache_block_byte_size);
 
-  for(int i = 0; i < (1 << iss_bhr_length); i++) {
+  for(int i = 0; i < (static_cast<uint64_t>(1) << iss_bht_length); i++) {
     bim_block_t *bim_block = new bim_block_t();
     bim_block->bim = new uint8_t [iss_cache_block_byte_size / 2];
     for (int j = 0; j < iss_cache_block_byte_size / 2; j++) {
@@ -75,7 +79,7 @@ void initial_gshare(long long bhr_length,
   }
 }
 
-std::string to_binString(unsigned int val, const int length)
+std::string to_binString(uint64_t val, const int length)
 {
   std::string str;
   int l = 0;
@@ -106,9 +110,25 @@ uint8_t update_bim (uint8_t curr, bool taken)
   }
 }
 
+size_t fold_index (size_t index, uint32_t ghr_len, uint32_t bht_len)
+{
+  uint64_t result = 0;
+  for (int i = 0; i < (ghr_len + bht_len - 1) / bht_len; i++) {
+    result ^= index & ((1 << bht_len) - 1);
+    index >>= bht_len;
+  }
+  return result;
+}
+
+
 void step_gshare (long long rtl_time,
                   int rtl_cmt_id, int rtl_grp_id,
-                  long long rtl_gshare_bhr)
+                  long long rtl_gshare_bhr,
+                  int rtl_gshare_rd_bht_index,
+                  int rtl_gshare_wr_bht_index,
+                  int rtl_taken,
+                  int rtl_predict_taken,
+                  int rtl_mispredict)
 {
   processor_t *p = spike_core->get_core(0);
   auto iss_next_pc = p->get_state()->pc;
@@ -116,7 +136,7 @@ void step_gshare (long long rtl_time,
   auto iss_insn    = p->get_state()->insn;
 
   if (is_cond_branch_inst(iss_insn.bits())) {
-    const size_t iss_bhr_mask = (1 << iss_bhr_length) - 1;
+    const size_t iss_bhr_mask = (static_cast<uint64_t>(1) << iss_bhr_length) - 1;
 
     size_t bim_array_index = (iss_pc >> 1) / iss_cache_block_byte_size;
     size_t bim_block_internal_index = (iss_pc & (iss_cache_block_byte_size -1)) >> 1;
@@ -126,34 +146,42 @@ void step_gshare (long long rtl_time,
     //          bim_array_index,
     //          bim_block_internal_index);
 
-    uint8_t bim_counter = bim_array.at(bim_array_index)->bim[bim_block_internal_index];
+    size_t array_index = fold_index (bim_array_index, iss_bhr_length, iss_bht_length);
+
+    uint8_t bim_counter = bim_array.at(array_index)->bim[bim_block_internal_index];
     bool iss_predict_taken = (bim_counter >> 1) & 1;
 
-    bool is_branch_taken = iss_next_pc != iss_pc + cond_inst_size(iss_insn.bits());
+    bool iss_is_taken_result = iss_next_pc != iss_pc + cond_inst_size(iss_insn.bits());
+    iss_bhr = ((iss_bhr << 1) | iss_is_taken_result) & iss_bhr_mask;
 
-    fprintf (gshare_log_fp, "%lld : GSHARE MODEL : PC = %08lx (%02d,%02d), index = (%4x, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s          ",
+    fprintf (gshare_log_fp, "%lld : GSHARE MODEL : {PC = %08lx (%02d,%02d), index = (%3d, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s}          ",
              rtl_time,
              iss_pc,
              rtl_cmt_id, rtl_grp_id,
-             static_cast<unsigned int>(bim_array_index), static_cast<unsigned int>(bim_block_internal_index),
-             to_binString(iss_bhr & ((1 << iss_bhr_length)-1), iss_bhr_length).c_str(),
-             iss_predict_taken ? "    TAKEN" : "NOT TAKEN",
-             is_branch_taken   ? "    TAKEN" : "NOT TAKEN",
-             iss_predict_taken == is_branch_taken ? "MATCH" : "FAIL ");
+             static_cast<unsigned int>(array_index), static_cast<unsigned int>(bim_block_internal_index),
+             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(),
+             iss_predict_taken   ? "    TAKEN" : "NOT TAKEN",
+             iss_is_taken_result ? "    TAKEN" : "NOT TAKEN",
+             iss_predict_taken == iss_is_taken_result ? "MATCH" : "FAIL ");
+    fprintf (gshare_log_fp, "RTL : {rd_index = %3d, wr_index = %3d, rtl_bhr = %s, predict = %s, result = %s, %s}  ",
+             rtl_gshare_rd_bht_index,
+             rtl_gshare_wr_bht_index,
+             to_binString(rtl_gshare_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(),
+             rtl_predict_taken ? "    TAKEN" : "NOT TAKEN",
+             rtl_taken         ? "    TAKEN" : "NOT TAKEN",
+             rtl_predict_taken == rtl_taken ? "MATCH" : "FAIL ");
 
-    iss_bhr = ((iss_bhr << 1) | is_branch_taken) & iss_bhr_mask;
-
-    if ((iss_bhr & (1 << iss_bhr_length) - 1) != rtl_gshare_bhr) {
+    if ((iss_bhr & (static_cast<uint64_t>(1) << iss_bhr_length) - 1) != rtl_gshare_bhr) {
       fprintf(gshare_log_fp, "// Warning : BHR different: RTL = %s, ISS = %s\n",
               to_binString(rtl_gshare_bhr, iss_bhr_length).c_str(),
-              to_binString(iss_bhr & ((1 << iss_bhr_length)-1), iss_bhr_length).c_str());
+              to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());
     } else {
       fprintf(gshare_log_fp, "// BHR RTL = %s\n", to_binString(rtl_gshare_bhr, iss_bhr_length).c_str());
     }
     // Option: Override RTL's BHR information
-    iss_bhr = rtl_gshare_bhr;
+    // iss_bhr = rtl_gshare_bhr;
 
     // Update bim_counter
-    bim_array.at(bim_array_index)->bim[bim_block_internal_index] = update_bim (is_branch_taken, bim_counter);
+    bim_array.at(array_index)->bim[bim_block_internal_index] = update_bim (iss_is_taken_result, bim_counter);
   }
 }

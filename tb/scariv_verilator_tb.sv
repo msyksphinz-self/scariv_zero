@@ -29,11 +29,17 @@ import "DPI-C" function void step_spike_wo_cmp(input int count);
 import "DPI-C" function void stop_sim_deadlock(input int count);
 
 import "DPI-C" function void initial_gshare(input longint bhr_length,
+                                            input longint bht_length,
                                             input longint cache_block_byte_size);
 import "DPI-C" function void step_gshare (input longint rtl_time,
                                           input int     rtl_cmt_id,
                                           input int     rtl_grp_id,
-                                          input longint rtl_gshare_bhr);
+                                          input longint rtl_gshare_bhr,
+                                          input int     rtl_gshare_rd_bht_index,
+                                          input int     rtl_gshare_wr_bht_index,
+                                          input int     rtl_taken,
+                                          input int     rtl_predict_taken,
+                                          input int     rtl_mispredict);
 
 import "DPI-C" function void initial_ras(input longint ras_length);
 import "DPI-C" function void step_ras (input longint rtl_time,
@@ -571,7 +577,12 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                 step_gshare ($time,
                              `BRANCH_INFO_Q[q_idx].cmt_id,
                              `BRANCH_INFO_Q[q_idx].grp_id,
-                             `BRANCH_INFO_Q[q_idx].gshare_bht);
+                             `BRANCH_INFO_Q[q_idx].gshare_bhr,
+                             `BRANCH_INFO_Q[q_idx].gshare_rd_bht_index,
+                             `BRANCH_INFO_Q[q_idx].gshare_wr_bht_index,
+                             `BRANCH_INFO_Q[q_idx].taken,
+                             `BRANCH_INFO_Q[q_idx].predict_taken,
+                             `BRANCH_INFO_Q[q_idx].mispredict);
                 if (`BRANCH_INFO_Q[q_idx].mispredict) begin
                   for (int q_idx_tmp = 0; q_idx_tmp <= q_idx; q_idx_tmp++) begin
                     `BRANCH_INFO_Q.pop_front();
@@ -645,7 +656,8 @@ end // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 `endif //  `ifdef NEVER
 
 initial begin
-  initial_gshare (scariv_conf_pkg::GSHARE_BHT_W,
+  initial_gshare (scariv_conf_pkg::GSHARE_HIST_LEN,
+                  scariv_conf_pkg::GSHARE_BHT_W,
                   scariv_lsu_pkg::ICACHE_DATA_B_W);
   initial_ras (scariv_conf_pkg::RAS_ENTRY_SIZE);
 end
