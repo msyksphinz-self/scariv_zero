@@ -1,6 +1,6 @@
 
 [
-    { "name": "dhrystone"       , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/dhrystone.riscv" , "xlen": 64, "expected_time": {"standard": 569606}},
+    { "name": "dhrystone"       , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/dhrystone.riscv" , "xlen": 64, "expected_time": {"standard": 569606, "boomv3": 792338}},
     { "name": "median"          , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/median.riscv"    , "xlen": 64},
     { "name": "mm"              , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/mm.riscv"        , "xlen": 64},
     { "name": "mt-matmul"       , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-tests/benchmarks/mt-matmul.riscv" , "xlen": 64},
