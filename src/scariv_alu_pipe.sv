@@ -79,6 +79,7 @@ logic                              w_ex1_zicond_valid;
 riscv_pkg::xlen_t                  w_ex1_zicond_result;
 riscv_pkg::xlen_t                  r_ex1_rs1_data;
 riscv_pkg::xlen_t                  r_ex1_rs2_data;
+logic                              r_ex1_rs2_imm_valid;
 
 pipe_ctrl_t                        r_ex2_pipe_ctrl;
 scariv_pkg::issue_t                r_ex2_issue;
@@ -236,11 +237,17 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_div_stall <= w_ex0_div_stall;
 
-    r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
+    // r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
+    // r_ex1_rs2_data <= w_ex0_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
+    //                   w_ex0_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
+    //                   w_ex0_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, w_ex0_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
+    //                   w_ex0_issue.rd_regs[1].predict_ready[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
+    r_ex1_rs1_data <= w_ex0_rs_fwd_data[0];
+    r_ex1_rs2_imm_valid  <= w_ex0_pipe_ctrl.imm != IMM__;
     r_ex1_rs2_data <= w_ex0_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
                       w_ex0_pipe_ctrl.imm == IMM_I  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
                       w_ex0_pipe_ctrl.imm == IMM_SH ? {{(riscv_pkg::XLEN_W-$clog2(riscv_pkg::XLEN_W)){1'b0}}, w_ex0_issue.inst[20+:$clog2(riscv_pkg::XLEN_W)]} :
-                      w_ex0_issue.rd_regs[1].predict_ready[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
+                      w_ex0_rs_fwd_data[1];
 
     r_ex1_wr_valid <= o_ex0_early_wr.valid;
 
@@ -283,8 +290,12 @@ generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   assign w_ex1_rs_fwd_data [rs_idx] = w_ex1_tgt_data[r_ex1_issue.rd_regs[rs_idx].early_index];
 end endgenerate // block: ex1_rs_loop
 
-assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs_fwd_data[0] : r_ex1_rs1_data;
-assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_rs_fwd_data[1] : r_ex1_rs2_data;
+assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs_fwd_data[0] :
+                                 r_ex1_issue.rd_regs[0].predict_ready[1] ? r_ex1_rs1_data :
+                                 ex0_regread_rs1.data;
+assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_rs_fwd_data[1] :
+                                 r_ex1_rs2_imm_valid | r_ex1_issue.rd_regs[1].predict_ready[1] ? r_ex1_rs2_data :
+                                 ex0_regread_rs2.data;
 
 logic signed [31: 0] tmp_ex1_result_d;
 logic signed [31: 0] w_ex1_rs1_selected_data_32;
