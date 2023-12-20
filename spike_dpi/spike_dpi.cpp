@@ -1606,7 +1606,7 @@ int main(int argc, char **argv)
       }
     }
 
-    step_gshare (cycle, 0, 0, iss_bhr);
+    step_gshare (cycle, 0, 0, iss_bhr, 0, 0, 0, 0, 0);
   }
 
   delete_spike();
