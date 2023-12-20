@@ -13,6 +13,7 @@ size_t iss_bhr_length;
 size_t iss_bht_length;
 size_t iss_cache_block_byte_size;
 long long iss_bhr;
+long long model_bhr;
 
 typedef struct {
   uint8_t *bim;
@@ -153,6 +154,7 @@ void step_gshare (long long rtl_time,
 
     bool iss_is_taken_result = iss_next_pc != iss_pc + cond_inst_size(iss_insn.bits());
     iss_bhr = ((iss_bhr << 1) | iss_is_taken_result) & iss_bhr_mask;
+    model_bhr = ((model_bhr << 1) | iss_is_taken_result) & iss_bhr_mask;
 
     fprintf (gshare_log_fp, "%lld : GSHARE MODEL : {PC = %08lx (%02d,%02d), index = (%3d, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s}          ",
              rtl_time,
@@ -171,7 +173,7 @@ void step_gshare (long long rtl_time,
              rtl_taken         ? "    TAKEN" : "NOT TAKEN",
              rtl_predict_taken == rtl_taken ? "MATCH" : "FAIL ");
 
-    if ((iss_bhr & (static_cast<uint64_t>(1) << iss_bhr_length) - 1) != rtl_gshare_bhr) {
+    if ((model_bhr & (static_cast<uint64_t>(1) << iss_bhr_length) - 1) != rtl_gshare_bhr) {
       fprintf(gshare_log_fp, "// Warning : BHR different: RTL = %s, ISS = %s\n",
               to_binString(rtl_gshare_bhr, iss_bhr_length).c_str(),
               to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());
@@ -179,9 +181,18 @@ void step_gshare (long long rtl_time,
       fprintf(gshare_log_fp, "// BHR RTL = %s\n", to_binString(rtl_gshare_bhr, iss_bhr_length).c_str());
     }
     // Option: Override RTL's BHR information
-    // iss_bhr = rtl_gshare_bhr;
+    model_bhr = rtl_gshare_bhr;
 
     // Update bim_counter
     bim_array.at(array_index)->bim[bim_block_internal_index] = update_bim (iss_is_taken_result, bim_counter);
+  } else {
+    fprintf (gshare_log_fp, "%lld : NONCOND      : {PC = %08lx (%02d,%02d),                  , MODEL_BHR = %s}             ",
+             rtl_time,
+             iss_pc,
+             rtl_cmt_id, rtl_grp_id,
+             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());
+    fprintf (gshare_log_fp, "                                             ");
+    fprintf (gshare_log_fp, "RTL : {                                rtl_bhr = %s}\n",
+             to_binString(rtl_gshare_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());
   }
 }

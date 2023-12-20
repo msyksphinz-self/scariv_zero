@@ -45,7 +45,7 @@ logic [IC_HWORD_LANE_W-1 : 0] w_f0_pc_vaddr_mask;
 // F1 stage
 //
 logic   r_f1_valid;
-gshare_hist_len_t  r_f1_ghr;
+logic   r_f1_clear;
 /* verilator lint_off UNOPTFLAT */
 gshare_hist_len_t  w_f1_ghr_lane_next[IC_HWORD_LANE_W-1 : 0];
 
@@ -65,22 +65,37 @@ logic                     r_f2_update_ghr;
 gshare_hist_len_t         r_f2_ghr_lane_last;
 scariv_ic_pkg::ic_block_t w_f2_predict_taken;
 scariv_ic_pkg::ic_block_t w_f2_predict_taken_oh;
-vaddr_t                 w_f2_btb_target_vaddr;
+vaddr_t                   w_f2_btb_target_vaddr;
+logic                     r_f2_clear;
+
+//
+// Dispattch
+//
+scariv_pkg::grp_id_t w_disp_noncond_match;
+scariv_pkg::disp_t   w_disp[scariv_conf_pkg::DISP_SIZE];
+scariv_pkg::disp_t   w_disp_noncond_oh;
 
 //
 // Br-Update
 //
 logic              w_br_upd_cond_rollback_valid;
 gshare_hist_len_t  w_br_upd_cond_rollback_ghr;
+logic              w_br_upd_noncond_rollback_valid;
+gshare_hist_len_t  w_br_upd_noncond_rollback_ghr;
 
+assign w_br_upd_cond_rollback_valid = br_upd_if.update & !br_upd_if.dead & br_upd_if.is_cond & ~br_upd_if.btb_not_hit & br_upd_if.mispredict;
 assign w_br_upd_cond_rollback_ghr   = {r_gshare_info[br_upd_if.brtag].ghr[GSHARE_HIST_LEN-1:1], br_upd_if.taken};
-assign w_br_upd_cond_rollback_valid = br_upd_if.update & !br_upd_if.dead & br_upd_if.is_cond & ~br_upd_if.btb_not_hit &
-                                      br_upd_if.mispredict;
 
-assign w_ghr_next = w_br_upd_cond_rollback_valid ? w_br_upd_cond_rollback_ghr :
-                    // If Branch existed but not predicted (in frontend GHR not updated), update GHR
-                    r_f2_update_ghr & i_f2_valid ? r_f2_ghr_lane_last :
+assign w_br_upd_noncond_rollback_valid = br_upd_if.update & !br_upd_if.dead & !br_upd_if.is_cond & br_upd_if.mispredict;
+assign w_br_upd_noncond_rollback_ghr   = r_gshare_info[br_upd_if.brtag].ghr;
+
+assign w_ghr_next = w_br_upd_cond_rollback_valid    ? w_br_upd_cond_rollback_ghr    :
+                    w_br_upd_noncond_rollback_valid ? w_br_upd_noncond_rollback_ghr :
+                    // |w_disp_noncond_match           ? w_disp_noncond_oh.gshare_bhr  :
+                    w_f1_update_ghr & i_f1_valid    ? w_f1_ghr_lane_next[IC_HWORD_LANE_W-1] : // If Branch existed but not predicted (in frontend GHR not updated), update GHR
                     r_ghr;
+
+                    // r_f2_update_ghr & i_f2_valid    ? r_f2_ghr_lane_last            : // If Branch existed but not predicted (in frontend GHR not updated), update GHR
 
 // --------------------------------
 // F0 stage
@@ -101,7 +116,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_f1_cond_hit_valid    = search_btb_if.f1_hit & search_btb_if.f1_is_cond & r_f1_pc_vaddr_mask;
+assign w_f1_cond_hit_valid    = (r_f1_clear | r_f2_clear) ? 'h0 : search_btb_if.f1_hit & search_btb_if.f1_is_cond & r_f1_pc_vaddr_mask;
 assign w_f1_noncond_hit_valid = search_btb_if.f1_hit & (search_btb_if.f1_is_call | search_btb_if.f1_is_ret | search_btb_if.f1_is_noncond) & r_f1_pc_vaddr_mask;
 assign w_f1_update_ghr        = r_f1_valid & i_f1_valid & |w_f1_cond_hit_valid;
 
@@ -117,6 +132,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_f2_update_ghr           <= w_f1_update_ghr;
     r_f2_ghr_lane_last        <= w_f1_update_ghr ? w_f1_ghr_lane_next[IC_HWORD_LANE_W-1] :
                                  r_ghr;
+    r_f2_clear    <= |w_f1_noncond_hit_valid;
+    r_f1_clear    <= r_f2_clear; // roll back
     gshare_search_if.f2_valid <= r_f1_valid & i_f1_valid;
   end
 end
@@ -322,23 +339,28 @@ typedef struct packed {
 } gshare_info_t;
 gshare_info_t[scariv_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0] r_gshare_info;
 
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : bru_disp_loop
+  assign w_disp_noncond_match[d_idx] = i_bru_disp_valid[d_idx] & (bru_disp_if.payload.inst[d_idx].is_call | bru_disp_if.payload.inst[d_idx].is_ret);
+  assign w_disp[d_idx] = bru_disp_if.payload.inst[d_idx];
+end endgenerate
+bit_oh_or #(.T(disp_t), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_disp_noncond_sel  (.i_oh(w_disp_noncond_match), .i_data(w_disp  ), .o_selected(w_disp_noncond_oh));
+
 generate for (genvar brtag_idx = 0; brtag_idx < scariv_conf_pkg::RV_BRU_ENTRY_SIZE; brtag_idx++) begin: bhr_fifo_loop
-  scariv_pkg::grp_id_t w_disp_match;
-  scariv_pkg::disp_t   w_disp[scariv_conf_pkg::DISP_SIZE];
-  scariv_pkg::disp_t   w_disp_oh;
-  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    assign w_disp_match[d_idx] = i_bru_disp_valid[d_idx] & bru_disp_if.payload.inst[d_idx].is_cond &
-                                 bru_disp_if.payload.inst[d_idx].brtag == brtag_idx;
-    assign w_disp[d_idx] = bru_disp_if.payload.inst[d_idx];
+  scariv_pkg::grp_id_t w_disp_cond_match;
+  scariv_pkg::disp_t   w_disp_cond_oh;
+
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : bru_disp_loop
+    assign w_disp_cond_match   [d_idx] = i_bru_disp_valid[d_idx] & (bru_disp_if.payload.inst[d_idx].brtag == brtag_idx);
   end
-  bit_oh_or #(.T(disp_t), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_disp_sel  (.i_oh(w_disp_match), .i_data(w_disp  ), .o_selected(w_disp_oh));
+
+  bit_oh_or #(.T(disp_t), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_disp_cond_sel     (.i_oh(w_disp_cond_match),    .i_data(w_disp  ), .o_selected(w_disp_cond_oh));
 
   always_ff @ (posedge i_clk) begin
-    if (|w_disp_match) begin
+    if (|w_disp_cond_match) begin
       r_gshare_info[brtag_idx].cmt_id    <= bru_disp_if.payload.cmt_id;
-      r_gshare_info[brtag_idx].grp_id    <= w_disp_match;
-      r_gshare_info[brtag_idx].ghr       <= w_disp_oh.gshare_bhr;
-      r_gshare_info[brtag_idx].bhr_index <= w_disp_oh.gshare_index;
+      r_gshare_info[brtag_idx].grp_id    <= w_disp_cond_match;
+      r_gshare_info[brtag_idx].ghr       <= w_disp_cond_oh.gshare_bhr;
+      r_gshare_info[brtag_idx].bhr_index <= w_disp_cond_oh.gshare_index;
     end
   end
 end endgenerate // block: bhr_fifo_loop
@@ -371,7 +393,7 @@ assign branch_info_new.mispredict          = br_upd_if.mispredict;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (br_upd_if.update & !br_upd_if.dead & br_upd_if.is_cond) begin
+    if (br_upd_if.update & !br_upd_if.dead) begin
       branch_info_queue.push_back(branch_info_new);
       $fwrite(fp, "%t PC=%08x (%d,%d) Result=%d(%s) GHR=%b\n", $time, br_upd_if.pc_vaddr,
               br_upd_if.cmt_id, br_upd_if.grp_id,
