@@ -80,6 +80,7 @@ scariv_ic_pkg::ic_block_t w_f2_predict_taken;
 scariv_ic_pkg::ic_block_t w_f2_predict_taken_oh;
 vaddr_t                   w_f2_btb_target_vaddr;
 logic                     r_f2_cond_hit_valid;
+logic                     r_f2_noncond_hit_valid;
 logic                     r_f2_clear;
 logic                     w_f2_clear;
 vaddr_t                   r_f2_vaddr;
@@ -175,6 +176,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_f1_clear    <= w_f2_clear; // roll back
     gshare_search_if.f2_valid <= r_f1_valid & i_f1_valid;
     r_f2_cond_hit_valid <= |w_f1_cond_hit_valid;
+    r_f2_noncond_hit_valid <= |w_f1_noncond_hit_valid;
 
     r_f2_vaddr     <= r_f1_vaddr;
   end
@@ -357,8 +359,8 @@ end
 bit_extract_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) f2_predict_valid_oh (.in(w_f2_predict_taken), .out(w_f2_predict_taken_oh));
 
 
-assign o_f2_predict_valid = r_f2_cond_hit_valid & gshare_search_if.f2_valid;
-// assign o_f2_predict_valid = (|w_f2_predict_taken) & gshare_search_if.f2_valid;
+// assign o_f2_predict_valid = r_f2_cond_hit_valid & gshare_search_if.f2_valid;
+assign o_f2_predict_valid = (r_f2_cond_hit_valid | r_f2_noncond_hit_valid) & gshare_search_if.f2_valid;
 assign o_f2_predict_taken = |w_f2_predict_taken;
 bit_oh_or_packed
   #(.T(vaddr_t),
@@ -372,8 +374,8 @@ u_f2_target_vaddr_hit_oh (
 assign o_f2_predict_target_vaddr = w_f2_predict_taken ? w_f2_btb_target_vaddr :
                                    (r_f2_vaddr + scariv_lsu_pkg::ICACHE_DATA_B_W) & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1);
 
-assign gshare_search_if.f2_pred_taken = r_f2_cond_hit_valid ? w_f2_predict_taken : 'h0;
-// assign gshare_search_if.f2_pred_taken = w_f2_predict_taken;
+// assign gshare_search_if.f2_pred_taken = r_f2_cond_hit_valid ? w_f2_predict_taken : 'h0;
+assign gshare_search_if.f2_pred_taken = {(scariv_lsu_pkg::ICACHE_DATA_B_W/2){(r_f2_cond_hit_valid | r_f2_noncond_hit_valid)}} & w_f2_predict_taken;
 
 `ifdef SIMULATION
 int fp;
