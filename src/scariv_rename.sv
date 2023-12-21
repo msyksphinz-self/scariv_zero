@@ -131,6 +131,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     rn_front_if.payload.is_br_included   <= ibuf_front_if.payload.is_br_included;
 `ifdef SIMULATION
     rn_front_if.payload.pc_addr_debug    <= {ibuf_front_if.payload.pc_addr, 1'b0};
+    rn_front_if.payload.f2_sim_gshare_time <= ibuf_front_if.payload.f2_sim_gshare_time;
 `endif // SIMULATION
     rn_front_if.payload.tlb_except_valid <= ibuf_front_if.payload.tlb_except_valid;
     rn_front_if.payload.tlb_except_cause <= ibuf_front_if.payload.tlb_except_cause;

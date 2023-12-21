@@ -40,6 +40,7 @@ typedef struct packed {
   ras_info_t  [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0] ras_info;
 `ifdef SIMULATION
   scariv_pkg::vaddr_t pc_dbg;
+  logic [63: 0]       f2_sim_gshare_time;
 `endif // SIMULATION
   logic               int_inserted;
 } inst_buf_t;

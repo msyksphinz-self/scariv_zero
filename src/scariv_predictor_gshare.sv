@@ -25,6 +25,8 @@ module scariv_predictor_gshare
  input logic i_f2_valid,
  input scariv_ic_pkg::ic_resp_t i_f2_ic_resp,
 
+ input logic i_inst_buffer_ready,
+
  btb_update_if.slave   update_btb_if,
  btb_search_if.slave   search_btb_if,
  btb_search_if.monitor search_btb_mon_if,
@@ -39,11 +41,16 @@ module scariv_predictor_gshare
 
  // Feedback into Frontend
  output logic   o_f2_predict_valid,
+ output logic   o_f2_predict_taken,
  output vaddr_t o_f2_predict_target_vaddr,
 
  // BRU dispatch valid
  input scariv_pkg::grp_id_t i_bru_disp_valid,
  scariv_front_if.watch      bru_disp_if,
+
+ // IBUF prediction valid
+ input logic             i_ibuf_decode_flush,
+ scariv_front_if.watch   ibuf_front_if,
 
  br_upd_if.slave      br_upd_if
  );
@@ -88,15 +95,20 @@ u_gshare
 
   .i_f1_valid (i_f1_valid),
   .i_f2_valid (i_f2_valid),
+  .i_inst_buffer_ready (i_inst_buffer_ready),
 
   .i_bru_disp_valid (i_bru_disp_valid),
   .bru_disp_if      (bru_disp_if     ),
+
+  .i_ibuf_decode_flush (i_ibuf_decode_flush),
+  .ibuf_front_if       (ibuf_front_if),
 
   .search_btb_if    (search_btb_mon_if),
   .gshare_search_if (gshare_search_if ),
   .br_upd_if        (br_upd_if        ),
 
   .o_f2_predict_valid        (o_f2_predict_valid       ),
+  .o_f2_predict_taken        (o_f2_predict_taken       ),
   .o_f2_predict_target_vaddr (o_f2_predict_target_vaddr)
 );
 

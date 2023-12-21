@@ -122,8 +122,10 @@ size_t fold_index (size_t index, uint32_t ghr_len, uint32_t bht_len)
 }
 
 
-void step_gshare (long long rtl_time,
-                  int rtl_cmt_id, int rtl_grp_id,
+void step_gshare (long long rtl_commit_time,
+                  long long rtl_f2_time,
+                  long long rtl_disp_time,
+                  int rtl_cmt_id, int rtl_grp_id, int rtl_brtag,
                   long long rtl_gshare_bhr,
                   int rtl_gshare_rd_bht_index,
                   int rtl_gshare_wr_bht_index,
@@ -156,19 +158,19 @@ void step_gshare (long long rtl_time,
     iss_bhr = ((iss_bhr << 1) | iss_is_taken_result) & iss_bhr_mask;
     model_bhr = ((model_bhr << 1) | iss_is_taken_result) & iss_bhr_mask;
 
-    fprintf (gshare_log_fp, "%lld : GSHARE MODEL : {PC = %08lx (%02d,%02d), index = (%3d, %2x), MODEL_BHR = %s, predict = %s, result = %s, %s}          ",
-             rtl_time,
+    fprintf (gshare_log_fp, "%lld,%lld,%lld : GSHARE MODEL : {PC = %08lx (%02d,%02d,%2d), index = (%3d, %2x), MODEL_BHR = %s(%016llx), predict = %s, result = %s, %s}          ",
+             rtl_f2_time, rtl_disp_time, rtl_commit_time,
              iss_pc,
-             rtl_cmt_id, rtl_grp_id,
+             rtl_cmt_id, rtl_grp_id, rtl_brtag,
              static_cast<unsigned int>(array_index), static_cast<unsigned int>(bim_block_internal_index),
-             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(),
+             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(), iss_bhr,
              iss_predict_taken   ? "    TAKEN" : "NOT TAKEN",
              iss_is_taken_result ? "    TAKEN" : "NOT TAKEN",
              iss_predict_taken == iss_is_taken_result ? "MATCH" : "FAIL ");
-    fprintf (gshare_log_fp, "RTL : {rd_index = %3d, wr_index = %3d, rtl_bhr = %s, predict = %s, result = %s, %s}  ",
+    fprintf (gshare_log_fp, "RTL : {rd_index = %3d, wr_index = %3d, rtl_bhr = %s(%016llx), predict = %s, result = %s, %s}  ",
              rtl_gshare_rd_bht_index,
              rtl_gshare_wr_bht_index,
-             to_binString(rtl_gshare_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(),
+             to_binString(rtl_gshare_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(), rtl_gshare_bhr,
              rtl_predict_taken ? "    TAKEN" : "NOT TAKEN",
              rtl_taken         ? "    TAKEN" : "NOT TAKEN",
              rtl_predict_taken == rtl_taken ? "MATCH" : "FAIL ");
@@ -186,11 +188,11 @@ void step_gshare (long long rtl_time,
     // Update bim_counter
     bim_array.at(array_index)->bim[bim_block_internal_index] = update_bim (iss_is_taken_result, bim_counter);
   } else {
-    fprintf (gshare_log_fp, "%lld : NONCOND      : {PC = %08lx (%02d,%02d),                  , MODEL_BHR = %s}             ",
-             rtl_time,
+    fprintf (gshare_log_fp, "%lld,%lld,%lld : NONCOND      : {PC = %08lx (%02d,%02d,  ),                  , MODEL_BHR = %s(%016llx)}             ",
+             rtl_f2_time, rtl_disp_time, rtl_commit_time,
              iss_pc,
              rtl_cmt_id, rtl_grp_id,
-             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());
+             to_binString(iss_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str(), iss_bhr);
     fprintf (gshare_log_fp, "                                             ");
     fprintf (gshare_log_fp, "RTL : {                                rtl_bhr = %s}\n",
              to_binString(rtl_gshare_bhr & ((static_cast<uint64_t>(1) << iss_bhr_length)-1), iss_bhr_length).c_str());

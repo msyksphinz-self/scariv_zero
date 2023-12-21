@@ -31,9 +31,12 @@ import "DPI-C" function void stop_sim_deadlock(input int count);
 import "DPI-C" function void initial_gshare(input longint bhr_length,
                                             input longint bht_length,
                                             input longint cache_block_byte_size);
-import "DPI-C" function void step_gshare (input longint rtl_time,
+import "DPI-C" function void step_gshare (input longint rtl_commit_time,
+                                          input longint rtl_f2_time,
+                                          input longint rtl_disp_time,
                                           input int     rtl_cmt_id,
                                           input int     rtl_grp_id,
+                                          input int     rtl_brtag,
                                           input longint rtl_gshare_bhr,
                                           input int     rtl_gshare_rd_bht_index,
                                           input int     rtl_gshare_wr_bht_index,
@@ -575,8 +578,11 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
               if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&
                   `BRANCH_INFO_Q[q_idx].grp_id == 1 << grp_idx) begin
                 step_gshare ($time,
+                             `BRANCH_INFO_Q[q_idx].f2_time,
+                             `BRANCH_INFO_Q[q_idx].disp_time,
                              `BRANCH_INFO_Q[q_idx].cmt_id,
                              `BRANCH_INFO_Q[q_idx].grp_id,
+                             `BRANCH_INFO_Q[q_idx].brtag,
                              `BRANCH_INFO_Q[q_idx].gshare_bhr,
                              `BRANCH_INFO_Q[q_idx].gshare_rd_bht_index,
                              `BRANCH_INFO_Q[q_idx].gshare_wr_bht_index,

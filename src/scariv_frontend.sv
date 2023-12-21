@@ -93,7 +93,6 @@ except_t r_f1_tlb_except_cause;
 logic    w_f1_predict_valid;
 vaddr_t  w_f1_btb_target_vaddr;
 
-logic    w_f1_ubtb_predict_valid;
 ubtb_search_if  w_f1_ubtb_predict_if();
 logic                           r_f2_ubtb_predict_valid;
 scariv_predict_pkg::ubtb_info_t r_f2_ubtb_info;
@@ -115,6 +114,7 @@ except_t          r_f2_tlb_except_cause;
 logic             w_f2_predict_valid;
 vaddr_t           w_f2_predict_target_vaddr;
 logic             w_f2_predict_valid_gshare;
+logic             w_f2_predict_taken_gshare;
 vaddr_t           w_f2_predict_target_vaddr_gshare;
 logic             w_f2_btb_predict_match;
 logic             w_f2_btb_predict_not_match;
@@ -774,15 +774,17 @@ ic_block_t w_f2_call_ret_tree;
 assign w_f2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.f2_is_call | w_ras_search_if.f2_is_ret), .out(w_f2_call_ret_tree));
 
-assign w_f1_predict_valid = r_f1_valid & ~r_f1_clear & w_f1_ubtb_predict_if.predict_valid;
+assign w_f1_predict_valid = r_f1_valid & ~r_f1_clear & w_f1_ubtb_predict_if.predict_valid & w_f1_ubtb_predict_if.ubtb_info.taken;
 
 assign w_f2_predict_valid        = r_f2_valid & ~r_f2_clear & w_f2_predict_valid_gshare & ~w_f2_btb_predict_match;
 assign w_f2_predict_target_vaddr = w_f2_predict_target_vaddr_gshare;
 
-assign w_f2_btb_predict_match = w_f2_predict_valid_gshare & r_f2_ubtb_predict_valid & r_f2_ubtb_info.taken &
-                                (w_f2_predict_target_vaddr_gshare == r_f2_ubtb_info.target_vaddr);
-assign w_f2_btb_predict_not_match = w_f2_predict_valid_gshare & r_f2_ubtb_predict_valid &
-                                    (w_f2_predict_target_vaddr_gshare != r_f2_ubtb_info.target_vaddr);
+assign w_f2_btb_predict_match = r_f2_ubtb_predict_valid & w_f2_predict_valid_gshare &
+                                ((~w_f2_predict_taken_gshare & ~r_f2_ubtb_info.taken) |
+                                 (w_f2_predict_taken_gshare & r_f2_ubtb_info.taken & (w_f2_predict_target_vaddr_gshare == r_f2_ubtb_info.target_vaddr)));
+assign w_f2_btb_predict_not_match = r_f2_ubtb_predict_valid & w_f2_predict_valid_gshare &  // ubtb and gshare generate prediction
+                                    (w_f2_predict_taken_gshare ^ r_f2_ubtb_info.taken) |                // 1. gshare predict with "not taken" even though ubtb generate predict "taken"
+                                    (w_f2_predict_taken_gshare & r_f2_ubtb_info.taken & (w_f2_predict_target_vaddr_gshare != r_f2_ubtb_info.target_vaddr));  // 2. gshare adn ubtb predict taken but jum address different
 
 // ------------------------------
 // Decode Level Prediction Valid
@@ -813,6 +815,7 @@ scariv_predictor_gshare u_predictor
 
    .i_f1_valid   (w_f1_inst_valid),
    .i_f2_valid   (w_f2_inst_valid & w_inst_buffer_ready),
+   .i_inst_buffer_ready   (w_inst_buffer_ready),
 
    .i_f2_ic_resp (w_f2_ic_resp),
 
@@ -828,10 +831,14 @@ scariv_predictor_gshare u_predictor
    .f1_ubtb_predict_if (w_f1_ubtb_predict_if),
 
    .o_f2_predict_valid        (w_f2_predict_valid_gshare       ),
+   .o_f2_predict_taken        (w_f2_predict_taken_gshare       ),
    .o_f2_predict_target_vaddr (w_f2_predict_target_vaddr_gshare),
 
    .i_bru_disp_valid (i_bru_disp_valid),
    .bru_disp_if      (bru_disp_if     ),
+
+   .i_ibuf_decode_flush (w_decode_flush.valid),
+   .ibuf_front_if (ibuf_front_if),
 
    .br_upd_if (br_upd_if)
    );

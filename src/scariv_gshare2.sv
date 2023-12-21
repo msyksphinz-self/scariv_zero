@@ -17,9 +17,14 @@ module scariv_gshare
  input logic i_f1_valid,
  input logic i_f2_valid,
 
+ input logic i_inst_buffer_ready,
  // BRU dispatch valid
  input scariv_pkg::grp_id_t i_bru_disp_valid,
  scariv_front_if.watch      bru_disp_if,
+
+ // IBUF prediction valid
+ input logic             i_ibuf_decode_flush,
+ scariv_front_if.watch   ibuf_front_if,
 
  br_upd_if.slave br_upd_if,
 
@@ -28,12 +33,14 @@ module scariv_gshare
 
  // Feedback into Frontend
  output logic   o_f2_predict_valid,
+ output logic   o_f2_predict_taken,
  output vaddr_t o_f2_predict_target_vaddr
  );
 
 localparam IC_HWORD_LANE_W = scariv_lsu_pkg::ICACHE_DATA_B_W / 2;
 
-gshare_hist_len_t  r_ghr;      // Branch History Register : 1=Taken / 0:NonTaken
+gshare_hist_len_t  r_f1_ghr;      // Branch History Register : 1=Taken / 0:NonTaken
+gshare_hist_len_t  r_f1_ghr_d1;
 gshare_hist_len_t  w_ghr_next; // Branch History Register : 1=Taken / 0:NonTaken
 
 //
@@ -46,8 +53,12 @@ logic [IC_HWORD_LANE_W-1 : 0] w_f0_pc_vaddr_mask;
 //
 logic   r_f1_valid;
 logic   r_f1_clear;
+logic   w_f1_clear;
+vaddr_t r_f1_vaddr;
 /* verilator lint_off UNOPTFLAT */
+gshare_hist_len_t  w_f1_ghr_lane_init;
 gshare_hist_len_t  w_f1_ghr_lane_next[IC_HWORD_LANE_W-1 : 0];
+// gshare_hist_len_t  r_f1_ghr;
 
 scariv_ic_pkg::ic_block_t w_f1_lane_predict;
 scariv_ic_pkg::ic_block_t r_f1_pc_vaddr_mask;
@@ -61,12 +72,17 @@ logic         w_f1_update_ghr;
 //
 // F2 stage
 //
+logic                     r_f2_valid;
+logic                     w_f2_cleared;
 logic                     r_f2_update_ghr;
-gshare_hist_len_t         r_f2_ghr_lane_last;
+// gshare_hist_len_t         r_f2_ghr_lane_last;
 scariv_ic_pkg::ic_block_t w_f2_predict_taken;
 scariv_ic_pkg::ic_block_t w_f2_predict_taken_oh;
 vaddr_t                   w_f2_btb_target_vaddr;
+logic                     r_f2_cond_hit_valid;
 logic                     r_f2_clear;
+logic                     w_f2_clear;
+vaddr_t                   r_f2_vaddr;
 
 //
 // Dispattch
@@ -74,6 +90,17 @@ logic                     r_f2_clear;
 scariv_pkg::grp_id_t w_disp_noncond_match;
 scariv_pkg::disp_t   w_disp[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::disp_t   w_disp_noncond_oh;
+
+// IBUF RAS prediction update
+logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_ibuf_noncond_match;
+scariv_pkg::disp_t                      w_ibuf_inst [scariv_conf_pkg::DISP_SIZE];
+scariv_pkg::disp_t                      w_ibuf_inst_oh;
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : ibuf_disp_loop
+  assign w_ibuf_noncond_match[d_idx] = ibuf_front_if.valid & ibuf_front_if.ready & i_ibuf_decode_flush & ibuf_front_if.payload.inst[d_idx].valid &
+                                       (ibuf_front_if.payload.inst[d_idx].is_call | ibuf_front_if.payload.inst[d_idx].is_ret);
+  assign w_ibuf_inst[d_idx] = ibuf_front_if.payload.inst[d_idx];
+end endgenerate
+bit_oh_or #(.T(disp_t), .WORDS(scariv_conf_pkg::DISP_SIZE)) u_ibuf_noncond_sel  (.i_oh(w_ibuf_noncond_match), .i_data(w_ibuf_inst ), .o_selected(w_ibuf_inst_oh));
 
 //
 // Br-Update
@@ -89,11 +116,14 @@ assign w_br_upd_cond_rollback_ghr   = {r_gshare_info[br_upd_if.brtag].ghr[GSHARE
 assign w_br_upd_noncond_rollback_valid = br_upd_if.update & !br_upd_if.dead & !br_upd_if.is_cond & br_upd_if.mispredict;
 assign w_br_upd_noncond_rollback_ghr   = r_gshare_info[br_upd_if.brtag].ghr;
 
+assign w_f1_ghr_lane_init = w_f2_cleared & ~i_inst_buffer_ready ? r_f1_ghr_d1 : r_f1_ghr;
+
 assign w_ghr_next = w_br_upd_cond_rollback_valid    ? w_br_upd_cond_rollback_ghr    :
                     w_br_upd_noncond_rollback_valid ? w_br_upd_noncond_rollback_ghr :
                     // |w_disp_noncond_match           ? w_disp_noncond_oh.gshare_bhr  :
+                    w_ibuf_noncond_match            ? w_ibuf_inst_oh.gshare_bhr :
                     w_f1_update_ghr & i_f1_valid    ? w_f1_ghr_lane_next[IC_HWORD_LANE_W-1] : // If Branch existed but not predicted (in frontend GHR not updated), update GHR
-                    r_ghr;
+                    w_f1_ghr_lane_init;
 
                     // r_f2_update_ghr & i_f2_valid    ? r_f2_ghr_lane_last            : // If Branch existed but not predicted (in frontend GHR not updated), update GHR
 
@@ -113,16 +143,24 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_f1_valid         <= gshare_search_if.f0_valid;
     r_f1_pc_vaddr_mask <= w_f0_pc_vaddr_mask;
+    r_f1_vaddr         <= gshare_search_if.f0_pc_vaddr;
+    // r_f1_ghr <= r_f1_ghr;
   end
 end
 
-assign w_f1_cond_hit_valid    = (r_f1_clear | r_f2_clear) ? 'h0 : search_btb_if.f1_hit & search_btb_if.f1_is_cond & r_f1_pc_vaddr_mask;
+assign w_f1_clear = r_f1_clear;
+assign w_f2_clear = r_f2_clear & i_f2_valid;
+
+assign w_f1_cond_hit_valid    = (/* w_f1_clear | */w_f2_clear) ? 'h0 : search_btb_if.f1_hit & search_btb_if.f1_is_cond & r_f1_pc_vaddr_mask;
 assign w_f1_noncond_hit_valid = search_btb_if.f1_hit & (search_btb_if.f1_is_call | search_btb_if.f1_is_ret | search_btb_if.f1_is_noncond) & r_f1_pc_vaddr_mask;
 assign w_f1_update_ghr        = r_f1_valid & i_f1_valid & |w_f1_cond_hit_valid;
 
 // --------------------------------
 // F2 stage
 // --------------------------------
+// last cycle f1 is valid but next cycle cleared,
+// it means last time updated counter is invalid, Roll back
+assign w_f2_cleared = r_f2_valid & ~i_f2_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -130,11 +168,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     gshare_search_if.f2_valid <= 1'b0;
   end else begin
     r_f2_update_ghr           <= w_f1_update_ghr;
-    r_f2_ghr_lane_last        <= w_f1_update_ghr ? w_f1_ghr_lane_next[IC_HWORD_LANE_W-1] :
-                                 r_ghr;
+    // r_f2_ghr_lane_last        <= w_f1_update_ghr ? w_f1_ghr_lane_next[IC_HWORD_LANE_W-1] :
+    //                              r_f1_ghr;
+    r_f2_valid    <= i_f1_valid;
     r_f2_clear    <= |w_f1_noncond_hit_valid;
-    r_f1_clear    <= r_f2_clear; // roll back
+    r_f1_clear    <= w_f2_clear; // roll back
     gshare_search_if.f2_valid <= r_f1_valid & i_f1_valid;
+    r_f2_cond_hit_valid <= |w_f1_cond_hit_valid;
+
+    r_f2_vaddr     <= r_f1_vaddr;
   end
 end
 
@@ -143,9 +185,15 @@ end
 // --------------------------------
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ghr <= {GSHARE_HIST_LEN{1'b0}};
+    r_f1_ghr <= {GSHARE_HIST_LEN{1'b0}};
   end else begin
-    r_ghr <= w_ghr_next;
+    // if (w_f2_cleared & ~i_inst_buffer_ready) begin
+    //   r_f1_ghr <= r_f1_ghr_d1;
+    // end else begin
+    r_f1_ghr <= w_ghr_next;
+    if (i_f2_valid) begin
+      r_f1_ghr_d1 <= r_f1_ghr;
+    end
   end
 end
 
@@ -156,9 +204,9 @@ end
 // --------------------------------
 logic [ 1: 0] w_br_update_bim;
 assign w_br_update_bim =  (((br_upd_if.bim_value == 2'b11) & !br_upd_if.mispredict &  br_upd_if.taken |
-                             (br_upd_if.bim_value == 2'b00) & !br_upd_if.mispredict & !br_upd_if.taken)) ? br_upd_if.bim_value :
-                           br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
-                           br_upd_if.bim_value - 2'b01;
+                            (br_upd_if.bim_value == 2'b00) & !br_upd_if.mispredict & !br_upd_if.taken)) ? br_upd_if.bim_value :
+                          br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
+                          br_upd_if.bim_value - 2'b01;
 
 logic [$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W/2)-1: 0] br_update_lane;
 assign br_update_lane = br_upd_if.is_rvc ? br_upd_if.pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)-1: 1] :
@@ -171,22 +219,22 @@ assign w_br_upd_xor_index = r_gshare_info[br_upd_if.brtag].bhr_index;
 generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx++) begin : ghr_loop
 
   logic [ 1: 0] w_f1_bim_counter;
-  logic [ 1: 0] r_f1_bim_counter_dram;
-  gshare_bht_t       r_f1_xor_rd_index;
+  logic [ 1: 0] w_f1_bim_counter_dram;
+  // gshare_bht_t       r_f1_xor_rd_index;
 
   // ---------------
   // F0 stage
   // ---------------
-  gshare_hist_len_t  w_f0_xor_rd_index_raw;
-  gshare_bht_t       w_f0_xor_rd_index;
-  gshare_hist_len_t  w_f0_pc_vaddr_lane;
-  assign w_f0_pc_vaddr_lane = {gshare_search_if.f0_pc_vaddr[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], c_idx[$clog2(IC_HWORD_LANE_W)-1:0], 1'b0};
+  gshare_hist_len_t  w_f1_xor_rd_index_raw;
+  gshare_bht_t       w_f1_xor_rd_index;
+  gshare_hist_len_t  w_f1_pc_vaddr_lane;
+  assign w_f1_pc_vaddr_lane = {r_f1_vaddr[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], c_idx[$clog2(IC_HWORD_LANE_W)-1:0], 1'b0};
   if (c_idx == 0) begin
-    assign w_f0_xor_rd_index_raw = r_f2_ghr_lane_last          ^ w_f0_pc_vaddr_lane;
+    assign w_f1_xor_rd_index_raw = w_f1_ghr_lane_init          ^ w_f1_pc_vaddr_lane;
   end else begin
-    assign w_f0_xor_rd_index_raw = w_f1_ghr_lane_next[c_idx-1] ^ w_f0_pc_vaddr_lane;
+    assign w_f1_xor_rd_index_raw = w_f1_ghr_lane_next[c_idx-1] ^ w_f1_pc_vaddr_lane;
   end
-  assign w_f0_xor_rd_index     = fold_hash_index(w_f0_xor_rd_index_raw);
+  assign w_f1_xor_rd_index     = fold_hash_index(w_f1_xor_rd_index_raw);
 
   // ---------------
   // F1 stage
@@ -195,8 +243,8 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx
 
   if (c_idx == 0) begin
     assign w_f1_cond_hit_active[c_idx] = w_f1_cond_hit_valid [c_idx];
-    assign w_f1_ghr_lane_next  [c_idx] = w_f1_cond_hit_active[c_idx] ? {r_f2_ghr_lane_last, w_f1_lane_predict[c_idx]} :
-                                         r_f2_ghr_lane_last;
+    assign w_f1_ghr_lane_next  [c_idx] = w_f1_cond_hit_active[c_idx] ? {w_f1_ghr_lane_init, w_f1_lane_predict[c_idx]} :
+                                         w_f1_ghr_lane_init;
   end else begin
     assign w_f1_cond_hit_active[c_idx] = w_f1_cond_hit_valid [c_idx] & ~(|w_f1_noncond_hit_valid[c_idx-1: 0]);
     assign w_f1_ghr_lane_next  [c_idx] = w_f1_cond_hit_active[c_idx] & ~|w_f1_lane_predict[c_idx-1: 0] ?
@@ -222,7 +270,7 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx
   //    .i_wr_addr (br_upd_if.gshare_index),
   //    .i_wr_data (w_br_update_bim),
   //
-  //    .i_rd_addr (w_f0_xor_rd_index),
+  //    .i_rd_addr (w_f1_xor_rd_index),
   //    .o_rd_data (w_f1_bim_counter_dram)
   //    );
 
@@ -246,40 +294,33 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx
     assign w_bim_array[a_idx] = r_bim;
   end // block: bim_loop
 
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_f1_bim_counter_dram <= 'h0;
-    end else begin
-      r_f1_bim_counter_dram <= w_bim_array[w_f0_xor_rd_index];
-    end
-  end
-
-  assign w_f1_bim_counter = br_upd_if.update & !br_upd_if.dead &
-                            (br_upd_if.gshare_index == w_f0_xor_rd_index) ? w_br_update_bim :
-                            r_f1_bim_counter_dram;
+  assign w_f1_bim_counter_dram = w_bim_array[w_f1_xor_rd_index];
+  assign w_f1_bim_counter      = br_upd_if.update & !br_upd_if.dead & (br_upd_if.gshare_index == w_f1_xor_rd_index) ? w_br_update_bim :
+                                 w_f1_bim_counter_dram;
 
   // Data SRAM is not formatted.
   // First access, default is set to TAKEN.
-  logic r_f1_rd_index_valid;
-  logic [scariv_conf_pkg::BTB_ENTRY_SIZE-1: 0] r_data_array_init_valid;
-
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_data_array_init_valid <= 'h0;
-      r_f1_rd_index_valid     <= 1'b0;
-      r_f1_xor_rd_index       <= 'h0;
-    end else begin
-      r_f1_rd_index_valid <= r_data_array_init_valid[w_f0_xor_rd_index];
-      r_f1_xor_rd_index   <= w_f0_xor_rd_index;
-
-      if (br_upd_if.update & !br_upd_if.dead) begin
-        r_data_array_init_valid[w_br_upd_xor_index] <= 1'b1;
-      end
-    end
-  end
+  // logic r_f1_rd_index_valid;
+  // logic [scariv_conf_pkg::BTB_ENTRY_SIZE-1: 0] r_data_array_init_valid;
+  //
+  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  //   if (!i_reset_n) begin
+  //     r_data_array_init_valid <= 'h0;
+  //     r_f1_rd_index_valid     <= 1'b0;
+  //     r_f1_xor_rd_index       <= 'h0;
+  //   end else begin
+  //     r_f1_rd_index_valid <= r_data_array_init_valid[w_f1_xor_rd_index];
+  //     r_f1_xor_rd_index   <= w_f1_xor_rd_index;
+  //
+  //     if (br_upd_if.update & !br_upd_if.dead) begin
+  //       r_data_array_init_valid[w_br_upd_xor_index] <= 1'b1;
+  //     end
+  //   end
+  // end
 
   logic [ 1: 0] w_f1_bim_value;
-  assign w_f1_bim_value = !r_f1_rd_index_valid ? 2'b10 : w_f1_bim_counter;
+  assign w_f1_bim_value = w_f1_bim_counter;
+  // assign w_f1_bim_value = !r_f1_rd_index_valid ? 2'b10 : w_f1_bim_counter;
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       gshare_search_if.f2_bim_value[c_idx] <= 'h0;
@@ -287,9 +328,9 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx
       gshare_search_if.f2_bhr      [c_idx] <= 'h0;
     end else begin
       gshare_search_if.f2_bim_value[c_idx] <= w_f1_bim_value;
-      gshare_search_if.f2_index    [c_idx] <= r_f1_xor_rd_index;
+      gshare_search_if.f2_index    [c_idx] <= w_f1_xor_rd_index; // r_f1_xor_rd_index;
       // if (c_idx == 0) begin
-      //   gshare_search_if.f2_bhr    [c_idx] <= r_ghr;
+      //   gshare_search_if.f2_bhr    [c_idx] <= r_f1_ghr;
       // end else begin
       gshare_search_if.f2_bhr    [c_idx] <= w_f1_ghr_lane_next[c_idx];
       // end
@@ -299,13 +340,26 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; c_idx
 end
 endgenerate
 
+`ifdef SIMULATION
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    gshare_search_if.f2_time <= 'h0;
+  end else begin
+    gshare_search_if.f2_time <= $time;
+  end
+end
+`endif // SIMULATION
+
 
 // ----------------------------
 // F2 stage Prediction Select
 // ----------------------------
 bit_extract_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) f2_predict_valid_oh (.in(w_f2_predict_taken), .out(w_f2_predict_taken_oh));
 
-assign o_f2_predict_valid        = |w_f2_predict_taken;
+
+assign o_f2_predict_valid = r_f2_cond_hit_valid & gshare_search_if.f2_valid;
+// assign o_f2_predict_valid = (|w_f2_predict_taken) & gshare_search_if.f2_valid;
+assign o_f2_predict_taken = |w_f2_predict_taken;
 bit_oh_or_packed
   #(.T(vaddr_t),
     .WORDS(scariv_lsu_pkg::ICACHE_DATA_B_W/2)
@@ -315,9 +369,11 @@ u_f2_target_vaddr_hit_oh (
  .i_data    (search_btb_if.f2_target_vaddr),
  .o_selected(w_f2_btb_target_vaddr)
  );
-assign o_f2_predict_target_vaddr = w_f2_btb_target_vaddr;
+assign o_f2_predict_target_vaddr = w_f2_predict_taken ? w_f2_btb_target_vaddr :
+                                   (r_f2_vaddr + scariv_lsu_pkg::ICACHE_DATA_B_W) & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1);
 
-assign gshare_search_if.f2_pred_taken = w_f2_predict_taken;
+assign gshare_search_if.f2_pred_taken = r_f2_cond_hit_valid ? w_f2_predict_taken : 'h0;
+// assign gshare_search_if.f2_pred_taken = w_f2_predict_taken;
 
 `ifdef SIMULATION
 int fp;
@@ -336,6 +392,10 @@ typedef struct packed {
   scariv_pkg::grp_id_t grp_id;
   gshare_hist_len_t ghr;
   gshare_bht_t      bhr_index;
+`ifdef SIMULATION
+  logic [63: 0]     f2_time;
+  logic [63: 0]     disp_time;
+`endif // SIMULATION
 } gshare_info_t;
 gshare_info_t[scariv_conf_pkg::RV_BRU_ENTRY_SIZE-1: 0] r_gshare_info;
 
@@ -361,6 +421,10 @@ generate for (genvar brtag_idx = 0; brtag_idx < scariv_conf_pkg::RV_BRU_ENTRY_SI
       r_gshare_info[brtag_idx].grp_id    <= w_disp_cond_match;
       r_gshare_info[brtag_idx].ghr       <= w_disp_cond_oh.gshare_bhr;
       r_gshare_info[brtag_idx].bhr_index <= w_disp_cond_oh.gshare_index;
+`ifdef SIMULATION
+      r_gshare_info[brtag_idx].f2_time   <= bru_disp_if.payload.f2_sim_gshare_time;
+      r_gshare_info[brtag_idx].disp_time <= $time;
+`endif // SIMULATION
     end
   end
 end endgenerate // block: bhr_fifo_loop
@@ -372,21 +436,27 @@ assign sim_br_upd_gshare_bhr =  w_br_upd_cond_rollback_valid ? w_br_upd_cond_rol
 typedef struct packed {
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
+  scariv_pkg::brtag_t  brtag;
   gshare_hist_len_t    gshare_bhr;
   gshare_bht_t         gshare_rd_bht_index;
   gshare_bht_t         gshare_wr_bht_index;
   logic                taken;
   logic                predict_taken;
   logic                mispredict;
+  logic [63: 0]        f2_time;
+  logic [63: 0]        disp_time;
 } branch_info_t;
 
 branch_info_t branch_info_queue[$];
 branch_info_t branch_info_new;
 assign branch_info_new.cmt_id              = br_upd_if.cmt_id;
 assign branch_info_new.grp_id              = br_upd_if.grp_id;
+assign branch_info_new.brtag               = br_upd_if.brtag;
 assign branch_info_new.gshare_bhr          = sim_br_upd_gshare_bhr;
 assign branch_info_new.gshare_rd_bht_index = r_gshare_info[br_upd_if.brtag].bhr_index;
 assign branch_info_new.gshare_wr_bht_index = r_gshare_info[br_upd_if.brtag].bhr_index;
+assign branch_info_new.f2_time             = r_gshare_info[br_upd_if.brtag].f2_time;
+assign branch_info_new.disp_time           = r_gshare_info[br_upd_if.brtag].disp_time;
 assign branch_info_new.taken               = br_upd_if.taken;
 assign branch_info_new.predict_taken       = br_upd_if.bim_value[1];
 assign branch_info_new.mispredict          = br_upd_if.mispredict;

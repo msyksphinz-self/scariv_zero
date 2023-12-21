@@ -44,7 +44,7 @@ localparam FTB_ENTRY_WAY_SIZE = 4;
 localparam FTB_ENTRY_SIZE_PER_WAY = FTB_ENTRY_SIZE / FTB_ENTRY_WAY_SIZE;
 
 logic [$clog2(FTB_ENTRY_SIZE_PER_WAY)-1: 0] w_f0_ftb_index;
-assign w_f0_ftb_index = i_f0_pc[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W) +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
+assign w_f0_ftb_index = i_f0_pc[1 + $clog2(FTB_ENTRY_SIZE_PER_WAY) +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
 
 ftb_entry_t r_ftb_entries[FTB_ENTRY_SIZE_PER_WAY][FTB_ENTRY_WAY_SIZE];
 
@@ -94,8 +94,8 @@ logic w_ftb_update_valid;
 logic [$clog2(FTB_ENTRY_SIZE_PER_WAY)-1: 0] w_ftb_update_index;
 logic [$clog2(FTB_ENTRY_WAY_SIZE)-1: 0]     w_ftb_update_way;
 assign w_ftb_update_valid = br_upd_if.update & !br_upd_if.dead & ~(br_upd_if.is_call | br_upd_if.is_ret);
-assign w_ftb_update_index = br_upd_if.basicblk_pc_vaddr[$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W) +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
-assign w_ftb_update_way = br_upd_if.pc_vaddr[2 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
+assign w_ftb_update_index = br_upd_if.basicblk_pc_vaddr[1 + $clog2(FTB_ENTRY_SIZE_PER_WAY) +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
+assign w_ftb_update_way = br_upd_if.pc_vaddr[1 +: $clog2(FTB_ENTRY_SIZE_PER_WAY)];
 ftb_entry_t w_ftb_update_entry;
 assign w_ftb_update_entry.partial_target_vaddr = br_upd_if.target_vaddr[15: 0];
 scariv_pkg::vaddr_t pc_vaddr_b1;

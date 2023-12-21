@@ -251,7 +251,8 @@ always_comb begin
   end // block: pred_loop
 
 `ifdef SIMULATION
-  w_inst_buf_load.pc_dbg           = {i_f2_inst.pc, 1'b0};
+  w_inst_buf_load.f2_sim_gshare_time = gshare_search_if.f2_time;
+  w_inst_buf_load.pc_dbg             = {i_f2_inst.pc, 1'b0};
 `endif // SIMULATION
   w_inst_buf_load.int_inserted = i_f2_inst.int_inserted;
 // end else if ((w_head_all_inst_issued |
@@ -566,8 +567,9 @@ end
 assign w_ibuf_front_payload_next.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
 assign w_ibuf_front_payload_next.basicblk_pc_vaddr = w_inst_buf_data[0].pc;
 `ifdef SIMULATION
-assign w_ibuf_front_payload_next.pc_addr_debug  = (w_inst_buf_data[0].pc + r_head_start_pos) << 1;
+assign w_ibuf_front_payload_next.pc_addr_debug           = (w_inst_buf_data[0].pc + r_head_start_pos) << 1;
 assign w_ibuf_front_payload_next.basicblk_pc_vaddr_debug = w_inst_buf_data[0].pc << 1;
+assign w_ibuf_front_payload_next.f2_sim_gshare_time      = w_inst_buf_data[0].f2_sim_gshare_time;
 `endif // SIMULATION
 assign w_ibuf_front_payload_next.is_br_included = |w_inst_bru_disped;
 assign w_ibuf_front_payload_next.tlb_except_valid = w_fetch_except;

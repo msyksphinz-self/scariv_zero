@@ -16,6 +16,7 @@ typedef struct packed {
 `ifdef SIMULATION
   scariv_pkg::vaddr_t            basicblk_pc_vaddr_debug;
   scariv_pkg::vaddr_t            pc_addr_debug;
+  logic [63: 0]                  f2_sim_gshare_time;
 `endif // SIMULATION
 } front_t;
 

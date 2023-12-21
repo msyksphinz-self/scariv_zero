@@ -269,11 +269,13 @@ interface gshare_search_if;
   scariv_pkg::vaddr_t      f0_pc_vaddr;
 
   logic                                                                            f2_valid;
+`ifdef SIMULATION
+  logic [63: 0]                                                                    f2_time;
+`endif // SIMULATION
   logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0]                                   f2_pred_taken;
   logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][ 1: 0]                            f2_bim_value;
   logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_BHT_W-1: 0]    f2_index;
   logic [scariv_lsu_pkg::ICACHE_DATA_B_W/2-1: 0][scariv_pkg::GSHARE_HIST_LEN-1: 0] f2_bhr;
-
   modport master (
     output f0_valid,
     output f0_pc_vaddr,
@@ -281,7 +283,8 @@ interface gshare_search_if;
     input  f2_pred_taken,
     input  f2_bim_value,
     input  f2_index,
-    input  f2_bhr
+    input  f2_bhr,
+    input  f2_time
   );
 
   modport slave (
@@ -291,7 +294,8 @@ interface gshare_search_if;
     output f2_pred_taken,
     output f2_bim_value,
     output f2_index,
-    output f2_bhr
+    output f2_bhr,
+    output f2_time
   );
 
   modport monitor (
@@ -299,7 +303,8 @@ interface gshare_search_if;
     input f2_index,
     input f2_pred_taken,
     input f2_bim_value,
-    input f2_bhr
+    input f2_bhr,
+    output f2_time
   );
 
 
