@@ -86,6 +86,8 @@ u_issue_unit
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
+   .i_basicblk_pc_vaddr (disp.payload.basicblk_pc_vaddr),
+
    .cre_ret_if  (cre_ret_if),
 
    .i_stall (1'b0),

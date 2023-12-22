@@ -24,6 +24,9 @@ module scariv_inst_buffer
  ras_search_if.slave      ras_search_if,
  gshare_search_if.monitor gshare_search_if,
 
+ input logic                           i_f2_ubtb_predict_valid,
+ input scariv_predict_pkg::ubtb_info_t i_f2_ubtb_info,
+
  output decode_flush_t    o_decode_flush,
 
  output logic                       o_inst_ready,
@@ -238,11 +241,13 @@ always_comb begin
   w_inst_buf_load.tlb_except_cause = i_f2_inst.tlb_except_cause;
 
   for (int b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
-    w_inst_buf_load.pred_info[b_idx].pred_taken        = gshare_search_if.f2_pred_taken[b_idx];
+    logic w_f2_ubtb_predict_hit;
+    assign w_f2_ubtb_predict_hit = i_f2_ubtb_predict_valid & i_f2_ubtb_info.taken & ((i_f2_ubtb_info.pc_offset >> 1) == b_idx);
+    w_inst_buf_load.pred_info[b_idx].pred_taken        = w_f2_ubtb_predict_hit ? i_f2_ubtb_info.taken : gshare_search_if.f2_pred_taken[b_idx];
     w_inst_buf_load.pred_info[b_idx].is_cond           = btb_search_if.f2_is_cond      [b_idx];
     w_inst_buf_load.pred_info[b_idx].bim_value         = gshare_search_if.f2_bim_value [b_idx];
-    w_inst_buf_load.pred_info[b_idx].btb_valid         = btb_search_if.f2_hit          [b_idx];
-    w_inst_buf_load.pred_info[b_idx].pred_target_vaddr = btb_search_if.f2_target_vaddr [b_idx];
+    w_inst_buf_load.pred_info[b_idx].btb_valid         = w_f2_ubtb_predict_hit ? i_f2_ubtb_info.taken        : btb_search_if.f2_hit          [b_idx];
+    w_inst_buf_load.pred_info[b_idx].pred_target_vaddr = w_f2_ubtb_predict_hit ? i_f2_ubtb_info.target_vaddr : btb_search_if.f2_target_vaddr [b_idx];
     w_inst_buf_load.pred_info[b_idx].gshare_index      = gshare_search_if.f2_index     [b_idx];
     w_inst_buf_load.pred_info[b_idx].gshare_bhr        = gshare_search_if.f2_bhr       [b_idx];
 
@@ -576,8 +581,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 assign w_ibuf_front_payload_next.pc_addr        = w_inst_buf_data[0].pc + r_head_start_pos;
+assign w_ibuf_front_payload_next.basicblk_pc_vaddr = w_inst_buf_data[0].pc;
 `ifdef SIMULATION
 assign w_ibuf_front_payload_next.pc_addr_debug  = (w_inst_buf_data[0].pc + r_head_start_pos) << 1;
+assign w_ibuf_front_payload_next.basicblk_pc_vaddr_debug = w_inst_buf_data[0].pc << 1;
 `endif // SIMULATION
 assign w_ibuf_front_payload_next.is_br_included = |w_inst_bru_disped;
 assign w_ibuf_front_payload_next.tlb_except_valid = w_fetch_except;

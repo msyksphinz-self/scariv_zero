@@ -116,12 +116,12 @@ end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex2_rs1_data <= 'h0;
+    // r_ex2_rs1_data <= 'h0;
 
     r_ex2_issue <= 'h0;
     r_ex2_pipe_ctrl <= 'h0;
   end else begin
-    r_ex2_rs1_data <= ex1_regread_rs1.data;
+    // r_ex2_rs1_data <= ex1_regread_rs1.data;
 
     r_ex2_issue <= r_ex1_issue;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
@@ -129,7 +129,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 end
 
 assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::XLEN_W-5){/* r_ex2_issue.inst[19] */1'b0}}, r_ex2_issue.inst[19:15]} :
-                                 r_ex2_rs1_data;
+                                 ex1_regread_rs1.data;
 
 // ------------
 // CSR Read

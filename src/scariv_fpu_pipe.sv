@@ -35,11 +35,11 @@ module scariv_fpu_pipe
     input logic [RV_ENTRY_SIZE-1:0] ex0_index,
     input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
-    regread_if.master ex1_regread_int_rs1,
+    regread_if.master ex0_regread_int_rs1,
 
-    regread_if.master ex1_regread_rs1,
-    regread_if.master ex1_regread_rs2,
-    regread_if.master ex1_regread_rs3,
+    regread_if.master ex0_regread_rs1,
+    regread_if.master ex0_regread_rs2,
+    regread_if.master ex0_regread_rs3,
 
     input scariv_pkg::mispred_t i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
@@ -55,9 +55,17 @@ scariv_pkg::issue_t                       w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0]                w_ex0_index;
 pipe_ctrl_t                               w_ex0_pipe_ctrl;
 
+logic [scariv_pkg::TGT_BUS_SIZE-1:0]      w_ex0_rs_fwd_valid[3];
+scariv_pkg::alen_t                        w_ex0_rs_fwd_data [3];
+
 logic [ 2: 0]                             w_ex0_rs_lsu_mispred;
 logic [ 2: 0]                             w_ex0_rs_mispred;
 logic [ 2: 0]                             r_ex1_rs_mispred;
+
+logic [ 2: 0]                             r_ex1_fwd_valid;
+scariv_pkg::alen_t                        r_ex1_rs1_data;
+scariv_pkg::alen_t                        r_ex1_rs2_data;
+scariv_pkg::alen_t                        r_ex1_rs3_data;
 
 pipe_ctrl_t                               r_ex1_pipe_ctrl;
 scariv_pkg::issue_t                       r_ex1_issue;
@@ -65,8 +73,6 @@ scariv_pkg::issue_t                       w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]                r_ex1_index;
 logic                                     w_ex1_frm_invalid;
 
-logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_int_fwd_valid;
-riscv_pkg::xlen_t                    w_ex1_rs_int_fwd_data ;
 logic [scariv_pkg::TGT_BUS_SIZE-1:0] w_ex1_rs_fwd_valid[3];
 scariv_pkg::alen_t                   w_ex1_rs_fwd_data [3];
 
@@ -142,24 +148,41 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex0_mispred_loop
 
   assign w_ex0_rs_mispred[rs_idx] = w_ex0_issue.rd_regs[rs_idx].valid &
                                     w_ex0_issue.rd_regs[rs_idx].predict_ready ? w_ex0_rs_lsu_mispred[rs_idx] : 1'b0;
-end
-endgenerate
+
+  scariv_pkg::alen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
+  for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
+    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = ex0_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
+                                                 (ex0_issue.rd_regs[rs_idx].typ  == scariv_pkg::GPR ? ex0_issue.rd_regs[rs_idx].regidx != 'h0 : 1'b1) &
+                                                 (ex0_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
+                                                 (ex0_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+    assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+  end
+    bit_oh_or #(
+      .T(scariv_pkg::alen_t),
+      .WORDS(scariv_pkg::TGT_BUS_SIZE)
+  ) u_rs_data_select (
+      .i_oh      (w_ex0_rs_fwd_valid[rs_idx]),
+      .i_data    (w_ex0_tgt_data            ),
+      .o_selected(w_ex0_rs_fwd_data [rs_idx])
+  );
+end endgenerate
+
 
 // ---------------------
 // EX1
 // ---------------------
 
-assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == scariv_pkg::FPR);
-assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
+assign ex0_regread_rs1.valid = ex0_issue.valid & ex0_issue.rd_regs[0].valid & (ex0_issue.rd_regs[0].typ == scariv_pkg::FPR);
+assign ex0_regread_rs1.rnid  = ex0_issue.rd_regs[0].rnid;
 
-assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid & (r_ex1_issue.rd_regs[1].typ == scariv_pkg::FPR);
-assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
+assign ex0_regread_rs2.valid = ex0_issue.valid & ex0_issue.rd_regs[1].valid & (ex0_issue.rd_regs[1].typ == scariv_pkg::FPR);
+assign ex0_regread_rs2.rnid  = ex0_issue.rd_regs[1].rnid;
 
-assign ex1_regread_rs3.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[2].valid & (r_ex1_issue.rd_regs[2].typ == scariv_pkg::FPR);
-assign ex1_regread_rs3.rnid  = r_ex1_issue.rd_regs[2].rnid;
+assign ex0_regread_rs3.valid = ex0_issue.valid & ex0_issue.rd_regs[2].valid & (ex0_issue.rd_regs[2].typ == scariv_pkg::FPR);
+assign ex0_regread_rs3.rnid  = ex0_issue.rd_regs[2].rnid;
 
-assign ex1_regread_int_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR);
-assign ex1_regread_int_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
+assign ex0_regread_int_rs1.valid = ex0_issue.valid & ex0_issue.rd_regs[0].valid & (ex0_issue.rd_regs[0].typ == scariv_pkg::GPR);
+assign ex0_regread_int_rs1.rnid  = ex0_issue.rd_regs[0].rnid;
 
 logic                                      w_ex0_commit_flush;
 logic                                      w_ex0_br_flush;
@@ -188,6 +211,14 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_rs_mispred <= w_ex0_rs_mispred;
+
+    r_ex1_rs1_data <= w_ex0_rs_fwd_data[0];
+    r_ex1_rs2_data <= w_ex0_rs_fwd_data[1];
+    r_ex1_rs3_data <= w_ex0_rs_fwd_data[2];
+
+    r_ex1_fwd_valid[0] <= |w_ex0_rs_fwd_valid[0];
+    r_ex1_fwd_valid[1] <= |w_ex0_rs_fwd_valid[1];
+    r_ex1_fwd_valid[2] <= |w_ex0_rs_fwd_valid[2];
   end
 end
 
@@ -324,10 +355,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_frm_invalid <= 1'b0;
   end else begin
-    r_ex2_rs1_data <= |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] :
-                      (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR) ? ex1_regread_int_rs1.data : ex1_regread_rs1.data;
-    r_ex2_rs2_data <= |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex1_regread_rs2.data;
-    r_ex2_rs3_data <= |w_ex1_rs_fwd_valid[2] ? w_ex1_rs_fwd_data[2] : ex1_regread_rs3.data;
+    r_ex2_rs1_data <= r_ex1_fwd_valid[0]     ? r_ex1_rs1_data :
+                      |w_ex1_rs_fwd_valid[0] ? w_ex1_rs_fwd_data[0] :
+                      (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR) ? ex0_regread_int_rs1.data : ex0_regread_rs1.data;
+    r_ex2_rs2_data <= r_ex1_fwd_valid[1]     ? r_ex1_rs2_data :
+                      |w_ex1_rs_fwd_valid[1] ? w_ex1_rs_fwd_data[1] : ex0_regread_rs2.data;
+    r_ex2_rs3_data <= r_ex1_fwd_valid[2]     ? r_ex1_rs3_data :
+                      |w_ex1_rs_fwd_valid[2] ? w_ex1_rs_fwd_data[2] : ex0_regread_rs3.data;
 
     r_ex2_issue <= w_ex2_issue_next;
     r_ex2_index <= r_ex1_index;

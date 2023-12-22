@@ -72,6 +72,7 @@ logic                                              w_commit_flush;
 logic                                              w_br_flush;
 logic                                              w_rob_except_flush;
 logic                                              w_load_br_flush;
+logic                                              w_load_commit_flush;
 logic                                              w_ready_to_mv_stbuf;
 
 scariv_pkg::rnid_t                                 w_rs2_rnid;
@@ -82,6 +83,8 @@ logic                                              w_rs2_may_mispred;
 logic                                              w_rs2_mispredicted;
 scariv_pkg::alen_t                                 w_rs2_phy_data;
 logic                                              w_entry_rs2_ready_next;
+logic                                              r_rs2_read_accepted;
+
 
 assign  o_entry = r_entry;
 
@@ -101,7 +104,8 @@ assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_en
 assign w_entry_flush  = w_commit_flush | w_br_flush | w_rob_except_flush;
 
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id, i_commit);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready |
                                 w_rs2_phy_hit & !w_rs2_mispredicted;
@@ -115,7 +119,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
 
 assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & !r_entry.dead &
                            ~r_entry.except_valid & (r_entry.is_sc ? r_entry.sc_success : ~r_entry.is_lr) &
-                           ~r_entry.st_buf_finished &
+                           ~r_entry.st_buf_finished & (r_entry.inst.rd_reg.valid ? r_entry.is_rs2_get : 1'b1) &
                            (r_entry.is_rmw ? i_st_buffer_empty & i_stq_outptr_valid  : ~r_entry.is_uc);
 assign o_uc_write_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.is_uc & ~r_entry.except_valid;
 
@@ -131,6 +135,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.is_valid <= 1'b0;
   end else begin
     r_entry <= w_entry_next;
+
+    r_rs2_read_accepted <= r_entry.inst.rd_reg.ready & i_rs2_read_accepted;
   end
 end
 
@@ -139,7 +145,7 @@ always_comb begin
 
   w_entry_next.inst.rd_reg.ready = w_entry_rs2_ready_next | r_entry.inst.rd_reg.ready;
   if (~w_entry_next.is_rs2_get) begin
-    if (r_entry.inst.rd_reg.ready & i_rs2_read_accepted) begin
+    if (r_rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
@@ -154,7 +160,7 @@ always_comb begin
       w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
                                      1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
                                      w_rs2_rel_hit, w_rs2_phy_hit, w_rs2_may_mispred);
-      if (w_entry_flush) begin
+      if (w_load_br_flush | w_load_commit_flush) begin
         w_entry_next.dead = 1'b1;
       end
     end

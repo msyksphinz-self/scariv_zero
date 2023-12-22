@@ -275,7 +275,7 @@ assign w_pc_update_before_entry = 1'b0;
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & (r_state == scariv_lsu_pkg::LSU_SCHED_WAIT) &
                        (r_entry.need_oldest ? r_oldest_ready : 1'b1)  &
                        !w_pc_update_before_entry & all_operand_ready(r_entry);
 assign o_entry       = r_entry;

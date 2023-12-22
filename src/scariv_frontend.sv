@@ -86,10 +86,13 @@ logic    r_f1_tlb_miss;
 logic    r_f1_tlb_except_valid;
 except_t r_f1_tlb_except_cause;
 
+logic    w_f1_predict_valid;
 vaddr_t  w_f1_btb_target_vaddr;
 
-logic    w_f1_predict_valid;
-vaddr_t  w_f1_predict_target_vaddr;
+logic    w_f1_ubtb_predict_valid;
+ubtb_search_if  w_f1_ubtb_predict_if();
+logic                           r_f2_ubtb_predict_valid;
+scariv_predict_pkg::ubtb_info_t r_f2_ubtb_info;
 
 // ==============
 // f2 stage
@@ -109,6 +112,8 @@ logic             w_f2_predict_valid;
 vaddr_t           w_f2_predict_target_vaddr;
 logic             w_f2_predict_valid_gshare;
 vaddr_t           w_f2_predict_target_vaddr_gshare;
+logic             w_f2_btb_predict_match;
+logic             w_f2_btb_predict_not_match;
 
 logic             w_f2_inst_buffer_load_valid;
 
@@ -400,11 +405,11 @@ always_comb begin
       w_f0_vaddr_next = (w_f2_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
     end
-  end else if (w_f1_predict_valid & !r_f1_clear) begin
+  end else if (w_f1_predict_valid & w_f1_ubtb_predict_if.ubtb_info.taken & !r_f1_clear) begin
     if (!w_f0_req_ready) begin
-      w_f0_vaddr_next = w_f1_predict_target_vaddr;
+      w_f0_vaddr_next = w_f1_ubtb_predict_if.ubtb_info.target_vaddr;
     end else begin
-      w_f0_vaddr_next = (w_f1_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
+      w_f0_vaddr_next = (w_f1_ubtb_predict_if.ubtb_info.target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
       end
   end else if (!w_f0_req_ready) begin
@@ -535,9 +540,9 @@ always_comb begin
   end else if (r_f2_valid & ~r_f2_clear & w_f2_predict_valid) begin
     w_f0_predicted = 1'b1;
     w_f0_vaddr     = w_f2_predict_target_vaddr;
-  end else if (r_f1_valid & ~r_f1_clear & w_f1_predict_valid) begin
+  end else if (r_f1_valid & ~r_f1_clear & w_f1_predict_valid & w_f1_ubtb_predict_if.ubtb_info.taken) begin
     w_f0_predicted = 1'b0;
-    w_f0_vaddr     = w_f1_predict_target_vaddr;
+    w_f0_vaddr     = w_f1_ubtb_predict_if.ubtb_info.target_vaddr;
   end else begin
     w_f0_predicted = 1'b0;
     w_f0_vaddr     = r_f0_vaddr;
@@ -632,7 +637,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_f2_valid <= r_f1_valid;
     end
     r_f2_clear <= r_f1_clear | w_int_flush_valid | w_flush_valid | w_iq_predict_valid |
-                  w_f2_predict_valid & ~r_f1_predicted |
+                  w_f2_predict_valid & (~r_f1_predicted | w_f2_btb_predict_not_match) |
                   ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready;
     r_f2_predicted <= r_f1_predicted;
     r_f2_vaddr <= r_f1_vaddr;
@@ -640,6 +645,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_f2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_f1_tlb_except_valid;
     r_f2_tlb_except_cause <= r_f1_tlb_except_cause;
     r_f2_int_inserted <= r_f1_int_inserted;
+
+    r_f2_ubtb_predict_valid <= w_f1_ubtb_predict_if.predict_valid;
+    r_f2_ubtb_info          <= w_f1_ubtb_predict_if.ubtb_info;
+
 `ifdef SIMULATION
     r_f2_paddr <= r_f1_paddr;
 `endif // SIMULATION
@@ -714,6 +723,9 @@ u_scariv_inst_buffer
    .ras_search_if    (w_ras_search_if   ),
    .gshare_search_if (w_gshare_search_if),
 
+   .i_f2_ubtb_predict_valid (r_f2_ubtb_predict_valid & ~w_f2_btb_predict_not_match),
+   .i_f2_ubtb_info          (r_f2_ubtb_info),
+
    .o_inst_ready (w_inst_buffer_ready),
    .i_f2_inst    (w_f2_inst_buffer_in),
 
@@ -754,17 +766,20 @@ assign w_bim_update_if.is_rvc         = br_upd_if.is_rvc;
 assign w_gshare_search_if.f0_valid    = w_f0_ic_req.valid;
 assign w_gshare_search_if.f0_pc_vaddr = w_f0_vaddr;
 
-assign w_f1_predict_valid = 1'b0;
-assign w_f1_predict_target_vaddr = 'h0;
-
-
 ic_block_t w_f2_btb_gshare_hit_array_tree;
 ic_block_t w_f2_call_ret_tree;
 assign w_f2_btb_gshare_hit_array_tree = 'h0;
-bit_tree_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) f2_call_ret_tree_lsb (.in(w_ras_search_if.f2_is_call | w_ras_search_if.f2_is_ret), .out(w_f2_call_ret_tree));
+bit_tree_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.f2_is_call | w_ras_search_if.f2_is_ret), .out(w_f2_call_ret_tree));
 
-assign w_f2_predict_valid        = r_f2_valid & ~r_f2_clear & w_f2_predict_valid_gshare;
+assign w_f1_predict_valid = r_f1_valid & ~r_f1_clear & w_f1_ubtb_predict_if.predict_valid;
+
+assign w_f2_predict_valid        = r_f2_valid & ~r_f2_clear & w_f2_predict_valid_gshare & ~w_f2_btb_predict_match;
 assign w_f2_predict_target_vaddr = w_f2_predict_target_vaddr_gshare;
+
+assign w_f2_btb_predict_match = w_f2_predict_valid_gshare & r_f2_ubtb_predict_valid & r_f2_ubtb_info.taken &
+                                (w_f2_predict_target_vaddr_gshare == r_f2_ubtb_info.target_vaddr);
+assign w_f2_btb_predict_not_match = w_f2_predict_valid_gshare & r_f2_ubtb_predict_valid &
+                                    (w_f2_predict_target_vaddr_gshare != r_f2_ubtb_info.target_vaddr);
 
 // ------------------------------
 // Decode Level Prediction Valid
@@ -790,6 +805,9 @@ scariv_predictor_gshare u_predictor
 
    .i_commit  (i_commit),
 
+   .i_f0_valid   (w_f0_ic_req.valid),
+   .i_f0_vaddr   (w_f0_ic_req.vaddr),
+
    .i_f1_valid   (w_f1_inst_valid),
    .i_f2_valid   (w_f2_inst_valid & w_inst_buffer_ready),
 
@@ -803,6 +821,8 @@ scariv_predictor_gshare u_predictor
    .ras_search_if (w_ras_search_if),
 
    .gshare_search_if (w_gshare_search_if),
+
+   .f1_ubtb_predict_if (w_f1_ubtb_predict_if),
 
    .o_f2_predict_valid        (w_f2_predict_valid_gshare       ),
    .o_f2_predict_target_vaddr (w_f2_predict_target_vaddr_gshare),

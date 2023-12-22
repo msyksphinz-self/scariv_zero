@@ -145,8 +145,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
     r_ex1_dead <= w_ex0_issue.valid & (w_ex0_br_flush | w_commit_flushed);
 
-    r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
-    r_ex1_rs2_data <= w_ex0_issue.rd_regs[1].predict_ready[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
+    // r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
+    // r_ex1_rs2_data <= w_ex0_issue.rd_regs[1].predict_ready[1] ? w_ex0_rs_fwd_data[1] : ex0_regread_rs2.data;
+    r_ex1_rs1_data <= w_ex0_rs_fwd_data[0];
+    r_ex1_rs2_data <= w_ex0_rs_fwd_data[1];
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -194,8 +196,12 @@ always_comb begin
   w_ex2_issue_next.valid = r_ex1_issue.valid & !w_ex1_br_flush;
 end
 
-assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs_fwd_data[0] : r_ex1_rs1_data;
-assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_rs_fwd_data[1] : r_ex1_rs2_data;
+assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs_fwd_data[0] :
+                                 r_ex1_issue.rd_regs[0].predict_ready[1] ? r_ex1_rs1_data :
+                                 ex0_regread_rs1.data;
+assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_rs_fwd_data[1] :
+                                 r_ex1_issue.rd_regs[1].predict_ready[1] ? r_ex1_rs2_data :
+                                 ex0_regread_rs2.data;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -297,6 +303,7 @@ assign ex3_br_upd_if.mispredict    = r_ex2_issue.is_call   ? ~w_ex2_call_hit :
 
 assign ex3_br_upd_if.bim_value     = r_ex2_issue.bim_value;
 assign ex3_br_upd_if.pc_vaddr      = /* r_ex2_issue.is_rvc ? */ r_ex2_issue.pc_addr /* : r_ex2_issue.pc_addr + 'h2 */;
+assign ex3_br_upd_if.basicblk_pc_vaddr  = r_ex2_issue.basicblk_pc_vaddr;
 assign ex3_br_upd_if.target_vaddr  = r_ex2_result ? r_ex2_br_vaddr :
                                      r_ex2_issue.is_rvc ? r_ex2_issue.pc_addr + 'h2 : r_ex2_issue.pc_addr + 'h4;
 `ifdef SIMULATION
