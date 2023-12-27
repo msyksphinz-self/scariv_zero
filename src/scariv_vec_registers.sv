@@ -92,7 +92,9 @@ generate for (genvar r_idx = 0; r_idx < scariv_vec_pkg::VEC_RNID_SIZE; r_idx++) 
 end endgenerate // block: reg_loop
 
 generate for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
-  assign regread[p_idx].data = r_phy_regs[regread[p_idx].rnid][regread[p_idx].pos];
+  always_ff @ (posedge i_clk) begin
+    regread[p_idx].data <= r_phy_regs[regread[p_idx].rnid][regread[p_idx].pos];
+  end
 end endgenerate
 
 endmodule // scariv_vec_registers

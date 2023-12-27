@@ -674,6 +674,10 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   assign w_vlvtype_req_if.valid              = w_rn_front_if.valid & w_rn_front_if.ready & (|w_rn_is_subcat_vset);
   assign w_vlvtype_req_if.checkpt_push_valid = |w_rn_front_if.payload.is_br_included;
+`ifdef SIMULATION
+  assign w_vlvtype_req_if.sim_cmt_id   = w_rn_front_if.payload.cmt_id;
+  assign w_vlvtype_req_if.sim_grp_id   = w_rn_is_subcat_vset;
+`endif // SIMULATION
 
   assign r_rn_vlvtype_info_if.vlvtype      = w_vlvtype_req_if.vlvtype;
   assign r_rn_vlvtype_info_if.index        = w_vlvtype_req_if.index;

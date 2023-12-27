@@ -150,6 +150,7 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
             EX2_HAZ_MISSU_FULL     : r_replay_additional_queue[idx].resolved = !i_missu_is_full;
             EX2_HAZ_MISSU_ASSIGNED : r_replay_additional_queue[idx].resolved = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == r_replay_additional_queue[idx].hazard_index) |
                                                                                ((r_replay_additional_queue[idx].hazard_index & i_missu_resolve.missu_entry_valids) == 'h0);
+            EX2_HAZ_VSTQ_HAZ       : r_replay_additional_queue[idx].resolved = w_head_is_oldest;
             default : begin
               r_replay_additional_queue[idx].resolved = 1'b0;
               // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
@@ -250,10 +251,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         if (!w_empty) begin
             case (w_rd_replay_queue_info.info.hazard_typ)
                 EX2_HAZ_STQ_NONFWD_HAZ : begin end
-                EX2_HAZ_RMW_ORDER_HAZ :  begin end
-                EX2_HAZ_L1D_CONFLICT :   begin end
-                EX2_HAZ_MISSU_FULL :     begin end
+                EX2_HAZ_RMW_ORDER_HAZ  : begin end
+                EX2_HAZ_L1D_CONFLICT   : begin end
+                EX2_HAZ_MISSU_FULL     : begin end
                 EX2_HAZ_MISSU_ASSIGNED : begin end
+                EX2_HAZ_VSTQ_HAZ       : begin end
                 default : begin
                     $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
                 end

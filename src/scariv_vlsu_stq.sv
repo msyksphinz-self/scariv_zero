@@ -38,6 +38,7 @@ endfunction // to_paddr
 
 typedef struct packed {
   logic                valid;
+  logic                ready_to_mv_stbuf;
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
   scariv_pkg::rnid_t   vs3_phy_idx;
@@ -54,8 +55,9 @@ typedef enum logic [ 2: 0] {
   INIT            = 0,
   WAIT_COMMIT     = 1,
   READ_VS3        = 2,
-  COMMIT_MV_STBUF = 3,
-  FINISH          = 4
+  GET_VS3         = 3,
+  COMMIT_MV_STBUF = 4,
+  FINISH          = 5
 } state_t;
 state_t r_state[VLSU_STQ_BANK_SIZE][VLSU_STQ_SIZE];
 
@@ -72,12 +74,13 @@ logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0] w_vs3_regread_bank_accepted_index;
 logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0] r_vs3_regread_bank_accepted_index_d1;
 logic [VLSU_STQ_BANK_SIZE-1: 0]         w_vs3_regread_bank_accepted;
 
-logic                                   st_buffer_proceed_valid;
+logic                                   st_buffer_ex0_proceed_valid;
+logic                                   st_buffer_ex1_proceed_valid;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_vlsu_haz_check_hit[VLSU_STQ_BANK_SIZE][VLSU_STQ_SIZE];
 
-assign st_buffer_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL);
-
+assign st_buffer_ex0_proceed_valid = ~r_ex1_st_buffer_valid | st_buffer_ex1_proceed_valid;
+assign st_buffer_ex1_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL);
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
@@ -151,6 +154,7 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
         INIT : begin
           if (w_freelist_pop_valid & w_entry_load_index[0][stq_idx]) begin
             w_vlsu_stq_entry_next.valid        = 1'b1;
+            w_vlsu_stq_entry_next.ready_to_mv_stbuf = 1'b0;
             w_vlsu_stq_entry_next.cmt_id       = vlsu_stq_req_if.cmt_id;
             w_vlsu_stq_entry_next.grp_id       = vlsu_stq_req_if.grp_id;
             w_vlsu_stq_entry_next.vs3_phy_idx  = vlsu_stq_req_if.vs3_phy_idx;
@@ -167,14 +171,20 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
           end
         end
         WAIT_COMMIT : begin
+          w_vlsu_stq_entry_next.ready_to_mv_stbuf = r_vlsu_stq_entries[bank_idx][stq_idx].ready_to_mv_stbuf | w_ready_to_mv_stbuf;
           if (w_commit_flush | w_br_flush) begin
             w_state_next = FINISH;
-          end else if (w_ready_to_mv_stbuf) begin
+          end else if ((w_ready_to_mv_stbuf | r_vlsu_stq_entries[bank_idx][stq_idx].ready_to_mv_stbuf) & st_buffer_ex0_proceed_valid) begin
             w_state_next = READ_VS3;
           end
         end
         READ_VS3 : begin
-          if (st_buffer_proceed_valid & w_vs3_regread_accepted[stq_idx] & w_vs3_regread_bank_accepted[bank_idx]) begin
+          if (st_buffer_ex1_proceed_valid & w_vs3_regread_accepted[stq_idx] & w_vs3_regread_bank_accepted[bank_idx]) begin
+            w_state_next = GET_VS3;
+          end
+        end
+        GET_VS3 : begin
+          if (~st_buffer_if.valid | st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL) begin
             w_state_next = COMMIT_MV_STBUF;
           end
         end
@@ -204,6 +214,7 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
                                                                              r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
                                                                              r_vlsu_stq_entries[bank_idx][stq_idx].grp_id);
       assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = vstq_is_younger_than_sload &
+                                                                  r_vlsu_stq_entries[bank_idx][stq_idx].valid &
                                                                   {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
                                                                    r_vlsu_stq_entries[bank_idx][stq_idx].paddr, bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0]};
     end
@@ -275,15 +286,37 @@ assign vec_vs3_rd_if.valid = |w_vs3_regread_req;
 assign vec_vs3_rd_if.rnid  = w_vlsu_stq_vs3_entry.vs3_phy_idx;
 assign vec_vs3_rd_if.pos   = w_vlsu_stq_vs3_entry.vs3_pos;
 
+logic               r_ex1_st_buffer_valid;
+scariv_pkg::paddr_t r_ex1_st_buffer_paddr;
+dlenb_t             r_ex1_st_buffer_strb;
+logic               r_ex1_st_buffer_skid_valid;
+dlen_t              r_ex1_st_buffer_skid_data;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     st_buffer_if.valid <= 1'b0;
+    r_ex1_st_buffer_skid_valid <= 1'b0;
   end else begin
-    if (st_buffer_proceed_valid) begin
-      st_buffer_if.valid <= vec_vs3_rd_if.valid;
-      st_buffer_if.paddr <= to_paddr(w_vlsu_stq_bank_idx, w_vlsu_stq_vs3_entry.paddr);
-      st_buffer_if.strb  <= w_vlsu_stq_vs3_entry.strb;
-      st_buffer_if.data  <= vec_vs3_rd_if.data;
+    if (st_buffer_ex1_proceed_valid) begin
+      r_ex1_st_buffer_valid <= vec_vs3_rd_if.valid;
+      r_ex1_st_buffer_paddr <= to_paddr(w_vlsu_stq_bank_idx, w_vlsu_stq_vs3_entry.paddr);
+      r_ex1_st_buffer_strb  <= w_vlsu_stq_vs3_entry.strb;
+    end
+
+    if (r_ex1_st_buffer_valid & ~st_buffer_ex1_proceed_valid) begin
+      if (~r_ex1_st_buffer_skid_valid) begin
+        r_ex1_st_buffer_skid_data <= vec_vs3_rd_if.data;
+        r_ex1_st_buffer_skid_valid <= 1'b1;
+      end
+    end else begin
+      r_ex1_st_buffer_skid_valid <= 1'b0;
+    end
+
+    if (st_buffer_ex1_proceed_valid) begin
+      st_buffer_if.valid <= r_ex1_st_buffer_valid;
+      st_buffer_if.paddr <= r_ex1_st_buffer_paddr;
+      st_buffer_if.strb  <= r_ex1_st_buffer_strb;
+      st_buffer_if.data  <= r_ex1_st_buffer_skid_valid ? r_ex1_st_buffer_skid_data : vec_vs3_rd_if.data;
     end
   end
 end

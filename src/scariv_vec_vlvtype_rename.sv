@@ -48,12 +48,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     end
 
     if (vlvtype_commit_if.valid) begin
-      if (vlvtype_commit_if.dead) begin
-        r_head_ptr   <= r_committed_ptr + 1;
-        r_curr_index <= r_committed_ptr;
-      end else begin
-        r_committed_ptr <= r_committed_ptr + 'h1;
-      end
+      // if (vlvtype_commit_if.dead) begin
+      //   r_head_ptr   <= r_committed_ptr + 1;
+      //   r_curr_index <= r_committed_ptr;
+      // end else begin
+      //   r_committed_ptr <= r_committed_ptr + 'h1;
+      // end
+      r_committed_ptr <= r_committed_ptr + 'h1;
     end
   end
 end
@@ -69,13 +70,20 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_table_ready <= 'h1;
     r_table_valid <= 'h1;
   end else begin
-    if (vlvtype_commit_if.valid & ~vlvtype_commit_if.dead) begin
+    if (vlvtype_commit_if.valid) begin
       r_table_valid[r_committed_ptr] <= 1'b0;
       r_table_ready[r_committed_ptr] <= 1'b0;
+      if (vlvtype_commit_if.dead) begin
+        r_vlvtype_table[r_committed_ptr+1] <= r_vlvtype_table[r_committed_ptr];
+      end
     end
     if (vlvtype_req_if.valid & !vlvtype_req_if.full) begin
       r_table_valid[r_head_ptr] <= 1'b1;
       r_table_ready[r_head_ptr] <= 1'b0;
+`ifdef SIMULATION
+      r_vlvtype_table[vlvtype_upd_if.index].sim_cmt_id <= vlvtype_req_if.sim_cmt_id;
+      r_vlvtype_table[vlvtype_upd_if.index].sim_grp_id <= vlvtype_req_if.sim_grp_id;
+`endif // SIMULATION
     end
 
     if (vlvtype_upd_if.valid) begin

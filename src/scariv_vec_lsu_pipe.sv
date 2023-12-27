@@ -67,15 +67,15 @@ logic                    w_ex0_br_flush;
 scariv_vec_pkg::issue_t  r_ex1_issue;
 scariv_vec_pkg::issue_t  w_ex1_issue_next;
 logic                    w_ex1_stall;
-logic                    w_ex1_req_splitted;
+logic                    w_ex1_agu_req_splitted;
 logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]    w_ex1_reg_offset;
-riscv_pkg::xlen_t        r_ex1_rs1_data;
+riscv_pkg::xlen_t        w_ex1_rs1_data;
 scariv_pkg::vaddr_t      w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
 tlb_resp_t               w_ex1_tlb_resp;
 pipe_ctrl_t              r_ex1_pipe_ctrl;
 scariv_pkg::maxaddr_t    w_ex1_addr; // VADDR(when exception) and PADDR
-scariv_vec_pkg::dlen_t   r_ex1_vpr_rs_data[2];
+scariv_vec_pkg::dlen_t   w_ex1_vpr_rs_data[2];
 logic                    w_ex1_br_flush;
 logic                    w_ex1_ld_except_valid;
 logic                    w_ex1_st_except_valid;
@@ -174,11 +174,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_replay_selected     <= w_ex1_replay_selected_next;
     r_ex1_replay_info         <= w_ex1_replay_info_next;
 
-    r_ex1_rs1_data        <= ex0_xpr_regread_rs1.data;
-    r_ex1_vpr_rs_data[0]  <= vec_phy_rd_if[0].data;
-    r_ex1_vpr_rs_data[1]  <= vec_phy_rd_if[1].data;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign w_ex1_rs1_data       = ex0_xpr_regread_rs1.data;
+assign w_ex1_vpr_rs_data[0] = vec_phy_rd_if[0].data;
+assign w_ex1_vpr_rs_data[1] = vec_phy_rd_if[1].data;
 
 
 assign w_ex1_tlb_req.valid       = r_ex1_issue.valid; //  & ~r_ex1_issue.paddr_valid;
@@ -209,12 +210,12 @@ u_address_gen
 
    .i_valid          (r_ex1_issue.valid & ~r_ex1_replay_selected),
    .i_flush_valid    (w_ex0_br_flush | w_commit_flush),
-   .i_rs1_base       (r_ex1_rs1_data            ),
+   .i_rs1_base       (w_ex1_rs1_data            ),
    .i_vec_step_index (r_ex1_issue.vec_step_index),
    .o_vaddr          (w_ex1_vaddr               ),
    .o_reg_offset     (w_ex1_reg_offset          ),
    .o_stall          (w_ex1_stall               ),
-   .o_req_splitted   (w_ex1_req_splitted        )
+   .o_req_splitted   (w_ex1_agu_req_splitted        )
    );
 
 assign o_pipe_stall = w_ex1_stall;
@@ -257,9 +258,11 @@ assign l1d_rd_if.s0_high_priority = 1'b0;  // r_ex1_issue.l1d_high_priority;
 assign w_ex1_br_flush = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex1_issue.valid;
 
-assign vec_phy_old_wr_if.valid = r_ex2_issue.valid & (r_ex2_issue.wr_old_reg.typ == scariv_pkg::VPR);
-assign vec_phy_old_wr_if.rnid  = r_ex2_req_splitted[1] ? r_ex2_issue.wr_reg.rnid : r_ex2_issue.wr_old_reg.rnid;
-assign vec_phy_old_wr_if.pos   = r_ex2_issue.vec_step_index;
+logic w_ex1_req_splitted;
+assign w_ex1_req_splitted = r_ex1_replay_selected ? r_ex1_replay_info.req_splitted[1] : w_ex1_agu_req_splitted;
+assign vec_phy_old_wr_if.valid = r_ex1_issue.valid & (r_ex1_issue.wr_old_reg.typ == scariv_pkg::VPR);
+assign vec_phy_old_wr_if.rnid  = w_ex1_req_splitted ? r_ex1_issue.wr_reg.rnid : r_ex1_issue.wr_old_reg.rnid;
+assign vec_phy_old_wr_if.pos   = r_ex1_issue.vec_step_index;
 
 always_comb begin
   w_ex2_issue_next       = r_ex1_issue;
@@ -279,7 +282,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_ex2_req_splitted <= r_ex1_replay_info.req_splitted;
       r_ex2_reg_offset   <= r_ex1_replay_info.reg_offset;
     end else begin
-      r_ex2_req_splitted[1] <= w_ex1_req_splitted;
+      r_ex2_req_splitted[1] <= w_ex1_agu_req_splitted;
       r_ex2_req_splitted[0] <= w_ex1_stall;
       r_ex2_reg_offset      <= w_ex1_reg_offset;
     end

@@ -90,6 +90,10 @@ typedef struct packed {
 } vtype_t;
 
 typedef struct packed {
+`ifdef SIMULATION
+  scariv_pkg::cmt_id_t sim_cmt_id;
+  scariv_pkg::grp_id_t sim_grp_id;
+`endif // SIMULATION
   vlenbmax_t vl;
   vtype_t    vtype;
 } vlvtype_t;
@@ -370,6 +374,10 @@ interface vlvtype_req_if;
   import scariv_vec_pkg::*;
 
   logic             valid;
+`ifdef SIMULATION
+  scariv_pkg::cmt_id_t sim_cmt_id;
+  scariv_pkg::grp_id_t sim_grp_id;
+`endif // SIMULATION
   logic             checkpt_push_valid;
   logic             ready;
   logic             full;
@@ -379,6 +387,10 @@ interface vlvtype_req_if;
 
   modport master (
     output valid,
+`ifdef SIMULATION
+    output sim_cmt_id,
+    output sim_grp_id,
+`endif // SIMULATION
     output checkpt_push_valid,
     input  ready,
     input  full,
@@ -389,6 +401,10 @@ interface vlvtype_req_if;
 
   modport slave (
     input  valid,
+`ifdef SIMULATION
+    input sim_cmt_id,
+    input sim_grp_id,
+`endif // SIMULATION
     input  checkpt_push_valid,
     output ready,
     output full,
