@@ -43,6 +43,7 @@ package scariv_conf_pkg;
 
   localparam BTB_ENTRY_SIZE = 256;
   localparam RAS_ENTRY_SIZE = 64;
+  localparam GSHARE_HIST_LEN = 48;
   localparam GSHARE_BHT_W   = 11;
 
   localparam FPNEW_LATENCY = 6;
