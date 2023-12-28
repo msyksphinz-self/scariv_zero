@@ -49,8 +49,12 @@ typedef enum logic [ 1: 0] {
 state_t r_state;
 
 logic        w_cache_misaligned;
-assign w_cache_misaligned = (&o_vaddr[$clog2(DCACHE_DATA_B_W)-1: $clog2(scariv_vec_pkg::DLENB)])  &
-                            (o_vaddr[$clog2(scariv_vec_pkg::DLENB)-1: 0] != 0);
+generate if (DCACHE_DATA_B_W <= scariv_vec_pkg::DLENB) begin
+  assign w_cache_misaligned = o_vaddr[$clog2(scariv_vec_pkg::DLENB)-1: 0] != 'h0;
+end else begin
+  assign w_cache_misaligned = (&o_vaddr[$clog2(DCACHE_DATA_B_W)-1: $clog2(scariv_vec_pkg::DLENB)])  &
+                              (o_vaddr[$clog2(scariv_vec_pkg::DLENB)-1: 0] != 0);
+end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -67,7 +71,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             if (w_cache_misaligned) begin
               r_state <= USTRIDE_GEN;
               r_vec_step_index       <= i_vec_step_index;
-              r_vaddr_next_cacheline <= i_rs1_base[scariv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] + 'h1;
+              r_vaddr_next_cacheline <= o_vaddr[scariv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] + 'h1;
               r_reg_offset           <= scariv_vec_pkg::DLENB - o_vaddr[scariv_vec_pkg::DLENB-1: 0];
             end else begin
               r_acc_addr_offset <= update_offset (i_vec_step_index, r_acc_addr_offset);
