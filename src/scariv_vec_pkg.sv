@@ -331,6 +331,23 @@ interface vlvtype_upd_if;
 endinterface // vlvtype_upd_if
 
 
+interface vlmul_upd_if;
+  logic         valid;
+  logic [ 2: 0] vlmul;
+
+  modport master (
+    output valid,
+    output vlmul
+  );
+
+  modport slave (
+    input  valid,
+    input  vlmul
+  );
+
+endinterface // vlmul_upd_if
+
+
 interface vlvtype_commit_if;
   import scariv_vec_pkg::*;
 

@@ -36,6 +36,8 @@ module scariv_rename
    input logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
    input scariv_pkg::vaddr_t                    i_sc_ras_vaddr,
 
+   vlmul_upd_if.slave         vlmul_upd_if,
+
    // Committer Rename ID update
    input scariv_pkg::commit_blk_t   i_commit,
    input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
@@ -53,6 +55,9 @@ disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_fpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_vpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
+
+vlmul_upd_if w_dummy_vlmul_upd_if;
+assign  w_dummy_vlmul_upd_if.valid = 1'b0;
 
 assign ibuf_front_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
                              i_resource_ok & &w_freelist_ready;
@@ -77,6 +82,9 @@ u_ipr_rename
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+
+   // Change VLMUL size
+   .vlmul_upd_if (w_dummy_vlmul_upd_if),
 
    .o_freelist_ready (w_freelist_ready[0]),
 
@@ -109,6 +117,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
+
+     // Change VLMUL size
+     .vlmul_upd_if (w_dummy_vlmul_upd_if),
 
      .o_freelist_ready (w_freelist_ready[1]),
 
@@ -148,6 +159,9 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
+
+     // Change VLMUL size
+     .vlmul_upd_if (vlmul_upd_if),
 
      .o_freelist_ready (w_freelist_ready[2]),
 

@@ -29,6 +29,9 @@ module scariv_rename_sub
  // from Resource Allocator
  input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
 
+ // Update VLMUL size
+ vlmul_upd_if.slave               vlmul_upd_if,
+
  // Branch Tag Update Signal
  br_upd_if.slave        br_upd_if,
 
@@ -148,6 +151,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
     (
     .i_clk     (i_clk ),
     .i_reset_n (i_reset_n),
+
+    // Change VLMUL size
+    .vlmul_upd_if (vlmul_upd_if),
 
     .i_push(w_push_freelist),
     .i_push_id(w_push_freelist_id),

@@ -163,6 +163,8 @@ scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
 scariv_pkg::phy_wr_t   w_ex3_vlsu_phy_wr  ;
 scariv_pkg::done_rpt_t w_vlsu_done_rpt    ;
 
+vlmul_upd_if           w_vlmul_upd_if();
+
 // -------------------------------
 // Internal Broadcast Interface
 // -------------------------------
@@ -329,6 +331,8 @@ u_rename (
 
   .i_commit             (w_commit),
   .i_commit_rnid_update (w_commit_rnid_update),
+
+  .vlmul_upd_if   (w_vlmul_upd_if),
 
   .i_resource_ok (w_resource_ok),
 
@@ -545,6 +549,9 @@ u_csu (
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  2]),
+    .ex1_regread_rs2(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
+                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                 3]),
 
     .i_early_wr(w_ex1_early_wr),
     .i_phy_wr  (w_ex3_phy_wr),
@@ -564,6 +571,7 @@ u_csu (
 
     .vec_csr_if     (w_vec_csr_if),
     .vlvtype_upd_if (w_vlvtype_upd_if),
+    .vlmul_upd_if   (w_vlmul_upd_if),
 
     .o_done_report (w_csu_done_rpt),
 
@@ -608,7 +616,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .ex0_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
                                        scariv_conf_pkg::LSU_INST_NUM + 1 +
                                        2 +   // BRU
-                                       1 +   // CSU
+                                       2 +   // CSU
                                        fpu_idx]),
 
       .ex0_regread_rs1(fp_regread[fpu_idx * 3 + 0]),
@@ -705,7 +713,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   localparam VALU_READ_PORT_IDX = scariv_conf_pkg::ALU_INST_NUM * 2 +
                                   scariv_conf_pkg::LSU_INST_NUM + 1 +
                                   2 +   // BRU
-                                  1 +   // CSU
+                                  2 +   // CSU
                                   scariv_conf_pkg::FPU_INST_NUM;
   localparam VALU_VPR_READ_PORT_IDX = 0;
 

@@ -19,6 +19,7 @@ module scariv_csu
   cre_ret_if.slave                        cre_ret_if,
 
   regread_if.master                          ex1_regread_rs1,
+  regread_if.master                          ex1_regread_rs2,
 
   /* Forwarding path */
   input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
@@ -42,6 +43,7 @@ module scariv_csu
 
   vec_csr_if.master           vec_csr_if,
   vlvtype_upd_if.master       vlvtype_upd_if,
+  vlmul_upd_if.master         vlmul_upd_if,
 
   // CLINT connection
   clint_if.slave clint_if,
@@ -63,6 +65,8 @@ logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic         w_ex3_done;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
+
+logic                                          w_lmul_exception_mode;
 
 // CSR Read Write interface
 csr_rd_if w_csr_read ();
@@ -131,9 +135,12 @@ u_csu_pipe
 
    .i_commit (i_commit),
 
+   .i_lmul_exception_mode (w_lmul_exception_mode),
+
    .rv0_issue(w_rv0_issue),
 
    .ex1_regread_rs1(ex1_regread_rs1),
+   .ex1_regread_rs2(ex1_regread_rs2),
 
    .o_ex1_early_wr(o_ex1_early_wr),
    .o_ex3_phy_wr (o_ex3_phy_wr),
@@ -147,6 +154,7 @@ u_csu_pipe
    .write_vec_if (w_vec_csr_write_if),
    .vec_csr_if   (vec_csr_if),
    .vlvtype_upd_if (vlvtype_upd_if),
+   .vlmul_upd_if   (vlmul_upd_if),
 
    .o_done_report (o_done_report)
    );
@@ -178,7 +186,11 @@ u_vec_csr
    .i_reset_n (i_reset_n),
 
    .read_csr_vec_if  (w_vec_csr_read_if),
-   .write_csr_vec_if (w_vec_csr_write_if)
+   .write_csr_vec_if (w_vec_csr_write_if),
+
+   .i_commit (i_commit),
+
+   .o_lmul_exception_mode (w_lmul_exception_mode)
    );
 
 

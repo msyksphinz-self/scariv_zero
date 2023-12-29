@@ -36,6 +36,8 @@ vlvtype_ren_idx_t r_head_ptr;
 vlvtype_ren_idx_t r_curr_index;
 vlvtype_ren_idx_t r_committed_ptr;
 
+logic                                 r_vec_lmul_change_mode;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_head_ptr      <= 'h1;

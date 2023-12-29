@@ -9,7 +9,10 @@
 
 module scariv_lsu_replay_queue
   import scariv_lsu_pkg::*;
-#(parameter type queue_base_t = logic)
+#(
+  parameter SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1,
+  parameter type queue_base_t = logic
+  )
 (
     input logic i_clk,
     input logic i_reset_n,
@@ -37,7 +40,7 @@ module scariv_lsu_replay_queue
     input logic            i_pipe_stall
 );
 
-localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
+localparam REPLAY_QUEUE_SIZE = SIZE;
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;

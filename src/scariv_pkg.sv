@@ -62,7 +62,7 @@ package scariv_pkg;
   localparam INT_REGRD_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
                                   scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
                                   2 +                                    // BRU port
-                                  1 +                                    // CSR port
+                                  2 +                                    // CSR port
                                   scariv_conf_pkg::FPU_INST_NUM +        // FPU port
                                   scariv_conf_pkg::VEC_ALU_INST_NUM +    // VALU port
                                   1;                                     // VLSU port

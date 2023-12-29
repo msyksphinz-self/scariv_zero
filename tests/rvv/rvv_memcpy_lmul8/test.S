@@ -6,9 +6,9 @@
 	.type	main, @function
 main:
 
-    li  a0, 0x80001000
-    li  a1, 0x80002000
-    li  a2, 0x00000800
+    la  a0, initial_data
+    la  a1, initial_data+0x800
+    li  a2, 0x800
 
     # void *memcpy(void* dest, const void* src, size_t n)
     # a0=dest, a1=src, a2=n
@@ -24,6 +24,6 @@ loop:
     bnez    a2, loop              # Any more?
 
 	li	a0, 0
-	jr	ra
+	ret
 
 #include "../template/vlsu_data.S"

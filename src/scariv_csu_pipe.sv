@@ -21,9 +21,12 @@ module scariv_csu_pipe
 
   input scariv_pkg::commit_blk_t      i_commit,
 
-  input scariv_csu_pkg::issue_t           rv0_issue,
+  input logic                         i_lmul_exception_mode,
 
-  regread_if.master                 ex1_regread_rs1,
+  input scariv_csu_pkg::issue_t       rv0_issue,
+
+  regread_if.master                   ex1_regread_rs1,
+  regread_if.master                   ex1_regread_rs2,
 
   output scariv_pkg::early_wr_t       o_ex1_early_wr,
   output scariv_pkg::phy_wr_t         o_ex3_phy_wr,
@@ -41,6 +44,7 @@ module scariv_csu_pipe
 
   vec_csr_if.master                 vec_csr_if,
   vlvtype_upd_if.master             vlvtype_upd_if,
+  vlmul_upd_if.master               vlmul_upd_if,
 
   output scariv_pkg::done_rpt_t     o_done_report
 );
@@ -65,6 +69,7 @@ pipe_ctrl_t             r_ex1_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex1_issue;
 
 riscv_pkg::xlen_t       w_ex2_rs1_selected_data;
+scariv_vec_pkg::vtype_t w_ex2_vtype;
 
 pipe_ctrl_t             r_ex2_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex2_issue;
@@ -77,6 +82,7 @@ scariv_csu_pkg::issue_t r_ex3_issue;
 riscv_pkg::xlen_t       r_ex3_result;
 riscv_pkg::xlen_t       r_ex3_csr_rd_data;
 logic                   r_ex3_csr_illegal;
+scariv_vec_pkg::vtype_t r_ex3_vtype;
 logic                   r_ex3_lmul_change;
 
 always_comb begin
@@ -98,6 +104,9 @@ assign w_ex0_pipe_ctrl.csr_update = w_ex0_csr_update == decoder_csu_ctrl_pkg::CS
 
 assign ex1_regread_rs1.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[0].valid;
 assign ex1_regread_rs1.rnid  = r_ex1_issue.rd_regs[0].rnid;
+
+assign ex1_regread_rs2.valid = r_ex1_issue.valid & r_ex1_issue.rd_regs[1].valid;
+assign ex1_regread_rs2.rnid  = r_ex1_issue.rd_regs[1].rnid;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -130,6 +139,7 @@ end
 
 assign w_ex2_rs1_selected_data = !r_ex2_issue.rd_regs[0].valid ? {{(riscv_pkg::XLEN_W-5){/* r_ex2_issue.inst[19] */1'b0}}, r_ex2_issue.inst[19:15]} :
                                  ex1_regread_rs1.data;
+assign w_ex2_vtype = r_ex2_issue.rd_regs[1].valid ? ex1_regread_rs2.data[11: 0] : r_ex2_issue.inst[31:20];
 
 // ------------
 // CSR Read
@@ -141,7 +151,7 @@ assign read_vec_if.valid = r_ex2_issue.valid & r_ex2_pipe_ctrl.csr_update;
 assign read_vec_if.addr  = r_ex2_issue.inst[31:20];
 
 scariv_vec_pkg::vlenbmax_t w_ex2_vlmax;
-assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(r_ex2_issue.inst[22:20], r_ex2_issue.inst[25:23]);
+assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(w_ex2_vtype.vlmul, w_ex2_vtype.vsew);
 
 riscv_pkg::xlen_t csr_read_data;
 assign csr_read_data = !read_if.resp_error ? read_if.data : read_vec_if.data;
@@ -152,7 +162,9 @@ assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
 
 assign vec_csr_if.index  = r_ex2_issue.vlvtype_ren_idx-1;
-assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL & (vec_csr_if.vlvtype.vtype.vlmul != r_ex2_issue.inst[22:20]);
+assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL &
+                           ~i_lmul_exception_mode &
+                           (vec_csr_if.vlvtype.vtype.vlmul != w_ex2_vtype.vlmul);
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -165,6 +177,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
     r_ex3_csr_illegal <= read_if.resp_error & read_vec_if.resp_error | w_ex2_is_fs_illegal;
+
+    r_ex3_vtype <= w_ex2_vtype;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
@@ -216,7 +230,7 @@ assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal |
                                    r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change                                 ? scariv_pkg::LMUL_CHANGE  :
                                    scariv_pkg::SILENT_FLUSH;
 
-assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
+assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | (o_done_report.except_type == scariv_pkg::LMUL_CHANGE)) ? r_ex3_issue.inst :
                                    'h0;
 
 // ------------
@@ -237,10 +251,14 @@ assign vlvtype_upd_if.sim_cmt_id    = r_ex3_issue.cmt_id;
 assign vlvtype_upd_if.sim_grp_id    = r_ex3_issue.grp_id;
 `endif // SIMULATION
 assign vlvtype_upd_if.vlvtype.vl    = r_ex3_csr_rd_data;
-assign vlvtype_upd_if.vlvtype.vtype = r_ex3_issue.inst[20 +: $bits(scariv_vec_pkg::vtype_t)];
+assign vlvtype_upd_if.vlvtype.vtype = r_ex3_vtype;
 assign vlvtype_upd_if.index         = r_ex3_issue.vlvtype_ren_idx;
 
 `ifdef SIMULATION
+
+assign vlmul_upd_if.valid = r_ex3_issue.valid & i_lmul_exception_mode &  (r_ex3_pipe_ctrl.op == OP_VSETVL);
+assign vlmul_upd_if.vlmul = vlvtype_upd_if.vlvtype.vtype;
+
 
 import "DPI-C" function void log_stage
 (
