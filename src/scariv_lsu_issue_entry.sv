@@ -135,6 +135,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
       end else if (i_put) begin
         w_entry_next = i_put_entry;
+        w_issued_next = 1'b0;
         if (w_load_entry_flush) begin
           w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
           w_dead_next  = 1'b1;

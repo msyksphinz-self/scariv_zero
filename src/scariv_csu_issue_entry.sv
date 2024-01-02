@@ -115,6 +115,7 @@ always_comb begin
       end else if (i_put) begin
         w_entry_next = w_init_entry;
         w_entry_next.oldest_valid = i_inst_oldest;
+        w_issued_next = 1'b0;
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
           w_dead_next  = 1'b1;

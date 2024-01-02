@@ -622,6 +622,8 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
   `include "tb_json_dumper.sv"
   `include "tb_json_perf_dumper.sv"
 
+  `include "tb_ooo_dumper.sv"
+
 `ifdef NEVER
 // ------------------------------
 // Instruction Cache Checker

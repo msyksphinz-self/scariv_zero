@@ -5,8 +5,14 @@ set TOP_NAME scariv_tile_wrapper
 
 # set DEVICE_NAME xc7z045ffg900
 # set DEVICE_NAME xc7z030fbg484
-set DEVICE_NAME xczu7ev-ffvc1156-2-e
-set BOARD_PART  xilinx.com:zcu104:part0:1.1
+
+# ZCU104
+# set DEVICE_NAME xczu7ev-ffvc1156-2-e
+# set BOARD_PART  xilinx.com:zcu104:part0:1.1
+
+# Arty-A7
+set DEVICE_NAME xc7a100tcsg324
+# set BOARD_PART  digilentinc.com:arty-a7-100:part0:1.0
 
 create_project -in_memory -part $DEVICE_NAME $PROJ_NAME $PROJ_DIR
 save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr
@@ -14,7 +20,7 @@ save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr
 set_property parent.project_path ${PROJ_DIR}/${PROJ_NAME}.xpr [current_project]
 set_property default_lib xil_defaultlib [current_project]
 set_property target_language Verilog [current_project]
-set_property board_part ${BOARD_PART} [current_project]
+# set_property board_part ${BOARD_PART} [current_project]
 set_property vhdl_version vhdl_2k [current_fileset]
 
 add_files -norecurse ../../src/riscv_common_pkg.sv
