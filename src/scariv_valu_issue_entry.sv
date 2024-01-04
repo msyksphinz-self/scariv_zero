@@ -95,7 +95,8 @@ function logic all_operand_ready(scariv_vec_pkg::issue_t entry);
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
         (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
         (!entry.rd_regs[2].valid | entry.rd_regs[2].valid  & (entry.rd_regs[2].ready | entry.rd_regs[2].predict_ready)) &
-        (!entry.wr_old_reg.valid | entry.wr_old_reg.valid  & entry.wr_old_reg.ready);
+        (!entry.wr_old_reg.valid | entry.wr_old_reg.valid  & entry.wr_old_reg.ready) &
+        (!entry.v0_reg.valid     | entry.v0_reg.valid      & entry.v0_reg.ready);
   return ret;
 endfunction // all_operand_ready
 
@@ -116,11 +117,20 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
 end endgenerate
 
 scariv_pkg::rnid_t w_wr_old_rnid;
-logic [ 1: 0]  w_wr_old_phy_hit;
+logic [ 2: 0]  w_wr_old_phy_hit;
 
 assign w_wr_old_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.wr_old_reg.rnid;
-generate for (genvar fwd_idx = 0; fwd_idx < 2; fwd_idx++) begin : old_wr_hit_loop
+generate for (genvar fwd_idx = 0; fwd_idx < 3; fwd_idx++) begin : old_wr_hit_loop
   assign w_wr_old_phy_hit[fwd_idx] = (w_wr_old_rnid == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
+end endgenerate
+
+// V0 Register Dependency
+scariv_pkg::rnid_t w_v0_rnid;
+logic [ 2: 0]  w_v0_phy_hit;
+
+assign w_v0_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.v0_reg.rnid;
+generate for (genvar fwd_idx = 0; fwd_idx < 3; fwd_idx++) begin : v0_hit_loop
+  assign w_v0_phy_hit[fwd_idx] = (w_v0_rnid == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
 end endgenerate
 
 
@@ -158,6 +168,7 @@ always_comb begin
   end
 
   w_entry_next.wr_old_reg.ready = r_entry.wr_old_reg.ready | (|w_wr_old_phy_hit);
+  w_entry_next.v0_reg.ready = r_entry.v0_reg.ready | (|w_v0_phy_hit);
 
   case (r_state)
     scariv_pkg::INIT : begin
@@ -167,6 +178,7 @@ always_comb begin
         w_entry_next = w_init_entry;
 
         w_entry_next.wr_old_reg.ready = i_put_data.wr_reg.old_ready | (|w_wr_old_phy_hit);
+        w_entry_next.v0_reg.ready     = i_put_data.v0_reg.ready /* | (|w_wr_old_phy_hit) */;
 
         w_entry_next.vlvtype_ready = vlvtype_info_if.ready | vlvtype_upd_load_valid;
         w_entry_next.vlvtype_index = vlvtype_info_if.index;

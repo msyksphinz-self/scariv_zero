@@ -55,7 +55,10 @@ module scariv_vec_lsu_pipe
  vlsu_lsq_req_if.master vlsu_ldq_req_if,
  vlsu_lsq_req_if.master vlsu_stq_req_if,
 
- output scariv_pkg::done_rpt_t o_done_report
+ scalar_ldq_haz_check_if.master scalar_ldq_haz_check_if,
+
+ output scariv_pkg::done_rpt_t      o_done_report,
+ output scariv_pkg::another_flush_t o_another_flush_report
  );
 
 logic   w_commit_flush;
@@ -324,7 +327,7 @@ assign lsu_pipe_haz_if.payload.is_uc          = 1'b0;
 assign lsu_pipe_haz_if.payload.hazard_index   = l1d_missu_if.resp_payload.missu_index_oh;
 assign lsu_pipe_haz_if.payload.vec_step_index = r_ex2_issue.vec_step_index;
 assign lsu_pipe_haz_if.payload.replay_info.paddr        = r_ex2_addr;
-assign lsu_pipe_haz_if.payload.replay_info.haz_1st_req  = (r_ex2_issue.vec_step_index == 'h0) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? w_ex2_hazard :
+assign lsu_pipe_haz_if.payload.replay_info.haz_1st_req  = ((r_ex2_issue.vec_lmul_index == 'h0) & (r_ex2_issue.vec_step_index == 'h0)) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? w_ex2_hazard :
                                                           r_ex3_vec_step_success & ~w_ex2_vec_step_success;
 assign lsu_pipe_haz_if.payload.replay_info.req_splitted = r_ex2_req_splitted;
 assign lsu_pipe_haz_if.payload.replay_info.reg_offset   = r_ex2_reg_offset;
@@ -401,7 +404,7 @@ always_comb begin
   end
 end
 
-assign w_ex2_is_1st_request = r_ex2_issue.vec_step_index == 'h0 & ~r_ex2_req_splitted[1] |  // Not splitted 2nd memory requests
+assign w_ex2_is_1st_request = (r_ex2_issue.vec_lmul_index == 'h0) & (r_ex2_issue.vec_step_index == 'h0) & ~r_ex2_req_splitted[1] |  // Not splitted 2nd memory requests
                               r_ex2_replay_selected & r_ex2_replay_haz_1st_req;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -434,24 +437,25 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-assign o_done_report.valid                = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign o_done_report.valid                = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_lmul_index == (1 << r_ex3_issue.vlvtype.vtype.vlmul)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id               = r_ex3_issue.grp_id;
 assign o_done_report.except_valid         = r_ex3_except_valid;
 assign o_done_report.except_type          = r_ex3_except_type;
 assign o_done_report.except_tval          = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
-// assign o_done_report.another_flush_valid  = 'h0; // ldq_haz_check_if.ex3_haz_valid;
-// assign o_done_report.another_flush_cmt_id = 'h0; // ldq_haz_check_if.ex3_haz_cmt_id;
-// assign o_done_report.another_flush_grp_id = 'h0; // ldq_haz_check_if.ex3_haz_grp_id;
 assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id               = r_ex3_issue.grp_id;
+
+assign o_another_flush_report.valid  = scalar_ldq_haz_check_if.haz_valid;
+assign o_another_flush_report.cmt_id = scalar_ldq_haz_check_if.haz_cmt_id;
+assign o_another_flush_report.grp_id = scalar_ldq_haz_check_if.haz_grp_id;
 
 assign vec_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_issue.wr_reg.valid & ~r_ex3_mis_valid;
 assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign vec_phy_wr_if.rd_pos  = r_ex3_issue.vec_step_index;
 assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
-assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & r_ex3_vec_step_success & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & r_ex3_vec_step_success & (r_ex3_issue.vec_lmul_index == (1 << r_ex3_issue.vlvtype.vtype.vlmul)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_reg.rnid;
 
 assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == OP_LOAD;
@@ -467,5 +471,9 @@ assign vlsu_stq_req_if.vs3_phy_idx = r_ex3_issue.rd_regs[2].rnid;
 assign vlsu_stq_req_if.vs3_pos     = r_ex3_issue.vec_step_index;
 assign vlsu_stq_req_if.strb        = r_ex3_mask;
 
+assign scalar_ldq_haz_check_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == OP_STORE;
+assign scalar_ldq_haz_check_if.paddr  = r_ex3_addr;
+assign scalar_ldq_haz_check_if.cmt_id = r_ex3_issue.cmt_id;
+assign scalar_ldq_haz_check_if.grp_id = r_ex3_issue.grp_id;
 
 endmodule // scariv_vec_lsu_pipe

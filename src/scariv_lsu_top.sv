@@ -76,11 +76,12 @@ module scariv_lsu_top
     // ----------------------
     // Vector LSU interface
     // ----------------------
-    l1d_rd_if.slave             vlsu_l1d_rd_if,
-    l1d_missu_if.slave          vlsu_l1d_missu_if,
-    output missu_resolve_t      o_missu_resolve,
-    st_buffer_if.slave          vlsu_st_buffer_if,
-    vstq_haz_check_if.master    vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],     // VSTQ Hazard Check
+    l1d_rd_if.slave               vlsu_l1d_rd_if,
+    l1d_missu_if.slave            vlsu_l1d_missu_if,
+    output missu_resolve_t        o_missu_resolve,
+    st_buffer_if.slave            vlsu_st_buffer_if,
+    vstq_haz_check_if.master      vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],     // VSTQ Hazard Check
+    scalar_ldq_haz_check_if.slave scalar_ldq_haz_check_if,                              // Vector Store --> Scalar Load disambiguation check
 
     // Commit notification
     input scariv_pkg::commit_blk_t i_commit,
@@ -266,6 +267,7 @@ u_ldq
  .cre_ret_if   (ldq_cre_ret_if  ),
 
  .ldq_haz_check_if (w_ldq_haz_check_if),
+ .scalar_ldq_haz_check_if (scalar_ldq_haz_check_if),
 
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),

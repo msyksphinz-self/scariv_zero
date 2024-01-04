@@ -75,7 +75,7 @@ pipe_ctrl_t             r_ex2_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex2_issue;
 riscv_pkg::xlen_t       r_ex2_rs1_data;
 logic                   w_ex2_is_fs_illegal;
-logic                   w_ex2_lmul_change;
+logic                   w_ex2_lmul_change_exc_valid;
 
 pipe_ctrl_t             r_ex3_pipe_ctrl;
 scariv_csu_pkg::issue_t r_ex3_issue;
@@ -83,7 +83,13 @@ riscv_pkg::xlen_t       r_ex3_result;
 riscv_pkg::xlen_t       r_ex3_csr_rd_data;
 logic                   r_ex3_csr_illegal;
 scariv_vec_pkg::vtype_t r_ex3_vtype;
-logic                   r_ex3_lmul_change;
+logic                   r_ex3_lmul_change_exc_valid;
+
+function automatic logic lmul_change_exc_valid (logic [ 2: 0] curr_vlmul, logic [ 2: 0] next_vlmul);
+  return (curr_vlmul != next_vlmul) &
+         (curr_vlmul[ 1: 0] < next_vlmul[ 1: 0]) &    // VLMUL increase
+         ~next_vlmul[2];                              // VLMUL is not minus
+endfunction // lmul_change_exc_valid
 
 always_comb begin
   r_ex0_issue = rv0_issue;
@@ -162,9 +168,9 @@ assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
                               (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FCSR  )) & i_mstatus[`MSTATUS_FS] == 'h0;
 
 assign vec_csr_if.index  = r_ex2_issue.vlvtype_ren_idx-1;
-assign w_ex2_lmul_change = r_ex2_pipe_ctrl.op == OP_VSETVL &
-                           ~i_lmul_exception_mode &
-                           (vec_csr_if.vlvtype.vtype.vlmul != w_ex2_vtype.vlmul);
+assign w_ex2_lmul_change_exc_valid = r_ex2_pipe_ctrl.op == OP_VSETVL &
+                                     ~i_lmul_exception_mode &
+                                     lmul_change_exc_valid (vec_csr_if.vlvtype.vtype.vlmul, w_ex2_vtype.vlmul);
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -178,7 +184,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex3_csr_illegal <= read_if.resp_error & read_vec_if.resp_error | w_ex2_is_fs_illegal;
 
-    r_ex3_vtype <= w_ex2_vtype;
+    r_ex3_vtype <= w_ex2_lmul_change_exc_valid ? vec_csr_if.vlvtype.vtype.vlmul : w_ex2_vtype;
 
     case (r_ex2_pipe_ctrl.op)
       OP_RW: r_ex3_result <= w_ex2_rs1_selected_data;
@@ -189,11 +195,13 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     endcase // case (r_ex2_pipe_ctrl.op)
 
     /* verilator lint_off WIDTH */
-    r_ex3_csr_rd_data <= r_ex2_pipe_ctrl.op == OP_VSETVL ? (w_ex2_rs1_selected_data < w_ex2_vlmax ? w_ex2_rs1_selected_data : w_ex2_vlmax) :
+    r_ex3_csr_rd_data <= r_ex2_pipe_ctrl.op == OP_VSETVL ? ((r_ex2_issue.wr_reg.regidx == 'h0) & (r_ex2_issue.rd_regs[0].regidx == 'h0) ? vec_csr_if.vlvtype.vl :
+                                                            w_ex2_rs1_selected_data < w_ex2_vlmax                                       ? w_ex2_rs1_selected_data :
+                                                            w_ex2_vlmax) :
                          (read_if.addr == `SYSREG_ADDR_MINSTRET) ? csr_read_data + scariv_pkg::encoder_grp_id({1'b0, r_ex2_issue.grp_id[scariv_conf_pkg::DISP_SIZE-1:1]}) :
                          csr_read_data;
 
-    r_ex3_lmul_change <= w_ex2_lmul_change;
+    r_ex3_lmul_change_exc_valid <= w_ex2_lmul_change_exc_valid;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -216,7 +224,7 @@ assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                      r_ex3_pipe_ctrl.is_ecall   |
                                      r_ex3_pipe_ctrl.is_ebreak  |
                                      r_ex3_csr_illegal          |
-                                     r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change |
+                                     r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid |
                                      (write_if.valid & write_if.resp_error);
 
 assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
@@ -227,7 +235,7 @@ assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal |
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S)              ? scariv_pkg::ECALL_S      :
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M)              ? scariv_pkg::ECALL_M      :
                                    r_ex3_pipe_ctrl.is_ebreak                                                           ? scariv_pkg::BREAKPOINT   :
-                                   r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change                                 ? scariv_pkg::LMUL_CHANGE  :
+                                   r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid                       ? scariv_pkg::LMUL_CHANGE  :
                                    scariv_pkg::SILENT_FLUSH;
 
 assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | (o_done_report.except_type == scariv_pkg::LMUL_CHANGE)) ? r_ex3_issue.inst :

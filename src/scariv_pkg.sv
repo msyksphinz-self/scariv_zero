@@ -40,6 +40,10 @@ package scariv_pkg;
                             2 +               // VALU
                             1 +               // VLSU
                             0;
+  localparam ANOTHER_FLUSH_SIZE = LSU_INST_NUM + // LSU
+                                  1 +            // VLSU
+                                  0;
+
 
   typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
@@ -199,7 +203,8 @@ typedef struct packed {
     gshare_bht_t  gshare_bhr;
 
     reg_wr_disp_t         wr_reg;
-    reg_rd_disp_t [ 2: 0] rd_regs;
+    reg_rd_disp_t [ 3: 0] rd_regs;
+    reg_rd_disp_t         v0_reg;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -237,6 +242,8 @@ typedef struct packed {
                                       rnid_t   rs2_rnid,
                                       logic    rs3_active,
                                       rnid_t   rs3_rnid,
+                                      logic    v0_active,
+                                      rnid_t   v0_rnid,
                                       brtag_t  brtag
                                       );
     disp_t ret;
@@ -251,6 +258,11 @@ typedef struct packed {
     ret.rd_regs[1].rnid    = rs2_rnid;
     ret.rd_regs[2].ready   = rs3_active;
     ret.rd_regs[2].rnid    = rs3_rnid;
+
+    ret.v0_reg.valid   = ~disp.inst[25];
+    ret.v0_reg.ready   = v0_active;
+    ret.v0_reg.rnid    = v0_rnid;
+
     ret.brtag       = brtag;
 
     return ret;
@@ -273,6 +285,7 @@ typedef struct packed {
     ret.rd_regs[0] = xpr_disp.rd_regs[0].typ == GPR ? xpr_disp.rd_regs[0] : xpr_disp.rd_regs[0].typ == FPR ? fpr_disp.rd_regs[0] : vpr_disp.rd_regs[0];
     ret.rd_regs[1] = xpr_disp.rd_regs[1].typ == GPR ? xpr_disp.rd_regs[1] : xpr_disp.rd_regs[1].typ == FPR ? fpr_disp.rd_regs[1] : vpr_disp.rd_regs[1];
     ret.rd_regs[2] = xpr_disp.rd_regs[2].typ == GPR ? xpr_disp.rd_regs[2] : xpr_disp.rd_regs[2].typ == FPR ? fpr_disp.rd_regs[2] : vpr_disp.rd_regs[2];
+    ret.v0_reg     = vpr_disp.v0_reg;
 
     return ret;
 

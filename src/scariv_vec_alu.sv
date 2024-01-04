@@ -37,6 +37,7 @@ module scariv_vec_alu #(
 
     /* read output */
     vec_regread_if.master  vec_phy_rd_if[3],
+    vec_regread_if.master  vec_phy_v0_if,
     vec_regread_if.master  vec_phy_old_wr_if,
     /* write output */
     vec_regwrite_if.master vec_phy_wr_if[2],
@@ -153,6 +154,7 @@ u_alu_pipe
    .ex0_fpr_regread_rs1(ex1_fpr_regread_rs1),
 
    .vec_phy_rd_if (vec_phy_rd_if),
+   .vec_phy_v0_if (vec_phy_v0_if),
    .vec_phy_old_wr_if (vec_phy_old_wr_if),
    .vec_phy_wr_if (vec_phy_wr_if),
    .vec_phy_fwd_if (w_vec_phy_fwd_if[ 0: 1]),

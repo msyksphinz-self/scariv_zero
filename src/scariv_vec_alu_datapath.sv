@@ -26,7 +26,7 @@ module scariv_vec_alu_datapath
  input [riscv_pkg::XLEN_W/8-1: 0]  i_wr_mask_old,
  input [ 7: 0]                     i_en_mask,
  input riscv_pkg::xlen_t           i_mm_mask,
- input riscv_pkg::xlen_t           i_v0,
+ input [ 7: 0]                     i_v0,
 
  output riscv_pkg::xlen_t          o_alu_res,
  output [riscv_pkg::XLEN_W/8-1: 0] o_mask_res
@@ -264,19 +264,19 @@ always_comb begin
                               w_wr_old.w64 [0] & ~i_mm_mask;
   end else begin
     unique case (i_sew)
-      scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_alu_masked_res.w8 [b] = i_en_mask[b] ? w_alu_res.w8 [b] : w_wr_old.w8 [b];
-      scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_alu_masked_res.w16[b] = i_en_mask[b] ? w_alu_res.w16[b] : w_wr_old.w16[b];
-      scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_alu_masked_res.w32[b] = i_en_mask[b] ? w_alu_res.w32[b] : w_wr_old.w32[b];
-      scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_alu_masked_res.w64[b] = i_en_mask[b] ? w_alu_res.w64[b] : w_wr_old.w64[b];
+      scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_alu_masked_res.w8 [b] = i_en_mask[b] & i_v0[b] ? w_alu_res.w8 [b] : w_wr_old.w8 [b];
+      scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_alu_masked_res.w16[b] = i_en_mask[b] & i_v0[b] ? w_alu_res.w16[b] : w_wr_old.w16[b];
+      scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_alu_masked_res.w32[b] = i_en_mask[b] & i_v0[b] ? w_alu_res.w32[b] : w_wr_old.w32[b];
+      scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_alu_masked_res.w64[b] = i_en_mask[b] & i_v0[b] ? w_alu_res.w64[b] : w_wr_old.w64[b];
       default             :                             w_alu_masked_res = 'h0;
     endcase // unique case (i_sew)
   end // else: !if(i_is_vmask_op)
 
   unique case (i_sew)
-    scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_mask_masked_res[b] = i_en_mask[b] ? w_mask_res[b] : i_wr_mask_old[b];
-    scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_mask_masked_res[b] = i_en_mask[b] ? w_mask_res[b] : i_wr_mask_old[b];
-    scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_mask_masked_res[b] = i_en_mask[b] ? w_mask_res[b] : i_wr_mask_old[b];
-    scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_mask_masked_res[b] = i_en_mask[b] ? w_mask_res[b] : i_wr_mask_old[b];
+    scariv_vec_pkg::EW8 : for (int b = 0; b < 8; b++) w_mask_masked_res[b] = i_en_mask[b] & i_v0[b] ? w_mask_res[b] : i_wr_mask_old[b];
+    scariv_vec_pkg::EW16: for (int b = 0; b < 4; b++) w_mask_masked_res[b] = i_en_mask[b] & i_v0[b] ? w_mask_res[b] : i_wr_mask_old[b];
+    scariv_vec_pkg::EW32: for (int b = 0; b < 2; b++) w_mask_masked_res[b] = i_en_mask[b] & i_v0[b] ? w_mask_res[b] : i_wr_mask_old[b];
+    scariv_vec_pkg::EW64: for (int b = 0; b < 1; b++) w_mask_masked_res[b] = i_en_mask[b] & i_v0[b] ? w_mask_res[b] : i_wr_mask_old[b];
     default             :                             w_mask_masked_res = 'h0;
   endcase // unique case (i_sew)
 end

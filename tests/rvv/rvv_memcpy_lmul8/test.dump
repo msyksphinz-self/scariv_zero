@@ -178,9 +178,9 @@ Disassembly of section .text.init:
 Disassembly of section .text:
 
 0000000080002000 <main>:
-    80002000:	00001517          	auipc	a0,0x1
-    80002004:	40050513          	addi	a0,a0,1024 # 80003400 <initial_data>
-    80002008:	f7818593          	addi	a1,gp,-136 # 80003c00 <_tbss_end+0x3fc>
+    80002000:	f7818513          	addi	a0,gp,-136 # 80003c00 <_tbss_end+0x3fc>
+    80002004:	00001597          	auipc	a1,0x1
+    80002008:	3fc58593          	addi	a1,a1,1020 # 80003400 <initial_data>
     8000200c:	6605                	lui	a2,0x1
     8000200e:	8006061b          	addiw	a2,a2,-2048 # 800 <buflen.1+0x7c0>
     80002012:	86aa                	mv	a3,a0

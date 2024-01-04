@@ -22,6 +22,8 @@ module scariv_ldq
 
    // Hazard check for STQ -> LDQ
    ldq_haz_check_if.slave      ldq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
+   // Vector Store --> Scalar Load disambiguation check
+   scalar_ldq_haz_check_if.slave scalar_ldq_haz_check_if,
 
    input missu_resolve_t     i_missu_resolve,
    input logic             i_missu_is_full,
@@ -68,6 +70,10 @@ logic [$clog2(scariv_conf_pkg::LDQ_SIZE):0]   w_disp_picked_num;
 
 logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld[scariv_conf_pkg::LSU_INST_NUM];
 logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld_oh[scariv_conf_pkg::LSU_INST_NUM];
+
+
+logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_vstore_sload_haz_vld;
+
 
 logic                                w_flush_valid;
 assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
@@ -268,8 +274,31 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
                                                  (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].addr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
 
-end
-endgenerate
+  // Vector Store --> Scalar Load, memory disambiguation check
+  logic       w_vstore_sload_same_dlen;
+  logic       sload_is_younger_than_vstore;
+  scariv_rough_older_check
+  vst_sld_older_check
+    (
+     .i_cmt_id0 (scalar_ldq_haz_check_if.cmt_id),
+     .i_grp_id0 (scalar_ldq_haz_check_if.grp_id),
+
+     .i_cmt_id1 (w_ldq_entries[l_idx].inst.cmt_id),
+     .i_grp_id1 (w_ldq_entries[l_idx].inst.grp_id),
+
+     .o_0_older_than_1 (sload_is_younger_than_vstore)
+     );
+  assign w_vstore_sload_same_dlen = scalar_ldq_haz_check_if.paddr[scariv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                    w_ldq_entries[l_idx].addr[scariv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)];
+  assign w_vstore_sload_haz_vld[l_idx] = scalar_ldq_haz_check_if.valid &
+                                         !w_ldq_entries[l_idx].dead &
+                                         w_ldq_entries[l_idx].is_valid &
+                                         sload_is_younger_than_vstore &
+                                         w_ldq_entries[l_idx].is_get_data &
+                                         w_vstore_sload_same_dlen;
+
+end endgenerate // block: ldq_loop
+
 
 
 // // request logic
@@ -377,6 +406,46 @@ generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) 
 
 end
 endgenerate
+
+
+// ==================
+// Vstore --> sload Flush Hazard
+// ==================
+generate if (scariv_vec_pkg::VLEN_W != 0) begin : vlsu_haz_check
+  logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_vstore_sload_haz_vld_oh;
+
+  scariv_entry_selector
+    #(
+      .ENTRY_SIZE (scariv_conf_pkg::LDQ_SIZE)
+      )
+  u_entry_selector
+    (
+     .i_oh_ptr       (w_out_ptr_oh),
+     .i_entry_valids (w_vstore_sload_haz_vld),
+     .o_entry_valid  (w_vstore_sload_haz_vld_oh)
+     );
+
+  ldq_entry_t w_sel_ldq_entry;
+
+  bit_oh_or
+    #(
+      .T     (ldq_entry_t),
+      .WORDS (scariv_conf_pkg::LDQ_SIZE)
+      )
+  u_flush_sel
+    (
+     .i_oh   (w_vstore_sload_haz_vld_oh),
+     .i_data (w_ldq_entries),
+     .o_selected(w_sel_ldq_entry)
+     );
+
+  always_comb begin
+    scalar_ldq_haz_check_if.haz_valid  = |w_vstore_sload_haz_vld;
+    scalar_ldq_haz_check_if.haz_cmt_id = w_sel_ldq_entry.inst.cmt_id;
+    scalar_ldq_haz_check_if.haz_grp_id = w_sel_ldq_entry.inst.grp_id;
+  end
+
+end endgenerate // block: vlsu_haz_check
 
 
 `ifdef SIMULATION

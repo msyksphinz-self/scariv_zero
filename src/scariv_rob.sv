@@ -22,7 +22,7 @@ module scariv_rob
    output cmt_id_t o_sc_new_cmt_id,
 
    input done_rpt_t      i_done_rpt             [CMT_BUS_SIZE],
-   input another_flush_t i_another_flush_report [LSU_INST_NUM],
+   input another_flush_t i_another_flush_report [ANOTHER_FLUSH_SIZE],
 
    br_upd_if.slave  ex3_br_upd_if,
 

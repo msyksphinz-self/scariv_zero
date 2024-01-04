@@ -416,17 +416,19 @@ endgenerate
 
 
 generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
-  logic[ 3: 0] w_raw_cat;
-  logic [ 2: 0] w_raw_subcat;
+  // logic[ 3: 0] w_raw_cat;
+  // logic [ 3: 0] w_raw_subcat;
   decoder_inst_cat
   u_decoder_inst_cat
     (
      .inst(w_expand_inst[w_idx]),
-     .inst_cat(w_raw_cat),
-     .inst_subcat(w_raw_subcat)
+     // .inst_cat(w_raw_cat),
+     // .inst_subcat(w_raw_subcat)
+     .inst_cat   (w_inst_cat   [w_idx]),
+     .inst_subcat(w_inst_subcat[w_idx])
      );
-  assign w_inst_cat   [w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
-  assign w_inst_subcat[w_idx] = decoder_inst_cat_pkg::inst_subcat_t'(w_raw_subcat);
+  // assign w_inst_cat   [w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
+  // assign w_inst_subcat[w_idx] = decoder_inst_cat_pkg::inst_subcat_t'(w_raw_subcat);
 
   decoder_reg
   u_decoder_reg

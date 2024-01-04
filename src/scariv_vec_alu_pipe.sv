@@ -33,6 +33,7 @@ module scariv_vec_alu_pipe
  regread_if.master      ex0_fpr_regread_rs1,
 
  vec_regread_if.master  vec_phy_rd_if[3],
+ vec_regread_if.master  vec_phy_v0_if,
  vec_regread_if.master  vec_phy_old_wr_if,
  vec_regwrite_if.master vec_phy_wr_if [2],
  vec_phy_fwd_if.master  vec_phy_fwd_if[2],
@@ -54,6 +55,7 @@ logic                   w_ex1_flush;
 riscv_pkg::xlen_t       w_ex1_rs1_data;
 scariv_vec_pkg::dlen_t  w_ex1_vpr_rs_data[3];
 scariv_vec_pkg::dlen_t  w_ex1_vpr_wr_old_data;
+scariv_vec_pkg::dlen_t  w_ex1_vpr_v0_data;
 riscv_pkg::xlen_t       w_ex1_rs1_selected_data;
 logic                   w_ex1_is_vmask_inst;
 
@@ -104,6 +106,10 @@ assign vec_phy_old_wr_if.valid = i_ex0_issue.valid & (i_ex0_issue.wr_old_reg.typ
 assign vec_phy_old_wr_if.rnid  = i_ex0_issue.wr_old_reg.rnid;
 assign vec_phy_old_wr_if.pos   = i_ex0_issue.vec_step_index;
 
+assign vec_phy_v0_if.valid = i_ex0_issue.valid & i_ex0_issue.v0_reg.valid;
+assign vec_phy_v0_if.rnid  = i_ex0_issue.v0_reg.rnid;
+assign vec_phy_v0_if.pos   = 'h0; // i_ex0_issue.vec_step_index;
+
 assign w_ex0_commit_flush = scariv_pkg::is_commit_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, i_commit);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
@@ -130,13 +136,14 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign w_ex1_rs1_data = r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == scariv_pkg::FPR) ? ex0_fpr_regread_rs1.data :
                         r_ex1_issue.rd_regs[0].valid & (r_ex1_issue.rd_regs[0].typ == scariv_pkg::GPR) ? ex0_xpr_regread_rs1.data :
-                        r_ex1_issue.inst[19:15];
+                        {{(riscv_pkg::XLEN_W-5){r_ex1_issue.inst[19]}}, r_ex1_issue.inst[19:15]};
 assign w_ex1_vpr_rs_data[0] = (r_ex1_issue.rd_regs[0].typ == scariv_pkg::FPR) & (r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32) ? {(riscv_vec_conf_pkg::DLEN_W/32){ex0_fpr_regread_rs1.data[31: 0]}} :
                               (r_ex1_issue.rd_regs[0].typ == scariv_pkg::FPR) & (r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW64) ? {(riscv_vec_conf_pkg::DLEN_W/64){ex0_fpr_regread_rs1.data[63: 0]}} :
                               vec_phy_rd_if[0].data;
 assign w_ex1_vpr_rs_data[1]  = vec_phy_rd_if[1].data;
 assign w_ex1_vpr_rs_data[2]  = vec_phy_rd_if[2].data;
 assign w_ex1_vpr_wr_old_data = vec_phy_old_wr_if.data;
+assign w_ex1_vpr_v0_data     = vec_phy_v0_if.data;
 
 
 // -----------------------------
@@ -170,16 +177,28 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
   logic [riscv_vec_conf_pkg::DLEN_W-1: 0] w_ex1_mm_mask;
   logic [ 3: 0] temp_vl;
   logic [ 7: 0] w_ex1_vr_mask_old_data;
+  logic         w_ex1_v0_valid;
+  logic [ 7: 0] w_ex1_v0_mask;
+
+  scariv_vec_pkg::vlenbmax_t w_vl_ew8_start;
+  scariv_vec_pkg::vlenbmax_t w_vl_ew16_start;
+  scariv_vec_pkg::vlenbmax_t w_vl_ew32_start;
+  scariv_vec_pkg::vlenbmax_t w_vl_ew64_start;
 
   scariv_vec_pkg::vlenbmax_t w_vl_ew8;
   scariv_vec_pkg::vlenbmax_t w_vl_ew16;
   scariv_vec_pkg::vlenbmax_t w_vl_ew32;
   scariv_vec_pkg::vlenbmax_t w_vl_ew64;
 
-  assign w_vl_ew8  = d_idx * 8 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W /  8);
-  assign w_vl_ew16 = d_idx * 4 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 16);
-  assign w_vl_ew32 = d_idx * 2 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
-  assign w_vl_ew64 = d_idx * 1 + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
+  assign w_vl_ew8_start  = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W /  8);
+  assign w_vl_ew16_start = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 16);
+  assign w_vl_ew32_start = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
+  assign w_vl_ew64_start = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
+
+  assign w_vl_ew8  = d_idx * 8 + w_vl_ew8_start;
+  assign w_vl_ew16 = d_idx * 4 + w_vl_ew16_start;
+  assign w_vl_ew32 = d_idx * 2 + w_vl_ew32_start;
+  assign w_vl_ew64 = d_idx * 1 + w_vl_ew64_start;
 
 
   always_comb begin
@@ -197,30 +216,41 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
   end // always_comb
 
   always_comb begin
+    w_ex1_v0_valid = ~r_ex1_issue.inst[25];
+    unique case (r_ex1_issue.vlvtype.vtype.vsew)
+      scariv_vec_pkg::EW8 : w_ex1_v0_mask = w_ex1_vpr_v0_data[d_idx*8 + r_ex1_issue.vec_step_index*riscv_vec_conf_pkg::DLEN_W/ 8 +: 8];
+      scariv_vec_pkg::EW16: w_ex1_v0_mask = w_ex1_vpr_v0_data[d_idx*4 + r_ex1_issue.vec_step_index*riscv_vec_conf_pkg::DLEN_W/16 +: 4];
+      scariv_vec_pkg::EW32: w_ex1_v0_mask = w_ex1_vpr_v0_data[d_idx*2 + r_ex1_issue.vec_step_index*riscv_vec_conf_pkg::DLEN_W/32 +: 2];
+      scariv_vec_pkg::EW64: w_ex1_v0_mask = w_ex1_vpr_v0_data[d_idx*1 + r_ex1_issue.vec_step_index*riscv_vec_conf_pkg::DLEN_W/64 +: 1];
+      default             : w_ex1_v0_mask = 'h0;
+    endcase // unique case (i_sew)
+  end // always_comb
+
+  always_comb begin
     unique case (r_ex1_issue.vlvtype.vtype.vsew)
       scariv_vec_pkg::EW8 : begin
-        temp_vl       = r_ex1_issue.vlvtype.vl > w_vl_ew8      ? r_ex1_issue.vlvtype.vl - w_vl_ew8  : 0;
-        w_ex1_en_mask = r_ex1_issue.vlvtype.vl > w_vl_ew8 +  8 ? {8{1'b1}} : (1 << temp_vl) - 1;
+        temp_vl                = r_ex1_issue.vlvtype.vl > w_vl_ew8      ? r_ex1_issue.vlvtype.vl - w_vl_ew8  : 0;
+        w_ex1_en_mask          = r_ex1_issue.vlvtype.vl > w_vl_ew8 +  8 ? {8{1'b1}} : (1 << temp_vl) - 1;
         w_ex1_vr_mask_old_data = w_ex1_vpr_wr_old_data[d_idx*8 +: 8];
       end
       scariv_vec_pkg::EW16: begin
-        temp_vl       = r_ex1_issue.vlvtype.vl > w_vl_ew16     ? r_ex1_issue.vlvtype.vl - w_vl_ew16 : 0;
-        w_ex1_en_mask = r_ex1_issue.vlvtype.vl > w_vl_ew16 + 4 ? {4{1'b1}} : (1 << temp_vl) - 1;
+        temp_vl                = r_ex1_issue.vlvtype.vl > w_vl_ew16     ? r_ex1_issue.vlvtype.vl - w_vl_ew16 : 0;
+        w_ex1_en_mask          = r_ex1_issue.vlvtype.vl > w_vl_ew16 + 4 ? {4{1'b1}} : (1 << temp_vl) - 1;
         w_ex1_vr_mask_old_data = w_ex1_vpr_wr_old_data[d_idx*4 +: 4];
       end
       scariv_vec_pkg::EW32: begin
-        temp_vl       = r_ex1_issue.vlvtype.vl > w_vl_ew32     ? r_ex1_issue.vlvtype.vl - w_vl_ew32 : 0;
-        w_ex1_en_mask = r_ex1_issue.vlvtype.vl > w_vl_ew32 + 2 ? {2{1'b1}} : (1 << temp_vl) - 1;
+        temp_vl                = r_ex1_issue.vlvtype.vl > w_vl_ew32     ? r_ex1_issue.vlvtype.vl - w_vl_ew32 : 0;
+        w_ex1_en_mask          = r_ex1_issue.vlvtype.vl > w_vl_ew32 + 2 ? {2{1'b1}} : (1 << temp_vl) - 1;
         w_ex1_vr_mask_old_data = w_ex1_vpr_wr_old_data[d_idx*2 +: 2];
       end
       scariv_vec_pkg::EW64: begin
-        temp_vl       = r_ex1_issue.vlvtype.vl > w_vl_ew64     ? r_ex1_issue.vlvtype.vl - w_vl_ew64 : 0;
-        w_ex1_en_mask = r_ex1_issue.vlvtype.vl > w_vl_ew64 + 1 ? {1{1'b1}} : (1 << temp_vl) - 1;
+        temp_vl                = r_ex1_issue.vlvtype.vl > w_vl_ew64     ? r_ex1_issue.vlvtype.vl - w_vl_ew64 : 0;
+        w_ex1_en_mask          = r_ex1_issue.vlvtype.vl > w_vl_ew64 + 1 ? {1{1'b1}} : (1 << temp_vl) - 1;
         w_ex1_vr_mask_old_data = w_ex1_vpr_wr_old_data[d_idx*1 +: 1];
       end
       default             : begin
-        temp_vl = 0;
-        w_ex1_en_mask = 'h0;
+        temp_vl                = 0;
+        w_ex1_en_mask          = 'h0;
         w_ex1_vr_mask_old_data = 'h0;
       end
     endcase // unique case (i_sew)
@@ -240,7 +270,7 @@ generate for (genvar d_idx = 0; d_idx < riscv_vec_conf_pkg::DLEN_W / 64; d_idx++
      .i_wr_mask_old   (w_ex1_vr_mask_old_data                        ),
      .i_en_mask       (w_ex1_en_mask                                 ),
      .i_mm_mask       (w_ex1_mm_mask                                 ),
-     .i_v0            ('h0                                           ),
+     .i_v0            (w_ex1_v0_valid ? w_ex1_v0_mask : {8{1'b1}}    ),
      .o_alu_res       (w_ex1_vec_result [d_idx*64 +: 64]             ),
      .o_mask_res      (w_ex1_vec_mask_lane [d_idx]                   )
      );

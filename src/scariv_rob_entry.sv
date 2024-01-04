@@ -19,7 +19,7 @@ module scariv_rob_entry
    input rob_entry_t  i_entry_in,
 
    input done_rpt_t      i_done_rpt [CMT_BUS_SIZE],
-   input another_flush_t i_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
+   input another_flush_t i_another_flush_report [ANOTHER_FLUSH_SIZE],
 
    output rob_entry_t o_entry,
    output logic       o_block_all_done,
@@ -72,17 +72,17 @@ endgenerate
 // --------------------
 // Another Flush Match
 // --------------------
-grp_id_t w_another_flush_tmp_valid[scariv_conf_pkg::LSU_INST_NUM];
+grp_id_t w_another_flush_tmp_valid[ANOTHER_FLUSH_SIZE];
 grp_id_t w_another_flush_valid;
 grp_id_t w_another_tree_flush_valid;
-generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+generate for (genvar l_idx = 0; l_idx < ANOTHER_FLUSH_SIZE; l_idx++) begin : lsu_loop
   assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
                                             (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? i_another_flush_report[l_idx].grp_id : 'h0;
 end
 endgenerate
 
 
-bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(scariv_conf_pkg::LSU_INST_NUM))
+bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(ANOTHER_FLUSH_SIZE))
 another_flush_select (.i_data(w_another_flush_tmp_valid), .o_selected(w_another_flush_valid));
 
 bit_tree_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE))

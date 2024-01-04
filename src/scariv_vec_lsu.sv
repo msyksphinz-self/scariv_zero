@@ -52,7 +52,10 @@ module scariv_vec_lsu #(
    vec_phy_fwd_if.slave   vec_valu_phy_fwd_if[2],
    vec_phy_fwd_if.master  vec_vlsu_phy_fwd_if[1],
 
-   output scariv_pkg::done_rpt_t o_done_report,
+   scalar_ldq_haz_check_if.master scalar_ldq_haz_check_if,
+
+   output scariv_pkg::done_rpt_t      o_done_report,
+   output scariv_pkg::another_flush_t o_another_flush_report,
    // Commit notification
    input scariv_pkg::commit_blk_t i_commit,
    br_upd_if.slave                br_upd_if,
@@ -243,7 +246,10 @@ u_lsu_pipe
    .vlsu_ldq_req_if (w_vlsu_ldq_req_if),
    .vlsu_stq_req_if (w_vlsu_stq_req_if),
 
-   .o_done_report (o_done_report)
+   .scalar_ldq_haz_check_if (scalar_ldq_haz_check_if),
+
+   .o_done_report          (o_done_report),
+   .o_another_flush_report (o_another_flush_report)
    );
 
 

@@ -112,9 +112,12 @@ typedef struct packed {
 
 function automatic vlenbmax_t calc_vlmax(logic [ 2: 0] vlmul,
                                          logic [ 2: 0] vsew);
-  return (VLENB << vlmul) >> vsew;
+  return vlmul == 3'b101 ? (VLENB / 8) >> vsew :
+         vlmul == 3'b110 ? (VLENB / 4) >> vsew :
+         vlmul == 3'b111 ? (VLENB / 2) >> vsew :
+         (VLENB << vlmul[ 1: 0]) >> vsew;
 
-endfunction
+endfunction // calc_vlmax
 
 
 typedef struct packed {
@@ -131,7 +134,9 @@ typedef struct packed {
   scariv_pkg::reg_wr_issue_t         wr_reg;
   scariv_pkg::reg_rd_issue_t         wr_old_reg;
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
+  scariv_pkg::reg_rd_issue_t         v0_reg;
 
+  logic [ 2: 0]        vec_lmul_index;
   vec_pos_t            vec_step_index;
   logic                vcomp_fin;
 
@@ -167,6 +172,7 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
+  ret.vec_lmul_index = 'h0;
   ret.vec_step_index = 'h0;
   ret.vcomp_fin      = 'h0;
 
@@ -179,6 +185,11 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.wr_old_reg.typ    = in.wr_reg.typ;
   ret.wr_old_reg.regidx = in.wr_reg.regidx;
   ret.wr_old_reg.rnid   = in.wr_reg.old_rnid;
+
+  ret.v0_reg.valid  = in.v0_reg.valid;
+  ret.v0_reg.typ    = in.v0_reg.typ;
+  ret.v0_reg.regidx = in.v0_reg.regidx;
+  ret.v0_reg.rnid   = in.v0_reg.rnid;
 
   ret.except_valid = 1'b0;
   ret.except_type  = scariv_pkg::INST_ADDR_MISALIGN;
@@ -551,3 +562,36 @@ modport slave
    );
 
 endinterface // vstq_haz_check_if
+
+
+interface scalar_ldq_haz_check_if;
+  logic                valid;
+  scariv_pkg::paddr_t  paddr;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+
+  logic                haz_valid;
+  scariv_pkg::cmt_id_t haz_cmt_id;
+  scariv_pkg::grp_id_t haz_grp_id;
+
+  modport master (
+    output valid,
+    output paddr,
+    output cmt_id,
+    output grp_id,
+    input  haz_valid,
+    input  haz_cmt_id,
+    input  haz_grp_id
+  );
+
+  modport slave (
+    input  valid,
+    input  paddr,
+    input  cmt_id,
+    input  grp_id,
+    output haz_valid,
+    output haz_cmt_id,
+    output haz_grp_id
+  );
+
+endinterface // scalar_ldq_haz_check_if

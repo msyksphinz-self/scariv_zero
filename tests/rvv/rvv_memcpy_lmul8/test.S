@@ -6,8 +6,8 @@
 	.type	main, @function
 main:
 
-    la  a0, initial_data
-    la  a1, initial_data+0x800
+    la  a0, initial_data+0x800
+    la  a1, initial_data
     li  a2, 0x800
 
     # void *memcpy(void* dest, const void* src, size_t n)

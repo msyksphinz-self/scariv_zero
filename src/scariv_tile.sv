@@ -114,7 +114,7 @@ scariv_pkg::early_wr_t      w_ex1_lsu_early_wr      [scariv_conf_pkg::LSU_INST_N
 scariv_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [scariv_conf_pkg::LSU_INST_NUM];
 scariv_pkg::done_rpt_t      w_lsu_done_rpt          [scariv_conf_pkg::LSU_INST_NUM];
 scariv_pkg::mispred_t       w_ex2_mispred_lsu       [scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::another_flush_t w_lsu_another_flush_rpt [scariv_conf_pkg::LSU_INST_NUM];
+scariv_pkg::another_flush_t w_another_flush_rpt     [scariv_pkg::ANOTHER_FLUSH_SIZE];
 // ----------------------------------
 // BRU Components
 // ----------------------------------
@@ -147,16 +147,17 @@ fflags_update_if w_fflags_update_if();
 // ----------------------------------
 // VEC Components
 // ----------------------------------
-localparam VPR_READ_PORT_NUM = 4 +  // from VALU
+localparam VPR_READ_PORT_NUM = 5 +  // from VALU
                                4 +  // from VLSU
                                0;
 scariv_pkg::grp_id_t   w_disp_valu_valids ;
 scariv_pkg::early_wr_t w_ex1_valu_early_wr;
-vec_regread_if         w_vec_phy_rd_if[8]()  ;
+vec_regread_if         w_vec_phy_rd_if[VPR_READ_PORT_NUM]()  ;
 vec_regwrite_if        w_vec_phy_wr_if[3]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
 st_buffer_if           w_vlsu_st_buffer_if();
 vstq_haz_check_if      w_vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM]();
+scalar_ldq_haz_check_if w_scalar_ldq_haz_check_if();
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
 scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
@@ -477,7 +478,7 @@ u_lsu_top
     .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
     .o_done_report(w_lsu_done_rpt),
-    .o_another_flush_report(w_lsu_another_flush_rpt),
+    .o_another_flush_report(w_another_flush_rpt[scariv_conf_pkg::LSU_INST_NUM-1: 0]),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
     .snoop_info_if (w_snoop_info_if),
@@ -491,11 +492,12 @@ u_lsu_top
     .sfence_if (w_sfence_if),
     .o_fence_i (w_fence_i),
 
-    .vlsu_l1d_rd_if    (vlsu_l1d_rd_if     ),
-    .vlsu_l1d_missu_if (vlsu_l1d_missu_if  ),
-    .o_missu_resolve   (w_missu_resolve    ),
-    .vlsu_st_buffer_if (w_vlsu_st_buffer_if),
-    .vstq_haz_check_if (w_vstq_haz_check_if),
+    .vlsu_l1d_rd_if          (vlsu_l1d_rd_if           ),
+    .vlsu_l1d_missu_if       (vlsu_l1d_missu_if        ),
+    .o_missu_resolve         (w_missu_resolve          ),
+    .vlsu_st_buffer_if       (w_vlsu_st_buffer_if      ),
+    .vstq_haz_check_if       (w_vstq_haz_check_if      ),
+    .scalar_ldq_haz_check_if (w_scalar_ldq_haz_check_if),
 
     .i_commit  (w_commit),
     .br_upd_if (w_ex3_br_upd_if)
@@ -742,6 +744,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .i_phy_wr(w_ex3_phy_wr),
 
      .vec_phy_rd_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +: 3]),
+     .vec_phy_v0_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  4]),
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  3]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[0:1]),
      .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
@@ -755,7 +758,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
 
   localparam VLSU_XPR_READ_PORT_IDX = VALU_READ_PORT_IDX + 1;
-  localparam VLSU_VPR_READ_PORT_IDX = VALU_VPR_READ_PORT_IDX + 4;
+  localparam VLSU_VPR_READ_PORT_IDX = VALU_VPR_READ_PORT_IDX + 5;
 
   scariv_vec_lsu
     #(.PORT_BASE(0))
@@ -787,11 +790,14 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
      .vec_vlsu_phy_fwd_if (w_vec_vlsu_phy_fwd_if),
 
+     .scalar_ldq_haz_check_if (w_scalar_ldq_haz_check_if),
+
      .l1d_rd_if       (vlsu_l1d_rd_if   ),
      .l1d_missu_if    (vlsu_l1d_missu_if),
      .i_missu_resolve (w_missu_resolve  ),
 
      .o_done_report(w_vlsu_done_rpt),
+     .o_another_flush_report(w_another_flush_rpt[scariv_conf_pkg::LSU_INST_NUM]),
 
      .i_commit (w_commit),
      .br_upd_if(w_ex3_br_upd_if),
@@ -831,7 +837,7 @@ scariv_rob u_rob
    .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
    .i_done_rpt (w_done_rpt),
-   .i_another_flush_report(w_lsu_another_flush_rpt),
+   .i_another_flush_report(w_another_flush_rpt),
 
    .o_commit (w_commit),
    .fflags_update_if (w_fflags_update_if),

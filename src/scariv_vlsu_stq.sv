@@ -208,12 +208,12 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
 
     // Scalar Load to VSTQ hazard check
     for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; spipe_idx++) begin : sload_vstq_haz_loop
-      logic vstq_is_younger_than_sload;
-      assign vstq_is_younger_than_sload = scariv_pkg::id0_is_older_than_id1 (vstq_haz_check_if[spipe_idx].ex2_cmt_id,
-                                                                             vstq_haz_check_if[spipe_idx].ex2_grp_id,
-                                                                             r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
-                                                                             r_vlsu_stq_entries[bank_idx][stq_idx].grp_id);
-      assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = vstq_is_younger_than_sload &
+      logic  vstq_is_older_than_sload;
+      assign vstq_is_older_than_sload = scariv_pkg::id0_is_older_than_id1 (r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
+                                                                           r_vlsu_stq_entries[bank_idx][stq_idx].grp_id,
+                                                                           vstq_haz_check_if[spipe_idx].ex2_cmt_id,
+                                                                           vstq_haz_check_if[spipe_idx].ex2_grp_id);
+      assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = vstq_is_older_than_sload &
                                                                   r_vlsu_stq_entries[bank_idx][stq_idx].valid &
                                                                   {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
                                                                    r_vlsu_stq_entries[bank_idx][stq_idx].paddr, bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0]};
