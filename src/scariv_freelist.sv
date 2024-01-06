@@ -54,18 +54,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
+logic r_push_is_locked;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_head_ptr <= 'h0;
     r_tail_ptr <= 'h0;
     r_active_bits <= {SIZE{1'b1}};
+    r_push_is_locked <= 1'b0;
     for (int i = 0; i < SIZE; i++) begin
       /* verilator lint_off WIDTH */
       r_freelist[i] = INIT + i;
     end
   end else begin
     if (vlmul_upd_if.valid) begin
+      r_push_is_locked <= 1'b1;
       case (vlmul_upd_if.vlmul)
         3'b000  : begin
           for (int i = 0; i < SIZE; i++) r_freelist[i] <= INIT + i;
@@ -90,28 +93,30 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       endcase // case (vlmul_upd_if.vlmul)
       r_tail_ptr <= 'h0;
       r_head_ptr <= 'h0;
-    end
-    if (i_push) begin
-      if (r_tail_ptr == r_ptr_limit-1) begin
-        r_tail_ptr <= 'h0;
-      end else begin
-        r_tail_ptr <= r_tail_ptr + 'h1;
+    end else begin // if (vlmul_upd_if.valid)
+      if (i_push & ~r_push_is_locked) begin
+        if (r_tail_ptr == r_ptr_limit-1) begin
+          r_tail_ptr <= 'h0;
+        end else begin
+          r_tail_ptr <= r_tail_ptr + 'h1;
+        end
+        r_active_bits[r_tail_ptr] <= 1'b1;
+        r_freelist[r_tail_ptr] <= i_push_id;
       end
-      r_active_bits[r_tail_ptr] <= 1'b1;
-      r_freelist[r_tail_ptr] <= i_push_id;
-    end
-    if (i_pop) begin
-      if (r_head_ptr == r_ptr_limit-1) begin
-        r_head_ptr <= 'h0;
-      end else begin
-        r_head_ptr <= r_head_ptr + 'h1;
-      end
-      r_active_bits[r_head_ptr] <= 1'b0;
+      if (i_pop) begin
+        r_push_is_locked <= 1'b0;
+        if (r_head_ptr == r_ptr_limit-1) begin
+          r_head_ptr <= 'h0;
+        end else begin
+          r_head_ptr <= r_head_ptr + 'h1;
+        end
+        r_active_bits[r_head_ptr] <= 1'b0;
 `ifdef SIMULATION
-      // delete poped ID for debug
-      r_freelist[r_head_ptr] <= 'h0;
+        // delete poped ID for debug
+        r_freelist[r_head_ptr] <= 'h0;
 `endif // SIMULATION
-    end
+      end // if (i_pop)
+    end // else: !if(vlmul_upd_if.valid)
   end
 end
 

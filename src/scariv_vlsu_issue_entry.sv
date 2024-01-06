@@ -228,7 +228,7 @@ always_comb begin
           if ((scariv_vec_pkg::VEC_STEP_W == 1) |
               (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) begin
             if ((r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE) |
-                (r_entry.vec_lmul_index == (1 << r_entry.vlvtype.vtype.vlmul)-1)) begin
+                (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry.vlvtype.vtype.vlmul)-1)) begin
               w_state_next = ISSUED_EX2;
             end else begin
               w_entry_next.vec_lmul_index = r_entry.vec_lmul_index + 'h1;

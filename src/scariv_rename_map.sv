@@ -24,6 +24,9 @@ module scariv_rename_map
    input logic                     i_clk,
    input logic                     i_reset_n,
 
+   // Update VLMUL size
+   vlmul_upd_if.slave       vlmul_upd_if,
+
    input logic [DISP_SIZE * NUM_OPERANDS-1:0] i_arch_valid,
    input logic [ 4: 0]             i_arch_id[DISP_SIZE * NUM_OPERANDS],
    output rnid_t      o_rnid[DISP_SIZE * NUM_OPERANDS],
@@ -107,7 +110,9 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
       if (!i_reset_n) begin
         r_map[i] <= i;
       end else begin
-        if (w_update) begin
+        if (vlmul_upd_if.valid) begin
+          r_map[i] <= i;
+        end else if (w_update) begin
           r_map[i] <= w_update_rnid;
         end
       end

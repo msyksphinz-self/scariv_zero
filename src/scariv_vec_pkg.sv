@@ -119,6 +119,10 @@ function automatic vlenbmax_t calc_vlmax(logic [ 2: 0] vlmul,
 
 endfunction // calc_vlmax
 
+function automatic logic [ 2: 0] calc_num_req(logic [ 2: 0] vlmul);
+  return vlmul[2] ? 'h1 : 1 << vlmul;
+endfunction // calc_num_req
+
 
 typedef struct packed {
   logic                 valid;
@@ -133,6 +137,7 @@ typedef struct packed {
 
   scariv_pkg::reg_wr_issue_t         wr_reg;
   scariv_pkg::reg_rd_issue_t         wr_old_reg;
+  scariv_pkg::rnid_t                 wr_origin_rnid;
   scariv_pkg::reg_rd_issue_t [ 2: 0] rd_regs;
   scariv_pkg::reg_rd_issue_t         v0_reg;
 
@@ -180,6 +185,7 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.wr_reg.typ = in.wr_reg.typ;
   ret.wr_reg.regidx = in.wr_reg.regidx;
   ret.wr_reg.rnid = in.wr_reg.rnid;
+  ret.wr_origin_rnid = in.wr_reg.rnid;
 
   ret.wr_old_reg.valid  = in.wr_reg.valid;
   ret.wr_old_reg.typ    = in.wr_reg.typ;
@@ -274,10 +280,12 @@ typedef struct packed {
   scariv_pkg::reg_rd_issue_t     rd_reg;
   scariv_pkg::reg_wr_issue_t     wr_reg;
   scariv_pkg::reg_rd_issue_t     wr_old_reg;
+  scariv_pkg::rnid_t             wr_origin_rnid;
   logic                          is_uc;
   scariv_lsu_pkg::ex2_haz_t      hazard_typ;
   logic [scariv_lsu_pkg::HAZARD_INDEX_SIZE-1: 0] hazard_index;
   vec_pos_t                      vec_step_index;
+  logic [ 2: 0]                  vec_lmul_index;
   vlsu_replay_info_t             replay_info;
 } vlsu_replay_queue_t;
 

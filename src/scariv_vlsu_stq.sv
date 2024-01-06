@@ -333,7 +333,19 @@ generate for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; s
     assign w_bank_vlsu_haz_check_hit[bank_idx] = |w_spipe_vlsu_haz_check_hit;
   end
 
-  assign vstq_haz_check_if[spipe_idx].ex2_haz_valid = vstq_haz_check_if[spipe_idx].ex2_valid & (|w_bank_vlsu_haz_check_hit);
+  logic  w_vstq_loading_is_older_than_sload;
+  logic  w_vstq_loading_sload_haz_check_hit;
+  assign w_vstq_loading_is_older_than_sload = scariv_pkg::id0_is_older_than_id1 (vlsu_stq_req_if.cmt_id,
+                                                                                 vlsu_stq_req_if.grp_id,
+                                                                                 vstq_haz_check_if[spipe_idx].ex2_cmt_id,
+                                                                                 vstq_haz_check_if[spipe_idx].ex2_grp_id);
+  assign w_vstq_loading_sload_haz_check_hit = w_vstq_loading_is_older_than_sload &
+                                              vlsu_stq_req_if.valid &
+                                              {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                               vlsu_stq_req_if.paddr                 [riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)]};
+
+  assign vstq_haz_check_if[spipe_idx].ex2_haz_valid = vstq_haz_check_if[spipe_idx].ex2_valid & ((|w_bank_vlsu_haz_check_hit) |
+                                                                                                w_vstq_loading_sload_haz_check_hit);
 end endgenerate // block: sload_vstq_haz_loop
 
 endmodule // scariv_vlsu_stq

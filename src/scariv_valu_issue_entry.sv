@@ -184,6 +184,7 @@ always_comb begin
         w_entry_next.vlvtype_index = vlvtype_info_if.index;
         w_entry_next.vlvtype       = vlvtype_upd_load_valid ? vlvtype_upd_if.vlvtype : vlvtype_info_if.vlvtype;
         w_entry_next.vec_step_index = 'h0;
+        w_entry_next.vec_lmul_index = 'h0;
         w_entry_next.vcomp_fin = scariv_vec_pkg::VEC_STEP_W == 1;
 
         if (w_load_entry_flush) begin
@@ -222,8 +223,21 @@ always_comb begin
           w_entry_next.rd_regs[2].predict_ready = 1'b0;
         end else begin
           if (scariv_vec_pkg::VEC_STEP_W == 1 ||
-              r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_entry.vcomp_fin : r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) begin
-            w_state_next = scariv_pkg::SCHED_CLEAR;
+              r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_entry.vcomp_fin :
+              (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) begin
+            if (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry.vlvtype.vtype.vlmul)-1) begin
+              w_state_next = scariv_pkg::SCHED_CLEAR;
+            end else begin
+              w_entry_next.vec_lmul_index = r_entry.vec_lmul_index + 'h1;
+              w_entry_next.vec_step_index = 'h0;
+              for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
+                if (r_entry.rd_regs[rs_idx].valid & r_entry.rd_regs[rs_idx].typ == scariv_pkg::VPR) begin
+                  w_entry_next.rd_regs[rs_idx].rnid = r_entry.rd_regs[rs_idx].rnid + 'h1;
+                end
+              end
+              w_entry_next.wr_old_reg.rnid = r_entry.wr_old_reg.rnid + 'h1;
+              w_entry_next.wr_reg.rnid     = r_entry.wr_reg.rnid + 'h1;
+            end
           end else begin
             w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
             w_entry_next.vcomp_fin = &r_entry.vec_step_index;

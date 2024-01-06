@@ -191,9 +191,11 @@ always_comb begin
     w_ex0_replay_issue.vlvtype           = w_lsu_pipe_req_if.payload.vlvtype     ;
     w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
     w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_replay_issue.wr_origin_rnid    = w_lsu_pipe_req_if.payload.wr_origin_rnid;
     w_ex0_replay_issue.wr_old_reg        = w_lsu_pipe_req_if.payload.wr_old_reg  ;
     w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
     w_ex0_replay_issue.vec_step_index    = w_lsu_pipe_req_if.payload.vec_step_index;
+    w_ex0_replay_issue.vec_lmul_index    = w_lsu_pipe_req_if.payload.vec_lmul_index;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION

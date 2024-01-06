@@ -19,6 +19,9 @@ module scariv_commit_map
  input logic                    i_clk,
  input logic                    i_reset_n,
 
+ // Update VLMUL size
+ vlmul_upd_if.slave             vlmul_upd_if,
+
  // Commit notification
  input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update,
 
@@ -59,10 +62,14 @@ generate for (genvar d_idx = 0; d_idx < 32; d_idx++) begin : reg_loop
       if (!i_reset_n) begin
         r_commit_map[d_idx] <= d_idx;
       end else begin
-        r_commit_map[d_idx] <= w_commit_map_next[d_idx];
+        if (vlmul_upd_if.valid) begin
+          r_commit_map[d_idx] <= d_idx;
+        end else begin
+          r_commit_map[d_idx] <= w_commit_map_next[d_idx];
+        end
       end
-    end
-  end
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end // else: !if((REG_TYPE == GPR) & (d_idx == 0))
 
   assign o_rnid_map[d_idx] = r_commit_map[d_idx];
 end

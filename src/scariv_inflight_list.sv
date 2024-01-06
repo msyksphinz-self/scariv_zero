@@ -21,6 +21,9 @@ module scariv_inflight_list
    input logic                               i_clk,
    input logic                               i_reset_n,
 
+   // Update VLMUL size
+   vlmul_upd_if.slave               vlmul_upd_if,
+
    input rnid_t        i_rnid[scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS],
    output logic [scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS-1: 0] o_valids,
 
@@ -65,7 +68,9 @@ generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : list_loop
       if (!i_reset_n) begin
         r_inflight_list[rn_idx] <= 1'b1;
       end else begin
-        if (w_update_fetch_valid) begin
+        if (vlmul_upd_if.valid) begin
+          r_inflight_list[rn_idx] <= 'b1;
+        end else if (w_update_fetch_valid) begin
           r_inflight_list[rn_idx] <= w_update_fetch_data;
         end else if (w_target_valid) begin
           r_inflight_list[rn_idx] <= 'b1;

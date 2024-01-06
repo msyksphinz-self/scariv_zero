@@ -290,12 +290,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       r_picked_inst_oh   <= 'h0;
       r_issue_entry_lock <= 1'b0;
     end else if (~i_stall) begin
-      if ((scariv_vec_pkg::VEC_STEP_W > 1) & o_issue.valid & o_issue.vec_step_index == 'h0) begin
+      if ((scariv_vec_pkg::VEC_STEP_W > 1) & o_issue.valid &
+          (o_issue.vec_lmul_index ==  'h0) & (o_issue.vec_step_index == 'h0)) begin
         r_picked_inst_oh <= w_picked_inst_oh;
         r_issue_entry_lock <= 1'b1;
       end else if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
                                     (o_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VMASK) |
-                                    (o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) |
+                                    ((o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) &
+                                     ((o_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE) |
+                                      (o_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(o_issue.vlvtype.vtype.vlmul)-1))) |
                                     |(w_entry_dead & r_picked_inst_oh))) begin
         r_picked_inst_oh <= w_picked_inst_oh;
         r_issue_entry_lock <= 1'b0;

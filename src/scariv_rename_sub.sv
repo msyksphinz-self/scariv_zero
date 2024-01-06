@@ -220,6 +220,9 @@ u_scariv_rename_map
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
+
    .i_arch_valid (w_archreg_valid),
    .i_arch_id    (w_archreg),
    .o_rnid       (w_rnid),
@@ -434,6 +437,9 @@ u_inflight_map
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
+
    .i_rnid   (w_rs1_rs2_rnid),
    .o_valids (w_active),
 
@@ -482,6 +488,9 @@ u_commit_map
   (
    .i_clk (i_clk),
    .i_reset_n(i_reset_n),
+
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
 
    .i_commit_rnid_update(i_commit_rnid_update),
    .o_rnid_map (w_restore_commit_map_list)

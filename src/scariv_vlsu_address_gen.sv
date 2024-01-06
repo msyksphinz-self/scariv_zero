@@ -18,6 +18,8 @@ module scariv_vlsu_address_gen
  input logic                     i_flush_valid,
 
  input riscv_pkg::xlen_t         i_rs1_base,
+
+ input logic                     i_is_last_lmul_index,
  input scariv_vec_pkg::vec_pos_t i_vec_step_index,
  output scariv_pkg::vaddr_t      o_vaddr,
  output logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]   o_reg_offset,
@@ -25,7 +27,7 @@ module scariv_vlsu_address_gen
  output logic                    o_req_splitted
  );
 
-logic [$clog2(scariv_vec_pkg::VLENB)-1: 0]    r_acc_addr_offset;
+logic [$clog2(scariv_vec_pkg::VLENB*8)-1: 0]    r_acc_addr_offset;
 logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]    r_reg_offset;
 scariv_vec_pkg::vec_pos_t r_vec_step_index;
 
@@ -93,8 +95,9 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_stall        = (r_state == INIT) & w_cache_misaligned & i_valid;
 assign o_req_splitted = (r_state != INIT);
-function automatic logic [$clog2(scariv_vec_pkg::VLENB)-1: 0] update_offset (scariv_vec_pkg::vec_pos_t step, logic [$clog2(scariv_vec_pkg::VLENB)-1: 0] current_offset);
-  if (step == scariv_vec_pkg::VEC_STEP_W-1) begin
+
+function automatic logic [$clog2(scariv_vec_pkg::VLENB*8)-1: 0] update_offset (scariv_vec_pkg::vec_pos_t step, logic [$clog2(scariv_vec_pkg::VLENB*8)-1: 0] current_offset);
+  if (i_is_last_lmul_index & (step == scariv_vec_pkg::VEC_STEP_W-1)) begin
     return 'h0;
   end else begin
     return current_offset + scariv_vec_pkg::DLENB;
