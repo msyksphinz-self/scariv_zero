@@ -144,6 +144,7 @@
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv
 ../src/scariv_lsu_lrsc.sv
+../src/scariv_lsu_prefetcher.sv
 
 ../src/scariv_snoop_top.sv
 

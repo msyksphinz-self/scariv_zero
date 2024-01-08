@@ -47,6 +47,10 @@ localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_p
                                scariv_conf_pkg::MISSU_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
 
+// Prefetecher
+localparam PREF_IPT_SIZE  = 64;   // IP-table size
+localparam PREF_CSPT_SIZE = 128;  // CSPT size
+
 typedef enum logic [ 1: 0] {
   MESI_INVALID   = 0,
   MESI_EXCLUSIVE = 1,
@@ -91,6 +95,7 @@ typedef enum logic [ 2: 0] {
   typedef struct packed {
     logic   valid;
     logic [31:0] inst;
+    vaddr_t      pc_addr;
     inst_cat_t   cat;
     brtag_t      brtag;
 
@@ -107,7 +112,6 @@ typedef enum logic [ 2: 0] {
 
 `ifdef SIMULATION
     logic         sim_is_rvc;
-    vaddr_t       sim_pc_addr;
     logic [63: 0] kanata_id;
 `endif // SIMULATION
   } lsu_issue_entry_t;
@@ -120,6 +124,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
+  ret.pc_addr = in.pc_addr;
 
   ret.cat    = in.cat;
 
@@ -140,7 +145,6 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
 
 `ifdef SIMULATION
   ret.sim_is_rvc  = in.rvc_inst_valid;
-  ret.sim_pc_addr = in.pc_addr;
   ret.kanata_id   = in.kanata_id;
 `endif // SIMULATION
 
@@ -724,6 +728,7 @@ typedef struct packed {
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
   logic [31: 0]          inst;
+  scariv_pkg::vaddr_t    pc_addr;
   reg_rd_issue_t [ 2: 0] rd_regs;
   reg_wr_issue_t         wr_reg;
   logic                  oldest_valid;
@@ -733,6 +738,7 @@ typedef struct packed {
   logic                  paddr_valid;
   scariv_pkg::paddr_t    paddr;
   logic                  is_uc;
+  logic                  is_prefetch;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
 `endif // SIMULATION

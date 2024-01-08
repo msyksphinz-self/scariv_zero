@@ -66,6 +66,9 @@ module scariv_lsu_pipe
   // Interface for Replay Queue
   lsu_pipe_haz_if.master                 lsu_pipe_haz_if,
 
+ // Prefetcher Interface
+ pipe_prefetcher_if.master             pipe_prefetcher_if,
+
   /* SFENCE update information */
   sfence_if.master                  sfence_if_master,
   /* FENCE.I update */
@@ -330,7 +333,8 @@ assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1
                                  r_ex1_issue.rd_regs[0].predict_ready[1] ? r_ex1_rs1_fwd_data :
                                  ex0_regread_rs1.data;
 
-assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
+assign w_ex1_vaddr = r_ex1_issue.is_prefetch ? r_ex1_issue.paddr :
+                     w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 
 logic w_ex1_readmem_cmd;
 logic w_ex1_writemem_cmd;
@@ -347,7 +351,7 @@ assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop ==
 assign w_ex1_writemem_cmd = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
 
 
-assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & (w_ex1_writemem_cmd | w_ex1_readmem_cmd) & ~r_ex1_issue.paddr_valid;
+assign w_ex1_tlb_req.valid       = r_ex1_issue.valid & (w_ex1_writemem_cmd | w_ex1_readmem_cmd | r_ex1_issue.is_prefetch) & ~r_ex1_issue.paddr_valid;
 assign w_ex1_tlb_req.cmd         = w_ex1_readmem_cmd ? M_XRD : M_XWR;
 assign w_ex1_tlb_req.vaddr       = w_ex1_vaddr;
 assign w_ex1_tlb_req.size        =
@@ -429,7 +433,7 @@ end
 assign w_ex1_readmem_op = (r_ex1_pipe_ctrl.op == OP_LOAD) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_lr;
 
 assign ex1_l1d_rd_if.s0_valid = r_ex1_issue.valid &
-                                w_ex1_readmem_op & !w_ex1_haz_detected;
+                                (w_ex1_readmem_op | r_ex1_issue.is_prefetch) & !w_ex1_haz_detected;
 assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_DATA_B_W)],
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
@@ -472,7 +476,7 @@ assign w_ex2_load_mispredicted = r_ex2_issue.valid &
                                  (w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid |
                                   (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) & ~(&w_ex2_fwd_success));
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
-                          w_ex2_readmem_op &
+                          (w_ex2_readmem_op | r_ex2_issue.is_prefetch) &
                           ~w_ex2_rmw_haz_vld &
                           ex1_l1d_rd_if.s1_miss &
                           ~ex1_l1d_rd_if.s1_conflict &
@@ -675,6 +679,21 @@ end // always_comb
 assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_ex2_issue.valid;
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex2_issue.valid;
+
+
+//
+// EX1 Prefetch Pipeline
+//
+assign pipe_prefetcher_if.valid = r_ex1_issue.valid &
+                                  ~r_ex1_issue.paddr_valid &  // Initial access from RV
+                                  ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) &
+                                  ~w_ex1_tlb_resp.miss &
+                                  ~w_ex1_commit_flush & ~w_ex1_br_flush;
+assign pipe_prefetcher_if.cmt_id   = r_ex1_issue.cmt_id;
+assign pipe_prefetcher_if.grp_id   = r_ex1_issue.grp_id;
+assign pipe_prefetcher_if.vaddr    = w_ex1_vaddr;
+assign pipe_prefetcher_if.pc_vaddr = r_ex1_issue.pc_addr;
+
 
 //
 // EX3 stage pipeline

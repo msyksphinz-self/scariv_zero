@@ -1047,3 +1047,33 @@ modport monitor (
 );
 
 endinterface // st_req_info_if
+
+
+// -----------------------------
+// Prefetcher Interface
+// -----------------------------
+interface pipe_prefetcher_if;
+
+logic                valid;
+scariv_pkg::vaddr_t  vaddr;
+scariv_pkg::cmt_id_t cmt_id;
+scariv_pkg::grp_id_t grp_id;
+scariv_pkg::vaddr_t  pc_vaddr;
+
+modport master (
+  output valid,
+  output vaddr,
+  output cmt_id,
+  output grp_id,
+  output pc_vaddr
+);
+
+modport slave (
+  input valid,
+  input vaddr,
+  input cmt_id,
+  input grp_id,
+  input pc_vaddr
+);
+
+endinterface // pipe_prefetcher_if

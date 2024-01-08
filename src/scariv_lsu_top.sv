@@ -144,6 +144,11 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs1_x0;
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_sfence_if_is_rs2_x0;
 scariv_pkg::vaddr_t w_sfence_if_vaddr[scariv_conf_pkg::LSU_INST_NUM];
 
+// Prefetcher Interface
+pipe_prefetcher_if  w_pipe_prefetcher_if[scariv_conf_pkg::LSU_INST_NUM]();
+lsu_pipe_issue_t    w_pref_issue[scariv_conf_pkg::LSU_INST_NUM];   // Prefetch Request
+logic               w_pref_ready[scariv_conf_pkg::LSU_INST_NUM];
+
 assign o_fence_i = |w_fence_i;
 
 assign sfence_if.valid     = |w_sfence_if_valid;
@@ -205,6 +210,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .i_stq_rmw_existed (w_stq_rmw_existed),
     .i_stq_rs2_resolve (w_stq_rs2_resolve),
+
+    .pipe_prefetcher_if (w_pipe_prefetcher_if[lsu_idx]),
+    .i_pref_issue       (w_pref_issue[lsu_idx]),   // Prefetch Request
+    .o_pref_ready       (w_pref_ready[lsu_idx]),
 
     .i_missu_resolve (w_missu_resolve),
     .i_missu_is_full (w_missu_is_full),
@@ -499,5 +508,22 @@ u_scariv_dcache
 
    .missu_dc_search_if (w_missu_dc_search_if)
    );
+
+
+// ---------------
+// L1D Prefetcher
+// ---------------
+scariv_lsu_prefetcher
+u_prefetcher
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .pipe_prefetcher_if (w_pipe_prefetcher_if),
+   .o_pref_issue      (w_pref_issue[scariv_conf_pkg::LSU_INST_NUM-1]),
+   .i_pref_pipe_ready (w_pref_ready[scariv_conf_pkg::LSU_INST_NUM-1])
+   );
+
+
 
 endmodule // mrsh_lsu_top

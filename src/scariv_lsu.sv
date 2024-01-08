@@ -79,6 +79,10 @@ module scariv_lsu
     input logic             i_stq_rmw_existed,
     input stq_resolve_t     i_stq_rs2_resolve,
 
+    // Prefetcher Interface
+    pipe_prefetcher_if.master  pipe_prefetcher_if,
+    input lsu_pipe_issue_t     i_pref_issue,   // Prefetch Request
+    output logic               o_pref_ready,
     /* write output */
     output scariv_pkg::early_wr_t o_ex1_early_wr,
     output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
@@ -218,7 +222,12 @@ assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1
 
 assign w_lsu_pipe_req_if.ready = w_replay_selected;
 
+assign o_pref_ready = ~(w_lsu_pipe_req_if.valid | w_issue_from_iss.valid);
+
 always_comb begin
+  w_ex0_replay_issue = 'h0;
+  w_ex0_replay_index_oh = 'h0;
+
   if (w_replay_selected) begin
     w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
     w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.payload.cmt_id      ;
@@ -232,16 +241,17 @@ always_comb begin
     w_ex0_replay_issue.paddr_valid       = 1'b1;
     w_ex0_replay_issue.paddr             = w_lsu_pipe_req_if.payload.paddr;
     w_ex0_replay_issue.is_uc             = w_lsu_pipe_req_if.payload.is_uc;
-
+    w_ex0_replay_issue.is_prefetch       = 1'b0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION
     w_ex0_replay_index_oh           = 'h0;
-  end else begin
+  end else if (w_issue_from_iss.valid) begin
     w_ex0_replay_issue.valid             = w_issue_from_iss.valid;
     w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
     w_ex0_replay_issue.inst              = w_issue_from_iss.inst;
+    w_ex0_replay_issue.pc_addr           = w_issue_from_iss.pc_addr;
     w_ex0_replay_issue.rd_regs           = w_issue_from_iss.rd_regs;
     w_ex0_replay_issue.wr_reg            = w_issue_from_iss.wr_reg;
     w_ex0_replay_issue.oldest_valid      = w_issue_from_iss.oldest_valid;
@@ -250,10 +260,15 @@ always_comb begin
     w_ex0_replay_issue.paddr_valid       = 1'b0;
     w_ex0_replay_issue.paddr             = 'h0;
     w_ex0_replay_issue.is_uc             = 1'b0;
+    w_ex0_replay_issue.is_prefetch       = 1'b0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
 `endif // SIMULATION
     w_ex0_replay_index_oh           = w_issue_index_from_iss;
+  end else if (o_pref_ready) begin // if (w_iss_from_issue.valid)
+    w_ex0_replay_issue.valid = i_pref_issue.valid;
+    w_ex0_replay_issue.paddr = i_pref_issue.paddr;
+    w_ex0_replay_issue.is_prefetch = 1'b1;
   end
 end // always_comb
 
@@ -312,6 +327,8 @@ u_lsu_pipe
    .o_tlb_resolve    (o_tlb_resolve   ),
    .o_ex2_q_updates  (o_ex2_q_updates ),
    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
+
+   .pipe_prefetcher_if (pipe_prefetcher_if),
 
    .sfence_if_master (sfence_if_master),
    .o_fence_i (o_fence_i),
