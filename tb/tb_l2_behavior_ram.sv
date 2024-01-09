@@ -48,7 +48,7 @@ logic                [ADDR_W-1:0] actual_line_pos;
 typedef struct packed {
   logic [ TAG_W-1:0] tag  ;
   logic [DATA_W-1:0] data ;
-  logic [ 3: 0]      sim_timer;
+  logic [$clog2(RD_LAT): 0] sim_timer;
 } rd_data_t;
 
 rd_data_t rd_queue[$];
@@ -61,7 +61,7 @@ logic                [ TAG_W-1:0] r_req_tag;
 always_comb begin
   rd_queue_init.data      = ram.exists(actual_line_pos) ? ram[actual_line_pos] : 'h0;
   rd_queue_init.tag       = i_req_tag;
-  rd_queue_init.sim_timer = 10;
+  rd_queue_init.sim_timer = RD_LAT;
 end
 
 generate for (genvar byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
