@@ -480,7 +480,7 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~w_ex2_rmw_haz_vld &
                           ex1_l1d_rd_if.s1_miss &
                           ~ex1_l1d_rd_if.s1_conflict &
-                          ~(&w_ex2_fwd_success);
+                          (~(&w_ex2_fwd_success) | r_ex2_issue.is_prefetch);
 
 assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
                                         !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
@@ -685,6 +685,8 @@ assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r
 // EX1 Prefetch Pipeline
 //
 assign pipe_prefetcher_if.valid = r_ex1_issue.valid &
+                                  // 1'b0 & // NEVER
+                                  ~r_ex1_issue.is_prefetch &
                                   ~r_ex1_issue.paddr_valid &  // Initial access from RV
                                   ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) &
                                   ~w_ex1_tlb_resp.miss &

@@ -24,12 +24,18 @@ module scariv_lsu_prefetcher
 localparam PC_TAG_LEN = 9;
 
 typedef struct packed {
-  logic                valid;
-  logic [PC_TAG_LEN:1] pc_tag;
-  logic [11: 0]        last_line_offset;
-  logic [11: 0]        stride;
-  logic [ 1: 0]        confidence;
+  logic                               valid;
+  logic [PC_TAG_LEN:1]                pc_tag;
+  logic [11: 0]                       last_line_offset;
+  logic [11: 0]                       stride;
+  logic [ 1: 0]                       confidence;
+  logic [$clog2(PREF_CSPT_SIZE)-1: 0] signature;
 } ipt_entry_t;
+
+typedef struct packed {
+  logic [11: 0]  stride;
+  logic [ 1: 0]  confidence;
+} cspt_entry_t;
 
 function automatic logic [ 1: 0] inc_confidence(logic [ 1: 0] in);
   return in == 2'b11 ? in : in + 2'b1;
@@ -42,52 +48,54 @@ endfunction // inc_confidence
 // ------------------------
 // IPT search & update
 // ------------------------
-ipt_entry_t[PREF_IPT_SIZE-1: 0] r_ipt_entry;
+ipt_entry_t [PREF_IPT_SIZE-1: 0]  r_ipt_entries;
+cspt_entry_t[PREF_CSPT_SIZE-1: 0] r_cspt_entries;
 
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
   logic [$clog2(PREF_IPT_SIZE)-1: 0] w_ipt_index;
   logic [11: 0]                      w_diff_stride;
   assign w_ipt_index   = pipe_prefetcher_if[p_idx].pc_vaddr[1 +: $clog2(PREF_IPT_SIZE)];
-  assign w_diff_stride = pipe_prefetcher_if[p_idx].vaddr[11: 0] - r_ipt_entry[w_ipt_index].last_line_offset[11: 0];
+  assign w_diff_stride = pipe_prefetcher_if[p_idx].vaddr[11: 0] - r_ipt_entries[w_ipt_index].last_line_offset[11: 0];
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
     end else begin
       if (pipe_prefetcher_if[p_idx].valid) begin
-        if (!r_ipt_entry[w_ipt_index].valid) begin
+        if (!r_ipt_entries[w_ipt_index].valid) begin
           // Entry not valid
-          r_ipt_entry[w_ipt_index].valid <= 1'b1;
-          if (r_ipt_entry[w_ipt_index].pc_tag != pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN]) begin
+          r_ipt_entries[w_ipt_index].valid <= 1'b1;
+          if (r_ipt_entries[w_ipt_index].pc_tag != pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN]) begin
             // PC tag different: Different PC access
-            r_ipt_entry[w_ipt_index].pc_tag <= pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN];
-            r_ipt_entry[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
-            r_ipt_entry[w_ipt_index].stride <= 'h0;
+            r_ipt_entries[w_ipt_index].pc_tag <= pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN];
+            r_ipt_entries[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
+            r_ipt_entries[w_ipt_index].stride <= 'h0;
           end
         end else begin
           // Already allocated
-          if (r_ipt_entry[w_ipt_index].pc_tag == pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN]) begin
+          if (r_ipt_entries[w_ipt_index].pc_tag == pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN]) begin
             // When PC Hit
-            r_ipt_entry[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
-            r_ipt_entry[w_ipt_index].stride <= w_diff_stride;
-            if (r_ipt_entry[w_ipt_index].stride == w_diff_stride) begin
-              r_ipt_entry[w_ipt_index].confidence <= inc_confidence(r_ipt_entry[w_ipt_index].confidence);
+            r_ipt_entries[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
+            r_ipt_entries[w_ipt_index].stride <= w_diff_stride;
+            if (r_ipt_entries[w_ipt_index].stride == w_diff_stride) begin
+              r_ipt_entries[w_ipt_index].confidence <= inc_confidence(r_ipt_entries[w_ipt_index].confidence);
             end else begin
-              r_ipt_entry[w_ipt_index].confidence <= dec_confidence(r_ipt_entry[w_ipt_index].confidence);
+              r_ipt_entries[w_ipt_index].confidence <= dec_confidence(r_ipt_entries[w_ipt_index].confidence);
             end
+            r_ipt_entries[w_ipt_index].signature <= (r_ipt_entries[w_ipt_index].signature << 1) ^ w_diff_stride;
           end else begin
             // PC tag different: Different PC access
-            r_ipt_entry[w_ipt_index].pc_tag <= pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN];
-            r_ipt_entry[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
-            r_ipt_entry[w_ipt_index].stride <= 'h0;
-          end // else: !if(r_ipt_entry[w_ipt_index].pc_tag == pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN])
-        end // else: !if(!r_ipt_entry[w_ipt_index].valid)
+            r_ipt_entries[w_ipt_index].pc_tag <= pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN];
+            r_ipt_entries[w_ipt_index].last_line_offset <= pipe_prefetcher_if[p_idx].vaddr[11: 0];
+            r_ipt_entries[w_ipt_index].stride <= 'h0;
+          end // else: !if(r_ipt_entries[w_ipt_index].pc_tag == pipe_prefetcher_if[p_idx].pc_vaddr[$clog2(PREF_IPT_SIZE)+1 +: PC_TAG_LEN])
+        end // else: !if(!r_ipt_entries[w_ipt_index].valid)
       end // if (pipe_prefetcher_if[p_idx].valid)
     end // else: !if(!i_reset_n)
   end // always_ff @ (posedge i_clk, negedge i_reset_n)
 end endgenerate // block: pipe_loop
 
 logic                              r_pr1_valid;
-logic [$clog2(PREF_IPT_SIZE)-1: 0] r_pr1_updated_index;
+logic [$clog2(PREF_IPT_SIZE)-1: 0] r_pr1_ipt_updated_index;
 scariv_pkg::vaddr_t                r_pr1_vaddr;
 
 typedef enum logic {
@@ -101,28 +109,99 @@ pref_state_t r_pref_state;
 logic [$clog2(NUM_DEGREE)-1: 0] r_pref_degree;
 scariv_pkg::vaddr_t r_pref_vaddr;
 
+logic [$clog2(PREF_CSPT_SIZE)-1: 0] w_pr1_ipt_signature;
+cspt_entry_t                        w_pr1_cspt_entry;
+assign w_pr1_ipt_signature = r_ipt_entries[r_pr1_ipt_updated_index].signature;
+assign w_pr1_cspt_entry    = r_cspt_entries[w_pr1_ipt_signature];
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_pr1_valid <= 1'b0;
     r_pref_state <= INIT;
   end else begin
     r_pr1_valid <= pipe_prefetcher_if[0].valid;
-    r_pr1_updated_index <= pipe_prefetcher_if[0].pc_vaddr[1 +: $clog2(PREF_IPT_SIZE)];
+    r_pr1_ipt_updated_index <= pipe_prefetcher_if[0].pc_vaddr[1 +: $clog2(PREF_IPT_SIZE)];
     r_pr1_vaddr <= pipe_prefetcher_if[0].vaddr;
 
+    if (r_cspt_entries[w_pr1_ipt_signature].stride == r_ipt_entries[w_pr1_ipt_signature].stride) begin
+      r_cspt_entries[w_pr1_ipt_signature].confidence = inc_confidence(r_cspt_entries[w_pr1_ipt_signature].confidence);
+    end else begin
+      r_cspt_entries[w_pr1_ipt_signature].confidence = dec_confidence(r_cspt_entries[w_pr1_ipt_signature].confidence);
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+logic               r_pr2_valid;
+scariv_pkg::vaddr_t r_pr2_vaddr;
+logic [$clog2(PREF_IPT_SIZE)-1: 0]  r_pr2_ipt_index;
+logic [$clog2(PREF_CSPT_SIZE)-1: 0] r_pr2_cspt_index;
+
+typedef struct packed {
+  scariv_pkg::vaddr_t base_vaddr;
+  logic [11: 0]       stride;
+} ipt_req_info_t;
+
+logic                               w_pr2_fifo_push;
+ipt_req_info_t                      w_pr2_ipt_req_info;
+logic                               r_ipt_fifo_pop;
+ipt_req_info_t                      w_ipt_pop_info;
+logic                               w_ipt_fifo_empty;
+assign w_pr2_fifo_push               = r_pr2_valid & (&r_ipt_entries[r_pr2_ipt_index].confidence);
+assign w_pr2_ipt_req_info.base_vaddr = r_pr2_vaddr;
+assign w_pr2_ipt_req_info.stride     = r_ipt_entries[r_pr2_ipt_index].stride;
+
+ring_fifo
+  #(
+    .T(ipt_req_info_t),
+    .DEPTH(8)
+    )
+u_ipt_req_fifo
+  (
+   .i_clk     (i_clk                 ),
+   .i_reset_n (i_reset_n             ),
+   .i_push    (w_pr2_fifo_push       ),
+   .i_data    (w_pr2_ipt_req_info    ),
+   .o_empty   (w_ipt_fifo_empty      ),
+   .o_full    (                      ),
+   .i_pop     (r_ipt_fifo_pop  ),
+   .o_data    (w_ipt_pop_info     )
+   );
+
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_pr2_valid <= 1'b0;
+
+  end else begin
+    r_pr2_valid      <= r_pr1_valid;
+    r_pr2_ipt_index  <= r_pr1_ipt_updated_index;
+    r_pr2_cspt_index <= w_pr1_ipt_signature;
+    r_pr2_vaddr      <= r_pr1_vaddr;
+  end
+end
+
+logic [11: 0] r_pref_stride;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_ipt_fifo_pop <= 1'b0;
+  end else begin
     case (r_pref_state)
       INIT: begin
-        if (r_pr1_valid & (&r_ipt_entry[r_pr1_updated_index].confidence)) begin
+        if (!w_ipt_fifo_empty) begin
+          r_ipt_fifo_pop <= 1'b1;
           r_pref_state <= PREF_GEN;
           r_pref_degree <= 'h0;
-          r_pref_vaddr <= r_pr1_vaddr + r_ipt_entry[r_pr1_updated_index].stride;
+          r_pref_stride <= w_ipt_pop_info.stride;
+          r_pref_vaddr <= w_ipt_pop_info.base_vaddr + w_ipt_pop_info.stride;
         end
       end
       PREF_GEN : begin
+        r_ipt_fifo_pop <= 1'b0;
         if (r_pref_degree == NUM_DEGREE-1) begin
           r_pref_state <= INIT;
         end else begin
-          r_pref_vaddr <= r_pref_vaddr + r_ipt_entry[r_pr1_updated_index].stride;
+          r_pref_vaddr <= r_pref_vaddr + r_pref_stride;
           r_pref_degree <= r_pref_degree + 'h1;
         end
       end
