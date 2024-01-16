@@ -49,19 +49,15 @@ module scariv_frontend
 // f0 stage
 // ==============
 
-typedef enum logic [ 2: 0]  {
+typedef enum logic {
   INIT = 0,
-  FETCH_REQ = 1,
-  WAIT_TLB_FILL = 2,
-  WAIT_IC_FILL = 3,
-  WAIT_IBUF_FREE = 4,
-  WAIT_FLUSH_FREE = 5
+  FETCH_REQ = 1
 } if_sm_t;
 
-if_sm_t  r_if_state;
 if_sm_t  w_if_state_next;
 
 logic                     r_f0_valid;
+logic                     r_f0_valid_d1;
 riscv_pkg::xlen_t         r_f0_vaddr;
 riscv_pkg::xlen_t         w_f0_vaddr_next;
 riscv_pkg::xlen_t         w_f0_vaddr;
@@ -137,7 +133,7 @@ vaddr_t w_iq_predict_target_vaddr;
 logic   r_iq_predict_flush;
 
 `ifdef SIMULATION
-paddr_t  r_f2_paddr;
+paddr_t  sim_r_f2_paddr;
 `endif // SIMULATION
 logic r_f0_int_flush;
 logic w_f0_int_flush_next;
@@ -165,185 +161,38 @@ cmt_id_t w_flush_cmt_id_next;
 grp_id_t w_flush_grp_id_next;
 
 logic    w_inst_buffer_ready;
-
-
-logic    w_ic_refill_wakeup;
-logic    w_tlb_refill_wakeup;
-logic    w_ibuf_refill_wakeup;
-logic    w_flush_haz_clear;
-
-logic    w_is_ftq_empty;
-logic    r_br_wait_ftq_free;
-logic    w_br_wait_ftq_free;
-
 logic    w_f0_req_ready;
 assign w_f0_req_ready = w_f0_ic_ready & w_tlb_ready;
-assign w_ic_refill_wakeup    = (r_if_state == WAIT_IC_FILL ) & w_f0_req_ready;
-assign w_tlb_refill_wakeup   = (r_if_state == WAIT_TLB_FILL) & w_f0_req_ready;
-assign w_ibuf_refill_wakeup  = (r_if_state == WAIT_IBUF_FREE ) & w_inst_buffer_ready & w_f0_req_ready;
-assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_f0_req_ready &
-                               (r_br_wait_ftq_free ? w_is_ftq_empty : 1'b1);
 
-always_comb begin
-  w_int_flush_valid = 1'b0;
-  if (is_flushed_commit(i_commit)) begin
-    if (i_commit.int_valid) begin
-      case (i_commit.except_type)
-        riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_EXTERNAL_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::MACHINE_TIMER_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_TIMER_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::MACHINE_SOFT_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_SOFT_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
-          w_int_flush_valid = 1'b1;
-        end
-      endcase // case (i_commit.except_type)
-    end else begin
-      case (i_commit.except_type)
-        SILENT_FLUSH   : w_f0_vaddr_flush_next = i_commit.epc + 4;
-        ANOTHER_FLUSH  : w_f0_vaddr_flush_next = i_commit.epc;
-        MRET           : w_f0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
-        SRET           : w_f0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
-        URET           : w_f0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];
-        ECALL_M        :
-          if (csr_info.medeleg[ECALL_M]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        ECALL_S        :
-          if (csr_info.medeleg[ECALL_S]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        ECALL_U        :
-          if (csr_info.medeleg[ECALL_U]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        BREAKPOINT        :
-          if (csr_info.medeleg[BREAKPOINT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        INST_ACC_FAULT :
-          if (csr_info.medeleg[INST_ACC_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        LOAD_ACC_FAULT :
-          if (csr_info.medeleg[LOAD_ACC_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        STAMO_ACC_FAULT :
-          if (csr_info.medeleg[STAMO_ACC_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        INST_PAGE_FAULT :
-          if (csr_info.medeleg[INST_PAGE_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        LOAD_PAGE_FAULT :
-          if (csr_info.medeleg[LOAD_PAGE_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        STAMO_PAGE_FAULT :
-          if (csr_info.medeleg[STAMO_PAGE_FAULT]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        INST_ADDR_MISALIGN :
-          if (csr_info.medeleg[INST_ADDR_MISALIGN]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        LOAD_ADDR_MISALIGN :
-          if (csr_info.medeleg[LOAD_ADDR_MISALIGN]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        STAMO_ADDR_MISALIGN :
-          if (csr_info.medeleg[STAMO_ADDR_MISALIGN]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        ILLEGAL_INST        :
-          if (csr_info.medeleg[ECALL_M]) begin
-            w_f0_vaddr_flush_next = csr_info.stvec[riscv_pkg::XLEN_W-1: 0];
-          end else begin
-            w_f0_vaddr_flush_next = csr_info.mtvec[riscv_pkg::XLEN_W-1: 0];
-          end
-        default           : begin
-          w_f0_vaddr_flush_next = 'h0;
-`ifdef SIMULATION
-          $fatal (0, "This exception not supported now : %d", i_commit.except_type);
-`endif // SIMULATION
-        end
-      endcase // case (i_commit.except_type)
-    end // else: !if(i_commit.int_valid)
-  end else if (w_br_flush) begin
-    w_f0_vaddr_flush_next = br_upd_if.target_vaddr;
-  end else if (!w_f0_req_ready) begin
-      w_f0_vaddr_flush_next = r_f0_vaddr;
-  end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
-    w_f0_vaddr_flush_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                            (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  end
-end // always_comb
+scariv_front_addr_gen
+u_addr_gen
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_commit (i_commit),
+   .br_upd_if (br_upd_if),
+
+   .csr_info (csr_info),
+
+   .i_f0_req_ready    (w_f0_req_ready       ),
+   .i_f0_vaddr        (r_f0_vaddr           ),
+   .o_int_flush_valid (w_int_flush_valid    ),
+   .o_vaddr           (w_f0_vaddr_flush_next)
+   );
+
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_if_state <= INIT;
-
-    r_f0_valid <= 1'b0;
-    /* verilator lint_off WIDTH */
+    r_f0_valid    <= 1'b0;
+    r_f0_valid_d1 <= 1'b0;
     r_f0_vaddr <= PC_INIT_VAL;
-    r_br_wait_ftq_free <= 1'b0;
   end else begin
-    r_if_state <= FETCH_REQ;
-    r_f0_valid <= 1'b1;
-    r_f0_vaddr <= r_if_state == FETCH_REQ ? w_f0_vaddr_next : PC_INIT_VAL;
+    r_f0_valid     <= 1'b1;
+    r_f0_valid_d1  <= r_f0_valid;
+    r_f0_vaddr     <= w_f0_vaddr_next;
     r_f0_int_flush <= w_f0_int_flush_next;
-    r_br_wait_ftq_free <= w_br_wait_ftq_free;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -355,196 +204,67 @@ assign w_f0_update_cond_1 = w_if_state_next == FETCH_REQ;
 logic w_f2_ic_miss_valid;
 assign w_f2_ic_miss_valid = r_f2_valid & w_f2_ic_resp.miss & !r_f2_clear;
 
-always_comb begin
-  w_f0_vaddr_next = r_f0_vaddr;
-  w_if_state_next = r_if_state;
-  w_br_wait_ftq_free = r_br_wait_ftq_free;
-  w_f0_int_flush_next = r_f0_int_flush;
-
-  w_f0_vaddr_next = w_f0_vaddr_flush_next;
-
-  // case (r_if_state)
-  //   INIT : begin
-  //     w_if_state_next = FETCH_REQ;
-  //   end
-  //   FETCH_REQ : begin
-  if (w_flush_valid | w_int_flush_valid) begin
-    // if (!w_f0_req_ready | w_br_fe_flush & !w_is_ftq_empty) begin
-    w_f0_vaddr_next = w_f0_vaddr_flush_next;
-    // w_if_state_next = WAIT_FLUSH_FREE;
-    w_br_wait_ftq_free = w_br_fe_flush & !w_is_ftq_empty;
-    w_f0_int_flush_next = w_f0_int_inserted;
-    // end else begin
-    //   w_f0_vaddr_next = (w_f0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-    //                     (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-    // end
-  end else if (w_iq_predict_valid) begin
-    if (w_f0_req_ready) begin
-      w_f0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                        (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-    end else begin
-      w_f0_vaddr_next = w_iq_predict_target_vaddr;
-    end
-  end else if (r_f2_valid & !r_f2_clear & r_f2_tlb_miss) begin
-    // w_if_state_next = WAIT_TLB_FILL;
-    w_f0_vaddr_next = r_f2_vaddr;
-    w_f0_int_flush_next = r_f2_int_inserted;
-  end else if (r_f2_valid & w_f2_ic_resp.miss & !r_f2_clear) begin
-    // w_if_state_next = WAIT_IC_FILL;
-    w_f0_vaddr_next = r_f2_vaddr;
-    w_f0_int_flush_next = r_f2_int_inserted;
-  end else if (r_f2_valid & !r_f2_clear & w_f2_ic_resp.valid & ~w_inst_buffer_ready) begin
-    // Retry from S2 stage Vaddr
-    w_f0_vaddr_next = r_f2_vaddr;
-    // w_if_state_next = WAIT_IBUF_FREE;
-  end else if (w_f2_predict_valid & !r_f2_clear) begin
-    if (!w_f0_req_ready) begin
-      w_f0_vaddr_next = w_f2_predict_target_vaddr;
-    end else begin
-      w_f0_vaddr_next = (w_f2_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                        (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-    end
-  end else if (w_f1_predict_valid & w_f1_ubtb_predict_if.ubtb_info.taken & !r_f1_clear) begin
-    if (!w_f0_req_ready) begin
-      w_f0_vaddr_next = w_f1_ubtb_predict_if.ubtb_info.target_vaddr;
-    end else begin
-      w_f0_vaddr_next = (w_f1_ubtb_predict_if.ubtb_info.target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                        (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-      end
-  end else if (!w_f0_req_ready) begin
-    w_f0_vaddr_next = w_f0_vaddr;
-  end else begin
-    w_f0_vaddr_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-                      (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-    w_f0_int_flush_next = w_f0_int_inserted;
-  end
-  //   end
-  //   WAIT_IC_FILL : begin
-  //     if (w_flush_valid | w_int_flush_valid) begin
-  //       w_f0_int_flush_next = w_f0_int_inserted;
-  //       if (!w_ic_refill_wakeup | w_br_fe_flush & !w_is_ftq_empty) begin
-  //         w_f0_vaddr_next = w_f0_vaddr_flush_next;
-  //         w_if_state_next = WAIT_FLUSH_FREE;
-  //         w_br_wait_ftq_free = w_br_fe_flush & !w_is_ftq_empty;
-  //       end else begin
-  //         w_f0_vaddr_next = (w_f0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end
-  //     end else if (w_iq_predict_valid) begin
-  //       if (w_ic_refill_wakeup) begin
-  //         w_f0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end else begin
-  //         w_f0_vaddr_next = w_iq_predict_target_vaddr;
-  //       end
-  //     end else if (w_ic_refill_wakeup) begin
-  //       w_f0_vaddr_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //       w_if_state_next = FETCH_REQ;
-  //     end
-  //   end
-  //   WAIT_TLB_FILL : begin
-  //     if (w_flush_valid | w_int_flush_valid) begin
-  //       w_f0_int_flush_next = w_f0_int_inserted;
-  //       if (!w_tlb_refill_wakeup | w_br_fe_flush & !w_is_ftq_empty) begin
-  //         w_f0_vaddr_next = w_f0_vaddr_flush_next;
-  //         w_if_state_next = WAIT_FLUSH_FREE;
-  //         w_br_wait_ftq_free = w_br_fe_flush & !w_is_ftq_empty;
-  //       end else begin
-  //         w_f0_vaddr_next = (w_f0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end
-  //     end else if (w_iq_predict_valid) begin
-  //       if (w_tlb_refill_wakeup) begin
-  //         w_f0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end else begin
-  //         w_f0_vaddr_next = w_iq_predict_target_vaddr;
-  //       end
-  //     end else if (w_tlb_refill_wakeup) begin
-  //       w_f0_vaddr_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //       w_if_state_next = FETCH_REQ;
-  //     end
-  //   end
-  //   WAIT_IBUF_FREE : begin
-  //     if (w_flush_valid | w_int_flush_valid) begin
-  //       w_f0_int_flush_next = w_f0_int_inserted;
-  //       if (!w_ibuf_refill_wakeup | w_br_fe_flush & !w_is_ftq_empty) begin
-  //         w_f0_vaddr_next = w_f0_vaddr_flush_next;
-  //         w_if_state_next = WAIT_FLUSH_FREE;
-  //       end else begin
-  //         w_f0_vaddr_next = (w_f0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end
-  //     end else if (w_iq_predict_valid) begin
-  //       if (w_ibuf_refill_wakeup) begin
-  //         w_f0_vaddr_next = (w_iq_predict_target_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end else begin
-  //         w_f0_vaddr_next = w_iq_predict_target_vaddr;
-  //       end
-  //     end else if (w_ibuf_refill_wakeup) begin
-  //       w_f0_vaddr_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //       w_if_state_next = FETCH_REQ;
-  //     end
-  //   end
-  //   WAIT_FLUSH_FREE : begin
-  //     if (w_flush_valid & !w_existed_flush_is_older | w_int_flush_valid) begin
-  //       w_f0_int_flush_next = w_f0_int_inserted;
-  //       if (w_flush_haz_clear) begin
-  //         w_f0_vaddr_next = (w_f0_vaddr_flush_next & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                           (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //         w_if_state_next = FETCH_REQ;
-  //       end else begin
-  //         w_f0_vaddr_next = w_f0_vaddr_flush_next;
-  //       end
-  //     end else if (w_flush_haz_clear) begin
-  //       w_f0_vaddr_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
-  //                         (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
-  //       w_if_state_next = FETCH_REQ;
-  //     end
-  //   end
-  //   default : begin
-  //   end
-  // endcase // case (r_if_state)
-
-end
-
 
 assign w_commit_flush  = is_flushed_commit(i_commit);
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
 
-always_comb begin
-  w_f0_int_inserted = w_int_flush_valid;
+function automatic vaddr_t calc_next_cacheline (vaddr_t in);
+  vaddr_t mask;
+  mask = scariv_lsu_pkg::ICACHE_DATA_B_W;
+  return w_f0_req_ready ? (in & ~(mask-1)) + mask : in;
+endfunction // calc_next_cacheline
 
-  if (/* w_flush_valid | */w_int_flush_valid) begin
-    w_f0_predicted = 1'b0;
-    w_f0_vaddr     = w_f0_vaddr_flush_next;
+always_comb begin
+  w_f0_int_inserted   = w_int_flush_valid;
+  w_f0_int_flush_next = r_f0_int_flush;
+
+  w_f0_predicted  = 1'b0;
+
+  if (w_flush_valid) begin
+    // Flush
+    w_f0_vaddr      = w_f0_vaddr_flush_next;
+    w_f0_vaddr_next = w_f0_vaddr_flush_next;  // In Flush, next cycle Cacheline read start.
+  end else if (w_int_flush_valid) begin
+    // Interrupt inserted
+    w_f0_vaddr      = w_f0_vaddr_flush_next;
+    w_f0_vaddr_next = calc_next_cacheline (w_f0_vaddr_flush_next);
+
   end else if (w_iq_predict_valid) begin
-    w_f0_predicted = 1'b1;
-    w_f0_vaddr     = w_iq_predict_target_vaddr;
+    // From Instruction Queue Stage: Prediction
+    w_f0_predicted  = 1'b1;
+    w_f0_vaddr      = w_iq_predict_target_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline (w_iq_predict_target_vaddr);
+
   end else if (r_f2_valid & ~r_f2_clear & (w_f2_ic_miss_valid | r_f2_tlb_miss)) begin
-    w_f0_predicted = 1'b0;
-    w_f0_vaddr     = r_f2_vaddr;
+    // From Frontend Pipeline f2: hazard happend
+    w_f0_vaddr      = r_f2_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(r_f2_vaddr);
+  end else if (r_f2_valid & !r_f2_clear & w_f2_ic_resp.valid & ~w_inst_buffer_ready) begin
+    // Retry from F2 stage Vaddr
+    w_f0_vaddr      = r_f2_vaddr;
+    w_f0_vaddr_next = r_f2_vaddr;
   end else if (r_f2_valid & ~r_f2_clear & w_f2_predict_valid) begin
-    w_f0_predicted = 1'b1;
-    w_f0_vaddr     = w_f2_predict_target_vaddr;
+    // F2 stage Prediction
+    w_f0_predicted  = 1'b1;
+    w_f0_vaddr      = w_f2_predict_target_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(w_f2_predict_target_vaddr);
   end else if (r_f1_valid & ~r_f1_clear & w_f1_predict_valid & w_f1_ubtb_predict_if.ubtb_info.taken) begin
-    w_f0_predicted = 1'b0;
-    w_f0_vaddr     = w_f1_ubtb_predict_if.ubtb_info.target_vaddr;
+    // F1 stage Prediction
+    w_f0_vaddr      = w_f1_ubtb_predict_if.ubtb_info.target_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(w_f1_ubtb_predict_if.ubtb_info.target_vaddr);
+  end else if (~w_f0_req_ready) begin
+    // Resource Not available
+    w_f0_vaddr      = r_f0_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(r_f0_vaddr);
+  end else if (r_f0_valid & ~r_f0_valid_d1) begin
+    w_f0_vaddr      = PC_INIT_VAL;
+    w_f0_vaddr_next = calc_next_cacheline(PC_INIT_VAL);
   end else begin
-    w_f0_predicted = 1'b0;
-    w_f0_vaddr     = r_f0_vaddr;
+    // Normal Update
+    w_f0_vaddr      = r_f0_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(r_f0_vaddr);
   end
 end // always_comb
 
@@ -570,9 +290,9 @@ tlb u_tlb
    .i_csr_satp(csr_info.satp),
    .ptw_if(ptw_if),
 
-   .i_tlb_req  (w_f0_tlb_req ),
-   .o_tlb_ready (w_tlb_ready),
-   .o_tlb_resp (w_f0_tlb_resp),
+   .i_tlb_req   (w_f0_tlb_req ),
+   .o_tlb_ready (w_tlb_ready  ),
+   .o_tlb_resp  (w_f0_tlb_resp),
 
    .o_tlb_update (),
    .o_tlb_resp_miss (w_f0_tlb_resp_miss)
@@ -581,36 +301,28 @@ tlb u_tlb
 // f0 --> f1
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_f1_valid <= 1'b0;
-    r_f1_clear <= 1'b0;
-    r_f1_predicted <= 1'b0;
-    r_f1_vaddr <= 'h0;
-    r_f1_paddr <= 'h0;
-    r_f1_tlb_miss <= 'h0;
+    r_f1_valid            <= 1'b0;
+    r_f1_clear            <= 1'b0;
+    r_f1_predicted        <= 1'b0;
+    r_f1_vaddr            <= 'h0;
+    r_f1_paddr            <= 'h0;
+    r_f1_tlb_miss         <= 'h0;
     r_f1_tlb_except_valid <= 1'b0;
   end else begin
-    // if (w_f2_ic_miss_valid) begin
-    //   r_f1_valid <= 1'b0;
-    // end else begin
-    r_f1_valid <= r_f0_valid & w_f0_ic_req.valid & w_f0_req_ready;
-    // end
-    // f1 clear condition : Trying to instruction allocate into Inst-Buffer but canceled
-    //                      --> Trying f2 request again from f0 stage.
-    // When IQ predicts, it also no need to set clear.
-    r_f1_clear <= ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready &
-                  ~w_iq_predict_valid;
-    r_f1_predicted <= w_f0_predicted;
-    r_f1_vaddr <= w_f0_vaddr;
-    r_f1_int_inserted <= w_f0_int_inserted | r_f0_int_flush;
-    r_f1_paddr <= w_f0_tlb_resp.paddr;
-    r_f1_tlb_miss <= /* w_f0_tlb_resp.miss*/ w_f0_tlb_resp_miss & r_f0_valid & w_f0_ic_req.valid;
+    r_f1_valid            <= r_f0_valid & w_f0_ic_req.valid & w_f0_req_ready;
+    r_f1_clear            <= ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready &
+                             ~w_iq_predict_valid;
+    r_f1_predicted        <= w_f0_predicted;
+    r_f1_vaddr            <= w_f0_vaddr;
+    r_f1_int_inserted     <= w_f0_int_inserted | r_f0_int_flush;
+    r_f1_paddr            <= w_f0_tlb_resp.paddr;
+    r_f1_tlb_miss         <= w_f0_tlb_resp_miss & r_f0_valid & w_f0_ic_req.valid;
     r_f1_tlb_except_valid <= w_f0_tlb_resp.pf.inst |
                              w_f0_tlb_resp.ae.inst |
                              w_f0_tlb_resp.ma.inst;
     r_f1_tlb_except_cause <= w_f0_tlb_resp.pf.inst ? INST_PAGE_FAULT :
                              w_f0_tlb_resp.ae.inst ? INST_ACC_FAULT  :
                              INST_ADDR_MISALIGN;  // w_f0_tlb_resp.ma.inst
-
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -618,38 +330,34 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 // f1 --> f2
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_f2_valid <= 1'b0;
-    r_f2_clear <= 1'b0;
-    r_f2_vaddr <= 'h0;
-    r_f2_predicted <= 1'b0;
+    r_f2_valid            <= 1'b0;
+    r_f2_clear            <= 1'b0;
+    r_f2_vaddr            <= 'h0;
+    r_f2_predicted        <= 1'b0;
     r_f2_tlb_miss         <= 1'b0;
     r_f2_tlb_except_valid <= 1'b0;
     r_f2_tlb_except_cause <= except_t'(0);
+    r_f2_int_inserted     <= 1'b0;
 `ifdef SIMULATION
-    r_f2_paddr <= 'h0;
+    sim_r_f2_paddr            <= 'h0;
 `endif // SIMULATION
-    r_f2_int_inserted <= 1'b0;
   end else begin // if (!i_reset_n)
-    if (w_f2_ic_miss_valid) begin
-      r_f2_valid <= 1'b0;
-    end else begin
-      r_f2_valid <= r_f1_valid;
-    end
-    r_f2_clear <= r_f1_clear | w_int_flush_valid | w_flush_valid | w_iq_predict_valid |
-                  w_f2_predict_valid & (~r_f1_predicted | w_f2_btb_predict_not_match) |
-                  ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready;
-    r_f2_predicted <= r_f1_predicted;
-    r_f2_vaddr <= r_f1_vaddr;
-    r_f2_tlb_miss         <= r_f1_tlb_miss;
-    r_f2_tlb_except_valid <= w_flush_valid ? 1'b0 : r_f1_tlb_except_valid;
-    r_f2_tlb_except_cause <= r_f1_tlb_except_cause;
-    r_f2_int_inserted <= r_f1_int_inserted;
+    r_f2_valid              <= r_f1_valid & ~w_f2_ic_miss_valid;
+    r_f2_clear              <= r_f1_clear | w_int_flush_valid | w_flush_valid | w_iq_predict_valid |
+                               w_f2_predict_valid & (~r_f1_predicted | w_f2_btb_predict_not_match) |
+                               ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready;
+    r_f2_predicted          <= r_f1_predicted;
+    r_f2_vaddr              <= r_f1_vaddr;
+    r_f2_tlb_miss           <= r_f1_tlb_miss;
+    r_f2_tlb_except_valid   <= w_flush_valid ? 1'b0 : r_f1_tlb_except_valid;
+    r_f2_tlb_except_cause   <= r_f1_tlb_except_cause;
+    r_f2_int_inserted       <= r_f1_int_inserted;
 
     r_f2_ubtb_predict_valid <= w_f1_ubtb_predict_if.predict_valid;
     r_f2_ubtb_info          <= w_f1_ubtb_predict_if.ubtb_info;
 
 `ifdef SIMULATION
-    r_f2_paddr <= r_f1_paddr;
+    sim_r_f2_paddr <= r_f1_paddr;
 `endif // SIMULATION
   end
 end
@@ -686,9 +394,7 @@ scariv_icache u_scariv_icache
    .ic_l2_resp (ic_l2_resp)
    );
 
-assign w_f2_inst_buffer_load_valid = (r_if_state == FETCH_REQ) &
-                                     (w_f2_inst_valid  |
-                                      (r_f2_valid & ~r_f2_clear & ~r_f2_tlb_miss & r_f2_tlb_except_valid));
+assign w_f2_inst_buffer_load_valid = w_f2_inst_valid  | (r_f2_valid & ~r_f2_clear & ~r_f2_tlb_miss & r_f2_tlb_except_valid);
 
 `ifdef SIMULATION
 paddr_t w_f2_ic_resp_debug_addr;
