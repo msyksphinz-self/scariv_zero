@@ -23,6 +23,8 @@ module scariv_vlsu_issue_unit
  // ROB notification interface
  rob_info_if.slave                     rob_info_if,
 
+ input logic                           i_lmul_exception_mode,
+
  input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input scariv_pkg::cmt_id_t            i_cmt_id,
  input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
@@ -232,6 +234,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
+    .i_inst_oldest (i_lmul_exception_mode),
+
     .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx] ),
     .rob_info_if   (rob_info_if),
 
@@ -295,10 +299,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         r_picked_inst_oh <= w_picked_inst_oh;
         r_issue_entry_lock <= 1'b1;
       end else if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
-                                    (o_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VMASK) |
                                     ((o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) &
-                                     ((o_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE) |
-                                      (o_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(o_issue.vlvtype.vtype.vlmul)-1))) |
+                                     (o_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(o_issue)-1)) |
                                     |(w_entry_dead & r_picked_inst_oh))) begin
         r_picked_inst_oh <= w_picked_inst_oh;
         r_issue_entry_lock <= 1'b0;

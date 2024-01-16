@@ -24,6 +24,8 @@ module scariv_vec_lsu #(
    /* Page Table Walk I/O */
    tlb_ptw_if.master  ptw_if,
 
+   input logic                     i_lmul_exception_mode,
+
    input scariv_pkg::grp_id_t      disp_valid,
    scariv_front_if.watch           disp,
    vlvtype_info_if.monitor         vlvtype_info_if,
@@ -50,7 +52,7 @@ module scariv_vec_lsu #(
    vec_regwrite_if.master vec_phy_wr_if,
    // Vector Forwarding Notification Path
    vec_phy_fwd_if.slave   vec_valu_phy_fwd_if[2],
-   vec_phy_fwd_if.master  vec_vlsu_phy_fwd_if[1],
+   vec_phy_fwd_if.master  vec_vlsu_phy_fwd_if,
 
    scalar_ldq_haz_check_if.master scalar_ldq_haz_check_if,
 
@@ -125,6 +127,8 @@ u_issue_unit
 
    .rob_info_if (rob_info_if),
 
+   .i_lmul_exception_mode (i_lmul_exception_mode),
+
    .i_disp_valid(w_disp_picked_inst_valid),
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (w_disp_picked_grp_id),
@@ -165,14 +169,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_replay_selected <= 'h0;
     r_replay_selected_lock <= 1'b0;
   end else begin
-    if ((scariv_vec_pkg::VEC_STEP_W > 1) &
-        (w_ex0_replay_issue.valid & (w_ex0_replay_issue.vec_step_index == 'h0))) begin
-      r_replay_selected <= w_replay_selected_next;
-      r_replay_selected_lock <= 1'b1;
-    end else if (w_ex0_replay_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
-                                             (w_ex0_replay_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1))) begin
+    if (w_ex0_replay_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
+                                             ((w_ex0_replay_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) &
+                                              (w_ex0_replay_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(w_ex0_replay_issue)-1)))) begin
       r_replay_selected <= w_replay_selected_next;
       r_replay_selected_lock <= 1'b0;
+    end else if ((scariv_vec_pkg::VEC_STEP_W > 1) &
+        (w_ex0_replay_issue.valid & (w_replay_selected & w_lsu_pipe_req_if.payload.replay_info.haz_1st_req |
+                                     (w_ex0_replay_issue.vec_lmul_index == 'h0) & (w_ex0_replay_issue.vec_step_index == 'h0)))) begin
+      r_replay_selected <= w_replay_selected_next;
+      r_replay_selected_lock <= 1'b1;
     end else if (!w_ex0_replay_issue.valid) begin
       r_replay_selected_lock <= 1'b0;
     end
@@ -189,11 +195,12 @@ always_comb begin
     w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.grp_id      ;
     w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
     w_ex0_replay_issue.vlvtype           = w_lsu_pipe_req_if.payload.vlvtype     ;
-    w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
+    w_ex0_replay_issue.rd_regs           = w_lsu_pipe_req_if.payload.rd_regs      ;
     w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
     w_ex0_replay_issue.wr_origin_rnid    = w_lsu_pipe_req_if.payload.wr_origin_rnid;
     w_ex0_replay_issue.wr_old_reg        = w_lsu_pipe_req_if.payload.wr_old_reg  ;
     w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
+    w_ex0_replay_issue.subcat            = w_lsu_pipe_req_if.payload.subcat      ;
     w_ex0_replay_issue.vec_step_index    = w_lsu_pipe_req_if.payload.vec_step_index;
     w_ex0_replay_issue.vec_lmul_index    = w_lsu_pipe_req_if.payload.vec_lmul_index;
 `ifdef SIMULATION
@@ -255,8 +262,8 @@ u_lsu_pipe
    );
 
 
-assign vec_vlsu_phy_fwd_if[0].valid   = w_vec_phy_fwd_if[0].valid;
-assign vec_vlsu_phy_fwd_if[0].rd_rnid = w_vec_phy_fwd_if[0].rd_rnid;
+assign vec_vlsu_phy_fwd_if.valid   = w_vec_phy_fwd_if[0].valid;
+assign vec_vlsu_phy_fwd_if.rd_rnid = w_vec_phy_fwd_if[0].rd_rnid;
 
 scariv_lsu_pkg::missu_resolve_t r_missu_resolve_d1;
 always_ff @ (posedge i_clk) begin

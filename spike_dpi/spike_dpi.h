@@ -10,7 +10,14 @@ extern "C" {
                   int rtl_insn,
                   int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
                   int rtl_wr_gpr_rnid, long long rtl_wr_val,
-                  const uint8_t* rtl_wr_vec_val);
+                  const uint8_t* rtl_wr_vec_val_0,
+                  const uint8_t* rtl_wr_vec_val_1,
+                  const uint8_t* rtl_wr_vec_val_2,
+                  const uint8_t* rtl_wr_vec_val_3,
+                  const uint8_t* rtl_wr_vec_val_4,
+                  const uint8_t* rtl_wr_vec_val_5,
+                  const uint8_t* rtl_wr_vec_val_6,
+                  const uint8_t* rtl_wr_vec_val_7);
   void stop_sim(int code, long long rtl_time);
 
 #ifndef VERILATOR

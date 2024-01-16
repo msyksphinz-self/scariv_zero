@@ -94,6 +94,7 @@ scariv_vec_pkg::issue_t  w_ex2_issue_next;
 logic                    r_ex2_replay_selected;
 logic                    r_ex2_replay_haz_1st_req;
 scariv_pkg::maxaddr_t    r_ex2_addr;
+scariv_vec_pkg::vlenbmax_t   w_ex2_vl;
 logic [ 1: 0]            r_ex2_req_splitted;
 logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]    r_ex2_reg_offset;
 pipe_ctrl_t              r_ex2_pipe_ctrl;
@@ -102,12 +103,16 @@ scariv_pkg::except_t     r_ex2_except_type;
 logic                    w_ex2_br_flush;
 logic                    w_ex2_l1d_missed;
 logic                    w_ex2_l1d_conflicted;
+logic                    w_ex2_l1d_hazard;
 logic                    w_ex2_hazard;
 logic                    r_ex2_is_uc;
 scariv_lsu_pkg::dc_data_t w_ex2_l1d_data;
 scariv_vec_pkg::dlen_t   w_ex2_aligned_data;
+logic                    w_ex2_l1d_vec_step_success;
 logic                    w_ex2_vec_step_success;
 logic                    w_ex2_is_1st_request;
+logic                    w_ex2_stq_alloc_neglected;
+logic                    w_ex2_stq_alloc_full_flush;
 
 scariv_vec_pkg::issue_t  r_ex3_issue;
 scariv_vec_pkg::issue_t  w_ex3_issue_next;
@@ -160,11 +165,14 @@ always_comb begin
     w_ex1_replay_info_next     = r_ex1_replay_info;
   end else begin
     w_ex1_issue_next       = i_ex0_issue;
-    w_ex1_issue_next.valid = i_ex0_issue.valid & !w_commit_flush & !w_ex0_br_flush;
+    w_ex1_issue_next.valid = i_ex0_issue.valid;
     w_ex1_replay_selected_next = i_ex0_replay_selected;
     w_ex1_replay_info_next     = i_ex0_replay_info;
     w_ex0_pipe_ctrl_next       = w_ex0_pipe_ctrl;
-  end
+  end // else: !if(w_ex1_stall)
+
+  // Aplly flush
+  w_ex1_issue_next.valid = w_ex1_issue_next.valid & !w_commit_flush & !w_ex0_br_flush;
 end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
@@ -215,7 +223,7 @@ u_address_gen
    .i_flush_valid    (w_ex0_br_flush | w_commit_flush),
    .i_rs1_base       (w_ex1_rs1_data            ),
 
-   .i_is_last_lmul_index (r_ex1_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex1_issue.vlvtype.vtype.vlmul)-1),
+   .i_is_last_lmul_index (r_ex1_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex1_issue)-1),
    .i_vec_step_index (r_ex1_issue.vec_step_index),
    .o_vaddr          (w_ex1_vaddr               ),
    .o_reg_offset     (w_ex1_reg_offset          ),
@@ -303,7 +311,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign w_ex2_l1d_data   = l1d_rd_if.s1_data;
 assign w_ex2_l1d_missed     = r_ex2_issue.valid & l1d_rd_if.s1_miss & ~l1d_rd_if.s1_conflict;
 assign w_ex2_l1d_conflicted = r_ex2_issue.valid & l1d_rd_if.s1_conflict;
-assign w_ex2_hazard         = w_ex2_l1d_missed | w_ex2_l1d_conflicted;
+assign w_ex2_l1d_hazard         = w_ex2_l1d_missed | w_ex2_l1d_conflicted;
 
 assign l1d_missu_if.load              = w_ex2_l1d_missed &
                                         !r_ex2_except_valid & !(l1d_rd_if.s1_conflict | l1d_rd_if.s1_hit);
@@ -311,30 +319,10 @@ assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 assign l1d_missu_if.req_payload.way   = l1d_rd_if.s1_hit_way;
 
-assign w_ex2_vec_step_success = w_ex2_is_1st_request ? ~w_ex2_hazard : ~w_ex2_hazard & r_ex3_vec_step_success;
+assign w_ex2_hazard = w_ex2_l1d_hazard | w_ex2_stq_alloc_neglected;
 
-// Interface to Replay Queue
-assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & ~i_replay_queue_full & ~w_ex2_vec_step_success & ~w_commit_flush & ~w_ex2_br_flush;
-assign lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
-assign lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
-assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
-assign lsu_pipe_haz_if.payload.vlvtype        = r_ex2_issue.vlvtype;
-assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
-assign lsu_pipe_haz_if.payload.oldest_valid   = 1'b0;
-assign lsu_pipe_haz_if.payload.hazard_typ     = l1d_rd_if.s1_conflict ? EX2_HAZ_L1D_CONFLICT : EX2_HAZ_MISSU_ASSIGNED;
-assign lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
-assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
-assign lsu_pipe_haz_if.payload.wr_old_reg     = r_ex2_issue.wr_old_reg;
-assign lsu_pipe_haz_if.payload.wr_origin_rnid = r_ex2_issue.wr_origin_rnid;
-assign lsu_pipe_haz_if.payload.is_uc          = 1'b0;
-assign lsu_pipe_haz_if.payload.hazard_index   = l1d_missu_if.resp_payload.missu_index_oh;
-assign lsu_pipe_haz_if.payload.vec_step_index = r_ex2_issue.vec_step_index;
-assign lsu_pipe_haz_if.payload.vec_lmul_index = r_ex2_issue.vec_lmul_index;
-assign lsu_pipe_haz_if.payload.replay_info.paddr        = r_ex2_addr;
-assign lsu_pipe_haz_if.payload.replay_info.haz_1st_req  = ((r_ex2_issue.vec_lmul_index == 'h0) & (r_ex2_issue.vec_step_index == 'h0)) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? w_ex2_hazard :
-                                                          r_ex3_vec_step_success & ~w_ex2_vec_step_success;
-assign lsu_pipe_haz_if.payload.replay_info.req_splitted = r_ex2_req_splitted;
-assign lsu_pipe_haz_if.payload.replay_info.reg_offset   = r_ex2_reg_offset;
+assign w_ex2_l1d_vec_step_success = w_ex2_is_1st_request ? ~w_ex2_l1d_hazard : ~w_ex2_l1d_hazard & r_ex3_vec_step_success;
+assign w_ex2_vec_step_success = w_ex2_is_1st_request ? ~w_ex2_hazard : ~w_ex2_hazard & r_ex3_vec_step_success;
 
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew8;
 scariv_vec_pkg::vlenbmax_t w_ex2_vl_ew16;
@@ -358,11 +346,28 @@ endfunction // max
 always_comb begin
   scariv_vec_pkg::vlenbmax_t w_ex2_temp_vl;
 
+  if (r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE) begin
+    case (r_ex2_issue.inst[31:29])
+      3'b000 : w_ex2_vl = scariv_vec_pkg::VLENB * 1;
+      3'b001 : w_ex2_vl = scariv_vec_pkg::VLENB * 2;
+      3'b010 : w_ex2_vl = scariv_vec_pkg::VLENB * 3;
+      3'b011 : w_ex2_vl = scariv_vec_pkg::VLENB * 4;
+      3'b100 : w_ex2_vl = scariv_vec_pkg::VLENB * 5;
+      3'b101 : w_ex2_vl = scariv_vec_pkg::VLENB * 6;
+      3'b110 : w_ex2_vl = scariv_vec_pkg::VLENB * 7;
+      3'b111 : w_ex2_vl = scariv_vec_pkg::VLENB * 8;
+      default : w_ex2_vl = scariv_vec_pkg::VLENB;
+    endcase // case (r_ex2_issue.inst[31:29])
+  end else begin // if (r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE)
+    w_ex2_vl = r_ex2_issue.vlvtype.vl;
+  end // else: !if(r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE)
+
+
   unique case (r_ex2_issue.vlvtype.vtype.vsew)
-    scariv_vec_pkg::EW8 : w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew8  ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew8  : 0, riscv_vec_conf_pkg::DLEN_W /  8);
-    scariv_vec_pkg::EW16: w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew16 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew16 : 0, riscv_vec_conf_pkg::DLEN_W / 16);
-    scariv_vec_pkg::EW32: w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew32 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew32 : 0, riscv_vec_conf_pkg::DLEN_W / 32);
-    scariv_vec_pkg::EW64: w_ex2_temp_vl = min(r_ex2_issue.vlvtype.vl > w_ex2_vl_ew64 ? r_ex2_issue.vlvtype.vl - w_ex2_vl_ew64 : 0, riscv_vec_conf_pkg::DLEN_W / 64);
+    scariv_vec_pkg::EW8 : w_ex2_temp_vl = min(w_ex2_vl > w_ex2_vl_ew8  ? w_ex2_vl - w_ex2_vl_ew8  : 0, riscv_vec_conf_pkg::DLEN_W /  8);
+    scariv_vec_pkg::EW16: w_ex2_temp_vl = min(w_ex2_vl > w_ex2_vl_ew16 ? w_ex2_vl - w_ex2_vl_ew16 : 0, riscv_vec_conf_pkg::DLEN_W / 16);
+    scariv_vec_pkg::EW32: w_ex2_temp_vl = min(w_ex2_vl > w_ex2_vl_ew32 ? w_ex2_vl - w_ex2_vl_ew32 : 0, riscv_vec_conf_pkg::DLEN_W / 32);
+    scariv_vec_pkg::EW64: w_ex2_temp_vl = min(w_ex2_vl > w_ex2_vl_ew64 ? w_ex2_vl - w_ex2_vl_ew64 : 0, riscv_vec_conf_pkg::DLEN_W / 64);
     default             : w_ex2_temp_vl = 'h0;
   endcase // unique case (i_sew)
 
@@ -377,10 +382,10 @@ always_comb begin
     endcase // unique case (r_ex2_issue.vlvtype.vtype.vsew)
   end else begin
     unique case (r_ex2_issue.vlvtype.vtype.vsew)
-      scariv_vec_pkg::EW8 : w_ex2_mask = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew8  + riscv_vec_conf_pkg::DLEN_W /  8 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*1)) - 1;
-      scariv_vec_pkg::EW16: w_ex2_mask = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew16 + riscv_vec_conf_pkg::DLEN_W / 16 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*2)) - 1;
-      scariv_vec_pkg::EW32: w_ex2_mask = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew32 + riscv_vec_conf_pkg::DLEN_W / 32 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*4)) - 1;
-      scariv_vec_pkg::EW64: w_ex2_mask = r_ex2_issue.vlvtype.vl > w_ex2_vl_ew64 + riscv_vec_conf_pkg::DLEN_W / 64 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*8)) - 1;
+      scariv_vec_pkg::EW8 : w_ex2_mask = w_ex2_vl > w_ex2_vl_ew8  + riscv_vec_conf_pkg::DLEN_W /  8 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*1)) - 1;
+      scariv_vec_pkg::EW16: w_ex2_mask = w_ex2_vl > w_ex2_vl_ew16 + riscv_vec_conf_pkg::DLEN_W / 16 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*2)) - 1;
+      scariv_vec_pkg::EW32: w_ex2_mask = w_ex2_vl > w_ex2_vl_ew32 + riscv_vec_conf_pkg::DLEN_W / 32 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*4)) - 1;
+      scariv_vec_pkg::EW64: w_ex2_mask = w_ex2_vl > w_ex2_vl_ew64 + riscv_vec_conf_pkg::DLEN_W / 64 ? {(riscv_vec_conf_pkg::DLEN_W / 8){1'b1}} : (1 << (w_ex2_temp_vl*8)) - 1;
       default             : w_ex2_mask = 'h0;
     endcase // unique case (i_sew)
   end // else: !if(r_ex2_req_splitted[1])
@@ -397,7 +402,7 @@ assign w_ex2_aligned_data = w_ex2_l1d_data >> {r_ex2_addr[$clog2(DCACHE_DATA_B_W
 
 always_comb begin
   w_ex3_issue_next       = r_ex2_issue;
-  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_hazard & ~w_commit_flush & ~w_ex2_br_flush;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_l1d_hazard & ~w_ex2_stq_alloc_neglected & ~w_commit_flush & ~w_ex2_br_flush;
 
   for(int b_idx = 0; b_idx < riscv_vec_conf_pkg::DLEN_W/8; b_idx++) begin
     if (r_ex3_req_splitted[0] & r_ex2_req_splitted[1]) begin
@@ -419,7 +424,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= w_ex3_issue_next;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
     r_ex3_addr      <= r_ex2_addr;
-    r_ex3_mis_valid <= w_ex2_hazard;
+    r_ex3_mis_valid <= w_ex2_l1d_hazard;
     r_ex3_mask      <= w_ex2_mask;
 
     r_ex3_req_splitted <= r_ex2_req_splitted;
@@ -435,13 +440,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       end
     end
 
-    r_ex3_except_valid <= r_ex2_except_valid;
-    r_ex3_except_type  <= r_ex2_except_type;
-  end
-end
+    r_ex3_except_valid <= r_ex2_except_valid | w_ex2_stq_alloc_full_flush;
+    r_ex3_except_type  <= r_ex2_except_valid ? r_ex2_except_type :
+                          scariv_pkg::SELF_KILL_REPLAY;   // When STQ alloc failed, self-kill and kill younger instructions
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-assign o_done_report.valid                = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue.vlvtype.vtype.vlmul)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign o_done_report.valid                = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
 assign o_done_report.grp_id               = r_ex3_issue.grp_id;
 assign o_done_report.except_valid         = r_ex3_except_valid;
@@ -459,25 +465,58 @@ assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign vec_phy_wr_if.rd_pos  = r_ex3_issue.vec_step_index;
 assign vec_phy_wr_if.rd_data = r_ex3_aligned_data;
 
-assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & r_ex3_vec_step_success & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue.vlvtype.vtype.vlmul)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign vec_phy_fwd_if[0].valid   = vec_phy_wr_if.valid & r_ex3_vec_step_success & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
 assign vec_phy_fwd_if[0].rd_rnid = r_ex3_issue.wr_origin_rnid;
 
-assign vlsu_ldq_req_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == OP_LOAD;
-assign vlsu_ldq_req_if.paddr  = r_ex3_addr;
-assign vlsu_ldq_req_if.cmt_id = r_ex3_issue.cmt_id;
-assign vlsu_ldq_req_if.grp_id = r_ex3_issue.grp_id;
+assign vlsu_ldq_req_if.valid  = r_ex2_issue.valid & w_ex2_l1d_vec_step_success & r_ex2_pipe_ctrl.op == OP_LOAD;
+assign vlsu_ldq_req_if.paddr  = r_ex2_addr;
+assign vlsu_ldq_req_if.cmt_id = r_ex2_issue.cmt_id;
+assign vlsu_ldq_req_if.grp_id = r_ex2_issue.grp_id;
 
-assign vlsu_stq_req_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == OP_STORE;
-assign vlsu_stq_req_if.paddr  = r_ex3_addr;
-assign vlsu_stq_req_if.cmt_id = r_ex3_issue.cmt_id;
-assign vlsu_stq_req_if.grp_id = r_ex3_issue.grp_id;
-assign vlsu_stq_req_if.vs3_phy_idx = r_ex3_issue.rd_regs[2].rnid;
-assign vlsu_stq_req_if.vs3_pos     = r_ex3_issue.vec_step_index;
-assign vlsu_stq_req_if.strb        = r_ex3_mask;
+assign vlsu_stq_req_if.valid  = r_ex2_issue.valid & w_ex2_l1d_vec_step_success & r_ex2_pipe_ctrl.op == OP_STORE;
+assign vlsu_stq_req_if.paddr  = r_ex2_addr;
+assign vlsu_stq_req_if.cmt_id = r_ex2_issue.cmt_id;
+assign vlsu_stq_req_if.grp_id = r_ex2_issue.grp_id;
+assign vlsu_stq_req_if.vs3_phy_idx = r_ex2_issue.rd_regs[2].rnid;
+assign vlsu_stq_req_if.vs3_pos     = r_ex2_issue.vec_step_index;
+assign vlsu_stq_req_if.strb        = w_ex2_mask;
 
-assign scalar_ldq_haz_check_if.valid  = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_pipe_ctrl.op == OP_STORE;
-assign scalar_ldq_haz_check_if.paddr  = r_ex3_addr;
-assign scalar_ldq_haz_check_if.cmt_id = r_ex3_issue.cmt_id;
-assign scalar_ldq_haz_check_if.grp_id = r_ex3_issue.grp_id;
+assign scalar_ldq_haz_check_if.valid  = r_ex2_issue.valid & w_ex2_l1d_vec_step_success & r_ex2_pipe_ctrl.op == OP_STORE;
+assign scalar_ldq_haz_check_if.paddr  = r_ex2_addr;
+assign scalar_ldq_haz_check_if.cmt_id = r_ex2_issue.cmt_id;
+assign scalar_ldq_haz_check_if.grp_id = r_ex2_issue.grp_id;
+
+assign w_ex2_stq_alloc_neglected  = vlsu_stq_req_if.valid & vlsu_stq_req_if.resp == scariv_vec_pkg::VSTQ_RESP_FULL_WAIT;
+assign w_ex2_stq_alloc_full_flush = vlsu_stq_req_if.valid & vlsu_stq_req_if.resp == scariv_vec_pkg::VSTQ_RESP_FULL_FLUSH;
+
+// --------------------------
+// Interface to Replay Queue
+// --------------------------
+assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & ~i_replay_queue_full & ~w_ex2_vec_step_success & ~w_commit_flush & ~w_ex2_br_flush;
+assign lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
+assign lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
+assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
+assign lsu_pipe_haz_if.payload.vlvtype        = r_ex2_issue.vlvtype;
+assign lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
+assign lsu_pipe_haz_if.payload.subcat         = r_ex2_issue.subcat;
+assign lsu_pipe_haz_if.payload.oldest_valid   = 1'b0;
+assign lsu_pipe_haz_if.payload.hazard_typ     = l1d_rd_if.s1_conflict ? EX2_HAZ_L1D_CONFLICT   :
+                                                l1d_rd_if.s1_miss     ? EX2_HAZ_MISSU_ASSIGNED :
+                                                EX2_HAZ_VSTQ_FULL_WAIT;
+assign lsu_pipe_haz_if.payload.rd_regs        = r_ex2_issue.rd_regs;
+assign lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
+assign lsu_pipe_haz_if.payload.wr_old_reg     = r_ex2_issue.wr_old_reg;
+assign lsu_pipe_haz_if.payload.wr_origin_rnid = r_ex2_issue.wr_origin_rnid;
+assign lsu_pipe_haz_if.payload.is_uc          = 1'b0;
+assign lsu_pipe_haz_if.payload.hazard_index   = l1d_missu_if.resp_payload.missu_index_oh;
+assign lsu_pipe_haz_if.payload.vec_step_index = r_ex2_issue.vec_step_index;
+assign lsu_pipe_haz_if.payload.vec_lmul_index = r_ex2_issue.vec_lmul_index;
+assign lsu_pipe_haz_if.payload.replay_info.paddr        = r_ex2_addr;
+assign lsu_pipe_haz_if.payload.replay_info.haz_1st_req  = ((r_ex2_issue.vec_lmul_index == 'h0) & (r_ex2_issue.vec_step_index == 'h0)) | r_ex2_replay_selected & r_ex2_replay_haz_1st_req ? w_ex2_hazard :
+                                                          r_ex3_vec_step_success & ~w_ex2_vec_step_success;
+assign lsu_pipe_haz_if.payload.replay_info.req_splitted = r_ex2_req_splitted;
+assign lsu_pipe_haz_if.payload.replay_info.reg_offset   = r_ex2_reg_offset;
+
+
 
 endmodule // scariv_vec_lsu_pipe

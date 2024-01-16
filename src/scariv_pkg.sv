@@ -151,7 +151,8 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
   URET = 26,
   SILENT_FLUSH  = 27,
   ANOTHER_FLUSH = 28,
-  LMUL_CHANGE   = 29
+  LMUL_CHANGE   = 29,
+  SELF_KILL_REPLAY = 30
 } except_t;
 
 typedef struct packed {

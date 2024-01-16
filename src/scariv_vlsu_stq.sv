@@ -84,16 +84,27 @@ assign st_buffer_ex1_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp !=
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
 
+logic [VLSU_STQ_BANK_SIZE-1: 0]            w_vlsu_stq_freelist_full;
+logic [VLSU_STQ_BANK_SIZE-1: 0]            w_vlsu_stq_all_entry_younger_or_equal_than_load;
+logic [$clog2(VLSU_STQ_BANK_SIZE)-1: 0]    w_vlsu_alloc_bank_index;
+assign w_vlsu_alloc_bank_index = vlsu_stq_req_if.paddr[$clog2(riscv_vec_conf_pkg::DLEN_W/8) +: $clog2(VLSU_STQ_BANK_SIZE)];
+
+assign vlsu_stq_req_if.resp = w_vlsu_stq_all_entry_younger_or_equal_than_load[w_vlsu_alloc_bank_index] ? scariv_vec_pkg::VSTQ_RESP_FULL_FLUSH :
+                              w_vlsu_stq_freelist_full[w_vlsu_alloc_bank_index]               ? scariv_vec_pkg::VSTQ_RESP_FULL_WAIT :
+                              scariv_vec_pkg::VSTQ_RESP_ACCEPTED;
+
 generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) begin : bank_loop
 
   logic [VLSU_STQ_SIZE-1: 0] w_entry_load_index  [1];
   logic [VLSU_STQ_SIZE-1: 0] w_entry_finish_index[1];
   logic [VLSU_STQ_SIZE-1: 0] w_vs3_regread_req_bank;
-  logic                      w_vlsu_stq_freelist_full;
   logic                      w_freelist_pop_valid;
   assign w_freelist_pop_valid = vlsu_stq_req_if.valid &
-                                vlsu_stq_req_if.paddr[$clog2(riscv_vec_conf_pkg::DLEN_W/8) +: $clog2(VLSU_STQ_BANK_SIZE)] == bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0] &
-                                ~w_vlsu_stq_freelist_full;
+                                w_vlsu_alloc_bank_index == bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0] &
+                                ~w_vlsu_stq_freelist_full[bank_idx];
+  logic [VLSU_STQ_SIZE-1: 0] w_entry_is_younger_or_eq_than_load;
+
+  assign w_vlsu_stq_all_entry_younger_or_equal_than_load[bank_idx] = &w_entry_is_younger_or_eq_than_load;
 
   scariv_freelist_multiports_oh
     #(.WIDTH (VLSU_STQ_SIZE),
@@ -109,7 +120,7 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
      .o_pop_id  (w_entry_load_index  ),
 
      .o_is_empty (),
-     .o_is_full  (w_vlsu_stq_freelist_full)
+     .o_is_full  (w_vlsu_stq_freelist_full[bank_idx])
      );
 
   function automatic logic [$clog2(VLSU_STQ_SIZE)-1:0] rr (logic [VLSU_STQ_SIZE-1:0] req, logic [VLSU_STQ_SIZE-1:0] curr);
@@ -129,6 +140,14 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
   logic [VLSU_STQ_SIZE-1: 0]         w_vs3_regread_accepted;
 
   for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_loop
+
+    logic w_entry_is_older_than_load;
+    assign w_entry_is_older_than_load = scariv_pkg::id0_is_older_than_id1 (r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
+                                                                           r_vlsu_stq_entries[bank_idx][stq_idx].grp_id,
+                                                                           vlsu_stq_req_if.cmt_id,
+                                                                           vlsu_stq_req_if.grp_id
+                                                                           );
+    assign w_entry_is_younger_or_eq_than_load[stq_idx] = r_vlsu_stq_entries[bank_idx][stq_idx].valid & !w_entry_is_older_than_load;
 
     logic w_br_flush;
     assign w_br_flush     = scariv_pkg::is_br_flush_target(r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
@@ -163,7 +182,11 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
             w_vlsu_stq_entry_next.paddr        = to_vstq_paddr(vlsu_stq_req_if.paddr);
             w_vlsu_stq_entry_next.is_committed = 1'b0;
 
-            w_state_next = WAIT_COMMIT;
+            if (w_commit_flush) begin
+              w_state_next = FINISH;
+            end else begin
+              w_state_next = WAIT_COMMIT;
+            end
 
 `ifdef SIMULATION
             w_vlsu_stq_entry_next.sim_paddr    = vlsu_stq_req_if.paddr;
@@ -177,6 +200,7 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
           end else if ((w_ready_to_mv_stbuf | r_vlsu_stq_entries[bank_idx][stq_idx].ready_to_mv_stbuf) & st_buffer_ex0_proceed_valid) begin
             w_state_next = READ_VS3;
           end
+          w_vlsu_stq_entry_next.is_committed = r_vlsu_stq_entries[bank_idx][stq_idx].is_committed | w_ready_to_mv_stbuf;
         end
         READ_VS3 : begin
           if (st_buffer_ex1_proceed_valid & w_vs3_regread_accepted[stq_idx] & w_vs3_regread_bank_accepted[bank_idx]) begin
@@ -213,10 +237,10 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
                                                                            r_vlsu_stq_entries[bank_idx][stq_idx].grp_id,
                                                                            vstq_haz_check_if[spipe_idx].ex2_cmt_id,
                                                                            vstq_haz_check_if[spipe_idx].ex2_grp_id);
-      assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = vstq_is_older_than_sload &
+      assign w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx] = (vstq_is_older_than_sload | r_vlsu_stq_entries[bank_idx][stq_idx].is_committed) &
                                                                   r_vlsu_stq_entries[bank_idx][stq_idx].valid &
-                                                                  {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
-                                                                   r_vlsu_stq_entries[bank_idx][stq_idx].paddr, bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0]};
+                                                                  (vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                                                   {r_vlsu_stq_entries[bank_idx][stq_idx].paddr, bank_idx[$clog2(VLSU_STQ_BANK_SIZE)-1: 0]});
     end
 
     always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -328,7 +352,7 @@ generate for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; s
   for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) begin : bank_loop
     logic [VLSU_STQ_SIZE-1: 0] w_spipe_vlsu_haz_check_hit;
     for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_idx;
-      assign w_spipe_vlsu_haz_check_hit[stq_idx] = w_vlsu_haz_check_hit[bank_idx][stq_idx];
+      assign w_spipe_vlsu_haz_check_hit[stq_idx] = w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx];
     end
     assign w_bank_vlsu_haz_check_hit[bank_idx] = |w_spipe_vlsu_haz_check_hit;
   end
@@ -341,8 +365,8 @@ generate for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; s
                                                                                  vstq_haz_check_if[spipe_idx].ex2_grp_id);
   assign w_vstq_loading_sload_haz_check_hit = w_vstq_loading_is_older_than_sload &
                                               vlsu_stq_req_if.valid &
-                                              {vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
-                                               vlsu_stq_req_if.paddr                 [riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)]};
+                                              (vstq_haz_check_if[spipe_idx].ex2_paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                               vlsu_stq_req_if.paddr                 [riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)]);
 
   assign vstq_haz_check_if[spipe_idx].ex2_haz_valid = vstq_haz_check_if[spipe_idx].ex2_valid & ((|w_bank_vlsu_haz_check_hit) |
                                                                                                 w_vstq_loading_sload_haz_check_hit);

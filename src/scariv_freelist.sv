@@ -122,7 +122,7 @@ end
 
 assign o_pop_id = r_freelist[r_head_ptr];
 
-assign o_is_empty = ~(|r_active_bits);
+assign o_is_empty = ~(|(r_active_bits & ((1 << r_ptr_limit)-1)));
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin

@@ -71,7 +71,7 @@ typedef enum logic [ 2: 0] {
 } ex1_haz_t;
 
 
-typedef enum logic [ 2: 0] {
+typedef enum logic [ 3: 0] {
   EX2_HAZ_NONE,
   EX2_HAZ_L1D_CONFLICT,
   EX2_HAZ_MISSU_ASSIGNED,
@@ -79,7 +79,8 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_MISSU_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
   EX2_HAZ_STQ_NONFWD_HAZ,
-  EX2_HAZ_VSTQ_HAZ
+  EX2_HAZ_VSTQ_HAZ,
+  EX2_HAZ_VSTQ_FULL_WAIT
 } ex2_haz_t;
 
   typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT,

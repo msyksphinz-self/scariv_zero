@@ -20,6 +20,8 @@ module scariv_csu_issue_unit
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ input logic                           i_oldest_mode,
+
  // ROB notification interface
  rob_info_if.slave                     rob_info_if,
 
@@ -236,7 +238,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_put_data (w_disp_entry  ),
     .i_vlvtype_ren_idx (i_vlvtype_ren_idx),
 
-    .i_inst_oldest (|(w_disp_oldest_valid & w_input_valid)),
+    .i_inst_oldest (|(w_disp_oldest_valid & w_input_valid) | i_oldest_mode),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),

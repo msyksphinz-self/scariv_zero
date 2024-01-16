@@ -128,7 +128,7 @@ end endgenerate
 scariv_pkg::rnid_t w_v0_rnid;
 logic [ 2: 0]  w_v0_phy_hit;
 
-assign w_v0_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.v0_reg.rnid;
+assign w_v0_rnid = i_put ? i_put_data.v0_reg.rnid : r_entry.v0_reg.rnid;
 generate for (genvar fwd_idx = 0; fwd_idx < 3; fwd_idx++) begin : v0_hit_loop
   assign w_v0_phy_hit[fwd_idx] = (w_v0_rnid == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
 end endgenerate
@@ -178,7 +178,7 @@ always_comb begin
         w_entry_next = w_init_entry;
 
         w_entry_next.wr_old_reg.ready = i_put_data.wr_reg.old_ready | (|w_wr_old_phy_hit);
-        w_entry_next.v0_reg.ready     = i_put_data.v0_reg.ready /* | (|w_wr_old_phy_hit) */;
+        w_entry_next.v0_reg.ready     = i_put_data.v0_reg.ready | (|w_v0_phy_hit);
 
         w_entry_next.vlvtype_ready = vlvtype_info_if.ready | vlvtype_upd_load_valid;
         w_entry_next.vlvtype_index = vlvtype_info_if.index;
@@ -225,7 +225,7 @@ always_comb begin
           if (scariv_vec_pkg::VEC_STEP_W == 1 ||
               r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_entry.vcomp_fin :
               (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) begin
-            if (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry.vlvtype.vtype.vlmul)-1) begin
+            if (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry)-1) begin
               w_state_next = scariv_pkg::SCHED_CLEAR;
             end else begin
               w_entry_next.vec_lmul_index = r_entry.vec_lmul_index + 'h1;

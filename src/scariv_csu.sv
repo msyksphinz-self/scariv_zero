@@ -41,6 +41,7 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
+  output logic                o_lmul_exception_mode,
   vec_csr_if.master           vec_csr_if,
   vlvtype_upd_if.master       vlvtype_upd_if,
   vlmul_upd_if.master         vlmul_upd_if,
@@ -65,8 +66,6 @@ logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic         w_ex3_done;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
-
-logic                                          w_lmul_exception_mode;
 
 // CSR Read Write interface
 csr_rd_if w_csr_read ();
@@ -102,6 +101,8 @@ u_scariv_issue_unit
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
+   .i_oldest_mode (o_lmul_exception_mode),
+
    .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
@@ -135,7 +136,7 @@ u_csu_pipe
 
    .i_commit (i_commit),
 
-   .i_lmul_exception_mode (w_lmul_exception_mode),
+   .i_lmul_exception_mode (o_lmul_exception_mode),
 
    .rv0_issue(w_rv0_issue),
 
@@ -190,7 +191,7 @@ u_vec_csr
 
    .i_commit (i_commit),
 
-   .o_lmul_exception_mode (w_lmul_exception_mode)
+   .o_lmul_exception_mode (o_lmul_exception_mode)
    );
 
 

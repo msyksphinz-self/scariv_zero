@@ -43,7 +43,7 @@ module scariv_vec_alu #(
     vec_regwrite_if.master vec_phy_wr_if[2],
     // Vector Forwarding Notification Path
     vec_phy_fwd_if.master  vec_valu_phy_fwd_if[2],
-    vec_phy_fwd_if.slave   vec_vlsu_phy_fwd_if[1],
+    vec_phy_fwd_if.slave   vec_vlsu_phy_fwd_if,
 
     output scariv_pkg::done_rpt_t o_done_report[2],
     // Commit notification
@@ -93,8 +93,8 @@ generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin 
   assign w_mispred_lsu[idx] = 'h0;
 end endgenerate
 
-assign w_vec_phy_fwd_if[2].valid   = vec_vlsu_phy_fwd_if[0].valid;
-assign w_vec_phy_fwd_if[2].rd_rnid = vec_vlsu_phy_fwd_if[0].rd_rnid;
+assign w_vec_phy_fwd_if[2].valid   = vec_vlsu_phy_fwd_if.valid;
+assign w_vec_phy_fwd_if[2].rd_rnid = vec_vlsu_phy_fwd_if.rd_rnid;
 
 scariv_valu_issue_unit
   #(

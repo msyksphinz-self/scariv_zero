@@ -61,6 +61,8 @@ typedef struct packed {
   logic csr_update;
 } pipe_ctrl_t;
 
+logic                   w_commit_flush;
+
 scariv_csu_pkg::issue_t r_ex0_issue;
 pipe_ctrl_t             w_ex0_pipe_ctrl;
 csr_update_t            w_ex0_csr_update;
@@ -85,10 +87,12 @@ logic                   r_ex3_csr_illegal;
 scariv_vec_pkg::vtype_t r_ex3_vtype;
 logic                   r_ex3_lmul_change_exc_valid;
 
+assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+
 function automatic logic lmul_change_exc_valid (logic [ 2: 0] curr_vlmul, logic [ 2: 0] next_vlmul);
   return (curr_vlmul != next_vlmul) &
-         (curr_vlmul[ 1: 0] < next_vlmul[ 1: 0]) &    // VLMUL increase
-         ~next_vlmul[2];                              // VLMUL is not minus
+         // (curr_vlmul[ 1: 0] < next_vlmul[ 1: 0]) &    // VLMUL increase
+         (($signed(curr_vlmul) > 0) | ($signed(next_vlmul) > 0));
 endfunction // lmul_change_exc_valid
 
 always_comb begin
@@ -119,8 +123,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= 'h0;
     r_ex1_pipe_ctrl <= 'h0;
   end else begin
-    r_ex1_issue <= r_ex0_issue;
-    r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
+    if (w_commit_flush) begin
+      r_ex1_issue.valid <= 1'b0;
+    end else begin
+      r_ex1_issue <= r_ex0_issue;
+      r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
+    end
   end
 end
 
@@ -138,7 +146,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end else begin
     // r_ex2_rs1_data <= ex1_regread_rs1.data;
 
-    r_ex2_issue <= r_ex1_issue;
+    if (w_commit_flush) begin
+      r_ex2_issue.valid <= 1'b0;
+    end else begin
+      r_ex2_issue <= r_ex1_issue;
+    end
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
   end
 end
@@ -160,7 +172,9 @@ scariv_vec_pkg::vlenbmax_t w_ex2_vlmax;
 assign w_ex2_vlmax = scariv_vec_pkg::calc_vlmax(w_ex2_vtype.vlmul, w_ex2_vtype.vsew);
 
 riscv_pkg::xlen_t csr_read_data;
-assign csr_read_data = !read_if.resp_error ? read_if.data : read_vec_if.data;
+assign csr_read_data = !read_if.resp_error ? read_if.data :
+                       r_ex2_issue.valid & (r_ex2_issue.inst[31:20] == `SYSREG_ADDR_VTYPE) ? vec_csr_if.vlvtype.vtype :
+                       read_vec_if.data;
 
 assign w_ex2_is_fs_illegal = r_ex2_pipe_ctrl.csr_update &
                              ((r_ex2_issue.inst[31:20] == `SYSREG_ADDR_FFLAGS) |
@@ -179,7 +193,11 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_pipe_ctrl <= 'h0;
     r_ex3_csr_illegal <= 1'b0;
   end else begin
-    r_ex3_issue     <= r_ex2_issue;
+    if (w_commit_flush) begin
+      r_ex3_issue.valid <= 1'b0;
+    end else begin
+      r_ex3_issue     <= r_ex2_issue;
+    end
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
 
     r_ex3_csr_illegal <= read_if.resp_error & read_vec_if.resp_error | w_ex2_is_fs_illegal;
@@ -252,6 +270,14 @@ assign write_if.valid = r_ex3_issue.valid &
                           r_ex3_issue.rd_regs[0].valid & (r_ex3_issue.rd_regs[0].regidx == 5'h0));
 assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
+
+assign write_vec_if.valid = r_ex3_issue.valid &
+                            !r_ex3_csr_illegal &
+                            r_ex3_pipe_ctrl.csr_update &
+                            !((r_ex3_pipe_ctrl.op == OP_RS || r_ex3_pipe_ctrl.op == OP_RC) &
+                              r_ex3_issue.rd_regs[0].valid & (r_ex3_issue.rd_regs[0].regidx == 5'h0));
+assign write_vec_if.addr  = r_ex3_issue.inst[31:20];
+assign write_vec_if.data  = r_ex3_result;
 
 assign vlvtype_upd_if.valid         = r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_VSETVL);
 `ifdef SIMULATION

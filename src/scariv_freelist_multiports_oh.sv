@@ -33,12 +33,12 @@ assign w_poped_bit[0] = r_active_bits;
 always_comb begin
   w_active_bits_next = r_active_bits;
   for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
-    w_active_bits_next = w_active_bits_next | i_push_id[p_idx];
-  end
-  for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
     if (i_pop[p_idx]) begin
       w_active_bits_next = w_active_bits_next & w_poped_bit[PORTS];
     end
+  end
+  for (int p_idx = 0; p_idx < PORTS; p_idx++) begin
+    w_active_bits_next = w_active_bits_next | i_push_id[p_idx];
   end
 end // always_comb
 

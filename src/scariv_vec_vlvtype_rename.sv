@@ -75,8 +75,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (vlvtype_commit_if.valid) begin
       r_table_valid[r_committed_ptr] <= 1'b0;
       r_table_ready[r_committed_ptr] <= 1'b0;
+      r_table_valid[r_committed_ptr+1] <= r_table_valid[r_committed_ptr+1] | r_table_valid[r_committed_ptr];
+      r_table_ready[r_committed_ptr+1] <= r_table_ready[r_committed_ptr+1] | r_table_ready[r_committed_ptr];
       if (vlvtype_commit_if.dead) begin
         r_vlvtype_table[r_committed_ptr+1] <= r_vlvtype_table[r_committed_ptr];
+      end else if (vlvtype_commit_if.lmul_change_valid) begin
+        r_vlvtype_table[r_committed_ptr+1].vtype <= r_vlvtype_table[r_committed_ptr].vtype;
       end
     end
     if (vlvtype_req_if.valid & !vlvtype_req_if.full) begin

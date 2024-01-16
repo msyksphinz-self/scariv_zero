@@ -155,9 +155,11 @@ scariv_pkg::early_wr_t w_ex1_valu_early_wr;
 vec_regread_if         w_vec_phy_rd_if[VPR_READ_PORT_NUM]()  ;
 vec_regwrite_if        w_vec_phy_wr_if[3]()  ;
 scariv_pkg::done_rpt_t w_valu_done_rpt[2]    ;
+vec_phy_fwd_if         w_vec_phy_fwd_if[3]();
 st_buffer_if           w_vlsu_st_buffer_if();
 vstq_haz_check_if      w_vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 scalar_ldq_haz_check_if w_scalar_ldq_haz_check_if();
+logic                   w_lmul_exception_mode;
 
 scariv_pkg::grp_id_t   w_disp_vlsu_valids ;
 scariv_pkg::early_wr_t w_ex1_vlsu_early_wr;
@@ -342,7 +344,7 @@ u_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .valu_vec_phy_wr_if (w_vec_phy_wr_if),
+  .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
   .rn_front_if  (w_rn_front_if),
   .i_sc_ras_index (w_sc_ras_index),
@@ -571,6 +573,7 @@ u_csu (
 
     .fflags_update_if (w_fflags_update_if),
 
+    .o_lmul_exception_mode (w_lmul_exception_mode),
     .vec_csr_if     (w_vec_csr_if),
     .vlvtype_upd_if (w_vlvtype_upd_if),
     .vlmul_upd_if   (w_vlmul_upd_if),
@@ -674,9 +677,6 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
   scariv_pkg::grp_id_t w_rn_is_subcat_vset;
 
-  vec_phy_fwd_if  w_vec_valu_phy_fwd_if[2]();
-  vec_phy_fwd_if  w_vec_vlsu_phy_fwd_if[1]();
-
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
     assign w_rn_is_subcat_vset[d_idx] = (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_CSU) &
                                         (w_rn_front_if.payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
@@ -747,8 +747,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_phy_v0_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  4]),
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  3]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[0:1]),
-     .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
-     .vec_vlsu_phy_fwd_if (w_vec_vlsu_phy_fwd_if),
+     .vec_valu_phy_fwd_if (w_vec_phy_fwd_if[0:1]),
+     .vec_vlsu_phy_fwd_if (w_vec_phy_fwd_if[2]),
 
      .o_done_report(w_valu_done_rpt),
 
@@ -772,6 +772,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .rob_info_if(w_rob_info_if),
      .ptw_if     (w_ptw_if[1 + scariv_conf_pkg::LSU_INST_NUM]),
 
+     .i_lmul_exception_mode (w_lmul_exception_mode),
+
      .disp_valid      (w_disp_vlsu_valids),
      .disp            (w_rn_front_if),
      .vlvtype_info_if (r_rn_vlvtype_info_if),
@@ -787,8 +789,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  3]),
      .vec_phy_wr_if     (w_vec_phy_wr_if[2]),
 
-     .vec_valu_phy_fwd_if (w_vec_valu_phy_fwd_if),
-     .vec_vlsu_phy_fwd_if (w_vec_vlsu_phy_fwd_if),
+     .vec_valu_phy_fwd_if (w_vec_phy_fwd_if[0:1]),
+     .vec_vlsu_phy_fwd_if (w_vec_phy_fwd_if[2]),
 
      .scalar_ldq_haz_check_if (w_scalar_ldq_haz_check_if),
 

@@ -119,11 +119,6 @@ function automatic vlenbmax_t calc_vlmax(logic [ 2: 0] vlmul,
 
 endfunction // calc_vlmax
 
-function automatic logic [ 2: 0] calc_num_req(logic [ 2: 0] vlmul);
-  return vlmul[2] ? 'h1 : 1 << vlmul;
-endfunction // calc_num_req
-
-
 typedef struct packed {
   logic                 valid;
   scariv_pkg::vaddr_t    pc_addr;
@@ -159,6 +154,13 @@ typedef struct packed {
   logic [63: 0] kanata_id;
 `endif // SIMULATION
 } issue_t;
+
+function automatic logic [ 3: 0] calc_num_req(issue_t issue);
+  return issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE ? issue.inst[31:29] + 'h1 :
+         issue.vlvtype.vtype.vlmul[2]                            ? 'h1 :
+         1 << issue.vlvtype.vtype.vlmul;
+endfunction // calc_num_req
+
 
 
 function issue_t assign_issue_common (scariv_pkg::disp_t in,
@@ -274,10 +276,11 @@ typedef struct packed {
 // VLSU Replay Queue
 typedef struct packed {
   logic [31: 0]                  inst;
-  decoder_inst_cat_pkg::inst_cat_t cat;
+  decoder_inst_cat_pkg::inst_cat_t    cat;
+  decoder_inst_cat_pkg::inst_subcat_t subcat;
   vlvtype_t                      vlvtype;
   logic                          oldest_valid;
-  scariv_pkg::reg_rd_issue_t     rd_reg;
+  scariv_pkg::reg_rd_issue_t[2:0]  rd_regs;
   scariv_pkg::reg_wr_issue_t     wr_reg;
   scariv_pkg::reg_rd_issue_t     wr_old_reg;
   scariv_pkg::rnid_t             wr_origin_rnid;
@@ -288,6 +291,12 @@ typedef struct packed {
   logic [ 2: 0]                  vec_lmul_index;
   vlsu_replay_info_t             replay_info;
 } vlsu_replay_queue_t;
+
+typedef enum logic [ 1: 0] {
+   VSTQ_RESP_ACCEPTED  = 0,
+   VSTQ_RESP_FULL_WAIT = 1,   // VSTQ is full and some older entries remained
+   VSTQ_RESP_FULL_FLUSH = 2   // VSTQ is full and all entries are younger
+} vstq_resp_t;
 
 
 endpackage // scariv_vec_pkg
@@ -371,15 +380,18 @@ interface vlvtype_commit_if;
   import scariv_vec_pkg::*;
 
   logic             valid;
+  logic             lmul_change_valid;
   logic             dead;
 
   modport master (
     output valid,
+    output lmul_change_valid,
     output dead
   );
 
   modport slave (
     input valid,
+    input lmul_change_valid,
     input dead
   );
 
@@ -521,6 +533,9 @@ interface vlsu_lsq_req_if;
   scariv_vec_pkg::vec_pos_t vs3_pos;
   scariv_vec_pkg::dlenb_t   strb;
 
+  // Status
+  scariv_vec_pkg::vstq_resp_t resp;
+
   modport master (
     output valid,
     output paddr,
@@ -528,7 +543,8 @@ interface vlsu_lsq_req_if;
     output grp_id,
     output vs3_phy_idx,
     output vs3_pos,
-    output strb
+    output strb,
+    input resp
   );
 
   modport slave (
@@ -538,7 +554,8 @@ interface vlsu_lsq_req_if;
     input grp_id,
     input vs3_phy_idx,
     input vs3_pos,
-    input strb
+    input strb,
+    output resp
   );
 
 endinterface // vlsu_lsq_req_if

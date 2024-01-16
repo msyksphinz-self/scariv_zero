@@ -225,6 +225,7 @@ always_comb begin
         SILENT_FLUSH   : w_f0_vaddr_flush_next = i_commit.epc + 4;
         ANOTHER_FLUSH  : w_f0_vaddr_flush_next = i_commit.epc;
         LMUL_CHANGE    : w_f0_vaddr_flush_next = scariv_vec_pkg::LMUL_CHANGE_HANDLER_BASE_ADDR;
+        SELF_KILL_REPLAY : w_f0_vaddr_flush_next = i_commit.epc;
         MRET           : w_f0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
         SRET           : w_f0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
         URET           : w_f0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];

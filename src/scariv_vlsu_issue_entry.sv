@@ -17,6 +17,8 @@ module scariv_vlsu_issue_entry
    input logic       i_clk,
    input logic       i_reset_n,
 
+   input logic       i_inst_oldest,
+
    // Output point valid specifield
    input logic       i_out_ptr_valid,
 
@@ -148,8 +150,10 @@ assign w_rs_pred_mispredicted_or = |w_rs_pred_mispredicted;
 
 logic vlvtype_upd_load_valid;
 logic vlvtype_upd_valid;
+logic vlvtype_info_valid;
 assign vlvtype_upd_valid      = vlvtype_upd_if.valid & (vlvtype_upd_if.index == r_entry.vlvtype_index);
 assign vlvtype_upd_load_valid = vlvtype_upd_if.valid & (vlvtype_upd_if.index == vlvtype_info_if.index);
+assign vlvtype_info_valid     = vlvtype_info_if.ready & (vlvtype_info_if.index == r_entry.vlvtype_index);
 
 always_comb begin
   w_state_next  = r_state;
@@ -162,7 +166,7 @@ always_comb begin
     w_entry_next.rd_regs[rs_idx].predict_ready[0] = r_entry.rd_regs[rs_idx].valid & w_rs_rel_hit[rs_idx];
     w_entry_next.rd_regs[rs_idx].predict_ready[1] = r_entry.rd_regs[rs_idx].predict_ready[0];
 
-    w_entry_next.vlvtype_ready = r_entry.vlvtype_ready | vlvtype_upd_valid;
+    w_entry_next.vlvtype_ready = r_entry.vlvtype_ready | vlvtype_upd_valid | vlvtype_info_valid;
     w_entry_next.vlvtype       = vlvtype_upd_valid ? vlvtype_upd_if.vlvtype : r_entry.vlvtype;
 
     if (w_entry_next.rd_regs[rs_idx].predict_ready[0]) begin
@@ -227,8 +231,7 @@ always_comb begin
         end else begin
           if ((scariv_vec_pkg::VEC_STEP_W == 1) |
               (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) begin
-            if ((r_entry.subcat == decoder_inst_cat_pkg::INST_SUBCAT_WHOLE) |
-                (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry.vlvtype.vtype.vlmul)-1)) begin
+            if (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry)-1) begin
               w_state_next = ISSUED_EX2;
             end else begin
               w_entry_next.vec_lmul_index = r_entry.vec_lmul_index + 'h1;
@@ -311,15 +314,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end
 
-generate if (EN_OLDEST == 1'b1) begin
-  assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
-                          ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
-  assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
-end else begin
-  assign w_oldest_ready = 1'b1;
-  assign w_pc_update_before_entry = 1'b0;
-end
-endgenerate
+assign w_oldest_ready = ~i_inst_oldest ? 1'b1 :
+                        (rob_info_if.cmt_id == r_entry.cmt_id) &
+                        ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
+assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_valid | rob_info_if.except_valid) & rob_info_if.done_grp_id);
 
 
 assign o_entry_valid = r_entry.valid;

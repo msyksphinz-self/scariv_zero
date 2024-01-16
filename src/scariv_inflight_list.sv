@@ -137,9 +137,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
     logic                         w_is_x0_reg;
     assign w_is_x0_reg = (REG_TYPE == GPR) & (i_rnid[d_idx * NUM_INFLIGHT_OPS + rs_idx] == 'h0);
     assign o_valids[d_idx * NUM_INFLIGHT_OPS + rs_idx] = w_is_x0_reg                  ? 1'b1 :
-                                                    w_update_phy_valids [rs_idx] ? 1'b1 :
-                                                    w_update_fetch_valid[rs_idx] ? w_update_fetch_data[rs_idx] :
-                                                    r_inflight_list[i_rnid[d_idx * NUM_INFLIGHT_OPS + rs_idx]];
+                                                         w_update_phy_valids [rs_idx] ? 1'b1 :
+                                                         w_update_fetch_valid[rs_idx] ? w_update_fetch_data[rs_idx] :
+                                                         r_inflight_list[i_rnid[d_idx * NUM_INFLIGHT_OPS + rs_idx]];
   end
 
 end // block: disp_loop

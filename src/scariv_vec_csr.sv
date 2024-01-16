@@ -66,6 +66,35 @@ always_comb begin
   end // if (read_csr_vec_if.valid)
 end // always_comb
 
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+  end else begin
+    if (write_csr_vec_if.valid) begin
+      case (write_csr_vec_if.addr)
+        `SYSREG_ADDR_VSTART   : r_vstart   <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VXSAT    : r_vxsat    <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VXRM     : r_vxrm     <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VCSR     : r_vcsr     <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VL       : r_vl       <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VTYPE    : r_vtype    <= write_csr_vec_if.data;
+        `SYSREG_ADDR_VSCRATCH : r_vscratch <= write_csr_vec_if.data;
+        default               : begin end
+      endcase // case (write_csr_vec_if.addr)
+    end // if (write_csr_vec_if.valid)
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+assign write_csr_vec_if.resp_error = write_csr_vec_if.valid &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VSTART)   &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VXSAT)    &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VXRM)     &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VCSR)     &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VL)       &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VTYPE)    &
+                                     (write_csr_vec_if.addr != `SYSREG_ADDR_VSCRATCH) &
+                                     1'b0;
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_lmul_exception_mode <= 1'b0;
