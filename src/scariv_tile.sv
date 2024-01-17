@@ -81,9 +81,6 @@ lsu_access_if w_lsu_access();
 sfence_if     w_sfence_if();
 logic                          w_fence_i;
 
-logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
-scariv_pkg::vaddr_t                    w_sc_ras_vaddr;
-
 brtag_if w_brtag_if();
 
 // ----------------------------------
@@ -273,9 +270,6 @@ scariv_frontend u_frontend (
   .int_if   (w_int_if),
 
   .ibuf_front_if(w_ibuf_front_if),
-  .rn_front_if (w_rn_front_if),
-  .o_sc_ras_index  (w_sc_ras_index),
-  .o_sc_ras_vaddr (w_sc_ras_vaddr),
 
   .ptw_if (w_ptw_if[0])
 );
@@ -300,9 +294,7 @@ u_rename (
   .br_upd_if (w_ex3_br_upd_if),
 
   .i_phy_wr (w_ex3_phy_wr),
-  .rn_front_if  (w_rn_front_if),
-  .i_sc_ras_index (w_sc_ras_index),
-  .i_sc_ras_vaddr (w_sc_ras_vaddr)
+  .rn_front_if  (w_rn_front_if)
 );
 
 

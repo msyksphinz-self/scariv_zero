@@ -32,9 +32,6 @@ module scariv_rename
    // Branch Tag Update Signal
    br_upd_if.slave        br_upd_if,
 
-   input logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
-   input scariv_pkg::vaddr_t                    i_sc_ras_vaddr,
-
    // Committer Rename ID update
    input scariv_pkg::commit_blk_t   i_commit,
    input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
@@ -146,12 +143,6 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign rn_front_if.payload.cmt_id = i_sc_new_cmt_id;
 always_comb begin
   rn_front_if.payload.inst = r_disp_inst;
-  // for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
-  //   rn_front_if.payload.inst[d_idx].ras_index      = i_sc_ras_index;
-  //   if (rn_front_if.payload.inst[d_idx].is_call) begin
-  //     rn_front_if.payload.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
-  //   end
-  // end
 end
 
 

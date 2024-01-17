@@ -36,11 +36,6 @@ module scariv_frontend
  // Dispatch Info
  scariv_front_if.master    ibuf_front_if,
 
- // For checking RAS updates
- scariv_front_if.watch     rn_front_if,
- output logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] o_sc_ras_index,
- output vaddr_t                    o_sc_ras_vaddr,
-
  // Page Table Walk I/O
  tlb_ptw_if.master ptw_if
 );
