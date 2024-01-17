@@ -15,7 +15,7 @@ module scariv_lsu_replay_queue
 
     output logic o_full,
 
-    input scariv_pkg::commit_blk_t i_commit,
+    commit_if.monitor commit_if,
     br_upd_if.slave                br_upd_if,
 
     // ROB notification interface
@@ -110,7 +110,7 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
     logic w_commit_flush;
     logic w_br_flush;
     logic w_entry_flush;
-    assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_replay_additional_queue[idx].valid;
+    assign w_commit_flush = commit_if.is_flushed_commit() & r_replay_additional_queue[idx].valid;
     assign w_br_flush     = scariv_pkg::is_br_flush_target(r_replay_additional_queue[idx].cmt_id, r_replay_additional_queue[idx].grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_replay_additional_queue[idx].valid;
     assign w_entry_flush  = w_commit_flush | w_br_flush;

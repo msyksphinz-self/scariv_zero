@@ -24,7 +24,7 @@ module scariv_bru_pipe
   input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
   // Commit notification
-  input scariv_pkg::commit_blk_t      i_commit,
+  commit_if.monitor      commit_if,
 
   input scariv_pkg::mispred_t         i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
@@ -171,7 +171,7 @@ select_mispred_bus rs2_mispred_select
  .o_mispred    (w_ex0_rs2_lsu_mispred)
  );
 
-assign w_commit_flushed = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flushed = commit_if.is_flushed_commit();
 
 
 assign o_ex1_early_wr.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;

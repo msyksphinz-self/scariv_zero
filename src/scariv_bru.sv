@@ -35,7 +35,7 @@ module scariv_bru
   output scariv_pkg::done_rpt_t o_done_report,
 
   // Commit notification
-  input scariv_pkg::commit_blk_t i_commit,
+  commit_if.monitor commit_if,
 
   br_upd_if.master            ex3_br_upd_if,
   br_upd_if.slave             ex3_br_upd_slave_if,
@@ -99,7 +99,7 @@ u_issue_unit
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(),
 
-   .i_commit (i_commit),
+   .commit_if (commit_if),
    .br_upd_if (ex3_br_upd_slave_if),
    .brtag_if  (brtag_if)
    );
@@ -121,7 +121,7 @@ u_bru_pipe
    .ex0_regread_rs1(ex1_regread_rs1),
    .ex0_regread_rs2(ex1_regread_rs2),
 
-   .i_commit (i_commit),
+   .commit_if (commit_if),
 
    .i_mispred_lsu (i_mispred_lsu),
 

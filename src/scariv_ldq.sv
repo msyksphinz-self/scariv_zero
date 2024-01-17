@@ -31,7 +31,7 @@ module scariv_ldq
    input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
 
    // Commit notification
-   input scariv_pkg::commit_blk_t i_commit,
+   commit_if.monitor commit_if,
    br_upd_if.slave              br_upd_if,
 
    // Store Buffer Interface
@@ -70,7 +70,7 @@ logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld[scariv_conf_
 logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld_oh[scariv_conf_pkg::LSU_INST_NUM];
 
 logic                                w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
+assign w_flush_valid = commit_if.is_flushed_commit();
 
 // --------------------------------
 // Credit & Return Interface
@@ -227,7 +227,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
      .i_stq_rs2_resolve (i_stq_rs2_resolve),
 
-     .i_commit (i_commit),
+     .commit_if (commit_if),
      .br_upd_if (br_upd_if),
 
      // .ex3_done_if    (w_ex3_done_sel_if),

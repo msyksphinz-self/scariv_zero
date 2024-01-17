@@ -19,7 +19,7 @@ module scariv_ftq
    output logic o_is_ftq_empty,
 
    // PC Update from Committer
-   input scariv_pkg::commit_blk_t i_commit,
+   commit_if.monitor commit_if,
 
    // Fetch direction update to Frontend
    br_upd_if.master br_upd_fe_if
@@ -63,7 +63,7 @@ u_ptr
    .o_out_ptr   (w_out_ptr_oh)
    );
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 assign w_ftq_flush = w_commit_flush | br_upd_fe_if.update & br_upd_fe_if.mispredict;
 

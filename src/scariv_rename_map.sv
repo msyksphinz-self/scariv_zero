@@ -34,9 +34,9 @@ module scariv_rename_map
    input logic                     i_restore_from_queue,
    input rnid_t       i_restore_rn_list[32],
 
-   input logic [DISP_SIZE-1: 0]    i_commit_rd_valid,
-   input logic [ 4: 0]             i_commit_rd_regidx[DISP_SIZE],
-   input rnid_t       i_commit_rd_rnid[DISP_SIZE],
+   input logic [DISP_SIZE-1: 0]    commit_if_rd_valid,
+   input logic [ 4: 0]             commit_if_rd_regidx[DISP_SIZE],
+   input rnid_t       commit_if_rd_rnid[DISP_SIZE],
 
    output rnid_t      o_rn_list[32]
    );
@@ -85,12 +85,12 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
     logic [DISP_SIZE-1: 0] w_rd_active_valid_oh;
     rnid_t    w_commit_rd_rnid;
     for (genvar d = 0; d < DISP_SIZE; d++) begin
-      assign w_rd_active_valid[d] = i_commit_rd_valid[d] &
-                                    (i_commit_rd_regidx[d] == i[4:0]);
+      assign w_rd_active_valid[d] = commit_if_rd_valid[d] &
+                                    (commit_if_rd_regidx[d] == i[4:0]);
     end
     bit_extract_msb #(.WIDTH(DISP_SIZE)) extract_latest_rd_bit(.in(w_rd_active_valid), .out(w_rd_active_valid_oh));
     bit_oh_or #(.T(logic[RNID_W-1:0]), .WORDS(DISP_SIZE)) bit_rnid_or(.i_oh(w_rd_active_valid_oh),
-                                                                      .i_data(i_commit_rd_rnid),
+                                                                      .i_data(commit_if_rd_rnid),
                                                                       .o_selected(w_commit_rd_rnid));
 
     assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :

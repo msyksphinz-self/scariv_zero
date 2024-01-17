@@ -54,7 +54,7 @@ module scariv_stq
    output stq_resolve_t o_stq_rs2_resolve,
 
    // Commit notification
-   input scariv_pkg::commit_blk_t   i_commit,
+   commit_if.monitor   commit_if,
    br_upd_if.slave                br_upd_if,
 
    // Store Buffer Interface
@@ -103,7 +103,7 @@ logic [scariv_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_req_accepted[scariv_c
 logic [scariv_conf_pkg::STQ_SIZE-1: 0]             w_stq_rs2_get;
 
 logic                                w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
+assign w_flush_valid = commit_if.is_flushed_commit();
 
 // --------------------------------
 // Credit & Return Interface
@@ -307,7 +307,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
      .i_missu_is_empty(i_missu_is_empty),
 
-     .i_commit (i_commit),
+     .commit_if (commit_if),
      .br_upd_if (br_upd_if),
 
      .o_stbuf_req_valid (w_stbuf_req_valid[s_idx]),

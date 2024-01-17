@@ -18,7 +18,7 @@ module scariv_predictor
  input logic  i_clk,
  input logic  i_reset_n,
 
- input commit_blk_t i_commit,
+ commit_if.monitor commit_if,
 
  input logic i_f1_valid,
  input logic i_f2_valid,
@@ -299,12 +299,12 @@ logic w_ras_br_flush;
 logic w_ras_flush_valid;
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_ras_commit_flush_valid_oh;
 logic [RAS_W-1: 0]          w_ras_commit_flush_ras_index_oh;
-assign w_ras_commit_flush = is_flushed_commit(i_commit) /* & |(i_commit.flush_valid & i_commit.ras_update) */;
+assign w_ras_commit_flush = commit_if.is_flushed_commit() /* & |(commit_if.payload.flush_valid & commit_if.ras_update) */;
 assign w_ras_br_flush = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict /* &
                         (br_upd_if.is_call | br_upd_if.is_ret) */;
-bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) commit_flush_valid_oh (.in(i_commit.flush_valid), .out(w_ras_commit_flush_valid_oh));
+bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) commit_flush_valid_oh (.in(commit_if.payload.flush_valid), .out(w_ras_commit_if.payload.flush_valid_oh));
 bit_oh_or_packed #(.T(logic [RAS_W-1: 0]), .WORDS(scariv_conf_pkg::DISP_SIZE))
-bit_oh_call_target(.i_oh(w_ras_commit_flush_valid_oh), .i_data(i_commit.ras_index), .o_selected(w_ras_commit_flush_ras_index_oh));
+bit_oh_call_target(.i_oh(w_ras_commit_if.payload.flush_valid_oh), .i_data(commit_if.ras_index), .o_selected(w_ras_commit_flush_ras_index_oh));
 assign w_ras_flush_valid   = w_ras_commit_flush | w_ras_br_flush;
 
 logic [RAS_W-1: 0]          w_flush_ras_index;
@@ -456,7 +456,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                      br_upd_if.pc_vaddr, br_upd_if.ras_index);
     end
     if (w_ras_commit_flush) begin
-      rtl_flush_ras ($time, i_commit.cmt_id, w_ras_commit_flush_valid_oh,
+      rtl_flush_ras ($time, commit_if.payload.cmt_id, w_ras_commit_if.payload.flush_valid_oh,
                      'h0, w_ras_commit_flush_ras_index_oh);
     end
   end

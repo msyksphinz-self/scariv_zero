@@ -18,7 +18,7 @@ module scariv_fpnew_wrapper
    input logic               i_reset_n,
 
    // Commit notification
-   input scariv_pkg::commit_blk_t i_commit,
+   commit_if.monitor commit_if,
    br_upd_if.slave                br_upd_if,
 
    input logic                i_valid,
@@ -266,7 +266,7 @@ always_comb begin
 
 end // always_comb
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 assign w_in_br_flush  = scariv_pkg::is_br_flush_target(w_aux_fpnew_in.cmt_id, w_aux_fpnew_in.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & i_valid;
 assign w_in_flush     = w_commit_flush | w_in_br_flush;

@@ -32,7 +32,7 @@ module scariv_resource_alloc
    // Branch Tag Update Signal
    br_upd_if.slave                br_upd_if,
 
-   input scariv_pkg::commit_blk_t   i_commit,
+   commit_if.monitor   commit_if,
 
    output logic o_resource_ok,
 
@@ -66,7 +66,7 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !(|w_fpu_no_credits_remained);
 
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
