@@ -534,10 +534,12 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
       // mshr_snoop_if.s1_hit_evict_index[e_idx] <= 1'b0;
       mshr_snoop_if.resp_s1_hit_index [e_idx] <= 1'b0;
       mshr_snoop_if.entry_valid       [e_idx] <= 1'b0;
+      mshr_snoop_if.entry_resolved    [e_idx] <= 1'b0;
     end else begin
       // mshr_snoop_if.s1_hit_evict_index[e_idx] <= w_snoop_missu_evict_hit_array_next[e_idx];
       mshr_snoop_if.resp_s1_hit_index [e_idx] <= w_snoop_missu_hit_array_next[e_idx];
       mshr_snoop_if.entry_valid       [e_idx] <= w_missu_entries[e_idx].valid;
+      mshr_snoop_if.entry_resolved    [e_idx] <= w_ext_rd_resp_valid;
     end
   end
 end endgenerate
