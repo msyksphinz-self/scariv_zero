@@ -38,7 +38,7 @@ module scariv_alu #(
 
     output scariv_pkg::done_rpt_t o_done_report,
     // Commit notification
-    input scariv_pkg::commit_blk_t i_commit,
+    commit_if.monitor commit_if,
     br_upd_if.slave              br_upd_if
 );
 
@@ -103,7 +103,7 @@ u_scariv_issue_unit
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .i_commit      (i_commit),
+   .commit_if      (commit_if),
    .br_upd_if     (br_upd_if)
    );
 
@@ -117,7 +117,7 @@ u_alu
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_commit  (i_commit),
+   .commit_if  (commit_if),
    .br_upd_if (br_upd_if),
 
    .rv0_issue(w_rv0_issue),

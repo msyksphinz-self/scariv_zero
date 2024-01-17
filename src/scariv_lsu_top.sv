@@ -75,7 +75,7 @@ module scariv_lsu_top
 
 
     // Commit notification
-    input scariv_pkg::commit_blk_t i_commit,
+    commit_if.monitor commit_if,
     br_upd_if.slave              br_upd_if
    );
 
@@ -216,7 +216,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .sfence_if_master (w_sfence_if_inst[lsu_idx]),
     .o_fence_i (w_fence_i[lsu_idx]),
 
-    .i_commit (i_commit),
+    .commit_if (commit_if),
 
     .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
     .o_done_report          (o_done_report         [lsu_idx]),
@@ -268,7 +268,7 @@ u_ldq
  .st_buffer_if (w_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
 
- .i_commit (i_commit),
+ .commit_if (commit_if),
  .br_upd_if (br_upd_if),
  .o_done_report()
  );
@@ -310,7 +310,7 @@ scariv_stq
 
   .o_stq_rmw_existed (w_stq_rmw_existed),
 
- .i_commit (i_commit),
+ .commit_if (commit_if),
  .br_upd_if (br_upd_if),
 
  .st_buffer_if (w_st_buffer_if),

@@ -24,7 +24,7 @@ module scariv_lsu_pipe
  sfence_if.slave                       sfence_if_slave,
 
  // Commit notification
- input scariv_pkg::commit_blk_t        i_commit,
+ commit_if.monitor        commit_if,
  br_upd_if.slave                       br_upd_if,
 
  input scariv_pkg::phy_wr_t             ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
@@ -220,7 +220,7 @@ select_mispred_bus ex0_rs2_mispred_select
 assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
 assign w_ex0_rs2_mispred = w_ex0_issue.rd_regs[1].valid & w_ex0_issue.rd_regs[1].predict_ready ? w_ex0_rs2_lsu_mispred : 1'b0;
 
-assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & w_ex0_issue.valid;
+assign w_ex0_commit_flush = commit_if.is_flushed_commit() & w_ex0_issue.valid;
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ex0_issue.valid;
 
@@ -434,7 +434,7 @@ assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_D
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
 
-assign w_ex1_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_ex1_issue.valid;
+assign w_ex1_commit_flush = commit_if.is_flushed_commit() & r_ex1_issue.valid;
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex1_issue.valid;
 
@@ -672,7 +672,7 @@ always_comb begin
   end
 end // always_comb
 
-assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_ex2_issue.valid;
+assign w_ex2_commit_flush = commit_if.is_flushed_commit() & r_ex2_issue.valid;
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex2_issue.valid;
 
@@ -728,9 +728,9 @@ logic                                r_sfence_vma_is_rs2_x0;
 scariv_pkg::vaddr_t      r_sfence_vma_vaddr;
 
 logic                                w_sfence_vma_sfence_commit_match;
-assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & i_commit.commit &
-                                          (i_commit.cmt_id == r_sfence_vma_cmt_id) &
-                                          |(i_commit.grp_id & r_sfence_vma_grp_id);
+assign w_sfence_vma_sfence_commit_match = r_sfence_vma_commit_wait & commit_if.commit_valid &
+                                          (commit_if.payload.cmt_id == r_sfence_vma_cmt_id) &
+                                          |(commit_if.payload.grp_id & r_sfence_vma_grp_id);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -757,21 +757,21 @@ assign sfence_if_master.vaddr     = r_sfence_vma_vaddr[riscv_pkg::VADDR_W-1:0];
 // ---------------
 // FENCE_I update
 // ---------------
-logic                r_fencei_commit_wait;
-logic                w_fencei_commit_match;
+logic                r_fencecommit_if_wait;
+logic                w_fencecommit_if_match;
 scariv_pkg::cmt_id_t r_fencei_cmt_id;
 scariv_pkg::grp_id_t r_fencei_grp_id;
-assign w_fencei_commit_match = r_fencei_commit_wait & i_commit.commit &
-                               (i_commit.cmt_id == r_fencei_cmt_id) &
-                               |(i_commit.grp_id & r_fencei_grp_id);
+assign w_fencecommit_if_match = r_fencecommit_if_wait & commit_if.commit_valid &
+                               (commit_if.payload.cmt_id == r_fencei_cmt_id) &
+                               |(commit_if.payload.grp_id & r_fencei_grp_id);
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_fencei_commit_wait <= 'h0;
+    r_fencecommit_if_wait <= 'h0;
   end else begin
-    if (w_fencei_commit_match) begin
-      r_fencei_commit_wait <= 1'b0;
+    if (w_fencecommit_if_match) begin
+      r_fencecommit_if_wait <= 1'b0;
     end else if (r_ex3_issue.valid & (r_ex3_pipe_ctrl.op == OP_FENCE_I)) begin
-      r_fencei_commit_wait <= 1'b1;
+      r_fencecommit_if_wait <= 1'b1;
       r_fencei_cmt_id <= r_ex3_issue.cmt_id;
       r_fencei_grp_id <= r_ex3_issue.grp_id;
     end
@@ -779,7 +779,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-assign o_fence_i = w_fencei_commit_match;
+assign o_fence_i = w_fencecommit_if_match;
 
 
 `ifdef SIMULATION

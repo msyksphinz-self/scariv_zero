@@ -24,7 +24,7 @@ module scariv_frontend
  l2_resp_if.slave ic_l2_resp,
 
  // PC Update from Committer
- input commit_blk_t i_commit,
+ commit_if.monitor commit_if,
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
 
@@ -181,9 +181,9 @@ assign w_flush_haz_clear     = (r_if_state == WAIT_FLUSH_FREE) & w_f0_req_ready 
 
 always_comb begin
   w_int_flush_valid = 1'b0;
-  if (is_flushed_commit(i_commit)) begin
-    if (i_commit.int_valid) begin
-      case (i_commit.except_type)
+  if (commit_if.is_flushed_commit()) begin
+    if (commit_if.payload.int_valid) begin
+      case (commit_if.payload.except_type)
         riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
           /* verilator lint_off WIDTHCONCAT */
           w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
@@ -214,11 +214,11 @@ always_comb begin
           w_f0_vaddr_flush_next = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
           w_int_flush_valid = 1'b1;
         end
-      endcase // case (i_commit.except_type)
+      endcase // case (commit_if.payload.except_type)
     end else begin
-      case (i_commit.except_type)
-        SILENT_FLUSH   : w_f0_vaddr_flush_next = i_commit.epc + 4;
-        ANOTHER_FLUSH  : w_f0_vaddr_flush_next = i_commit.epc;
+      case (commit_if.payload.except_type)
+        SILENT_FLUSH   : w_f0_vaddr_flush_next = commit_if.payload.epc + 4;
+        ANOTHER_FLUSH  : w_f0_vaddr_flush_next = commit_if.payload.epc;
         MRET           : w_f0_vaddr_flush_next = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
         SRET           : w_f0_vaddr_flush_next = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];
         URET           : w_f0_vaddr_flush_next = csr_info.uepc [riscv_pkg::XLEN_W-1: 0];
@@ -309,16 +309,16 @@ always_comb begin
         default           : begin
           w_f0_vaddr_flush_next = 'h0;
 `ifdef SIMULATION
-          $fatal (0, "This exception not supported now : %d", i_commit.except_type);
+          $fatal (0, "This exception not supported now : %d", commit_if.payload.except_type);
 `endif // SIMULATION
         end
-      endcase // case (i_commit.except_type)
-    end // else: !if(i_commit.int_valid)
+      endcase // case (commit_if.payload.except_type)
+    end // else: !if(commit_if.payload.int_valid)
   end else if (w_br_flush) begin
     w_f0_vaddr_flush_next = br_upd_if.target_vaddr;
   end else if (!w_f0_req_ready) begin
       w_f0_vaddr_flush_next = r_f0_vaddr;
-  end else begin // if (|(i_commit.except_valid & ~i_commit.dead_id))
+  end else begin // if (|(commit_if.payload.except_valid & ~commit_if.payload.dead_id))
     w_f0_vaddr_flush_next = (r_f0_vaddr & ~((1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W))-1)) +
                             (1 << $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W));
   end
@@ -514,7 +514,7 @@ always_comb begin
 end
 
 
-assign w_commit_flush  = is_flushed_commit(i_commit);
+assign w_commit_flush  = commit_if.is_flushed_commit();
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
@@ -797,7 +797,7 @@ scariv_predictor_gshare u_predictor
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .i_commit  (i_commit),
+   .commit_if  (commit_if),
 
    .i_f0_valid   (w_f0_ic_req.valid),
    .i_f0_vaddr   (w_f0_ic_req.vaddr),

@@ -539,7 +539,6 @@ typedef struct packed {
 // Commit Signals
 // -----------------
 typedef struct packed {
-  logic             commit;
   cmt_id_t          cmt_id;
   grp_id_t          grp_id;
   grp_id_t          except_valid;
@@ -548,11 +547,9 @@ typedef struct packed {
   riscv_pkg::xlen_t tval;
   grp_id_t          dead_id;
   grp_id_t          flush_valid;
-  logic [DISP_SIZE-1: 0] ras_update;
-  logic [DISP_SIZE-1: 0][RAS_W-1: 0] ras_index;
 
   // Interrupt Inserted
-logic                                int_valid;
+  logic             int_valid;
 } commit_blk_t;
 
 function logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
@@ -581,7 +578,8 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
 endfunction // encoder_grp_id
 
 function logic is_flushed_commit (commit_blk_t commit);
-  return commit.commit & |(commit.flush_valid & ~commit.dead_id);
+  return |(commit.flush_valid & ~commit.dead_id);
+  // return commit.commit & |(commit.flush_valid & ~commit.dead_id);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
@@ -600,21 +598,21 @@ logic                                     inst0_grp_id_older;
 
 endfunction // inst0_older
 
-function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
-                                      grp_id_t entry_grp_id,
-                                      commit_blk_t commit);
-  logic w_cmt_is_older;
-  logic entry_older;
-
-  w_cmt_is_older = commit.cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
-                   commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
-                   commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
-  entry_older = w_cmt_is_older ||
-                (commit.cmt_id == entry_cmt_id && |((commit.flush_valid & ~commit.dead_id) <= entry_grp_id));
-
-  return is_flushed_commit(commit) & entry_older;
-
-endfunction // is_commit_flush_target
+// function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
+//                                       grp_id_t entry_grp_id,
+//                                       commit_blk_t commit);
+//   logic w_cmt_is_older;
+//   logic entry_older;
+//
+//   w_cmt_is_older = commit.cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+//                    commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+//                    commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+//   entry_older = w_cmt_is_older ||
+//                 (commit.cmt_id == entry_cmt_id && |((commit.flush_valid & ~commit.dead_id) <= entry_grp_id));
+//
+//   return is_flushed_commit(commit) & entry_older;
+//
+// endfunction // is_commit_flush_target
 
 
 //                                   brtag_t brtag,
@@ -762,5 +760,46 @@ typedef struct packed {
 } inst_buffer_in_t;
 
 endpackage
+
+interface commit_if;
+  import scariv_pkg::*;
+
+  logic        commit_valid;
+  commit_blk_t payload;
+
+  function logic is_flushed_commit ();
+    return commit_valid & |(payload.flush_valid & ~payload.dead_id);
+  endfunction // is_flushed_commit
+
+  function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
+                                        grp_id_t entry_grp_id);
+    logic w_cmt_is_older;
+    logic entry_older;
+
+    w_cmt_is_older = payload.cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
+                     payload.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
+                     payload.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
+    entry_older = w_cmt_is_older ||
+                  (payload.cmt_id == entry_cmt_id && |((payload.flush_valid & ~payload.dead_id) <= entry_grp_id));
+
+    return is_flushed_commit() & entry_older;
+
+  endfunction // is_commit_flush_target
+
+
+modport master (
+  output commit_valid,
+  output payload,
+  import is_flushed_commit
+);
+
+modport monitor (
+  input commit_valid,
+  input payload,
+  import is_flushed_commit,
+  import is_commit_flush_target
+);
+
+endinterface // commit_if
 
 `default_nettype wire

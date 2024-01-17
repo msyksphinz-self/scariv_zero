@@ -33,8 +33,8 @@ module scariv_rename
    br_upd_if.slave        br_upd_if,
 
    // Committer Rename ID update
-   input scariv_pkg::commit_blk_t   i_commit,
-   input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
+   commit_if.monitor   commit_if,
+   input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update
    );
 
 logic [ 1: 0] w_freelist_ready;
@@ -49,11 +49,11 @@ disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_fpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
 
-assign ibuf_front_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
+assign ibuf_front_if.ready = !(commit_if_rnid_update.commit & (|commit_if.payload.except_valid)) &
                              i_resource_ok & &w_freelist_ready;
 
 assign w_ibuf_front_fire = ~w_flush_valid & ibuf_front_if.valid & ibuf_front_if.ready;
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
@@ -77,8 +77,8 @@ u_ipr_rename
 
    .o_disp_inst (w_ibuf_ipr_disp_inst),
 
-   .i_commit             (i_commit            ),
-   .i_commit_rnid_update (i_commit_rnid_update)
+   .commit_if             (commit_if            ),
+   .commit_if_rnid_update (commit_if_rnid_update)
    );
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
@@ -100,8 +100,8 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
 
      .o_disp_inst (w_ibuf_fpr_disp_inst),
 
-     .i_commit             (i_commit            ),
-     .i_commit_rnid_update (i_commit_rnid_update)
+     .commit_if             (commit_if            ),
+     .commit_if_rnid_update (commit_if_rnid_update)
      );
 
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop

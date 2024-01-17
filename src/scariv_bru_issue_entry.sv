@@ -39,7 +39,7 @@ module scariv_bru_issue_entry
    input logic       i_entry_picked,
 
    // Commit notification
-   input             scariv_pkg::commit_blk_t i_commit,
+   commit_if.monitor commit_if,
    // Branch Flush Notification
    br_upd_if.slave   br_upd_if,
 
@@ -195,12 +195,12 @@ assign w_init_entry = scariv_bru_pkg::assign_bru_issue(i_put_data, i_cmt_id, i_g
                                                        i_basicblk_pc_vaddr);
 
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_entry.valid;
+assign w_commit_flush = commit_if.is_flushed_commit() & r_entry.valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.valid;
 assign w_entry_flush = w_commit_flush | w_br_flush;
 
-assign w_load_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & i_put;
+assign w_load_commit_flush = commit_if.is_flushed_commit() & i_put;
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_entry_flush = w_load_commit_flush | w_load_br_flush | i_dead_put;

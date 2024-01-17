@@ -56,7 +56,7 @@ module scariv_lsu_issue_unit
   output scariv_pkg::done_rpt_t         o_done_report,
 
   // Commit notification
-  input scariv_pkg::commit_blk_t          i_commit,
+  commit_if.monitor          commit_if,
   // Branch Flush Notification
   br_upd_if.slave                       br_upd_if
 );
@@ -82,7 +82,7 @@ logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 scariv_pkg::done_rpt_t          w_entry_done_report[ENTRY_SIZE];
 
 logic                                w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(i_commit);
+assign w_flush_valid = commit_if.is_flushed_commit();
 
 logic                                w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
@@ -244,7 +244,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_replay_queue_full  (i_replay_queue_full ),
     .i_missu_is_empty     (i_missu_is_empty    ),
 
-    .i_commit (i_commit),
+    .commit_if (commit_if),
     .br_upd_if (br_upd_if),
 
     .o_issue_succeeded (w_entry_finish   [s_idx]),
