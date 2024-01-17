@@ -741,6 +741,7 @@ interface mshr_snoop_if;
 
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] resp_s1_hit_index;
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_valid;
+  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_resolved;
 
   // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_evict_index;
 
@@ -753,7 +754,8 @@ interface mshr_snoop_if;
     input  resp_s1_data,
     input  resp_s1_hit_index,
     input  resp_s1_evict_valid,
-    input  entry_valid
+    input  entry_valid,
+    input  entry_resolved
   );
 
   modport slave (
@@ -765,7 +767,8 @@ interface mshr_snoop_if;
     output resp_s1_data,
     output resp_s1_hit_index,
     output resp_s1_evict_valid,
-    output entry_valid
+    output entry_valid,
+    output entry_resolved
   );
 
 endinterface // mshr_snoop_if
