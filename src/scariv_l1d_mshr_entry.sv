@@ -34,6 +34,7 @@ module scariv_l1d_mshr_entry
    input logic i_uc_fwd_hit,
 
    output logic o_l1d_wr_updating,
+   output logic o_l1d_wr_finish,
 
    input logic i_busy_by_snoop,
 
@@ -164,6 +165,7 @@ end // always_comb
 assign o_ext_req_ready = (r_state == READY_REQ) & !w_hit_st_requestor_busy;
 assign o_wr_req_valid = r_state == WRITE_L1D;
 assign o_evict_ready  = r_state == EVICT_REQ;
+assign o_l1d_wr_finish = r_state == WRITE_L1D_TEMP2;
 
 assign o_l1d_wr_updating = r_state inside {WRITE_L1D, WRITE_L1D_TEMP, WRITE_L1D_TEMP2};
 

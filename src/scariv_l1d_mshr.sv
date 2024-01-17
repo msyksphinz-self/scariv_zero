@@ -57,6 +57,7 @@ logic                                             w_out_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_entry_finish;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_missu_valids;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_updating;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_finish;
 
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;
 logic [REQ_PORT_NUM-1: 0]   w_resp_evict_conflict;
@@ -361,6 +362,7 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
 
        .o_l1d_wr_updating (w_l1d_wr_updating[e_idx]),
+       .o_l1d_wr_finish   (w_l1d_wr_finish  [e_idx]),
 
        .i_busy_by_snoop (snoop_info_if.busy),
 
@@ -539,7 +541,7 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
       // mshr_snoop_if.s1_hit_evict_index[e_idx] <= w_snoop_missu_evict_hit_array_next[e_idx];
       mshr_snoop_if.resp_s1_hit_index [e_idx] <= w_snoop_missu_hit_array_next[e_idx];
       mshr_snoop_if.entry_valid       [e_idx] <= w_missu_entries[e_idx].valid;
-      mshr_snoop_if.entry_resolved    [e_idx] <= w_ext_rd_resp_valid;
+      mshr_snoop_if.entry_resolved    [e_idx] <= w_l1d_wr_finish[e_idx];
     end
   end
 end endgenerate
