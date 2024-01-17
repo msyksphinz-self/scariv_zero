@@ -75,6 +75,7 @@ typedef struct packed {
   ew_t                   vsew;
   logic                  is_mask_inst;
   dlen_t                 old_wr_data;
+  logic                  is_last_lmul;
   vec_pos_t              step_index;
   fpnew_lane_t           simd_mask;
   vlenbmax_t             vl;

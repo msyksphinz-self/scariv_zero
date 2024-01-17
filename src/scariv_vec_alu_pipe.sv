@@ -386,6 +386,31 @@ assign w_ex1_fpnew_src_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg
 assign w_ex1_fpnew_dst_fp_fmt = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::FP32  : fpnew_pkg::FP64;
 assign w_ex1_fpnew_int_fmt    = r_ex1_issue.vlvtype.vtype.vsew == scariv_vec_pkg::EW32 ? fpnew_pkg::INT32 : fpnew_pkg::INT64;
 
+logic                                          w_ex1_v0_valid;
+
+scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew8_start;
+scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew16_start;
+scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew32_start;
+scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew64_start;
+
+assign w_ex1_vl_ew8_start  = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W / 8) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W /  8);
+assign w_ex1_vl_ew16_start = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W /16) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 16);
+assign w_ex1_vl_ew32_start = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W /32) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
+assign w_ex1_vl_ew64_start = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W /64) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
+
+logic [riscv_vec_conf_pkg::DLEN_W/ 8-1: 0]     w_ex1_v0_mask;
+
+always_comb begin
+  w_ex1_v0_valid = ~r_ex1_issue.inst[25];
+  unique case (r_ex1_issue.vlvtype.vtype.vsew)
+    scariv_vec_pkg::EW8 : w_ex1_v0_mask = w_ex1_vpr_v0_data[w_ex1_vl_ew8_start  +: riscv_vec_conf_pkg::DLEN_W/ 8];
+    scariv_vec_pkg::EW16: w_ex1_v0_mask = w_ex1_vpr_v0_data[w_ex1_vl_ew16_start +: riscv_vec_conf_pkg::DLEN_W/16];
+    scariv_vec_pkg::EW32: w_ex1_v0_mask = w_ex1_vpr_v0_data[w_ex1_vl_ew32_start +: riscv_vec_conf_pkg::DLEN_W/32];
+    scariv_vec_pkg::EW64: w_ex1_v0_mask = w_ex1_vpr_v0_data[w_ex1_vl_ew64_start +: riscv_vec_conf_pkg::DLEN_W/64];
+    default             : w_ex1_v0_mask = 'h0;
+  endcase // unique case (i_sew)
+end // always_comb
+
 assign w_ex1_fpnew_tag_in.op           = r_ex1_pipe_ctrl.op;
 assign w_ex1_fpnew_tag_in.reg_type     = r_ex1_issue.wr_reg.typ;
 assign w_ex1_fpnew_tag_in.rnid         = r_ex1_issue.wr_reg.rnid;
@@ -394,8 +419,9 @@ assign w_ex1_fpnew_tag_in.grp_id       = r_ex1_issue.grp_id;
 assign w_ex1_fpnew_tag_in.vsew         = r_ex1_issue.vlvtype.vtype.vsew;
 assign w_ex1_fpnew_tag_in.is_mask_inst = r_ex1_pipe_ctrl.is_mask_inst;
 assign w_ex1_fpnew_tag_in.old_wr_data  = w_ex1_vpr_wr_old_data;
+assign w_ex1_fpnew_tag_in.is_last_lmul = r_ex1_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex1_issue)-1;
 assign w_ex1_fpnew_tag_in.step_index   = r_ex1_issue.vec_step_index;
-assign w_ex1_fpnew_tag_in.simd_mask    = w_ex1_fpnew_simd_mask;
+assign w_ex1_fpnew_tag_in.simd_mask    = w_ex1_fpnew_simd_mask & (w_ex1_v0_valid ? w_ex1_v0_mask : {riscv_vec_conf_pkg::DLEN_W{1'b1}});
 assign w_ex1_fpnew_tag_in.vl           = r_ex1_issue.vlvtype.vl;
 assign w_ex1_fpnew_tag_in.vcomp_fin    = r_ex1_issue.vcomp_fin;
 
@@ -407,8 +433,8 @@ scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew32;
 scariv_vec_pkg::vlenbmax_t w_ex1_vl_ew64;
 scariv_vec_pkg::vlenbmax_t w_ex1_temp_vl;
 
-assign w_ex1_vl_ew32 = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
-assign w_ex1_vl_ew64 = r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
+assign w_ex1_vl_ew32 = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W /32) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 32);
+assign w_ex1_vl_ew64 = r_ex1_issue.vec_lmul_index * (riscv_vec_conf_pkg::VLEN_W /64) + r_ex1_issue.vec_step_index * (riscv_vec_conf_pkg::DLEN_W / 64);
 
 function automatic scariv_vec_pkg::vlenbmax_t min(scariv_vec_pkg::vlenbmax_t a, scariv_vec_pkg::vlenbmax_t b);
   return a > b ? b : a;
@@ -675,7 +701,8 @@ always_comb begin
   vec_phy_fwd_if[1].valid   = vec_phy_wr_if[1].valid;
   vec_phy_fwd_if[1].rd_rnid = w_fpnew_tag_out.rnid;
 
-  o_done_report[1].valid  = w_fpnew_out_valid & (w_fpnew_tag_out.is_mask_inst ? w_fpnew_tag_out.vcomp_fin : w_fpnew_tag_out.step_index == scariv_vec_pkg::VEC_STEP_W-1);
+  o_done_report[1].valid  = w_fpnew_out_valid & (w_fpnew_tag_out.is_mask_inst ? w_fpnew_tag_out.vcomp_fin :
+                                                 w_fpnew_tag_out.is_last_lmul & (w_fpnew_tag_out.step_index == scariv_vec_pkg::VEC_STEP_W-1));
   o_done_report[1].cmt_id = w_fpnew_tag_out.cmt_id;
   o_done_report[1].grp_id = w_fpnew_tag_out.grp_id;
   o_done_report[1].fflags_update_valid = 1'b0;
