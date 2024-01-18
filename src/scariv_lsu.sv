@@ -87,7 +87,7 @@ module scariv_lsu
     output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
 
     // Commit notification
-    input scariv_pkg::commit_blk_t i_commit,
+    commit_if.monitor commit_if,
 
     output scariv_pkg::mispred_t       o_ex2_mispred,
     output scariv_pkg::done_rpt_t      o_done_report,
@@ -177,7 +177,7 @@ u_issue_unit
 
   .o_done_report (),
 
-  .i_commit  (i_commit),
+  .commit_if  (commit_if),
   .br_upd_if (br_upd_if),
 
   // .request_if (request_if),
@@ -196,7 +196,7 @@ u_replay_queue
   .i_clk (i_clk),
   .i_reset_n (i_reset_n),
 
-  .i_commit  (i_commit),
+  .commit_if  (commit_if),
   .br_upd_if (br_upd_if),
 
   .rob_info_if (rob_info_if),
@@ -278,7 +278,7 @@ u_lsu_pipe
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_commit  (i_commit),
+   .commit_if  (commit_if),
    .br_upd_if (br_upd_if),
 
    .csr_info (csr_info),

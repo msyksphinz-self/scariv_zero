@@ -23,7 +23,7 @@ module scariv_commit_map
  vlmul_upd_if.slave             vlmul_upd_if,
 
  // Commit notification
- input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update,
+ input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update,
 
  output rnid_t o_rnid_map[32]
  );
@@ -43,12 +43,19 @@ always_comb begin
                           {i_commit_rnid_update.dead_id | i_commit_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
                           i_commit_rnid_update.dead_id;
 
-  if (i_commit_rnid_update.commit) begin
+  w_dead_id_with_except = (|commit_if_rnid_update.except_valid) &
+                          (commit_if_rnid_update.except_type != scariv_pkg::SILENT_FLUSH) /* &
+                          (commit_if_rnid_update.except_type != scariv_pkg::ANOTHER_FLUSH) */ ?
+                          {commit_if_rnid_update.dead_id | commit_if_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
+                          commit_if_rnid_update.dead_id;
+
+
+  if (commit_if_rnid_update.commit) begin
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
-      if (i_commit_rnid_update.rnid_valid[d_idx] &
-          (i_commit_rnid_update.rd_typ[d_idx] == REG_TYPE) &
+      if (commit_if_rnid_update.rnid_valid[d_idx] &
+          (commit_if_rnid_update.rd_typ[d_idx] == REG_TYPE) &
           !w_dead_id_with_except[d_idx]) begin
-        w_commit_map_next[i_commit_rnid_update.rd_regidx[d_idx]] = i_commit_rnid_update.rd_rnid[d_idx];
+        w_commit_map_next[commit_if_rnid_update.rd_regidx[d_idx]] = commit_if_rnid_update.rd_rnid[d_idx];
       end
     end
   end

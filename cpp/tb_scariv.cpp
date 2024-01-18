@@ -237,7 +237,7 @@ void stop_sim(int code, long long rtl_time)
   fprintf(compare_log_fp, "RUNNING TIME : %lld\n", rtl_time);
   fprintf(compare_log_fp, "===============================\n");
 
-  // dut->final();
+  dut->final();
 #ifdef DUMP_FST
   if (dump_fst_enable) tfp->close();
 #endif // DUMP_FST

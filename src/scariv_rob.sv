@@ -26,7 +26,7 @@ module scariv_rob
 
    br_upd_if.slave  ex3_br_upd_if,
 
-   output commit_blk_t     o_commit,
+   commit_if.master        commit_if,
    fflags_update_if.master fflags_update_if,
    output cmt_rnid_upd_t   o_commit_rnid_update,
 
@@ -84,8 +84,8 @@ fflags_update_if w_fflags_update_if();
 cmt_rnid_upd_t   w_commit_rnid_update;
 
 logic                                      w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(w_commit) |
-                       scariv_pkg::is_flushed_commit(o_commit);
+assign w_flush_valid = scariv_pkg::is_flushed_commit(w_commit) & w_out_valid |
+                       commit_if.is_flushed_commit();
 
 inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_clear (1'b0),
@@ -94,7 +94,7 @@ inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
 
 assign rn_front_if.ready = 1'b1;
 assign w_ignore_disp = w_flush_valid & (rn_front_if.valid & rn_front_if.ready);
-assign w_credit_return_val = (w_commit.commit ? 'h1 : 'h0) /* +
+assign w_credit_return_val = (w_out_valid ? 'h1 : 'h0) /* +
                              (w_ignore_disp   ? 'h1 : 'h0) */ ;
 
 scariv_credit_return_slave
@@ -104,7 +104,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return(w_commit.commit | w_ignore_disp),
+ .i_get_return(w_out_valid| w_ignore_disp),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -216,7 +216,7 @@ logic w_load_valid;
 
      .o_entry          (w_entries[c_idx]),
      .o_block_all_done (w_entry_all_done[c_idx]),
-     .i_commit_finish  (w_entry_all_done[c_idx] &
+     .commit_if_finish  (w_entry_all_done[c_idx] &
                         (w_out_cmt_entry_id == c_idx)),
 
      .i_kill (w_flush_valid),
@@ -253,7 +253,6 @@ assign w_int_type = int_if.m_external_int_valid ? riscv_common_pkg::MACHINE_EXTE
                     int_if.s_software_int_valid ? riscv_common_pkg::SUPER_SOFT_INT       :
                     'h0;
 
-assign w_commit.commit       = w_entry_all_done[w_out_cmt_entry_id];
 assign w_commit.cmt_id       = w_out_cmt_id;
 assign w_commit.grp_id       = w_out_entry.grp_id;
 assign w_commit.except_valid = w_valid_except_grp_id | w_int_valid;
@@ -271,9 +270,10 @@ assign w_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    o_commit.commit <= 1'b0;
+    commit_if.commit_valid <= 1'b0;
   end else begin
-    o_commit <= w_commit;
+    commit_if.commit_valid <= w_out_valid;
+    commit_if.payload      <= w_commit;
   end
 end
 
@@ -285,7 +285,7 @@ import "DPI-C" function void spike_update_timer (input longint value);
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
-    if (w_commit.commit & w_out_entry.int_inserted) begin
+    if (commit_if.commit_valid & w_out_entry.int_inserted) begin
       spike_update_timer (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_clint.w_mtime_next);
     end
   end
@@ -302,7 +302,7 @@ assign w_valid_except_grp_id = w_out_entry.except_valid & w_cmt_pc_upd_valid_oh;
 bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_type), .o_selected(w_except_type_selected));
 bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_tval), .o_selected(w_except_tval_selected));
 
-assign w_commit_rnid_update.commit     = w_commit.commit;
+assign w_commit_rnid_update.commit     = w_out_valid;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
   assign w_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
   assign w_commit_rnid_update.old_rnid  [d_idx] = w_out_entry.inst[d_idx].wr_reg.old_rnid;
@@ -332,7 +332,7 @@ bit_oh_or_packed #(.T(fflags_t), .WORDS(DISP_SIZE)) u_bit_fflags_select (.i_oh(w
 // --------------------------
 // FFLAGS update when commit
 // --------------------------
-assign w_fflags_update_if.valid  = w_commit.commit & (|w_out_entry.fflags_update_valid);
+assign w_fflags_update_if.valid  = w_out_valid& (|w_out_entry.fflags_update_valid);
 assign w_fflags_update_if.fflags = w_fflags_sel;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -380,7 +380,7 @@ assign w_dead_grp_id = w_except_dead_grp_id; //  |
 //   if (!i_reset_n) begin
 //     r_killing_uncmts <= 1'b0;
 //   end else begin
-//     if (w_commit.commit & (|w_commit.except_valid) & !r_killing_uncmts) begin
+//     if (w_out_valid& (|w_commit_if.payload.except_valid) & !r_killing_uncmts) begin
 //       r_killing_uncmts <= 1'b1;
 //     end else if (r_killing_uncmts & !w_commit.commit) begin  // Commit finished
 //       r_killing_uncmts <= 1'b0;
@@ -522,12 +522,12 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         r_rob_entry_count <= r_rob_entry_count + $countones(w_entry_valids);
       end
 
-      if (w_commit.commit) begin
+      if (w_out_valid) begin
         r_commit_count <= r_commit_count + 'h1;
-        r_inst_count   <= r_inst_count + $countones(w_commit.grp_id & ~w_commit.dead_id);
-        r_dead_count   <= r_dead_count + $countones(w_commit.grp_id &  w_commit.dead_id);
+        r_inst_count   <= r_inst_count + $countones(w_commit_if.payload.grp_id & ~w_commit_if.payload.dead_id);
+        r_dead_count   <= r_dead_count + $countones(w_commit_if.payload.grp_id &  w_commit_if.payload.dead_id);
         for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
-          if ((w_commit.grp_id & w_commit.dead_id >> grp_idx) & 'h1) begin
+          if ((w_commit_if.payload.grp_id & w_commit_if.payload.dead_id >> grp_idx) & 'h1) begin
             case (w_out_entry.sim_dead_reason[grp_idx])
               DEAD_EXC          : r_dead_reason_count.dead_exc          = r_dead_reason_count.dead_exc          + 'h1;
               DEAD_BRANCH       : r_dead_reason_count.dead_branch       = r_dead_reason_count.dead_branch       + 'h1;
@@ -538,7 +538,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
             endcase // case (w_commit.dead_reason[grp_idx])
           end
         end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
-      end // if (w_commit.commit)
+      end // if (w_out_valid)
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
@@ -581,7 +581,7 @@ import "DPI-C" function void log_stage
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    if (w_commit.commit) begin
+    if (w_out_valid) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (w_out_entry.grp_id[i]) begin
           log_stage (w_out_entry.inst[i].kanata_id, "CMT");
@@ -601,7 +601,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_out_entry_d1 <= 'h0;
     r_dead_grp_d1  <= 'h0;
   end else begin
-    r_commit_d1 <= w_commit.commit;
+    r_commit_d1 <= w_out_valid;
     r_out_entry_d1 <= w_out_entry;
     r_dead_grp_d1  <= w_dead_grp_id;
   end

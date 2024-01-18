@@ -19,7 +19,7 @@ module scariv_csu_pipe
   input logic                       i_clk,
   input logic                       i_reset_n,
 
-  input scariv_pkg::commit_blk_t      i_commit,
+  commit_if.monitor      commit_if,
 
   input logic                         i_lmul_exception_mode,
 

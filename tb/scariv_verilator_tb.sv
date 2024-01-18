@@ -564,7 +564,7 @@ end endgenerate
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
         for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
           if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &
               ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id[grp_idx]) begin
@@ -618,7 +618,7 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
 
       // Counting up instruction
       cycle_counter <= cycle_counter + 1;
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.commit) begin
+      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
         total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
                                                      ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
         int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
@@ -644,6 +644,8 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
 
   `include "tb_json_dumper.sv"
   `include "tb_json_perf_dumper.sv"
+
+  `include "tb_ooo_dumper.sv"
 
 `ifdef NEVER
 // ------------------------------

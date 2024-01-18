@@ -38,8 +38,8 @@ module scariv_rename_sub
  output disp_t [scariv_conf_pkg::DISP_SIZE-1:0] o_disp_inst,
 
  // Committer Rename ID update
- input scariv_pkg::commit_blk_t   i_commit,
- input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
+ commit_if.monitor   commit_if,
+ input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update
  );
 
 localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 :
@@ -192,13 +192,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_commit_except_valid_dly <= 1'b0;
     r_commit_rnid_update_dly <= 'h0;
   end else begin
-    r_commit_dly <= i_commit;
+    r_commit_dly <= commit_if.payload;
     r_commit_except_valid_dly <= w_commit_except_valid;
-    r_commit_rnid_update_dly <= i_commit_rnid_update;
+    r_commit_rnid_update_dly <= commit_if_rnid_update;
   end
 end
 
-assign w_commit_except_valid = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_except_valid = commit_if.is_flushed_commit();
 
 assign w_restore_valid = (|r_commit_except_valid_dly)  |                        // Exception : Restore from CommitMap
                          w_brupd_rnid_restore_valid; // Speculation Miss : Restore from Br Queue
@@ -206,10 +206,10 @@ assign w_restore_rn_list = (|r_commit_except_valid_dly) ? w_restore_commit_map_l
                            w_restore_queue_list;
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : cmt_rd_loop
-  assign w_commit_rd_regidx[d_idx] = i_commit_rnid_update.rd_regidx[d_idx];
-  assign w_commit_rd_rnid[d_idx]   = i_commit_rnid_update.rd_rnid[d_idx];
+  assign w_commit_rd_regidx[d_idx] = commit_if_rnid_update.rd_regidx[d_idx];
+  assign w_commit_rd_rnid[d_idx]   = commit_if_rnid_update.rd_rnid[d_idx];
 
-  assign w_commit_except_rd_valid[d_idx] = w_commit_except_valid & i_commit.grp_id[d_idx] & !i_commit.dead_id[d_idx];
+  assign w_commit_except_rd_valid[d_idx] = w_commit_except_valid & commit_if.payload.grp_id[d_idx] & !commit_if.payload.dead_id[d_idx];
 end
 endgenerate
 
@@ -237,9 +237,9 @@ u_scariv_rename_map
    .i_restore_from_queue (w_restore_valid  ),
    .i_restore_rn_list    (w_restore_rn_list),
 
-   .i_commit_rd_valid ({scariv_conf_pkg::DISP_SIZE{1'b0}}),
-   .i_commit_rd_regidx(w_commit_rd_regidx),
-   .i_commit_rd_rnid  (w_commit_rd_rnid),
+   .commit_if_rd_valid ({scariv_conf_pkg::DISP_SIZE{1'b0}}),
+   .commit_if_rd_regidx(w_commit_rd_regidx),
+   .commit_if_rd_rnid  (w_commit_rd_rnid),
 
    .o_rn_list (w_rn_list)
    );
@@ -491,8 +491,7 @@ u_commit_map
 
    // Change VLMUL size
    .vlmul_upd_if (vlmul_upd_if),
-
-   .i_commit_rnid_update(i_commit_rnid_update),
+   .commit_if_rnid_update(commit_if_rnid_update),
    .o_rnid_map (w_restore_commit_map_list)
    );
 

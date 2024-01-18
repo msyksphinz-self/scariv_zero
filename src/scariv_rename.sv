@@ -33,14 +33,11 @@ module scariv_rename
    // Branch Tag Update Signal
    br_upd_if.slave        br_upd_if,
 
-   input logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] i_sc_ras_index,
-   input scariv_pkg::vaddr_t                    i_sc_ras_vaddr,
-
    vlmul_upd_if.slave         vlmul_upd_if,
 
    // Committer Rename ID update
-   input scariv_pkg::commit_blk_t   i_commit,
-   input scariv_pkg::cmt_rnid_upd_t i_commit_rnid_update
+   commit_if.monitor   commit_if,
+   input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update
    );
 
 logic [ 2: 0] w_freelist_ready;
@@ -60,10 +57,13 @@ vlmul_upd_if w_dummy_vlmul_upd_if;
 assign  w_dummy_vlmul_upd_if.valid = 1'b0;
 
 assign ibuf_front_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
+=======
+assign ibuf_front_if.ready = !(commit_if_rnid_update.commit & (|commit_if.payload.except_valid)) &
+>>>>>>> bfddd037ec7dadac46968812dfa21a8c5bb96874
                              i_resource_ok & &w_freelist_ready;
 
 assign w_ibuf_front_fire = ~w_flush_valid & ibuf_front_if.valid & ibuf_front_if.ready;
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
@@ -97,8 +97,8 @@ u_ipr_rename
 
    .o_disp_inst (w_ibuf_ipr_disp_inst),
 
-   .i_commit             (i_commit            ),
-   .i_commit_rnid_update (i_commit_rnid_update)
+   .commit_if             (commit_if            ),
+   .commit_if_rnid_update (commit_if_rnid_update)
    );
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
@@ -132,8 +132,8 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
 
      .o_disp_inst (w_ibuf_fpr_disp_inst),
 
-     .i_commit             (i_commit            ),
-     .i_commit_rnid_update (i_commit_rnid_update)
+     .commit_if             (commit_if            ),
+     .commit_if_rnid_update (commit_if_rnid_update)
      );
 
 end else begin // block: fpu
@@ -220,12 +220,6 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign rn_front_if.payload.cmt_id = i_sc_new_cmt_id;
 always_comb begin
   rn_front_if.payload.inst = r_disp_inst;
-  // for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : ras_idx_loop
-  //   rn_front_if.payload.inst[d_idx].ras_index      = i_sc_ras_index;
-  //   if (rn_front_if.payload.inst[d_idx].is_call) begin
-  //     rn_front_if.payload.inst[d_idx].ras_prev_vaddr = i_sc_ras_vaddr;  // When CALL, stack previous RAS address
-  //   end
-  // end
 end
 
 

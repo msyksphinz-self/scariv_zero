@@ -39,7 +39,7 @@ module scariv_ldq_entry
  input                                           missu_resolve_t i_missu_resolve,
  input logic                                     i_missu_is_full,
  // Commit notification
- input                                           scariv_pkg::commit_blk_t i_commit,
+ commit_if.monitor                               commit_if,
  br_upd_if.slave                                 br_upd_if,
 
  input logic                                     i_st_buffer_empty,
@@ -86,22 +86,22 @@ logic [ 1: 0]                                    w_rs_mispredicted;
 assign o_entry = r_entry;
 assign o_ex2_ldq_entries_recv = r_ex2_ldq_entries_recv;
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit) & r_entry.is_valid;
+assign w_commit_flush = commit_if.is_flushed_commit() & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush;
 
 
-assign w_load_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_load_commit_flush = commit_if.is_flushed_commit();
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_flush = w_load_commit_flush | w_load_br_flush;
 
-assign w_dead_state_clear = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
+assign w_dead_state_clear = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 
 assign o_entry_finish = r_entry.is_valid & (r_entry.is_committed | r_entry.dead) & i_ldq_outptr_valid;
 
-assign w_entry_commit = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
+assign w_entry_commit = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 
 // assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
 //                        all_operand_ready(r_entry);

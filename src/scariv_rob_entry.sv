@@ -23,7 +23,7 @@ module scariv_rob_entry
 
    output rob_entry_t o_entry,
    output logic       o_block_all_done,
-   input logic        i_commit_finish,
+   input logic        commit_if_finish,
 
    input logic        i_kill,
 
@@ -166,7 +166,7 @@ always_comb begin
     // Condition :
     // all instruction done, or ROB entry dead,
     // So, during killing, allocated new instruction should be killed.
-    if (i_commit_finish & o_block_all_done) begin
+    if (commit_if_finish & o_block_all_done) begin
       w_entry_next.valid = 1'b0;
     end
 

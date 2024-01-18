@@ -30,7 +30,7 @@ module scariv_csr
    plic_if.slave  plic_if,
 
    // Commit notification
-   input scariv_pkg::commit_blk_t i_commit
+   commit_if.monitor commit_if
    );
 
 `include "scariv_csr_def.svh"
@@ -711,7 +711,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mdb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mdbound       <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_MDBOUND       ) begin r_mdbound       <= write_if.data; end end
 
 logic [$clog2(scariv_conf_pkg::DISP_SIZE): 0] w_inst_bit_cnt;
-bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_minstret_bit_cnt(.in(i_commit.grp_id & ~i_commit.dead_id), .out(w_inst_bit_cnt));
+bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_minstret_bit_cnt(.in(commit_if.payload.grp_id & ~commit_if.payload.dead_id), .out(w_inst_bit_cnt));
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -721,7 +721,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_instret <= write_if.data;
   end else if (write_if.valid & (write_if.addr == `SYSREG_ADDR_INSTRET)) begin
 
-  end else if (i_commit.commit) begin
+  end else if (commit_if.commit_valid) begin
     /* verilator lint_off WIDTH */
     r_instret <= r_instret + w_inst_bit_cnt;
   end
@@ -893,7 +893,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mco
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mscontext    <= 'h0; end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_MSCONTEXT   ) begin r_mscontext    <= write_if.data; end end
 
 
-assign csr_info.update  = i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid);
+assign csr_info.update  = commit_if.commit_valid & |(commit_if.payload.except_valid & commit_if.payload.flush_valid);
 assign csr_info.mstatus = w_mstatus;
 assign csr_info.mepc    = r_mepc  & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
 assign csr_info.mtvec   = r_mtvec & ~(r_misa[2] ? 1 : 3); // MISA.C is off, only accepted 4-byte align
@@ -939,7 +939,7 @@ assign int_if.m_external_int_valid = w_m_int_en[11] | w_s_int_en[11];
 
 logic w_delegate;
 assign w_delegate = scariv_conf_pkg::USING_VM & (r_priv <= riscv_common_pkg::PRIV_S) &
-                    r_medeleg[int'(i_commit.except_type)];
+                    r_medeleg[int'(commit_if.payload.except_type)];
 
 always_comb begin
   w_mstatus = r_mstatus;
@@ -972,13 +972,13 @@ always_comb begin
   w_mtval_next   = r_mtval ;
 
 
-  if (i_commit.commit & i_commit.int_valid & |(i_commit.grp_id & ~i_commit.dead_id)) begin
+  if (commit_if.commit_valid & commit_if.payload.int_valid & |(commit_if.payload.grp_id & ~commit_if.payload.dead_id)) begin
 
     if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0)) begin
       // Delegation
 
-      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
-                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
 
       // CSRWrite (SYSREG_ADDR_SEPC,  epc);
       w_scause_next = 1 << (riscv_pkg::XLEN_W - 1) | deleg_int_encoded;
@@ -991,8 +991,8 @@ always_comb begin
       w_mstatus_next[`SSTATUS_SIE]  = 'h0;
     end else begin // if (r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) != 'h0))
 
-      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
-                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
 
       // CSRWrite (SYSREG_ADDR_MEPC,   epc);
       w_mcause_next[riscv_pkg::XLEN_W-1]    = 1'b1;
@@ -1006,28 +1006,28 @@ always_comb begin
 
     end // else: !if(r_priv <= riscv_common_pkg::PRIV_S & ((r_mideleg & w_m_int_en) 1= 'h0))
 
-  end else if (i_commit.commit & |(i_commit.except_valid & i_commit.flush_valid)) begin
-    if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::MRET)) begin
+  end else if (commit_if.commit_valid & |(commit_if.payload.except_valid & commit_if.payload.flush_valid)) begin
+    if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::MRET)) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
-      // r_mcause <= i_commit.except_type;
+      // r_mcause <= commit_if.payload.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_MPIE] = 1'b1;
       w_mstatus_next[`MSTATUS_MPP ] = riscv_common_pkg::PRIV_U;
       w_mstatus_next[`MSTATUS_MIE ] = w_mstatus[`MSTATUS_MPIE];
       w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_MPP]);
       // w_mtval_next = 'h0;
-    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::SRET)) begin
+    end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::SRET)) begin
       // r_mepc <= epc;
       /* verilator lint_off WIDTH */
-      // r_mcause <= i_commit.except_type;
+      // r_mcause <= commit_if.payload.except_type;
       // r_mtval <= io.tval;
       w_mstatus_next[`MSTATUS_SPIE] = 1'b1;
       w_mstatus_next[`MSTATUS_SPP ] = riscv_common_pkg::PRIV_U;
       w_mstatus_next[`MSTATUS_SIE ] = w_mstatus[`MSTATUS_SPIE];
       w_priv_next = riscv_common_pkg::priv_t'(w_mstatus[`MSTATUS_SPP]);
-      w_stval_next = i_commit.tval;
-    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::URET)) begin // if (i_commit.except_type == scariv_pkg::SRET)
+      w_stval_next = commit_if.payload.tval;
+    end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::URET)) begin // if (commit_if.payload.except_type == scariv_pkg::SRET)
       w_mtval_next = 'h0;
     end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::LMUL_CHANGE)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
@@ -1037,51 +1037,59 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
       w_priv_next = riscv_common_pkg::PRIV_M;
     end else if (w_delegate) begin
-      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
-                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+      w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */
-      w_scause_next = i_commit.except_type;
-      if (i_commit.except_type == scariv_pkg::ILLEGAL_INST        ||
-          i_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
-          i_commit.except_type == scariv_pkg::INST_ACC_FAULT      ||
-          i_commit.except_type == scariv_pkg::INST_PAGE_FAULT     ||
-          i_commit.except_type == scariv_pkg::LOAD_ADDR_MISALIGN  ||
-          i_commit.except_type == scariv_pkg::LOAD_ACC_FAULT      ||
-          i_commit.except_type == scariv_pkg::LOAD_PAGE_FAULT     ||
-          i_commit.except_type == scariv_pkg::STAMO_ADDR_MISALIGN ||
-          i_commit.except_type == scariv_pkg::STAMO_ACC_FAULT     ||
-          i_commit.except_type == scariv_pkg::STAMO_PAGE_FAULT) begin
-        w_stval_next = i_commit.tval;
-      end else begin // if (i_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||...
+      w_scause_next = commit_if.payload.except_type;
+      if (commit_if.payload.except_type == scariv_pkg::ILLEGAL_INST        ||
+          commit_if.payload.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
+          commit_if.payload.except_type == scariv_pkg::INST_ACC_FAULT      ||
+          commit_if.payload.except_type == scariv_pkg::INST_PAGE_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_ADDR_MISALIGN  ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_ACC_FAULT      ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_PAGE_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_ADDR_MISALIGN ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_ACC_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_PAGE_FAULT) begin
+        w_stval_next = commit_if.payload.tval;
+      end else begin // if (commit_if.payload.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||...
         w_stval_next = 'h0;
-      end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
+      end // if (commit_if.payload.except_type == INST_ADDR_MISALIGN  ||...
       w_mstatus_next[`MSTATUS_SPIE] = w_mstatus[`MSTATUS_SIE];
       w_mstatus_next[`MSTATUS_SPP ] = r_priv[0];
       w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
 
       w_priv_next = riscv_common_pkg::PRIV_S;
+
     end else if (~|(i_commit.except_valid & i_commit.dead_id) &
                  (i_commit.except_type != scariv_pkg::SILENT_FLUSH) &
                  (i_commit.except_type != scariv_pkg::SELF_KILL_REPLAY) &
                  (i_commit.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
                      i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+
+    end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) &
+                 (commit_if.payload.except_type != scariv_pkg::SILENT_FLUSH) &
+                 (commit_if.payload.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
+
       /* verilator lint_off WIDTH */
-      w_mcause_next = i_commit.except_type;
-      if (i_commit.except_type == scariv_pkg::ILLEGAL_INST        ||
-          i_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
-          i_commit.except_type == scariv_pkg::INST_ACC_FAULT      ||
-          i_commit.except_type == scariv_pkg::INST_PAGE_FAULT     ||
-          i_commit.except_type == scariv_pkg::LOAD_ADDR_MISALIGN  ||
-          i_commit.except_type == scariv_pkg::LOAD_ACC_FAULT      ||
-          i_commit.except_type == scariv_pkg::LOAD_PAGE_FAULT     ||
-          i_commit.except_type == scariv_pkg::STAMO_ADDR_MISALIGN ||
-          i_commit.except_type == scariv_pkg::STAMO_ACC_FAULT     ||
-          i_commit.except_type == scariv_pkg::STAMO_PAGE_FAULT) begin
-        w_mtval_next = i_commit.tval;
-      end else begin // if (i_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||...
+      w_mcause_next = commit_if.payload.except_type;
+      if (commit_if.payload.except_type == scariv_pkg::ILLEGAL_INST        ||
+          commit_if.payload.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
+          commit_if.payload.except_type == scariv_pkg::INST_ACC_FAULT      ||
+          commit_if.payload.except_type == scariv_pkg::INST_PAGE_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_ADDR_MISALIGN  ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_ACC_FAULT      ||
+          commit_if.payload.except_type == scariv_pkg::LOAD_PAGE_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_ADDR_MISALIGN ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_ACC_FAULT     ||
+          commit_if.payload.except_type == scariv_pkg::STAMO_PAGE_FAULT) begin
+        w_mtval_next = commit_if.payload.tval;
+      end else begin // if (commit_if.payload.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||...
         w_mtval_next = 'h0;
-      end // if (i_commit.except_type == INST_ADDR_MISALIGN  ||...
+      end // if (commit_if.payload.except_type == INST_ADDR_MISALIGN  ||...
       w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
       w_mstatus_next[`MSTATUS_MPP ] = r_priv;
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;

@@ -52,7 +52,7 @@ module scariv_csu
   plic_if.slave plic_if,
 
   // Commit notification
-  input scariv_pkg::commit_blk_t i_commit,
+  commit_if.monitor commit_if,
   br_upd_if.slave              br_upd_if
 );
 
@@ -120,7 +120,7 @@ u_scariv_issue_unit
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
 
-   .i_commit      (i_commit),
+   .commit_if      (commit_if),
    .br_upd_if     (br_upd_if)
    );
 
@@ -134,7 +134,7 @@ u_csu_pipe
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_commit (i_commit),
+   .commit_if (commit_if),
 
    .i_lmul_exception_mode (o_lmul_exception_mode),
 
@@ -177,7 +177,7 @@ u_scariv_csr
    .int_if   (int_if),
    .fflags_update_if (fflags_update_if),
 
-   .i_commit (i_commit)
+   .commit_if (commit_if)
    );
 
 scariv_vec_csr

@@ -17,7 +17,7 @@ module scariv_muldiv_pipe
  input logic                           i_reset_n,
 
  // Commit notification
- input scariv_pkg::commit_blk_t          i_commit,
+ commit_if.monitor          commit_if,
  br_upd_if.slave                       br_upd_if,
 
  input logic                           i_valid,
@@ -138,7 +138,7 @@ generate for (genvar s_idx = 0; s_idx < MUL_STEP; s_idx++) begin : mul_loop
 
 
   if (s_idx != 0) begin
-    assign w_mul_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+    assign w_mul_commit_flush = commit_if.is_flushed_commit();
     assign w_mul_br_flush     = scariv_pkg::is_br_flush_target(r_cmt_id[s_idx], r_grp_id[s_idx], br_upd_if.cmt_id, br_upd_if.grp_id,
                                                              br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
     assign w_mul_flush_valid  = w_mul_commit_flush | w_mul_br_flush;
@@ -219,12 +219,12 @@ endgenerate
 // Divide Unit
 // ================
 
-assign w_commit_flush_load = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush_load = commit_if.is_flushed_commit();
 assign w_br_flush_load     = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_flush_valid_load = w_commit_flush_load | w_br_flush_load;
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 assign w_br_flush     = scariv_pkg::is_br_flush_target(w_div_cmt_id, w_div_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_flush_valid  = w_commit_flush | w_br_flush;

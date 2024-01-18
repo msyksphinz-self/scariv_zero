@@ -43,7 +43,7 @@ module scariv_stq_entry
    output stq_entry_t                         o_entry,
 
    // Commit notification
-   input scariv_pkg::commit_blk_t               i_commit,
+   commit_if.monitor               commit_if,
    br_upd_if.slave                            br_upd_if,
 
    input logic                                i_missu_is_empty,
@@ -98,19 +98,19 @@ select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_
                                    .o_valid (w_rs2_phy_hit), .o_data (w_rs2_phy_data));
 
 assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & |(rob_info_if.except_valid & rob_info_if.done_grp_id & r_entry.inst.grp_id);
-assign w_commit_flush = scariv_pkg::is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, i_commit) & r_entry.is_valid;
+assign w_commit_flush = commit_if.is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
 assign w_entry_flush  = w_commit_flush | w_br_flush | w_rob_except_flush;
 
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
-assign w_load_commit_flush = scariv_pkg::is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id, i_commit);
+assign w_load_commit_flush = commit_if.is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready |
                                 w_rs2_phy_hit & !w_rs2_mispredicted;
 
-// assign w_ready_to_mv_stbuf = i_commit.commit & (i_commit.cmt_id == r_entry.inst.cmt_id);
+// assign w_ready_to_mv_stbuf = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 scariv_pkg::grp_id_t w_prev_grp_id_mask;
 assign w_prev_grp_id_mask = r_entry.inst.grp_id-1;
 assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &

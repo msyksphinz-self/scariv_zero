@@ -85,16 +85,13 @@ lsu_access_if w_lsu_access();
 sfence_if     w_sfence_if();
 logic                          w_fence_i;
 
-logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_sc_ras_index;
-scariv_pkg::vaddr_t                    w_sc_ras_vaddr;
-
 brtag_if w_brtag_if();
 
 // ----------------------------------
 // Committer Components
 // ----------------------------------
 /* verilator lint_off UNOPTFLAT */
-scariv_pkg::commit_blk_t     w_commit;
+commit_if     w_commit_if();
 scariv_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
 
 // ----------------------------------
@@ -308,16 +305,13 @@ scariv_frontend u_frontend (
   .ic_l2_req(ic_l2_req),
   .ic_l2_resp(ic_l2_resp),
 
-  .i_commit (w_commit),
+  .commit_if (w_commit_if),
   .br_upd_if (w_ex3_br_upd_if),
 
   .csr_info (w_csr_info),
   .int_if   (w_int_if),
 
   .ibuf_front_if(w_ibuf_front_if),
-  .rn_front_if (w_rn_front_if),
-  .o_sc_ras_index  (w_sc_ras_index),
-  .o_sc_ras_vaddr (w_sc_ras_vaddr),
 
   .ptw_if (w_ptw_if[0])
 );
@@ -332,8 +326,8 @@ u_rename (
   .ibuf_front_if (w_ibuf_front_if),
   .i_sc_new_cmt_id (w_sc_new_cmt_id),
 
-  .i_commit             (w_commit),
-  .i_commit_rnid_update (w_commit_rnid_update),
+  .commit_if             (w_commit_if),
+  .commit_if_rnid_update (w_commit_rnid_update),
 
   .vlmul_upd_if   (w_vlmul_upd_if),
 
@@ -347,8 +341,6 @@ u_rename (
   .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
   .rn_front_if  (w_rn_front_if),
-  .i_sc_ras_index (w_sc_ras_index),
-  .i_sc_ras_vaddr (w_sc_ras_vaddr)
 );
 
 
@@ -374,7 +366,7 @@ scariv_resource_alloc u_resource_alloc
 
   .br_upd_if (w_ex3_br_upd_if),
 
-  .i_commit (w_commit),
+  .commit_if (w_commit_if),
 
   .o_brtag  (w_iq_brtag),
 
@@ -436,7 +428,7 @@ generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_i
       .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
       .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
 
-      .i_commit  (w_commit),
+      .commit_if  (w_commit_if),
       .br_upd_if (w_ex3_br_upd_if),
 
       .o_done_report (w_alu_done_rpt[alu_idx])
@@ -501,7 +493,7 @@ u_lsu_top
     .vstq_haz_check_if       (w_vstq_haz_check_if      ),
     .scalar_ldq_haz_check_if (w_scalar_ldq_haz_check_if),
 
-    .i_commit  (w_commit),
+    .commit_if  (w_commit_if),
     .br_upd_if (w_ex3_br_upd_if)
    );
 
@@ -532,7 +524,7 @@ u_bru (
     .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
 
     .o_done_report (w_bru_done_rpt),
-    .i_commit      (w_commit),
+    .commit_if      (w_commit_if),
     .ex3_br_upd_if (w_ex3_br_upd_if),
     .ex3_br_upd_slave_if (w_ex3_br_upd_if),
 
@@ -580,7 +572,7 @@ u_csu (
 
     .o_done_report (w_csu_done_rpt),
 
-    .i_commit (w_commit),
+    .commit_if (w_commit_if),
     .br_upd_if (w_ex3_br_upd_if)
 );
 
@@ -636,7 +628,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr[fpu_idx]),
       .o_fpnew_phy_wr   (w_fpnew_phy_wr    [fpu_idx]),
 
-      .i_commit  (w_commit),
+      .commit_if  (w_commit_if),
       .br_upd_if (w_ex3_br_upd_if),
 
       .o_mv_done_report (w_fpu_mv_done_rpt[fpu_idx]),
@@ -841,7 +833,7 @@ scariv_rob u_rob
    .i_done_rpt (w_done_rpt),
    .i_another_flush_report(w_another_flush_rpt),
 
-   .o_commit (w_commit),
+   .commit_if (w_commit_if),
    .fflags_update_if (w_fflags_update_if),
    .o_commit_rnid_update (w_commit_rnid_update),
 
