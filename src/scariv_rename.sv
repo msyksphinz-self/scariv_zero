@@ -54,12 +54,8 @@ disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
 
 vlmul_upd_if w_dummy_vlmul_upd_if;
-assign  w_dummy_vlmul_upd_if.valid = 1'b0;
-
-assign ibuf_front_if.ready = !(i_commit_rnid_update.commit & (|i_commit.except_valid)) &
-=======
+assign w_dummy_vlmul_upd_if.valid = 1'b0;
 assign ibuf_front_if.ready = !(commit_if_rnid_update.commit & (|commit_if.payload.except_valid)) &
->>>>>>> bfddd037ec7dadac46968812dfa21a8c5bb96874
                              i_resource_ok & &w_freelist_ready;
 
 assign w_ibuf_front_fire = ~w_flush_valid & ibuf_front_if.valid & ibuf_front_if.ready;
@@ -174,8 +170,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
 
      .o_disp_inst (w_ibuf_vpr_disp_inst),
 
-     .i_commit             (i_commit            ),
-     .i_commit_rnid_update (i_commit_rnid_update)
+     .commit_if             (commit_if            ),
+     .commit_if_rnid_update (commit_if_rnid_update)
      );
 
 end else begin // block: vpr

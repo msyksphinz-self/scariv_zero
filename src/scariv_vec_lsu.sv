@@ -59,7 +59,7 @@ module scariv_vec_lsu #(
    output scariv_pkg::done_rpt_t      o_done_report,
    output scariv_pkg::another_flush_t o_another_flush_report,
    // Commit notification
-   input scariv_pkg::commit_blk_t i_commit,
+   commit_if.monitor              commit_if,
    br_upd_if.slave                br_upd_if,
 
    st_buffer_if.master            st_buffer_if,
@@ -149,7 +149,7 @@ u_issue_unit
    .o_issue(w_issue_from_iss),
    .o_iss_index_oh(),
 
-   .i_commit      (i_commit),
+   .commit_if     (commit_if),
    .br_upd_if     (br_upd_if)
    );
 
@@ -226,7 +226,7 @@ u_lsu_pipe
    .csr_info  (csr_info),
    .ptw_if    (ptw_if),
 
-   .i_commit  (i_commit),
+   .commit_if (commit_if),
    .br_upd_if (br_upd_if),
 
    .i_ex0_issue           (w_ex0_replay_issue             ),
@@ -281,7 +281,7 @@ u_replay_queue
  .i_clk     (i_clk    ),
  .i_reset_n (i_reset_n),
 
- .i_commit  (i_commit),
+ .commit_if (commit_if),
  .br_upd_if (br_upd_if),
 
  .rob_info_if (rob_info_if),
@@ -310,7 +310,7 @@ u_ldq
 
  .vlsu_ldq_req_if (w_vlsu_ldq_req_if),
  .rob_info_if     (rob_info_if      ),
- .i_commit        (i_commit         ),
+ .commit_if       (commit_if        ),
  .br_upd_if       (br_upd_if        )
 );
 
@@ -323,7 +323,7 @@ u_stq
 
  .vlsu_stq_req_if (w_vlsu_stq_req_if),
  .rob_info_if     (rob_info_if      ),
- .i_commit        (i_commit         ),
+ .commit_if       (commit_if        ),
  .br_upd_if       (br_upd_if        ),
  .vec_vs3_rd_if   (vec_phy_rd_if[2] ),
  .st_buffer_if    (st_buffer_if     ),

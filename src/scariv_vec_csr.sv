@@ -17,7 +17,8 @@ module scariv_vec_csr
    csr_rd_if.slave  read_csr_vec_if,
    csr_wr_if.slave  write_csr_vec_if,
 
-   input scariv_pkg::commit_blk_t i_commit,
+   // Commit notification
+   commit_if.monitor commit_if,
 
    output logic o_lmul_exception_mode
    );
@@ -99,17 +100,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_lmul_exception_mode <= 1'b0;
   end else begin
-    if (is_flushed_commit(i_commit)) begin
-      case (i_commit.except_type)
+    if (commit_if.is_flushed_commit()) begin
+      case (commit_if.payload.except_type)
         LMUL_CHANGE : begin
           r_lmul_exception_mode <= 1'b1;
-          r_vscratch <= i_commit.tval;
+          r_vscratch <= commit_if.payload.tval;
         end
         MRET,
         SRET,
         URET        : r_lmul_exception_mode <= 1'b0;
         default     : begin end
-      endcase // case (i_commit.except_type)
+      endcase // case (commit_if.payload.except_type)
     end
   end
 end

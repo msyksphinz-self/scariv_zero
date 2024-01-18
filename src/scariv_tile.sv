@@ -340,7 +340,7 @@ u_rename (
   .i_phy_wr (w_ex3_phy_wr),
   .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
-  .rn_front_if  (w_rn_front_if),
+  .rn_front_if  (w_rn_front_if)
 );
 
 
@@ -696,9 +696,6 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vlvtype_commit_if (w_vlvtype_commit),
      .i_brtag           (w_rn_front_if.payload.inst[0].brtag),
 
-     .i_commit  (w_commit),
-     .br_upd_if (w_ex3_br_upd_if),
-
      .vec_csr_if     (w_vec_csr_if),
      .vlvtype_upd_if (w_vlvtype_upd_if)
    );
@@ -744,7 +741,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .o_done_report(w_valu_done_rpt),
 
-     .i_commit (w_commit),
+     .commit_if(w_commit_if),
      .br_upd_if(w_ex3_br_upd_if)
      );
 
@@ -793,7 +790,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .o_done_report(w_vlsu_done_rpt),
      .o_another_flush_report(w_another_flush_rpt[scariv_conf_pkg::LSU_INST_NUM]),
 
-     .i_commit (w_commit),
+     .commit_if(w_commit_if),
      .br_upd_if(w_ex3_br_upd_if),
 
      .st_buffer_if      (w_vlsu_st_buffer_if),

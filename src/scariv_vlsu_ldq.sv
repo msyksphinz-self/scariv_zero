@@ -21,7 +21,7 @@ module scariv_vlsu_ldq
  // ROB notification interface
  rob_info_if.slave              rob_info_if,
  // Commit notification
- input scariv_pkg::commit_blk_t i_commit,
+ commit_if.monitor              commit_if,
  // Branch Flush Notification
  br_upd_if.slave                br_upd_if
  );
@@ -47,7 +47,7 @@ typedef struct packed {
 vlsu_ldq_entry_t r_vlsu_ldq_entries[VLSU_LDQ_BANK_SIZE][VLSU_LDQ_SIZE];
 logic                w_commit_flush;
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 generate for (genvar bank_idx = 0; bank_idx < VLSU_LDQ_BANK_SIZE; bank_idx++) begin : bank_loop
 

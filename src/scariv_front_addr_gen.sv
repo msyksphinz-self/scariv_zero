@@ -71,6 +71,8 @@ always_comb begin
     end else begin
       case (commit_if.payload.except_type)
         SILENT_FLUSH   : o_vaddr = commit_if.payload.epc + 4;
+        LMUL_CHANGE    : o_vaddr = scariv_vec_pkg::LMUL_CHANGE_HANDLER_BASE_ADDR;
+        SELF_KILL_REPLAY : o_vaddr = commit_if.payload.epc;
         ANOTHER_FLUSH  : o_vaddr = commit_if.payload.epc;
         MRET           : o_vaddr = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
         SRET           : o_vaddr = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];

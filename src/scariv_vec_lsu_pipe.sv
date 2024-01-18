@@ -22,7 +22,7 @@ module scariv_vec_lsu_pipe
  tlb_ptw_if.master ptw_if,
 
  // Commit notification
- input scariv_pkg::commit_blk_t i_commit,
+ commit_if.monitor              commit_if,
  br_upd_if.slave                br_upd_if,
 
  input scariv_vec_pkg::issue_t  i_ex0_issue,
@@ -128,7 +128,7 @@ scariv_vec_pkg::dlen_t   w_ex3_aligned_data_next;
 logic                    r_ex3_vec_step_success;
 scariv_vec_pkg::dlenb_t  r_ex3_mask;
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 
 // ---------------------

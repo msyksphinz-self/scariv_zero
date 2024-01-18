@@ -87,7 +87,7 @@ logic                   r_ex3_csr_illegal;
 scariv_vec_pkg::vtype_t r_ex3_vtype;
 logic                   r_ex3_lmul_change_exc_valid;
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 function automatic logic lmul_change_exc_valid (logic [ 2: 0] curr_vlmul, logic [ 2: 0] next_vlmul);
   return (curr_vlmul != next_vlmul) &

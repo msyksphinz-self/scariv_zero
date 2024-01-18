@@ -189,7 +189,7 @@ u_vec_csr
    .read_csr_vec_if  (w_vec_csr_read_if),
    .write_csr_vec_if (w_vec_csr_write_if),
 
-   .i_commit (i_commit),
+   .commit_if (commit_if),
 
    .o_lmul_exception_mode (o_lmul_exception_mode)
    );

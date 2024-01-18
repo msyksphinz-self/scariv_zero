@@ -1029,9 +1029,9 @@ always_comb begin
       w_stval_next = commit_if.payload.tval;
     end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::URET)) begin // if (commit_if.payload.except_type == scariv_pkg::SRET)
       w_mtval_next = 'h0;
-    end else if (~|(i_commit.except_valid & i_commit.dead_id) & (i_commit.except_type == scariv_pkg::LMUL_CHANGE)) begin
-      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
-                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
+    end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::LMUL_CHANGE)) begin
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
       w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
       w_mstatus_next[`MSTATUS_MPP ] = r_priv;
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
@@ -1061,15 +1061,9 @@ always_comb begin
 
       w_priv_next = riscv_common_pkg::PRIV_S;
 
-    end else if (~|(i_commit.except_valid & i_commit.dead_id) &
-                 (i_commit.except_type != scariv_pkg::SILENT_FLUSH) &
-                 (i_commit.except_type != scariv_pkg::SELF_KILL_REPLAY) &
-                 (i_commit.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
-      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){i_commit.epc[riscv_pkg::VADDR_W-1]}},
-                     i_commit.epc[riscv_pkg::VADDR_W-1: 0]};
-
     end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) &
                  (commit_if.payload.except_type != scariv_pkg::SILENT_FLUSH) &
+                 (commit_if.payload.except_type != scariv_pkg::SELF_KILL_REPLAY) &
                  (commit_if.payload.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
                      commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};

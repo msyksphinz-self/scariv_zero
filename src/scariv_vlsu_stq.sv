@@ -18,7 +18,7 @@ module scariv_vlsu_stq
  // ROB notification interface
  rob_info_if.slave              rob_info_if,
  // Commit notification
- input scariv_pkg::commit_blk_t i_commit,
+ commit_if.monitor              commit_if,
  // Branch Flush Notification
  br_upd_if.slave                br_upd_if,
  // vs3 read port Interface
@@ -82,7 +82,7 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_vlsu_haz_check_hit[VLSU_STQ_BANK_SI
 assign st_buffer_ex0_proceed_valid = ~r_ex1_st_buffer_valid | st_buffer_ex1_proceed_valid;
 assign st_buffer_ex1_proceed_valid = !st_buffer_if.valid | (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL);
 
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 logic [VLSU_STQ_BANK_SIZE-1: 0]            w_vlsu_stq_freelist_full;
 logic [VLSU_STQ_BANK_SIZE-1: 0]            w_vlsu_stq_all_entry_younger_or_equal_than_load;

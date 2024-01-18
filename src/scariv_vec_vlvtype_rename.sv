@@ -17,10 +17,6 @@ module scariv_vec_vlvtype_rename
  vlvtype_commit_if.slave vlvtype_commit_if,
  input brtag_t           i_brtag,
 
- input commit_blk_t   i_commit,
- // Branch Tag Update Signal
- br_upd_if.slave      br_upd_if,
-
  // From CSU pipeline
  vec_csr_if.slave     vec_csr_if,
  vlvtype_upd_if.slave vlvtype_upd_if

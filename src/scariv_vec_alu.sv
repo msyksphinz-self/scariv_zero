@@ -47,7 +47,7 @@ module scariv_vec_alu #(
 
     output scariv_pkg::done_rpt_t o_done_report[2],
     // Commit notification
-    input scariv_pkg::commit_blk_t i_commit,
+    commit_if.monitor              commit_if,
     br_upd_if.slave                br_upd_if
 );
 
@@ -128,7 +128,7 @@ u_scariv_issue_unit
    .o_issue(w_ex0_issue),
    .o_iss_index_oh(),
 
-   .i_commit      (i_commit),
+   .commit_if     (commit_if),
    .br_upd_if     (br_upd_if)
    );
 
@@ -144,7 +144,7 @@ u_alu_pipe
 
    .csr_info (csr_info),
 
-   .i_commit  (i_commit),
+   .commit_if (commit_if),
    .br_upd_if (br_upd_if),
 
    .i_ex0_issue (w_ex0_issue),

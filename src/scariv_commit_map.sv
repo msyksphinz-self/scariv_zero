@@ -37,15 +37,9 @@ always_comb begin
     w_commit_map_next[r_idx] = r_commit_map[r_idx];
   end
 
-  w_dead_id_with_except = (|i_commit_rnid_update.except_valid) &
-                          (i_commit_rnid_update.except_type != scariv_pkg::SILENT_FLUSH &
-                           i_commit_rnid_update.except_type != scariv_pkg::LMUL_CHANGE) ?
-                          {i_commit_rnid_update.dead_id | i_commit_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
-                          i_commit_rnid_update.dead_id;
-
   w_dead_id_with_except = (|commit_if_rnid_update.except_valid) &
-                          (commit_if_rnid_update.except_type != scariv_pkg::SILENT_FLUSH) /* &
-                          (commit_if_rnid_update.except_type != scariv_pkg::ANOTHER_FLUSH) */ ?
+                          ((commit_if_rnid_update.except_type != scariv_pkg::SILENT_FLUSH) &
+                           (commit_if_rnid_update.except_type != scariv_pkg::LMUL_CHANGE)) ?
                           {commit_if_rnid_update.dead_id | commit_if_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
                           commit_if_rnid_update.dead_id;
 

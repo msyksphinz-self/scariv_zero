@@ -48,7 +48,7 @@ module scariv_vlsu_issue_unit
  input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
 
  // Commit notification
- input scariv_pkg::commit_blk_t          i_commit,
+ commit_if.monitor                     commit_if,
  // Branch Flush Notification
  br_upd_if.slave                       br_upd_if
  );
@@ -79,7 +79,7 @@ logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 
 logic                           w_commit_flush;
-assign w_commit_flush = scariv_pkg::is_flushed_commit(i_commit);
+assign w_commit_flush = commit_if.is_flushed_commit();
 
 logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
@@ -259,7 +259,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_mispred_lsu(i_mispred_lsu),
     .vec_phy_fwd_if(vec_phy_fwd_if),
 
-    .i_commit  (i_commit),
+    .commit_if (commit_if),
     .br_upd_if (br_upd_if),
 
     .o_dead (w_entry_dead[s_idx]),
