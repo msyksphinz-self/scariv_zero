@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_lsu_replay_queue
+// NAME : scariv_vlsu_replay_queue
 // TYPE : module
 // ------------------------------------------------------------------------
 // LSU Replay Queue
@@ -7,11 +7,9 @@
 //
 // ------------------------------------------------------------------------
 
-module scariv_lsu_replay_queue
+module scariv_vlsu_replay_queue
   import scariv_lsu_pkg::*;
 #(
-  parameter SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1,
-  parameter type queue_base_t = logic
   )
 (
     input logic i_clk,
@@ -40,7 +38,7 @@ module scariv_lsu_replay_queue
     input logic            i_pipe_stall
 );
 
-localparam REPLAY_QUEUE_SIZE = SIZE;
+localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::RV_VLSU_ENTRY_SIZE;
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;
@@ -48,16 +46,7 @@ logic [REPLAY_QUEUE_W-1: 0] r_diff_counter;
 logic w_head_is_oldest;
 
 typedef struct packed {
-  queue_base_t info;
-  // logic [31: 0]  inst;
-  // decoder_inst_cat_pkg::inst_cat_t cat;
-  // logic                            oldest_valid;
-  // scariv_pkg::reg_rd_issue_t       rd_reg;
-  // scariv_pkg::reg_wr_issue_t       wr_reg;
-  // scariv_pkg::paddr_t              paddr;
-  // logic                            is_uc;
-  // scariv_lsu_pkg::ex2_haz_t        hazard_typ;
-  // logic [HAZARD_INDEX_SIZE-1: 0]   hazard_index;
+  scariv_vec_pkg::vlsu_replay_queue_t info;
   logic [REPLAY_QUEUE_W-1: 0] diff_counter;
 } queue_t;
 typedef struct packed {
@@ -89,16 +78,6 @@ assign w_queue_pop  = w_lsu_replay_valid & (lsu_pipe_req_if.ready | w_replay_add
 always_comb begin
   w_new_replay_queue_info.info         = lsu_pipe_haz_if.payload;
   w_new_replay_queue_info.diff_counter = w_empty ? 'h0 : r_diff_counter;
-  // w_new_replay_queue_info.inst                 = lsu_pipe_haz_if.payload.inst          ;
-  // w_new_replay_queue_info.cat                  = lsu_pipe_haz_if.payload.cat           ;
-  // w_new_replay_queue_info.oldest_valid         = lsu_pipe_haz_if.payload.oldest_valid  ;
-  // w_new_replay_queue_info.rd_reg               = lsu_pipe_haz_if.payload.rd_reg        ;
-  // w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
-  // w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
-  // w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
-  // w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
-  // w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
-  // w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
 end
 
 // Diff counter from previous Queue inesrtion
@@ -155,6 +134,8 @@ generate for (genvar idx = 0; idx < REPLAY_QUEUE_SIZE; idx++) begin : replay_add
             EX2_HAZ_MISSU_FULL     : r_replay_additional_queue[idx].resolved = !i_missu_is_full;
             EX2_HAZ_MISSU_ASSIGNED : r_replay_additional_queue[idx].resolved = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == r_replay_additional_queue[idx].hazard_index) |
                                                                                ((r_replay_additional_queue[idx].hazard_index & i_missu_resolve.missu_entry_valids) == 'h0);
+            EX2_HAZ_VSTQ_HAZ       : r_replay_additional_queue[idx].resolved = w_head_is_oldest;
+            EX2_HAZ_VSTQ_FULL_WAIT : r_replay_additional_queue[idx].resolved = w_head_is_oldest;
             default : begin
               r_replay_additional_queue[idx].resolved = 1'b0;
               // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
@@ -259,6 +240,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                 EX2_HAZ_L1D_CONFLICT   : begin end
                 EX2_HAZ_MISSU_FULL     : begin end
                 EX2_HAZ_MISSU_ASSIGNED : begin end
+                EX2_HAZ_VSTQ_HAZ       : begin end
+                EX2_HAZ_VSTQ_FULL_WAIT : begin end
                 default : begin
                     $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.info.hazard_typ);
                 end

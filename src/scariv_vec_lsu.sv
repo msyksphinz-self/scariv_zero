@@ -273,9 +273,7 @@ end
 assign r_missu_resolve_d1.missu_entry_valids = i_missu_resolve.missu_entry_valids;
 
 // Replay Queue
-scariv_lsu_replay_queue
-  #(.SIZE (scariv_conf_pkg::RV_VLSU_ENTRY_SIZE * riscv_vec_conf_pkg::VLEN_W / riscv_vec_conf_pkg::DLEN_W),
-    .queue_base_t(scariv_vec_pkg::vlsu_replay_queue_t))
+scariv_vlsu_replay_queue
 u_replay_queue
 (
  .i_clk     (i_clk    ),
