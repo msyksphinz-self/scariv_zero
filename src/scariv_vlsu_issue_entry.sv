@@ -204,14 +204,10 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = SCHED_CLEAR;
         w_dead_next  = 1'b1;
-      end else begin
-        /* if (o_entry_valid & w_pc_update_before_entry & w_oldest_ready) begin
-          w_state_next = DONE;
-        end else */ if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or & ~i_stall) begin
-          w_issued_next = 1'b1;
-          w_state_next = ISSUED;
-          w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
-        end
+      end else if (o_entry_ready & i_entry_picked & !w_rs_pred_mispredicted_or & ~i_stall) begin
+        w_issued_next = 1'b1;
+        w_state_next = ISSUED;
+        w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
       end
     end
     ISSUED : begin
@@ -229,26 +225,9 @@ always_comb begin
           w_state_next = WAIT;
           w_entry_next.vec_step_index = 'h0;
         end else begin
-          if ((scariv_vec_pkg::VEC_STEP_W == 1) |
-              (r_entry.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1)) begin
-            if (r_entry.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_entry)-1) begin
-              w_state_next = ISSUED_EX2;
-            end else begin
-              w_entry_next.vec_lmul_index = r_entry.vec_lmul_index + 'h1;
-              w_entry_next.vec_step_index = 'h0;
-              for (int rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin
-                if (r_entry.rd_regs[rs_idx].valid & r_entry.rd_regs[rs_idx].typ == scariv_pkg::VPR) begin
-                  w_entry_next.rd_regs[rs_idx].rnid = r_entry.rd_regs[rs_idx].rnid + 'h1;
-                end
-              end
-              w_entry_next.wr_old_reg.rnid = r_entry.wr_old_reg.rnid + 'h1;
-              w_entry_next.wr_reg.rnid     = r_entry.wr_reg.rnid + 'h1;
-            end // else: !if(r_entry.vec_lmul_index == (1 << r_entry.vlvtype.vtype.vlmul)-1)
-          end else begin
-            w_entry_next.vec_step_index = r_entry.vec_step_index + 'h1;
-          end
+          w_state_next = ISSUED_EX2;
         end
-      end
+      end // if (~i_stall)
     end // case: ISSUED
     ISSUED_EX2 : begin
       if (i_replay_queue_full) begin
@@ -321,8 +300,7 @@ assign w_pc_update_before_entry = |((r_entry.grp_id - 1) & (rob_info_if.upd_pc_v
 
 
 assign o_entry_valid = r_entry.valid;
-assign o_entry_ready = r_entry.valid & ((r_state == WAIT) |
-                                        (r_state == ISSUED && scariv_vec_pkg::VEC_STEP_W > 1)) & !w_entry_flush &
+assign o_entry_ready = r_entry.valid & (r_state == WAIT) & !w_entry_flush &
                        w_oldest_ready & !w_pc_update_before_entry & all_operand_ready(r_entry) & r_entry.vlvtype_ready;
 assign o_entry       = r_entry;
 assign o_dead        = r_dead;

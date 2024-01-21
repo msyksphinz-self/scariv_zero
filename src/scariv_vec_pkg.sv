@@ -141,13 +141,6 @@ typedef struct packed {
   vec_pos_t            vec_step_index;
   logic                vcomp_fin;
 
-  logic                except_valid;
-  scariv_pkg::except_t except_type;
-  riscv_pkg::xlen_t   except_tval;
-
-  logic                fflags_update_valid;
-  scariv_pkg::fflags_t fflags;
-
   logic             vlvtype_ready;
   vlvtype_ren_idx_t vlvtype_index;
   vlvtype_t         vlvtype;
@@ -199,12 +192,6 @@ function issue_t assign_issue_common (scariv_pkg::disp_t in,
   ret.v0_reg.typ    = in.v0_reg.typ;
   ret.v0_reg.regidx = in.v0_reg.regidx;
   ret.v0_reg.rnid   = in.v0_reg.rnid;
-
-  ret.except_valid = 1'b0;
-  ret.except_type  = scariv_pkg::INST_ADDR_MISALIGN;
-
-  ret.fflags_update_valid = 1'b0;
-  ret.fflags = 'h0;
 
 `ifdef SIMULATION
   ret.kanata_id = in.kanata_id;
@@ -268,7 +255,7 @@ function issue_t assign_issue_op3 (scariv_pkg::disp_t in,
 endfunction // assign_issue_op3
 
 typedef struct packed {
-  scariv_pkg::paddr_t        paddr;
+  scariv_pkg::vaddr_t        vaddr;
   logic [ 1: 0]              req_splitted;
   logic                      haz_1st_req;
   logic [$clog2(DLENB)-1: 0] reg_offset;

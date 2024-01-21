@@ -58,9 +58,6 @@ logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
-logic [ENTRY_SIZE-1:0] r_picked_inst_oh;
-logic [ENTRY_SIZE-1:0] w_picked_inst_locked_oh;
-logic r_issue_entry_lock;
 logic [ENTRY_SIZE-1:0] w_entry_dead;
 
 logic                  w_iss_br_flush;
@@ -264,9 +261,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 
     .o_dead (w_entry_dead[s_idx]),
 
-    .i_entry_picked    (w_picked_inst_locked_oh[s_idx]),
-    .o_issue_succeeded (w_entry_finish         [s_idx]),
-    .i_clear_entry     (w_entry_finish_oh      [s_idx]),
+    .i_entry_picked    (w_picked_inst_oh [s_idx]),
+    .o_issue_succeeded (w_entry_finish   [s_idx]),
+    .i_clear_entry     (w_entry_finish_oh[s_idx]),
 
     .i_replay_queue_full (i_replay_queue_full)
   );
@@ -278,36 +275,11 @@ endgenerate
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
-bit_oh_or #(.T(scariv_vec_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_locked_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_vec_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
-
-assign w_picked_inst_locked_oh = r_issue_entry_lock ? r_picked_inst_oh : w_picked_inst_oh;
 
 assign w_iss_br_flush = scariv_pkg::is_br_flush_target(o_issue.cmt_id, o_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & o_issue.valid;
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_issue_entry_lock <= 1'b0;
-  end else begin
-    if (i_replay_queue_full | w_iss_br_flush | w_commit_flush) begin
-      r_picked_inst_oh   <= 'h0;
-      r_issue_entry_lock <= 1'b0;
-    end else if (~i_stall) begin
-      if ((scariv_vec_pkg::VEC_STEP_W > 1) & o_issue.valid &
-          (o_issue.vec_lmul_index ==  'h0) & (o_issue.vec_step_index == 'h0)) begin
-        r_picked_inst_oh <= w_picked_inst_oh;
-        r_issue_entry_lock <= 1'b1;
-      end else if (o_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
-                                    ((o_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) &
-                                     (o_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(o_issue)-1)) |
-                                    |(w_entry_dead & r_picked_inst_oh))) begin
-        r_picked_inst_oh <= w_picked_inst_oh;
-        r_issue_entry_lock <= 1'b0;
-      end
-    end
-  end
-end
 
 // --------------
 // Done signals

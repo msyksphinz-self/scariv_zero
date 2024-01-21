@@ -33,9 +33,7 @@ module scariv_vlsu_replay_queue
     input stq_resolve_t    i_stq_rs2_resolve,
 
     // Request from Replay Queue
-    lsu_pipe_req_if.master lsu_pipe_req_if,
-
-    input logic            i_pipe_stall
+    lsu_pipe_req_if.master lsu_pipe_req_if
 );
 
 localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::RV_VLSU_ENTRY_SIZE;
@@ -205,7 +203,7 @@ always_comb begin
   if (!w_empty) begin
     if (w_replay_additional_queue_tail.dead) begin
       w_lsu_replay_valid = 1'b1;  // immediately remove from queue
-    end else if (w_replay_additional_queue_tail.valid & ~i_pipe_stall) begin
+    end else if (w_replay_additional_queue_tail.valid) begin
       if (w_replay_additional_queue_tail.resolved |
           (w_rd_replay_queue_info.diff_counter != 'h0 &&
            r_prev_diff_counter == w_rd_replay_queue_info.diff_counter ||

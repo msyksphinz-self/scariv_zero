@@ -73,15 +73,21 @@ scariv_pkg::disp_t            w_disp_picked_inst[VEC_LSU_PORT_SIZE];
 logic [VEC_LSU_PORT_SIZE-1:0] w_disp_picked_inst_valid;
 scariv_pkg::grp_id_t          w_disp_picked_grp_id[VEC_LSU_PORT_SIZE];
 scariv_vec_pkg::issue_t       w_ex0_issue;
-scariv_vec_pkg::issue_t       w_ex0_replay_issue;
+scariv_vec_pkg::issue_t       w_ex0_issue_to_uop_gen;
+scariv_vec_pkg::issue_t       w_ex0_uop_to_pipe;
+logic                         w_ex0_uop_replay_selected;
+scariv_vec_pkg::vlsu_replay_info_t w_ex0_uop_replay_info;
+
 scariv_vec_pkg::issue_t       w_issue_from_iss;
 vec_phy_fwd_if                w_vec_phy_fwd_if[3]();
 lsu_pipe_haz_if #(.T(scariv_vec_pkg::vlsu_replay_queue_t)) w_lsu_pipe_haz_if ();
 lsu_pipe_req_if #(.T(scariv_vec_pkg::vlsu_replay_queue_t)) w_lsu_pipe_req_if ();
-logic                         w_replay_selected;
+logic                         w_ex0_is_replay_selected;
 logic                         w_replay_queue_full;
 
-logic                         w_lsu_Pipe_stall;
+logic                         w_lsu_pipe_stall;
+logic                         w_uop_gen_ready;
+scariv_pkg::another_flush_t   w_lsu_pipe_flush_self;
 
 done_if                       w_ex3_done_if();
 
@@ -138,7 +144,7 @@ u_issue_unit
 
    .cre_ret_if  (cre_ret_if),
 
-   .i_stall    (w_lsu_pipe_req_if.valid & w_replay_selected | w_lsu_Pipe_stall),
+   .i_stall    (w_lsu_pipe_req_if.valid & w_ex0_is_replay_selected | ~w_uop_gen_ready),
    .i_replay_queue_full  (w_replay_queue_full ),
 
    .i_early_wr    (w_early_wr_zero),
@@ -154,60 +160,39 @@ u_issue_unit
    );
 
 
-logic w_replay_selected_next;
+logic w_ex0_is_replay_selected_next;
 logic r_replay_selected;
-logic r_replay_selected_lock;
-assign w_replay_selected_next = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
+assign w_ex0_is_replay_selected_next = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                                 ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
                                 w_replay_queue_full                               ? 1'b1 :
                                 scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.cmt_id, w_lsu_pipe_req_if.grp_id,
                                                                    w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
-assign w_replay_selected = r_replay_selected_lock ? r_replay_selected : w_replay_selected_next;
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_replay_selected <= 'h0;
-    r_replay_selected_lock <= 1'b0;
-  end else begin
-    if (w_ex0_replay_issue.valid & ((scariv_vec_pkg::VEC_STEP_W == 1) |
-                                             ((w_ex0_replay_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1) &
-                                              (w_ex0_replay_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(w_ex0_replay_issue)-1)))) begin
-      r_replay_selected <= w_replay_selected_next;
-      r_replay_selected_lock <= 1'b0;
-    end else if ((scariv_vec_pkg::VEC_STEP_W > 1) &
-        (w_ex0_replay_issue.valid & (w_replay_selected & w_lsu_pipe_req_if.payload.replay_info.haz_1st_req |
-                                     (w_ex0_replay_issue.vec_lmul_index == 'h0) & (w_ex0_replay_issue.vec_step_index == 'h0)))) begin
-      r_replay_selected <= w_replay_selected_next;
-      r_replay_selected_lock <= 1'b1;
-    end else if (!w_ex0_replay_issue.valid) begin
-      r_replay_selected_lock <= 1'b0;
-    end
-  end // else: !if(!i_reset_n)
-end // always_ff @ (posedge i_clk, negedge i_reset_n)
+assign w_ex0_is_replay_selected = w_ex0_is_replay_selected_next;
 
 
-assign w_lsu_pipe_req_if.ready = w_replay_selected;
+
+assign w_lsu_pipe_req_if.ready = w_ex0_is_replay_selected & w_uop_gen_ready;
 
 always_comb begin
-  if (w_replay_selected) begin
-    w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
-    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.cmt_id      ;
-    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.grp_id      ;
-    w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
-    w_ex0_replay_issue.vlvtype           = w_lsu_pipe_req_if.payload.vlvtype     ;
-    w_ex0_replay_issue.rd_regs           = w_lsu_pipe_req_if.payload.rd_regs      ;
-    w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
-    w_ex0_replay_issue.wr_origin_rnid    = w_lsu_pipe_req_if.payload.wr_origin_rnid;
-    w_ex0_replay_issue.wr_old_reg        = w_lsu_pipe_req_if.payload.wr_old_reg  ;
-    w_ex0_replay_issue.cat               = w_lsu_pipe_req_if.payload.cat         ;
-    w_ex0_replay_issue.subcat            = w_lsu_pipe_req_if.payload.subcat      ;
-    w_ex0_replay_issue.vec_step_index    = w_lsu_pipe_req_if.payload.vec_step_index;
-    w_ex0_replay_issue.vec_lmul_index    = w_lsu_pipe_req_if.payload.vec_lmul_index;
+  if (w_ex0_is_replay_selected) begin
+    w_ex0_issue_to_uop_gen.valid             = w_lsu_pipe_req_if.valid       ;
+    w_ex0_issue_to_uop_gen.cmt_id            = w_lsu_pipe_req_if.cmt_id      ;
+    w_ex0_issue_to_uop_gen.grp_id            = w_lsu_pipe_req_if.grp_id      ;
+    w_ex0_issue_to_uop_gen.inst              = w_lsu_pipe_req_if.payload.inst        ;
+    w_ex0_issue_to_uop_gen.vlvtype           = w_lsu_pipe_req_if.payload.vlvtype     ;
+    w_ex0_issue_to_uop_gen.rd_regs           = w_lsu_pipe_req_if.payload.rd_regs      ;
+    w_ex0_issue_to_uop_gen.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
+    w_ex0_issue_to_uop_gen.wr_origin_rnid    = w_lsu_pipe_req_if.payload.wr_origin_rnid;
+    w_ex0_issue_to_uop_gen.wr_old_reg        = w_lsu_pipe_req_if.payload.wr_old_reg  ;
+    w_ex0_issue_to_uop_gen.cat               = w_lsu_pipe_req_if.payload.cat         ;
+    w_ex0_issue_to_uop_gen.subcat            = w_lsu_pipe_req_if.payload.subcat      ;
+    w_ex0_issue_to_uop_gen.vec_step_index    = w_lsu_pipe_req_if.payload.vec_step_index;
+    w_ex0_issue_to_uop_gen.vec_lmul_index    = w_lsu_pipe_req_if.payload.vec_lmul_index;
 `ifdef SIMULATION
-    w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
+    w_ex0_issue_to_uop_gen.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
 `endif // SIMULATION
   end else begin
-    w_ex0_replay_issue = w_issue_from_iss;
+    w_ex0_issue_to_uop_gen = w_issue_from_iss;
   end
 end // always_comb
 
@@ -215,6 +200,31 @@ assign w_vec_phy_fwd_if[1].valid   = vec_valu_phy_fwd_if[0].valid;
 assign w_vec_phy_fwd_if[1].rd_rnid = vec_valu_phy_fwd_if[0].rd_rnid;
 assign w_vec_phy_fwd_if[2].valid   = vec_valu_phy_fwd_if[1].valid;
 assign w_vec_phy_fwd_if[2].rd_rnid = vec_valu_phy_fwd_if[1].rd_rnid;
+
+scariv_vlsu_uop_gen
+  #(
+    .NUM_OPERANDS(3)
+    )
+u_vlsu_uop_gen
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_pipe_flush_self(w_lsu_pipe_flush_self),
+
+   .o_ready (w_uop_gen_ready),
+
+   .i_issue (w_ex0_issue_to_uop_gen),
+   .i_replay_selected(w_ex0_is_replay_selected),
+   .i_replay_info(w_lsu_pipe_req_if.payload.replay_info),
+
+   .o_issue (w_ex0_uop_to_pipe),
+   .o_replay_selected(w_ex0_uop_replay_selected),
+   .o_replay_info(w_ex0_uop_replay_info),
+
+   .i_ready (~w_lsu_pipe_stall)
+   );
+
 
 scariv_vec_lsu_pipe
 u_lsu_pipe
@@ -229,11 +239,12 @@ u_lsu_pipe
    .commit_if (commit_if),
    .br_upd_if (br_upd_if),
 
-   .i_ex0_issue           (w_ex0_replay_issue             ),
-   .i_ex0_replay_selected (w_replay_selected              ),
-   .i_ex0_replay_info     (w_lsu_pipe_req_if.payload.replay_info),
+   .i_ex0_issue           (w_ex0_uop_to_pipe        ),
+   .i_ex0_replay_selected (w_ex0_uop_replay_selected),
+   .i_ex0_replay_info     (w_ex0_uop_replay_info    ),
 
-   .o_pipe_stall (w_lsu_Pipe_stall),
+   .o_pipe_stall (w_lsu_pipe_stall),
+   .o_flush_self (w_lsu_pipe_flush_self),
 
    .ex1_i_phy_wr(i_phy_wr),
 
@@ -295,8 +306,7 @@ u_replay_queue
 
  .o_full (w_replay_queue_full),
 
- .lsu_pipe_req_if (w_lsu_pipe_req_if),
- .i_pipe_stall    (w_lsu_Pipe_stall)
+ .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
 
 
