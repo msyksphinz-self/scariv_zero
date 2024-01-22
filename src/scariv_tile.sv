@@ -472,7 +472,7 @@ u_lsu_top
     .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
 
     .o_done_report(w_lsu_done_rpt),
-    .o_another_flush_report(w_another_flush_rpt[scariv_conf_pkg::LSU_INST_NUM-1: 0]),
+    .o_another_flush_report(w_another_flush_rpt[0:scariv_conf_pkg::LSU_INST_NUM-1]),
     .o_ex2_mispred (w_ex2_mispred_lsu),
 
     .snoop_info_if (w_snoop_info_if),

@@ -131,10 +131,10 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
 end endgenerate
 
 scariv_pkg::rnid_t w_wr_old_rnid;
-logic [ 1: 0]  w_wr_old_phy_hit;
+logic [ 2: 0]  w_wr_old_phy_hit;
 
 assign w_wr_old_rnid = i_put ? i_put_data.wr_reg.old_rnid : r_entry.wr_old_reg.rnid;
-generate for (genvar fwd_idx = 0; fwd_idx < 1; fwd_idx++) begin : old_wr_hit_loop
+generate for (genvar fwd_idx = 0; fwd_idx < 3; fwd_idx++) begin : old_wr_hit_loop
   assign w_wr_old_phy_hit[fwd_idx] = (w_wr_old_rnid == vec_phy_fwd_if[fwd_idx].rd_rnid) & vec_phy_fwd_if[fwd_idx].valid;
 end endgenerate
 

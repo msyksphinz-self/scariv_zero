@@ -814,7 +814,14 @@ typedef enum logic {
 // -----------------------
 // Store Buffer Interface
 // -----------------------
-localparam ST_BUF_WIDTH      = scariv_pkg::ALEN_W * 2 < riscv_vec_conf_pkg::DLEN_W ? riscv_vec_conf_pkg::DLEN_W : scariv_pkg::ALEN_W * 2;
+function automatic integer max(integer a, integer b);
+  return a > b ? a : b;
+endfunction // max
+function automatic integer min(integer a, integer b);
+  return a < b ? a : b;
+endfunction // max
+
+localparam ST_BUF_WIDTH      = min(max(scariv_pkg::ALEN_W * 2, riscv_vec_conf_pkg::DLEN_W), scariv_conf_pkg::DCACHE_DATA_W);
 localparam ST_BUF_ENTRY_SIZE = scariv_conf_pkg::STQ_SIZE / 4;
 
 typedef enum logic [1:0] {
