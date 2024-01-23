@@ -84,6 +84,8 @@ always_comb begin
           end
           w_uop_next.wr_old_reg.rnid = i_issue.wr_old_reg.rnid + w_issue_vec_stex_max;
           w_uop_next.wr_reg.rnid     = i_issue.wr_reg.rnid + w_issue_vec_stex_max;
+
+          w_replay_info_next.haz_1st_req = 1'0;
         end // else: !if(i_issue.vec_lmul_index == (1 << i_issue.vlvtype.vtype.vlmul)-1)
       end // if (i_issue.valid)
     end // case: INIT

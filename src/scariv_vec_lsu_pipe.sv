@@ -115,6 +115,7 @@ scariv_lsu_pkg::dc_data_t w_ex2_l1d_data;
 scariv_vec_pkg::dlen_t   w_ex2_aligned_data;
 logic                    w_ex2_l1d_vec_step_success;
 logic                    w_ex2_vec_step_success;
+logic                    w_ex2_vec_step_failure;
 logic                    w_ex2_is_1st_request;
 logic                    w_ex2_stq_alloc_neglected;
 logic                    w_ex2_stq_alloc_full_flush;
@@ -333,8 +334,9 @@ assign w_ex2_hazard = w_ex2_l1d_hazard | w_ex2_stq_alloc_neglected;
 
 assign w_ex2_l1d_vec_step_success = w_ex2_is_1st_request ? ~w_ex2_l1d_hazard : ~w_ex2_l1d_hazard & r_ex3_vec_step_success;
 assign w_ex2_vec_step_success = w_ex2_is_1st_request ? ~w_ex2_hazard : ~w_ex2_hazard & r_ex3_vec_step_success;
+assign w_ex2_vec_step_failure = w_ex2_is_1st_request ?  w_ex2_hazard :  w_ex2_hazard & r_ex3_vec_step_success;
 
-assign w_ex2_flush_self.valid  = r_ex2_issue.valid & ~w_ex2_vec_step_success;
+assign w_ex2_flush_self.valid  = r_ex2_issue.valid & ~w_ex2_vec_step_success & l1d_rd_if.s1_conflict; // Only EX2_HAZ_L1D_CONFLICT, delete all uops
 assign w_ex2_flush_self.cmt_id = r_ex2_issue.cmt_id;
 assign w_ex2_flush_self.grp_id = r_ex2_issue.grp_id;
 
@@ -508,7 +510,7 @@ assign w_ex2_stq_alloc_full_flush = vlsu_stq_req_if.valid & vlsu_stq_req_if.resp
 // --------------------------
 // Interface to Replay Queue
 // --------------------------
-assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & ~i_replay_queue_full & ~w_ex2_vec_step_success & ~w_commit_flush & ~w_ex2_br_flush;
+assign lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & ~i_replay_queue_full & w_ex2_vec_step_failure & ~w_commit_flush & ~w_ex2_br_flush;
 assign lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
 assign lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
 assign lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
