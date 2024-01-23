@@ -43,12 +43,12 @@ module scariv_fpu_pipe
 
     lsu_mispred_if.slave mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
-    early_wr_if.master o_ex1_mv_early_wr,
-    phy_wr_if.master   o_ex3_mv_phy_wr,
-    done_report_if.master         mv_done_report_if,
+    early_wr_if.master    ex1_mv_early_wr_if,
+    phy_wr_if.master      ex3_mv_phy_wr_if,
+    done_report_if.master mv_done_report_if,
 
-    phy_wr_if.master   o_fpnew_phy_wr,
-    done_report_if.master         fp_done_report_if
+    phy_wr_if.master      fpnew_phy_wr_if,
+    done_report_if.master fp_done_report_if
 );
 
 scariv_pkg::issue_t                       w_ex0_issue;
@@ -242,12 +242,12 @@ endgenerate
 // -----------------------------
 // EX1 :
 // -----------------------------
-assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
+assign ex1_mv_early_wr_if.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
                                  &(~(w_ex1_rs_mispred | r_ex1_rs_mispred));
 
-assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
-assign o_ex1_mv_early_wr.may_mispred = 1'b0;
+assign ex1_mv_early_wr_if.rd_rnid = r_ex1_issue.wr_reg.rnid;
+assign ex1_mv_early_wr_if.rd_type = r_ex1_issue.wr_reg.typ;
+assign ex1_mv_early_wr_if.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
   scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
@@ -367,7 +367,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
-    r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
+    r_ex2_wr_valid <= ex1_mv_early_wr_if.valid;
 
     r_ex2_rs_mispred <= r_ex1_rs_mispred | w_ex1_rs_mispred;
 
@@ -547,10 +547,10 @@ u_scariv_fpnew_wrapper
 
 
 always_comb begin
-  o_ex3_mv_phy_wr.valid   = r_ex3_wr_valid & ~r_ex3_frm_invalid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  o_ex3_mv_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-  o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-  o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
+  ex3_mv_phy_wr_if.valid   = r_ex3_wr_valid & ~r_ex3_frm_invalid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  ex3_mv_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  ex3_mv_phy_wr_if.rd_type = r_ex3_issue.wr_reg.typ;
+  ex3_mv_phy_wr_if.rd_data = r_ex3_res_data;
 
   mv_done_report_if.valid               = r_ex3_issue.valid & r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
   mv_done_report_if.cmt_id              = r_ex3_issue.cmt_id;
@@ -560,10 +560,10 @@ always_comb begin
   mv_done_report_if.fflags_update_valid = 1'b0;
   mv_done_report_if.fflags              = 'h0;
 
-  o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
-  o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
-  o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
-  o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
+  fpnew_phy_wr_if.valid   = w_fpnew_result_valid;
+  fpnew_phy_wr_if.rd_rnid = w_fpnew_rnid;
+  fpnew_phy_wr_if.rd_type = w_fpnew_reg_type;
+  fpnew_phy_wr_if.rd_data = w_fpnew_result_data;
 
   fp_done_report_if.valid               = w_fpnew_result_valid;
   fp_done_report_if.cmt_id              = w_fpnew_cmt_id;

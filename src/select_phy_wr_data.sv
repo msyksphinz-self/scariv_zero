@@ -2,9 +2,9 @@ module select_phy_wr_data
   (
    input scariv_pkg::rnid_t   i_entry_rnid,
    input scariv_pkg::reg_t    i_entry_type,
-   phy_wr_if.slave phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
+   phy_wr_if.slave            phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
-   output logic             o_valid,
+   output logic               o_valid,
    output scariv_pkg::alen_t  o_data
    );
 

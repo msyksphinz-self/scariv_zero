@@ -20,13 +20,13 @@ module scariv_csu
   regread_if.master                          ex1_regread_rs1,
 
   /* Forwarding path */
-  early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
-  phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
-  lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
+  early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+  phy_wr_if.slave       phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+  lsu_mispred_if.slave  mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
   /* write output */
-  early_wr_if.master o_ex1_early_wr,
-  phy_wr_if.master   o_ex3_phy_wr,
+  early_wr_if.master early_wr_out_if,
+  phy_wr_if.master   phy_wr_out_if,
 
   /* CSR information */
   csr_info_if.master          csr_info,
@@ -101,7 +101,7 @@ u_scariv_issue_unit
 
    .i_stall (1'b0),
 
-   .phy_wr_if  (phy_wr_if),
+   .phy_wr_if  (phy_wr_in_if),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
@@ -126,8 +126,8 @@ u_csu_pipe
 
    .ex1_regread_rs1(ex1_regread_rs1),
 
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .ex1_early_wr_if(early_wr_out_if),
+   .ex3_phy_wr_if  (phy_wr_out_if),
 
    .i_status_priv (csr_info.priv),
    .i_mstatus     (csr_info.mstatus),
