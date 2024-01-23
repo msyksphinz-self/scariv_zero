@@ -42,9 +42,7 @@ module scariv_ldq
 
    input stq_resolve_t          i_stq_rs2_resolve,
 
-   done_if.slave ex3_done_if[scariv_conf_pkg::LSU_INST_NUM],
-
-   output scariv_pkg::done_rpt_t o_done_report[scariv_conf_pkg::LSU_INST_NUM]
+   done_if.slave ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]
    );
 
 ldq_entry_t w_ldq_entries[scariv_conf_pkg::LDQ_SIZE];

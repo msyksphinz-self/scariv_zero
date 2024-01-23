@@ -21,9 +21,9 @@ module scariv_stq
     cre_ret_if.slave                                   cre_ret_if,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t                 i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t                   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-   input scariv_pkg::mispred_t                  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+   early_wr_if.slave    early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave      phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+   lsu_mispred_if.slave mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
    input ex1_q_update_t        i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
@@ -288,9 +288,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_disp            (w_disp_entry      ),
      .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
 
-     .i_early_wr (i_early_wr),
-     .i_phy_wr   (i_phy_wr),
-     .i_mispred_lsu (i_mispred_lsu),
+     .early_wr_in_if (early_wr_in_if),
+     .phy_wr_in_if   (phy_wr_in_if  ),
+     .mispred_in_if  (mispred_in_if ),
 
      .i_ex1_q_valid   (|w_ex1_q_valid),
      .i_ex1_q_updates (w_ex1_q_updates),

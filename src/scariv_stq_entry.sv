@@ -24,9 +24,9 @@ module scariv_stq_entry
    input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] i_disp_pipe_sel_oh,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t                 i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t                   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-   input scariv_pkg::mispred_t                  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+   early_wr_if.slave                          early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave                            phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+   lsu_mispred_if.slave                       mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
    input logic                                i_ex1_q_valid,
@@ -91,10 +91,10 @@ assign  o_entry = r_entry;
 assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_reg.rnid;
 assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.typ;
 
-select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_mispred  (i_mispred_lsu),
+select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_mispred  (mispred_in_if),
                                        .o_mispred (w_rs2_mispredicted));
 assign w_rs2_rel_hit = 1'b0;
-select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_phy_wr (i_phy_wr),
+select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_in_if (phy_wr_in_if),
                                    .o_valid (w_rs2_phy_hit), .o_data (w_rs2_phy_data));
 
 assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & |(rob_info_if.except_valid & rob_info_if.done_grp_id & r_entry.inst.grp_id);

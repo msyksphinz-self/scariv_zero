@@ -48,17 +48,17 @@ module scariv_lsu_top
     l2_resp_if.slave  l1d_ext_resp,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+    early_wr_if.slave early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+    phy_wr_if.slave   phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr[scariv_conf_pkg::LSU_INST_NUM],
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr  [scariv_conf_pkg::LSU_INST_NUM],
+    early_wr_if.master    early_wr_out_if[scariv_conf_pkg::LSU_INST_NUM],
+    phy_wr_if.master      phy_wr_out_if  [scariv_conf_pkg::LSU_INST_NUM],
+    lsu_mispred_if.master mispred_out_if [scariv_conf_pkg::LSU_INST_NUM],
 
-    output scariv_pkg::done_rpt_t      o_done_report          [scariv_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
-    output scariv_pkg::another_flush_t o_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
+    done_report_if.master   done_report_if [scariv_conf_pkg::LSU_INST_NUM],
+    flush_report_if.master flush_report_if [scariv_conf_pkg::LSU_INST_NUM],
 
-    output scariv_pkg::mispred_t  o_ex2_mispred[scariv_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
     snoop_info_if.monitor snoop_info_if,
@@ -119,8 +119,6 @@ done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
 
-scariv_pkg::done_rpt_t w_done_report[scariv_conf_pkg::LSU_INST_NUM];
-
 missu_fwd_if w_missu_fwd_if [scariv_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
 stq_haz_check_if w_stq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
@@ -178,9 +176,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr  (i_phy_wr),
-    .i_mispred_lsu (o_ex2_mispred),
+    .early_wr_in_if(early_wr_in_if),
+    .phy_wr_in_if  (phy_wr_in_if  ),
+    .mispred_in_if (mispred_out_if),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
@@ -210,17 +208,17 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_missu_is_full (w_missu_is_full),
     .i_missu_is_empty (w_missu_is_empty),
 
-    .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
-    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
+    .early_wr_out_if (early_wr_out_if[lsu_idx]),
+    .mispred_out_if  (mispred_out_if [lsu_idx]),
+    .phy_wr_out_if   (phy_wr_out_if  [lsu_idx]),
 
     .sfence_if_master (w_sfence_if_inst[lsu_idx]),
     .o_fence_i (w_fence_i[lsu_idx]),
 
     .commit_if (commit_if),
 
-    .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
-    .o_done_report          (o_done_report         [lsu_idx]),
-    .o_another_flush_report (o_another_flush_report[lsu_idx]),
+    .done_report_if         (done_report_if [lsu_idx]),
+    .flush_report_if        (flush_report_if[lsu_idx]),
     .br_upd_if              (br_upd_if             )
    );
 
@@ -269,8 +267,7 @@ u_ldq
  .uc_write_if  (w_uc_write_if),
 
  .commit_if (commit_if),
- .br_upd_if (br_upd_if),
- .o_done_report()
+ .br_upd_if (br_upd_if)
  );
 
 
@@ -289,9 +286,9 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
- .i_early_wr    (i_early_wr),
- .i_phy_wr      (i_phy_wr  ),
- .i_mispred_lsu (o_ex2_mispred),
+ .early_wr_in_if (early_wr_in_if),
+ .phy_wr_in_if   (phy_wr_in_if  ),
+ .mispred_in_if  (mispred_out_if),
 
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),

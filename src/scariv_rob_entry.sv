@@ -18,8 +18,8 @@ module scariv_rob_entry
    input logic        i_load_valid,
    input rob_entry_t  i_entry_in,
 
-   input done_rpt_t      i_done_rpt [CMT_BUS_SIZE],
-   input another_flush_t i_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
+   done_report_if.slave  done_report_if [CMT_BUS_SIZE],
+   flush_report_if.slave flush_report_if [scariv_conf_pkg::LSU_INST_NUM],
 
    output rob_entry_t o_entry,
    output logic       o_block_all_done,
@@ -48,16 +48,18 @@ assign w_in_cmt_id = {i_entry_in.cmt_id_msb, i_cmt_id[CMT_ENTRY_W-1:0]};
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : grp_id_loop
   logic [CMT_BUS_SIZE-1: 0] w_done_rpt_tmp_valid;
+  done_rpt_t                w_done_rpt_payloads[CMT_BUS_SIZE];
   done_rpt_t                w_done_rpt_selected;
   for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
-    assign w_done_rpt_tmp_valid[c_idx] = i_done_rpt[c_idx].valid &
-                                         i_done_rpt[c_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0] &&
-                                         i_done_rpt[c_idx].grp_id == (1 << d_idx);
+    assign w_done_rpt_tmp_valid[c_idx] = done_report_if[c_idx].valid &
+                                         done_report_if[c_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0] &&
+                                         done_report_if[c_idx].grp_id == (1 << d_idx);
+    assign w_done_rpt_payloads[c_idx] = done_report_if[c_idx].get_payload();
   end
   assign w_done_rpt_valid[d_idx] = |w_done_rpt_tmp_valid;
   bit_oh_or #(.T(done_rpt_t), .WORDS(CMT_BUS_SIZE))
   sel_done_rpt (.i_oh(w_done_rpt_tmp_valid),
-                .i_data(i_done_rpt),
+                .i_data(w_done_rpt_payloads),
                 .o_selected(w_done_rpt_selected));
   assign w_done_rpt_except_valid[d_idx] = w_done_rpt_selected.except_valid;
   assign w_done_rpt_except_type [d_idx] = w_done_rpt_selected.except_type;
@@ -76,8 +78,8 @@ grp_id_t w_another_flush_tmp_valid[scariv_conf_pkg::LSU_INST_NUM];
 grp_id_t w_another_flush_valid;
 grp_id_t w_another_tree_flush_valid;
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
-  assign w_another_flush_tmp_valid[l_idx] = i_another_flush_report[l_idx].valid &
-                                            (i_another_flush_report[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? i_another_flush_report[l_idx].grp_id : 'h0;
+  assign w_another_flush_tmp_valid[l_idx] = flush_report_if[l_idx].valid &
+                                            (flush_report_if[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? flush_report_if[l_idx].grp_id : 'h0;
 end
 endgenerate
 
