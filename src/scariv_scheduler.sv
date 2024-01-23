@@ -33,13 +33,13 @@ module scariv_issue_unit
  input logic                           i_stall,
 
  /* Forwarding path */
- input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
- input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+ early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
+ phy_wr_if.slave   phy_wr_if  [scariv_pkg::TGT_BUS_SIZE],
 
  output                                scariv_pkg::issue_t o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
- input scariv_pkg::mispred_t             i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+ lsu_mispred_if.slave             mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
  done_if.slave                         pipe_done_if[NUM_DONE_PORT],
 
@@ -202,9 +202,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr(i_phy_wr),
-    .i_mispred_lsu(i_mispred_lsu),
+    .early_wr_if(early_wr_if),
+    .phy_wr_if(phy_wr_if),
+    .mispred_if(mispred_if),
 
     .i_pipe_done         (|w_pipe_done_valid),
     .i_pipe_done_payload (w_done_payload_oh),

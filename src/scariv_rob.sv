@@ -21,8 +21,8 @@ module scariv_rob
 
    output cmt_id_t o_sc_new_cmt_id,
 
-   input done_rpt_t      i_done_rpt             [CMT_BUS_SIZE],
-   input another_flush_t i_another_flush_report [LSU_INST_NUM],
+   done_report_if.slave  done_report_if  [CMT_BUS_SIZE],
+   flush_report_if.slave flush_report_if [LSU_INST_NUM],
 
    br_upd_if.slave  ex3_br_upd_if,
 
@@ -208,8 +208,8 @@ logic w_load_valid;
      .i_load_valid (w_load_valid),
      .i_entry_in   (w_entry_in),
 
-     .i_done_rpt             (i_done_rpt),
-     .i_another_flush_report (i_another_flush_report),
+     .done_report_if  (done_report_if),
+     .flush_report_if (flush_report_if),
 
      .o_entry          (w_entries[c_idx]),
      .o_block_all_done (w_entry_all_done[c_idx]),

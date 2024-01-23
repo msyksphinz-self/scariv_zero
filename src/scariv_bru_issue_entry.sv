@@ -32,9 +32,9 @@ module scariv_bru_issue_entry
    output scariv_bru_pkg::issue_entry_t o_entry,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t i_early_wr   [scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t   i_phy_wr     [scariv_pkg::TGT_BUS_SIZE],
-   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+   early_wr_if.slave early_wr_if   [scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave   phy_wr_if     [scariv_pkg::TGT_BUS_SIZE],
+   lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic       i_entry_picked,
 
@@ -93,11 +93,11 @@ generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
   assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
   assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
 
-  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_early_wr (i_early_wr),
+  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .early_wr_if (early_wr_if),
                                            .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .phy_wr_if   (phy_wr_if),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
-  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (i_mispred_lsu),
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_mispred  (mispred_if),
                                         .o_mispred (w_rs_mispredicted[rs_idx]));
 end
 endgenerate

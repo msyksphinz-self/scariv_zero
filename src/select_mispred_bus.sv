@@ -2,7 +2,7 @@ module select_mispred_bus
   (
    input scariv_pkg::rnid_t i_entry_rnid,
    input scariv_pkg::reg_t        i_entry_type,
-   input scariv_pkg::mispred_t    i_mispred[scariv_conf_pkg::LSU_INST_NUM],
+   lsu_mispred_if.slave    i_mispred[scariv_conf_pkg::LSU_INST_NUM],
 
    output logic                 o_mispred
    );

@@ -62,8 +62,10 @@ l2_resp_if l2_resp ();
 scariv_front_if w_ibuf_front_if();
 scariv_front_if w_rn_front_if ();
 
-scariv_pkg::early_wr_t w_ex1_early_wr[scariv_pkg::REL_BUS_SIZE];
-scariv_pkg::phy_wr_t   w_ex3_phy_wr  [scariv_pkg::TGT_BUS_SIZE];
+early_wr_if    w_early_wr_if[scariv_pkg::REL_BUS_SIZE]();
+phy_wr_if      w_phy_wr_if  [scariv_pkg::TGT_BUS_SIZE]();
+lsu_mispred_if w_mispred_if [scariv_conf_pkg::LSU_INST_NUM]();
+
 scariv_pkg::cmt_id_t   w_sc_new_cmt_id;
 
 regread_if  #(.REG_TYPE(scariv_pkg::GPR)) int_regread[scariv_pkg::INT_REGRD_PORT_NUM] ();
@@ -71,7 +73,7 @@ regread_if  #(.REG_TYPE(scariv_pkg::FPR)) fp_regread [scariv_pkg::FP_REGRD_PORT_
 regwrite_if #(.REG_TYPE(scariv_pkg::GPR)) int_regwrite[scariv_pkg::INT_REGWR_PORT_NUM] ();
 regwrite_if #(.REG_TYPE(scariv_pkg::FPR)) fp_regwrite [scariv_pkg::FP_REGWR_PORT_NUM ] ();
 
-scariv_pkg::done_rpt_t w_done_rpt[scariv_pkg::CMT_BUS_SIZE];
+done_report_if w_done_report_if[scariv_pkg::CMT_BUS_SIZE];
 
 csr_info_if w_csr_info ();
 interrupt_if w_int_if();
@@ -96,7 +98,6 @@ scariv_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
 scariv_pkg::grp_id_t   w_disp_alu_valids [scariv_conf_pkg::ALU_INST_NUM];
 scariv_pkg::early_wr_t w_ex1_alu_early_wr[scariv_conf_pkg::ALU_INST_NUM];
 scariv_pkg::phy_wr_t   w_ex3_alu_phy_wr  [scariv_conf_pkg::ALU_INST_NUM];
-scariv_pkg::done_rpt_t w_alu_done_rpt    [scariv_conf_pkg::ALU_INST_NUM];
 
 
 // ----------------------------------
@@ -105,16 +106,13 @@ scariv_pkg::done_rpt_t w_alu_done_rpt    [scariv_conf_pkg::ALU_INST_NUM];
 scariv_pkg::grp_id_t        w_disp_lsu_valids;
 scariv_pkg::early_wr_t      w_ex1_lsu_early_wr      [scariv_conf_pkg::LSU_INST_NUM];
 scariv_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::done_rpt_t      w_lsu_done_rpt          [scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::mispred_t       w_ex2_mispred_lsu       [scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::another_flush_t w_lsu_another_flush_rpt [scariv_conf_pkg::LSU_INST_NUM];
+flush_report_if             w_flush_report_if [scariv_conf_pkg::LSU_INST_NUM]();
 // ----------------------------------
 // BRU Components
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_bru_valids;
 scariv_pkg::early_wr_t w_ex1_bru_early_wr;
 scariv_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
-scariv_pkg::done_rpt_t w_bru_done_rpt;
 br_upd_if w_ex3_br_upd_if();
 
 // ----------------------------------
@@ -123,7 +121,6 @@ br_upd_if w_ex3_br_upd_if();
 scariv_pkg::grp_id_t   w_disp_csu_valids;
 scariv_pkg::early_wr_t w_ex1_csu_early_wr;
 scariv_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
-scariv_pkg::done_rpt_t w_csu_done_rpt;
 
 // ----------------------------------
 // FPU Components
@@ -132,8 +129,6 @@ scariv_pkg::grp_id_t   w_disp_fpu_valids [scariv_conf_pkg::FPU_INST_NUM];
 scariv_pkg::early_wr_t w_ex1_fpu_early_wr[scariv_conf_pkg::FPU_INST_NUM];
 scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr[scariv_conf_pkg::FPU_INST_NUM];
 scariv_pkg::phy_wr_t   w_fpnew_phy_wr    [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::done_rpt_t w_fpu_mv_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::done_rpt_t w_fpu_fp_done_rpt [scariv_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
 
@@ -172,12 +167,6 @@ scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
 // Merging Forwarding / Done signals
 // ----------------------------------
 // ALU
-generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_loop
-  assign w_ex1_early_wr[a_idx] = w_ex1_alu_early_wr[a_idx];
-  assign w_ex3_phy_wr  [a_idx] = w_ex3_alu_phy_wr  [a_idx];
-  assign w_done_rpt    [a_idx] = w_alu_done_rpt    [a_idx];
-end
-endgenerate
 
 generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_wr_loop
   assign int_regwrite[a_idx].valid = w_ex3_alu_phy_wr[a_idx].valid;
@@ -187,13 +176,6 @@ end endgenerate
 
 
 // LSU
-generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_loop
-  assign w_ex1_early_wr[LSU_INST_PORT_BASE + l_idx] = w_ex1_lsu_early_wr[l_idx];
-  assign w_ex3_phy_wr  [LSU_INST_PORT_BASE + l_idx] = w_ex3_lsu_phy_wr  [l_idx];
-  assign w_done_rpt    [LSU_DONE_PORT_BASE + l_idx] = w_lsu_done_rpt    [l_idx];
-end
-endgenerate
-
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_wr_loop
   assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].valid = w_ex3_lsu_phy_wr[l_idx].valid & (w_ex3_lsu_phy_wr[l_idx].rd_type == scariv_pkg::GPR);
   assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].rnid  = w_ex3_lsu_phy_wr[l_idx].rd_rnid;
@@ -207,36 +189,17 @@ endgenerate
 
 
 // BRU
-assign w_ex1_early_wr[BRU_INST_PORT_BASE] = w_ex1_bru_early_wr;
-assign w_ex3_phy_wr  [BRU_INST_PORT_BASE] = w_ex3_bru_phy_wr  ;
-assign w_done_rpt    [BRU_DONE_PORT_BASE] = w_bru_done_rpt;
-
 assign int_regwrite[BRU_INT_REGWR_PORT_BASE].valid = w_ex3_bru_phy_wr.valid;
 assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_ex3_bru_phy_wr.rd_rnid;
 assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_ex3_bru_phy_wr.rd_data;
 
 // CSU
-// assign w_ex1_early_wr[CSU_INST_PORT_BASE] = w_ex1_csu_early_wr;
-assign w_ex1_early_wr[CSU_INST_PORT_BASE] = 'h0;
-assign w_ex3_phy_wr  [CSU_INST_PORT_BASE] = w_ex3_csu_phy_wr  ;
-assign w_done_rpt    [CSU_DONE_PORT_BASE] = w_csu_done_rpt;
-
 assign int_regwrite[CSU_INT_REGWR_PORT_BASE].valid = w_ex3_csu_phy_wr.valid;
 assign int_regwrite[CSU_INT_REGWR_PORT_BASE].rnid  = w_ex3_csu_phy_wr.rd_rnid;
 assign int_regwrite[CSU_INT_REGWR_PORT_BASE].data  = w_ex3_csu_phy_wr.rd_data;
 
 
 // FPU
-generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_loop
-  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+0] = w_ex1_fpu_early_wr[f_idx];
-  assign w_ex1_early_wr[FPU_INST_PORT_BASE + f_idx*2+1] = 'h0;   // Now, FPNew early wakeup is not used.
-  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+0] = w_ex3_fpumv_phy_wr[f_idx];
-  assign w_ex3_phy_wr  [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpnew_phy_wr    [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+0] = w_fpu_mv_done_rpt [f_idx];
-  assign w_done_rpt    [FPU_INST_PORT_BASE + f_idx*2+1] = w_fpu_fp_done_rpt [f_idx];
-end
-endgenerate
-
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_wr_loop
   assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
   assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_ex3_fpumv_phy_wr[f_idx].rd_rnid ;
@@ -293,7 +256,7 @@ u_rename (
 
   .br_upd_if (w_ex3_br_upd_if),
 
-  .i_phy_wr (w_ex3_phy_wr),
+  .phy_wr_if (w_phy_wr_if),
   .rn_front_if  (w_rn_front_if)
 );
 
@@ -365,17 +328,17 @@ generate for (genvar alu_idx = 0; alu_idx < scariv_conf_pkg::ALU_INST_NUM; alu_i
       .ex1_regread_rs1(int_regread[alu_idx * 2 + 0]),
       .ex1_regread_rs2(int_regread[alu_idx * 2 + 1]),
 
-      .i_early_wr(w_ex1_early_wr),
-      .i_phy_wr  (w_ex3_phy_wr),
-      .i_mispred_lsu (w_ex2_mispred_lsu),
+      .early_wr_in_if (w_early_wr_if),
+      .phy_wr_in_if   (w_phy_wr_if  ),
+      .mispred_in_if  (w_mispred_if ),
 
-      .o_ex1_early_wr(w_ex1_alu_early_wr[alu_idx]),
-      .o_ex3_phy_wr  (w_ex3_alu_phy_wr  [alu_idx]),
+      .early_wr_out_if(w_early_wr_if[alu_idx]),
+      .phy_wr_out_if  (w_phy_wr_if  [alu_idx]),
 
       .commit_if  (w_commit_if),
       .br_upd_if (w_ex3_br_upd_if),
 
-      .o_done_report (w_alu_done_rpt[alu_idx])
+      .done_report_if (w_done_report_if[alu_idx])
   );
 end
 endgenerate
@@ -409,15 +372,15 @@ u_lsu_top
     .l1d_ext_req  (l1d_ext_req ),
     .l1d_ext_resp (l1d_ext_resp),
 
-    .i_early_wr(w_ex1_early_wr),
-    .i_phy_wr  (w_ex3_phy_wr),
+    .early_wr_in_if(w_early_wr_if),
+    .phy_wr_in_if  (w_phy_wr_if  ),
 
-    .o_ex1_early_wr(w_ex1_lsu_early_wr),
-    .o_ex3_phy_wr  (w_ex3_lsu_phy_wr  ),
+    .early_wr_out_if(w_early_wr_if[LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
+    .phy_wr_out_if  (w_phy_wr_if  [LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
+    .mispred_out_if (w_mispred_if [LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
 
-    .o_done_report(w_lsu_done_rpt),
-    .o_another_flush_report(w_lsu_another_flush_rpt),
-    .o_ex2_mispred (w_ex2_mispred_lsu),
+    .done_report_if(w_done_report_if [LSU_DONE_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
+    .flush_report_if(w_flush_report_if),
 
     .snoop_info_if (w_snoop_info_if),
 
@@ -453,14 +416,14 @@ u_bru (
                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  1]),
 
-    .i_early_wr(w_ex1_early_wr),
-    .i_phy_wr  (w_ex3_phy_wr),
-    .i_mispred_lsu (w_ex2_mispred_lsu),
+    .early_wr_if(w_early_wr_if),
+    .phy_wr_if  (w_phy_wr_if),
+    .mispred_if (w_mispred_if),
 
     .o_ex1_early_wr(w_ex1_bru_early_wr),
     .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
 
-    .o_done_report (w_bru_done_rpt),
+    .done_report_if (w_done_report_if[BRU_DONE_PORT_BASE]),
     .commit_if      (w_commit_if),
     .ex3_br_upd_if (w_ex3_br_upd_if),
     .ex3_br_upd_slave_if (w_ex3_br_upd_if),
@@ -482,12 +445,12 @@ u_csu (
                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  2]),
 
-    .i_early_wr(w_ex1_early_wr),
-    .i_phy_wr  (w_ex3_phy_wr),
+    .early_wr_if(w_early_wr_if),
+    .phy_wr_if  (w_phy_wr_if),
 
     .o_ex1_early_wr(w_ex1_csu_early_wr),
     .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
-    .i_mispred_lsu (w_ex2_mispred_lsu),
+    .mispred_if (w_mispred_if),
 
     .clint_if (clint_if),
     .plic_if  (plic_if),
@@ -498,7 +461,7 @@ u_csu (
 
     .fflags_update_if (w_fflags_update_if),
 
-    .o_done_report (w_csu_done_rpt),
+    .done_report_if (w_done_report_if[CSU_DONE_PORT_BASE]),
 
     .commit_if (w_commit_if),
     .br_upd_if (w_ex3_br_upd_if)
@@ -548,9 +511,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .ex0_regread_rs2(fp_regread[fpu_idx * 3 + 1]),
       .ex0_regread_rs3(fp_regread[fpu_idx * 3 + 2]),
 
-      .i_early_wr(w_ex1_early_wr),
-      .i_phy_wr  (w_ex3_phy_wr),
-      .i_mispred_lsu (w_ex2_mispred_lsu),
+      .early_wr_if(w_early_wr_if),
+      .phy_wr_if  (w_phy_wr_if  ),
+      .mispred_if (w_mispred_if ),
 
       .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
       .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr[fpu_idx]),
@@ -559,8 +522,8 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .commit_if  (w_commit_if),
       .br_upd_if (w_ex3_br_upd_if),
 
-      .o_mv_done_report (w_fpu_mv_done_rpt[fpu_idx]),
-      .o_fp_done_report (w_fpu_fp_done_rpt[fpu_idx])
+      .mv_done_report_if (w_done_report_if[FPU_INST_PORT_BASE + fpu_idx*2+0]),
+      .fp_done_report_if (w_done_report_if[FPU_INST_PORT_BASE + fpu_idx*2+1])
     );
   end
 
@@ -598,8 +561,8 @@ scariv_rob u_rob
 
    .o_sc_new_cmt_id (w_sc_new_cmt_id),
 
-   .i_done_rpt (w_done_rpt),
-   .i_another_flush_report(w_lsu_another_flush_rpt),
+   .done_report_if  (w_done_report_if ),
+   .flush_report_if (w_flush_report_if),
 
    .commit_if (w_commit_if),
    .fflags_update_if (w_fflags_update_if),

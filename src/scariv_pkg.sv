@@ -511,14 +511,12 @@ typedef struct packed {
   } phy_wr_t;
 
   typedef struct packed {
-    logic               mis_valid;     // Mispredict
-    reg_t               rd_type;
+    logic  mis_valid;     // Mispredict
+    reg_t  rd_type;
     rnid_t rd_rnid;
   } mispred_t;
 
-
   typedef struct packed {
-    logic             valid;
     cmt_id_t          cmt_id;
     grp_id_t          grp_id;
     logic             except_valid;
@@ -801,5 +799,145 @@ modport monitor (
 );
 
 endinterface // commit_if
+
+
+interface done_report_if;
+
+  import scariv_pkg::*;
+
+  logic             valid;
+  cmt_id_t          cmt_id;
+  grp_id_t          grp_id;
+  logic             except_valid;
+  except_t          except_type;
+  riscv_pkg::xlen_t except_tval;
+  logic             fflags_update_valid;
+  fflags_t          fflags;
+
+function automatic scariv_pkg::done_rpt_t get_payload ();
+  scariv_pkg::done_rpt_t ret;
+  ret = '{cmt_id: cmt_id,
+          grp_id: grp_id,
+          except_valid: except_valid,
+          except_type: except_type,
+          except_tval: except_tval,
+          fflags_update_valid: fflags_update_valid,
+          fflags: fflags};
+
+  return ret;
+endfunction // get_payload
+
+modport master (
+  output valid,
+  output cmt_id,
+  output grp_id,
+  output except_valid,
+  output except_type,
+  output except_tval,
+  output fflags_update_valid,
+  output fflags,
+  import get_payload
+);
+
+modport slave (
+  input  valid,
+  input  cmt_id,
+  input  grp_id,
+  input  except_valid,
+  input  except_type,
+  input  except_tval,
+  input  fflags_update_valid,
+  input  fflags,
+  import get_payload
+);
+
+endinterface // done_report_if
+
+
+interface flush_report_if;
+
+  import scariv_pkg::*;
+
+  logic    valid;
+  cmt_id_t cmt_id;
+  grp_id_t grp_id;
+
+modport master (
+  output valid,
+  output cmt_id,
+  output grp_id
+);
+
+modport slave (
+  input  valid,
+  input  cmt_id,
+  input  grp_id
+);
+
+endinterface // flush_report_if
+
+interface phy_wr_if;
+  logic              valid;
+  scariv_pkg::rnid_t rd_rnid;
+  scariv_pkg::reg_t  rd_type;
+  scariv_pkg::alen_t rd_data;
+
+modport master (
+  output valid,
+  output rd_rnid,
+  output rd_type,
+  output rd_data
+);
+
+modport slave (
+  input  valid,
+  input  rd_rnid,
+  input  rd_type,
+  input  rd_data
+);
+
+endinterface // phy_wr_if
+
+interface early_wr_if;
+  logic              valid;
+  scariv_pkg::rnid_t rd_rnid;
+  scariv_pkg::reg_t  rd_type;
+
+  logic  may_mispred;
+
+modport master (
+  output valid,
+  output rd_rnid,
+  output rd_type,
+  output may_mispred
+);
+
+modport slave (
+  input  valid,
+  input  rd_rnid,
+  input  rd_type,
+  input  may_mispred
+);
+
+endinterface // early_wr_if
+
+interface lsu_mispred_if;
+  logic              mis_valid;     // Mispredict
+  scariv_pkg::reg_t  rd_type;
+  scariv_pkg::rnid_t rd_rnid;
+
+modport master (
+  output mis_valid,
+  output rd_type,
+  output rd_rnid
+);
+
+modport slave (
+  input  mis_valid,
+  input  rd_type,
+  input  rd_rnid
+);
+
+endinterface // lsu_mispred_if
 
 `default_nettype wire
