@@ -25,8 +25,8 @@ module scariv_csu_pipe
 
   regread_if.master                 ex1_regread_rs1,
 
-  early_wr_if.master       o_ex1_early_wr,
-  phy_wr_if.master         o_ex3_phy_wr,
+  early_wr_if.master       ex1_early_wr_if,
+  phy_wr_if.master         ex3_phy_wr_if,
 
   /* CSR information */
   input riscv_common_pkg::priv_t               i_status_priv,
@@ -159,10 +159,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
+assign ex3_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
+assign ex3_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign ex3_phy_wr_if.rd_type = r_ex3_issue.wr_reg.typ;
+assign ex3_phy_wr_if.rd_data = r_ex3_csr_rd_data;
 
 logic w_ex3_sret_tsr_illegal;
 

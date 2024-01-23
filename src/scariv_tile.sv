@@ -96,39 +96,28 @@ scariv_pkg::cmt_rnid_upd_t   w_commit_rnid_update;
 // ALU Components
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_alu_valids [scariv_conf_pkg::ALU_INST_NUM];
-scariv_pkg::early_wr_t w_ex1_alu_early_wr[scariv_conf_pkg::ALU_INST_NUM];
-scariv_pkg::phy_wr_t   w_ex3_alu_phy_wr  [scariv_conf_pkg::ALU_INST_NUM];
 
 
 // ----------------------------------
 // LSU Components
 // ----------------------------------
 scariv_pkg::grp_id_t        w_disp_lsu_valids;
-scariv_pkg::early_wr_t      w_ex1_lsu_early_wr      [scariv_conf_pkg::LSU_INST_NUM];
-scariv_pkg::phy_wr_t        w_ex3_lsu_phy_wr        [scariv_conf_pkg::LSU_INST_NUM];
 flush_report_if             w_flush_report_if [scariv_conf_pkg::LSU_INST_NUM]();
 // ----------------------------------
 // BRU Components
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_bru_valids;
-scariv_pkg::early_wr_t w_ex1_bru_early_wr;
-scariv_pkg::phy_wr_t   w_ex3_bru_phy_wr  ;
 br_upd_if w_ex3_br_upd_if();
 
 // ----------------------------------
 // CSU Components
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_csu_valids;
-scariv_pkg::early_wr_t w_ex1_csu_early_wr;
-scariv_pkg::phy_wr_t   w_ex3_csu_phy_wr  ;
 
 // ----------------------------------
 // FPU Components
 // ----------------------------------
 scariv_pkg::grp_id_t   w_disp_fpu_valids [scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::early_wr_t w_ex1_fpu_early_wr[scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_ex3_fpumv_phy_wr[scariv_conf_pkg::FPU_INST_NUM];
-scariv_pkg::phy_wr_t   w_fpnew_phy_wr    [scariv_conf_pkg::FPU_INST_NUM];
 
 fflags_update_if w_fflags_update_if();
 
@@ -169,52 +158,53 @@ scariv_pkg::brtag_t  w_iq_brtag  [scariv_conf_pkg::DISP_SIZE];
 // ALU
 
 generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_reg_wr_loop
-  assign int_regwrite[a_idx].valid = w_ex3_alu_phy_wr[a_idx].valid;
-  assign int_regwrite[a_idx].rnid  = w_ex3_alu_phy_wr[a_idx].rd_rnid ;
-  assign int_regwrite[a_idx].data  = w_ex3_alu_phy_wr[a_idx].rd_data ;
+  assign int_regwrite[a_idx].valid = w_phy_wr_if[ALU_INST_PORT_BASE + a_idx].valid;
+  assign int_regwrite[a_idx].rnid  = w_phy_wr_if[ALU_INST_PORT_BASE + a_idx].rd_rnid ;
+  assign int_regwrite[a_idx].data  = w_phy_wr_if[ALU_INST_PORT_BASE + a_idx].rd_data ;
 end endgenerate
 
 
 // LSU
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_reg_wr_loop
-  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].valid = w_ex3_lsu_phy_wr[l_idx].valid & (w_ex3_lsu_phy_wr[l_idx].rd_type == scariv_pkg::GPR);
-  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].rnid  = w_ex3_lsu_phy_wr[l_idx].rd_rnid;
-  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].data  = w_ex3_lsu_phy_wr[l_idx].rd_data;
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].valid = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].valid & (w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_type == scariv_pkg::GPR);
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].rnid  = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_rnid;
+  assign int_regwrite[LSU_INT_REGWR_PORT_BASE + l_idx].data  = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_data;
 
-  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].valid = w_ex3_lsu_phy_wr[l_idx].valid & (w_ex3_lsu_phy_wr[l_idx].rd_type == scariv_pkg::FPR);
-  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].rnid  = w_ex3_lsu_phy_wr[l_idx].rd_rnid;
-  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].data  = w_ex3_lsu_phy_wr[l_idx].rd_data;
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].valid = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].valid & (w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].rnid  = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_rnid;
+  assign fp_regwrite[LSU_FP_REGWR_PORT_BASE + l_idx].data  = w_phy_wr_if[LSU_INST_PORT_BASE + l_idx].rd_data;
 end
 endgenerate
 
 
 // BRU
-assign int_regwrite[BRU_INT_REGWR_PORT_BASE].valid = w_ex3_bru_phy_wr.valid;
-assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_ex3_bru_phy_wr.rd_rnid;
-assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_ex3_bru_phy_wr.rd_data;
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].valid = w_phy_wr_if[BRU_INST_PORT_BASE].valid;
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].rnid  = w_phy_wr_if[BRU_INST_PORT_BASE].rd_rnid;
+assign int_regwrite[BRU_INT_REGWR_PORT_BASE].data  = w_phy_wr_if[BRU_INST_PORT_BASE].rd_data;
 
 // CSU
-assign int_regwrite[CSU_INT_REGWR_PORT_BASE].valid = w_ex3_csu_phy_wr.valid;
-assign int_regwrite[CSU_INT_REGWR_PORT_BASE].rnid  = w_ex3_csu_phy_wr.rd_rnid;
-assign int_regwrite[CSU_INT_REGWR_PORT_BASE].data  = w_ex3_csu_phy_wr.rd_data;
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].valid = w_phy_wr_if[CSU_INST_PORT_BASE].valid;
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].rnid  = w_phy_wr_if[CSU_INST_PORT_BASE].rd_rnid;
+assign int_regwrite[CSU_INT_REGWR_PORT_BASE].data  = w_phy_wr_if[CSU_INST_PORT_BASE].rd_data;
 
 
 // FPU
 generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) begin : fpu_reg_wr_loop
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_ex3_fpumv_phy_wr[f_idx].rd_rnid ;
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].data  = w_ex3_fpumv_phy_wr[f_idx].rd_data ;
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].valid = w_fpnew_phy_wr    [f_idx].valid & (w_fpnew_phy_wr[f_idx].rd_type == scariv_pkg::GPR);
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_fpnew_phy_wr    [f_idx].rd_rnid ;
-  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].data  = w_fpnew_phy_wr    [f_idx].rd_data ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].valid = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+0].valid & (w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+0].rd_type == scariv_pkg::GPR);
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+0].rd_rnid ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+0].data  = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+0].rd_data ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].valid = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+1].valid & (w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+1].rd_type == scariv_pkg::GPR);
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+1].rd_rnid ;
+  assign int_regwrite [FPU_INT_REGWR_PORT_BASE + f_idx*2+1].data  = w_phy_wr_if[FPU_INST_PORT_BASE + f_idx*2+1].rd_data ;
 
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].valid = w_ex3_fpumv_phy_wr[f_idx].valid & (w_ex3_fpumv_phy_wr[f_idx].rd_type == scariv_pkg::FPR);
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_ex3_fpumv_phy_wr[f_idx].rd_rnid ;
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].data  = w_ex3_fpumv_phy_wr[f_idx].rd_data ;
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].valid = w_fpnew_phy_wr    [f_idx].valid & (w_fpnew_phy_wr[f_idx].rd_type == scariv_pkg::FPR);
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_fpnew_phy_wr    [f_idx].rd_rnid ;
-  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].data  = w_fpnew_phy_wr    [f_idx].rd_data ;
-end endgenerate
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].valid = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+0].valid & (w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+0].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].rnid  = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+0].rd_rnid ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+0].data  = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+0].rd_data ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].valid = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+1].valid & (w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+1].rd_type == scariv_pkg::FPR);
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].rnid  = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+1].rd_rnid ;
+  assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].data  = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+1].rd_data ;
+end endgenerate // block: fpu_reg_wr_loop
+
 
 scariv_frontend u_frontend (
   .i_clk(i_clk),
@@ -377,7 +367,7 @@ u_lsu_top
 
     .early_wr_out_if(w_early_wr_if[LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
     .phy_wr_out_if  (w_phy_wr_if  [LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
-    .mispred_out_if (w_mispred_if [LSU_INST_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
+    .mispred_out_if (w_mispred_if),
 
     .done_report_if(w_done_report_if [LSU_DONE_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
     .flush_report_if(w_flush_report_if),
@@ -416,12 +406,12 @@ u_bru (
                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  1]),
 
-    .early_wr_if(w_early_wr_if),
-    .phy_wr_if  (w_phy_wr_if),
-    .mispred_if (w_mispred_if),
+    .early_wr_in_if(w_early_wr_if),
+    .phy_wr_in_if  (w_phy_wr_if),
+    .mispred_in_if (w_mispred_if),
 
-    .o_ex1_early_wr(w_ex1_bru_early_wr),
-    .o_ex3_phy_wr  (w_ex3_bru_phy_wr  ),
+    .early_wr_out_if(w_early_wr_if[BRU_INST_PORT_BASE]),
+    .phy_wr_out_if  (w_phy_wr_if  [BRU_INST_PORT_BASE]),
 
     .done_report_if (w_done_report_if[BRU_DONE_PORT_BASE]),
     .commit_if      (w_commit_if),
@@ -445,12 +435,12 @@ u_csu (
                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
                                  2]),
 
-    .early_wr_if(w_early_wr_if),
-    .phy_wr_if  (w_phy_wr_if),
+    .early_wr_in_if(w_early_wr_if),
+    .phy_wr_in_if  (w_phy_wr_if  ),
+    .mispred_in_if (w_mispred_if ),
 
-    .o_ex1_early_wr(w_ex1_csu_early_wr),
-    .o_ex3_phy_wr  (w_ex3_csu_phy_wr  ),
-    .mispred_if (w_mispred_if),
+    .early_wr_out_if(w_early_wr_if[CSU_INST_PORT_BASE]),
+    .phy_wr_out_if  (w_phy_wr_if  [CSU_INST_PORT_BASE]),
 
     .clint_if (clint_if),
     .plic_if  (plic_if),
@@ -515,9 +505,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .phy_wr_if  (w_phy_wr_if  ),
       .mispred_if (w_mispred_if ),
 
-      .o_ex1_mv_early_wr(w_ex1_fpu_early_wr[fpu_idx]),
-      .o_ex3_mv_phy_wr  (w_ex3_fpumv_phy_wr[fpu_idx]),
-      .o_fpnew_phy_wr   (w_fpnew_phy_wr    [fpu_idx]),
+      .mv_early_wr_if  (w_early_wr_if[FPU_INST_PORT_BASE + fpu_idx*2+0]),
+      .mv_phy_wr_if    (w_phy_wr_if  [FPU_INST_PORT_BASE + fpu_idx*2+0]),
+      .fpnew_phy_wr_if (w_phy_wr_if  [FPU_INST_PORT_BASE + fpu_idx*2+1]),
 
       .commit_if  (w_commit_if),
       .br_upd_if (w_ex3_br_upd_if),
@@ -525,7 +515,9 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .mv_done_report_if (w_done_report_if[FPU_INST_PORT_BASE + fpu_idx*2+0]),
       .fp_done_report_if (w_done_report_if[FPU_INST_PORT_BASE + fpu_idx*2+1])
     );
-  end
+
+    assign w_early_wr_if[FPU_INST_PORT_BASE + fpu_idx*2+1].valid = 1'b0;
+  end // block: fpu_loop
 
   // --------------------------------------
   // FPU: Floating Point Physical Register

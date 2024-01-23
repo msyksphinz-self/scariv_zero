@@ -31,8 +31,8 @@ module scariv_bru_pipe
   regread_if.master                   ex0_regread_rs1,
   regread_if.master                   ex0_regread_rs2,
 
-  output                            scariv_pkg::early_wr_t o_ex1_early_wr,
-  output                            scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+  early_wr_if.master ex1_early_wr_if,
+  phy_wr_if.master   ex3_phy_wr_if,
 
   done_report_if.master             done_report_if,
   br_upd_if.master                  ex3_br_upd_if
@@ -174,10 +174,10 @@ select_mispred_bus rs2_mispred_select
 assign w_commit_flushed = commit_if.is_flushed_commit();
 
 
-assign o_ex1_early_wr.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;
-assign o_ex1_early_wr.rd_rnid = w_ex0_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type = w_ex0_issue.wr_reg.typ;
-assign o_ex1_early_wr.may_mispred = 1'b0;
+assign ex1_early_wr_if.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;
+assign ex1_early_wr_if.rd_rnid = w_ex0_issue.wr_reg.rnid;
+assign ex1_early_wr_if.rd_type = w_ex0_issue.wr_reg.typ;
+assign ex1_early_wr_if.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
@@ -231,12 +231,12 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid   = r_ex2_issue.valid &
-                              r_ex2_pipe_ctrl.wr_rd & (r_ex2_issue.wr_reg.regidx != 'h0);
-assign o_ex3_phy_wr.rd_rnid = r_ex2_issue.wr_reg.rnid;
-assign o_ex3_phy_wr.rd_type = r_ex2_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
-                               r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
+assign ex3_phy_wr_if.valid   = r_ex2_issue.valid &
+                               r_ex2_pipe_ctrl.wr_rd & (r_ex2_issue.wr_reg.regidx != 'h0);
+assign ex3_phy_wr_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
+assign ex3_phy_wr_if.rd_type = r_ex2_issue.wr_reg.typ;
+assign ex3_phy_wr_if.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                                r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
 
 assign done_report_if.valid    = r_ex2_issue.valid;
 assign done_report_if.cmt_id   = r_ex2_issue.cmt_id;

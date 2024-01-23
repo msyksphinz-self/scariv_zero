@@ -38,9 +38,9 @@ module scariv_fpu #(
     lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
     /* write output */
-    early_wr_if.master o_ex1_mv_early_wr,
-    phy_wr_if.master   o_ex3_mv_phy_wr,
-    phy_wr_if.master   o_fpnew_phy_wr,
+    early_wr_if.master mv_early_wr_if,
+    phy_wr_if.master   mv_phy_wr_if,
+    phy_wr_if.master   fpnew_phy_wr_if,
 
     done_report_if.master         mv_done_report_if,
     done_report_if.master         fp_done_report_if,
@@ -146,11 +146,11 @@ u_fpu
 
    .mispred_if (mispred_if),
 
-   .o_ex1_mv_early_wr(o_ex1_mv_early_wr),
-   .o_ex3_mv_phy_wr  (o_ex3_mv_phy_wr  ),
-   .mv_done_report_if (mv_done_report_if ),
+   .ex1_mv_early_wr_if (mv_early_wr_if   ),
+   .ex3_mv_phy_wr_if   (mv_phy_wr_if     ),
+   .mv_done_report_if  (mv_done_report_if),
 
-   .o_fpnew_phy_wr   (o_fpnew_phy_wr   ),
+   .fpnew_phy_wr_if   (fpnew_phy_wr_if   ),
    .fp_done_report_if (fp_done_report_if )
    );
 
