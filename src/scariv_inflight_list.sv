@@ -25,7 +25,7 @@ module scariv_inflight_list
    input rnid_t   i_update_fetch_rnid[scariv_conf_pkg::DISP_SIZE],
    input grp_id_t i_update_fetch_data,
 
-   input phy_wr_t phy_wr_if[TGT_BUS_SIZE]
+   phy_wr_if.slave phy_wr_if[TGT_BUS_SIZE]
    );
 
 logic [TGT_BUS_SIZE-1: 0] w_phy_valids;
