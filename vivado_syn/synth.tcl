@@ -48,8 +48,11 @@ read_xdc ../synth_constraints.xdc
 # read_xdc dont_touch.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
+set FLATTEN_HIERARCHY rebuilt
+# set FLATTEN_HIERARCHY none
+
 synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
-    -flatten_hierarchy rebuilt \
+    -flatten_hierarchy ${FLATTEN_HIERARCHY} \
     -include_dir ../../src/fpnew/src/common_cells/include \
     -include_dir ../../src \
     -retiming \
