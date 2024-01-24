@@ -125,6 +125,7 @@ logic                    w_ex1_haz_detected;
 scariv_pkg::maxaddr_t    w_ex1_addr;
 logic w_ex1_commit_flush;
 logic w_ex1_br_flush;
+logic w_ex1_sfence_vma_illegal;
 
 
 // riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
@@ -161,6 +162,7 @@ logic                   r_ex2_is_sc;
 
 logic w_ex2_commit_flush;
 logic w_ex2_br_flush;
+logic r_ex2_sfence_vma_illegal;
 
 //
 // EX3 stage
@@ -172,6 +174,7 @@ logic                            r_ex3_mis_valid;
 logic                            r_ex3_except_valid;
 scariv_pkg::except_t             r_ex3_except_type;
 scariv_pkg::maxaddr_t            r_ex3_addr;
+logic                            r_ex3_sfence_vma_illegal;
 
 logic                 w_ex2_haz_detected;
 assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
@@ -365,9 +368,6 @@ logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
 scariv_pkg::except_t w_ex1_tlb_except_type;
 
-logic w_ex1_sfence_vma_illegal;
-logic r_ex2_sfence_vma_illegal;
-logic r_ex3_sfence_vma_illegal;
 assign w_ex1_sfence_vma_illegal = (r_ex1_pipe_ctrl.op == OP_SFENCE_VMA) & csr_info.mstatus[`MSTATUS_TVM];
 
 assign w_ex1_ld_except_valid = w_ex1_readmem_cmd  & w_ex1_tlb_req.valid & (w_ex1_tlb_resp.pf.ld | w_ex1_tlb_resp.ae.ld | w_ex1_tlb_resp.ma.ld);
