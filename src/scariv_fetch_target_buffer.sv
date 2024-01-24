@@ -106,7 +106,7 @@ assign w_ftb_update_entry.bimodal              = (((br_upd_if.bim_value == 2'b11
                                                  br_upd_if.taken ? br_upd_if.bim_value + 2'b01 :
                                                  br_upd_if.bim_value - 2'b01;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
+always_ff @ (posedge i_clk) begin
   if (w_ftb_update_valid) begin
     r_ftb_entries[w_ftb_update_index][w_ftb_update_way] <= w_ftb_update_entry;
   end
