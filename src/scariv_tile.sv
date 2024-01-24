@@ -73,7 +73,7 @@ regread_if  #(.REG_TYPE(scariv_pkg::FPR)) fp_regread [scariv_pkg::FP_REGRD_PORT_
 regwrite_if #(.REG_TYPE(scariv_pkg::GPR)) int_regwrite[scariv_pkg::INT_REGWR_PORT_NUM] ();
 regwrite_if #(.REG_TYPE(scariv_pkg::FPR)) fp_regwrite [scariv_pkg::FP_REGWR_PORT_NUM ] ();
 
-done_report_if w_done_report_if[scariv_pkg::CMT_BUS_SIZE];
+done_report_if w_done_report_if[scariv_pkg::CMT_BUS_SIZE]();
 
 csr_info_if w_csr_info ();
 interrupt_if w_int_if();
