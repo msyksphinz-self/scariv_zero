@@ -87,10 +87,12 @@
 
 ../src/simple_arbiter.sv
 ../src/scariv_frontend.sv
+../src/scariv_front_addr_gen.sv
 
 ../src/scariv_predictor.sv
 ../src/scariv_gshare.sv
 ../src/scariv_predictor_gshare.sv
+../src/scariv_fetch_target_buffer.sv
 
 ../src/scariv_icache.sv
 ../src/scariv_ic_pref.sv
