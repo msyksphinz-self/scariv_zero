@@ -18,15 +18,23 @@ module bit_oh_or
   //   assign w_selected_array[i] = w_selected_array[i-1] | {$bits(T){i_oh[i]}} & i_data[i];
   // end
   // endgenerate
-logic [$clog2(WORDS)-1: 0] idx;
-function automatic logic [$clog2(WORDS)-1: 0] encoder (logic [WORDS-1: 0] in);
+// logic [$clog2(WORDS)-1: 0] idx;
+// function automatic logic [$clog2(WORDS)-1: 0] encoder (logic [WORDS-1: 0] in);
+//   for (int i = 0; i < WORDS; i++) begin
+//     if (in[i]) return i;
+//   end
+//   return 0;
+// endfunction // encoder
+//
+// assign o_selected = ~|i_oh ? 'h0 : i_data[encoder(i_oh)];
+
+function automatic T bit_oh_func();
   for (int i = 0; i < WORDS; i++) begin
-    if (in[i]) return i;
+    if (i_oh[i]) return i_data[i];
   end
   return 0;
-endfunction // encoder
-
-assign o_selected = ~|i_oh ? 'h0 : i_data[encoder(i_oh)];
+endfunction // bit_oh_func
+assign o_selected = bit_oh_func();
 
 endmodule
 
