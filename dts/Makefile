@@ -18,6 +18,7 @@ build: dts_skelenton.dts bootrom.S
 	dd if=/dev/zero of=dummy.bin bs=80 count=1
 	dtc -@ -O dtb rv$(XLEN)$(EXT).dts -o rv$(XLEN)$(EXT).dtb
 	cat bootrom.bin rv$(XLEN)$(EXT).dtb dummy.bin > bootrom.img
+	./bin2hex.py --bit-width 64  bootrom.img bootrom_w8.hex
 	./bin2hex.py --bit-width 128 bootrom.img bootrom_w16.hex
 	./bin2hex.py --bit-width 256 bootrom.img bootrom_w32.hex
 	./bin2hex.py --bit-width 512 bootrom.img bootrom_w64.hex
