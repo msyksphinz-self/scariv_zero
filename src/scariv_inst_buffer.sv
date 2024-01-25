@@ -1002,4 +1002,10 @@ end
 `endif // SIMULATION
 
 
+initial begin
+  if (scariv_conf_pkg::DISP_SIZE * 32 > scariv_conf_pkg::ICACHE_DATA_W) begin
+    $fatal(0, "32xDISP_SIZE larger than ICache Line size is not supported");
+  end
+end
+
 endmodule // inst_buffer
