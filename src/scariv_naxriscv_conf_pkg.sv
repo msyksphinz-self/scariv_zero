@@ -10,7 +10,7 @@ package scariv_conf_pkg;
 
   localparam INST_BUF_SIZE = 6;
 
-  localparam DISP_SIZE = 3;
+  localparam DISP_SIZE = 2;
 
   localparam ALU_INST_NUM = 2;
   localparam LSU_INST_NUM = 1;
@@ -31,7 +31,7 @@ package scariv_conf_pkg;
 
   localparam RV_CSU_ENTRY_SIZE = 2;
   localparam RV_BRU_ENTRY_SIZE = 4;
-  localparam RV_FPU_ENTRY_SIZE = 0;
+  localparam RV_FPU_ENTRY_SIZE = 2;
 
   localparam MISSU_ENTRY_SIZE = 2;
 
