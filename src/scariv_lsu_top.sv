@@ -431,21 +431,37 @@ assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CO
                            w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].s1_miss     ? STATUS_MISS :
                            STATUS_NONE;
-// assign lsu_access.missu_conflicted_idx_oh   = r_ptw_missu_resp_missu_index_oh;
-assign lsu_access.missu_conflicted_idx_oh = 'h0;
-assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
-assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
-assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_ptw_resp_valid    <= 1'b0;
-    r_ptw_paddr_sel     <= 'h0;
-  end else begin
-    r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(scariv_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
-    r_ptw_resp_valid            <= lsu_access.req_valid;
+generate if (scariv_conf_pkg::DCACHE_DATA_W == riscv_pkg::XLEN_W) begin : lsu_access_1
+  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data;
+  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ptw_resp_valid <= 1'b0;
+    end else begin
+      r_ptw_resp_valid <= lsu_access.req_valid;
+    end
   end
-end
+end else begin : lsu_access_2
+  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
+  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ptw_resp_valid    <= 1'b0;
+      r_ptw_paddr_sel     <= 'h0;
+    end else begin
+      r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(scariv_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
+      r_ptw_resp_valid            <= lsu_access.req_valid;
+    end
+  end
+end endgenerate // block: lsu_access_2
+
 
 // ---------------------------
 //  L1D Snoop Interface

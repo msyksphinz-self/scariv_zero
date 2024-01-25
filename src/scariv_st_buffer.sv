@@ -343,17 +343,20 @@ generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) 
   st_buffer_entry_t w_fwd_entry;
   bit_oh_or #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE)) fwd_select_entry (.i_data(w_entries), .i_oh(st_buf_hit_array), .o_selected(w_fwd_entry));
 
-  logic dw_upper;
-  assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
-
   assign stbuf_fwd_check_if[p_idx].fwd_valid = |st_buf_hit_array;
-  assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[scariv_pkg::ALEN_W/8 +: scariv_pkg::ALEN_W/8] :
-                                               w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
-  assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[scariv_pkg::ALEN_W +: scariv_pkg::ALEN_W] :
-                                               w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  if (ST_BUF_WIDTH == scariv_pkg::ALEN_W * 2) begin
+    logic dw_upper;
+    assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
 
-  end // block: lsu_fwd_loop
-endgenerate
+    assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[scariv_pkg::ALEN_W/8 +: scariv_pkg::ALEN_W/8] :
+                                                 w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
+    assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[scariv_pkg::ALEN_W +: scariv_pkg::ALEN_W] :
+                                                 w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  end else begin
+    assign stbuf_fwd_check_if[p_idx].fwd_dw    = w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
+    assign stbuf_fwd_check_if[p_idx].fwd_data  = w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  end
+end endgenerate // block: lsu_fwd_loop
 
 // --------------
 // AMO Operation
