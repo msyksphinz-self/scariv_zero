@@ -178,7 +178,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv32_pkg.sv \
-		../src/scariv_$(CONF)_conf_pkg.sv \
+		../configs/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
 # \
@@ -193,7 +193,7 @@ rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(R
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv64_pkg.sv \
-		../src/scariv_$(CONF)_conf_pkg.sv \
+		../configs/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
 # \
