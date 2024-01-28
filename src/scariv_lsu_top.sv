@@ -286,9 +286,7 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
- .early_wr_in_if (early_wr_in_if),
  .phy_wr_in_if   (phy_wr_in_if  ),
- .mispred_in_if  (mispred_out_if),
 
  .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
