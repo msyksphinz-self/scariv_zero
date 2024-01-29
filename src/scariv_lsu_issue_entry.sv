@@ -181,7 +181,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
       end else if (i_ex2_updates.update) begin
-        if ((i_ex2_updates.hazard_typ != EX2_HAZ_NONE) & i_replay_queue_full) begin
+        if (!i_ex2_updates.success & i_replay_queue_full) begin
           w_entry_next.haz_reason = LSU_ISSUE_HAZ_REPLAY_FULL;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT;
         end else begin

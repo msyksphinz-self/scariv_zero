@@ -146,6 +146,7 @@ logic                   w_ex2_l1d_missed;
 logic                   w_ex2_readmem_op;
 logic                   r_ex2_except_valid;
 scariv_pkg::except_t    r_ex2_except_type;
+ex2_haz_t               w_ex2_hazard_typ;
 
 scariv_pkg::alenb_t       w_stbuf_fwd_dw;
 scariv_pkg::alen_t        w_stbuf_fwd_aligned_data;
@@ -156,7 +157,7 @@ scariv_pkg::alen_t        w_streq_fwd_aligned_data;
 scariv_pkg::alenb_t       w_ex2_expected_fwd_valid;
 scariv_pkg::alenb_t       w_ex2_fwd_success;
 
-logic                   w_ex2_sc_success;
+logic                   w_ex2_success;
 logic                   r_ex2_is_lr;
 logic                   r_ex2_is_sc;
 
@@ -179,7 +180,7 @@ logic                            r_ex3_sfence_vma_illegal;
 logic                 w_ex2_haz_detected;
 assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
 assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
-                            (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) |
+                            (w_ex2_hazard_typ != EX2_HAZ_NONE) |
                             (w_ex2_readmem_op ? w_ex2_load_mispredicted : 1'b0);
 
 //
@@ -340,12 +341,10 @@ logic w_ex1_is_lr;
 logic w_ex1_is_sc;
 logic r_ex2_readmem_op;
 logic r_ex2_writemem_op;
-assign w_ex1_is_lr = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_LR32) |
-                                                       (r_ex1_pipe_ctrl.rmwop == RMWOP_LR64));
+assign w_ex1_is_lr = r_ex1_pipe_ctrl.rmwop == RMWOP_LR;
 assign w_ex1_readmem_cmd = (r_ex1_pipe_ctrl.op == OP_LOAD) | w_ex1_is_lr;
 
-assign w_ex1_is_sc = (r_ex1_pipe_ctrl.op == OP_RMW) & ((r_ex1_pipe_ctrl.rmwop == RMWOP_SC32) |
-                                                       (r_ex1_pipe_ctrl.rmwop == RMWOP_SC64));
+assign w_ex1_is_sc = r_ex1_pipe_ctrl.rmwop == RMWOP_SC;
 assign w_ex1_writemem_cmd = (r_ex1_pipe_ctrl.op == OP_STORE) | r_ex1_pipe_ctrl.is_amo | w_ex1_is_sc;
 
 
@@ -400,10 +399,8 @@ assign o_ex1_q_updates.tlb_uc              = ~w_ex1_tlb_resp.cacheable;
 assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
 assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
 assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;
-assign o_ex1_q_updates.vaddr               = w_ex1_vaddr;
 assign o_ex1_q_updates.paddr               = w_ex1_tlb_resp.paddr;
 assign o_ex1_q_updates.size                = r_ex1_pipe_ctrl.size;
-assign o_ex1_q_updates.is_rmw              = (r_ex1_pipe_ctrl.op == OP_RMW);
 assign o_ex1_q_updates.rmwop               = r_ex1_pipe_ctrl.rmwop;
 
 `ifdef SIMULATION
@@ -460,7 +457,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected;
 assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected;
 assign lrsc_if.paddr           = r_ex2_addr;
-assign w_ex2_sc_success        = lrsc_if.sc_success;
+assign w_ex2_success           = lrsc_if.sc_success;
 
 
 logic w_ex2_rmw_haz_vld;
@@ -486,28 +483,23 @@ assign l1d_missu_if.req_payload.way   = ex1_l1d_rd_if.s1_hit_way;
 // L1D replace information
 
 // Interface to EX2 updates
-assign o_ex2_q_updates.update     = r_ex2_issue.valid;
-assign o_ex2_q_updates.cmt_id     = r_ex2_issue.cmt_id;
-assign o_ex2_q_updates.grp_id     = r_ex2_issue.grp_id;
-assign o_ex2_q_updates.hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
-                                    w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ :
-                                    &w_ex2_fwd_success                ? EX2_HAZ_NONE          :
-                                    ex1_l1d_rd_if.s1_conflict         ? EX2_HAZ_L1D_CONFLICT  :
-                                    l1d_missu_if.load ?
-                                    (l1d_missu_if.resp_payload.full   ? EX2_HAZ_MISSU_FULL       :
-                                     /* l1d_missu_if.resp_payload.allocated ? */ EX2_HAZ_MISSU_ASSIGNED) :
-                                    EX2_HAZ_NONE;
-assign o_ex2_q_updates.missu_index_oh = l1d_missu_if.resp_payload.missu_index_oh;
-// assign o_ex2_q_updates.index_oh     = r_ex2_index_oh;
-assign o_ex2_q_updates.hazard_index = stq_haz_check_if.ex2_haz_index;
-assign o_ex2_q_updates.is_amo     = r_ex2_pipe_ctrl.is_amo;
-assign o_ex2_q_updates.is_lr      = r_ex2_is_lr;
-assign o_ex2_q_updates.is_sc      = r_ex2_is_sc;
-assign o_ex2_q_updates.sc_success = w_ex2_sc_success;
+assign o_ex2_q_updates.update  = r_ex2_issue.valid;
+assign o_ex2_q_updates.cmt_id  = r_ex2_issue.cmt_id;
+assign o_ex2_q_updates.grp_id  = r_ex2_issue.grp_id;
+assign o_ex2_q_updates.success = r_ex2_is_sc ? w_ex2_success : w_ex2_hazard_typ == EX2_HAZ_NONE;
+
+assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
+                          w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :
+                          &w_ex2_fwd_success                ? EX2_HAZ_NONE           :
+                          ex1_l1d_rd_if.s1_conflict         ? EX2_HAZ_L1D_CONFLICT   :
+                          l1d_missu_if.load ?
+                          (l1d_missu_if.resp_payload.full   ? EX2_HAZ_MISSU_FULL     :
+                           /* l1d_missu_if.resp_payload.allocated ? */ EX2_HAZ_MISSU_ASSIGNED) :
+                          EX2_HAZ_NONE;
 
 // Interface to Replay Queue
 always_comb begin
-  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (o_ex2_q_updates.hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (w_ex2_hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
   lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
   lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
@@ -515,13 +507,13 @@ always_comb begin
   end
   lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
   lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
-  lsu_pipe_haz_if.payload.hazard_typ     = o_ex2_q_updates.hazard_typ;
+  lsu_pipe_haz_if.payload.hazard_typ     = w_ex2_hazard_typ;
   lsu_pipe_haz_if.payload.rd_reg         = r_ex2_issue.rd_regs[0];
   lsu_pipe_haz_if.payload.wr_reg         = r_ex2_issue.wr_reg;
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
   lsu_pipe_haz_if.payload.is_uc          = r_ex2_is_uc;
-  lsu_pipe_haz_if.payload.hazard_index   = o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
-                                                stq_haz_check_if.ex2_haz_index;
+  lsu_pipe_haz_if.payload.hazard_index   = w_ex2_hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
+                                           stq_haz_check_if.ex2_haz_index;
 end
 
 // ---------------------
@@ -683,8 +675,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
     r_ex3_mis_valid <= 1'b0;
   end else begin
-    r_ex3_aligned_data <= (r_ex2_pipe_ctrl.op == OP_RMW) &
-                          ((r_ex2_pipe_ctrl.rmwop == RMWOP_SC32) | (r_ex2_pipe_ctrl.rmwop == RMWOP_SC64)) ? !w_ex2_sc_success : w_ex2_data_sign_ext;
+    r_ex3_aligned_data <= r_ex2_pipe_ctrl.rmwop == RMWOP_SC ? !w_ex2_success : w_ex2_data_sign_ext;
     r_ex3_mis_valid <= ex2_mispred_out_if.mis_valid;
     r_ex3_addr      <= r_ex2_addr;
 

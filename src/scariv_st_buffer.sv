@@ -105,7 +105,7 @@ assign w_init_load = assign_st_buffer(
                                       st_buffer_if.cmt_id, st_buffer_if.grp_id,
 `endif // SIMULATION
                                       st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
-                                      st_buffer_if.is_rmw, st_buffer_if.rmwop, st_buffer_if.is_amo);
+                                      st_buffer_if.rmwop, st_buffer_if.size);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept       ? ST_BUF_MERGE :
@@ -364,10 +364,12 @@ end endgenerate // block: lsu_fwd_loop
 
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_amo_valids;
 decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop[ST_BUF_ENTRY_SIZE];
+decoder_lsu_ctrl_pkg::size_t   w_amo_size [ST_BUF_ENTRY_SIZE];
 riscv_pkg::xlen_t              w_amo_data0[ST_BUF_ENTRY_SIZE];
 riscv_pkg::xlen_t              w_amo_data1[ST_BUF_ENTRY_SIZE];
 
 decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop_sel;
+decoder_lsu_ctrl_pkg::size_t   w_amo_size_sel;
 riscv_pkg::xlen_t              w_amo_data0_sel;
 riscv_pkg::xlen_t              w_amo_data1_sel;
 riscv_pkg::xlen_t              w_amo_op_result;
@@ -378,12 +380,14 @@ u_amo_op
    .i_data0 (w_amo_data0_sel),
    .i_data1 (w_amo_data1_sel),
    .i_op    (w_amo_rmwop_sel),
+   .i_size  (w_amo_size_sel ),
    .o_data  (w_amo_op_result)
    );
 
 generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : amo_loop
   assign w_amo_valids[e_idx] = w_amo_op_if[e_idx].valid;
   assign w_amo_rmwop[e_idx] = w_amo_op_if[e_idx].rmwop;
+  assign w_amo_size [e_idx] = w_amo_op_if[e_idx].size;
   assign w_amo_data0[e_idx] = w_amo_op_if[e_idx].data0;
   assign w_amo_data1[e_idx] = w_amo_op_if[e_idx].data1;
 
@@ -392,6 +396,7 @@ end
 endgenerate
 
 bit_oh_or #(.T(decoder_lsu_ctrl_pkg::rmwop_t), .WORDS(ST_BUF_ENTRY_SIZE)) amo_rmwop_sel (.i_oh(w_amo_valids), .i_data(w_amo_rmwop), .o_selected(w_amo_rmwop_sel));
+bit_oh_or #(.T(decoder_lsu_ctrl_pkg::size_t),  .WORDS(ST_BUF_ENTRY_SIZE)) amo_size_sel  (.i_oh(w_amo_valids), .i_data(w_amo_size),  .o_selected(w_amo_size_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data0_sel (.i_oh(w_amo_valids), .i_data(w_amo_data0), .o_selected(w_amo_data0_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data1_sel (.i_oh(w_amo_valids), .i_data(w_amo_data1), .o_selected(w_amo_data1_sel));
 

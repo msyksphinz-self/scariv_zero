@@ -288,12 +288,11 @@ scariv_stq
 
  .phy_wr_in_if   (phy_wr_in_if  ),
 
- .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
-  .int_rs2_regread (int_rs2_regread),
-  .fp_rs2_regread  (fp_rs2_regread ),
+ .int_rs2_regread (int_rs2_regread),
+ .fp_rs2_regread  (fp_rs2_regread ),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
  .stq_haz_check_if (w_stq_haz_check_if),
