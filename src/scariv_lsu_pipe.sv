@@ -689,7 +689,8 @@ assign done_report_if.cmt_id        = r_ex3_issue.cmt_id;
 assign done_report_if.grp_id        = r_ex3_issue.grp_id;
 assign done_report_if.except_valid  = r_ex3_except_valid;
 assign done_report_if.except_type   = r_ex3_except_type;
-assign done_report_if.except_tval   = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
+assign done_report_if.except_tval   = r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
+                                      {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
 
 assign flush_report_if.valid  = ldq_haz_check_if.ex3_haz_valid;
 assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;

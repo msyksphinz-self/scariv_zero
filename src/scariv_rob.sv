@@ -252,14 +252,30 @@ assign w_int_type = int_if.m_external_int_valid ? riscv_common_pkg::MACHINE_EXTE
 
 assign w_commit.cmt_id       = w_out_cmt_id;
 assign w_commit.grp_id       = w_out_entry.grp_id;
-assign w_commit.except_valid = w_valid_except_grp_id | w_int_valid;
+// assign w_commit.except_valid = w_valid_except_grp_id | w_int_valid;
+// assign w_commit.int_valid    = w_int_valid;
+// assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
+// /* verilator lint_off WIDTH */
+// assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
+//                                  w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
+//                                 w_except_tval_selected;
+// encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
+// /* verilator lint_off WIDTH */
+// assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
+// assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
+// assign w_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
+
+logic                                  w_rob_except_match;
+assign w_rob_except_match = r_rob_except.valid & (r_rob_except.cmt_id == w_commit.cmt_id);
+
+assign w_commit.except_valid = {scariv_conf_pkg::DISP_SIZE{w_rob_except_match}} & r_rob_except.grp_id | w_int_valid;
 assign w_commit.int_valid    = w_int_valid;
-assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
+assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : r_rob_except.typ;
 /* verilator lint_off WIDTH */
 assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
                                  w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
-                                w_except_tval_selected;
-encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
+                                r_rob_except.tval;
+encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (r_rob_except.grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
 assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
@@ -271,6 +287,100 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     commit_if.commit_valid <= w_out_valid;
     commit_if.payload      <= w_commit;
+  end
+end
+
+// -------------------------------
+// Exception detect and selection
+// -------------------------------
+
+localparam EXCEPT_SIZE = CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM + 1;  // +1 is from Frontend Exception
+
+logic [EXCEPT_SIZE-1: 0] w_done_except_valid;
+cmt_id_t          w_done_cmt_id      [EXCEPT_SIZE];
+grp_id_t          w_done_grp_id      [EXCEPT_SIZE];
+except_t          w_done_except_type [EXCEPT_SIZE];
+riscv_pkg::xlen_t w_done_tval        [EXCEPT_SIZE];
+generate for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : done_exc_loop
+  assign w_done_except_valid[c_idx] = done_report_if[c_idx].valid & done_report_if[c_idx].except_valid;
+  assign w_done_cmt_id      [c_idx] = done_report_if[c_idx].cmt_id;
+  assign w_done_grp_id      [c_idx] = done_report_if[c_idx].grp_id;
+  assign w_done_except_type [c_idx] = done_report_if[c_idx].except_type;
+  assign w_done_tval        [c_idx] = done_report_if[c_idx].except_tval;
+end endgenerate
+generate for (genvar c_idx = 0; c_idx < scariv_conf_pkg::LSU_INST_NUM; c_idx++) begin : done_exc_flush_loop
+  assign w_done_except_valid[c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].valid;
+  assign w_done_cmt_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].cmt_id;
+  assign w_done_grp_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].grp_id;
+  assign w_done_except_type [c_idx + CMT_BUS_SIZE] = ANOTHER_FLUSH;
+  assign w_done_tval        [c_idx + CMT_BUS_SIZE] = 'h0;
+end endgenerate
+assign w_done_except_valid[CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = |({DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid);
+assign w_done_cmt_id      [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = w_in_cmt_id;
+assign w_done_grp_id      [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = {DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid;
+logic [$clog2(DISP_SIZE)-1: 0] w_frontend_exception_encoded;
+encoder #(.SIZE(DISP_SIZE)) u_except_rob_in_disp (.i_in (w_frontend_exception_valid), .o_out(w_frontend_exception_encoded));
+assign w_done_except_type [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] ? rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] : ILLEGAL_INST;
+assign w_done_tval        [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] & (rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] != ILLEGAL_INST) ?
+                                                                           rn_front_if.payload.tlb_except_tval[w_frontend_exception_encoded] :
+                                                                           rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst_valid ? rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst : rn_front_if.payload.inst[w_frontend_exception_encoded].inst;
+
+logic                             w_exc_min_valid;
+logic [$clog2(EXCEPT_SIZE)-1: 0]  w_exc_min_idx;
+
+bit_multiple_age_min
+  #(.WORDS(EXCEPT_SIZE))
+u_detect_exc_min
+  (
+   .i_valids(w_done_except_valid),
+   .i_cmt_id(w_done_cmt_id),
+   .i_grp_id(w_done_grp_id),
+
+   .o_valid  (w_exc_min_valid),
+   .o_min_idx(w_exc_min_idx)
+   );
+
+typedef struct packed {
+  logic                valid;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+  except_t             typ;
+  riscv_pkg::xlen_t    tval;
+} rob_except_t;
+
+rob_except_t r_rob_except;
+rob_except_t w_rob_except_next;
+
+always_comb begin
+  w_rob_except_next = r_rob_except;
+
+  if (commit_if.commit_valid & (commit_if.payload.cmt_id == r_rob_except.cmt_id)) begin
+    w_rob_except_next.valid = 'h0;
+  end
+
+  if (|w_done_except_valid) begin
+    if (r_rob_except.valid) begin
+      if (id0_is_older_than_id1(w_done_cmt_id[w_exc_min_idx], w_done_grp_id[w_exc_min_idx],
+                                r_rob_except.cmt_id, r_rob_except.grp_id)) begin
+        w_rob_except_next.cmt_id = w_done_cmt_id     [w_exc_min_idx];
+        w_rob_except_next.grp_id = w_done_grp_id     [w_exc_min_idx];
+        w_rob_except_next.typ    = w_done_except_type[w_exc_min_idx];
+        w_rob_except_next.tval   = w_done_tval       [w_exc_min_idx];
+      end
+    end else begin
+      w_rob_except_next.valid  = 1'b1;
+      w_rob_except_next.cmt_id = w_done_cmt_id     [w_exc_min_idx];
+      w_rob_except_next.grp_id = w_done_grp_id     [w_exc_min_idx];
+      w_rob_except_next.typ    = w_done_except_type[w_exc_min_idx];
+      w_rob_except_next.tval   = w_done_tval       [w_exc_min_idx];
+    end
+  end // if (|w_done_except_valid)
+end // always_comb
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_rob_except.valid <= 1'b0;
+  end else begin
+    r_rob_except <= w_rob_except_next;
   end
 end
 
