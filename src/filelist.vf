@@ -47,6 +47,7 @@
 ../src/bit_encoder.sv
 ../src/bit_clz_32.sv
 ../src/bit_clz_64.sv
+../src/bit_multiple_age_min.sv
 ../src/ring_fifo.sv
 ../src/ring_fifo_2ptr.sv
 
