@@ -186,7 +186,7 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
                                                      w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred, w_rs1_rel_index,
                                                      i_stq_rmw_existed, w_disp_oldest_valid[idx]);
 
-  decoder_lsu_sched u_csu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
+  decoder_lsu_sched u_lsu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
 
 end endgenerate
 

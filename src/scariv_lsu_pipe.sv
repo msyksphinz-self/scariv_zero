@@ -697,11 +697,11 @@ assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign flush_report_if.grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
 assign ex3_phy_wr_out_if.valid   = r_ex3_issue.valid &
-                              r_ex3_issue.wr_reg.valid &
-                              (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
-                               r_ex3_issue.wr_reg.typ == scariv_pkg::FPR ? 1'b1 :
-                               1'b1) &
-                              ~r_ex3_mis_valid;
+                                   r_ex3_issue.wr_reg.valid &
+                                   (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
+                                    r_ex3_issue.wr_reg.typ == scariv_pkg::FPR ? 1'b1 :
+                                    1'b1) &
+                                   ~r_ex3_mis_valid;
 assign ex3_phy_wr_out_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
 assign ex3_phy_wr_out_if.rd_type = r_ex3_issue.wr_reg.typ;
 assign ex3_phy_wr_out_if.rd_data = r_ex3_aligned_data;
