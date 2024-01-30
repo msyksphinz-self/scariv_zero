@@ -1023,7 +1023,7 @@ always_comb begin
       w_stval_next = commit_if.payload.tval;
     end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::URET)) begin // if (commit_if.payload.except_type == scariv_pkg::SRET)
       w_mtval_next = 'h0;
-    end else if (w_delegate) begin
+    end else if (|(commit_if.payload.except_valid & ~commit_if.payload.dead_id) & w_delegate) begin
       w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
                      commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */

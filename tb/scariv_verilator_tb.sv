@@ -539,22 +539,23 @@ logic [63: 0]                                                  total_commit_coun
 logic [63: 0]                                                  int_commit_counter;
 
 `define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
-
+`define ROB u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob
 
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
+      if (`ROB.w_out_valid) begin
         for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
-          if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &
-              ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id[grp_idx]) begin
+          if (`ROB.w_commit.grp_id[grp_idx] &
+              ~`ROB.w_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
             step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
                         int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
-                        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_sim_mstatus[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id][grp_idx],
-                        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_valid_except_grp_id[grp_idx],
-                        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_except_type_selected,
-                        u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                        `ROB.w_sim_mstatus[`ROB.w_out_cmt_entry_id][grp_idx],
+                        // Exception selection
+                        (`ROB.w_commit.cmt_id == `ROB.r_rob_except.cmt_id) & |((1 << grp_idx) & `ROB.r_rob_except.grp_id) ? `ROB.r_rob_except.valid : 1'b0,
+                        `ROB.r_rob_except.typ,
+                        `ROB.w_out_cmt_id,
                         1 << grp_idx,
                         committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
                         committed_rob_entry.inst[grp_idx].wr_reg.valid,
@@ -566,7 +567,7 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                         w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
 
             for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
-              if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&
+              if (`BRANCH_INFO_Q[q_idx].cmt_id == `ROB.w_out_cmt_id &&
                   `BRANCH_INFO_Q[q_idx].grp_id == 1 << grp_idx) begin
                 step_gshare ($time,
                              `BRANCH_INFO_Q[q_idx].cmt_id,
@@ -580,26 +581,26 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                   `BRANCH_INFO_Q.delete(q_idx);
                 end
                 break;
-              end // if (`BRANCH_INFO_Q[q_idx].cmt_id == u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id &&...
+              end // if (`BRANCH_INFO_Q[q_idx].cmt_id == `ROB.w_out_cmt_id &&...
             end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
 
             // RAS check
             step_ras ($time,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                      `ROB.w_out_cmt_id,
                       1 << grp_idx,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_ras_index,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_entry.br_upd_info.sim_pred_vaddr);
-          end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id[grp_idx] &...
+                      `ROB.w_out_entry.br_upd_info.sim_ras_index,
+                      `ROB.w_out_entry.br_upd_info.sim_pred_vaddr);
+          end // if (`ROB.w_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
-      end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
+      end  // if (`ROB.w_out_valid)
 
       // Counting up instruction
       cycle_counter <= cycle_counter + 1;
-      if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
-        total_commit_counter <= total_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
-                                                     ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
-        int_commit_counter <= int_commit_counter + $countones(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.grp_id &
-                                                             ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_commit.dead_id);
+      if (`ROB.w_out_valid) begin
+        total_commit_counter <= total_commit_counter + $countones(`ROB.w_commit.grp_id &
+                                                     ~`ROB.w_commit.dead_id);
+        int_commit_counter <= int_commit_counter + $countones(`ROB.w_commit.grp_id &
+                                                              ~`ROB.w_commit.dead_id);
       end
       if (((cycle_counter % cycle_interval) == 0) && (cycle_counter != 0)) begin
         $display ("%10d : %10d : IPC(recent) = %0.02f, IPC(total) = %0.02f",

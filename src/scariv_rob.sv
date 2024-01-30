@@ -50,8 +50,6 @@ logic [DISP_SIZE-1:0]              w_frontend_exception_valid;
 logic [DISP_SIZE-1:0]              w_frontend_exception_tree_valid;
 
 logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
-except_t                            w_except_type_selected;
-riscv_pkg::xlen_t      w_except_tval_selected;
 
 logic                                w_ignore_disp;
 logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
@@ -62,12 +60,6 @@ logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
 logic                                      w_in_valid, w_out_valid;
 logic [CMT_ENTRY_W-1:0]                    w_out_cmt_entry_id;
 logic [CMT_ENTRY_W-1:0]                    w_in_cmt_entry_id;
-
-// Commiter Selection
-logic [DISP_SIZE-1: 0]              w_valid_upd_pc_grp_id;
-logic [DISP_SIZE-1: 0]              w_cmt_pc_upd_valid_oh;
-logic [DISP_SIZE-1: 0]              w_valid_except_grp_id;
-// logic [DISP_SIZE-1: 0]              w_valid_branch_grp_id;
 
 assign w_out_cmt_entry_id = w_out_cmt_id[CMT_ENTRY_W-1:0];
 assign w_in_cmt_entry_id  = w_in_cmt_id [CMT_ENTRY_W-1:0];
@@ -175,13 +167,9 @@ function automatic rob_entry_t assign_rob_entry();
   for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
     // If TLB Exception detected before execution, this instruction already done.
     ret.done_grp_id [d_idx] = w_frontend_exception_tree_valid[d_idx] ? w_disp_grp_id[d_idx] : 1'b0;
-    ret.except_valid[d_idx] = w_frontend_exception_tree_valid[d_idx] & w_disp_grp_id[d_idx];
-    ret.except_type [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] ? rn_front_if.payload.tlb_except_cause[d_idx] : ILLEGAL_INST;
-    ret.except_tval [d_idx] = rn_front_if.payload.tlb_except_valid[d_idx] & (rn_front_if.payload.tlb_except_cause[d_idx] != ILLEGAL_INST) ? rn_front_if.payload.tlb_except_tval[d_idx] : 'h0;
-    ret.flush_valid [d_idx] = ret.dead[d_idx] ? 1'b0 : ret.except_valid[d_idx];
     ret.dead        [d_idx] = ret.dead[d_idx] /* | ret.except_valid[d_idx] */;
 `ifdef SIMULATION
-    ret.sim_dead_reason[d_idx] = ret.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
+    // ret.sim_dead_reason[d_idx] = ret.except_valid[d_idx] ? DEAD_EXC : DEAD_NONE;
 `endif // SIMULATION
   end
 
@@ -252,19 +240,6 @@ assign w_int_type = int_if.m_external_int_valid ? riscv_common_pkg::MACHINE_EXTE
 
 assign w_commit.cmt_id       = w_out_cmt_id;
 assign w_commit.grp_id       = w_out_entry.grp_id;
-// assign w_commit.except_valid = w_valid_except_grp_id | w_int_valid;
-// assign w_commit.int_valid    = w_int_valid;
-// assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : except_t'(w_except_type_selected);
-// /* verilator lint_off WIDTH */
-// assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
-//                                  w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
-//                                 w_except_tval_selected;
-// encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (w_valid_except_grp_id), .o_out(w_cmt_except_valid_encoded));
-// /* verilator lint_off WIDTH */
-// assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
-// assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
-// assign w_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
-
 logic                                  w_rob_except_match;
 assign w_rob_except_match = r_rob_except.valid & (r_rob_except.cmt_id == w_commit.cmt_id);
 
@@ -279,7 +254,7 @@ encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (r_rob_except.grp_id), .
 /* verilator lint_off WIDTH */
 assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
 assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
-assign w_commit.flush_valid  = w_out_entry.flush_valid | w_int_valid;
+assign w_commit.flush_valid  = {scariv_conf_pkg::DISP_SIZE{w_rob_except_match}} & r_rob_except.grp_id | w_int_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -399,16 +374,6 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
 end
 `endif // SIMULATION
 
-// Select Jump Insntruction
-assign w_valid_upd_pc_grp_id = (w_out_entry.br_upd_info.upd_valid |
-                                w_out_entry.except_valid) /* & w_out_entry.done_grp_id */;
-bit_extract_lsb #(.WIDTH(DISP_SIZE)) u_bit_pc_upd_valid (.in(w_valid_upd_pc_grp_id), .out(w_cmt_pc_upd_valid_oh));
-
-// Select Exception Instruction
-assign w_valid_except_grp_id = w_out_entry.except_valid & w_cmt_pc_upd_valid_oh;
-bit_oh_or_packed #(.T(except_t), .WORDS(DISP_SIZE)) u_bit_except_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_type), .o_selected(w_except_type_selected));
-bit_oh_or_packed #(.T(riscv_pkg::xlen_t), .WORDS(DISP_SIZE)) u_bit_except_tval_select (.i_oh(w_valid_except_grp_id), .i_data(w_out_entry.except_tval), .o_selected(w_except_tval_selected));
-
 assign w_commit_rnid_update.commit     = w_out_valid;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
   assign w_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
@@ -463,37 +428,10 @@ logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_array[scariv_co
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_out_entry.br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
 
 // Make dead Instruction, (after exception)
-bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(w_out_entry.except_valid), .out(w_dead_grp_id_except_tmp));
+bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(r_rob_except.grp_id), .out(w_dead_grp_id_except_tmp));
 logic [DISP_SIZE-1: 0] w_except_dead_grp_id;
-logic                  w_is_active_except;   // Instruction generates exception but itself active
-// assign w_is_active_except = (w_except_type_selected == scariv_pkg::SILENT_FLUSH) |
-//                             (w_except_type_selected == scariv_pkg::ECALL_U)      |
-//                             (w_except_type_selected == scariv_pkg::ECALL_S)      |
-//                             (w_except_type_selected == scariv_pkg::ECALL_M)      |
-//                             (w_except_type_selected == scariv_pkg::URET)         |
-//                             (w_except_type_selected == scariv_pkg::SRET)         |
-//                             (w_except_type_selected == scariv_pkg::MRET)         |
-//                             1'b0;
-assign w_is_active_except = 1'b1;
-
-assign w_except_dead_grp_id = w_is_active_except ?  // active flush itself doesn't include dead instruction
-                              {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0} :  // so, 1-bit left shift
-                              w_dead_grp_id_except_tmp;                           // otherwise, except itself includes dead instruction
-assign w_dead_grp_id = w_except_dead_grp_id; //  |
-// {w_dead_grp_id_br_tmp[DISP_SIZE-2: 0], 1'b0} ;   // branch: 1-bit left shift
-
-// Killing all uncommitted instructions
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     r_killing_uncmts <= 1'b0;
-//   end else begin
-//     if (w_out_valid& (|w_commit_if.payload.except_valid) & !r_killing_uncmts) begin
-//       r_killing_uncmts <= 1'b1;
-//     end else if (r_killing_uncmts & !w_commit.commit) begin  // Commit finished
-//       r_killing_uncmts <= 1'b0;
-//     end
-//   end
-// end
+assign w_except_dead_grp_id = {w_dead_grp_id_except_tmp[DISP_SIZE-2: 0], 1'b0};  // active flush itself doesn't include dead instruction, so, 1-bit left shift
+assign w_dead_grp_id = r_rob_except.valid & (w_commit.cmt_id == r_rob_except.cmt_id) ? w_except_dead_grp_id : 'h0;
 
 // ROB Notification Information
 // rob_info_if rob_info_if_pre();
@@ -502,13 +440,7 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.grp_id       <= w_out_entry.grp_id;
   rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
   rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
-  rob_info_if.except_valid <= w_out_entry.except_valid & ~w_out_entry.dead;
-
-  // rob_info_if.cmt_id       <= rob_info_if_pre.cmt_id;
-  // rob_info_if.grp_id       <= rob_info_if_pre.grp_id;
-  // rob_info_if.done_grp_id  <= rob_info_if_pre.done_grp_id;
-  // rob_info_if.upd_pc_valid <= rob_info_if_pre.upd_pc_valid;
-  // rob_info_if.except_valid <= rob_info_if_pre.except_valid;
+  rob_info_if.except_valid <= r_rob_except.valid & (r_rob_except.cmt_id == w_out_cmt_id) ? r_rob_except.grp_id & ~w_out_entry.dead : 'h0;
 end
 
 `ifdef SIMULATION
@@ -530,7 +462,7 @@ function void dump_entry_json(int fp, rob_entry_t entry, int index);
     $fwrite(fp, "done_grp_id:\"0x%02x\", ", entry.done_grp_id);
 
     $fwrite(fp, "dead:%d, ", entry.dead);
-    $fwrite(fp, "except_valid:0x%02x", entry.except_valid);
+    // $fwrite(fp, "except_valid:0x%02x", entry.except_valid);
 
     $fwrite(fp, " },\n");
   end // if (entry.valid)

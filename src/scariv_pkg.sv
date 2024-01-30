@@ -320,16 +320,10 @@ typedef struct packed {
     grp_id_t grp_id;
 
     rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
-    // disp_t[scariv_conf_pkg::DISP_SIZE-1:0] inst;
 
     grp_id_t done_grp_id;
 
-    grp_id_t   except_valid;
-    except_t [scariv_conf_pkg::DISP_SIZE-1:0] except_type;
-    riscv_pkg::xlen_t [scariv_conf_pkg::DISP_SIZE-1:0] except_tval;
-
     grp_id_t  dead;
-    grp_id_t  flush_valid;
 
     // Branch update info
     logic         is_br_included;
