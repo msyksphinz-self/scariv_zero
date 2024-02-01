@@ -1,8 +1,15 @@
 all: sim_vivado
 
+RV_AMO  = 1
+
 PATH_INC += ../src
+PATH_INC += ../src/fpnew/src/common_cells/include
+PATH_INC += ../tb
 
 DEFINE += SIMULATION
+DEFINE += RV_AMO=$(RV_AMO)
+DEFINE += RV64
+DEFINE += XSIM
 
 XVLOG_ARGS += --sv
 XVLOG_ARGS += $(addprefix -i , $(PATH_INC))
@@ -20,6 +27,7 @@ CPP_FILELIST += ../cpp/memory_block.cpp
 
 XSC_ARGS += --cppversion 14
 XSC_ARGS += $(CPP_FILELIST)
+XSC_ARGS += -gcc_compile_options "-I../spike_dpi/"
 XSC_ARGS += --gcc_link_options "-L/usr/lib64 -lelf -I/usr/include/x86_64-linux-gnu/"
 
 DUMP=off
@@ -75,11 +83,15 @@ FILELIST = sim_filelist.f
 
 sim_vivado: $(DECODE_FILES) $(FILELIST)
 	$(XSC) $(XSC_ARGS) | tee sim.log
-	$(XVLOG) $(XVLOG_ARGS) ../src/riscv64_pkg.sv ../src/scariv_standard_conf_pkg.sv -f $(FILELIST) $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
+	$(XVLOG) $(XVLOG_ARGS) \
+		../src/riscv_fpu_imafdc_pkg.sv \
+		../src/riscv64_pkg.sv \
+		../configs/scariv_standard_conf_pkg.sv \
+		-f $(FILELIST) $(FILE_TEST) $(FILE_SRC) | tee -a sim.log
 	$(XELAB) $(XELAB_ARGS) tb | tee -a sim.log
 	DUMP_TYPE=$(DUMP) $(XSIM) $(XSIM_ARGS) "work.tb" | tee -a sim.log
 
-$(FILELIST): ../src/filelist.f filelist.f
+$(FILELIST): ../src/fpnew.vf ../src/filelist.vf filelist.vf
 	echo "../tb/sim_pkg.sv" > $@
 	echo "../src/riscv_common_pkg.sv" >> $@
 	cat $^ >> $@

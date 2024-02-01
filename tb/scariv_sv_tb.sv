@@ -71,6 +71,77 @@ tag_t                     w_ss_resp_tag;
 scariv_pkg::ic_data_t     w_ss_resp_data;
 logic                     w_ss_resp_ready;
 
+/* Middle Interface */
+logic                                        w_mid_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_mid_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_mid_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_mid_req_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_mid_req_data;
+logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_mid_req_byte_en;
+logic                                        w_mid_req_ready;
+
+logic                                        w_mid_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_mid_resp_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_mid_resp_data;
+logic                                        w_mid_resp_ready;
+
+/* BootROM Interface */
+logic                                        w_bootrom_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_bootrom_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_bootrom_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_bootrom_req_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_bootrom_req_data;
+logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_bootrom_req_byte_en;
+logic                                        w_bootrom_req_ready;
+
+logic                                        w_bootrom_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_bootrom_resp_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_bootrom_resp_data;
+logic                                        w_bootrom_resp_ready;
+
+/* Serial Interface */
+logic                                        w_serial_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_serial_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_serial_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_serial_req_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_serial_req_data;
+logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_serial_req_byte_en;
+logic                                        w_serial_req_ready;
+
+logic                                        w_serial_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_serial_resp_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_serial_resp_data;
+logic                                        w_serial_resp_ready;
+
+/* Kernel Interface */
+logic                                        w_kernel_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_kernel_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_kernel_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_kernel_req_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_kernel_req_data;
+logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_kernel_req_byte_en;
+logic                                        w_kernel_req_ready;
+
+logic                                        w_kernel_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_kernel_resp_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_kernel_resp_data;
+logic                                        w_kernel_resp_ready;
+
+/* Initrd Interface */
+logic                                        w_initrd_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_initrd_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_initrd_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_initrd_req_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_initrd_req_data;
+logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_initrd_req_byte_en;
+logic                                        w_initrd_req_ready;
+
+logic                                        w_initrd_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_initrd_resp_tag;
+logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_initrd_resp_data;
+logic                                        w_initrd_resp_ready;
+
+
 /* from ELF Loader */
 logic                                     w_elf_req_valid;
 scariv_lsu_pkg::mem_cmd_t                   w_elf_req_cmd;
@@ -80,47 +151,19 @@ logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_elf_req_data;
 logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_elf_req_byte_en;
 logic                                     w_elf_req_ready;
 
-/* L1D Interface */
-logic                                     w_l1d_req_valid;
-scariv_lsu_pkg::mem_cmd_t                   w_l1d_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]            w_l1d_req_addr;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_req_tag;
-logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_l1d_req_byte_en;
-logic                                     w_l1d_req_ready;
-
-logic                                     w_l1d_resp_valid;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l1d_resp_tag;
-logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_l1d_resp_data;
-logic                                     w_l1d_resp_ready;
-
-/* PTW Interface */
-logic                                     w_ptw_req_valid;
-scariv_lsu_pkg::mem_cmd_t                   w_ptw_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]            w_ptw_req_addr;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ptw_req_tag;
-logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_ptw_req_data;
-logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_ptw_req_byte_en;
-logic                                     w_ptw_req_ready;
-
-logic                                     w_ptw_resp_valid;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_ptw_resp_tag;
-logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_ptw_resp_data;
-logic                                     w_ptw_resp_ready;
-
 /* L2 Interface */
-logic                                     w_l2_req_valid;
-scariv_lsu_pkg::mem_cmd_t                   w_l2_req_cmd;
-logic [riscv_pkg::PADDR_W-1:0]            w_l2_req_addr;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_req_tag;
+logic                                        w_l2_req_valid;
+scariv_lsu_pkg::mem_cmd_t                    w_l2_req_cmd;
+logic [riscv_pkg::PADDR_W-1:0]               w_l2_req_addr;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_l2_req_tag;
 logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_req_data;
 logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] w_l2_req_byte_en;
-logic                                     w_l2_req_ready;
+logic                                        w_l2_req_ready;
 
-logic                                     w_l2_resp_valid;
-logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    w_l2_resp_tag;
+logic                                        w_l2_resp_valid;
+logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]     w_l2_resp_tag;
 logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   w_l2_resp_data;
-logic                                     w_l2_resp_ready;
+logic                                        w_l2_resp_ready;
 
 // Snoop Interface
 logic                                     w_snoop_req_valid;
@@ -544,7 +587,7 @@ end
 //       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
 //         if (committed_rob_entry.grp_id[grp_idx] & (!w_dead_grp_id[grp_idx])) begin
 //           $fwrite (log_fp, "%5t %5d PC=%010x (%02d,%02d) %08x ", $time,
-//                    u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.r_minstret,
+//                    u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_minstret,
 //                    committed_rob_entry.inst[grp_idx].pc_addr,
 //                    u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
 //                    committed_rob_entry.inst[grp_idx].inst);
@@ -566,16 +609,19 @@ end
 //   `endif // SIMULATION
 // `endif // VERILATOR
 
+`define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
+`define ROB u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob
+
 `ifdef DIRECT_LOAD_HEX
 
 always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
   if (!w_scariv_reset_n) begin
   end else begin
-    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
+    if (`ROB.w_out_valid) begin
       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (committed_rob_entry.grp_id[grp_idx]) begin
           $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
-                   u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
+                   `ROB.w_out_cmt_id, 1 << grp_idx,
                    (committed_rob_entry.pc_addr << 1) + (4 * grp_idx));
           if (committed_rob_entry.inst[grp_idx].rd_valid) begin
             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
@@ -588,7 +634,7 @@ always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
           $fwrite (pipe_fp, "DASM(%08x)", committed_rob_entry.inst[grp_idx].inst);
         end // if (committed_rob_entry.grp_id[grp_idx])
       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
-    end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_entry_all_done[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmd_id])
+    end // if (`ROB.w_entry_all_done[`ROB.w_out_cmd_id])
     $fwrite(pipe_fp, "\n");
   end // else: !if(!w_scariv_reset_n)
 end // always_ff @ (negedge w_clk, negedge w_scariv_reset_n)
@@ -599,16 +645,17 @@ end // always_ff @ (negedge w_clk, negedge w_scariv_reset_n)
 always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
   if (!w_scariv_reset_n) begin
   end else begin
-    if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.commit) begin
+    if (`ROB.w_out_valid) begin
       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
-        if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.grp_id[grp_idx] &
-            ~u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.o_commit.dead_id[grp_idx]) begin
+        if (`ROB.w_commit.grp_id[grp_idx] &
+            ~`ROB.w_commit.dead_id[grp_idx]) begin
           step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
-                      int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_scariv_csu.u_scariv_csr.r_priv),
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_sim_mstatus[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id][grp_idx],
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_valid_except_grp_id[grp_idx],
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_except_type_selected,
-                      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id,
+                      int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
+                      `ROB.w_sim_mstatus[`ROB.w_out_cmt_entry_id][grp_idx],
+                      // Exception selection
+                      (`ROB.w_commit.cmt_id == `ROB.r_rob_except.cmt_id) & |((1 << grp_idx) & `ROB.r_rob_except.grp_id) ? `ROB.r_rob_except.valid : 1'b0,
+                      `ROB.r_rob_except.typ,
+                      `ROB.w_out_cmt_id,
                       1 << grp_idx,
                       committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
                       committed_rob_entry.inst[grp_idx].wr_reg.valid,
@@ -620,7 +667,7 @@ always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
                       w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
         end
       end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
-    end  // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid)
+    end  // if (`ROB.w_out_valid)
   end  // else: !if(!i_scariv_reset_n)
 end  // always_ff @ (negedge i_clk, negedge i_scariv_reset_n)
 
@@ -662,11 +709,11 @@ end
 //       $fwrite(pipe_fp, ")");
 //     end
 //     $fwrite(pipe_fp, " | ");
-//     if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_valid) begin
+//     if (`ROB.w_out_valid) begin
 //       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
 //         if (committed_rob_entry.grp_id[grp_idx]) begin
 //           $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
-//                    u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id, 1 << grp_idx,
+//                    `ROB.w_out_cmt_id, 1 << grp_idx,
 //                    (committed_rob_entry.pc_addr << 1) + (4 * grp_idx));
 //           if (committed_rob_entry.inst[grp_idx].rd_valid) begin
 //             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
@@ -679,7 +726,7 @@ end
 //           $fwrite (pipe_fp, "DASM(%08x)", committed_rob_entry.inst[grp_idx].inst);
 //         end // if (committed_rob_entry.grp_id[grp_idx])
 //       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
-//     end // if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_entry_all_done[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmd_id])
+//     end // if (`ROB.w_entry_all_done[`ROB.w_out_cmd_id])
 //     $fwrite(pipe_fp, "\n");
 //   end // else: !if(!w_scariv_reset_n)
 // end // always_ff @ (negedge w_clk, negedge w_scariv_reset_n)
