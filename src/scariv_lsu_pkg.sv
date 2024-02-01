@@ -818,7 +818,6 @@ typedef struct packed {
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
   logic                                                l1d_high_priority;
-  logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
   decoder_lsu_ctrl_pkg::size_t                         size;
   logic                                                is_amo;

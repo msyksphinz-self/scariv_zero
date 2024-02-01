@@ -87,7 +87,7 @@ assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.t
 select_phy_wr_bus rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if),
                                   .o_valid (w_rs2_phy_hit));
 
-assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & |(rob_info_if.except_valid & rob_info_if.done_grp_id & r_entry.inst.grp_id);
+assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & (|rob_info_if.except_valid) & (rob_info_if.except_valid <= r_entry.inst.grp_id);
 assign w_commit_flush = commit_if.is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
@@ -106,7 +106,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & r_entry.is_rs2_get &
+assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & ~r_entry.dead & r_entry.is_rs2_get &
                            r_entry.paddr_valid & ~r_entry.is_uc &
                            ~r_entry.st_buf_finished &
                            ((r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP__) ?

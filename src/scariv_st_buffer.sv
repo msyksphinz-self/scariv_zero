@@ -182,13 +182,13 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
     assign w_ex2_rmw_order_haz_vld[p_idx][e_idx] = w_entries[e_idx].valid &
-                                                   w_entries[e_idx].is_rmw &
+                                                   (w_entries[e_idx].rmwop != decoder_lsu_ctrl_pkg::RMWOP__) &
                                                    rmw_order_check_if[p_idx].ex2_valid;
   end // block: rmw_order_haz_loop
 
   // MSHR L1D update & Merge
   assign w_entry_l1d_merge_hit[e_idx] = w_entries[e_idx].valid & (w_state[e_idx] == ST_BUF_WAIT_REFILL) &
-                                        ~w_entries[e_idx].is_rmw &
+                                        (w_entries[e_idx].rmwop == decoder_lsu_ctrl_pkg::RMWOP__) &
                                         |(w_entries[e_idx].missu_index_oh & mshr_stbuf_search_if.mshr_index_oh);
 
 end // block: entry_loop

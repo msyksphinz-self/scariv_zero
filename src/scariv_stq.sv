@@ -482,6 +482,7 @@ end
 
 /* verilator lint_off UNOPTFLAT */
 scariv_pkg::grp_id_t w_sq_commit_ready_issue;
+scariv_pkg::grp_id_t w_sq_is_rmw;
 bit_oh_or
   #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
 select_cmt_oh
@@ -499,13 +500,14 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   logic                                w_sq_commit_valid;
   bit_rotate_left #(.WIDTH(scariv_conf_pkg::STQ_SIZE), .VAL(d_idx)) u_ptr_rotate(.i_in(w_out_ptr_oh), .o_out(w_shifted_out_ptr_oh));
   assign w_sq_commit_valid = |(w_stbuf_req_valid & w_shifted_out_ptr_oh);
+  assign w_sq_is_rmw[d_idx]= |(w_stq_rmw_existed & w_shifted_out_ptr_oh);
 
   if (d_idx == 0) begin
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid;
   end else begin
 
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid &
-                                            w_sq_commit_ready_issue[d_idx-1] &
+                                            w_sq_commit_ready_issue[d_idx-1] & ~w_sq_is_rmw[d_idx-1] &
                                             (w_stq_cmt_head_entry.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)] ==
                                              w_stq_cmt_entry.addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)

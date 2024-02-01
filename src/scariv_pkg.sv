@@ -772,7 +772,7 @@ interface commit_if;
                      payload.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
                      payload.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
     entry_older = w_cmt_is_older ||
-                  (payload.cmt_id == entry_cmt_id && |((payload.flush_valid & ~payload.dead_id) <= entry_grp_id));
+                  (payload.cmt_id == entry_cmt_id && ((payload.flush_valid & ~payload.dead_id) <= entry_grp_id));
 
     return is_flushed_commit() & entry_older;
 

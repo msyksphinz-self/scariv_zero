@@ -350,6 +350,11 @@ always_comb begin
       w_rob_except_next.tval   = w_done_tval       [w_exc_min_idx];
     end
   end // if (|w_done_except_valid)
+
+  if (scariv_pkg::is_br_flush_target(w_rob_except_next.cmt_id, w_rob_except_next.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
+                                     ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & w_rob_except_next.valid) begin
+    w_rob_except_next.valid = 'h0;
+  end
 end // always_comb
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
