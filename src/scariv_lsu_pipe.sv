@@ -282,7 +282,7 @@ u_tlb
  .sfence_if(sfence_if_slave),
 
  .i_csr_update (csr_info.update),
- .i_status_prv(csr_info.mstatus[`MSTATUS_MPRV] ? csr_info.mstatus[`MSTATUS_MPP] : csr_info.priv),
+ .i_status_prv(riscv_common_pkg::priv_t'(csr_info.mstatus[`MSTATUS_MPRV] ? csr_info.mstatus[`MSTATUS_MPP] : csr_info.priv)),
  .i_csr_status(csr_info.mstatus),
  .i_csr_satp  (csr_info.satp   ),
 

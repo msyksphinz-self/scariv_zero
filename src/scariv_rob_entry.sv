@@ -27,7 +27,7 @@ module scariv_rob_entry
 
    input logic        i_kill,
 
-   br_upd_if.slave  br_upd_if
+   br_upd_if.slave  br_upd_slave_if
    );
 
 rob_entry_t             r_entry;
@@ -126,10 +126,10 @@ always_comb begin
 
   if (i_load_valid) begin
     w_entry_next = i_entry_in;
-    if (br_upd_if.update) begin
+    if (br_upd_slave_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (is_br_flush_target_wo_itself (w_in_cmt_id, 1 << d_idx, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                          br_upd_if.dead, br_upd_if.mispredict)) begin
+        if (is_br_flush_target_wo_itself (w_in_cmt_id, 1 << d_idx, br_upd_slave_if.cmt_id, br_upd_slave_if.grp_id,
+                                          br_upd_slave_if.dead, br_upd_slave_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
           // w_entry_next.flush_valid [d_idx] = 1'b0;
@@ -139,10 +139,10 @@ always_comb begin
         end
         // Resolve the branch dependency
       end
-      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.taken;
+      if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
       end
-    end // if (br_upd_if.update)
+    end // if (br_upd_slave_if.update)
 
 `ifdef SIMULATION
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin: life_loop
@@ -180,11 +180,11 @@ always_comb begin
     end
 
     // Branch condition update
-    if (br_upd_if.update) begin
+    if (br_upd_slave_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
         if (r_entry.inst[d_idx].valid &
-            is_br_flush_target_wo_itself (w_cmt_id, 1 << d_idx, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                          br_upd_if.dead, br_upd_if.mispredict)) begin
+            is_br_flush_target_wo_itself (w_cmt_id, 1 << d_idx, br_upd_slave_if.cmt_id, br_upd_slave_if.grp_id,
+                                          br_upd_slave_if.dead, br_upd_slave_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
           w_entry_next.dead        [d_idx] = 1'b1;
 `ifdef SIMULATION
@@ -193,16 +193,16 @@ always_comb begin
         end
         // Resolve the branch dependency
       end
-      if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_if.grp_id)] = br_upd_if.taken;
-      end // if (br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
+      if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
+      end // if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
 `ifdef SIMULATION
-      if ((br_upd_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_if.dead) begin
-        w_entry_next.br_upd_info.sim_ras_index    = br_upd_if.ras_index;
-        w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_if.pred_vaddr;
+      if ((br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_slave_if.dead) begin
+        w_entry_next.br_upd_info.sim_ras_index    = br_upd_slave_if.ras_index;
+        w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_slave_if.pred_vaddr;
       end
 `endif // SIMULATION
-    end // if (br_upd_if.update)
+    end // if (br_upd_slave_if.update)
 
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
       if (i_kill) begin

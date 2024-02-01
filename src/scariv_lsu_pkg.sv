@@ -564,6 +564,7 @@ typedef struct packed {
   scariv_pkg::maxaddr_t addr;
   logic                 paddr_valid;
   logic                 is_rs2_get;
+  logic                 rs2_read_accepted;
   scariv_pkg::alen_t    rs2_data;
 
   logic                is_committed;

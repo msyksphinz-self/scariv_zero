@@ -24,7 +24,7 @@ module scariv_frontend
  l2_resp_if.slave ic_l2_resp,
 
  // PC Update from Committer
- commit_if.monitor commit_if,
+ commit_if.monitor commit_in_if,
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
 
@@ -165,7 +165,7 @@ u_addr_gen
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .commit_if (commit_if),
+   .commit_in_if (commit_in_if),
    .br_upd_if (br_upd_if),
 
    .csr_info (csr_info),
@@ -200,7 +200,7 @@ logic w_f2_ic_miss_valid;
 assign w_f2_ic_miss_valid = r_f2_valid & w_f2_ic_resp.miss & !r_f2_clear;
 
 
-assign w_commit_flush  = commit_if.is_flushed_commit();
+assign w_commit_flush  = commit_in_if.is_flushed_commit();
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
@@ -502,8 +502,6 @@ scariv_predictor_gshare u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
-
-   .commit_if  (commit_if),
 
    .i_f0_valid   (w_f0_ic_req.valid),
    .i_f0_vaddr   (w_f0_ic_req.vaddr),

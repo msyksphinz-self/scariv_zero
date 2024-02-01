@@ -759,11 +759,11 @@ interface commit_if;
   logic        commit_valid;
   commit_blk_t payload;
 
-  function logic is_flushed_commit ();
+  function automatic logic is_flushed_commit ();
     return commit_valid & |(payload.flush_valid & ~payload.dead_id);
   endfunction // is_flushed_commit
 
-  function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
+  function automatic logic is_commit_flush_target(cmt_id_t entry_cmt_id,
                                         grp_id_t entry_grp_id);
     logic w_cmt_is_older;
     logic entry_older;
@@ -779,18 +779,25 @@ interface commit_if;
   endfunction // is_commit_flush_target
 
 
-modport master (
-  output commit_valid,
-  output payload,
-  import is_flushed_commit
-);
+  modport master (
+    output commit_valid,
+    output payload,
+    import is_flushed_commit
+  );
 
-modport monitor (
-  input commit_valid,
-  input payload,
-  import is_flushed_commit,
-  import is_commit_flush_target
-);
+  modport monitor (
+    input commit_valid,
+    input payload,
+    import is_flushed_commit,
+    import is_commit_flush_target
+  );
+
+  modport slave (
+    input commit_valid,
+    input payload //,
+    // import is_flushed_commit(),
+    // import is_commit_flush_target()
+  );
 
 endinterface // commit_if
 

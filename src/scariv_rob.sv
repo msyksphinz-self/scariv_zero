@@ -24,7 +24,7 @@ module scariv_rob
    done_report_if.slave  done_report_if  [CMT_BUS_SIZE],
    flush_report_if.slave flush_report_if [LSU_INST_NUM],
 
-   br_upd_if.slave  ex3_br_upd_if,
+   br_upd_if.slave  br_upd_slave_if,
 
    commit_if.master        commit_if,
    fflags_update_if.master fflags_update_if,
@@ -206,7 +206,7 @@ logic w_load_valid;
 
      .i_kill (w_flush_valid),
 
-     .br_upd_if (ex3_br_upd_if)
+     .br_upd_slave_if (br_upd_slave_if)
      );
 
 `ifdef SIMULATION
@@ -351,8 +351,8 @@ always_comb begin
     end
   end // if (|w_done_except_valid)
 
-  if (scariv_pkg::is_br_flush_target(w_rob_except_next.cmt_id, w_rob_except_next.grp_id, ex3_br_upd_if.cmt_id, ex3_br_upd_if.grp_id,
-                                     ex3_br_upd_if.dead, ex3_br_upd_if.mispredict) & ex3_br_upd_if.update & w_rob_except_next.valid) begin
+  if (scariv_pkg::is_br_flush_target(w_rob_except_next.cmt_id, w_rob_except_next.grp_id, br_upd_slave_if.cmt_id, br_upd_slave_if.grp_id,
+                                     br_upd_slave_if.dead, br_upd_slave_if.mispredict) & br_upd_slave_if.update & w_rob_except_next.valid) begin
     w_rob_except_next.valid = 'h0;
   end
 end // always_comb

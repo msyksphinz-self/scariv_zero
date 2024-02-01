@@ -32,7 +32,7 @@ function automatic T bit_oh_func();
   for (int i = 0; i < WORDS; i++) begin
     if (i_oh[i]) return i_data[i];
   end
-  return 0;
+  return T'(0);
 endfunction // bit_oh_func
 assign o_selected = bit_oh_func();
 

@@ -76,8 +76,7 @@ scariv_pkg::rnid_t                                 w_rs2_rnid;
 scariv_pkg::reg_t                                  w_rs2_type;
 logic                                              w_rs2_phy_hit;
 logic                                              w_entry_rs2_ready_next;
-logic                                              r_rs2_read_accepted;
-
+logic                                              w_rs2_read_accepted;
 
 assign  o_entry = r_entry;
 
@@ -98,6 +97,7 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_gr
 assign w_load_commit_flush = commit_if.is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id);
 
 assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready | w_rs2_phy_hit;
+assign w_rs2_read_accepted    = r_entry.inst.rd_reg.ready & i_rs2_read_accepted;
 
 // assign w_ready_to_mv_stbuf = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 scariv_pkg::grp_id_t w_prev_grp_id_mask;
@@ -126,8 +126,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_entry.is_valid <= 1'b0;
   end else begin
     r_entry <= w_entry_next;
-
-    r_rs2_read_accepted <= r_entry.inst.rd_reg.ready & i_rs2_read_accepted;
   end
 end
 
@@ -135,8 +133,10 @@ always_comb begin
   w_entry_next = r_entry;
 
   w_entry_next.inst.rd_reg.ready = w_entry_rs2_ready_next | r_entry.inst.rd_reg.ready;
+
+  w_entry_next.rs2_read_accepted = w_rs2_read_accepted;
   if (~w_entry_next.is_rs2_get) begin
-    if (r_rs2_read_accepted) begin
+    if (r_entry.rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
@@ -191,15 +191,6 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.inst.cmt_id = cmt_id;
   ret.inst.grp_id = grp_id;
 
-  // for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
-  //   ret.inst.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
-  //   ret.inst.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
-  //   ret.inst.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
-  //   ret.inst.rd_regs[rs_idx].rnid          = in.rd_regs[rs_idx].rnid;
-  //   ret.inst.rd_regs[rs_idx].ready         = in.rd_regs[rs_idx].ready | rs_rel_hit[rs_idx] & ~rs_may_mispred[rs_idx] | rs_phy_hit[rs_idx];
-  //   ret.inst.rd_regs[rs_idx].predict_ready = rs_rel_hit[rs_idx] & rs_may_mispred[rs_idx];
-  // end
-
   ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
   ret.inst.rd_reg.typ           = in.rd_regs[1].typ;
   ret.inst.rd_reg.regidx        = in.rd_regs[1].regidx;
@@ -207,14 +198,7 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.inst.rd_reg.ready         = in.rd_regs[1].ready | rs2_phy_hit;
   ret.inst.rd_reg.predict_ready = 1'b0;
 
-  // ret.inst.wr_reg.valid  = in.wr_reg.valid;
-  // ret.inst.wr_reg.typ    = in.wr_reg.typ;
-  // ret.inst.wr_reg.regidx = in.wr_reg.regidx;
-  // ret.inst.wr_reg.rnid   = in.wr_reg.rnid;
-
-  // for (int rs_idx = 2; rs_idx < 3; rs_idx++) begin
-  //   ret.inst.rd_regs[rs_idx].valid = 1'b0;
-  // end
+  ret.rs2_read_accepted = 1'b0;
 
 `ifdef SIMULATION
   ret.inst.sim_inst   = in.inst;

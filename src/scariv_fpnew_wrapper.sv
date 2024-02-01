@@ -369,7 +369,7 @@ u_fpnew_top
    .rst_ni (i_reset_n),
    // Input signals
    .operands_i    (w_fpnew_rs     ),
-   .rnd_mode_i    (i_rnd_mode     ),
+   .rnd_mode_i    (fpnew_pkg::roundmode_e'(i_rnd_mode)     ),
    .op_i          (w_fpnew_op     ),
    .op_mod_i      (w_fpnew_op_mod ),
    .src_fmt_i     (w_src_fp_fmt   ),

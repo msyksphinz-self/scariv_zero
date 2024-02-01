@@ -104,6 +104,8 @@ logic     w_missu_is_full;
 logic     w_missu_is_empty;
 logic     w_stq_rmw_existed;
 
+lsu_mispred_if w_mispred_if [scariv_conf_pkg::LSU_INST_NUM]();
+
 stq_resolve_t w_stq_rs2_resolve;
 
 l2_req_if    w_l1d_ext_req[2]();
@@ -154,7 +156,12 @@ assign w_sfence_if_slave.is_rs1_x0 = sfence_if.is_rs1_x0;
 assign w_sfence_if_slave.is_rs2_x0 = sfence_if.is_rs2_x0;
 assign w_sfence_if_slave.vaddr     = sfence_if.vaddr;
 
+
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
+
+  assign w_mispred_if[lsu_idx].mis_valid = mispred_out_if[lsu_idx].mis_valid;
+  assign w_mispred_if[lsu_idx].rd_type   = mispred_out_if[lsu_idx].rd_type  ;
+  assign w_mispred_if[lsu_idx].rd_rnid   = mispred_out_if[lsu_idx].rd_rnid  ;
 
   scariv_lsu
   #(
@@ -178,7 +185,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .early_wr_in_if(early_wr_in_if),
     .phy_wr_in_if  (phy_wr_in_if  ),
-    .mispred_in_if (mispred_out_if),
+    .mispred_in_if (w_mispred_if  ),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),

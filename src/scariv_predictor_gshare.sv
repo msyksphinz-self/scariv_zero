@@ -16,8 +16,6 @@ module scariv_predictor_gshare
  input logic  i_clk,
  input logic  i_reset_n,
 
- commit_if.monitor commit_if,
-
  input logic   i_f0_valid,
  input vaddr_t i_f0_vaddr,
 

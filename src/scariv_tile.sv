@@ -216,7 +216,7 @@ scariv_frontend u_frontend (
   .ic_l2_req(ic_l2_req),
   .ic_l2_resp(ic_l2_resp),
 
-  .commit_if (w_commit_if),
+  .commit_in_if (w_commit_if),
   .br_upd_if (w_ex3_br_upd_if),
 
   .csr_info (w_csr_info),
@@ -562,7 +562,7 @@ scariv_rob u_rob
 
    .rob_info_if   (w_rob_info_if),
 
-   .ex3_br_upd_if (w_ex3_br_upd_if)
+   .br_upd_slave_if (w_ex3_br_upd_if)
    );
 
 
