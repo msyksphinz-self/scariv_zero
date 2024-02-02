@@ -504,9 +504,9 @@ assign w_ex2_hazard_typ = vstq_haz_check_if.ex2_haz_valid   ? EX2_HAZ_VSTQ_HAZ  
 // Interface to Replay Queue
 always_comb begin
   lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (w_ex2_hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
+  lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
-  if (br_upd_if.update) begin
-  end
   lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
   lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
   lsu_pipe_haz_if.payload.hazard_typ     = w_ex2_hazard_typ;
