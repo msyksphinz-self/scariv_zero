@@ -115,7 +115,7 @@ u_bru_pipe
    .i_reset_n(i_reset_n),
 
    .rv0_issue(w_rv0_issue),
-   .rv0_index('h0),
+   .rv0_index({scariv_conf_pkg::RV_BRU_ENTRY_SIZE{1'b0}}),
 
    .ex1_phy_wr_if(phy_wr_in_if),
    .mispred_if   (mispred_in_if),

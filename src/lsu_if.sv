@@ -638,29 +638,29 @@ interface snoop_if;
 endinterface // snoop_if
 
 
-interface snoop_unit_if;
-  logic                     req_valid;
-  scariv_lsu_pkg::snoop_req_t req_payload;
-
-  // L1D interface
-  logic                      resp_valid;
-  scariv_lsu_pkg::snoop_resp_t resp_payload;
-
-  modport master (
-    output req_valid,
-    output req_payload,
-    input  resp_valid,
-    input  resp_payload
-  );
-
-  modport slave (
-    input  req_valid,
-    input  req_payload,
-    output resp_valid,
-    output resp_payload
-  );
-
-endinterface // snoop_unit_if
+// interface snoop_unit_if;
+//   logic                     req_valid;
+//   scariv_lsu_pkg::snoop_req_t req_payload;
+//
+//   // L1D interface
+//   logic                      resp_valid;
+//   scariv_lsu_pkg::snoop_resp_t resp_payload;
+//
+//   modport master (
+//     output req_valid,
+//     output req_payload,
+//     input  resp_valid,
+//     input  resp_payload
+//   );
+//
+//   modport slave (
+//     input  req_valid,
+//     input  req_payload,
+//     output resp_valid,
+//     output resp_payload
+//   );
+//
+// endinterface // snoop_unit_if
 
 
 interface l1d_snoop_if;

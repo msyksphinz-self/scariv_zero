@@ -53,15 +53,15 @@ if_sm_t  w_if_state_next;
 
 logic                     r_f0_valid;
 logic                     r_f0_valid_d1;
-riscv_pkg::xlen_t         r_f0_vaddr;
-riscv_pkg::xlen_t         w_f0_vaddr_next;
-riscv_pkg::xlen_t         w_f0_vaddr;
+vaddr_t                   r_f0_vaddr;
+vaddr_t                   w_f0_vaddr_next;
+vaddr_t                   w_f0_vaddr;
 logic                     w_f0_predicted;
 scariv_lsu_pkg::tlb_req_t   w_f0_tlb_req;
 scariv_lsu_pkg::tlb_resp_t  w_f0_tlb_resp;
 ic_req_t                  w_f0_ic_req;
 logic                     w_f0_ic_ready;
-riscv_pkg::xlen_t         w_f0_vaddr_flush_next;
+vaddr_t                   w_f0_vaddr_flush_next;
 
 // ==============
 // f1 stage
@@ -71,7 +71,7 @@ logic    r_f1_valid;
 logic    w_f1_inst_valid;
 logic    r_f1_clear;
 logic    r_f1_predicted;
-riscv_pkg::xlen_t  r_f1_vaddr;
+vaddr_t  r_f1_vaddr;
 paddr_t  r_f1_paddr;
 logic    r_f1_tlb_miss;
 logic    r_f1_tlb_except_valid;
@@ -93,7 +93,7 @@ logic             w_f2_inst_valid;
 logic             r_f2_valid;
 logic             r_f2_clear;
 logic             r_f2_predicted;
-riscv_pkg::xlen_t r_f2_vaddr;
+vaddr_t           r_f2_vaddr;
 ic_resp_t         w_f2_ic_resp;
 logic             r_f2_tlb_miss;
 logic             r_f2_tlb_except_valid;

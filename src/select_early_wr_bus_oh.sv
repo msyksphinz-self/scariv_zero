@@ -6,7 +6,7 @@ module select_early_wr_bus_oh
 
    output logic                                         o_valid,
    output logic [$clog2(scariv_pkg::REL_BUS_SIZE)-1: 0] o_hit_index,
-   output logic [scariv_pkg::REL_BUS_SIZE-1: 0]         o_may_mispred
+   output logic                                         o_may_mispred
    );
 
 
