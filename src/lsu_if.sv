@@ -638,29 +638,29 @@ interface snoop_if;
 endinterface // snoop_if
 
 
-interface snoop_unit_if;
-  logic                     req_valid;
-  scariv_lsu_pkg::snoop_req_t req_payload;
-
-  // L1D interface
-  logic                      resp_valid;
-  scariv_lsu_pkg::snoop_resp_t resp_payload;
-
-  modport master (
-    output req_valid,
-    output req_payload,
-    input  resp_valid,
-    input  resp_payload
-  );
-
-  modport slave (
-    input  req_valid,
-    input  req_payload,
-    output resp_valid,
-    output resp_payload
-  );
-
-endinterface // snoop_unit_if
+// interface snoop_unit_if;
+//   logic                     req_valid;
+//   scariv_lsu_pkg::snoop_req_t req_payload;
+//
+//   // L1D interface
+//   logic                      resp_valid;
+//   scariv_lsu_pkg::snoop_resp_t resp_payload;
+//
+//   modport master (
+//     output req_valid,
+//     output req_payload,
+//     input  resp_valid,
+//     input  resp_payload
+//   );
+//
+//   modport slave (
+//     input  req_valid,
+//     input  req_payload,
+//     output resp_valid,
+//     output resp_payload
+//   );
+//
+// endinterface // snoop_unit_if
 
 
 interface l1d_snoop_if;
@@ -839,7 +839,7 @@ logic [scariv_lsu_pkg::ST_BUF_WIDTH/8-1: 0] strb;
 logic [scariv_lsu_pkg::ST_BUF_WIDTH-1: 0]   data;
 logic                                     is_rmw;
 decoder_lsu_ctrl_pkg::rmwop_t             rmwop;
-logic                                     is_amo;
+decoder_lsu_ctrl_pkg::size_t              size;
 
 
 `ifdef SIMULATION
@@ -857,7 +857,7 @@ modport master (
   output data,
   output is_rmw,
   output rmwop,
-  output is_amo,
+  output size,
 `ifdef SIMULATION
   output cmt_id,
   output grp_id,
@@ -874,7 +874,7 @@ modport slave (
   input data,
   input is_rmw,
   input rmwop,
-  input is_amo,
+  input size,
 `ifdef SIMULATION
   input cmt_id,
   input grp_id,
@@ -905,6 +905,7 @@ interface amo_op_if;
 
 logic                         valid;
 decoder_lsu_ctrl_pkg::rmwop_t rmwop;
+decoder_lsu_ctrl_pkg::size_t  size;
 riscv_pkg::xlen_t             data0;
 riscv_pkg::xlen_t             data1;
 riscv_pkg::xlen_t             result;
@@ -912,6 +913,7 @@ riscv_pkg::xlen_t             result;
 modport master (
   output valid,
   output rmwop,
+  output size,
   output data0,
   output data1,
   input  result
@@ -920,6 +922,7 @@ modport master (
 modport slave (
   input  valid,
   input  rmwop,
+  input  size,
   input  data0,
   input  data1,
   output result

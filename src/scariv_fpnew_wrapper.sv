@@ -51,6 +51,15 @@ logic     w_fma32_ready;
 
 // assign o_ready = w_fma64_ready & w_fma32_ready;
 
+typedef struct packed {
+  fpnew_pkg::operation_e op;
+  logic                  op_mod;
+  scariv_pkg::reg_t      reg_type;
+  scariv_pkg::rnid_t     rnid;
+  logic                  frm_invalid;
+  logic                  output_is_int32;
+} aux_fpnew_t;
+
 logic                                    w_fma32_in_valid;
 logic                                    w_noncomp32_in_valid;
 
@@ -105,13 +114,80 @@ logic                                    w_in_flush;
 scariv_fpu_pkg::aux_fpnew_t w_aux_fpnew_in;
 scariv_fpu_pkg::aux_fpnew_t w_aux_fpnew_out;
 
+typedef struct packed {
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+  logic                dead;
+} aux_fpnew_age_t;
+
+aux_fpnew_age_t r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY];
+aux_fpnew_age_t r_longfpu_age;
+aux_fpnew_age_t w_longfpu_age_next;
+logic                  w_age_fifo_last_br_flush_valid;
+logic                  w_age_fifo_last_dead;
+
+generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::FPNEW_LATENCY; l_idx++) begin : age_fifo_loop
+  if (l_idx == 0) begin
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_age_fifo[l_idx].dead <= 1'b0;
+      end else begin
+        r_age_fifo[l_idx].cmt_id <= i_cmt_id;
+        r_age_fifo[l_idx].grp_id <= i_grp_id;
+        r_age_fifo[l_idx].dead <= 1'b0;
+      end
+    end
+
+  end else begin // if (l_idx == 0)
+    logic w_br_flush;
+    assign w_br_flush = scariv_pkg::is_br_flush_target(r_age_fifo[l_idx-1].cmt_id, r_age_fifo[l_idx-1].grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+
+    always_ff @ (posedge i_clk, negedge i_reset_n) begin
+      if (!i_reset_n) begin
+        r_age_fifo[l_idx].dead <= 1'b0;
+      end else begin
+        r_age_fifo[l_idx] <= r_age_fifo[l_idx-1];
+        if (w_br_flush) begin
+          r_age_fifo[l_idx].dead <= 1'b1;
+        end
+      end
+    end
+  end // else: !if(l_idx == 0)
+end endgenerate
+
+assign w_age_fifo_last_br_flush_valid = scariv_pkg::is_br_flush_target(r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].cmt_id, r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+assign w_age_fifo_last_dead = r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].dead | w_age_fifo_last_br_flush_valid;
+
+
+always_comb begin
+  w_longfpu_age_next = r_longfpu_age;
+
+  if (scariv_pkg::is_br_flush_target(r_longfpu_age.cmt_id, r_longfpu_age.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                     br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update) begin
+    w_longfpu_age_next.dead = 1'b1;
+  end
+  if (w_fdiv_valid) begin
+    w_longfpu_age_next.cmt_id = i_cmt_id;
+    w_longfpu_age_next.grp_id = i_grp_id;
+    w_longfpu_age_next.dead   = 1'b0;
+  end
+end // always_comb
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_longfpu_age.dead <= 1'b0;
+  end else begin
+    r_longfpu_age <= w_longfpu_age_next;
+  end
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
 assign w_aux_fpnew_in.op          = w_fpnew_op;
 assign w_aux_fpnew_in.op_mod      = w_fpnew_op_mod;
 assign w_aux_fpnew_in.reg_type    = i_reg_type;
 assign w_aux_fpnew_in.rnid        = i_rnid;
 assign w_aux_fpnew_in.frm_invalid = i_frm_invalid;
-assign w_aux_fpnew_in.cmt_id = i_cmt_id;
-assign w_aux_fpnew_in.grp_id = i_grp_id;
 assign w_aux_fpnew_in.output_is_int32 = i_pipe_ctrl.op inside {OP_FCVT_W_S, OP_FCVT_W_D};
 
 assign w_fma32_rs[0] = (w_fpnew_op == fpnew_pkg::ADD) ? 'h0          : i_rs1[31: 0];
@@ -256,7 +332,7 @@ always_comb begin
 end // always_comb
 
 assign w_commit_flush = commit_if.is_flushed_commit();
-assign w_in_br_flush  = scariv_pkg::is_br_flush_target(w_aux_fpnew_in.cmt_id, w_aux_fpnew_in.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+assign w_in_br_flush  = scariv_pkg::is_br_flush_target(i_cmt_id, i_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                        br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & i_valid;
 assign w_in_flush     = w_commit_flush | w_in_br_flush;
 
@@ -293,7 +369,7 @@ u_fpnew_top
    .rst_ni (i_reset_n),
    // Input signals
    .operands_i    (w_fpnew_rs     ),
-   .rnd_mode_i    (i_rnd_mode     ),
+   .rnd_mode_i    (fpnew_pkg::roundmode_e'(i_rnd_mode)     ),
    .op_i          (w_fpnew_op     ),
    .op_mod_i      (w_fpnew_op_mod ),
    .src_fmt_i     (w_src_fp_fmt   ),
@@ -303,7 +379,7 @@ u_fpnew_top
    .tag_i         (w_aux_fpnew_in ),
    .simd_mask_i   (1'b0           ),
    // Input Handshake
-   .in_valid_i (i_valid ),
+   .in_valid_i (i_valid & ~w_in_flush),
    .in_ready_o ( ),
    .flush_i    (w_commit_flush),
    // Output signals
@@ -328,7 +404,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     o_frm_invalid <= 1'b0;
     o_reg_type  <= scariv_pkg::FPR;
   end else begin
-    o_valid <= w_fpnew_out_valid;
+    o_valid <= w_fpnew_out_valid & ~w_commit_flush &
+               (w_aux_fpnew_out.op inside {fpnew_pkg::DIV, fpnew_pkg::SQRT} ? ~w_longfpu_age_next.dead : ~w_age_fifo_last_dead);
     o_fflags <= {w_fpnew_fflags.NV,
                  w_fpnew_fflags.DZ,
                  w_fpnew_fflags.OF,
@@ -336,8 +413,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                  w_fpnew_fflags.NX};
 
     o_result      <= w_aux_fpnew_out.output_is_int32 ? {{32{w_result[31]}}, w_result[31: 0]} : w_result;
-    o_cmt_id      <= w_aux_fpnew_out.cmt_id;
-    o_grp_id      <= w_aux_fpnew_out.grp_id;
+    o_cmt_id      <= w_aux_fpnew_out.op inside {fpnew_pkg::DIV,fpnew_pkg::SQRT} ? r_longfpu_age.cmt_id : r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].cmt_id;
+    o_grp_id      <= w_aux_fpnew_out.op inside {fpnew_pkg::DIV,fpnew_pkg::SQRT} ? r_longfpu_age.grp_id : r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].grp_id;
     o_rnid        <= w_aux_fpnew_out.rnid;
     o_frm_invalid <= w_aux_fpnew_out.frm_invalid;
     o_reg_type    <= w_aux_fpnew_out.reg_type;

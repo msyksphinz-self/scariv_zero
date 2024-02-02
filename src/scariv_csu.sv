@@ -22,13 +22,13 @@ module scariv_csu
   regread_if.master                          ex1_regread_rs2,
 
   /* Forwarding path */
-  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-  input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-  input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+  early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+  phy_wr_if.slave       phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+  lsu_mispred_if.slave  mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
   /* write output */
-  output scariv_pkg::early_wr_t o_ex1_early_wr,
-  output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+  early_wr_if.master early_wr_out_if,
+  phy_wr_if.master   phy_wr_out_if,
 
   /* CSR information */
   csr_info_if.master          csr_info,
@@ -37,7 +37,7 @@ module scariv_csu
   /* ROB notification interface */
   rob_info_if.slave           rob_info_if,
 
-  output scariv_pkg::done_rpt_t o_done_report,
+  done_report_if.master done_report_if,
 
   fflags_update_if.slave      fflags_update_if,
 
@@ -115,7 +115,7 @@ u_scariv_issue_unit
 
    .i_stall (1'b0),
 
-   .i_phy_wr  (i_phy_wr),
+   .phy_wr_if  (phy_wr_in_if),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
@@ -143,8 +143,8 @@ u_csu_pipe
    .ex1_regread_rs1(ex1_regread_rs1),
    .ex1_regread_rs2(ex1_regread_rs2),
 
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .ex1_early_wr_if(early_wr_out_if),
+   .ex3_phy_wr_if  (phy_wr_out_if),
 
    .i_status_priv (csr_info.priv),
    .i_mstatus     (csr_info.mstatus),
@@ -157,7 +157,8 @@ u_csu_pipe
    .vlvtype_upd_if (vlvtype_upd_if),
    .vlmul_upd_if   (vlmul_upd_if),
 
-   .o_done_report (o_done_report)
+   .done_report_if (done_report_if)
+>>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
    );
 
 

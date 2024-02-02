@@ -33,7 +33,7 @@ module scariv_fpu_pipe
 
     input scariv_pkg::issue_t ex0_issue,
     input logic [RV_ENTRY_SIZE-1:0] ex0_index,
-    input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+    phy_wr_if.slave ex1_phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
     regread_if.master ex0_regread_int_rs1,
 
@@ -41,14 +41,14 @@ module scariv_fpu_pipe
     regread_if.master ex0_regread_rs2,
     regread_if.master ex0_regread_rs3,
 
-    input scariv_pkg::mispred_t i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+    lsu_mispred_if.slave mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
-    output scariv_pkg::early_wr_t o_ex1_mv_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
-    output scariv_pkg::done_rpt_t o_mv_done_report,
+    early_wr_if.master    ex1_mv_early_wr_if,
+    phy_wr_if.master      ex3_mv_phy_wr_if,
+    done_report_if.master mv_done_report_if,
 
-    output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
-    output scariv_pkg::done_rpt_t o_fp_done_report
+    phy_wr_if.master      fpnew_phy_wr_if,
+    done_report_if.master fp_done_report_if
 );
 
 scariv_pkg::issue_t                       w_ex0_issue;
@@ -107,6 +107,7 @@ logic                              r_ex2_frm_invalid;
 
 
 scariv_pkg::issue_t                r_ex3_issue;
+scariv_pkg::issue_t                w_ex3_issue_next;
 logic                              w_fpnew_result_valid;
 scariv_pkg::alen_t                 w_fpnew_result_data;
 logic [ 4: 0]                      w_fpnew_result_fflags;
@@ -141,7 +142,7 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex0_mispred_loop
    (
     .i_entry_rnid (w_ex0_issue.rd_regs[rs_idx].rnid),
     .i_entry_type (w_ex0_issue.rd_regs[rs_idx].typ),
-    .i_mispred    (i_mispred_lsu),
+    .i_mispred    (mispred_if),
 
     .o_mispred    (w_ex0_rs_lsu_mispred[rs_idx])
     );
@@ -151,11 +152,11 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex0_mispred_loop
 
   scariv_pkg::alen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = ex0_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
+    assign w_ex0_rs_fwd_valid[rs_idx][tgt_idx] = ex0_issue.rd_regs[rs_idx].valid & ex1_phy_wr_if[tgt_idx].valid &
                                                  (ex0_issue.rd_regs[rs_idx].typ  == scariv_pkg::GPR ? ex0_issue.rd_regs[rs_idx].regidx != 'h0 : 1'b1) &
-                                                 (ex0_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                                 (ex0_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
-    assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+                                                 (ex0_issue.rd_regs[rs_idx].typ  == ex1_phy_wr_if[tgt_idx].rd_type) &
+                                                 (ex0_issue.rd_regs[rs_idx].rnid == ex1_phy_wr_if[tgt_idx].rd_rnid);
+    assign w_ex0_tgt_data[tgt_idx] = ex1_phy_wr_if[tgt_idx].rd_data;
   end
     bit_oh_or #(
       .T(scariv_pkg::alen_t),
@@ -228,7 +229,7 @@ generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : mispred_loop
    (
     .i_entry_rnid (r_ex1_issue.rd_regs[rs_idx].rnid),
     .i_entry_type (r_ex1_issue.rd_regs[rs_idx].typ),
-    .i_mispred    (i_mispred_lsu),
+    .i_mispred    (mispred_if),
 
     .o_mispred    (w_ex1_rs_lsu_mispred[rs_idx])
     );
@@ -242,21 +243,21 @@ endgenerate
 // -----------------------------
 // EX1 :
 // -----------------------------
-assign o_ex1_mv_early_wr.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
+assign ex1_mv_early_wr_if.valid = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & (r_ex1_pipe_ctrl.pipe == PIPE_FAST) &
                                  &(~(w_ex1_rs_mispred | r_ex1_rs_mispred));
 
-assign o_ex1_mv_early_wr.rd_rnid = r_ex1_issue.wr_reg.rnid;
-assign o_ex1_mv_early_wr.rd_type = r_ex1_issue.wr_reg.typ;
-assign o_ex1_mv_early_wr.may_mispred = 1'b0;
+assign ex1_mv_early_wr_if.rd_rnid = r_ex1_issue.wr_reg.rnid;
+assign ex1_mv_early_wr_if.rd_type = r_ex1_issue.wr_reg.typ;
+assign ex1_mv_early_wr_if.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 3; rs_idx++) begin : ex1_rs_loop
   scariv_pkg::alen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_i_phy_wr[tgt_idx].valid &
+    assign w_ex1_rs_fwd_valid[rs_idx][tgt_idx] = r_ex1_issue.rd_regs[rs_idx].valid & ex1_phy_wr_if[tgt_idx].valid &
                                                  (r_ex1_issue.rd_regs[rs_idx].typ == scariv_pkg::GPR ? r_ex1_issue.rd_regs[rs_idx].regidx != 'h0 : 1'b1) &
-                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                                 (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
-    assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+                                                 (r_ex1_issue.rd_regs[rs_idx].typ  == ex1_phy_wr_if[tgt_idx].rd_type) &
+                                                 (r_ex1_issue.rd_regs[rs_idx].rnid == ex1_phy_wr_if[tgt_idx].rd_rnid);
+    assign w_ex1_tgt_data[tgt_idx] = ex1_phy_wr_if[tgt_idx].rd_data;
   end
     bit_oh_or #(
       .T(scariv_pkg::alen_t),
@@ -278,23 +279,23 @@ assign w_ex1_frm_invalid = r_ex1_pipe_ctrl.use_frm & ((r_ex1_issue.inst[14:12] =
 
 generate
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_i_phy_wr[tgt_idx].valid &
+    assign w_ex2_rs1_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[0].valid & ex1_phy_wr_if[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[0].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[0].regidx != 'h0 : 1'b1) &
-                                          (r_ex2_issue.rd_regs[0].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rd_regs[0].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                          (r_ex2_issue.rd_regs[0].typ  == ex1_phy_wr_if[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rd_regs[0].rnid == ex1_phy_wr_if[tgt_idx].rd_rnid);
 
 
-    assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[1].valid & ex1_i_phy_wr[tgt_idx].valid &
+    assign w_ex2_rs2_fwd_valid[tgt_idx] = r_ex2_issue.rd_regs[1].valid & ex1_phy_wr_if[tgt_idx].valid &
                                           (r_ex2_issue.rd_regs[1].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[1].regidx != 'h0 : 1'b1) &
-                                          (r_ex2_issue.rd_regs[1].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                          (r_ex2_issue.rd_regs[1].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                          (r_ex2_issue.rd_regs[1].typ  == ex1_phy_wr_if[tgt_idx].rd_type) &
+                                          (r_ex2_issue.rd_regs[1].rnid == ex1_phy_wr_if[tgt_idx].rd_rnid);
 
-    assign w_ex2_rs3_fwd_valid[tgt_idx] =  r_ex2_issue.rd_regs[2].valid & ex1_i_phy_wr[tgt_idx].valid &
+    assign w_ex2_rs3_fwd_valid[tgt_idx] =  r_ex2_issue.rd_regs[2].valid & ex1_phy_wr_if[tgt_idx].valid &
                                            (r_ex2_issue.rd_regs[2].typ == scariv_pkg::GPR ? r_ex2_issue.rd_regs[2].regidx != 'h0 : 1'b1) &
-                                           (r_ex2_issue.rd_regs[2].typ  == ex1_i_phy_wr[tgt_idx].rd_type) &
-                                           (r_ex2_issue.rd_regs[2].rnid == ex1_i_phy_wr[tgt_idx].rd_rnid);
+                                           (r_ex2_issue.rd_regs[2].typ  == ex1_phy_wr_if[tgt_idx].rd_type) &
+                                           (r_ex2_issue.rd_regs[2].rnid == ex1_phy_wr_if[tgt_idx].rd_rnid);
 
-    assign w_ex2_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+    assign w_ex2_tgt_data[tgt_idx] = ex1_phy_wr_if[tgt_idx].rd_data;
   end
 endgenerate
 
@@ -367,7 +368,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_index <= r_ex1_index;
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
 
-    r_ex2_wr_valid <= o_ex1_mv_early_wr.valid;
+    r_ex2_wr_valid <= ex1_mv_early_wr_if.valid;
 
     r_ex2_rs_mispred <= r_ex1_rs_mispred | w_ex1_rs_mispred;
 
@@ -483,6 +484,11 @@ assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r
 assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
 
 
+always_comb begin
+  w_ex3_issue_next = r_ex2_issue;
+  w_ex3_issue_next.valid = r_ex2_issue.valid & !w_ex2_flush;
+end
+
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     // r_ex3_result <= 'h0;
@@ -493,7 +499,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_res_data  <= 'h0;
     r_ex3_frm_invalid <= 1'b0;
   end else begin
-    r_ex3_issue <= r_ex2_issue;
+    r_ex3_issue <= w_ex3_issue_next;
     r_ex3_index <= r_ex2_index;
     r_ex3_wr_valid  <= r_ex2_wr_valid;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
@@ -520,7 +526,7 @@ u_scariv_fpnew_wrapper
    .commit_if  (commit_if),
    .br_upd_if (br_upd_if),
 
-   .i_valid (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
+   .i_valid     (r_ex2_issue.valid & w_ex2_fpnew_valid & (&(~r_ex2_rs_mispred))),
    .i_pipe_ctrl (r_ex2_pipe_ctrl),
    .i_cmt_id    (r_ex2_issue.cmt_id),
    .i_grp_id    (r_ex2_issue.grp_id),
@@ -547,31 +553,31 @@ u_scariv_fpnew_wrapper
 
 
 always_comb begin
-  o_ex3_mv_phy_wr.valid   = r_ex3_wr_valid & ~r_ex3_frm_invalid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  o_ex3_mv_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-  o_ex3_mv_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-  o_ex3_mv_phy_wr.rd_data = r_ex3_res_data;
+  ex3_mv_phy_wr_if.valid   = r_ex3_wr_valid & ~r_ex3_frm_invalid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  ex3_mv_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
+  ex3_mv_phy_wr_if.rd_type = r_ex3_issue.wr_reg.typ;
+  ex3_mv_phy_wr_if.rd_data = r_ex3_res_data;
 
-  o_mv_done_report.valid               = r_ex3_issue.valid & r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
-  o_mv_done_report.cmt_id              = r_ex3_issue.cmt_id;
-  o_mv_done_report.grp_id              = r_ex3_issue.grp_id;
-  o_mv_done_report.except_valid        = r_ex3_frm_invalid;
-  o_mv_done_report.except_type         = scariv_pkg::ILLEGAL_INST;
-  o_mv_done_report.fflags_update_valid = 1'b0;
-  o_mv_done_report.fflags              = 'h0;
+  mv_done_report_if.valid               = r_ex3_issue.valid & r_ex3_wr_valid & (r_ex3_pipe_ctrl.pipe == PIPE_FAST);
+  mv_done_report_if.cmt_id              = r_ex3_issue.cmt_id;
+  mv_done_report_if.grp_id              = r_ex3_issue.grp_id;
+  mv_done_report_if.except_valid        = r_ex3_frm_invalid;
+  mv_done_report_if.except_type         = scariv_pkg::ILLEGAL_INST;
+  mv_done_report_if.fflags_update_valid = 1'b0;
+  mv_done_report_if.fflags              = 'h0;
 
-  o_fpnew_phy_wr.valid   = w_fpnew_result_valid;
-  o_fpnew_phy_wr.rd_rnid = w_fpnew_rnid;
-  o_fpnew_phy_wr.rd_type = w_fpnew_reg_type;
-  o_fpnew_phy_wr.rd_data = w_fpnew_result_data;
+  fpnew_phy_wr_if.valid   = w_fpnew_result_valid;
+  fpnew_phy_wr_if.rd_rnid = w_fpnew_rnid;
+  fpnew_phy_wr_if.rd_type = w_fpnew_reg_type;
+  fpnew_phy_wr_if.rd_data = w_fpnew_result_data;
 
-  o_fp_done_report.valid               = w_fpnew_result_valid;
-  o_fp_done_report.cmt_id              = w_fpnew_cmt_id;
-  o_fp_done_report.grp_id              = w_fpnew_grp_id;
-  o_fp_done_report.except_valid        = w_fpnew_frm_invalid;
-  o_fp_done_report.except_type         = scariv_pkg::ILLEGAL_INST;
-  o_fp_done_report.fflags_update_valid = w_fpnew_result_valid;
-  o_fp_done_report.fflags              = w_fpnew_result_fflags;
+  fp_done_report_if.valid               = w_fpnew_result_valid;
+  fp_done_report_if.cmt_id              = w_fpnew_cmt_id;
+  fp_done_report_if.grp_id              = w_fpnew_grp_id;
+  fp_done_report_if.except_valid        = w_fpnew_frm_invalid;
+  fp_done_report_if.except_type         = scariv_pkg::ILLEGAL_INST;
+  fp_done_report_if.fflags_update_valid = w_fpnew_result_valid;
+  fp_done_report_if.fflags              = w_fpnew_result_fflags;
 
 end // always_comb
 

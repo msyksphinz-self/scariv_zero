@@ -132,9 +132,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
-  ret.need_oldest      = (in.cat == decoder_inst_cat_pkg::INST_CAT_ST) & (in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW) |
-                         stq_rmw_existed |
-                         oldest_valid;
+  ret.need_oldest      = stq_rmw_existed | oldest_valid;
   ret.oldest_valid     = 1'b0;
 
   ret.wr_reg.valid = in.wr_reg.valid;
@@ -337,7 +335,6 @@ typedef struct packed {
   logic                           tlb_uc;
 
   logic [MEM_Q_SIZE-1:0]          index_oh;
-  scariv_pkg::vaddr_t vaddr;
   scariv_pkg::paddr_t paddr;
 
   // Atomic Operations
@@ -346,16 +343,10 @@ typedef struct packed {
 } ex1_q_update_t;
 
 typedef struct packed {
-  logic                                     update;
-  ex2_haz_t                                 hazard_typ;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]     missu_index_oh;
-  scariv_pkg::cmt_id_t                      cmt_id;
-  scariv_pkg::grp_id_t                      grp_id;
-  logic [scariv_conf_pkg::STQ_SIZE-1:0]     hazard_index;
-  logic                                     is_amo;
-  logic                                     is_lr;
-  logic                                     is_sc;
-  logic                                     sc_success;
+  logic                update;
+  scariv_pkg::cmt_id_t cmt_id;
+  scariv_pkg::grp_id_t grp_id;
+  logic                success;
 } ex2_q_update_t;
 
 typedef struct packed {
@@ -556,7 +547,6 @@ endfunction // gen_dw
 typedef struct packed {
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
-  logic                  oldest_valid;
   reg_rd_issue_t         rd_reg;
 //  reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
@@ -578,19 +568,14 @@ typedef struct packed {
   scariv_pkg::maxaddr_t addr;
   logic                 paddr_valid;
   logic                 is_rs2_get;
+  logic                 rs2_read_accepted;
   scariv_pkg::alen_t    rs2_data;
 
-  logic                except_valid;
   logic                is_committed;
 
   // Uncached Access Region
   logic                         is_uc;
-  // Atomic Operations
-  logic                         is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
-  logic                         is_amo;
-  logic                         is_lr;
-  logic                         is_sc;
   logic                         sc_success;
 
   logic st_buf_finished;
@@ -838,8 +823,8 @@ typedef struct packed {
   logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
   dc_ways_idx_t                                        l1d_way;
   logic                                                l1d_high_priority;
-  logic                                                is_rmw;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
+  decoder_lsu_ctrl_pkg::size_t                         size;
   logic                                                is_amo;
   logic                                                amo_op_done;
 `ifdef SIMULATION
@@ -873,9 +858,8 @@ function st_buffer_entry_t assign_st_buffer (
    scariv_pkg::paddr_t  paddr,
    logic [ST_BUF_WIDTH/8-1: 0]   strb,
    logic [ST_BUF_WIDTH-1: 0]     data,
-   logic                         is_rmw,
    decoder_lsu_ctrl_pkg::rmwop_t rmwop,
-   logic                         is_amo
+   decoder_lsu_ctrl_pkg::size_t  size
   );
   st_buffer_entry_t ret;
 
@@ -886,9 +870,8 @@ function st_buffer_entry_t assign_st_buffer (
   ret.strb  = strb;
   ret.data  = data;
 
-  ret.is_rmw = is_rmw;
   ret.rmwop  = rmwop;
-  ret.is_amo = is_amo;
+  ret.size   = size;
 
 `ifdef SIMULATION
   ret.cmt_id = cmt_id;

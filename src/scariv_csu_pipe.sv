@@ -28,8 +28,8 @@ module scariv_csu_pipe
   regread_if.master                   ex1_regread_rs1,
   regread_if.master                   ex1_regread_rs2,
 
-  output scariv_pkg::early_wr_t       o_ex1_early_wr,
-  output scariv_pkg::phy_wr_t         o_ex3_phy_wr,
+  early_wr_if.master       ex1_early_wr_if,
+  phy_wr_if.master         ex3_phy_wr_if,
 
   /* CSR information */
   input riscv_common_pkg::priv_t               i_status_priv,
@@ -46,7 +46,7 @@ module scariv_csu_pipe
   vlvtype_upd_if.master             vlvtype_upd_if,
   vlmul_upd_if.master               vlmul_upd_if,
 
-  output scariv_pkg::done_rpt_t     o_done_report
+  done_report_if.master     done_report_if
 );
 
 `include "scariv_csr_def.svh"
@@ -223,10 +223,10 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign o_ex3_phy_wr.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
-assign o_ex3_phy_wr.rd_rnid = r_ex3_issue.wr_reg.rnid;
-assign o_ex3_phy_wr.rd_type = r_ex3_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = r_ex3_csr_rd_data;
+assign ex3_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_issue.wr_reg.valid;
+assign ex3_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
+assign ex3_phy_wr_if.rd_type = r_ex3_issue.wr_reg.typ;
+assign ex3_phy_wr_if.rd_data = r_ex3_csr_rd_data;
 
 logic w_ex3_sret_tsr_illegal;
 
@@ -257,6 +257,31 @@ assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal |
                                    scariv_pkg::SILENT_FLUSH;
 
 assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | (o_done_report.except_type == scariv_pkg::LMUL_CHANGE)) ? r_ex3_issue.inst :
+=======
+assign done_report_if.valid    = r_ex3_issue.valid;
+assign done_report_if.cmt_id   = r_ex3_issue.cmt_id;
+assign done_report_if.grp_id   = r_ex3_issue.grp_id;
+assign done_report_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
+                                     r_ex3_pipe_ctrl.is_mret |
+                                     r_ex3_pipe_ctrl.is_sret |
+                                     r_ex3_pipe_ctrl.is_uret |
+                                     r_ex3_pipe_ctrl.is_ecall |
+                                     r_ex3_pipe_ctrl.is_ebreak |
+                                     r_ex3_csr_illegal |
+                                     (write_if.valid & write_if.resp_error);
+
+assign done_report_if.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
+                                   r_ex3_pipe_ctrl.is_mret ? scariv_pkg::MRET :
+                                   r_ex3_pipe_ctrl.is_sret ? scariv_pkg::SRET :
+                                   r_ex3_pipe_ctrl.is_uret ? scariv_pkg::URET :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U) ? scariv_pkg::ECALL_U :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
+                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
+                                   r_ex3_pipe_ctrl.is_ebreak ? scariv_pkg::BREAKPOINT :
+                                   scariv_pkg::SILENT_FLUSH;
+
+assign done_report_if.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
+>>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
                                    'h0;
 
 // ------------

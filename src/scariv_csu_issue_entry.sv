@@ -37,7 +37,7 @@ module scariv_csu_issue_entry
    output scariv_csu_pkg::issue_t o_entry,
 
    /* Forwarding path */
-   input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
 
    input logic       i_entry_picked,
 
@@ -93,7 +93,7 @@ generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loo
   assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
   assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
 
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .i_phy_wr   (i_phy_wr),
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .phy_wr_if   (phy_wr_if),
                                         .o_valid   (w_rs_phy_hit[rs_idx]));
   assign w_rs_rel_index[rs_idx] = 'h0;
 end endgenerate

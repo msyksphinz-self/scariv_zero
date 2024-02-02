@@ -155,7 +155,7 @@ always_comb begin
       w_entry_next.addr        = i_ex1_q_updates.paddr;
       w_entry_next.paddr_valid = !i_ex1_q_updates.tlb_except_valid;
       w_entry_next.size        = i_ex1_q_updates.size;
-    end else if (i_ex2_q_valid & r_entry.paddr_valid & (i_ex2_q_updates.hazard_typ == EX2_HAZ_NONE)) begin
+    end else if (i_ex2_q_valid & r_entry.paddr_valid & i_ex2_q_updates.success) begin
       w_entry_next.is_get_data = 1'b1;
     end
 

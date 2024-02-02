@@ -24,7 +24,7 @@ module scariv_frontend
  l2_resp_if.slave ic_l2_resp,
 
  // PC Update from Committer
- commit_if.monitor commit_if,
+ commit_if.monitor commit_in_if,
  // Branch Tag Update Signal
  br_upd_if.slave              br_upd_if,
 
@@ -53,15 +53,15 @@ if_sm_t  w_if_state_next;
 
 logic                     r_f0_valid;
 logic                     r_f0_valid_d1;
-riscv_pkg::xlen_t         r_f0_vaddr;
-riscv_pkg::xlen_t         w_f0_vaddr_next;
-riscv_pkg::xlen_t         w_f0_vaddr;
+vaddr_t                   r_f0_vaddr;
+vaddr_t                   w_f0_vaddr_next;
+vaddr_t                   w_f0_vaddr;
 logic                     w_f0_predicted;
 scariv_lsu_pkg::tlb_req_t   w_f0_tlb_req;
 scariv_lsu_pkg::tlb_resp_t  w_f0_tlb_resp;
 ic_req_t                  w_f0_ic_req;
 logic                     w_f0_ic_ready;
-riscv_pkg::xlen_t         w_f0_vaddr_flush_next;
+vaddr_t                   w_f0_vaddr_flush_next;
 
 // ==============
 // f1 stage
@@ -71,7 +71,7 @@ logic    r_f1_valid;
 logic    w_f1_inst_valid;
 logic    r_f1_clear;
 logic    r_f1_predicted;
-riscv_pkg::xlen_t  r_f1_vaddr;
+vaddr_t  r_f1_vaddr;
 paddr_t  r_f1_paddr;
 logic    r_f1_tlb_miss;
 logic    r_f1_tlb_except_valid;
@@ -93,7 +93,7 @@ logic             w_f2_inst_valid;
 logic             r_f2_valid;
 logic             r_f2_clear;
 logic             r_f2_predicted;
-riscv_pkg::xlen_t r_f2_vaddr;
+vaddr_t           r_f2_vaddr;
 ic_resp_t         w_f2_ic_resp;
 logic             r_f2_tlb_miss;
 logic             r_f2_tlb_except_valid;
@@ -165,7 +165,7 @@ u_addr_gen
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
 
-   .commit_if (commit_if),
+   .commit_in_if (commit_in_if),
    .br_upd_if (br_upd_if),
 
    .csr_info (csr_info),
@@ -199,7 +199,7 @@ logic w_f2_ic_miss_valid;
 assign w_f2_ic_miss_valid = r_f2_valid & w_f2_ic_resp.miss & !r_f2_clear;
 
 
-assign w_commit_flush  = commit_if.is_flushed_commit();
+assign w_commit_flush  = commit_in_if.is_flushed_commit();
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
@@ -501,8 +501,6 @@ scariv_predictor_gshare u_predictor
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
-
-   .commit_if  (commit_if),
 
    .i_f0_valid   (w_f0_ic_req.valid),
    .i_f0_vaddr   (w_f0_ic_req.vaddr),

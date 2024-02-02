@@ -33,17 +33,17 @@ module scariv_fpu #(
     regread_if.master ex0_regread_rs3,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+    early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
+    phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
+    lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_mv_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_mv_phy_wr,
-    output scariv_pkg::phy_wr_t   o_fpnew_phy_wr,
+    early_wr_if.master mv_early_wr_if,
+    phy_wr_if.master   mv_phy_wr_if,
+    phy_wr_if.master   fpnew_phy_wr_if,
 
-    output scariv_pkg::done_rpt_t o_mv_done_report,
-    output scariv_pkg::done_rpt_t o_fp_done_report,
+    done_report_if.master         mv_done_report_if,
+    done_report_if.master         fp_done_report_if,
 
     // Commit notification
     commit_if.monitor commit_if,
@@ -106,9 +106,9 @@ u_scariv_issue_unit
 
    .i_stall    (w_fpnew_block),
 
-   .i_early_wr(i_early_wr),
-   .i_phy_wr  (i_phy_wr),
-   .i_mispred_lsu (i_mispred_lsu),
+   .early_wr_if(early_wr_if),
+   .phy_wr_if  (phy_wr_if),
+   .mispred_if (mispred_if),
 
    .o_issue(w_ex0_issue),
    .o_iss_index_oh(w_ex0_index_oh),
@@ -136,7 +136,7 @@ u_fpu
 
    .ex0_issue(w_ex0_issue),
    .ex0_index(w_ex0_index_oh),
-   .ex1_i_phy_wr(i_phy_wr),
+   .ex1_phy_wr_if(phy_wr_if),
 
    .ex0_regread_int_rs1(ex0_regread_int_rs1),
 
@@ -144,14 +144,14 @@ u_fpu
    .ex0_regread_rs2(ex0_regread_rs2),
    .ex0_regread_rs3(ex0_regread_rs3),
 
-   .i_mispred_lsu (i_mispred_lsu),
+   .mispred_if (mispred_if),
 
-   .o_ex1_mv_early_wr(o_ex1_mv_early_wr),
-   .o_ex3_mv_phy_wr  (o_ex3_mv_phy_wr  ),
-   .o_mv_done_report (o_mv_done_report ),
+   .ex1_mv_early_wr_if (mv_early_wr_if   ),
+   .ex3_mv_phy_wr_if   (mv_phy_wr_if     ),
+   .mv_done_report_if  (mv_done_report_if),
 
-   .o_fpnew_phy_wr   (o_fpnew_phy_wr   ),
-   .o_fp_done_report (o_fp_done_report )
+   .fpnew_phy_wr_if   (fpnew_phy_wr_if   ),
+   .fp_done_report_if (fp_done_report_if )
    );
 
 

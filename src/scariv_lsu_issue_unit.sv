@@ -34,13 +34,13 @@ module scariv_lsu_issue_unit
   input logic                           i_stall,
 
   /* Forwarding path */
-  input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-  input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
+  early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
+  phy_wr_if.slave   phy_wr_if  [scariv_pkg::TGT_BUS_SIZE],
 
   output scariv_lsu_pkg::lsu_issue_entry_t o_issue,
   output [ENTRY_SIZE-1:0]                  o_iss_index_oh,
 
-  input scariv_pkg::mispred_t           i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+  lsu_mispred_if.slave           mispred_if[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
   input ex1_q_update_t                  i_ex1_updates,
   input logic                           i_tlb_resolve,
@@ -52,8 +52,6 @@ module scariv_lsu_issue_unit
   input logic                           i_stq_rmw_existed,
 
   done_if.slave                         pipe_done_if,
-
-  output scariv_pkg::done_rpt_t         o_done_report,
 
   // Commit notification
   commit_if.monitor          commit_if,
@@ -77,9 +75,6 @@ logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_finish;
 logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
-logic [ENTRY_SIZE-1: 0]         w_entry_done;
-logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
-scariv_pkg::done_rpt_t          w_entry_done_report[ENTRY_SIZE];
 
 logic                                w_flush_valid;
 assign w_flush_valid = commit_if.is_flushed_commit();
@@ -180,18 +175,18 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
   assign w_rs1_rnid = i_disp_info[idx].rd_regs[0].rnid;
   assign w_rs1_type = i_disp_info[idx].rd_regs[0].typ ;
 
-  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .early_wr_if (early_wr_if),
                                            .o_valid   (w_rs1_rel_hit), .o_hit_index (w_rs1_rel_index), .o_may_mispred (w_rs1_may_mispred));
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .phy_wr_if   (phy_wr_if),
                                         .o_valid      (w_rs1_phy_hit));
-  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
+  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (mispred_if),
                                         .o_mispred    (w_rs1_mispredicted));
 
   assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], i_cmt_id, i_grp_id[idx],
                                                      w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred, w_rs1_rel_index,
                                                      i_stq_rmw_existed, w_disp_oldest_valid[idx]);
 
-  decoder_lsu_sched u_csu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
+  decoder_lsu_sched u_lsu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
 
 end endgenerate
 
@@ -232,10 +227,10 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr(i_phy_wr),
+    .early_wr_if(early_wr_if),
+    .phy_wr_if(phy_wr_if),
 
-    .i_mispred_lsu (i_mispred_lsu),
+    .mispred_if (mispred_if),
     .i_ex1_updates (i_ex1_updates),
     .i_tlb_resolve        (i_tlb_resolve       ),
     .i_ex2_updates        (i_ex2_updates       ),
@@ -253,8 +248,6 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_entry_picked    (w_picked_inst_oh[s_idx] & ~i_stall)
   );
 
-  assign w_entry_done[s_idx] = w_entry_done_report[s_idx].valid;
-
 end
 endgenerate
 
@@ -263,11 +256,6 @@ assign o_iss_index_oh = w_picked_inst_oh;
 // Clear selection
 assign w_entry_finish_oh = w_entry_finish & w_entry_out_ptr_oh;
 
-// --------------
-// Done signals
-// --------------
-bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_done_oh));
-bit_oh_or #(.T(scariv_pkg::done_rpt_t), .WORDS(ENTRY_SIZE)) bit_oh_done_report  (.i_oh(w_entry_done_oh), .i_data(w_entry_done_report), .o_selected(o_done_report ));
 
 `ifdef SIMULATION
 typedef struct packed {

@@ -105,7 +105,7 @@ assign w_init_load = assign_st_buffer(
                                       st_buffer_if.cmt_id, st_buffer_if.grp_id,
 `endif // SIMULATION
                                       st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
-                                      st_buffer_if.is_rmw, st_buffer_if.rmwop, st_buffer_if.is_amo);
+                                      st_buffer_if.rmwop, st_buffer_if.size);
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept       ? ST_BUF_MERGE :
@@ -182,13 +182,13 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
     assign w_ex2_rmw_order_haz_vld[p_idx][e_idx] = w_entries[e_idx].valid &
-                                                   w_entries[e_idx].is_rmw &
+                                                   (w_entries[e_idx].rmwop != decoder_lsu_ctrl_pkg::RMWOP__) &
                                                    rmw_order_check_if[p_idx].ex2_valid;
   end // block: rmw_order_haz_loop
 
   // MSHR L1D update & Merge
   assign w_entry_l1d_merge_hit[e_idx] = w_entries[e_idx].valid & (w_state[e_idx] == ST_BUF_WAIT_REFILL) &
-                                        ~w_entries[e_idx].is_rmw &
+                                        (w_entries[e_idx].rmwop == decoder_lsu_ctrl_pkg::RMWOP__) &
                                         |(w_entries[e_idx].missu_index_oh & mshr_stbuf_search_if.mshr_index_oh);
 
 end // block: entry_loop
@@ -343,17 +343,20 @@ generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) 
   st_buffer_entry_t w_fwd_entry;
   bit_oh_or #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE)) fwd_select_entry (.i_data(w_entries), .i_oh(st_buf_hit_array), .o_selected(w_fwd_entry));
 
-  logic dw_upper;
-  assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
-
   assign stbuf_fwd_check_if[p_idx].fwd_valid = |st_buf_hit_array;
-  assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[scariv_pkg::ALEN_W/8 +: scariv_pkg::ALEN_W/8] :
-                                               w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
-  assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[scariv_pkg::ALEN_W +: scariv_pkg::ALEN_W] :
-                                               w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  if (ST_BUF_WIDTH == scariv_pkg::ALEN_W * 2) begin
+    logic dw_upper;
+    assign dw_upper = stbuf_fwd_check_if[p_idx].paddr[$clog2(ST_BUF_WIDTH/8)-1];
 
-  end // block: lsu_fwd_loop
-endgenerate
+    assign stbuf_fwd_check_if[p_idx].fwd_dw    = dw_upper ? w_fwd_entry.strb[scariv_pkg::ALEN_W/8 +: scariv_pkg::ALEN_W/8] :
+                                                 w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
+    assign stbuf_fwd_check_if[p_idx].fwd_data  = dw_upper ? w_fwd_entry.data[scariv_pkg::ALEN_W +: scariv_pkg::ALEN_W] :
+                                                 w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  end else begin
+    assign stbuf_fwd_check_if[p_idx].fwd_dw    = w_fwd_entry.strb[scariv_pkg::ALEN_W/8-1: 0];
+    assign stbuf_fwd_check_if[p_idx].fwd_data  = w_fwd_entry.data[scariv_pkg::ALEN_W-1: 0];
+  end
+end endgenerate // block: lsu_fwd_loop
 
 // --------------
 // AMO Operation
@@ -361,10 +364,12 @@ endgenerate
 
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_amo_valids;
 decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop[ST_BUF_ENTRY_SIZE];
+decoder_lsu_ctrl_pkg::size_t   w_amo_size [ST_BUF_ENTRY_SIZE];
 riscv_pkg::xlen_t              w_amo_data0[ST_BUF_ENTRY_SIZE];
 riscv_pkg::xlen_t              w_amo_data1[ST_BUF_ENTRY_SIZE];
 
 decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop_sel;
+decoder_lsu_ctrl_pkg::size_t   w_amo_size_sel;
 riscv_pkg::xlen_t              w_amo_data0_sel;
 riscv_pkg::xlen_t              w_amo_data1_sel;
 riscv_pkg::xlen_t              w_amo_op_result;
@@ -375,12 +380,14 @@ u_amo_op
    .i_data0 (w_amo_data0_sel),
    .i_data1 (w_amo_data1_sel),
    .i_op    (w_amo_rmwop_sel),
+   .i_size  (w_amo_size_sel ),
    .o_data  (w_amo_op_result)
    );
 
 generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : amo_loop
   assign w_amo_valids[e_idx] = w_amo_op_if[e_idx].valid;
   assign w_amo_rmwop[e_idx] = w_amo_op_if[e_idx].rmwop;
+  assign w_amo_size [e_idx] = w_amo_op_if[e_idx].size;
   assign w_amo_data0[e_idx] = w_amo_op_if[e_idx].data0;
   assign w_amo_data1[e_idx] = w_amo_op_if[e_idx].data1;
 
@@ -389,6 +396,7 @@ end
 endgenerate
 
 bit_oh_or #(.T(decoder_lsu_ctrl_pkg::rmwop_t), .WORDS(ST_BUF_ENTRY_SIZE)) amo_rmwop_sel (.i_oh(w_amo_valids), .i_data(w_amo_rmwop), .o_selected(w_amo_rmwop_sel));
+bit_oh_or #(.T(decoder_lsu_ctrl_pkg::size_t),  .WORDS(ST_BUF_ENTRY_SIZE)) amo_size_sel  (.i_oh(w_amo_valids), .i_data(w_amo_size),  .o_selected(w_amo_size_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data0_sel (.i_oh(w_amo_valids), .i_data(w_amo_data0), .o_selected(w_amo_data0_sel));
 bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data1_sel (.i_oh(w_amo_valids), .i_data(w_amo_data1), .o_selected(w_amo_data1_sel));
 

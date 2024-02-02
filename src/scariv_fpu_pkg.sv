@@ -19,7 +19,14 @@ import decoder_fpu_ctrl_pkg::*;
   };
 
   localparam fpnew_pkg::fpu_implementation_t SCARIV_FPNEW_IMPL = '{
-    PipeRegs:   '{default: scariv_conf_pkg::FPNEW_LATENCY},
+    PipeRegs:   '{'{unsigned'(scariv_conf_pkg::FPNEW_LATENCY),
+                    unsigned'(scariv_conf_pkg::FPNEW_LATENCY),
+                    unsigned'(scariv_conf_pkg::FPNEW_LATENCY),
+                    unsigned'(scariv_conf_pkg::FPNEW_LATENCY),
+                    unsigned'(scariv_conf_pkg::FPNEW_LATENCY)},
+                  '{default: unsigned'(scariv_conf_pkg::FPNEW_LATENCY-1)},
+                  '{default: unsigned'(scariv_conf_pkg::FPNEW_LATENCY)},
+                  '{default: unsigned'(scariv_conf_pkg::FPNEW_LATENCY)}},
     UnitTypes:  '{'{default: fpnew_pkg::MERGED}, // ADDMUL
                   '{default: fpnew_pkg::MERGED}, // DIVSQRT
                   '{default: fpnew_pkg::PARALLEL}, // NONCOMP

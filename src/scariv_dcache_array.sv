@@ -86,7 +86,7 @@ logic [READ_PORT_NUM-1: 0]                       w_update_tag_valid;
 logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]       w_update_tag_addr[READ_PORT_NUM];
 
 // Selection of Request from LSU ports
-generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : lsu_loop
+generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : rd_port_loop
   assign w_s0_dc_read_req_valid[p_idx] = i_dc_read_req[p_idx].valid;
   assign w_s0_dc_read_priority [p_idx] = i_dc_read_req[p_idx].valid & i_dc_read_req[p_idx].high_priority;
 

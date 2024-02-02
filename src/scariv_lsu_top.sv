@@ -48,17 +48,17 @@ module scariv_lsu_top
     l2_resp_if.slave  l1d_ext_resp,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+    early_wr_if.slave early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+    phy_wr_if.slave   phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr[scariv_conf_pkg::LSU_INST_NUM],
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr  [scariv_conf_pkg::LSU_INST_NUM],
+    early_wr_if.master    early_wr_out_if[scariv_conf_pkg::LSU_INST_NUM],
+    phy_wr_if.master      phy_wr_out_if  [scariv_conf_pkg::LSU_INST_NUM],
+    lsu_mispred_if.master mispred_out_if [scariv_conf_pkg::LSU_INST_NUM],
 
-    output scariv_pkg::done_rpt_t      o_done_report          [scariv_conf_pkg::LSU_INST_NUM],  // LDQ done report, STQ done report
-    output scariv_pkg::another_flush_t o_another_flush_report [scariv_conf_pkg::LSU_INST_NUM],
+    done_report_if.master   done_report_if [scariv_conf_pkg::LSU_INST_NUM],
+    flush_report_if.master flush_report_if [scariv_conf_pkg::LSU_INST_NUM],
 
-    output scariv_pkg::mispred_t  o_ex2_mispred[scariv_conf_pkg::LSU_INST_NUM],
 
     // Internal Broadcast Interface
     snoop_info_if.monitor snoop_info_if,
@@ -114,6 +114,8 @@ logic     w_missu_is_full;
 logic     w_missu_is_empty;
 logic     w_stq_rmw_existed;
 
+lsu_mispred_if w_mispred_if [scariv_conf_pkg::LSU_INST_NUM]();
+
 stq_resolve_t w_stq_rs2_resolve;
 
 l2_req_if    w_l1d_ext_req[2]();
@@ -128,8 +130,6 @@ done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
-
-scariv_pkg::done_rpt_t w_done_report[scariv_conf_pkg::LSU_INST_NUM];
 
 missu_fwd_if w_missu_fwd_if [scariv_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
@@ -167,7 +167,12 @@ assign w_sfence_if_slave.is_rs1_x0 = sfence_if.is_rs1_x0;
 assign w_sfence_if_slave.is_rs2_x0 = sfence_if.is_rs2_x0;
 assign w_sfence_if_slave.vaddr     = sfence_if.vaddr;
 
+
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
+
+  assign w_mispred_if[lsu_idx].mis_valid = mispred_out_if[lsu_idx].mis_valid;
+  assign w_mispred_if[lsu_idx].rd_type   = mispred_out_if[lsu_idx].rd_type  ;
+  assign w_mispred_if[lsu_idx].rd_rnid   = mispred_out_if[lsu_idx].rd_rnid  ;
 
   scariv_lsu
   #(
@@ -189,9 +194,9 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 
     .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
 
-    .i_early_wr(i_early_wr),
-    .i_phy_wr  (i_phy_wr),
-    .i_mispred_lsu (o_ex2_mispred),
+    .early_wr_in_if(early_wr_in_if),
+    .phy_wr_in_if  (phy_wr_in_if  ),
+    .mispred_in_if (w_mispred_if  ),
 
     .ex2_fwd_check_if (w_ex2_fwd_check[lsu_idx]),
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
@@ -223,17 +228,17 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_missu_is_full (w_missu_is_full),
     .i_missu_is_empty (w_missu_is_empty),
 
-    .o_ex1_early_wr(o_ex1_early_wr[lsu_idx]),
-    .o_ex3_phy_wr  (o_ex3_phy_wr  [lsu_idx]),
+    .early_wr_out_if (early_wr_out_if[lsu_idx]),
+    .mispred_out_if  (mispred_out_if [lsu_idx]),
+    .phy_wr_out_if   (phy_wr_out_if  [lsu_idx]),
 
     .sfence_if_master (w_sfence_if_inst[lsu_idx]),
     .o_fence_i (w_fence_i[lsu_idx]),
 
     .commit_if (commit_if),
 
-    .o_ex2_mispred          (o_ex2_mispred         [lsu_idx]),
-    .o_done_report          (o_done_report         [lsu_idx]),
-    .o_another_flush_report (o_another_flush_report[lsu_idx]),
+    .done_report_if         (done_report_if [lsu_idx]),
+    .flush_report_if        (flush_report_if[lsu_idx]),
     .br_upd_if              (br_upd_if             )
    );
 
@@ -283,8 +288,7 @@ u_ldq
  .uc_write_if  (w_uc_write_if),
 
  .commit_if (commit_if),
- .br_upd_if (br_upd_if),
- .o_done_report()
+ .br_upd_if (br_upd_if)
  );
 
 
@@ -303,16 +307,13 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
- .i_early_wr    (i_early_wr),
- .i_phy_wr      (i_phy_wr  ),
- .i_mispred_lsu (o_ex2_mispred),
+ .phy_wr_in_if   (phy_wr_in_if  ),
 
- .i_tlb_resolve  (w_tlb_resolve  ),
  .i_ex1_q_updates(w_ex1_q_updates),
  .i_ex2_q_updates(w_ex2_q_updates),
 
-  .int_rs2_regread (int_rs2_regread),
-  .fp_rs2_regread  (fp_rs2_regread ),
+ .int_rs2_regread (int_rs2_regread),
+ .fp_rs2_regread  (fp_rs2_regread ),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
  .stq_haz_check_if (w_stq_haz_check_if),
@@ -490,21 +491,37 @@ assign lsu_access.status = w_l1d_rd_if[L1D_PTW_PORT].s1_conflict ? STATUS_L1D_CO
                            w_l1d_rd_if[L1D_PTW_PORT].s1_hit      ? STATUS_HIT :
                            w_l1d_rd_if[L1D_PTW_PORT].s1_miss     ? STATUS_MISS :
                            STATUS_NONE;
-// assign lsu_access.missu_conflicted_idx_oh   = r_ptw_missu_resp_missu_index_oh;
-assign lsu_access.missu_conflicted_idx_oh = 'h0;
-assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
-assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
-assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
 
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_ptw_resp_valid    <= 1'b0;
-    r_ptw_paddr_sel     <= 'h0;
-  end else begin
-    r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(scariv_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
-    r_ptw_resp_valid            <= lsu_access.req_valid;
+generate if (scariv_conf_pkg::DCACHE_DATA_W == riscv_pkg::XLEN_W) begin : lsu_access_1
+  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data;
+  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ptw_resp_valid <= 1'b0;
+    end else begin
+      r_ptw_resp_valid <= lsu_access.req_valid;
+    end
   end
-end
+end else begin : lsu_access_2
+  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.data                    = w_l1d_rd_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
+  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_ptw_resp_valid    <= 1'b0;
+      r_ptw_paddr_sel     <= 'h0;
+    end else begin
+      r_ptw_paddr_sel             <= lsu_access.paddr[$clog2(riscv_pkg::XLEN_W / 8) +: $clog2(scariv_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)];
+      r_ptw_resp_valid            <= lsu_access.req_valid;
+    end
+  end
+end endgenerate // block: lsu_access_2
+
 
 // ---------------------------
 //  L1D Snoop Interface

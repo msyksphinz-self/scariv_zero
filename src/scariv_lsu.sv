@@ -31,9 +31,9 @@ module scariv_lsu
     regread_if.master ex1_regread_rs1,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr  [scariv_pkg::TGT_BUS_SIZE],
-    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+    early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+    phy_wr_if.slave       phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
+    lsu_mispred_if.slave  mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
     // STQ Forwarding checker
     fwd_check_if.master           ex2_fwd_check_if,
@@ -83,15 +83,15 @@ module scariv_lsu
     input stq_resolve_t     i_stq_rs2_resolve,
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+    early_wr_if.master    early_wr_out_if,
+    phy_wr_if.master      phy_wr_out_if,
+    lsu_mispred_if.master mispred_out_if,
 
     // Commit notification
     commit_if.monitor commit_if,
 
-    output scariv_pkg::mispred_t       o_ex2_mispred,
-    output scariv_pkg::done_rpt_t      o_done_report,
-    output scariv_pkg::another_flush_t o_another_flush_report,
+    done_report_if.master      done_report_if,
+    flush_report_if.master     flush_report_if,
 
     /* SFENCE update information */
     sfence_if.master            sfence_if_master,
@@ -118,10 +118,6 @@ logic [LSU_ISS_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
 lsu_pipe_haz_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_haz_if ();
 lsu_pipe_req_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_req_if ();
-
-done_if              w_ex3_done_if();
-scariv_pkg::cmt_id_t w_ex3_cmt_id;
-scariv_pkg::grp_id_t w_ex3_grp_id;
 
 logic w_replay_queue_full;
 
@@ -175,16 +171,14 @@ u_issue_unit
 
   .pipe_done_if (ex3_internal_done_if),
 
-  .o_done_report (),
-
   .commit_if  (commit_if),
   .br_upd_if (br_upd_if),
 
   // .request_if (request_if),
 
-  .i_early_wr    (i_early_wr),
-  .i_phy_wr      (i_phy_wr  ),
-  .i_mispred_lsu (i_mispred_lsu)
+  .early_wr_if (early_wr_in_if),
+  .phy_wr_if   (phy_wr_in_if  ),
+  .mispred_if  (mispred_in_if )
 );
 
 
@@ -284,20 +278,19 @@ u_lsu_pipe
    .csr_info (csr_info),
    .sfence_if_slave(sfence_if_slave),
 
-   .ex1_i_phy_wr (i_phy_wr),
+   .mispred_if (mispred_in_if),
+   .ex1_phy_wr_if (phy_wr_in_if),
 
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
    .ex0_regread_rs1(ex1_regread_rs1),
 
-   .i_mispred_lsu (i_mispred_lsu),
-
-   .o_ex1_early_wr(o_ex1_early_wr),
-   .o_ex3_phy_wr (o_ex3_phy_wr),
+   .ex1_early_wr_out_if(early_wr_out_if),
+   .ex3_phy_wr_out_if  (phy_wr_out_if),
+   .ex2_mispred_out_if (mispred_out_if),
 
    .ex1_l1d_rd_if (l1d_rd_if),
-   .o_ex2_mispred (o_ex2_mispred),
 
    .ptw_if(ptw_if),
    .l1d_missu_if (l1d_missu_if),
@@ -324,22 +317,8 @@ u_lsu_pipe
    .sfence_if_master (sfence_if_master),
    .o_fence_i (o_fence_i),
 
-   .ex3_done_if (w_ex3_done_if),
-   .o_ex3_cmt_id (w_ex3_cmt_id),
-   .o_ex3_grp_id (w_ex3_grp_id)
+   .done_report_if  (done_report_if ),
+   .flush_report_if (flush_report_if)
 );
-
-assign o_done_report.valid               = w_ex3_done_if.done;
-assign o_done_report.cmt_id              = w_ex3_cmt_id;
-assign o_done_report.grp_id              = w_ex3_grp_id;
-assign o_done_report.except_valid        = w_ex3_done_if.payload.except_valid       ;
-assign o_done_report.except_type         = w_ex3_done_if.payload.except_type        ;
-assign o_done_report.except_tval         = w_ex3_done_if.payload.except_tval        ;
-assign o_done_report.fflags_update_valid = w_ex3_done_if.payload.fflags_update_valid;
-assign o_done_report.fflags              = w_ex3_done_if.payload.fflags             ;
-
-assign o_another_flush_report.valid  = w_ex3_done_if.payload.another_flush_valid ;
-assign o_another_flush_report.cmt_id = w_ex3_done_if.payload.another_flush_cmt_id;
-assign o_another_flush_report.grp_id = w_ex3_done_if.payload.another_flush_grp_id;
 
 endmodule // scariv_lsu

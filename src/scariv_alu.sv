@@ -28,15 +28,15 @@ module scariv_alu #(
     regread_if.master ex1_regread_rs2,
 
     /* Forwarding path */
-    input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
-    input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+    early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+    phy_wr_if.slave       phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
+    lsu_mispred_if.slave  mispred_in_if [scariv_conf_pkg::LSU_INST_NUM],
 
     /* write output */
-    output scariv_pkg::early_wr_t o_ex1_early_wr,
-    output scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+    early_wr_if.master early_wr_out_if,
+    phy_wr_if.master   phy_wr_out_if,
 
-    output scariv_pkg::done_rpt_t o_done_report,
+    done_report_if.master done_report_if,
     // Commit notification
     commit_if.monitor commit_if,
     br_upd_if.slave              br_upd_if
@@ -96,9 +96,9 @@ u_scariv_issue_unit
 
    .i_stall    (w_muldiv_stall),
 
-   .i_early_wr(i_early_wr),
-   .i_phy_wr  (i_phy_wr),
-   .i_mispred_lsu (i_mispred_lsu),
+   .early_wr_if(early_wr_in_if),
+   .phy_wr_if  (phy_wr_in_if  ),
+   .mispred_if (mispred_in_if ),
 
    .o_issue(w_rv0_issue),
    .o_iss_index_oh(w_rv0_index_oh),
@@ -122,19 +122,19 @@ u_alu
 
    .rv0_issue(w_rv0_issue),
    .rv0_index(w_rv0_index_oh),
-   .ex1_i_phy_wr(i_phy_wr),
+   .ex1_phy_wr_if(phy_wr_in_if),
 
    .o_muldiv_stall(w_muldiv_stall),
 
    .ex0_regread_rs1(ex1_regread_rs1),
    .ex0_regread_rs2(ex1_regread_rs2),
 
-   .i_mispred_lsu (i_mispred_lsu),
+   .mispred_lsu_if (mispred_in_if),
 
-   .o_ex0_early_wr(o_ex1_early_wr),
-   .o_ex2_phy_wr (o_ex3_phy_wr),
+   .ex0_early_wr_if(early_wr_out_if),
+   .ex2_phy_wr_if  (phy_wr_out_if  ),
 
-   .o_done_report (o_done_report)
+   .done_report_if (done_report_if)
    );
 
 

@@ -8,7 +8,6 @@ module bit_brshift
  output logic [WIDTH-1:0] out
  );
 
-genvar                    a, i, j;
 logic [WIDTH-1:0] bus_array[WIDTH];
 
 generate for(genvar i = 0; i < WIDTH; i++) begin : gen_outer

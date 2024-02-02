@@ -31,10 +31,10 @@ import scariv_lsu_pkg::*;
    output scariv_lsu_pkg::lsu_issue_entry_t o_entry,
 
    /* Forwarding path */
-   input scariv_pkg::early_wr_t i_early_wr[scariv_pkg::REL_BUS_SIZE],
-   input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
 
-   input scariv_pkg::mispred_t  i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+   lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
    input ex1_q_update_t         i_ex1_updates,
    input logic                  i_tlb_resolve,
@@ -102,11 +102,11 @@ endfunction // all_operand_ready
 
 assign w_rs1_rnid = r_entry.rd_regs[0].rnid;
 assign w_rs1_type = r_entry.rd_regs[0].typ;
-select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_early_wr (i_early_wr),
+select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .early_wr_if (early_wr_if),
                                          .o_valid   (w_rs1_rel_hit), .o_hit_index (w_rs1_rel_index), .o_may_mispred (w_rs1_may_mispred));
-select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_phy_wr   (i_phy_wr),
+select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .phy_wr_if   (phy_wr_if),
                                       .o_valid   (w_rs1_phy_hit));
-select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (i_mispred_lsu),
+select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (mispred_if),
                                       .o_mispred (w_rs1_mispredicted));
 
 assign w_rs1_pred_mispredicted = r_entry.rd_regs[0].predict_ready & w_rs1_mispredicted;
@@ -181,7 +181,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
       end else if (i_ex2_updates.update) begin
-        if ((i_ex2_updates.hazard_typ != EX2_HAZ_NONE) & i_replay_queue_full) begin
+        if (!i_ex2_updates.success & i_replay_queue_full) begin
           w_entry_next.haz_reason = LSU_ISSUE_HAZ_REPLAY_FULL;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_HAZ_WAIT;
         end else begin
@@ -270,7 +270,7 @@ end
 
 assign w_inst_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
                              ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
-assign w_oldest_ready = r_entry.oldest_valid &  & i_st_buffer_empty & i_missu_is_empty & i_out_ptr_valid;
+assign w_oldest_ready = r_entry.oldest_valid & i_st_buffer_empty & ~i_stq_rmw_existed & i_missu_is_empty & i_out_ptr_valid;
 
 assign w_pc_update_before_entry = 1'b0;
 

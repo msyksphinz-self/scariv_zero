@@ -36,7 +36,7 @@ module scariv_csu_issue_unit
  input logic                           i_stall,
 
  /* Forwarding path */
- input scariv_pkg::phy_wr_t            i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+ phy_wr_if.slave            phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
  output scariv_csu_pkg::issue_t            o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
@@ -244,7 +244,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .o_entry_ready(w_entry_ready[s_idx]),
     .o_entry(w_entry[s_idx]),
 
-    .i_phy_wr(i_phy_wr),
+    .phy_wr_if(phy_wr_if),
 
     .commit_if  (commit_if),
     .br_upd_if (br_upd_if),

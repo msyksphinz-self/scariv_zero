@@ -32,12 +32,14 @@ import_files ../../src/$::env(FPU_FILE)
 add_files -norecurse ../../src/$::env(RV_FILE)
 import_files ../../src/$::env(RV_FILE)
 
-puts $::env(CONF_FILE)
-add_files -norecurse ../../src/$::env(CONF_FILE)
-import_files ../../src/$::env(CONF_FILE)
+add_files -norecurse ../../configs/$::env(CONF_FILE)
+import_files ../../configs/$::env(CONF_FILE)
+# add_files -norecurse ../../src/scariv_standard_conf_pkg.sv
+# import_files ../../src/scariv_standard_conf_pkg.sv
 
 add_files -norecurse ../../src/$::env(VPU_FILE)
 import_files ../../src/$::env(VPU_FILE)
+>>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
 
 # add_files -norecurse $RTL_ROOT_DIR
 source filelist.tcl
@@ -49,8 +51,11 @@ read_xdc ../synth_constraints.xdc
 # read_xdc dont_touch.xdc
 # set_property used_in_implementation false [get_files dont_touch.xdc]
 
+# set FLATTEN_HIERARCHY rebuilt
+set FLATTEN_HIERARCHY none
+
 synth_design -top ${TOP_NAME} -part $DEVICE_NAME -fanout_limit 10000 \
-    -flatten_hierarchy rebuilt \
+    -flatten_hierarchy ${FLATTEN_HIERARCHY} \
     -include_dir ../../src/fpnew/src/common_cells/include \
     -include_dir ../../src \
     -retiming \
@@ -62,7 +67,7 @@ report_utilization -file ${TOP_NAME}.area.hier2.rpt -hierarchical -hierarchical_
 report_utilization -file ${TOP_NAME}.area.hier3.rpt -hierarchical -hierarchical_depth 3
 report_utilization -file ${TOP_NAME}.area.hier.rpt  -hierarchical
 
-set regs [get_cells -hier -filter {PRIMITIVE_TYPE =~ REGISTER*}]
+set regs [all_registers]
 set fp [open ${TOP_NAME}_ff_list.txt w]
 foreach reg $regs {
     puts $fp $reg
@@ -78,7 +83,7 @@ close $fp
 
 write_verilog -force -mode design ${TOP_NAME}.synth.v
 
-write_verilog -force -mode design -cell scariv_stq_entry scariv_stq_entry.synth.v
+# write_verilog -force -mode design -cell scariv_stq_entry scariv_stq_entry.synth.v
 
 report_timing_summary -max_paths 100 -nworst 500 -file ${TOP_NAME}_timing_summary_synth.rpt
 report_timing -max_paths 100 -nworst 500 -file ${TOP_NAME}_timing_synth.rpt

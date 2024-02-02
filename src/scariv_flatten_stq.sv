@@ -1,12 +1,12 @@
 // ------------------------------------------------------------------------
-// NAME : scariv_stq
+// NAME : scariv_flatten_stq
 // TYPE : module
 // ------------------------------------------------------------------------
-// Store Queue
+// Store Queue that each entry flatten
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
-module scariv_stq
+module scariv_flatten_stq
   import scariv_lsu_pkg::*;
   import decoder_lsu_ctrl_pkg::*;
   (
@@ -21,11 +21,14 @@ module scariv_stq
     cre_ret_if.slave                                   cre_ret_if,
 
    /* Forwarding path */
+   early_wr_if.slave    early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
    phy_wr_if.slave      phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+   lsu_mispred_if.slave mispred_in_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // Updates from LSU Pipeline EX1 stage
-   input ex1_q_update_t i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
+   input ex1_q_update_t        i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
+   input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] i_tlb_resolve,
    input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
 
    // Store Data Read Interface
@@ -72,7 +75,7 @@ logic [scariv_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [$clog2(scariv_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
-stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
+stq_entry_t r_stq_entries[scariv_conf_pkg::STQ_SIZE];
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 
@@ -228,15 +231,15 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   // Selection of EX1 Update signal
   ex1_q_update_t w_ex1_q_updates;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_stq_entries[s_idx].inst.cmt_id), .grp_id(w_stq_entries[s_idx].inst.grp_id),
+  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(r_stq_entries[s_idx].inst.cmt_id), .grp_id(r_stq_entries[s_idx].inst.grp_id),
                                          .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
   // Selection of EX2 Update signal
   ex2_q_update_t w_ex2_q_updates;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
   ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .i_cmt_id(w_stq_entries[s_idx].inst.cmt_id),
-                                         .i_grp_id(w_stq_entries[s_idx].inst.grp_id),
+                                         .i_cmt_id(r_stq_entries[s_idx].inst.cmt_id),
+                                         .i_grp_id(r_stq_entries[s_idx].inst.grp_id),
                                          .i_ex2_recv(r_ex2_stq_entries_recv),
                                          .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
@@ -260,125 +263,199 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .master_if (w_ex3_done_sel_if)
      );
 
-  // ---------------
-  // STQ Snoop If
-  // ---------------
-  // assign stq_entry_snoop_if.req_s0_valid = stq_snoop_if.req_s0_valid;
-  // assign stq_entry_snoop_if.req_s0_paddr = stq_snoop_if.req_s0_paddr;
-  //
-  // assign w_stq_snoop_valid[s_idx] = stq_entry_snoop_if.resp_s1_valid;
-  // assign w_stq_snoop_data [s_idx] = stq_entry_snoop_if.resp_s1_data;
-  // assign w_stq_snoop_be   [s_idx] = stq_entry_snoop_if.resp_s1_be;
+  /* verilator lint_off UNOPTFLAT */
+  stq_entry_t                          w_entry_next;
+  logic                                w_entry_flush;
+  logic                                w_commit_flush;
+  logic                                w_br_flush;
+  logic                                w_rob_except_flush;
+  logic                                w_load_br_flush;
+  logic                                w_load_commit_flush;
+  logic                                w_ready_to_mv_stbuf;
 
-  scariv_stq_entry
-    #(.entry_index (s_idx))
-  u_entry
-    (
-     .i_clk     (i_clk    ),
-     .i_reset_n (i_reset_n),
+  scariv_pkg::rnid_t                   w_rs2_rnid;
+  scariv_pkg::reg_t                    w_rs2_type;
+  logic                                w_rs2_rel_hit;
+  logic                                w_rs2_phy_hit;
+  logic                                w_rs2_may_mispred;
+  logic                                w_rs2_mispredicted;
+  scariv_pkg::alen_t                   w_rs2_phy_data;
+  logic                                w_entry_rs2_ready_next;
+  logic                                r_rs2_read_accepted;
 
-     .rob_info_if (rob_info_if),
+  assign w_rs2_rnid = |w_input_valid ? w_disp_entry.rd_regs[1].rnid : r_stq_entries[s_idx].inst.rd_reg.rnid;
+  assign w_rs2_type = |w_input_valid ? w_disp_entry.rd_regs[1].typ  : r_stq_entries[s_idx].inst.rd_reg.typ;
 
-     .i_disp_load       (|w_input_valid    ),
-     .i_disp_cmt_id     (disp.payload.cmt_id),
-     .i_disp_grp_id     (w_disp_grp_id     ),
-     .i_disp            (w_disp_entry      ),
-     .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
+  select_mispred_bus  rs2_mispred_select(.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .i_mispred  (mispred_in_if),
+                                         .o_mispred (w_rs2_mispredicted));
+  assign w_rs2_rel_hit = 1'b0;
+  select_phy_wr_data rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if),
+                                     .o_valid (w_rs2_phy_hit), .o_data (w_rs2_phy_data));
 
-     .phy_wr_in_if   (phy_wr_in_if  ),
+  assign w_rob_except_flush = (rob_info_if.cmt_id == r_stq_entries[s_idx].inst.cmt_id) & |(rob_info_if.except_valid & rob_info_if.done_grp_id & r_stq_entries[s_idx].inst.grp_id);
+  assign w_commit_flush = commit_if.is_commit_flush_target(r_stq_entries[s_idx].inst.cmt_id, r_stq_entries[s_idx].inst.grp_id) & r_stq_entries[s_idx].is_valid;
+  assign w_br_flush     = scariv_pkg::is_br_flush_target(r_stq_entries[s_idx].inst.cmt_id, r_stq_entries[s_idx].inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_stq_entries[s_idx].is_valid;
+  assign w_entry_flush  = w_commit_flush | w_br_flush | w_rob_except_flush;
 
-     .i_ex1_q_valid   (|w_ex1_q_valid),
-     .i_ex1_q_updates (w_ex1_q_updates),
+  assign w_load_br_flush = scariv_pkg::is_br_flush_target(disp.payload.cmt_id, w_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
+  assign w_load_commit_flush = commit_if.is_commit_flush_target(disp.payload.cmt_id, w_disp_grp_id);
 
-     .i_ex2_q_valid  (|w_ex2_q_valid),
-     .i_ex2_q_updates(w_ex2_q_updates),
+  assign w_entry_rs2_ready_next = r_stq_entries[s_idx].inst.rd_reg.ready |
+                                  w_rs2_phy_hit & !w_rs2_mispredicted;
 
-     .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data),
+  // assign w_ready_to_mv_stbuf = commit_if.commit_valid & (commit_if.payload.cmt_id == r_stq_entries[s_idx].inst.cmt_id);
+  scariv_pkg::grp_id_t w_prev_grp_id_mask;
+  assign w_prev_grp_id_mask = r_stq_entries[s_idx].inst.grp_id-1;
+  assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_stq_entries[s_idx].inst.cmt_id) &
+                               |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_stq_entries[s_idx].inst.grp_id) &
+                               ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-     .o_entry (w_stq_entries[s_idx]),
+  assign w_stbuf_req_valid[s_idx] = r_stq_entries[s_idx].is_valid & r_stq_entries[s_idx].is_committed &
+                                    r_stq_entries[s_idx].paddr_valid & (r_stq_entries[s_idx].is_sc ? r_stq_entries[s_idx].sc_success : ~r_stq_entries[s_idx].is_lr) &
+                                    ~r_stq_entries[s_idx].st_buf_finished & (r_stq_entries[s_idx].inst.rd_reg.valid ? r_stq_entries[s_idx].is_rs2_get : 1'b1) &
+                                    (r_stq_entries[s_idx].is_rmw ? st_buffer_if.is_empty & w_out_ptr_oh[s_idx]  : ~r_stq_entries[s_idx].is_uc);
+  assign w_uc_write_req_valid[s_idx] = r_stq_entries[s_idx].is_valid & r_stq_entries[s_idx].is_committed & r_stq_entries[s_idx].is_uc & r_stq_entries[s_idx].paddr_valid;
 
-     .i_missu_is_empty(i_missu_is_empty),
+  assign w_stq_entry_st_finish[s_idx] = r_stq_entries[s_idx].is_valid &
+                                        (r_stq_entries[s_idx].st_buf_finished |
+                                         r_stq_entries[s_idx].is_committed & r_stq_entries[s_idx].is_sc & ~r_stq_entries[s_idx].sc_success |
+                                         r_stq_entries[s_idx].is_committed & r_stq_entries[s_idx].is_lr |
+                                         r_stq_entries[s_idx].dead) &
+                                        w_out_ptr_oh[s_idx];
 
-     .commit_if (commit_if),
-     .br_upd_if (br_upd_if),
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_stq_entries[s_idx].is_valid <= 1'b0;
+    end else begin
+      r_stq_entries[s_idx] <= w_entry_next;
 
-     .o_stbuf_req_valid (w_stbuf_req_valid[s_idx]),
-     .i_stbuf_accept    (|w_stbuf_accept_array & (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL)),
+      r_rs2_read_accepted <= r_stq_entries[s_idx].inst.rd_reg.ready & w_stq_rs2_read_valids_oh[s_idx];
+    end
+  end
 
-     .o_uc_write_req_valid (w_uc_write_req_valid[s_idx]),
-     .i_uc_write_accept    (uc_write_if.ready),
+  always_comb begin
+    w_entry_next = r_stq_entries[s_idx];
 
-     // Snoop Interface
-     // .stq_snoop_if (stq_entry_snoop_if),
-
-     .i_st_buffer_empty (st_buffer_if.is_empty),
-
-     .ex3_done_if           (w_ex3_done_sel_if),
-     .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
-     .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
-     );
-
-    // If rs2 operand is already ready, store data is fetch directly
-    assign w_stq_rs2_read_valids[s_idx] = w_stq_entries[s_idx].is_valid &
-                                          !w_stq_entries[s_idx].dead &
-                                          !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_read_accepted &
-                                          w_stq_entries[s_idx].inst.rd_reg.valid &
-                                          w_stq_entries[s_idx].inst.rd_reg.ready;
-
-    assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
-                                  (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
-    for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
-      assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
+    w_entry_next.inst.rd_reg.ready = w_entry_rs2_ready_next | r_stq_entries[s_idx].inst.rd_reg.ready;
+    if (~w_entry_next.is_rs2_get) begin
+      if (r_rs2_read_accepted) begin
+        w_entry_next.rs2_data   = r_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data;
+        w_entry_next.is_rs2_get = 1'b1;
+      end
+      if (w_rs2_phy_hit) begin
+        w_entry_next.rs2_data   = w_rs2_phy_data;
+        w_entry_next.is_rs2_get = 1'b1;
+      end
     end
 
-    // Forwarding check
-    for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-      logic  w_entry_older_than_fwd;
-      logic  w_same_addr_region;
-      logic  w_same_dw;
-      logic [ 7: 0] w_entry_dw;
-      assign w_entry_dw = gen_dw(w_stq_entries[s_idx].size, w_stq_entries[s_idx].addr[2:0]);
-      assign w_same_dw = is_dw_included(w_stq_entries[s_idx].size, w_stq_entries[s_idx].addr[2:0],
-                                        ex2_fwd_check_if[p_idx].paddr_dw);
-      assign w_same_addr_region = w_stq_entries   [s_idx].addr [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
-                                  ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
+    if (!r_stq_entries[s_idx].is_valid) begin
+      if (|w_input_valid) begin
+        w_entry_next = assign_stq_disp(w_disp_entry, disp.payload.cmt_id, w_disp_grp_id,
+                                       1 << (s_idx % scariv_conf_pkg::LSU_INST_NUM),
+                                       w_rs2_rel_hit, w_rs2_phy_hit, w_rs2_may_mispred);
+        if (w_load_br_flush | w_load_commit_flush) begin
+          w_entry_next.dead = 1'b1;
+        end
+      end
+    end else if (r_stq_entries[s_idx].is_committed | r_stq_entries[s_idx].dead) begin
+      if (w_stq_entry_st_finish[s_idx]) begin
+        w_entry_next.is_valid = 1'b0;
+      end
+      if (w_stbuf_req_valid[s_idx] & |w_stbuf_accept_array & (st_buffer_if.resp != scariv_lsu_pkg::ST_BUF_FULL) |
+          w_uc_write_req_valid[s_idx] & uc_write_if.ready) begin
+        w_entry_next.st_buf_finished = 1'b1;
+      end
+    end else begin
+      if (w_entry_flush) begin
+        w_entry_next.dead = 1'b1;
+      end else if (~r_stq_entries[s_idx].paddr_valid & |w_ex1_q_valid & (w_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
+        w_entry_next.addr         = w_ex1_q_updates.paddr;
+        w_entry_next.paddr_valid  = w_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS;
+        w_entry_next.size         = w_ex1_q_updates.size;
+        w_entry_next.is_uc        = w_ex1_q_updates.hazard_typ == EX1_HAZ_NONE ? w_ex1_q_updates.tlb_uc : r_stq_entries[s_idx].is_uc;
 
-      assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                             !w_stq_entries[s_idx].dead &
-                                             (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
-                                             w_stq_entries[s_idx].paddr_valid &
-                                             w_stq_entries[s_idx].is_rs2_get &
-                                             w_same_addr_region &
-                                             |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
-      assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
+        w_entry_next.is_rmw  = w_ex1_q_updates.is_rmw;
+        w_entry_next.rmwop   = w_ex1_q_updates.rmwop;
 
-      scariv_rough_older_check
+        w_entry_next.inst.oldest_valid = r_stq_entries[s_idx].inst.oldest_valid | (w_ex1_q_updates.hazard_typ == EX1_HAZ_UC_ACCESS);
+
+        w_entry_next.dead = w_ex1_q_updates.tlb_except_valid;
+      end else if (r_stq_entries[s_idx].is_rmw & |w_ex2_q_valid) begin
+        w_entry_next.is_amo     = w_ex2_q_updates.is_amo;
+        w_entry_next.is_lr      = w_ex2_q_updates.is_lr;
+        w_entry_next.is_sc      = w_ex2_q_updates.is_sc;
+        w_entry_next.sc_success = w_ex2_q_updates.sc_success;
+      end
+      if (r_stq_entries[s_idx].inst.rd_reg.predict_ready & w_rs2_mispredicted) begin
+        w_entry_next.inst.rd_reg.predict_ready = 1'b0;
+      end
+      if (w_ready_to_mv_stbuf) begin
+        w_entry_next.is_committed = 1'b1;
+      end
+    end
+  end // always_comb
+
+  // If rs2 operand is already ready, store data is fetch directly
+  assign w_stq_rs2_read_valids[s_idx] = r_stq_entries[s_idx].is_valid &
+                                        !r_stq_entries[s_idx].dead &
+                                        !r_stq_entries[s_idx].is_rs2_get &
+                                        r_stq_entries[s_idx].inst.rd_reg.valid &
+                                        r_stq_entries[s_idx].inst.rd_reg.ready;
+
+  assign w_stq_rs2_get[s_idx] = r_stq_entries[s_idx].is_valid &
+                                (r_stq_entries[s_idx].is_rs2_get | r_stq_entries[s_idx].dead);
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
+    assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
+  end
+
+  // Forwarding check
+  for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+    logic  w_entry_older_than_fwd;
+    logic  w_same_addr_region;
+    logic  w_same_dw;
+    logic [ 7: 0] w_entry_dw;
+    assign w_entry_dw = gen_dw(r_stq_entries[s_idx].size, r_stq_entries[s_idx].addr[2:0]);
+    assign w_same_dw = is_dw_included(r_stq_entries[s_idx].size, r_stq_entries[s_idx].addr[2:0],
+                                      ex2_fwd_check_if[p_idx].paddr_dw);
+    assign w_same_addr_region = r_stq_entries   [s_idx].addr [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
+                                ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
+
+    assign w_ex2_fwd_valid[p_idx][s_idx] = r_stq_entries[s_idx].is_valid &
+                                           !r_stq_entries[s_idx].dead &
+                                           (w_entry_older_than_fwd | r_stq_entries[s_idx].is_committed) &
+                                           r_stq_entries[s_idx].paddr_valid &
+                                           r_stq_entries[s_idx].is_rs2_get &
+                                           w_same_addr_region &
+                                           |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
+    assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
+
+    scariv_rough_older_check
       u_rough_older_check
         (
-         .i_cmt_id0 (w_stq_entries[s_idx].inst.cmt_id   ),
-         .i_grp_id0 (w_stq_entries[s_idx].inst.grp_id   ),
+         .i_cmt_id0 (r_stq_entries[s_idx].inst.cmt_id   ),
+         .i_grp_id0 (r_stq_entries[s_idx].inst.grp_id   ),
          .i_cmt_id1 (ex2_fwd_check_if[p_idx].cmt_id),
          .i_grp_id1 (ex2_fwd_check_if[p_idx].grp_id),
 
          .o_0_older_than_1 (w_entry_older_than_fwd)
          );
 
-    end // block: fwd_loop
-
+  end // block: fwd_loop
 
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
-  logic pipe_is_younger_than_rmw;
+    logic pipe_is_younger_than_rmw;
 
-    assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
-                                                                         w_stq_entries[s_idx].inst.grp_id,
+    assign pipe_is_younger_than_rmw = scariv_pkg::id0_is_older_than_id1 (r_stq_entries[s_idx].inst.cmt_id,
+                                                                         r_stq_entries[s_idx].inst.grp_id,
                                                                          rmw_order_check_if[p_idx].ex2_cmt_id,
                                                                          rmw_order_check_if[p_idx].ex2_grp_id);
-    assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                                     (w_stq_entries[s_idx].rmwop != RMWOP__) &
+    assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = r_stq_entries[s_idx].is_valid &
+                                                     r_stq_entries[s_idx].is_rmw &
                                                      rmw_order_check_if[p_idx].ex2_valid &
-                                                     (pipe_is_younger_than_rmw | w_stq_entries[s_idx].is_committed);
+                                                     (pipe_is_younger_than_rmw | r_stq_entries[s_idx].is_committed);
   end // block: rmw_order_haz_loop
 
   // STQ Hazard Check
@@ -386,30 +463,30 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
     logic pipe_is_younger_than_stq;
     logic w_same_addr_region;
 
-    assign pipe_is_younger_than_stq = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
-                                                                       w_stq_entries[s_idx].inst.grp_id,
+    assign pipe_is_younger_than_stq = scariv_pkg::id0_is_older_than_id1 (r_stq_entries[s_idx].inst.cmt_id,
+                                                                       r_stq_entries[s_idx].inst.grp_id,
                                                                        stq_haz_check_if[p_idx].ex2_cmt_id,
                                                                        stq_haz_check_if[p_idx].ex2_grp_id);
-    assign w_same_addr_region = w_stq_entries   [s_idx].addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
+    assign w_same_addr_region = r_stq_entries   [s_idx].addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
                                 stq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
-    assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                               !w_stq_entries[s_idx].dead &
-                                               w_stq_entries[s_idx].paddr_valid &
-                                               !w_stq_entries[s_idx].is_rs2_get &
+    assign w_ex2_stq_haz_valid[p_idx][s_idx] = r_stq_entries[s_idx].is_valid &
+                                               !r_stq_entries[s_idx].dead &
+                                               r_stq_entries[s_idx].paddr_valid &
+                                               !r_stq_entries[s_idx].is_rs2_get &
                                                stq_haz_check_if[p_idx].ex2_valid &
                                                w_same_addr_region &
                                                pipe_is_younger_than_stq;
   end // block: rmw_order_haz_loop
 
-  assign w_stq_rmw_existed[s_idx] = w_stq_entries[s_idx].is_valid & (w_stq_entries[s_idx].rmwop != RMWOP__);
+  assign w_stq_rmw_existed[s_idx] = r_stq_entries[s_idx].is_valid & r_stq_entries[s_idx].is_rmw;
 end // block: stq_loop
 endgenerate
 
 // ST data read selection
 stq_entry_t w_stq_rs2_req_entry;
 bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh));
-bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
+bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh), .i_data(r_stq_entries), .o_selected(w_stq_rs2_req_entry));
 assign int_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
 assign int_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
 
@@ -437,9 +514,9 @@ endgenerate
 scariv_pkg::alen_t w_aligned_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
   if (scariv_pkg::ALEN_W == 64) begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(r_stq_entries[s_idx].rs2_data, r_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
   end else begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(r_stq_entries[s_idx].rs2_data, r_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
   end
 end
 endgenerate
@@ -482,13 +559,12 @@ end
 
 /* verilator lint_off UNOPTFLAT */
 scariv_pkg::grp_id_t w_sq_commit_ready_issue;
-scariv_pkg::grp_id_t w_sq_is_rmw;
 bit_oh_or
   #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
 select_cmt_oh
   (
    .i_oh(w_out_ptr_oh),
-   .i_data(w_stq_entries),
+   .i_data(r_stq_entries),
    .o_selected(w_stq_cmt_head_entry)
    );
 
@@ -500,14 +576,15 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   logic                                w_sq_commit_valid;
   bit_rotate_left #(.WIDTH(scariv_conf_pkg::STQ_SIZE), .VAL(d_idx)) u_ptr_rotate(.i_in(w_out_ptr_oh), .o_out(w_shifted_out_ptr_oh));
   assign w_sq_commit_valid = |(w_stbuf_req_valid & w_shifted_out_ptr_oh);
-  assign w_sq_is_rmw[d_idx]= |(w_stq_rmw_existed & w_shifted_out_ptr_oh);
 
   if (d_idx == 0) begin
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid;
   end else begin
 
     assign w_sq_commit_ready_issue[d_idx] = w_sq_commit_valid &
-                                            w_sq_commit_ready_issue[d_idx-1] & ~w_sq_is_rmw[d_idx-1] &
+                                            w_sq_commit_ready_issue[d_idx-1] &
+                                            !w_stq_cmt_head_entry.is_rmw &
+                                            !w_stq_cmt_entry.is_rmw &
                                             (w_stq_cmt_head_entry.addr[riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)] ==
                                              w_stq_cmt_entry.addr     [riscv_pkg::PADDR_W-1:$clog2(scariv_lsu_pkg::ST_BUF_WIDTH/8)]);
   end // else: !if(d_idx == 0)
@@ -515,13 +592,13 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   logic [$clog2(scariv_conf_pkg::STQ_SIZE)-1: 0] w_shifted_out_ptr;
   bit_encoder #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_encoder_ptr (.i_in(w_shifted_out_ptr_oh), .o_out(w_shifted_out_ptr));
   stq_entry_t w_stq_cmt_entry;
-  assign w_stq_cmt_entry = w_stq_entries[w_shifted_out_ptr];
+  assign w_stq_cmt_entry = r_stq_entries[w_shifted_out_ptr];
   // bit_oh_or
   //   #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
   // select_cmt_oh
   //   (
   //    .i_oh(w_shifted_out_ptr_oh),
-  //    .i_data(w_stq_entries),
+  //    .i_data(r_stq_entries),
   //    .o_selected(w_stq_cmt_entry)
   //    );
 
@@ -576,9 +653,9 @@ generate for(genvar b_idx = 0; b_idx < scariv_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) 
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[scariv_conf_pkg::DISP_SIZE];
 end
 endgenerate
-assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.rmwop != RMWOP__;
+assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.is_rmw;
 assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
-assign st_buffer_if.size   = w_stq_cmt_head_entry.size;
+assign st_buffer_if.is_amo = w_stq_cmt_head_entry.is_amo;
 `ifdef SIMULATION
 assign st_buffer_if.cmt_id = w_stq_cmt_head_entry.inst.cmt_id;
 assign st_buffer_if.grp_id = w_stq_cmt_head_entry.inst.grp_id;
@@ -588,13 +665,37 @@ assign st_buffer_if.grp_id = w_stq_cmt_head_entry.inst.grp_id;
 // After Commit, UC-Write Operation
 // ---------------------------------
 stq_entry_t w_uc_write_entry_sel;
-bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_uc_write_entry  (.i_oh(w_uc_write_req_valid), .i_data(w_stq_entries), .o_selected(w_uc_write_entry_sel));
+bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_uc_write_entry  (.i_oh(w_uc_write_req_valid), .i_data(r_stq_entries), .o_selected(w_uc_write_entry_sel));
 always_comb begin
   uc_write_if.valid = |w_uc_write_req_valid;
   uc_write_if.paddr = w_uc_write_entry_sel.addr;
   uc_write_if.data  = w_uc_write_entry_sel.rs2_data;
   uc_write_if.size  = w_uc_write_entry_sel.size;
 end
+
+function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
+                                                scariv_pkg::cmt_id_t cmt_id,
+                                                scariv_pkg::grp_id_t grp_id,
+                                                logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
+                                                logic rs2_rel_hit, logic rs2_phy_hit, logic rs2_may_mispred);
+  stq_entry_t ret;
+
+  ret = 'h0;
+
+  ret.is_valid  = 1'b1;
+
+  ret.inst.cmt_id = cmt_id;
+  ret.inst.grp_id = grp_id;
+
+`ifdef SIMULATION
+  ret.inst.sim_inst   = in.inst;
+  ret.inst.sim_cat    = in.cat;
+
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+
+  return ret;
+endfunction // assign_stq_disp
 
 
 `ifdef SIMULATION
@@ -642,7 +743,7 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
 endfunction // dump_json
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin
-  assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
+  assign w_stq_valid[s_idx] = r_stq_entries[s_idx].is_valid;
 end
 endgenerate
 
@@ -681,12 +782,15 @@ function void dump_json(int fp);
   if (|w_stq_valid) begin
     $fwrite(fp, "  \"scariv_stq\":{\n");
     for (int s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin
-      dump_entry_json (fp, w_stq_entries[s_idx], s_idx);
+      dump_entry_json (fp, r_stq_entries[s_idx], s_idx);
     end
     $fwrite(fp, "  },\n");
   end
 endfunction // dump_json
 `endif // SIMULATION
+
+
+
 
 
 endmodule // scariv_stq

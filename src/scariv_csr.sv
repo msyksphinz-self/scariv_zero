@@ -1036,7 +1036,8 @@ always_comb begin
       w_mstatus_next[`MSTATUS_MPP ] = r_priv;
       w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
       w_priv_next = riscv_common_pkg::PRIV_M;
-    end else if (w_delegate) begin
+    end else if (|(commit_if.payload.except_valid & ~commit_if.payload.dead_id) & w_delegate) begin
+>>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
       w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
                      commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
       /* verilator lint_off WIDTH */

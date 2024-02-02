@@ -65,8 +65,10 @@ always_comb begin
 end
 
 generate for (genvar byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
-  assign rd_queue_ram.data[byte_idx*8+:8] = i_snoop_resp_be[byte_idx] ? i_snoop_resp_data[byte_idx*8+:8] :
-                                            ram[r_req_paddr_pos][byte_idx*8+:8];
+  always_comb begin
+    rd_queue_ram.data[byte_idx*8+:8] = i_snoop_resp_be[byte_idx] ? i_snoop_resp_data[byte_idx*8+:8] :
+                                       ram[r_req_paddr_pos][byte_idx*8+:8];
+  end
 end endgenerate
 assign rd_queue_ram.tag       = r_req_tag;
 assign rd_queue_ram.sim_timer = 10;
@@ -94,7 +96,9 @@ end
 localparam DEBUG_LINE_SIZE = 128;
 line_status_t [DEBUG_LINE_SIZE-1: 0] sim_line_status_set;
 generate for (genvar i = 0; i < DEBUG_LINE_SIZE; i++) begin
-  assign sim_line_status_set[i] = status[(actual_line_pos & ~(DEBUG_LINE_SIZE-1)) + i];
+  always_comb begin
+    sim_line_status_set[i] = status[(actual_line_pos & ~(DEBUG_LINE_SIZE-1)) + i];
+  end
 end endgenerate
 `endif // SIMULATION
 

@@ -242,7 +242,7 @@ always_comb begin
 
   for (int b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx++) begin : pred_loop
     logic w_f2_ubtb_predict_hit;
-    assign w_f2_ubtb_predict_hit = i_f2_ubtb_predict_valid & i_f2_ubtb_info.taken & ((i_f2_ubtb_info.pc_offset >> 1) == b_idx);
+    w_f2_ubtb_predict_hit = i_f2_ubtb_predict_valid & i_f2_ubtb_info.taken & ((i_f2_ubtb_info.pc_offset >> 1) == b_idx);
     w_inst_buf_load.pred_info[b_idx].pred_taken        = w_f2_ubtb_predict_hit ? i_f2_ubtb_info.taken : gshare_search_if.f2_pred_taken[b_idx];
     w_inst_buf_load.pred_info[b_idx].is_cond           = btb_search_if.f2_is_cond      [b_idx];
     w_inst_buf_load.pred_info[b_idx].bim_value         = gshare_search_if.f2_bim_value [b_idx];
@@ -1046,5 +1046,11 @@ end
 
 `endif // SIMULATION
 
+
+initial begin
+  if (scariv_conf_pkg::DISP_SIZE * 32 > scariv_conf_pkg::ICACHE_DATA_W) begin
+    $fatal(0, "32xDISP_SIZE larger than ICache Line size is not supported");
+  end
+end
 
 endmodule // inst_buffer

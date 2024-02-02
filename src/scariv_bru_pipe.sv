@@ -21,20 +21,20 @@ module scariv_bru_pipe
 
   input scariv_bru_pkg::issue_entry_t rv0_issue,
   input logic [RV_ENTRY_SIZE-1:0]     rv0_index,
-  input scariv_pkg::phy_wr_t          ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
+  phy_wr_if.slave          ex1_phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
   // Commit notification
   commit_if.monitor      commit_if,
 
-  input scariv_pkg::mispred_t         i_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM],
+  lsu_mispred_if.slave         mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
   regread_if.master                   ex0_regread_rs1,
   regread_if.master                   ex0_regread_rs2,
 
-  output                            scariv_pkg::early_wr_t o_ex1_early_wr,
-  output                            scariv_pkg::phy_wr_t   o_ex3_phy_wr,
+  early_wr_if.master ex1_early_wr_if,
+  phy_wr_if.master   ex3_phy_wr_if,
 
-  output scariv_pkg::done_rpt_t     o_done_report,
+  done_report_if.master             done_report_if,
   br_upd_if.master                  ex3_br_upd_if
 );
 
@@ -111,7 +111,7 @@ assign ex0_regread_rs2.rnid  = w_ex0_issue.rd_regs[1].rnid;
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex0_rs_loop
   riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex0_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+    assign w_ex0_tgt_data[tgt_idx] = ex1_phy_wr_if[tgt_idx].rd_data;
   end
   assign w_ex0_rs_fwd_data [rs_idx] = w_ex0_tgt_data[w_ex0_issue.rd_regs[rs_idx].early_index];
 end endgenerate
@@ -156,7 +156,7 @@ select_mispred_bus rs1_mispred_select
 (
  .i_entry_rnid (w_ex0_issue.rd_regs[0].rnid),
  .i_entry_type (w_ex0_issue.rd_regs[0].typ),
- .i_mispred    (i_mispred_lsu),
+ .i_mispred    (mispred_if),
 
  .o_mispred    (w_ex0_rs1_lsu_mispred)
  );
@@ -166,7 +166,7 @@ select_mispred_bus rs2_mispred_select
 (
  .i_entry_rnid (w_ex0_issue.rd_regs[1].rnid),
  .i_entry_type (w_ex0_issue.rd_regs[1].typ),
- .i_mispred    (i_mispred_lsu),
+ .i_mispred    (mispred_if),
 
  .o_mispred    (w_ex0_rs2_lsu_mispred)
  );
@@ -174,15 +174,15 @@ select_mispred_bus rs2_mispred_select
 assign w_commit_flushed = commit_if.is_flushed_commit();
 
 
-assign o_ex1_early_wr.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;
-assign o_ex1_early_wr.rd_rnid = w_ex0_issue.wr_reg.rnid;
-assign o_ex1_early_wr.rd_type = w_ex0_issue.wr_reg.typ;
-assign o_ex1_early_wr.may_mispred = 1'b0;
+assign ex1_early_wr_if.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;
+assign ex1_early_wr_if.rd_rnid = w_ex0_issue.wr_reg.rnid;
+assign ex1_early_wr_if.rd_type = w_ex0_issue.wr_reg.typ;
+assign ex1_early_wr_if.may_mispred = 1'b0;
 
 generate for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : ex1_rs_loop
   riscv_pkg::xlen_t w_ex1_tgt_data [scariv_pkg::TGT_BUS_SIZE];
   for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : rs_tgt_loop
-    assign w_ex1_tgt_data[tgt_idx] = ex1_i_phy_wr[tgt_idx].rd_data;
+    assign w_ex1_tgt_data[tgt_idx] = ex1_phy_wr_if[tgt_idx].rd_data;
   end
   assign w_ex1_rs_fwd_data [rs_idx] = w_ex1_tgt_data[r_ex1_issue.rd_regs[rs_idx].early_index];
 end endgenerate // block: ex1_rs_loop
@@ -231,18 +231,18 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign o_ex3_phy_wr.valid   = r_ex2_issue.valid &
-                              r_ex2_pipe_ctrl.wr_rd & (r_ex2_issue.wr_reg.regidx != 'h0);
-assign o_ex3_phy_wr.rd_rnid = r_ex2_issue.wr_reg.rnid;
-assign o_ex3_phy_wr.rd_type = r_ex2_issue.wr_reg.typ;
-assign o_ex3_phy_wr.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
-                               r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
+assign ex3_phy_wr_if.valid   = r_ex2_issue.valid &
+                               r_ex2_pipe_ctrl.wr_rd & (r_ex2_issue.wr_reg.regidx != 'h0);
+assign ex3_phy_wr_if.rd_rnid = r_ex2_issue.wr_reg.rnid;
+assign ex3_phy_wr_if.rd_type = r_ex2_issue.wr_reg.typ;
+assign ex3_phy_wr_if.rd_data = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex2_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
+                                r_ex2_issue.pc_addr} + (r_ex2_issue.is_rvc ? 'h2 : 'h4);
 
-assign o_done_report.valid    = r_ex2_issue.valid;
-assign o_done_report.cmt_id   = r_ex2_issue.cmt_id;
-assign o_done_report.grp_id   = r_ex2_issue.grp_id;
-assign o_done_report.except_valid  = 1'b0;
-assign o_done_report.except_type = scariv_pkg::except_t'('h0);
+assign done_report_if.valid    = r_ex2_issue.valid;
+assign done_report_if.cmt_id   = r_ex2_issue.cmt_id;
+assign done_report_if.grp_id   = r_ex2_issue.grp_id;
+assign done_report_if.except_valid  = 1'b0;
+assign done_report_if.except_type = scariv_pkg::except_t'('h0);
 
 scariv_pkg::vaddr_t w_ex1_offset_uj;
 scariv_pkg::vaddr_t w_ex1_offset_sb;
