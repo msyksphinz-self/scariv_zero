@@ -31,7 +31,7 @@ module scariv_inflight_list
    input rnid_t   i_update_fetch_rnid[scariv_conf_pkg::DISP_SIZE],
    input grp_id_t i_update_fetch_data,
 
-   phy_wr_if.slave phy_wr_if[TGT_BUS_SIZE]
+   input rnid_update_t i_rnid_update[TARGET_SIZE]
    );
 
 logic [TARGET_SIZE-1: 0] w_phy_valids;
@@ -47,21 +47,20 @@ generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : list_loop
   end else begin
     grp_id_t w_update_fetch_valid_tmp;
     grp_id_t w_update_fetch_data_tmp;
-  logic w_update_fetch_valid;
-  logic w_update_fetch_data;
+    logic w_update_fetch_valid;
+    logic w_update_fetch_data;
     for (genvar d_fetch_idx = 0; d_fetch_idx < scariv_conf_pkg::DISP_SIZE; d_fetch_idx++) begin
       assign w_update_fetch_valid_tmp [d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] & (i_update_fetch_rnid[d_fetch_idx] == rn_idx);
       assign w_update_fetch_data_tmp[d_fetch_idx] = i_update_fetch_valid[d_fetch_idx] &  i_update_fetch_data[d_fetch_idx];
     end
-    assign w_update_fetch_valid   = |w_update_fetch_valid_tmp;
+    assign w_update_fetch_valid = |w_update_fetch_valid_tmp;
     assign w_update_fetch_data  = |w_update_fetch_data_tmp;
 
-  logic [TARGET_SIZE-1: 0] w_target_valid_tmp;
-  logic                               w_target_valid;
-    for (genvar d_cmt_idx = 0; d_cmt_idx < TGT_BUS_SIZE; d_cmt_idx++) begin
-      assign w_target_valid_tmp [d_cmt_idx] = phy_wr_if[d_cmt_idx].valid &
-                                              (phy_wr_if[d_cmt_idx].rd_rnid == rn_idx) &
-                                              (phy_wr_if[d_cmt_idx].rd_type == REG_TYPE);
+    logic [TARGET_SIZE-1: 0] w_target_valid_tmp;
+    logic                    w_target_valid;
+    for (genvar d_cmt_idx = 0; d_cmt_idx < TARGET_SIZE; d_cmt_idx++) begin
+      assign w_target_valid_tmp [d_cmt_idx] = i_rnid_update[d_cmt_idx].valid &
+                                              (i_rnid_update[d_cmt_idx].rnid == rn_idx);
     end
     assign w_target_valid   = |w_target_valid_tmp;
 
@@ -84,11 +83,10 @@ generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : list_loop
 end // block: list_loop
 endgenerate
 
-generate for (genvar p_idx = 0; p_idx < TGT_BUS_SIZE; p_idx++) begin : phy_loop
-  assign w_phy_valids[p_idx] = phy_wr_if[p_idx].valid & (phy_wr_if[p_idx].rd_type == REG_TYPE);
-  assign w_phy_rnids [p_idx] = phy_wr_if[p_idx].rd_rnid;
-end
-endgenerate
+generate for (genvar p_idx = 0; p_idx < TARGET_SIZE; p_idx++) begin : phy_loop
+  assign w_phy_valids[p_idx] = i_rnid_update[p_idx].valid;
+  assign w_phy_rnids [p_idx] = i_rnid_update[p_idx].rnid;
+end endgenerate
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
   logic [NUM_INFLIGHT_OPS-1: 0] w_update_fetch_valid;

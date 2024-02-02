@@ -29,8 +29,6 @@ module scariv_vec_lsu_pipe
  input logic                    i_ex0_replay_selected,
  input scariv_vec_pkg::vlsu_replay_info_t i_ex0_replay_info,
 
- input scariv_pkg::phy_wr_t     ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
-
  output logic                       o_pipe_stall,
  output scariv_pkg::another_flush_t o_flush_self,
 
@@ -58,8 +56,8 @@ module scariv_vec_lsu_pipe
 
  scalar_ldq_haz_check_if.master scalar_ldq_haz_check_if,
 
- output scariv_pkg::done_rpt_t      o_done_report,
- output scariv_pkg::another_flush_t o_another_flush_report
+ done_report_if.master  done_report_if,
+ flush_report_if.master flush_report_if
  );
 
 logic   w_commit_flush;
@@ -465,18 +463,18 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-assign o_done_report.valid                = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
-assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
-assign o_done_report.grp_id               = r_ex3_issue.grp_id;
-assign o_done_report.except_valid         = r_ex3_except_valid;
-assign o_done_report.except_type          = r_ex3_except_type;
-assign o_done_report.except_tval          = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
-assign o_done_report.cmt_id               = r_ex3_issue.cmt_id;
-assign o_done_report.grp_id               = r_ex3_issue.grp_id;
+assign done_report_if.valid        = r_ex3_issue.valid & r_ex3_vec_step_success & ~r_ex3_req_splitted[0] & (r_ex3_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex3_issue)-1) & (r_ex3_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1);
+assign done_report_if.cmt_id       = r_ex3_issue.cmt_id;
+assign done_report_if.grp_id       = r_ex3_issue.grp_id;
+assign done_report_if.except_valid = r_ex3_except_valid;
+assign done_report_if.except_type  = r_ex3_except_type;
+assign done_report_if.except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
+assign done_report_if.cmt_id       = r_ex3_issue.cmt_id;
+assign done_report_if.grp_id       = r_ex3_issue.grp_id;
 
-assign o_another_flush_report.valid  = scalar_ldq_haz_check_if.haz_valid;
-assign o_another_flush_report.cmt_id = scalar_ldq_haz_check_if.haz_cmt_id;
-assign o_another_flush_report.grp_id = scalar_ldq_haz_check_if.haz_grp_id;
+assign flush_report_if.valid  = scalar_ldq_haz_check_if.haz_valid;
+assign flush_report_if.cmt_id = scalar_ldq_haz_check_if.haz_cmt_id;
+assign flush_report_if.grp_id = scalar_ldq_haz_check_if.haz_grp_id;
 
 assign vec_phy_wr_if.valid   = r_ex3_issue.valid & r_ex3_vec_step_success & r_ex3_issue.wr_reg.valid & ~r_ex3_mis_valid;
 assign vec_phy_wr_if.rd_rnid = r_ex3_issue.wr_reg.rnid;

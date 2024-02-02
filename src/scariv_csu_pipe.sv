@@ -232,32 +232,6 @@ logic w_ex3_sret_tsr_illegal;
 
 assign w_ex3_sret_tsr_illegal   = r_ex3_pipe_ctrl.is_sret       & i_mstatus[`MSTATUS_TSR];
 
-assign o_done_report.valid    = r_ex3_issue.valid;
-assign o_done_report.cmt_id   = r_ex3_issue.cmt_id;
-assign o_done_report.grp_id   = r_ex3_issue.grp_id;
-assign o_done_report.except_valid  = r_ex3_pipe_ctrl.csr_update |
-                                     r_ex3_pipe_ctrl.is_mret    |
-                                     r_ex3_pipe_ctrl.is_sret    |
-                                     r_ex3_pipe_ctrl.is_uret    |
-                                     r_ex3_pipe_ctrl.is_ecall   |
-                                     r_ex3_pipe_ctrl.is_ebreak  |
-                                     r_ex3_csr_illegal          |
-                                     r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid |
-                                     (write_if.valid & write_if.resp_error);
-
-assign o_done_report.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
-                                   r_ex3_pipe_ctrl.is_mret                                                             ? scariv_pkg::MRET         :
-                                   r_ex3_pipe_ctrl.is_sret                                                             ? scariv_pkg::SRET         :
-                                   r_ex3_pipe_ctrl.is_uret                                                             ? scariv_pkg::URET         :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_U)              ? scariv_pkg::ECALL_U      :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S)              ? scariv_pkg::ECALL_S      :
-                                   r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M)              ? scariv_pkg::ECALL_M      :
-                                   r_ex3_pipe_ctrl.is_ebreak                                                           ? scariv_pkg::BREAKPOINT   :
-                                   r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid                       ? scariv_pkg::LMUL_CHANGE  :
-                                   scariv_pkg::SILENT_FLUSH;
-
-assign o_done_report.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | (o_done_report.except_type == scariv_pkg::LMUL_CHANGE)) ? r_ex3_issue.inst :
-=======
 assign done_report_if.valid    = r_ex3_issue.valid;
 assign done_report_if.cmt_id   = r_ex3_issue.cmt_id;
 assign done_report_if.grp_id   = r_ex3_issue.grp_id;
@@ -268,6 +242,7 @@ assign done_report_if.except_valid  = r_ex3_pipe_ctrl.csr_update |
                                      r_ex3_pipe_ctrl.is_ecall |
                                      r_ex3_pipe_ctrl.is_ebreak |
                                      r_ex3_csr_illegal |
+                                     r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid |
                                      (write_if.valid & write_if.resp_error);
 
 assign done_report_if.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | write_if.valid & write_if.resp_error) ? scariv_pkg::ILLEGAL_INST :
@@ -278,10 +253,10 @@ assign done_report_if.except_type = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal 
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_S) ? scariv_pkg::ECALL_S :
                                    r_ex3_pipe_ctrl.is_ecall & (i_status_priv == riscv_common_pkg::PRIV_M) ? scariv_pkg::ECALL_M :
                                    r_ex3_pipe_ctrl.is_ebreak ? scariv_pkg::BREAKPOINT :
+                                   r_ex3_pipe_ctrl.op == OP_VSETVL & r_ex3_lmul_change_exc_valid                       ? scariv_pkg::LMUL_CHANGE  :
                                    scariv_pkg::SILENT_FLUSH;
 
-assign done_report_if.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal) ? r_ex3_issue.inst :
->>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
+assign done_report_if.except_tval = (r_ex3_csr_illegal | w_ex3_sret_tsr_illegal | (done_report_if.except_type == scariv_pkg::LMUL_CHANGE)) ? r_ex3_issue.inst :
                                    'h0;
 
 // ------------

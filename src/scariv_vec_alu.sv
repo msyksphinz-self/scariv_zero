@@ -33,7 +33,7 @@ module scariv_vec_alu #(
     regread_if.master            ex1_fpr_regread_rs1,
 
     /* Forwarding path */
-    input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+    phy_wr_if.slave       phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
 
     /* read output */
     vec_regread_if.master  vec_phy_rd_if[3],
@@ -45,7 +45,7 @@ module scariv_vec_alu #(
     vec_phy_fwd_if.master  vec_valu_phy_fwd_if[2],
     vec_phy_fwd_if.slave   vec_vlsu_phy_fwd_if,
 
-    output scariv_pkg::done_rpt_t o_done_report[2],
+   done_report_if.master   done_report_if[2],
     // Commit notification
     commit_if.monitor              commit_if,
     br_upd_if.slave                br_upd_if
@@ -83,14 +83,14 @@ u_scariv_disp_pickup
    .o_disp_grp_id (w_disp_picked_grp_id)
    );
 
-scariv_pkg::early_wr_t w_early_wr_zero[scariv_pkg::REL_BUS_SIZE];
+early_wr_if w_early_wr_zero[scariv_pkg::REL_BUS_SIZE];
 generate for (genvar idx = 0; idx < scariv_pkg::REL_BUS_SIZE; idx++) begin : early_zero_fill
-  assign w_early_wr_zero[idx] = 'h0;
+  assign w_early_wr_zero[idx].valid = 'h0;
 end endgenerate
 
-scariv_pkg::mispred_t  w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
+lsu_mispred_if  w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
 generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin : mispred_zero_fill
-  assign w_mispred_lsu[idx] = 'h0;
+  assign w_mispred_lsu[idx].mis_valid = 'h0;
 end endgenerate
 
 assign w_vec_phy_fwd_if[2].valid   = vec_vlsu_phy_fwd_if.valid;
@@ -120,10 +120,10 @@ u_scariv_issue_unit
 
    .i_stall    (1'b0),
 
-   .i_early_wr    (w_early_wr_zero),
-   .i_phy_wr      (i_phy_wr),
-   .i_mispred_lsu (w_mispred_lsu),
-   .vec_phy_fwd_if (w_vec_phy_fwd_if),
+   .early_wr_if   (w_early_wr_zero  ),
+   .phy_wr_if     (phy_wr_if        ),
+   .mispred_if    (w_mispred_lsu    ),
+   .vec_phy_fwd_if(w_vec_phy_fwd_if ),
 
    .o_issue(w_ex0_issue),
    .o_iss_index_oh(),
@@ -148,7 +148,6 @@ u_alu_pipe
    .br_upd_if (br_upd_if),
 
    .i_ex0_issue (w_ex0_issue),
-   .ex1_i_phy_wr(i_phy_wr),
 
    .ex0_xpr_regread_rs1(ex1_xpr_regread_rs1),
    .ex0_fpr_regread_rs1(ex1_fpr_regread_rs1),
@@ -159,7 +158,7 @@ u_alu_pipe
    .vec_phy_wr_if (vec_phy_wr_if),
    .vec_phy_fwd_if (w_vec_phy_fwd_if[ 0: 1]),
 
-   .o_done_report (o_done_report)
+   .done_report_if (done_report_if)
    );
 
 assign vec_valu_phy_fwd_if[0].valid   = w_vec_phy_fwd_if[0].valid;

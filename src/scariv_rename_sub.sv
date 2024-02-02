@@ -24,7 +24,7 @@ module scariv_rename_sub
  input logic                     i_ibuf_front_fire,
  input scariv_front_pkg::front_t i_ibuf_front_payload,
 
- phy_wr_if.slave phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
+ input rnid_update_t             i_rnid_update[TARGET_SIZE],
 
  // from Resource Allocator
  input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
@@ -468,7 +468,7 @@ u_inflight_map
    .i_update_fetch_rnid  (w_rd_rnid  ),
    .i_update_fetch_data  (w_rd_data  ),
 
-   .phy_wr_if (phy_wr_if)
+   .i_rnid_update (i_rnid_update)
 );
 
 // Map List Queue

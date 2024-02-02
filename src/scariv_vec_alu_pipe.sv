@@ -27,7 +27,6 @@ module scariv_vec_alu_pipe
  br_upd_if.slave                br_upd_if,
 
  input scariv_vec_pkg::issue_t  i_ex0_issue,
- input scariv_pkg::phy_wr_t ex1_i_phy_wr[scariv_pkg::TGT_BUS_SIZE],
 
  regread_if.master      ex0_xpr_regread_rs1,
  regread_if.master      ex0_fpr_regread_rs1,
@@ -38,7 +37,7 @@ module scariv_vec_alu_pipe
  vec_regwrite_if.master vec_phy_wr_if [2],
  vec_phy_fwd_if.master  vec_phy_fwd_if[2],
 
- output scariv_pkg::done_rpt_t o_done_report[2]
+ done_report_if.master   done_report_if[2]
 );
 
 pipe_ctrl_t               w_ex0_pipe_ctrl;
@@ -685,12 +684,12 @@ always_comb begin
   vec_phy_fwd_if[0].valid   = vec_phy_wr_if[0].valid & (r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_ex2_issue.vcomp_fin : 1'b1 /* r_ex2_issue.vec_step_index == 'h0 */);
   vec_phy_fwd_if[0].rd_rnid = r_ex2_issue.wr_reg.rnid;
 
-  o_done_report[0].valid  = r_ex2_issue.valid & ~r_ex2_fpnew_valid & (r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_ex2_issue.vcomp_fin :
+  done_report_if[0].valid  = r_ex2_issue.valid & ~r_ex2_fpnew_valid & (r_ex2_issue.subcat == decoder_inst_cat_pkg::INST_SUBCAT_VCOMP ? r_ex2_issue.vcomp_fin :
                                                                       (r_ex2_issue.vec_lmul_index == scariv_vec_pkg::calc_num_req(r_ex2_issue)-1) & (r_ex2_issue.vec_step_index == scariv_vec_pkg::VEC_STEP_W-1));
-  o_done_report[0].cmt_id = r_ex2_issue.cmt_id;
-  o_done_report[0].grp_id = r_ex2_issue.grp_id;
-  o_done_report[0].fflags_update_valid = 1'b0;
-  o_done_report[0].fflags = 'h0;
+  done_report_if[0].cmt_id = r_ex2_issue.cmt_id;
+  done_report_if[0].grp_id = r_ex2_issue.grp_id;
+  done_report_if[0].fflags_update_valid = 1'b0;
+  done_report_if[0].fflags = 'h0;
 
   vec_phy_wr_if[1].valid   = w_fpnew_out_valid;
   vec_phy_wr_if[1].rd_rnid = w_fpnew_tag_out.rnid;
@@ -701,12 +700,12 @@ always_comb begin
   vec_phy_fwd_if[1].valid   = vec_phy_wr_if[1].valid;
   vec_phy_fwd_if[1].rd_rnid = w_fpnew_tag_out.rnid;
 
-  o_done_report[1].valid  = w_fpnew_out_valid & (w_fpnew_tag_out.is_mask_inst ? w_fpnew_tag_out.vcomp_fin :
+  done_report_if[1].valid  = w_fpnew_out_valid & (w_fpnew_tag_out.is_mask_inst ? w_fpnew_tag_out.vcomp_fin :
                                                  w_fpnew_tag_out.is_last_lmul & (w_fpnew_tag_out.step_index == scariv_vec_pkg::VEC_STEP_W-1));
-  o_done_report[1].cmt_id = w_fpnew_tag_out.cmt_id;
-  o_done_report[1].grp_id = w_fpnew_tag_out.grp_id;
-  o_done_report[1].fflags_update_valid = 1'b0;
-  o_done_report[1].fflags = 'h0;
+  done_report_if[1].cmt_id = w_fpnew_tag_out.cmt_id;
+  done_report_if[1].grp_id = w_fpnew_tag_out.grp_id;
+  done_report_if[1].fflags_update_valid = 1'b0;
+  done_report_if[1].fflags = 'h0;
 
 end // always_comb
 

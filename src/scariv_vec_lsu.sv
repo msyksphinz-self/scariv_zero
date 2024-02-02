@@ -36,7 +36,7 @@ module scariv_vec_lsu #(
    regread_if.master            ex1_xpr_regread_rs1,
 
    /* Forwarding path */
-   input scariv_pkg::phy_wr_t   i_phy_wr [scariv_pkg::TGT_BUS_SIZE],
+   phy_wr_if.slave       phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
 
    // --------------------
    // To Scalar Interface
@@ -56,8 +56,8 @@ module scariv_vec_lsu #(
 
    scalar_ldq_haz_check_if.master scalar_ldq_haz_check_if,
 
-   output scariv_pkg::done_rpt_t      o_done_report,
-   output scariv_pkg::another_flush_t o_another_flush_report,
+   done_report_if.master   done_report_if,
+   flush_report_if.master  flush_report_if,
    // Commit notification
    commit_if.monitor              commit_if,
    br_upd_if.slave                br_upd_if,
@@ -110,14 +110,14 @@ u_scariv_disp_pickup
    .o_disp_grp_id (w_disp_picked_grp_id)
    );
 
-scariv_pkg::early_wr_t w_early_wr_zero[scariv_pkg::REL_BUS_SIZE];
+early_wr_if w_early_wr_zero[scariv_pkg::REL_BUS_SIZE];
 generate for (genvar idx = 0; idx < scariv_pkg::REL_BUS_SIZE; idx++) begin : early_zero_fill
-  assign w_early_wr_zero[idx] = 'h0;
+  assign w_early_wr_zero[idx].valid = 'h0;
 end endgenerate
 
-scariv_pkg::mispred_t  w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
+lsu_mispred_if w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
 generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin : mispred_zero_fill
-  assign w_mispred_lsu[idx] = 'h0;
+  assign w_mispred_lsu[idx].mis_valid = 'h0;
 end endgenerate
 
 scariv_vlsu_issue_unit
@@ -147,9 +147,9 @@ u_issue_unit
    .i_stall    (w_lsu_pipe_req_if.valid & w_ex0_is_replay_selected | ~w_uop_gen_ready),
    .i_replay_queue_full  (w_replay_queue_full ),
 
-   .i_early_wr    (w_early_wr_zero),
-   .i_phy_wr      (i_phy_wr),
-   .i_mispred_lsu (w_mispred_lsu),
+   .early_wr_if   (w_early_wr_zero),
+   .phy_wr_if     (phy_wr_if      ),
+   .mispred_if    (w_mispred_lsu),
    .vec_phy_fwd_if (w_vec_phy_fwd_if),
 
    .o_issue(w_issue_from_iss),
@@ -246,8 +246,6 @@ u_lsu_pipe
    .o_pipe_stall (w_lsu_pipe_stall),
    .o_flush_self (w_lsu_pipe_flush_self),
 
-   .ex1_i_phy_wr(i_phy_wr),
-
    .ex0_xpr_regread_rs1(ex1_xpr_regread_rs1),
 
    .vec_phy_rd_if (vec_phy_rd_if[0:1]),
@@ -268,8 +266,8 @@ u_lsu_pipe
 
    .scalar_ldq_haz_check_if (scalar_ldq_haz_check_if),
 
-   .o_done_report          (o_done_report),
-   .o_another_flush_report (o_another_flush_report)
+   .done_report_if  (done_report_if ),
+   .flush_report_if (flush_report_if)
    );
 
 

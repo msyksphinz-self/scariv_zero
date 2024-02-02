@@ -244,11 +244,6 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   assign fp_regwrite  [FPU_FP_REGWR_PORT_BASE + f_idx*2+1].data  = w_phy_wr_if[FPU_INST_PORT_BASE+f_idx*2+1].rd_data ;
 end endgenerate // block: fpu_reg_wr_loop
 
-assign w_done_rpt[VALU_DONE_PORT_BASE+0] = w_valu_done_rpt[0];
-assign w_done_rpt[VALU_DONE_PORT_BASE+1] = w_valu_done_rpt[1];
-assign w_done_rpt[VLSU_DONE_PORT_BASE  ] = w_vlsu_done_rpt;
-
-
 scariv_frontend u_frontend (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
@@ -685,7 +680,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .ex1_fpr_regread_rs1(fp_regread[scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                                      1]),                                    // LSU port
 
-     .i_phy_wr(w_ex3_phy_wr),
+     .phy_wr_if (w_phy_wr_if),
 
      .vec_phy_rd_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +: 3]),
      .vec_phy_v0_if     (w_vec_phy_rd_if[VALU_VPR_READ_PORT_IDX +  4]),
@@ -694,7 +689,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .vec_valu_phy_fwd_if (w_vec_phy_fwd_if[0:1]),
      .vec_vlsu_phy_fwd_if (w_vec_phy_fwd_if[2]),
 
-     .o_done_report(w_valu_done_rpt),
+     .done_report_if (w_done_report_if [VALU_DONE_PORT_BASE +: 2]),
 
      .commit_if(w_commit_if),
      .br_upd_if(w_ex3_br_upd_if)
@@ -727,7 +722,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
      .ex1_xpr_regread_rs1(int_regread[VLSU_XPR_READ_PORT_IDX]),
 
-     .i_phy_wr(w_ex3_phy_wr),
+     .phy_wr_if (w_phy_wr_if),
 
      .vec_phy_rd_if     (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +: 3]),
      .vec_phy_old_wr_if (w_vec_phy_rd_if[VLSU_VPR_READ_PORT_IDX +  3]),
@@ -742,8 +737,8 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .l1d_missu_if    (vlsu_l1d_missu_if),
      .i_missu_resolve (w_missu_resolve  ),
 
-     .o_done_report(w_vlsu_done_rpt),
-     .o_another_flush_report(w_another_flush_rpt[scariv_conf_pkg::LSU_INST_NUM]),
+     .done_report_if (w_done_report_if [VLSU_DONE_PORT_BASE]),
+     .flush_report_if(w_flush_report_if[scariv_conf_pkg::LSU_INST_NUM]),
 
      .commit_if(w_commit_if),
      .br_upd_if(w_ex3_br_upd_if),

@@ -77,8 +77,7 @@ grp_id_t w_another_tree_flush_valid;
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
   assign w_another_flush_tmp_valid[l_idx] = flush_report_if[l_idx].valid &
                                             (flush_report_if[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? flush_report_if[l_idx].grp_id : 'h0;
-end
-endgenerate
+end endgenerate
 
 
 bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(ANOTHER_FLUSH_SIZE))

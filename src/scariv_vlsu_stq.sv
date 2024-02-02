@@ -195,7 +195,9 @@ generate for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) be
         end
         WAIT_COMMIT : begin
           w_vlsu_stq_entry_next.ready_to_mv_stbuf = r_vlsu_stq_entries[bank_idx][stq_idx].ready_to_mv_stbuf | w_ready_to_mv_stbuf;
-          if (w_commit_flush | w_br_flush) begin
+          if (commit_if.is_commit_flush_target(r_vlsu_stq_entries[bank_idx][stq_idx].cmt_id,
+                                               r_vlsu_stq_entries[bank_idx][stq_idx].grp_id) |
+              w_br_flush) begin
             w_state_next = FINISH;
           end else if ((w_ready_to_mv_stbuf | r_vlsu_stq_entries[bank_idx][stq_idx].ready_to_mv_stbuf) & st_buffer_ex0_proceed_valid) begin
             w_state_next = READ_VS3;

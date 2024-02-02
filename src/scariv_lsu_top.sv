@@ -406,7 +406,6 @@ always_comb begin
     w_st_buffer_if.data     = w_scalar_st_buffer_if.data    ;
     w_st_buffer_if.is_rmw   = w_scalar_st_buffer_if.is_rmw  ;
     w_st_buffer_if.rmwop    = w_scalar_st_buffer_if.rmwop   ;
-    w_st_buffer_if.is_amo   = w_scalar_st_buffer_if.is_amo  ;
 `ifdef SIMULATION
     w_st_buffer_if.cmt_id   = w_scalar_st_buffer_if.cmt_id  ;
     w_st_buffer_if.grp_id   = w_scalar_st_buffer_if.grp_id  ;
@@ -420,7 +419,6 @@ always_comb begin
     w_st_buffer_if.data     = vlsu_st_buffer_if.data    ;
     w_st_buffer_if.is_rmw   = vlsu_st_buffer_if.is_rmw  ;
     w_st_buffer_if.rmwop    = vlsu_st_buffer_if.rmwop   ;
-    w_st_buffer_if.is_amo   = vlsu_st_buffer_if.is_amo  ;
 `ifdef SIMULATION
     w_st_buffer_if.cmt_id   = vlsu_st_buffer_if.cmt_id  ;
     w_st_buffer_if.grp_id   = vlsu_st_buffer_if.grp_id  ;

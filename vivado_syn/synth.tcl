@@ -34,12 +34,9 @@ import_files ../../src/$::env(RV_FILE)
 
 add_files -norecurse ../../configs/$::env(CONF_FILE)
 import_files ../../configs/$::env(CONF_FILE)
-# add_files -norecurse ../../src/scariv_standard_conf_pkg.sv
-# import_files ../../src/scariv_standard_conf_pkg.sv
 
 add_files -norecurse ../../src/$::env(VPU_FILE)
 import_files ../../src/$::env(VPU_FILE)
->>>>>>> 98beb67d59f5a0615ee1b8831c584ae2bad7a42a
 
 # add_files -norecurse $RTL_ROOT_DIR
 source filelist.tcl

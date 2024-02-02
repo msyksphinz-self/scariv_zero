@@ -33,8 +33,8 @@ import scariv_lsu_pkg::*;
    /* Forwarding path */
    early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
    phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
-
    lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
+
   // Execution updates from pipeline
    input ex1_q_update_t         i_ex1_updates,
    input logic                  i_tlb_resolve,
