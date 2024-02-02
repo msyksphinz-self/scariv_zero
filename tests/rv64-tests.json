@@ -32,8 +32,8 @@
     { "name": "serialdevice"      , "group" : ["sanity", "nightly"], "elf": "../../../tests/serialdevice/test.elf"      , "xlen": 64},
     { "name": "clint_test"        , "group" : ["sanity", "nightly"], "elf": "../../../tests/clint_test/test_rv64.elf"   , "xlen": 64, "skip": 1},
     { "name": "small_loop"        , "group" : ["sanity", "nightly"], "elf": "../../../tests/small_loop/test.elf"        , "xlen": 64},
-    { "name": "fadd_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fadd_bandwidth_test/test.elf", "xlen": 64},
-    { "name": "fdiv_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fdiv_bandwidth_test/test.elf", "xlen": 64},
+    { "name": "fadd_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fadd_bandwidth_test/test.elf", "xlen": 64, "expected_time": {"standard": 17462}},
+    { "name": "fdiv_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fdiv_bandwidth_test/test.elf", "xlen": 64, "expected_time": {"standard": 66778}},
 
     { "name": "rv64ui-p-add"         , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64ui-p-add"          , "xlen": 64},
     { "name": "rv64ui-p-addi"        , "group": ["sanity", "nightly"], "elf": "../../../tests/riscv-tests/isa/rv64ui-p-addi"         , "xlen": 64},
