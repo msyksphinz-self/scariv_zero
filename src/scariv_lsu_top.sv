@@ -33,10 +33,9 @@ module scariv_lsu_top
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
-    regread_if.master   ex1_int_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
-
-    regread_if.master   int_rs2_regread,
-    regread_if.master   fp_rs2_regread ,
+    regread_if.master   int_rs1_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
+    regread_if.master   int_rs2_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
+    regread_if.master   fp_rs2_regread [scariv_conf_pkg::LSU_INST_NUM-1: 0],
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -112,11 +111,8 @@ l2_req_if    w_l1d_ext_req[2]();
 l1d_evict_if w_l1d_evict_if();
 
 // Feedbacks to LDQ / STQ
-ex1_q_update_t        w_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM];
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
-ex2_q_update_t        w_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM];
-
-done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
+ldq_upd_if  w_ldq_upd_if[scariv_conf_pkg::LSU_INST_NUM]();
+stq_upd_if  w_stq_upd_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
@@ -181,7 +177,10 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .disp       (disp                   ),
     .cre_ret_if (iss_cre_ret_if[lsu_idx]),
 
-    .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
+    .ex0_regread_rs1     (int_rs1_regread[lsu_idx]),
+    .ex0_int_regread_rs2 (int_rs2_regread[lsu_idx]),
+    .ex0_fp_regread_rs2  (fp_rs2_regread [lsu_idx]),
+
 
     .early_wr_in_if(early_wr_in_if),
     .phy_wr_in_if  (phy_wr_in_if  ),
@@ -201,9 +200,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),
 
-    .o_ex1_q_updates (w_ex1_q_updates [lsu_idx]),
-    .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
-    .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
+    .ldq_upd_if (w_ldq_upd_if [lsu_idx]),
+    .stq_upd_if (w_stq_upd_if [lsu_idx]),
 
     .i_st_buffer_empty    (w_st_buffer_if.is_empty),
     .i_st_requester_empty (w_uc_write_if.is_empty ),
@@ -260,15 +258,12 @@ u_ldq
 
  .ldq_haz_check_if (w_ldq_haz_check_if),
 
- .i_ex1_q_updates(w_ex1_q_updates),
- .i_ex2_q_updates(w_ex2_q_updates),
+ .ldq_upd_if (w_ldq_upd_if),
 
  .i_missu_resolve (w_missu_resolve),
  .i_missu_is_full (w_missu_is_full),
 
  .i_stq_rs2_resolve (w_stq_rs2_resolve),
-
- .ex3_done_if (w_ex3_done_if),
 
  .st_buffer_if (w_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
@@ -295,17 +290,11 @@ scariv_stq
 
  .phy_wr_in_if   (phy_wr_in_if  ),
 
- .i_ex1_q_updates(w_ex1_q_updates),
- .i_ex2_q_updates(w_ex2_q_updates),
-
- .int_rs2_regread (int_rs2_regread),
- .fp_rs2_regread  (fp_rs2_regread ),
+ .stq_upd_if (w_stq_upd_if),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
  .stq_haz_check_if (w_stq_haz_check_if),
  .rmw_order_check_if (w_rmw_order_check_if),
-
- .ex3_done_if (w_ex3_done_if),
 
  .i_missu_is_empty (w_missu_is_empty),
 

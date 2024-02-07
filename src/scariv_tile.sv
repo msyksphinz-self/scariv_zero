@@ -351,10 +351,10 @@ u_lsu_top
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 
-    .ex1_int_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
+    .int_rs1_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
 
-    .int_rs2_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) +  scariv_conf_pkg::LSU_INST_NUM]),
-    .fp_rs2_regread  (fp_regread [(scariv_conf_pkg::FPU_INST_NUM * 3)]),
+    .int_rs2_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 + scariv_conf_pkg::LSU_INST_NUM +: scariv_conf_pkg::LSU_INST_NUM]),
+    .fp_rs2_regread  (fp_regread [scariv_conf_pkg::FPU_INST_NUM * 3 +: scariv_conf_pkg::LSU_INST_NUM]),
 
     .ptw_if       (w_ptw_if[1 +: scariv_conf_pkg::LSU_INST_NUM]),
     .lsu_access   (w_lsu_access),
@@ -400,10 +400,10 @@ u_bru (
     .cre_ret_if (bru_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
                                  0]),
     .ex1_regread_rs2(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
                                  1]),
 
     .early_wr_in_if(w_early_wr_if),
@@ -432,7 +432,7 @@ u_csu (
     .cre_ret_if (csu_cre_ret_if),
 
     .ex1_regread_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                 scariv_conf_pkg::LSU_INST_NUM * 2 +
                                  2]),
 
     .early_wr_in_if(w_early_wr_if),
@@ -492,7 +492,7 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
       .cre_ret_if (fpu_cre_ret_if[fpu_idx]),
 
       .ex0_regread_int_rs1(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                       scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                       scariv_conf_pkg::LSU_INST_NUM * 2 +
                                        2 +   // BRU
                                        1 +   // CSU
                                        fpu_idx]),

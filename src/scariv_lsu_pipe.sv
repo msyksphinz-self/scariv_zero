@@ -15,8 +15,8 @@ module scariv_lsu_pipe
   parameter RV_ENTRY_SIZE = 32
   )
 (
- input logic                           i_clk,
- input logic                           i_reset_n,
+ input logic i_clk,
+ input logic i_reset_n,
 
  /* CSR information */
  csr_info_if.slave                     csr_info,
@@ -34,7 +34,10 @@ module scariv_lsu_pipe
  input scariv_lsu_pkg::lsu_pipe_issue_t i_ex0_replay_issue,
  input [MEM_Q_SIZE-1: 0]                i_ex0_replay_index_oh,
 
- regread_if.master                     ex0_regread_rs1,
+ regread_if.master ex0_regread_rs1,
+ // Store Data Read Interface
+ regread_if.master ex0_int_regread_rs2,
+ regread_if.master ex0_fp_regread_rs2 ,
 
  early_wr_if.master                    ex1_early_wr_out_if,
  phy_wr_if.master                      ex3_phy_wr_out_if,
@@ -58,10 +61,11 @@ module scariv_lsu_pipe
  // LRSC update Logic
  lrsc_if.master                        lrsc_if,
 
- // Feedbacks to LDQ / STQ
- output ex1_q_update_t                 o_ex1_q_updates,
- output logic                          o_tlb_resolve,
- output ex2_q_update_t                 o_ex2_q_updates,
+ // Feedbacks to IQ
+ iq_upd_if.master iq_upd_if,
+ // Updates to LDQ/STQ
+ ldq_upd_if.master ldq_upd_if,
+ stq_upd_if.master stq_upd_if,
 
   // Interface for Replay Queue
   lsu_pipe_haz_if.master                 lsu_pipe_haz_if,
@@ -110,9 +114,11 @@ logic w_ex0_br_flush;
 scariv_lsu_pkg::lsu_pipe_issue_t        r_ex1_issue, w_ex1_issue_next;
 logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
-riscv_pkg::xlen_t        r_ex1_rs1;
 riscv_pkg::xlen_t        w_ex1_rs1_selected_data;
 riscv_pkg::xlen_t        r_ex1_rs1_fwd_data;
+
+riscv_pkg::xlen_t        w_ex1_rs2_selected_data;
+riscv_pkg::xlen_t        r_ex1_rs2_fwd_data;
 
 scariv_pkg::vaddr_t      w_ex1_vaddr;
 tlb_req_t                w_ex1_tlb_req;
@@ -136,6 +142,7 @@ logic w_ex1_sfence_vma_illegal;
 scariv_lsu_pkg::lsu_pipe_issue_t       r_ex2_issue, w_ex2_issue_next;
 logic [MEM_Q_SIZE-1: 0] r_ex2_index_oh;
 scariv_pkg::maxaddr_t   r_ex2_addr;
+scariv_pkg::alen_t      r_ex2_rs2_data;
 lsu_pipe_ctrl_t         r_ex2_pipe_ctrl;
 scariv_pkg::alen_t      w_ex2_data_tmp;
 scariv_pkg::alen_t      w_ex2_data_sign_ext;
@@ -246,8 +253,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_uc     <= 1'b0;
   end else begin
-    // r_ex1_rs1 <= w_ex0_rs1_selected_data;
     r_ex1_rs1_fwd_data <= w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
+    r_ex1_rs2_fwd_data <= w_ex0_tgt_data[w_ex0_issue.rd_regs[1].early_index];
 
     r_ex1_issue     <= w_ex1_issue_next;
     r_ex1_index_oh  <= w_ex0_index_oh;
@@ -290,7 +297,7 @@ u_tlb
  .o_tlb_ready(),
  .o_tlb_resp(w_ex1_tlb_resp),
 
- .o_tlb_update(o_tlb_resolve),
+ .o_tlb_update(iq_upd_if.tlb_resolve),
  .o_tlb_resp_miss (),
 
  .ptw_if (ptw_if)
@@ -328,10 +335,19 @@ end
 assign ex0_regread_rs1.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[0].valid;
 assign ex0_regread_rs1.rnid  = w_ex0_issue.rd_regs[0].rnid;
 
-// assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_rs1_fwd_data : r_ex1_rs1;
+// ST data read selection
+assign ex0_int_regread_rs2.valid = w_ex0_issue.valid & w_ex0_issue.rd_regs[1].valid & (w_ex0_issue.rd_regs[1].typ == scariv_pkg::GPR);
+assign ex0_int_regread_rs2.rnid  = w_ex0_issue.rd_regs[1].rnid;
+
+assign ex0_fp_regread_rs2.valid  = w_ex0_issue.valid & w_ex0_issue.rd_regs[1].valid & (w_ex0_issue.rd_regs[1].typ == scariv_pkg::FPR);
+assign ex0_fp_regread_rs2.rnid   = w_ex0_issue.rd_regs[1].rnid;
+
 assign w_ex1_rs1_selected_data = r_ex1_issue.rd_regs[0].predict_ready[0] ? w_ex1_tgt_data[r_ex1_issue.rd_regs[0].early_index] :
                                  r_ex1_issue.rd_regs[0].predict_ready[1] ? r_ex1_rs1_fwd_data :
                                  ex0_regread_rs1.data;
+assign w_ex1_rs2_selected_data = r_ex1_issue.rd_regs[1].predict_ready[0] ? w_ex1_tgt_data[r_ex1_issue.rd_regs[1].early_index] :
+                                 r_ex1_issue.rd_regs[1].predict_ready[1] ? r_ex1_rs2_fwd_data :
+                                 r_ex1_issue.rd_regs[1].typ == scariv_pkg::FPR ? ex0_fp_regread_rs2.data : ex0_int_regread_rs2.data;
 
 assign w_ex1_vaddr = w_ex1_rs1_selected_data[riscv_pkg::VADDR_W-1:0] + mem_offset(r_ex1_pipe_ctrl.op, r_ex1_issue.inst);
 
@@ -358,7 +374,7 @@ assign w_ex1_tlb_req.size        =
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
 assign w_ex1_tlb_req.passthrough = 1'b0;
 
-assign ex1_early_wr_out_if.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (o_ex1_q_updates.hazard_typ == EX1_HAZ_NONE);
+assign ex1_early_wr_out_if.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid & (iq_upd_if.hazard_typ == EX1_HAZ_NONE);
 assign ex1_early_wr_out_if.rd_rnid     = r_ex1_issue.wr_reg.rnid;
 assign ex1_early_wr_out_if.rd_type     = r_ex1_issue.wr_reg.typ;
 assign ex1_early_wr_out_if.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
@@ -386,35 +402,28 @@ assign w_ex1_tlb_except_type = w_ex1_sfence_vma_illegal                  ? scari
                                w_ex1_writemem_cmd & w_ex1_tlb_resp.ae.st ? scariv_pkg::STAMO_ACC_FAULT    :  // PF<-->AE priority is opposite, TLB generate
                                scariv_pkg::SILENT_FLUSH;
 
-assign w_ex1_haz_detected = o_ex1_q_updates.hazard_typ != EX1_HAZ_NONE;
+assign w_ex1_haz_detected = iq_upd_if.hazard_typ != EX1_HAZ_NONE;
 
 // Interface to EX1 updates
-assign o_ex1_q_updates.update              = r_ex1_issue.valid;
-assign o_ex1_q_updates.cmt_id              = r_ex1_issue.cmt_id;
-assign o_ex1_q_updates.grp_id              = r_ex1_issue.grp_id;
-assign o_ex1_q_updates.hazard_typ          = w_ex1_tlb_req.valid & w_ex1_tlb_resp.miss ? EX1_HAZ_TLB_MISS :
-                                             w_ex1_tlb_req.valid & ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? EX1_HAZ_UC_ACCESS :
-                                             EX1_HAZ_NONE;
-assign o_ex1_q_updates.tlb_uc              = ~w_ex1_tlb_resp.cacheable;
-assign o_ex1_q_updates.tlb_except_valid    = !w_ex1_tlb_resp.miss & (w_ex1_ld_except_valid | w_ex1_st_except_valid);
-assign o_ex1_q_updates.tlb_except_type     = w_ex1_tlb_except_type;
-assign o_ex1_q_updates.index_oh            = r_ex1_index_oh;
-assign o_ex1_q_updates.paddr               = w_ex1_tlb_resp.paddr;
-assign o_ex1_q_updates.size                = r_ex1_pipe_ctrl.size;
-assign o_ex1_q_updates.rmwop               = r_ex1_pipe_ctrl.rmwop;
+assign iq_upd_if.update              = r_ex1_issue.valid;
+assign iq_upd_if.index_oh            = r_ex1_index_oh;
+assign iq_upd_if.hazard_typ          = w_ex1_tlb_req.valid & w_ex1_tlb_resp.miss ? EX1_HAZ_TLB_MISS :
+                                       w_ex1_tlb_req.valid & ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? EX1_HAZ_UC_ACCESS :
+                                       EX1_HAZ_NONE;
+assign iq_upd_if.index_oh            = r_ex1_index_oh;
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
-    // if (o_ex1_q_updates.update &
-    //     !$onehot(o_ex1_q_updates.pipe_sel_idx_oh)) begin
-    //   $fatal(0, "LSU Pipeline : o_ex1_q_updates.pipe_sel_idx_oh should be one-hot Value=%x\n",
-    //          o_ex1_q_updates.pipe_sel_idx_oh);
+    // if (iq_upd_if.update &
+    //     !$onehot(iq_upd_if.pipe_sel_idx_oh)) begin
+    //   $fatal(0, "LSU Pipeline : iq_upd_if.pipe_sel_idx_oh should be one-hot Value=%x\n",
+    //          iq_upd_if.pipe_sel_idx_oh);
     // end
-    if (o_ex1_q_updates.update &
-        !$onehot0(o_ex1_q_updates.index_oh)) begin
-      $fatal(0, "LSU Pipeline : o_ex1_q_updates.index_oh should be one-hot. Value=%x\n",
-             o_ex1_q_updates.index_oh);
+    if (iq_upd_if.update &
+        !$onehot0(iq_upd_if.index_oh)) begin
+      $fatal(0, "LSU Pipeline : iq_upd_if.index_oh should be one-hot. Value=%x\n",
+             iq_upd_if.index_oh);
     end
   end
 end
@@ -446,6 +455,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_is_sc <= 1'b0;
   end else begin
     r_ex2_addr         <= w_ex1_ld_except_valid | w_ex1_st_except_valid ? w_ex1_vaddr : w_ex1_addr;
+    r_ex2_rs2_data     <= w_ex1_rs2_selected_data;
+
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
     r_ex2_except_type  <= w_ex1_tlb_except_type;
 
@@ -482,11 +493,23 @@ assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 assign l1d_missu_if.req_payload.way   = ex1_l1d_rd_if.s1_hit_way;
 // L1D replace information
 
-// Interface to EX2 updates
-assign o_ex2_q_updates.update  = r_ex2_issue.valid;
-assign o_ex2_q_updates.cmt_id  = r_ex2_issue.cmt_id;
-assign o_ex2_q_updates.grp_id  = r_ex2_issue.grp_id;
-assign o_ex2_q_updates.success = r_ex2_is_sc ? w_ex2_success : w_ex2_hazard_typ == EX2_HAZ_NONE;
+// LDQ
+assign ldq_upd_if.update         = r_ex2_issue.valid & (r_ex2_except_valid | ~w_ex2_haz_detected);
+assign ldq_upd_if.payload.cmt_id = r_ex2_issue.cmt_id;
+assign ldq_upd_if.payload.grp_id = r_ex2_issue.grp_id;
+assign ldq_upd_if.payload.size   = r_ex2_pipe_ctrl.size;
+assign ldq_upd_if.payload.paddr  = r_ex2_addr;
+
+// Interface to STQ updates
+assign stq_upd_if.update           = r_ex2_issue.valid & (r_ex2_except_valid | ~w_ex2_haz_detected);
+assign stq_upd_if.payload.cmt_id   = r_ex2_issue.cmt_id;
+assign stq_upd_if.payload.grp_id   = r_ex2_issue.grp_id;
+assign stq_upd_if.payload.paddr    = r_ex2_addr;
+assign stq_upd_if.payload.is_uc    = r_ex2_is_uc;
+assign stq_upd_if.payload.rmwop    = r_ex2_pipe_ctrl.rmwop;
+assign stq_upd_if.payload.size     = r_ex2_pipe_ctrl.size;
+assign stq_upd_if.payload.rs2_data = r_ex2_rs2_data;
+assign stq_upd_if.payload.success  = w_ex2_success;
 
 assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :
@@ -529,12 +552,12 @@ end
 // `ifdef SIMULATION
 // always_ff @ (negedge i_clk, negedge i_reset_n) begin
 //   if (i_reset_n) begin
-//     if (o_ex2_q_updates.update &
+//     if (stq_upd_if.update &
 //         (r_ex2_pipe_ctrl.op == OP_LOAD) &
-//         (o_ex2_q_updates.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
-//         !$onehot(o_ex2_q_updates.missu_index_oh)) begin
-//       $fatal(0, "LSU Pipeline : o_ex2_q_updates.missu_index_oh should be one-hot. Value=%x\n",
-//              o_ex2_q_updates.missu_index_oh);
+//         (stq_upd_if.hazard_typ == EX2_HAZ_MISSU_ASSIGNED) &
+//         !$onehot(stq_upd_if.missu_index_oh)) begin
+//       $fatal(0, "LSU Pipeline : stq_upd_if.missu_index_oh should be one-hot. Value=%x\n",
+//              stq_upd_if.missu_index_oh);
 //     end
 //   end // if (i_reset_n)
 // end
@@ -692,7 +715,7 @@ assign done_report_if.except_type   = r_ex3_except_type;
 assign done_report_if.except_tval   = r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
                                       {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
 
-assign flush_report_if.valid  = ldq_haz_check_if.ex3_haz_valid;
+assign flush_report_if.valid  = r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid;
 assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign flush_report_if.grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 

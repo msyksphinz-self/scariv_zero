@@ -43,6 +43,8 @@ typedef logic [scariv_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
                           scariv_conf_pkg::LDQ_SIZE :
                           scariv_conf_pkg::STQ_SIZE;
 
+localparam LSU_IQ_ENTRY_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+
 localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ?
                                scariv_conf_pkg::MISSU_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
@@ -80,12 +82,11 @@ typedef enum logic [ 2: 0] {
 } ex2_haz_t;
 
   typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT,
-                                LSU_SCHED_EX2, LSU_SCHED_CLEAR } lsu_sched_state_t;
+                                LSU_SCHED_CLEAR } lsu_sched_state_t;
 
-  typedef enum logic [ 1: 0] {
+  typedef enum logic {
     LSU_ISSUE_HAZ_TLB_MISS,
-    LSU_ISSUE_HAZ_UC_ACCESS,
-    LSU_ISSUE_HAZ_REPLAY_FULL
+    LSU_ISSUE_HAZ_UC_ACCESS
   } lsu_issue_haz_reason_t;
 
   typedef struct packed {
@@ -103,7 +104,7 @@ typedef enum logic [ 2: 0] {
     lsu_issue_haz_reason_t  haz_reason;
 
     reg_wr_issue_t         wr_reg;
-    reg_rd_issue_t [ 2: 0] rd_regs;
+    reg_rd_issue_t [ 1: 0] rd_regs;
 
 `ifdef SIMULATION
     logic         sim_is_rvc;
@@ -113,10 +114,10 @@ typedef enum logic [ 2: 0] {
   } lsu_issue_entry_t;
 
 function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
-                                         cmt_id_t cmt_id,
-                                         grp_id_t grp_id,
-                                         logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t rs_rel_index,
-                                         logic stq_rmw_existed, logic oldest_valid);
+                                                   cmt_id_t cmt_id,
+                                                   grp_id_t grp_id,
+                                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t[ 1: 0] rs_rel_index,
+                                                   logic stq_rmw_existed, logic oldest_valid);
   lsu_issue_entry_t ret;
   ret.valid = in.valid;
   ret.inst = in.inst;
@@ -142,7 +143,7 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
   ret.kanata_id   = in.kanata_id;
 `endif // SIMULATION
 
-  for (int rs_idx = 0; rs_idx < 1; rs_idx++) begin
+  for (int rs_idx = 0; rs_idx < 2; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
     ret.rd_regs[rs_idx].typ           = in.rd_regs[rs_idx].typ;
     ret.rd_regs[rs_idx].regidx        = in.rd_regs[rs_idx].regidx;
@@ -151,12 +152,8 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
     ret.rd_regs[rs_idx].predict_ready[0] = rs_rel_hit[rs_idx];
     ret.rd_regs[rs_idx].predict_ready[1] = 1'b0;
     if (ret.rd_regs[rs_idx].predict_ready[0]) begin
-      ret.rd_regs[rs_idx].early_index = rs_rel_index;
+      ret.rd_regs[rs_idx].early_index = rs_rel_index[rs_idx];
     end
-  end
-
-  for (int rs_idx = 1; rs_idx < 3; rs_idx++) begin
-    ret.rd_regs[rs_idx].valid = 1'b0;
   end
 
   return ret;
@@ -319,31 +316,22 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  logic                           update;
-  // scariv_pkg::issue_t               inst;
-  decoder_lsu_ctrl_pkg::size_t    size; // Memory Access Size
-  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_idx_oh;
+  decoder_lsu_ctrl_pkg::size_t size; // Memory Access Size
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
-  ex1_haz_t                       hazard_typ;
-  logic                           tlb_except_valid;
-  scariv_pkg::except_t              tlb_except_type;
-  logic                           tlb_uc;
-
-  logic [MEM_Q_SIZE-1:0]          index_oh;
-  scariv_pkg::paddr_t paddr;
-
-  // Atomic Operations
-  logic                         is_rmw;
-  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
-} ex1_q_update_t;
+  scariv_pkg::paddr_t  paddr;
+} ldq_update_t;
 
 typedef struct packed {
-  logic                update;
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
-  logic                success;
-} ex2_q_update_t;
+  scariv_pkg::paddr_t  paddr;
+  logic                is_uc;
+  decoder_lsu_ctrl_pkg::size_t size; // Memory Access Size
+  decoder_lsu_ctrl_pkg::rmwop_t rmwop;
+  scariv_pkg::alen_t   rs2_data;
+  logic                success;     // SC is succeeded
+} stq_update_t;
 
 typedef struct packed {
   logic                                valid;
@@ -563,8 +551,6 @@ typedef struct packed {
 
   scariv_pkg::maxaddr_t addr;
   logic                 paddr_valid;
-  logic                 is_rs2_get;
-  logic                 rs2_read_accepted;
   scariv_pkg::alen_t    rs2_data;
 
   logic                is_committed;
@@ -909,3 +895,36 @@ typedef struct packed {
 } lsu_replay_queue_t;
 
 endpackage // scariv_lsu_pkg
+
+interface iq_upd_if;
+  import scariv_lsu_pkg::*;
+
+  logic                         update;
+  logic [LSU_IQ_ENTRY_SIZE-1:0] index_oh;
+  ex1_haz_t                     hazard_typ;
+
+  logic                         tlb_resolve;
+
+modport master (output update, index_oh, hazard_typ, tlb_resolve);
+modport slave  (input  update, index_oh, hazard_typ, tlb_resolve);
+
+endinterface // iq_upd_if
+
+
+interface ldq_upd_if;
+  logic        update;
+  scariv_lsu_pkg::ldq_update_t payload;
+
+modport master (output update, payload);
+modport slave  (input  update, payload);
+
+endinterface // ldq_upd_if
+
+interface stq_upd_if;
+  logic        update;
+  scariv_lsu_pkg::stq_update_t payload;
+
+modport master (output update, payload);
+modport slave  (input  update, payload);
+
+endinterface // stq_upd_if

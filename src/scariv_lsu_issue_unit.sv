@@ -42,9 +42,7 @@ module scariv_lsu_issue_unit
 
   lsu_mispred_if.slave           mispred_if[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
-  input ex1_q_update_t                  i_ex1_updates,
-  input logic                           i_tlb_resolve,
-  input ex2_q_update_t                  i_ex2_updates,
+  iq_upd_if.slave  iq_upd_if,
   input logic                           i_st_buffer_empty,
   input logic                           i_st_requester_empty,
   input logic                           i_missu_is_empty,
@@ -164,26 +162,29 @@ lsu_issue_entry_t w_input_entry[IN_PORT_SIZE];
 logic [IN_PORT_SIZE-1: 0] w_disp_oldest_valid;
 generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
 
-  scariv_pkg::rnid_t        w_rs1_rnid;
-  scariv_pkg::reg_t         w_rs1_type;
-  logic                     w_rs1_rel_hit;
-  logic                     w_rs1_may_mispred;
-  scariv_pkg::rel_bus_idx_t w_rs1_rel_index;
-  logic                     w_rs1_phy_hit;
-  logic                     w_rs1_mispredicted;
+  logic [ 1: 0]             w_rs_rel_hit;
+  logic [ 1: 0]             w_rs_may_mispred;
+  scariv_pkg::rel_bus_idx_t [ 1: 0] w_rs_rel_index;
+  logic [ 1: 0]             w_rs_phy_hit;
+  logic [ 1: 0]             w_rs_mispredicted;
 
-  assign w_rs1_rnid = i_disp_info[idx].rd_regs[0].rnid;
-  assign w_rs1_type = i_disp_info[idx].rd_regs[0].typ ;
+  for (genvar rs_idx = 0; rs_idx < 2; rs_idx++) begin : rs_loop
+    scariv_pkg::rnid_t        w_rs_rnid;
+    scariv_pkg::reg_t         w_rs_type;
 
-  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .early_wr_if (early_wr_if),
-                                           .o_valid   (w_rs1_rel_hit), .o_hit_index (w_rs1_rel_index), .o_may_mispred (w_rs1_may_mispred));
-  select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .phy_wr_if   (phy_wr_if),
-                                        .o_valid      (w_rs1_phy_hit));
-  select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs1_rnid), .i_entry_type (w_rs1_type), .i_mispred  (mispred_if),
-                                        .o_mispred    (w_rs1_mispredicted));
+    assign w_rs_rnid = i_disp_info[idx].rd_regs[rs_idx].rnid;
+    assign w_rs_type = i_disp_info[idx].rd_regs[rs_idx].typ ;
+
+    select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid), .i_entry_type (w_rs_type), .early_wr_if (early_wr_if),
+                                             .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
+    select_phy_wr_bus   rs_phy_select    (.i_entry_rnid (w_rs_rnid), .i_entry_type (w_rs_type), .phy_wr_if   (phy_wr_if),
+                                          .o_valid      (w_rs_phy_hit[rs_idx]));
+    select_mispred_bus  rs_mispred_select(.i_entry_rnid (w_rs_rnid), .i_entry_type (w_rs_type), .i_mispred  (mispred_if),
+                                          .o_mispred    (w_rs_mispredicted[rs_idx]));
+  end
 
   assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], i_cmt_id, i_grp_id[idx],
-                                                     w_rs1_rel_hit, w_rs1_phy_hit, w_rs1_may_mispred, w_rs1_rel_index,
+                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
                                                      i_stq_rmw_existed, w_disp_oldest_valid[idx]);
 
   decoder_lsu_sched u_lsu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
@@ -231,9 +232,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .phy_wr_if(phy_wr_if),
 
     .mispred_if (mispred_if),
-    .i_ex1_updates (i_ex1_updates),
-    .i_tlb_resolve        (i_tlb_resolve       ),
-    .i_ex2_updates        (i_ex2_updates       ),
+    .iq_upd_if  (iq_upd_if ),
     .i_st_buffer_empty    (i_st_buffer_empty   ),
     .i_st_requester_empty (i_st_requester_empty),
     .i_replay_queue_full  (i_replay_queue_full ),

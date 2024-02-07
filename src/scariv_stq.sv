@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------
+ // ------------------------------------------------------------------------
 // NAME : scariv_stq
 // TYPE : module
 // ------------------------------------------------------------------------
@@ -23,25 +23,17 @@ module scariv_stq
    /* Forwarding path */
    phy_wr_if.slave      phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
 
-   // Updates from LSU Pipeline EX1 stage
-   input ex1_q_update_t i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
    // Updates from LSU Pipeline EX2 stage
-   input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-
-   // Store Data Read Interface
-   regread_if.master   int_rs2_regread,
-   regread_if.master   fp_rs2_regread ,
+   stq_upd_if.slave stq_upd_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // Forwarding checker
-   fwd_check_if.slave                        ex2_fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
+   fwd_check_if.slave ex2_fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // STQ Hazard Check
-   stq_haz_check_if.slave      stq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
+   stq_haz_check_if.slave  stq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // RMW Ordere Hazard Check
-   rmw_order_check_if.slave    rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
-
-   done_if.slave        ex3_done_if[scariv_conf_pkg::LSU_INST_NUM],
+   rmw_order_check_if.slave  rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic           i_missu_is_empty,
 
@@ -75,9 +67,6 @@ logic [$clog2(scariv_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
-
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids;
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids_oh;
 
 logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rmw_existed;
 assign o_stq_rmw_existed = |w_stq_rmw_existed;
@@ -211,7 +200,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   scariv_pkg::disp_t           w_disp_entry;
   scariv_pkg::grp_id_t w_disp_grp_id;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex2_stq_entries_recv;
   scariv_pkg::grp_id_t w_stbuf_accept_array;
 
   // stq_snoop_if stq_entry_snoop_if();
@@ -225,50 +213,12 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]),     .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
   bit_oh_or #(.T(logic[scariv_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
-  // Selection of EX1 Update signal
-  ex1_q_update_t w_ex1_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_stq_entries[s_idx].inst.cmt_id), .grp_id(w_stq_entries[s_idx].inst.grp_id),
-                                         .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
 
   // Selection of EX2 Update signal
-  ex2_q_update_t w_ex2_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
-  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates),
-                                         .i_cmt_id(w_stq_entries[s_idx].inst.cmt_id),
-                                         .i_grp_id(w_stq_entries[s_idx].inst.grp_id),
-                                         .i_ex2_recv(r_ex2_stq_entries_recv),
-                                         .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
-
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
-  always_ff @ (posedge i_clk, negedge i_reset_n) begin
-    if (!i_reset_n) begin
-      r_ex3_q_valid <= 'h0;
-    end else begin
-      r_ex3_q_valid <= w_ex2_q_valid;
-    end
-  end
-  done_if w_ex3_done_sel_if();
-
-  // Selection of EX3 Update signal
-  ex3_done_if_select
-    #(.ENTRY_SIZE(scariv_conf_pkg::STQ_SIZE))
-  u_ex3_done_if_select
-    (
-     .i_select  (r_ex3_q_valid),
-     .slave_if  (ex3_done_if),
-     .master_if (w_ex3_done_sel_if)
-     );
-
-  // ---------------
-  // STQ Snoop If
-  // ---------------
-  // assign stq_entry_snoop_if.req_s0_valid = stq_snoop_if.req_s0_valid;
-  // assign stq_entry_snoop_if.req_s0_paddr = stq_snoop_if.req_s0_paddr;
-  //
-  // assign w_stq_snoop_valid[s_idx] = stq_entry_snoop_if.resp_s1_valid;
-  // assign w_stq_snoop_data [s_idx] = stq_entry_snoop_if.resp_s1_data;
-  // assign w_stq_snoop_be   [s_idx] = stq_entry_snoop_if.resp_s1_be;
+  stq_update_t w_ex2_q_updates;
+  logic        w_ex2_q_valid;
+  stq_upd_select u_stq_upd_select (.stq_upd_if(stq_upd_if), .i_cmt_id(w_stq_entries[s_idx].inst.cmt_id), .i_grp_id(w_stq_entries[s_idx].inst.grp_id),
+                                   .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
   scariv_stq_entry
     #(.entry_index (s_idx))
@@ -287,14 +237,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
      .phy_wr_in_if   (phy_wr_in_if  ),
 
-     .i_ex1_q_valid   (|w_ex1_q_valid),
-     .i_ex1_q_updates (w_ex1_q_updates),
-
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
-
-     .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data),
 
      .o_entry (w_stq_entries[s_idx]),
 
@@ -314,20 +258,10 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
      .i_st_buffer_empty (st_buffer_if.is_empty),
 
-     .ex3_done_if           (w_ex3_done_sel_if),
      .i_stq_outptr_valid    (w_out_ptr_oh[s_idx]),
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
-    // If rs2 operand is already ready, store data is fetch directly
-    assign w_stq_rs2_read_valids[s_idx] = w_stq_entries[s_idx].is_valid &
-                                          !w_stq_entries[s_idx].dead &
-                                          !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_read_accepted &
-                                          w_stq_entries[s_idx].inst.rd_reg.valid &
-                                          w_stq_entries[s_idx].inst.rd_reg.ready;
-
-    assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
-                                  (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
     for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
       assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
     end
@@ -348,7 +282,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                              !w_stq_entries[s_idx].dead &
                                              (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
                                              w_stq_entries[s_idx].paddr_valid &
-                                             w_stq_entries[s_idx].is_rs2_get &
                                              w_same_addr_region &
                                              |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
@@ -396,7 +329,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
     assign w_ex2_stq_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
                                                !w_stq_entries[s_idx].dead &
                                                w_stq_entries[s_idx].paddr_valid &
-                                               !w_stq_entries[s_idx].is_rs2_get &
                                                stq_haz_check_if[p_idx].ex2_valid &
                                                w_same_addr_region &
                                                pipe_is_younger_than_stq;
@@ -405,17 +337,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   assign w_stq_rmw_existed[s_idx] = w_stq_entries[s_idx].is_valid & (w_stq_entries[s_idx].rmwop != RMWOP__);
 end // block: stq_loop
 endgenerate
-
-// ST data read selection
-stq_entry_t w_stq_rs2_req_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh));
-bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
-assign int_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
-assign int_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
-
-assign fp_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::FPR);
-assign fp_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
-
 
 // RMW Order Hazard Check Logci
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_haz_resp_loop
@@ -472,7 +393,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     o_stq_rs2_resolve <= 'h0;
   end else begin
-    o_stq_rs2_resolve.index <= w_stq_rs2_get;
+    o_stq_rs2_resolve.index <= 'h0;
   end
 end
 
@@ -690,3 +611,28 @@ endfunction // dump_json
 
 
 endmodule // scariv_stq
+
+module stq_upd_select
+  import scariv_lsu_pkg::*;
+  (
+   stq_upd_if.slave           stq_upd_if[scariv_conf_pkg::LSU_INST_NUM],
+   input scariv_pkg::cmt_id_t i_cmt_id,
+   input scariv_pkg::grp_id_t i_grp_id,
+   output logic               o_ex2_q_valid,
+   output stq_update_t        o_ex2_q_updates
+   );
+
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
+stq_update_t w_ex2_payloads[scariv_conf_pkg::LSU_INST_NUM];
+
+generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
+  assign w_ex2_update_match[p_idx] = (stq_upd_if[p_idx].update &&
+                                      stq_upd_if[p_idx].payload.cmt_id == i_cmt_id &&
+                                      stq_upd_if[p_idx].payload.grp_id == i_grp_id);
+  assign w_ex2_payloads[p_idx] = stq_upd_if[p_idx].payload;
+end endgenerate
+
+assign o_ex2_q_valid = |w_ex2_update_match;
+bit_oh_or #(.T(stq_update_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(w_ex2_payloads), .o_selected(o_ex2_q_updates));
+
+endmodule // stq_upd_select
