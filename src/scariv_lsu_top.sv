@@ -35,8 +35,8 @@ module scariv_lsu_top
 
     regread_if.master   ex1_int_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
 
-    regread_if.master   int_rs2_regread,
-    regread_if.master   fp_rs2_regread ,
+    regread_if.master   int_rs2_regread[scariv_conf_pkg::STQ_REGRD_PORT_NUM],
+    regread_if.master   fp_rs2_regread [scariv_conf_pkg::STQ_REGRD_PORT_NUM],
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if[scariv_conf_pkg::LSU_INST_NUM],

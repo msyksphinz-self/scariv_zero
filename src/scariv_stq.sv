@@ -29,8 +29,8 @@ module scariv_stq
    input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
 
    // Store Data Read Interface
-   regread_if.master   int_rs2_regread,
-   regread_if.master   fp_rs2_regread ,
+   regread_if.master   int_rs2_regread[scariv_conf_pkg::STQ_REGRD_PORT_NUM],
+   regread_if.master   fp_rs2_regread [scariv_conf_pkg::STQ_REGRD_PORT_NUM],
 
    // Forwarding checker
    fwd_check_if.slave                        ex2_fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -76,8 +76,8 @@ stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids;
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids_oh;
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids   [scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids_oh[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
 
 logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rmw_existed;
 assign o_stq_rmw_existed = |w_stq_rmw_existed;
@@ -207,6 +207,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+  localparam rs2_regrd_port_idx = s_idx[$clog2(scariv_conf_pkg::STQ_REGRD_PORT_NUM)-1: 0];
+
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   scariv_pkg::disp_t           w_disp_entry;
   scariv_pkg::grp_id_t w_disp_grp_id;
@@ -293,8 +295,9 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
 
-     .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread.data : fp_rs2_regread.data),
+     .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[rs2_regrd_port_idx][s_idx]),
+     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread[rs2_regrd_port_idx].data :
+                                                                                     fp_rs2_regread [rs2_regrd_port_idx].data),
 
      .o_entry (w_stq_entries[s_idx]),
 
@@ -320,11 +323,14 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      );
 
     // If rs2 operand is already ready, store data is fetch directly
-    assign w_stq_rs2_read_valids[s_idx] = w_stq_entries[s_idx].is_valid &
-                                          !w_stq_entries[s_idx].dead &
-                                          !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_read_accepted &
-                                          w_stq_entries[s_idx].inst.rd_reg.valid &
-                                          w_stq_entries[s_idx].inst.rd_reg.ready;
+    for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
+      assign w_stq_rs2_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
+                                                   w_stq_entries[s_idx].is_valid &
+                                                   !w_stq_entries[s_idx].dead &
+                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_read_accepted &
+                                                   w_stq_entries[s_idx].inst.rd_reg.valid &
+                                                   w_stq_entries[s_idx].inst.rd_reg.ready;
+    end
 
     assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
                                   (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
@@ -407,14 +413,17 @@ end // block: stq_loop
 endgenerate
 
 // ST data read selection
-stq_entry_t w_stq_rs2_req_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh));
-bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
-assign int_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
-assign int_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+generate for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
+  stq_entry_t w_stq_rs2_req_entry;
+  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids[r_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh[r_idx]));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh[r_idx]), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
 
-assign fp_rs2_regread.valid     = |w_stq_rs2_read_valids & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::FPR);
-assign fp_rs2_regread.rnid      = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+  assign int_rs2_regread[r_idx].valid = |w_stq_rs2_read_valids[r_idx] & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
+  assign int_rs2_regread[r_idx].rnid  = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+
+  assign fp_rs2_regread[r_idx].valid = |w_stq_rs2_read_valids[r_idx] & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::FPR);
+  assign fp_rs2_regread[r_idx].rnid  = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+end endgenerate
 
 
 // RMW Order Hazard Check Logci

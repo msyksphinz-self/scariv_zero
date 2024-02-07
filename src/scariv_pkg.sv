@@ -57,13 +57,14 @@ package scariv_pkg;
   localparam MISSU_ENTRY_W = $clog2(MISSU_ENTRY_SIZE);
 
   localparam INT_REGRD_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
-                                  scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
+                                  scariv_conf_pkg::LSU_INST_NUM +        // LSU port
+                                  scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                   2 +                                    // BRU port
                                   1 +                                    // CSR port
                                   scariv_conf_pkg::FPU_INST_NUM;         // FPU port
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
-                                 1;                                      // LSU port
+                                 scariv_conf_pkg::STQ_REGRD_PORT_NUM;    // LSU port
 
   localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
                                   scariv_conf_pkg::LSU_INST_NUM +    // LSU port
