@@ -351,7 +351,7 @@ u_lsu_top
     .ldq_cre_ret_if (ldq_cre_ret_if),
     .stq_cre_ret_if (stq_cre_ret_if),
 
-    .ex1_int_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
+    .int_rs1_regread (int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +: scariv_conf_pkg::LSU_INST_NUM]),
 
     .int_rs2_regread (int_regread[(scariv_conf_pkg::ALU_INST_NUM * 2) + scariv_conf_pkg::LSU_INST_NUM +: scariv_conf_pkg::STQ_REGRD_PORT_NUM]),
     .fp_rs2_regread  (fp_regread [(scariv_conf_pkg::FPU_INST_NUM * 3) +: scariv_conf_pkg::STQ_REGRD_PORT_NUM]),
