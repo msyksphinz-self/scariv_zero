@@ -113,7 +113,7 @@ typedef enum logic [ 2: 0] {
 `endif // SIMULATION
   } lsu_issue_entry_t;
 
-function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in,
+function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in, logic flush,
                                                    cmt_id_t cmt_id,
                                                    grp_id_t grp_id,
                                                    logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t[ 1: 0] rs_rel_index,

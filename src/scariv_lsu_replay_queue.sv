@@ -88,7 +88,7 @@ always_comb begin
   w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
   w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
   w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
-  w_new_replay_queue_info.diff_counter         = w_empty ? 'h0 : r_diff_counter;
+  w_new_replay_queue_info.diff_counter         = 'h0; /* w_empty | lsu_pipe_haz_if.payload.hazard_typ ==  ? 'h0 : r_diff_counter; */
 end
 
 // Diff counter from previous Queue inesrtion

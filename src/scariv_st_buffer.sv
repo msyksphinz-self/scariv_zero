@@ -176,7 +176,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge & ~w_entry_l1d_merge_hit[e_idx] &
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
-  assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~w_ready_to_merge &
+  assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~(w_ready_to_merge & ~w_entry_l1d_merge_hit[e_idx]) &
                                   w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
   // RMW Order Hazard Check

@@ -67,7 +67,7 @@ scariv_lsu_pkg::lsu_issue_entry_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
-logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
+logic [ENTRY_SIZE-1: 0]         r_entry_out_ptr_oh;
 
 logic [ENTRY_SIZE-1:0]          w_entry_wait_complete;
 logic [ENTRY_SIZE-1:0]          w_entry_complete;
@@ -80,30 +80,55 @@ assign w_flush_valid = commit_if.is_flushed_commit();
 logic                                w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
 
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
+
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
-inoutptr_var_oh
-  #(.SIZE(ENTRY_SIZE))
-u_req_ptr
+generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : entry_finish_loop
+  if (p_idx == 0) begin
+    bit_encoder #(.WIDTH(ENTRY_SIZE)) u_finish_entry_encoder (.i_in(w_entry_finish_oh), .o_out(w_entry_finish_index[p_idx]));
+  end else begin
+    assign w_entry_finish_index[p_idx] = 'h0;
+  end
+end endgenerate
+
+scariv_freelist_multiports
+  #(.SIZE (ENTRY_SIZE),
+    .WIDTH ($clog2(ENTRY_SIZE)),
+    .PORTS (IN_PORT_SIZE)
+    )
+u_entry_freelist
   (
-   .i_clk (i_clk),
+   .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
-   .i_rollback (1'b0),
+   .i_push    (|w_entry_finish_oh),
+   .i_push_id (w_entry_finish_index),
 
-   .i_in_valid (|i_disp_valid & ~w_ignore_disp),
-   .i_in_val   ({{($clog2(ENTRY_SIZE)-$clog2(IN_PORT_SIZE)){1'b0}}, w_input_valid_cnt}),
-   .o_in_ptr_oh(w_entry_in_ptr_oh   ),
+   .i_pop   (i_disp_valid),
+   .o_pop_id(w_entry_load_index),
 
-   .i_out_valid  (|w_entry_finish_oh),
-   .i_out_val    ({{($clog2(ENTRY_SIZE)){1'b0}}, 1'b1}),
-   .o_out_ptr_oh (w_entry_out_ptr_oh                  )
+   .o_is_empty()
    );
 
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_entry_out_ptr_oh <= 'h1;
+  end else begin
+    if (commit_if.is_flushed_commit()) begin
+      r_entry_out_ptr_oh <= 'h1;
+    end else if (o_issue.valid & ~i_stall) begin
+      r_entry_out_ptr_oh <= o_iss_index_oh;
+    end
+  end
+end
+
+
 assign w_ignore_disp = w_flush_valid & (|i_disp_valid);
-assign w_credit_return_val = ((|w_entry_finish_oh) ? 'h1 : 'h0) +
-                             (w_ignore_disp        ? w_input_valid_cnt  : 'h0) ;
+assign w_credit_return_val = (|w_entry_finish_oh) ? 'h1 : 'h0;
 
 scariv_credit_return_slave
   #(.MAX_CREDITS(ENTRY_SIZE))
@@ -112,7 +137,7 @@ u_credit_return_slave
  .i_clk(i_clk),
  .i_reset_n(i_reset_n),
 
- .i_get_return((|w_entry_finish_oh) | w_ignore_disp),
+ .i_get_return(|w_entry_finish_oh ),
  .i_return_val(w_credit_return_val),
 
  .cre_ret_if (cre_ret_if)
@@ -143,7 +168,7 @@ bit_brshift
 u_age_selector
   (
    .in   (w_entry_valid & w_entry_ready),
-   .i_sel(w_entry_out_ptr_oh),
+   .i_sel(r_entry_out_ptr_oh),
    .out  (w_picked_inst)
    );
 
@@ -154,7 +179,7 @@ bit_blshift
 u_inst_selector
   (
    .in   (w_picked_inst_pri),
-   .i_sel(w_entry_out_ptr_oh),
+   .i_sel(r_entry_out_ptr_oh),
    .out  (w_picked_inst_oh)
    );
 
@@ -183,7 +208,7 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
                                           .o_mispred    (w_rs_mispredicted[rs_idx]));
   end
 
-  assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], i_cmt_id, i_grp_id[idx],
+  assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], w_flush_valid, i_cmt_id, i_grp_id[idx],
                                                      w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
                                                      i_stq_rmw_existed, w_disp_oldest_valid[idx]);
 
@@ -196,9 +221,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   lsu_issue_entry_t         w_disp_entry;
   scariv_pkg::grp_id_t      w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
-    logic [ENTRY_SIZE-1: 0] target_idx_oh;
-    bit_rotate_left #(.WIDTH(ENTRY_SIZE), .VAL(i_idx)) target_bit_rotate (.i_in(w_entry_in_ptr_oh), .o_out(target_idx_oh));
-    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & !w_flush_valid & (target_idx_oh[s_idx]);
+    assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (w_entry_load_index[i_idx] == s_idx);
   end
 
   bit_oh_or #(.T(lsu_issue_entry_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(w_input_entry), .o_selected(w_disp_entry));
@@ -214,7 +237,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_clk    (i_clk    ),
     .i_reset_n(i_reset_n),
 
-    .i_out_ptr_valid (w_entry_out_ptr_oh [s_idx] ),
+    .i_out_ptr_valid (r_entry_out_ptr_oh [s_idx] ),
 
     .rob_info_if (rob_info_if),
 
@@ -253,7 +276,7 @@ endgenerate
 bit_oh_or #(.T(scariv_lsu_pkg::lsu_issue_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 // Clear selection
-assign w_entry_finish_oh = w_entry_finish & w_entry_out_ptr_oh;
+bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(r_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
 `ifdef SIMULATION
@@ -299,7 +322,7 @@ function void dump_json(string name, int fp, int index);
   if (|w_entry_valid) begin
     $fwrite(fp, "  \"scariv_lsu_issue_unit_%s[%d]\" : {\n", name, index[$clog2(ENTRY_SIZE)-1: 0]);
     $fwrite(fp, "    \"in_ptr\"  : %d\n", w_entry_in_ptr_oh);
-    $fwrite(fp, "    \"out_ptr\" : %d\n", w_entry_out_ptr_oh);
+    $fwrite(fp, "    \"out_ptr\" : %d\n", r_entry_out_ptr_oh);
     for (int s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin
       dump_entry_json (fp, w_entry_ptr[s_idx], s_idx);
     end

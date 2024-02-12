@@ -137,9 +137,10 @@ always_comb begin
 
   case (r_state)
     scariv_lsu_pkg::LSU_SCHED_INIT : begin
-      if (w_entry_flush) begin
-        w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
-      end else if (i_put) begin
+      // if (w_entry_flush) begin
+      //   w_state_next = scariv_lsu_pkg::LSU_SCHED_INIT;
+      // end else
+      if (i_put) begin
         w_entry_next = i_put_entry;
         w_issued_next = 1'b0;
         if (w_load_entry_flush) begin
@@ -260,7 +261,7 @@ end
 
 assign w_inst_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
                              ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
-assign w_oldest_ready = r_entry.oldest_valid & i_st_buffer_empty & ~i_stq_rmw_existed & i_missu_is_empty & i_out_ptr_valid;
+assign w_oldest_ready = r_entry.oldest_valid & i_st_buffer_empty & ~i_stq_rmw_existed & i_missu_is_empty & w_inst_oldest_ready /* i_out_ptr_valid */;
 
 assign w_pc_update_before_entry = 1'b0;
 
