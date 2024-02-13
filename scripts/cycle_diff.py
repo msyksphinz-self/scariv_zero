@@ -4,14 +4,17 @@ import heapq
 import argparse
 import re
 
-#    for line0 in fp0.read().split('\n'):
-#        print (line0)
-#        print ("M")
-#    for line1 in fp1.read().split('\n'):
-#        print(line1)
-#        print("H")
+def read_file(file_path):
+    # Open file and return generator to read files as needed.
+    with open(file_path, 'r') as file:
+        for line in file:
+            yield line
 
-def extract_and_compare (file0, file1, max_diff):
+def parse_line(line):
+    # Analyze line and generate information
+    return re.findall(r'^(\d+) : (\d+) : PC=\[([0-9A-Fa-f]+)\] \(.+\) [0-9A-Fa-f]+ (.+)$', line)
+
+def compare_files (file0, file1, max_diff):
     fp0 = open(file0, 'r')
     fp1 = open(file1, 'r')
 
@@ -20,14 +23,15 @@ def extract_and_compare (file0, file1, max_diff):
 
     max_ten = []
 
-    line0 = fp0.readline()
-    while line0:
-        m0 = re.findall(r'^(\d+) : (\d+) : PC=\[([0-9A-Fa-f]+)\] \(.+\) [0-9A-Fa-f]+ (.+)$', line0)
+    lines0 = read_file(file0)
+    lines1 = read_file(file1)
+
+    for line0 in lines0:
+        m0 = parse_line(line0)
         if len(m0) != 0:
             # Match log0 instruction commit info
-            line1 = fp1.readline()
-            while line1:
-                m1 = re.findall(r'^(\d+) : (\d+) : PC=\[([0-9A-Fa-f]+)\] \(.+\) [0-9A-Fa-f]+ (.+)$', line1)
+            for line1 in lines1:
+                m1 = parse_line(line1)
                 if len(m1) != 0:
                     # --------------
                     # Start compare
@@ -67,9 +71,6 @@ def extract_and_compare (file0, file1, max_diff):
                         heapq.heapreplace(max_ten, (diff_cycle01, out_str))
 
                     break
-                line1 = fp1.readline()
-
-        line0 = fp0.readline()
 
     print("----------------------------")
     print("Top ranked different cycles")
@@ -86,7 +87,7 @@ def main():
     parser.add_argument('-n', type=int, default=10, help="Maximal Ranked diff")
     args = parser.parse_args()
 
-    extract_and_compare (args.log0, args.log1, args.n)
+    compare_files (args.log0, args.log1, args.n)
 
 
 if __name__ == "__main__":
