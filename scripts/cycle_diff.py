@@ -12,7 +12,7 @@ def read_file(file_path):
 
 def parse_line(line):
     # Analyze line and generate information
-    return re.findall(r'^(\d+) : (\d+) : PC=\[([0-9A-Fa-f]+)\] \(.+\) [0-9A-Fa-f]+ (.+)$', line)
+    return re.findall(r'^(\d+) : (\d+) : PC=\[([0-9A-Fa-f]+)\] (\(.+\)) [0-9A-Fa-f]+ (.+)$', line)
 
 def compare_files (file0, file1, max_diff):
     fp0 = open(file0, 'r')
@@ -48,10 +48,12 @@ def compare_files (file0, file1, max_diff):
                     diff_cycle0 = cycle0 - prev_cycle0
                     diff_cycle1 = cycle1 - prev_cycle1
 
-                    out_str = "inst[%d,%d] PC=%s %-40s cycle %d, %d" % \
-                        (int(m0[0][1]), int(m1[0][1]),
+                    out_str = "cycle[%d,%d] inst[%d,%d] PC=%s %s,%s %-40s cycle %d, %d" % \
+                        (int(m0[0][0]), int(m1[0][0]),
+                         int(m0[0][1]), int(m1[0][1]),
                          m0[0][2],
-                         m0[0][3],
+                         m0[0][3], m1[0][3],
+                         m0[0][4],
                          cycle0, cycle1)
                     print (out_str, end='')
 
