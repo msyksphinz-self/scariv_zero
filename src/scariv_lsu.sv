@@ -179,7 +179,7 @@ u_issue_unit
 
 
 // Replay Queue
-scariv_lsu_replay_queue
+scariv_lsu_fast_replay_queue
 u_replay_queue
 (
   .i_clk (i_clk),
