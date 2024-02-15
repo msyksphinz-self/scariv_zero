@@ -719,6 +719,7 @@ typedef struct packed {
   logic                  is_uc;
 `ifdef SIMULATION
   logic [63: 0]          kanata_id;
+  vaddr_t                sim_pc_addr;
 `endif // SIMULATION
 } lsu_pipe_issue_t;
 
