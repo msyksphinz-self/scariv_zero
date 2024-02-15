@@ -23,8 +23,13 @@ def compare_files (file0, file1, max_diff):
 
     max_ten = []
 
+    region_rank = []
+
     lines0 = read_file(file0)
     lines1 = read_file(file1)
+
+    region_start_cycle0 = 0
+    region_start_cycle1 = 0
 
     for line0 in lines0:
         m0 = parse_line(line0)
@@ -72,13 +77,32 @@ def compare_files (file0, file1, max_diff):
                     elif diff_cycle01 > max_ten[0][0]:
                         heapq.heapreplace(max_ten, (diff_cycle01, out_str))
 
+                    if int(m0[0][1]) % 1000 == 0:
+                        diff_region_cycle = (cycle0 - region_start_cycle0) - (cycle1 - region_start_cycle1)
+                        if len(region_rank) < 10:
+                            heapq.heappush(region_rank, (diff_cycle01, int(m0[0][1])))
+                        elif diff_region_cycle > region_rank[0][0]:
+                            heapq.heapreplace(region_rank, (diff_region_cycle, int(m0[0][1])))
+                        region_start_cycle0 = cycle0
+                        region_start_cycle1 = cycle1
+
+
                     break
+
 
     print("----------------------------")
     print("Top ranked different cycles")
     print("----------------------------")
     for diff, info in sorted(max_ten, reverse=True):
         print("diff=%d : %s" % (diff, info))
+    print("----------------------------")
+
+
+    print("----------------------------")
+    print("Top ranked different region")
+    print("----------------------------")
+    for diff, info in sorted(region_rank, reverse=True):
+        print("diff=%d : %d - %d" % (diff, info, info + 1000))
     print("----------------------------")
 
 def main():
