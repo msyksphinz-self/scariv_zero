@@ -464,22 +464,28 @@ assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
 assign l1d_missu_if.req_payload.way   = ex1_l1d_rd_if.s1_hit_way;
 // L1D replace information
 
-// LDQ
-assign ldq_upd_if.update         = r_ex1_issue.valid & ~w_ex1_tlb_resp.miss;
-assign ldq_upd_if.payload.cmt_id = r_ex1_issue.cmt_id;
-assign ldq_upd_if.payload.grp_id = r_ex1_issue.grp_id;
-assign ldq_upd_if.payload.size   = r_ex1_pipe_ctrl.size;
-assign ldq_upd_if.payload.paddr  = w_ex1_tlb_resp.paddr;
+// Interface to LDQ updates
+assign ldq_upd_if.ex1_update          = r_ex1_issue.valid & ~w_ex1_tlb_resp.miss;
+assign ldq_upd_if.ex1_payload.cmt_id  = r_ex1_issue.cmt_id;
+assign ldq_upd_if.ex1_payload.grp_id  = r_ex1_issue.grp_id;
+assign ldq_upd_if.ex1_payload.size    = r_ex1_pipe_ctrl.size;
+assign ldq_upd_if.ex1_payload.paddr   = w_ex1_tlb_resp.paddr;
+assign ldq_upd_if.ex3_update          = r_ex2_issue.valid & ~w_ex2_haz_detected;
+assign ldq_upd_if.ex3_payload.cmt_id  = r_ex2_issue.cmt_id;
+assign ldq_upd_if.ex3_payload.grp_id  = r_ex2_issue.grp_id;
 
 // Interface to STQ updates
-assign stq_upd_if.update           = r_ex1_issue.valid & ~w_ex1_tlb_resp.miss;
-assign stq_upd_if.payload.cmt_id   = r_ex1_issue.cmt_id;
-assign stq_upd_if.payload.grp_id   = r_ex1_issue.grp_id;
-assign stq_upd_if.payload.paddr    = w_ex1_tlb_resp.paddr;
-assign stq_upd_if.payload.is_uc    = !w_ex1_tlb_resp.cacheable;
-assign stq_upd_if.payload.rmwop    = r_ex1_pipe_ctrl.rmwop;
-assign stq_upd_if.payload.size     = r_ex1_pipe_ctrl.size;
-assign stq_upd_if.payload.success  = w_ex1_success;
+assign stq_upd_if.ex1_update          = r_ex1_issue.valid & ~w_ex1_tlb_resp.miss;
+assign stq_upd_if.ex1_payload.cmt_id  = r_ex1_issue.cmt_id;
+assign stq_upd_if.ex1_payload.grp_id  = r_ex1_issue.grp_id;
+assign stq_upd_if.ex1_payload.paddr   = w_ex1_tlb_resp.paddr;
+assign stq_upd_if.ex1_payload.is_uc   = !w_ex1_tlb_resp.cacheable;
+assign stq_upd_if.ex1_payload.rmwop   = r_ex1_pipe_ctrl.rmwop;
+assign stq_upd_if.ex1_payload.size    = r_ex1_pipe_ctrl.size;
+assign stq_upd_if.ex2_update          = r_ex2_issue.valid;
+assign stq_upd_if.ex2_payload.cmt_id  = r_ex2_issue.cmt_id;
+assign stq_upd_if.ex2_payload.grp_id  = r_ex2_issue.grp_id;
+assign stq_upd_if.ex2_payload.success = r_ex2_success;
 
 assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :

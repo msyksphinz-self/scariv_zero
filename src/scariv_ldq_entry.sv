@@ -28,8 +28,11 @@ module scariv_ldq_entry
 
  input logic                                     i_entry_picked,
 
-  input logic                        i_ex2_q_valid,
-  input scariv_lsu_pkg::ldq_update_t i_ex2_q_updates,
+  input logic                            i_ex1_q_valid,
+  input scariv_lsu_pkg::ldq_ex1_update_t i_ex1_q_updates,
+
+  input logic                            i_ex3_q_valid,
+  input scariv_lsu_pkg::ldq_ex3_update_t i_ex3_q_updates,
 
  input                                           missu_resolve_t i_missu_resolve,
  input logic                                     i_missu_is_full,
@@ -138,9 +141,10 @@ always_comb begin
 
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
-      w_entry_next.addr        = i_ex2_q_updates.paddr;
-      w_entry_next.size        = i_ex2_q_updates.size;
+    end else if (~r_entry.paddr_valid & i_ex1_q_valid) begin
+      w_entry_next.addr        = i_ex1_q_updates.paddr;
+      w_entry_next.size        = i_ex1_q_updates.size;
+    end else if (~r_entry.paddr_valid & i_ex3_q_valid) begin
       w_entry_next.paddr_valid = 1'b1;
       w_entry_next.is_get_data = 1'b1;
     end
@@ -154,9 +158,9 @@ end // always_comb
 
 // `ifdef SIMULATION
 // always_ff @ (negedge i_clk, negedge i_reset_n) begin
-//   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex2_q_valid) begin
-//     if (w_missu_is_assigned & !$onehot(i_ex2_q_updates.missu_index_oh)) begin
-//       $fatal (0, "When MISSU is assigned, MISSU index ID must be one hot but actually %x\n", i_ex2_q_updates.missu_index_oh);
+//   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex1_q_valid) begin
+//     if (w_missu_is_assigned & !$onehot(i_ex1_q_updates.missu_index_oh)) begin
+//       $fatal (0, "When MISSU is assigned, MISSU index ID must be one hot but actually %x\n", i_ex1_q_updates.missu_index_oh);
 //     end
 //   end
 // end

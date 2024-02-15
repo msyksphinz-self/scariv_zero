@@ -27,8 +27,10 @@ module scariv_stq_entry
    phy_wr_if.slave                            phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
 
    // Updates from LSU Pipeline EX2 stage
-   input logic                        i_ex2_q_valid,
-   input scariv_lsu_pkg::stq_update_t i_ex2_q_updates,
+   input logic                            i_ex1_q_valid,
+   input scariv_lsu_pkg::stq_ex1_update_t i_ex1_q_updates,
+   input logic                            i_ex2_q_valid,
+   input scariv_lsu_pkg::stq_ex2_update_t i_ex2_q_updates,
 
   // rs2 store data interface
     input logic                               i_rs2_read_accepted,
@@ -149,13 +151,16 @@ always_comb begin
   end else begin
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
-      w_entry_next.addr         = i_ex2_q_updates.paddr;
-      w_entry_next.size         = i_ex2_q_updates.size;
-      w_entry_next.is_uc        = i_ex2_q_updates.is_uc;
-      w_entry_next.rmwop        = i_ex2_q_updates.rmwop;
-      w_entry_next.paddr_valid  = (i_ex2_q_updates.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC) ? i_ex2_q_updates.success : 1'b1;
+    end else if (~r_entry.paddr_valid & i_ex1_q_valid) begin
+      w_entry_next.addr         = i_ex1_q_updates.paddr;
+      w_entry_next.size         = i_ex1_q_updates.size;
+      w_entry_next.is_uc        = i_ex1_q_updates.is_uc;
+      w_entry_next.rmwop        = i_ex1_q_updates.rmwop;
+      w_entry_next.paddr_valid  = (i_ex1_q_updates.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC) ? 1'b1 : i_ex2_q_updates.success;
+    // end else if (r_entry.paddr_valid & i_ex2_q_valid) begin
+    //   w_entry_next.paddr_valid  = r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC ? i_ex2_q_updates.success : r_entry.paddr_valid;
     end
+
     if (w_ready_to_mv_stbuf) begin
       w_entry_next.is_committed = 1'b1;
     end
