@@ -68,6 +68,7 @@ scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [$clog2(scariv_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
 
 stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
+logic [scariv_conf_pkg::STQ_SIZE-1: 0]        w_stq_valid;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 
@@ -282,6 +283,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
+    assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
+
     // If rs2 operand is already ready, store data is fetch directly
     for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
       assign w_stq_rs2_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
@@ -441,7 +444,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     o_stq_rs2_resolve <= 'h0;
   end else begin
-    o_stq_rs2_resolve.index <= w_stq_rs2_get;
+    o_stq_rs2_resolve.index <= w_stq_rs2_get | ~w_stq_valid;  // RS2 get or STQ entry is finished => resolve
   end
 end
 
@@ -567,7 +570,6 @@ end
 
 
 `ifdef SIMULATION
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_valid;
 logic [$clog2(scariv_conf_pkg::STQ_SIZE): 0]      w_entry_valid_cnt;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -610,10 +612,6 @@ function void dump_entry_json(int fp, stq_entry_t entry, int index);
 
 endfunction // dump_json
 
-generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin
-  assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
-end
-endgenerate
 
 logic [63: 0] r_cycle_count;
 logic [63: 0] r_stq_max_period;
