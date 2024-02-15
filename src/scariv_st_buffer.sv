@@ -462,6 +462,32 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
   `endif //  `ifdef VERILATOR
+
+logic [63: 0] sim_wr_l1d_cnt;
+logic [63: 0] sim_st_buffer_cnt;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    sim_wr_l1d_cnt  <= 'h0;
+    sim_st_buffer_cnt <= 'h0;
+  end else begin
+    if (l1d_stbuf_wr_if.s0_valid) begin
+      sim_wr_l1d_cnt <= sim_wr_l1d_cnt + 'h1;
+    end
+    if (st_buffer_if.valid & st_buffer_if.resp != ST_BUF_FULL) begin
+      sim_st_buffer_cnt <= sim_st_buffer_cnt + 'h1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+final begin
+  $write ("==========================================\n");
+  $write ("ST-Buffer L1D update\n\n");
+  $write ("l1d_stbuf_wr_if : %d\n", sim_wr_l1d_cnt);
+  $write ("st_buffer transfer : %d\n", sim_st_buffer_cnt);
+  $write ("==========================================\n");
+end
+
 `endif //  `ifdef SIMULATION
 
 endmodule // scariv_st_buffer
