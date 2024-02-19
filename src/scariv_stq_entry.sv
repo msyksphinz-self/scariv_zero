@@ -71,15 +71,20 @@ scariv_pkg::rnid_t                                 w_rs2_rnid;
 scariv_pkg::reg_t                                  w_rs2_type;
 logic                                              w_rs2_phy_hit;
 
+logic                                              w_rs2_phy_data_hit;
+scariv_pkg::alen_t                                 w_rs2_phy_data;
+
 assign  o_entry = r_entry;
 
 assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_reg.rnid;
 assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.typ;
 
-select_phy_wr_bus rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if),
-                                  .o_valid (w_rs2_phy_hit));
+select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM))
+rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[scariv_conf_pkg::ALU_INST_NUM +: (scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM)]), .o_valid (w_rs2_phy_hit));
+select_phy_wr_data #(.BUS_SIZE(scariv_conf_pkg::ALU_INST_NUM))
+rs2_phy_data  (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[0 +: scariv_conf_pkg::ALU_INST_NUM]), .o_valid (w_rs2_phy_data_hit), .o_data (w_rs2_phy_data));
 
-assign  o_entry = r_entry;
+assign o_entry = r_entry;
 
 assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & (|rob_info_if.except_valid) & (rob_info_if.except_valid <= r_entry.inst.grp_id);
 assign w_commit_flush = commit_if.is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id) & r_entry.is_valid;
@@ -125,19 +130,27 @@ always_comb begin
   w_entry_next = r_entry;
 
   if (~w_entry_next.is_rs2_get) begin
-    w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | r_entry.inst.rd_reg.ready;
+    w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | w_rs2_phy_data_hit | r_entry.inst.rd_reg.ready;
     w_entry_next.rs2_read_accepted = i_rs2_read_accepted;
     if (r_entry.rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
+      w_entry_next.is_rs2_get = 1'b1;
+    end
+    if (w_rs2_phy_data_hit) begin
+      w_entry_next.rs2_data   = w_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
 
   if (!r_entry.is_valid) begin
     if (i_disp_load) begin
-      w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, w_rs2_phy_hit);
+      w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, w_rs2_phy_hit | w_rs2_phy_data_hit);
       if (w_load_br_flush | w_load_commit_flush) begin
         w_entry_next.dead = 1'b1;
+      end
+      if (w_rs2_phy_data_hit) begin
+        w_entry_next.rs2_data   = w_rs2_phy_data;
+        w_entry_next.is_rs2_get = 1'b1;
       end
     end
   end else if (r_entry.is_committed | r_entry.dead) begin

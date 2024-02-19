@@ -203,7 +203,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
-  localparam rs2_regrd_port_idx = s_idx[$clog2(scariv_conf_pkg::STQ_REGRD_PORT_NUM)-1: 0];
+  /* verilator lint_off SELRANGE */
+  localparam rs2_regrd_port_idx = scariv_conf_pkg::STQ_REGRD_PORT_NUM == 1 ? 'h0 : s_idx[$clog2(scariv_conf_pkg::STQ_REGRD_PORT_NUM)-1: 0];
 
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   scariv_pkg::disp_t           w_disp_entry;
