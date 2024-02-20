@@ -169,9 +169,9 @@ always_comb begin
       w_entry_next.size         = i_ex1_q_updates.size;
       w_entry_next.is_uc        = i_ex1_q_updates.is_uc;
       w_entry_next.rmwop        = i_ex1_q_updates.rmwop;
-      w_entry_next.paddr_valid  = (i_ex1_q_updates.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC) ? 1'b1 : i_ex2_q_updates.success;
-    // end else if (r_entry.paddr_valid & i_ex2_q_valid) begin
-    //   w_entry_next.paddr_valid  = r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC ? i_ex2_q_updates.success : r_entry.paddr_valid;
+      w_entry_next.paddr_valid  = (i_ex1_q_updates.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC) ? 1'b1 : 1'b0;
+    end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
+      w_entry_next.paddr_valid  = r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC ? i_ex2_q_updates.success : r_entry.paddr_valid;
     end
 
     if (w_ready_to_mv_stbuf) begin
@@ -192,6 +192,8 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
 
   ret.inst.cmt_id = cmt_id;
   ret.inst.grp_id = grp_id;
+
+  ret.inst.is_rmw = in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW;
 
   ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
   ret.inst.rd_reg.typ           = in.rd_regs[1].typ;

@@ -346,7 +346,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                                                          rmw_order_check_if[p_idx].ex2_cmt_id,
                                                                          rmw_order_check_if[p_idx].ex2_grp_id);
     assign w_ex2_rmw_order_haz_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
-                                                     (w_stq_entries[s_idx].rmwop != RMWOP__) &
+                                                     w_stq_entries[s_idx].inst.is_rmw &
                                                      rmw_order_check_if[p_idx].ex2_valid &
                                                      (pipe_is_younger_than_rmw | w_stq_entries[s_idx].is_committed);
   end // block: rmw_order_haz_loop
@@ -372,7 +372,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                                pipe_is_younger_than_stq;
   end // block: rmw_order_haz_loop
 
-  assign w_stq_rmw_existed[s_idx] = w_stq_entries[s_idx].is_valid & (w_stq_entries[s_idx].rmwop != RMWOP__);
+  assign w_stq_rmw_existed[s_idx] = w_stq_entries[s_idx].is_valid & w_stq_entries[s_idx].inst.is_rmw;
 end // block: stq_loop
 endgenerate
 
@@ -549,7 +549,7 @@ generate for(genvar b_idx = 0; b_idx < scariv_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) 
   assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[scariv_conf_pkg::DISP_SIZE];
 end
 endgenerate
-assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.rmwop != RMWOP__;
+assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.inst.is_rmw;
 assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
 assign st_buffer_if.size   = w_stq_cmt_head_entry.size;
 `ifdef SIMULATION

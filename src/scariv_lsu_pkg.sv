@@ -542,6 +542,7 @@ endfunction // gen_dw
 typedef struct packed {
   scariv_pkg::cmt_id_t   cmt_id;
   scariv_pkg::grp_id_t   grp_id;
+  logic                  is_rmw;
   reg_rd_issue_t         rd_reg;
 //  reg_wr_issue_t         wr_reg;
 `ifdef SIMULATION
