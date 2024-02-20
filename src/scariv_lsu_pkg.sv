@@ -316,17 +316,12 @@ typedef struct packed {
 } sfence_t;
 
 typedef struct packed {
-  decoder_lsu_ctrl_pkg::size_t size; // Memory Access Size
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
   scariv_pkg::paddr_t  paddr;
-} ldq_ex1_update_t;
-
-typedef struct packed {
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
+  decoder_lsu_ctrl_pkg::size_t size; // Memory Access Size
   logic                success;
-} ldq_ex3_update_t;
+} ldq_ex2_update_t;
 
 typedef struct packed {
   scariv_pkg::cmt_id_t cmt_id;
@@ -927,13 +922,11 @@ endinterface // iq_upd_if
 
 
 interface ldq_upd_if;
-  logic        ex1_update;
-  scariv_lsu_pkg::ldq_ex1_update_t ex1_payload;
-  logic        ex3_update;
-  scariv_lsu_pkg::ldq_ex3_update_t ex3_payload;
+  logic        ex2_update;
+  scariv_lsu_pkg::ldq_ex2_update_t ex2_payload;
 
-modport master (output ex1_update, ex1_payload, ex3_update, ex3_payload);
-modport slave  (input  ex1_update, ex1_payload, ex3_update, ex3_payload);
+modport master (output ex2_update, ex2_payload);
+modport slave  (input  ex2_update, ex2_payload);
 
 endinterface // ldq_upd_if
 

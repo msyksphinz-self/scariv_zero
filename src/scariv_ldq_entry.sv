@@ -28,11 +28,8 @@ module scariv_ldq_entry
 
  input logic                                     i_entry_picked,
 
-  input logic                            i_ex1_q_valid,
-  input scariv_lsu_pkg::ldq_ex1_update_t i_ex1_q_updates,
-
-  input logic                            i_ex3_q_valid,
-  input scariv_lsu_pkg::ldq_ex3_update_t i_ex3_q_updates,
+  input logic                            i_ex2_q_valid,
+  input scariv_lsu_pkg::ldq_ex2_update_t i_ex2_q_updates,
 
  input                                           missu_resolve_t i_missu_resolve,
  input logic                                     i_missu_is_full,
@@ -141,12 +138,11 @@ always_comb begin
 
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (~r_entry.paddr_valid & i_ex1_q_valid) begin
-      w_entry_next.addr        = i_ex1_q_updates.paddr;
-      w_entry_next.size        = i_ex1_q_updates.size;
-    end else if (~r_entry.paddr_valid & i_ex3_q_valid) begin
+    end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
       w_entry_next.paddr_valid = 1'b1;
       w_entry_next.is_get_data = 1'b1;
+      w_entry_next.addr        = i_ex2_q_updates.paddr;
+      w_entry_next.size        = i_ex2_q_updates.size;
     end
 
     if (w_entry_commit) begin
