@@ -173,9 +173,10 @@ always_comb begin
     w_longfpu_age_next.dead = 1'b1;
   end
 
-  if (w_fpnew_out_valid | w_commit_flush) begin
+  if (w_fpnew_out_valid & (w_aux_fpnew_out.op inside {fpnew_pkg::DIV, fpnew_pkg::SQRT}) | w_commit_flush) begin
     w_longfpu_valid_next = 1'b0;
-  end else if (i_valid & w_fdiv_valid) begin
+  end
+  if (i_valid & ~w_in_flush & w_fdiv_valid) begin
     w_longfpu_valid_next = 1'b1;
 
     w_longfpu_age_next.cmt_id = i_cmt_id;
