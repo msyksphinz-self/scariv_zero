@@ -27,8 +27,8 @@ module scariv_lsu_top
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
-    input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    scariv_front_if.watch                                      disp,
+    input logic [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid[scariv_conf_pkg::LSU_INST_NUM],
+    scariv_front_if.watch                        disp,
     cre_ret_if.slave    iss_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
@@ -173,7 +173,7 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rob_info_if (rob_info_if),
     .sfence_if_slave (w_sfence_if_slave),
 
-    .disp_valid (disp_valid             ),
+    .disp_valid (disp_valid [lsu_idx]   ),
     .disp       (disp                   ),
     .cre_ret_if (iss_cre_ret_if[lsu_idx]),
 
@@ -232,11 +232,18 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 end // block: lsu_loop
 endgenerate
 
-generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
-  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
-end
-endgenerate
+scariv_pkg::grp_id_t      w_ldq_disp_valid_tmp[scariv_conf_pkg::LSU_INST_NUM];
+scariv_pkg::grp_id_t      w_stq_disp_valid_tmp[scariv_conf_pkg::LSU_INST_NUM];
+
+generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin: disp_lsu_loop
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    assign w_ldq_disp_valid_tmp[l_idx][d_idx] = disp_valid[l_idx][d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
+    assign w_stq_disp_valid_tmp[l_idx][d_idx] = disp_valid[l_idx][d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
+  end
+end endgenerate
+
+bit_or #(.WIDTH($bits(scariv_pkg::grp_id_t)), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_ldq_disp_merge (.i_data(w_ldq_disp_valid_tmp), .o_selected(w_ldq_disp_valid));
+bit_or #(.WIDTH($bits(scariv_pkg::grp_id_t)), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_stq_disp_merge (.i_data(w_stq_disp_valid_tmp), .o_selected(w_stq_disp_valid));
 
 // -----------------------------------
 // Ldq

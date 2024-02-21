@@ -617,17 +617,21 @@ assign w_ibuf_front_payload_next.resource_cnt.muldiv_inst_cnt = w_inst_muldiv_cn
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_mem_inst_cnt (.in(w_inst_mem_disped), .out(w_inst_mem_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_ld_inst_cnt  (.in(w_inst_ld_disped), .out(w_inst_ld_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_st_inst_cnt  (.in(w_inst_st_disped), .out(w_inst_st_cnt));
-assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
+// assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
 
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_rsrc_loop
-  logic [$clog2(scariv_conf_pkg::MEM_DISP_SIZE): 0]  lsu_lane_width;
-  assign lsu_lane_width = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
-  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_cnt[l_idx] = (w_inst_mem_cnt >= lsu_lane_width * (l_idx+1)) ? lsu_lane_width :
-                                                    /* verilator lint_off UNSIGNED */
-                                                    (w_inst_mem_cnt <  lsu_lane_width * l_idx) ? 'h0 :
-                                                    w_inst_mem_cnt - lsu_lane_width * l_idx;
-end
-endgenerate
+  localparam lsu_lane_width = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+  logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_lane_disped_valid[lsu_lane_width];
+  logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_lane_disped_valid_or;
+  logic [$clog2(lsu_lane_width+1): 0] w_lane_disp_cnt;
+  for (genvar i = 0; i < lsu_lane_width; i++) begin: cnt_loop
+    bit_pick_1_pos #(.NUM(i * scariv_conf_pkg::LSU_INST_NUM + l_idx), .SEL_WIDTH(scariv_conf_pkg::DISP_SIZE)) bit_pos (.i_valids(w_inst_mem_disped), .o_picked_pos(w_lane_disped_valid[i]));
+  end
+  bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(lsu_lane_width)) lsu_disped_or (.i_data(w_lane_disped_valid), .o_selected(w_lane_disped_valid_or));
+  bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_lsu_inst_cnt (.in(w_lane_disped_valid_or), .out(w_lane_disp_cnt));
+  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_cnt  [l_idx] = w_lane_disp_cnt;
+  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid[l_idx] = w_lane_disped_valid_or;
+end endgenerate
 
 assign w_ibuf_front_payload_next.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
 assign w_ibuf_front_payload_next.resource_cnt.st_inst_cnt = w_inst_st_cnt;
