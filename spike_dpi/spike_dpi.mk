@@ -6,6 +6,7 @@ CFLAGS += -I$(abspath riscv-isa-sim)
 CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
 CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
 CFLAGS += -I$(abspath ../cpp/)
+CFLAGS += -I$(realpath ../sniper/snipersim/sift)
 
 HAVE_INT128 := yes
 HAVE_DLOPEN := yes

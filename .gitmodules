@@ -22,3 +22,9 @@
 [submodule "tests/riscv_arch_tests"]
 	path = tests/riscv_arch_tests
 	url = https://github.com/tenstorrent/riscv_arch_tests.git
+[submodule "sniper/snipersim"]
+	path = sniper/snipersim
+	url = github-msyksphinz:msyksphinz-self/snipersim.git
+[submodule "sniper/rv8"]
+	path = sniper/rv8
+	url = https://github.com/michaeljclark/rv8.git
