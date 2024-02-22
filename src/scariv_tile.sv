@@ -101,7 +101,7 @@ scariv_pkg::grp_id_t   w_disp_alu_valids [scariv_conf_pkg::ALU_INST_NUM];
 // ----------------------------------
 // LSU Components
 // ----------------------------------
-scariv_pkg::grp_id_t        w_disp_lsu_valids;
+scariv_pkg::grp_id_t        w_disp_lsu_valids[scariv_conf_pkg::LSU_INST_NUM];
 flush_report_if             w_flush_report_if [scariv_conf_pkg::LSU_INST_NUM]();
 // ----------------------------------
 // BRU Components
@@ -287,9 +287,11 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                                              w_rn_front_if.payload.resource_cnt.alu_inst_valid[a_idx][d_idx];
   end
 
-  assign w_disp_lsu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
-                                    (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD ||
-                                     w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST);
+  for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin: lsu_disp_valid_loop
+    assign w_disp_lsu_valids[l_idx][d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
+                                             w_rn_front_if.payload.resource_cnt.lsu_inst_valid[l_idx][d_idx];
+  end
+
   assign w_disp_bru_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&
                                     (w_rn_front_if.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
   assign w_disp_csu_valids[d_idx] = w_rn_front_if.valid && w_rn_front_if.payload.inst[d_idx].valid && !w_rn_front_if.payload.inst[d_idx].illegal_valid &&

@@ -121,7 +121,7 @@ iq_upd_if w_iq_upd_if();
 
 scariv_disp_pickup
   #(
-    .PORT_BASE(PORT_BASE),
+    .PORT_BASE(0),
     .PORT_SIZE(MEM_PORT_SIZE)
     )
 u_scariv_disp_pickup
