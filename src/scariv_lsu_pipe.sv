@@ -510,6 +510,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
   lsu_pipe_haz_if.payload.is_uc          = r_ex2_is_uc;
   lsu_pipe_haz_if.payload.hazard_index   = w_ex2_hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
+                                           w_ex2_hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? 'h1 :
                                            stq_haz_check_if.ex2_haz_index;
 end
 

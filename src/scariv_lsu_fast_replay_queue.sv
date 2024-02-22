@@ -142,7 +142,7 @@ generate for (genvar q_idx = 0; q_idx < REPLAY_QUEUE_SIZE; q_idx++) begin : queu
       end else begin
         case (r_replay_queue[q_idx].hazard_typ)
           EX2_HAZ_STQ_NONFWD_HAZ : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index & ~i_stq_rs2_resolve.index;
-          EX2_HAZ_RMW_ORDER_HAZ  : r_replay_queue[q_idx].hazard_index <= w_is_oldest & i_st_buffer_empty & i_missu_is_empty ? 'h0 : r_replay_queue[q_idx].hazard_index;
+          EX2_HAZ_RMW_ORDER_HAZ  : r_replay_queue[q_idx].hazard_index <= w_is_oldest & i_st_buffer_empty & i_missu_is_empty ? 'h0 : 1'b1;
           EX2_HAZ_L1D_CONFLICT   : r_replay_queue[q_idx].hazard_index <= 'h0; // Replay immediately
           EX2_HAZ_MISSU_FULL     : r_replay_queue[q_idx].hazard_index <= !i_missu_is_full ? 'h0 : r_replay_queue[q_idx].hazard_index;
           EX2_HAZ_MISSU_ASSIGNED : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index &
