@@ -26,9 +26,8 @@ module scariv_ldq
    input missu_resolve_t     i_missu_resolve,
    input logic             i_missu_is_full,
 
-   // Updates from LSU Pipeline EX1 stage
-   input ex1_q_update_t        i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-   input ex2_q_update_t        i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
+   // Updates from LSU Pipeline EX2 stage
+   ldq_upd_if.slave  ldq_upd_if[scariv_conf_pkg::LSU_INST_NUM],
 
    // Commit notification
    commit_if.monitor commit_if,
@@ -40,9 +39,7 @@ module scariv_ldq
    // UC Store Interface
    uc_write_if.monitor          uc_write_if,
 
-   input stq_resolve_t          i_stq_rs2_resolve,
-
-   done_if.slave ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]
+   input stq_resolve_t          i_stq_rs2_resolve
    );
 
 ldq_entry_t w_ldq_entries[scariv_conf_pkg::LDQ_SIZE];
@@ -145,7 +142,6 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   scariv_pkg::disp_t           w_disp_entry;
   scariv_pkg::grp_id_t         w_disp_grp_id;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_ldq_entries_recv;
 
   for (genvar i_idx = 0; i_idx < scariv_conf_pkg::MEM_DISP_SIZE; i_idx++) begin : in_loop
     logic [scariv_conf_pkg::LDQ_SIZE-1: 0]  w_entry_ptr_oh;
@@ -157,38 +153,12 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
   bit_oh_or #(.T(logic[scariv_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
 
-  // Selection of EX1 Update signal
-  ex1_q_update_t w_ex1_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_q_valid;
-  ex1_update_select u_ex1_update_select (.i_ex1_q_updates(i_ex1_q_updates), .cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .grp_id(w_ldq_entries[l_idx].inst.grp_id),
-                                         .o_ex1_q_valid(w_ex1_q_valid), .o_ex1_q_updates(w_ex1_q_updates));
+  // Selection of EX3 Update signal
+  ldq_ex2_update_t w_ex2_q_updates;
+  logic        w_ex2_q_valid;
+  ldq_ex2_upd_select u_ldq_ex2_upd_select (.ldq_upd_if(ldq_upd_if), .i_cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .i_grp_id(w_ldq_entries[l_idx].inst.grp_id),
+                                           .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
-  // Selection of EX1 Update signal
-  ex2_q_update_t w_ex2_q_updates;
-  logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_q_valid;
-  ex2_update_select u_ex2_update_select (.i_ex2_q_updates(i_ex2_q_updates), .i_cmt_id(w_ldq_entries[l_idx].inst.cmt_id), .i_grp_id(w_ldq_entries[l_idx].inst.grp_id),
-                                         .i_ex2_recv(w_ex2_ldq_entries_recv),
-                                         .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
-
-  // logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] r_ex3_q_valid;
-  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  //   if (!i_reset_n) begin
-  //     r_ex3_q_valid <= 'h0;
-  //   end else begin
-  //     r_ex3_q_valid <= w_ex2_q_valid;
-  //   end
-  // end
-  // done_if w_ex3_done_sel_if();
-  //
-  // // Selection of EX3 Update signal
-  // ex3_done_if_select
-  //   #(.ENTRY_SIZE(scariv_conf_pkg::LDQ_SIZE))
-  // u_ex3_done_if_select
-  //   (
-  //    .i_select  (r_ex3_q_valid),
-  //    .slave_if  (ex3_done_if),
-  //    .master_if (w_ex3_done_sel_if)
-  //    );
 
   scariv_ldq_entry
     #(.entry_index (l_idx))
@@ -207,14 +177,10 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
      .o_entry (w_ldq_entries[l_idx]),
      .o_entry_ready (w_entry_ready[l_idx]),
-     .o_ex2_ldq_entries_recv(w_ex2_ldq_entries_recv),
 
-     // .i_entry_picked (|w_run_request_rev_oh[l_idx] & !(|w_ldq_replay_conflict[l_idx])),
     .i_entry_picked  (1'b0),
-    .i_ex1_q_valid   (|w_ex1_q_valid ),
-    .i_ex1_q_updates (w_ex1_q_updates),
 
-    .i_ex2_q_valid   (|w_ex2_q_valid ),
+    .i_ex2_q_valid   (w_ex2_q_valid  ),
     .i_ex2_q_updates (w_ex2_q_updates),
 
      .i_missu_resolve (i_missu_resolve),
@@ -227,8 +193,6 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
      .commit_if (commit_if),
      .br_upd_if (br_upd_if),
-
-     // .ex3_done_if    (w_ex3_done_sel_if),
 
      .i_ldq_outptr_valid (w_out_ptr_oh[l_idx]),
      .o_entry_finish (w_entry_complete[l_idx])
@@ -268,70 +232,6 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
 end
 endgenerate
-
-
-// // request logic
-// generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : pipe_loop
-//   assign ldq_replay_if[p_idx].valid = |w_run_request[p_idx];
-//   ldq_entry_t w_ldq_replay_entry;
-//
-//   bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_req_sel (.in(w_run_request[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_run_request_oh[p_idx]));
-//   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_rerun_oh  (.i_oh(w_run_request_oh[p_idx]), .i_data(w_ldq_entries), .o_selected(w_ldq_replay_entry));
-//
-//   assign ldq_replay_if[p_idx].issue = w_ldq_replay_entry.inst;
-//
-//   assign ldq_replay_if[p_idx].index_oh = w_run_request_oh[p_idx];
-//
-//   for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : ldq_loop
-//     assign w_run_request_rev_oh[l_idx][p_idx] = w_run_request_oh[p_idx][l_idx];
-//
-//     assign w_ldq_replay_conflict[l_idx][p_idx] = ldq_replay_if[p_idx].conflict & w_run_request[p_idx][l_idx];
-//   end
-// end
-// endgenerate
-
-// // ===============
-// // done logic
-// // ===============
-// generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::LSU_INST_NUM; d_idx++) begin : done_loop
-//   logic [scariv_conf_pkg::LDQ_SIZE-1:0]      w_ldq_done_array;
-//   ldq_entry_t                              w_ldq_done_entry;
-//   logic [scariv_conf_pkg::LDQ_SIZE-1: 0]     w_ldq_done_oh;
-//
-//   for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin : q_loop
-//     assign w_ldq_done_array[l_idx] = (w_ldq_entries[l_idx].state == LDQ_EX3_DONE) &
-//                                      w_ldq_entries[l_idx].pipe_sel_idx_oh[d_idx];
-//   end
-//   bit_extract_msb #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_bit_done_oh (.in(w_ldq_done_array), .out(w_ldq_done_oh));
-//   bit_oh_or #(.T(ldq_entry_t), .WORDS(scariv_conf_pkg::LDQ_SIZE)) select_done_oh  (.i_oh(w_ldq_done_oh), .i_data(w_ldq_entries), .o_selected(w_ldq_done_entry));
-//
-//   assign o_done_report[d_idx].valid   = |w_ldq_done_array;
-//   assign o_done_report[d_idx].cmt_id  = w_ldq_done_entry.inst.cmt_id;
-//   assign o_done_report[d_idx].grp_id  = w_ldq_done_entry.inst.grp_id;
-//   assign o_done_report[d_idx].except_valid = w_ldq_done_entry.except_valid;
-//   assign o_done_report[d_idx].except_type  = w_ldq_done_entry.except_type;
-//   assign o_done_report[d_idx].except_tval  = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){w_ldq_done_entry.addr[riscv_pkg::VADDR_W-1]}},
-//                                               w_ldq_done_entry.addr};
-//
-// `ifdef SIMULATION
-//   // Kanata
-//   import "DPI-C" function void log_stage
-//     (
-//      input longint id,
-//      input string  stage
-//      );
-//
-//   always_ff @ (negedge i_clk, negedge i_reset_n) begin
-//     if (i_reset_n) begin
-//       if (o_done_report[d_idx].valid) begin
-//         log_stage (w_ldq_done_entry.kanata_id, "DO");
-//       end
-//     end
-//   end
-// `endif // SIMULATION
-//
-// end
-// endgenerate
 
 
 // ==================
@@ -493,109 +393,27 @@ endfunction // dump_perf
 
 endmodule // scariv_ldq
 
-module ex1_update_select
+module ldq_ex2_upd_select
   import scariv_lsu_pkg::*;
   (
-   input ex1_q_update_t i_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-   input scariv_pkg::cmt_id_t cmt_id,
-   input scariv_pkg::grp_id_t grp_id,
-   output [scariv_conf_pkg::LSU_INST_NUM-1: 0]   o_ex1_q_valid,
-   output                                 ex1_q_update_t o_ex1_q_updates
-   );
-
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex1_update_match;
-
-for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex1_update_loop
-  assign o_ex1_q_valid[p_idx] = i_ex1_q_updates[p_idx].update &&
-                                i_ex1_q_updates[p_idx].cmt_id == cmt_id &&
-                                i_ex1_q_updates[p_idx].grp_id == grp_id;
-end
-
-bit_oh_or #(.T(ex1_q_update_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(o_ex1_q_valid), .i_data(i_ex1_q_updates), .o_selected(o_ex1_q_updates));
-
-endmodule // ex1_update_select
-
-
-module ex2_update_select
-  import scariv_lsu_pkg::*;
-  (
-   input ex2_q_update_t i_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM],
-   input scariv_pkg::cmt_id_t                           i_cmt_id,
-   input scariv_pkg::grp_id_t                           i_grp_id,
-   input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]     i_ex2_recv,
-   output logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]    o_ex2_q_valid,
-   output                                             ex2_q_update_t o_ex2_q_updates
+   ldq_upd_if.slave           ldq_upd_if[scariv_conf_pkg::LSU_INST_NUM],
+   input scariv_pkg::cmt_id_t i_cmt_id,
+   input scariv_pkg::grp_id_t i_grp_id,
+   output logic               o_ex2_q_valid,
+   output ldq_ex2_update_t        o_ex2_q_updates
    );
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_ex2_update_match;
+ldq_ex2_update_t w_ex2_payloads[scariv_conf_pkg::LSU_INST_NUM];
 
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : ex2_update_loop
-  assign w_ex2_update_match[p_idx] = (i_ex2_q_updates[p_idx].update &&
-                                      i_ex2_q_updates[p_idx].cmt_id == i_cmt_id &&
-                                      i_ex2_q_updates[p_idx].grp_id == i_grp_id) |
-                                     i_ex2_recv[p_idx];
-end
-endgenerate
+  assign w_ex2_update_match[p_idx] = (ldq_upd_if[p_idx].ex2_update &&
+                                      ldq_upd_if[p_idx].ex2_payload.cmt_id == i_cmt_id &&
+                                      ldq_upd_if[p_idx].ex2_payload.grp_id == i_grp_id);
+  assign w_ex2_payloads[p_idx] = ldq_upd_if[p_idx].ex2_payload;
+end endgenerate
 
-assign o_ex2_q_valid = w_ex2_update_match;
-bit_oh_or #(.T(ex2_q_update_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(i_ex2_q_updates), .o_selected(o_ex2_q_updates));
+assign o_ex2_q_valid = |w_ex2_update_match;
+bit_oh_or #(.T(ldq_ex2_update_t), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) bit_oh_update (.i_oh(w_ex2_update_match), .i_data(w_ex2_payloads), .o_selected(o_ex2_q_updates));
 
-endmodule // ex2_update_select
-
-module ex3_done_if_select
-  import scariv_lsu_pkg::*;
-#(
-  parameter ENTRY_SIZE = 32
-  )
-(
- input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] i_select,
- done_if.slave        slave_if [scariv_conf_pkg::LSU_INST_NUM],
- done_if.master       master_if
- );
-
-typedef struct packed {
-  logic                                done;
-  logic [ENTRY_SIZE-1: 0]              index_oh;
-  logic                                except_valid;
-  scariv_pkg::except_t                   except_type;
-  // For flushing another instruction
-  logic                                another_flush_valid;
-  scariv_pkg::cmt_id_t       another_flush_cmt_id;
-  scariv_pkg::grp_id_t another_flush_grp_id;
-} done_if_t;
-
-done_if_t w_done_array [scariv_conf_pkg::LSU_INST_NUM];
-done_if_t w_done_selected;
-
-generate for (genvar i=0; i < scariv_conf_pkg::LSU_INST_NUM; i++) begin
-  assign w_done_array[i].done                         = slave_if[i].done                ;
-  assign w_done_array[i].index_oh                     = slave_if[i].index_oh            ;
-  assign w_done_array[i].except_valid         = slave_if[i].payload.except_valid        ;
-  assign w_done_array[i].except_type          = slave_if[i].payload.except_type         ;
-  assign w_done_array[i].another_flush_valid  = slave_if[i].payload.another_flush_valid ;
-  assign w_done_array[i].another_flush_cmt_id = slave_if[i].payload.another_flush_cmt_id;
-  assign w_done_array[i].another_flush_grp_id = slave_if[i].payload.another_flush_grp_id;
-end
-endgenerate
-
-bit_oh_or
-  #(
-    .T(done_if_t),
-    .WORDS(scariv_conf_pkg::LSU_INST_NUM)
-    )
-bit_oh_update
-  (
-   .i_oh(i_select),
-   .i_data(w_done_array),
-   .o_selected(w_done_selected)
-   );
-
-assign master_if.done                         = w_done_selected.done                ;
-assign master_if.index_oh                     = w_done_selected.index_oh            ;
-assign master_if.payload.except_valid         = w_done_selected.except_valid        ;
-assign master_if.payload.except_type          = w_done_selected.except_type         ;
-assign master_if.payload.another_flush_valid  = w_done_selected.another_flush_valid ;
-assign master_if.payload.another_flush_cmt_id = w_done_selected.another_flush_cmt_id;
-assign master_if.payload.another_flush_grp_id = w_done_selected.another_flush_grp_id;
-
-endmodule // ex3_done_if_select
+endmodule // ldq_ex2_upd_select

@@ -26,12 +26,11 @@ module scariv_stq_entry
    /* Forwarding path */
    phy_wr_if.slave                            phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
 
-   // Updates from LSU Pipeline EX1 stage
-   input logic                                i_ex1_q_valid,
-   input ex1_q_update_t                       i_ex1_q_updates,
    // Updates from LSU Pipeline EX2 stage
-   input logic                                i_ex2_q_valid,
-   input ex2_q_update_t                       i_ex2_q_updates,
+   input logic                            i_ex1_q_valid,
+   input scariv_lsu_pkg::stq_ex1_update_t i_ex1_q_updates,
+   input logic                            i_ex2_q_valid,
+   input scariv_lsu_pkg::stq_ex2_update_t i_ex2_q_updates,
 
   // rs2 store data interface
     input logic                               i_rs2_read_accepted,
@@ -53,10 +52,6 @@ module scariv_stq_entry
    output logic                               o_uc_write_req_valid,
    input logic                                i_uc_write_accept,
 
-   // // Snoop Interface
-   // stq_snoop_if.slave                         stq_snoop_if,
-
-   done_if.slave    ex3_done_if,
    input logic                                     i_stq_outptr_valid,
    output logic                                    o_stq_entry_st_finish
    );
@@ -75,16 +70,21 @@ logic                                              w_ready_to_mv_stbuf;
 scariv_pkg::rnid_t                                 w_rs2_rnid;
 scariv_pkg::reg_t                                  w_rs2_type;
 logic                                              w_rs2_phy_hit;
-logic                                              w_entry_rs2_ready_next;
-logic                                              w_rs2_read_accepted;
+
+logic                                              w_rs2_phy_data_hit;
+scariv_pkg::alen_t                                 w_rs2_phy_data;
 
 assign  o_entry = r_entry;
 
 assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_reg.rnid;
 assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.typ;
 
-select_phy_wr_bus rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if),
-                                  .o_valid (w_rs2_phy_hit));
+select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM))
+rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[scariv_conf_pkg::ALU_INST_NUM +: (scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM)]), .o_valid (w_rs2_phy_hit));
+select_phy_wr_data #(.BUS_SIZE(scariv_conf_pkg::ALU_INST_NUM))
+rs2_phy_data  (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[0 +: scariv_conf_pkg::ALU_INST_NUM]), .o_valid (w_rs2_phy_data_hit), .o_data (w_rs2_phy_data));
+
+assign o_entry = r_entry;
 
 assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & (|rob_info_if.except_valid) & (rob_info_if.except_valid <= r_entry.inst.grp_id);
 assign w_commit_flush = commit_if.is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id) & r_entry.is_valid;
@@ -96,9 +96,6 @@ assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_gr
                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_commit_flush = commit_if.is_commit_flush_target(i_disp_cmt_id, i_disp_grp_id);
 
-assign w_entry_rs2_ready_next = r_entry.inst.rd_reg.ready | w_rs2_phy_hit;
-assign w_rs2_read_accepted    = r_entry.inst.rd_reg.ready & i_rs2_read_accepted;
-
 // assign w_ready_to_mv_stbuf = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 scariv_pkg::grp_id_t w_prev_grp_id_mask;
 assign w_prev_grp_id_mask = r_entry.inst.grp_id-1;
@@ -106,7 +103,7 @@ assign w_ready_to_mv_stbuf = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
                              |(rob_info_if.done_grp_id & ~rob_info_if.except_valid & r_entry.inst.grp_id) &
                              ((w_prev_grp_id_mask & rob_info_if.done_grp_id) == w_prev_grp_id_mask);
 
-assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & ~r_entry.dead & r_entry.is_rs2_get &
+assign o_stbuf_req_valid = r_entry.is_valid & r_entry.is_committed & ~r_entry.dead &
                            r_entry.paddr_valid & ~r_entry.is_uc &
                            ~r_entry.st_buf_finished &
                            ((r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP__) ?
@@ -132,23 +129,28 @@ end
 always_comb begin
   w_entry_next = r_entry;
 
-  w_entry_next.inst.rd_reg.ready = w_entry_rs2_ready_next | r_entry.inst.rd_reg.ready;
-
-  w_entry_next.rs2_read_accepted = w_rs2_read_accepted;
   if (~w_entry_next.is_rs2_get) begin
+    w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | w_rs2_phy_data_hit | r_entry.inst.rd_reg.ready;
+    w_entry_next.rs2_read_accepted = i_rs2_read_accepted;
     if (r_entry.rs2_read_accepted) begin
       w_entry_next.rs2_data   = i_rs2_data;
+      w_entry_next.is_rs2_get = 1'b1;
+    end
+    if (w_rs2_phy_data_hit) begin
+      w_entry_next.rs2_data   = w_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
 
   if (!r_entry.is_valid) begin
     if (i_disp_load) begin
-      w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id,
-                                     1 << (entry_index % scariv_conf_pkg::LSU_INST_NUM),
-                                     w_rs2_phy_hit);
+      w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, w_rs2_phy_hit | w_rs2_phy_data_hit);
       if (w_load_br_flush | w_load_commit_flush) begin
         w_entry_next.dead = 1'b1;
+      end
+      if (w_rs2_phy_data_hit) begin
+        w_entry_next.rs2_data   = w_rs2_phy_data;
+        w_entry_next.is_rs2_get = 1'b1;
       end
     end
   end else if (r_entry.is_committed | r_entry.dead) begin
@@ -162,15 +164,16 @@ always_comb begin
   end else begin
     if (w_entry_flush) begin
       w_entry_next.dead = 1'b1;
-    end else if (~r_entry.paddr_valid & i_ex1_q_valid & (i_ex1_q_updates.hazard_typ == EX1_HAZ_NONE)) begin
+    end else if (~r_entry.paddr_valid & i_ex1_q_valid) begin
       w_entry_next.addr         = i_ex1_q_updates.paddr;
-      w_entry_next.paddr_valid  = (i_ex1_q_updates.hazard_typ != EX1_HAZ_TLB_MISS) & ~i_ex1_q_updates.tlb_except_valid;
       w_entry_next.size         = i_ex1_q_updates.size;
-      w_entry_next.is_uc        = i_ex1_q_updates.tlb_uc & ~i_ex1_q_updates.tlb_except_valid;
+      w_entry_next.is_uc        = i_ex1_q_updates.is_uc;
       w_entry_next.rmwop        = i_ex1_q_updates.rmwop;
-    end else if ((r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC) & i_ex2_q_valid) begin
-      w_entry_next.paddr_valid = r_entry.paddr_valid & i_ex2_q_updates.success;
+      w_entry_next.paddr_valid  = (i_ex1_q_updates.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC) ? 1'b1 : 1'b0;
+    end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
+      w_entry_next.paddr_valid  = r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC ? i_ex2_q_updates.success : r_entry.paddr_valid;
     end
+
     if (w_ready_to_mv_stbuf) begin
       w_entry_next.is_committed = 1'b1;
     end
@@ -180,7 +183,6 @@ end // always_comb
 function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
                                                 scariv_pkg::cmt_id_t cmt_id,
                                                 scariv_pkg::grp_id_t grp_id,
-                                                logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] pipe_sel_oh,
                                                 logic rs2_phy_hit);
   stq_entry_t ret;
 
@@ -191,6 +193,8 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.inst.cmt_id = cmt_id;
   ret.inst.grp_id = grp_id;
 
+  ret.inst.is_rmw = in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW;
+
   ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
   ret.inst.rd_reg.typ           = in.rd_regs[1].typ;
   ret.inst.rd_reg.regidx        = in.rd_regs[1].regidx;
@@ -199,6 +203,7 @@ function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
   ret.inst.rd_reg.predict_ready = 1'b0;
 
   ret.rs2_read_accepted = 1'b0;
+  ret.is_rs2_get = 1'b0;
 
 `ifdef SIMULATION
   ret.inst.sim_inst   = in.inst;

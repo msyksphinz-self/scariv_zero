@@ -28,7 +28,7 @@ module scariv_lsu
     scariv_front_if.watch                        disp,
     cre_ret_if.slave                             cre_ret_if,
 
-    regread_if.master ex1_regread_rs1,
+    regread_if.master ex0_regread_rs1,
 
     /* Forwarding path */
     early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
@@ -65,9 +65,8 @@ module scariv_lsu
     tlb_ptw_if.master ptw_if,
 
     // Feedbacks to LDQ / STQ
-    output ex1_q_update_t   o_ex1_q_updates,
-    output logic            o_tlb_resolve,
-    output ex2_q_update_t   o_ex2_q_updates,
+    ldq_upd_if.master ldq_upd_if,
+    stq_upd_if.master stq_upd_if,
 
     input logic             i_st_buffer_empty,
     input logic             i_st_requester_empty,
@@ -118,9 +117,11 @@ lsu_pipe_req_if w_lsu_pipe_req_if ();
 
 logic w_replay_queue_full;
 
+iq_upd_if w_iq_upd_if();
+
 scariv_disp_pickup
   #(
-    .PORT_BASE(PORT_BASE),
+    .PORT_BASE(0),
     .PORT_SIZE(MEM_PORT_SIZE)
     )
 u_scariv_disp_pickup
@@ -157,9 +158,7 @@ u_issue_unit
   .o_issue        (w_issue_from_iss      ),
   .o_iss_index_oh (w_issue_index_from_iss),
 
-  .i_ex1_updates        (o_ex1_q_updates     ),
-  .i_tlb_resolve        (o_tlb_resolve       ),
-  .i_ex2_updates        (o_ex2_q_updates     ),
+  .iq_upd_if            (w_iq_upd_if         ),
   .i_st_buffer_empty    (i_st_buffer_empty   ),
   .i_st_requester_empty (i_st_requester_empty),
   .i_replay_queue_full  (w_replay_queue_full ),
@@ -180,7 +179,7 @@ u_issue_unit
 
 
 // Replay Queue
-scariv_lsu_replay_queue
+scariv_lsu_fast_replay_queue
 u_replay_queue
 (
   .i_clk (i_clk),
@@ -200,15 +199,16 @@ u_replay_queue
   .i_missu_is_full (i_missu_is_full ),
   .i_stq_rs2_resolve (i_stq_rs2_resolve),
 
-  .o_full (w_replay_queue_full),
-
+  .o_full (),
+  .o_almost_full (w_replay_queue_full),
   .lsu_pipe_req_if (w_lsu_pipe_req_if)
 );
 
 assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
                            scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
-                                                              w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id);
+                                                              w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id) |
+                           w_replay_queue_full;  // replay queue is almost full, IQ is stoped, but replay can be selected.
 
 assign w_lsu_pipe_req_if.ready = w_replay_selected;
 
@@ -229,6 +229,7 @@ always_comb begin
 
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = 'h0;  // w_lsu_pipe_req_if.kanata_id   ;
+    w_ex0_replay_issue.sim_pc_addr  = 'h0;
 `endif // SIMULATION
     w_ex0_replay_index_oh           = 'h0;
   end else begin
@@ -246,6 +247,7 @@ always_comb begin
     w_ex0_replay_issue.is_uc             = 1'b0;
 `ifdef SIMULATION
     w_ex0_replay_issue.kanata_id    = w_issue_from_iss.kanata_id;
+    w_ex0_replay_issue.sim_pc_addr  = w_issue_from_iss.sim_pc_addr;
 `endif // SIMULATION
     w_ex0_replay_index_oh           = w_issue_index_from_iss;
   end
@@ -278,7 +280,7 @@ u_lsu_pipe
    .i_ex0_replay_issue    (w_ex0_replay_issue   ),
    .i_ex0_replay_index_oh (w_ex0_replay_index_oh),
 
-   .ex0_regread_rs1(ex1_regread_rs1),
+   .ex0_regread_rs1     (ex0_regread_rs1    ),
 
    .ex1_early_wr_out_if(early_wr_out_if),
    .ex3_phy_wr_out_if  (phy_wr_out_if),
@@ -301,9 +303,9 @@ u_lsu_pipe
 
    .lrsc_if (lrsc_if),
 
-   .o_ex1_q_updates  (o_ex1_q_updates ),
-   .o_tlb_resolve    (o_tlb_resolve   ),
-   .o_ex2_q_updates  (o_ex2_q_updates ),
+   .iq_upd_if  (w_iq_upd_if),
+   .ldq_upd_if (ldq_upd_if ),
+   .stq_upd_if (stq_upd_if ),
    .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
    .sfence_if_master (sfence_if_master),

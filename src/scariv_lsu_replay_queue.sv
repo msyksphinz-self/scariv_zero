@@ -14,6 +14,7 @@ module scariv_lsu_replay_queue
     input logic i_reset_n,
 
     output logic o_full,
+    output logic o_almost_full,
 
     commit_if.monitor commit_if,
     br_upd_if.slave                br_upd_if,
@@ -87,7 +88,7 @@ always_comb begin
   w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
   w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
   w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
-  w_new_replay_queue_info.diff_counter         = w_empty ? 'h0 : r_diff_counter;
+  w_new_replay_queue_info.diff_counter         = 'h0; /* w_empty | lsu_pipe_haz_if.payload.hazard_typ ==  ? 'h0 : r_diff_counter; */
 end
 
 // Diff counter from previous Queue inesrtion
@@ -151,6 +152,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
     end
 end
+
+logic [$clog2(REPLAY_QUEUE_SIZE)-1: 0] r_fifo_counter;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fifo_counter <= 'h0;
+  end else begin
+    case ({w_queue_pop, w_queue_push})
+      2'b01   : r_fifo_counter <= r_fifo_counter + 'h1;
+      2'b10   : r_fifo_counter <= r_fifo_counter - 'h1;
+      default : begin end
+    endcase // case ({w_queue_pop, w_queue_push})
+  end
+end
+
+assign o_almost_full = r_fifo_counter >= REPLAY_QUEUE_SIZE - 4; // 4(=four stage)
 
 ring_fifo
 #(

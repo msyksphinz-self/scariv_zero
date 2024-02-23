@@ -35,7 +35,7 @@ def main():
 
     t_delta = datetime.timedelta(hours=9)
     JST = datetime.timezone(t_delta, 'JST')
-    dir_name = datetime.datetime.now(JST).strftime('%Y%m%d%H%M')
+    dir_name = datetime.datetime.now(JST).strftime('%Y%m%d%H%M%S')
     num_tests = int(args.num_tests)
 
     # config_name = "config_priv_" + args.priv_mode
@@ -46,7 +46,7 @@ def main():
                      "DIR=" + "generated/" + dir_name,
                      "NUM_GEN=" + str(num_tests),
                      "CONFIG_YAML=" + os.path.realpath(config_file),
-                     "ISA=rv64imafdc",
+                     "ISA=rv64imafdc_zifencei",
                      "ABI=lp64"]
     build_result = subprocess.Popen(build_command, text=True)
     build_result.wait()
