@@ -215,11 +215,11 @@ generate if (ooo_count_valid) begin : ooo_monitor_count
         r_issue_num    [ALU_ISSUE_BASE + alu_idx] <= 'h0;
         r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] <= 'h0;
       end else begin
-        if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.valid) begin
+        if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.valid) begin
           r_issue_num    [ALU_ISSUE_BASE + alu_idx] <= r_issue_num[ALU_ISSUE_BASE + alu_idx] + 'h1;
           if (scariv_pkg::id0_is_older_than_id1 (w_scheduler_oldest_cmt_id, w_scheduler_oldest_grp_id,
-                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.cmt_id,
-                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.grp_id)) begin
+                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.cmt_id,
+                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.grp_id)) begin
             r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] <= r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] + 'h1;
           end
         end
