@@ -11,12 +11,12 @@ typedef struct packed {
 } iq_entry_t;
 
 typedef struct packed {
-  scariv_pkg::vaddr_t pc_addr;
   decoder_inst_cat_pkg::inst_cat_t cat;
   logic [31: 0]  inst;
   scariv_pkg::reg_wr_issue_t wr_reg;
 `ifdef SIMULATION
-  logic [63: 0]  kanata_id;
+  scariv_pkg::vaddr_t pc_addr;
+  logic [63: 0]       kanata_id;
 `endif // SIMULATION
 } iq_payload_t;
 
@@ -29,11 +29,11 @@ typedef struct packed {
   scariv_pkg::reg_wr_issue_t wr_reg;
   scariv_pkg::reg_rd_issue_t [ 1: 0] rd_regs;
 
-  scariv_pkg::vaddr_t        pc_addr;
   decoder_inst_cat_pkg::inst_cat_t cat;
   logic [31: 0]  inst;
 `ifdef SIMULATION
-  logic [63: 0]  kanata_id;
+  scariv_pkg::vaddr_t pc_addr;
+  logic [63: 0]       kanata_id;
 `endif // SIMULATION
 } issue_t;
 
@@ -64,7 +64,6 @@ endfunction // assign_entry
 
 function automatic iq_payload_t assign_payload (scariv_pkg::disp_t in);
   iq_payload_t ret;
-  ret.pc_addr   = in.pc_addr;
   ret.cat       = in.cat    ;
   ret.inst      = in.inst   ;
   ret.wr_reg.valid  = in.wr_reg.valid ;
@@ -73,6 +72,7 @@ function automatic iq_payload_t assign_payload (scariv_pkg::disp_t in);
   ret.wr_reg.rnid   = in.wr_reg.rnid  ;
 
 `ifdef SIMULATION
+  ret.pc_addr   = in.pc_addr;
   ret.kanata_id = in.kanata_id;
 `endif // SIMULATION
 
@@ -89,10 +89,10 @@ function automatic issue_t assign_issue (iq_entry_t iq, iq_payload_t payload);
   ret.wr_reg  = payload.wr_reg;
   ret.rd_regs = iq.rd_regs    ;
 
-  ret.pc_addr = payload.pc_addr   ;
   ret.cat     = payload.cat       ;
   ret.inst    = payload.inst      ;
 `ifdef SIMULATION
+  ret.pc_addr = payload.pc_addr   ;
   ret.kanata_id = payload.kanata_id;
 `endif // SIMULATION
 
