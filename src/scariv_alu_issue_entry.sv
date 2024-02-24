@@ -55,7 +55,6 @@ logic    w_dead_next;
 scariv_alu_pkg::iq_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
 scariv_alu_pkg::iq_entry_t w_entry_next;
-scariv_alu_pkg::iq_entry_t w_init_entry;
 
 logic    w_oldest_ready;
 
@@ -90,8 +89,8 @@ function logic all_operand_ready(scariv_alu_pkg::iq_entry_t entry);
 endfunction // all_operand_ready
 
 generate for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
-  assign w_rs_rnid[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].rnid : r_entry.rd_regs[rs_idx].rnid;
-  assign w_rs_type[rs_idx] = i_put ? i_put_data.rd_regs[rs_idx].typ  : r_entry.rd_regs[rs_idx].typ;
+  assign w_rs_rnid[rs_idx] = r_entry.rd_regs[rs_idx].rnid;
+  assign w_rs_type[rs_idx] = r_entry.rd_regs[rs_idx].typ;
 
   select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs_rnid[rs_idx]), .i_entry_type (w_rs_type[rs_idx]), .early_wr_if (early_wr_if),
                                            .o_valid   (w_rs_rel_hit[rs_idx]), .o_hit_index (w_rs_rel_index[rs_idx]), .o_may_mispred (w_rs_may_mispred[rs_idx]));
@@ -131,7 +130,7 @@ always_comb begin
       if (w_entry_flush) begin
         w_state_next = scariv_pkg::INIT;
       end else if (i_put) begin
-        w_entry_next = w_init_entry;
+        w_entry_next = i_put_data;
         w_issued_next = 1'b0;
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
@@ -186,16 +185,6 @@ always_comb begin
   if (br_upd_if.update) begin
   end
 end // always_comb
-
-
-generate if (NUM_OPERANDS == 3) begin : init_entry_op3
-  assign w_init_entry = scariv_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred);
-end else begin
-  assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index);
-end
-endgenerate
 
 
 assign w_commit_flush = commit_if.is_flushed_commit() & r_entry.valid;
