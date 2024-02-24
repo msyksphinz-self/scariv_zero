@@ -23,7 +23,7 @@ generate if (ooo_count_valid) begin : ooo_monitor_count
     scariv_pkg::cmt_id_t w_alu_oldest_cmt_id[scariv_conf_pkg::RV_ALU_ENTRY_SIZE];
     scariv_pkg::grp_id_t w_alu_oldest_grp_id[scariv_conf_pkg::RV_ALU_ENTRY_SIZE];
 
-    for (genvar entry_idx = 0; entry_idx < scariv_conf_pkg::RV_ALU_ENTRY_SIZE; entry_idx++) begin
+    for (genvar entry_idx = 0; entry_idx < scariv_conf_pkg::RV_ALU_ENTRY_SIZE / scariv_conf_pkg::ALU_INST_NUM; entry_idx++) begin
     logic w_id0_is_older_than_id1;
       assign w_id0_is_older_than_id1 = scariv_pkg::id0_is_older_than_id1 (entry_idx == 'h0 ? 'h0 : w_alu_oldest_cmt_id[entry_idx-1],
                                                                           entry_idx == 'h0 ? 'h0 : w_alu_oldest_grp_id[entry_idx-1],
