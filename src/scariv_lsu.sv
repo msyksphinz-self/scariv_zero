@@ -233,7 +233,7 @@ always_comb begin
 `endif // SIMULATION
     w_ex0_replay_index_oh           = 'h0;
   end else begin
-    w_ex0_replay_issue.valid             = w_issue_from_iss.valid;
+    w_ex0_replay_issue.valid             = w_issue_from_iss.valid & ~w_replay_queue_full;
     w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
     w_ex0_replay_issue.inst              = w_issue_from_iss.inst;
