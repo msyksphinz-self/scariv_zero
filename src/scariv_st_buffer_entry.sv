@@ -246,12 +246,18 @@ always_comb begin
     ST_BUF_L1D_MERGE : begin
       // ST_BUF_L1D_MERGE and ST_BUF_L1D_MERGE2 are needed to
       // Keep lifetime for fowarding during L1D update
-      if (!l1d_mshr_wr_if.s1_wr_resp.s1_conflict) begin
+      if (!i_snoop_busy) begin
+        w_state_next = ST_BUF_RD_L1D;
+      end else if (!l1d_mshr_wr_if.s1_wr_resp.s1_conflict) begin
         w_state_next = ST_BUF_L1D_MERGE2;
       end
     end
     ST_BUF_L1D_MERGE2 : begin
-      w_state_next = ST_BUF_WAIT_FINISH;
+      if (!i_snoop_busy) begin
+        w_state_next = ST_BUF_RD_L1D;
+      end else begin
+        w_state_next = ST_BUF_WAIT_FINISH;
+      end
     end
     ST_BUF_WAIT_FINISH : begin
       o_entry_finish = 1'b1;
