@@ -1,5 +1,6 @@
 VERILATOR_HOME ?= /usr/local/share/verilator
 
+CFLAGS += -DRISCV_ENABLE_SIFT
 CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)

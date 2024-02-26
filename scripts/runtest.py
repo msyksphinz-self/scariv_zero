@@ -12,6 +12,8 @@ import subprocess
 import json
 import argparse
 
+import sniper
+
 class BuildResult(Enum):
     SUCCESS = 0
     FAIL = 1
@@ -317,6 +319,10 @@ def main():
 	                default=100000000, help="Cycle Limitation")
     parser.add_argument('--docker', dest="docker", action="store_true",
 	                default=False, help="Use Docker environment")
+    parser.add_argument('--sniper', dest="sniper", action="store_true",
+	                default=False, help="Execute Sniper for cycle calculation")
+    parser.add_argument('--sniper-only', dest="sniper_only", action="store_true",
+	                default=False, help="Execute Only Sniper for cycle calculation")
 
     args = parser.parse_args()
 
@@ -365,12 +371,19 @@ def main():
             sim_conf["bitmanip"] = 1
         else:
             sim_conf["bitmanip"] = 0
+    sim_conf["sniper"]= args.sniper
+    sim_conf["sniper_only"] = args.sniper_only
 
-    sim = verilator_sim()
+    if not sim_conf["sniper_only"]:
+        sim = verilator_sim()
 
-    if sim.build_sim(sim_conf) == BuildResult.FAIL:
-        return
-    sim.run_sim(sim_conf, testcase)
+        if sim.build_sim(sim_conf) == BuildResult.FAIL:
+            return
+        sim.run_sim(sim_conf, testcase)
+
+    if sim_conf["sniper"] or sim_conf["sniper_only"]:
+        sniper_env = sniper.sniper()
+        sniper_env.run_sniper(sim_conf, testcase)
 
 if __name__ == "__main__":
     main()

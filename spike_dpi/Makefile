@@ -6,6 +6,7 @@ ifeq ($(VERILATOR),1)
 	CFLAGS += -DVERILATOR
 endif
 
+CFLAGS += -DRISCV_ENABLE_SIFT
 CFLAGS += -g
 CFLAGS += --std=c++17
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
@@ -25,6 +26,7 @@ CFLAGS += -I$(VCS_HOME)/include/
 
 # CFLAGS += -lriscv
 
+EXE_CFLAGS += -DRISCV_ENABLE_SIFT
 EXE_CFLAGS += -g
 EXE_CFLAGS += --std=c++17
 # EXE_CFLAGS += -Wl,--export-dynamic
