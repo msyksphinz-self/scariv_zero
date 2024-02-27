@@ -365,7 +365,7 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
                                     !w_inst_buf_entry_b0.dead &
                                     w_inst_buf_entry_b0.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
-      w_fetch_except_tval [w_idx] = {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)],
+      w_fetch_except_tval [w_idx] = {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)],
                                      w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0};
 
       w_expand_pred_info[w_idx] = w_inst_buf_entry_b0.pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
@@ -388,8 +388,8 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
                                     w_inst_buf_entry_b2.tlb_except_cause;
       w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ?
-                                    {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0} :
-                                    {w_inst_buf_entry_b2.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0], 1'b0};
+                                    {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0} :
+                                    {w_inst_buf_entry_b2.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0], 1'b0};
 
       w_expand_pred_info [w_idx] = w_inst_buf_entry_b2.pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
@@ -686,7 +686,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       w_ibuf_front_payload_next.inst[d_idx].inst = w_expand_inst[d_idx];
       w_ibuf_front_payload_next.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
       w_ibuf_front_payload_next.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
-      w_ibuf_front_payload_next.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
+      w_ibuf_front_payload_next.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W){1'b0}}} +
                                                       {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       w_ibuf_front_payload_next.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;

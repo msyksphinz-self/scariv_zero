@@ -238,12 +238,12 @@ endfunction  // assign_issue_t
   typedef struct packed {
     mem_cmd_t cmd;
     scariv_pkg::paddr_t addr;
-    ic_data_t data;
-    ic_strb_t byte_en;
+    dc_data_t data;
+    dc_strb_t byte_en;
   } l2_req_t;
 
   typedef struct packed {
-    ic_data_t data;
+    dc_data_t data;
   } l2_resp_t;
 
 typedef struct packed {

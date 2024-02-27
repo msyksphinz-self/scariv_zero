@@ -1,6 +1,6 @@
 package scariv_conf_pkg;
 
-  localparam ICACHE_DATA_W = 128;
+  localparam ICACHE_DATA_W = 64;
   localparam DCACHE_DATA_W = 128;
   localparam ICACHE_WORDS = 64;
   localparam DCACHE_WORDS = 64;

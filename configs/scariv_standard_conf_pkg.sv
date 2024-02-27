@@ -1,6 +1,6 @@
 package scariv_conf_pkg;
 
-  localparam ICACHE_DATA_W = 512;
+  localparam ICACHE_DATA_W = 128;
   localparam DCACHE_DATA_W = 512;
   localparam ICACHE_WORDS = 32;
   localparam DCACHE_WORDS = 32;
@@ -10,7 +10,7 @@ package scariv_conf_pkg;
 
   localparam INST_BUF_SIZE = 8;
 
-  localparam DISP_SIZE = 5;
+  localparam DISP_SIZE = 4;
 
   localparam ALU_INST_NUM = 2;
   localparam LSU_INST_NUM = 2;

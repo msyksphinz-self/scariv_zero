@@ -80,7 +80,7 @@ assign o_resp_data  = r_resp_data [RD_LAT-1];
 
 initial begin
   if (FILE == "image") begin
-    if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin
+    if (scariv_conf_pkg::DCACHE_DATA_W == 128) begin
       $readmemh ("../../../tests/linux/image_w16.hex", r_ram);
     end else if (scariv_conf_pkg::ICACHE_DATA_W == 256) begin
       $readmemh ("../../../tests/linux/image_w32.hex", r_ram);
@@ -88,7 +88,7 @@ initial begin
       $readmemh ("../../../tests/linux/image_w64.hex", r_ram);
     end
   end else if (FILE == "initrd") begin
-    if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin
+    if (scariv_conf_pkg::DCACHE_DATA_W == 128) begin
       $readmemh ("../../../tests/linux/spike_rootfs_w16.hex", r_ram);
     end else if (scariv_conf_pkg::ICACHE_DATA_W == 256) begin
       $readmemh ("../../../tests/linux/spike_rootfs_w32.hex", r_ram);

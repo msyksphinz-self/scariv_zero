@@ -591,11 +591,14 @@ scariv_pkg::alen_t                    w_ex2_missu_fwd_aligned_data;
 
 scariv_pkg::alen_t                    w_ex2_fwd_final_data;
 
+logic [$clog2(scariv_conf_pkg::DCACHE_DATA_W)-1: 0] w_ex2_dcache_pos;
+assign w_ex2_dcache_pos = {r_ex2_addr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
+
 always_comb begin
   {w_ex2_fwd_dw, w_ex2_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                       ex2_fwd_check_if.fwd_dw, ex2_fwd_check_if.fwd_data,
                                                       r_ex2_addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
-  w_ex2_missu_fwd_aligned_data = missu_fwd_if.ex2_fwd_data >> {r_ex2_addr[$clog2(DCACHE_DATA_B_W)-1: 0], 3'b000};
+  w_ex2_missu_fwd_aligned_data = missu_fwd_if.ex2_fwd_data >> w_ex2_dcache_pos;
   w_ex2_missu_fwd_dw           = {8{missu_fwd_if.ex2_fwd_valid}};
 end
 

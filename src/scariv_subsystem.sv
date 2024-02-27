@@ -104,7 +104,7 @@ u_router
 
 scariv_clint
 #(
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h200_0000),
@@ -133,7 +133,7 @@ scariv_clint
 
 scariv_plic
 #(
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (scariv_lsu_pkg::L2_CMD_TAG_W + 2),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('hc00_0000),
