@@ -16,7 +16,7 @@ module distributed_ram
 );
 
 
-logic [WIDTH-1:0] data_array[WORDS];
+(* RAM_STYLE = "distributed" *) logic [WIDTH-1:0] data_array[WORDS];
 
 always_ff @ (posedge i_clk) begin
   if (i_wr) begin
