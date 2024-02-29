@@ -202,3 +202,4 @@
 
 ../src/distributed_ram.sv
 ../src/distributed_mp_ram.sv
+../src/distributed_1rd_ram.sv
