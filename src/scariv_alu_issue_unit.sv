@@ -281,8 +281,8 @@ end endgenerate
 // Payload RAM
 logic [$clog2(ENTRY_SIZE)-1: 0] w_picked_inst_index;
 bit_encoder #(.WIDTH(ENTRY_SIZE)) u_issue_index_encoder (.i_in(w_picked_inst_oh), .o_out(w_picked_inst_index));
-distributed_mp_ram
-  #(.PORTS(IN_PORT_SIZE), .WIDTH($bits(scariv_alu_pkg::iq_payload_t)), .WORDS(ENTRY_SIZE))
+distributed_1rd_ram
+  #(.WR_PORTS(IN_PORT_SIZE), .WIDTH($bits(scariv_alu_pkg::iq_payload_t)), .WORDS(ENTRY_SIZE))
 u_iq_payload_ram
   (
    .i_clk     (i_clk    ),

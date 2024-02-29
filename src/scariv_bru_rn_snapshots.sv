@@ -78,8 +78,8 @@ generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::BRU_DISP_SIZE; b_idx++)
 //   end
 end endgenerate // block: disp_snapshot_loop
 
-distributed_mp_ram
-  #(.PORTS (scariv_conf_pkg::BRU_DISP_SIZE),
+distributed_1rd_ram
+  #(.WR_PORTS (scariv_conf_pkg::BRU_DISP_SIZE),
     .WIDTH (32 * RNID_W),
     .WORDS (scariv_conf_pkg::RV_BRU_ENTRY_SIZE)
     )

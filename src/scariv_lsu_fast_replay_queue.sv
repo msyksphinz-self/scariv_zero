@@ -35,7 +35,8 @@ module scariv_lsu_fast_replay_queue
     lsu_pipe_req_if.master lsu_pipe_req_if
 );
 
-localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
+// localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
+localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 typedef struct packed {
@@ -58,7 +59,7 @@ typedef struct packed {
 } replay_payload_t;
 
 replay_queue_t   r_replay_queue  [REPLAY_QUEUE_SIZE];
-replay_payload_t r_replay_payload[REPLAY_QUEUE_SIZE];
+replay_payload_t w_replay_payload;
 
 logic [REPLAY_QUEUE_W-1: 0]          w_pop_freelist_id;
 logic [REPLAY_QUEUE_SIZE-1: 0]       w_resolved_list;
@@ -169,11 +170,29 @@ assign new_replay_payload.wr_reg       = lsu_pipe_haz_if.payload.wr_reg      ;
 assign new_replay_payload.paddr        = lsu_pipe_haz_if.payload.paddr       ;
 assign new_replay_payload.is_uc        = lsu_pipe_haz_if.payload.is_uc       ;
 
-always_ff @ (posedge i_clk) begin
-  if (lsu_pipe_haz_if.valid) begin
-    r_replay_payload[w_pop_freelist_id] <= new_replay_payload;
-  end
-end
+distributed_ram
+  #(.WIDTH($bits(replay_payload_t)),
+    .WORDS(REPLAY_QUEUE_SIZE)
+    )
+u_payload_info_ram
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_wr      (lsu_pipe_haz_if.valid),
+   .i_wr_addr (w_pop_freelist_id    ),
+   .i_wr_data (new_replay_payload   ),
+
+   .i_rd_addr (w_resolved_index),
+   .o_rd_data (w_replay_payload)
+   );
+
+
+// always_ff @ (posedge i_clk) begin
+//   if (lsu_pipe_haz_if.valid) begin
+//     r_replay_payload[w_pop_freelist_id] <= new_replay_payload;
+//   end
+// end
 
 bit_extract_lsb_ptr #(.WIDTH(REPLAY_QUEUE_SIZE)) u_resolved_oh    (.in(w_resolved_list), .i_ptr(w_pop_freelist_id), .out(w_resolved_list_oh));
 bit_encoder         #(.WIDTH(REPLAY_QUEUE_SIZE)) u_resolved_index (.i_in(w_resolved_list_oh), .o_out(w_resolved_index));
@@ -185,13 +204,13 @@ bit_encoder         #(.WIDTH(REPLAY_QUEUE_SIZE)) u_resolved_index (.i_in(w_resol
 assign lsu_pipe_req_if.valid                  = |w_resolved_list & ~r_replay_queue[w_resolved_index].dead;
 assign lsu_pipe_req_if.payload.cmt_id         = r_replay_queue  [w_resolved_index].cmt_id       ;
 assign lsu_pipe_req_if.payload.grp_id         = r_replay_queue  [w_resolved_index].grp_id       ;
-assign lsu_pipe_req_if.payload.inst           = r_replay_payload[w_resolved_index].inst         ;
-assign lsu_pipe_req_if.payload.cat            = r_replay_payload[w_resolved_index].cat          ;
-assign lsu_pipe_req_if.payload.oldest_valid   = r_replay_payload[w_resolved_index].oldest_valid ;
-assign lsu_pipe_req_if.payload.rd_reg         = r_replay_payload[w_resolved_index].rd_reg       ;
-assign lsu_pipe_req_if.payload.wr_reg         = r_replay_payload[w_resolved_index].wr_reg       ;
-assign lsu_pipe_req_if.payload.paddr          = r_replay_payload[w_resolved_index].paddr        ;
-assign lsu_pipe_req_if.payload.is_uc          = r_replay_payload[w_resolved_index].is_uc        ;
+assign lsu_pipe_req_if.payload.inst           = w_replay_payload.inst         ;
+assign lsu_pipe_req_if.payload.cat            = w_replay_payload.cat          ;
+assign lsu_pipe_req_if.payload.oldest_valid   = w_replay_payload.oldest_valid ;
+assign lsu_pipe_req_if.payload.rd_reg         = w_replay_payload.rd_reg       ;
+assign lsu_pipe_req_if.payload.wr_reg         = w_replay_payload.wr_reg       ;
+assign lsu_pipe_req_if.payload.paddr          = w_replay_payload.paddr        ;
+assign lsu_pipe_req_if.payload.is_uc          = w_replay_payload.is_uc        ;
 assign lsu_pipe_req_if.payload.hazard_typ     = r_replay_queue  [w_resolved_index].hazard_typ   ;
 assign lsu_pipe_req_if.payload.hazard_index   = r_replay_queue  [w_resolved_index].hazard_index ;
 

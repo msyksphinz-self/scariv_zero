@@ -25,11 +25,74 @@ module scariv_phy_registers
 
 localparam WIDTH = REG_TYPE == GPR ? riscv_pkg::XLEN_W : riscv_fpu_pkg::FLEN_W;
 
-`define IVT_MULTIPORT
+// `define USE_DISTRIBUTED_RAM
+`define USE_BLOCK_RAM
+// `define USE_NORMAL_MULTIPORT
 
-`ifdef IVT_MULTIPORT
+`ifdef USE_DISTRIBUTED_RAM
 
-logic [WR_PORT_SIZE-1: 0] r_lvt [RNID_SIZE];
+logic [WR_PORT_SIZE-1: 0] w_wr_valid;
+logic [RNID_W-1: 0]       w_wr_addr[WR_PORT_SIZE];
+logic [WIDTH-1: 0]        w_wr_data[WR_PORT_SIZE];
+
+generate for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : wr_loop
+  assign w_wr_valid[w_idx] = regwrite[w_idx].valid;
+  assign w_wr_addr [w_idx] = regwrite[w_idx].rnid;
+  assign w_wr_data [w_idx] = regwrite[w_idx].data;
+end endgenerate
+
+logic [RNID_W-1: 0]       w_rd_addr[RD_PORT_SIZE];
+logic [WIDTH-1: 0]        w_rd_data[RD_PORT_SIZE];
+
+generate for (genvar r_idx = 0; r_idx < RD_PORT_SIZE; r_idx++) begin : rd_loop
+  always_ff @ (posedge i_clk) begin
+    if ((REG_TYPE == GPR) & (regread[r_idx].rnid == 'h0)) begin
+      regread[r_idx].data <= 'h0;
+    end else begin
+      regread[r_idx].data <= w_rd_data[r_idx];
+    end
+  end
+  assign w_rd_addr[r_idx] = regread[r_idx].rnid;
+end endgenerate
+
+distributed_mp_ram
+  #(
+    .WR_PORTS (WR_PORT_SIZE),
+    .RD_PORTS (RD_PORT_SIZE),
+    .WIDTH (WIDTH ),
+    .WORDS (RNID_SIZE)
+    )
+u_array
+ (
+  .i_clk     (i_clk    ),
+  .i_reset_n (i_reset_n),
+
+  .i_wr      (w_wr_valid),
+  .i_wr_addr (w_wr_addr ),
+  .i_wr_data (w_wr_data ),
+
+  .i_rd_addr (w_rd_addr),
+  .o_rd_data (w_rd_data)
+  );
+
+`ifdef SIMULATION
+  logic [WIDTH-1: 0] sim_phy_regs[RNID_SIZE];
+  generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : sim_rn_loop
+    logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
+    for (genvar wr_idx = 0; wr_idx < WR_PORT_SIZE; wr_idx++) begin
+      assign sim_phy_rn_data[wr_idx] = u_array.w_rd_loop[0].w_wr_loop[wr_idx].data_array[rn_idx];
+    end
+    bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (u_array.r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
+  end endgenerate
+`endif // SIMULATION
+
+`endif //  `ifdef USE_DISTRIBUTED_RAM
+
+`ifdef USE_BLOCK_RAM
+
+// USE BLOCK RAM
+
+logic [RNID_SIZE-1: 0][WR_PORT_SIZE-1: 0] r_lvt;
 
 generate for (genvar r_idx = 0; r_idx < RD_PORT_SIZE; r_idx++) begin : w_rd_loop
   logic [WIDTH-1: 0]  w_rd_data_d1[WR_PORT_SIZE];
@@ -93,19 +156,21 @@ end endgenerate // block: rnid_loop
 
 
 `ifdef SIMULATION
-  logic [WIDTH-1: 0] sim_phy_regs[RNID_SIZE];
-  generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : sim_rn_loop
-    logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
-    for (genvar wr_idx = 0; wr_idx < WR_PORT_SIZE; wr_idx++) begin
-      assign sim_phy_rn_data[wr_idx] = w_rd_loop[0].w_wr_loop[wr_idx].u_array.data_array[rn_idx];
-    end
-    bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
-  end endgenerate
+logic [WIDTH-1: 0] sim_phy_regs[RNID_SIZE];
+generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : sim_rn_loop
+logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
+  for (genvar wr_idx = 0; wr_idx < WR_PORT_SIZE; wr_idx++) begin
+    assign sim_phy_rn_data[wr_idx] = w_rd_loop[0].w_wr_loop[wr_idx].u_array.data_array[rn_idx];
+  end
+  bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
+end endgenerate
+
 `endif // SIMULATION
 
-`endif // IVT_MULTIPORT
+`endif //  `ifdef USE_BLOCK_RAM
 
-`ifdef NORMAL_MULTIPORT
+`ifdef USE_NORMAL_MULTIPORT
+
 logic [WIDTH-1: 0] r_phy_regs[RNID_SIZE];
 
 logic [WR_PORT_SIZE-1:0] wr_valid;
@@ -169,6 +234,6 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
   end
 end endgenerate
 
-`endif //  `ifdef NORMAL_MULTIPORT
+`endif //  `ifdef USE_NORMAL_MULTIPORT
 
 endmodule

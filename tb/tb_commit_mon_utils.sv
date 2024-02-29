@@ -30,8 +30,7 @@ logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::FPR_RNID_SIZE + 
 generate for (genvar r_idx = 0; r_idx < scariv_pkg::XPR_RNID_SIZE; r_idx++) begin: reg_loop
 `ifdef NORMAL_MULTIPORT
   assign w_physical_int_data[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_int_phy_registers.r_phy_regs[r_idx];
-`endif // NORMAL_MULTIPORT
-`ifdef IVT_MULTIPORT
+`else  // NORMAL_MULTIPORT
   assign w_physical_int_data[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_int_phy_registers.sim_phy_regs[r_idx];
 `endif // IVT_MULTIPORT
 end endgenerate
@@ -40,8 +39,7 @@ generate if (riscv_pkg::FLEN_W != 0) begin
   for (genvar r_idx = 0; r_idx < scariv_pkg::FPR_RNID_SIZE; r_idx++) begin: reg_loop
 `ifdef NORMAL_MULTIPORT
     assign w_physical_fp_data [r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.r_phy_regs[r_idx];
-`endif // NORMAL_MULTIPORT
-`ifdef IVT_MULTIPORT
+`else // IVT_MULTIPORT
     assign w_physical_fp_data [r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.sim_phy_regs[r_idx];
 `endif // IVT_MULTIPORT
   end
