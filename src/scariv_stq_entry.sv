@@ -193,39 +193,4 @@ always_comb begin
   end
 end // always_comb
 
-function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
-                                                scariv_pkg::cmt_id_t cmt_id,
-                                                scariv_pkg::grp_id_t grp_id,
-                                                logic rs2_phy_hit);
-  stq_entry_t ret;
-
-  ret = 'h0;
-
-  ret.is_valid  = 1'b1;
-
-  ret.inst.cmt_id = cmt_id;
-  ret.inst.grp_id = grp_id;
-
-  ret.inst.is_rmw = in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW;
-
-  ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
-  ret.inst.rd_reg.typ           = in.rd_regs[1].typ;
-  ret.inst.rd_reg.regidx        = in.rd_regs[1].regidx;
-  ret.inst.rd_reg.rnid          = in.rd_regs[1].rnid;
-  ret.inst.rd_reg.ready         = in.rd_regs[1].ready | rs2_phy_hit;
-  ret.inst.rd_reg.predict_ready = 1'b0;
-
-  ret.rs2_read_accepted = 1'b0;
-  ret.is_rs2_get = 1'b0;
-
-`ifdef SIMULATION
-  ret.inst.sim_inst   = in.inst;
-  ret.inst.sim_cat    = in.cat;
-
-  ret.kanata_id = in.kanata_id;
-`endif // SIMULATION
-
-  return ret;
-endfunction // assign_stq_disp
-
 endmodule // scariv_stq_entry

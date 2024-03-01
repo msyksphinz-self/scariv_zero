@@ -166,6 +166,29 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
+generate for (genvar idx = 0; idx < scariv_conf_pkg::MEM_DISP_SIZE; idx++) begin : in_port_loop
+  scariv_pkg::rnid_t                                 w_rs2_rnid;
+  scariv_pkg::reg_t                                  w_rs2_type;
+
+  logic                                              w_rs2_phy_hit;
+  logic                                              w_rs2_rel_hit;
+  scariv_pkg::rel_bus_idx_t                          w_rs2_rel_index;
+  logic                                              w_rs2_may_mispred;
+
+  assign w_rs2_rnid = disp_picked_inst[idx].rd_regs[1].rnid;
+  assign w_rs2_type = disp_picked_inst[idx].rd_regs[1].typ;
+
+  // Early Wakeup Signal detection
+  select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .early_wr_if (early_wr_in_if),
+                                           .o_valid   (w_rs2_rel_hit), .o_hit_index (w_rs2_rel_index), .o_may_mispred (w_rs2_may_mispred));
+  select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE))
+  rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if), .o_valid (w_rs2_phy_hit));
+
+  assign w_stq_entry_in[idx] = assign_stq_disp(disp_picked_inst[idx], w_rs2_rel_hit, w_rs2_rel_index, w_rs2_phy_hit);
+
+end endgenerate // block: in_port_loop
+
+
 //
 // STQ Pointer
 //
@@ -189,6 +212,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::MEM_DISP_SIZE; s_idx++)
 end
 endgenerate
 
+logic [$clog2(scariv_conf_pkg::STQ_SIZE)-1: 0] w_out_ptr_idx;
+bit_encoder #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_uc_encoder_ptr (.i_in(w_out_ptr_oh), .o_out(w_out_ptr_idx));
 
 // logic [scariv_conf_pkg::STQ_SIZE-1: 0]                   w_stq_snoop_valid;
 // logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]              w_stq_snoop_data[scariv_conf_pkg::STQ_SIZE];
@@ -217,7 +242,7 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
   localparam rs2_regrd_port_idx = scariv_conf_pkg::STQ_REGRD_PORT_NUM == 1 ? 'h0 : s_idx[$clog2(scariv_conf_pkg::STQ_REGRD_PORT_NUM)-1: 0];
 
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
-  scariv_pkg::disp_t           w_disp_entry;
+  stq_entry_t          w_load_stq_entry;
   scariv_pkg::grp_id_t w_disp_grp_id;
   logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_disp_pipe_sel_oh;
   scariv_pkg::grp_id_t w_stbuf_accept_array;
@@ -230,8 +255,8 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
     assign w_input_valid[i_idx] = disp_picked_inst_valid[i_idx] & !w_flush_valid & (w_entry_ptr_oh[s_idx]);
   end
 
-  bit_oh_or #(.T(scariv_pkg::disp_t), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(disp_picked_inst),   .o_selected(w_disp_entry));
-  bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]),     .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_entry  (.i_oh(w_input_valid), .i_data(w_stq_entry_in),   .o_selected(w_load_stq_entry));
+  bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]),     .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_grp_id   (.i_oh(w_input_valid), .i_data(disp_picked_grp_id), .o_selected(w_disp_grp_id));
   bit_oh_or #(.T(logic[scariv_conf_pkg::LSU_INST_NUM-1: 0]), .WORDS(scariv_conf_pkg::MEM_DISP_SIZE)) bit_oh_pipe_sel (.i_oh(w_input_valid), .i_data(w_pipe_sel_idx_oh), .o_selected(w_disp_pipe_sel_oh));
 
   // Selection of EX2 Update signal
@@ -257,9 +282,10 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_disp_load       (|w_input_valid    ),
      .i_disp_cmt_id     (disp.payload.cmt_id),
      .i_disp_grp_id     (w_disp_grp_id     ),
-     .i_disp            (w_disp_entry      ),
+     .i_disp_stq_entry  (w_load_stq_entry  ),
      .i_disp_pipe_sel_oh(w_disp_pipe_sel_oh),
 
+     .early_wr_in_if (early_wr_in_if),
      .phy_wr_in_if   (phy_wr_in_if  ),
 
      .i_ex1_q_valid  (|w_ex1_q_valid),
@@ -503,18 +529,11 @@ end
 // ==============================
 // After commit, store operation
 // ==============================
+assign w_stq_cmt_head_entry = w_stq_entries[w_out_ptr_idx];
 
 /* verilator lint_off UNOPTFLAT */
 scariv_pkg::grp_id_t w_sq_commit_ready_issue;
 scariv_pkg::grp_id_t w_sq_is_rmw;
-bit_oh_or
-  #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE))
-select_cmt_oh
-  (
-   .i_oh(w_out_ptr_oh),
-   .i_data(w_stq_entries),
-   .o_selected(w_stq_cmt_head_entry)
-   );
 
 logic [scariv_lsu_pkg::ST_BUF_WIDTH/8-1:0] w_st_buffer_strb[scariv_conf_pkg::DISP_SIZE];
 logic [scariv_lsu_pkg::ST_BUF_WIDTH-1:0]   w_st_buffer_data[scariv_conf_pkg::DISP_SIZE];
@@ -612,13 +631,48 @@ assign st_buffer_if.grp_id = w_stq_cmt_head_entry.inst.grp_id;
 // After Commit, UC-Write Operation
 // ---------------------------------
 stq_entry_t w_uc_write_entry_sel;
-bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_uc_write_entry  (.i_oh(w_uc_write_req_valid), .i_data(w_stq_entries), .o_selected(w_uc_write_entry_sel));
+assign w_uc_write_entry_sel = w_stq_entries[w_out_ptr_idx];
+
 always_comb begin
   uc_write_if.valid = |w_uc_write_req_valid;
   uc_write_if.paddr = w_uc_write_entry_sel.addr;
   uc_write_if.data  = w_uc_write_entry_sel.rs2_data;
   uc_write_if.size  = w_uc_write_entry_sel.size;
 end
+
+function automatic stq_entry_t assign_stq_disp (scariv_pkg::disp_t in,
+                                                logic rs2_rel_hit, scariv_pkg::rel_bus_idx_t rs2_rel_index,
+                                                logic rs2_phy_hit);
+  stq_entry_t ret;
+
+  ret = 'h0;
+
+  ret.is_valid  = 1'b1;
+
+  ret.inst.is_rmw = in.subcat == decoder_inst_cat_pkg::INST_SUBCAT_RMW;
+
+  ret.inst.rd_reg.valid         = in.rd_regs[1].valid;
+  ret.inst.rd_reg.typ           = in.rd_regs[1].typ;
+  ret.inst.rd_reg.regidx        = in.rd_regs[1].regidx;
+  ret.inst.rd_reg.rnid          = in.rd_regs[1].rnid;
+  ret.inst.rd_reg.ready         = in.rd_regs[1].ready | rs2_phy_hit;
+  ret.inst.rd_reg.predict_ready[0] = rs2_rel_hit;
+  ret.inst.rd_reg.predict_ready[1] = 1'b0;
+  ret.inst.rd_reg.early_index      = rs2_rel_index;
+
+  ret.rs2_rel_read_accepted = 1'b0;
+  ret.rs2_phy_read_accepted = 1'b0;
+  ret.is_rs2_get = 1'b0;
+
+`ifdef SIMULATION
+  ret.inst.sim_inst   = in.inst;
+  ret.inst.sim_cat    = in.cat;
+
+  ret.kanata_id = in.kanata_id;
+`endif // SIMULATION
+
+  return ret;
+endfunction // assign_stq_disp
 
 
 `ifdef SIMULATION
