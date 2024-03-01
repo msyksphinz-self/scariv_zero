@@ -20,7 +20,7 @@ import scariv_lsu_pkg::*;
   rob_info_if.slave           rob_info_if,
 
    input logic                i_put,
-   input lsu_issue_entry_t    i_put_entry,
+   input iq_entry_t    i_put_entry,
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
    input logic                i_stq_rmw_existed,
@@ -28,7 +28,7 @@ import scariv_lsu_pkg::*;
    output logic               o_entry_valid,
   /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
-   output scariv_lsu_pkg::lsu_issue_entry_t o_entry,
+   output scariv_lsu_pkg::iq_entry_t o_entry,
 
    /* Forwarding path */
    early_wr_if.slave early_wr_if[scariv_pkg::REL_BUS_SIZE],
@@ -57,9 +57,9 @@ logic    r_issued;
 logic    w_issued_next;
 logic    r_dead;
 logic    w_dead_next;
-scariv_lsu_pkg::lsu_issue_entry_t r_entry;
+scariv_lsu_pkg::iq_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
-scariv_lsu_pkg::lsu_issue_entry_t w_entry_next;
+scariv_lsu_pkg::iq_entry_t w_entry_next;
 
 logic    w_inst_oldest_ready;
 logic    w_oldest_ready;
@@ -99,7 +99,7 @@ scariv_lsu_pkg::lsu_sched_state_t r_state;
 scariv_lsu_pkg::lsu_sched_state_t w_state_next;
 
 // Only rs1 operand ready is checked.
-function logic all_operand_ready(scariv_lsu_pkg::lsu_issue_entry_t entry);
+function logic all_operand_ready(scariv_lsu_pkg::iq_entry_t entry);
   logic     ret;
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready));
         // (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready));

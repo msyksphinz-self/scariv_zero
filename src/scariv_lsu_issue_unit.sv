@@ -63,7 +63,7 @@ logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-scariv_lsu_pkg::lsu_issue_entry_t w_entry[ENTRY_SIZE];
+scariv_lsu_pkg::iq_entry_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_in_ptr_oh;
@@ -183,7 +183,7 @@ u_inst_selector
    .out  (w_picked_inst_oh)
    );
 
-lsu_issue_entry_t w_input_entry[IN_PORT_SIZE];
+scariv_lsu_pkg::iq_entry_t w_input_entry[IN_PORT_SIZE];
 logic [IN_PORT_SIZE-1: 0] w_disp_oldest_valid;
 generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
 
@@ -208,9 +208,9 @@ generate for (genvar idx = 0; idx < IN_PORT_SIZE; idx++) begin : in_port_loop
                                           .o_mispred    (w_rs_mispredicted[rs_idx]));
   end
 
-  assign w_input_entry[idx] = assign_lsu_issue_entry(i_disp_info[idx], w_flush_valid, i_cmt_id, i_grp_id[idx],
-                                                     w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
-                                                     i_stq_rmw_existed, w_disp_oldest_valid[idx]);
+  assign w_input_entry[idx] = assign_entry(i_disp_info[idx], w_flush_valid, i_cmt_id, i_grp_id[idx],
+                                           w_rs_rel_hit, w_rs_phy_hit, w_rs_may_mispred, w_rs_rel_index,
+                                           i_stq_rmw_existed, w_disp_oldest_valid[idx]);
 
   decoder_lsu_sched u_lsu_sched (.inst(i_disp_info[idx].inst), .oldest(w_disp_oldest_valid[idx]));
 
@@ -218,13 +218,13 @@ end endgenerate
 
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   logic [IN_PORT_SIZE-1: 0] w_input_valid;
-  lsu_issue_entry_t         w_disp_entry;
+  iq_entry_t                w_disp_entry;
   scariv_pkg::grp_id_t      w_disp_grp_id;
   for (genvar i_idx = 0; i_idx < IN_PORT_SIZE; i_idx++) begin : in_loop
     assign w_input_valid[i_idx] = i_disp_valid[i_idx] & (w_entry_load_index[i_idx] == s_idx);
   end
 
-  bit_oh_or #(.T(lsu_issue_entry_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(w_input_entry), .o_selected(w_disp_entry));
+  bit_oh_or #(.T(iq_entry_t), .WORDS(IN_PORT_SIZE)) bit_oh_entry (.i_oh(w_input_valid), .i_data(w_input_entry), .o_selected(w_disp_entry));
   bit_oh_or #(.T(logic[scariv_conf_pkg::DISP_SIZE-1:0]), .WORDS(IN_PORT_SIZE)) bit_oh_grp_id (.i_oh(w_input_valid), .i_data(i_grp_id), .o_selected(w_disp_grp_id));
 
   logic  w_pipe_done_valid;
@@ -273,8 +273,38 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
 end
 endgenerate
 
-bit_oh_or #(.T(scariv_lsu_pkg::lsu_issue_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+
+scariv_lsu_pkg::iq_payload_t w_in_payload[IN_PORT_SIZE];
+generate for (genvar p_idx = 0; p_idx < IN_PORT_SIZE; p_idx++) begin : in_payload_loop
+  assign w_in_payload[p_idx] = scariv_lsu_pkg::assign_payload (i_disp_info[p_idx]);
+end endgenerate
+
+// Payload RAM
+logic [$clog2(ENTRY_SIZE)-1: 0] w_picked_inst_index;
+bit_encoder #(.WIDTH(ENTRY_SIZE)) u_issue_index_encoder (.i_in(w_picked_inst_oh), .o_out(w_picked_inst_index));
+distributed_1rd_ram
+  #(.WR_PORTS(IN_PORT_SIZE), .WIDTH($bits(scariv_lsu_pkg::iq_payload_t)), .WORDS(ENTRY_SIZE))
+u_iq_payload_ram
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_wr      (i_disp_valid      ),
+   .i_wr_addr (w_entry_load_index),
+   .i_wr_data (w_in_payload      ),
+
+   .i_rd_addr (w_picked_inst_index  ),
+   .o_rd_data (w_iq_payload_selected)
+   );
+
+
+assign o_issue = scariv_lsu_pkg::assign_issue(w_iq_entry_selected, w_iq_payload_selected);
+
+scariv_lsu_pkg::iq_entry_t   w_iq_entry_selected;
+scariv_lsu_pkg::iq_payload_t w_iq_payload_selected;
+bit_oh_or #(.T(scariv_lsu_pkg::iq_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(w_iq_entry_selected));
 assign o_iss_index_oh = w_picked_inst_oh;
+
 // Clear selection
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(r_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
@@ -297,7 +327,7 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "grp_id:%d, ", entry.entry.grp_id);
 
     // Destination Register
-    $fwrite(fp, "rd:{ valid:%1d, idx:%02d, rnid:%d },", entry.entry.wr_reg.valid, entry.entry.wr_reg.regidx, entry.entry.wr_reg.rnid);
+    // $fwrite(fp, "rd:{ valid:%1d, idx:%02d, rnid:%d },", entry.entry.wr_reg.valid, entry.entry.wr_reg.regidx, entry.entry.wr_reg.rnid);
     // Source 1
     $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[0].valid, entry.entry.rd_regs[0].regidx, entry.entry.rd_regs[0].rnid, entry.entry.rd_regs[0].ready);
     // Source 2

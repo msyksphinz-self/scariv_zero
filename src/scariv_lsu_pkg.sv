@@ -89,59 +89,69 @@ typedef enum logic [ 2: 0] {
     LSU_ISSUE_HAZ_UC_ACCESS
   } lsu_issue_haz_reason_t;
 
-  typedef struct packed {
-    logic   valid;
-    logic [31:0] inst;
-    inst_cat_t   cat;
-    brtag_t      brtag;
 
-    cmt_id_t cmt_id;
-    grp_id_t grp_id;
+typedef struct packed {
+  decoder_inst_cat_pkg::inst_cat_t cat;
+  logic [31: 0]                    inst;
+  scariv_pkg::reg_wr_issue_t       wr_reg;
+`ifdef SIMULATION
+  scariv_pkg::vaddr_t sim_pc_addr;
+  logic               sim_is_rvc;
+  logic [63: 0]       kanata_id;
+`endif // SIMULATION
+} iq_payload_t;
 
-    logic                   need_oldest;
-    logic                   oldest_valid;
+typedef struct packed {
+  logic   valid;
 
-    lsu_issue_haz_reason_t  haz_reason;
+  cmt_id_t cmt_id;
+  grp_id_t grp_id;
 
-    reg_wr_issue_t         wr_reg;
-    reg_rd_issue_t [ 0: 0] rd_regs;
+  logic need_oldest;
+  logic oldest_valid;
+
+  lsu_issue_haz_reason_t  haz_reason;
+
+  reg_rd_issue_t [ 0: 0] rd_regs;
+} iq_entry_t;
+
+typedef struct packed {
+  logic   valid;
+  logic [31:0] inst;
+  inst_cat_t   cat;
+  brtag_t      brtag;
+
+  cmt_id_t cmt_id;
+  grp_id_t grp_id;
+
+  logic                   need_oldest;
+  logic                   oldest_valid;
+
+  lsu_issue_haz_reason_t  haz_reason;
+
+  reg_wr_issue_t         wr_reg;
+  reg_rd_issue_t [ 0: 0] rd_regs;
 
 `ifdef SIMULATION
-    logic         sim_is_rvc;
-    vaddr_t       sim_pc_addr;
-    logic [63: 0] kanata_id;
+  logic         sim_is_rvc;
+  vaddr_t       sim_pc_addr;
+  logic [63: 0] kanata_id;
 `endif // SIMULATION
-  } lsu_issue_entry_t;
+} lsu_issue_entry_t;
 
-function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in, logic flush,
-                                                   cmt_id_t cmt_id,
-                                                   grp_id_t grp_id,
-                                                   logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t[ 1: 0] rs_rel_index,
-                                                   logic stq_rmw_existed, logic oldest_valid);
-  lsu_issue_entry_t ret;
+
+function iq_entry_t assign_entry (disp_t in, logic flush,
+                                  cmt_id_t cmt_id,
+                                  grp_id_t grp_id,
+                                  logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, scariv_pkg::rel_bus_idx_t[ 1: 0] rs_rel_index,
+                                  logic stq_rmw_existed, logic oldest_valid);
+  iq_entry_t ret;
   ret.valid = in.valid;
-  ret.inst = in.inst;
-
-  ret.cat    = in.cat;
-
-  ret.brtag   = in.brtag;
-
   ret.cmt_id = cmt_id;
   ret.grp_id = grp_id;
 
   ret.need_oldest      = stq_rmw_existed | oldest_valid;
   ret.oldest_valid     = 1'b0;
-
-  ret.wr_reg.valid = in.wr_reg.valid;
-  ret.wr_reg.typ = in.wr_reg.typ;
-  ret.wr_reg.regidx = in.wr_reg.regidx;
-  ret.wr_reg.rnid = in.wr_reg.rnid;
-
-`ifdef SIMULATION
-  ret.sim_is_rvc  = in.rvc_inst_valid;
-  ret.sim_pc_addr = in.pc_addr;
-  ret.kanata_id   = in.kanata_id;
-`endif // SIMULATION
 
   for (int rs_idx = 0; rs_idx < 1; rs_idx++) begin
     ret.rd_regs[rs_idx].valid         = in.rd_regs[rs_idx].valid;
@@ -159,6 +169,50 @@ function lsu_issue_entry_t assign_lsu_issue_entry (disp_t in, logic flush,
   return ret;
 
 endfunction  // assign_issue_t
+
+
+function automatic iq_payload_t assign_payload (scariv_pkg::disp_t in);
+  iq_payload_t ret;
+  ret.cat       = in.cat    ;
+  ret.inst      = in.inst   ;
+  ret.wr_reg.valid  = in.wr_reg.valid ;
+  ret.wr_reg.typ    = in.wr_reg.typ   ;
+  ret.wr_reg.regidx = in.wr_reg.regidx;
+  ret.wr_reg.rnid   = in.wr_reg.rnid  ;
+
+`ifdef SIMULATION
+  ret.sim_pc_addr = in.pc_addr;
+  ret.sim_is_rvc  = in.rvc_inst_valid;
+  ret.kanata_id   = in.kanata_id;
+`endif // SIMULATION
+
+  return ret;
+endfunction // assign_payload
+
+function automatic lsu_issue_entry_t assign_issue (iq_entry_t iq, iq_payload_t payload);
+  lsu_issue_entry_t ret;
+  ret.valid   = iq.valid     ;
+
+  ret.cmt_id  = iq.cmt_id    ;
+  ret.grp_id  = iq.grp_id    ;
+
+  ret.wr_reg  = payload.wr_reg;
+  ret.rd_regs = iq.rd_regs    ;
+
+  ret.need_oldest   = iq.need_oldest;
+  ret.oldest_valid  = iq.oldest_valid;
+
+  ret.cat     = payload.cat       ;
+  ret.inst    = payload.inst      ;
+`ifdef SIMULATION
+  ret.sim_pc_addr = payload.sim_pc_addr;
+  ret.sim_is_rvc  = payload.sim_is_rvc;
+  ret.kanata_id   = payload.kanata_id;
+`endif // SIMULATION
+
+  return ret;
+endfunction // assign_issue
+
 
   typedef enum logic [4:0] {
     M_XRD       = 5'b00000,  // int load
