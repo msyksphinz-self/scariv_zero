@@ -20,21 +20,26 @@ module scariv_stq_entry
    input logic                                  i_disp_load,
    input scariv_pkg::cmt_id_t                   i_disp_cmt_id,
    input scariv_pkg::grp_id_t                   i_disp_grp_id,
-   input scariv_pkg::disp_t                     i_disp,
+   input stq_entry_t                            i_disp_stq_entry,
    input logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] i_disp_pipe_sel_oh,
 
    /* Forwarding path */
-   phy_wr_if.slave                            phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+   early_wr_if.slave early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave   phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
 
    // Updates from LSU Pipeline EX2 stage
-   input logic                            i_ex1_q_valid,
-   input scariv_lsu_pkg::stq_ex1_update_t i_ex1_q_updates,
-   input logic                            i_ex2_q_valid,
-   input scariv_lsu_pkg::stq_ex2_update_t i_ex2_q_updates,
+   input logic            i_ex1_q_valid,
+   input stq_ex1_update_t i_ex1_q_updates,
+   input logic            i_ex2_q_valid,
+   input stq_ex2_update_t i_ex2_q_updates,
 
-  // rs2 store data interface
-    input logic                               i_rs2_read_accepted,
-    input scariv_pkg::alen_t                  i_rs2_data,
+   // rs2 store data interface
+   input logic              i_rs2_rel_read_accepted,
+   input logic              i_rs2_rel_mispredicted,
+   input scariv_pkg::alen_t i_rs2_rel_data,
+
+   input logic              i_rs2_phy_read_accepted,
+   input scariv_pkg::alen_t i_rs2_phy_data,
 
    output stq_entry_t                         o_entry,
 
@@ -70,19 +75,20 @@ logic                                              w_ready_to_mv_stbuf;
 scariv_pkg::rnid_t                                 w_rs2_rnid;
 scariv_pkg::reg_t                                  w_rs2_type;
 logic                                              w_rs2_phy_hit;
-
-logic                                              w_rs2_phy_data_hit;
-scariv_pkg::alen_t                                 w_rs2_phy_data;
+logic                                              w_rs2_rel_hit;
+scariv_pkg::rel_bus_idx_t                          w_rs2_rel_index;
+logic                                              w_rs2_may_mispred;
 
 assign  o_entry = r_entry;
 
-assign w_rs2_rnid = i_disp_load ? i_disp.rd_regs[1].rnid : r_entry.inst.rd_reg.rnid;
-assign w_rs2_type = i_disp_load ? i_disp.rd_regs[1].typ  : r_entry.inst.rd_reg.typ;
+assign w_rs2_rnid = r_entry.inst.rd_reg.rnid;
+assign w_rs2_type = r_entry.inst.rd_reg.typ;
 
-select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM))
-rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[scariv_conf_pkg::ALU_INST_NUM +: (scariv_pkg::TGT_BUS_SIZE - scariv_conf_pkg::ALU_INST_NUM)]), .o_valid (w_rs2_phy_hit));
-select_phy_wr_data #(.BUS_SIZE(scariv_conf_pkg::ALU_INST_NUM))
-rs2_phy_data  (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if[0 +: scariv_conf_pkg::ALU_INST_NUM]), .o_valid (w_rs2_phy_data_hit), .o_data (w_rs2_phy_data));
+// Early Wakeup Signal detection
+select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .early_wr_if (early_wr_in_if),
+                                         .o_valid   (w_rs2_rel_hit), .o_hit_index (w_rs2_rel_index), .o_may_mispred (w_rs2_may_mispred));
+select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE))
+rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if), .o_valid (w_rs2_phy_hit));
 
 assign o_entry = r_entry;
 
@@ -129,28 +135,35 @@ end
 always_comb begin
   w_entry_next = r_entry;
 
+
+  // RS2 data collection
   if (~w_entry_next.is_rs2_get) begin
-    w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | w_rs2_phy_data_hit | r_entry.inst.rd_reg.ready;
-    w_entry_next.rs2_read_accepted = i_rs2_read_accepted;
-    if (r_entry.rs2_read_accepted) begin
-      w_entry_next.rs2_data   = i_rs2_data;
+    w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | r_entry.inst.rd_reg.ready;
+    w_entry_next.inst.rd_reg.predict_ready[0] = w_rs2_rel_hit;
+    w_entry_next.inst.rd_reg.predict_ready[1] = r_entry.inst.rd_reg.predict_ready[0];
+    if (w_rs2_rel_hit) begin
+      w_entry_next.inst.rd_reg.early_index = w_rs2_rel_index;
+    end
+    w_entry_next.rs2_rel_read_accepted = i_rs2_rel_read_accepted;
+    if (r_entry.inst.rd_reg.predict_ready[1] & w_entry_next.rs2_rel_read_accepted & ~i_rs2_rel_mispredicted) begin
+      w_entry_next.rs2_data   = i_rs2_rel_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
-    if (w_rs2_phy_data_hit) begin
-      w_entry_next.rs2_data   = w_rs2_phy_data;
+    w_entry_next.rs2_phy_read_accepted = i_rs2_phy_read_accepted;
+    if (r_entry.rs2_phy_read_accepted) begin
+      w_entry_next.rs2_data   = i_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
 
   if (!r_entry.is_valid) begin
     if (i_disp_load) begin
-      w_entry_next = assign_stq_disp(i_disp, i_disp_cmt_id, i_disp_grp_id, w_rs2_phy_hit | w_rs2_phy_data_hit);
+      w_entry_next = i_disp_stq_entry;
+      w_entry_next.inst.cmt_id = i_disp_cmt_id;
+      w_entry_next.inst.grp_id = i_disp_grp_id;
+
       if (w_load_br_flush | w_load_commit_flush) begin
         w_entry_next.dead = 1'b1;
-      end
-      if (w_rs2_phy_data_hit) begin
-        w_entry_next.rs2_data   = w_rs2_phy_data;
-        w_entry_next.is_rs2_get = 1'b1;
       end
     end
   end else if (r_entry.is_committed | r_entry.dead) begin

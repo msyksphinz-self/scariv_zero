@@ -612,7 +612,8 @@ typedef struct packed {
 
   scariv_pkg::maxaddr_t addr;
   logic                 paddr_valid;
-  logic                 rs2_read_accepted;
+  logic                 rs2_rel_read_accepted;
+  logic                 rs2_phy_read_accepted;
   logic                 is_rs2_get;
   scariv_pkg::alen_t    rs2_data;
 

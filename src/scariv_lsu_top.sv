@@ -292,6 +292,8 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
+ .early_wr_in_if (early_wr_in_if),
+ .mispred_in_if  (w_mispred_if  ),
  .phy_wr_in_if   (phy_wr_in_if  ),
 
  .int_rs2_regread(int_rs2_regread),

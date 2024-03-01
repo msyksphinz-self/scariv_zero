@@ -21,7 +21,9 @@ module scariv_stq
     cre_ret_if.slave                                   cre_ret_if,
 
    /* Forwarding path */
-   phy_wr_if.slave      phy_wr_in_if [scariv_pkg::TGT_BUS_SIZE],
+   early_wr_if.slave    early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
+   lsu_mispred_if.slave mispred_in_if [scariv_conf_pkg::LSU_INST_NUM],
+   phy_wr_if.slave      phy_wr_in_if  [scariv_pkg::TGT_BUS_SIZE],
 
    // Store Data Read Interface
    regread_if.master   int_rs2_regread[scariv_conf_pkg::STQ_REGRD_PORT_NUM],
@@ -66,14 +68,22 @@ scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [scariv_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [$clog2(scariv_conf_pkg::STQ_SIZE):0]   w_disp_picked_num;
+stq_entry_t w_stq_entry_in[scariv_conf_pkg::MEM_DISP_SIZE];
 
 stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
 logic [scariv_conf_pkg::STQ_SIZE-1: 0]        w_stq_valid;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids   [scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
-logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rs2_read_valids_oh[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rs2_phy_read_valids   [scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rs2_phy_read_valids_oh[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rs2_rel_read_valids   [scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_rs2_rel_read_valids_oh[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+
+scariv_pkg::alen_t w_rs2_rel_data[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
+logic [scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0] w_rs2_rel_mispredicted;
+scariv_pkg::alen_t w_rs2_phy_data[scariv_conf_pkg::STQ_REGRD_PORT_NUM-1: 0];
 
 logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_stq_rmw_existed;
 assign o_stq_rmw_existed = |w_stq_rmw_existed;
@@ -258,9 +268,12 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_ex2_q_valid  (|w_ex2_q_valid),
      .i_ex2_q_updates(w_ex2_q_updates),
 
-     .i_rs2_read_accepted (w_stq_rs2_read_valids_oh[rs2_regrd_port_idx][s_idx]),
-     .i_rs2_data          (w_stq_entries[s_idx].inst.rd_reg.typ == scariv_pkg::GPR ? int_rs2_regread[rs2_regrd_port_idx].data :
-                                                                                     fp_rs2_regread [rs2_regrd_port_idx].data),
+     .i_rs2_rel_read_accepted (w_rs2_rel_read_valids_oh[rs2_regrd_port_idx][s_idx]),
+     .i_rs2_rel_data          (w_rs2_rel_data          [rs2_regrd_port_idx]),
+     .i_rs2_rel_mispredicted  (w_rs2_rel_mispredicted  [rs2_regrd_port_idx]),
+
+     .i_rs2_phy_read_accepted (w_rs2_phy_read_valids_oh[rs2_regrd_port_idx][s_idx]),
+     .i_rs2_phy_data          (w_rs2_phy_data          [rs2_regrd_port_idx]),
 
      .o_entry (w_stq_entries[s_idx]),
 
@@ -288,10 +301,17 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
 
     // If rs2 operand is already ready, store data is fetch directly
     for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
-      assign w_stq_rs2_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
+      assign w_rs2_rel_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
                                                    w_stq_entries[s_idx].is_valid &
                                                    !w_stq_entries[s_idx].dead &
-                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_read_accepted &
+                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_rel_read_accepted &
+                                                   w_stq_entries[s_idx].inst.rd_reg.valid &
+                                                   w_stq_entries[s_idx].inst.rd_reg.predict_ready[0];
+
+      assign w_rs2_phy_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
+                                                   w_stq_entries[s_idx].is_valid &
+                                                   !w_stq_entries[s_idx].dead &
+                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_phy_read_accepted &
                                                    w_stq_entries[s_idx].inst.rd_reg.valid &
                                                    w_stq_entries[s_idx].inst.rd_reg.ready;
     end
@@ -378,15 +398,46 @@ endgenerate
 
 // ST data read selection
 generate for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
-  stq_entry_t w_stq_rs2_req_entry;
-  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_rs2_rd_req_sel (.in(w_stq_rs2_read_valids[r_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_stq_rs2_read_valids_oh[r_idx]));
-  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rd_req_entry  (.i_oh(w_stq_rs2_read_valids_oh[r_idx]), .i_data(w_stq_entries), .o_selected(w_stq_rs2_req_entry));
+  stq_entry_t w_phy_req_entry;
+  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE))     u_bit_rs2_phy_req_sel (.in(w_rs2_phy_read_valids[r_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rs2_phy_read_valids_oh[r_idx]));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_phy_req_entry  (.i_oh(w_rs2_phy_read_valids_oh[r_idx]), .i_data(w_stq_entries), .o_selected(w_phy_req_entry));
 
-  assign int_rs2_regread[r_idx].valid = |w_stq_rs2_read_valids[r_idx] & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::GPR);
-  assign int_rs2_regread[r_idx].rnid  = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+  stq_entry_t w_rel_req_entry;
+  bit_extract_lsb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE))     u_bit_rs2_rel_req_sel (.in(w_rs2_rel_read_valids[r_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_rs2_rel_read_valids_oh[r_idx]));
+  bit_oh_or #(.T(stq_entry_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) u_select_rs2_rel_req_entry  (.i_oh(w_rs2_rel_read_valids_oh[r_idx]), .i_data(w_stq_entries), .o_selected(w_rel_req_entry));
 
-  assign fp_rs2_regread[r_idx].valid = |w_stq_rs2_read_valids[r_idx] & (w_stq_rs2_req_entry.inst.rd_reg.typ == scariv_pkg::FPR);
-  assign fp_rs2_regread[r_idx].rnid  = w_stq_rs2_req_entry.inst.rd_reg.rnid;
+  // instance
+  scariv_stq_rs2_rel_pipe
+  u_rs2_rel_pipe
+    (
+     .i_clk     (i_clk    ),
+     .i_reset_n (i_reset_n),
+
+     .i_ex0_rel_valid    (|w_rs2_rel_read_valids[r_idx]            ),
+     .i_ex0_rel_idx      (w_rel_req_entry.inst.rd_reg.early_index ),
+     .i_ex0_rnid         (w_rel_req_entry.inst.rd_reg.rnid        ),
+     .i_ex0_type         (w_rel_req_entry.inst.rd_reg.typ         ),
+     .o_ex1_rel_data     (w_rs2_rel_data        [r_idx]           ),
+     .o_ex1_mispredicted (w_rs2_rel_mispredicted[r_idx]           ),
+
+     .mispred_in_if (mispred_in_if),
+     .phy_wr_in_if  (phy_wr_in_if )
+     );
+
+  scariv_stq_rs2_phy_pipe
+  u_rs2_phy_pipe
+    (
+     .i_clk     (i_clk),
+
+     .i_ex0_phy_rd_valid (|w_rs2_phy_read_valids[r_idx]    ),
+     .i_ex0_phy_type     (w_phy_req_entry.inst.rd_reg.typ  ),
+     .i_ex0_phy_rnid     (w_phy_req_entry.inst.rd_reg.rnid ),
+     .o_ex1_phy_data     (w_rs2_phy_data [r_idx]           ),
+
+     .int_rs2_regread (int_rs2_regread[r_idx]),
+     .fp_rs2_regread  (fp_rs2_regread [r_idx])
+     );
+
 end endgenerate
 
 

@@ -144,6 +144,8 @@
 ../src/scariv_ldq_entry.sv
 ../src/scariv_stq.sv
 ../src/scariv_stq_entry.sv
+../src/scariv_stq_rs2_rel_pipe.sv
+../src/scariv_stq_rs2_phy_pipe.sv
 ../src/scariv_st_buffer.sv
 ../src/scariv_st_buffer_entry.sv
 ../src/scariv_amo_operation.sv
