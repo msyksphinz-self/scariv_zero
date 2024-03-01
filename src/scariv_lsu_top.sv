@@ -97,7 +97,6 @@ fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
-missu_dc_search_if w_missu_dc_search_if ();
 missu_resolve_t w_missu_resolve;
 logic     w_missu_is_full;
 logic     w_missu_is_empty;
@@ -349,8 +348,7 @@ u_l1d_mshr
 
  .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
 
- .missu_pa_search_if (w_missu_pa_search_if),
- .missu_dc_search_if (w_missu_dc_search_if)
+ .missu_pa_search_if (w_missu_pa_search_if)
  );
 
 
@@ -510,9 +508,7 @@ u_scariv_dcache
    .stbuf_l1d_merge_if (w_l1d_merge_if  ),
    .missu_l1d_wr_if    (w_miss_l1d_wr_if),
 
-   .snoop_wr_if        (w_snoop_wr_if),
-
-   .missu_dc_search_if (w_missu_dc_search_if)
+   .snoop_wr_if        (w_snoop_wr_if)
    );
 
 endmodule // mrsh_lsu_top
