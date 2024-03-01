@@ -24,10 +24,7 @@ module scariv_dcache
    l1d_wr_if.slave stbuf_l1d_merge_if,
    l1d_wr_if.slave missu_l1d_wr_if,
 
-   l1d_wr_if.slave snoop_wr_if,
-
-   // MISSU search interface
-   missu_dc_search_if.master missu_dc_search_if
+   l1d_wr_if.slave snoop_wr_if
    );
 
 dc_read_resp_t[scariv_conf_pkg::DCACHE_BANKS-1: 0] w_dc_read_resp[RD_PORT_NUM];
@@ -122,45 +119,6 @@ generate for (genvar p_idx = 0; p_idx < RD_PORT_NUM; p_idx++) begin : rd_resp_lo
 
 end // block: rd_resp_loop
 endgenerate
-
-
-// ==========================
-// L2 Reponse
-// RESP1 : Getting Data
-// ==========================
-// logic r_rp1_l1d_exp_resp_valid;
-// logic [scariv_pkg::MISSU_ENTRY_W-1:0] r_rp1_missu_resp_tag;
-// logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0] r_rp1_missu_resp_data;
-//
-//
-// // --------------------------------------------------
-// // Interface of MISSU Search Entry to get information
-// // --------------------------------------------------
-// assign missu_dc_search_if.valid = r_rp1_l1d_exp_resp_valid;
-// assign missu_dc_search_if.index = r_rp1_missu_resp_tag;
-//
-// // ===========================
-// // L2 Reponse
-// // RESP2 : Search MISSU Entiers
-// // ===========================
-//
-// logic r_s0_valid;
-// miss_entry_t r_s0_searched_missu_entry;
-// logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0] r_s0_resp_data;
-// logic [DCACHE_DATA_B_W-1: 0] r_s0_be;
-// always_ff @ (posedge i_clk, negedge i_reset_n) begin
-//   if (!i_reset_n) begin
-//     r_s0_valid <= 1'b0;
-//     r_s0_searched_missu_entry <= 'h0;
-//     r_s0_resp_data <= 'h0;
-//     r_s0_be <= 'h0;
-//   end else begin
-//     r_s0_valid <= r_rp1_l1d_exp_resp_valid;
-//     r_s0_searched_missu_entry <= missu_dc_search_if.missu_entry;
-//     r_s0_resp_data <= r_rp1_missu_resp_data;
-//     r_s0_be        <= {DCACHE_DATA_B_W{1'b1}};
-//   end
-// end
 
 
 // -------------

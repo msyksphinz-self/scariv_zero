@@ -40,10 +40,7 @@ module scariv_l1d_mshr
 
    // Snoop Interface
    snoop_info_if.monitor snoop_info_if,
-   mshr_snoop_if.slave   mshr_snoop_if,
-
-   // MISSU search interface (from DCache)
-   missu_dc_search_if.slave missu_dc_search_if
+   mshr_snoop_if.slave   mshr_snoop_if
    );
 
 localparam NORMAL_REQ_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM;
@@ -431,9 +428,6 @@ assign l1d_evict_if.valid = |w_missu_ready_to_evict;
 assign l1d_evict_if.payload.paddr = w_missu_ready_to_evict_entry.paddr;
 assign l1d_evict_if.payload.data  = w_missu_ready_to_evict_entry.data;
 
-// Searching MISSU Interface from DCache
-assign missu_dc_search_if.missu_entry = w_missu_entries[missu_dc_search_if.index];
-
 // Notification to MISSU resolve to LDQ
 // Note: Now searching from MISSU means L1D will be written and resolve confliction
 assign mshr_stbuf_search_if.mshr_index_oh = w_wr_req_valid_oh;
@@ -443,22 +437,6 @@ assign o_missu_resolve.resolve_index_oh   = 1 << w_ext_rd_resp_tag;
 assign o_missu_resolve.missu_entry_valids = w_missu_valids;
 assign o_missu_is_full  = &w_missu_valids;
 assign o_missu_is_empty = ~|w_missu_valids;
-
-// ---------------------
-// MISSU Search Registers
-// ---------------------
-logic                                         r_missu_search_valid;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]         r_missu_search_index_oh;
-
-always_ff @ (posedge i_clk, negedge i_reset_n) begin
-  if (!i_reset_n) begin
-    r_missu_search_valid <= 1'b0;
-    r_missu_search_index_oh <= 'h0;
-  end else begin
-    r_missu_search_valid    <= missu_dc_search_if.valid;
-    r_missu_search_index_oh <= 1 << missu_dc_search_if.index;
-  end
-end
 
 // Eviction Hazard Check
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
