@@ -323,33 +323,36 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .o_stq_entry_st_finish (w_stq_entry_st_finish[s_idx])
      );
 
-    assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
+  assign w_stq_valid[s_idx] = w_stq_entries[s_idx].is_valid;
 
-    // If rs2 operand is already ready, store data is fetch directly
-    for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
-      assign w_rs2_rel_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
-                                                   w_stq_entries[s_idx].is_valid &
-                                                   !w_stq_entries[s_idx].dead &
-                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_rel_read_accepted &
-                                                   w_stq_entries[s_idx].inst.rd_reg.valid &
-                                                   w_stq_entries[s_idx].inst.rd_reg.predict_ready[0];
+  // If rs2 operand is already ready, store data is fetch directly
+  for (genvar r_idx = 0; r_idx < scariv_conf_pkg::STQ_REGRD_PORT_NUM; r_idx++) begin : stq_regread_loop
+    assign w_rs2_rel_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
+                                                 w_stq_entries[s_idx].is_valid &
+                                                 !w_stq_entries[s_idx].dead &
+                                                 !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_rel_read_accepted &
+                                                 w_stq_entries[s_idx].inst.rd_reg.valid &
+                                                 w_stq_entries[s_idx].inst.rd_reg.predict_ready[0];
 
-      assign w_rs2_phy_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
-                                                   w_stq_entries[s_idx].is_valid &
-                                                   !w_stq_entries[s_idx].dead &
-                                                   !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_phy_read_accepted &
-                                                   w_stq_entries[s_idx].inst.rd_reg.valid &
-                                                   w_stq_entries[s_idx].inst.rd_reg.ready;
-    end
+    assign w_rs2_phy_read_valids[r_idx][s_idx] = (rs2_regrd_port_idx == r_idx) &
+                                                 w_stq_entries[s_idx].is_valid &
+                                                 !w_stq_entries[s_idx].dead &
+                                                 !w_stq_entries[s_idx].is_rs2_get & !w_stq_entries[s_idx].rs2_phy_read_accepted &
+                                                 w_stq_entries[s_idx].inst.rd_reg.valid &
+                                                 w_stq_entries[s_idx].inst.rd_reg.ready;
+  end
 
-    assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
-                                  (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
+  assign w_stq_rs2_get[s_idx] = w_stq_entries[s_idx].is_valid &
+                                (w_stq_entries[s_idx].is_rs2_get | w_stq_entries[s_idx].dead);
 
-    for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
-      assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
-    end
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stbuf_acc_loop
+    assign w_stbuf_accept_array[d_idx] = w_stbuf_req_accepted[d_idx][s_idx];
+  end
 
-    // Forwarding check
+  // -----------------
+  // Forwarding check
+  // -----------------
+  if (scariv_conf_pkg::DETAIL_STLD_FWD) begin : detail_stld_fwd
     for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
       logic  w_entry_older_than_fwd;
       logic  w_same_addr_region;
@@ -369,19 +372,30 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
                                              |(w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw);
       assign w_ex2_fwd_dw[p_idx][s_idx] = w_entry_dw & ex2_fwd_check_if[p_idx].paddr_dw;
 
-      scariv_rough_older_check
-      u_rough_older_check
-        (
-         .i_cmt_id0 (w_stq_entries[s_idx].inst.cmt_id   ),
-         .i_grp_id0 (w_stq_entries[s_idx].inst.grp_id   ),
-         .i_cmt_id1 (ex2_fwd_check_if[p_idx].cmt_id),
-         .i_grp_id1 (ex2_fwd_check_if[p_idx].grp_id),
-
-         .o_0_older_than_1 (w_entry_older_than_fwd)
-         );
-
+      assign w_entry_older_than_fwd = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
+                                                                         w_stq_entries[s_idx].inst.grp_id,
+                                                                         ex2_fwd_check_if[p_idx].cmt_id,
+                                                                         ex2_fwd_check_if[p_idx].grp_id);
     end // block: fwd_loop
+  end else begin : coarse_stld_fwd // block: detail_stld_fwd
+    for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+      logic  w_entry_older_than_fwd;
+      logic  w_same_addr_region;
+      assign w_same_addr_region = w_stq_entries   [s_idx].addr [riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)] ==
+                                  ex2_fwd_check_if[p_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(scariv_pkg::ALEN_W/8)];
 
+      assign w_entry_older_than_fwd = scariv_pkg::id0_is_older_than_id1 (w_stq_entries[s_idx].inst.cmt_id,
+                                                                         w_stq_entries[s_idx].inst.grp_id,
+                                                                         ex2_fwd_check_if[p_idx].cmt_id,
+                                                                         ex2_fwd_check_if[p_idx].grp_id);
+
+      assign w_ex2_fwd_valid[p_idx][s_idx] = w_stq_entries[s_idx].is_valid &
+                                             !w_stq_entries[s_idx].dead &
+                                             (w_entry_older_than_fwd | w_stq_entries[s_idx].is_committed) &
+                                             w_stq_entries[s_idx].paddr_valid &
+                                             w_same_addr_region;
+    end // block: fwd_loop
+  end // block: coarse_stld_fwd
 
   // RMW Order Hazard Check
   for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : rmw_order_haz_loop
@@ -484,36 +498,57 @@ endgenerate
 // =========================
 // STQ Forwarding Logic
 // =========================
-scariv_pkg::alen_t w_aligned_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
-generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
-  if (scariv_pkg::ALEN_W == 64) begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
-  end else begin
-    assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
-  end
-end
-endgenerate
+generate if (scariv_conf_pkg::DETAIL_STLD_FWD) begin : detail_stld_fwd
 
-generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
-
-  for (genvar b_idx = 0; b_idx < scariv_pkg::ALEN_W/8; b_idx++) begin : byte_loop
-    scariv_pkg::alen_t                     w_stq_fwd_rs2_data;
-    logic [ 7: 0]                        w_ex2_fwd_dw_selected;
-    logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
-    logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_strb_valid;
-    for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
-      assign w_ex2_fwd_strb_valid[s_idx] = w_ex2_fwd_dw[p_idx][s_idx][b_idx] & w_ex2_fwd_valid[p_idx][s_idx];
+  scariv_pkg::alen_t w_aligned_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
+  for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_rs2_loop
+    if (scariv_pkg::ALEN_W == 64) begin
+      assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_8byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    end else begin
+      assign w_aligned_rs2_data_array[s_idx] = scariv_lsu_pkg::align_4byte(w_stq_entries[s_idx].rs2_data, w_stq_entries[s_idx].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
     end
-    bit_extract_msb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_strb_valid), .i_ptr_oh(w_out_ptr_oh), .out(w_ex2_fwd_valid_oh));
-    bit_oh_or #(.T(scariv_pkg::alen_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_aligned_rs2_data_array), .o_selected(w_stq_fwd_rs2_data));
+  end
 
-    assign ex2_fwd_check_if[p_idx].fwd_dw  [b_idx]        = |w_ex2_fwd_strb_valid;
-    assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_rs2_data[b_idx*8+:8];
-  end // block: byte_loop
+  for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+    for (genvar b_idx = 0; b_idx < scariv_pkg::ALEN_W/8; b_idx++) begin : byte_loop
+      scariv_pkg::alen_t                     w_stq_fwd_rs2_data;
+      logic [ 7: 0]                          w_ex2_fwd_dw_selected;
+      logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_valid_oh;
+      logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_ex2_fwd_strb_valid;
+      for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
+        assign w_ex2_fwd_strb_valid[s_idx] = w_ex2_fwd_dw[p_idx][s_idx][b_idx] & w_ex2_fwd_valid[p_idx][s_idx];
+      end
+      bit_extract_msb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_strb_valid), .i_ptr_oh(w_out_ptr_oh), .out(w_ex2_fwd_valid_oh));
+      bit_oh_or #(.T(scariv_pkg::alen_t), .WORDS(scariv_conf_pkg::STQ_SIZE)) select_fwd_entry  (.i_oh(w_ex2_fwd_valid_oh), .i_data(w_aligned_rs2_data_array), .o_selected(w_stq_fwd_rs2_data));
 
-  assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
-end // block: fwd_loop
-endgenerate
+      assign ex2_fwd_check_if[p_idx].fwd_dw  [b_idx]        = |w_ex2_fwd_strb_valid;
+      assign ex2_fwd_check_if[p_idx].fwd_data[b_idx*8 +: 8] =  w_stq_fwd_rs2_data[b_idx*8+:8];
+    end // block: byte_loop
+
+    assign ex2_fwd_check_if[p_idx].fwd_valid      = |w_ex2_fwd_valid[p_idx];
+
+  end // block: fwd_loop
+
+end else begin : coarse_stld_fwd // block: detail_stld_fwd
+
+  for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : fwd_loop
+    logic [$clog2(scariv_conf_pkg::STQ_SIZE)-1: 0] w_ex2_fwd_valid_ptr;
+    scariv_pkg::alen_t                             w_stq_fwd_rs2_data;
+    logic [scariv_conf_pkg::STQ_SIZE-1: 0]         w_ex2_fwd_valid_oh;
+
+    bit_extract_msb_ptr_oh #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_bit_req_sel (.in(w_ex2_fwd_valid[p_idx]), .i_ptr_oh(w_out_ptr_oh), .out(w_ex2_fwd_valid_oh));
+    bit_encoder #(.WIDTH(scariv_conf_pkg::STQ_SIZE)) u_encoder_ptr (.i_in(w_ex2_fwd_valid_oh), .o_out(w_ex2_fwd_valid_ptr));
+    if (scariv_pkg::ALEN_W == 64) begin
+      assign w_stq_fwd_rs2_data = scariv_lsu_pkg::align_8byte(w_stq_entries[w_ex2_fwd_valid_ptr].rs2_data, w_stq_entries[w_ex2_fwd_valid_ptr].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    end else begin
+      assign w_stq_fwd_rs2_data = scariv_lsu_pkg::align_4byte(w_stq_entries[w_ex2_fwd_valid_ptr].rs2_data, w_stq_entries[w_ex2_fwd_valid_ptr].addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+    end
+    assign ex2_fwd_check_if[p_idx].fwd_dw    = {8{|w_ex2_fwd_valid[p_idx]}} & gen_dw(w_stq_entries[w_ex2_fwd_valid_ptr].size, w_stq_entries[w_ex2_fwd_valid_ptr].addr[2:0]);
+    assign ex2_fwd_check_if[p_idx].fwd_data  =  w_stq_fwd_rs2_data;
+    assign ex2_fwd_check_if[p_idx].fwd_valid = |w_ex2_fwd_valid[p_idx];
+
+  end
+end endgenerate
 
 // =========================
 // STQ Hazard Resolve Logic
