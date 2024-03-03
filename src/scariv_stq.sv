@@ -535,10 +535,12 @@ assign w_stq_cmt_head_entry = w_stq_entries[w_out_ptr_idx];
 scariv_pkg::grp_id_t w_sq_commit_ready_issue;
 scariv_pkg::grp_id_t w_sq_is_rmw;
 
-logic [scariv_lsu_pkg::ST_BUF_WIDTH/8-1:0] w_st_buffer_strb[scariv_conf_pkg::DISP_SIZE];
-logic [scariv_lsu_pkg::ST_BUF_WIDTH-1:0]   w_st_buffer_data[scariv_conf_pkg::DISP_SIZE];
+localparam ST_BUF_MERGE_ENTRY_SIZE = 2;
 
-generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stb_loop
+logic [scariv_lsu_pkg::ST_BUF_WIDTH/8-1:0] w_st_buffer_strb[ST_BUF_MERGE_ENTRY_SIZE];
+logic [scariv_lsu_pkg::ST_BUF_WIDTH-1:0]   w_st_buffer_data[ST_BUF_MERGE_ENTRY_SIZE];
+
+generate for (genvar d_idx = 0; d_idx < ST_BUF_MERGE_ENTRY_SIZE; d_idx++) begin : stb_loop
   logic [scariv_conf_pkg::STQ_SIZE-1: 0] w_shifted_out_ptr_oh;
   logic                                w_sq_commit_valid;
   bit_rotate_left #(.WIDTH(scariv_conf_pkg::STQ_SIZE), .VAL(d_idx)) u_ptr_rotate(.i_in(w_out_ptr_oh), .o_out(w_shifted_out_ptr_oh));
@@ -593,7 +595,7 @@ endgenerate
 // ready to store_buffer
 // 0010111 --> inv -> 1101000 --> lower lsb --> 1111000 --> inv --> 0000111
 scariv_pkg::grp_id_t w_sq_stb_ready_inv;
-bit_tree_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) select_stb_bit (.in(~w_sq_commit_ready_issue), .out(w_sq_stb_ready_inv));
+bit_tree_lsb #(.WIDTH(ST_BUF_MERGE_ENTRY_SIZE)) select_stb_bit (.in(~w_sq_commit_ready_issue), .out(w_sq_stb_ready_inv));
 assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 
 // Make Store Buffer Request
@@ -602,23 +604,23 @@ assign st_buffer_if.paddr = w_stq_cmt_head_entry.addr;
 
 generate for(genvar b_idx = 0; b_idx < scariv_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   scariv_pkg::grp_id_t w_strb_array;
-  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : stb_disp_loop
+  for (genvar d_idx = 0; d_idx < ST_BUF_MERGE_ENTRY_SIZE; d_idx++) begin : stb_disp_loop
     assign w_strb_array[d_idx] = w_st_buffer_strb[d_idx][b_idx] & w_stbuf_accepted_disp[d_idx];
   end
   assign st_buffer_if.strb[b_idx] = |w_strb_array;
 
   scariv_pkg::grp_id_t w_strb_array_msb;
-  bit_extract_msb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) extract_msb_strb (.in(w_strb_array), .out(w_strb_array_msb));
+  bit_extract_msb #(.WIDTH(ST_BUF_MERGE_ENTRY_SIZE)) extract_msb_strb (.in(w_strb_array), .out(w_strb_array_msb));
 
   /* verilator lint_off UNOPTFLAT */
-  logic [7: 0] w_data_byte_array[scariv_conf_pkg::DISP_SIZE+1];
+  logic [7: 0] w_data_byte_array[ST_BUF_MERGE_ENTRY_SIZE+1];
   assign w_data_byte_array[0] = w_st_buffer_data[0][b_idx*8 +: 8];
-  for (genvar d2_idx = 0; d2_idx < scariv_conf_pkg::DISP_SIZE; d2_idx++) begin : st_buf_disp_loop
+  for (genvar d2_idx = 0; d2_idx < ST_BUF_MERGE_ENTRY_SIZE; d2_idx++) begin : st_buf_disp_loop
     assign w_data_byte_array[d2_idx+1] = w_strb_array_msb[d2_idx] ? w_st_buffer_data[d2_idx][b_idx*8 +: 8] : w_data_byte_array[d2_idx];
   end
-  assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[scariv_conf_pkg::DISP_SIZE];
-end
-endgenerate
+  assign st_buffer_if.data[b_idx*8 +: 8] = w_data_byte_array[ST_BUF_MERGE_ENTRY_SIZE];
+end endgenerate // block: loop_st_buf_strb
+
 assign st_buffer_if.is_rmw = w_stq_cmt_head_entry.inst.is_rmw;
 assign st_buffer_if.rmwop  = w_stq_cmt_head_entry.rmwop;
 assign st_buffer_if.size   = w_stq_cmt_head_entry.size;
