@@ -1,3 +1,5 @@
+set_param general.maxThreads $env(CORES)
+
 set PROJ_NAME scariv_tile_wrapper
 set PROJ_DIR .
 set RTL_ROOT_DIR ../../src
