@@ -78,7 +78,8 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_MISSU_FULL,
   EX2_HAZ_MISSU_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
-  EX2_HAZ_STQ_NONFWD_HAZ
+  EX2_HAZ_STQ_NONFWD_HAZ,
+  EX2_HAZ_STQ_FWD_MISS   // Only use in COARSE_LDST_FWD mode
 } ex2_haz_t;
 
   typedef enum logic [ 2: 0] { LSU_SCHED_INIT, LSU_SCHED_WAIT, LSU_SCHED_ISSUED, LSU_SCHED_HAZ_WAIT,
@@ -556,6 +557,15 @@ function logic is_dw_included(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(
   return (addr1_dw & addr2_dw) == addr2_dw;
 endfunction // is_dw_included
 
+// addr1/size1 includes addr2_dw ?
+function logic is_strb_hit(decoder_lsu_ctrl_pkg::size_t size1, logic [$clog2(scariv_pkg::ALEN_W/8)-1:0] addr1,
+                           logic [scariv_pkg::ALEN_W/8-1:0] addr2_dw);
+  scariv_pkg::alenb_t addr1_dw;
+  addr1_dw = gen_dw(size1, addr1);
+
+  return |(addr1_dw & addr2_dw);
+endfunction // is_dw_included
+
 
 function logic [DCACHE_DATA_B_W-1: 0] gen_dw_cacheline(decoder_lsu_ctrl_pkg::size_t size,
                                                        logic [$clog2(DCACHE_DATA_B_W)-1:0] addr);
@@ -615,7 +625,6 @@ typedef struct packed {
   logic                 rs2_rel_read_accepted;
   logic                 rs2_phy_read_accepted;
   logic                 is_rs2_get;
-  scariv_pkg::alen_t    rs2_data;
 
   logic                is_committed;
 

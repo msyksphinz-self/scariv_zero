@@ -318,14 +318,18 @@ endinterface // stq_replay_if
 
 interface fwd_check_if;
 
-logic              valid;
+logic                valid;
 scariv_pkg::cmt_id_t cmt_id;
 scariv_pkg::grp_id_t grp_id;
 scariv_pkg::paddr_t  paddr;
 scariv_pkg::alenb_t  paddr_dw;
-logic              fwd_valid;
+logic                fwd_valid;
 scariv_pkg::alenb_t  fwd_dw;
 scariv_pkg::alen_t   fwd_data;
+
+// Forward Miss: Only used in DETAIL_STLD_FWD
+logic                                          fwd_miss_valid;
+logic [$clog2(scariv_conf_pkg::STQ_SIZE)-1: 0] fwd_miss_haz_index;
 
 modport master (
   output valid,
@@ -335,7 +339,9 @@ modport master (
   output paddr_dw,
   input  fwd_valid,
   input  fwd_dw,
-  input  fwd_data
+  input  fwd_data,
+  input  fwd_miss_valid,
+  input  fwd_miss_haz_index
 );
 
 modport slave (
@@ -346,7 +352,9 @@ modport slave (
   input  paddr_dw,
   output fwd_valid,
   output fwd_dw,
-  output fwd_data
+  output fwd_data,
+  output fwd_miss_valid,
+  output fwd_miss_haz_index
 );
 
 endinterface // fwd_check_if

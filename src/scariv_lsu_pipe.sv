@@ -487,6 +487,7 @@ assign stq_upd_if.ex2_payload.success = r_ex2_success;
 
 assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :
+                          w_ex2_fwd_miss_valid              ? EX2_HAZ_STQ_FWD_MISS   :
                           &w_ex2_fwd_success                ? EX2_HAZ_NONE           :
                           ex1_l1d_rd_if.s1_conflict         ? EX2_HAZ_L1D_CONFLICT   :
                           l1d_missu_if.load ?
@@ -510,6 +511,7 @@ always_comb begin
   lsu_pipe_haz_if.payload.paddr          = r_ex2_addr;
   lsu_pipe_haz_if.payload.is_uc          = r_ex2_is_uc;
   lsu_pipe_haz_if.payload.hazard_index   = w_ex2_hazard_typ == EX2_HAZ_MISSU_ASSIGNED ? l1d_missu_if.resp_payload.missu_index_oh :
+                                           w_ex2_hazard_typ == EX2_HAZ_STQ_FWD_MISS   ? 1 << ex2_fwd_check_if.fwd_miss_haz_index :
                                            w_ex2_hazard_typ == EX2_HAZ_RMW_ORDER_HAZ  ? 'h1 :
                                            stq_haz_check_if.ex2_haz_index;
 end
@@ -583,6 +585,8 @@ assign rmw_order_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 assign missu_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign missu_fwd_if.ex2_paddr  = r_ex2_addr;
 
+logic w_ex2_fwd_miss_valid;
+
 scariv_pkg::alenb_t                  w_ex2_fwd_dw;
 scariv_pkg::alen_t                    w_ex2_fwd_aligned_data;
 
@@ -598,6 +602,7 @@ always_comb begin
   {w_ex2_fwd_dw, w_ex2_fwd_aligned_data} = fwd_align (r_ex2_pipe_ctrl.size,
                                                       ex2_fwd_check_if.fwd_dw, ex2_fwd_check_if.fwd_data,
                                                       r_ex2_addr[$clog2(scariv_pkg::ALEN_W/8)-1:0]);
+  w_ex2_fwd_miss_valid = ex2_fwd_check_if.fwd_miss_valid;
   w_ex2_missu_fwd_aligned_data = missu_fwd_if.ex2_fwd_data >> w_ex2_dcache_pos;
   w_ex2_missu_fwd_dw           = {8{missu_fwd_if.ex2_fwd_valid}};
 end

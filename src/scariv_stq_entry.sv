@@ -62,6 +62,7 @@ module scariv_stq_entry
    );
 
 stq_entry_t                          r_entry;
+
 /* verilator lint_off UNOPTFLAT */
 stq_entry_t                          w_entry_next;
 logic                                              w_entry_flush;
@@ -135,7 +136,6 @@ end
 always_comb begin
   w_entry_next = r_entry;
 
-
   // RS2 data collection
   if (~w_entry_next.is_rs2_get) begin
     w_entry_next.inst.rd_reg.ready = w_rs2_phy_hit | r_entry.inst.rd_reg.ready;
@@ -146,12 +146,10 @@ always_comb begin
     end
     w_entry_next.rs2_rel_read_accepted = i_rs2_rel_read_accepted;
     if (r_entry.inst.rd_reg.predict_ready[1] & w_entry_next.rs2_rel_read_accepted & ~i_rs2_rel_mispredicted) begin
-      w_entry_next.rs2_data   = i_rs2_rel_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
     w_entry_next.rs2_phy_read_accepted = i_rs2_phy_read_accepted;
     if (r_entry.rs2_phy_read_accepted) begin
-      w_entry_next.rs2_data   = i_rs2_phy_data;
       w_entry_next.is_rs2_get = 1'b1;
     end
   end
