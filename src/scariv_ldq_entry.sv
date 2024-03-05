@@ -28,6 +28,8 @@ module scariv_ldq_entry
 
  input logic                                     i_entry_picked,
 
+ input logic                                     i_flush_valid,
+
   input logic                            i_ex2_q_valid,
   input scariv_lsu_pkg::ldq_ex2_update_t i_ex2_q_updates,
 
@@ -53,9 +55,6 @@ logic                                            w_entry_ready;
 ldq_entry_t                                      r_entry;
 /* verilator lint_off UNOPTFLAT */
 ldq_entry_t                                      w_entry_next;
-logic                                            w_entry_flush;
-logic                                            w_commit_flush;
-logic                                            w_br_flush;
 logic                                            w_load_br_flush;
 logic                                            w_load_commit_flush;
 logic                                            w_load_flush;
@@ -77,12 +76,6 @@ logic [ 1: 0]                                    w_rs_mispredicted;
 
 assign o_entry = r_entry;
 
-assign w_commit_flush = commit_if.is_flushed_commit() & r_entry.is_valid;
-assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                                     br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_entry.is_valid;
-assign w_entry_flush  = w_commit_flush | w_br_flush;
-
-
 assign w_load_commit_flush = commit_if.is_flushed_commit();
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
@@ -94,7 +87,7 @@ assign o_entry_finish = r_entry.is_valid & (r_entry.is_committed | r_entry.dead)
 
 assign w_entry_commit = commit_if.commit_valid & (commit_if.payload.cmt_id == r_entry.inst.cmt_id);
 
-// assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !w_entry_flush &
+// assign o_entry_ready = (r_entry.state == LDQ_ISSUE_WAIT) & !i_flush_valid &
 //                        all_operand_ready(r_entry);
 //
 // assign w_oldest_ready = (rob_info_if.cmt_id == r_entry.inst.cmt_id) &
@@ -136,7 +129,7 @@ always_comb begin
   end else begin
     w_entry_next.inst.oldest_valid = r_entry.inst.oldest_valid | w_oldest_ready;
 
-    if (w_entry_flush) begin
+    if (i_flush_valid) begin
       w_entry_next.dead = 1'b1;
     end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
       w_entry_next.paddr_valid = 1'b1;
@@ -154,7 +147,7 @@ end // always_comb
 
 // `ifdef SIMULATION
 // always_ff @ (negedge i_clk, negedge i_reset_n) begin
-//   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~w_entry_flush & i_ex1_q_valid) begin
+//   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~i_flush_valid & i_ex1_q_valid) begin
 //     if (w_missu_is_assigned & !$onehot(i_ex1_q_updates.missu_index_oh)) begin
 //       $fatal (0, "When MISSU is assigned, MISSU index ID must be one hot but actually %x\n", i_ex1_q_updates.missu_index_oh);
 //     end

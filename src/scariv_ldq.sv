@@ -160,6 +160,14 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
                                            .o_ex2_q_valid(w_ex2_q_valid), .o_ex2_q_updates(w_ex2_q_updates));
 
 
+  logic          w_entry_flush;
+  logic          w_commit_flush;
+  logic          w_br_flush;
+  assign w_commit_flush = commit_if.is_flushed_commit() & w_ldq_entries[l_idx].is_valid;
+  assign w_br_flush     = scariv_pkg::is_br_flush_target(w_ldq_entries[l_idx].inst.cmt_id, w_ldq_entries[l_idx].inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ldq_entries[l_idx].is_valid;
+  assign w_entry_flush  = w_commit_flush | w_br_flush;
+
   scariv_ldq_entry
     #(.entry_index (l_idx))
   u_entry
@@ -178,10 +186,12 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .o_entry (w_ldq_entries[l_idx]),
      .o_entry_ready (w_entry_ready[l_idx]),
 
-    .i_entry_picked  (1'b0),
+     .i_flush_valid (w_entry_flush),
 
-    .i_ex2_q_valid   (w_ex2_q_valid  ),
-    .i_ex2_q_updates (w_ex2_q_updates),
+     .i_entry_picked  (1'b0),
+
+     .i_ex2_q_valid   (w_ex2_q_valid  ),
+     .i_ex2_q_updates (w_ex2_q_updates),
 
      .i_missu_resolve (i_missu_resolve),
      .i_missu_is_full (i_missu_is_full),
@@ -223,7 +233,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
     assign w_ex2_same_dw = |(scariv_lsu_pkg::gen_dw(ldq_haz_check_if[p_idx].ex2_size, ldq_haz_check_if[p_idx].ex2_paddr[2:0]) &
                              scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].addr[2:0]));
     assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
-                                                 !w_ldq_entries[l_idx].dead &
+                                                 !(w_ldq_entries[l_idx].dead | w_entry_flush) &
                                                  w_ldq_entries[l_idx].is_valid &
                                                  ld_is_younger_than_st &
                                                  w_ldq_entries[l_idx].is_get_data &

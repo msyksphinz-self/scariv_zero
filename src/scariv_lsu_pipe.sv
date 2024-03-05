@@ -175,6 +175,7 @@ logic                            r_ex3_except_valid;
 scariv_pkg::except_t             r_ex3_except_type;
 scariv_pkg::maxaddr_t            r_ex3_addr;
 logic                            r_ex3_sfence_vma_illegal;
+logic                            w_ex3_ldq_br_flush;
 
 logic                 w_ex2_haz_detected;
 assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
@@ -698,7 +699,10 @@ assign done_report_if.except_type   = r_ex3_except_type;
 assign done_report_if.except_tval   = r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
                                       {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
 
-assign flush_report_if.valid  = r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid;
+assign w_ex3_ldq_br_flush = scariv_pkg::is_br_flush_target(ldq_haz_check_if.ex3_haz_cmt_id, ldq_haz_check_if.ex3_haz_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & ldq_haz_check_if.ex3_haz_valid;
+
+assign flush_report_if.valid  = r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex3_ldq_br_flush;
 assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign flush_report_if.grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
