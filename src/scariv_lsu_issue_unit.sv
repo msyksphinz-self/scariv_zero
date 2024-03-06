@@ -59,6 +59,7 @@ module scariv_lsu_issue_unit
 
 logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
+logic [ENTRY_SIZE-1:0] w_entry_oldest_valid;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
@@ -120,7 +121,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     if (commit_if.is_flushed_commit()) begin
       r_entry_out_ptr_oh <= 'h1;
-    end else if (o_issue.valid & ~i_stall) begin
+    end else if (o_issue.valid & ~i_stall ) begin
       r_entry_out_ptr_oh <= o_iss_index_oh;
     end
   end
@@ -167,7 +168,7 @@ bit_brshift
   #(.WIDTH(ENTRY_SIZE))
 u_age_selector
   (
-   .in   (w_entry_valid & w_entry_ready),
+   .in   (|w_entry_oldest_valid ? w_entry_oldest_valid : w_entry_valid & w_entry_ready),
    .i_sel(r_entry_out_ptr_oh),
    .out  (w_picked_inst)
    );
@@ -231,6 +232,8 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
   scariv_pkg::done_payload_t    w_done_payloads;
   assign w_pipe_done_valid = pipe_done_if.done & pipe_done_if.index_oh[s_idx];
   assign w_done_payloads   = pipe_done_if.payload;
+
+  assign w_entry_oldest_valid[s_idx] = w_entry[s_idx].valid & w_entry_ready[s_idx] & w_entry[s_idx].oldest_valid;
 
   scariv_lsu_issue_entry
   u_entry(

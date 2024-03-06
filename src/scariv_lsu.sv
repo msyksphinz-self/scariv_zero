@@ -208,7 +208,7 @@ assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
                            scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id) |
-                           w_replay_queue_full;  // replay queue is almost full, IQ is stoped, but replay can be selected.
+                           w_replay_queue_full & (w_issue_from_iss.valid ? ~w_issue_from_iss.oldest_valid : 1'b1);  // replay queue is almost full, IQ is stoped except "oldest is valid".
 
 assign w_lsu_pipe_req_if.ready = w_replay_selected;
 
@@ -233,7 +233,7 @@ always_comb begin
 `endif // SIMULATION
     w_ex0_replay_index_oh           = 'h0;
   end else begin
-    w_ex0_replay_issue.valid             = w_issue_from_iss.valid & ~w_replay_queue_full;
+    w_ex0_replay_issue.valid             = w_issue_from_iss.valid & (w_replay_queue_full ? w_issue_from_iss.oldest_valid : 1'b1);
     w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
     w_ex0_replay_issue.inst              = w_issue_from_iss.inst;

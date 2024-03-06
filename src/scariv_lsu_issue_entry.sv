@@ -157,7 +157,7 @@ always_comb begin
         w_dead_next  = 1'b1;
       end else begin
         if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs1_pred_mispredicted & !w_rs2_pred_mispredicted &
-            ~i_replay_queue_full) begin
+            (~i_replay_queue_full | r_entry.oldest_valid)) begin
           w_issued_next = 1'b1;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_ISSUED;
         end
