@@ -521,7 +521,7 @@ end
 // Misprediction Update
 // ---------------------
 always_comb begin
-  ex2_mispred_out_if.mis_valid = w_ex2_load_mispredicted | r_ex2_haz_detected_from_ex1;
+  ex2_mispred_out_if.mis_valid = w_ex2_load_mispredicted | w_ex2_haz_detected | r_ex2_haz_detected_from_ex1;
   ex2_mispred_out_if.rd_type   = r_ex2_issue.wr_reg.typ;
   ex2_mispred_out_if.rd_rnid   = r_ex2_issue.wr_reg.rnid;
 end
