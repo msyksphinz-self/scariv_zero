@@ -148,6 +148,7 @@
 ../src/scariv_stq_rs2_phy_pipe.sv
 ../src/scariv_st_buffer.sv
 ../src/scariv_st_buffer_entry.sv
+../src/scariv_st_buffer_amo_entry.sv
 ../src/scariv_amo_operation.sv
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv

@@ -56,6 +56,7 @@ u_ptr
    .i_reset_n    (i_reset_n),
 
    .i_rollback  (w_ftq_flush),
+   .i_clear     (1'b0),
 
    .i_in_valid  (w_in_valid  ),
    .o_in_ptr    (w_in_ptr_oh ),

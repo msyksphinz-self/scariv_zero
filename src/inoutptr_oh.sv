@@ -7,6 +7,7 @@ module inoutptr_oh
  input logic             i_reset_n,
 
  input logic             i_rollback,
+ input logic             i_clear,
 
  input logic             i_in_valid,
  output logic [SIZE-1:0] o_in_ptr,
@@ -17,15 +18,35 @@ module inoutptr_oh
 logic [SIZE-1:0] r_inptr;
 logic [SIZE-1:0] r_outptr;
 
+logic [SIZE-1:0] w_inptr_next;
+logic [SIZE-1:0] w_outptr_next;
+
+always_comb begin
+  w_inptr_next = r_inptr;
+  w_outptr_next = r_outptr;
+  if (i_rollback) begin
+    w_inptr_next  = r_outptr;
+    w_outptr_next = r_outptr;
+  end
+  if (i_clear) begin
+    w_inptr_next  = {{(SIZE-1){1'b0}}, 1'b1};
+    w_outptr_next = {{(SIZE-1){1'b0}}, 1'b1};
+  end
+  if (i_in_valid) begin
+    w_inptr_next = {w_inptr_next [SIZE-2:0], w_inptr_next [SIZE-1]};
+  end
+  if (i_out_valid) begin
+    w_outptr_next = {w_outptr_next[SIZE-2:0], w_outptr_next[SIZE-1]};
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_inptr  <= {{(SIZE-1){1'b0}}, 1'b1};
     r_outptr <= {{(SIZE-1){1'b0}}, 1'b1};
   end else begin
-    r_inptr  <= i_rollback  ? r_outptr :
-                i_in_valid  ? {r_inptr [SIZE-2:0], r_inptr [SIZE-1]} : r_inptr;
-    r_outptr <= i_rollback  ? r_outptr :
-                i_out_valid ? {r_outptr[SIZE-2:0], r_outptr[SIZE-1]} : r_outptr;
+    r_inptr  <= w_inptr_next;
+    r_outptr <= w_outptr_next;
   end
 end
 

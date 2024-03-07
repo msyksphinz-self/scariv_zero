@@ -7,7 +7,7 @@
 //
 // ------------------------------------------------------------------------
 
-module scariv_st_buffer_entry
+module scariv_st_buffer_amo_entry
   import scariv_lsu_pkg::*;
 (
  input logic  i_clk,
@@ -46,6 +46,9 @@ module scariv_st_buffer_entry
  input missu_resp_t    i_st_missu_resp,
  input missu_resolve_t i_missu_resolve,
 
+ // Atomic Operation
+ amo_op_if.master amo_op_if,
+
  l1d_wr_if.watch     l1d_mshr_wr_if,
 
  output logic             o_ready_to_merge,
@@ -62,6 +65,9 @@ st_buffer_entry_t r_entry;
 st_buffer_state_t r_state;
 st_buffer_state_t w_state_next;
 
+logic                     is_entry_rmw;
+logic                     is_entry_amo;
+
 logic         w_l1d_rd_req_next;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
@@ -69,11 +75,25 @@ logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 logic                                      w_missu_resolve_vld;
 assign w_missu_resolve_vld = |(~i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh);
 
+riscv_pkg::xlen_t w_amo_op_result;
+riscv_pkg::xlen_t r_amo_l1d_data;
+riscv_pkg::xlen_t w_amo_l1d_data_next;
+
+assign is_entry_rmw = r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP__;
+assign is_entry_amo = (r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP__) &
+                      (r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP_LR) &
+                      (r_entry.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC);
+
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry <= 'h0;
+
+    r_amo_l1d_data <= 'h0;
   end else begin
     r_entry <= w_entry_next;
+
+    r_amo_l1d_data <= w_amo_l1d_data_next;
   end
 end
 
@@ -90,6 +110,7 @@ assign paddr_partial = {r_entry.paddr[$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)-1:
 
 always_comb begin
   w_entry_next = r_entry;
+  w_amo_l1d_data_next = r_amo_l1d_data;
 
   w_state_next = r_state;
   w_l1d_rd_req_next = 1'b0;
@@ -150,8 +171,16 @@ always_comb begin
         w_state_next = ST_BUF_MISSU_REFILL;
         w_entry_next.l1d_way = i_l1d_s1_way;
       end else begin
-        w_entry_next.l1d_way = i_l1d_s1_way;
-        w_state_next = ST_BUF_L1D_UPDATE;
+        if (is_entry_amo & !r_entry.amo_op_done) begin
+          w_state_next = ST_BUF_AMO_OPERATION;
+
+          w_entry_next.l1d_way = i_l1d_s1_way;
+          /* verilator lint_off SELRANGE */
+          w_amo_l1d_data_next = i_l1d_s1_data[paddr_partial +: riscv_pkg::XLEN_W];
+        end else begin
+          w_entry_next.l1d_way = i_l1d_s1_way;
+          w_state_next = ST_BUF_L1D_UPDATE;
+        end
       end
     end
     ST_BUF_L1D_UPDATE: begin
@@ -191,11 +220,18 @@ always_comb begin
       end
     end
     ST_BUF_WAIT_REFILL: begin
-      if (i_mshr_l1d_wr_merged) begin
-        w_state_next = ST_BUF_L1D_MERGE;
-      end else if (w_missu_resolve_vld) begin
-        w_state_next = ST_BUF_RD_L1D;
-      end
+      if (is_entry_rmw) begin
+        if (w_missu_resolve_vld) begin
+          // Finish MISSU L1D update
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end else begin
+        if (i_mshr_l1d_wr_merged) begin
+          w_state_next = ST_BUF_L1D_MERGE;
+        end else if (w_missu_resolve_vld) begin
+          w_state_next = ST_BUF_RD_L1D;
+        end
+      end // else: !if(is_entry_rmw)
     end
     ST_BUF_WAIT_SNOOP : begin
       if (!i_snoop_busy) begin
@@ -230,6 +266,16 @@ always_comb begin
         w_entry_next.valid = 1'b0;
       end
     end
+    ST_BUF_AMO_OPERATION : begin
+      w_state_next = ST_BUF_L1D_UPDATE;
+      w_entry_next.amo_op_done = 1'b1;
+
+      for (integer idx = 0; idx < riscv_pkg::XLEN_W; idx+=8) begin
+        if (paddr_partial[$clog2(ST_BUF_WIDTH)-1: 0] + idx < ST_BUF_WIDTH) begin
+          w_entry_next.data[(paddr_partial[$clog2(ST_BUF_WIDTH)-1: 0] + idx) +: 8] = amo_op_if.result[idx +: 8];
+        end
+      end
+    end
     default : begin
     end
   endcase // case (r_state)
@@ -238,6 +284,7 @@ end // always_comb
 assign o_entry = r_entry;
 assign o_state = r_state;
 assign o_ready_to_merge = r_entry.valid &
+                          !is_entry_rmw &
                           (r_state != ST_BUF_L1D_UPDATE) &
                           (r_state != ST_BUF_L1D_UPD_RESP) &
                           (r_state != ST_BUF_L1D_MERGE) &
@@ -246,6 +293,16 @@ assign o_ready_to_merge = r_entry.valid &
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
 assign o_missu_req    = r_entry.valid & (r_state == ST_BUF_MISSU_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
+
+// ------------------
+// Atomic Operations
+// ------------------
+assign amo_op_if.valid = r_state == ST_BUF_AMO_OPERATION;
+assign amo_op_if.rmwop = r_entry.rmwop;
+assign amo_op_if.size  = r_entry.size;
+assign amo_op_if.data0 = r_entry.data[paddr_partial +: riscv_pkg::XLEN_W];
+assign amo_op_if.data1 = r_amo_l1d_data;
+
 
 // -----------------------------------
 // Forwarding check from LSU Pipeline
@@ -266,4 +323,4 @@ final begin
 end
 `endif // SIMULATION
 
-endmodule // scariv_st_buffer_entry
+endmodule // scariv_st_buffer_amo_entry
