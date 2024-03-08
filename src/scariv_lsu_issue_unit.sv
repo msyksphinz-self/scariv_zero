@@ -84,6 +84,9 @@ logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
 logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
 logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
 
+scariv_lsu_pkg::iq_entry_t   w_iq_entry_selected;
+scariv_lsu_pkg::iq_payload_t w_iq_payload_selected;
+
 /* verilator lint_off WIDTH */
 bit_cnt #(.WIDTH(IN_PORT_SIZE)) u_input_valid_cnt (.in(i_disp_valid), .out(w_input_valid_cnt));
 
@@ -303,8 +306,6 @@ u_iq_payload_ram
 
 assign o_issue = scariv_lsu_pkg::assign_issue(w_iq_entry_selected, w_iq_payload_selected);
 
-scariv_lsu_pkg::iq_entry_t   w_iq_entry_selected;
-scariv_lsu_pkg::iq_payload_t w_iq_payload_selected;
 bit_oh_or #(.T(scariv_lsu_pkg::iq_entry_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(w_iq_entry_selected));
 assign o_iss_index_oh = w_picked_inst_oh;
 
