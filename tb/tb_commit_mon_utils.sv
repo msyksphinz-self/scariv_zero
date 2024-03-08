@@ -1,29 +1,19 @@
 logic [scariv_conf_pkg::CMT_ENTRY_SIZE-1: 0] rob_entries_valid;
-scariv_pkg::rob_entry_t rob_entries[scariv_conf_pkg::CMT_ENTRY_SIZE];
-scariv_pkg::rob_entry_t committed_rob_entry;
+scariv_pkg::rob_entry_t   rob_entries[scariv_conf_pkg::CMT_ENTRY_SIZE];
+scariv_pkg::rob_entry_t   committed_rob_entry;
+scariv_pkg::rob_payload_t committed_rob_payload;
 generate for (genvar r_idx = 0; r_idx < scariv_conf_pkg::CMT_ENTRY_SIZE; r_idx++) begin : rob_loop
   assign rob_entries[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.entry_loop[r_idx].u_entry.r_entry;
   assign rob_entries_valid[r_idx] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.entry_loop[r_idx].u_entry.r_entry.valid;
-end
-endgenerate
+end endgenerate
 
-logic [scariv_conf_pkg::CMT_ENTRY_SIZE-1: 0] w_commited_oh;
+logic [$clog2(scariv_conf_pkg::CMT_ENTRY_SIZE)-1: 0] w_commited_idx;
 logic [scariv_conf_pkg::DISP_SIZE-1: 0]    w_dead_grp_id;
-assign w_commited_oh = 'h1 << u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id;
+assign w_commited_idx = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id;
 assign w_dead_grp_id = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_dead_grp_id;
 
-bit_oh_or
-  #(
-    .T(scariv_pkg::rob_entry_t),
-    .WORDS(scariv_conf_pkg::CMT_ENTRY_SIZE)
-    )
-committed_entry
-  (
-   .i_oh(w_commited_oh),
-   .i_data(rob_entries),
-   .o_selected(committed_rob_entry)
-);
-
+assign committed_rob_entry   = rob_entries[w_commited_idx];
+assign committed_rob_payload = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.u_payload_ram.data_array[w_commited_idx];
 
 logic [riscv_pkg::XLEN_W-1: 0] w_physical_int_data [scariv_pkg::XPR_RNID_SIZE + 32];
 logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::FPR_RNID_SIZE + 32];
@@ -69,11 +59,11 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
           $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
                   $time,
                   /* verilator lint_off WIDTH */
-                  (committed_rob_entry.pc_addr << 1) + (4 * grp_idx),
+                  committed_rob_payload.disp[grp_idx].pc_addr << 1,
                   u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id,
                   1 << grp_idx,
-                  rob_entries[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst,
-                  rob_entries[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id].inst[grp_idx].inst);
+                  committed_rob_payload.disp[grp_idx].inst,
+                  committed_rob_payload.disp[grp_idx].inst);
         end // if (rob_entries[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id].valid &...
       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
       step_spike_wo_cmp(10);

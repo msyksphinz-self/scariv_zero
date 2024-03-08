@@ -549,7 +549,7 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
           if (`ROB.w_commit.grp_id[grp_idx] &
               ~`ROB.w_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
-            step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
+            step_spike ($time / 4, longint'(committed_rob_payload.disp[grp_idx].pc_addr),
                         int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
                         `ROB.w_sim_mstatus[`ROB.w_out_cmt_entry_id][grp_idx],
                         // Exception selection
@@ -557,14 +557,14 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                         `ROB.r_rob_except.typ,
                         `ROB.w_out_cmt_id,
                         1 << grp_idx,
-                        committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
-                        committed_rob_entry.inst[grp_idx].wr_reg.valid,
-                        committed_rob_entry.inst[grp_idx].wr_reg.typ,
-                        committed_rob_entry.inst[grp_idx].wr_reg.regidx,
-                        committed_rob_entry.inst[grp_idx].wr_reg.rnid,
-                        committed_rob_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
-                        w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
-                        w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
+                        committed_rob_payload.disp[grp_idx].rvc_inst_valid ? committed_rob_payload.disp[grp_idx].rvc_inst : committed_rob_payload.disp[grp_idx].inst,
+                        committed_rob_payload.disp[grp_idx].wr_reg.valid,
+                        committed_rob_payload.disp[grp_idx].wr_reg.typ,
+                        committed_rob_payload.disp[grp_idx].wr_reg.regidx,
+                        committed_rob_payload.disp[grp_idx].wr_reg.rnid,
+                        committed_rob_payload.disp[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
+                        w_physical_int_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid] :
+                        w_physical_fp_data [committed_rob_payload.disp[grp_idx].wr_reg.rnid]);
 
             for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
               if (`BRANCH_INFO_Q[q_idx].cmt_id == `ROB.w_out_cmt_id &&
@@ -585,11 +585,11 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
             end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
 
             // RAS check
-            step_ras ($time,
-                      `ROB.w_out_cmt_id,
-                      1 << grp_idx,
-                      `ROB.w_out_entry.br_upd_info.sim_ras_index,
-                      `ROB.w_out_entry.br_upd_info.sim_pred_vaddr);
+            // step_ras ($time,
+            //           `ROB.w_out_cmt_id,
+            //           1 << grp_idx,
+            //           `ROB.w_out_entry.br_upd_info.sim_ras_index,
+            //           `ROB.w_out_entry.br_upd_info.sim_pred_vaddr);
           end // if (`ROB.w_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (`ROB.w_out_valid)

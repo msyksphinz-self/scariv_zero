@@ -139,9 +139,9 @@ always_comb begin
         end
         // Resolve the branch dependency
       end
-      if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
-      end
+      // if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+      //   w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
+      // end
     end // if (br_upd_slave_if.update)
 
 `ifdef SIMULATION
@@ -182,7 +182,7 @@ always_comb begin
     // Branch condition update
     if (br_upd_slave_if.update) begin
       for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-        if (r_entry.inst[d_idx].valid &
+        if (r_entry.valid & r_entry.grp_id[d_idx] &
             is_br_flush_target_wo_itself (w_cmt_id, 1 << d_idx, br_upd_slave_if.cmt_id, br_upd_slave_if.grp_id,
                                           br_upd_slave_if.dead, br_upd_slave_if.mispredict)) begin
           w_entry_next.done_grp_id [d_idx] = 1'b1;
@@ -193,15 +193,15 @@ always_comb begin
         end
         // Resolve the branch dependency
       end
-      if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
-        w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
-      end // if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
-`ifdef SIMULATION
-      if ((br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_slave_if.dead) begin
-        w_entry_next.br_upd_info.sim_ras_index    = br_upd_slave_if.ras_index;
-        w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_slave_if.pred_vaddr;
-      end
-`endif // SIMULATION
+      // if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) begin
+      //   w_entry_next.br_upd_info.upd_valid   [encoder_grp_id(br_upd_slave_if.grp_id)] = br_upd_slave_if.taken;
+      // end // if (br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0])
+// `ifdef SIMULATION
+//       if ((br_upd_slave_if.cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) & ~br_upd_slave_if.dead) begin
+//         w_entry_next.br_upd_info.sim_ras_index    = br_upd_slave_if.ras_index;
+//         w_entry_next.br_upd_info.sim_pred_vaddr   = br_upd_slave_if.pred_vaddr;
+//       end
+// `endif // SIMULATION
     end // if (br_upd_slave_if.update)
 
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop

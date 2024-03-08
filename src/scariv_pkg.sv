@@ -303,7 +303,6 @@ typedef struct packed {
 
 // Instruction's static information from decoder
 typedef struct packed {
-  logic              valid;
   vaddr_t            pc_addr;
   reg_wr_disp_t      wr_reg;
   logic [31: 0]      inst;
@@ -312,34 +311,29 @@ typedef struct packed {
   logic [15: 0]      rvc_inst;
   logic [63: 0]      kanata_id;
 `endif // SIMULATION
-} rob_static_info_t;
+} rob_entry_payload_t;
 
-  typedef struct packed {
-    logic          valid;
+typedef struct packed {
+  rob_entry_payload_t [DISP_SIZE-1: 0] disp;
+} rob_payload_t;
 
-    logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
-    logic    cmt_id_msb;
-    grp_id_t grp_id;
+typedef struct packed {
+  logic    valid;
 
-    rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
+  logic    cmt_id_msb;
+  grp_id_t grp_id;
+  grp_id_t done_grp_id;
+  grp_id_t dead;
 
-    grp_id_t done_grp_id;
+  grp_id_t                  fflags_update_valid;
+  fflags_t [DISP_SIZE-1: 0] fflags;
 
-    grp_id_t  dead;
-
-    // Branch update info
-    logic         is_br_included;
-    br_upd_info_t br_upd_info;
-
-    grp_id_t                  fflags_update_valid;
-    fflags_t [DISP_SIZE-1: 0] fflags;
-
-    logic                                         int_inserted;
+  logic                     int_inserted;
 `ifdef SIMULATION
-    logic [DISP_SIZE-1: 0] [31: 0] lifetime;
-    dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
+  logic [DISP_SIZE-1: 0] [31: 0] lifetime;
+  dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
 `endif // SIMULATION
-  } rob_entry_t;
+} rob_entry_t;
 
   typedef struct packed {
     logic   valid;
