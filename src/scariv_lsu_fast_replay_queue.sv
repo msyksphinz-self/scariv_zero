@@ -130,8 +130,8 @@ generate for (genvar q_idx = 0; q_idx < REPLAY_QUEUE_SIZE; q_idx++) begin : queu
           (w_pop_freelist_id == q_idx)) begin
         r_replay_queue[q_idx].valid        <= 1'b1;
         r_replay_queue[q_idx].dead         <= 1'b0;
-        r_replay_queue[q_idx].cmt_id       <= lsu_pipe_haz_if.payload.cmt_id;
-        r_replay_queue[q_idx].grp_id       <= lsu_pipe_haz_if.payload.grp_id;
+        r_replay_queue[q_idx].cmt_id       <= lsu_pipe_haz_if.cmt_id;
+        r_replay_queue[q_idx].grp_id       <= lsu_pipe_haz_if.grp_id;
         r_replay_queue[q_idx].hazard_typ   <= lsu_pipe_haz_if.payload.hazard_typ;
         r_replay_queue[q_idx].hazard_index <= lsu_pipe_haz_if.payload.hazard_index;
       end else if (w_freelist_push &
@@ -203,8 +203,8 @@ bit_encoder         #(.WIDTH(REPLAY_QUEUE_SIZE)) u_resolved_index (.i_in(w_resol
 // -------------
 
 assign lsu_pipe_req_if.valid                  = |w_resolved_list & ~r_replay_queue[w_resolved_index].dead;
-assign lsu_pipe_req_if.payload.cmt_id         = r_replay_queue  [w_resolved_index].cmt_id       ;
-assign lsu_pipe_req_if.payload.grp_id         = r_replay_queue  [w_resolved_index].grp_id       ;
+assign lsu_pipe_req_if.cmt_id                 = r_replay_queue  [w_resolved_index].cmt_id       ;
+assign lsu_pipe_req_if.grp_id                 = r_replay_queue  [w_resolved_index].grp_id       ;
 assign lsu_pipe_req_if.payload.inst           = w_replay_payload.inst         ;
 assign lsu_pipe_req_if.payload.cat            = w_replay_payload.cat          ;
 assign lsu_pipe_req_if.payload.oldest_valid   = w_replay_payload.oldest_valid ;

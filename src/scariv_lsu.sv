@@ -209,7 +209,7 @@ u_replay_queue
 
 assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
-                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
+                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.cmt_id, w_lsu_pipe_req_if.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id) |
                            w_replay_queue_full & (w_issue_from_iss.valid ? ~w_issue_from_iss.oldest_valid : 1'b1);  // replay queue is almost full, IQ is stoped except "oldest is valid".
 

@@ -142,7 +142,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                           (i_ibuf_front_payload.inst[d_idx].wr_reg.typ == REG_TYPE) &
                           ((REG_TYPE == GPR) ? (i_ibuf_front_payload.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
 
-  scariv_freelist
+  scariv_rename_freelist
     #(
       .SIZE (FLIST_SIZE),
       .WIDTH (RNID_W),

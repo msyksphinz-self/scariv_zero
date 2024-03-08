@@ -465,8 +465,8 @@ end
 grp_id_t w_cmt_entry_vsetvl;
 
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
-  assign w_cmt_entry_vsetvl[d_idx] = (w_out_entry.inst[d_idx].cat    == decoder_inst_cat_pkg::INST_CAT_CSU) &
-                                     (w_out_entry.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
+  assign w_cmt_entry_vsetvl[d_idx] = (w_out_payload.disp[d_idx].cat    == decoder_inst_cat_pkg::INST_CAT_CSU) &
+                                     (w_out_payload.disp[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
 end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
