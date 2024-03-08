@@ -28,6 +28,8 @@ package scariv_conf_pkg;
   localparam RV_LSU_ENTRY_SIZE = 32;
   localparam LDQ_SIZE = 32;
   localparam STQ_SIZE = 32;
+  localparam STQ_REGRD_PORT_NUM = 2;
+  localparam DETAIL_STLD_FWD = 1;
 
   localparam RV_CSU_ENTRY_SIZE = 8;
   localparam RV_BRU_ENTRY_SIZE = 32;

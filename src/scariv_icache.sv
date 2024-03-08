@@ -36,6 +36,11 @@ module scariv_icache
  l2_resp_if.slave ic_l2_resp
 );
 
+localparam CACHE_DATA_W   = scariv_conf_pkg::DCACHE_DATA_W > scariv_conf_pkg::ICACHE_DATA_W ? scariv_conf_pkg::DCACHE_DATA_W : scariv_conf_pkg::ICACHE_DATA_W;
+localparam CACHE_DATA_B_W = CACHE_DATA_W / 8;
+
+localparam NUM_BANKS = CACHE_DATA_W / scariv_conf_pkg::ICACHE_DATA_W;
+
 // S0 stage
 logic    w_f0_req_fire;
 
@@ -44,14 +49,16 @@ logic             r_f1_valid;
 ic_ways_t         w_f1_tag_hit;
 vaddr_t           r_f1_vaddr;
 logic             w_f1_hit;
-ic_data_t         w_f1_data[scariv_conf_pkg::ICACHE_WAYS];
+dc_data_t         w_f1_data[scariv_conf_pkg::ICACHE_WAYS];
 logic             w_f1_pref_search_working_hit;
+logic [$clog2(NUM_BANKS)-1: 0] w_f1_bank;
 
 /* S2 stage */
 logic     r_f2_valid;
 logic     r_f2_hit;
 ic_ways_t r_f2_tag_hit;
 paddr_t   r_f2_paddr;
+logic [$clog2(NUM_BANKS)-1: 0] r_f2_bank;
 ic_data_t r_f2_data[scariv_conf_pkg::ICACHE_WAYS];
 ic_data_t w_f2_selected_data;
 logic     r_f2_normal_miss;
@@ -79,7 +86,7 @@ ic_ways_idx_t w_next_way;
 logic [ICACHE_TAG_LOW-1: 0]                     w_tag_ram_addr;
 ic_tag_t                w_tag_ram_tag ;
 logic [ICACHE_TAG_LOW-1: 0]                     w_dat_ram_addr;
-ic_data_t                                       w_dat_ram_data;
+dc_data_t                                       w_dat_ram_data;
 
 // ------------------------
 // Instruction Prefetcher
@@ -87,7 +94,7 @@ ic_data_t                                       w_dat_ram_data;
 logic   w_pref_l2_req_valid ;
 paddr_t w_pref_l2_req_paddr ;
 logic     w_f1_pref_paddr_hit;
-ic_data_t w_f1_pref_hit_data;
+dc_data_t w_f1_pref_hit_data;
 logic     r_f2_pref_paddr_hit;
 ic_data_t r_f2_pref_hit_data;
 logic     ic_l2_pref_req_fire;
@@ -96,7 +103,7 @@ logic     ic_l2_pref_resp_fire;
 logic     w_pref_wr_valid;
 logic     w_pref_wr_ready;
 vaddr_t   w_pref_wr_vaddr;
-ic_data_t w_pref_wr_data ;
+dc_data_t w_pref_wr_data ;
 
 logic     w_pref_wr_fire;
 assign w_pref_wr_fire = w_pref_wr_valid & w_pref_wr_ready;
@@ -107,7 +114,7 @@ assign w_is_req_tag_pre_fetch    = ic_l2_req.tag == {L2_UPPER_TAG_IC, {(L2_CMD_T
 assign w_is_resp_tag_normal_fetch = ic_l2_resp.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
 assign w_is_resp_tag_pre_fetch    = ic_l2_resp.tag == {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
 
-assign w_f2_replace_addr = r_f2_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW];
+assign w_f2_replace_addr = r_f2_vaddr[$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW];
 
 generate if (scariv_conf_pkg::ICACHE_WAYS == 2) begin : replace_way_2
   assign w_next_way = ~r_replace_way[w_f2_replace_addr];
@@ -129,17 +136,17 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // else: !if(scariv_conf_pkg::ICACHE_WAYS == 2)
 
 
-assign w_tag_ram_addr = w_f0_req_fire          ? i_f0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                        ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                                                 w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] ;
+assign w_tag_ram_addr = w_f0_req_fire          ? i_f0_req.vaddr    [$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                                                 w_pref_wr_vaddr   [$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] ;
 
-assign w_tag_ram_tag = w_f0_req_fire          ? i_f0_req.vaddr    [VADDR_W-1:ICACHE_TAG_LOW + $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)] :
-                       ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW + $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)] :
-                                                w_pref_wr_vaddr   [VADDR_W-1:ICACHE_TAG_LOW + $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)] ;
+assign w_tag_ram_tag = w_f0_req_fire          ? i_f0_req.vaddr    [VADDR_W-1:ICACHE_TAG_LOW + $clog2(CACHE_DATA_B_W)] :
+                       ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[VADDR_W-1:ICACHE_TAG_LOW + $clog2(CACHE_DATA_B_W)] :
+                                                w_pref_wr_vaddr   [VADDR_W-1:ICACHE_TAG_LOW + $clog2(CACHE_DATA_B_W)] ;
 
-assign w_dat_ram_addr = w_f0_req_fire          ? i_f0_req.vaddr    [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                        ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
-                                                 w_pref_wr_vaddr   [$clog2(ICACHE_DATA_B_W) +: ICACHE_TAG_LOW] ;
+assign w_dat_ram_addr = w_f0_req_fire          ? i_f0_req.vaddr    [$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                        ic_l2_normal_resp_fire ? r_f2_waiting_vaddr[$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] :
+                                                 w_pref_wr_vaddr   [$clog2(CACHE_DATA_B_W) +: ICACHE_TAG_LOW] ;
 
 assign w_dat_ram_data = w_pref_wr_fire ? w_pref_wr_data :
                         ic_l2_resp.payload.data;
@@ -174,11 +181,11 @@ generate for(genvar way = 0; way < scariv_conf_pkg::ICACHE_WAYS; way++) begin : 
        .o_tag_valid (w_f1_tag_valid )
        );
 
-  assign w_f1_tag_hit[way] = (r_f1_vaddr[VADDR_W-1:ICACHE_TAG_LOW + $clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)] == w_f1_tag) & w_f1_tag_valid;
+  assign w_f1_tag_hit[way] = (r_f1_vaddr[VADDR_W-1:ICACHE_TAG_LOW + $clog2(CACHE_DATA_B_W)] == w_f1_tag) & w_f1_tag_valid;
 
   data_array
     #(
-      .WIDTH(scariv_conf_pkg::ICACHE_DATA_W),
+      .WIDTH(CACHE_DATA_W),
       .WORDS(1 << ICACHE_TAG_LOW)
       )
   data (
@@ -186,7 +193,7 @@ generate for(genvar way = 0; way < scariv_conf_pkg::ICACHE_WAYS; way++) begin : 
         .i_reset_n(i_reset_n),
         .i_wr   (w_ram_wr                ),
         .i_addr (w_dat_ram_addr          ),
-        .i_be   ({ICACHE_DATA_B_W{1'b1}} ),
+        .i_be   ({CACHE_DATA_B_W{1'b1}} ),
         .i_data (w_dat_ram_data          ),
         .o_data (w_f1_data[way]          )
         );
@@ -194,15 +201,21 @@ generate for(genvar way = 0; way < scariv_conf_pkg::ICACHE_WAYS; way++) begin : 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_f2_tag_hit[way] <= 1'b0;
-      r_f2_data   [way] <= 'h0;
     end else begin
       r_f2_tag_hit[way] <= w_f1_tag_hit[way];
-      r_f2_data   [way] <= w_f1_data   [way];
     end
   end
 
-end
-endgenerate
+  if (NUM_BANKS > 1) begin
+    always_ff @ (posedge i_clk) begin
+      r_f2_data [way] <= w_f1_data[way][w_f1_bank * scariv_conf_pkg::ICACHE_DATA_W +: scariv_conf_pkg::ICACHE_DATA_W];
+    end
+  end else begin
+    always_ff @ (posedge i_clk) begin
+      r_f2_data [way] <= w_f1_data[way];
+    end
+  end
+end endgenerate
 
 
 assign w_f0_req_fire = i_f0_req.valid & o_f0_ready;
@@ -211,6 +224,13 @@ assign w_f0_req_fire = i_f0_req.valid & o_f0_ready;
 // S1 stage
 // ===============
 assign w_f1_hit = (|w_f1_tag_hit);
+generate if (NUM_BANKS > 1) begin : multiple_banks
+  assign w_f1_bank = r_f1_vaddr[$clog2(ICACHE_DATA_B_W) +: $clog2(NUM_BANKS)];
+  always_ff @ (posedge i_clk) begin
+    r_f2_bank <= w_f1_bank;
+  end
+
+end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -269,12 +289,18 @@ assign o_f2_resp.valid = !i_flush_valid & r_f2_valid /*  &
                          (r_f2_pref_paddr_hit |
                           r_f2_hit & (r_ic_state == ICInit)) */;
 
+dc_strb_t w_f2_be;
+assign w_f2_be = ~((1 << r_f2_vaddr[$clog2(CACHE_DATA_B_W)-1: 0])-1);
+
 assign o_f2_resp.vaddr = r_f2_vaddr [VADDR_W-1: 1];
 assign o_f2_resp.data  = r_f2_pref_paddr_hit ? r_f2_pref_hit_data :
                          w_f2_selected_data;
-assign o_f2_resp.be    = {ICACHE_DATA_B_W{1'b1}} &
-                         ~((1 << r_f2_vaddr[$clog2(ICACHE_DATA_B_W)-1: 0])-1);
-assign o_f2_resp.miss = r_f2_normal_miss & ~r_f2_pref_paddr_hit;
+generate if (NUM_BANKS > 1) begin : multiple_banks_resp
+  assign o_f2_resp.be  = w_f2_be[ICACHE_DATA_B_W * r_f2_bank +: ICACHE_DATA_B_W];
+end else begin
+  assign o_f2_resp.be  = w_f2_be;
+end endgenerate
+assign o_f2_resp.miss  = r_f2_normal_miss & ~r_f2_pref_paddr_hit;
 
 `ifdef SIMULATION
 assign o_f2_resp.vaddr_dbg = r_f2_vaddr [VADDR_W-1: 0];
@@ -377,10 +403,11 @@ assign w_pref_wr_ready = !(w_f0_req_fire | ic_l2_normal_resp_fire);
 
 always_ff @ (posedge i_clk) begin
   r_f2_pref_paddr_hit <= w_f1_pref_paddr_hit;
-  r_f2_pref_hit_data  <= w_f1_pref_hit_data;
+  r_f2_pref_hit_data  <= w_f1_pref_hit_data[w_f1_bank * scariv_conf_pkg::ICACHE_DATA_W +: scariv_conf_pkg::ICACHE_DATA_W];
 end
 
 scariv_ic_pref
+  #(.CACHE_DATA_B_W(CACHE_DATA_B_W))
 u_ic_pref
   (
    .i_clk     (i_clk),

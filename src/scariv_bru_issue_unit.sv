@@ -134,7 +134,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
         brtag_if.valid <= 1'b0;
     end else begin
-        brtag_if.valid <= |w_entry_finish;
+      brtag_if.valid <= |w_entry_finish & (w_finished_entry_sel.subcat == decoder_inst_cat_pkg::INST_SUBCAT_BRANCH);
         brtag_if.brtag <= w_finished_entry_sel.brtag;
     end
 end

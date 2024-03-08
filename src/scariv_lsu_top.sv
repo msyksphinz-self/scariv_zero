@@ -27,16 +27,15 @@ module scariv_lsu_top
     /* ROB notification interface */
     rob_info_if.slave           rob_info_if,
 
-    input logic         [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid,
-    scariv_front_if.watch                                      disp,
+    input logic [scariv_conf_pkg::DISP_SIZE-1:0] disp_valid[scariv_conf_pkg::LSU_INST_NUM],
+    scariv_front_if.watch                        disp,
     cre_ret_if.slave    iss_cre_ret_if[scariv_conf_pkg::LSU_INST_NUM],
     cre_ret_if.slave    ldq_cre_ret_if,
     cre_ret_if.slave    stq_cre_ret_if,
 
-    regread_if.master   ex1_int_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
-
-    regread_if.master   int_rs2_regread,
-    regread_if.master   fp_rs2_regread ,
+    regread_if.master   int_rs1_regread[scariv_conf_pkg::LSU_INST_NUM-1: 0],
+    regread_if.master   int_rs2_regread[scariv_conf_pkg::STQ_REGRD_PORT_NUM],
+    regread_if.master   fp_rs2_regread [scariv_conf_pkg::STQ_REGRD_PORT_NUM],
 
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -108,7 +107,6 @@ fwd_check_if w_ex2_fwd_check  [scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
-missu_dc_search_if w_missu_dc_search_if ();
 missu_resolve_t w_missu_resolve;
 logic     w_missu_is_full;
 logic     w_missu_is_empty;
@@ -122,11 +120,8 @@ l2_req_if    w_l1d_ext_req[2]();
 l1d_evict_if w_l1d_evict_if();
 
 // Feedbacks to LDQ / STQ
-ex1_q_update_t        w_ex1_q_updates[scariv_conf_pkg::LSU_INST_NUM];
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_tlb_resolve;
-ex2_q_update_t        w_ex2_q_updates[scariv_conf_pkg::LSU_INST_NUM];
-
-done_if w_ex3_done_if[scariv_conf_pkg::LSU_INST_NUM]();
+ldq_upd_if  w_ldq_upd_if[scariv_conf_pkg::LSU_INST_NUM]();
+stq_upd_if  w_stq_upd_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
@@ -188,11 +183,11 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rob_info_if (rob_info_if),
     .sfence_if_slave (w_sfence_if_slave),
 
-    .disp_valid (disp_valid             ),
+    .disp_valid (disp_valid [lsu_idx]   ),
     .disp       (disp                   ),
     .cre_ret_if (iss_cre_ret_if[lsu_idx]),
 
-    .ex1_regread_rs1     (ex1_int_regread[lsu_idx]),
+    .ex0_regread_rs1     (int_rs1_regread[lsu_idx]),
 
     .early_wr_in_if(early_wr_in_if),
     .phy_wr_in_if  (phy_wr_in_if  ),
@@ -214,9 +209,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),
 
-    .o_ex1_q_updates (w_ex1_q_updates [lsu_idx]),
-    .o_tlb_resolve   (w_tlb_resolve   [lsu_idx]),
-    .o_ex2_q_updates (w_ex2_q_updates [lsu_idx]),
+    .ldq_upd_if (w_ldq_upd_if [lsu_idx]),
+    .stq_upd_if (w_stq_upd_if [lsu_idx]),
 
     .i_st_buffer_empty    (w_scalar_st_buffer_if.is_empty),
     .i_st_requester_empty (w_uc_write_if.is_empty ),
@@ -250,11 +244,18 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
 end // block: lsu_loop
 endgenerate
 
-generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-  assign w_ldq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
-  assign w_stq_disp_valid[d_idx] = disp_valid[d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
-end
-endgenerate
+scariv_pkg::grp_id_t      w_ldq_disp_valid_tmp[scariv_conf_pkg::LSU_INST_NUM];
+scariv_pkg::grp_id_t      w_stq_disp_valid_tmp[scariv_conf_pkg::LSU_INST_NUM];
+
+generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin: disp_lsu_loop
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    assign w_ldq_disp_valid_tmp[l_idx][d_idx] = disp_valid[l_idx][d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_LD;
+    assign w_stq_disp_valid_tmp[l_idx][d_idx] = disp_valid[l_idx][d_idx] & disp.payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_ST;
+  end
+end endgenerate
+
+bit_or #(.WIDTH($bits(scariv_pkg::grp_id_t)), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_ldq_disp_merge (.i_data(w_ldq_disp_valid_tmp), .o_selected(w_ldq_disp_valid));
+bit_or #(.WIDTH($bits(scariv_pkg::grp_id_t)), .WORDS(scariv_conf_pkg::LSU_INST_NUM)) u_stq_disp_merge (.i_data(w_stq_disp_valid_tmp), .o_selected(w_stq_disp_valid));
 
 // -----------------------------------
 // Ldq
@@ -274,15 +275,12 @@ u_ldq
  .ldq_haz_check_if (w_ldq_haz_check_if),
  .scalar_ldq_haz_check_if (scalar_ldq_haz_check_if),
 
- .i_ex1_q_updates(w_ex1_q_updates),
- .i_ex2_q_updates(w_ex2_q_updates),
+ .ldq_upd_if (w_ldq_upd_if),
 
  .i_missu_resolve (w_missu_resolve),
  .i_missu_is_full (w_missu_is_full),
 
  .i_stq_rs2_resolve (w_stq_rs2_resolve),
-
- .ex3_done_if (w_ex3_done_if),
 
  .st_buffer_if (w_scalar_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
@@ -307,23 +305,22 @@ scariv_stq
  .disp         (disp            ),
  .cre_ret_if   (stq_cre_ret_if  ),
 
+ .early_wr_in_if (early_wr_in_if),
+ .mispred_in_if  (w_mispred_if  ),
  .phy_wr_in_if   (phy_wr_in_if  ),
 
- .i_ex1_q_updates(w_ex1_q_updates),
- .i_ex2_q_updates(w_ex2_q_updates),
+ .int_rs2_regread(int_rs2_regread),
+ .fp_rs2_regread (fp_rs2_regread ),
 
- .int_rs2_regread (int_rs2_regread),
- .fp_rs2_regread  (fp_rs2_regread ),
+ .stq_upd_if (w_stq_upd_if),
 
  .ex2_fwd_check_if(w_ex2_fwd_check),
  .stq_haz_check_if (w_stq_haz_check_if),
  .rmw_order_check_if (w_rmw_order_check_if),
 
- .ex3_done_if (w_ex3_done_if),
-
  .i_missu_is_empty (w_missu_is_empty),
 
-  .o_stq_rmw_existed (w_stq_rmw_existed),
+ .o_stq_rmw_existed (w_stq_rmw_existed),
 
  .commit_if (commit_if),
  .br_upd_if (br_upd_if),
@@ -371,8 +368,7 @@ u_l1d_mshr
 
  .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
 
- .missu_pa_search_if (w_missu_pa_search_if),
- .missu_dc_search_if (w_missu_dc_search_if)
+ .missu_pa_search_if (w_missu_pa_search_if)
  );
 
 
@@ -581,9 +577,7 @@ u_scariv_dcache
    .stbuf_l1d_merge_if (w_l1d_merge_if  ),
    .missu_l1d_wr_if    (w_miss_l1d_wr_if),
 
-   .snoop_wr_if        (w_snoop_wr_if),
-
-   .missu_dc_search_if (w_missu_dc_search_if)
+   .snoop_wr_if        (w_snoop_wr_if)
    );
 
 endmodule // mrsh_lsu_top

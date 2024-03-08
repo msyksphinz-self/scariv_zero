@@ -46,7 +46,6 @@ logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
 // scariv_pkg::vaddr_t    w_upd_br_vaddr;
-logic [DISP_SIZE-1:0]              w_dead_grp_id_br_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id_except_tmp;
 logic [DISP_SIZE-1:0]              w_dead_grp_id;
 logic [DISP_SIZE-1:0]              w_frontend_exception_valid;
@@ -56,6 +55,9 @@ logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 
 logic                                w_ignore_disp;
 logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
+
+rob_entry_t   w_out_entry;
+rob_payload_t w_out_payload;
 
 //
 // Pointer
@@ -135,35 +137,11 @@ function automatic rob_entry_t assign_rob_entry();
   rob_entry_t ret;
 
   ret.valid       = 1'b1;
-  ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
   ret.cmt_id_msb  = w_in_cmt_id[CMT_ENTRY_W];
+  ret.dead        = w_disp_grp_id & {scariv_conf_pkg::DISP_SIZE{w_flush_valid}};
   ret.grp_id      = w_disp_grp_id;
-  ret.pc_addr     = rn_front_if.payload.pc_addr;
-  for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
-    ret.inst[d_idx].valid          = rn_front_if.payload.inst[d_idx].valid         ;
-    ret.inst[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
-    ret.inst[d_idx].cat            = rn_front_if.payload.inst[d_idx].cat           ;
-    ret.inst[d_idx].subcat         = rn_front_if.payload.inst[d_idx].subcat        ;
-    ret.inst[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
-    // ret.inst[d_idx].ras_index      = rn_front_if.payload.inst[d_idx].ras_index     ;
-    // ret.inst[d_idx].is_cond        = rn_front_if.payload.inst[d_idx].is_cond       ;
-    // ret.inst[d_idx].is_call        = rn_front_if.payload.inst[d_idx].is_call       ;
-    // ret.inst[d_idx].is_ret         = rn_front_if.payload.inst[d_idx].is_ret        ;
-    // ret.inst[d_idx].gshare_bhr     = rn_front_if.payload.inst[d_idx].gshare_bhr    ;
-`ifdef SIMULATION
-    ret.inst[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
-    ret.inst[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
-    ret.inst[d_idx].inst           = rn_front_if.payload.inst[d_idx].inst          ;
-    ret.inst[d_idx].kanata_id      = rn_front_if.payload.inst[d_idx].kanata_id     ;
-`endif // SIMULATION
-  end // block: inst_loop
 
-  // ret.br_upd_info.gshare_bhr   = w_rn_front_if_cond_inst.gshare_bhr;
-  // ret.br_upd_info.gshare_index = w_rn_front_if_cond_inst.gshare_index;
-  // ret.br_upd_info.bim_value    = w_rn_front_if_cond_inst.bim_value;
   ret.fflags_update_valid = 'h0;
-
-  ret.is_br_included = rn_front_if.payload.is_br_included;
 
   ret.int_inserted = rn_front_if.payload.int_inserted;
 
@@ -181,9 +159,27 @@ function automatic rob_entry_t assign_rob_entry();
 endfunction // assign_rob_entry
 
 
-rob_entry_t w_entry_in;
-assign w_entry_in = assign_rob_entry();
+function automatic rob_payload_t assign_rob_payload ();
+  rob_payload_t ret;
 
+  for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : inst_loop
+    ret.disp[d_idx].pc_addr        = rn_front_if.payload.inst[d_idx].pc_addr       ;
+    ret.disp[d_idx].wr_reg         = rn_front_if.payload.inst[d_idx].wr_reg        ;
+    ret.disp[d_idx].inst           = rn_front_if.payload.inst[d_idx].inst          ;
+`ifdef SIMULATION
+    ret.disp[d_idx].rvc_inst_valid = rn_front_if.payload.inst[d_idx].rvc_inst_valid;
+    ret.disp[d_idx].rvc_inst       = rn_front_if.payload.inst[d_idx].rvc_inst      ;
+    ret.disp[d_idx].kanata_id      = rn_front_if.payload.inst[d_idx].kanata_id     ;
+`endif // SIMULATION
+  end // block: inst_loop
+
+  return ret;
+endfunction // assign_rob_paylaod
+
+rob_entry_t    w_entry_in;
+rob_payload_t  w_payload_in;
+assign w_entry_in   = assign_rob_entry();
+assign w_payload_in = assign_rob_payload();
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
@@ -218,12 +214,27 @@ logic w_load_valid;
   end
 `endif // SIMULATION
 
-end
-endgenerate
+end endgenerate
+
+distributed_ram
+  #(.WIDTH($bits(rob_payload_t)),
+    .WORDS(CMT_ENTRY_SIZE)
+    )
+u_payload_ram
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_wr     (rn_front_if.valid & rn_front_if.ready),
+   .i_wr_addr(w_in_cmt_entry_id),
+   .i_wr_data(w_payload_in),
+
+   .i_rd_addr(w_out_cmt_entry_id),
+   .o_rd_data(w_out_payload)
+   );
 
 assign o_sc_new_cmt_id = w_in_cmt_id;
 
-rob_entry_t w_out_entry;
 assign w_out_entry = w_entries[w_out_cmt_entry_id];
 
 // Interrupt detection
@@ -251,11 +262,11 @@ assign w_commit.int_valid    = w_int_valid;
 assign w_commit.except_type  = w_int_valid ? except_t'(w_int_type) : r_rob_except.typ;
 /* verilator lint_off WIDTH */
 assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_MISALIGN  ||
-                                 w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_entry.pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
+                                 w_commit.except_type == scariv_pkg::INST_ACC_FAULT) ? {w_out_payload.disp[0].pc_addr, 1'b0} + {w_cmt_except_valid_encoded, 2'b00} :
                                 r_rob_except.tval;
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (r_rob_except.grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
-assign w_commit.epc          = w_out_entry.inst[w_cmt_except_valid_encoded].pc_addr;
+assign w_commit.epc          = w_out_payload.disp[w_cmt_except_valid_encoded].pc_addr;
 assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
 assign w_commit.flush_valid  = {scariv_conf_pkg::DISP_SIZE{w_rob_except_match}} & r_rob_except.grp_id | w_int_valid;
 
@@ -384,11 +395,11 @@ end
 
 assign w_commit_rnid_update.commit     = w_out_valid;
 generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : commit_rd_loop
-  assign w_commit_rnid_update.rnid_valid[d_idx] = w_out_entry.inst[d_idx].wr_reg.valid;
-  assign w_commit_rnid_update.old_rnid  [d_idx] = w_out_entry.inst[d_idx].wr_reg.old_rnid;
-  assign w_commit_rnid_update.rd_rnid   [d_idx] = w_out_entry.inst[d_idx].wr_reg.rnid;
-  assign w_commit_rnid_update.rd_regidx [d_idx] = w_out_entry.inst[d_idx].wr_reg.regidx;
-  assign w_commit_rnid_update.rd_typ    [d_idx] = w_out_entry.inst[d_idx].wr_reg.typ;
+  assign w_commit_rnid_update.rnid_valid[d_idx] = w_out_payload.disp[d_idx].wr_reg.valid;
+  assign w_commit_rnid_update.old_rnid  [d_idx] = w_out_payload.disp[d_idx].wr_reg.old_rnid;
+  assign w_commit_rnid_update.rd_rnid   [d_idx] = w_out_payload.disp[d_idx].wr_reg.rnid;
+  assign w_commit_rnid_update.rd_regidx [d_idx] = w_out_payload.disp[d_idx].wr_reg.regidx;
+  assign w_commit_rnid_update.rd_typ    [d_idx] = w_out_payload.disp[d_idx].wr_reg.typ;
 end
 endgenerate
 assign w_commit_rnid_update.dead_id        = w_commit.dead_id;
@@ -432,9 +443,6 @@ grp_id_t w_is_ret_array;
 logic [$clog2(scariv_conf_pkg::RAS_ENTRY_SIZE)-1: 0] w_ras_index_array[scariv_conf_pkg::DISP_SIZE];
 
 
-// Make dead Instruction, (after branch instruction)
-bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_br_grp_id (.in(w_out_entry.br_upd_info.upd_valid), .out(w_dead_grp_id_br_tmp));
-
 // Make dead Instruction, (after exception)
 bit_tree_lsb #(.WIDTH(DISP_SIZE)) u_bit_dead_except_grp_id (.in(r_rob_except.grp_id), .out(w_dead_grp_id_except_tmp));
 logic [DISP_SIZE-1: 0] w_except_dead_grp_id;
@@ -447,7 +455,7 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.cmt_id       <= w_out_cmt_id;
   rob_info_if.grp_id       <= w_out_entry.grp_id;
   rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
-  rob_info_if.upd_pc_valid <= w_out_entry.br_upd_info.upd_valid;
+  rob_info_if.upd_pc_valid <= 1'b0;
   rob_info_if.except_valid <= r_rob_except.valid & (r_rob_except.cmt_id == w_out_cmt_id) ? r_rob_except.grp_id & ~w_out_entry.dead : 'h0;
 end
 
@@ -484,7 +492,7 @@ function void dump_entry_json(int fp, rob_entry_t entry, int index);
   if (entry.valid) begin
     $fwrite(fp, "    \"scariv_rob_entry[%d]\" : {", index[$clog2(CMT_ENTRY_SIZE)-1:0]);
     $fwrite(fp, "valid:%d, ", entry.valid);
-    $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
+    // $fwrite(fp, "pc_addr:\"0x%0x\", ", entry.pc_addr << 1);
 
     $fwrite(fp, "grp_id:\"0x%02x\", ", entry.grp_id);
     $fwrite(fp, "done_grp_id:\"0x%02x\", ", entry.done_grp_id);
@@ -631,14 +639,15 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (w_out_valid) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (w_out_entry.grp_id[i]) begin
-          log_stage (w_out_entry.inst[i].kanata_id, "CMT");
+          log_stage (w_out_payload.disp[i].kanata_id, "CMT");
         end
       end
     end
   end
 end
 
-rob_entry_t r_out_entry_d1;
+rob_entry_t   r_out_entry_d1;
+rob_payload_t r_out_payload_d1;
 logic r_commit_d1;
 logic [DISP_SIZE-1:0] r_dead_grp_d1;
 
@@ -646,10 +655,12 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_commit_d1    <= 1'b0;
     r_out_entry_d1 <= 'h0;
+    r_out_payload_d1 <= 'h0;
     r_dead_grp_d1  <= 'h0;
   end else begin
     r_commit_d1 <= w_out_valid;
     r_out_entry_d1 <= w_out_entry;
+    r_out_payload_d1 <= w_out_payload;
     r_dead_grp_d1  <= w_dead_grp_id;
   end
 end
@@ -663,7 +674,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     if (r_commit_d1) begin
       for (int i = 0; i < scariv_conf_pkg::DISP_SIZE; i++) begin
         if (r_out_entry_d1.grp_id[i]) begin
-          retire_inst (r_out_entry_d1.inst[i].kanata_id, kanata_retire_id,
+          retire_inst (r_out_payload_d1.disp[i].kanata_id, kanata_retire_id,
                        r_out_entry_d1.dead[i] | r_dead_grp_d1[i]);
           if (!(r_out_entry_d1.dead[i] | r_dead_grp_d1[i])) begin
             kanata_retire_id = kanata_retire_id + 1;

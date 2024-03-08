@@ -79,13 +79,13 @@ assign o_resp_tag   = r_resp_tag  [RD_LAT-1];
 assign o_resp_data  = r_resp_data [RD_LAT-1];
 
 initial begin
-  if (scariv_conf_pkg::ICACHE_DATA_W == 64) begin
+  if (scariv_conf_pkg::DCACHE_DATA_W == 64) begin
     $readmemh ("../../../dts/bootrom_w8.hex", r_rom);
-  end else if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin
+  end else if (scariv_conf_pkg::DCACHE_DATA_W == 128) begin
     $readmemh ("../../../dts/bootrom_w16.hex", r_rom);
-  end else if (scariv_conf_pkg::ICACHE_DATA_W == 256) begin
+  end else if (scariv_conf_pkg::DCACHE_DATA_W == 256) begin
     $readmemh ("../../../dts/bootrom_w32.hex", r_rom);
-  end else if (scariv_conf_pkg::ICACHE_DATA_W == 512) begin
+  end else if (scariv_conf_pkg::DCACHE_DATA_W == 512) begin
     $readmemh ("../../../dts/bootrom_w64.hex", r_rom);
   end
 end

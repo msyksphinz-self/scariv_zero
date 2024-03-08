@@ -12,6 +12,7 @@
 
 ../src/recurse_pkg.sv
 ../src/scariv_pkg.sv
+../src/scariv_alu_pkg.sv
 ../src/scariv_lsu_pkg.sv
 ../src/scariv_ic_pkg.sv
 ../src/scariv_bru_pkg.sv
@@ -122,6 +123,8 @@
 ../src/scariv_rob.sv
 ../src/scariv_rob_entry.sv
 
+../src/scariv_alu_issue_unit.sv
+../src/scariv_alu_issue_entry.sv
 ../src/scariv_alu.sv
 ../src/scariv_alu_pipe.sv
 ../src/scariv_muldiv_pipe.sv
@@ -134,7 +137,7 @@
 ../src/scariv_lsu.sv
 ../src/scariv_lsu_issue_unit.sv
 ../src/scariv_lsu_issue_entry.sv
-../src/scariv_lsu_replay_queue.sv
+../src/scariv_lsu_fast_replay_queue.sv
 ../src/scariv_lsu_pipe.sv
 ../src/scariv_l1d_mshr.sv
 ../src/scariv_l1d_mshr_entry.sv
@@ -144,8 +147,11 @@
 ../src/scariv_ldq_entry.sv
 ../src/scariv_stq.sv
 ../src/scariv_stq_entry.sv
+../src/scariv_stq_rs2_rel_pipe.sv
+../src/scariv_stq_rs2_phy_pipe.sv
 ../src/scariv_st_buffer.sv
 ../src/scariv_st_buffer_entry.sv
+../src/scariv_st_buffer_amo_entry.sv
 ../src/scariv_amo_operation.sv
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv
@@ -215,3 +221,7 @@
 ../src/scariv_plic_regs.sv
 
 ../src/scariv_bootrom.sv
+
+../src/distributed_ram.sv
+../src/distributed_mp_ram.sv
+../src/distributed_1rd_ram.sv

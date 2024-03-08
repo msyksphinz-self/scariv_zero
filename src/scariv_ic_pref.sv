@@ -11,6 +11,7 @@ module scariv_ic_pref
   import scariv_pkg::*;
   import scariv_ic_pkg::*;
   import scariv_lsu_pkg::*;
+#(parameter CACHE_DATA_B_W = scariv_conf_pkg::DCACHE_DATA_W/8)  // By default use cache width as bus size (Data Width > Fetch Width)
 (
  input logic i_clk,
  input logic i_reset_n,
@@ -30,20 +31,20 @@ module scariv_ic_pref
 
  // Response prefetech
  input logic     i_pref_l2_resp_valid,
- input ic_data_t i_pref_l2_resp_data,
+ input dc_data_t i_pref_l2_resp_data,
 
  // Instruction Fetch search
  input logic      i_f0_pref_search_valid,
  input vaddr_t    i_f0_pref_search_vaddr,
  output logic     o_f1_pref_search_hit,
- output ic_data_t o_f1_pref_search_data,
+ output dc_data_t o_f1_pref_search_data,
  output logic     o_f1_pref_search_working_hit, // Currently same address is fetching now, will be come response
 
  // Write ICCache Interface
  output logic     o_ic_wr_valid,
  input  logic     i_ic_wr_ready,
  output vaddr_t   o_ic_wr_vaddr,
- output ic_data_t o_ic_wr_data
+ output dc_data_t o_ic_wr_data
  );
 
 // Prefetcher state machine
@@ -55,10 +56,10 @@ vaddr_t       r_pref_vaddr;
 logic     r_prefetched_valid;
 vaddr_t   r_prefetched_vaddr;
 paddr_t   r_prefetched_paddr;
-ic_data_t r_prefetched_data;
+dc_data_t r_prefetched_data;
 
 logic w_is_exceed_next_page;
-assign w_is_exceed_next_page = (i_ic_l2_req_vaddr[11: 0] + scariv_lsu_pkg::ICACHE_DATA_B_W) >= 13'h1000;
+assign w_is_exceed_next_page = (i_ic_l2_req_vaddr[11: 0] + CACHE_DATA_B_W) >= 13'h1000;
 
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -69,8 +70,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       ICInit : begin
         if (~i_flush_valid & i_ic_l2_req_fire & !w_is_exceed_next_page & !i_fence_i) begin
           r_pref_state <= ICReq;
-          r_pref_vaddr <= (i_ic_l2_req_vaddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + scariv_lsu_pkg::ICACHE_DATA_B_W;
-          r_pref_paddr <= (i_ic_l2_req_paddr & ~{$clog2(ICACHE_DATA_B_W){1'b1}}) + scariv_lsu_pkg::ICACHE_DATA_B_W;
+          r_pref_vaddr <= (i_ic_l2_req_vaddr & ~{$clog2(CACHE_DATA_B_W){1'b1}}) + CACHE_DATA_B_W;
+          r_pref_paddr <= (i_ic_l2_req_paddr & ~{$clog2(CACHE_DATA_B_W){1'b1}}) + CACHE_DATA_B_W;
         end
       end // case: ICInit
       ICReq : begin
@@ -123,13 +124,13 @@ logic w_f0_pref_search_working_hit_and_l2_return;
 
 assign w_f0_pref_search_hit = i_f0_pref_search_valid &
                               r_prefetched_valid &
-                              (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
-                               r_prefetched_vaddr    [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
+                              (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(CACHE_DATA_B_W)] ==
+                               r_prefetched_vaddr    [riscv_pkg::VADDR_W-1: $clog2(CACHE_DATA_B_W)]);
 
 assign w_f0_pref_search_working_hit = i_f0_pref_search_valid &
                                       (r_pref_state == ICResp) &
-                                      (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)] ==
-                                       r_pref_vaddr          [riscv_pkg::VADDR_W-1: $clog2(ICACHE_DATA_B_W)]);
+                                      (i_f0_pref_search_vaddr[riscv_pkg::VADDR_W-1: $clog2(CACHE_DATA_B_W)] ==
+                                       r_pref_vaddr          [riscv_pkg::VADDR_W-1: $clog2(CACHE_DATA_B_W)]);
 
 assign w_f0_pref_search_working_hit_and_l2_return = w_f0_pref_search_working_hit & i_pref_l2_resp_valid;
 

@@ -4,38 +4,38 @@ module l2c_arbiter_wrapper
 /* from ELF Loader */
 input  logic                                        i_elf_req_valid,
 input  scariv_lsu_pkg::mem_cmd_t                    i_elf_req_cmd,
-input  logic [riscv_pkg::PADDR_W-1:0]               i_elf_req_addr,
-input  logic [TAG_W-1: 0]     i_elf_req_tag,
-input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   i_elf_req_data,
-input  logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] i_elf_req_byte_en,
+input  scariv_pkg::paddr_t                          i_elf_req_addr,
+input  logic [TAG_W-1: 0]                           i_elf_req_tag,
+input  scariv_lsu_pkg::dc_data_t                    i_elf_req_data,
+input  scariv_lsu_pkg::dc_strb_t                    i_elf_req_byte_en,
 output logic                                        o_elf_req_ready,
 
 /* from Frontend IC */
 input  logic                                        i_ss_req_valid,
 input  scariv_lsu_pkg::mem_cmd_t                    i_ss_req_cmd,
-input  logic [riscv_pkg::PADDR_W-1:0]               i_ss_req_addr,
-input  logic [TAG_W-1: 0]     i_ss_req_tag,
-input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   i_ss_req_data,
-input  logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] i_ss_req_byte_en,
+input  scariv_pkg::paddr_t                          i_ss_req_addr,
+input  logic [TAG_W-1: 0]                           i_ss_req_tag,
+input  scariv_lsu_pkg::dc_data_t                    i_ss_req_data,
+input  scariv_lsu_pkg::dc_strb_t                    i_ss_req_byte_en,
 output logic                                        o_ss_req_ready,
 
 output logic                                       o_ss_resp_valid,
-output logic [TAG_W-1: 0]    o_ss_resp_tag,
-output logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]  o_ss_resp_data,
-input  logic                                       i_ss_resp_ready  ,
+output logic [TAG_W-1: 0]                          o_ss_resp_tag,
+output scariv_lsu_pkg::dc_data_t                   o_ss_resp_data,
+input  logic                                       i_ss_resp_ready,
 
 /* L2 Interface */
 output logic                                        o_l2_req_valid,
 output scariv_lsu_pkg::mem_cmd_t                    o_l2_req_cmd,
-output logic [riscv_pkg::PADDR_W-1:0]               o_l2_req_addr,
-output logic [TAG_W-1: 0]     o_l2_req_tag,
-output logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   o_l2_req_data,
-output logic [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] o_l2_req_byte_en,
+output scariv_pkg::paddr_t                          o_l2_req_addr,
+output logic [TAG_W-1: 0]                           o_l2_req_tag,
+output scariv_lsu_pkg::dc_data_t                    o_l2_req_data,
+output scariv_lsu_pkg::dc_strb_t                    o_l2_req_byte_en,
 input  logic                                        i_l2_req_ready,
 
 input  logic                                        i_l2_resp_valid,
-input  logic [TAG_W-1: 0]     i_l2_resp_tag,
-input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0]   i_l2_resp_data,
+input  logic [TAG_W-1: 0]                           i_l2_resp_tag,
+input  scariv_lsu_pkg::dc_data_t                    i_l2_resp_data,
 output logic                                        o_l2_resp_ready
    );
 

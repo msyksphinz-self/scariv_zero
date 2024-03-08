@@ -11,10 +11,10 @@ package scariv_fpu_pkg;
 import decoder_fpu_ctrl_pkg::*;
 
   localparam fpnew_pkg::fpu_features_t SCARIV_FPNEW_FEATURE = '{
-    Width:         64,
+    Width:         unsigned'(riscv_fpu_pkg::FLEN_W),
     EnableVectors: 1'b0,
     EnableNanBox:  1'b1,
-    FpFmtMask:     5'b11000,
+    FpFmtMask:     riscv_fpu_pkg::FLEN_W == 64 ? 5'b11000 : 5'b10000,  /* FLEN_W == 32 */
     IntFmtMask:    4'b0011
   };
 

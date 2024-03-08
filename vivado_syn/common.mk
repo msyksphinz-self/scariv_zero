@@ -1,5 +1,7 @@
 .PHONY: filelist
 
+export CORES = $(shell nproc)
+
 all: filelist
 	vivado -mode tcl -log synth.log -source ../synth.tcl
 

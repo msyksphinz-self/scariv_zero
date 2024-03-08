@@ -64,7 +64,8 @@ package scariv_pkg;
   localparam MISSU_ENTRY_W = $clog2(MISSU_ENTRY_SIZE);
 
   localparam INT_REGRD_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM * 2 +    // ALU port
-                                  scariv_conf_pkg::LSU_INST_NUM + 1 +    // LSU port
+                                  scariv_conf_pkg::LSU_INST_NUM +        // LSU port
+                                  scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                   2 +                                    // BRU port
                                   2 +                                    // CSR port
                                   scariv_conf_pkg::FPU_INST_NUM +        // FPU port
@@ -73,7 +74,8 @@ package scariv_pkg;
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
                                  1 +                                     // LSU port
-                                 scariv_conf_pkg::VEC_ALU_INST_NUM;      // VEC port
+                                 scariv_conf_pkg::VEC_ALU_INST_NUM +     // VEC port
+                                 scariv_conf_pkg::STQ_REGRD_PORT_NUM;    // LSU port
 
   localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
                                   scariv_conf_pkg::LSU_INST_NUM +    // LSU port
@@ -218,11 +220,13 @@ typedef struct packed {
     logic [ALU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] alu_inst_valid;
     logic [$clog2(MULDIV_DISP_SIZE): 0]                        muldiv_inst_cnt;
     logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]        lsu_inst_cnt;
-    logic [$clog2(LDQ_SIZE): 0]                                ld_inst_cnt;
-    logic [$clog2(STQ_SIZE): 0]                                st_inst_cnt;
-    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    lsu_inst_valid;
+
+    logic [$clog2(MEM_DISP_SIZE): 0]                           ld_inst_cnt;
+    logic [$clog2(MEM_DISP_SIZE): 0]                           st_inst_cnt;
+    logic [LSU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] lsu_inst_valid;
     logic [$clog2(BRU_DISP_SIZE): 0]                           bru_inst_cnt;
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    bru_inst_valid;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    bru_branch_valid;
     logic [$clog2(CSU_DISP_SIZE): 0]                           csu_inst_cnt;
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    csu_inst_valid;
     logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]        fpu_inst_cnt;
@@ -336,7 +340,6 @@ typedef struct packed {
 
 // Instruction's static information from decoder
 typedef struct packed {
-  logic              valid;
   vaddr_t            pc_addr;
   inst_cat_t         cat;
   inst_subcat_t      subcat;
@@ -347,34 +350,29 @@ typedef struct packed {
   logic [15: 0]      rvc_inst;
   logic [63: 0]      kanata_id;
 `endif // SIMULATION
-} rob_static_info_t;
+} rob_entry_payload_t;
 
-  typedef struct packed {
-    logic          valid;
+typedef struct packed {
+  rob_entry_payload_t [DISP_SIZE-1: 0] disp;
+} rob_payload_t;
 
-    logic [riscv_pkg::VADDR_W-1: 1] pc_addr;
-    logic    cmt_id_msb;
-    grp_id_t grp_id;
+typedef struct packed {
+  logic    valid;
 
-    rob_static_info_t [scariv_conf_pkg::DISP_SIZE-1:0] inst;
+  logic    cmt_id_msb;
+  grp_id_t grp_id;
+  grp_id_t done_grp_id;
+  grp_id_t dead;
 
-    grp_id_t done_grp_id;
+  grp_id_t                  fflags_update_valid;
+  fflags_t [DISP_SIZE-1: 0] fflags;
 
-    grp_id_t  dead;
-
-    // Branch update info
-    logic         is_br_included;
-    br_upd_info_t br_upd_info;
-
-    grp_id_t                  fflags_update_valid;
-    fflags_t [DISP_SIZE-1: 0] fflags;
-
-    logic                                         int_inserted;
+  logic                     int_inserted;
 `ifdef SIMULATION
-    logic [DISP_SIZE-1: 0] [31: 0] lifetime;
-    dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
+  logic [DISP_SIZE-1: 0] [31: 0] lifetime;
+  dead_reason_t[scariv_conf_pkg::DISP_SIZE-1:0] sim_dead_reason;
 `endif // SIMULATION
-  } rob_entry_t;
+} rob_entry_t;
 
   typedef struct packed {
     logic   valid;

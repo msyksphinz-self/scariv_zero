@@ -476,9 +476,9 @@ grp_id_t w_is_br_inst;
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : br_loop
   assign w_is_br_inst[d_idx] = i_ibuf_front_fire &
                                i_ibuf_front_payload.inst[d_idx].valid &
+                               (i_ibuf_front_payload.inst[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_BRANCH) &
                                (i_ibuf_front_payload.inst[d_idx].cat == decoder_inst_cat_pkg::INST_CAT_BR);
-end
-endgenerate
+end endgenerate
 
 
 scariv_bru_rn_snapshots

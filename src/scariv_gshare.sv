@@ -145,30 +145,57 @@ generate for (genvar c_idx = 0; c_idx < scariv_lsu_pkg::ICACHE_DATA_B_W / 2; c_i
 
   assign br_update_lane_hit = br_update_lane == c_idx;
 
-  logic [ 1: 0]   w_bim_array [2 ** scariv_pkg::GSHARE_BHT_W];
-  for (genvar a_idx = 0; a_idx < 2 ** scariv_pkg::GSHARE_BHT_W; a_idx++) begin : bim_loop
-    logic [ 1: 0]   r_bim;
-    always_ff @ (posedge i_clk, negedge i_reset_n) begin
-      if (!i_reset_n) begin
-        r_bim <= 2'b10;
-      end else begin
-        if (br_upd_if.update & !br_upd_if.dead &
-            br_update_lane_hit &
-            (br_upd_if.gshare_index == a_idx)) begin
-          r_bim <= w_update_counter;
-        end
-      end
-    end
-    assign w_bim_array[a_idx] = r_bim;
-  end // block: bim_loop
+  logic [ 1: 0 ] w_f0_bim_counter;
+
+  distributed_ram
+    #(.WIDTH(2),
+      .WORDS(2 ** scariv_pkg::GSHARE_BHT_W)
+      )
+  u_bim_counter_ram
+    (
+     .i_clk     (i_clk),
+     .i_reset_n (i_reset_n),
+
+     .i_wr (br_upd_if.update & !br_upd_if.dead & br_update_lane_hit),
+     .i_wr_addr (br_upd_if.gshare_index),
+     .i_wr_data (w_update_counter),
+
+     .i_rd_addr (w_f0_xor_rd_index),
+     .o_rd_data (w_f0_bim_counter)
+     );
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
       r_f1_bim_counter_dram <= 'h0;
     end else begin
-      r_f1_bim_counter_dram <= w_bim_array[w_f0_xor_rd_index];
+      r_f1_bim_counter_dram <= w_f0_bim_counter;
     end
   end
+
+  // logic [ 1: 0]   w_bim_array [2 ** scariv_pkg::GSHARE_BHT_W];
+  // for (genvar a_idx = 0; a_idx < 2 ** scariv_pkg::GSHARE_BHT_W; a_idx++) begin : bim_loop
+  //   logic [ 1: 0]   r_bim;
+  //   always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  //     if (!i_reset_n) begin
+  //       r_bim <= 2'b10;
+  //     end else begin
+  //       if (br_upd_if.update & !br_upd_if.dead &
+  //           br_update_lane_hit &
+  //           (br_upd_if.gshare_index == a_idx)) begin
+  //         r_bim <= w_update_counter;
+  //       end
+  //     end
+  //   end
+  //   assign w_bim_array[a_idx] = r_bim;
+  // end // block: bim_loop
+  //
+  // always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  //   if (!i_reset_n) begin
+  //     r_f1_bim_counter_dram <= 'h0;
+  //   end else begin
+  //     r_f1_bim_counter_dram <= w_bim_array[w_f0_xor_rd_index];
+  //   end
+  // end
 
   assign w_f1_bim_counter = br_upd_if.update & !br_upd_if.dead &
                             (br_upd_if.gshare_index == w_f0_xor_rd_index) ? w_update_counter :

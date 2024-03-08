@@ -81,6 +81,7 @@ scariv_pkg::grp_id_t w_inst_is_muldiv;
 scariv_pkg::grp_id_t w_inst_is_ld;
 scariv_pkg::grp_id_t w_inst_is_st;
 scariv_pkg::grp_id_t w_inst_is_br;
+scariv_pkg::grp_id_t w_inst_is_br_branch;
 scariv_pkg::grp_id_t w_inst_is_csu;
 scariv_pkg::grp_id_t w_inst_is_fpu;
 scariv_pkg::grp_id_t w_inst_is_valu;
@@ -372,7 +373,7 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
                                     !w_inst_buf_entry_b0.dead &
                                     w_inst_buf_entry_b0.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
-      w_fetch_except_tval [w_idx] = {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)],
+      w_fetch_except_tval [w_idx] = {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)],
                                      w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0};
 
       w_expand_pred_info[w_idx] = w_inst_buf_entry_b0.pred_info[w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0]];
@@ -395,8 +396,8 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
                                     w_inst_buf_entry_b2.tlb_except_cause;
       w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ?
-                                    {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0} :
-                                    {w_inst_buf_entry_b2.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0], 1'b0};
+                                    {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], w_rvc_buf_idx_with_offset[w_idx][$clog2(ic_word_num)-1:0], 1'b0} :
+                                    {w_inst_buf_entry_b2.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0], 1'b0};
 
       w_expand_pred_info [w_idx] = w_inst_buf_entry_b2.pred_info[w_rvc_buf_idx_with_offset_b2[$clog2(ic_word_num)-1:0]];
       w_expand_pred_index[w_idx] = w_inst_buf_ptr_b2;
@@ -416,19 +417,15 @@ endgenerate
 
 
 generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) begin : word_loop
-  // logic[ 3: 0] w_raw_cat;
-  // logic [ 3: 0] w_raw_subcat;
   decoder_inst_cat
   u_decoder_inst_cat
     (
      .inst(w_expand_inst[w_idx]),
-     // .inst_cat(w_raw_cat),
-     // .inst_subcat(w_raw_subcat)
+
      .inst_cat   (w_inst_cat   [w_idx]),
      .inst_subcat(w_inst_subcat[w_idx])
      );
-  // assign w_inst_cat   [w_idx] = decoder_inst_cat_pkg::inst_cat_t'(w_raw_cat);
-  // assign w_inst_subcat[w_idx] = decoder_inst_cat_pkg::inst_subcat_t'(w_raw_subcat);
+
 
   decoder_reg
   u_decoder_reg
@@ -457,15 +454,16 @@ logic          w_inst_fpu_illegal;
                               w_inst_st_fpu_illegal |
                               w_inst_arith_fpu_illegal;
 
-  assign w_inst_is_arith [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH );
-  assign w_inst_is_muldiv[w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_MULDIV);
-  assign w_inst_is_ld    [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
-  assign w_inst_is_st    [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
-  assign w_inst_is_br    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
-  assign w_inst_is_csu   [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
-  assign w_inst_is_fpu   [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU );
-  assign w_inst_is_valu  [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VALU);
-  assign w_inst_is_vlsu  [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VLSU);
+  assign w_inst_is_arith     [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ARITH );
+  assign w_inst_is_muldiv    [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_MULDIV);
+  assign w_inst_is_ld        [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_LD    );
+  assign w_inst_is_st        [w_idx] = w_expanded_valid[w_idx] & !w_inst_st_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_ST    );
+  assign w_inst_is_br        [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_BR    );
+  assign w_inst_is_br_branch [w_idx] = w_expanded_valid[w_idx] & !w_inst_ld_fpu_illegal & (w_inst_subcat[w_idx] == decoder_inst_cat_pkg::INST_SUBCAT_BRANCH);
+  assign w_inst_is_csu       [w_idx] = w_expanded_valid[w_idx] & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_CSU   );
+  assign w_inst_is_fpu       [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_FPU );
+  assign w_inst_is_valu      [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VALU);
+  assign w_inst_is_vlsu      [w_idx] = w_expanded_valid[w_idx] & !w_inst_arith_fpu_illegal & (w_inst_cat[w_idx] == decoder_inst_cat_pkg::INST_CAT_VLSU);
 
   logic          w_is_std_call;
   logic          w_is_std_ret;
@@ -640,24 +638,29 @@ assign w_ibuf_front_payload_next.resource_cnt.muldiv_inst_cnt = w_inst_muldiv_cn
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_mem_inst_cnt (.in(w_inst_mem_disped), .out(w_inst_mem_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_ld_inst_cnt  (.in(w_inst_ld_disped), .out(w_inst_ld_cnt));
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_st_inst_cnt  (.in(w_inst_st_disped), .out(w_inst_st_cnt));
-assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
+// assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid = w_inst_mem_disped;
 
 generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_rsrc_loop
-  logic [$clog2(scariv_conf_pkg::MEM_DISP_SIZE): 0]  lsu_lane_width;
-  assign lsu_lane_width = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
-  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_cnt[l_idx] = (w_inst_mem_cnt >= lsu_lane_width * (l_idx+1)) ? lsu_lane_width :
-                                                    /* verilator lint_off UNSIGNED */
-                                                    (w_inst_mem_cnt <  lsu_lane_width * l_idx) ? 'h0 :
-                                                    w_inst_mem_cnt - lsu_lane_width * l_idx;
-end
-endgenerate
+  localparam lsu_lane_width = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+  logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_lane_disped_valid[lsu_lane_width];
+  logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_lane_disped_valid_or;
+  logic [$clog2(lsu_lane_width+1): 0] w_lane_disp_cnt;
+  for (genvar i = 0; i < lsu_lane_width; i++) begin: cnt_loop
+    bit_pick_1_pos #(.NUM(i * scariv_conf_pkg::LSU_INST_NUM + l_idx), .SEL_WIDTH(scariv_conf_pkg::DISP_SIZE)) bit_pos (.i_valids(w_inst_mem_disped), .o_picked_pos(w_lane_disped_valid[i]));
+  end
+  bit_or #(.WIDTH(scariv_conf_pkg::DISP_SIZE), .WORDS(lsu_lane_width)) lsu_disped_or (.i_data(w_lane_disped_valid), .o_selected(w_lane_disped_valid_or));
+  bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_lsu_inst_cnt (.in(w_lane_disped_valid_or), .out(w_lane_disp_cnt));
+  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_cnt  [l_idx] = w_lane_disp_cnt;
+  assign w_ibuf_front_payload_next.resource_cnt.lsu_inst_valid[l_idx] = w_lane_disped_valid_or;
+end endgenerate
 
 assign w_ibuf_front_payload_next.resource_cnt.ld_inst_cnt = w_inst_ld_cnt;
 assign w_ibuf_front_payload_next.resource_cnt.st_inst_cnt = w_inst_st_cnt;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_bru_inst_cnt (.in(w_inst_bru_disped), .out(w_inst_bru_cnt));
-assign w_ibuf_front_payload_next.resource_cnt.bru_inst_cnt   = w_inst_bru_cnt;
-assign w_ibuf_front_payload_next.resource_cnt.bru_inst_valid = w_inst_bru_disped;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_cnt     = w_inst_bru_cnt;
+assign w_ibuf_front_payload_next.resource_cnt.bru_inst_valid   = w_inst_bru_disped;
+assign w_ibuf_front_payload_next.resource_cnt.bru_branch_valid = w_inst_bru_disped & w_inst_is_br_branch;
 
 bit_cnt #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) u_csu_inst_cnt (.in(w_inst_csu_disped), .out(w_inst_csu_cnt));
 assign w_ibuf_front_payload_next.resource_cnt.csu_inst_cnt   = w_inst_csu_cnt;
@@ -715,7 +718,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       w_ibuf_front_payload_next.inst[d_idx].inst = w_expand_inst[d_idx];
       w_ibuf_front_payload_next.inst[d_idx].rvc_inst_valid = w_rvc_valid[d_idx];
       w_ibuf_front_payload_next.inst[d_idx].rvc_inst       = w_rvc_inst [d_idx];
-      w_ibuf_front_payload_next.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::DCACHE_DATA_B_W){1'b0}}} +
+      w_ibuf_front_payload_next.inst[d_idx].pc_addr = {w_inst_buf_data[0].pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)], {$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W){1'b0}}} +
                                                       {w_rvc_buf_idx_with_offset[d_idx], 1'b0};
 
       w_ibuf_front_payload_next.inst[d_idx].wr_reg.valid   = rd_field_type[d_idx] != RD__;

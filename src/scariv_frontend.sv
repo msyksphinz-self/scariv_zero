@@ -238,7 +238,7 @@ always_comb begin
   end else if (r_f2_valid & !r_f2_clear & w_f2_ic_resp.valid & ~w_inst_buffer_ready) begin
     // Retry from F2 stage Vaddr
     w_f0_vaddr      = r_f2_vaddr;
-    w_f0_vaddr_next = r_f2_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(r_f2_vaddr); // r_f2_vaddr;
   end else if (r_f2_valid & ~r_f2_clear & w_f2_predict_valid) begin
     // F2 stage Prediction
     w_f0_predicted  = 1'b1;
@@ -304,8 +304,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_f1_tlb_except_valid <= 1'b0;
   end else begin
     r_f1_valid            <= r_f0_valid & w_f0_ic_req.valid & w_f0_req_ready;
-    r_f1_clear            <= ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready &
-                             ~w_iq_predict_valid;
+    /* r_f1_clear            <= ~w_flush_valid & w_f2_inst_buffer_load_valid & ~w_inst_buffer_ready &
+                             ~w_iq_predict_valid; */
+    r_f1_clear            <= 1'b0;
     r_f1_predicted        <= w_f0_predicted;
     r_f1_vaddr            <= w_f0_vaddr;
     r_f1_int_inserted     <= w_f0_int_inserted | r_f0_int_flush;

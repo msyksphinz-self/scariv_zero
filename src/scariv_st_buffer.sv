@@ -76,7 +76,7 @@ st_buffer_entry_t w_init_load;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1:0] w_stbuf_fwd_hit[ST_BUF_ENTRY_SIZE];
 
-amo_op_if w_amo_op_if [ST_BUF_ENTRY_SIZE]();
+amo_op_if w_amo_op_if();
 
 logic [ST_BUF_ENTRY_SIZE-1: 0]          w_ex2_rmw_order_haz_vld[scariv_conf_pkg::LSU_INST_NUM];
 
@@ -95,9 +95,22 @@ assign w_out_valid  = |(w_entry_finish & w_out_ptr_oh);
 // -----------------------
 // Input / Output Pointer
 // -----------------------
-inoutptr_var_oh #(.SIZE(ST_BUF_ENTRY_SIZE)) u_req_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n), .i_rollback(1'b0),
-                                                      .i_in_valid (w_st_buffer_allocated ), .i_in_val ('h1), .o_in_ptr_oh (w_in_ptr_oh ),
-                                                      .i_out_valid(w_out_valid), .i_out_val('h1), .o_out_ptr_oh(w_out_ptr_oh));
+inoutptr_oh
+  #(.SIZE(ST_BUF_ENTRY_SIZE))
+u_req_ptr
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .i_rollback (1'b0),
+   .i_clear    (st_buffer_if.valid & st_buffer_if.is_rmw),
+
+   .i_in_valid  (w_st_buffer_allocated ),
+   .o_in_ptr    (w_in_ptr_oh ),
+
+   .i_out_valid (w_out_valid),
+   .o_out_ptr   (w_out_ptr_oh)
+   );
 
 // New Entry create
 assign w_init_load = assign_st_buffer(
@@ -119,64 +132,115 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
 
   assign w_entry_valids[e_idx] = w_entries[e_idx].valid;
 
-  assign w_load = st_buffer_if.valid & w_in_ptr_oh[e_idx] & w_st_buffer_allocated;
+  assign w_load = st_buffer_if.valid & (st_buffer_if.is_rmw ? e_idx == 0 : w_in_ptr_oh[e_idx]) & w_st_buffer_allocated;
 
-  scariv_st_buffer_entry
-  u_entry
-    (
-     .i_clk    (i_clk    ),
-     .i_reset_n(i_reset_n),
+  if (e_idx == 0) begin
+    scariv_st_buffer_amo_entry
+      u_entry
+        (
+         .i_clk    (i_clk    ),
+         .i_reset_n(i_reset_n),
 
-     .i_load (w_load),
-     .i_entry(w_init_load),
-     .i_merge_accept (w_merge_accept[e_idx]),
+         .i_load (w_load),
+         .i_entry(w_init_load),
+         .i_merge_accept (w_merge_accept[e_idx]),
 
-     .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
-     .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
+         .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
+         .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
 
-     .o_missu_req      (w_entry_missu_req   [e_idx]),
-     .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
+         .o_missu_req      (w_entry_missu_req   [e_idx]),
+         .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
 
-     .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
-     .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
-     .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
-     .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
+         .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
+         .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
+         .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
+         .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
 
-     // Forward check interface from LSU Pipeline
-     .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
-     .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
+         // Forward check interface from LSU Pipeline
+         .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
+         .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
 
-     .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
-     .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss    ),
-     .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
-     .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
+         .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
+         .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss    ),
+         .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
+         .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
 
-     .o_l1d_wr_req         (w_entry_l1d_wr_req   [e_idx]),
-     .i_l1d_wr_accepted    (w_entry_l1d_wr_req_oh[e_idx]),
+         .o_l1d_wr_req         (w_entry_l1d_wr_req   [e_idx]),
+         .i_l1d_wr_accepted    (w_entry_l1d_wr_req_oh[e_idx]),
 
-     .i_l1d_wr_s1_resp_hit      (l1d_stbuf_wr_if.s1_wr_resp.s1_hit),
-     .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
+         .i_l1d_wr_s1_resp_hit      (l1d_stbuf_wr_if.s1_wr_resp.s1_hit),
+         .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
 
-     .i_snoop_busy     (snoop_info_if.busy),
-     .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
-     .i_missu_resolve (i_missu_resolve),
+         .i_snoop_busy     (snoop_info_if.busy),
+         .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
+         .i_missu_resolve (i_missu_resolve),
 
-     .amo_op_if (w_amo_op_if[e_idx]),
+         .amo_op_if (w_amo_op_if),
 
-     .l1d_mshr_wr_if   (l1d_mshr_wr_if),
-     .o_ready_to_merge (w_ready_to_merge),
-     .i_mshr_l1d_wr_merged (w_entry_l1d_merge_hit[e_idx]),
-     .o_entry(w_entries[e_idx]),
-     .o_state(w_state  [e_idx]),
-     .o_entry_finish (w_entry_finish[e_idx]),
-     .i_finish_accepted(w_out_ptr_oh[e_idx])
-     );
+         .l1d_mshr_wr_if   (l1d_mshr_wr_if),
+         .o_ready_to_merge (w_ready_to_merge),
+         .i_mshr_l1d_wr_merged (w_entry_l1d_merge_hit[e_idx]),
+         .o_entry(w_entries[e_idx]),
+         .o_state(w_state  [e_idx]),
+         .o_entry_finish (w_entry_finish[e_idx]),
+         .i_finish_accepted(w_out_ptr_oh[e_idx])
+         );
+  end else begin // if (e_idx == 0)
+    scariv_st_buffer_entry
+      u_entry
+        (
+         .i_clk    (i_clk    ),
+         .i_reset_n(i_reset_n),
+
+         .i_load (w_load),
+         .i_entry(w_init_load),
+         .i_merge_accept (w_merge_accept[e_idx]),
+
+         .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
+         .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
+
+         .o_missu_req      (w_entry_missu_req   [e_idx]),
+         .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
+
+         .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
+         .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
+         .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
+         .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
+
+         // Forward check interface from LSU Pipeline
+         .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
+         .o_fwd_lsu_hit      (w_stbuf_fwd_hit[e_idx]),
+
+         .i_l1d_rd_s1_conflict (l1d_rd_if.s1_conflict),
+         .i_l1d_rd_s1_miss     (l1d_rd_if.s1_miss    ),
+         .i_l1d_s1_way         (l1d_rd_if.s1_hit_way ),
+         .i_l1d_s1_data        (l1d_rd_if.s1_data    ),
+
+         .o_l1d_wr_req         (w_entry_l1d_wr_req   [e_idx]),
+         .i_l1d_wr_accepted    (w_entry_l1d_wr_req_oh[e_idx]),
+
+         .i_l1d_wr_s1_resp_hit      (l1d_stbuf_wr_if.s1_wr_resp.s1_hit),
+         .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
+
+         .i_snoop_busy     (snoop_info_if.busy),
+         .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
+         .i_missu_resolve (i_missu_resolve),
+
+         .l1d_mshr_wr_if   (l1d_mshr_wr_if),
+         .o_ready_to_merge (w_ready_to_merge),
+         .i_mshr_l1d_wr_merged (w_entry_l1d_merge_hit[e_idx]),
+         .o_entry(w_entries[e_idx]),
+         .o_state(w_state  [e_idx]),
+         .o_entry_finish (w_entry_finish[e_idx]),
+         .i_finish_accepted(w_out_ptr_oh[e_idx])
+         );
+  end // else: !if(e_idx == 0)
 
   // Search Merging
   assign w_merge_accept[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & w_ready_to_merge & ~w_entry_l1d_merge_hit[e_idx] &
                                  w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
-  assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~w_ready_to_merge &
+  assign w_merge_refused[e_idx] = w_entries[e_idx].valid & st_buffer_if.valid & ~(w_ready_to_merge & ~w_entry_l1d_merge_hit[e_idx]) &
                                   w_entries[e_idx].paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)] == st_buffer_if.paddr[riscv_pkg::PADDR_W-1:$clog2(ST_BUF_WIDTH/8)];
 
   // RMW Order Hazard Check
@@ -362,44 +426,15 @@ end endgenerate // block: lsu_fwd_loop
 // AMO Operation
 // --------------
 
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_amo_valids;
-decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop[ST_BUF_ENTRY_SIZE];
-decoder_lsu_ctrl_pkg::size_t   w_amo_size [ST_BUF_ENTRY_SIZE];
-riscv_pkg::xlen_t              w_amo_data0[ST_BUF_ENTRY_SIZE];
-riscv_pkg::xlen_t              w_amo_data1[ST_BUF_ENTRY_SIZE];
-
-decoder_lsu_ctrl_pkg::rmwop_t  w_amo_rmwop_sel;
-decoder_lsu_ctrl_pkg::size_t   w_amo_size_sel;
-riscv_pkg::xlen_t              w_amo_data0_sel;
-riscv_pkg::xlen_t              w_amo_data1_sel;
-riscv_pkg::xlen_t              w_amo_op_result;
-
 scariv_amo_operation
 u_amo_op
   (
-   .i_data0 (w_amo_data0_sel),
-   .i_data1 (w_amo_data1_sel),
-   .i_op    (w_amo_rmwop_sel),
-   .i_size  (w_amo_size_sel ),
-   .o_data  (w_amo_op_result)
+   .i_data0 (w_amo_op_if.data0),
+   .i_data1 (w_amo_op_if.data1),
+   .i_op    (w_amo_op_if.rmwop),
+   .i_size  (w_amo_op_if.size ),
+   .o_data  (w_amo_op_if.result)
    );
-
-generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : amo_loop
-  assign w_amo_valids[e_idx] = w_amo_op_if[e_idx].valid;
-  assign w_amo_rmwop[e_idx] = w_amo_op_if[e_idx].rmwop;
-  assign w_amo_size [e_idx] = w_amo_op_if[e_idx].size;
-  assign w_amo_data0[e_idx] = w_amo_op_if[e_idx].data0;
-  assign w_amo_data1[e_idx] = w_amo_op_if[e_idx].data1;
-
-  assign w_amo_op_if[e_idx].result = w_amo_op_result;
-end
-endgenerate
-
-bit_oh_or #(.T(decoder_lsu_ctrl_pkg::rmwop_t), .WORDS(ST_BUF_ENTRY_SIZE)) amo_rmwop_sel (.i_oh(w_amo_valids), .i_data(w_amo_rmwop), .o_selected(w_amo_rmwop_sel));
-bit_oh_or #(.T(decoder_lsu_ctrl_pkg::size_t),  .WORDS(ST_BUF_ENTRY_SIZE)) amo_size_sel  (.i_oh(w_amo_valids), .i_data(w_amo_size),  .o_selected(w_amo_size_sel));
-bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data0_sel (.i_oh(w_amo_valids), .i_data(w_amo_data0), .o_selected(w_amo_data0_sel));
-bit_oh_or #(.T(riscv_pkg::xlen_t),             .WORDS(ST_BUF_ENTRY_SIZE)) amo_data1_sel (.i_oh(w_amo_valids), .i_data(w_amo_data1), .o_selected(w_amo_data1_sel));
-
 
 // ----------------------------------
 // Temporary implementation of Snoop
@@ -462,6 +497,32 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
   `endif //  `ifdef VERILATOR
+
+logic [63: 0] sim_wr_l1d_cnt;
+logic [63: 0] sim_st_buffer_cnt;
+
+always_ff @ (negedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    sim_wr_l1d_cnt  <= 'h0;
+    sim_st_buffer_cnt <= 'h0;
+  end else begin
+    if (l1d_stbuf_wr_if.s0_valid) begin
+      sim_wr_l1d_cnt <= sim_wr_l1d_cnt + 'h1;
+    end
+    if (st_buffer_if.valid & st_buffer_if.resp != ST_BUF_FULL) begin
+      sim_st_buffer_cnt <= sim_st_buffer_cnt + 'h1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+
+final begin
+  $write ("==========================================\n");
+  $write ("ST-Buffer L1D update\n\n");
+  $write ("l1d_stbuf_wr_if : %d\n", sim_wr_l1d_cnt);
+  $write ("st_buffer transfer : %d\n", sim_st_buffer_cnt);
+  $write ("==========================================\n");
+end
+
 `endif //  `ifdef SIMULATION
 
 endmodule // scariv_st_buffer

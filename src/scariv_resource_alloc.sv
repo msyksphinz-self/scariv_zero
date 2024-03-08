@@ -97,16 +97,17 @@ u_rob_credit_return
  .cre_ret_if (rob_cre_ret_if)
 );
 
+localparam ALU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_ALU_ENTRY_SIZE / scariv_conf_pkg::ALU_INST_NUM;
 
 generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) begin : alu_cre_ret_loop
   logic w_inst_arith_valid;
   assign w_inst_arith_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.alu_inst_cnt[a_idx];
-  logic [$clog2(scariv_conf_pkg::RV_ALU_ENTRY_SIZE):0] w_alu_inst_cnt;
+  logic [$clog2(ALU_ISS_ENTRY_SIZE):0] w_alu_inst_cnt;
   /* verilator lint_off WIDTH */
   assign w_alu_inst_cnt = ibuf_front_if.payload.resource_cnt.alu_inst_cnt[a_idx];
 
   scariv_credit_return_master
-    #(.MAX_CREDITS(scariv_conf_pkg::RV_ALU_ENTRY_SIZE))
+    #(.MAX_CREDITS(ALU_ISS_ENTRY_SIZE))
   u_alu_credit_return
   (
    .i_clk(i_clk),
@@ -269,7 +270,7 @@ u_brtag_freelist
 
   .i_push    (brtag_if.valid),
   .i_push_id (brtag_if.brtag),
-  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_inst_valid),
+  .i_pop     ({scariv_conf_pkg::DISP_SIZE{w_iq_fire}} & ibuf_front_if.payload.resource_cnt.bru_branch_valid),
   .o_pop_id  (w_brtag_freelist_pop_id),
   .o_is_empty()
 );

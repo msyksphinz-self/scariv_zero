@@ -1,7 +1,11 @@
+set_param general.maxThreads $env(CORES)
+
 set PROJ_NAME scariv_tile_wrapper
 set PROJ_DIR .
 set RTL_ROOT_DIR ../../src
 set TOP_NAME scariv_tile_wrapper
+# set TOP_NAME scariv_phy_registers
+# set TOP_NAME distributed_mp_ram
 
 # set DEVICE_NAME xc7z045ffg900
 # set DEVICE_NAME xc7z030fbg484
@@ -13,6 +17,7 @@ set TOP_NAME scariv_tile_wrapper
 # Arty-A7
 set DEVICE_NAME xc7a100tcsg324
 # set BOARD_PART  digilentinc.com:arty-a7-100:part0:1.0
+set DEVICE_NAME xc7a200tsbg484
 
 create_project -in_memory -part $DEVICE_NAME $PROJ_NAME $PROJ_DIR
 save_project_as -force $PROJ_NAME $PROJ_DIR/$PROJ_NAME.xpr

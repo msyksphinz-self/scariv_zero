@@ -42,7 +42,8 @@ generate for (genvar b_idx = 0; b_idx < scariv_lsu_pkg::ICACHE_DATA_B_W/2; b_idx
   assign update_entry.target_vaddr = update_btb_if.target_vaddr;
 
   logic   info_update_valid;
-  assign info_update_valid = update_btb_if.valid & (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
+  assign info_update_valid = update_btb_if.valid &
+                             (w_update_pc_vaddr[BTB_ENTRY_FIELD_MSB:1] == b_idx);
   btb_inst_info_t update_info_entry;
   btb_inst_info_t w_f1_info_entry;
   assign update_info_entry.valid       = info_update_valid;

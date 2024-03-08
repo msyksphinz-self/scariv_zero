@@ -23,8 +23,8 @@ module scariv_alu_pipe
     commit_if.monitor commit_if,
     br_upd_if.slave              br_upd_if,
 
-    input scariv_pkg::issue_t rv0_issue,
-    input logic [RV_ENTRY_SIZE-1:0] rv0_index,
+    input scariv_alu_pkg::issue_t   ex0_issue,
+    input logic [RV_ENTRY_SIZE-1:0] ex0_index,
     phy_wr_if.slave ex1_phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
     output logic o_muldiv_stall,
@@ -45,7 +45,7 @@ typedef struct packed {
   imm_t imm;
 } pipe_ctrl_t;
 
-scariv_pkg::issue_t        w_ex0_issue;
+scariv_alu_pkg::issue_t    w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0] w_ex0_index;
 pipe_ctrl_t                w_ex0_pipe_ctrl;
 
@@ -58,8 +58,8 @@ riscv_pkg::xlen_t                    w_ex0_rs_fwd_data[2];
 
 
 pipe_ctrl_t                r_ex1_pipe_ctrl;
-scariv_pkg::issue_t        r_ex1_issue;
-scariv_pkg::issue_t        w_ex1_issue_next;
+scariv_alu_pkg::issue_t    r_ex1_issue;
+scariv_alu_pkg::issue_t    w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0] r_ex1_index;
 logic                      w_ex1_commit_flush;
 logic                      w_ex1_br_flush;
@@ -82,8 +82,8 @@ riscv_pkg::xlen_t                  r_ex1_rs2_data;
 logic                              r_ex1_rs2_imm_valid;
 
 pipe_ctrl_t                        r_ex2_pipe_ctrl;
-scariv_pkg::issue_t                r_ex2_issue;
-scariv_pkg::issue_t                w_ex2_issue_next;
+scariv_alu_pkg::issue_t            r_ex2_issue;
+scariv_alu_pkg::issue_t            w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]         r_ex2_index;
 
 logic                              r_ex2_wr_valid;
@@ -127,8 +127,8 @@ assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
 
 always_comb begin
-  w_ex0_issue = rv0_issue;
-  w_ex0_index = rv0_index;
+  w_ex0_issue = ex0_issue;
+  w_ex0_index = ex0_index;
 end
 
 // ---------------------
@@ -235,7 +235,7 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_issue <= w_ex1_issue_next;
     r_ex1_index <= w_ex0_index;
     r_ex1_pipe_ctrl <= w_ex0_pipe_ctrl;
-    r_ex1_div_stall <= w_ex0_div_stall;
+    r_ex1_div_stall <= w_ex0_muldiv_valid & w_ex0_div_stall;
 
     // r_ex1_rs1_data <= w_ex0_issue.rd_regs[0].predict_ready[1] ? w_ex0_rs_fwd_data[0] : ex0_regread_rs1.data;
     // r_ex1_rs2_data <= w_ex0_pipe_ctrl.imm == IMM_S  ? {{(riscv_pkg::XLEN_W-12){w_ex0_issue.inst[31]}}, w_ex0_issue.inst[31:20]} :
@@ -252,8 +252,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex1_wr_valid <= ex0_early_wr_if.valid;
 
     r_ex1_muldiv_valid <= w_ex0_muldiv_valid & (~w_ex0_rs1_mispred & ~w_ex0_rs2_mispred) & !w_ex0_flush;
-
-    r_ex1_div_stall <= w_ex0_div_stall;
   end
 end
 
@@ -345,9 +343,6 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
 
     case (r_ex1_pipe_ctrl.op)
       OP_SIGN_LUI:    r_ex2_result <= {{(riscv_pkg::XLEN_W-32){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:12], 12'h000};
-      OP_SIGN_AUIPC:  r_ex2_result <= {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex1_issue.pc_addr[riscv_pkg::VADDR_W-1]}},
-                                       r_ex1_issue.pc_addr} +
-                                      {{(riscv_pkg::XLEN_W-32){r_ex1_issue.inst[31]}}, r_ex1_issue.inst[31:12], 12'h000};
       OP_SIGN_ADD:    r_ex2_result <= w_ex1_rs1_selected_data + w_ex1_rs2_selected_data;
       OP_SIGN_SUB:    r_ex2_result <= w_ex1_rs1_selected_data - w_ex1_rs2_selected_data;
 `ifdef RV64

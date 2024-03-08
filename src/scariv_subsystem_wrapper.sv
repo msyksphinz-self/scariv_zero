@@ -17,13 +17,13 @@ module scariv_subsystem_wrapper
     output scariv_lsu_pkg::mem_cmd_t                                      o_l2_req_cmd,
     output logic                   [              riscv_pkg::PADDR_W-1:0] o_l2_req_addr,
     output logic                   [  scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] o_l2_req_tag,
-    output logic                   [  scariv_conf_pkg::ICACHE_DATA_W-1:0] o_l2_req_data,
-    output logic                   [scariv_conf_pkg::ICACHE_DATA_W/8-1:0] o_l2_req_byte_en,
+    output logic                   [  scariv_conf_pkg::DCACHE_DATA_W-1:0] o_l2_req_data,
+    output logic                   [scariv_conf_pkg::DCACHE_DATA_W/8-1:0] o_l2_req_byte_en,
     input  logic                                                          i_l2_req_ready,
 
     input  logic                                      i_l2_resp_valid,
     input  logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] i_l2_resp_tag,
-    input  logic [scariv_conf_pkg::ICACHE_DATA_W-1:0] i_l2_resp_data,
+    input  logic [scariv_conf_pkg::DCACHE_DATA_W-1:0] i_l2_resp_data,
     output logic                                      o_l2_resp_ready,
 
     input logic [ 7: 0] i_interrupts,

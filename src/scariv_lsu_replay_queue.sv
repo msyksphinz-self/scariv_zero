@@ -18,6 +18,7 @@ module scariv_lsu_replay_queue
     input logic i_reset_n,
 
     output logic o_full,
+    output logic o_almost_full,
 
     commit_if.monitor commit_if,
     br_upd_if.slave                br_upd_if,
@@ -89,16 +90,6 @@ assign w_queue_pop  = w_lsu_replay_valid & (lsu_pipe_req_if.ready | w_replay_add
 always_comb begin
   w_new_replay_queue_info.info         = lsu_pipe_haz_if.payload;
   w_new_replay_queue_info.diff_counter = w_empty ? 'h0 : r_diff_counter;
-  // w_new_replay_queue_info.inst                 = lsu_pipe_haz_if.payload.inst          ;
-  // w_new_replay_queue_info.cat                  = lsu_pipe_haz_if.payload.cat           ;
-  // w_new_replay_queue_info.oldest_valid         = lsu_pipe_haz_if.payload.oldest_valid  ;
-  // w_new_replay_queue_info.rd_reg               = lsu_pipe_haz_if.payload.rd_reg        ;
-  // w_new_replay_queue_info.rd_reg.predict_ready = 2'b00                                 ;
-  // w_new_replay_queue_info.wr_reg               = lsu_pipe_haz_if.payload.wr_reg        ;
-  // w_new_replay_queue_info.paddr                = lsu_pipe_haz_if.payload.paddr         ;
-  // w_new_replay_queue_info.is_uc                = lsu_pipe_haz_if.payload.is_uc         ;
-  // w_new_replay_queue_info.hazard_typ           = lsu_pipe_haz_if.payload.hazard_typ    ;
-  // w_new_replay_queue_info.hazard_index         = lsu_pipe_haz_if.payload.hazard_index;
 end
 
 // Diff counter from previous Queue inesrtion
@@ -182,6 +173,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         end
     end
 end
+
+logic [$clog2(REPLAY_QUEUE_SIZE)-1: 0] r_fifo_counter;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_fifo_counter <= 'h0;
+  end else begin
+    case ({w_queue_pop, w_queue_push})
+      2'b01   : r_fifo_counter <= r_fifo_counter + 'h1;
+      2'b10   : r_fifo_counter <= r_fifo_counter - 'h1;
+      default : begin end
+    endcase // case ({w_queue_pop, w_queue_push})
+  end
+end
+
+assign o_almost_full = r_fifo_counter >= REPLAY_QUEUE_SIZE - 4; // 4(=four stage)
 
 ring_fifo
 #(

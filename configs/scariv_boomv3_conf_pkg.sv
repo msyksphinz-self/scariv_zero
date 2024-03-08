@@ -1,6 +1,6 @@
 package scariv_conf_pkg;
 
-  localparam ICACHE_DATA_W = 128;
+  localparam ICACHE_DATA_W = 64;
   localparam DCACHE_DATA_W = 128;
   localparam ICACHE_WORDS = 64;
   localparam DCACHE_WORDS = 64;
@@ -28,6 +28,8 @@ package scariv_conf_pkg;
   localparam RV_LSU_ENTRY_SIZE = 16;
   localparam LDQ_SIZE = 16;
   localparam STQ_SIZE = 16;
+  localparam STQ_REGRD_PORT_NUM = 1;
+  localparam DETAIL_STLD_FWD = 0;
 
   localparam RV_CSU_ENTRY_SIZE = 4;
   localparam RV_BRU_ENTRY_SIZE = 16;

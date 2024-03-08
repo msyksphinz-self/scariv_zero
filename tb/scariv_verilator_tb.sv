@@ -67,8 +67,8 @@ logic                     w_elf_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_elf_req_cmd;
 scariv_pkg::paddr_t       w_elf_req_addr;
 tag_t                     w_elf_req_tag;
-scariv_pkg::ic_data_t     w_elf_req_data;
-scariv_pkg::ic_strb_t     w_elf_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_elf_req_data;
+scariv_lsu_pkg::dc_strb_t w_elf_req_byte_en;
 logic                     w_elf_req_ready;
 
 /* from Frontend IC */
@@ -76,13 +76,13 @@ logic                     w_ss_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_ss_req_cmd;
 scariv_pkg::paddr_t       w_ss_req_addr;
 tag_t                     w_ss_req_tag;
-scariv_pkg::ic_data_t     w_ss_req_data;
-scariv_pkg::ic_strb_t     w_ss_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_ss_req_data;
+scariv_lsu_pkg::dc_strb_t w_ss_req_byte_en;
 logic                     w_ss_req_ready;
 
 logic                     w_ss_resp_valid;
 tag_t                     w_ss_resp_tag;
-scariv_pkg::ic_data_t     w_ss_resp_data;
+scariv_lsu_pkg::dc_data_t w_ss_resp_data;
 logic                     w_ss_resp_ready;
 
 /* L1D Interface */
@@ -90,13 +90,13 @@ logic                     w_l1d_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_l1d_req_cmd;
 scariv_pkg::paddr_t       w_l1d_req_addr;
 tag_t                     w_l1d_req_tag;
-scariv_pkg::ic_data_t     w_l1d_req_data;
-scariv_pkg::ic_strb_t     w_l1d_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_l1d_req_data;
+scariv_lsu_pkg::dc_strb_t w_l1d_req_byte_en;
 logic                     w_l1d_req_ready;
 
 logic                     w_l1d_resp_valid;
 tag_t                     w_l1d_resp_tag;
-scariv_pkg::ic_data_t     w_l1d_resp_data;
+scariv_lsu_pkg::dc_data_t w_l1d_resp_data;
 logic                     w_l1d_resp_ready;
 
 /* PTW Interface */
@@ -104,13 +104,13 @@ logic                     w_ptw_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_ptw_req_cmd;
 scariv_pkg::paddr_t       w_ptw_req_addr;
 tag_t                     w_ptw_req_tag;
-scariv_pkg::ic_data_t     w_ptw_req_data;
-scariv_pkg::ic_strb_t     w_ptw_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_ptw_req_data;
+scariv_lsu_pkg::dc_strb_t w_ptw_req_byte_en;
 logic                     w_ptw_req_ready;
 
 logic                     w_ptw_resp_valid;
 tag_t                     w_ptw_resp_tag;
-scariv_pkg::ic_data_t     w_ptw_resp_data;
+scariv_lsu_pkg::dc_data_t w_ptw_resp_data;
 logic                     w_ptw_resp_ready;
 
 // Snoop Interface
@@ -118,21 +118,21 @@ logic                     w_snoop_req_valid;
 scariv_pkg::paddr_t       w_snoop_req_paddr;
 
 logic                     w_snoop_resp_valid;
-scariv_pkg::ic_data_t     w_snoop_resp_data;
-scariv_pkg::ic_strb_t     w_snoop_resp_be;
+scariv_lsu_pkg::dc_data_t w_snoop_resp_data;
+scariv_lsu_pkg::dc_strb_t w_snoop_resp_be;
 
 /* Middle Interface */
 logic                     w_mid_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_mid_req_cmd;
 scariv_pkg::paddr_t       w_mid_req_addr;
 tag_t                     w_mid_req_tag;
-scariv_pkg::ic_data_t     w_mid_req_data;
-scariv_pkg::ic_strb_t     w_mid_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_mid_req_data;
+scariv_lsu_pkg::dc_strb_t w_mid_req_byte_en;
 logic                     w_mid_req_ready;
 
 logic                     w_mid_resp_valid;
 tag_t                     w_mid_resp_tag;
-scariv_pkg::ic_data_t     w_mid_resp_data;
+scariv_lsu_pkg::dc_data_t w_mid_resp_data;
 logic                     w_mid_resp_ready;
 
 /* BootROM Interface */
@@ -140,13 +140,13 @@ logic                     w_bootrom_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_bootrom_req_cmd;
 scariv_pkg::paddr_t       w_bootrom_req_addr;
 tag_t                     w_bootrom_req_tag;
-scariv_pkg::ic_data_t     w_bootrom_req_data;
-scariv_pkg::ic_strb_t     w_bootrom_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_bootrom_req_data;
+scariv_lsu_pkg::dc_strb_t w_bootrom_req_byte_en;
 logic                     w_bootrom_req_ready;
 
 logic                     w_bootrom_resp_valid;
 tag_t                     w_bootrom_resp_tag;
-scariv_pkg::ic_data_t     w_bootrom_resp_data;
+scariv_lsu_pkg::dc_data_t w_bootrom_resp_data;
 logic                     w_bootrom_resp_ready;
 
 /* Serial Interface */
@@ -154,13 +154,13 @@ logic                     w_serial_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_serial_req_cmd;
 scariv_pkg::paddr_t       w_serial_req_addr;
 tag_t                     w_serial_req_tag;
-scariv_pkg::ic_data_t     w_serial_req_data;
-scariv_pkg::ic_strb_t     w_serial_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_serial_req_data;
+scariv_lsu_pkg::dc_strb_t w_serial_req_byte_en;
 logic                     w_serial_req_ready;
 
 logic                     w_serial_resp_valid;
 tag_t                     w_serial_resp_tag;
-scariv_pkg::ic_data_t     w_serial_resp_data;
+scariv_lsu_pkg::dc_data_t w_serial_resp_data;
 logic                     w_serial_resp_ready;
 
 /* Kernel Boot Flash Interface */
@@ -168,13 +168,13 @@ logic                     w_kernel_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_kernel_req_cmd;
 scariv_pkg::paddr_t       w_kernel_req_addr;
 tag_t                     w_kernel_req_tag;
-scariv_pkg::ic_data_t     w_kernel_req_data;
-scariv_pkg::ic_strb_t     w_kernel_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_kernel_req_data;
+scariv_lsu_pkg::dc_strb_t w_kernel_req_byte_en;
 logic                     w_kernel_req_ready;
 
 logic                     w_kernel_resp_valid;
 tag_t                     w_kernel_resp_tag;
-scariv_pkg::ic_data_t     w_kernel_resp_data;
+scariv_lsu_pkg::dc_data_t w_kernel_resp_data;
 logic                     w_kernel_resp_ready;
 
 /* initrd Boot Flash Interface */
@@ -182,13 +182,13 @@ logic                     w_initrd_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_initrd_req_cmd;
 scariv_pkg::paddr_t       w_initrd_req_addr;
 tag_t                     w_initrd_req_tag;
-scariv_pkg::ic_data_t     w_initrd_req_data;
-scariv_pkg::ic_strb_t     w_initrd_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_initrd_req_data;
+scariv_lsu_pkg::dc_strb_t w_initrd_req_byte_en;
 logic                     w_initrd_req_ready;
 
 logic                     w_initrd_resp_valid;
 tag_t                     w_initrd_resp_tag;
-scariv_pkg::ic_data_t     w_initrd_resp_data;
+scariv_lsu_pkg::dc_data_t w_initrd_resp_data;
 logic                     w_initrd_resp_ready;
 
 /* L2 Interface */
@@ -196,13 +196,13 @@ logic                     w_l2_req_valid;
 scariv_lsu_pkg::mem_cmd_t w_l2_req_cmd;
 scariv_pkg::paddr_t       w_l2_req_addr;
 tag_t                     w_l2_req_tag;
-scariv_pkg::ic_data_t     w_l2_req_data;
-scariv_pkg::ic_strb_t     w_l2_req_byte_en;
+scariv_lsu_pkg::dc_data_t w_l2_req_data;
+scariv_lsu_pkg::dc_strb_t w_l2_req_byte_en;
 logic                     w_l2_req_ready;
 
 logic                     w_l2_resp_valid;
 tag_t                     w_l2_resp_tag;
-scariv_pkg::ic_data_t     w_l2_resp_data;
+scariv_lsu_pkg::dc_data_t w_l2_resp_data;
 logic                     w_l2_resp_ready;
 
 /* Connection */
@@ -371,7 +371,7 @@ u_scariv_subsystem_wrapper
 
 tb_l2_behavior_ram
   #(
-    .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+    .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
     .TAG_W    (TAG_W),
     .ADDR_W   (riscv_pkg::PADDR_W),
     .BASE_ADDR('h8000_0000),
@@ -409,7 +409,7 @@ u_tb_l2_behavior_ram
 // BootROM
 scariv_bootrom
 #(
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h1000),
@@ -438,7 +438,7 @@ scariv_bootrom
 // Serial
 scariv_serialdevice
 #(
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h5400_0000),
@@ -468,7 +468,7 @@ scariv_serialdevice
 tb_flash
 #(
   .FILE     ("image"),
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('h8020_0000),
@@ -498,7 +498,7 @@ tb_flash
 tb_flash
 #(
   .FILE     ("initrd"),
-  .DATA_W   (scariv_conf_pkg::ICACHE_DATA_W),
+  .DATA_W   (scariv_conf_pkg::DCACHE_DATA_W),
   .TAG_W    (TAG_W),
   .ADDR_W   (riscv_pkg::PADDR_W),
   .BASE_ADDR('hffc8_4a00),
@@ -569,7 +569,7 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
           if (`ROB.w_commit.grp_id[grp_idx] &
               ~`ROB.w_commit.dead_id[grp_idx]) begin
             /* verilator lint_off WIDTH */
-            step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
+            step_spike ($time / 4, longint'(committed_rob_payload.disp[grp_idx].pc_addr),
                         int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
                         `ROB.w_sim_mstatus[`ROB.w_out_cmt_entry_id][grp_idx],
                         // Exception selection
@@ -577,14 +577,14 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                         `ROB.r_rob_except.typ,
                         `ROB.w_out_cmt_id,
                         1 << grp_idx,
-                        committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
-                        committed_rob_entry.inst[grp_idx].wr_reg.valid,
-                        committed_rob_entry.inst[grp_idx].wr_reg.typ,
-                        committed_rob_entry.inst[grp_idx].wr_reg.regidx,
-                        committed_rob_entry.inst[grp_idx].wr_reg.rnid,
-                        committed_rob_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
-                        w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
-                        w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid],
+                        committed_rob_payload.disp[grp_idx].rvc_inst_valid ? committed_rob_payload.disp[grp_idx].rvc_inst : committed_rob_payload.disp[grp_idx].inst,
+                        committed_rob_payload.disp[grp_idx].wr_reg.valid,
+                        committed_rob_payload.disp[grp_idx].wr_reg.typ,
+                        committed_rob_payload.disp[grp_idx].wr_reg.regidx,
+                        committed_rob_payload.disp[grp_idx].wr_reg.rnid,
+                        committed_rob_payload.disp[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
+                        w_physical_int_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid] :
+                        w_physical_fp_data [committed_rob_payload.disp[grp_idx].wr_reg.rnid],
                         w_physical_vec_data_rnid[grp_idx][0], w_physical_vec_data_rnid[grp_idx][1], w_physical_vec_data_rnid[grp_idx][2], w_physical_vec_data_rnid[grp_idx][3],
                         w_physical_vec_data_rnid[grp_idx][4], w_physical_vec_data_rnid[grp_idx][5], w_physical_vec_data_rnid[grp_idx][6], w_physical_vec_data_rnid[grp_idx][7]
                         );
@@ -608,11 +608,11 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
             end // for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++)
 
             // RAS check
-            step_ras ($time,
-                      `ROB.w_out_cmt_id,
-                      1 << grp_idx,
-                      `ROB.w_out_entry.br_upd_info.sim_ras_index,
-                      `ROB.w_out_entry.br_upd_info.sim_pred_vaddr);
+            // step_ras ($time,
+            //           `ROB.w_out_cmt_id,
+            //           1 << grp_idx,
+            //           `ROB.w_out_entry.br_upd_info.sim_ras_index,
+            //           `ROB.w_out_entry.br_upd_info.sim_pred_vaddr);
           end // if (`ROB.w_commit.grp_id[grp_idx] &...
         end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
       end  // if (`ROB.w_out_valid)

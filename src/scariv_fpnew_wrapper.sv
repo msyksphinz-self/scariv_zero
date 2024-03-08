@@ -123,6 +123,9 @@ typedef struct packed {
 aux_fpnew_age_t r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY];
 aux_fpnew_age_t r_longfpu_age;
 aux_fpnew_age_t w_longfpu_age_next;
+logic                  w_longfpu_valid_next;
+logic                  r_longfpu_valid;
+
 logic                  w_age_fifo_last_br_flush_valid;
 logic                  w_age_fifo_last_dead;
 
@@ -163,12 +166,19 @@ assign w_age_fifo_last_dead = r_age_fifo[scariv_conf_pkg::FPNEW_LATENCY-1].dead 
 
 always_comb begin
   w_longfpu_age_next = r_longfpu_age;
+  w_longfpu_valid_next = r_longfpu_valid;
 
   if (scariv_pkg::is_br_flush_target(r_longfpu_age.cmt_id, r_longfpu_age.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                      br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update) begin
     w_longfpu_age_next.dead = 1'b1;
   end
-  if (w_fdiv_valid) begin
+
+  if (w_fpnew_out_valid & (w_aux_fpnew_out.op inside {fpnew_pkg::DIV, fpnew_pkg::SQRT}) | w_commit_flush) begin
+    w_longfpu_valid_next = 1'b0;
+  end
+  if (i_valid & ~w_in_flush & w_fdiv_valid) begin
+    w_longfpu_valid_next = 1'b1;
+
     w_longfpu_age_next.cmt_id = i_cmt_id;
     w_longfpu_age_next.grp_id = i_grp_id;
     w_longfpu_age_next.dead   = 1'b0;
@@ -177,8 +187,10 @@ end // always_comb
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
+    r_longfpu_valid <= 1'b0;
     r_longfpu_age.dead <= 1'b0;
   end else begin
+    r_longfpu_valid <= w_longfpu_valid_next;
     r_longfpu_age <= w_longfpu_age_next;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
@@ -339,15 +351,25 @@ assign w_in_flush     = w_commit_flush | w_in_br_flush;
 assign w_fma32_in_valid     = i_valid & ~w_in_flush & w_fma_valid     & (i_pipe_ctrl.size == SIZE_W);
 assign w_noncomp32_in_valid = i_valid & ~w_in_flush & w_noncomp_valid & (i_pipe_ctrl.size == SIZE_W);
 
-logic [ 2: 0][63: 0] w_fpnew_rs;
-assign w_fpnew_rs[0] = (w_fpnew_op == fpnew_pkg::ADD)                 ? 'h0   :
-                       (w_fpnew_op == fpnew_pkg::DIV) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 :
-                       i_rs1;
-assign w_fpnew_rs[1] = (w_fpnew_op == fpnew_pkg::SQRT) ? ((i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 : i_rs1) :
-                       (w_fpnew_op == fpnew_pkg::ADD ) ? i_rs1 :
-                       (w_fpnew_op == fpnew_pkg::DIV ) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs2[63:32] ? 64'hffffffff7fc00000 :
-                       i_rs2;
-assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD)  ? i_rs2 : i_rs3;
+logic [ 2: 0][riscv_fpu_pkg::FLEN_W-1: 0] w_fpnew_rs;
+generate if (riscv_fpu_pkg::FLEN_W == 64) begin
+  assign w_fpnew_rs[0] = (w_fpnew_op == fpnew_pkg::ADD)                 ? 'h0   :
+                         (w_fpnew_op == fpnew_pkg::DIV) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 :
+                         i_rs1;
+  assign w_fpnew_rs[1] = (w_fpnew_op == fpnew_pkg::SQRT) ? ((i_pipe_ctrl.size == SIZE_W) & ~&i_rs1[63:32] ? 64'hffffffff7fc00000 : i_rs1) :
+                         (w_fpnew_op == fpnew_pkg::ADD ) ? i_rs1 :
+                         (w_fpnew_op == fpnew_pkg::DIV ) & (i_pipe_ctrl.size == SIZE_W) & ~&i_rs2[63:32] ? 64'hffffffff7fc00000 :
+                         i_rs2;
+  assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD)  ? i_rs2 : i_rs3;
+end else begin
+  assign w_fpnew_rs[0] = (w_fpnew_op == fpnew_pkg::ADD)                 ? 'h0   :
+                         i_rs1;
+  assign w_fpnew_rs[1] = (w_fpnew_op == fpnew_pkg::SQRT) ? i_rs1 :
+                         (w_fpnew_op == fpnew_pkg::ADD ) ? i_rs1 :
+                         (w_fpnew_op == fpnew_pkg::DIV ) & i_rs2;
+  assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD)  ? i_rs2 : i_rs3;
+end endgenerate // else: !if(riscv_fpu_pkg::FLEN_W == 64)
+
 logic [riscv_fpu_pkg::FLEN_W-1: 0] w_result;
 
 fpnew_pkg::status_t                w_fpnew_fflags;
@@ -390,8 +412,10 @@ u_fpnew_top
    .out_valid_o (w_fpnew_out_valid),
    .out_ready_i (1'b1   ),
    // Indication of valid data in flight
-   .busy_o (o_busy)
+   .busy_o ()
    );
+
+assign o_busy = w_fdiv_valid | r_longfpu_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin

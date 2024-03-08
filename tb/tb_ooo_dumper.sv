@@ -23,7 +23,7 @@ generate if (ooo_count_valid) begin : ooo_monitor_count
     scariv_pkg::cmt_id_t w_alu_oldest_cmt_id[scariv_conf_pkg::RV_ALU_ENTRY_SIZE];
     scariv_pkg::grp_id_t w_alu_oldest_grp_id[scariv_conf_pkg::RV_ALU_ENTRY_SIZE];
 
-    for (genvar entry_idx = 0; entry_idx < scariv_conf_pkg::RV_ALU_ENTRY_SIZE; entry_idx++) begin
+    for (genvar entry_idx = 0; entry_idx < scariv_conf_pkg::RV_ALU_ENTRY_SIZE / scariv_conf_pkg::ALU_INST_NUM; entry_idx++) begin
     logic w_id0_is_older_than_id1;
       assign w_id0_is_older_than_id1 = scariv_pkg::id0_is_older_than_id1 (entry_idx == 'h0 ? 'h0 : w_alu_oldest_cmt_id[entry_idx-1],
                                                                           entry_idx == 'h0 ? 'h0 : w_alu_oldest_grp_id[entry_idx-1],
@@ -215,11 +215,11 @@ generate if (ooo_count_valid) begin : ooo_monitor_count
         r_issue_num    [ALU_ISSUE_BASE + alu_idx] <= 'h0;
         r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] <= 'h0;
       end else begin
-        if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.valid) begin
+        if (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.valid) begin
           r_issue_num    [ALU_ISSUE_BASE + alu_idx] <= r_issue_num[ALU_ISSUE_BASE + alu_idx] + 'h1;
           if (scariv_pkg::id0_is_older_than_id1 (w_scheduler_oldest_cmt_id, w_scheduler_oldest_grp_id,
-                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.cmt_id,
-                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_rv0_issue.grp_id)) begin
+                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.cmt_id,
+                                                 u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.alu_loop[alu_idx].u_alu.w_ex0_issue.grp_id)) begin
             r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] <= r_ooo_issue_num[ALU_ISSUE_BASE + alu_idx] + 'h1;
           end
         end

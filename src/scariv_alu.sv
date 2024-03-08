@@ -43,6 +43,7 @@ module scariv_alu #(
 );
 
 localparam ALU_PORT_SIZE = scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM;
+localparam ALU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_ALU_ENTRY_SIZE / scariv_conf_pkg::ALU_INST_NUM;
 
 `ifdef SIMULATION
 initial begin
@@ -56,8 +57,8 @@ scariv_pkg::disp_t w_disp_inst[scariv_conf_pkg::DISP_SIZE];
 scariv_pkg::disp_t disp_picked_inst[ALU_PORT_SIZE];
 logic [ALU_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[ALU_PORT_SIZE];
-scariv_pkg::issue_t w_rv0_issue;
-logic [scariv_conf_pkg::RV_ALU_ENTRY_SIZE-1:0] w_rv0_index_oh;
+scariv_alu_pkg::issue_t w_ex0_issue;
+logic [ALU_ISS_ENTRY_SIZE-1:0] w_ex0_index_oh;
 
 logic                                        w_muldiv_stall;
 
@@ -76,9 +77,9 @@ u_scariv_disp_pickup
    .o_disp_grp_id (disp_picked_grp_id)
    );
 
-scariv_issue_unit
+scariv_alu_issue_unit
   #(
-    .ENTRY_SIZE  (scariv_conf_pkg::RV_ALU_ENTRY_SIZE),
+    .ENTRY_SIZE  (ALU_ISS_ENTRY_SIZE),
     .IN_PORT_SIZE(ALU_PORT_SIZE)
     )
 u_scariv_issue_unit
@@ -100,8 +101,8 @@ u_scariv_issue_unit
    .phy_wr_if  (phy_wr_in_if  ),
    .mispred_if (mispred_in_if ),
 
-   .o_issue(w_rv0_issue),
-   .o_iss_index_oh(w_rv0_index_oh),
+   .o_issue(w_ex0_issue),
+   .o_iss_index_oh(w_ex0_index_oh),
 
    .commit_if      (commit_if),
    .br_upd_if     (br_upd_if)
@@ -110,7 +111,7 @@ u_scariv_issue_unit
 
 scariv_alu_pipe
   #(
-    .RV_ENTRY_SIZE(scariv_conf_pkg::RV_ALU_ENTRY_SIZE)
+    .RV_ENTRY_SIZE(ALU_ISS_ENTRY_SIZE)
     )
 u_alu
   (
@@ -120,8 +121,8 @@ u_alu
    .commit_if  (commit_if),
    .br_upd_if (br_upd_if),
 
-   .rv0_issue(w_rv0_issue),
-   .rv0_index(w_rv0_index_oh),
+   .ex0_issue(w_ex0_issue),
+   .ex0_index(w_ex0_index_oh),
    .ex1_phy_wr_if(phy_wr_in_if),
 
    .o_muldiv_stall(w_muldiv_stall),
