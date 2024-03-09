@@ -1140,7 +1140,9 @@ always_comb begin
         end
 
         w_mstatus_next[`MSTATUS_FS] = write_if.data[`MSTATUS_FS];
-        w_mstatus_next[`MSTATUS_VS] = write_if.data[`MSTATUS_VS];
+        if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+          w_mstatus_next[`MSTATUS_VS] = write_if.data[`MSTATUS_VS];
+        end
       end // case: `SYSREG_ADDR_MSTATUS
 
       `SYSREG_ADDR_SSTATUS : begin
@@ -1149,7 +1151,9 @@ always_comb begin
         w_mstatus_next[`MSTATUS_SPP ] = write_if.data[`MSTATUS_SPP ];
         w_mstatus_next[`MSTATUS_XS  ] = write_if.data[`MSTATUS_XS  ];
         w_mstatus_next[`MSTATUS_FS  ] = write_if.data[`MSTATUS_FS  ];
-        w_mstatus_next[`MSTATUS_VS  ] = write_if.data[`MSTATUS_VS  ];
+        if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+          w_mstatus_next[`MSTATUS_VS  ] = write_if.data[`MSTATUS_VS  ];
+        end
         w_mstatus_next[`MSTATUS_MPP ] = write_if.data[`MSTATUS_MPP ];
         w_mstatus_next[`MSTATUS_MXR ] = write_if.data[`MSTATUS_MXR ];
         w_mstatus_next[`MSTATUS_SUM ] = write_if.data[`MSTATUS_SUM ];
