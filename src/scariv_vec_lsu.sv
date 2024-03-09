@@ -110,12 +110,12 @@ u_scariv_disp_pickup
    .o_disp_grp_id (w_disp_picked_grp_id)
    );
 
-early_wr_if w_early_wr_zero[scariv_pkg::REL_BUS_SIZE];
+early_wr_if w_early_wr_zero[scariv_pkg::REL_BUS_SIZE]();
 generate for (genvar idx = 0; idx < scariv_pkg::REL_BUS_SIZE; idx++) begin : early_zero_fill
   assign w_early_wr_zero[idx].valid = 'h0;
 end endgenerate
 
-lsu_mispred_if w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM];
+lsu_mispred_if w_mispred_lsu[scariv_conf_pkg::LSU_INST_NUM]();
 generate for (genvar idx = 0; idx < scariv_conf_pkg::LSU_INST_NUM; idx++) begin : mispred_zero_fill
   assign w_mispred_lsu[idx].mis_valid = 'h0;
 end endgenerate

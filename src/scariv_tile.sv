@@ -106,7 +106,7 @@ scariv_pkg::grp_id_t   w_disp_alu_valids [scariv_conf_pkg::ALU_INST_NUM];
 // LSU Components
 // ----------------------------------
 scariv_pkg::grp_id_t        w_disp_lsu_valids[scariv_conf_pkg::LSU_INST_NUM];
-flush_report_if             w_flush_report_if [scariv_conf_pkg::LSU_INST_NUM]();
+flush_report_if             w_flush_report_if[scariv_pkg::ANOTHER_FLUSH_SIZE]();
 
 // ----------------------------------
 // BRU Components
@@ -423,7 +423,7 @@ u_lsu_top
     .mispred_out_if (w_mispred_if),
 
     .done_report_if(w_done_report_if [LSU_DONE_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
-    .flush_report_if(w_flush_report_if),
+    .flush_report_if(w_flush_report_if[scariv_conf_pkg::LSU_INST_NUM-1: 0]),
 
     .snoop_info_if (w_snoop_info_if),
 

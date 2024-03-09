@@ -260,8 +260,8 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
 
      .o_0_older_than_1 (sload_is_younger_than_vstore)
      );
-  assign w_vstore_sload_same_dlen = scalar_ldq_haz_check_if.paddr[scariv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
-                                    w_ldq_entries[l_idx].addr[scariv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)];
+  assign w_vstore_sload_same_dlen = scalar_ldq_haz_check_if.paddr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)] ==
+                                    w_ldq_entries[l_idx].addr[riscv_pkg::PADDR_W-1: $clog2(scariv_vec_pkg::DLENB)];
   assign w_vstore_sload_haz_vld[l_idx] = scalar_ldq_haz_check_if.valid &
                                          !w_ldq_entries[l_idx].dead &
                                          w_ldq_entries[l_idx].is_valid &

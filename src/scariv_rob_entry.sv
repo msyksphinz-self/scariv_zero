@@ -19,7 +19,7 @@ module scariv_rob_entry
    input rob_entry_t  i_entry_in,
 
    done_report_if.slave  done_report_if [CMT_BUS_SIZE],
-   flush_report_if.slave flush_report_if [scariv_conf_pkg::LSU_INST_NUM],
+   flush_report_if.slave flush_report_if [scariv_pkg::ANOTHER_FLUSH_SIZE],
 
    output rob_entry_t o_entry,
    output logic       o_block_all_done,
@@ -74,7 +74,7 @@ grp_id_t w_another_flush_tmp_valid[ANOTHER_FLUSH_SIZE];
 grp_id_t w_another_flush_valid;
 grp_id_t w_another_tree_flush_valid;
 
-generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) begin : lsu_loop
+generate for (genvar l_idx = 0; l_idx < scariv_pkg::ANOTHER_FLUSH_SIZE; l_idx++) begin : lsu_loop
   assign w_another_flush_tmp_valid[l_idx] = flush_report_if[l_idx].valid &
                                             (flush_report_if[l_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0]) ? flush_report_if[l_idx].grp_id : 'h0;
 end endgenerate

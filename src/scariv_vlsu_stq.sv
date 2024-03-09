@@ -353,7 +353,7 @@ generate for (genvar spipe_idx = 0; spipe_idx < scariv_conf_pkg::LSU_INST_NUM; s
   logic [VLSU_STQ_BANK_SIZE-1: 0] w_bank_vlsu_haz_check_hit;
   for (genvar bank_idx = 0; bank_idx < VLSU_STQ_BANK_SIZE; bank_idx++) begin : bank_loop
     logic [VLSU_STQ_SIZE-1: 0] w_spipe_vlsu_haz_check_hit;
-    for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_idx;
+    for (genvar stq_idx = 0; stq_idx < VLSU_STQ_SIZE; stq_idx++) begin : stq_loop;
       assign w_spipe_vlsu_haz_check_hit[stq_idx] = w_vlsu_haz_check_hit[bank_idx][stq_idx][spipe_idx];
     end
     assign w_bank_vlsu_haz_check_hit[bank_idx] = |w_spipe_vlsu_haz_check_hit;

@@ -31,7 +31,7 @@ logic [$clog2(scariv_vec_pkg::VLENB*8)-1: 0]    r_acc_addr_offset;
 logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]    r_reg_offset;
 scariv_vec_pkg::vec_pos_t r_vec_step_index;
 
-logic [scariv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] r_vaddr_next_cacheline;
+logic [riscv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] r_vaddr_next_cacheline;
 
 always_comb begin
   if (r_state == USTRIDE_GEN) begin
@@ -73,7 +73,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
             if (w_cache_misaligned) begin
               r_state <= USTRIDE_GEN;
               r_vec_step_index       <= i_vec_step_index;
-              r_vaddr_next_cacheline <= o_vaddr[scariv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] + 'h1;
+              r_vaddr_next_cacheline <= o_vaddr[riscv_pkg::VADDR_W-1:$clog2(DCACHE_DATA_B_W)] + 'h1;
               r_reg_offset           <= scariv_vec_pkg::DLENB - o_vaddr[scariv_vec_pkg::DLENB-1: 0];
             end else begin
               r_acc_addr_offset <= update_offset (i_vec_step_index, r_acc_addr_offset);

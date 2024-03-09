@@ -22,7 +22,7 @@ module scariv_rob
    output cmt_id_t o_sc_new_cmt_id,
 
    done_report_if.slave  done_report_if  [CMT_BUS_SIZE],
-   flush_report_if.slave flush_report_if [LSU_INST_NUM],
+   flush_report_if.slave flush_report_if [ANOTHER_FLUSH_SIZE],
 
    br_upd_if.slave  br_upd_slave_if,
 
@@ -283,7 +283,7 @@ end
 // Exception detect and selection
 // -------------------------------
 
-localparam EXCEPT_SIZE = CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM + 1;  // +1 is from Frontend Exception
+localparam EXCEPT_SIZE = CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE + 1;  // +1 is from Frontend Exception
 
 logic [EXCEPT_SIZE-1: 0] w_done_except_valid;
 cmt_id_t          w_done_cmt_id      [EXCEPT_SIZE];
@@ -297,7 +297,7 @@ generate for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : done_exc_
   assign w_done_except_type [c_idx] = done_report_if[c_idx].except_type;
   assign w_done_tval        [c_idx] = done_report_if[c_idx].except_tval;
 end endgenerate
-generate for (genvar c_idx = 0; c_idx < scariv_conf_pkg::LSU_INST_NUM; c_idx++) begin : done_exc_flush_loop
+generate for (genvar c_idx = 0; c_idx < scariv_pkg::ANOTHER_FLUSH_SIZE; c_idx++) begin : done_exc_flush_loop
   assign w_done_except_valid[c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].valid;
   assign w_done_cmt_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].cmt_id;
   assign w_done_grp_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].grp_id;

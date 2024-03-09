@@ -104,6 +104,7 @@
 ../src/scariv_rename.sv
 ../src/scariv_rename_sub.sv
 ../src/scariv_resource_alloc.sv
+../src/scariv_rename_freelist.sv
 ../src/scariv_freelist.sv
 ../src/scariv_freelist_multiports.sv
 ../src/scariv_freelist_multiports_oh.sv
@@ -189,8 +190,10 @@
 ../src/scariv_vec_alu_datapath.sv
 ../src/scariv_vec_alu_pipe.sv
 ../src/scariv_vec_registers.sv
+../src/scariv_vlsu_uop_gen.sv
 ../src/scariv_vec_lsu_pipe.sv
 ../src/scariv_vec_lsu.sv
+../src/scariv_vlsu_replay_queue.sv
 ../src/scariv_vlsu_address_gen.sv
 ../src/scariv_vlsu_issue_entry.sv
 ../src/scariv_vlsu_issue_unit.sv

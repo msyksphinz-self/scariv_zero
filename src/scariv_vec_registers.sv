@@ -24,77 +24,74 @@ localparam WIDTH = riscv_vec_conf_pkg::DLEN_W;
 
 typedef logic [scariv_vec_pkg::VEC_RNID_W-1: 0] rnid_t;
 
-logic [WIDTH-1: 0] r_phy_regs[scariv_vec_pkg::VEC_RNID_SIZE][scariv_vec_pkg::VEC_STEP_W];
+logic [scariv_vec_pkg::VEC_RNID_SIZE-1: 0][WR_PORT_SIZE-1: 0] r_lvt;
 
-logic [WR_PORT_SIZE-1:0]  wr_valid;
-scariv_vec_pkg::vec_pos_t wr_pos [WR_PORT_SIZE];
-rnid_t                    wr_rnid[WR_PORT_SIZE];
-logic [WIDTH-1: 0]        wr_data[WR_PORT_SIZE];
+generate for (genvar r_idx = 0; r_idx < RD_PORT_SIZE; r_idx++) begin : w_rd_loop
+  logic [WIDTH-1: 0]  w_rd_data_d1[scariv_vec_pkg::VEC_STEP_W][WR_PORT_SIZE];
+  for (genvar s_idx = 0; s_idx < scariv_vec_pkg::VEC_STEP_W; s_idx++) begin : step_loop
+    for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_wr_loop
+      wire  w_wr_valid = regwrite[w_idx].valid & (regwrite[w_idx].rd_pos == s_idx);
 
-generate for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin : w_port_loop
-  assign wr_valid[w_idx] = regwrite[w_idx].valid;
-  assign wr_pos  [w_idx] = regwrite[w_idx].rd_pos;
-  assign wr_rnid [w_idx] = regwrite[w_idx].rd_rnid;
-  assign wr_data [w_idx] = regwrite[w_idx].rd_data;
-end endgenerate
+      data_array_2p
+        #(
+          .WIDTH (WIDTH ),
+          .ADDR_W(scariv_vec_pkg::VEC_RNID_W)
+          )
+      u_array
+        (
+         .i_clk     (i_clk    ),
+         .i_reset_n (i_reset_n),
 
+         .i_wr      (w_wr_valid          ),
+         .i_wr_addr (regwrite[w_idx].rd_rnid),
+         .i_wr_data (regwrite[w_idx].rd_data),
 
-generate for (genvar r_idx = 0; r_idx < scariv_vec_pkg::VEC_RNID_SIZE; r_idx++) begin : reg_loop
-  logic w_wr_valid;
-  logic [WIDTH-1: 0]        w_wr_data;
-  scariv_vec_pkg::vec_pos_t w_wr_pos;
+         .i_rd_addr (regread[r_idx].rnid),
+         .o_rd_data (w_rd_data_d1[s_idx][w_idx] )
+         );
 
-  select_oh #(
-      .SEL_WIDTH (WR_PORT_SIZE),
-      .KEY_WIDTH (scariv_vec_pkg::VEC_RNID_W),
-      .DATA_WIDTH(WIDTH)
-  ) wr_data_select (
-      .i_cmp_key (r_idx[scariv_vec_pkg::VEC_RNID_W-1:0]),
-      .i_valid   (wr_valid),
-      .i_keys    (wr_rnid),
-      .i_data    (wr_data),
-      .o_valid   (w_wr_valid),
-      .o_data    (w_wr_data)
-  );
+    end // block: w_wr_loop
 
-  select_oh #(
-      .SEL_WIDTH (WR_PORT_SIZE),
-      .KEY_WIDTH (scariv_vec_pkg::VEC_RNID_W),
-      .DATA_WIDTH($bits(scariv_vec_pkg::vec_pos_t))
-  ) wr_pos_select (
-      .i_cmp_key (r_idx[scariv_vec_pkg::VEC_RNID_W-1:0]),
-      .i_valid   (wr_valid),
-      .i_keys    (wr_rnid),
-      .i_data    (wr_pos),
-      .o_valid   (),
-      .o_data    (w_wr_pos)
-  );
+  end // block: w_rd_loop
 
+  logic [WR_PORT_SIZE-1: 0] r_lvt_d1;
+  scariv_vec_pkg::vec_pos_t r_pos_d1;
+  always_ff @ (posedge i_clk) begin
+    r_lvt_d1 <= r_lvt[regread[r_idx].rnid];
+    r_pos_d1 <= regread[r_idx].pos;
+  end
 
-  for (genvar s_idx = 0; s_idx < scariv_vec_pkg::VEC_STEP_W; s_idx++) begin : bank_loop
+  logic [WIDTH-1: 0] w_rd_data_sel;
+  bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt_d1), .i_data(w_rd_data_d1[r_pos_d1]), .o_selected(w_rd_data_sel));
+  assign regread[r_idx].data = w_rd_data_sel;
+end endgenerate // block: step_loop
 
-    always_ff @(posedge i_clk, negedge i_reset_n) begin
-      if (!i_reset_n) begin
-        r_phy_regs[r_idx][s_idx] <= {WIDTH{1'b0}};
-      end else begin
-        if (w_wr_valid & (w_wr_pos == s_idx)) begin
-          r_phy_regs[r_idx][s_idx] <= w_wr_data;
-        end
-      end
+generate for (genvar rn_idx = 0; rn_idx < scariv_vec_pkg::VEC_RNID_SIZE; rn_idx++) begin : rnid_loop
+logic [WR_PORT_SIZE-1: 0] w_wr_valid;
+  for (genvar w_idx = 0; w_idx < WR_PORT_SIZE; w_idx++) begin
+    assign w_wr_valid[w_idx] = regwrite[w_idx].valid & (regwrite[w_idx].rd_rnid == rn_idx);
+  end
+
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_lvt[rn_idx] <= 'h1;
+    end else begin
+      r_lvt[rn_idx] <= |w_wr_valid ? w_wr_valid : r_lvt[rn_idx];
     end
-  end // block: bank_loop
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+end endgenerate // block: rnid_loop
+
 
 `ifdef SIMULATION
-  logic [WIDTH-1: 0]  w_sim_phy_regs;
-  assign w_sim_phy_regs = r_phy_regs[r_idx][0];
-`endif // SIMULATION
-
-end endgenerate // block: reg_loop
-
-generate for (genvar p_idx = 0; p_idx < RD_PORT_SIZE; p_idx++) begin : port_loop
-  always_ff @ (posedge i_clk) begin
-    regread[p_idx].data <= r_phy_regs[regread[p_idx].rnid][regread[p_idx].pos];
+logic [WIDTH-1: 0] sim_phy_regs[scariv_vec_pkg::VEC_RNID_SIZE];
+generate for (genvar rn_idx = 0; rn_idx < scariv_vec_pkg::VEC_RNID_SIZE; rn_idx++) begin : sim_rn_loop
+logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
+  for (genvar wr_idx = 0; wr_idx < WR_PORT_SIZE; wr_idx++) begin
+    assign sim_phy_rn_data[wr_idx] = w_rd_loop[0].step_loop[0].w_wr_loop[wr_idx].u_array.data_array[rn_idx];
   end
+  bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
 end endgenerate
+
+`endif // SIMULATION
 
 endmodule // scariv_vec_registers

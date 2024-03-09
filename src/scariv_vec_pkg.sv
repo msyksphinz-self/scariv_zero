@@ -461,9 +461,8 @@ interface vec_regread_if;
   scariv_vec_pkg::vec_pos_t  pos;
   logic [WIDTH-1: 0]         data;
 
-  modport master(output valid, output rnid, output pos, input data);
-
-  modport slave(input valid, input rnid, input pos, output data);
+  modport master(output valid, output rnid, output pos, input  data);
+  modport slave (input  valid, input  rnid, input  pos, output data);
 
 endinterface // vec_regread_if
 

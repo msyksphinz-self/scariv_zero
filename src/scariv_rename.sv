@@ -53,7 +53,7 @@ disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_vpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
 
-vlmul_upd_if w_dummy_vlmul_upd_if;
+vlmul_upd_if w_dummy_vlmul_upd_if();
 assign w_dummy_vlmul_upd_if.valid = 1'b0;
 assign ibuf_front_if.ready = !(commit_if_rnid_update.commit & (|commit_if.payload.except_valid)) &
                              i_resource_ok & &w_freelist_ready;
