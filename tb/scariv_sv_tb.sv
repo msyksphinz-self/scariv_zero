@@ -1,5 +1,5 @@
 `ifndef DIRECT_LOAD_HEX
-import "DPI-C" function load_binary
+import "DPI-C" function load_elf
 (
  input string path_exec,
  input string filename,
@@ -526,13 +526,13 @@ localparam TIMEOUT = 100000000;
 initial begin
   w_clk = 1'b0;
   w_elf_loader_reset_n = 1'b0;
-  w_scariv_reset_n        = 1'b0;
+  w_scariv_reset_n     = 1'b0;
   w_ram_reset_n        = 1'b0;
 
   #(STEP * 100);
 
   w_elf_loader_reset_n = 1'b1;
-  w_scariv_reset_n        = 1'b0;
+  w_scariv_reset_n     = 1'b0;
   w_ram_reset_n        = 1'b1;
 
   #(STEP * 10000);
@@ -570,7 +570,7 @@ initial begin
     $finish(1);
   end
   open_log_fp(filename);
-  load_binary("", filename, 1'b1);
+  load_elf("", filename, 1'b1);
 `endif // DIRECT_LOAD_HEX
 
 end
@@ -650,7 +650,7 @@ always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
       for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++) begin
         if (`ROB.w_commit.grp_id[grp_idx] &
             ~`ROB.w_commit.dead_id[grp_idx]) begin
-          step_spike ($time / 4, longint'(committed_rob_entry.inst[grp_idx].pc_addr),
+          step_spike ($time / 4, longint'(committed_rob_payload.disp[grp_idx].pc_addr),
                       int'(u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_csu.u_scariv_csr.r_priv),
                       `ROB.w_sim_mstatus[`ROB.w_out_cmt_entry_id][grp_idx],
                       // Exception selection
@@ -658,14 +658,14 @@ always_ff @(negedge w_clk, negedge w_scariv_reset_n) begin
                       `ROB.r_rob_except.typ,
                       `ROB.w_out_cmt_id,
                       1 << grp_idx,
-                      committed_rob_entry.inst[grp_idx].rvc_inst_valid ? committed_rob_entry.inst[grp_idx].rvc_inst : committed_rob_entry.inst[grp_idx].inst,
-                      committed_rob_entry.inst[grp_idx].wr_reg.valid,
-                      committed_rob_entry.inst[grp_idx].wr_reg.typ,
-                      committed_rob_entry.inst[grp_idx].wr_reg.regidx,
-                      committed_rob_entry.inst[grp_idx].wr_reg.rnid,
-                      committed_rob_entry.inst[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
-                      w_physical_int_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid] :
-                      w_physical_fp_data [committed_rob_entry.inst[grp_idx].wr_reg.rnid]);
+                      committed_rob_payload.disp[grp_idx].rvc_inst_valid ? committed_rob_payload.disp[grp_idx].rvc_inst : committed_rob_payload.disp[grp_idx].inst,
+                      committed_rob_payload.disp[grp_idx].wr_reg.valid,
+                      committed_rob_payload.disp[grp_idx].wr_reg.typ,
+                      committed_rob_payload.disp[grp_idx].wr_reg.regidx,
+                      committed_rob_payload.disp[grp_idx].wr_reg.rnid,
+                      committed_rob_payload.disp[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
+                      w_physical_int_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid] :
+                      w_physical_fp_data [committed_rob_payload.disp[grp_idx].wr_reg.rnid]);
         end
       end  // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
     end  // if (`ROB.w_out_valid)
@@ -716,15 +716,15 @@ end
 //           $fwrite (pipe_fp, "(%02d,%02d) PC=%08x ",
 //                    `ROB.w_out_cmt_id, 1 << grp_idx,
 //                    (committed_rob_entry.pc_addr << 1) + (4 * grp_idx));
-//           if (committed_rob_entry.inst[grp_idx].rd_valid) begin
+//           if (committed_rob_payload.disp[grp_idx].rd_valid) begin
 //             $fwrite (pipe_fp, "GPR[%02d](%03d)=%016x : ",
-//                      committed_rob_entry.inst[grp_idx].rd_regidx,
-//                      committed_rob_entry.inst[grp_idx].rd_rnid,
-//                      w_physical_int_data[committed_rob_entry.inst[grp_idx].rd_rnid]);
+//                      committed_rob_payload.disp[grp_idx].rd_regidx,
+//                      committed_rob_payload.disp[grp_idx].rd_rnid,
+//                      w_physical_int_data[committed_rob_payload.disp[grp_idx].rd_rnid]);
 //           end else begin
 //             $fwrite (pipe_fp, "                                        : ");
 //           end
-//           $fwrite (pipe_fp, "DASM(%08x)", committed_rob_entry.inst[grp_idx].inst);
+//           $fwrite (pipe_fp, "DASM(%08x)", committed_rob_payload.disp[grp_idx].inst);
 //         end // if (committed_rob_entry.grp_id[grp_idx])
 //       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
 //     end // if (`ROB.w_entry_all_done[`ROB.w_out_cmd_id])

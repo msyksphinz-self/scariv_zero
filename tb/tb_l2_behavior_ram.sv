@@ -87,17 +87,19 @@ assign req_fire = i_req_valid & o_req_ready;
 assign actual_addr = i_req_addr /* - BASE_ADDR */;
 assign actual_line_pos = actual_addr >> $clog2(DATA_W / 8);
 
-line_status_t  actual_line_status;
-always_comb begin
-  actual_line_status = status[actual_line_pos];
-end
+// line_status_t  actual_line_status;
+// always_comb begin
+//   actual_line_status = status[actual_line_pos];
+// end
 
 `ifdef SIMULATION
 localparam DEBUG_LINE_SIZE = 128;
 line_status_t [DEBUG_LINE_SIZE-1: 0] sim_line_status_set;
 generate for (genvar i = 0; i < DEBUG_LINE_SIZE; i++) begin
   always_comb begin
-    sim_line_status_set[i] = status[(actual_line_pos & ~(DEBUG_LINE_SIZE-1)) + i];
+    if (i_req_valid) begin
+      sim_line_status_set[i] = status[(actual_line_pos & ~(DEBUG_LINE_SIZE-1)) + i];
+    end
   end
 end endgenerate
 `endif // SIMULATION

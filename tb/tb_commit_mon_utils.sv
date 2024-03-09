@@ -67,7 +67,11 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
         end // if (rob_entries[u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_id].valid &...
       end // for (int grp_idx = 0; grp_idx < scariv_conf_pkg::DISP_SIZE; grp_idx++)
       step_spike_wo_cmp(10);
+`ifdef VELILATOR
       stop_sim_deadlock($time / 4);
+`else // VELILATOR
+      $finish;
+`endif // VELILATOR
       r_finish_valid <= 1'b1;
     end
   end
