@@ -358,11 +358,9 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       w_rvc_inst[w_idx]    = w_local_rvc_inst;
       w_rvc_valid[w_idx]   = 1'b1;
       w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 &
-                                 !w_inst_buf_entry_b0.dead &
                                  & (&w_rvc_byte_en);
 
       w_fetch_except[w_idx]       = w_inst_buf_valid_b0 &
-                                    !w_inst_buf_entry_b0.dead &
                                     w_inst_buf_entry_b0.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_cause;
       w_fetch_except_tval [w_idx] = {w_inst_buf_entry_b0.pc[riscv_pkg::VADDR_W-1:$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)],
@@ -377,14 +375,14 @@ generate for (genvar w_idx = 0; w_idx < scariv_conf_pkg::DISP_SIZE; w_idx++) beg
       /* verilator lint_off ALWCOMBORDER */
       w_rvc_buf_idx[w_idx + 1] = w_rvc_buf_idx[w_idx] + 2;
       w_expand_inst[w_idx]     = {w_rvc_next_inst, w_local_rvc_inst};
-      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead &
-                                 w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead &
+      w_expanded_valid[w_idx]  = w_inst_buf_valid_b0 &
+                                 w_inst_buf_valid_b2 &
                                  &{w_rvc_next_byte_en, w_rvc_byte_en};
       w_rvc_inst[w_idx]    = 'h0;
       w_rvc_valid[w_idx]   = 1'b0;
 
-      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 & !w_inst_buf_entry_b0.dead & w_inst_buf_entry_b0.tlb_except_valid |
-                                    w_inst_buf_valid_b2 & !w_inst_buf_entry_b2.dead & w_inst_buf_entry_b2.tlb_except_valid;
+      w_fetch_except[w_idx]       = w_inst_buf_valid_b0 & w_inst_buf_entry_b0.tlb_except_valid |
+                                    w_inst_buf_valid_b2 & w_inst_buf_entry_b2.tlb_except_valid;
       w_fetch_except_cause[w_idx] = w_inst_buf_entry_b0.tlb_except_valid ? w_inst_buf_entry_b0.tlb_except_cause :
                                     w_inst_buf_entry_b2.tlb_except_cause;
       w_fetch_except_tval [w_idx] = w_inst_buf_entry_b0.tlb_except_valid ?
