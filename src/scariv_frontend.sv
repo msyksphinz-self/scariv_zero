@@ -44,13 +44,6 @@ module scariv_frontend
 // f0 stage
 // ==============
 
-typedef enum logic {
-  INIT = 0,
-  FETCH_REQ = 1
-} if_sm_t;
-
-if_sm_t  w_if_state_next;
-
 logic                     r_f0_valid;
 logic                     r_f0_valid_d1;
 vaddr_t                   r_f0_vaddr;
@@ -183,6 +176,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_f0_valid    <= 1'b0;
     r_f0_valid_d1 <= 1'b0;
     r_f0_vaddr <= PC_INIT_VAL;
+    r_f0_int_flush <= 1'b0;
   end else begin
     r_f0_valid     <= 1'b1;
     r_f0_valid_d1  <= r_f0_valid;
@@ -192,15 +186,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-logic w_f0_update_cond_0, w_f0_update_cond_1;
-assign w_f0_update_cond_0 = (w_f0_ic_req.valid & w_f0_ic_ready & w_tlb_ready);
-assign w_f0_update_cond_1 = w_if_state_next == FETCH_REQ;
-
 logic w_f2_ic_miss_valid;
 assign w_f2_ic_miss_valid = r_f2_valid & w_f2_ic_resp.miss & !r_f2_clear;
 
 
-assign w_commit_flush  = commit_in_if.is_flushed_commit();
+// assign w_commit_flush  = commit_in_if.is_flushed_commit();
+assign w_commit_flush  = commit_in_if.commit_valid &
+                         |(commit_in_if.payload.flush_valid & ~commit_in_if.payload.dead_id);
 
 assign w_br_flush      = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid   = w_commit_flush | w_br_flush;
@@ -359,7 +351,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 end
 
 
-// assign w_f0_ic_req.valid = (r_if_state != INIT) & (w_if_state_next == FETCH_REQ);
 assign w_f0_ic_req.valid = r_f0_valid & !w_flush_valid & w_tlb_ready;
 
 assign w_f0_ic_req.vaddr = w_f0_vaddr;

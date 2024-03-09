@@ -28,13 +28,13 @@ module bit_oh_or
 //
 // assign o_selected = ~|i_oh ? 'h0 : i_data[encoder(i_oh)];
 
-function automatic T bit_oh_func();
+function automatic T bit_oh_func(logic [WORDS-1:0] i_oh, T i_data[WORDS]);
   for (int i = 0; i < WORDS; i++) begin
     if (i_oh[i]) return i_data[i];
   end
   return T'(0);
 endfunction // bit_oh_func
-assign o_selected = bit_oh_func();
+assign o_selected = bit_oh_func(i_oh, i_data);
 
 endmodule
 

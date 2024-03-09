@@ -260,7 +260,7 @@ end
 
 generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begin : stq_loop
   /* verilator lint_off SELRANGE */
-  localparam rs2_regrd_port_idx = scariv_conf_pkg::STQ_REGRD_PORT_NUM == 1 ? 'h0 : s_idx[$clog2(scariv_conf_pkg::STQ_REGRD_PORT_NUM)-1: 0];
+  localparam rs2_regrd_port_idx = scariv_conf_pkg::STQ_REGRD_PORT_NUM == 1 ? 'h0 : s_idx;
 
   logic [scariv_conf_pkg::MEM_DISP_SIZE-1: 0]  w_input_valid;
   stq_entry_t          w_load_stq_entry;

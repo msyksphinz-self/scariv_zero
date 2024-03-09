@@ -181,9 +181,10 @@ always_comb begin
       end
     end
     default : begin
-`ifdef SIMULATION
-      $fatal (0, "ALU scheduler entry reached unexpected state\n");
-`endif // SIMULATION
+// `ifdef SIMULATION
+//       $fatal (0, "ALU scheduler entry reached unexpected state\n");
+// `endif // SIMULATION
+      w_state_next = scariv_pkg::INIT;
     end
   endcase // case (r_state)
 

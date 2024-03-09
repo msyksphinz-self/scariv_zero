@@ -91,8 +91,6 @@ select_early_wr_bus_oh rs_rel_select_oh (.i_entry_rnid (w_rs2_rnid), .i_entry_ty
 select_phy_wr_bus #(.BUS_SIZE(scariv_pkg::TGT_BUS_SIZE))
 rs2_phy_select (.i_entry_rnid (w_rs2_rnid), .i_entry_type (w_rs2_type), .phy_wr_if (phy_wr_in_if), .o_valid (w_rs2_phy_hit));
 
-assign o_entry = r_entry;
-
 assign w_rob_except_flush = (rob_info_if.cmt_id == r_entry.inst.cmt_id) & (|rob_info_if.except_valid) & (rob_info_if.except_valid <= r_entry.inst.grp_id);
 assign w_commit_flush = commit_if.is_commit_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id) & r_entry.is_valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.inst.cmt_id, r_entry.inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,

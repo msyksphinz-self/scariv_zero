@@ -155,6 +155,8 @@ scariv_pkg::alen_t        w_streq_fwd_aligned_data;
 scariv_pkg::alenb_t       w_ex2_expected_fwd_valid;
 scariv_pkg::alenb_t       w_ex2_fwd_success;
 
+logic                   w_ex2_fwd_miss_valid;
+
 logic                   w_ex1_success;
 logic                   r_ex2_success;
 logic                   r_ex2_is_lr;
@@ -382,7 +384,6 @@ assign iq_upd_if.index_oh            = r_ex1_index_oh;
 assign iq_upd_if.hazard_typ          = w_ex1_tlb_req.valid & w_ex1_tlb_resp.miss ? EX1_HAZ_TLB_MISS :
                                        w_ex1_tlb_req.valid & ~w_ex1_tlb_resp.cacheable & ~r_ex1_issue.oldest_valid & ~(w_ex1_ld_except_valid | w_ex1_st_except_valid) ? EX1_HAZ_UC_ACCESS :
                                        EX1_HAZ_NONE;
-assign iq_upd_if.index_oh            = r_ex1_index_oh;
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -585,8 +586,6 @@ assign rmw_order_check_if.ex2_grp_id = r_ex2_issue.grp_id;
 // MISSU Hazard Check
 assign missu_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;
 assign missu_fwd_if.ex2_paddr  = r_ex2_addr;
-
-logic w_ex2_fwd_miss_valid;
 
 scariv_pkg::alenb_t                  w_ex2_fwd_dw;
 scariv_pkg::alen_t                    w_ex2_fwd_aligned_data;

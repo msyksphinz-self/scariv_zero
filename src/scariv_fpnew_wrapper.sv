@@ -114,6 +114,11 @@ logic                                    w_in_flush;
 aux_fpnew_t w_aux_fpnew_in;
 aux_fpnew_t w_aux_fpnew_out;
 
+logic [riscv_fpu_pkg::FLEN_W-1: 0] w_result;
+
+fpnew_pkg::status_t                w_fpnew_fflags;
+logic                              w_fpnew_out_valid;
+
 typedef struct packed {
   scariv_pkg::cmt_id_t cmt_id;
   scariv_pkg::grp_id_t grp_id;
@@ -369,11 +374,6 @@ end else begin
                          (w_fpnew_op == fpnew_pkg::DIV ) & i_rs2;
   assign w_fpnew_rs[2] = (w_fpnew_op == fpnew_pkg::ADD)  ? i_rs2 : i_rs3;
 end endgenerate // else: !if(riscv_fpu_pkg::FLEN_W == 64)
-
-logic [riscv_fpu_pkg::FLEN_W-1: 0] w_result;
-
-fpnew_pkg::status_t                w_fpnew_fflags;
-logic                              w_fpnew_out_valid;
 
 // --------------
 // FPU Pipeline
