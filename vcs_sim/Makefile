@@ -79,6 +79,7 @@ FILELIST = sim_filelist.f
 all: build
 	mkdir -p sim_rv64imafdc_standard/dhrystone && cd sim_rv64imafdc_standard/dhrystone && \
 	../../simv +fsdb+all +fsdb+autoflush +ELF=../../../tests/riscv-tests/benchmarks/dhrystone.riscv 2>&1 | tee sim.log
+	fsdb2vcd sim_rv64imafdc_standard/dhrystone/wave.fsdb | bzip2 > sim_rv64imafdc_standard/dhrystone/wave.bz2
 
 build: $(FILELIST)
 	$(MAKE) -C ../verilator_sim/ RV_FLEN=64 .config_design_xlen64_flen64
