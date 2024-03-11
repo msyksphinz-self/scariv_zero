@@ -66,7 +66,9 @@ logic [ENTRY_SIZE-1: 0]         w_entry_done;
 logic [ENTRY_SIZE-1: 0]         w_entry_done_oh;
 
 logic                           w_flush_valid;
-assign w_flush_valid = commit_if.is_flushed_commit();
+always_comb begin
+  w_flush_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
+end
 
 logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;

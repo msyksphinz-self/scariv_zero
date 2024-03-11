@@ -65,7 +65,7 @@ logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld[scariv_conf_
 logic [scariv_conf_pkg::LDQ_SIZE-1: 0]        w_ex2_ldq_stq_haz_vld_oh[scariv_conf_pkg::LSU_INST_NUM];
 
 logic                                w_flush_valid;
-assign w_flush_valid = commit_if.is_flushed_commit();
+assign w_flush_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 // --------------------------------
 // Credit & Return Interface
@@ -163,7 +163,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   logic          w_entry_flush;
   logic          w_commit_flush;
   logic          w_br_flush;
-  assign w_commit_flush = commit_if.is_flushed_commit() & w_ldq_entries[l_idx].is_valid;
+  assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & w_ldq_entries[l_idx].is_valid;
   assign w_br_flush     = scariv_pkg::is_br_flush_target(w_ldq_entries[l_idx].inst.cmt_id, w_ldq_entries[l_idx].inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                          br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ldq_entries[l_idx].is_valid;
   assign w_entry_flush  = w_commit_flush | w_br_flush;

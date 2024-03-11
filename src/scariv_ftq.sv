@@ -64,7 +64,7 @@ u_ptr
    .o_out_ptr   (w_out_ptr_oh)
    );
 
-assign w_commit_flush = commit_if.is_flushed_commit();
+assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 assign w_ftq_flush = w_commit_flush | br_upd_fe_if.update & br_upd_fe_if.mispredict;
 
