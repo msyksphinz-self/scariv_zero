@@ -106,6 +106,7 @@ assign o_pref_l2_req_paddr = r_pref_paddr;
 // Search PAaddr
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
+    r_prefetched_valid <= 1'b0;
   end else begin
     if ((r_pref_state == ICResp) & i_pref_l2_resp_valid) begin
       r_prefetched_valid <= 1'b1;
@@ -134,11 +135,16 @@ assign w_f0_pref_search_working_hit = i_f0_pref_search_valid &
 
 assign w_f0_pref_search_working_hit_and_l2_return = w_f0_pref_search_working_hit & i_pref_l2_resp_valid;
 
-always_ff @ (posedge i_clk) begin
-  // Search
-  o_f1_pref_search_hit         <= w_f0_pref_search_hit | w_f0_pref_search_working_hit_and_l2_return;
-  o_f1_pref_search_data        <= w_f0_pref_search_working_hit_and_l2_return ? i_pref_l2_resp_data : r_prefetched_data;
-  o_f1_pref_search_working_hit <= w_f0_pref_search_working_hit & ~i_pref_l2_resp_valid;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (i_reset_n) begin
+    o_f1_pref_search_hit         <= 1'b0;
+    o_f1_pref_search_working_hit <= 1'b0;
+  end else begin
+    // Search
+    o_f1_pref_search_hit         <= w_f0_pref_search_hit | w_f0_pref_search_working_hit_and_l2_return;
+    o_f1_pref_search_data        <= w_f0_pref_search_working_hit_and_l2_return ? i_pref_l2_resp_data : r_prefetched_data;
+    o_f1_pref_search_working_hit <= w_f0_pref_search_working_hit & ~i_pref_l2_resp_valid;
+  end
 end
 
 // =========================
