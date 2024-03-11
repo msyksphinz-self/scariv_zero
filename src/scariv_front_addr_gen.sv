@@ -33,7 +33,7 @@ assign w_br_flush  = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 
 always_comb begin
   o_int_flush_valid = 1'b0;
-  if (commit_in_if.is_flushed_commit()) begin
+  if (scariv_pkg::is_flushed_commit(commit_in_if.commit_valid, commit_in_if.payload)) begin
     if (commit_in_if.payload.int_valid) begin
       case (commit_in_if.payload.except_type)
         riscv_common_pkg::MACHINE_EXTERNAL_INT : begin

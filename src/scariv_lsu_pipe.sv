@@ -215,7 +215,7 @@ select_mispred_bus ex0_rs1_mispred_select
 
 assign w_ex0_rs1_mispred = w_ex0_issue.rd_regs[0].valid & w_ex0_issue.rd_regs[0].predict_ready ? w_ex0_rs1_lsu_mispred : 1'b0;
 
-assign w_ex0_commit_flush = commit_if.is_flushed_commit() & w_ex0_issue.valid;
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & w_ex0_issue.valid;
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ex0_issue.valid;
 
@@ -412,7 +412,7 @@ assign ex1_l1d_rd_if.s0_paddr = {w_ex1_addr[riscv_pkg::PADDR_W-1:$clog2(DCACHE_D
                                  {$clog2(DCACHE_DATA_B_W){1'b0}}};
 assign ex1_l1d_rd_if.s0_high_priority = r_ex1_issue.l1d_high_priority;
 
-assign w_ex1_commit_flush = commit_if.is_flushed_commit() & r_ex1_issue.valid;
+assign w_ex1_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & r_ex1_issue.valid;
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex1_issue.valid;
 
@@ -669,7 +669,7 @@ always_comb begin
   end
 end // always_comb
 
-assign w_ex2_commit_flush = commit_if.is_flushed_commit() & r_ex2_issue.valid;
+assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & r_ex2_issue.valid;
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex2_issue.valid;
 

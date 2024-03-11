@@ -188,7 +188,7 @@ assign ex0_regread_int_rs1.rnid  = ex0_issue.rd_regs[0].rnid;
 logic                                      w_ex0_commit_flush;
 logic                                      w_ex0_br_flush;
 logic                                      w_ex0_flush;
-assign w_ex0_commit_flush = commit_if.is_flushed_commit();
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
@@ -329,7 +329,7 @@ bit_oh_or #(
 logic                                      w_ex1_commit_flush;
 logic                                      w_ex1_br_flush;
 logic                                      w_ex1_flush;
-assign w_ex1_commit_flush = commit_if.is_flushed_commit();
+assign w_ex1_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex1_br_flush     = scariv_pkg::is_br_flush_target(r_ex1_issue.cmt_id, r_ex1_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex1_flush = w_ex1_commit_flush | w_ex1_br_flush;
@@ -478,7 +478,7 @@ end // always_comb
 logic                                      w_ex2_commit_flush;
 logic                                      w_ex2_br_flush;
 logic                                      w_ex2_flush;
-assign w_ex2_commit_flush = commit_if.is_flushed_commit();
+assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;

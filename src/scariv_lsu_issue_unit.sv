@@ -76,7 +76,7 @@ logic [ENTRY_SIZE-1:0]          w_entry_finish;
 logic [ENTRY_SIZE-1:0]          w_entry_finish_oh;
 
 logic                                w_flush_valid;
-assign w_flush_valid = commit_if.is_flushed_commit();
+assign w_flush_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 logic                                w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]        w_credit_return_val;
@@ -122,7 +122,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry_out_ptr_oh <= 'h1;
   end else begin
-    if (commit_if.is_flushed_commit()) begin
+    if (scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload)) begin
       r_entry_out_ptr_oh <= 'h1;
     end else if (o_issue.valid & ~i_stall ) begin
       r_entry_out_ptr_oh <= o_iss_index_oh;

@@ -66,7 +66,8 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !(|w_fpu_no_credits_remained);
 
 
-assign w_commit_flush = commit_if.is_flushed_commit();
+// assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
+assign w_commit_flush = commit_if.commit_valid & |(commit_if.payload.flush_valid & ~commit_if.payload.dead_id);
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 

@@ -299,7 +299,7 @@ logic w_ras_br_flush;
 logic w_ras_flush_valid;
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_ras_commit_flush_valid_oh;
 logic [RAS_W-1: 0]          w_ras_commit_flush_ras_index_oh;
-assign w_ras_commit_flush = commit_if.is_flushed_commit() /* & |(commit_if.payload.flush_valid & commit_if.ras_update) */;
+assign w_ras_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) /* & |(commit_if.payload.flush_valid & commit_if.ras_update) */;
 assign w_ras_br_flush = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict /* &
                         (br_upd_if.is_call | br_upd_if.is_ret) */;
 bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE)) commit_flush_valid_oh (.in(commit_if.payload.flush_valid), .out(w_ras_commit_if.payload.flush_valid_oh));

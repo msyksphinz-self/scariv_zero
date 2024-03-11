@@ -173,7 +173,7 @@ select_mispred_bus rs2_mispred_select
  .o_mispred    (w_ex0_rs2_lsu_mispred)
  );
 
-assign w_commit_flushed = commit_if.is_flushed_commit();
+assign w_commit_flushed = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 
 assign ex1_early_wr_if.valid   = w_ex0_issue.valid & w_ex0_issue.wr_reg.valid;

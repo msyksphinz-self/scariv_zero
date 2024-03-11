@@ -75,8 +75,8 @@ fflags_update_if w_fflags_update_if();
 cmt_rnid_upd_t   w_commit_rnid_update;
 
 logic                                      w_flush_valid;
-assign w_flush_valid = scariv_pkg::is_flushed_commit(w_commit) & w_out_valid |
-                       commit_if.is_flushed_commit();
+assign w_flush_valid = scariv_pkg::is_flushed_commit(w_out_valid, w_commit) & w_out_valid |
+                       scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 inoutptr #(.SIZE(CMT_ID_SIZE)) u_cmt_ptr(.i_clk (i_clk), .i_reset_n(i_reset_n),
                                          .i_clear (1'b0),
