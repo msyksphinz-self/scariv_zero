@@ -96,7 +96,6 @@ riscv_pkg::xlen_t                  r_ex2_result;
 localparam MUL_UNROLL = 8;
 localparam MUL_PIPE_MAX = riscv_pkg::XLEN_W/MUL_UNROLL;
 
-logic                                      w_mul_stall_pipe;
 logic                                      w_ex0_muldiv_valid;
 logic                                      w_ex0_muldiv_type_valid;
 logic                                      w_muldiv_res_valid;

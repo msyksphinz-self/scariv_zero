@@ -723,12 +723,8 @@ interface commit_if;
   logic        commit_valid;
   commit_blk_t payload;
 
-  function automatic logic is_flushed_commit ();
-    return commit_valid & |(payload.flush_valid & ~payload.dead_id);
-  endfunction // is_flushed_commit
-
   function automatic logic is_commit_flush_target(cmt_id_t entry_cmt_id,
-                                        grp_id_t entry_grp_id);
+                                                  grp_id_t entry_grp_id);
     logic w_cmt_is_older;
     logic entry_older;
 
