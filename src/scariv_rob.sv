@@ -175,8 +175,10 @@ endfunction // assign_rob_paylaod
 
 rob_entry_t    w_entry_in;
 rob_payload_t  w_payload_in;
-assign w_entry_in   = assign_rob_entry();
-assign w_payload_in = assign_rob_payload();
+always_comb begin
+  w_entry_in   = assign_rob_entry();
+  w_payload_in = assign_rob_payload();
+end
 
 generate for (genvar c_idx = 0; c_idx < CMT_ENTRY_SIZE; c_idx++) begin : entry_loop
 logic w_load_valid;
