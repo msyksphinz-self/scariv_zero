@@ -198,7 +198,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end
 
-assign w_commit_except_valid = commit_if.is_flushed_commit();
+assign w_commit_except_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 assign w_restore_valid = (|r_commit_except_valid_dly)  |                        // Exception : Restore from CommitMap
                          w_brupd_rnid_restore_valid; // Speculation Miss : Restore from Br Queue

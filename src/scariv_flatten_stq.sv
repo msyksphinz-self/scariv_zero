@@ -103,7 +103,7 @@ logic [scariv_conf_pkg::STQ_SIZE-1: 0]             w_stbuf_req_accepted[scariv_c
 logic [scariv_conf_pkg::STQ_SIZE-1: 0]             w_stq_rs2_get;
 
 logic                                w_flush_valid;
-assign w_flush_valid = commit_if.is_flushed_commit();
+assign w_flush_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 // --------------------------------
 // Credit & Return Interface

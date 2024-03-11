@@ -76,7 +76,7 @@ logic [ 1: 0]                                    w_rs_mispredicted;
 
 assign o_entry = r_entry;
 
-assign w_load_commit_flush = commit_if.is_flushed_commit();
+assign w_load_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_load_br_flush = scariv_pkg::is_br_flush_target(i_disp_cmt_id, i_disp_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                       br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_load_flush = w_load_commit_flush | w_load_br_flush;

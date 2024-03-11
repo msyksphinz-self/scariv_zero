@@ -604,9 +604,8 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
   return 'hx;
 endfunction // encoder_grp_id
 
-function logic is_flushed_commit (commit_blk_t commit);
-  return |(commit.flush_valid & ~commit.dead_id);
-  // return commit.commit & |(commit.flush_valid & ~commit.dead_id);
+function logic is_flushed_commit (logic commit_valid, commit_blk_t payload);
+  return commit_valid & |(payload.flush_valid & ~payload.dead_id);
 endfunction // is_flushed_commit
 
 function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
@@ -624,37 +623,6 @@ logic                                     inst0_grp_id_older;
   return inst0_vld & inst1_vld & inst0_grp_id_older;
 
 endfunction // inst0_older
-
-// function logic is_commit_flush_target(cmt_id_t entry_cmt_id,
-//                                       grp_id_t entry_grp_id,
-//                                       commit_blk_t commit);
-//   logic w_cmt_is_older;
-//   logic entry_older;
-//
-//   w_cmt_is_older = commit.cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
-//                    commit.cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
-//                    commit.cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
-//   entry_older = w_cmt_is_older ||
-//                 (commit.cmt_id == entry_cmt_id && |((commit.flush_valid & ~commit.dead_id) <= entry_grp_id));
-//
-//   return is_flushed_commit(commit) & entry_older;
-//
-// endfunction // is_commit_flush_target
-
-
-//                                   brtag_t brtag,
-//                                   logic br_dead,
-//                                   logic br_mispredicted);
-// logic w_cmt_is_older;
-// logic entry_older;
-//
-// w_cmt_is_older = br_cmt_id[CMT_ID_W-1]   ^ entry_cmt_id[CMT_ID_W-1] ?
-//                  br_cmt_id[CMT_ID_W-2:0] > entry_cmt_id[CMT_ID_W-2:0] :
-//                  br_cmt_id[CMT_ID_W-2:0] < entry_cmt_id[CMT_ID_W-2:0] ;
-// entry_older = w_cmt_is_older ||
-//               (br_cmt_id == entry_cmt_id && |(br_flush_valid & entry_grp_id));
-//
-// endfunction // is_br_flush_target
 
 function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
                                   cmt_id_t br_cmt_id, grp_id_t br_grp_id,
@@ -794,12 +762,8 @@ interface commit_if;
   logic        commit_valid;
   commit_blk_t payload;
 
-  function automatic logic is_flushed_commit ();
-    return commit_valid & |(payload.flush_valid & ~payload.dead_id);
-  endfunction // is_flushed_commit
-
   function automatic logic is_commit_flush_target(cmt_id_t entry_cmt_id,
-                                        grp_id_t entry_grp_id);
+                                                  grp_id_t entry_grp_id);
     logic w_cmt_is_older;
     logic entry_older;
 
@@ -809,29 +773,25 @@ interface commit_if;
     entry_older = w_cmt_is_older ||
                   (payload.cmt_id == entry_cmt_id && ((payload.flush_valid & ~payload.dead_id) <= entry_grp_id));
 
-    return is_flushed_commit() & entry_older;
+    return scariv_pkg::is_flushed_commit(commit_valid, payload) & entry_older;
 
   endfunction // is_commit_flush_target
 
 
   modport master (
     output commit_valid,
-    output payload,
-    import is_flushed_commit
+    output payload
   );
 
   modport monitor (
     input commit_valid,
     input payload,
-    import is_flushed_commit,
     import is_commit_flush_target
   );
 
   modport slave (
     input commit_valid,
-    input payload //,
-    // import is_flushed_commit(),
-    // import is_commit_flush_target()
+    input payload
   );
 
 endinterface // commit_if

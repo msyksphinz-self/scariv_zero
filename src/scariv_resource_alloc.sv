@@ -75,7 +75,8 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !vlvtype_req_if.full;
 
 
-assign w_commit_flush = commit_if.is_flushed_commit();
+// assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
+assign w_commit_flush = commit_if.commit_valid & |(commit_if.payload.flush_valid & ~commit_if.payload.dead_id);
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
@@ -107,7 +108,8 @@ generate for (genvar a_idx = 0; a_idx < scariv_conf_pkg::ALU_INST_NUM; a_idx++) 
   assign w_alu_inst_cnt = ibuf_front_if.payload.resource_cnt.alu_inst_cnt[a_idx];
 
   scariv_credit_return_master
-    #(.MAX_CREDITS(ALU_ISS_ENTRY_SIZE))
+    #(.MAX_CREDITS (ALU_ISS_ENTRY_SIZE),
+      .MAXIMAL_VAL (scariv_conf_pkg::ARITH_DISP_SIZE / scariv_conf_pkg::ALU_INST_NUM))
   u_alu_credit_return
   (
    .i_clk(i_clk),
@@ -133,7 +135,8 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LSU_INST_NUM; l_idx++) 
   assign w_lsu_inst_cnt = ibuf_front_if.payload.resource_cnt.lsu_inst_cnt[l_idx];
 
   scariv_credit_return_master
-    #(.MAX_CREDITS(LSU_ISS_ENTRY_SIZE))
+    #(.MAX_CREDITS (LSU_ISS_ENTRY_SIZE),
+      .MAXIMAL_VAL (scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM))
   u_lsu_credit_return
   (
    .i_clk(i_clk),
@@ -154,7 +157,8 @@ endgenerate
 logic   w_inst_ld_valid;
 assign w_inst_ld_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.ld_inst_cnt;
 scariv_credit_return_master
-  #(.MAX_CREDITS(scariv_conf_pkg::LDQ_SIZE))
+  #(.MAX_CREDITS (scariv_conf_pkg::LDQ_SIZE),
+    .MAXIMAL_VAL (scariv_conf_pkg::MEM_DISP_SIZE))
 u_ldq_credit_return
 (
  .i_clk(i_clk),
@@ -173,7 +177,8 @@ u_ldq_credit_return
 logic   w_inst_st_valid;
 assign w_inst_st_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.st_inst_cnt;
 scariv_credit_return_master
-  #(.MAX_CREDITS(scariv_conf_pkg::STQ_SIZE))
+  #(.MAX_CREDITS (scariv_conf_pkg::STQ_SIZE),
+    .MAXIMAL_VAL (scariv_conf_pkg::MEM_DISP_SIZE))
 u_stq_credit_return
 (
  .i_clk(i_clk),
@@ -194,7 +199,8 @@ assign w_inst_csu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_
 logic [$clog2(scariv_conf_pkg::RV_CSU_ENTRY_SIZE):0] w_inst_csu_cnt;
 assign w_inst_csu_cnt = ibuf_front_if.payload.resource_cnt.csu_inst_cnt;
 scariv_credit_return_master
-  #(.MAX_CREDITS(scariv_conf_pkg::RV_CSU_ENTRY_SIZE))
+  #(.MAX_CREDITS(scariv_conf_pkg::RV_CSU_ENTRY_SIZE),
+    .MAXIMAL_VAL (scariv_conf_pkg::CSU_DISP_SIZE))
 u_csu_credit_return
 (
  .i_clk(i_clk),
@@ -214,7 +220,8 @@ assign w_inst_bru_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_
 logic [$clog2(scariv_conf_pkg::RV_BRU_ENTRY_SIZE):0] w_bru_inst_cnt;
 assign w_bru_inst_cnt = ibuf_front_if.payload.resource_cnt.bru_inst_cnt;
 scariv_credit_return_master
-  #(.MAX_CREDITS(scariv_conf_pkg::RV_BRU_ENTRY_SIZE))
+  #(.MAX_CREDITS (scariv_conf_pkg::RV_BRU_ENTRY_SIZE),
+    .MAXIMAL_VAL (scariv_conf_pkg::BRU_DISP_SIZE))
 u_bru_credit_return
 (
  .i_clk(i_clk),
@@ -238,7 +245,8 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
   assign w_fpu_inst_cnt = ibuf_front_if.payload.resource_cnt.fpu_inst_cnt[f_idx];
 
   scariv_credit_return_master
-    #(.MAX_CREDITS(scariv_conf_pkg::RV_FPU_ENTRY_SIZE))
+    #(.MAX_CREDITS(scariv_conf_pkg::RV_FPU_ENTRY_SIZE),
+      .MAXIMAL_VAL (scariv_conf_pkg::FPU_DISP_SIZE / scariv_conf_pkg::FPU_INST_NUM))
   u_fpu_credit_return
   (
    .i_clk(i_clk),
