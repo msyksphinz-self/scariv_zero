@@ -423,7 +423,7 @@ u_lsu_top
     .mispred_out_if (w_mispred_if),
 
     .done_report_if(w_done_report_if [LSU_DONE_PORT_BASE +: scariv_conf_pkg::LSU_INST_NUM]),
-    .flush_report_if(w_flush_report_if[scariv_conf_pkg::LSU_INST_NUM-1: 0]),
+    .flush_report_if(w_flush_report_if[0 +: scariv_conf_pkg::LSU_INST_NUM]),
 
     .snoop_info_if (w_snoop_info_if),
 

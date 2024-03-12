@@ -47,7 +47,7 @@ typedef struct packed {
 vlsu_ldq_entry_t r_vlsu_ldq_entries[VLSU_LDQ_BANK_SIZE][VLSU_LDQ_SIZE];
 logic                w_commit_flush;
 
-assign w_commit_flush = commit_if.is_flushed_commit();
+assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 
 generate for (genvar bank_idx = 0; bank_idx < VLSU_LDQ_BANK_SIZE; bank_idx++) begin : bank_loop
 

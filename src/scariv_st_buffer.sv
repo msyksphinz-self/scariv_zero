@@ -113,12 +113,15 @@ u_req_ptr
    );
 
 // New Entry create
-assign w_init_load = assign_st_buffer(
+always_comb begin
+  w_init_load = assign_st_buffer(
 `ifdef SIMULATION
-                                      st_buffer_if.cmt_id, st_buffer_if.grp_id,
+                                 st_buffer_if.cmt_id, st_buffer_if.grp_id,
 `endif // SIMULATION
-                                      st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
-                                      st_buffer_if.rmwop, st_buffer_if.size);
+                                 st_buffer_if.paddr, st_buffer_if.strb, st_buffer_if.data,
+                                 st_buffer_if.rmwop, st_buffer_if.size);
+  w_init_load.size = st_buffer_if.size;
+end
 
 assign st_buffer_if.resp = w_st_buffer_allocated ? ST_BUF_ALLOC :
                            |w_merge_accept       ? ST_BUF_MERGE :

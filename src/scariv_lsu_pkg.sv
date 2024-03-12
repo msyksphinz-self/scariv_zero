@@ -908,7 +908,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_WAIT_SNOOP    = 13
 } st_buffer_state_t;
 
-function st_buffer_entry_t assign_st_buffer (
+function automatic st_buffer_entry_t assign_st_buffer (
 `ifdef SIMULATION
    scariv_pkg::cmt_id_t cmt_id,
    scariv_pkg::grp_id_t grp_id,

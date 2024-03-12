@@ -100,7 +100,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_lmul_exception_mode <= 1'b0;
   end else begin
-    if (commit_if.is_flushed_commit()) begin
+    if (scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload)) begin
       case (commit_if.payload.except_type)
         LMUL_CHANGE : begin
           r_lmul_exception_mode <= 1'b1;

@@ -74,7 +74,7 @@ logic                   r_ex2_is_vmask_inst;
 scariv_vec_pkg::dlen_t  r_ex2_vpr_wr_old_data;
 
 
-assign w_ex0_commit_flush = commit_if.is_flushed_commit();
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
@@ -109,7 +109,7 @@ assign vec_phy_v0_if.valid = i_ex0_issue.valid & i_ex0_issue.v0_reg.valid;
 assign vec_phy_v0_if.rnid  = i_ex0_issue.v0_reg.rnid;
 assign vec_phy_v0_if.pos   = i_ex0_issue.vec_lmul_index >> (3 + i_ex0_issue.vlvtype.vtype.vsew - $clog2(scariv_vec_pkg::VEC_STEP_W));
 
-assign w_ex0_commit_flush = commit_if.is_flushed_commit();
+assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
@@ -152,7 +152,7 @@ assign w_ex1_vpr_v0_data     = vec_phy_v0_if.data;
 logic                                      w_ex2_commit_flush;
 logic                                      w_ex2_br_flush;
 logic                                      w_ex2_flush;
-assign w_ex2_commit_flush = commit_if.is_flushed_commit();
+assign w_ex2_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
 assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r_ex2_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
 assign w_ex2_flush = w_ex2_commit_flush | w_ex2_br_flush;
