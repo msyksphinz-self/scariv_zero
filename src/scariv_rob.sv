@@ -306,15 +306,15 @@ generate for (genvar c_idx = 0; c_idx < scariv_pkg::ANOTHER_FLUSH_SIZE; c_idx++)
   assign w_done_except_type [c_idx + CMT_BUS_SIZE] = ANOTHER_FLUSH;
   assign w_done_tval        [c_idx + CMT_BUS_SIZE] = 'h0;
 end endgenerate
-assign w_done_except_valid[CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = |({DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid);
-assign w_done_cmt_id      [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = w_in_cmt_id;
-assign w_done_grp_id      [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = {DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid;
+assign w_done_except_valid[CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE] = |({DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid);
+assign w_done_cmt_id      [CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE] = w_in_cmt_id;
+assign w_done_grp_id      [CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE] = {DISP_SIZE{rn_front_if.valid}} & w_disp_grp_id & w_frontend_exception_valid;
 logic [$clog2(DISP_SIZE)-1: 0] w_frontend_exception_encoded;
 encoder #(.SIZE(DISP_SIZE)) u_except_rob_in_disp (.i_in (w_frontend_exception_valid), .o_out(w_frontend_exception_encoded));
-assign w_done_except_type [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] ? rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] : ILLEGAL_INST;
-assign w_done_tval        [CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] & (rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] != ILLEGAL_INST) ?
-                                                                           rn_front_if.payload.tlb_except_tval[w_frontend_exception_encoded] :
-                                                                           rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst_valid ? rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst : rn_front_if.payload.inst[w_frontend_exception_encoded].inst;
+assign w_done_except_type [CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] ? rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] : ILLEGAL_INST;
+assign w_done_tval        [CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE] = rn_front_if.payload.tlb_except_valid[w_frontend_exception_encoded] & (rn_front_if.payload.tlb_except_cause[w_frontend_exception_encoded] != ILLEGAL_INST) ?
+                                                                            rn_front_if.payload.tlb_except_tval[w_frontend_exception_encoded] :
+                                                                            rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst_valid ? rn_front_if.payload.inst[w_frontend_exception_encoded].rvc_inst : rn_front_if.payload.inst[w_frontend_exception_encoded].inst;
 
 logic                             w_exc_min_valid;
 logic [$clog2(EXCEPT_SIZE)-1: 0]  w_exc_min_idx;
