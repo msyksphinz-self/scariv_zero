@@ -555,7 +555,7 @@ generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin : vpu
   for (genvar grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
     for (genvar lmul_idx = 0; lmul_idx < 8; lmul_idx++) begin
       for (genvar idx = 0; idx < riscv_vec_conf_pkg::VLEN_W/8; idx++) begin : array_loop
-        assign w_physical_vec_data_rnid[grp_idx][lmul_idx][idx] = w_physical_vec_data[committed_rob_entry.inst[grp_idx].wr_reg.rnid + lmul_idx][idx*8 +: 8];
+        assign w_physical_vec_data_rnid[grp_idx][lmul_idx][idx] = w_physical_vec_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid + lmul_idx][idx*8 +: 8];
       end
     end
   end
