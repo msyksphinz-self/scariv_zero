@@ -18,7 +18,7 @@ extern bool elf_load_finish;
 
 extern "C" {
   extern FILE *compare_log_fp;
-  void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char *ext_isa);
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char *ext_isa, int rv_vles);
   void stop_sim(int code, long long rtl_time);
   void stop_sim_deadlock(long long rtl_time);
 }
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
 #else // RV_BITMANIP
   const bool rv_bitmanip_enabled = false;
 #endif // RV_BITMANIP
-  initial_spike(filename, RV_XLEN, RV_FLEN, quote(ISA));
+  initial_spike(filename, RV_XLEN, RV_FLEN, quote(ISA), RV_VLEN);
 
   // Format
   dut->i_elf_loader_reset_n = 0;

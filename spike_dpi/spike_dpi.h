@@ -2,14 +2,22 @@
 #include <svdpi.h>
 
 extern "C" {
-  void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa);
+  void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa, int rv_vlen);
   void step_spike(long long time, long long rtl_pc,
                   int rtl_priv, long long rtl_mstatus,
                   int rtl_exception, int rtl_exception_cause,
                   int rtl_cmt_id, int rtl_grp_id,
                   int rtl_insn,
                   int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
-                  int rtl_wr_gpr_rnid, long long rtl_wr_val);
+                  int rtl_wr_gpr_rnid, long long rtl_wr_val,
+                  const uint8_t* rtl_wr_vec_val_0,
+                  const uint8_t* rtl_wr_vec_val_1,
+                  const uint8_t* rtl_wr_vec_val_2,
+                  const uint8_t* rtl_wr_vec_val_3,
+                  const uint8_t* rtl_wr_vec_val_4,
+                  const uint8_t* rtl_wr_vec_val_5,
+                  const uint8_t* rtl_wr_vec_val_6,
+                  const uint8_t* rtl_wr_vec_val_7);
   void stop_sim(int code, long long rtl_time);
 
 #ifndef VERILATOR

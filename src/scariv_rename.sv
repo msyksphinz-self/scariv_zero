@@ -23,6 +23,7 @@ module scariv_rename
    input scariv_pkg::cmt_id_t i_sc_new_cmt_id,
 
    phy_wr_if.slave phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
+   vec_phy_fwd_if.slave       vec_phy_fwd_if[3],
    scariv_front_if.master           rn_front_if,
 
    // from Resource Allocator
@@ -32,12 +33,14 @@ module scariv_rename
    // Branch Tag Update Signal
    br_upd_if.slave        br_upd_if,
 
+   vlmul_upd_if.slave         vlmul_upd_if,
+
    // Committer Rename ID update
    commit_if.monitor   commit_if,
    input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update
    );
 
-logic [ 1: 0] w_freelist_ready;
+logic [ 2: 0] w_freelist_ready;
 logic         w_ibuf_front_fire;
 
 logic         w_commit_flush;
@@ -46,9 +49,12 @@ logic         w_flush_valid;
 
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_ipr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_fpr_disp_inst;
+disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_vpr_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] w_ibuf_merge_disp_inst;
 disp_t [scariv_conf_pkg::DISP_SIZE-1:0] r_disp_inst;
 
+vlmul_upd_if w_dummy_vlmul_upd_if();
+assign w_dummy_vlmul_upd_if.valid = 1'b0;
 assign ibuf_front_if.ready = !(commit_if_rnid_update.commit & (|commit_if.payload.except_valid)) &
                              i_resource_ok & &w_freelist_ready;
 
@@ -58,19 +64,30 @@ assign w_commit_flush = commit_if.commit_valid & |(commit_if.payload.flush_valid
 assign w_br_flush     = br_upd_if.update & ~br_upd_if.dead & br_upd_if.mispredict;
 assign w_flush_valid  = w_commit_flush | w_br_flush;
 
+rnid_update_t w_xpr_rnid_update[scariv_pkg::TGT_BUS_SIZE];
+generate for(genvar s = 0; s < scariv_pkg::TGT_BUS_SIZE; s++) begin : xpr_rnid_update_loop
+  assign w_xpr_rnid_update[s].valid = phy_wr_if[s].valid & (phy_wr_if[s].rd_type == scariv_pkg::GPR);
+  assign w_xpr_rnid_update[s].rnid  = phy_wr_if[s].rd_rnid;
+end endgenerate // xpr_rnid_update_loop
+
 scariv_rename_sub
-  #(.REG_TYPE (GPR))
+  #(.REG_TYPE (GPR),
+    .TARGET_SIZE (scariv_pkg::TGT_BUS_SIZE)
+    )
 u_ipr_rename
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),
+
+   // Change VLMUL size
+   .vlmul_upd_if (w_dummy_vlmul_upd_if),
 
    .o_freelist_ready (w_freelist_ready[0]),
 
    .i_ibuf_front_fire    (w_ibuf_front_fire),
    .i_ibuf_front_payload (ibuf_front_if.payload),
 
-   .phy_wr_if  (phy_wr_if),
+   .i_rnid_update (w_xpr_rnid_update),
    .i_brtag   (i_brtag),
    .br_upd_if (br_upd_if),
 
@@ -81,19 +98,31 @@ u_ipr_rename
    );
 
 generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
+
+  rnid_update_t w_fpr_rnid_update[scariv_pkg::TGT_BUS_SIZE];
+  for(genvar s = 0; s < scariv_pkg::TGT_BUS_SIZE; s++) begin : xpr_rnid_update_loop
+    assign w_fpr_rnid_update[s].valid = phy_wr_if[s].valid & (phy_wr_if[s].rd_type == scariv_pkg::FPR);
+    assign w_fpr_rnid_update[s].rnid  = phy_wr_if[s].rd_rnid;
+  end // fpr_rnid_update_loop
+
   scariv_rename_sub
-    #(.REG_TYPE (scariv_pkg::FPR))
+    #(.REG_TYPE (scariv_pkg::FPR),
+      .TARGET_SIZE (scariv_pkg::TGT_BUS_SIZE)
+      )
   u_fpr_rename
     (
      .i_clk     (i_clk    ),
      .i_reset_n (i_reset_n),
+
+     // Change VLMUL size
+     .vlmul_upd_if (w_dummy_vlmul_upd_if),
 
      .o_freelist_ready (w_freelist_ready[1]),
 
      .i_ibuf_front_fire    (w_ibuf_front_fire),
      .i_ibuf_front_payload (ibuf_front_if.payload),
 
-     .phy_wr_if  (phy_wr_if),
+     .i_rnid_update (w_fpr_rnid_update),
      .i_brtag   (i_brtag),
      .br_upd_if (br_upd_if),
 
@@ -103,15 +132,60 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpr
      .commit_if_rnid_update (commit_if_rnid_update)
      );
 
-  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    assign w_ibuf_merge_disp_inst[d_idx]  = merge_scariv_front_if (w_ibuf_ipr_disp_inst[d_idx], w_ibuf_fpr_disp_inst[d_idx]);
-  end
-
 end else begin // block: fpu
   assign w_freelist_ready[1] = 1'b1;
   for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
-    assign w_ibuf_merge_disp_inst[d_idx]  = w_ibuf_ipr_disp_inst[d_idx];
+    assign w_ibuf_fpr_disp_inst[d_idx]  = 'h0;
   end
+end endgenerate
+
+
+generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpr
+
+  rnid_update_t w_vpr_rnid_update[3];
+  for(genvar s = 0; s < 3; s++) begin : vpr_rnid_update_loop
+    assign w_vpr_rnid_update[s].valid = vec_phy_fwd_if[s].valid;
+    assign w_vpr_rnid_update[s].rnid  = vec_phy_fwd_if[s].rd_rnid;
+  end // vpr_rnid_update_loop
+
+  scariv_rename_sub
+    #(.REG_TYPE (scariv_pkg::VPR),
+      .TARGET_SIZE (3))
+  u_vpr_rename
+    (
+     .i_clk     (i_clk    ),
+     .i_reset_n (i_reset_n),
+
+     // Change VLMUL size
+     .vlmul_upd_if (vlmul_upd_if),
+
+     .o_freelist_ready (w_freelist_ready[2]),
+
+     .i_ibuf_front_fire    (w_ibuf_front_fire),
+     .i_ibuf_front_payload (ibuf_front_if.payload),
+
+     .i_rnid_update (w_vpr_rnid_update),
+     .i_brtag   (i_brtag),
+     .br_upd_if (br_upd_if),
+
+     .o_disp_inst (w_ibuf_vpr_disp_inst),
+
+     .commit_if             (commit_if            ),
+     .commit_if_rnid_update (commit_if_rnid_update)
+     );
+
+end else begin // block: vpr
+  assign w_freelist_ready[2] = 1'b1;
+  for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+    assign w_ibuf_vpr_disp_inst[d_idx]  = 'h0;
+  end
+end endgenerate
+
+// Merge dispatched instruction
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : disp_loop
+  assign w_ibuf_merge_disp_inst[d_idx]  = merge_scariv_front_if (w_ibuf_ipr_disp_inst[d_idx],
+                                                                 w_ibuf_fpr_disp_inst[d_idx],
+                                                                 w_ibuf_vpr_disp_inst[d_idx]);
 end endgenerate
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

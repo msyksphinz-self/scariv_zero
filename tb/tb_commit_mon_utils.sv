@@ -35,6 +35,18 @@ generate if (riscv_pkg::FLEN_W != 0) begin
   end
 end endgenerate
 
+logic [riscv_vec_conf_pkg::VLEN_W-1: 0] w_physical_vec_data [scariv_vec_pkg::VEC_RNID_SIZE];
+generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+  for (genvar r_idx = 0; r_idx < scariv_vec_pkg::VEC_RNID_SIZE; r_idx++) begin: reg_loop
+    for (genvar step_idx = 0; step_idx < scariv_vec_pkg::VEC_STEP_W; step_idx++) begin
+      assign w_physical_vec_data [r_idx][step_idx * riscv_vec_conf_pkg::DLEN_W +: riscv_vec_conf_pkg::DLEN_W] = u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.vpu.u_vec_registers.w_rd_loop[0].step_loop[step_idx].w_wr_loop[0].u_array.data_array[r_idx];
+    end
+  end
+end endgenerate
+
+logic [riscv_vec_conf_pkg::VLEN_W-1: 0] sim_physical_vec_data_32;
+assign sim_physical_vec_data_32 = w_physical_vec_data[32];
+
 logic [11 : 0] r_timeout_counter;
 logic          r_finish_valid;
 

@@ -13,11 +13,13 @@ module scariv_csu
   input logic i_clk,
   input logic i_reset_n,
 
-  input scariv_pkg::grp_id_t disp_valid,
-  scariv_front_if.watch                              disp,
-  cre_ret_if.slave                       cre_ret_if,
+  input scariv_pkg::grp_id_t              disp_valid,
+  scariv_front_if.watch                   disp,
+  input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
+  cre_ret_if.slave                        cre_ret_if,
 
   regread_if.master                          ex1_regread_rs1,
+  regread_if.master                          ex1_regread_rs2,
 
   /* Forwarding path */
   early_wr_if.slave     early_wr_in_if[scariv_pkg::REL_BUS_SIZE],
@@ -39,6 +41,11 @@ module scariv_csu
 
   fflags_update_if.slave      fflags_update_if,
 
+  output logic                o_lmul_exception_mode,
+  vec_csr_if.master           vec_csr_if,
+  vlvtype_upd_if.master       vlvtype_upd_if,
+  vlmul_upd_if.master         vlmul_upd_if,
+
   // CLINT connection
   clint_if.slave clint_if,
   // PLIC connection
@@ -54,7 +61,7 @@ scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::CSU_DISP_SIZE];
 logic [scariv_conf_pkg::CSU_DISP_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::grp_id_t disp_picked_grp_id[scariv_conf_pkg::CSU_DISP_SIZE];
 
-scariv_pkg::issue_t w_rv0_issue;
+scariv_csu_pkg::issue_t w_rv0_issue;
 logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_rv0_index_oh;
 
 logic         w_ex3_done;
@@ -63,6 +70,9 @@ logic [scariv_conf_pkg::RV_CSU_ENTRY_SIZE-1:0] w_ex3_index;
 // CSR Read Write interface
 csr_rd_if w_csr_read ();
 csr_wr_if w_csr_write();
+
+csr_rd_if  w_vec_csr_read_if ();
+csr_wr_if  w_vec_csr_write_if();
 
 
 scariv_disp_pickup
@@ -91,12 +101,16 @@ u_scariv_issue_unit
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
 
+   .i_oldest_mode (o_lmul_exception_mode),
+
    .rob_info_if (rob_info_if),
 
    .i_disp_valid(disp_picked_inst_valid),
    .i_cmt_id    (disp.payload.cmt_id),
    .i_grp_id    (disp_picked_grp_id),
    .i_disp_info (disp_picked_inst),
+   .i_vlvtype_ren_idx (i_vlvtype_ren_idx),
+
    .cre_ret_if  (cre_ret_if),
 
    .i_stall (1'b0),
@@ -122,9 +136,12 @@ u_csu_pipe
 
    .commit_if (commit_if),
 
+   .i_lmul_exception_mode (o_lmul_exception_mode),
+
    .rv0_issue(w_rv0_issue),
 
    .ex1_regread_rs1(ex1_regread_rs1),
+   .ex1_regread_rs2(ex1_regread_rs2),
 
    .ex1_early_wr_if(early_wr_out_if),
    .ex3_phy_wr_if  (phy_wr_out_if),
@@ -133,6 +150,12 @@ u_csu_pipe
    .i_mstatus     (csr_info.mstatus),
    .read_if (w_csr_read),
    .write_if (w_csr_write),
+
+   .read_vec_if  (w_vec_csr_read_if),
+   .write_vec_if (w_vec_csr_write_if),
+   .vec_csr_if   (vec_csr_if),
+   .vlvtype_upd_if (vlvtype_upd_if),
+   .vlmul_upd_if   (vlmul_upd_if),
 
    .done_report_if (done_report_if)
    );
@@ -156,6 +179,21 @@ u_scariv_csr
 
    .commit_if (commit_if)
    );
+
+scariv_vec_csr
+u_vec_csr
+  (
+   .i_clk     (i_clk    ),
+   .i_reset_n (i_reset_n),
+
+   .read_csr_vec_if  (w_vec_csr_read_if),
+   .write_csr_vec_if (w_vec_csr_write_if),
+
+   .commit_if (commit_if),
+
+   .o_lmul_exception_mode (o_lmul_exception_mode)
+   );
+
 
 
 endmodule  // scariv_csu

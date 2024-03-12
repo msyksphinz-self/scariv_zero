@@ -13,7 +13,7 @@ module scariv_l1d_mshr
    input logic  i_reset_n,
 
    // from Pipeline for Load + STQ Load
-   l1d_missu_if.slave l1d_missu[scariv_conf_pkg::LSU_INST_NUM + 1],
+   l1d_missu_if.slave l1d_missu[scariv_lsu_pkg::MSHR_REQ_PORT_NUM],
    // from LS-Pipe hazard check
    missu_fwd_if.slave missu_fwd_if[scariv_conf_pkg::LSU_INST_NUM],
 
@@ -44,7 +44,7 @@ module scariv_l1d_mshr
    );
 
 localparam NORMAL_REQ_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM;
-localparam REQ_PORT_NUM        = scariv_conf_pkg::LSU_INST_NUM + 1;
+localparam REQ_PORT_NUM        = scariv_lsu_pkg::MSHR_REQ_PORT_NUM;
 
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1:0] w_in_ptr_oh;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1:0] w_out_ptr_oh;
@@ -54,6 +54,7 @@ logic                                             w_out_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_entry_finish;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_missu_valids;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_updating;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_finish;
 
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;
 logic [REQ_PORT_NUM-1: 0]   w_resp_evict_conflict;
@@ -358,6 +359,7 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
        .i_uc_fwd_hit (|w_uc_fwd_hit[e_idx]),
 
        .o_l1d_wr_updating (w_l1d_wr_updating[e_idx]),
+       .o_l1d_wr_finish   (w_l1d_wr_finish  [e_idx]),
 
        .i_busy_by_snoop (snoop_info_if.busy),
 

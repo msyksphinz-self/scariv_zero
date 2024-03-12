@@ -9,7 +9,10 @@
 module scariv_rename_sub
   import scariv_pkg::*;
   #(parameter REG_TYPE = GPR,
-    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    parameter TARGET_SIZE = 1,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE :
+                            REG_TYPE == FPR ? FPR_RNID_SIZE :
+                            scariv_vec_pkg::VEC_RNID_SIZE,
     localparam RNID_W = $clog2(RNID_SIZE),
     parameter type rnid_t = logic [RNID_W-1: 0])
 (
@@ -21,10 +24,13 @@ module scariv_rename_sub
  input logic                     i_ibuf_front_fire,
  input scariv_front_pkg::front_t i_ibuf_front_payload,
 
- phy_wr_if.slave phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
+ input rnid_update_t             i_rnid_update[TARGET_SIZE],
 
  // from Resource Allocator
  input brtag_t i_brtag  [scariv_conf_pkg::DISP_SIZE],
+
+ // Update VLMUL size
+ vlmul_upd_if.slave               vlmul_upd_if,
 
  // Branch Tag Update Signal
  br_upd_if.slave        br_upd_if,
@@ -36,9 +42,11 @@ module scariv_rename_sub
  input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update
  );
 
-localparam NUM_OPERANDS = REG_TYPE == FPR ? 3 :
-                          2;   // REG_TYPE == INT
+localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 :
+                          REG_TYPE == FPR ? 3 :
+                          3;   // REG_TYPE == VPR
 localparam FLIST_SIZE = REG_TYPE == GPR ? XPR_FLIST_SIZE : FPR_FLIST_SIZE;
+localparam NUM_INFLIGHT_OPS = REG_TYPE == GPR ? 2 : REG_TYPE == FPR ? 3 : 5 /* VPR */;
 
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                   w_all_freelist_ready;
@@ -57,8 +65,9 @@ rnid_t                       rs1_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rs2_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rs3_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rd_old_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
+rnid_t                       v0_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 
-logic [scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_active;
+logic [scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS-1: 0] w_active;
 
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
@@ -108,7 +117,8 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   //            silent flush (actually normally exit) => old ID
   assign except_flush_valid = r_commit_rnid_update_dly.commit &
                               r_commit_rnid_update_dly.except_valid[d_idx] &
-                              (r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH);
+                              ((r_commit_rnid_update_dly.except_type != scariv_pkg::SILENT_FLUSH) &
+                               (r_commit_rnid_update_dly.except_type != scariv_pkg::LMUL_CHANGE));
   // Another Flush generate flush even though it is (actually) dead.
   // Another Flush is not marked as dead, but it is actually dead.
   // Freelist must be receive new ID
@@ -132,7 +142,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
                           (i_ibuf_front_payload.inst[d_idx].wr_reg.typ == REG_TYPE) &
                           ((REG_TYPE == GPR) ? (i_ibuf_front_payload.inst[d_idx].wr_reg.regidx != 'h0) : 1'b1);
 
-  scariv_freelist
+  scariv_rename_freelist
     #(
       .SIZE (FLIST_SIZE),
       .WIDTH (RNID_W),
@@ -142,6 +152,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
     (
     .i_clk     (i_clk ),
     .i_reset_n (i_reset_n),
+
+    // Change VLMUL size
+    .vlmul_upd_if (vlmul_upd_if),
 
     .i_push(w_push_freelist),
     .i_push_id(w_push_freelist_id),
@@ -207,6 +220,9 @@ u_scariv_rename_map
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
 
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
+
    .i_arch_valid (w_archreg_valid),
    .i_arch_id    (w_archreg),
    .o_rnid       (w_rnid),
@@ -252,6 +268,9 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   rnid_t   rd_old_rnid_tmp[scariv_conf_pkg::DISP_SIZE];
   grp_id_t rd_old_rnid_tmp_valid;
 
+  rnid_t   rd_v0_rnid_tmp[scariv_conf_pkg::DISP_SIZE];
+  grp_id_t rd_v0_rnid_tmp_valid;
+
   always_comb begin
 
     /* initial index of loop */
@@ -285,6 +304,10 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
       rd_old_rnid_tmp      [0] = w_rd_old_rnid[d_idx];
     end // else: !if(i_ibuf_front_payload.inst[p_idx].wr_reg.valid &&...
 
+    // V0 Register for Mask
+    rd_v0_rnid_tmp_valid[0] = 1'b0;
+    rd_v0_rnid_tmp      [0] = w_rn_list[0];
+
     /* verilator lint_off UNSIGNED */
     for (int p_idx = 1; p_idx < d_idx; p_idx++) begin: prev_rd_loop
       if (i_ibuf_front_payload.inst[p_idx].wr_reg.valid &&
@@ -316,8 +339,37 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
         rd_old_rnid_tmp_valid[p_idx] = rd_old_rnid_tmp_valid[p_idx-1];
         rd_old_rnid_tmp      [p_idx] = rd_old_rnid_tmp      [p_idx-1];
       end // else: !if(i_ibuf_front_payload.inst[p_idx].wr_reg.valid &&...
+
+      if (i_ibuf_front_payload.inst[p_idx].wr_reg.valid &&
+          i_ibuf_front_payload.inst[p_idx].wr_reg.typ    == scariv_pkg::VPR &&
+          i_ibuf_front_payload.inst[p_idx].wr_reg.regidx == 'h0) begin
+        rd_v0_rnid_tmp_valid[p_idx] = 1'b1;
+        rd_v0_rnid_tmp      [p_idx] = w_rd_rnid[p_idx];
+      end else begin
+        rd_v0_rnid_tmp_valid[p_idx] = rd_v0_rnid_tmp_valid[p_idx-1];
+        rd_v0_rnid_tmp      [p_idx] = rd_v0_rnid_tmp      [p_idx-1];
+      end // else: !if(i_ibuf_front_payload.inst[p_idx].wr_reg.valid &&...
+
     end // block: prev_rd_loop
 
+    /* verilator lint_off SELRANGE */
+    if (d_idx == 0) begin
+      rs1_rnid_fwd[d_idx] = w_rnid[0];
+      rs2_rnid_fwd[d_idx] = w_rnid[1];
+      if (NUM_OPERANDS >= 3) begin
+        rs3_rnid_fwd[d_idx] = w_rnid[2];
+      end
+      rd_old_rnid_fwd[d_idx] = w_rd_old_rnid[0];
+      v0_rnid_fwd[d_idx]  = w_rn_list[0];
+    end else begin
+      rs1_rnid_fwd[d_idx] = rs1_rnid_tmp[d_idx-1];
+      rs2_rnid_fwd[d_idx] = rs2_rnid_tmp[d_idx-1];
+      if (NUM_OPERANDS >= 3) begin
+        rs3_rnid_fwd[d_idx] = rs3_rnid_tmp[d_idx-1];
+      end
+      rd_old_rnid_fwd[d_idx] = rd_old_rnid_tmp[d_idx-1];
+      v0_rnid_fwd[d_idx]  = rd_v0_rnid_tmp[d_idx-1];
+    end // else: !if(d_idx == 0)
   end // always_comb
 
   if (NUM_OPERANDS >= 3) begin : num_operands_3
@@ -367,35 +419,47 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
   assign o_disp_inst[d_idx] = assign_disp_rename (i_ibuf_front_payload.inst[d_idx],
                                                   w_rd_rnid[d_idx],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 3],
                                                   rd_old_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 0],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 0],
                                                   rs1_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 1],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 1],
                                                   rs2_rnid_fwd[d_idx],
-                                                  w_active [d_idx * NUM_OPERANDS + 2],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 2],
                                                   rs3_rnid_fwd[d_idx],
+                                                  w_active [d_idx * NUM_INFLIGHT_OPS + 4],
+                                                  v0_rnid_fwd[d_idx],
                                                   i_brtag[d_idx]);
 
 end // block: src_rn_loop
 endgenerate
 
 
-rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
+rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_INFLIGHT_OPS];
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
-  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 0] = rs1_rnid_fwd[d_idx];
-  assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 1] = rs2_rnid_fwd[d_idx];
-  if (NUM_OPERANDS >= 3) begin
-    assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 2] = rs3_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 0] = rs1_rnid_fwd[d_idx];
+  assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 1] = rs2_rnid_fwd[d_idx];
+  if (NUM_INFLIGHT_OPS >= 3) begin
+    assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 2] = rs3_rnid_fwd[d_idx];
   end
-end
-endgenerate
+  if (REG_TYPE == VPR) begin
+    assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 3] = rd_old_rnid_fwd[d_idx];
+    assign w_rs1_rs2_rnid[d_idx * NUM_INFLIGHT_OPS + 4] = v0_rnid_fwd[d_idx];
+  end
+end endgenerate
 
 scariv_inflight_list
-  #(.REG_TYPE(REG_TYPE))
+  #(.REG_TYPE     (REG_TYPE),
+    .TARGET_SIZE  (TARGET_SIZE),
+    .NUM_INFLIGHT_OPS (NUM_INFLIGHT_OPS)
+    )
 u_inflight_map
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
+
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
 
    .i_rnid   (w_rs1_rs2_rnid),
    .o_valids (w_active),
@@ -404,7 +468,7 @@ u_inflight_map
    .i_update_fetch_rnid  (w_rd_rnid  ),
    .i_update_fetch_data  (w_rd_data  ),
 
-   .phy_wr_if (phy_wr_if)
+   .i_rnid_update (i_rnid_update)
 );
 
 // Map List Queue
@@ -446,21 +510,23 @@ u_commit_map
    .i_clk (i_clk),
    .i_reset_n(i_reset_n),
 
+   // Change VLMUL size
+   .vlmul_upd_if (vlmul_upd_if),
    .commit_if_rnid_update(commit_if_rnid_update),
    .o_rnid_map (w_restore_commit_map_list)
    );
 
 `ifdef SIMULATION
 
-rnid_t w_rnid_list[RNID_SIZE];
+rnid_t[RNID_SIZE-1: 0] w_sim_rnid_list;
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : rn_loop
   for (genvar f_idx = 0; f_idx < FLIST_SIZE; f_idx++) begin : flist_loop
-    assign w_rnid_list[d_idx * FLIST_SIZE + f_idx] = free_loop[d_idx].u_freelist.r_freelist[f_idx];
+    assign w_sim_rnid_list[d_idx * FLIST_SIZE + f_idx] = free_loop[d_idx].u_freelist.r_freelist[f_idx];
   end
 end
 endgenerate
 generate for (genvar r_idx = 0; r_idx < 32; r_idx++) begin : rmap_loop
-  assign w_rnid_list[scariv_conf_pkg::DISP_SIZE * FLIST_SIZE + r_idx] = u_scariv_rename_map.r_map[r_idx];
+  assign w_sim_rnid_list[scariv_conf_pkg::DISP_SIZE * FLIST_SIZE + r_idx] = u_scariv_rename_map.r_map[r_idx];
 end
 endgenerate
 
@@ -469,11 +535,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     for (int f1_idx = 0; f1_idx < RNID_SIZE; f1_idx++) begin : list_check1_loop
       for (int f2_idx = 0; f2_idx < RNID_SIZE; f2_idx++) begin : list_check2_loop
         if (f1_idx != f2_idx) begin
-          if (w_rnid_list[f1_idx] !='h0 && (w_rnid_list[f1_idx] == w_rnid_list[f2_idx])) begin
+          if (w_sim_rnid_list[f1_idx] !='h0 && (w_sim_rnid_list[f1_idx] == w_sim_rnid_list[f2_idx])) begin
             $fatal(0, "Index %d(%2d, %2d) and %d(%2d, %2d) are same ID: %3d\n",
                    f1_idx[$clog2(RNID_SIZE)-1: 0], f1_idx[$clog2(RNID_SIZE)-1: 0] / FLIST_SIZE, f1_idx[$clog2(RNID_SIZE)-1: 0] % FLIST_SIZE,
                    f2_idx[$clog2(RNID_SIZE)-1: 0], f2_idx[$clog2(RNID_SIZE)-1: 0] / FLIST_SIZE, f2_idx[$clog2(RNID_SIZE)-1: 0] % FLIST_SIZE,
-                   w_rnid_list[f1_idx]);
+                   w_sim_rnid_list[f1_idx]);
           end
         end
       end

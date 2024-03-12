@@ -20,6 +20,8 @@ module scariv_csu_issue_unit
  input logic                           i_clk,
  input logic                           i_reset_n,
 
+ input logic                           i_oldest_mode,
+
  // ROB notification interface
  rob_info_if.slave                     rob_info_if,
 
@@ -27,6 +29,7 @@ module scariv_csu_issue_unit
  input scariv_pkg::cmt_id_t            i_cmt_id,
  input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
  scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
+ input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
 
  cre_ret_if.slave                      cre_ret_if,
 
@@ -35,7 +38,7 @@ module scariv_csu_issue_unit
  /* Forwarding path */
  phy_wr_if.slave            phy_wr_if[scariv_pkg::TGT_BUS_SIZE],
 
- output scariv_pkg::issue_t            o_issue,
+ output scariv_csu_pkg::issue_t            o_issue,
  output [ENTRY_SIZE-1:0]               o_iss_index_oh,
 
  // Commit notification
@@ -50,7 +53,7 @@ logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
 
-scariv_pkg::issue_t w_entry[ENTRY_SIZE];
+scariv_csu_pkg::issue_t w_entry[ENTRY_SIZE];
 
 logic [$clog2(IN_PORT_SIZE): 0] w_input_valid_cnt;
 logic [ENTRY_SIZE-1: 0]         w_entry_out_ptr_oh;
@@ -233,7 +236,9 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_cmt_id   (i_cmt_id  ),
     .i_grp_id   (w_disp_grp_id  ),
     .i_put_data (w_disp_entry  ),
-    .i_inst_oldest (|(w_disp_oldest_valid & w_input_valid)),
+    .i_vlvtype_ren_idx (i_vlvtype_ren_idx),
+
+    .i_inst_oldest (|(w_disp_oldest_valid & w_input_valid) | i_oldest_mode),
 
     .o_entry_valid(w_entry_valid[s_idx]),
     .o_entry_ready(w_entry_ready[s_idx]),
@@ -256,7 +261,7 @@ endgenerate
 bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) u_entry_finish_bit_oh (.in(w_entry_finish), .i_ptr_oh(w_entry_out_ptr_oh), .out(w_entry_finish_oh));
 
 
-bit_oh_or #(.T(scariv_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
+bit_oh_or #(.T(scariv_csu_pkg::issue_t), .WORDS(ENTRY_SIZE)) u_picked_inst (.i_oh(w_picked_inst_oh), .i_data(w_entry), .o_selected(o_issue));
 assign o_iss_index_oh = w_picked_inst_oh;
 
 // --------------
@@ -266,7 +271,7 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done)
 
 `ifdef SIMULATION
 typedef struct packed {
-  scariv_pkg::issue_t entry;
+  scariv_csu_pkg::issue_t entry;
   scariv_pkg::sched_state_t state;
 } entry_ptr_t;
 

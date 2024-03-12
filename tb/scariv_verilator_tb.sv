@@ -21,7 +21,15 @@ import "DPI-C" function void step_spike
    input int     rtl_wr_typ,
    input int     rtl_wr_gpr,
    input int     rtl_wr_rnid,
-   input longint rtl_wr_val
+   input longint rtl_wr_val,
+   input byte    rtl_wr_vec_val0[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val1[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val2[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val3[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val4[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val5[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val6[riscv_vec_conf_pkg::VLEN_W/8],
+   input byte    rtl_wr_vec_val7[riscv_vec_conf_pkg::VLEN_W/8]
    );
 
 import "DPI-C" function void step_spike_wo_cmp(input int count);
@@ -541,6 +549,18 @@ logic [63: 0]                                                  int_commit_counte
 `define BRANCH_INFO_Q u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_predictor.u_gshare.branch_info_queue
 `define ROB u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob
 
+byte w_physical_vec_data_rnid[scariv_pkg::DISP_SIZE-1: 0][8][riscv_vec_conf_pkg::VLEN_W/8-1: 0];
+
+generate if (riscv_vec_conf_pkg::VLEN_W != 0) begin : vpu
+  for (genvar grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
+    for (genvar lmul_idx = 0; lmul_idx < 8; lmul_idx++) begin
+      for (genvar idx = 0; idx < riscv_vec_conf_pkg::VLEN_W/8; idx++) begin : array_loop
+        assign w_physical_vec_data_rnid[grp_idx][lmul_idx][idx] = w_physical_vec_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid + lmul_idx][idx*8 +: 8];
+      end
+    end
+  end
+end endgenerate
+
 always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
     if (!i_scariv_reset_n) begin
     end else begin
@@ -564,7 +584,10 @@ always_ff @(negedge i_clk, negedge i_scariv_reset_n) begin
                         committed_rob_payload.disp[grp_idx].wr_reg.rnid,
                         committed_rob_payload.disp[grp_idx].wr_reg.typ == scariv_pkg::GPR ?
                         w_physical_int_data[committed_rob_payload.disp[grp_idx].wr_reg.rnid] :
-                        w_physical_fp_data [committed_rob_payload.disp[grp_idx].wr_reg.rnid]);
+                        w_physical_fp_data [committed_rob_payload.disp[grp_idx].wr_reg.rnid],
+                        w_physical_vec_data_rnid[grp_idx][0], w_physical_vec_data_rnid[grp_idx][1], w_physical_vec_data_rnid[grp_idx][2], w_physical_vec_data_rnid[grp_idx][3],
+                        w_physical_vec_data_rnid[grp_idx][4], w_physical_vec_data_rnid[grp_idx][5], w_physical_vec_data_rnid[grp_idx][6], w_physical_vec_data_rnid[grp_idx][7]
+                        );
 
             for (int q_idx = 0; q_idx < `BRANCH_INFO_Q.size(); q_idx++) begin
               if (`BRANCH_INFO_Q[q_idx].cmt_id == `ROB.w_out_cmt_id &&

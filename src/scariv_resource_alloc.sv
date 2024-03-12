@@ -28,6 +28,10 @@ module scariv_resource_alloc
    cre_ret_if.master csu_cre_ret_if,
    cre_ret_if.master bru_cre_ret_if,
    cre_ret_if.master fpu_cre_ret_if[scariv_conf_pkg::FPU_INST_NUM],
+   cre_ret_if.master valu_cre_ret_if,
+   cre_ret_if.master vlsu_cre_ret_if,
+
+   vlvtype_req_if.slave  vlvtype_req_if,
 
    // Branch Tag Update Signal
    br_upd_if.slave                br_upd_if,
@@ -47,13 +51,15 @@ logic                                     w_flush_valid;
 logic                                     w_iq_fire;
 
 logic                                               w_rob_no_credits_remained;
-logic [scariv_conf_pkg::ALU_INST_NUM-1: 0]            w_alu_no_credits_remained;
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]            w_lsu_no_credits_remained;
+logic [scariv_conf_pkg::ALU_INST_NUM-1: 0]          w_alu_no_credits_remained;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0]          w_lsu_no_credits_remained;
 logic                                               w_ldq_no_credits_remained;
 logic                                               w_stq_no_credits_remained;
 logic                                               w_csu_no_credits_remained;
 logic                                               w_bru_no_credits_remained;
-logic [scariv_conf_pkg::FPU_INST_NUM-1: 0]            w_fpu_no_credits_remained;
+logic [scariv_conf_pkg::FPU_INST_NUM-1: 0]          w_fpu_no_credits_remained;
+logic                                               w_valu_no_credits_remained;
+logic                                               w_vlsu_no_credits_remained;
 
 
 assign o_resource_ok = !w_rob_no_credits_remained &
@@ -63,7 +69,10 @@ assign o_resource_ok = !w_rob_no_credits_remained &
                        !w_stq_no_credits_remained &
                        !w_csu_no_credits_remained &
                        !w_bru_no_credits_remained &
-                       !(|w_fpu_no_credits_remained);
+                       !(|w_fpu_no_credits_remained) &
+                       !w_valu_no_credits_remained &
+                       !w_vlsu_no_credits_remained &
+                       !vlvtype_req_if.full;
 
 
 // assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
@@ -278,5 +287,47 @@ u_brtag_freelist
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : branch_disp_loop
   assign o_brtag[d_idx]  = w_brtag_freelist_pop_id[d_idx];
 end endgenerate
+
+
+logic   w_inst_valu_valid;
+assign w_inst_valu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.valu_inst_cnt;
+logic [$clog2(scariv_conf_pkg::RV_VALU_ENTRY_SIZE):0] w_valu_inst_cnt;
+assign w_valu_inst_cnt = ibuf_front_if.payload.resource_cnt.valu_inst_cnt;
+scariv_credit_return_master
+  #(.MAX_CREDITS(scariv_conf_pkg::RV_VALU_ENTRY_SIZE))
+u_valu_credit_return
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_credit(~w_flush_valid & w_inst_valu_valid & ibuf_front_if.ready),
+ .i_credit_val(w_valu_inst_cnt),
+
+ .o_credits(),
+ .o_no_credits(w_valu_no_credits_remained),
+
+ .cre_ret_if (valu_cre_ret_if)
+);
+
+logic   w_inst_vlsu_valid;
+assign w_inst_vlsu_valid = ibuf_front_if.valid & |ibuf_front_if.payload.resource_cnt.vlsu_inst_cnt;
+logic [$clog2(scariv_conf_pkg::RV_VLSU_ENTRY_SIZE):0] w_vlsu_inst_cnt;
+assign w_vlsu_inst_cnt = ibuf_front_if.payload.resource_cnt.vlsu_inst_cnt;
+scariv_credit_return_master
+  #(.MAX_CREDITS(scariv_conf_pkg::RV_VLSU_ENTRY_SIZE))
+u_vlsu_credit_return
+(
+ .i_clk(i_clk),
+ .i_reset_n(i_reset_n),
+
+ .i_get_credit(~w_flush_valid & w_inst_vlsu_valid & ibuf_front_if.ready),
+ .i_credit_val(w_vlsu_inst_cnt),
+
+ .o_credits(),
+ .o_no_credits(w_vlsu_no_credits_remained),
+
+ .cre_ret_if (vlsu_cre_ret_if)
+);
+
 
 endmodule // scariv_resource_alloc

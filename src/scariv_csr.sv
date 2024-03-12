@@ -540,7 +540,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_scounteren.raw_bit <= write_if.data[31: 0];
   end
 end
-always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sscratch      <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SSCRATCH      ) begin r_sscratch      <= write_if.data; end end
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_sscratch <= 'h0;
+  end else if (write_if.valid & write_if.addr == `SYSREG_ADDR_SSCRATCH) begin
+    r_sscratch <= write_if.data;
+  end
+end
 always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_sip           <= 'h0; end else if (write_if.valid & write_if.addr ==  `SYSREG_ADDR_SIP           ) begin r_sip           <= write_if.data; end end
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -937,7 +943,7 @@ assign w_delegate = scariv_conf_pkg::USING_VM & (r_priv <= riscv_common_pkg::PRI
 
 always_comb begin
   w_mstatus = r_mstatus;
-  w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]);
+  w_mstatus[riscv_pkg::MSTATUS_SD] = (&w_mstatus[`MSTATUS_FS]) | (&w_mstatus[`MSTATUS_XS]) | (&w_mstatus[`MSTATUS_VS]);
 end
 
 
@@ -1023,6 +1029,13 @@ always_comb begin
       w_stval_next = commit_if.payload.tval;
     end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::URET)) begin // if (commit_if.payload.except_type == scariv_pkg::SRET)
       w_mtval_next = 'h0;
+    end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) & (commit_if.payload.except_type == scariv_pkg::LMUL_CHANGE)) begin
+      w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
+                     commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
+      w_mstatus_next[`MSTATUS_MPIE] = w_mstatus[`MSTATUS_MIE];
+      w_mstatus_next[`MSTATUS_MPP ] = r_priv;
+      w_mstatus_next[`MSTATUS_MIE ] = 1'b0;
+      w_priv_next = riscv_common_pkg::PRIV_M;
     end else if (|(commit_if.payload.except_valid & ~commit_if.payload.dead_id) & w_delegate) begin
       w_sepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
                      commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
@@ -1047,11 +1060,14 @@ always_comb begin
       w_mstatus_next[`MSTATUS_SIE ] = 1'b0;
 
       w_priv_next = riscv_common_pkg::PRIV_S;
+
     end else if (~|(commit_if.payload.except_valid & commit_if.payload.dead_id) &
                  (commit_if.payload.except_type != scariv_pkg::SILENT_FLUSH) &
+                 (commit_if.payload.except_type != scariv_pkg::SELF_KILL_REPLAY) &
                  (commit_if.payload.except_type != scariv_pkg::ANOTHER_FLUSH)) begin
       w_mepc_next = {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){commit_if.payload.epc[riscv_pkg::VADDR_W-1]}},
                      commit_if.payload.epc[riscv_pkg::VADDR_W-1: 0]};
+
       /* verilator lint_off WIDTH */
       w_mcause_next = commit_if.payload.except_type;
       if (commit_if.payload.except_type == scariv_pkg::ILLEGAL_INST        ||
@@ -1124,6 +1140,9 @@ always_comb begin
         end
 
         w_mstatus_next[`MSTATUS_FS] = write_if.data[`MSTATUS_FS];
+        if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+          w_mstatus_next[`MSTATUS_VS] = write_if.data[`MSTATUS_VS];
+        end
       end // case: `SYSREG_ADDR_MSTATUS
 
       `SYSREG_ADDR_SSTATUS : begin
@@ -1132,6 +1151,9 @@ always_comb begin
         w_mstatus_next[`MSTATUS_SPP ] = write_if.data[`MSTATUS_SPP ];
         w_mstatus_next[`MSTATUS_XS  ] = write_if.data[`MSTATUS_XS  ];
         w_mstatus_next[`MSTATUS_FS  ] = write_if.data[`MSTATUS_FS  ];
+        if (riscv_vec_conf_pkg::VLEN_W != 0) begin
+          w_mstatus_next[`MSTATUS_VS  ] = write_if.data[`MSTATUS_VS  ];
+        end
         w_mstatus_next[`MSTATUS_MPP ] = write_if.data[`MSTATUS_MPP ];
         w_mstatus_next[`MSTATUS_MXR ] = write_if.data[`MSTATUS_MXR ];
         w_mstatus_next[`MSTATUS_SUM ] = write_if.data[`MSTATUS_SUM ];

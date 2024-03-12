@@ -26,6 +26,7 @@ int argc;
 const char *argv[20];
 int g_rv_xlen = 0;
 int g_rv_flen = 0;
+int g_rv_vlen = 0;
 
 extern long long iss_bhr;   // defined in gshare_model.cpp
 
@@ -136,7 +137,7 @@ static void read_file_bytes(const char *filename,size_t fileoff,
 }
 
 
-void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa)
+void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa, int rv_vlen)
 {
   argv[0] = "spike_dpi";
   char *isa_str = (char *)malloc(sizeof(char) * 32);
@@ -168,6 +169,7 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   int arg_max = 2;
   g_rv_xlen = rv_xlen;
   g_rv_flen = rv_flen;
+  g_rv_vlen = rv_vlen;
   // argv[arg_max++] = "-m0x80000000:0x10000,"     \
   //     "0x0000000000125000:0x1000," \
   //     "0x0000000000129000:0x1000," \
@@ -530,10 +532,13 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "-m0x80000000:0x80000000,0x0:0x1000";
 #ifndef SIM_MAIN
   argv[arg_max++] = "--extlib=../../../spike_dpi/libserialdevice.so";
+  argv[arg_max++] = "--extlib=../../../spike_dpi/liblmul_change_rom.so";
 #else // SIM_MAIN
   argv[arg_max++] = "--extlib=./libserialdevice.so";
+  argv[arg_max++] = "--extlib=./liblmul_change_rom.so";
 #endif // SIM_MAIN
   argv[arg_max++] = "--device=serialdevice,1409286144,uart";   // 1409286144 = 0x5400_0000
+  argv[arg_max++] = "--device=lmul_change_rom,8192,lmul_change_rom";   //  = 0x0000_2000
   argv[arg_max++] = "--log";
   argv[arg_max++] = "spike.log";
   argv[arg_max++] = "-l";
@@ -552,6 +557,9 @@ void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* 
   argv[arg_max++] = "--kernel=../tests/linux/Image";
   argv[arg_max++] = "--initrd=../tests/linux/spike_rootfs.cpio";
 #endif // SIM_MAIN
+  char *varch_str =(char *)malloc(sizeof(char) * 64);
+  sprintf(varch_str, "--varch=vlen:%d,elen:%d", rv_vlen, rv_vlen < rv_xlen ? rv_vlen : rv_xlen);
+  argv[arg_max++] = varch_str;
   argv[arg_max++] = filename;
   argc = arg_max;
   for (int i = argc; i < 20; i++) { argv[i] = NULL; }
@@ -969,7 +977,9 @@ std::map<int, const char *> riscv_excpt_map {
   {25, "SRET Flush"},
   {26, "URET Flush"},
   {27, "CSR Update Flush"},
-  {28, "Another Flush"}
+  {28, "Another Flush"},
+  {29, "LMUL change"},
+  {30, "Self Kill and Replay"}
 };
 
 void step_spike(long long rtl_time, long long rtl_pc,
@@ -978,7 +988,15 @@ void step_spike(long long rtl_time, long long rtl_pc,
                 int rtl_cmt_id, int rtl_grp_id,
                 int rtl_insn,
                 int rtl_wr_valid, int rtl_wr_type, int rtl_wr_gpr_addr,
-                int rtl_wr_gpr_rnid, long long rtl_wr_val)
+                int rtl_wr_gpr_rnid, long long rtl_wr_val,
+                const uint8_t* rtl_wr_vec_val0,
+                const uint8_t* rtl_wr_vec_val1,
+                const uint8_t* rtl_wr_vec_val2,
+                const uint8_t* rtl_wr_vec_val3,
+                const uint8_t* rtl_wr_vec_val4,
+                const uint8_t* rtl_wr_vec_val5,
+                const uint8_t* rtl_wr_vec_val6,
+                const uint8_t* rtl_wr_vec_val7)
 {
 #ifndef SIM_MAIN
   svScope g_scope;
@@ -1010,6 +1028,17 @@ void step_spike(long long rtl_time, long long rtl_pc,
     return;
   }
 
+  if (rtl_exception & (rtl_exception_cause == 29)) {
+    fprintf(compare_log_fp, "==========================================\n");
+    fprintf(compare_log_fp, "%lld : Exception Happened(%d,%d) : Cause = %s(%d)\n", rtl_time,
+            rtl_cmt_id, rtl_grp_id,
+            riscv_excpt_map[rtl_exception_cause],
+            rtl_exception_cause),
+    fprintf(compare_log_fp, "==========================================\n");
+    p->step(1);
+    return;
+  }
+
   if (rtl_exception & ((rtl_exception_cause == 13) ||  // Load Page Fault
                        (rtl_exception_cause == 15) ||  // Store Page Fault
                        (rtl_exception_cause == 12))) {  // Instruction Page Fault
@@ -1022,7 +1051,8 @@ void step_spike(long long rtl_time, long long rtl_pc,
     return;
   }
 
-  if (rtl_exception & ((rtl_exception_cause == 28))) {  // Another Flush
+  if (rtl_exception & ((rtl_exception_cause == 28) ||  // Another Flush
+                       (rtl_exception_cause == 30))) { // Self Kill and Replay
     fprintf(compare_log_fp, "==========================================\n");
     fprintf(compare_log_fp, "%lld : Exception Happened : Cause = %s(%d)\n", rtl_time,
             riscv_excpt_map[rtl_exception_cause],
@@ -1074,26 +1104,50 @@ void step_spike(long long rtl_time, long long rtl_pc,
     return; // WFI doesn't update PC -> just skip
   }
 
-  for (auto &iss_rd: p->get_state()->log_mem_read) {
-    int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
-    uint64_t iss_lsu_addr = std::get<0>(iss_rd);
-    fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
-            g_rv_xlen / 4, iss_lsu_addr,
-            g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
-    if (iss_lsu_addr == 0x200bff8) {
-      fprintf(compare_log_fp, "==========================================\n");
-      fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
-      fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
-      fprintf(compare_log_fp, "==========================================\n");
-      p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
-      p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
-      return;
+  if (((p->get_state()->insn.bits() & 0x7f) != 0x07) &   // Not Vector Load
+      ((p->get_state()->insn.bits() & 0x7f) != 0x27)) {  // Not Vector Store
+    for (auto &iss_rd: p->get_state()->log_mem_read) {
+      int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+      uint64_t iss_lsu_addr = std::get<0>(iss_rd);
+      fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+              g_rv_xlen / 4, iss_lsu_addr,
+              g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+      if (iss_lsu_addr == 0x200bff8) {
+        fprintf(compare_log_fp, "==========================================\n");
+        fprintf(compare_log_fp, "RTL MTIME (0x2000_bff8) Backporting to ISS.\n");
+        fprintf(compare_log_fp, "ISS MTIME is updated by RTL = %0*llx\n", g_rv_xlen / 4, rtl_wr_val);
+        fprintf(compare_log_fp, "==========================================\n");
+        p->get_mmu()->store_uint64 (0x200bff8, rtl_wr_val);
+        p->get_state()->XPR.write(rtl_wr_gpr_addr, rtl_wr_val);
+        return;
+      }
     }
-  }
-  for (auto &iss_wr: p->get_state()->log_mem_write) {
-    fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
-            g_rv_xlen / 4, std::get<0>(iss_wr),
-            g_rv_xlen / 4, std::get<1>(iss_wr));
+    for (auto &iss_wr: p->get_state()->log_mem_write) {
+      fprintf(compare_log_fp, "MW%d(0x%0*lx)<=%0*lx\n", std::get<2>(iss_wr),
+              g_rv_xlen / 4, std::get<0>(iss_wr),
+              g_rv_xlen / 4, std::get<1>(iss_wr));
+    }
+  } else {
+    if (p->get_state()->log_mem_read.size() != 0) {
+      fprintf (compare_log_fp, "MR%d : ", std::get<2>(p->get_state()->log_mem_read[0]));
+      for (auto &iss_rd: p->get_state()->log_mem_read) {
+        int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
+        uint64_t iss_lsu_addr = std::get<0>(iss_rd);
+        fprintf (compare_log_fp, "(0x%0*lx)=>%0*lx, ",
+                 g_rv_xlen / 4, iss_lsu_addr,
+                 g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
+      }
+      fprintf (compare_log_fp, "\n");
+    }
+    if (p->get_state()->log_mem_write.size() != 0) {
+      fprintf (compare_log_fp, "MW%d : ", std::get<2>(p->get_state()->log_mem_write[0]));
+      for (auto &iss_wr: p->get_state()->log_mem_write) {
+        fprintf(compare_log_fp, "(0x%0*lx)<=%0*lx, ",
+                g_rv_xlen / 4, std::get<0>(iss_wr),
+                g_rv_xlen / 4, std::get<1>(iss_wr));
+      }
+      fprintf (compare_log_fp, "\n");
+    }
   }
 
   if (!is_equal_vaddr(iss_pc, rtl_pc)) {
@@ -1184,11 +1238,17 @@ void step_spike(long long rtl_time, long long rtl_pc,
       // magic number "16" is category of register write
       if (std::get<0>(iss_rd) < 32 * 16) {
         fprintf(compare_log_fp, "==========================================\n");
-        fprintf(compare_log_fp, "ISS Writes GPR but RTL NOT");
-        int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd)];
+        switch (std::get<0>(iss_rd) % 16) {
+          case 0 : fprintf(compare_log_fp, "ISS Writes GPR but RTL NOT"); break;
+          case 1 : fprintf(compare_log_fp, "ISS Writes FPR but RTL NOT"); break;
+          case 2 : fprintf(compare_log_fp, "ISS Writes VPR but RTL NOT"); break;
+          default : continue;
+        }
+        int64_t iss_wr_val = p->get_state()->XPR[std::get<0>(iss_rd) / 16];
 
-        fprintf(compare_log_fp, "  GPR[%ld]<=%0*lx\n",
+        fprintf(compare_log_fp, "  GPR[%ld,%ld]<=%0*lx\n",
                 std::get<0>(iss_rd) / 16,
+                std::get<0>(iss_rd),
                 g_rv_xlen / 4, iss_wr_val);
         fprintf(compare_log_fp, "==========================================\n");
         stop_sim(100, rtl_time);
@@ -1299,6 +1359,68 @@ void step_spike(long long rtl_time, long long rtl_pc,
     } else {
       fprintf(compare_log_fp, "FPR[%02d](%d) <= %0*llx\n", rtl_wr_gpr_addr, rtl_wr_gpr_rnid, g_rv_flen / 4, rtl_wr_val);
     }
+  } else if (rtl_wr_valid && (iss_wr_type == 2 || rtl_wr_type == 2)) { // VPR write
+    fprintf(compare_log_fp, "VPU : VL/VLMAX = %ld/%ld, VFLMUL=%0.1f, VSEW=EW%ld, VTA=%ld, VMA=%ld\n",
+            p->VU.vl, p->VU.vlmax, p->VU.vflmul, p->VU.vsew, p->VU.vta, p->VU.vma);
+    const uint8_t* rtl_wr_vec_val[8] = {
+      rtl_wr_vec_val0, rtl_wr_vec_val1, rtl_wr_vec_val2, rtl_wr_vec_val3,
+      rtl_wr_vec_val4, rtl_wr_vec_val5, rtl_wr_vec_val6, rtl_wr_vec_val7
+    };
+
+    for (size_t lmul = 0; lmul < p->VU.vflmul; lmul++) {
+      bool diff_found = false;
+      for (int b = 0; b < g_rv_vlen / 8; b++) {
+        if (rtl_wr_vec_val[lmul][b] != static_cast<uint8_t *>(p->VU.reg_file)[(rtl_wr_gpr_addr + lmul) * (g_rv_vlen/8) + b]) {
+          diff_found = true;
+        }
+      }
+      if (diff_found) {
+        fprintf (compare_log_fp, "==========================================\n");
+        fprintf (compare_log_fp, "Wrong VPR[%02ld](%ld): \n", (rtl_wr_gpr_addr + lmul), (rtl_wr_gpr_rnid + lmul));
+        fprintf (compare_log_fp, "ISS[%02ld] = ", (rtl_wr_gpr_addr + lmul));
+        for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+          fprintf (compare_log_fp, "%02x", static_cast<uint8_t *>(p->VU.reg_file)[(rtl_wr_gpr_addr + lmul) * (g_rv_vlen/8) + b]);
+          if (b % 4 == 0) {
+            fprintf (compare_log_fp, "_");
+          }
+        }
+        fprintf (compare_log_fp, "\n");
+
+        fprintf(compare_log_fp, "RTL[%02ld] = ", (rtl_wr_gpr_addr + lmul));
+        for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+          fprintf (compare_log_fp, "%02x", rtl_wr_vec_val[lmul][b]);
+          if (b % 4 == 0) {
+            fprintf (compare_log_fp, "_");
+          }
+        }
+        fprintf (compare_log_fp, "\n");
+
+        fprintf(compare_log_fp, "          ");
+        for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+          if (rtl_wr_vec_val[lmul][b] != static_cast<uint8_t *>(p->VU.reg_file)[(rtl_wr_gpr_addr + lmul) * (g_rv_vlen/8) + b]) {
+            fprintf (compare_log_fp, "~~");
+          } else {
+            fprintf (compare_log_fp, "  ");
+          }
+          if (b % 4 == 0) {
+            fprintf (compare_log_fp, " ");
+          }
+        }
+        fprintf (compare_log_fp, "\n");
+
+        stop_sim (100, rtl_time);
+      } else {
+        fprintf (compare_log_fp, "VPR[%02ld](%ld) <= ", (rtl_wr_gpr_addr + lmul), (rtl_wr_gpr_rnid + lmul));
+        for (int b = g_rv_vlen / 8-1; b >= 0; b--) {
+          fprintf (compare_log_fp, "%02x", rtl_wr_vec_val[lmul][b]);
+          if (b % 4 == 0) {
+            fprintf (compare_log_fp, "_");
+          }
+        }
+        fprintf (compare_log_fp, "\n");
+      }
+    }
+
   }
 
 }
@@ -1574,7 +1696,7 @@ int main(int argc, char **argv)
     fprintf(compare_log_fp, "INST     CYCLE    PC\n");
   }
 
-  initial_spike (htif_args[0].c_str(), 64, 64, "imafdc");
+  initial_spike (htif_args[0].c_str(), 64, 64, "imafdc", 128);
   processor_t *p = spike_core->get_core(0);
 
   initial_gshare(10, 64);
@@ -1618,7 +1740,7 @@ void open_log_fp(const char *filename)
     perror("failed to open log file");
     exit(EXIT_FAILURE);
   }
-  initial_spike(filename, 64, 64, "imafdc");
+  initial_spike(filename, 64, 64, "imafdc", 128);
 
 }
 #endif // VERILATOR

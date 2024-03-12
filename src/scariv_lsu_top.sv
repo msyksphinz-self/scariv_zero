@@ -72,6 +72,15 @@ module scariv_lsu_top
     /* FENCE.I update */
     output logic                o_fence_i,
 
+    // ----------------------
+    // Vector LSU interface
+    // ----------------------
+    l1d_rd_if.slave               vlsu_l1d_rd_if,
+    l1d_missu_if.slave            vlsu_l1d_missu_if,
+    output missu_resolve_t        o_missu_resolve,
+    st_buffer_if.slave            vlsu_st_buffer_if,
+    vstq_haz_check_if.master      vstq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],     // VSTQ Hazard Check
+    scalar_ldq_haz_check_if.slave scalar_ldq_haz_check_if,                              // Vector Store --> Scalar Load disambiguation check
 
     // Commit notification
     commit_if.monitor commit_if,
@@ -83,8 +92,9 @@ localparam L1D_SNOOP_PORT    = 0;
 localparam L1D_PTW_PORT      = L1D_SNOOP_PORT   + 1;
 localparam L1D_LS_PORT_BASE  = L1D_PTW_PORT     + 1;
 localparam L1D_MISSU_PORT    = L1D_LS_PORT_BASE + scariv_conf_pkg::LSU_INST_NUM;
-localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT     + 1;
-localparam L1D_RD_PORT_NUM   = L1D_ST_RD_PORT   + 1;
+localparam L1D_ST_RD_PORT    = L1D_MISSU_PORT   + 1;
+localparam L1D_VLSU_RD_PORT  = L1D_ST_RD_PORT   + 1;
+localparam L1D_RD_PORT_NUM   = L1D_VLSU_RD_PORT + 1;
 
 l1d_rd_if  w_l1d_rd_if [L1D_RD_PORT_NUM] ();
 l1d_wr_if  w_l1d_stbuf_wr_if();
@@ -92,8 +102,8 @@ l1d_wr_if  w_l1d_merge_if();
 l1d_wr_if  w_miss_l1d_wr_if();
 l1d_wr_if  w_snoop_wr_if();
 // LSU Pipeline + ST-Buffer
-l1d_missu_if w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
-fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
+l1d_missu_if w_l1d_missu_if   [scariv_lsu_pkg::MSHR_REQ_PORT_NUM] ();
+fwd_check_if w_ex2_fwd_check  [scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
@@ -124,6 +134,7 @@ rmw_order_check_if w_rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
+st_buffer_if            w_scalar_st_buffer_if();
 st_buffer_if            w_st_buffer_if();
 missu_pa_search_if      w_missu_pa_search_if();
 mshr_stbuf_search_if    w_mshr_stbuf_search_if();
@@ -193,13 +204,15 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .stq_haz_check_if (w_stq_haz_check_if[lsu_idx]),
     .missu_fwd_if (w_missu_fwd_if[lsu_idx]),
 
+    .vstq_haz_check_if (vstq_haz_check_if[lsu_idx]),
+
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),
 
     .ldq_upd_if (w_ldq_upd_if [lsu_idx]),
     .stq_upd_if (w_stq_upd_if [lsu_idx]),
 
-    .i_st_buffer_empty    (w_st_buffer_if.is_empty),
+    .i_st_buffer_empty    (w_scalar_st_buffer_if.is_empty),
     .i_st_requester_empty (w_uc_write_if.is_empty ),
 
     .i_stq_rmw_existed (w_stq_rmw_existed),
@@ -260,6 +273,7 @@ u_ldq
  .cre_ret_if   (ldq_cre_ret_if  ),
 
  .ldq_haz_check_if (w_ldq_haz_check_if),
+ .scalar_ldq_haz_check_if (scalar_ldq_haz_check_if),
 
  .ldq_upd_if (w_ldq_upd_if),
 
@@ -268,7 +282,7 @@ u_ldq
 
  .i_stq_rs2_resolve (w_stq_rs2_resolve),
 
- .st_buffer_if (w_st_buffer_if),
+ .st_buffer_if (w_scalar_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
 
  .commit_if (commit_if),
@@ -311,7 +325,7 @@ scariv_stq
  .commit_if (commit_if),
  .br_upd_if (br_upd_if),
 
- .st_buffer_if (w_st_buffer_if),
+ .st_buffer_if (w_scalar_st_buffer_if),
  .uc_write_if  (w_uc_write_if),
 
  .stq_snoop_if(stq_snoop_if),
@@ -320,6 +334,12 @@ scariv_stq
 );
 
 assign w_l1d_rd_if [L1D_MISSU_PORT].s0_valid = 'h0;
+
+assign w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].load = vlsu_l1d_missu_if.load;
+assign w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].req_payload = vlsu_l1d_missu_if.req_payload;
+assign vlsu_l1d_missu_if.resp_payload = w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1].resp_payload;
+
+assign o_missu_resolve = w_missu_resolve;
 
 scariv_l1d_mshr
 u_l1d_mshr
@@ -369,6 +389,40 @@ u_scariv_store_requester
 
    .l1d_ext_wr_req(w_l1d_ext_req[1])
    );
+
+always_comb begin
+  w_scalar_st_buffer_if.resp     = w_st_buffer_if.resp;
+  w_scalar_st_buffer_if.is_empty = w_st_buffer_if.is_empty;
+
+  vlsu_st_buffer_if.resp  = w_st_buffer_if.is_empty;
+  if (w_scalar_st_buffer_if.valid) begin
+    w_st_buffer_if.valid    = w_scalar_st_buffer_if.valid   ;
+    w_st_buffer_if.paddr    = w_scalar_st_buffer_if.paddr   ;
+    w_st_buffer_if.strb     = w_scalar_st_buffer_if.strb    ;
+    w_st_buffer_if.data     = w_scalar_st_buffer_if.data    ;
+    w_st_buffer_if.is_rmw   = w_scalar_st_buffer_if.is_rmw  ;
+    w_st_buffer_if.rmwop    = w_scalar_st_buffer_if.rmwop   ;
+`ifdef SIMULATION
+    w_st_buffer_if.cmt_id   = w_scalar_st_buffer_if.cmt_id  ;
+    w_st_buffer_if.grp_id   = w_scalar_st_buffer_if.grp_id  ;
+`endif // SIMULATION
+
+    vlsu_st_buffer_if.resp  = scariv_lsu_pkg::ST_BUF_FULL;
+  end else begin
+    w_st_buffer_if.valid    = vlsu_st_buffer_if.valid   ;
+    w_st_buffer_if.paddr    = vlsu_st_buffer_if.paddr   ;
+    w_st_buffer_if.strb     = vlsu_st_buffer_if.strb    ;
+    w_st_buffer_if.data     = vlsu_st_buffer_if.data    ;
+    w_st_buffer_if.is_rmw   = vlsu_st_buffer_if.is_rmw  ;
+    w_st_buffer_if.rmwop    = vlsu_st_buffer_if.rmwop   ;
+`ifdef SIMULATION
+    w_st_buffer_if.cmt_id   = vlsu_st_buffer_if.cmt_id  ;
+    w_st_buffer_if.grp_id   = vlsu_st_buffer_if.grp_id  ;
+`endif // SIMULATION
+
+    vlsu_st_buffer_if.resp  = w_st_buffer_if.resp;
+  end // else: !if(w_scalar_st_buffer_if.valid)
+end // always_comb
 
 scariv_st_buffer
 u_st_buffer
@@ -494,6 +548,21 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_snoop_resp_valid <= l1d_snoop_if.req_s0_valid;
   end
 end
+
+
+// ----------------------
+// Vector LSU interface
+// ----------------------
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_valid = vlsu_l1d_rd_if.s0_valid;
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_paddr = vlsu_l1d_rd_if.s0_paddr;
+assign w_l1d_rd_if [L1D_VLSU_RD_PORT].s0_high_priority = 1'b0;
+
+assign vlsu_l1d_rd_if.s1_conflict = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_conflict;
+assign vlsu_l1d_rd_if.s1_miss     = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_miss;
+assign vlsu_l1d_rd_if.s1_hit      = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_hit;
+assign vlsu_l1d_rd_if.s1_hit_way  = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_hit_way;
+assign vlsu_l1d_rd_if.s1_data     = w_l1d_rd_if[L1D_VLSU_RD_PORT].s1_data;
+
 
 scariv_dcache
   #(.RD_PORT_NUM (L1D_RD_PORT_NUM))

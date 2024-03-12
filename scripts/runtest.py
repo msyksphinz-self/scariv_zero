@@ -68,6 +68,8 @@ class verilator_sim:
                          "ISA="         +     sim_conf["isa_ext"],
                          "RV_XLEN="     + str(sim_conf["xlen"]),
                          "RV_FLEN="     + str(sim_conf["flen"]),
+                         "RV_VLEN="     + str(sim_conf["vlen"]),
+                         "RV_DLEN="     + str(sim_conf["dlen"]),
                          "EXT_ISA="      + str(sim_conf["amo"]),
                          "RV_BITMANIP=" + str(sim_conf["bitmanip"])]
 
@@ -240,8 +242,6 @@ class verilator_sim:
         return self.execute_test(*args)
 
     def run_sim(self, sim_conf, testcase):
-        self.test_table
-        print ("parallel = " + str(sim_conf["parallel"]))
         for t in sim_conf["testlist"]:
             json_open = open(t, 'r')
             t = json.load(json_open)
@@ -296,7 +296,12 @@ def main():
     parser.add_argument('-i', '--isa', dest='isa', action='store',
 	                default='rv32imc',
 	                help='ISA of design comfiguration')
-
+    parser.add_argument('--vlen', dest='vlen', action='store',
+	                default=0,
+	                help='Vector Datapath Length')
+    parser.add_argument('--dlen', dest='dlen', action='store',
+	                default=0,
+	                help='Defalut Vector Length')
     parser.add_argument('-c', '--conf', dest='conf', action='store',
 	                default='standard',
 	                help="Configuration of design : tiny, small, standard, big, giant")
@@ -326,6 +331,8 @@ def main():
 
     testcase = args.testcase
     sim_conf["isa_ext"]         = sim_conf["isa"][4:]
+    sim_conf["vlen"]            = args.vlen
+    sim_conf["dlen"]            = args.dlen
     sim_conf["parallel"]        = int(args.parallel)
     sim_conf["fst_dump"]        = args.debug
     sim_conf["dump_start_time"] = args.dump_start
@@ -343,7 +350,8 @@ def main():
         elif sim_conf["xlen"] == 64 :
             sim_conf["testlist"] = ['../tests/rv64-tests.json',
                                     '../tests/rv64-bench.json',
-                                    '../tests/rv64-aapg.json']
+                                    '../tests/rv64-aapg.json',
+                                    '../tests/rv64-rvv-tests.json']
     else:
         sim_conf["testlist"] = [args.testlist]
 

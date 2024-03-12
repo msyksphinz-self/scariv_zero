@@ -7,6 +7,8 @@
 ../src/decoder_csu_sched.sv
 ../src/decoder_lsu_sched.sv
 ../src/decoder_fpu_ctrl.sv
+../src/decoder_valu_ctrl.sv
+../src/decoder_vlsu_ctrl.sv
 
 ../src/recurse_pkg.sv
 ../src/scariv_pkg.sv
@@ -14,10 +16,11 @@
 ../src/scariv_lsu_pkg.sv
 ../src/scariv_ic_pkg.sv
 ../src/scariv_bru_pkg.sv
-../src/scariv_csu_pkg.sv
 ../src/scariv_fpu_pkg.sv
 ../src/scariv_predict_pkg.sv
 ../src/scariv_ibuf_pkg.sv
+../src/scariv_vec_pkg.sv
+../src/scariv_csu_pkg.sv
 
 ../src/l2_if.sv
 ../src/scariv_front_pkg.sv
@@ -83,7 +86,6 @@
 ../src/scariv_tile_wrapper.sv
 ../src/scariv_inst_buffer.sv
 ../src/scariv_disp_pickup.sv
-../src/scariv_disp_merge.sv
 ../src/scariv_ptw.sv
 ../src/scariv_rvc_expander.sv
 
@@ -102,8 +104,10 @@
 ../src/scariv_rename.sv
 ../src/scariv_rename_sub.sv
 ../src/scariv_resource_alloc.sv
+../src/scariv_rename_freelist.sv
 ../src/scariv_freelist.sv
 ../src/scariv_freelist_multiports.sv
+../src/scariv_freelist_multiports_oh.sv
 ../src/scariv_brtag_freelist.sv
 ../src/scariv_rename_map.sv
 ../src/scariv_inflight_list.sv
@@ -177,6 +181,24 @@
 ../src/scariv_btb.sv
 ../src/scariv_pred_ras.sv
 ../src/scariv_ftq.sv
+
+../src/scariv_vec_csr.sv
+../src/scariv_vec_vlvtype_rename.sv
+../src/scariv_valu_issue_unit.sv
+../src/scariv_valu_issue_entry.sv
+../src/scariv_vec_alu.sv
+../src/scariv_vec_alu_datapath.sv
+../src/scariv_vec_alu_pipe.sv
+../src/scariv_vec_registers.sv
+../src/scariv_vlsu_uop_gen.sv
+../src/scariv_vec_lsu_pipe.sv
+../src/scariv_vec_lsu.sv
+../src/scariv_vlsu_replay_queue.sv
+../src/scariv_vlsu_address_gen.sv
+../src/scariv_vlsu_issue_entry.sv
+../src/scariv_vlsu_issue_unit.sv
+../src/scariv_vlsu_ldq.sv
+../src/scariv_vlsu_stq.sv
 
 ../src/l2_if_arbiter.sv
 ../src/l2_if_req_splitter_with_others.sv

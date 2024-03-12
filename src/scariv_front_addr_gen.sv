@@ -70,6 +70,8 @@ always_comb begin
     end else begin
       case (commit_in_if.payload.except_type)
         scariv_pkg::SILENT_FLUSH   : o_vaddr = commit_in_if.payload.epc + 4;
+        scariv_pkg::LMUL_CHANGE    : o_vaddr = scariv_vec_pkg::LMUL_CHANGE_HANDLER_BASE_ADDR;
+        scariv_pkg::SELF_KILL_REPLAY : o_vaddr = commit_in_if.payload.epc;
         scariv_pkg::ANOTHER_FLUSH  : o_vaddr = commit_in_if.payload.epc;
         scariv_pkg::MRET           : o_vaddr = csr_info.mepc [riscv_pkg::XLEN_W-1: 0];
         scariv_pkg::SRET           : o_vaddr = csr_info.sepc [riscv_pkg::XLEN_W-1: 0];

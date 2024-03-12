@@ -50,6 +50,9 @@ module scariv_lsu_pipe
  stq_haz_check_if.master               stq_haz_check_if,
  missu_fwd_if.master                   missu_fwd_if,
 
+
+ vstq_haz_check_if.master              vstq_haz_check_if,
+
  // RMW Ordere Hazard Check
  rmw_order_check_if.master             rmw_order_check_if,
 
@@ -449,7 +452,7 @@ assign w_ex2_rmw_haz_vld = rmw_order_check_if.ex2_stq_haz_vld | rmw_order_check_
 
 assign w_ex2_load_mispredicted = r_ex2_issue.valid &
                                  w_ex2_readmem_op &
-                                 (w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid |
+                                 (w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid | vstq_haz_check_if.ex2_haz_valid |
                                   (ex1_l1d_rd_if.s1_miss | ex1_l1d_rd_if.s1_conflict) & ~(&w_ex2_fwd_success));
 assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           w_ex2_readmem_op &
@@ -459,7 +462,7 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~(&w_ex2_fwd_success);
 
 assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
-                                        !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
+                                        !(w_ex2_rmw_haz_vld | stq_haz_check_if.ex2_haz_valid | vstq_haz_check_if.ex2_haz_valid) &
                                         !r_ex2_except_valid & !(ex1_l1d_rd_if.s1_conflict | ex1_l1d_rd_if.s1_hit);
 assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
 assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
@@ -487,7 +490,8 @@ assign stq_upd_if.ex2_payload.cmt_id  = r_ex2_issue.cmt_id;
 assign stq_upd_if.ex2_payload.grp_id  = r_ex2_issue.grp_id;
 assign stq_upd_if.ex2_payload.success = r_ex2_success;
 
-assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
+assign w_ex2_hazard_typ = vstq_haz_check_if.ex2_haz_valid   ? EX2_HAZ_VSTQ_HAZ       :
+                          stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :
                           w_ex2_fwd_miss_valid              ? EX2_HAZ_STQ_FWD_MISS   :
                           &w_ex2_fwd_success                ? EX2_HAZ_NONE           :
@@ -500,11 +504,9 @@ assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD
 // Interface to Replay Queue
 always_comb begin
   lsu_pipe_haz_if.valid                  = r_ex2_issue.valid & ~r_ex2_except_valid & (w_ex2_hazard_typ != EX2_HAZ_NONE) & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+  lsu_pipe_haz_if.cmt_id                 = r_ex2_issue.cmt_id;
+  lsu_pipe_haz_if.grp_id                 = r_ex2_issue.grp_id;
   lsu_pipe_haz_if.payload.inst           = r_ex2_issue.inst;
-  lsu_pipe_haz_if.payload.cmt_id         = r_ex2_issue.cmt_id;
-  lsu_pipe_haz_if.payload.grp_id         = r_ex2_issue.grp_id;
-  if (br_upd_if.update) begin
-  end
   lsu_pipe_haz_if.payload.cat            = r_ex2_issue.cat;
   lsu_pipe_haz_if.payload.oldest_valid   = r_ex2_issue.oldest_valid;
   lsu_pipe_haz_if.payload.hazard_typ     = w_ex2_hazard_typ;
@@ -582,6 +584,13 @@ assign stq_haz_check_if.ex2_size   = r_ex2_pipe_ctrl.size;
 assign rmw_order_check_if.ex2_valid  = r_ex2_issue.valid;
 assign rmw_order_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
 assign rmw_order_check_if.ex2_grp_id = r_ex2_issue.grp_id;
+
+// Vector STQ Speculative Load Hazard Check
+assign vstq_haz_check_if.ex2_valid  = r_ex2_issue.valid & (r_ex2_issue.cat == decoder_inst_cat_pkg::INST_CAT_LD);
+assign vstq_haz_check_if.ex2_paddr  = r_ex2_addr;
+assign vstq_haz_check_if.ex2_cmt_id = r_ex2_issue.cmt_id;
+assign vstq_haz_check_if.ex2_grp_id = r_ex2_issue.grp_id;
+
 
 // MISSU Hazard Check
 assign missu_fwd_if.ex2_valid  = r_ex2_issue.valid & w_ex2_fwd_check_type;

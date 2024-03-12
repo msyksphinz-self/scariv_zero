@@ -61,6 +61,9 @@ module scariv_lsu
     // STQ Hazard Check
     stq_haz_check_if.master stq_haz_check_if,
 
+    // VSTQ Hazard Check
+    vstq_haz_check_if.master  vstq_haz_check_if,
+
     // Page Table Walk I/O
     tlb_ptw_if.master ptw_if,
 
@@ -112,8 +115,8 @@ scariv_pkg::grp_id_t      disp_picked_grp_id[MEM_PORT_SIZE];
 scariv_lsu_pkg::lsu_issue_entry_t               w_issue_from_iss;
 logic [LSU_ISS_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
-lsu_pipe_haz_if w_lsu_pipe_haz_if ();
-lsu_pipe_req_if w_lsu_pipe_req_if ();
+lsu_pipe_haz_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_haz_if ();
+lsu_pipe_req_if #(scariv_lsu_pkg::lsu_replay_queue_t) w_lsu_pipe_req_if ();
 
 logic w_replay_queue_full;
 
@@ -206,7 +209,7 @@ u_replay_queue
 
 assign w_replay_selected = w_lsu_pipe_req_if.valid & ~w_issue_from_iss.valid ? 1'b1 :
                            ~w_lsu_pipe_req_if.valid & w_issue_from_iss.valid ? 1'b0 :
-                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.payload.cmt_id, w_lsu_pipe_req_if.payload.grp_id,
+                           scariv_pkg::id0_is_older_than_id1 (w_lsu_pipe_req_if.cmt_id, w_lsu_pipe_req_if.grp_id,
                                                               w_issue_from_iss.cmt_id, w_issue_from_iss.grp_id) |
                            w_replay_queue_full & (w_issue_from_iss.valid ? ~w_issue_from_iss.oldest_valid : 1'b1);  // replay queue is almost full, IQ is stoped except "oldest is valid".
 
@@ -215,8 +218,8 @@ assign w_lsu_pipe_req_if.ready = w_replay_selected;
 always_comb begin
   if (w_replay_selected) begin
     w_ex0_replay_issue.valid             = w_lsu_pipe_req_if.valid       ;
-    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.payload.cmt_id      ;
-    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.payload.grp_id      ;
+    w_ex0_replay_issue.cmt_id            = w_lsu_pipe_req_if.cmt_id      ;
+    w_ex0_replay_issue.grp_id            = w_lsu_pipe_req_if.grp_id      ;
     w_ex0_replay_issue.inst              = w_lsu_pipe_req_if.payload.inst        ;
     w_ex0_replay_issue.rd_regs[0]        = w_lsu_pipe_req_if.payload.rd_reg      ;
     w_ex0_replay_issue.wr_reg            = w_lsu_pipe_req_if.payload.wr_reg      ;
@@ -296,6 +299,8 @@ u_lsu_pipe
    .rmw_order_check_if (rmw_order_check_if),
 
    .stq_haz_check_if (stq_haz_check_if),
+
+   .vstq_haz_check_if (vstq_haz_check_if),
 
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),

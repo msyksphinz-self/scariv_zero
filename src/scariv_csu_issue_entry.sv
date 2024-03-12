@@ -28,12 +28,13 @@ module scariv_csu_issue_entry
    input scariv_pkg::cmt_id_t i_cmt_id,
    input scariv_pkg::grp_id_t i_grp_id,
    input scariv_pkg::disp_t   i_put_data,
+   input scariv_vec_pkg::vlvtype_ren_idx_t i_vlvtype_ren_idx,
    input logic                i_inst_oldest,
 
    output logic               o_entry_valid,
    /* verilator lint_off UNOPTFLAT */
    output logic               o_entry_ready,
-   output scariv_pkg::issue_t o_entry,
+   output scariv_csu_pkg::issue_t o_entry,
 
    /* Forwarding path */
    phy_wr_if.slave   phy_wr_if [scariv_pkg::TGT_BUS_SIZE],
@@ -53,10 +54,10 @@ logic    r_issued;
 logic    w_issued_next;
 logic    r_dead;
 logic    w_dead_next;
-scariv_pkg::issue_t r_entry;
+scariv_csu_pkg::issue_t r_entry;
 /* verilator lint_off UNOPTFLAT */
-scariv_pkg::issue_t w_entry_next;
-scariv_pkg::issue_t w_init_entry;
+scariv_csu_pkg::issue_t w_entry_next;
+scariv_csu_pkg::issue_t w_init_entry;
 
 logic    w_oldest_ready;
 
@@ -80,7 +81,7 @@ logic w_pc_update_before_entry;
 scariv_pkg::sched_state_t r_state;
 scariv_pkg::sched_state_t w_state_next;
 
-function logic all_operand_ready(scariv_pkg::issue_t entry);
+function logic all_operand_ready(scariv_csu_pkg::issue_t entry);
   logic     ret;
   ret = (!entry.rd_regs[0].valid | entry.rd_regs[0].valid  & (entry.rd_regs[0].ready | entry.rd_regs[0].predict_ready)) &
         (!entry.rd_regs[1].valid | entry.rd_regs[1].valid  & (entry.rd_regs[1].ready | entry.rd_regs[1].predict_ready)) &
@@ -115,6 +116,7 @@ always_comb begin
       end else if (i_put) begin
         w_entry_next = w_init_entry;
         w_entry_next.oldest_valid = i_inst_oldest;
+        w_entry_next.vlvtype_ren_idx = i_vlvtype_ren_idx;
         w_issued_next = 1'b0;
         if (w_load_entry_flush) begin
           w_state_next = scariv_pkg::SCHED_CLEAR;
@@ -165,14 +167,7 @@ always_comb begin
 end // always_comb
 
 
-generate if (NUM_OPERANDS == 3) begin : init_entry_op3
-  assign w_init_entry = scariv_pkg::assign_issue_op3(i_put_data, i_cmt_id, i_grp_id,
-                                                     'h0, w_rs_phy_hit, 'h0);
-end else begin
-  assign w_init_entry = scariv_pkg::assign_issue_op2(i_put_data, i_cmt_id, i_grp_id,
-                                                     'h0, w_rs_phy_hit, 'h0, w_rs_rel_index);
-end endgenerate
-
+assign w_init_entry = scariv_csu_pkg::assign_issue_entry(i_put_data, i_cmt_id, i_grp_id, 'h0, w_rs_phy_hit, 'h0);
 
 assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & r_entry.valid;
 assign w_br_flush     = scariv_pkg::is_br_flush_target(r_entry.cmt_id, r_entry.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,

@@ -5,6 +5,7 @@ endif
 
 RV_XLEN = 64
 RV_FLEN = 64
+RV_VLEN = 512
 RV_AMO  = 1
 RV_BITMANIP = 0
 
@@ -20,9 +21,8 @@ VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
 
-# VERILATOR_OPTS += -CFLAGS "-g"
-# VERILATOR_OPTS += -LDFLAGS "-lelf"
-VERILATOR_OPTS += -O3
+# VERILATOR_OPTS += -CFLAGS "-g -O0"
+VERILATOR_OPTS += -CFLAGS "-O3"
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
@@ -86,7 +86,7 @@ VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
-VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
+VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\" -DRV_VLEN=$(RV_VLEN)"
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
@@ -110,6 +110,8 @@ DECODE_FILES += ../src/decoder_csu_ctrl.sv
 DECODE_FILES += ../src/decoder_csu_sched.sv
 DECODE_FILES += ../src/decoder_lsu_sched.sv
 DECODE_FILES += ../src/decoder_fpu_ctrl.sv
+DECODE_FILES += ../src/decoder_valu_ctrl.sv
+DECODE_FILES += ../src/decoder_vlsu_ctrl.sv
 DECODE_FILES += ../src/decoder_reg.sv
 DECODE_FILES += ../src/pma_map.sv
 
@@ -140,8 +142,10 @@ build_espresso:
 	cd ../src && ./build_decoder.rb lsu_sched $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_fpu_ctrl.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb fpu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
-../src/decoder_vec_ctrl.sv: ../src/riscv_rvv_decoder.json
-	cd ../src && ./build_decoder.rb vec_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_valu_ctrl.sv: ../src/riscv_rvv_decoder.json
+	cd ../src && ./build_decoder.rb valu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
+../src/decoder_vlsu_ctrl.sv: ../src/riscv_rvv_decoder.json
+	cd ../src && ./build_decoder.rb vlsu_ctrl $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/decoder_reg.sv: $(DECODE_JSONS)
 	cd ../src && ./build_decoder.rb reg $(RV_XLEN) $(RV_FLEN) $(ISA)
 ../src/pma_map.sv: ../src/pma_memory_map.json ../scripts/build_memory_map.rb
@@ -178,6 +182,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
 		../src/riscv32_pkg.sv \
+		../src/riscv_vec_v$(RV_VLEN)_d$(RV_DLEN)_conf_pkg.sv \
 		../configs/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)
 
@@ -192,6 +197,7 @@ rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(R
 		$(VERILATOR_OPTS_RV64) \
 		../src/riscv_common_pkg.sv \
 		../src/riscv_fpu_$(ISA)_pkg.sv \
+		../src/riscv_vec_v$(RV_VLEN)_d$(RV_DLEN)_conf_pkg.sv \
 		../src/riscv64_pkg.sv \
 		../configs/scariv_$(CONF)_conf_pkg.sv \
 		-f $(FILELIST)

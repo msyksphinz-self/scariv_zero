@@ -10,12 +10,17 @@
 module scariv_commit_map
   import scariv_pkg::*;
   #(parameter REG_TYPE = GPR,
-    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE  : FPR_RNID_SIZE,
+    localparam RNID_SIZE  = REG_TYPE == GPR ? XPR_RNID_SIZE :
+                            REG_TYPE == FPR ? FPR_RNID_SIZE :
+                            scariv_vec_pkg::VEC_RNID_SIZE,
     localparam RNID_W = $clog2(RNID_SIZE),
     parameter type rnid_t = logic [RNID_W-1: 0])
 (
  input logic                    i_clk,
  input logic                    i_reset_n,
+
+ // Update VLMUL size
+ vlmul_upd_if.slave             vlmul_upd_if,
 
  // Commit notification
  input scariv_pkg::cmt_rnid_upd_t commit_if_rnid_update,
@@ -33,10 +38,11 @@ always_comb begin
   end
 
   w_dead_id_with_except = (|commit_if_rnid_update.except_valid) &
-                          (commit_if_rnid_update.except_type != scariv_pkg::SILENT_FLUSH) /* &
-                          (commit_if_rnid_update.except_type != scariv_pkg::ANOTHER_FLUSH) */ ?
+                          ((commit_if_rnid_update.except_type != scariv_pkg::SILENT_FLUSH) &
+                           (commit_if_rnid_update.except_type != scariv_pkg::LMUL_CHANGE)) ?
                           {commit_if_rnid_update.dead_id | commit_if_rnid_update.except_valid} : // When except and NOT silent flush, instruction itself is not valid
                           commit_if_rnid_update.dead_id;
+
 
   if (commit_if_rnid_update.commit) begin
     for (int d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : d_loop
@@ -57,10 +63,14 @@ generate for (genvar d_idx = 0; d_idx < 32; d_idx++) begin : reg_loop
       if (!i_reset_n) begin
         r_commit_map[d_idx] <= d_idx;
       end else begin
-        r_commit_map[d_idx] <= w_commit_map_next[d_idx];
+        if (vlmul_upd_if.valid) begin
+          r_commit_map[d_idx] <= d_idx;
+        end else begin
+          r_commit_map[d_idx] <= w_commit_map_next[d_idx];
+        end
       end
-    end
-  end
+    end // always_ff @ (posedge i_clk, negedge i_reset_n)
+  end // else: !if((REG_TYPE == GPR) & (d_idx == 0))
 
   assign o_rnid_map[d_idx] = r_commit_map[d_idx];
 end

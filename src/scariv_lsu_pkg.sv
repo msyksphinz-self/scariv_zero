@@ -49,6 +49,8 @@ localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_p
                                scariv_conf_pkg::MISSU_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
 
+localparam MSHR_REQ_PORT_NUM = scariv_conf_pkg::LSU_INST_NUM + 1 + 1;  // LSU pipeline + ST-Buffer + Vector
+
 typedef enum logic [ 1: 0] {
   MESI_INVALID   = 0,
   MESI_EXCLUSIVE = 1,
@@ -71,7 +73,7 @@ typedef enum logic [ 2: 0] {
 } ex1_haz_t;
 
 
-typedef enum logic [ 2: 0] {
+typedef enum logic [ 3: 0] {
   EX2_HAZ_NONE,
   EX2_HAZ_L1D_CONFLICT,
   EX2_HAZ_MISSU_ASSIGNED,
@@ -79,6 +81,8 @@ typedef enum logic [ 2: 0] {
   EX2_HAZ_MISSU_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
   EX2_HAZ_STQ_NONFWD_HAZ,
+  EX2_HAZ_VSTQ_HAZ,
+  EX2_HAZ_VSTQ_FULL_WAIT,
   EX2_HAZ_STQ_FWD_MISS   // Only use in COARSE_LDST_FWD mode
 } ex2_haz_t;
 
@@ -860,7 +864,7 @@ function automatic integer min(integer a, integer b);
   return a < b ? a : b;
 endfunction // max
 
-localparam ST_BUF_WIDTH = min(scariv_pkg::ALEN_W * 2, scariv_conf_pkg::DCACHE_DATA_W);
+localparam ST_BUF_WIDTH      = min(max(scariv_pkg::ALEN_W * 2, riscv_vec_conf_pkg::DLEN_W), scariv_conf_pkg::DCACHE_DATA_W);
 localparam ST_BUF_ENTRY_SIZE = scariv_conf_pkg::STQ_SIZE / 4;
 
 typedef enum logic [1:0] {
@@ -904,7 +908,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_WAIT_SNOOP    = 13
 } st_buffer_state_t;
 
-function st_buffer_entry_t assign_st_buffer (
+function automatic st_buffer_entry_t assign_st_buffer (
 `ifdef SIMULATION
    scariv_pkg::cmt_id_t cmt_id,
    scariv_pkg::grp_id_t grp_id,
@@ -954,8 +958,6 @@ endfunction // is_cache_addr_same
 // LSU Replay Queue
 typedef struct packed {
   logic [31: 0]              inst;
-  scariv_pkg::cmt_id_t       cmt_id;
-  scariv_pkg::grp_id_t       grp_id;
   inst_cat_t                 cat;
   logic                      oldest_valid;
   scariv_pkg::reg_rd_issue_t rd_reg;

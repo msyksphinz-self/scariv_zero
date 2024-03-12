@@ -36,7 +36,14 @@ package scariv_pkg;
                             LSU_INST_NUM +    // LSU
                             1 +               // BRU
                             1 +               // CSU
-                            FPU_INST_NUM * 2; // FPU
+                            FPU_INST_NUM * 2 +// FPU
+                            2 +               // VALU
+                            1 +               // VLSU
+                            0;
+  localparam ANOTHER_FLUSH_SIZE = LSU_INST_NUM + // LSU
+                                  1 +            // VLSU
+                                  0;
+
 
   typedef logic [$clog2(REL_BUS_SIZE)-1: 0] rel_bus_idx_t;
 
@@ -60,10 +67,14 @@ package scariv_pkg;
                                   scariv_conf_pkg::LSU_INST_NUM +        // LSU port
                                   scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                   2 +                                    // BRU port
-                                  1 +                                    // CSR port
-                                  scariv_conf_pkg::FPU_INST_NUM;         // FPU port
+                                  2 +                                    // CSR port
+                                  scariv_conf_pkg::FPU_INST_NUM +        // FPU port
+                                  scariv_conf_pkg::VEC_ALU_INST_NUM +    // VALU port
+                                  1;                                     // VLSU port
 
   localparam FP_REGRD_PORT_NUM = scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
+                                 1 +                                     // LSU port
+                                 scariv_conf_pkg::VEC_ALU_INST_NUM +     // VEC port
                                  scariv_conf_pkg::STQ_REGRD_PORT_NUM;    // LSU port
 
   localparam INT_REGWR_PORT_NUM = scariv_conf_pkg::ALU_INST_NUM +    // ALU port
@@ -104,9 +115,10 @@ typedef logic [scariv_conf_pkg::ICACHE_DATA_W/8-1: 0] ic_strb_t;
     logic [31:0] inst;
   } inst_buf_t;
 
-  typedef enum logic {
+  typedef enum logic [ 1: 0] {
     GPR,
-    FPR
+    FPR,
+    VPR
   } reg_t;
 
 typedef struct packed {
@@ -139,9 +151,10 @@ typedef enum logic [$clog2(riscv_pkg::XLEN_W)-1: 0] {
   MRET = 24,
   SRET = 25,
   URET = 26,
-  SILENT_FLUSH = 27,
-  ANOTHER_FLUSH = 28
-
+  SILENT_FLUSH  = 27,
+  ANOTHER_FLUSH = 28,
+  LMUL_CHANGE   = 29,
+  SELF_KILL_REPLAY = 30
 } except_t;
 
 typedef struct packed {
@@ -158,6 +171,7 @@ typedef struct packed {
     logic [4:0]        regidx;
     rnid_t rnid;
     rnid_t old_rnid;
+    logic old_ready;
 } reg_wr_disp_t;
 
   typedef struct packed {
@@ -192,7 +206,8 @@ typedef struct packed {
     gshare_bht_t  gshare_bhr;
 
     reg_wr_disp_t         wr_reg;
-    reg_rd_disp_t [ 2: 0] rd_regs;
+    reg_rd_disp_t [ 3: 0] rd_regs;
+    reg_rd_disp_t         v0_reg;
 
 `ifdef SIMULATION
     logic [63: 0]                     kanata_id;
@@ -205,6 +220,7 @@ typedef struct packed {
     logic [ALU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] alu_inst_valid;
     logic [$clog2(MULDIV_DISP_SIZE): 0]                        muldiv_inst_cnt;
     logic [LSU_INST_NUM-1: 0][$clog2(MEM_DISP_SIZE): 0]        lsu_inst_cnt;
+
     logic [$clog2(MEM_DISP_SIZE): 0]                           ld_inst_cnt;
     logic [$clog2(MEM_DISP_SIZE): 0]                           st_inst_cnt;
     logic [LSU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] lsu_inst_valid;
@@ -215,10 +231,15 @@ typedef struct packed {
     logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    csu_inst_valid;
     logic [FPU_INST_NUM-1: 0][$clog2(FPU_DISP_SIZE): 0]        fpu_inst_cnt;
     logic [FPU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
+    logic [$clog2(scariv_conf_pkg::VALU_DISP_SIZE): 0]         valu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    valu_inst_valid;
+    logic [$clog2(scariv_conf_pkg::VLSU_DISP_SIZE): 0]         vlsu_inst_cnt;
+    logic [scariv_conf_pkg::DISP_SIZE-1: 0]                    vlsu_inst_valid;
   } resource_cnt_t;
 
   function disp_t assign_disp_rename (disp_t   disp,
                                       rnid_t   rd_rnid,
+                                      logic    rd_old_active,
                                       rnid_t   rd_old_rnid,
                                       logic    rs1_active,
                                       rnid_t   rs1_rnid,
@@ -226,19 +247,27 @@ typedef struct packed {
                                       rnid_t   rs2_rnid,
                                       logic    rs3_active,
                                       rnid_t   rs3_rnid,
+                                      logic    v0_active,
+                                      rnid_t   v0_rnid,
                                       brtag_t  brtag
                                       );
     disp_t ret;
     ret = disp;
 
-    ret.wr_reg.rnid     = rd_rnid;
-    ret.wr_reg.old_rnid = rd_old_rnid;
+    ret.wr_reg.rnid      = rd_rnid;
+    ret.wr_reg.old_rnid  = rd_old_rnid;
+    ret.wr_reg.old_ready = rd_old_active;
     ret.rd_regs[0].ready   = rs1_active;
     ret.rd_regs[0].rnid    = rs1_rnid;
     ret.rd_regs[1].ready   = rs2_active;
     ret.rd_regs[1].rnid    = rs2_rnid;
     ret.rd_regs[2].ready   = rs3_active;
     ret.rd_regs[2].rnid    = rs3_rnid;
+
+    ret.v0_reg.valid   = ~disp.inst[25];
+    ret.v0_reg.ready   = v0_active;
+    ret.v0_reg.rnid    = v0_rnid;
+
     ret.brtag       = brtag;
 
     return ret;
@@ -246,14 +275,22 @@ typedef struct packed {
   endfunction  // assign_disp_rename
 
 
-  function disp_t merge_scariv_front_if (disp_t int_disp,
-                                         disp_t fp_disp);
+typedef struct packed {
+  logic   valid;
+  rnid_t  rnid;
+} rnid_update_t;
+
+
+  function disp_t merge_scariv_front_if (disp_t xpr_disp,
+                                         disp_t fpr_disp,
+                                         disp_t vpr_disp);
     disp_t ret;
-    ret = int_disp;
-    ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
-    ret.rd_regs[0] = int_disp.rd_regs[0].typ == GPR ? int_disp.rd_regs[0] : fp_disp.rd_regs[0];
-    ret.rd_regs[1] = int_disp.rd_regs[1].typ == GPR ? int_disp.rd_regs[1] : fp_disp.rd_regs[1];
-    ret.rd_regs[2] = int_disp.rd_regs[2].typ == GPR ? int_disp.rd_regs[2] : fp_disp.rd_regs[2];
+    ret = xpr_disp;
+    ret.wr_reg     = xpr_disp.wr_reg.typ     == GPR ? xpr_disp.wr_reg     : xpr_disp.wr_reg.typ     == FPR ? fpr_disp.wr_reg     : vpr_disp.wr_reg;
+    ret.rd_regs[0] = xpr_disp.rd_regs[0].typ == GPR ? xpr_disp.rd_regs[0] : xpr_disp.rd_regs[0].typ == FPR ? fpr_disp.rd_regs[0] : vpr_disp.rd_regs[0];
+    ret.rd_regs[1] = xpr_disp.rd_regs[1].typ == GPR ? xpr_disp.rd_regs[1] : xpr_disp.rd_regs[1].typ == FPR ? fpr_disp.rd_regs[1] : vpr_disp.rd_regs[1];
+    ret.rd_regs[2] = xpr_disp.rd_regs[2].typ == GPR ? xpr_disp.rd_regs[2] : xpr_disp.rd_regs[2].typ == FPR ? fpr_disp.rd_regs[2] : vpr_disp.rd_regs[2];
+    ret.v0_reg     = vpr_disp.v0_reg;
 
     return ret;
 
@@ -295,7 +332,7 @@ typedef struct packed {
   logic              valid;
   reg_t              typ;
   logic [4:0]        regidx;
-  rnid_t rnid;
+  rnid_t             rnid;
   logic              ready;
   logic [1:0]        predict_ready;
   rel_bus_idx_t      early_index;
@@ -304,6 +341,8 @@ typedef struct packed {
 // Instruction's static information from decoder
 typedef struct packed {
   vaddr_t            pc_addr;
+  inst_cat_t         cat;
+  inst_subcat_t      subcat;
   reg_wr_disp_t      wr_reg;
   logic [31: 0]      inst;
 `ifdef SIMULATION

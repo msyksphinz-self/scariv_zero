@@ -1,0 +1,327 @@
+                  v512d128 v256d256
+-------------------------------------------
+vsaddu.vv       |
+vsadd.vv        |
+vssubu.vv       |
+vssub.vv        |
+vsaddu.vx       |
+vsadd.vx        |
+vssubu.vx       |
+vssub.vx        |
+vsaddu.vi       |
+vsadd.vi        |
+vaaddu.vv       |
+vaadd.vv        |
+vasubu.vv       |
+vasub.vv        |
+vaaddu.vx       |
+vaadd.vx        |
+vasubu.vx       |
+vasub.vx        |
+vsmul.vv        |
+vsmul.vx        |
+vssrl.vv        |
+vssra.vv        |
+vssrl.vx        |
+vssra.vx        |
+vssrl.vi        |
+vssra.vi        |
+vnclipu.wv      |
+vnclip.wv       |
+vnclipu.wx      |
+vnclip.wx       |
+vnclipu.wi      |
+vnclip.wi       |
+
+vsetvli         | v        v
+vsetivli        |
+vsetvl          |
+vmv.v.v         | v        v
+vmv.v.x         | v        v
+vfmv.v.f        | v        v
+vmv.v.i         | v        v
+vmv.x.s         |
+vmv.s.x         |
+vfmv.f.s        |
+vfmv.s.f        |
+vadd.vv         | v        v
+vsub.vv         | v        v
+vminu.vv        | v        v
+vmin.vv         | v        v
+vmaxu.vv        | v        v
+vmax.vv         | v        v
+vand.vv         | v        v
+vor.vv          | v        v
+vxor.vv         | v        v
+vrgather.vv     |
+vadc.vv         |
+vmadc.vv        |
+vsbc.vv         |
+vmsbc.vv        |
+vmerge.vv       |
+vmseq.vv        | v        v
+vmsne.vv        | v        v
+vmsltu.vv       | v        v
+vmslt.vv        | v        v
+vmsleu.vv       | v        v
+vmsle.vv        | v        v
+vsll.vv         | v        v
+vsrl.vv         | v        v
+vsra.vv         | v        v
+vnsrl.vv        |
+vnsra.vv        |
+vwredsumu.vv    |
+vwredsum.vv     |
+vdotu.vv        |
+vdot.vv         |
+vqmaccu.vv      |
+vqmacc.vv       |
+vqmaccus.vv     |
+vqmaccsu.vv     |
+vadd.vx         | v        v
+vsub.vx         | v        v
+vrsub.vx        | v        v
+vminu.vx        | v        v
+vmin.vx         | v        v
+vmaxu.vx        | v        v
+vmax.vx         | v        v
+vand.vx         | v        v
+vor.vx          | v        v
+vxor.vx         | v        v
+vrgather.vx     |
+vslideup.vx     |
+vslidedown.vx   |
+vadc.vx         |
+vmadc.vx        |
+vsbc.vx         |
+vmsbc.vx        |
+vmerge.vx       |
+vmseq.vx        | v        v
+vmsne.vx        | v        v
+vmsltu.vx       | v        v
+vmslt.vx        | v        v
+vmsleu.vx       | v        v
+vmsle.vx        | v        v
+vmsgtu.vx       | v        v
+vmsgt.vx        | v        v
+vsll.vx         | v        v
+vsrl.vx         | v        v
+vsra.vx         | v        v
+vnsrl.vx        |
+vnsra.vx        |
+vwredsumu.vx    |
+vwredsum.vx     |
+vdotu.vx        |
+vdot.vx         |
+vqmaccu.vx      |
+vqmacc.vx       |
+vqmaccus.vx     |
+vqmaccsu.vx     |
+vadd.vi         | v        v
+vrsub.vi        | v        v
+vand.vi         | v        v
+vor.vi          | v        v
+vxor.vi         | v        v
+vrgather.vi     |
+vslideup.vi     |
+vslidedown.vi   |
+vadc.vi         |
+vmadc.vi        |
+vmseq.vi        | v        v
+vmsne.vi        | v        v
+vmsleu.vi       | v        v
+vmsle.vi        | v        v
+vmsgtu.vi       | v        v
+vmsgt.vi        | v        v
+vsll.vi         | v        v
+vsrl.vi         | v        v
+vsra.vi         | v        v
+vnsrl.vi        |
+vnsra.vi        |
+vredsum.vv      |
+vredand.vv      |
+vredor.vv       |
+vredxor.vv      |
+vredminu.vv     |
+vredmin.vv      |
+vredmaxu.vv     |
+vredmax.vv      |
+VWXUNARY0.vv    |
+VMUNARY0.vv     |
+vcompress.vv    |
+vmandnot.mm     | v        v
+vmand.mm        | v        v
+vmor.mm         | v        v
+vmxor.mm        | v        v
+vmornot.mm      | v        v
+vmnand.mm       | v        v
+vmnor.mm        | v        v
+vmxnor.mm       | v        v
+vdivu.vv        |
+vdiv.vv         |
+vremu.vv        |
+vrem.vv         |
+vmulhu.vv       |
+vmul.vv         |
+vmulhsu.vv      |
+vmulh.vv        |
+vmadd.vv        |
+vnmsub.vv       |
+vmacc.vv        |
+vnmsac.vv       |
+vwaddu.vv       |
+vwadd.vv        |
+vwsubu.vv       |
+vwsub.vv        |
+vwaddu.w.vv     |
+vwadd.w.vv      |
+vwsubu.w.vv     |
+vwsub.w.vv      |
+vwmulu.vv       |
+vwmulsu.vv      |
+vwmul.vv        |
+vwmaccu.vv      |
+vwmacc.vv       |
+vwmaccus.vv     |
+vwmaccsu.vv     |
+vslide1up.vx    |
+vslide1down.vx  |
+VRXUNARY0.vx    |
+vdivu.vx        |
+vdiv.vx         |
+vremu.vx        |
+vrem.vx         |
+vmulhu.vx       |
+vmul.vx         |
+vmulhsu.vx      |
+vmulh.vx        |
+vmadd.vx        |
+vnmsub.vx       |
+vmacc.vx        |
+vnmsac.vx       |
+vwaddu.vx       |
+vwadd.vx        |
+vwsubu.vx       |
+vwsub.vx        |
+vwaddu.w.vx     |
+vwadd.w.vx      |
+vwsubu.w.vx     |
+vwsub.w.vx      |
+vwmulu.vx       |
+vwmulsu.vx      |
+vwmul.vx        |
+vwmaccu.vx      |
+vwmacc.vx       |
+vwmaccus.vx     |
+vwmaccsu.vx     |
+vfadd.vv        | v        v
+vfredsum.vv     |
+vfsub.vv        | v        v
+vfredosum.vv    |
+vfmin.vv        |
+vfredmin.vv     |
+vfmax.vv        |
+vfredmax.vv     |
+vfsgnj.vv       |
+vfsgnjn.vv      |
+vfsgnjx.vv      |
+VWFUNARY0.vx    |
+vmfeq.vv        | v        v
+vmfle.vv        | v        v
+vmflt.vv        | v        v
+vmfne.vv        | v        v
+vfdiv.vv        | v        v
+VFUNARY0.vx     |
+VFUNARY1.vx     |
+vfmul.vv        | v        v
+vfrsub.vv       |
+vfmadd.vv       | v        v
+vfnmadd.vv      | v        v
+vfmsub.vv       | v        v
+vfnmsub.vv      | v        v
+vfmacc.vv       | v        v
+vfnmacc.vv      | v        v
+vfmsac.vv       | v        v
+vfnmsac.vv      |
+vfwadd.vv       |
+vfwredsum.vv    |
+vfwsub.vv       |
+vfwredosum.vv   |
+vfwadd.wv       |
+vfwsub.wv       |
+vfwmul.vv       |
+vfdot.vv        |
+vfwmacc.vv      |
+vfwnmacc.vv     |
+vfwmsac.vv      |
+vfwnmsac.vv     |
+vfadd.vf        | v        v
+vfredsum.vf     |
+vfsub.vf        | v        v
+vfredosum.vf    |
+vfmin.vf        |
+vfredmin.vf     |
+vfmax.vf        |
+vfredmax.vf     |
+vfsgnj.vf       |
+vfsgnjn.vf      |
+vfsgnjx.vf      |
+vfmv.vf         |
+vmfeq.vf        | v        v
+vmfle.vf        | v        v
+vmflt.vf        | v        v
+vmfne.vf        | v        v
+vmfgt.vf        | v        v
+vmfge.vf        | v        v
+vfdiv.vf        |
+vfrdiv.vf       |
+vfmul.vf        |
+vfrsub.vf       |
+vfmadd.vf       | v        v
+vfnmadd.vf      | v        v
+vfmsub.vf       | v        v
+vfnmsub.vf      | v        v
+vfmacc.vf       | v        v
+vfnmacc.vf      | v        v
+vfmsac.vf       | v        v
+vfnmsac.vf      | v        v
+vfwadd.vf       |
+vfwredsum.vf    |
+vfwsub.vf       |
+vfwredosum.vf   |
+vfwadd.wf       |
+vfwsub.wf       |
+vfwmul.vf       |
+vfdot.vf        |
+vfwmacc.vf      |
+vfwnmacc.vf     |
+vfwmsac.vf      |
+vfwnmsac.vf     |
+vle8.v          | v        v
+vlse8.v         |
+vlxei8.v        |
+vse8.v          | v        v
+vsuxei8.v       |
+vsse8.v         |
+vsxei8.v        |
+vle16.v         | v        v
+vlse16.v        |
+vlxei16.v       |
+vse16.v         | v        v
+vsuxei16.v      |
+vsse16.v        |
+vsxei16.v       |
+vle32.v         | v        v
+vlse32.v        |
+vlxei32.v       |
+vse32.v         | v        v
+vsuxei32.v      |
+vsse32.v        |
+vsxei32.v       |
+vle64.v         | v        v
+vlse64.v        |
+vlxei64.v       |
+vse64.v         | v        v
+vsuxei64.v      |
+vsse64.v        |
+vsxei64.v       |

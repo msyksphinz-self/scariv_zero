@@ -12,13 +12,20 @@ module scariv_rename_map
   import scariv_pkg::*;
   import scariv_conf_pkg::*;
 #(parameter REG_TYPE = GPR,
-  localparam NUM_OPERANDS = (REG_TYPE == GPR) ? 2 : 3,
-  localparam RNID_W = REG_TYPE == GPR ? XPR_RNID_W : FPR_RNID_W,
+  localparam NUM_OPERANDS = REG_TYPE == GPR ? 2 :
+                            REG_TYPE == FPR ? 3 :
+                            3, // REG_TYPE == VPR
+  localparam RNID_W = REG_TYPE == GPR ? XPR_RNID_W :
+                      REG_TYPE == FPR ? FPR_RNID_W :
+                      scariv_vec_pkg::VEC_RNID_W,
   parameter type rnid_t = logic [RNID_W-1: 0]
   )
 (
    input logic                     i_clk,
    input logic                     i_reset_n,
+
+   // Update VLMUL size
+   vlmul_upd_if.slave       vlmul_upd_if,
 
    input logic [DISP_SIZE * NUM_OPERANDS-1:0] i_arch_valid,
    input logic [ 4: 0]             i_arch_id[DISP_SIZE * NUM_OPERANDS],
@@ -74,6 +81,21 @@ logic [RNID_W: 0]                                                        ret;
 
 endfunction // select_latest_rnid
 
+logic r_push_is_locked;
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_push_is_locked <= 1'b0;
+  end else begin
+    if (vlmul_upd_if.valid) begin
+      r_push_is_locked <= 1'b1;
+    end else if (|i_update) begin
+      r_push_is_locked <= 1'b0;
+    end
+  end
+end
+
+
 generate for (genvar i = 0; i < 32; i++) begin : map_loop
   if ((REG_TYPE == GPR) & (i == 0)) begin
     assign r_map[0] = 'h0;
@@ -94,7 +116,7 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
                                                                       .o_selected(w_commit_rd_rnid));
 
     assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :
-                                       i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
+                                       i_restore_from_queue & ~r_push_is_locked ? {1'b1, i_restore_rn_list[i]} :
                                        select_latest_rnid (i_update,
                                                            i,
                                                            i_update_arch_id,
@@ -103,7 +125,9 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
       if (!i_reset_n) begin
         r_map[i] <= i;
       end else begin
-        if (w_update) begin
+        if (vlmul_upd_if.valid) begin
+          r_map[i] <= i;
+        end else if (w_update) begin
           r_map[i] <= w_update_rnid;
         end
       end
@@ -112,14 +136,68 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
 end
 endgenerate
 
-generate for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : rnid_loop
-  for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
-    assign o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[i_arch_id[d_idx * NUM_OPERANDS + rs_idx]];
+
+generate if (REG_TYPE == VPR) begin : vpr_rename_out
+  logic [ 1: 0] r_vlmul;
+  always_ff @ (posedge i_clk, negedge i_reset_n) begin
+    if (!i_reset_n) begin
+      r_vlmul <= 'h0;
+    end else begin
+      if (vlmul_upd_if.valid) begin
+        case (vlmul_upd_if.vlmul)
+          2'b00  : r_vlmul <= 'h0;
+          2'b01  : r_vlmul <= 'h1;
+          2'b10  : r_vlmul <= 'h2;
+          2'b11  : r_vlmul <= 'h3;
+          default : r_vlmul <= 'h0;
+        endcase // case (vlmul_upd_if.vlmul)
+      end
+    end // else: !if(!i_reset_n)
+  end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+  for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : rnid_loop
+    for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
+      logic [ 4: 0] w_rmap_idx;
+      always_comb begin
+        w_rmap_idx = 'h0;
+        case (r_vlmul)
+          2'b00 : begin
+            o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[i_arch_id[d_idx * NUM_OPERANDS + rs_idx]];
+          end
+          2'b01 : begin
+            w_rmap_idx = {i_arch_id[d_idx * NUM_OPERANDS + rs_idx][4:1], 1'b0};
+            o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[w_rmap_idx] + i_arch_id[d_idx * NUM_OPERANDS + rs_idx][  0];
+          end
+          2'b10 : begin
+            w_rmap_idx = {i_arch_id[d_idx * NUM_OPERANDS + rs_idx][4:2], 2'b00};
+            o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[w_rmap_idx] + i_arch_id[d_idx * NUM_OPERANDS + rs_idx][1:0];
+          end
+          2'b11 : begin
+            w_rmap_idx = {i_arch_id[d_idx * NUM_OPERANDS + rs_idx][4:3], 3'b000};
+            o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[w_rmap_idx] + i_arch_id[d_idx * NUM_OPERANDS + rs_idx][2:0];
+          end
+          default : begin
+            o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[i_arch_id[d_idx * NUM_OPERANDS + rs_idx]];
+          end
+        endcase // case (r_vlmul)
+      end // always_comb
+    end // block: rs_loop
+
+    assign o_rd_old_rnid[d_idx] = r_map[i_rd_regidx[d_idx]];
   end
 
-  assign o_rd_old_rnid[d_idx] = r_map[i_rd_regidx[d_idx]];
-end
-endgenerate
+
+end else begin : ipr_fpr_rename_out
+
+  for (genvar d_idx = 0; d_idx < DISP_SIZE; d_idx++) begin : rnid_loop
+    for (genvar rs_idx = 0; rs_idx < NUM_OPERANDS; rs_idx++) begin : rs_loop
+      assign o_rnid[d_idx * NUM_OPERANDS + rs_idx] = r_map[i_arch_id[d_idx * NUM_OPERANDS + rs_idx]];
+    end
+
+    assign o_rd_old_rnid[d_idx] = r_map[i_rd_regidx[d_idx]];
+  end
+
+end endgenerate
 
 assign o_rn_list = r_map;
 

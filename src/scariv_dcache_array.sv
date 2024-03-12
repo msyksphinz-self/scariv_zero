@@ -80,7 +80,8 @@ logic                                     w_s1_wr_data_valid;
 logic [READ_PORT_NUM-1: 0]                        w_s0_dc_rd_wr_conflict;
 logic [READ_PORT_NUM-1: 0]                        r_s1_dc_rd_wr_conflict;
 
-logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[DCACHE_WORDS_PER_BANK];
+// logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1 : 0] r_replace_target[DCACHE_WORDS_PER_BANK];
+logic [$clog2(scariv_conf_pkg::DCACHE_WAYS) : 0] r_replace_target[DCACHE_WORDS_PER_BANK];  // Allocate 1-bit larger space for randomize
 logic [READ_PORT_NUM-1: 0]                       w_update_tag_valid;
 logic [$clog2(DCACHE_WORDS_PER_BANK)-1: 0]       w_update_tag_addr[READ_PORT_NUM];
 
@@ -143,7 +144,7 @@ generate for (genvar p_idx = 0; p_idx < READ_PORT_NUM; p_idx++) begin : rd_port_
   encoder #(.SIZE(scariv_conf_pkg::DCACHE_WAYS)) hit_encoder (.i_in(w_s1_tag_hit), .o_out(w_s1_tag_hit_idx));
 
   assign o_dc_read_resp[p_idx].hit      = w_s1_read_req_valid & (|w_s1_tag_hit);
-  assign o_dc_read_resp[p_idx].hit_way  = (|w_s1_tag_hit) ? w_s1_tag_hit_idx : r_replace_target[0];
+  assign o_dc_read_resp[p_idx].hit_way  = (|w_s1_tag_hit) ? w_s1_tag_hit_idx : r_replace_target[0][$clog2(scariv_conf_pkg::DCACHE_WAYS)-1 : 0];
   assign o_dc_read_resp[p_idx].miss     = w_s1_read_req_valid & ~(|w_s1_tag_hit);
   assign o_dc_read_resp[p_idx].conflict =  r_s1_wr_req_valid |
                                            r_s1_dc_rd_wr_conflict[p_idx] |
@@ -276,13 +277,16 @@ generate for (genvar w_idx = 0; w_idx < DCACHE_WORDS_PER_BANK; w_idx++) begin : 
       for (int i = 0; i < READ_PORT_NUM; i++) begin
         if (|r_s1_dc_read_req_valid_oh) begin
           // Temporary : This is sequential and rando mreplace policy
-          r_replace_target[w_idx] <= r_replace_target[w_idx] + 'h1;
+          // r_replace_target[w_idx] <= r_replace_target[w_idx] + 'h1;
+          // LFSR
+          r_replace_target[w_idx] <= r_replace_target[w_idx] == 'h0 ? {scariv_conf_pkg::DCACHE_WAYS{1'b1}} :
+                                     {r_replace_target[w_idx][0] ^ r_replace_target[w_idx][1],
+                                      r_replace_target[w_idx][$clog2(scariv_conf_pkg::DCACHE_WAYS): 1]};
         end
       end
     end
   end
-end
-endgenerate
+end endgenerate
 
 
 generate for(genvar way = 0; way < scariv_conf_pkg::DCACHE_WAYS; way++) begin : dc_way_loop

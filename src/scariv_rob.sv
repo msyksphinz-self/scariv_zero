@@ -22,7 +22,7 @@ module scariv_rob
    output cmt_id_t o_sc_new_cmt_id,
 
    done_report_if.slave  done_report_if  [CMT_BUS_SIZE],
-   flush_report_if.slave flush_report_if [LSU_INST_NUM],
+   flush_report_if.slave flush_report_if [ANOTHER_FLUSH_SIZE],
 
    br_upd_if.slave  br_upd_slave_if,
 
@@ -34,7 +34,10 @@ module scariv_rob
    interrupt_if.slave  int_if,
 
    // ROB notification interface
-   rob_info_if.master rob_info_if
+   rob_info_if.master rob_info_if,
+
+   // Vector VSET instruction update
+   vlvtype_commit_if.master vlvtype_commit_if
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
@@ -282,7 +285,7 @@ end
 // Exception detect and selection
 // -------------------------------
 
-localparam EXCEPT_SIZE = CMT_BUS_SIZE + scariv_conf_pkg::LSU_INST_NUM + 1;  // +1 is from Frontend Exception
+localparam EXCEPT_SIZE = CMT_BUS_SIZE + scariv_pkg::ANOTHER_FLUSH_SIZE + 1;  // +1 is from Frontend Exception
 
 logic [EXCEPT_SIZE-1: 0] w_done_except_valid;
 cmt_id_t          w_done_cmt_id      [EXCEPT_SIZE];
@@ -296,7 +299,7 @@ generate for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : done_exc_
   assign w_done_except_type [c_idx] = done_report_if[c_idx].except_type;
   assign w_done_tval        [c_idx] = done_report_if[c_idx].except_tval;
 end endgenerate
-generate for (genvar c_idx = 0; c_idx < scariv_conf_pkg::LSU_INST_NUM; c_idx++) begin : done_exc_flush_loop
+generate for (genvar c_idx = 0; c_idx < scariv_pkg::ANOTHER_FLUSH_SIZE; c_idx++) begin : done_exc_flush_loop
   assign w_done_except_valid[c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].valid;
   assign w_done_cmt_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].cmt_id;
   assign w_done_grp_id      [c_idx + CMT_BUS_SIZE] = flush_report_if[c_idx].grp_id;
@@ -456,6 +459,26 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.done_grp_id  <= {DISP_SIZE{w_out_entry.valid}} & w_out_entry.done_grp_id;
   rob_info_if.upd_pc_valid <= 1'b0;
   rob_info_if.except_valid <= r_rob_except.valid & (r_rob_except.cmt_id == w_out_cmt_id) ? r_rob_except.grp_id & ~w_out_entry.dead : 'h0;
+end
+
+// ------------------------------
+// Commit Information for Vector
+// ------------------------------
+grp_id_t w_cmt_entry_vsetvl;
+
+generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : csu_vset_loop
+  assign w_cmt_entry_vsetvl[d_idx] = (w_out_payload.disp[d_idx].cat    == decoder_inst_cat_pkg::INST_CAT_CSU) &
+                                     (w_out_payload.disp[d_idx].subcat == decoder_inst_cat_pkg::INST_SUBCAT_VSET);
+end endgenerate
+
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    vlvtype_commit_if.valid <= 1'b0;
+  end else begin
+    vlvtype_commit_if.valid             <= w_out_valid & |(w_cmt_entry_vsetvl /* & ~o_commit.dead_id */);
+    vlvtype_commit_if.lmul_change_valid <= w_commit.except_valid & (w_commit.except_type == scariv_pkg::LMUL_CHANGE);
+    vlvtype_commit_if.dead              <= |(w_cmt_entry_vsetvl & w_commit.dead_id);
+  end
 end
 
 `ifdef SIMULATION

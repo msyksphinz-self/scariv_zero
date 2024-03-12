@@ -50,6 +50,7 @@ EXE_CFLAGS += -lpthread
 all: riscv-isa-sim-makefile Makefile
 	$(MAKE) -f spike_dpi.mk libspike_dpi.a
 	$(MAKE) libserialdevice.so
+	$(MAKE) liblmul_change_rom.so
 	$(MAKE) spike_main
 
 libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
@@ -57,6 +58,9 @@ libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
 
 libserialdevice.so: serialdevice.cc
 	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
+
+liblmul_change_rom.so: lmul_change_rom.cc
+	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr -I../src/lmul_exc_handler/
 
 spike_main: spike_dpi_exe.o gshare_model_exe.o libspike_dpi.a
 	g++ -L. -Wl,--export-dynamic -o $@ $^ $(EXE_CFLAGS)
@@ -77,6 +81,7 @@ riscv-isa-sim-makefile:
 	ln -fs riscv-isa-sim/config.h
 
 CLEAN_FILES += riscv-isa-sim-makefile
+CLEAN_FILES += $(wildcard *.so)
 
 clean:
 	rm -rf $(CLEAN_FILES)
