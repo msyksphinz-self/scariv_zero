@@ -335,7 +335,7 @@ u_scariv_subsystem_wrapper
    .o_snoop_resp_data (w_snoop_resp_data),
    .o_snoop_resp_be   (w_snoop_resp_be),
 
-   .i_interrupts ('h0)
+   .i_interrupts (8'b0000_0000)
    );
 
 
@@ -538,7 +538,7 @@ initial begin
   #(STEP * 10000);
 
   w_elf_loader_reset_n = 1'b0;
-  w_scariv_reset_n        = 1'b1;
+  w_scariv_reset_n     = 1'b1;
   w_ram_reset_n        = 1'b1;
 
   #(STEP * TIMEOUT);

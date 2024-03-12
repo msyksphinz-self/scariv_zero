@@ -11,13 +11,13 @@ module tb_elf_loader
  input logic                               i_clk,
  input logic                               i_reset_n,
 
- output logic                                o_req_valid,
- output scariv_lsu_pkg::mem_cmd_t                   o_req_cmd,
- output logic [riscv_pkg::PADDR_W-1:0]       o_req_addr,
- output logic [scariv_lsu_pkg::L2_CMD_TAG_W-1:0]    o_req_tag,
+ output logic                                        o_req_valid,
+ output scariv_lsu_pkg::mem_cmd_t                    o_req_cmd,
+ output logic [riscv_pkg::PADDR_W-1:0]               o_req_addr,
+ output logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0]   o_req_tag,
  output logic [scariv_conf_pkg::DCACHE_DATA_W-1:0]   o_req_data,
  output logic [scariv_conf_pkg::DCACHE_DATA_W/8-1:0] o_req_byte_en,
- input logic                                 i_req_ready
+ input logic                                         i_req_ready
 );
 
 logic                __debug_req_valid;

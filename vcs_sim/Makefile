@@ -1,7 +1,7 @@
-export SNPSLMD_LICENSE_FILE=1700@133.11.58.5
-export VCS_HOME   = /home/shioya/opt/cad/synopsys/vcs/U-2023.03
-export VERDI_HOME = /home/shioya/opt/cad/synopsys/verdi/Q-2020.03-1/
-export LD_LIBRARY_PATH = $(VCS_HOME)linux64/lib/:$(VERDI_HOME)share/PLI/VCS/linux64/:$(VCS_HOME)platform/linux64/bin/:$(shell echo $$LD_LIBRARY_PATH):
+# export SNPSLMD_LICENSE_FILE=1700@133.11.58.5
+# export VCS_HOME   = /home/shioya/opt/cad/synopsys/vcs/U-2023.03
+export VERDI_HOME = /home/shioya/opt/cad/synopsys/verdi/T-2022.06-SP1-1/
+# export LD_LIBRARY_PATH = $(VCS_HOME)linux64/lib/:$(VERDI_HOME)share/PLI/VCS/linux64/:$(VCS_HOME)platform/linux64/bin/:$(shell echo $$LD_LIBRARY_PATH):
 
 ISA = imfdc
 CONF = tiny
