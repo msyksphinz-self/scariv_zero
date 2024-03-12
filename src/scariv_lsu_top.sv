@@ -394,7 +394,7 @@ always_comb begin
   w_scalar_st_buffer_if.resp     = w_st_buffer_if.resp;
   w_scalar_st_buffer_if.is_empty = w_st_buffer_if.is_empty;
 
-  vlsu_st_buffer_if.resp  = w_st_buffer_if.is_empty;
+  vlsu_st_buffer_if.resp  = w_st_buffer_if.resp;
   if (w_scalar_st_buffer_if.valid) begin
     w_st_buffer_if.valid    = w_scalar_st_buffer_if.valid   ;
     w_st_buffer_if.paddr    = w_scalar_st_buffer_if.paddr   ;
@@ -402,6 +402,7 @@ always_comb begin
     w_st_buffer_if.data     = w_scalar_st_buffer_if.data    ;
     w_st_buffer_if.is_rmw   = w_scalar_st_buffer_if.is_rmw  ;
     w_st_buffer_if.rmwop    = w_scalar_st_buffer_if.rmwop   ;
+    w_st_buffer_if.size     = w_scalar_st_buffer_if.size    ;
 `ifdef SIMULATION
     w_st_buffer_if.cmt_id   = w_scalar_st_buffer_if.cmt_id  ;
     w_st_buffer_if.grp_id   = w_scalar_st_buffer_if.grp_id  ;
@@ -415,6 +416,7 @@ always_comb begin
     w_st_buffer_if.data     = vlsu_st_buffer_if.data    ;
     w_st_buffer_if.is_rmw   = vlsu_st_buffer_if.is_rmw  ;
     w_st_buffer_if.rmwop    = vlsu_st_buffer_if.rmwop   ;
+    w_st_buffer_if.size     = vlsu_st_buffer_if.size    ;
 `ifdef SIMULATION
     w_st_buffer_if.cmt_id   = vlsu_st_buffer_if.cmt_id  ;
     w_st_buffer_if.grp_id   = vlsu_st_buffer_if.grp_id  ;
