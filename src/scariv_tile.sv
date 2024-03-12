@@ -496,7 +496,7 @@ u_csu (
                                  scariv_conf_pkg::LSU_INST_NUM + scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                  2]),
     .ex1_regread_rs2(int_regread[scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                 scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                 scariv_conf_pkg::LSU_INST_NUM + scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                  3]),
 
     .early_wr_in_if(w_early_wr_if),
