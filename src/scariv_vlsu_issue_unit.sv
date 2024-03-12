@@ -288,7 +288,7 @@ bit_extract_lsb_ptr_oh #(.WIDTH(ENTRY_SIZE)) bit_extract_done (.in(w_entry_done)
 `ifdef SIMULATION
 typedef struct packed {
   scariv_vec_pkg::issue_t entry;
-  scariv_pkg::sched_state_t state;
+  // scariv_pkg::sched_state_t state;
 } entry_ptr_t;
 
 function void dump_entry_json(int fp, entry_ptr_t entry, int index);
@@ -308,12 +308,12 @@ function void dump_entry_json(int fp, entry_ptr_t entry, int index);
     $fwrite(fp, "rs1:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[0].valid, entry.entry.rd_regs[0].regidx, entry.entry.rd_regs[0].rnid, entry.entry.rd_regs[0].ready);
     // Source 2
     $fwrite(fp, "rs2:{ valid:%1d, idx:%02d, rnid:%d, ready:%01d },", entry.entry.rd_regs[1].valid, entry.entry.rd_regs[1].regidx, entry.entry.rd_regs[1].rnid, entry.entry.rd_regs[1].ready);
-    $fwrite(fp, "state:\"%s\", ", entry.state == scariv_pkg::INIT          ? "INIT" :
-                                  entry.state == scariv_pkg::WAIT          ? "WAIT" :
-                                  entry.state == scariv_pkg::ISSUED        ? "ISSUED" :
-                                  entry.state == scariv_pkg::DONE          ? "DONE" :
-                                  entry.state == scariv_pkg::WAIT_COMPLETE ? "WAIT_COMPLETE" :
-                                  entry.state == scariv_pkg::DEAD          ? "DEAD" : "x");
+    // $fwrite(fp, "state:\"%s\", ", entry.state == scariv_pkg::INIT          ? "INIT" :
+    //                               entry.state == scariv_pkg::WAIT          ? "WAIT" :
+    //                               entry.state == scariv_pkg::ISSUED        ? "ISSUED" :
+    //                               entry.state == scariv_pkg::DONE          ? "DONE" :
+    //                               entry.state == scariv_pkg::WAIT_COMPLETE ? "WAIT_COMPLETE" :
+    //                               entry.state == scariv_pkg::DEAD          ? "DEAD" : "x");
     $fwrite(fp, " },\n");
   end // if (entry.entry.valid)
 
@@ -322,7 +322,7 @@ endfunction // dump_json
 entry_ptr_t w_entry_ptr[ENTRY_SIZE];
 generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop_ptr
   assign w_entry_ptr[s_idx].entry = entry_loop[s_idx].u_issue_entry.r_entry;
-  assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_issue_entry.r_state;
+  // assign w_entry_ptr[s_idx].state = entry_loop[s_idx].u_issue_entry.r_state;
 end
 endgenerate
 
