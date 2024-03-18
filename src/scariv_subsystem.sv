@@ -11,6 +11,8 @@ module scariv_subsystem (
     input logic i_clk,
     input logic i_reset_n,
 
+    input scariv_pkg::vaddr_t i_const_init_vaddr,
+
     // L2 request from ICache
     l2_req_if.master l2_req,
     l2_resp_if.slave l2_resp,
@@ -47,6 +49,8 @@ u_tile
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
+
+   .i_const_init_vaddr (i_const_init_vaddr),
 
    // L2 request from ICache
    .ic_l2_req  (w_req_core_ic_if ),

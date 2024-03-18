@@ -11,6 +11,8 @@ module scariv_tile (
     input logic i_clk,
     input logic i_reset_n,
 
+    input scariv_pkg::vaddr_t i_const_init_vaddr,
+
     // L2 request from ICache
     l2_req_if.master ic_l2_req,
     l2_resp_if.slave ic_l2_resp,
@@ -206,9 +208,12 @@ generate for (genvar f_idx = 0; f_idx < scariv_conf_pkg::FPU_INST_NUM; f_idx++) 
 end endgenerate // block: fpu_reg_wr_loop
 
 
-scariv_frontend u_frontend (
+scariv_frontend
+u_frontend (
   .i_clk(i_clk),
   .i_reset_n(i_reset_n),
+
+  .i_const_init_vaddr (i_const_init_vaddr),
 
   .sfence_if (w_sfence_if),
   .i_fence_i (w_fence_i),

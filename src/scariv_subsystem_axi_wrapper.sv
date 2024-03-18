@@ -12,6 +12,8 @@ module scariv_subsystem_axi_wrapper
    input logic   i_clk,
    input logic   i_reset_n,
 
+   input scariv_pkg::vaddr_t i_const_init_vaddr,
+
    output logic                               axi_if_aw_valid,
    input  logic                               axi_if_aw_ready,
    output logic                               axi_if_aw_last,
@@ -178,6 +180,8 @@ u_scariv_subsystem
 (
  .i_clk     (i_clk),
  .i_reset_n (i_reset_n),
+
+ .i_const_init_vaddr (i_const_init_vaddr),
 
  .l2_req  (w_l2_req ),
  .l2_resp (w_l2_resp),

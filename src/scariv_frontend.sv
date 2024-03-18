@@ -15,6 +15,8 @@ module scariv_frontend
  input logic i_clk,
  input logic i_reset_n,
 
+ input vaddr_t i_const_init_vaddr,
+
  /* SFENCE update information */
  sfence_if.slave  sfence_if,
   /* FENCE.I update */
@@ -182,7 +184,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_f0_valid    <= 1'b0;
     r_f0_valid_d1 <= 1'b0;
-    r_f0_vaddr <= PC_INIT_VAL;
+    r_f0_vaddr    <= i_const_init_vaddr;
   end else begin
     r_f0_valid     <= 1'b1;
     r_f0_valid_d1  <= r_f0_valid;
