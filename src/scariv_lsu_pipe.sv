@@ -783,6 +783,7 @@ assign o_fence_i = w_fencecommit_if_match;
 
 
 `ifdef SIMULATION
+  `ifdef KANATA_DUMP
 // Kanata
 import "DPI-C" function void log_stage
 (
@@ -805,7 +806,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       log_stage (r_ex3_issue.kanata_id, "EX3");
     end
   end
-end
+end // always_ff @ (negedge i_clk, negedge i_reset_n)
+  `endif //  `ifdef KANATA_DUMP
 `endif // SIMULATION
 
 

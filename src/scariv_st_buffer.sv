@@ -452,7 +452,7 @@ end
 
 
 `ifdef SIMULATION
-  `ifdef VERILATOR
+  `ifdef COMPARE_ISS
 import "DPI-C" function void record_stq_store
 (
  input longint rtl_time,
@@ -496,7 +496,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end // if (sim_s1_valid & !sim_s1_conflict)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
-  `endif //  `ifdef VERILATOR
+  `endif //  `ifdef COMPARE_ISS
 
 logic [63: 0] sim_wr_l1d_cnt;
 logic [63: 0] sim_st_buffer_cnt;

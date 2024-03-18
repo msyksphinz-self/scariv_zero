@@ -194,7 +194,7 @@ assign missu_l1d_wr_if.s2_done    = stbuf_l1d_wr_if.s2_done;
 assign missu_l1d_wr_if.s2_wr_resp = stbuf_l1d_wr_if.s2_wr_resp;
 
 `ifdef SIMULATION
-`ifdef VERILATOR
+  `ifdef COMPARE_ISS
 import "DPI-C" function void record_l1d_load
 (
  input longint rtl_time,
@@ -232,7 +232,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end // if (l1d_wr_if.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
-`endif // VERILATOR
+  `endif // COMPARE_ISS
 
 
 logic [63: 0] r_cycle_count;

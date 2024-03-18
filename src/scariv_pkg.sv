@@ -692,9 +692,9 @@ function automatic ftq_entry_t assign_ftq_entry(cmt_id_t  cmt_id,
   ret.notify_valid = 1'b0;
   ret.done      = 1'b0;
   ret.dead      = 1'b0;
-  ret.inst      = inst.rvc_inst_valid ? inst.rvc_inst : inst.inst;
 
 `ifdef SIMULATION
+  ret.inst      = inst.rvc_inst_valid ? inst.rvc_inst : inst.inst;
   ret.pred_target_vaddr = inst.pred_target_vaddr;
 `endif // SIMULATION
 

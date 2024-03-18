@@ -150,7 +150,7 @@ assign st_req_info_if.busy  = r_l1d_evict_req_valid;
 assign st_req_info_if.paddr = r_ext_evict_payload.paddr;
 
 `ifdef SIMULATION
-`ifdef VERILATOR
+  `ifdef COMPARE_ISS
 import "DPI-C" function void record_l1d_evict
 (
  input longint rtl_time,
@@ -190,7 +190,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end // if (l1d_ext_wr_req.valid)
   end // if (i_reset_n)
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
-`endif //  VERILATOR
+  `endif // COMPARE_ISS
 `endif // SIMULATION
 
 endmodule // scariv_store_requestor

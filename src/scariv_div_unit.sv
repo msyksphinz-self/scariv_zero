@@ -40,6 +40,8 @@ module scariv_div_unit
  output logic [RV_ENTRY_SIZE-1: 0]      o_index_oh
  );
 
+`define RV64
+
 logic                                  w_valid;
 logic                                  w_is_64bit;
 logic [ 3: 0]                          w_fn;

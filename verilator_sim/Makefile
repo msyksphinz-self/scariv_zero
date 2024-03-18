@@ -159,6 +159,13 @@ FILELIST = sim_filelist.f
 	rm -rf .config_design_*
 	touch $@
 
+.config_litex_xlen64_flen$(RV_FLEN): $(DECODE_JSONS) ../src/litex_memory_map.json
+	make -B RV_XLEN=64 RV_FLEN=$(RV_FLEN) ISA=$(ISA) build_decode_v > /dev/null 2>&1
+	cd ../src && ../scripts/build_memory_map.rb ../src/litex_memory_map.json $(RV_XLEN)
+	rm -rf .config_design_*
+	touch $@
+
+
 .dts_xlen$(RV_XLEN)_flen$(RV_FLEN)_$(ISA):
 	make -B XLEN=$(RV_XLEN) EXT=$(ISA) -C ../dts
 	rm -rf .dts_xlen*

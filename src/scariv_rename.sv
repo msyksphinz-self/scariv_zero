@@ -204,6 +204,8 @@ function void dump_json(string name, int fp);
 
 endfunction // dump
 
+  `ifdef KANATA
+
 // Kanata
 import "DPI-C" function void log_stage
 (
@@ -223,6 +225,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end
 end
 
+  `endif // KANATA
 
 `endif // SIMULATION
 

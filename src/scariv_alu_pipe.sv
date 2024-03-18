@@ -443,7 +443,7 @@ always_ff @(negedge i_clk, negedge i_reset_n) begin
   end
 end
 
-
+  `ifdef KANATA_DUMP
 // Kanata
 import "DPI-C" function void log_stage
 (
@@ -465,6 +465,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end
 end
 
+  `endif //  `ifdef KANATA_DUMP
 `endif // SIMULATION
 
 endmodule // scariv_alu_pipe

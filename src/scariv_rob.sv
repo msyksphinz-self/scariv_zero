@@ -379,6 +379,7 @@ end
 
 
 `ifdef SIMULATION
+  `ifdef COMPARE_ISS
 
 import "DPI-C" function void spike_update_timer (input longint value);
 
@@ -386,10 +387,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
   end else begin
     if (commit_if.commit_valid & w_out_entry.int_inserted) begin
-      spike_update_timer (u_scariv_subsystem_wrapper.u_scariv_subsystem.u_clint.w_mtime_next);
+      spike_update_timer (`SUBSYSTEM_TOP.u_clint.w_mtime_next);
     end
   end
 end
+  `endif //  COMPARE_ISS
 `endif // SIMULATION
 
 assign w_commit_rnid_update.commit     = w_out_valid;
@@ -667,5 +669,34 @@ end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
 `endif // MONITOR
 `endif // SIMULATION
+
+`ifdef SIMULATION
+  `ifdef NATIVE_DUMP
+integer native_dump_fp;
+initial begin
+  native_dump_fp = $fopen("native_dump.txt", "w");
+end
+
+always_ff @ (negedge i_clk) begin
+  for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
+    if (w_out_valid &
+        w_commit.grp_id[grp_idx] &
+        ~w_commit.dead_id[grp_idx]) begin
+      /* verilator lint_off WIDTH */
+      $fwrite(native_dump_fp, "%t PC=%08x: INST=0x%08x, DASM(0x%08x) ",
+              $time,
+              w_out_payload.disp[grp_idx].pc_addr,
+              w_out_payload.disp[grp_idx].rvc_inst_valid ? w_out_payload.disp[grp_idx].rvc_inst : w_out_payload.disp[grp_idx].inst,
+              w_out_payload.disp[grp_idx].rvc_inst_valid ? w_out_payload.disp[grp_idx].rvc_inst : w_out_payload.disp[grp_idx].inst);
+      if (w_commit.except_valid[grp_idx]) begin
+        $fwrite(native_dump_fp, "Exception, Type=%d\n", w_commit.except_type);
+      end else begin
+        $fwrite(native_dump_fp, "\n");
+      end
+    end
+  end // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
+end // always_ff @ (negedge i_clk)
+  `endif //  `ifdef NATIVE_DUMP
+`endif //  `ifdef SIMULATION
 
 endmodule // scariv_rob

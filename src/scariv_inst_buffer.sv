@@ -835,6 +835,7 @@ u_ras
 assign w_iq_ras_ret_vaddr[0] = 1'b0;
 
 `ifdef SIMULATION
+  `ifdef ISS_COMPARE
 
 import "DPI-C" function void rtl_push_ras (input longint rtl_time,
                                            input longint rtl_pc_vaddr,
@@ -877,6 +878,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (negedge i_clk, negedge i_reset_n)
 
+  `endif // ISS_COMPARE
 `endif // SIMULATION
 
 
@@ -972,6 +974,8 @@ function void dump_perf (int fp);
   $fwrite(fp, "  \"average count\" : %5f},\n", r_sim_ibuf_entry_count / 1000.0);
 endfunction // dump_perf
 
+  `ifdef DUMP_KANATA
+
 import "DPI-C" function void log_dispatch
 (
  input longint timeinfo,
@@ -999,6 +1003,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     end
   end
 end
+
+  `endif // DUMP_KANATA
 
 `endif // SIMULATION
 

@@ -206,6 +206,7 @@ assign write_if.addr  = r_ex3_issue.inst[31:20];
 assign write_if.data  = r_ex3_result;
 
 `ifdef SIMULATION
+  `ifdef KANATA_DUMP
 
 import "DPI-C" function void log_stage
 (
@@ -230,6 +231,7 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
   end
 end
 
+  `endif //  `ifdef KANATA_DUMP
 `endif // SIMULATION
 
 endmodule // scariv_csu_pipe
