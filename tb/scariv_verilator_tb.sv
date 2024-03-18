@@ -335,6 +335,8 @@ u_scariv_subsystem_wrapper
    .i_clk    (i_clk),
    .i_reset_n(i_scariv_reset_n),
 
+   .i_const_init_vaddr ('h0000_1000),
+
    // ICache Interconnection
    .o_l2_req_valid  (w_ss_req_valid),
    .o_l2_req_cmd    (w_ss_req_cmd),

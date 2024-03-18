@@ -256,8 +256,8 @@ always_comb begin
     w_f0_vaddr      = r_f0_vaddr;
     w_f0_vaddr_next = calc_next_cacheline(r_f0_vaddr);
   end else if (r_f0_valid & ~r_f0_valid_d1) begin
-    w_f0_vaddr      = PC_INIT_VAL;
-    w_f0_vaddr_next = calc_next_cacheline(PC_INIT_VAL);
+    w_f0_vaddr      = i_const_init_vaddr;
+    w_f0_vaddr_next = calc_next_cacheline(i_const_init_vaddr);
   end else begin
     // Normal Update
     w_f0_vaddr      = r_f0_vaddr;

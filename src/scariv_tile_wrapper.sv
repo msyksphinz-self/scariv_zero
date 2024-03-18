@@ -10,6 +10,9 @@
 module scariv_tile_wrapper (
     input  logic                                                        i_clk,
     input  logic                                                        i_reset_n,
+
+    input scariv_pkg::vaddr_t                                           i_const_init_vaddr,
+
     // L2 request from ICache
     output logic                                                        o_ic_req_valid,
     output scariv_lsu_pkg::mem_cmd_t                                      o_ic_req_cmd,
@@ -143,6 +146,8 @@ assign clint_if.time_irq_clear = i_clint_time_irq_clear;
   scariv_tile u_scariv_tile (
       .i_clk(i_clk),
       .i_reset_n(i_reset_n),
+
+      .i_const_init_vaddr (i_const_init_vaddr),
 
       .ic_l2_req(ic_l2_req),
       .ic_l2_resp(ic_l2_resp),

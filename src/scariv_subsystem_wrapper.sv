@@ -12,6 +12,8 @@ module scariv_subsystem_wrapper
     input  logic                                                        i_clk,
     input  logic                                                        i_reset_n,
 
+    input scariv_pkg::vaddr_t                                           i_const_init_vaddr,
+
     // L2 request
     output logic                                                          o_l2_req_valid,
     output scariv_lsu_pkg::mem_cmd_t                                      o_l2_req_cmd,
@@ -75,6 +77,8 @@ u_scariv_subsystem
 (
  .i_clk     (i_clk),
  .i_reset_n (i_reset_n),
+
+ .i_const_init_vaddr (i_const_init_vaddr),
 
  .l2_req  (w_l2_req ),
  .l2_resp (w_l2_resp),
