@@ -22,7 +22,7 @@
 ../src/l2_if.sv
 ../src/scariv_front_pkg.sv
 ../src/reg_if.sv
-../src/lsu_if.sv
+../src/lsu_vipt/lsu_vipt_if.sv
 ../src/scariv_if.sv
 ../src/fpu_if.sv
 
@@ -130,12 +130,12 @@
 ../src/scariv_bitmanip_alu.sv
 ../src/scariv_zicond_alu.sv
 
-../src/scariv_lsu_top.sv
-../src/scariv_lsu.sv
-../src/scariv_lsu_issue_unit.sv
-../src/scariv_lsu_issue_entry.sv
-../src/scariv_lsu_fast_replay_queue.sv
-../src/scariv_lsu_pipe.sv
+../src/lsu_vipt/scariv_lsu_vipt_top.sv
+../src/lsu_vipt/scariv_lsu_vipt.sv
+../src/lsu_vipt/scariv_lsu_vipt_issue_unit.sv
+../src/lsu_vipt/scariv_lsu_vipt_issue_entry.sv
+../src/lsu_vipt/scariv_lsu_vipt_fast_replay_queue.sv
+../src/lsu_vipt/scariv_lsu_vipt_pipe.sv
 ../src/scariv_l1d_mshr.sv
 ../src/scariv_l1d_mshr_entry.sv
 ../src/scariv_store_requestor.sv
@@ -152,7 +152,7 @@
 ../src/scariv_amo_operation.sv
 ../src/scariv_dcache.sv
 ../src/scariv_dcache_array.sv
-../src/scariv_lsu_lrsc.sv
+../src/lsu_vipt/scariv_lsu_vipt_lrsc.sv
 
 ../src/scariv_snoop_top.sv
 

@@ -1,79 +1,46 @@
 interface l1d_rd_if;
 
-  logic             s0_valid;
-  scariv_pkg::paddr_t s0_paddr;
-  logic             s0_high_priority;
+import scariv_pkg::*;
+import scariv_lsu_pkg::*;
 
-  logic                                    s1_hit;
-  logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_hit_way;
-  logic                                    s1_miss;
-  logic                                    s1_conflict;
-  scariv_lsu_pkg::mesi_t                     s1_mesi;
-  logic [scariv_conf_pkg::DCACHE_DATA_W-1:0] s1_data;
+logic      s0_valid;
+dc_index_t s0_index;
+logic      s0_high_priority;
 
-  // Eviction: Replaced Address
-  logic                                           s1_replace_valid;
-  logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] s1_replace_way;
-  scariv_lsu_pkg::mesi_t                            s1_replace_mesi;
+paddr_t    s1_paddr;
 
+logic      s2_hit;
+dc_ways_t  s2_hit_way;
+logic      s2_miss;
+logic      s2_conflict;
+mesi_t     s2_mesi;
+dc_data_t  s2_data;
 
-  modport master(
-    output s0_valid,
-    output s0_paddr,
-    output s0_high_priority,
+// Eviction: Replaced Address
+logic     s2_replace_valid;
+dc_ways_t s2_replace_way;
+mesi_t    s2_replace_mesi;
 
-    input  s1_hit,
-    input  s1_hit_way,
-    input  s1_miss,
-    input  s1_conflict,
-    input  s1_data,
-    input  s1_mesi,
-
-    input  s1_replace_valid,
-    input  s1_replace_way,
-    input  s1_replace_mesi
-  );
-
-  modport slave(
-    input  s0_valid,
-    input  s0_paddr,
-    input  s0_high_priority,
-
-    output s1_hit,
-    output s1_hit_way,
-    output s1_miss,
-    output s1_conflict,
-    output s1_data,
-    output s1_mesi,
-
-    output s1_replace_valid,
-    output s1_replace_way,
-    output s1_replace_mesi
-  );
-
-
-  modport watch (
-    input s1_hit,
-    input s1_hit_way,
-    input s1_miss,
-    input s1_conflict,
-    input s1_data,
-    input s1_mesi,
-
-    input s1_replace_valid,
-    input s1_replace_way,
-    input s1_replace_mesi
-  );
+modport master(output s0_valid, s0_index, s0_high_priority,
+               output s1_paddr,
+               input  s2_hit, s2_hit_way, s2_miss, s2_conflict, s2_data, s2_mesi,
+               input  s2_replace_valid, s2_replace_way, s2_replace_mesi);
+modport slave (input  s0_valid, s0_index, s0_high_priority,
+               input  s1_paddr,
+               output s2_hit, s2_hit_way, s2_miss, s2_conflict, s2_data, s2_mesi,
+               output s2_replace_valid, s2_replace_way, s2_replace_mesi);
+modport watch (input  s2_hit, s2_hit_way, s2_miss, s2_conflict, s2_data, s2_mesi,
+               input  s2_replace_valid, s2_replace_way, s2_replace_mesi);
 
 endinterface // l1d_rd_if
 
 
 interface l1d_wr_if;
 
-  logic                          s0_valid;
-  scariv_lsu_pkg::s0_l1d_wr_req_t  s0_wr_req;
-  scariv_lsu_pkg::mesi_t           s0_mesi;
-  logic                          s0_unlock_valid;
+  logic                           s0_valid;
+  scariv_lsu_pkg::s0_l1d_wr_req_t s0_wr_req;
+  scariv_lsu_pkg::mesi_t          s0_mesi;
+  logic                           s0_unlock_valid;
 
   logic                          s1_resp_valid;
   scariv_lsu_pkg::s1_l1d_wr_resp_t s1_wr_resp;
