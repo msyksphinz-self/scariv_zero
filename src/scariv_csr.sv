@@ -581,7 +581,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin if (!i_reset_n) begin r_mha
 
 xlen_t w_misa_reset;
 generate if (riscv_fpu_pkg::FLEN_W == 0) begin
-  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
+  assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("I" - "A")) |
               ('h1 << ("M" - "A")) |
@@ -589,7 +589,7 @@ generate if (riscv_fpu_pkg::FLEN_W == 0) begin
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
 end else if (riscv_fpu_pkg::FLEN_W == 32) begin
-  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
+  assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("F" - "A")) |
               ('h1 << ("I" - "A")) |
@@ -598,7 +598,7 @@ end else if (riscv_fpu_pkg::FLEN_W == 32) begin
               ('h1 << ("U" - "A")) |
               ((XLEN_W / 32) << (XLEN_W-2));
 end else if (riscv_fpu_pkg::FLEN_W ==64) begin
-  assign w_misa_reset = (`RV_AMO << ("A" - "A")) |
+  assign w_misa_reset = ('h1 << ("A" - "A")) |
               ('h1 << ("C" - "A")) |
               ('h1 << ("D" - "A")) |
               ('h1 << ("F" - "A")) |
@@ -619,7 +619,7 @@ always_comb begin
   end else if (riscv_fpu_pkg::FLEN_W == 32) begin
     w_misa_next[("D" - "A")] = 1'b0;
   end
-  w_misa_next[("A" - "A")] = `RV_AMO;
+  w_misa_next[("A" - "A")] = 1'b1;
   w_misa_next[("B" - "A")] = 1'b0;
   w_misa_next[("V" - "A")] = 1'b0;
 end
