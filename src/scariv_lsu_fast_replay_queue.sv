@@ -36,7 +36,9 @@ module scariv_lsu_fast_replay_queue
 );
 
 // localparam REPLAY_QUEUE_SIZE = (scariv_conf_pkg::LDQ_SIZE + scariv_conf_pkg::STQ_SIZE) / scariv_conf_pkg::LSU_INST_NUM + 1;
-localparam REPLAY_QUEUE_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+localparam REPLAY_QUEUE_SIZE_RAW = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
+localparam REPLAY_QUEUE_SIZE = REPLAY_QUEUE_SIZE_RAW > 8 ? REPLAY_QUEUE_SIZE_RAW : 8;
+
 localparam REPLAY_QUEUE_W = $clog2(REPLAY_QUEUE_SIZE);
 
 typedef struct packed {
