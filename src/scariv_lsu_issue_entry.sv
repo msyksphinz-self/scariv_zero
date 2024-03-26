@@ -74,15 +74,6 @@ logic                     w_rs1_phy_hit;
 logic                     w_rs1_mispredicted;
 logic                     w_rs1_pred_mispredicted;
 
-scariv_pkg::rnid_t        w_rs2_rnid;
-scariv_pkg::reg_t         w_rs2_type;
-scariv_pkg::rel_bus_idx_t w_rs2_rel_index;
-logic                     w_rs2_rel_hit;
-logic                     w_rs2_may_mispred;
-logic                     w_rs2_phy_hit;
-logic                     w_rs2_mispredicted;
-logic                     w_rs2_pred_mispredicted;
-
 logic     w_entry_flush;
 logic     w_commit_flush;
 logic     w_br_flush;
@@ -156,7 +147,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs1_pred_mispredicted & !w_rs2_pred_mispredicted &
+        if (o_entry_valid & o_entry_ready & i_entry_picked & !w_rs1_pred_mispredicted &
             (~i_replay_queue_full | r_entry.oldest_valid)) begin
           w_issued_next = 1'b1;
           w_state_next = scariv_lsu_pkg::LSU_SCHED_ISSUED;
@@ -168,7 +159,7 @@ always_comb begin
         w_state_next = scariv_lsu_pkg::LSU_SCHED_CLEAR;
         w_dead_next  = 1'b1;
       end else begin
-        if (w_rs1_pred_mispredicted | w_rs2_pred_mispredicted) begin
+        if (w_rs1_pred_mispredicted) begin
           w_state_next = scariv_lsu_pkg::LSU_SCHED_WAIT;
           w_issued_next = 1'b0;
           w_entry_next.rd_regs[0].predict_ready = 1'b0;
