@@ -27,6 +27,13 @@ module scariv_vlsu_address_gen
  output logic                    o_req_splitted
  );
 
+typedef enum logic [ 1: 0] {
+   INIT = 0,
+   USTRIDE_GEN = 1
+} state_t;
+
+state_t r_state;
+
 logic [$clog2(scariv_vec_pkg::VLENB*8)-1: 0]    r_acc_addr_offset;
 logic [$clog2(scariv_vec_pkg::DLENB)-1: 0]    r_reg_offset;
 scariv_vec_pkg::vec_pos_t r_vec_step_index;
@@ -42,13 +49,6 @@ always_comb begin
     o_reg_offset = 'h0;
   end
 end
-
-typedef enum logic [ 1: 0] {
-   INIT = 0,
-   USTRIDE_GEN = 1
-} state_t;
-
-state_t r_state;
 
 logic        w_cache_misaligned;
 generate if (DCACHE_DATA_B_W <= scariv_vec_pkg::DLENB) begin

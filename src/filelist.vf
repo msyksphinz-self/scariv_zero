@@ -223,6 +223,8 @@
 ../src/scariv_plic_reg_threshold.sv
 ../src/scariv_plic_regs.sv
 
+../src/scariv_ram.sv
+
 ../src/scariv_bootrom.sv
 
 ../src/distributed_ram.sv

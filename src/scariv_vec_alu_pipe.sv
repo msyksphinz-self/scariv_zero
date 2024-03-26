@@ -109,11 +109,6 @@ assign vec_phy_v0_if.valid = i_ex0_issue.valid & i_ex0_issue.v0_reg.valid;
 assign vec_phy_v0_if.rnid  = i_ex0_issue.v0_reg.rnid;
 assign vec_phy_v0_if.pos   = i_ex0_issue.vec_lmul_index >> (3 + i_ex0_issue.vlvtype.vtype.vsew - $clog2(scariv_vec_pkg::VEC_STEP_W));
 
-assign w_ex0_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload);
-assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(i_ex0_issue.cmt_id, i_ex0_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update;
-assign w_ex0_flush = w_ex0_commit_flush | w_ex0_br_flush;
-
 // ---------------------
 // EX1
 // ---------------------
@@ -535,7 +530,7 @@ generate if (scariv_vec_pkg::VEC_STEP_W == 1) begin : fpnew_mask_vstep_1
       default : w_fpnew_mask_wr_result_next = 'h0;
     endcase // case (w_fpnew_tag_out.vsew)
   end // always_comb
-end else begin : mask_vstep_n0 // if (scariv_vec_pkg::VEC_STEP_W == 1)
+end else begin : fpnew_mask_vstep_n0 // if (scariv_vec_pkg::VEC_STEP_W == 1)
   always_comb begin
     if (w_fpnew_tag_out.vcomp_fin) begin
       w_fpnew_mask_wr_result_next = w_fpnew_tag_out.old_wr_data & ~((1 << w_fpnew_tag_out.vl) - 1) |

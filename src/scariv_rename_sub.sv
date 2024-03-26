@@ -352,24 +352,6 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
 
     end // block: prev_rd_loop
 
-    /* verilator lint_off SELRANGE */
-    if (d_idx == 0) begin
-      rs1_rnid_fwd[d_idx] = w_rnid[0];
-      rs2_rnid_fwd[d_idx] = w_rnid[1];
-      if (NUM_OPERANDS >= 3) begin
-        rs3_rnid_fwd[d_idx] = w_rnid[2];
-      end
-      rd_old_rnid_fwd[d_idx] = w_rd_old_rnid[0];
-      v0_rnid_fwd[d_idx]  = w_rn_list[0];
-    end else begin
-      rs1_rnid_fwd[d_idx] = rs1_rnid_tmp[d_idx-1];
-      rs2_rnid_fwd[d_idx] = rs2_rnid_tmp[d_idx-1];
-      if (NUM_OPERANDS >= 3) begin
-        rs3_rnid_fwd[d_idx] = rs3_rnid_tmp[d_idx-1];
-      end
-      rd_old_rnid_fwd[d_idx] = rd_old_rnid_tmp[d_idx-1];
-      v0_rnid_fwd[d_idx]  = rd_v0_rnid_tmp[d_idx-1];
-    end // else: !if(d_idx == 0)
   end // always_comb
 
   if (NUM_OPERANDS >= 3) begin : num_operands_3

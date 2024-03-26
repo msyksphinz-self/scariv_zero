@@ -4,7 +4,7 @@ export VERDI_HOME = /home/shioya/opt/cad/synopsys/verdi/T-2022.06-SP1-1/
 # export LD_LIBRARY_PATH = $(VCS_HOME)linux64/lib/:$(VERDI_HOME)share/PLI/VCS/linux64/:$(VCS_HOME)platform/linux64/bin/:$(shell echo $$LD_LIBRARY_PATH):
 
 ISA = imfdc
-CONF = tiny
+CONF = standard
 
 VCS_OPTS += +define+VCS_SIM
 
@@ -22,6 +22,7 @@ VCS_OPTS += ../src/riscv_common_pkg.sv
 VCS_OPTS += ../src/riscv_fpu_$(ISA)_pkg.sv
 VCS_OPTS += ../src/riscv64_pkg.sv
 VCS_OPTS += ../configs/scariv_$(CONF)_conf_pkg.sv
+VCS_OPTS += ../src/riscv_vec_v512_d128_conf_pkg.sv
 VCS_OPTS += ../cpp/tb_elf_loader.cpp
 VCS_OPTS += -f $(FILELIST)
 VCS_OPTS += -o simv
@@ -82,9 +83,9 @@ all: build
 	fsdb2vcd sim_rv64imafdc_standard/dhrystone/wave.fsdb | bzip2 > sim_rv64imafdc_standard/dhrystone/wave.bz2
 
 build: $(FILELIST)
-	$(MAKE) -C ../verilator_sim/ RV_FLEN=64 .config_design_xlen64_flen64
-	echo $(LD_LIBRARY_PATH)
 	${VCS_HOME}/bin/vcs $(VCS_OPTS)
+
+#	$(MAKE) -C ../verilator_sim/ RV_FLEN=64 .config_design_xlen64_flen64
 
 $(FILELIST): ../src/fpnew.vf ../src/filelist.vf filelist.f
 	echo "../tb/sim_pkg.sv" > $@

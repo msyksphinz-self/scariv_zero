@@ -79,7 +79,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
         `SYSREG_ADDR_VCSR     : r_vcsr     <= write_csr_vec_if.data;
         `SYSREG_ADDR_VL       : r_vl       <= write_csr_vec_if.data;
         `SYSREG_ADDR_VTYPE    : r_vtype    <= write_csr_vec_if.data;
-        `SYSREG_ADDR_VSCRATCH : r_vscratch <= write_csr_vec_if.data;
+        // `SYSREG_ADDR_VSCRATCH : r_vscratch <= write_csr_vec_if.data;
         default               : begin end
       endcase // case (write_csr_vec_if.addr)
     end // if (write_csr_vec_if.valid)

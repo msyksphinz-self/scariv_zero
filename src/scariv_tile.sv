@@ -176,6 +176,10 @@ cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_FPU_ENTRY_SIZE)) fpu_cre_ret_if[scariv
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_VALU_ENTRY_SIZE)) valu_cre_ret_if();
 cre_ret_if #(.MAX_INC(scariv_conf_pkg::RV_VLSU_ENTRY_SIZE)) vlsu_cre_ret_if();
 
+vlvtype_commit_if w_vlvtype_commit();
+vlvtype_upd_if    w_vlvtype_upd_if();
+vec_csr_if        w_vec_csr_if();
+vlvtype_info_if   r_rn_vlvtype_info_if();
 
 // ----------------------------------
 // Branch Tag
@@ -609,11 +613,6 @@ generate if (riscv_fpu_pkg::FLEN_W != 0) begin : fpu
 end // if (riscv_fpu_pkg::FLEN_W != 0)
 endgenerate
 
-vlvtype_commit_if w_vlvtype_commit();
-vlvtype_upd_if    w_vlvtype_upd_if();
-vec_csr_if        w_vec_csr_if();
-vlvtype_info_if   r_rn_vlvtype_info_if();
-
 generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
   scariv_vec_pkg::vlvtype_ren_idx_t  w_ibuf_vlvtype_index;
 
@@ -654,7 +653,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
 
 
   localparam VALU_READ_PORT_IDX = scariv_conf_pkg::ALU_INST_NUM * 2 +
-                                  scariv_conf_pkg::LSU_INST_NUM + 1 +
+                                  scariv_conf_pkg::LSU_INST_NUM + scariv_conf_pkg::STQ_REGRD_PORT_NUM +
                                   2 +   // BRU
                                   2 +   // CSU
                                   scariv_conf_pkg::FPU_INST_NUM;
@@ -680,7 +679,7 @@ generate if (scariv_vec_pkg::VLEN_W != 0) begin : vpu
      .ex1_xpr_regread_rs1(int_regread[VALU_READ_PORT_IDX]),
 
      .ex1_fpr_regread_rs1(fp_regread[scariv_conf_pkg::FPU_INST_NUM * 3 +     // FPU port
-                                     1]),                                    // LSU port
+                                     scariv_conf_pkg::STQ_REGRD_PORT_NUM]),                                    // LSU port
 
      .phy_wr_if (w_phy_wr_if),
 

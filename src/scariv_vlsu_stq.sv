@@ -77,6 +77,12 @@ logic [VLSU_STQ_BANK_SIZE-1: 0]         w_vs3_regread_bank_accepted;
 logic                                   st_buffer_ex0_proceed_valid;
 logic                                   st_buffer_ex1_proceed_valid;
 
+logic                                   r_ex1_st_buffer_valid;
+scariv_pkg::paddr_t                     r_ex1_st_buffer_paddr;
+dlenb_t                                 r_ex1_st_buffer_strb;
+logic                                   r_ex1_st_buffer_skid_valid;
+dlen_t                                  r_ex1_st_buffer_skid_data;
+
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_vlsu_haz_check_hit[VLSU_STQ_BANK_SIZE][VLSU_STQ_SIZE];
 
 assign st_buffer_ex0_proceed_valid = ~r_ex1_st_buffer_valid | st_buffer_ex1_proceed_valid;
@@ -311,12 +317,6 @@ bit_encoder #(.WIDTH(VLSU_STQ_BANK_SIZE)) bit_oh_bank (.i_in(w_vs3_regread_bank_
 assign vec_vs3_rd_if.valid = |w_vs3_regread_req;
 assign vec_vs3_rd_if.rnid  = w_vlsu_stq_vs3_entry.vs3_phy_idx;
 assign vec_vs3_rd_if.pos   = w_vlsu_stq_vs3_entry.vs3_pos;
-
-logic               r_ex1_st_buffer_valid;
-scariv_pkg::paddr_t r_ex1_st_buffer_paddr;
-dlenb_t             r_ex1_st_buffer_strb;
-logic               r_ex1_st_buffer_skid_valid;
-dlen_t              r_ex1_st_buffer_skid_data;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
