@@ -60,7 +60,7 @@ typedef enum logic [3:0] {
 scariv_lsu_pkg::mshr_entry_t r_entry;
 scariv_lsu_pkg::mshr_entry_t w_entry_next;
 
-state_t r_state;
+(* mark_debug="true" *) state_t r_state;
 state_t w_state_next;
 
 logic [ 1: 0] r_count_fin;

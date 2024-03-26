@@ -95,7 +95,7 @@ logic     w_entry_finish;
 // When previous instruction generates exception or jump
 logic w_pc_update_before_entry;
 
-scariv_lsu_pkg::lsu_sched_state_t r_state;
+(* mark_debug="true" *) scariv_lsu_pkg::lsu_sched_state_t r_state;
 scariv_lsu_pkg::lsu_sched_state_t w_state_next;
 
 // Only rs1 operand ready is checked.

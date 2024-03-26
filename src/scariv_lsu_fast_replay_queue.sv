@@ -58,7 +58,7 @@ typedef struct packed {
     logic                            is_uc;
 } replay_payload_t;
 
-replay_queue_t   r_replay_queue  [REPLAY_QUEUE_SIZE];
+(* mark_debug="true" *) replay_queue_t   r_replay_queue  [REPLAY_QUEUE_SIZE];
 replay_payload_t w_replay_payload;
 
 logic [REPLAY_QUEUE_W-1: 0]          w_pop_freelist_id;

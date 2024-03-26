@@ -57,7 +57,7 @@ module scariv_lsu_issue_unit
   br_upd_if.slave                       br_upd_if
 );
 
-logic [ENTRY_SIZE-1:0] w_entry_valid;
+(* mark_debug="true" *) logic [ENTRY_SIZE-1:0] w_entry_valid;
 logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_entry_oldest_valid;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
