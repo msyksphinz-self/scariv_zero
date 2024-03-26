@@ -36,13 +36,20 @@ logic [$clog2(SIZE)-1:0]  w_tail_ptr_next;
 logic [$clog2(SIZE)-1:0]  w_head_ptr[PORTS];
 logic [$clog2(SIZE)-1:0]  w_tail_ptr[PORTS];
 
+function automatic logic [$clog2(PORTS): 0] count_ones(logic [PORTS-1: 0] bits);
+  logic [$clog2(PORTS): 0]  ret;
+  ret = 0;
+  for (int i = 0; i < PORTS; i++) ret = ret + bits[i];
+  return ret;
+endfunction // count_ones
+
 generate if (SIZE == 1 << $clog2(SIZE)) begin : size_2pow
   for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
     assign w_head_ptr[p_idx] = r_head_ptr + p_idx;
     assign w_tail_ptr[p_idx] = r_tail_ptr + p_idx;
   end
-  assign w_head_ptr_next = r_head_ptr + $countones(i_pop);
-  assign w_tail_ptr_next = r_tail_ptr + $countones(i_push);
+  assign w_head_ptr_next = r_head_ptr + count_ones(i_pop);
+  assign w_tail_ptr_next = r_tail_ptr + count_ones(i_push);
 end else if (PORTS == 1) begin : single_port
   for (genvar p_idx = 0; p_idx < PORTS; p_idx++) begin : ports_loop
     assign w_head_ptr[p_idx] = r_head_ptr;
@@ -55,8 +62,8 @@ end else begin : multi_port
     assign w_head_ptr[p_idx] = r_head_ptr + p_idx < SIZE ? r_head_ptr + p_idx : r_head_ptr + p_idx - SIZE;
     assign w_tail_ptr[p_idx] = r_tail_ptr + p_idx < SIZE ? r_tail_ptr + p_idx : r_tail_ptr + p_idx - SIZE;
   end
-  wire [$clog2(SIZE): 0] w_head_ptr_update = r_head_ptr + $countones(i_pop);
-  wire [$clog2(SIZE): 0] w_tail_ptr_update = r_tail_ptr + $countones(i_push);
+  wire [$clog2(SIZE): 0] w_head_ptr_update = r_head_ptr + count_ones(i_pop);
+  wire [$clog2(SIZE): 0] w_tail_ptr_update = r_tail_ptr + count_ones(i_push);
 
   assign w_head_ptr_next = w_head_ptr_update < SIZE-1 ? w_head_ptr_update : w_head_ptr_update - SIZE;
   assign w_tail_ptr_next = w_tail_ptr_update < SIZE-1 ? w_tail_ptr_update : w_tail_ptr_update - SIZE;
