@@ -16,8 +16,6 @@ package scariv_pkg;
 
   integer STDERR = 32'h8000_0002;
 
-  localparam PC_INIT_VAL = 'h0000_1000;
-
   localparam INST_BUF_SIZE = scariv_conf_pkg::INST_BUF_SIZE;
 
   localparam MAX_ADDR_W = VADDR_W > PADDR_W ? VADDR_W : PADDR_W;

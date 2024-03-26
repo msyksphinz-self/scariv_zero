@@ -78,6 +78,7 @@ ifeq ($(DEBUG),on)
 	VERILATOR_OPTS += -CFLAGS "-DDUMP_FST"
 endif
 VERILATOR_OPTS += +define+MONITOR
+VERILATOR_OPTS += +define+SUBSYSTEM_TOP=scariv_tb.u_scariv_subsystem_wrapper.u_scariv_subsystem
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION
