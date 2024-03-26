@@ -11,6 +11,10 @@ module scariv_tile (
     input logic i_clk,
     input logic i_reset_n,
 
+`ifdef ILA_DEBUG
+    output scariv_ila_pkg::ila_debug_tile_t  o_ila_debug_tile,
+`endif // ILA_DEBUG
+
     input scariv_pkg::vaddr_t i_const_init_vaddr,
 
     // L2 request from ICache
@@ -61,8 +65,8 @@ localparam FPU_FP_REGWR_PORT_BASE = LSU_FP_REGWR_PORT_BASE + scariv_conf_pkg::LS
 l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
-scariv_front_if w_ibuf_front_if();
-scariv_front_if w_rn_front_if ();
+(* mark_debug = "true" *) scariv_front_if w_ibuf_front_if();
+(* mark_debug = "true" *) scariv_front_if w_rn_front_if ();
 
 early_wr_if    w_early_wr_if[scariv_pkg::REL_BUS_SIZE]();
 phy_wr_if      w_phy_wr_if  [scariv_pkg::TGT_BUS_SIZE]();
@@ -552,6 +556,10 @@ scariv_rob u_rob
   (
    .i_clk    (i_clk),
    .i_reset_n(i_reset_n),
+
+`ifdef ILA_DEBUG
+   .o_ila_debug_rob (o_ila_debug_tile.rob),
+`endif // ILA_DEBUG
 
    .rn_front_if    (w_rn_front_if     ),
    .cre_ret_if (rob_cre_ret_if),

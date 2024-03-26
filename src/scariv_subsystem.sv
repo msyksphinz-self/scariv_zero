@@ -11,6 +11,10 @@ module scariv_subsystem (
     input logic i_clk,
     input logic i_reset_n,
 
+`ifdef ILA_DEBUG
+    output scariv_ila_pkg::ila_debug_tile_t  o_ila_debug_tile,
+`endif // ILA_DEBUG
+
     input scariv_pkg::vaddr_t i_const_init_vaddr,
 
     // L2 request from ICache
@@ -49,6 +53,10 @@ u_tile
   (
    .i_clk     (i_clk),
    .i_reset_n (i_reset_n),
+
+`ifdef ILA_DEBUG
+   .o_ila_debug_tile (o_ila_debug_tile),
+`endif // ILA_DEBUG
 
    .i_const_init_vaddr (i_const_init_vaddr),
 

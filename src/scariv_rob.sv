@@ -15,6 +15,10 @@ module scariv_rob
    input logic                   i_clk,
    input logic                   i_reset_n,
 
+`ifdef ILA_DEBUG
+   output scariv_ila_pkg::ila_debug_rob_t  o_ila_debug_rob,
+`endif // ILA_DEBUG
+
    scariv_front_if.slave                 rn_front_if,
 
    cre_ret_if.slave              cre_ret_if,
@@ -38,7 +42,7 @@ module scariv_rob
    );
 
 rob_entry_t              w_entries[CMT_ENTRY_SIZE];
-cmt_id_t     w_in_cmt_id, w_out_cmt_id;
+(* mark_debug = "true" *) cmt_id_t     w_in_cmt_id, w_out_cmt_id;
 logic [DISP_SIZE-1:0]              w_disp_grp_id;
 logic [CMT_ENTRY_SIZE-1:0]         w_entry_all_done;
 logic [DISP_SIZE-1:0]              w_br_upd_valid_oh;
@@ -53,8 +57,8 @@ logic [$clog2(CMT_ENTRY_SIZE)-1: 0] w_cmt_except_valid_encoded;
 logic                                w_ignore_disp;
 logic [$clog2(CMT_ENTRY_SIZE): 0]    w_credit_return_val;
 
-rob_entry_t   w_out_entry;
-rob_payload_t w_out_payload;
+(* mark_debug = "true" *) rob_entry_t   w_out_entry;
+(* mark_debug = "true" *) rob_payload_t w_out_payload;
 
 //
 // Pointer
@@ -698,5 +702,17 @@ always_ff @ (negedge i_clk) begin
 end // always_ff @ (negedge i_clk)
   `endif //  `ifdef NATIVE_DUMP
 `endif //  `ifdef SIMULATION
+
+`ifdef ILA_DEBUG
+
+always_ff @ (posedge i_clk) begin
+  o_ila_debug_rob.head_ptr <= w_in_cmt_id;
+  o_ila_debug_rob.tail_ptr <= w_out_cmt_id;
+  o_ila_debug_rob.entry    <= w_out_entry;
+  o_ila_debug_rob.payload  <= w_out_payload;
+end
+
+`endif // ILA_DEBUG
+
 
 endmodule // scariv_rob

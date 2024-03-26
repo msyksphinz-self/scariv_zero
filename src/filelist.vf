@@ -19,6 +19,8 @@
 ../src/scariv_predict_pkg.sv
 ../src/scariv_ibuf_pkg.sv
 
+../src/scariv_ila_pkg.sv
+
 ../src/l2_if.sv
 ../src/scariv_front_pkg.sv
 ../src/reg_if.sv
