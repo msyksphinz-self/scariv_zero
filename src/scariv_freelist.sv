@@ -27,8 +27,8 @@ module scariv_freelist
 
 logic [WIDTH-1:0]         r_freelist[SIZE];
 
-(* mark_debug="true" *) (* dont_touch="yes" *) logic [$clog2(SIZE)-1:0]  r_head_ptr;
-(* mark_debug="true" *) (* dont_touch="yes" *) logic [$clog2(SIZE)-1:0]  r_tail_ptr;
+logic [$clog2(SIZE)-1:0]  r_head_ptr;
+logic [$clog2(SIZE)-1:0]  r_tail_ptr;
 
 logic [SIZE-1:0]          r_active_bits;
 
@@ -38,8 +38,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_tail_ptr <= 'h0;
     r_active_bits <= {SIZE{1'b1}};
     for (int i = 0; i < SIZE; i++) begin
-      /* verilator lint_off WIDTH */
-      r_freelist[i] = INIT + i;
+      r_freelist[i] <= INIT + i;
     end
   end else begin
     if (i_push) begin

@@ -102,7 +102,7 @@ end
 
 assign ex1_early_wr_if.valid       = 1'b0;
 assign ex1_early_wr_if.rd_rnid     = 1'b0;
-assign ex1_early_wr_if.rd_type     = 1'b0;
+assign ex1_early_wr_if.rd_type     = scariv_pkg::GPR;
 assign ex1_early_wr_if.may_mispred = 1'b0;
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
