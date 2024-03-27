@@ -718,8 +718,8 @@ endpackage
 interface commit_if;
   import scariv_pkg::*;
 
-  logic        commit_valid;
-  commit_blk_t payload;
+  (* mark_debug="true" *) logic        commit_valid;
+  (* mark_debug="true" *) commit_blk_t payload;
 
   function automatic logic is_commit_flush_target(cmt_id_t entry_cmt_id,
                                                   grp_id_t entry_grp_id);
@@ -760,14 +760,14 @@ interface done_report_if;
 
   import scariv_pkg::*;
 
-  logic             valid;
-  cmt_id_t          cmt_id;
-  grp_id_t          grp_id;
-  logic             except_valid;
-  except_t          except_type;
-  riscv_pkg::xlen_t except_tval;
-  logic             fflags_update_valid;
-  fflags_t          fflags;
+  (* mark_debug="true" *) logic             valid;
+  (* mark_debug="true" *) cmt_id_t          cmt_id;
+  (* mark_debug="true" *) grp_id_t          grp_id;
+  (* mark_debug="true" *) logic             except_valid;
+  (* mark_debug="true" *) except_t          except_type;
+  (* mark_debug="true" *) riscv_pkg::xlen_t except_tval;
+  (* mark_debug="true" *) logic             fflags_update_valid;
+  (* mark_debug="true" *) fflags_t          fflags;
 
 function automatic scariv_pkg::done_rpt_t get_payload ();
   scariv_pkg::done_rpt_t ret;
