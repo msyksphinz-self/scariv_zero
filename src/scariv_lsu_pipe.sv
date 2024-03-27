@@ -106,7 +106,7 @@ logic w_ex0_br_flush;
 //
 // EX1 stage
 //
-scariv_lsu_pkg::lsu_pipe_issue_t        r_ex1_issue, w_ex1_issue_next;
+(* mark_debug="true" *) (* dont_touch="yes" *) scariv_lsu_pkg::lsu_pipe_issue_t        r_ex1_issue, w_ex1_issue_next;
 logic [MEM_Q_SIZE-1: 0]  r_ex1_index_oh;
 
 riscv_pkg::xlen_t        w_ex1_rs1_selected_data;
@@ -131,7 +131,7 @@ logic w_ex1_sfence_vma_illegal;
 //
 // EX2 stage
 //
-scariv_lsu_pkg::lsu_pipe_issue_t       r_ex2_issue, w_ex2_issue_next;
+(* mark_debug="true" *) (* dont_touch="yes" *) scariv_lsu_pkg::lsu_pipe_issue_t       r_ex2_issue, w_ex2_issue_next;
 logic [MEM_Q_SIZE-1: 0] r_ex2_index_oh;
 scariv_pkg::maxaddr_t   r_ex2_addr;
 lsu_pipe_ctrl_t         r_ex2_pipe_ctrl;
@@ -169,7 +169,7 @@ logic r_ex2_sfence_vma_illegal;
 //
 // EX3 stage
 //
-scariv_lsu_pkg::lsu_pipe_issue_t r_ex3_issue, w_ex3_issue_next;
+(* mark_debug="true" *) (* dont_touch="yes" *) scariv_lsu_pkg::lsu_pipe_issue_t r_ex3_issue, w_ex3_issue_next;
 lsu_pipe_ctrl_t                  r_ex3_pipe_ctrl;
 scariv_pkg::alen_t               r_ex3_aligned_data;
 logic                            r_ex3_mis_valid;

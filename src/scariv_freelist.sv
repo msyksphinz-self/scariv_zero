@@ -27,8 +27,8 @@ module scariv_freelist
 
 logic [WIDTH-1:0]         r_freelist[SIZE];
 
-logic [$clog2(SIZE)-1:0]  r_head_ptr;
-logic [$clog2(SIZE)-1:0]  r_tail_ptr;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [$clog2(SIZE)-1:0]  r_head_ptr;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [$clog2(SIZE)-1:0]  r_tail_ptr;
 
 logic [SIZE-1:0]          r_active_bits;
 

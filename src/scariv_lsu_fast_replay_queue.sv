@@ -63,7 +63,7 @@ typedef struct packed {
 replay_queue_t   r_replay_queue  [REPLAY_QUEUE_SIZE];
 replay_payload_t w_replay_payload;
 
-logic [REPLAY_QUEUE_W-1: 0]          w_pop_freelist_id;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [REPLAY_QUEUE_W-1: 0]          w_pop_freelist_id;
 logic [REPLAY_QUEUE_SIZE-1: 0]       w_resolved_list;
 logic [REPLAY_QUEUE_SIZE-1: 0]       w_resolved_list_oh;
 logic [REPLAY_QUEUE_W-1: 0]          w_resolved_index;
@@ -71,8 +71,8 @@ logic [REPLAY_QUEUE_W-1: 0]          w_resolved_index;
 /*-----------
  * Freelist
  *-----------*/
-logic                                w_freelist_push;
-logic                                w_freelist_pop;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic                                w_freelist_push;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic                                w_freelist_pop;
 assign w_freelist_push = lsu_pipe_req_if.valid & lsu_pipe_req_if.ready | r_replay_queue[w_resolved_index].valid & r_replay_queue[w_resolved_index].dead;
 assign w_freelist_pop  = lsu_pipe_haz_if.valid;
 
