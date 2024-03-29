@@ -215,7 +215,7 @@ typedef struct packed {
     logic [FPU_INST_NUM-1: 0][scariv_conf_pkg::DISP_SIZE-1: 0] fpu_inst_valid;
   } resource_cnt_t;
 
-  function disp_t assign_disp_rename (disp_t   disp,
+  function automatic disp_t assign_disp_rename (disp_t   disp,
                                       rnid_t   rd_rnid,
                                       rnid_t   rd_old_rnid,
                                       logic    rs1_active,
@@ -244,8 +244,8 @@ typedef struct packed {
   endfunction  // assign_disp_rename
 
 
-  function disp_t merge_scariv_front_if (disp_t int_disp,
-                                         disp_t fp_disp);
+  function automatic disp_t merge_scariv_front_if (disp_t int_disp,
+                                                   disp_t fp_disp);
     disp_t ret;
     ret = int_disp;
     ret.wr_reg = int_disp.wr_reg.typ == GPR ? int_disp.wr_reg : fp_disp.wr_reg;
@@ -371,7 +371,7 @@ typedef struct packed {
 
 
 
-function issue_t assign_issue_common (disp_t in,
+function automatic issue_t assign_issue_common (disp_t in,
                                       cmt_id_t cmt_id,
                                       grp_id_t grp_id);
   issue_t ret;
@@ -418,7 +418,7 @@ function issue_t assign_issue_common (disp_t in,
 
 endfunction // assign_issue_common
 
-function issue_t assign_issue_op2 (disp_t in,
+function automatic issue_t assign_issue_op2 (disp_t in,
                                    cmt_id_t cmt_id,
                                    grp_id_t grp_id,
                                    logic [ 1: 0] rs_rel_hit, logic [ 1: 0] rs_phy_hit, logic [ 1: 0] rs_may_mispred, rel_bus_idx_t rs_rel_index[2]);
@@ -447,7 +447,7 @@ function issue_t assign_issue_op2 (disp_t in,
 endfunction  // assign_issue_t
 
 
-function issue_t assign_issue_op3 (disp_t in,
+function automatic issue_t assign_issue_op3 (disp_t in,
                                    cmt_id_t cmt_id,
                                    grp_id_t grp_id,
                                    logic [ 2: 0] rs_rel_hit, logic [ 2: 0] rs_phy_hit, logic [ 2: 0] rs_may_mispred);
@@ -538,7 +538,7 @@ typedef struct packed {
   logic             int_valid;
 } commit_blk_t;
 
-function logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
+function automatic logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
                                       cmt_id_t cmt_id1, grp_id_t grp_id1);
 logic                                w_cmt_is_older;
 logic                                w_0_older_than_1;
@@ -554,7 +554,7 @@ logic                                w_0_older_than_1;
 endfunction // id0_is_older_than_id1
 
 
-function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
+function automatic logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in);
   for (int i = 0; i < DISP_SIZE; i++) begin
     /* verilator lint_off WIDTH */
     if (in[i]) return i;
@@ -563,11 +563,11 @@ function logic [$clog2(DISP_SIZE)-1: 0] encoder_grp_id (logic[DISP_SIZE-1: 0] in
   return 'hx;
 endfunction // encoder_grp_id
 
-function logic is_flushed_commit (logic commit_valid, commit_blk_t payload);
+function automatic logic is_flushed_commit (logic commit_valid, commit_blk_t payload);
   return commit_valid & |(payload.flush_valid & ~payload.dead_id);
 endfunction // is_flushed_commit
 
-function inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
+function automatic inst0_older (logic inst0_vld, cmt_id_t inst0_cmt_id, grp_id_t inst0_grp_id,
                       logic inst1_vld, cmt_id_t inst1_cmt_id, grp_id_t inst1_grp_id);
 
 logic                                     inst0_cmt_id_older;
@@ -583,7 +583,7 @@ logic                                     inst0_grp_id_older;
 
 endfunction // inst0_older
 
-function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+function automatic logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
                                   cmt_id_t br_cmt_id, grp_id_t br_grp_id,
                                   logic br_dead, logic br_mispredicted);
   logic w_cmt_is_older;
@@ -598,7 +598,7 @@ function logic is_br_flush_target(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
 
 endfunction // is_br_flush_target
 
-function logic is_br_flush_target_wo_itself(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
+function automatic logic is_br_flush_target_wo_itself(cmt_id_t entry_cmt_id, grp_id_t entry_grp_id,
                                             cmt_id_t br_cmt_id, grp_id_t br_grp_id,
                                             logic br_dead, logic br_mispredicted);
 logic                                             w_cmt_is_older;
@@ -832,10 +832,10 @@ modport slave (
 endinterface // flush_report_if
 
 interface phy_wr_if;
-  logic              valid;
-  scariv_pkg::rnid_t rd_rnid;
-  scariv_pkg::reg_t  rd_type;
-  scariv_pkg::alen_t rd_data;
+  (* mark_debug="true" *) (* dont_touch="true" *) logic              valid;
+  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::rnid_t rd_rnid;
+  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::reg_t  rd_type;
+  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::alen_t rd_data;
 
 modport master (
   output valid,
@@ -854,11 +854,11 @@ modport slave (
 endinterface // phy_wr_if
 
 interface early_wr_if;
-  logic              valid;
-  scariv_pkg::rnid_t rd_rnid;
-  scariv_pkg::reg_t  rd_type;
+  (* mark_debug="true" *) (* dont_touch="true" *) logic              valid;
+  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::rnid_t rd_rnid;
+  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::reg_t  rd_type;
 
-  logic  may_mispred;
+  (* mark_debug="true" *) (* dont_touch="true" *) logic  may_mispred;
 
 modport master (
   output valid,

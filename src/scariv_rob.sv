@@ -464,6 +464,45 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.except_valid <= r_rob_except.valid & (r_rob_except.cmt_id == w_out_cmt_id) ? r_rob_except.grp_id & ~w_out_entry.dead : 'h0;
 end
 
+// -----------------------------
+// DeadLock Check for Debugging
+// -----------------------------
+(* mark_debug = "true" *) (* dont_touch = "yes" *) logic [ 7: 0] r_uncommitted_counter;
+(* mark_debug = "true" *) (* dont_touch = "yes" *) logic         r_deadlocked;
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_uncommitted_counter <= 'h0;
+    r_deadlocked          <= 1'b0;
+  end else begin
+    if (commit_if.commit_valid) begin
+      r_uncommitted_counter <= 'h0;
+    end else begin
+      r_uncommitted_counter <= r_uncommitted_counter + 'h1;
+    end
+    if (&r_uncommitted_counter) begin
+      r_deadlocked <= 1'b1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, posedge i_reset_n)
+
+(* mark_debug = "true" *) (* dont_touch = "yes" *) logic [ 7: 0] r_dead_uncommitted_counter;
+(* mark_debug = "true" *) (* dont_touch = "yes" *) logic         r_dead_deadlocked;
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_dead_uncommitted_counter <= 'h0;
+    r_dead_deadlocked          <= 1'b0;
+  end else begin
+    if (commit_if.commit_valid & |(commit_if.payload.grp_id ^ commit_if.payload.dead_id)) begin
+      r_dead_uncommitted_counter <= 'h0;
+    end else begin
+      r_dead_uncommitted_counter <= r_dead_uncommitted_counter + 'h1;
+    end
+    if (&r_uncommitted_counter) begin
+      r_dead_deadlocked <= 1'b1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, posedge i_reset_n)
+
 `ifdef SIMULATION
 `ifdef MONITOR
 logic [CMT_ENTRY_SIZE-1: 0] w_entry_valids;

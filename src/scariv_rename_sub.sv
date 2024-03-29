@@ -43,12 +43,9 @@ localparam FLIST_SIZE = REG_TYPE == GPR ? XPR_FLIST_SIZE : FPR_FLIST_SIZE;
 logic [scariv_conf_pkg::DISP_SIZE-1: 0] w_freelist_empty;
 logic                                   w_all_freelist_ready;
 
-rnid_t        w_rd_rnid[scariv_conf_pkg::DISP_SIZE];
-rnid_t        w_rd_old_rnid[scariv_conf_pkg::DISP_SIZE];
-
 logic [scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_archreg_valid;
 logic [ 4: 0]                             w_archreg[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
-rnid_t                       w_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
+(* mark_debug="true" *) (* dont_touch="yes" *) rnid_t                       w_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
 
 logic [ 4: 0]                             w_update_arch_id [scariv_conf_pkg::DISP_SIZE];
 rnid_t                       w_update_rnid    [scariv_conf_pkg::DISP_SIZE];
@@ -58,7 +55,7 @@ rnid_t                       rs2_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rs3_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       rd_old_rnid_fwd[scariv_conf_pkg::DISP_SIZE];
 
-logic [scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_active;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS-1: 0] w_active;
 
 logic                                     w_brupd_rnid_restore_valid;
 logic                                     w_commit_flush_rnid_restore_valid;
@@ -67,9 +64,12 @@ grp_id_t     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       w_commit_rd_rnid[scariv_conf_pkg::DISP_SIZE];
 
-grp_id_t     w_rd_valids;
-logic [ 4: 0]                             w_rd_regidx[scariv_conf_pkg::DISP_SIZE];
-grp_id_t     w_rd_data;
+(* mark_debug="true" *) (* dont_touch="true" *) grp_id_t      w_rd_valids;
+(* mark_debug="true" *) (* dont_touch="true" *) grp_id_t      w_rd_data;
+(* mark_debug="true" *) (* dont_touch="true" *) rnid_t        w_rd_rnid    [scariv_conf_pkg::DISP_SIZE];
+logic [ 4: 0] w_rd_regidx  [scariv_conf_pkg::DISP_SIZE];
+rnid_t        w_rd_old_rnid[scariv_conf_pkg::DISP_SIZE];
+
 
 // Current rename map information to stack
 logic                        w_restore_valid;
@@ -380,7 +380,7 @@ end // block: src_rn_loop
 endgenerate
 
 
-rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
+(* mark_debug="true" *) (* dont_touch="yes" *) rnid_t w_rs1_rs2_rnid[scariv_conf_pkg::DISP_SIZE * NUM_OPERANDS];
 generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) begin : op_loop
   assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 0] = rs1_rnid_fwd[d_idx];
   assign w_rs1_rs2_rnid[d_idx * NUM_OPERANDS + 1] = rs2_rnid_fwd[d_idx];

@@ -50,8 +50,8 @@ module scariv_bru_issue_unit
  brtag_if.master                       brtag_if
  );
 
-(* mark_debug = "true" *) logic [ENTRY_SIZE-1:0] w_entry_valid;
-(* mark_debug = "true" *) logic [ENTRY_SIZE-1:0] w_entry_ready;
+(* mark_debug = "true" *) (* dont_touch="true" *) logic [ENTRY_SIZE-1:0] w_entry_valid;
+(* mark_debug = "true" *) (* dont_touch="true" *) logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
