@@ -82,6 +82,7 @@ VERILATOR_OPTS += +define+SUBSYSTEM_TOP=scariv_tb.u_scariv_subsystem_wrapper.u_s
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION
+VERILATOR_OPTS += +define+COMPARE_ISS
 VERILATOR_OPTS += --compiler clang
 VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
