@@ -101,7 +101,7 @@ end
 
 `ifdef SIMULATION
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
-  if (i_reset_n) begin
+  if (!i_reset_n) begin
     if (o_is_empty && i_pop & ~i_push) begin
       $fatal(0, "When freelist is empty, i_pop must not be asserted");
     end
