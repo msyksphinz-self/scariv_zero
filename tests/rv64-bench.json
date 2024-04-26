@@ -13,5 +13,7 @@
 
     { "name": "coremark"        , "group": ["bench", "nightly"], "elf": "../../../tests/riscv-coremark/coremark.bare.riscv"     , "xlen": 64, "expected_time": {"standard": 1334822}},
 
-    { "name": "linux_hifive"    , "group": ["linux"], "elf": "../../../tests/linux/fw_jump.elf"  , "xlen": 64}
+    { "name": "linux_hifive"    , "group": ["linux"], "elf": "../../../tests/linux/fw_jump.elf"  , "xlen": 64},
+
+    { "name": "litex_bios"      , "group": ["bench"], "elf": "../../../tests/litex_soc/software/bios/bios.elf"  , "xlen": 64, "env": "litex"}
 ]

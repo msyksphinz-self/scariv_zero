@@ -2,8 +2,6 @@
 #ifndef _RISCV_SERIALDEVICE_H
 #define _RISCV_SERIALDEVICE_H
 
-#include <riscv/mmio_plugin.h>
-
 #include "abstract_device.h"
 #include "mmu.h"
 
@@ -46,6 +44,6 @@ bool serialdevice_t::store(reg_t addr, size_t len, const uint8_t* bytes)
   return true;
 }
 
-static mmio_plugin_registration_t<serialdevice_t> serialdevice_mmio_plugin_registration("serialdevice");
+// static mmio_plugin_registration_t<serialdevice_t> serialdevice_mmio_plugin_registration("serialdevice");
 
 #endif // _RISCV_SERIALDEVICE_H
