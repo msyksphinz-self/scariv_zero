@@ -335,7 +335,7 @@ u_scariv_subsystem_wrapper
    .i_clk    (i_clk),
    .i_reset_n(i_scariv_reset_n),
 
-   .i_const_init_vaddr ('h0000_1000),
+   .i_const_init_vaddr (`INIT_PC),
 
    // ICache Interconnection
    .o_l2_req_valid  (w_ss_req_valid),
@@ -400,6 +400,7 @@ u_tb_l2_behavior_ram
    .i_snoop_resp_be   (w_snoop_resp_be)
    );
 
+`ifndef LITEX
 // BootROM
 scariv_bootrom
 #(
@@ -427,6 +428,7 @@ scariv_bootrom
   .o_resp_data   (w_bootrom_resp_data   ),
   .i_resp_ready  (w_bootrom_resp_ready  )
 );
+`endif // LITEX
 
 
 // Serial

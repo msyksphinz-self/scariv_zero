@@ -94,7 +94,11 @@ logic                                                w_req_is_serial;
 logic                                                w_req_is_kernel;
 logic                                                w_req_is_initrd;
 logic                                                w_req_is_another;
+`ifndef LITEX
 assign w_req_is_bootrom = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h0000_1000;
+`else // LITEX
+assign w_req_is_bootrom = 1'b0;
+`endif // LITEX
 assign w_req_is_serial  = {i_req_addr[riscv_pkg::PADDR_W-1: 12], 12'h000}  == 'h5400_0000;
 assign w_req_is_kernel  = (i_req_addr[riscv_pkg::PADDR_W-1:  0] >= 'h8020_0000) &&
                           (i_req_addr[riscv_pkg::PADDR_W-1:  0] <  'h8220_0000);

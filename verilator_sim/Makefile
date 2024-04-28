@@ -97,6 +97,7 @@ INIT_PC = 4096  # 0x1000
 ifeq ($(ENV),LITEX)
 	INIT_PC = 0
 	BUILD_CONFIG    = .config_litex_xlen64_flen$(RV_FLEN)
+	VERILATOR_OPTS += +define+LITEX
 endif
 VERILATOR_OPTS += +define+INIT_PC=$(INIT_PC)
 
