@@ -92,13 +92,14 @@ VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(I
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
+BUILD_CONFIG  = .config_design_xlen64_flen$(RV_FLEN)
+INIT_PC = 4096  # 0x1000
 ifeq ($(ENV),LITEX)
-	VERILATOR_OPTS += +define+INIT_PC=0
+	INIT_PC = 0
 	BUILD_CONFIG    = .config_litex_xlen64_flen$(RV_FLEN)
-else
-	VERILATOR_OPTS += +define+INIT_PC=4096  # 0x1000
-	BUILD_CONFIG    = .config_design_xlen64_flen$(RV_FLEN)
 endif
+VERILATOR_OPTS += +define+INIT_PC=$(INIT_PC)
+
 
 VERILATOR_OPTS_RV64 += +define+RV64
 
@@ -245,6 +246,6 @@ $(FILELIST): ../src/fpnew.vf ../src/filelist.vf filelist.f
 	cat $^ >> $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_* sim_rv* .dts_xlen*
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_* sim_rv* .dts_xlen*
 	$(MAKE) -C ../dts clean
 	$(MAKE) -C ../spike_dpi clean
