@@ -21,7 +21,7 @@ extern "C" int debug_tick(
     switch (state) {
       case 0 : {
         if (m_it != g_memory_ptr->GetIterEnd() &&
-            m_it->second->GetBaseAddr() >= 0x80000000 &&
+            /* m_it->second->GetBaseAddr() >= 0x80000000 && */
             addr < m_it->second->GetBlockSize()) {
           uint32_t data = 0;
           for (int i = 0; i < 4; i++) {
