@@ -804,11 +804,11 @@ void step_spike(long long rtl_time, long long rtl_pc,
   }
   prev_minstret_access = false;
   prev_instret = instret;
-  // fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", rtl_time,
-  //         instret,
-  //         rtl_pc,
-  //         rtl_priv == 0 ? 'U' : rtl_priv == 2 ? 'S' : 'M',
-  //         rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
+  fprintf(compare_log_fp, "%lld : %ld : PC=[%016llx] (%c,%02d,%02d) %08x %s\n", rtl_time,
+          instret,
+          rtl_pc,
+          rtl_priv == 0 ? 'U' : rtl_priv == 2 ? 'S' : 'M',
+          rtl_cmt_id, rtl_grp_id, rtl_insn, disasm->disassemble(rtl_insn).c_str());
   auto iss_pc   = p->get_state()->prev_pc;
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
