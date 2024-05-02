@@ -47,14 +47,14 @@ typedef struct packed {
 
 logic   w_commit_flushed;
 
-(* mark_debug="true" *) (* dont_touch="true" *) scariv_bru_pkg::issue_entry_t            w_ex0_issue;
+scariv_bru_pkg::issue_entry_t            w_ex0_issue;
 logic [RV_ENTRY_SIZE-1: 0]               w_ex0_index;
 pipe_ctrl_t                              w_ex0_pipe_ctrl;
 logic                                    w_ex0_br_flush;
 riscv_pkg::xlen_t                        w_ex0_rs_fwd_data [2];
 
 pipe_ctrl_t                              r_ex1_pipe_ctrl;
-(* mark_debug="true" *) (* dont_touch="true" *) scariv_bru_pkg::issue_entry_t            r_ex1_issue;
+scariv_bru_pkg::issue_entry_t            r_ex1_issue;
 scariv_bru_pkg::issue_entry_t            w_ex1_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex1_index;
 logic                                    w_ex1_br_flush;
@@ -79,7 +79,7 @@ logic                                    w_ex0_rs1_mispred;
 logic                                    w_ex0_rs2_mispred;
 
 pipe_ctrl_t                              r_ex2_pipe_ctrl;
-(* mark_debug="true" *) (* dont_touch="true" *) scariv_bru_pkg::issue_entry_t            r_ex2_issue;
+scariv_bru_pkg::issue_entry_t            r_ex2_issue;
 scariv_bru_pkg::issue_entry_t            w_ex2_issue_next;
 logic [RV_ENTRY_SIZE-1: 0]               r_ex2_index;
 riscv_pkg::xlen_t                        r_ex2_wr_data;

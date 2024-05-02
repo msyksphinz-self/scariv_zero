@@ -1027,9 +1027,9 @@ endinterface // lsu_pipe_haz_if
 
 
 interface lsu_pipe_req_if;
-  (* mark_debug="true" *) (* dont_touch="yes" *) logic                      valid;
-  (* mark_debug="true" *) (* dont_touch="yes" *) logic                      ready;
-  (* mark_debug="true" *) (* dont_touch="yes" *) scariv_lsu_pkg::lsu_replay_queue_t payload;
+  logic                      valid;
+  logic                      ready;
+  scariv_lsu_pkg::lsu_replay_queue_t payload;
 
   modport master (
     output valid,

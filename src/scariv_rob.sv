@@ -340,7 +340,7 @@ typedef struct packed {
   riscv_pkg::xlen_t    tval;
 } rob_except_t;
 
-(* mark_debug="true" *) (* dont_touch="true" *) rob_except_t r_rob_except;
+rob_except_t r_rob_except;
 rob_except_t w_rob_except_next;
 
 always_comb begin

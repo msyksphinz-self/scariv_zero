@@ -832,10 +832,10 @@ modport slave (
 endinterface // flush_report_if
 
 interface phy_wr_if;
-  (* mark_debug="true" *) (* dont_touch="true" *) logic              valid;
-  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::rnid_t rd_rnid;
-  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::reg_t  rd_type;
-  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::alen_t rd_data;
+  logic              valid;
+  scariv_pkg::rnid_t rd_rnid;
+  scariv_pkg::reg_t  rd_type;
+  scariv_pkg::alen_t rd_data;
 
 modport master (
   output valid,
@@ -854,11 +854,11 @@ modport slave (
 endinterface // phy_wr_if
 
 interface early_wr_if;
-  (* mark_debug="true" *) (* dont_touch="true" *) logic              valid;
-  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::rnid_t rd_rnid;
-  (* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::reg_t  rd_type;
+  logic              valid;
+  scariv_pkg::rnid_t rd_rnid;
+  scariv_pkg::reg_t  rd_type;
 
-  (* mark_debug="true" *) (* dont_touch="true" *) logic  may_mispred;
+  logic  may_mispred;
 
 modport master (
   output valid,

@@ -52,7 +52,7 @@ module scariv_ldq_entry
 
 logic                                            w_entry_ready;
 
-(* mark_debug="true" *) (* dont_touch="yes"*) ldq_entry_t              r_entry;
+ldq_entry_t              r_entry;
 /* verilator lint_off UNOPTFLAT */
 ldq_entry_t                                      w_entry_next;
 logic                                            w_load_br_flush;

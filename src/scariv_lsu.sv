@@ -101,9 +101,9 @@ localparam MEM_PORT_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU
 localparam LSU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 done_if ex3_internal_done_if();
 
-(* mark_debug="true" *) (* dont_touch="yes" *) scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
+scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
 logic [MEM_Q_SIZE-1: 0]         w_ex0_replay_index_oh;
-(* mark_debug="true" *) (* dont_touch="yes" *) logic w_replay_selected;
+logic w_replay_selected;
 
 logic [MEM_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
@@ -113,7 +113,7 @@ scariv_lsu_pkg::lsu_issue_entry_t               w_issue_from_iss;
 logic [LSU_ISS_ENTRY_SIZE-1: 0] w_issue_index_from_iss;
 
 lsu_pipe_haz_if w_lsu_pipe_haz_if ();
-(* mark_debug="true" *) (* dont_touch="yes" *) lsu_pipe_req_if w_lsu_pipe_req_if ();
+lsu_pipe_req_if w_lsu_pipe_req_if ();
 
 logic w_replay_queue_full;
 

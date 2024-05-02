@@ -52,7 +52,7 @@ logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1:0] w_out_ptr;
 logic                                             w_in_valid;
 logic                                             w_out_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_entry_finish;
-(* mark_debug = "true" *) logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_entry_valids;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_entry_valids;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_updating;
 
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;

@@ -25,12 +25,12 @@ module scariv_freelist
  output logic             o_is_empty
  );
 
-(* mark_debug="true" *) (* dont_touch="true" *) logic [SIZE-1: 0][WIDTH-1: 0] r_freelist;
+logic [SIZE-1: 0][WIDTH-1: 0] r_freelist;
 
-(* mark_debug="true" *) (* dont_touch="true" *) logic [$clog2(SIZE)-1:0]  r_head_ptr;
-(* mark_debug="true" *) (* dont_touch="true" *) logic [$clog2(SIZE)-1:0]  r_tail_ptr;
+logic [$clog2(SIZE)-1:0]  r_head_ptr;
+logic [$clog2(SIZE)-1:0]  r_tail_ptr;
 
-(* mark_debug="true" *) (* dont_touch="true" *) logic [SIZE-1:0]          r_active_bits;
+logic [SIZE-1:0]          r_active_bits;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -72,9 +72,9 @@ assign o_is_empty = ~(|r_active_bits);
 
 // Debug signals to capture violation
 
-(* mark_debug="true" *) (* dont_touch="true" *) logic [SIZE-1: 0][SIZE-1: 1] r_conflict;
-(* mark_debug="true" *) (* dont_touch="true" *) logic [SIZE-1: 0]            w_line_conflict;
-(* mark_debug="true" *) (* dont_touch="true" *) logic                        r_detect_conflict;
+logic [SIZE-1: 0][SIZE-1: 1] r_conflict;
+logic [SIZE-1: 0]            w_line_conflict;
+logic                        r_detect_conflict;
 generate for (genvar y = 0; y < SIZE; y++) begin : y_confilct_loop
   assign w_line_conflict[y] = |r_conflict[y];
   for (genvar x = 1; x < SIZE; x++) begin : x_conflict_loop

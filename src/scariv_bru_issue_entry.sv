@@ -32,8 +32,8 @@ module scariv_bru_issue_entry
    output scariv_bru_pkg::issue_entry_t o_entry,
 
    /* Forwarding path */
-   (* mark_debug="true" *) (* dont_touch="true" *) early_wr_if.slave early_wr_if   [scariv_pkg::REL_BUS_SIZE],
-   (* mark_debug="true" *) (* dont_touch="true" *) phy_wr_if.slave   phy_wr_if     [scariv_pkg::TGT_BUS_SIZE],
+   early_wr_if.slave early_wr_if   [scariv_pkg::REL_BUS_SIZE],
+   phy_wr_if.slave   phy_wr_if     [scariv_pkg::TGT_BUS_SIZE],
    lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
 
    input logic       i_entry_picked,
@@ -51,7 +51,7 @@ logic    r_issued;
 logic    w_issued_next;
 logic    r_dead;
 logic    w_dead_next;
-(* mark_debug="true" *) (* dont_touch="yes" *) scariv_bru_pkg::issue_entry_t r_entry;
+scariv_bru_pkg::issue_entry_t r_entry;
 /* verilator lint_off UNOPTFLAT */
 scariv_bru_pkg::issue_entry_t w_entry_next;
 scariv_bru_pkg::issue_entry_t w_init_entry;
@@ -78,7 +78,7 @@ logic     w_entry_finish;
 // When previous instruction generates exception or jump
 logic w_pc_update_before_entry;
 
-(* mark_debug="true" *) (* dont_touch="true" *) scariv_pkg::sched_state_t r_state;
+scariv_pkg::sched_state_t r_state;
 scariv_pkg::sched_state_t w_state_next;
 
 function logic all_operand_ready(scariv_bru_pkg::issue_entry_t entry);

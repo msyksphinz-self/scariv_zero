@@ -22,7 +22,7 @@ module scariv_bru_issue_unit
  // ROB notification interface
  rob_info_if.slave                     rob_info_if,
 
-(* mark_debug = "true" *) input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
+ input logic [IN_PORT_SIZE-1: 0]       i_disp_valid,
  input scariv_pkg::cmt_id_t            i_cmt_id,
  input scariv_pkg::grp_id_t            i_grp_id[IN_PORT_SIZE],
  scariv_pkg::disp_t                    i_disp_info[IN_PORT_SIZE],
@@ -50,8 +50,8 @@ module scariv_bru_issue_unit
  brtag_if.master                       brtag_if
  );
 
-(* mark_debug = "true" *) (* dont_touch="true" *) logic [ENTRY_SIZE-1:0] w_entry_valid;
-(* mark_debug = "true" *) (* dont_touch="true" *) logic [ENTRY_SIZE-1:0] w_entry_ready;
+logic [ENTRY_SIZE-1:0] w_entry_valid;
+logic [ENTRY_SIZE-1:0] w_entry_ready;
 logic [ENTRY_SIZE-1:0] w_picked_inst;
 logic [ENTRY_SIZE-1:0] w_picked_inst_pri;
 logic [ENTRY_SIZE-1:0] w_picked_inst_oh;
@@ -75,7 +75,7 @@ assign w_flush_valid = scariv_pkg::is_flushed_commit(commit_if.commit_valid, com
 logic                           w_ignore_disp;
 logic [$clog2(ENTRY_SIZE): 0]   w_credit_return_val;
 
-(* mark_debug = "true" *) logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
+logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_load_index[IN_PORT_SIZE];
 logic [$clog2(ENTRY_SIZE)-1: 0] w_entry_finish_index[IN_PORT_SIZE];
 
 /* verilator lint_off WIDTH */

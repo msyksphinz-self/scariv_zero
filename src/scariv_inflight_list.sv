@@ -31,7 +31,7 @@ module scariv_inflight_list
 logic [TGT_BUS_SIZE-1: 0] w_phy_valids;
 rnid_t       w_phy_rnids[TGT_BUS_SIZE];
 
-(* mark_debug = "true" *) (* dont_touch="true" *) logic [RNID_SIZE-1: 0]             r_inflight_list;
+logic [RNID_SIZE-1: 0]             r_inflight_list;
 
 generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : list_loop
   if ((REG_TYPE == GPR) & (rn_idx == 0)) begin

@@ -64,9 +64,9 @@ grp_id_t     w_commit_except_rd_valid;
 logic [ 4: 0]                             w_commit_rd_regidx[scariv_conf_pkg::DISP_SIZE];
 rnid_t                       w_commit_rd_rnid[scariv_conf_pkg::DISP_SIZE];
 
-(* mark_debug="true" *) (* dont_touch="true" *) grp_id_t      w_rd_valids;
-(* mark_debug="true" *) (* dont_touch="true" *) grp_id_t      w_rd_data;
-(* mark_debug="true" *) (* dont_touch="true" *) rnid_t        w_rd_rnid    [scariv_conf_pkg::DISP_SIZE];
+grp_id_t      w_rd_valids;
+grp_id_t      w_rd_data;
+rnid_t        w_rd_rnid    [scariv_conf_pkg::DISP_SIZE];
 logic [ 4: 0] w_rd_regidx  [scariv_conf_pkg::DISP_SIZE];
 rnid_t        w_rd_old_rnid[scariv_conf_pkg::DISP_SIZE];
 

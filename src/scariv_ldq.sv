@@ -44,7 +44,7 @@ module scariv_ldq
 
 ldq_entry_t w_ldq_entries[scariv_conf_pkg::LDQ_SIZE];
 
-(* mark_debug = "true" *) logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_entry_valid;
+logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_entry_valid;
 logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_entry_ready;
 
 scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::MEM_DISP_SIZE];

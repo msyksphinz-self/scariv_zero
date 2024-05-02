@@ -138,7 +138,7 @@ interface br_upd_if;
   logic                                  dead;
   scariv_pkg::cmt_id_t                   cmt_id;
   scariv_pkg::grp_id_t                   grp_id;
-  (* mark_debug="true" *) (* dont_touch="yes" *) scariv_pkg::brtag_t                    brtag;
+  scariv_pkg::brtag_t                    brtag;
 
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_index;
   logic [scariv_pkg::GSHARE_BHT_W-1: 0] gshare_bhr;
