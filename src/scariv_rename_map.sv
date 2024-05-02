@@ -38,12 +38,12 @@ module scariv_rename_map
    input logic [ 4: 0]             commit_if_rd_regidx[DISP_SIZE],
    input rnid_t       commit_if_rd_rnid[DISP_SIZE],
 
-   output rnid_t      o_rn_list[32]
+   output rnid_t[31: 0]       o_rn_list
    );
 
 
 
-rnid_t                r_map[32];
+rnid_t[31: 0]  r_map;
 
 function logic [RNID_W: 0] select_latest_rnid (input logic [DISP_SIZE-1:0] i_update,
                                                input logic [ 4: 0]       tgt_arch_id,

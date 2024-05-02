@@ -14,51 +14,51 @@ module scariv_subsystem_axi_wrapper
 
    input scariv_pkg::vaddr_t i_const_init_vaddr,
 
-   (* mark_debug = "true" *) output logic                               axi_if_aw_valid,
-   (* mark_debug = "true" *) input  logic                               axi_if_aw_ready,
-   (* mark_debug = "true" *) output logic                               axi_if_aw_last,
-   (* mark_debug = "true" *) output scariv_pkg::paddr_t                 axi_if_aw_addr,
-   (* mark_debug = "true" *) logic [1:0]                                axi_if_aw_burst,
-   (* mark_debug = "true" *) logic [7:0]                                axi_if_aw_len,
-   (* mark_debug = "true" *) logic [2:0]                                axi_if_aw_size,
-   (* mark_debug = "true" *) logic                                      axi_if_aw_lock,
-   (* mark_debug = "true" *) logic [2:0]                                axi_if_aw_prot,
-   (* mark_debug = "true" *) logic [3:0]                                axi_if_aw_cache,
-   (* mark_debug = "true" *) logic [3:0]                                axi_if_aw_qos,
-   (* mark_debug = "true" *) logic [3:0]                                axi_if_aw_region,
-   (* mark_debug = "true" *) logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_aw_id,
+   output logic                               axi_if_aw_valid,
+   input  logic                               axi_if_aw_ready,
+   output logic                               axi_if_aw_last,
+   output scariv_pkg::paddr_t                 axi_if_aw_addr,
+   logic [1:0]                                axi_if_aw_burst,
+   logic [7:0]                                axi_if_aw_len,
+   logic [2:0]                                axi_if_aw_size,
+   logic                                      axi_if_aw_lock,
+   logic [2:0]                                axi_if_aw_prot,
+   logic [3:0]                                axi_if_aw_cache,
+   logic [3:0]                                axi_if_aw_qos,
+   logic [3:0]                                axi_if_aw_region,
+   logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_aw_id,
 
-   (* mark_debug = "true" *) output logic                     axi_if_w_valid,
-   (* mark_debug = "true" *) input  logic                     axi_if_w_ready,
-   (* mark_debug = "true" *) output logic                     axi_if_w_last,
-   (* mark_debug = "true" *) output scariv_lsu_pkg::dc_data_t axi_if_w_data,
-   (* mark_debug = "true" *) output scariv_lsu_pkg::dc_strb_t axi_if_w_strb,
+   output logic                     axi_if_w_valid,
+   input  logic                     axi_if_w_ready,
+   output logic                     axi_if_w_last,
+   output scariv_lsu_pkg::dc_data_t axi_if_w_data,
+   output scariv_lsu_pkg::dc_strb_t axi_if_w_strb,
 
-   (* mark_debug = "true" *) input  logic                                      axi_if_b_valid,
-   (* mark_debug = "true" *) output logic                                      axi_if_b_ready,
-   (* mark_debug = "true" *) input  logic [1:0]                                axi_if_b_resp,
-   (* mark_debug = "true" *) input  logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_b_id,
+   input  logic                                      axi_if_b_valid,
+   output logic                                      axi_if_b_ready,
+   input  logic [1:0]                                axi_if_b_resp,
+   input  logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_b_id,
 
-   (* mark_debug = "true" *) output logic                                        axi_if_ar_valid,
-   (* mark_debug = "true" *) input  logic                                        axi_if_ar_ready,
-   (* mark_debug = "true" *) output logic                                        axi_if_ar_last,
-   (* mark_debug = "true" *) output scariv_pkg::paddr_t                          axi_if_ar_addr,
-   (* mark_debug = "true" *) output logic [1:0]                                  axi_if_ar_burst,
-   (* mark_debug = "true" *) output logic [7:0]                                  axi_if_ar_len,
-   (* mark_debug = "true" *) output logic [2:0]                                  axi_if_ar_size,
-   (* mark_debug = "true" *) output logic                                        axi_if_ar_lock,
-   (* mark_debug = "true" *) output logic [2:0]                                  axi_if_ar_prot,
-   (* mark_debug = "true" *) output logic [3:0]                                  axi_if_ar_cache,
-   (* mark_debug = "true" *) output logic [3:0]                                  axi_if_ar_qos,
-   (* mark_debug = "true" *) output logic [3:0]                                  axi_if_ar_region,
-   (* mark_debug = "true" *) output logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0]   axi_if_ar_id,
+   output logic                                        axi_if_ar_valid,
+   input  logic                                        axi_if_ar_ready,
+   output logic                                        axi_if_ar_last,
+   output scariv_pkg::paddr_t                          axi_if_ar_addr,
+   output logic [1:0]                                  axi_if_ar_burst,
+   output logic [7:0]                                  axi_if_ar_len,
+   output logic [2:0]                                  axi_if_ar_size,
+   output logic                                        axi_if_ar_lock,
+   output logic [2:0]                                  axi_if_ar_prot,
+   output logic [3:0]                                  axi_if_ar_cache,
+   output logic [3:0]                                  axi_if_ar_qos,
+   output logic [3:0]                                  axi_if_ar_region,
+   output logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0]   axi_if_ar_id,
 
-   (* mark_debug = "true" *) input logic                                      axi_if_r_valid,
-   (* mark_debug = "true" *) output logic                                     axi_if_r_ready,
-   (* mark_debug = "true" *) input logic                                      axi_if_r_last,
-   (* mark_debug = "true" *) input logic [1:0]                                axi_if_r_resp,
-   (* mark_debug = "true" *) input scariv_lsu_pkg::dc_data_t                  axi_if_r_data,
-   (* mark_debug = "true" *) input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id,
+   input logic                                      axi_if_r_valid,
+   output logic                                     axi_if_r_ready,
+   input logic                                      axi_if_r_last,
+   input logic [1:0]                                axi_if_r_resp,
+   input scariv_lsu_pkg::dc_data_t                  axi_if_r_data,
+   input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id,
 
 `ifdef ILA_DEBUG
   output scariv_pkg::cmt_id_t      o_ila_debug_tile_rob_head_ptr,
@@ -90,8 +90,8 @@ module scariv_subsystem_axi_wrapper
   output logic [31: 0]             o_ila_debug_tile_rob_payload_disp1_inst,
 `endif // ILA_DEBUG
 
-   // External Interrupts
-   input logic [ 7: 0] i_interrupts
+  // External Interrupts
+  input logic [ 7: 0] i_interrupts
 );
 
 
@@ -188,7 +188,7 @@ assign axi_if_ar_qos    = 1'b0;
 assign axi_if_ar_region = 1'b0;
 assign axi_if_ar_id     = w_l2_req.tag;
 
-assign axi_if_r_ready         = 1'b1;
+assign axi_if_r_ready         = w_l2_resp.ready;
 assign w_l2_resp.valid        = axi_if_r_valid;
 assign w_l2_resp.tag          = axi_if_r_id;
 assign w_l2_resp.payload.data = axi_if_r_data;

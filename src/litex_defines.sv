@@ -4,4 +4,5 @@
 // `define SUBSYSTEM_TOP sim.scariv_subsystem_axi_wrapper.u_scariv_subsystem
 // `define NATIVE_DUMP
 `define LITEX
+// `define NATIVE_DUMP
 `define ILA_DEBUG

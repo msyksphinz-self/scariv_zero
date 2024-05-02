@@ -65,8 +65,8 @@ localparam FPU_FP_REGWR_PORT_BASE = LSU_FP_REGWR_PORT_BASE + scariv_conf_pkg::LS
 l2_req_if  l2_req ();
 l2_resp_if l2_resp ();
 
-(* mark_debug = "true" *) scariv_front_if w_ibuf_front_if();
-(* mark_debug = "true" *) scariv_front_if w_rn_front_if ();
+scariv_front_if w_ibuf_front_if();
+scariv_front_if w_rn_front_if ();
 
 early_wr_if    w_early_wr_if[scariv_pkg::REL_BUS_SIZE]();
 phy_wr_if      w_phy_wr_if  [scariv_pkg::TGT_BUS_SIZE]();

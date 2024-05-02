@@ -80,7 +80,7 @@ scariv_pkg::alen_t r_rs2_data_array[scariv_conf_pkg::STQ_SIZE];
 
 
 stq_entry_t w_stq_entries[scariv_conf_pkg::STQ_SIZE];
-(* mark_debug = "true" *) logic [scariv_conf_pkg::STQ_SIZE-1: 0]        w_stq_valid;
+logic [scariv_conf_pkg::STQ_SIZE-1: 0]        w_stq_valid;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_pipe_sel_idx_oh[scariv_conf_pkg::MEM_DISP_SIZE];
 

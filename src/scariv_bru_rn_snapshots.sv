@@ -17,7 +17,7 @@ module scariv_bru_rn_snapshots    //
    input logic         i_clk,
    input logic         i_reset_n,
 
-   input rnid_t i_rn_list[32],
+   input rnid_t[31: 0] i_rn_list,
 
    input grp_id_t      i_load,
    input grp_id_t      i_rd_valid,
@@ -28,7 +28,7 @@ module scariv_bru_rn_snapshots    //
    // Branch Tag Update Signal
    br_upd_if.slave br_upd_if,
 
-   output              rnid_t o_rn_list[32]
+   (* mark_debug="true" *) (* dont_touch="yes" *) output              rnid_t o_rn_list[32]
    );
 
 // logic [31: 0][RNID_W-1: 0] r_snapshots[scariv_conf_pkg::RV_BRU_ENTRY_SIZE];
@@ -50,10 +50,10 @@ generate for(genvar r_idx =  0; r_idx < 32; r_idx++) begin : register_loop
 end endgenerate
 
 // Use SRAM to store Register
-logic [scariv_conf_pkg::BRU_DISP_SIZE-1: 0] w_push_valid;
-logic [32 * RNID_W-1: 0]                    w_push_snapshot [scariv_conf_pkg::BRU_DISP_SIZE];
-brtag_t                                     w_push_brtag    [scariv_conf_pkg::BRU_DISP_SIZE];
-logic [32 * RNID_W-1: 0]                    w_restore_snapshot;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [scariv_conf_pkg::BRU_DISP_SIZE-1: 0] w_push_valid;
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [32 * RNID_W-1: 0]                    w_push_snapshot [scariv_conf_pkg::BRU_DISP_SIZE];
+(* mark_debug="true" *) (* dont_touch="yes" *) brtag_t                                     w_push_brtag    [scariv_conf_pkg::BRU_DISP_SIZE];
+(* mark_debug="true" *) (* dont_touch="yes" *) logic [32 * RNID_W-1: 0]                    w_restore_snapshot;
 generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::BRU_DISP_SIZE; b_idx++) begin: disp_snapshot_loop
   bit_pick_1_index #(.NUM(b_idx), .SEL_WIDTH(scariv_conf_pkg::DISP_SIZE), .DATA_WIDTH($bits(brtag_t)))
   u_pick_brtag(.i_valids(i_load), .i_data(i_brtag), .o_valid(), .o_data(w_push_brtag[b_idx]), .o_picked_pos());
@@ -77,6 +77,9 @@ generate for (genvar b_idx = 0; b_idx < scariv_conf_pkg::BRU_DISP_SIZE; b_idx++)
 //     end
 //   end
 end endgenerate // block: disp_snapshot_loop
+
+(* mark_debug="true" *)(* dont_touch="true" *) scariv_pkg::brtag_t w_rd_addr;
+assign w_rd_addr = br_upd_if.brtag;
 
 distributed_1rd_ram
   #(.WR_PORTS (scariv_conf_pkg::BRU_DISP_SIZE),
