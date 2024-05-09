@@ -68,8 +68,10 @@ class verilator_sim:
                          "ISA="         +     sim_conf["isa_ext"],
                          "RV_XLEN="     + str(sim_conf["xlen"]),
                          "RV_FLEN="     + str(sim_conf["flen"]),
-                         "EXT_ISA="      + str(sim_conf["amo"]),
-                         "RV_BITMANIP=" + str(sim_conf["bitmanip"])]
+                         "EXT_ISA="     + str(sim_conf["amo"]),
+                         "RV_BITMANIP=" + str(sim_conf["bitmanip"]),
+                         "ENV="         + str("LITEX" if sim_conf["litex"] else "DEFAULT")
+                         ]
 
         current_dir = os.path.abspath("../")
         user_id    = os.getuid()
@@ -162,6 +164,10 @@ class verilator_sim:
             else:
                 run_process.wait()
         else:
+            with open(os.path.join(base_dir, testcase, "rerun.sh"), mode="w") as rerun_fp:
+                rerun_fp.write(" ".join(command))
+            rerun_fp.close
+
             if show_stdout:
                 subprocess.call(command, bufsize=0, text=True, cwd=base_dir + '/' + testcase)
             else:
@@ -317,6 +323,8 @@ def main():
 	                default=100000000, help="Cycle Limitation")
     parser.add_argument('--docker', dest="docker", action="store_true",
 	                default=False, help="Use Docker environment")
+    parser.add_argument('--litex', dest="litex", action="store_true",
+	                default=False, help="Use LiteX environment")
 
     args = parser.parse_args()
 
@@ -334,6 +342,7 @@ def main():
     sim_conf["cycle"]           = args.cycle
     sim_conf["kanata"]          = args.kanata
     sim_conf["use_docker"]      = args.docker
+    sim_conf["litex"]           = args.litex
 
     sim_conf["xlen"] = int(sim_conf["isa"][2:4])
 

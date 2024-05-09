@@ -1,4 +1,6 @@
 #include <map>
+#include "config.h"
+#include "cfg.h"
 #include "disasm.h"
 #include "kanata.h"
 
@@ -15,7 +17,12 @@ void init_kanata ()
     exit(EXIT_FAILURE);
   }
   fprintf(kanata_fp, "Kanata 0004\n");
-  disasm = new disassembler_t (64);
+
+  cfg_t cfg;
+  cfg.isa = DEFAULT_ISA;
+  cfg.priv = DEFAULT_PRIV;
+  isa_parser_t isa_parser(cfg.isa, cfg.priv);
+  disasm = new disassembler_t (&isa_parser);
 }
 
 void start_kanata (long long cycle)

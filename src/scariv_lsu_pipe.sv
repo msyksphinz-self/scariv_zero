@@ -227,14 +227,16 @@ end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex1_issue   <= 'h0;
+    r_ex1_issue.valid <= 1'b0;
     r_ex1_index_oh   <= 'h0;
 
-    r_ex2_issue     <= 'h0;
+    r_ex2_issue.valid <= 1'b0;
     r_ex2_index_oh  <= 'h0;
     r_ex2_haz_detected_from_ex1  <= 1'b0;
 
     r_ex2_is_uc     <= 1'b0;
+
+    r_ex3_issue.valid <= 1'b0;
   end else begin
     r_ex1_rs1_fwd_data <= w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
 

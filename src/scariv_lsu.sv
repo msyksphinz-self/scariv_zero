@@ -102,8 +102,8 @@ localparam LSU_ISS_ENTRY_SIZE = scariv_conf_pkg::RV_LSU_ENTRY_SIZE / scariv_conf
 done_if ex3_internal_done_if();
 
 scariv_lsu_pkg::lsu_pipe_issue_t w_ex0_replay_issue;
-logic [MEM_Q_SIZE-1: 0]          w_ex0_replay_index_oh;
-logic                            w_replay_selected;
+logic [MEM_Q_SIZE-1: 0]         w_ex0_replay_index_oh;
+logic w_replay_selected;
 
 logic [MEM_PORT_SIZE-1:0] disp_picked_inst_valid;
 scariv_pkg::disp_t        disp_picked_inst  [MEM_PORT_SIZE];
@@ -237,7 +237,7 @@ always_comb begin
     w_ex0_replay_issue.cmt_id            = w_issue_from_iss.cmt_id;
     w_ex0_replay_issue.grp_id            = w_issue_from_iss.grp_id;
     w_ex0_replay_issue.inst              = w_issue_from_iss.inst;
-    w_ex0_replay_issue.rd_regs           = w_issue_from_iss.rd_regs;
+    w_ex0_replay_issue.rd_regs[0]        = w_issue_from_iss.rd_regs[0];
     w_ex0_replay_issue.wr_reg            = w_issue_from_iss.wr_reg;
     w_ex0_replay_issue.oldest_valid      = w_issue_from_iss.oldest_valid;
     w_ex0_replay_issue.cat               = w_issue_from_iss.cat;

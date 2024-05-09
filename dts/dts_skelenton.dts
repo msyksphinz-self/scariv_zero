@@ -42,19 +42,35 @@
     compatible = "ns16550a";
   };
 
-  memory@80000000 {
+  memory@0 {
     device_type = "memory";
-    reg = <0x0 0x80000000 0x0 0x80000000>;
+    reg = <0x0 0x0 0x0 0x100000>;
+  };
+  memory@10000000 {
+    device_type = "memory";
+    reg = <0x0 0x10000000 0x0 0x10000000>;
   };
   soc {
     #address-cells = <2>;
     #size-cells = <2>;
     compatible = "ucbbar,spike-bare-soc", "simple-bus";
     ranges;
+    /*
     clint@2000000 {
       compatible = "riscv,clint0";
       interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7 >;
       reg = <0x0 0x2000000 0x0 0xc0000>;
+    };
+    */
+    PLIC: plic@c000000 {
+      compatible = "riscv,plic0";
+      #address-cells = <2>;
+      interrupts-extended = <&CPU0_intc 11 &CPU0_intc 9 >;
+      reg = <0x0 0xc000000 0x0 0x1000000>;
+      riscv,ndev = <0x1f>;
+      riscv,max-priority = <0xf>;
+      #interrupt-cells = <1>;
+      interrupt-controller;
     };
   };
 };

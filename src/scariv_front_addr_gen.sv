@@ -35,38 +35,41 @@ always_comb begin
   o_int_flush_valid = 1'b0;
   if (scariv_pkg::is_flushed_commit(commit_in_if.commit_valid, commit_in_if.payload)) begin
     if (commit_in_if.payload.int_valid) begin
-      case (commit_in_if.payload.except_type)
-        riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_EXTERNAL_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::MACHINE_TIMER_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_TIMER_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::MACHINE_SOFT_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-        riscv_common_pkg::SUPER_SOFT_INT : begin
-          /* verilator lint_off WIDTHCONCAT */
-          o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
-          o_int_flush_valid = 1'b1;
-        end
-      endcase // case (commit_in_if.payload.except_type)
+      o_vaddr = csr_info.mtvec;
+      o_int_flush_valid = 1'b1;
+
+      // case (commit_in_if.payload.except_type)
+      //   riscv_common_pkg::MACHINE_EXTERNAL_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_EXTERNAL_INT, 2'b00};
+      //                      o_int_flush_valid = 1'b1;
+      //   end
+      //   riscv_common_pkg::SUPER_EXTERNAL_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_EXTERNAL_INT, 2'b00};
+      //     o_int_flush_valid = 1'b1;
+      //   end
+      //   riscv_common_pkg::MACHINE_TIMER_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_TIMER_INT, 2'b00};
+      //     o_int_flush_valid = 1'b1;
+      //   end
+      //   riscv_common_pkg::SUPER_TIMER_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_TIMER_INT, 2'b00};
+      //     o_int_flush_valid = 1'b1;
+      //   end
+      //   riscv_common_pkg::MACHINE_SOFT_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::MACHINE_SOFT_INT, 2'b00};
+      //     o_int_flush_valid = 1'b1;
+      //   end
+      //   riscv_common_pkg::SUPER_SOFT_INT : begin
+      //     /* verilator lint_off WIDTHCONCAT */
+      //     o_vaddr = {csr_info.mtvec [riscv_pkg::XLEN_W-1: 1], 1'b0} + {riscv_common_pkg::SUPER_SOFT_INT, 2'b00};
+      //     o_int_flush_valid = 1'b1;
+      //   end
+      // endcase // case (commit_in_if.payload.except_type)
     end else begin
       case (commit_in_if.payload.except_type)
         scariv_pkg::SILENT_FLUSH   : o_vaddr = commit_in_if.payload.epc + 4;

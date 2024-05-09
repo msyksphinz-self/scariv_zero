@@ -20,7 +20,7 @@ CLEAN_FILES += libspike_dpi.a
 CLEAN_FILES += spike_dpi.o
 
 spike_dpi.o: spike_dpi.cpp
-	g++ $^ -c -o $@ $(CFLAGS)
+	g++ $^ -c -g -o $@ $(CFLAGS)
 
 libspike_dpi.a: $(riscv_objs)
 	ar rcs $@ $^

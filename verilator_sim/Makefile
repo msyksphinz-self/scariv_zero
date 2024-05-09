@@ -20,9 +20,9 @@ VERILATOR_OPTS += $(abspath ../cpp/memory_block.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/mem_body.cpp)
 VERILATOR_OPTS += $(abspath ../cpp/kanata.cpp)
 
-# VERILATOR_OPTS += -CFLAGS "-g"
+VERILATOR_OPTS += -CFLAGS "-g"
 # VERILATOR_OPTS += -LDFLAGS "-lelf"
-VERILATOR_OPTS += -O3
+# VERILATOR_OPTS += -O3
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/riscv)
 VERILATOR_OPTS += -CFLAGS "-I"$(abspath ../spike_dpi/riscv-isa-sim/softfloat/)
@@ -82,6 +82,7 @@ VERILATOR_OPTS += +define+SUBSYSTEM_TOP=scariv_tb.u_scariv_subsystem_wrapper.u_s
 VERILATOR_OPTS += --unroll-count 1024
 VERILATOR_OPTS += -j $(NPROCS)
 VERILATOR_OPTS += +define+SIMULATION
+VERILATOR_OPTS += +define+COMPARE_ISS
 VERILATOR_OPTS += --compiler clang
 VERILATOR_OPTS += -Wno-BLKANDNBLK
 # VERILATOR_OPTS += -Wno-fatal
@@ -90,6 +91,16 @@ VERILATOR_OPTS += -Wno-WIDTH
 VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
+
+BUILD_CONFIG  = .config_design_xlen64_flen$(RV_FLEN)
+INIT_PC = 4096  # 0x1000
+ifeq ($(ENV),LITEX)
+	INIT_PC = 0
+	BUILD_CONFIG    = .config_litex_xlen64_flen$(RV_FLEN)
+	VERILATOR_OPTS += +define+LITEX
+endif
+VERILATOR_OPTS += +define+INIT_PC=$(INIT_PC)
+
 
 VERILATOR_OPTS_RV64 += +define+RV64
 
@@ -192,7 +203,7 @@ rv32_build: $(FILELIST) .config_design_xlen32_flen$(RV_FLEN) .dts_xlen32_flen$(R
 # \
 #		2>&1 | tee build_rv32$(ISA)_$(CONF).log
 
-rv64_build: $(FILELIST) .config_design_xlen64_flen$(RV_FLEN) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
+rv64_build: $(FILELIST) $(BUILD_CONFIG) .dts_xlen64_flen$(RV_FLEN)_$(ISA)
 	verilator --top-module $(TOP) \
 		-o ../$(TOP)_rv64$(ISA)_$(CONF) \
 		--Mdir obj_dir_rv64$(ISA)_$(CONF) \
@@ -236,5 +247,6 @@ $(FILELIST): ../src/fpnew.vf ../src/filelist.vf filelist.f
 	cat $^ >> $@
 
 clean:
-	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_design_* sim_rv* .dts_xlen*
+	rm -rf obj_dir_rv* $(TOP)_rv* $(DECODE_FILES) .config_* sim_rv* .dts_xlen*
 	$(MAKE) -C ../dts clean
+	$(MAKE) -C ../spike_dpi clean

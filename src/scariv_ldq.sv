@@ -44,7 +44,8 @@ module scariv_ldq
 
 ldq_entry_t w_ldq_entries[scariv_conf_pkg::LDQ_SIZE];
 
-logic [scariv_conf_pkg::LDQ_SIZE-1:0] w_entry_ready;
+logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_entry_valid;
+logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_entry_ready;
 
 scariv_pkg::disp_t disp_picked_inst[scariv_conf_pkg::MEM_DISP_SIZE];
 logic [scariv_conf_pkg::MEM_DISP_SIZE-1:0] disp_picked_inst_valid;
@@ -163,9 +164,9 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
   logic          w_entry_flush;
   logic          w_commit_flush;
   logic          w_br_flush;
-  assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & w_ldq_entries[l_idx].is_valid;
+  assign w_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & w_entry_valid[l_idx];
   assign w_br_flush     = scariv_pkg::is_br_flush_target(w_ldq_entries[l_idx].inst.cmt_id, w_ldq_entries[l_idx].inst.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
-                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_ldq_entries[l_idx].is_valid;
+                                                         br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & w_entry_valid[l_idx];
   assign w_entry_flush  = w_commit_flush | w_br_flush;
 
   scariv_ldq_entry
@@ -234,14 +235,15 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
                              scariv_lsu_pkg::gen_dw(w_ldq_entries[l_idx].size, w_ldq_entries[l_idx].addr[2:0]));
     assign w_ex2_ldq_stq_haz_vld[p_idx][l_idx] = ldq_haz_check_if[p_idx].ex2_valid &
                                                  !(w_ldq_entries[l_idx].dead | w_entry_flush) &
-                                                 w_ldq_entries[l_idx].is_valid &
+                                                 w_entry_valid[l_idx] &
                                                  ld_is_younger_than_st &
                                                  w_ldq_entries[l_idx].is_get_data &
                                                  (ldq_haz_check_if[p_idx].ex2_paddr[riscv_pkg::PADDR_W-1: 3] == w_ldq_entries[l_idx].addr[riscv_pkg::PADDR_W-1: 3]) & w_ex2_same_dw;
   end // block: st_ld_haz_loop
 
-end
-endgenerate
+  assign w_entry_valid[l_idx] = w_ldq_entries[l_idx].is_valid;
+
+end endgenerate
 
 
 // ==================
@@ -289,7 +291,6 @@ endgenerate
 
 `ifdef SIMULATION
 // credit / return management assertion
-logic [scariv_conf_pkg::LDQ_SIZE-1: 0] w_ldq_valid;
 logic [$clog2(scariv_conf_pkg::LDQ_SIZE): 0]      w_entry_valid_cnt;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
@@ -303,7 +304,7 @@ end
 
 
 /* verilator lint_off WIDTH */
-bit_cnt #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_entry_valid_cnt (.in(w_ldq_valid), .out(w_entry_valid_cnt));
+bit_cnt #(.WIDTH(scariv_conf_pkg::LDQ_SIZE)) u_entry_valid_cnt (.in(w_entry_valid), .out(w_entry_valid_cnt));
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (i_reset_n) begin
@@ -354,13 +355,8 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
 
 endfunction // dump_json
 
-generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin
-  assign w_ldq_valid[l_idx] = w_ldq_entries[l_idx].is_valid;
-end
-endgenerate
-
 function void dump_json(int fp);
-  if (|w_ldq_valid) begin
+  if (|w_entry_valid) begin
     $fwrite(fp, "  \"scariv_ldq\":{\n");
     for (int l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begin
       dump_entry_json (fp, w_ldq_entries[l_idx], l_idx);
@@ -384,11 +380,11 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       r_ldq_max_period  <= 'h0;
       r_ldq_entry_count <= 'h0;
     end else begin
-      if (|w_ldq_valid) begin
-        if (&w_ldq_valid) begin
+      if (|w_entry_valid) begin
+        if (&w_entry_valid) begin
           r_ldq_max_period  <= r_ldq_max_period + 'h1;
         end
-        r_ldq_entry_count <= r_ldq_entry_count + $countones(w_ldq_valid);
+        r_ldq_entry_count <= r_ldq_entry_count + $countones(w_entry_valid);
       end
     end // else: !if(r_cycle_count % sim_pkg::COUNT_UNIT == sim_pkg::COUNT_UNIT-1)
   end // else: !if(!i_reset_n)

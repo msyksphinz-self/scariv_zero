@@ -31,6 +31,7 @@
     { "name": "gshare_test"       , "group" : ["sanity", "nightly"], "elf": "../../../tests/gshare_test/test.elf"       , "xlen": 64},
     { "name": "serialdevice"      , "group" : ["sanity", "nightly"], "elf": "../../../tests/serialdevice/test.elf"      , "xlen": 64},
     { "name": "clint_test"        , "group" : ["sanity", "nightly"], "elf": "../../../tests/clint_test/test_rv64.elf"   , "xlen": 64, "skip": 1},
+    { "name": "clint_timer_test"  , "group" : ["sanity", "nightly"], "elf": "../../../tests/clint_timer_test/test_rv64.elf"   , "xlen": 64},
     { "name": "small_loop"        , "group" : ["sanity", "nightly"], "elf": "../../../tests/small_loop/test.elf"        , "xlen": 64},
     { "name": "fadd_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fadd_bandwidth_test/test.elf", "xlen": 64, "expected_time": {"standard": 17462}},
     { "name": "fdiv_bandwidth_test", "group" : ["sanity", "nightly"], "elf": "../../../tests/fdiv_bandwidth_test/test.elf", "xlen": 64, "expected_time": {"standard": 66778}},

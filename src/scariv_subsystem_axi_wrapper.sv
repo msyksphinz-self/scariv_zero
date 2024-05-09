@@ -60,8 +60,38 @@ module scariv_subsystem_axi_wrapper
    input scariv_lsu_pkg::dc_data_t                  axi_if_r_data,
    input logic [scariv_lsu_pkg::L2_CMD_TAG_W+2-1:0] axi_if_r_id,
 
-   // External Interrupts
-   input logic [ 7: 0] i_interrupts
+`ifdef ILA_DEBUG
+  output scariv_pkg::cmt_id_t      o_ila_debug_tile_rob_head_ptr,
+  output scariv_pkg::cmt_id_t      o_ila_debug_tile_rob_tail_ptr,
+  output logic                     o_ila_debug_tile_rob_entry_valid,
+  output logic                     o_ila_debug_tile_rob_entry_cmt_id_msb,
+  output scariv_pkg::grp_id_t      o_ila_debug_tile_rob_entry_grp_id,
+  output scariv_pkg::grp_id_t      o_ila_debug_tile_rob_entry_done_grp_id,
+  output scariv_pkg::grp_id_t      o_ila_debug_tile_rob_entry_dead,
+  output scariv_pkg::grp_id_t      o_ila_debug_tile_rob_entry_fflags_update_valid,
+  output scariv_pkg::fflags_t      o_ila_debug_tile_rob_entry_fflags_0,
+  output scariv_pkg::fflags_t      o_ila_debug_tile_rob_entry_fflags_1,
+  output logic                     o_ila_debug_tile_rob_entry_int_inserted,
+
+  output scariv_pkg::vaddr_t       o_ila_debug_tile_rob_payload_disp0_pc_addr,
+  output logic                     o_ila_debug_tile_rob_payload_disp0_valid,
+  output scariv_pkg::reg_t         o_ila_debug_tile_rob_payload_disp0_typ,
+  output logic [4:0]               o_ila_debug_tile_rob_payload_disp0_regidx,
+  output scariv_pkg::rnid_t        o_ila_debug_tile_rob_payload_disp0_rnid,
+  output scariv_pkg::rnid_t        o_ila_debug_tile_rob_payload_disp0_old_rnid,
+  output logic [31: 0]             o_ila_debug_tile_rob_payload_disp0_inst,
+
+  output scariv_pkg::vaddr_t       o_ila_debug_tile_rob_payload_disp1_pc_addr,
+  output logic                     o_ila_debug_tile_rob_payload_disp1_valid,
+  output scariv_pkg::reg_t         o_ila_debug_tile_rob_payload_disp1_typ,
+  output logic [4:0]               o_ila_debug_tile_rob_payload_disp1_regidx,
+  output scariv_pkg::rnid_t        o_ila_debug_tile_rob_payload_disp1_rnid,
+  output scariv_pkg::rnid_t        o_ila_debug_tile_rob_payload_disp1_old_rnid,
+  output logic [31: 0]             o_ila_debug_tile_rob_payload_disp1_inst,
+`endif // ILA_DEBUG
+
+  // External Interrupts
+  input logic [ 7: 0] i_interrupts
 );
 
 
@@ -158,7 +188,7 @@ assign axi_if_ar_qos    = 1'b0;
 assign axi_if_ar_region = 1'b0;
 assign axi_if_ar_id     = w_l2_req.tag;
 
-assign axi_if_r_ready         = 1'b1;
+assign axi_if_r_ready         = w_l2_resp.ready;
 assign w_l2_resp.valid        = axi_if_r_valid;
 assign w_l2_resp.tag          = axi_if_r_id;
 assign w_l2_resp.payload.data = axi_if_r_data;
@@ -175,11 +205,19 @@ assign w_l2_req.ready = (r_state == IDLE) & (w_rd_valid ? axi_if_ar_ready : 1'b1
 // assign o_snoop_resp_data  = w_snoop_if.resp_payload.data;
 // assign o_snoop_resp_be    = w_snoop_if.resp_payload.be;
 
+`ifdef ILA_DEBUG
+scariv_ila_pkg::ila_debug_tile_t w_ila_debug_tile;
+`endif // ILA_DEBUG
+
 scariv_subsystem
 u_scariv_subsystem
 (
  .i_clk     (i_clk),
  .i_reset_n (i_reset_n),
+
+`ifdef ILA_DEBUG
+ .o_ila_debug_tile (w_ila_debug_tile),
+`endif // ILA_DEBUG
 
  .i_const_init_vaddr (i_const_init_vaddr),
 
@@ -191,5 +229,35 @@ u_scariv_subsystem
  .snoop_if (w_snoop_if)
 
  );
+
+
+`ifdef ILA_DEBUG
+  assign o_ila_debug_tile_rob_head_ptr                  = w_ila_debug_tile.rob.head_ptr                 ;
+  assign o_ila_debug_tile_rob_tail_ptr                  = w_ila_debug_tile.rob.tail_ptr                 ;
+  assign o_ila_debug_tile_rob_entry_valid               = w_ila_debug_tile.rob.entry.valid              ;
+  assign o_ila_debug_tile_rob_entry_cmt_id_msb          = w_ila_debug_tile.rob.entry.cmt_id_msb         ;
+  assign o_ila_debug_tile_rob_entry_grp_id              = w_ila_debug_tile.rob.entry.grp_id             ;
+  assign o_ila_debug_tile_rob_entry_done_grp_id         = w_ila_debug_tile.rob.entry.done_grp_id        ;
+  assign o_ila_debug_tile_rob_entry_dead                = w_ila_debug_tile.rob.entry.dead               ;
+  assign o_ila_debug_tile_rob_entry_fflags_update_valid = w_ila_debug_tile.rob.entry.fflags_update_valid;
+  assign o_ila_debug_tile_rob_entry_fflags_0            = w_ila_debug_tile.rob.entry.fflags[0]          ;
+  assign o_ila_debug_tile_rob_entry_fflags_1            = w_ila_debug_tile.rob.entry.fflags[1]          ;
+  assign o_ila_debug_tile_rob_entry_int_inserted        = w_ila_debug_tile.rob.entry.int_inserted       ;
+
+  assign o_ila_debug_tile_rob_payload_disp0_pc_addr     = w_ila_debug_tile.rob.payload.disp[0].pc_addr        ;
+  assign o_ila_debug_tile_rob_payload_disp0_typ         = w_ila_debug_tile.rob.payload.disp[0].wr_reg.typ     ;
+  assign o_ila_debug_tile_rob_payload_disp0_regidx      = w_ila_debug_tile.rob.payload.disp[0].wr_reg.regidx  ;
+  assign o_ila_debug_tile_rob_payload_disp0_rnid        = w_ila_debug_tile.rob.payload.disp[0].wr_reg.rnid    ;
+  assign o_ila_debug_tile_rob_payload_disp0_old_rnid    = w_ila_debug_tile.rob.payload.disp[0].wr_reg.old_rnid;
+  assign o_ila_debug_tile_rob_payload_disp0_inst        = w_ila_debug_tile.rob.payload.disp[0].inst           ;
+
+  assign o_ila_debug_tile_rob_payload_disp1_pc_addr     = w_ila_debug_tile.rob.payload.disp[1].pc_addr        ;
+  assign o_ila_debug_tile_rob_payload_disp1_typ         = w_ila_debug_tile.rob.payload.disp[1].wr_reg.typ     ;
+  assign o_ila_debug_tile_rob_payload_disp1_regidx      = w_ila_debug_tile.rob.payload.disp[1].wr_reg.regidx  ;
+  assign o_ila_debug_tile_rob_payload_disp1_rnid        = w_ila_debug_tile.rob.payload.disp[1].wr_reg.rnid    ;
+  assign o_ila_debug_tile_rob_payload_disp1_old_rnid    = w_ila_debug_tile.rob.payload.disp[1].wr_reg.old_rnid;
+  assign o_ila_debug_tile_rob_payload_disp1_inst        = w_ila_debug_tile.rob.payload.disp[1].inst           ;
+`endif // ILA_DEBUG
+
 
 endmodule // scariv_subsystem_axi

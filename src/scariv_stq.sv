@@ -782,7 +782,11 @@ assign w_uc_write_entry_sel = w_stq_entries[w_out_ptr_idx];
 always_comb begin
   uc_write_if.valid = |w_uc_write_req_valid;
   uc_write_if.paddr = w_uc_write_entry_sel.addr;
-  uc_write_if.data  = w_stq_stbuf_rs2_data[0];
+  if (scariv_conf_pkg::DETAIL_STLD_FWD) begin
+    uc_write_if.data = r_rs2_data_array[w_stbuf_rs2_out_ptr[0]];
+  end else begin
+    uc_write_if.data = w_stq_stbuf_rs2_data[0];
+  end
   uc_write_if.size  = w_uc_write_entry_sel.size;
 end
 

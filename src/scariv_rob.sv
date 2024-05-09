@@ -15,6 +15,10 @@ module scariv_rob
    input logic                   i_clk,
    input logic                   i_reset_n,
 
+`ifdef ILA_DEBUG
+   output scariv_ila_pkg::ila_debug_rob_t  o_ila_debug_rob,
+`endif // ILA_DEBUG
+
    scariv_front_if.slave                 rn_front_if,
 
    cre_ret_if.slave              cre_ret_if,
@@ -266,7 +270,7 @@ assign w_commit.tval          = (w_commit.except_type == scariv_pkg::INST_ADDR_M
 encoder #(.SIZE(CMT_ENTRY_SIZE)) except_pc_vaddr (.i_in (r_rob_except.grp_id), .o_out(w_cmt_except_valid_encoded));
 /* verilator lint_off WIDTH */
 assign w_commit.epc          = w_out_payload.disp[w_cmt_except_valid_encoded].pc_addr;
-assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id) & w_commit.grp_id;
+assign w_commit.dead_id      = (w_out_entry.dead | w_dead_grp_id | {{(scariv_conf_pkg::DISP_SIZE-1){w_int_valid}}, 1'b0}) & w_commit.grp_id;
 assign w_commit.flush_valid  = {scariv_conf_pkg::DISP_SIZE{w_rob_except_match}} & r_rob_except.grp_id | w_int_valid;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
@@ -459,6 +463,45 @@ always_ff @ (posedge i_clk) begin
   rob_info_if.upd_pc_valid <= 1'b0;
   rob_info_if.except_valid <= r_rob_except.valid & (r_rob_except.cmt_id == w_out_cmt_id) ? r_rob_except.grp_id & ~w_out_entry.dead : 'h0;
 end
+
+// -----------------------------
+// DeadLock Check for Debugging
+// -----------------------------
+logic [15: 0] r_uncommitted_counter;
+logic         r_deadlocked;
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_uncommitted_counter <= 'h0;
+    r_deadlocked          <= 1'b0;
+  end else begin
+    if (commit_if.commit_valid) begin
+      r_uncommitted_counter <= 'h0;
+    end else begin
+      r_uncommitted_counter <= r_uncommitted_counter + 'h1;
+    end
+    if (&r_uncommitted_counter) begin
+      r_deadlocked <= 1'b1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, posedge i_reset_n)
+
+logic [ 7: 0] r_dead_uncommitted_counter;
+logic         r_dead_deadlocked;
+always_ff @ (posedge i_clk, posedge i_reset_n) begin
+  if (!i_reset_n) begin
+    r_dead_uncommitted_counter <= 'h0;
+    r_dead_deadlocked          <= 1'b0;
+  end else begin
+    if (commit_if.commit_valid & |(commit_if.payload.grp_id ^ commit_if.payload.dead_id)) begin
+      r_dead_uncommitted_counter <= 'h0;
+    end else begin
+      r_dead_uncommitted_counter <= r_dead_uncommitted_counter + 'h1;
+    end
+    if (&r_uncommitted_counter) begin
+      r_dead_deadlocked <= 1'b1;
+    end
+  end // else: !if(!i_reset_n)
+end // always_ff @ (posedge i_clk, posedge i_reset_n)
 
 `ifdef SIMULATION
 `ifdef MONITOR
@@ -670,12 +713,30 @@ end // always_ff @ (negedge i_clk, negedge i_reset_n)
 `endif // MONITOR
 `endif // SIMULATION
 
-`ifdef SIMULATION
-  `ifdef NATIVE_DUMP
+`ifdef NATIVE_DUMP
 integer native_dump_fp;
 initial begin
   native_dump_fp = $fopen("native_dump.txt", "w");
 end
+
+logic [riscv_pkg::XLEN_W-1: 0] w_physical_int_data [scariv_pkg::XPR_RNID_SIZE + 32];
+logic [riscv_pkg::FLEN_W-1: 0] w_physical_fp_data  [scariv_pkg::FPR_RNID_SIZE + 32];
+generate for (genvar r_idx = 0; r_idx < scariv_pkg::XPR_RNID_SIZE; r_idx++) begin: reg_loop
+`ifdef NORMAL_MULTIPORT
+  assign w_physical_int_data[r_idx] = u_scariv_subsystem.u_tile.u_int_phy_registers.r_phy_regs[r_idx];
+`else  // NORMAL_MULTIPORT
+  assign w_physical_int_data[r_idx] = u_scariv_subsystem.u_tile.u_int_phy_registers.sim_phy_regs[r_idx];
+`endif // IVT_MULTIPORT
+end endgenerate
+generate if (riscv_pkg::FLEN_W != 0) begin
+  for (genvar r_idx = 0; r_idx < scariv_pkg::FPR_RNID_SIZE; r_idx++) begin: reg_loop
+`ifdef NORMAL_MULTIPORT
+    assign w_physical_fp_data [r_idx] = u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.r_phy_regs[r_idx];
+`else // IVT_MULTIPORT
+    assign w_physical_fp_data [r_idx] = u_scariv_subsystem.u_tile.fpu.u_fp_phy_registers.sim_phy_regs[r_idx];
+`endif // IVT_MULTIPORT
+  end
+end endgenerate
 
 always_ff @ (negedge i_clk) begin
   for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++) begin
@@ -683,11 +744,17 @@ always_ff @ (negedge i_clk) begin
         w_commit.grp_id[grp_idx] &
         ~w_commit.dead_id[grp_idx]) begin
       /* verilator lint_off WIDTH */
-      $fwrite(native_dump_fp, "%t PC=%08x: INST=0x%08x, DASM(0x%08x) ",
+      $fwrite(native_dump_fp, "%t PC=%08x: INST=0x%08x, DASM(0x%08x) | ",
               $time,
               w_out_payload.disp[grp_idx].pc_addr,
-              w_out_payload.disp[grp_idx].rvc_inst_valid ? w_out_payload.disp[grp_idx].rvc_inst : w_out_payload.disp[grp_idx].inst,
-              w_out_payload.disp[grp_idx].rvc_inst_valid ? w_out_payload.disp[grp_idx].rvc_inst : w_out_payload.disp[grp_idx].inst);
+              w_out_payload.disp[grp_idx].inst,
+              w_out_payload.disp[grp_idx].inst);
+      if (w_out_payload.disp[grp_idx].wr_reg.valid) begin
+        $fwrite (native_dump_fp, "x%02d(%d)<=%016x",
+                 w_out_payload.disp[grp_idx].wr_reg.regidx,
+                 w_out_payload.disp[grp_idx].wr_reg.rnid,
+                 w_physical_int_data[w_out_payload.disp[grp_idx].wr_reg.rnid]);
+      end
       if (w_commit.except_valid[grp_idx]) begin
         $fwrite(native_dump_fp, "Exception, Type=%d\n", w_commit.except_type);
       end else begin
@@ -696,7 +763,19 @@ always_ff @ (negedge i_clk) begin
     end
   end // for (int grp_idx = 0; grp_idx < scariv_pkg::DISP_SIZE; grp_idx++)
 end // always_ff @ (negedge i_clk)
-  `endif //  `ifdef NATIVE_DUMP
-`endif //  `ifdef SIMULATION
+
+`endif //  `ifdef NATIVE_DUMP
+
+`ifdef ILA_DEBUG
+
+always_ff @ (posedge i_clk) begin
+  o_ila_debug_rob.head_ptr <= w_in_cmt_id;
+  o_ila_debug_rob.tail_ptr <= w_out_cmt_id;
+  o_ila_debug_rob.entry    <= w_out_entry;
+  o_ila_debug_rob.payload  <= w_out_payload;
+end
+
+`endif // ILA_DEBUG
+
 
 endmodule // scariv_rob

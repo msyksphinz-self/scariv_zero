@@ -164,8 +164,17 @@ logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
   end
   bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
 end endgenerate
-
 `endif // SIMULATION
+`ifdef NATIVE_DUMP
+logic [WIDTH-1: 0] sim_phy_regs[RNID_SIZE];
+generate for (genvar rn_idx = 0; rn_idx < RNID_SIZE; rn_idx++) begin : sim_rn_loop
+logic [WIDTH-1: 0] sim_phy_rn_data[WR_PORT_SIZE];
+  for (genvar wr_idx = 0; wr_idx < WR_PORT_SIZE; wr_idx++) begin
+    assign sim_phy_rn_data[wr_idx] = w_rd_loop[0].w_wr_loop[wr_idx].u_array.data_array[rn_idx];
+  end
+  bit_oh_or #(.T(logic[WIDTH-1: 0]), .WORDS(WR_PORT_SIZE)) u_data_sel (.i_oh (r_lvt[rn_idx]), .i_data(sim_phy_rn_data), .o_selected(sim_phy_regs[rn_idx]));
+end endgenerate
+`endif // NATIVE_DUMP
 
 `endif //  `ifdef USE_BLOCK_RAM
 

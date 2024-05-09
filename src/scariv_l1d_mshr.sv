@@ -52,7 +52,7 @@ logic [$clog2(scariv_conf_pkg::MISSU_ENTRY_SIZE)-1:0] w_out_ptr;
 logic                                             w_in_valid;
 logic                                             w_out_valid;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_entry_finish;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_missu_valids;
+logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] w_entry_valids;
 logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]             w_l1d_wr_updating;
 
 logic [REQ_PORT_NUM-1: 0]   w_resp_conflict;
@@ -126,9 +126,9 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
       $fatal (0, "MISSU remained size must not exceed default value %d\n",
             scariv_conf_pkg::MISSU_ENTRY_SIZE);
     end
-    if (r_missu_remained_size != scariv_conf_pkg::MISSU_ENTRY_SIZE - $countones(w_missu_valids)) begin
+    if (r_missu_remained_size != scariv_conf_pkg::MISSU_ENTRY_SIZE - $countones(w_entry_valids)) begin
       $fatal (0, "MISSU counter size and emptied MISSU entry size is different %d != %d\n",
-              r_missu_remained_size, scariv_conf_pkg::MISSU_ENTRY_SIZE - $countones(w_missu_valids));
+              r_missu_remained_size, scariv_conf_pkg::MISSU_ENTRY_SIZE - $countones(w_entry_valids));
     end
   end
 end
@@ -368,7 +368,7 @@ generate for (genvar e_idx = 0; e_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; e_idx
        .o_entry_finish (w_entry_finish[e_idx])
        );
 
-  assign w_missu_valids[e_idx] = w_missu_entries[e_idx].valid;
+  assign w_entry_valids[e_idx] = w_missu_entries[e_idx].valid;
 
 end // block: entry_loop
 endgenerate
@@ -434,9 +434,9 @@ assign mshr_stbuf_search_if.mshr_index_oh = w_wr_req_valid_oh;
 
 assign o_missu_resolve.valid              = w_ext_rd_resp_valid;
 assign o_missu_resolve.resolve_index_oh   = 1 << w_ext_rd_resp_tag;
-assign o_missu_resolve.missu_entry_valids = w_missu_valids;
-assign o_missu_is_full  = &w_missu_valids;
-assign o_missu_is_empty = ~|w_missu_valids;
+assign o_missu_resolve.missu_entry_valids = w_entry_valids;
+assign o_missu_is_full  = &w_entry_valids;
+assign o_missu_is_empty = ~|w_entry_valids;
 
 // Eviction Hazard Check
 generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM; p_idx++) begin : lsu_haz_loop
@@ -567,7 +567,7 @@ endfunction // dump_json
 
 
 function void dump_json(int fp);
-  if (|w_missu_valids) begin
+  if (|w_entry_valids) begin
     $fwrite(fp, "  \"scariv_missu\" : {\n");
     for (int c_idx = 0; c_idx < scariv_conf_pkg::MISSU_ENTRY_SIZE; c_idx++) begin
       dump_entry_json (fp, w_missu_entries[c_idx], c_idx);

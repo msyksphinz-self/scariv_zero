@@ -16,13 +16,13 @@ module bit_multiple_age_min
  output logic [$clog2(WORDS)-1: 0] o_min_idx
  );
 
-function automatic logic [$clog2(WORDS)-1: 0] find_min_idx();
-  logic [$clog2(WORDS)-1: 0] w_min_idx;
-  cmt_id_t w_min_cmt_id;
-  grp_id_t w_min_grp_id;
-  logic                     w_min_valid;
+logic [$clog2(WORDS)-1: 0] w_min_idx;
+cmt_id_t                   w_min_cmt_id;
+grp_id_t                   w_min_grp_id;
+logic                      w_min_valid;
 
-  w_min_idx    = 0;
+always_comb begin
+  w_min_idx    = 'h0;
   w_min_valid  = i_valids[0];
   w_min_cmt_id = i_cmt_id[0];
   w_min_grp_id = i_grp_id[0];
@@ -35,12 +35,10 @@ function automatic logic [$clog2(WORDS)-1: 0] find_min_idx();
       w_min_valid  = 1'b1;
     end
   end
-
-  return w_min_idx;
-endfunction //
+end // always_comb
 
 assign o_valid = |i_valids;
-assign o_min_idx = find_min_idx();
+assign o_min_idx = w_min_idx;
 
 endmodule // bit_multiple_age_min
 

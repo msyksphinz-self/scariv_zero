@@ -58,7 +58,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_active_bits <= {SIZE{1'b1}};
     for (int i = 0; i < SIZE; i++) begin
       /* verilator lint_off WIDTH */
-      r_freelist[i] = i;
+      r_freelist[i] <= i;
     end
   end else begin
     if (i_push) begin
