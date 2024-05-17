@@ -5,13 +5,14 @@ module l2c_splitter_wrapper
    input logic                                        i_req_valid,
    input scariv_lsu_pkg::mem_cmd_t                    i_req_cmd,
    input scariv_pkg::paddr_t                          i_req_addr,
-   input logic [TAG_W-1:0]     i_req_tag,
+   input scariv_lsu_pkg::dc_color_t                   i_req_color,
+   input logic [TAG_W-1:0]                            i_req_tag,
    input scariv_lsu_pkg::dc_data_t                    i_req_data,
    input scariv_lsu_pkg::dc_strb_t                    i_req_byte_en,
    output logic                                       o_req_ready,
 
    output logic                                      o_resp_valid,
-   output logic [TAG_W-1:0]   o_resp_tag,
+   output logic [TAG_W-1:0]                          o_resp_tag,
    output scariv_lsu_pkg::dc_data_t                  o_resp_data,
    input logic                                       i_resp_ready,
 
@@ -19,6 +20,7 @@ module l2c_splitter_wrapper
    output logic                                        o_bootrom_req_valid,
    output scariv_lsu_pkg::mem_cmd_t                    o_bootrom_req_cmd,
    output scariv_pkg::paddr_t                          o_bootrom_req_addr,
+   output scariv_lsu_pkg::dc_color_t                   o_bootrom_req_color,
    output logic [TAG_W-1:0]                            o_bootrom_req_tag,
    output scariv_lsu_pkg::dc_data_t                    o_bootrom_req_data,
    output scariv_lsu_pkg::dc_strb_t                    o_bootrom_req_byte_en,
@@ -33,6 +35,7 @@ module l2c_splitter_wrapper
    output logic                                        o_serial_req_valid,
    output scariv_lsu_pkg::mem_cmd_t                    o_serial_req_cmd,
    output scariv_pkg::paddr_t                          o_serial_req_addr,
+   output scariv_lsu_pkg::dc_color_t                   o_serial_req_color,
    output logic [TAG_W-1:0]                            o_serial_req_tag,
    output scariv_lsu_pkg::dc_data_t                    o_serial_req_data,
    output scariv_lsu_pkg::dc_strb_t                    o_serial_req_byte_en,
@@ -47,6 +50,7 @@ module l2c_splitter_wrapper
    output logic                                        o_kernel_req_valid,
    output scariv_lsu_pkg::mem_cmd_t                    o_kernel_req_cmd,
    output scariv_pkg::paddr_t                          o_kernel_req_addr,
+   output scariv_lsu_pkg::dc_color_t                   o_kernel_req_color,
    output logic [TAG_W-1:0]                            o_kernel_req_tag,
    output scariv_lsu_pkg::dc_data_t                    o_kernel_req_data,
    output scariv_lsu_pkg::dc_strb_t                    o_kernel_req_byte_en,
@@ -61,6 +65,7 @@ module l2c_splitter_wrapper
    output logic                                        o_initrd_req_valid,
    output scariv_lsu_pkg::mem_cmd_t                    o_initrd_req_cmd,
    output scariv_pkg::paddr_t                          o_initrd_req_addr,
+   output scariv_lsu_pkg::dc_color_t                   o_initrd_req_color,
    output logic [TAG_W-1:0]                            o_initrd_req_tag,
    output scariv_lsu_pkg::dc_data_t                    o_initrd_req_data,
    output scariv_lsu_pkg::dc_strb_t                    o_initrd_req_byte_en,
@@ -75,6 +80,7 @@ module l2c_splitter_wrapper
    output logic                                        o_l2_req_valid,
    output scariv_lsu_pkg::mem_cmd_t                    o_l2_req_cmd,
    output scariv_pkg::paddr_t                          o_l2_req_addr,
+   output scariv_lsu_pkg::dc_color_t                   o_l2_req_color,
    output logic [TAG_W-1:0]                            o_l2_req_tag,
    output scariv_lsu_pkg::dc_data_t                    o_l2_req_data,
    output scariv_lsu_pkg::dc_strb_t                    o_l2_req_byte_en,
@@ -113,6 +119,7 @@ assign w_req_is_another = !w_req_is_bootrom & !w_req_is_serial & !w_req_is_kerne
 assign o_bootrom_req_valid   = i_req_valid & w_req_is_bootrom;
 assign o_bootrom_req_cmd     = i_req_cmd    ;
 assign o_bootrom_req_addr    = i_req_addr   ;
+assign o_bootrom_req_color   = i_req_color  ;
 assign o_bootrom_req_tag     = i_req_tag    ;
 assign o_bootrom_req_data    = i_req_data   ;
 assign o_bootrom_req_byte_en = i_req_byte_en;
@@ -120,6 +127,7 @@ assign o_bootrom_req_byte_en = i_req_byte_en;
 assign o_serial_req_valid   = i_req_valid & w_req_is_serial;
 assign o_serial_req_cmd     = i_req_cmd    ;
 assign o_serial_req_addr    = i_req_addr   ;
+assign o_serial_req_color   = i_req_color  ;
 assign o_serial_req_tag     = i_req_tag    ;
 assign o_serial_req_data    = i_req_data   ;
 assign o_serial_req_byte_en = i_req_byte_en;
@@ -127,6 +135,7 @@ assign o_serial_req_byte_en = i_req_byte_en;
 assign o_kernel_req_valid   = i_req_valid & w_req_is_kernel;
 assign o_kernel_req_cmd     = i_req_cmd    ;
 assign o_kernel_req_addr    = i_req_addr   ;
+assign o_kernel_req_color   = i_req_color  ;
 assign o_kernel_req_tag     = i_req_tag    ;
 assign o_kernel_req_data    = i_req_data   ;
 assign o_kernel_req_byte_en = i_req_byte_en;
@@ -134,6 +143,7 @@ assign o_kernel_req_byte_en = i_req_byte_en;
 assign o_initrd_req_valid   = i_req_valid & w_req_is_initrd;
 assign o_initrd_req_cmd     = i_req_cmd    ;
 assign o_initrd_req_addr    = i_req_addr   ;
+assign o_initrd_req_color   = i_req_color  ;
 assign o_initrd_req_tag     = i_req_tag    ;
 assign o_initrd_req_data    = i_req_data   ;
 assign o_initrd_req_byte_en = i_req_byte_en;
@@ -141,6 +151,7 @@ assign o_initrd_req_byte_en = i_req_byte_en;
 assign o_l2_req_valid   = i_req_valid & w_req_is_another;
 assign o_l2_req_cmd     = i_req_cmd    ;
 assign o_l2_req_addr    = i_req_addr   ;
+assign o_l2_req_color   = i_req_color  ;
 assign o_l2_req_tag     = i_req_tag    ;
 assign o_l2_req_data    = i_req_data   ;
 assign o_l2_req_byte_en = i_req_byte_en;

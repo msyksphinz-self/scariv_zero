@@ -745,6 +745,7 @@ assign w_stbuf_accepted_disp = ~w_sq_stb_ready_inv;
 // Make Store Buffer Request
 assign st_buffer_if.valid = |w_stbuf_accepted_disp;
 assign st_buffer_if.paddr = w_stq_cmt_head_entry.addr;
+assign st_buffer_if.color = w_stq_cmt_head_entry.color;
 
 generate for(genvar b_idx = 0; b_idx < scariv_lsu_pkg::ST_BUF_WIDTH/8; b_idx++) begin : loop_st_buf_strb
   scariv_pkg::grp_id_t w_strb_array;

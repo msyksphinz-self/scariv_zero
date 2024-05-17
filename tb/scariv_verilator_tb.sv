@@ -55,147 +55,158 @@ localparam TAG_W = scariv_lsu_pkg::L2_CMD_TAG_W + 2;
 typedef logic [TAG_W-1: 0] tag_t;
 
 /* from ELF Loader */
-logic                     w_elf_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_elf_req_cmd;
-scariv_pkg::paddr_t       w_elf_req_addr;
-tag_t                     w_elf_req_tag;
-scariv_lsu_pkg::dc_data_t w_elf_req_data;
-scariv_lsu_pkg::dc_strb_t w_elf_req_byte_en;
-logic                     w_elf_req_ready;
+logic                      w_elf_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_elf_req_cmd;
+scariv_pkg::paddr_t        w_elf_req_addr;
+scariv_lsu_pkg::dc_color_t w_elf_req_color;
+tag_t                      w_elf_req_tag;
+scariv_lsu_pkg::dc_data_t  w_elf_req_data;
+scariv_lsu_pkg::dc_strb_t  w_elf_req_byte_en;
+logic                      w_elf_req_ready;
 
 /* from Frontend IC */
-logic                     w_ss_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_ss_req_cmd;
-scariv_pkg::paddr_t       w_ss_req_addr;
-tag_t                     w_ss_req_tag;
-scariv_lsu_pkg::dc_data_t w_ss_req_data;
-scariv_lsu_pkg::dc_strb_t w_ss_req_byte_en;
-logic                     w_ss_req_ready;
+logic                      w_ss_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_ss_req_cmd;
+scariv_pkg::paddr_t        w_ss_req_addr;
+scariv_lsu_pkg::dc_color_t w_ss_req_color;
+tag_t                      w_ss_req_tag;
+scariv_lsu_pkg::dc_data_t  w_ss_req_data;
+scariv_lsu_pkg::dc_strb_t  w_ss_req_byte_en;
+logic                      w_ss_req_ready;
 
-logic                     w_ss_resp_valid;
-tag_t                     w_ss_resp_tag;
-scariv_lsu_pkg::dc_data_t w_ss_resp_data;
-logic                     w_ss_resp_ready;
+logic                      w_ss_resp_valid;
+tag_t                      w_ss_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_ss_resp_data;
+logic                      w_ss_resp_ready;
 
 /* L1D Interface */
-logic                     w_l1d_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_l1d_req_cmd;
-scariv_pkg::paddr_t       w_l1d_req_addr;
-tag_t                     w_l1d_req_tag;
-scariv_lsu_pkg::dc_data_t w_l1d_req_data;
-scariv_lsu_pkg::dc_strb_t w_l1d_req_byte_en;
-logic                     w_l1d_req_ready;
+logic                      w_l1d_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_l1d_req_cmd;
+scariv_pkg::paddr_t        w_l1d_req_addr;
+scariv_lsu_pkg::dc_color_t w_l1d_req_color;
+tag_t                      w_l1d_req_tag;
+scariv_lsu_pkg::dc_data_t  w_l1d_req_data;
+scariv_lsu_pkg::dc_strb_t  w_l1d_req_byte_en;
+logic                      w_l1d_req_ready;
 
-logic                     w_l1d_resp_valid;
-tag_t                     w_l1d_resp_tag;
-scariv_lsu_pkg::dc_data_t w_l1d_resp_data;
-logic                     w_l1d_resp_ready;
+logic                      w_l1d_resp_valid;
+tag_t                      w_l1d_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_l1d_resp_data;
+logic                      w_l1d_resp_ready;
 
 /* PTW Interface */
-logic                     w_ptw_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_ptw_req_cmd;
-scariv_pkg::paddr_t       w_ptw_req_addr;
-tag_t                     w_ptw_req_tag;
-scariv_lsu_pkg::dc_data_t w_ptw_req_data;
-scariv_lsu_pkg::dc_strb_t w_ptw_req_byte_en;
-logic                     w_ptw_req_ready;
+logic                      w_ptw_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_ptw_req_cmd;
+scariv_pkg::paddr_t        w_ptw_req_addr;
+scariv_lsu_pkg::dc_color_t w_ptw_req_color;
+tag_t                      w_ptw_req_tag;
+scariv_lsu_pkg::dc_data_t  w_ptw_req_data;
+scariv_lsu_pkg::dc_strb_t  w_ptw_req_byte_en;
+logic                      w_ptw_req_ready;
 
-logic                     w_ptw_resp_valid;
-tag_t                     w_ptw_resp_tag;
-scariv_lsu_pkg::dc_data_t w_ptw_resp_data;
-logic                     w_ptw_resp_ready;
+logic                      w_ptw_resp_valid;
+tag_t                      w_ptw_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_ptw_resp_data;
+logic                      w_ptw_resp_ready;
 
 // Snoop Interface
-logic                     w_snoop_req_valid;
-scariv_pkg::paddr_t       w_snoop_req_paddr;
+logic                      w_snoop_req_valid;
+scariv_pkg::paddr_t        w_snoop_req_paddr;
+scariv_lsu_pkg::dc_color_t w_snoop_req_color;
 
-logic                     w_snoop_resp_valid;
-scariv_lsu_pkg::dc_data_t w_snoop_resp_data;
-scariv_lsu_pkg::dc_strb_t w_snoop_resp_be;
+logic                      w_snoop_resp_valid;
+scariv_lsu_pkg::dc_data_t  w_snoop_resp_data;
+scariv_lsu_pkg::dc_strb_t  w_snoop_resp_be;
 
 /* Middle Interface */
-logic                     w_mid_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_mid_req_cmd;
-scariv_pkg::paddr_t       w_mid_req_addr;
-tag_t                     w_mid_req_tag;
-scariv_lsu_pkg::dc_data_t w_mid_req_data;
-scariv_lsu_pkg::dc_strb_t w_mid_req_byte_en;
-logic                     w_mid_req_ready;
+logic                      w_mid_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_mid_req_cmd;
+scariv_pkg::paddr_t        w_mid_req_addr;
+scariv_lsu_pkg::dc_color_t w_mid_req_color;
+tag_t                      w_mid_req_tag;
+scariv_lsu_pkg::dc_data_t  w_mid_req_data;
+scariv_lsu_pkg::dc_strb_t  w_mid_req_byte_en;
+logic                      w_mid_req_ready;
 
-logic                     w_mid_resp_valid;
-tag_t                     w_mid_resp_tag;
-scariv_lsu_pkg::dc_data_t w_mid_resp_data;
-logic                     w_mid_resp_ready;
+logic                      w_mid_resp_valid;
+tag_t                      w_mid_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_mid_resp_data;
+logic                      w_mid_resp_ready;
 
 /* BootROM Interface */
-logic                     w_bootrom_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_bootrom_req_cmd;
-scariv_pkg::paddr_t       w_bootrom_req_addr;
-tag_t                     w_bootrom_req_tag;
-scariv_lsu_pkg::dc_data_t w_bootrom_req_data;
-scariv_lsu_pkg::dc_strb_t w_bootrom_req_byte_en;
-logic                     w_bootrom_req_ready;
+logic                      w_bootrom_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_bootrom_req_cmd;
+scariv_pkg::paddr_t        w_bootrom_req_addr;
+scariv_lsu_pkg::dc_color_t w_bootrom_req_color;
+tag_t                      w_bootrom_req_tag;
+scariv_lsu_pkg::dc_data_t  w_bootrom_req_data;
+scariv_lsu_pkg::dc_strb_t  w_bootrom_req_byte_en;
+logic                      w_bootrom_req_ready;
 
-logic                     w_bootrom_resp_valid;
-tag_t                     w_bootrom_resp_tag;
-scariv_lsu_pkg::dc_data_t w_bootrom_resp_data;
-logic                     w_bootrom_resp_ready;
+logic                      w_bootrom_resp_valid;
+tag_t                      w_bootrom_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_bootrom_resp_data;
+logic                      w_bootrom_resp_ready;
 
 /* Serial Interface */
-logic                     w_serial_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_serial_req_cmd;
-scariv_pkg::paddr_t       w_serial_req_addr;
-tag_t                     w_serial_req_tag;
-scariv_lsu_pkg::dc_data_t w_serial_req_data;
-scariv_lsu_pkg::dc_strb_t w_serial_req_byte_en;
-logic                     w_serial_req_ready;
+logic                      w_serial_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_serial_req_cmd;
+scariv_pkg::paddr_t        w_serial_req_addr;
+scariv_lsu_pkg::dc_color_t w_serial_req_color;
+tag_t                      w_serial_req_tag;
+scariv_lsu_pkg::dc_data_t  w_serial_req_data;
+scariv_lsu_pkg::dc_strb_t  w_serial_req_byte_en;
+logic                      w_serial_req_ready;
 
-logic                     w_serial_resp_valid;
-tag_t                     w_serial_resp_tag;
-scariv_lsu_pkg::dc_data_t w_serial_resp_data;
-logic                     w_serial_resp_ready;
+logic                      w_serial_resp_valid;
+tag_t                      w_serial_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_serial_resp_data;
+logic                      w_serial_resp_ready;
 
 /* Kernel Boot Flash Interface */
-logic                     w_kernel_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_kernel_req_cmd;
-scariv_pkg::paddr_t       w_kernel_req_addr;
-tag_t                     w_kernel_req_tag;
-scariv_lsu_pkg::dc_data_t w_kernel_req_data;
-scariv_lsu_pkg::dc_strb_t w_kernel_req_byte_en;
-logic                     w_kernel_req_ready;
+logic                      w_kernel_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_kernel_req_cmd;
+scariv_pkg::paddr_t        w_kernel_req_addr;
+scariv_lsu_pkg::dc_color_t w_kernel_req_color;
+tag_t                      w_kernel_req_tag;
+scariv_lsu_pkg::dc_data_t  w_kernel_req_data;
+scariv_lsu_pkg::dc_strb_t  w_kernel_req_byte_en;
+logic                      w_kernel_req_ready;
 
-logic                     w_kernel_resp_valid;
-tag_t                     w_kernel_resp_tag;
-scariv_lsu_pkg::dc_data_t w_kernel_resp_data;
-logic                     w_kernel_resp_ready;
+logic                      w_kernel_resp_valid;
+tag_t                      w_kernel_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_kernel_resp_data;
+logic                      w_kernel_resp_ready;
 
 /* initrd Boot Flash Interface */
-logic                     w_initrd_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_initrd_req_cmd;
-scariv_pkg::paddr_t       w_initrd_req_addr;
-tag_t                     w_initrd_req_tag;
-scariv_lsu_pkg::dc_data_t w_initrd_req_data;
-scariv_lsu_pkg::dc_strb_t w_initrd_req_byte_en;
-logic                     w_initrd_req_ready;
+logic                      w_initrd_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_initrd_req_cmd;
+scariv_pkg::paddr_t        w_initrd_req_addr;
+scariv_lsu_pkg::dc_color_t w_initrd_req_color;
+tag_t                      w_initrd_req_tag;
+scariv_lsu_pkg::dc_data_t  w_initrd_req_data;
+scariv_lsu_pkg::dc_strb_t  w_initrd_req_byte_en;
+logic                      w_initrd_req_ready;
 
-logic                     w_initrd_resp_valid;
-tag_t                     w_initrd_resp_tag;
-scariv_lsu_pkg::dc_data_t w_initrd_resp_data;
-logic                     w_initrd_resp_ready;
+logic                      w_initrd_resp_valid;
+tag_t                      w_initrd_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_initrd_resp_data;
+logic                      w_initrd_resp_ready;
 
 /* L2 Interface */
-logic                     w_l2_req_valid;
-scariv_lsu_pkg::mem_cmd_t w_l2_req_cmd;
-scariv_pkg::paddr_t       w_l2_req_addr;
-tag_t                     w_l2_req_tag;
-scariv_lsu_pkg::dc_data_t w_l2_req_data;
-scariv_lsu_pkg::dc_strb_t w_l2_req_byte_en;
-logic                     w_l2_req_ready;
+logic                      w_l2_req_valid;
+scariv_lsu_pkg::mem_cmd_t  w_l2_req_cmd;
+scariv_pkg::paddr_t        w_l2_req_addr;
+scariv_lsu_pkg::dc_color_t w_l2_req_color;
+tag_t                      w_l2_req_tag;
+scariv_lsu_pkg::dc_data_t  w_l2_req_data;
+scariv_lsu_pkg::dc_strb_t  w_l2_req_byte_en;
+logic                      w_l2_req_ready;
 
-logic                     w_l2_resp_valid;
-tag_t                     w_l2_resp_tag;
-scariv_lsu_pkg::dc_data_t w_l2_resp_data;
-logic                     w_l2_resp_ready;
+logic                      w_l2_resp_valid;
+tag_t                      w_l2_resp_tag;
+scariv_lsu_pkg::dc_data_t  w_l2_resp_data;
+logic                      w_l2_resp_ready;
 
 /* Connection */
 l2c_arbiter_wrapper
@@ -203,41 +214,44 @@ l2c_arbiter_wrapper
 u_l2c_arbiter_wrapper
 (
  /* from ELF Loader */
- .i_elf_req_valid  (w_elf_req_valid),
- .i_elf_req_cmd    (w_elf_req_cmd),
- .i_elf_req_addr   (w_elf_req_addr),
- .i_elf_req_tag    (w_elf_req_tag),
- .i_elf_req_data   (w_elf_req_data),
- .i_elf_req_byte_en(w_elf_req_byte_en),
- .o_elf_req_ready  (w_elf_req_ready),
+ .i_elf_req_valid   (w_elf_req_valid   ),
+ .i_elf_req_cmd     (w_elf_req_cmd     ),
+ .i_elf_req_addr    (w_elf_req_addr    ),
+ .i_elf_req_color   (w_elf_req_color   ),
+ .i_elf_req_tag     (w_elf_req_tag     ),
+ .i_elf_req_data    (w_elf_req_data    ),
+ .i_elf_req_byte_en (w_elf_req_byte_en ),
+ .o_elf_req_ready   (w_elf_req_ready   ),
 
  /* from Frontend IC */
- .i_ss_req_valid  (w_ss_req_valid),
- .i_ss_req_cmd    (w_ss_req_cmd),
- .i_ss_req_addr   (w_ss_req_addr),
- .i_ss_req_tag    (w_ss_req_tag),
- .i_ss_req_data   (w_ss_req_data),
- .i_ss_req_byte_en(w_ss_req_byte_en),
- .o_ss_req_ready  (w_ss_req_ready),
+ .i_ss_req_valid   (w_ss_req_valid   ),
+ .i_ss_req_cmd     (w_ss_req_cmd     ),
+ .i_ss_req_addr    (w_ss_req_addr    ),
+ .i_ss_req_color   (w_ss_req_color   ),
+ .i_ss_req_tag     (w_ss_req_tag     ),
+ .i_ss_req_data    (w_ss_req_data    ),
+ .i_ss_req_byte_en (w_ss_req_byte_en ),
+ .o_ss_req_ready   (w_ss_req_ready   ),
 
- .o_ss_resp_valid(w_ss_resp_valid),
- .o_ss_resp_tag  (w_ss_resp_tag),
- .o_ss_resp_data (w_ss_resp_data),
- .i_ss_resp_ready(w_ss_resp_ready),
+ .o_ss_resp_valid  (w_ss_resp_valid),
+ .o_ss_resp_tag    (w_ss_resp_tag),
+ .o_ss_resp_data   (w_ss_resp_data),
+ .i_ss_resp_ready  (w_ss_resp_ready),
 
  /* Middle Interface */
- .o_l2_req_valid  (w_mid_req_valid   ),
- .o_l2_req_cmd    (w_mid_req_cmd     ),
- .o_l2_req_addr   (w_mid_req_addr    ),
- .o_l2_req_tag    (w_mid_req_tag     ),
- .o_l2_req_data   (w_mid_req_data    ),
- .o_l2_req_byte_en(w_mid_req_byte_en ),
- .i_l2_req_ready  (w_mid_req_ready   ),
+ .o_l2_req_valid   (w_mid_req_valid   ),
+ .o_l2_req_cmd     (w_mid_req_cmd     ),
+ .o_l2_req_addr    (w_mid_req_addr    ),
+ .o_l2_req_color   (w_mid_req_color   ),
+ .o_l2_req_tag     (w_mid_req_tag     ),
+ .o_l2_req_data    (w_mid_req_data    ),
+ .o_l2_req_byte_en (w_mid_req_byte_en ),
+ .i_l2_req_ready   (w_mid_req_ready   ),
 
- .i_l2_resp_valid (w_mid_resp_valid  ),
- .i_l2_resp_tag   (w_mid_resp_tag    ),
- .i_l2_resp_data  (w_mid_resp_data   ),
- .o_l2_resp_ready (w_mid_resp_ready  )
+ .i_l2_resp_valid  (w_mid_resp_valid  ),
+ .i_l2_resp_tag    (w_mid_resp_tag    ),
+ .i_l2_resp_data   (w_mid_resp_data   ),
+ .o_l2_resp_ready  (w_mid_resp_ready  )
  );
 
 l2c_splitter_wrapper
@@ -248,6 +262,7 @@ u_l2c_splitter_wrapper
    .i_req_valid  (w_mid_req_valid   ),
    .i_req_cmd    (w_mid_req_cmd     ),
    .i_req_addr   (w_mid_req_addr    ),
+   .i_req_color  (w_mid_req_color   ),
    .i_req_tag    (w_mid_req_tag     ),
    .i_req_data   (w_mid_req_data    ),
    .i_req_byte_en(w_mid_req_byte_en ),
@@ -262,6 +277,7 @@ u_l2c_splitter_wrapper
    .o_bootrom_req_valid  (w_bootrom_req_valid   ),
    .o_bootrom_req_cmd    (w_bootrom_req_cmd     ),
    .o_bootrom_req_addr   (w_bootrom_req_addr    ),
+   .o_bootrom_req_color  (w_bootrom_req_color   ),
    .o_bootrom_req_tag    (w_bootrom_req_tag     ),
    .o_bootrom_req_data   (w_bootrom_req_data    ),
    .o_bootrom_req_byte_en(w_bootrom_req_byte_en ),
@@ -276,6 +292,7 @@ u_l2c_splitter_wrapper
    .o_serial_req_valid  (w_serial_req_valid   ),
    .o_serial_req_cmd    (w_serial_req_cmd     ),
    .o_serial_req_addr   (w_serial_req_addr    ),
+   .o_serial_req_color  (w_serial_req_color   ),
    .o_serial_req_tag    (w_serial_req_tag     ),
    .o_serial_req_data   (w_serial_req_data    ),
    .o_serial_req_byte_en(w_serial_req_byte_en ),
@@ -290,6 +307,7 @@ u_l2c_splitter_wrapper
    .o_kernel_req_valid   (w_kernel_req_valid   ),
    .o_kernel_req_cmd     (w_kernel_req_cmd     ),
    .o_kernel_req_addr    (w_kernel_req_addr    ),
+   .o_kernel_req_color   (w_kernel_req_color   ),
    .o_kernel_req_tag     (w_kernel_req_tag     ),
    .o_kernel_req_data    (w_kernel_req_data    ),
    .o_kernel_req_byte_en (w_kernel_req_byte_en ),
@@ -304,6 +322,7 @@ u_l2c_splitter_wrapper
    .o_initrd_req_valid   (w_initrd_req_valid   ),
    .o_initrd_req_cmd     (w_initrd_req_cmd     ),
    .o_initrd_req_addr    (w_initrd_req_addr    ),
+   .o_initrd_req_color   (w_initrd_req_color   ),
    .o_initrd_req_tag     (w_initrd_req_tag     ),
    .o_initrd_req_data    (w_initrd_req_data    ),
    .o_initrd_req_byte_en (w_initrd_req_byte_en ),
@@ -315,18 +334,19 @@ u_l2c_splitter_wrapper
    .o_initrd_resp_ready (w_initrd_resp_ready  ),
 
    /* L2 Interface */
-   .o_l2_req_valid  (w_l2_req_valid   ),
-   .o_l2_req_cmd    (w_l2_req_cmd     ),
-   .o_l2_req_addr   (w_l2_req_addr    ),
-   .o_l2_req_tag    (w_l2_req_tag     ),
-   .o_l2_req_data   (w_l2_req_data    ),
-   .o_l2_req_byte_en(w_l2_req_byte_en ),
-   .i_l2_req_ready  (w_l2_req_ready   ),
+   .o_l2_req_valid   (w_l2_req_valid   ),
+   .o_l2_req_cmd     (w_l2_req_cmd     ),
+   .o_l2_req_addr    (w_l2_req_addr    ),
+   .o_l2_req_color   (w_l2_req_color   ),
+   .o_l2_req_tag     (w_l2_req_tag     ),
+   .o_l2_req_data    (w_l2_req_data    ),
+   .o_l2_req_byte_en (w_l2_req_byte_en ),
+   .i_l2_req_ready   (w_l2_req_ready   ),
 
-   .i_l2_resp_valid (w_l2_resp_valid  ),
-   .i_l2_resp_tag   (w_l2_resp_tag    ),
-   .i_l2_resp_data  (w_l2_resp_data   ),
-   .o_l2_resp_ready (w_l2_resp_ready  )
+   .i_l2_resp_valid  (w_l2_resp_valid  ),
+   .i_l2_resp_tag    (w_l2_resp_tag    ),
+   .i_l2_resp_data   (w_l2_resp_data   ),
+   .o_l2_resp_ready  (w_l2_resp_ready  )
    );
 
 scariv_subsystem_wrapper
@@ -338,22 +358,24 @@ u_scariv_subsystem_wrapper
    .i_const_init_vaddr (`INIT_PC),
 
    // ICache Interconnection
-   .o_l2_req_valid  (w_ss_req_valid),
-   .o_l2_req_cmd    (w_ss_req_cmd),
-   .o_l2_req_addr   (w_ss_req_addr),
-   .o_l2_req_tag    (w_ss_req_tag),
-   .o_l2_req_data   (w_ss_req_data),
-   .o_l2_req_byte_en(w_ss_req_byte_en),
-   .i_l2_req_ready  (w_ss_req_ready),
+   .o_l2_req_valid   (w_ss_req_valid   ),
+   .o_l2_req_cmd     (w_ss_req_cmd     ),
+   .o_l2_req_addr    (w_ss_req_addr    ),
+   .o_l2_req_color   (w_ss_req_color   ),
+   .o_l2_req_tag     (w_ss_req_tag     ),
+   .o_l2_req_data    (w_ss_req_data    ),
+   .o_l2_req_byte_en (w_ss_req_byte_en ),
+   .i_l2_req_ready   (w_ss_req_ready   ),
 
-   .i_l2_resp_valid (w_ss_resp_valid),
-   .i_l2_resp_tag   (w_ss_resp_tag),
-   .i_l2_resp_data  (w_ss_resp_data),
-   .o_l2_resp_ready (w_ss_resp_ready),
+   .i_l2_resp_valid  (w_ss_resp_valid  ),
+   .i_l2_resp_tag    (w_ss_resp_tag    ),
+   .i_l2_resp_data   (w_ss_resp_data   ),
+   .o_l2_resp_ready  (w_ss_resp_ready  ),
 
    // Snoop Interface
    .i_snoop_req_valid(w_snoop_req_valid),
    .i_snoop_req_paddr(w_snoop_req_paddr),
+   .i_snoop_req_color(w_snoop_req_color),
 
    .o_snoop_resp_valid(w_snoop_resp_valid),
    .o_snoop_resp_data (w_snoop_resp_data),
@@ -381,6 +403,7 @@ u_tb_l2_behavior_ram
    .i_req_valid  (w_l2_req_valid),
    .i_req_cmd    (w_l2_req_cmd),
    .i_req_addr   (w_l2_req_addr),
+   .i_req_color  (w_l2_req_color),
    .i_req_tag    (w_l2_req_tag),
    .i_req_data   (w_l2_req_data),
    .i_req_byte_en(w_l2_req_byte_en),
@@ -394,6 +417,7 @@ u_tb_l2_behavior_ram
    // Snoop Interface
    .o_snoop_req_valid(w_snoop_req_valid),
    .o_snoop_req_paddr(w_snoop_req_paddr),
+   .o_snoop_req_color(w_snoop_req_color),
 
    .i_snoop_resp_valid(w_snoop_resp_valid),
    .i_snoop_resp_data (w_snoop_resp_data),

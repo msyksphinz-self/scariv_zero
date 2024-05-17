@@ -25,9 +25,10 @@ module scariv_ic_pref
  input paddr_t  i_ic_l2_req_paddr,
 
  // Requests prefetch
- output logic   o_pref_l2_req_valid,
- input logic    i_pref_l2_req_ready,
- output paddr_t o_pref_l2_req_paddr,
+ output logic      o_pref_l2_req_valid,
+ input logic       i_pref_l2_req_ready,
+ output paddr_t    o_pref_l2_req_paddr,
+ output dc_color_t o_pref_l2_req_color,
 
  // Response prefetech
  input logic     i_pref_l2_resp_valid,
@@ -102,6 +103,7 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_pref_l2_req_valid = (r_pref_state == ICReq);
 assign o_pref_l2_req_paddr = r_pref_paddr;
+assign o_pref_l2_req_color = r_pref_vaddr[12 +: DCACHE_COLOR_W];
 
 // Search PAaddr
 always_ff @ (posedge i_clk, negedge i_reset_n) begin

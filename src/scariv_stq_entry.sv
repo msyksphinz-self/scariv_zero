@@ -179,6 +179,7 @@ always_comb begin
       w_entry_next.is_uc        = i_ex1_q_updates.is_uc;
       w_entry_next.rmwop        = i_ex1_q_updates.rmwop;
       w_entry_next.paddr_valid  = (i_ex1_q_updates.rmwop != decoder_lsu_ctrl_pkg::RMWOP_SC) ? 1'b1 : 1'b0;
+      w_entry_next.color        = i_ex1_q_updates.color;
     end else if (~r_entry.paddr_valid & i_ex2_q_valid) begin
       w_entry_next.paddr_valid  = r_entry.rmwop == decoder_lsu_ctrl_pkg::RMWOP_SC ? i_ex2_q_updates.success : r_entry.paddr_valid;
     end

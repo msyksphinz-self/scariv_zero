@@ -345,7 +345,7 @@ end
 endgenerate
 
 
-scariv_lsu_top
+scariv_lsu_vipt_top
 u_lsu_top
   (
     .i_clk    (i_clk    ),

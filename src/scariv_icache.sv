@@ -91,8 +91,10 @@ dc_data_t                                       w_dat_ram_data;
 // ------------------------
 // Instruction Prefetcher
 // ------------------------
-logic   w_pref_l2_req_valid ;
-paddr_t w_pref_l2_req_paddr ;
+logic      w_pref_l2_req_valid ;
+paddr_t    w_pref_l2_req_paddr ;
+dc_color_t w_pref_l2_req_color ;
+
 logic     w_f1_pref_paddr_hit;
 dc_data_t w_f1_pref_hit_data;
 logic     r_f2_pref_paddr_hit;
@@ -374,6 +376,7 @@ always_comb begin
     ic_l2_req.valid           = 1'b1;
     ic_l2_req.payload.cmd     = M_XRD;
     ic_l2_req.payload.addr    = w_pref_l2_req_paddr;
+    ic_l2_req.payload.color   = w_pref_l2_req_color;
     ic_l2_req.tag             = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-3){1'b0}}, 1'b1};
     ic_l2_req.payload.data    = 'h0;
     ic_l2_req.payload.byte_en = 'h0;
@@ -381,6 +384,7 @@ always_comb begin
     ic_l2_req.valid           = (r_ic_state == ICReq) & !r_f2_working_pref_hit;
     ic_l2_req.payload.cmd     = M_XRD;
     ic_l2_req.payload.addr    = r_f2_paddr;
+    ic_l2_req.payload.color   = r_f2_vaddr[12 +: DCACHE_COLOR_W];
     ic_l2_req.tag             = {L2_UPPER_TAG_IC, {(L2_CMD_TAG_W-2){1'b0}}};
     ic_l2_req.payload.data    = 'h0;
     ic_l2_req.payload.byte_en = 'h0;
@@ -424,6 +428,7 @@ u_ic_pref
    .o_pref_l2_req_valid (w_pref_l2_req_valid),
    .i_pref_l2_req_ready (ic_l2_req.ready),
    .o_pref_l2_req_paddr (w_pref_l2_req_paddr),
+   .o_pref_l2_req_color (w_pref_l2_req_color),
 
    // Response prefetech
    .i_pref_l2_resp_valid(ic_l2_pref_resp_fire),

@@ -2,6 +2,7 @@ module tb_l2_behavior_ram #(
     parameter DATA_W    = 256,
     parameter TAG_W     = 4,
     parameter ADDR_W    = 12,
+    parameter COLOR_W   = 1,
     parameter BASE_ADDR = 'h8000_0000,
     parameter SIZE      = 4096,
     parameter RD_LAT    = 10
@@ -10,13 +11,14 @@ module tb_l2_behavior_ram #(
     input logic i_reset_n,
 
     // L2 request
-    input  logic                                  i_req_valid,
-    input  scariv_lsu_pkg::mem_cmd_t                i_req_cmd,
-    input  logic                   [  ADDR_W-1:0] i_req_addr,
-    input  logic                   [   TAG_W-1:0] i_req_tag,
-    input  logic                   [  DATA_W-1:0] i_req_data,
-    input  logic                   [DATA_W/8-1:0] i_req_byte_en,
-    output logic                                  o_req_ready,
+    input  logic                     i_req_valid,
+    input  scariv_lsu_pkg::mem_cmd_t i_req_cmd,
+    input  logic [  ADDR_W-1:0]      i_req_addr,
+    input  logic [ COLOR_W-1:0]      i_req_color,
+    input  logic [   TAG_W-1:0]      i_req_tag,
+    input  logic [  DATA_W-1:0]      i_req_data,
+    input  logic [DATA_W/8-1:0]      i_req_byte_en,
+    output logic                     o_req_ready,
 
     output logic              o_resp_valid,
     output logic [ TAG_W-1:0] o_resp_tag,
@@ -24,8 +26,9 @@ module tb_l2_behavior_ram #(
     input  logic              i_resp_ready,
 
     // Snoop Interface
-    output logic                          o_snoop_req_valid,
-    output logic [riscv_pkg::PADDR_W-1:0] o_snoop_req_paddr,
+    output logic               o_snoop_req_valid,
+    output logic [ ADDR_W-1:0] o_snoop_req_paddr,
+    output logic [COLOR_W-1:0] o_snoop_req_color,
 
     input logic                                     i_snoop_resp_valid,
     input logic [ scariv_conf_pkg::DCACHE_DATA_W-1:0] i_snoop_resp_data,
@@ -39,8 +42,10 @@ typedef enum logic [0:0] {
     ST_GIVEN = 1
 } line_status_t;
 
-logic                [DATA_W-1:0] ram             [int unsigned];
-line_status_t                     status          [int unsigned];
+logic [DATA_W-1:0]                ram    [int unsigned];
+line_status_t                     status [int unsigned];
+scariv_lsu_pkg::dc_color_t        color  [int unsigned];
+
 logic                             req_fire;
 logic                [ADDR_W-1:0] actual_addr;
 logic                [ADDR_W-1:0] actual_line_pos;
@@ -125,6 +130,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (req_fire && i_req_cmd == scariv_lsu_pkg::M_XWR) begin
       if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_GIVEN) begin
         status[actual_line_pos] = ST_INIT;
+        color [actual_line_pos] = i_req_color;
       end
       // $display("%t write(%x): line update %08x status[%08x] = %d", $time, i_req_tag, actual_line_pos, actual_line_pos, status[actual_line_pos]);
       for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin
@@ -141,14 +147,16 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
           // $display("%t read (%x): data read %08x, status[%08x]=%d", $time, i_req_tag, actual_addr, actual_line_pos, status[actual_line_pos]);
           if ((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT) begin
             if (w_map_hit & w_map_attributes.c &
-                (i_req_tag[TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
+                (i_req_tag[scariv_lsu_pkg::L2_CMD_TAG_W-1 -: 2] == scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D)) begin
               status[actual_line_pos] = ST_GIVEN;
+              color [actual_line_pos] = i_req_color;
             end
             rd_queue.push_back(rd_queue_init);
           end else begin
             r_state <= SNOOP;
             o_snoop_req_valid <= 1'b1;
             o_snoop_req_paddr <= i_req_addr;
+            o_snoop_req_color <= color [actual_line_pos];
             r_req_paddr_pos <= actual_line_pos;
             r_req_tag <= i_req_tag;
           end // else: !if((status.exists(actual_line_pos) ? status[actual_line_pos] : ST_INIT) == ST_INIT)
@@ -157,9 +165,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
       SNOOP : begin
         o_snoop_req_valid <= 1'b0;
         o_snoop_req_paddr <= 'h0;
+        o_snoop_req_color <= 'h0;
         if (i_snoop_resp_valid) begin
           r_state <= IDLE;
-          if (r_req_tag[TAG_W-1 -: 2] != scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
+          if (r_req_tag[scariv_lsu_pkg::L2_CMD_TAG_W-1 -: 2] != scariv_lsu_pkg::L2_UPPER_TAG_RD_L1D) begin
             status[r_req_paddr_pos] = ST_INIT;
           end
           for (int byte_idx = 0; byte_idx < DATA_W / 8; byte_idx++) begin

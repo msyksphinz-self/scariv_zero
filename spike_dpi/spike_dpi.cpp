@@ -813,9 +813,16 @@ void step_spike(long long rtl_time, long long rtl_pc,
   auto iss_insn = p->get_state()->insn;
   auto iss_priv = p->get_state()->last_inst_priv;
   auto iss_mstatus = p->get_state()->mstatus->read();
-  // fprintf(compare_log_fp, "%lld : ISS PC = %016llx, NormalPC = %016llx INSN = %08x\n",
+  // reg_t iss_fetch_paddr = 0;
+  // try {
+  //   iss_fetch_paddr = p->get_mmu()->translate (p->get_mmu()->generate_access_info(iss_pc, FETCH, {}), 1);
+  // } catch (trap_t& t) {
+  //   fprintf (compare_log_fp, "trap received: %s\n", t.name().c_str());
+  // }
+  // fprintf(compare_log_fp, "%lld : ISS PC = %016llx,P%016llx, NormalPC = %016llx INSN = %08x\n",
   //         rtl_time,
   //         iss_pc,
+  //         iss_fetch_paddr,
   //         p->get_state()->prev_pc,
   //         iss_insn);
   // fprintf(compare_log_fp, "%lld : ISS MSTATUS = %016llx, RTL MSTATUS = %016llx\n", rtl_time, iss_mstatus, rtl_mstatus);
@@ -827,8 +834,16 @@ void step_spike(long long rtl_time, long long rtl_pc,
   for (auto &iss_rd: p->get_state()->log_mem_read) {
     int64_t iss_wr_val = p->get_state()->XPR[rtl_wr_gpr_addr];
     uint64_t iss_lsu_addr = std::get<0>(iss_rd);
-    fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
+
+    reg_t iss_read_paddr = 0;
+    try {
+      iss_read_paddr = p->get_mmu()->translate (p->get_mmu()->generate_access_info(std::get<0>(iss_rd), LOAD, {}), 1);
+    } catch (trap_t& t) {
+      fprintf (compare_log_fp, "trap received: %s\n", t.name().c_str());
+    }
+    fprintf(compare_log_fp, "MR%d(0x%0*lx,P0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),
             g_rv_xlen / 4, iss_lsu_addr,
+            g_rv_xlen / 4, iss_read_paddr,
             g_rv_xlen / 4, iss_wr_val /* std::get<1>(iss_rd) */);
     if (iss_lsu_addr == 0x200bff8) {
       fprintf(compare_log_fp, "==========================================\n");
@@ -841,8 +856,15 @@ void step_spike(long long rtl_time, long long rtl_pc,
     }
   }
   for (auto &iss_wr: p->get_state()->log_mem_write) {
-    fprintf(compare_log_fp, "MW%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_wr),
+    reg_t iss_write_paddr = 0;
+    try {
+      iss_write_paddr = p->get_mmu()->translate (p->get_mmu()->generate_access_info(std::get<0>(iss_wr), STORE, {}), 1);
+    } catch (trap_t& t) {
+      fprintf (compare_log_fp, "trap received: %s\n", t.name().c_str());
+    }
+    fprintf(compare_log_fp, "MW%d(0x%0*lx,P0x%0*lx)<=%0*lx\n", std::get<2>(iss_wr),
             g_rv_xlen / 4, std::get<0>(iss_wr),
+            g_rv_xlen / 4, iss_write_paddr,
             g_rv_xlen / 4, std::get<1>(iss_wr));
   }
 
@@ -1090,7 +1112,7 @@ void record_stq_store(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, cause = %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {
@@ -1173,7 +1195,7 @@ void record_l1d_load(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, cause = %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {
@@ -1216,7 +1238,7 @@ void record_l1d_evict(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, cause = %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {

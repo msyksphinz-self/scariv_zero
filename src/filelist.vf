@@ -11,7 +11,7 @@
 ../src/recurse_pkg.sv
 ../src/scariv_pkg.sv
 ../src/scariv_alu_pkg.sv
-../src/scariv_lsu_pkg.sv
+../src/lsu_vipt/scariv_lsu_vipt_pkg.sv
 ../src/scariv_ic_pkg.sv
 ../src/scariv_bru_pkg.sv
 ../src/scariv_csu_pkg.sv
@@ -138,8 +138,8 @@
 ../src/lsu_vipt/scariv_lsu_vipt_issue_entry.sv
 ../src/lsu_vipt/scariv_lsu_vipt_fast_replay_queue.sv
 ../src/lsu_vipt/scariv_lsu_vipt_pipe.sv
-../src/scariv_l1d_mshr.sv
-../src/scariv_l1d_mshr_entry.sv
+../src/lsu_vipt/scariv_lsu_vipt_mshr.sv
+../src/lsu_vipt/scariv_lsu_vipt_mshr_entry.sv
 ../src/scariv_store_requestor.sv
 ../src/scariv_l2_req_arbiter.sv
 ../src/scariv_ldq.sv
@@ -148,15 +148,15 @@
 ../src/scariv_stq_entry.sv
 ../src/scariv_stq_rs2_rel_pipe.sv
 ../src/scariv_stq_rs2_phy_pipe.sv
-../src/scariv_st_buffer.sv
-../src/scariv_st_buffer_entry.sv
-../src/scariv_st_buffer_amo_entry.sv
+../src/lsu_vipt/scariv_lsu_vipt_st_buffer.sv
+../src/lsu_vipt/scariv_lsu_vipt_st_buffer_entry.sv
+../src/lsu_vipt/scariv_lsu_vipt_st_buffer_amo_entry.sv
 ../src/scariv_amo_operation.sv
-../src/scariv_dcache.sv
-../src/scariv_dcache_array.sv
+../src/lsu_vipt/scariv_lsu_vipt_dcache.sv
+../src/lsu_vipt/scariv_lsu_vipt_dcache_array.sv
 ../src/lsu_vipt/scariv_lsu_vipt_lrsc.sv
 
-../src/scariv_snoop_top.sv
+../src/lsu_vipt/scariv_lsu_vipt_snoop_top.sv
 
 ../src/scariv_bru.sv
 ../src/scariv_bru_issue_unit.sv

@@ -1,5 +1,17 @@
 package scariv_conf_pkg;
 
+  //         (DATA_W/8)*WORDS*WAYS
+  // ICACHE: (   128/8)*   64*   4 =  4KB
+  // DCACHE: (   512/8)*  128*   4 = 32KB
+  // -------------------------------------------------------------
+  //          5         4         3         2         1         0
+  // 987654321098765432109876543210987654321098765432109876543210
+  //                                                       ~~~~~~ CL
+  //                                                     ~~ BANK
+  //                                                ~~~~~ INDEX
+  //                                                 ------------
+  //                                                -   VIRTUAL
+  //                                           COLOR
   localparam ICACHE_DATA_W = 128;
   localparam DCACHE_DATA_W = 512;
   localparam ICACHE_WORDS = 32;
