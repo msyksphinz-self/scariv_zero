@@ -160,7 +160,7 @@ scariv_pkg::alenb_t       w_ex2_expected_fwd_valid;
 scariv_pkg::alenb_t       w_ex2_fwd_success;
 
 logic                   w_ex1_success;
-logic                   r_ex2_success;
+logic                   w_ex2_success;
 logic                   r_ex2_is_lr;
 logic                   r_ex2_is_sc;
 
@@ -440,14 +440,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 
     r_ex2_is_lr <= w_ex1_is_lr;
     r_ex2_is_sc <= w_ex1_is_sc;
-    r_ex2_success <= w_ex1_success;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign lrsc_if.lr_update_valid = r_ex1_issue.valid & w_ex1_is_lr & ~w_ex1_haz_detected;
-assign lrsc_if.sc_check_valid  = r_ex1_issue.valid & w_ex1_is_sc & ~w_ex1_haz_detected;
-assign lrsc_if.paddr           = w_ex1_addr;
-assign w_ex1_success           = lrsc_if.sc_success;
+assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected;
+assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected;
+assign lrsc_if.paddr           = r_ex2_addr;
+assign w_ex2_success           = lrsc_if.sc_success;
 
 
 logic w_ex2_rmw_haz_vld;
@@ -493,7 +492,7 @@ assign stq_upd_if.ex1_payload.size    = r_ex1_pipe_ctrl.size;
 assign stq_upd_if.ex2_update          = r_ex2_issue.valid;
 assign stq_upd_if.ex2_payload.cmt_id  = r_ex2_issue.cmt_id;
 assign stq_upd_if.ex2_payload.grp_id  = r_ex2_issue.grp_id;
-assign stq_upd_if.ex2_payload.success = r_ex2_success;
+assign stq_upd_if.ex2_payload.success = w_ex2_success;
 
 assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                 ? EX2_HAZ_RMW_ORDER_HAZ  :
@@ -690,7 +689,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
     r_ex3_mis_valid <= 1'b0;
   end else begin
-    r_ex3_aligned_data <= r_ex2_pipe_ctrl.rmwop == RMWOP_SC ? !r_ex2_success : w_ex2_data_sign_ext;
+    r_ex3_aligned_data <= r_ex2_pipe_ctrl.rmwop == RMWOP_SC ? !w_ex2_success : w_ex2_data_sign_ext;
     r_ex3_mis_valid <= ex2_mispred_out_if.mis_valid;
     r_ex3_addr      <= r_ex2_addr;
 
