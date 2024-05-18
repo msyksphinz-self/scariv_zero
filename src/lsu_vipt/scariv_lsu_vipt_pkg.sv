@@ -415,19 +415,14 @@ typedef struct packed {
 } ldq_ex2_update_t;
 
 typedef struct packed {
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
-  scariv_pkg::paddr_t  paddr;
-  dc_color_t           color;
-  logic                is_uc;
-  decoder_lsu_ctrl_pkg::size_t size; // Memory Access Size
+  scariv_pkg::cmt_id_t          cmt_id;
+  scariv_pkg::grp_id_t          grp_id;
+  scariv_pkg::paddr_t           paddr;
+  dc_color_t                    color;
+  logic                         is_uc;
+  decoder_lsu_ctrl_pkg::size_t  size; // Memory Access Size
   decoder_lsu_ctrl_pkg::rmwop_t rmwop;
-} stq_ex1_update_t;
-
-typedef struct packed {
-  scariv_pkg::cmt_id_t cmt_id;
-  scariv_pkg::grp_id_t grp_id;
-  logic                success;     // SC is succeeded
+  logic                         success; // SC is succeeded
 } stq_ex2_update_t;
 
 
@@ -1043,12 +1038,10 @@ modport slave  (input  ex2_update, ex2_payload);
 endinterface // ldq_upd_if
 
 interface stq_upd_if;
-  logic        ex1_update;
-  scariv_lsu_pkg::stq_ex1_update_t ex1_payload;
   logic        ex2_update;
   scariv_lsu_pkg::stq_ex2_update_t ex2_payload;
 
-modport master (output ex1_update, ex1_payload, ex2_update, ex2_payload);
-modport slave  (input  ex1_update, ex1_payload, ex2_update, ex2_payload);
+modport master (output ex2_update, ex2_payload);
+modport slave  (input  ex2_update, ex2_payload);
 
 endinterface // stq_upd_if

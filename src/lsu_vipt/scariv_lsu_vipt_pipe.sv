@@ -481,17 +481,14 @@ assign ldq_upd_if.ex2_payload.paddr   = r_ex2_addr;
 
 
 // Interface to STQ updates
-assign stq_upd_if.ex1_update          = r_ex1_issue.valid & ~w_ex1_tlb_resp.miss;
-assign stq_upd_if.ex1_payload.cmt_id  = r_ex1_issue.cmt_id;
-assign stq_upd_if.ex1_payload.grp_id  = r_ex1_issue.grp_id;
-assign stq_upd_if.ex1_payload.paddr   = w_ex1_tlb_resp.paddr;
-assign stq_upd_if.ex1_payload.color   = w_ex1_vaddr[12 +: DCACHE_COLOR_W];
-assign stq_upd_if.ex1_payload.is_uc   = !w_ex1_tlb_resp.cacheable;
-assign stq_upd_if.ex1_payload.rmwop   = r_ex1_pipe_ctrl.rmwop;
-assign stq_upd_if.ex1_payload.size    = r_ex1_pipe_ctrl.size;
 assign stq_upd_if.ex2_update          = r_ex2_issue.valid;
 assign stq_upd_if.ex2_payload.cmt_id  = r_ex2_issue.cmt_id;
 assign stq_upd_if.ex2_payload.grp_id  = r_ex2_issue.grp_id;
+assign stq_upd_if.ex2_payload.paddr   = r_ex2_addr;
+assign stq_upd_if.ex2_payload.color   = r_ex2_color;
+assign stq_upd_if.ex2_payload.is_uc   = r_ex2_is_uc;
+assign stq_upd_if.ex2_payload.rmwop   = r_ex2_pipe_ctrl.rmwop;
+assign stq_upd_if.ex2_payload.size    = r_ex2_pipe_ctrl.size;
 assign stq_upd_if.ex2_payload.success = w_ex2_success;
 
 assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid    ? EX2_HAZ_STQ_NONFWD_HAZ :
