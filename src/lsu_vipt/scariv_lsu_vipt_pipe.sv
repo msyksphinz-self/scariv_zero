@@ -698,7 +698,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_addr    <= r_ex2_addr;
     r_ex3_color   <= r_ex2_color;
     r_ex3_is_uc   <= r_ex2_is_uc;
-    r_ex3_hit_way <= r_ex2_hit_way;
+    r_ex3_hit_way <= l1d_rd_if.s1_hit_way;
 
     r_ex3_except_valid <= r_ex2_except_valid;
     r_ex3_except_type  <= r_ex2_except_type;
