@@ -175,6 +175,10 @@ lsu_pipe_issue_t                 r_ex3_issue, w_ex3_issue_next;
 lsu_pipe_ctrl_t                  r_ex3_pipe_ctrl;
 scariv_pkg::alen_t               r_ex3_aligned_data;
 logic                            r_ex3_mis_valid;
+logic                            r_ex3_missu_load_valid;
+dc_color_t                       r_ex3_color;
+dc_color_t                       r_ex3_is_uc;
+dc_ways_idx_t                    r_ex3_hit_way;
 logic                            r_ex3_except_valid;
 scariv_pkg::except_t             r_ex3_except_type;
 scariv_pkg::maxaddr_t            r_ex3_addr;
@@ -463,13 +467,11 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
 
-assign l1d_missu_if.load              = w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
-                                        !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
-                                        !r_ex2_except_valid & !(l1d_rd_if.s1_conflict | l1d_rd_if.s1_hit);
-assign l1d_missu_if.req_payload.paddr = r_ex2_addr;
-assign l1d_missu_if.req_payload.color = r_ex2_color;
-assign l1d_missu_if.req_payload.is_uc = r_ex2_is_uc;
-assign l1d_missu_if.req_payload.way   = l1d_rd_if.s1_hit_way;
+assign l1d_missu_if.load              = r_ex3_missu_load_valid;
+assign l1d_missu_if.req_payload.paddr = r_ex3_addr;
+assign l1d_missu_if.req_payload.color = r_ex3_color;
+assign l1d_missu_if.req_payload.is_uc = r_ex3_is_uc;
+assign l1d_missu_if.req_payload.way   = r_ex3_hit_way;
 // L1D replace information
 
 // Interface to LDQ updates
@@ -688,7 +690,15 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end else begin
     r_ex3_aligned_data <= r_ex2_pipe_ctrl.rmwop == RMWOP_SC ? !w_ex2_success : w_ex2_data_sign_ext;
     r_ex3_mis_valid <= ex2_mispred_out_if.mis_valid;
-    r_ex3_addr      <= r_ex2_addr;
+
+    r_ex3_missu_load_valid <= w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
+                              !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
+                              !r_ex2_except_valid & !(l1d_rd_if.s1_conflict | l1d_rd_if.s1_hit);
+
+    r_ex3_addr    <= r_ex2_addr;
+    r_ex3_color   <= r_ex2_color;
+    r_ex3_is_uc   <= r_ex2_is_uc;
+    r_ex3_hit_way <= r_ex2_hit_way;
 
     r_ex3_except_valid <= r_ex2_except_valid;
     r_ex3_except_type  <= r_ex2_except_type;
