@@ -37,9 +37,10 @@ import scariv_lsu_pkg::*;
    lsu_mispred_if.slave  mispred_if[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
    iq_upd_if.slave iq_upd_if,
+   mshr_info_if.slave           mshr_info_if,
+
    input logic                  i_st_buffer_empty,
    input logic                  i_st_requester_empty,
-   input logic                  i_missu_is_empty,
    input logic                  i_replay_queue_full,
 
    input logic       i_entry_picked,
@@ -261,7 +262,7 @@ end
 
 assign w_inst_oldest_ready = (rob_info_if.cmt_id == r_entry.cmt_id) &
                              ((rob_info_if.done_grp_id & r_entry.grp_id-1) == r_entry.grp_id-1);
-assign w_oldest_ready = r_entry.oldest_valid & i_st_buffer_empty /* & ~i_stq_rmw_existed */ & i_missu_is_empty & w_inst_oldest_ready /* i_out_ptr_valid */;
+assign w_oldest_ready = r_entry.oldest_valid & i_st_buffer_empty /* & ~i_stq_rmw_existed */ & mshr_info_if.is_empty & w_inst_oldest_ready /* i_out_ptr_valid */;
 
 assign w_pc_update_before_entry = 1'b0;
 

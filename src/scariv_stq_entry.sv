@@ -45,8 +45,6 @@ module scariv_stq_entry
    commit_if.monitor               commit_if,
    br_upd_if.slave                            br_upd_if,
 
-   input logic                                i_missu_is_empty,
-
    output logic                               o_stbuf_req_valid,
    input logic                                i_stbuf_accept,
 

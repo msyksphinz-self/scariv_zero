@@ -20,13 +20,13 @@ module scariv_lsu_vipt_st_buffer_entry
  output logic o_l1d_rd_req, // Read Request of L1D
  input logic  i_l1d_rd_accepted,
 
- output logic o_missu_req, // Refill request to MISSU
- input logic  i_missu_accepted,
+ output logic o_mshr_req, // Refill request to MSHR
+ input logic  i_mshr_accepted,
 
- input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_update_hit,
- input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_search_hit,
- input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_search_hit,
- input logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] i_missu_evict_sent,
+ input logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] i_mshr_search_update_hit,
+ input logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] i_mshr_search_hit,
+ input logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] i_mshr_evict_search_hit,
+ input logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] i_mshr_evict_sent,
 
  // Forward check interface from LSU Pipeline
  fwd_check_if.slave stbuf_fwd_check_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -43,8 +43,8 @@ module scariv_lsu_vipt_st_buffer_entry
  input logic     i_l1d_wr_s1_resp_conflict,
 
  input logic           i_snoop_busy,
- input missu_resp_t    i_st_missu_resp,
- input missu_resolve_t i_missu_resolve,
+ input mshr_resp_t    i_st_mshr_resp,
+ input mshr_resolve_t i_mshr_resolve,
 
  l1d_wr_if.watch     l1d_mshr_wr_if,
 
@@ -66,8 +66,8 @@ logic         w_l1d_rd_req_next;
 
 logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] w_fwd_lsu_hit;
 
-logic                                      w_missu_resolve_vld;
-assign w_missu_resolve_vld = |(~i_missu_resolve.missu_entry_valids & r_entry.missu_index_oh);
+logic                                      w_mshr_resolve_vld;
+assign w_mshr_resolve_vld = |(~i_mshr_resolve.mshr_entry_valids & r_entry.mshr_index_oh);
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -124,30 +124,30 @@ always_comb begin
     ST_BUF_RESP_L1D: begin
       if (i_snoop_busy) begin
         w_state_next = ST_BUF_WAIT_SNOOP;
-      end else if (i_missu_search_update_hit != 'h0) begin
+      end else if (i_mshr_search_update_hit != 'h0) begin
         w_state_next = ST_BUF_RD_L1D;
-      end else if (i_missu_search_hit != 'h0) begin
-        if (i_missu_resolve.valid &
-            (i_missu_resolve.resolve_index_oh == i_missu_search_hit)) begin
-          // MISSU hit and resolve immediately : replay again
+      end else if (i_mshr_search_hit != 'h0) begin
+        if (i_mshr_resolve.valid &
+            (i_mshr_resolve.resolve_index_oh == i_mshr_search_hit)) begin
+          // MSHR hit and resolve immediately : replay again
           w_state_next = ST_BUF_RD_L1D;
         end else begin
           w_state_next = ST_BUF_WAIT_REFILL; // Replay
-          w_entry_next.missu_index_oh = i_missu_search_hit;
+          w_entry_next.mshr_index_oh = i_mshr_search_hit;
         end
-      end else if (i_missu_evict_search_hit != 0) begin
-        if (|(i_missu_evict_search_hit & i_missu_evict_sent)) begin
+      end else if (i_mshr_evict_search_hit != 0) begin
+        if (|(i_mshr_evict_search_hit & i_mshr_evict_sent)) begin
           // Already evicted
-          w_state_next = ST_BUF_MISSU_REFILL;
+          w_state_next = ST_BUF_MSHR_REFILL;
         end else begin
           w_state_next = ST_BUF_WAIT_REFILL; // Todo: Should be merge
-          w_entry_next.missu_index_oh = i_missu_search_hit;
+          w_entry_next.mshr_index_oh = i_mshr_search_hit;
         end
       end else if (i_l1d_rd_s1_conflict) begin
         w_entry_next.l1d_high_priority = 1'b1;
         w_state_next = ST_BUF_RD_L1D;
       end else if (i_l1d_rd_s1_miss) begin
-        w_state_next = ST_BUF_MISSU_REFILL;
+        w_state_next = ST_BUF_MSHR_REFILL;
         w_entry_next.l1d_way = i_l1d_s1_way;
       end else begin
         w_entry_next.l1d_way = i_l1d_s1_way;
@@ -168,32 +168,32 @@ always_comb begin
         w_state_next = ST_BUF_WAIT_FINISH;
       end
     end
-    ST_BUF_MISSU_REFILL: begin
-      if (i_missu_accepted) begin
-        if (i_st_missu_resp.evict_conflict) begin
+    ST_BUF_MSHR_REFILL: begin
+      if (i_mshr_accepted) begin
+        if (i_st_mshr_resp.evict_conflict) begin
           w_state_next = ST_BUF_WAIT_EVICT;
-          w_entry_next.missu_index_oh = i_st_missu_resp.missu_index_oh;
-        end else if (i_st_missu_resp.missu_index_oh != 'h0) begin
+          w_entry_next.mshr_index_oh = i_st_mshr_resp.mshr_index_oh;
+        end else if (i_st_mshr_resp.mshr_index_oh != 'h0) begin
           w_state_next = ST_BUF_WAIT_REFILL; // Replay
-          w_entry_next.missu_index_oh = i_st_missu_resp.missu_index_oh;
-        end else if (i_st_missu_resp.full) begin
+          w_entry_next.mshr_index_oh = i_st_mshr_resp.mshr_index_oh;
+        end else if (i_st_mshr_resp.full) begin
           w_state_next = ST_BUF_WAIT_FULL;
         end else begin
-          // if index_oh is zero, it means MISSU is correctly allocated,
+          // if index_oh is zero, it means MSHR is correctly allocated,
           // so move to STQ_COMMIT and rerun, and set index_oh conflict bit set again.
           w_state_next = ST_BUF_RD_L1D; // Replay
         end
       end
-    end // case: ST_BUF_MISSU_REFILL
+    end // case: ST_BUF_MSHR_REFILL
     ST_BUF_WAIT_EVICT : begin
-      if (w_missu_resolve_vld) begin
+      if (w_mshr_resolve_vld) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end
     ST_BUF_WAIT_REFILL: begin
       if (i_mshr_l1d_wr_merged) begin
         w_state_next = ST_BUF_L1D_MERGE;
-      end else if (w_missu_resolve_vld) begin
+      end else if (w_mshr_resolve_vld) begin
         w_state_next = ST_BUF_RD_L1D;
       end
     end
@@ -203,7 +203,7 @@ always_comb begin
       end
     end
     ST_BUF_WAIT_FULL: begin
-      if (!i_st_missu_resp.full) begin
+      if (!i_st_mshr_resp.full) begin
         w_state_next = ST_BUF_RD_L1D; // Replay
       end
     end
@@ -244,7 +244,7 @@ assign o_ready_to_merge = r_entry.valid &
                           (r_state != ST_BUF_L1D_MERGE2) &
                           (r_state != ST_BUF_WAIT_FINISH);
 assign o_l1d_rd_req = r_entry.valid & (r_state == ST_BUF_RD_L1D);
-assign o_missu_req    = r_entry.valid & (r_state == ST_BUF_MISSU_REFILL);
+assign o_mshr_req   = r_entry.valid & (r_state == ST_BUF_MSHR_REFILL);
 assign o_l1d_wr_req = r_entry.valid & (r_state == ST_BUF_L1D_UPDATE);
 
 // -----------------------------------

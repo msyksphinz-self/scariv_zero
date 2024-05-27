@@ -24,9 +24,8 @@ module scariv_lsu_vipt_fast_replay_queue
 
     lsu_pipe_haz_if.slave  lsu_pipe_haz_if,
 
-    input missu_resolve_t  i_missu_resolve,
-    input logic            i_missu_is_full,
-    input logic            i_missu_is_empty,
+    input mshr_resolve_t  i_mshr_resolve,
+    mshr_info_if.slave    mshr_info_if,
 
     input logic            i_st_buffer_empty,
     input stq_resolve_t    i_stq_rs2_resolve,
@@ -145,11 +144,11 @@ generate for (genvar q_idx = 0; q_idx < REPLAY_QUEUE_SIZE; q_idx++) begin : queu
         case (r_replay_queue[q_idx].hazard_typ)
           EX2_HAZ_STQ_NONFWD_HAZ : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index & ~i_stq_rs2_resolve.index;
           EX2_HAZ_STQ_FWD_MISS   : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index & ~i_stq_rs2_resolve.index;
-          EX2_HAZ_RMW_ORDER_HAZ  : r_replay_queue[q_idx].hazard_index <= w_is_oldest & i_st_buffer_empty & i_missu_is_empty ? 'h0 : 1'b1;
+          EX2_HAZ_RMW_ORDER_HAZ  : r_replay_queue[q_idx].hazard_index <= w_is_oldest & i_st_buffer_empty & mshr_info_if.is_empty ? 'h0 : 1'b1;
           EX2_HAZ_L1D_CONFLICT   : r_replay_queue[q_idx].hazard_index <= 'h0; // Replay immediately
-          EX2_HAZ_MISSU_FULL     : r_replay_queue[q_idx].hazard_index <= !i_missu_is_full ? 'h0 : r_replay_queue[q_idx].hazard_index;
-          EX2_HAZ_MISSU_ASSIGNED : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index &
-                                                                         (i_missu_resolve.valid ? ~i_missu_resolve.resolve_index_oh : i_missu_resolve.missu_entry_valids);
+          EX2_HAZ_MSHR_FULL     : r_replay_queue[q_idx].hazard_index <= !mshr_info_if.is_full ? 'h0 : r_replay_queue[q_idx].hazard_index;
+          EX2_HAZ_MSHR_ASSIGNED : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index &
+                                                                         (i_mshr_resolve.valid ? ~i_mshr_resolve.resolve_index_oh : i_mshr_resolve.mshr_entry_valids);
           default : begin
             r_replay_queue[q_idx].hazard_index <= 'h0;
           end
@@ -223,8 +222,8 @@ logic [63: 0] sim_replay_stq_nofwd_cnt;
 logic [63: 0] sim_replay_stq_fwdmiss_cnt;
 logic [63: 0] sim_replay_rmw_order_cnt;
 logic [63: 0] sim_replay_l1d_confict_cnt;
-logic [63: 0] sim_replay_missu_cnt;
-logic [63: 0] sim_replay_missu_assigned_cnt;
+logic [63: 0] sim_replay_mshr_cnt;
+logic [63: 0] sim_replay_mshr_assigned_cnt;
 
 always_ff @ (negedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
@@ -232,8 +231,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
     sim_replay_stq_fwdmiss_cnt    <= 'h0;
     sim_replay_rmw_order_cnt      <= 'h0;
     sim_replay_l1d_confict_cnt    <= 'h0;
-    sim_replay_missu_cnt          <= 'h0;
-    sim_replay_missu_assigned_cnt <= 'h0;
+    sim_replay_mshr_cnt          <= 'h0;
+    sim_replay_mshr_assigned_cnt <= 'h0;
   end else begin
     if (lsu_pipe_req_if.valid & lsu_pipe_req_if.ready) begin
       case (lsu_pipe_req_if.payload.hazard_typ)
@@ -241,8 +240,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
         EX2_HAZ_STQ_FWD_MISS   : sim_replay_stq_fwdmiss_cnt    <= sim_replay_stq_fwdmiss_cnt    + 'h1;
         EX2_HAZ_RMW_ORDER_HAZ  : sim_replay_rmw_order_cnt      <= sim_replay_rmw_order_cnt      + 'h1;
         EX2_HAZ_L1D_CONFLICT   : sim_replay_l1d_confict_cnt    <= sim_replay_l1d_confict_cnt    + 'h1;
-        EX2_HAZ_MISSU_FULL     : sim_replay_missu_cnt          <= sim_replay_missu_cnt          + 'h1;
-        EX2_HAZ_MISSU_ASSIGNED : sim_replay_missu_assigned_cnt <= sim_replay_missu_assigned_cnt + 'h1;
+        EX2_HAZ_MSHR_FULL     : sim_replay_mshr_cnt          <= sim_replay_mshr_cnt          + 'h1;
+        EX2_HAZ_MSHR_ASSIGNED : sim_replay_mshr_assigned_cnt <= sim_replay_mshr_assigned_cnt + 'h1;
         default : begin end
       endcase // case (lsu_pipe_req_if.valid.hazard_typ)
     end
@@ -256,8 +255,8 @@ final begin
   $write ("EX2_HAZ_STQ_FWD_MISS   : %d\n", sim_replay_stq_fwdmiss_cnt);
   $write ("EX2_HAZ_RMW_ORDER_HAZ  : %d\n", sim_replay_rmw_order_cnt);
   $write ("EX2_HAZ_L1D_CONFLICT   : %d\n", sim_replay_l1d_confict_cnt);
-  $write ("EX2_HAZ_MISSU_FULL     : %d\n", sim_replay_missu_cnt);
-  $write ("EX2_HAZ_MISSU_ASSIGNED : %d\n", sim_replay_missu_assigned_cnt);
+  $write ("EX2_HAZ_MSHR_FULL      : %d\n", sim_replay_mshr_cnt);
+  $write ("EX2_HAZ_MSHR_ASSIGNED  : %d\n", sim_replay_mshr_assigned_cnt);
   $write ("==========================================\n");
 end
 

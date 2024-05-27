@@ -41,14 +41,17 @@ module scariv_lsu_vipt
     fwd_check_if.master           stbuf_fwd_check_if,
     // Store Requestor Forward checker
     fwd_check_if.master           streq_fwd_check_if,
+    // Each Pipeline address check
+    lsu_pipe_cmp_if.master        lsu_pipe_cmp_master_if,
+    lsu_pipe_cmp_slave_if.slave   lsu_pipe_cmp_slave_if ,
 
     /* L1D Interface */
     l1d_rd_vipt_if.master         l1d_rd_if,
 
     /* Load Requester Interface */
-    l1d_missu_if.master          l1d_missu_if,
-    // MISSU Forward Check
-    missu_fwd_if.master    missu_fwd_if,
+    l1d_mshr_if.master          l1d_mshr_if,
+    // MSHR Forward Check
+    mshr_fwd_if.master    mshr_fwd_if,
     // STQ -> LDQ check
     ldq_haz_check_if.master    ldq_haz_check_if,
 
@@ -71,9 +74,8 @@ module scariv_lsu_vipt
     input logic             i_st_buffer_empty,
     input logic             i_st_requester_empty,
 
-    input missu_resolve_t   i_missu_resolve,
-    input logic             i_missu_is_full,
-    input logic             i_missu_is_empty,
+    input mshr_resolve_t    i_mshr_resolve,
+    mshr_info_if.slave      mshr_info_if,
 
     input logic             i_stq_rmw_existed,
     input stq_resolve_t     i_stq_rs2_resolve,
@@ -163,7 +165,7 @@ u_issue_unit
   .i_st_requester_empty (i_st_requester_empty),
   .i_replay_queue_full  (w_replay_queue_full ),
 
-  .i_missu_is_empty     (i_missu_is_empty    ),
+  .mshr_info_if (mshr_info_if),
 
   .pipe_done_if (ex3_internal_done_if),
 
@@ -192,11 +194,10 @@ u_replay_queue
 
   .lsu_pipe_haz_if (w_lsu_pipe_haz_if),
 
-  .i_st_buffer_empty    (i_st_buffer_empty),
-  .i_missu_is_empty     (i_missu_is_empty ),
+  .i_mshr_resolve (i_mshr_resolve),
+  .mshr_info_if   (mshr_info_if  ),
 
-  .i_missu_resolve (i_missu_resolve ),
-  .i_missu_is_full (i_missu_is_full ),
+  .i_st_buffer_empty    (i_st_buffer_empty),
   .i_stq_rs2_resolve (i_stq_rs2_resolve),
 
   .o_full (),
@@ -274,6 +275,8 @@ u_lsu_pipe
    .commit_if  (commit_if),
    .br_upd_if (br_upd_if),
 
+   .mshr_info_if (mshr_info_if),
+
    .csr_info (csr_info),
    .sfence_if_slave(sfence_if_slave),
 
@@ -292,8 +295,8 @@ u_lsu_pipe
    .l1d_rd_if (l1d_rd_if),
 
    .ptw_if(ptw_if),
-   .l1d_missu_if (l1d_missu_if),
-   .missu_fwd_if (missu_fwd_if),
+   .l1d_mshr_if (l1d_mshr_if),
+   .mshr_fwd_if (mshr_fwd_if),
    .ldq_haz_check_if (ldq_haz_check_if),
 
    .rmw_order_check_if (rmw_order_check_if),
@@ -303,6 +306,9 @@ u_lsu_pipe
    .ex2_fwd_check_if (ex2_fwd_check_if),
    .stbuf_fwd_check_if (stbuf_fwd_check_if),
    .streq_fwd_check_if (streq_fwd_check_if),
+
+   .lsu_pipe_cmp_master_if (lsu_pipe_cmp_master_if),
+   .lsu_pipe_cmp_slave_if  (lsu_pipe_cmp_slave_if ),
 
    .lrsc_if (lrsc_if),
 

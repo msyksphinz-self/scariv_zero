@@ -30,13 +30,13 @@ typedef enum logic [ 2: 0] {
   CHECK_L1D = 1,
   RESP_L1D  = 2,
   L2_REQUEST = 3,
-  WAIT_L1D_MISSU = 4,
+  WAIT_L1D_MSHR = 4,
   L2_RESP_WAIT = 5
 } state_t;
 
 state_t r_state;
 logic [$clog2(riscv_pkg::PG_LEVELS)-1: 0] r_count;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_wait_conflicted_missu_oh;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] r_wait_conflicted_mshr_oh;
 
 logic [PTW_PORT_NUM-1: 0]             w_ptw_valid;
 logic [PTW_PORT_NUM-1: 0]             w_ptw_accept;
@@ -181,9 +181,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
               // L1D port conflict : retry
               r_state <= CHECK_L1D;
             end
-            scariv_lsu_pkg::STATUS_MISSU_CONFLICT : begin
-              r_state <= WAIT_L1D_MISSU;
-              r_wait_conflicted_missu_oh <= lsu_access.missu_conflicted_idx_oh;
+            scariv_lsu_pkg::STATUS_MSHR_CONFLICT : begin
+              r_state <= WAIT_L1D_MSHR;
+              r_wait_conflicted_mshr_oh <= lsu_access.mshr_conflicted_idx_oh;
             end
             default : begin
 `ifdef SIMULATION
@@ -197,9 +197,9 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
 `endif // SIMULATION
         end // else: !if(lsu_access.resp_valid)
       end
-      WAIT_L1D_MISSU : begin
+      WAIT_L1D_MSHR : begin
         if (lsu_access.conflict_resolve_vld &&
-            lsu_access.conflict_resolve_idx_oh == r_wait_conflicted_missu_oh) begin
+            lsu_access.conflict_resolve_idx_oh == r_wait_conflicted_mshr_oh) begin
           r_state <= CHECK_L1D;
         end
       end

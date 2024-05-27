@@ -23,8 +23,7 @@ module scariv_ldq
    // Hazard check for STQ -> LDQ
    ldq_haz_check_if.slave      ldq_haz_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   input missu_resolve_t     i_missu_resolve,
-   input logic             i_missu_is_full,
+   input mshr_resolve_t     i_mshr_resolve,
 
    // Updates from LSU Pipeline EX2 stage
    ldq_upd_if.slave  ldq_upd_if[scariv_conf_pkg::LSU_INST_NUM],
@@ -194,8 +193,7 @@ generate for (genvar l_idx = 0; l_idx < scariv_conf_pkg::LDQ_SIZE; l_idx++) begi
      .i_ex2_q_valid   (w_ex2_q_valid  ),
      .i_ex2_q_updates (w_ex2_q_updates),
 
-     .i_missu_resolve (i_missu_resolve),
-     .i_missu_is_full (i_missu_is_full),
+     .i_mshr_resolve (i_mshr_resolve),
 
      .i_st_buffer_empty (st_buffer_if.is_empty),
      .i_st_requester_empty (uc_write_if.is_empty),
@@ -343,8 +341,8 @@ function void dump_entry_json(int fp, ldq_entry_t entry, int index);
     //   LDQ_WAIT_COMMIT     : $fwrite(fp, "LDQ_WAIT_COMMIT");
     //   LDQ_WAIT_ENTRY_CLR  : $fwrite(fp, "LDQ_WAIT_ENTRY_CLR");
     //   LDQ_ISSUED          : $fwrite(fp, "LDQ_ISSUED");
-    //   LDQ_MISSU_EVICT_HAZ : $fwrite(fp, "LDQ_MISSU_EVICT_HAZ");
-    //   LDQ_MISSU_FULL      : $fwrite(fp, "LDQ_MISSU_FULL");
+    //   LDQ_MSHR_EVICT_HAZ  : $fwrite(fp, "LDQ_MSHR_EVICT_HAZ");
+    //   LDQ_MSHR_FULL       : $fwrite(fp, "LDQ_MSHR_FULL");
     //   LDQ_WAIT_OLDEST     : $fwrite(fp, "LDQ_WAIT_OLDEST");
     //   LDQ_NONFWD_HAZ_WAIT : $fwrite(fp, "LDQ_NONFWD_HAZ_WAIT");
     //   default             : $fatal(0, "State Log lacked. %d\n", entry.state);

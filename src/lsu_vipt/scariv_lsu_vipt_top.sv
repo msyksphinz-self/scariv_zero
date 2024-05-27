@@ -86,14 +86,16 @@ l1d_wr_if  w_l1d_merge_if();
 l1d_wr_if  w_miss_l1d_wr_if();
 l1d_wr_if  w_snoop_wr_if();
 // LSU Pipeline + ST-Buffer
-l1d_missu_if w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
+l1d_mshr_if w_l1d_mshr_if[scariv_conf_pkg::LSU_INST_NUM + 1] ();
 fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
-missu_resolve_t w_missu_resolve;
-logic     w_missu_is_full;
-logic     w_missu_is_empty;
+lsu_pipe_cmp_if       w_lsu_pipe_master_cmp_if[scariv_conf_pkg::LSU_INST_NUM] ();
+lsu_pipe_cmp_slave_if w_lsu_pipe_slave_cmp_if [scariv_conf_pkg::LSU_INST_NUM] ();
+
+mshr_resolve_t w_mshr_resolve;
+mshr_info_if    w_mshr_info_if();
 logic     w_stq_rmw_existed;
 
 lsu_mispred_if w_mispred_if [scariv_conf_pkg::LSU_INST_NUM]();
@@ -110,7 +112,7 @@ stq_upd_if  w_stq_upd_if[scariv_conf_pkg::LSU_INST_NUM]();
 scariv_pkg::grp_id_t      w_ldq_disp_valid;
 scariv_pkg::grp_id_t      w_stq_disp_valid;
 
-missu_fwd_if w_missu_fwd_if [scariv_conf_pkg::LSU_INST_NUM]();
+mshr_fwd_if w_mshr_fwd_if [scariv_conf_pkg::LSU_INST_NUM]();
 ldq_haz_check_if w_ldq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
 stq_haz_check_if w_stq_haz_check_if [scariv_conf_pkg::LSU_INST_NUM]();
 
@@ -119,7 +121,7 @@ rmw_order_check_if w_rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM]();
 lrsc_if  w_lrsc_if[scariv_conf_pkg::LSU_INST_NUM]();
 
 st_buffer_if            w_st_buffer_if();
-missu_pa_search_if      w_missu_pa_search_if();
+mshr_pa_search_if      w_mshr_pa_search_if();
 mshr_stbuf_search_if    w_mshr_stbuf_search_if();
 uc_write_if             w_uc_write_if();
 
@@ -145,6 +147,70 @@ assign w_sfence_if_slave.is_rs1_x0 = sfence_if.is_rs1_x0;
 assign w_sfence_if_slave.is_rs2_x0 = sfence_if.is_rs2_x0;
 assign w_sfence_if_slave.vaddr     = sfence_if.vaddr;
 
+generate if (scariv_conf_pkg::LSU_INST_NUM == 1) begin : gen_cmp_pipe_1
+end else if (scariv_conf_pkg::LSU_INST_NUM == 2) begin : gen_cmp_pipe_2
+
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_cmt_id    [0] = w_lsu_pipe_master_cmp_if[1].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_grp_id    [0] = w_lsu_pipe_master_cmp_if[1].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_load_valid[0] = w_lsu_pipe_master_cmp_if[1].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_paddr     [0] = w_lsu_pipe_master_cmp_if[1].ex2_paddr;
+
+  assign w_lsu_pipe_master_cmp_if[1].ex1_has_older_store     [0] = w_lsu_pipe_slave_cmp_if[0].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[1].ex2_haz_same_paddr_store[0] = w_lsu_pipe_slave_cmp_if[0].ex2_haz_same_paddr_store;
+
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_cmt_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_grp_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_load_valid[0] = w_lsu_pipe_master_cmp_if[0].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_paddr     [0] = w_lsu_pipe_master_cmp_if[0].ex2_paddr;
+
+  assign w_lsu_pipe_master_cmp_if[0].ex1_has_older_store     [0] = w_lsu_pipe_slave_cmp_if[1].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[0].ex2_haz_same_paddr_store[0] = w_lsu_pipe_slave_cmp_if[1].ex2_haz_same_paddr_store;
+
+end else if (scariv_conf_pkg::LSU_INST_NUM == 3) begin : gen_cmp_pipe_3
+
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_cmt_id    [0] = w_lsu_pipe_master_cmp_if[1].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_grp_id    [0] = w_lsu_pipe_master_cmp_if[1].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_load_valid[0] = w_lsu_pipe_master_cmp_if[1].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_paddr     [0] = w_lsu_pipe_master_cmp_if[1].ex2_paddr;
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_cmt_id    [1] = w_lsu_pipe_master_cmp_if[2].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex0_grp_id    [1] = w_lsu_pipe_master_cmp_if[2].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_load_valid[1] = w_lsu_pipe_master_cmp_if[2].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[0].ex2_paddr     [1] = w_lsu_pipe_master_cmp_if[2].ex2_paddr;
+
+  assign w_lsu_pipe_master_cmp_if[0].ex1_has_older_store     [0] = w_lsu_pipe_slave_cmp_if[1].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[0].ex2_haz_same_paddr_store[0] = w_lsu_pipe_slave_cmp_if[1].ex2_haz_same_paddr_store;
+  assign w_lsu_pipe_master_cmp_if[0].ex1_has_older_store     [1] = w_lsu_pipe_slave_cmp_if[2].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[0].ex2_haz_same_paddr_store[1] = w_lsu_pipe_slave_cmp_if[2].ex2_haz_same_paddr_store;
+
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_cmt_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_grp_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_load_valid[0] = w_lsu_pipe_master_cmp_if[0].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_paddr     [0] = w_lsu_pipe_master_cmp_if[0].ex2_paddr;
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_cmt_id    [1] = w_lsu_pipe_master_cmp_if[2].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex0_grp_id    [1] = w_lsu_pipe_master_cmp_if[2].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_load_valid[1] = w_lsu_pipe_master_cmp_if[2].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[1].ex2_paddr     [1] = w_lsu_pipe_master_cmp_if[2].ex2_paddr;
+
+  assign w_lsu_pipe_master_cmp_if[1].ex1_has_older_store     [0] = w_lsu_pipe_slave_cmp_if[0].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[1].ex2_haz_same_paddr_store[0] = w_lsu_pipe_slave_cmp_if[0].ex2_haz_same_paddr_store;
+  assign w_lsu_pipe_master_cmp_if[1].ex1_has_older_store     [1] = w_lsu_pipe_slave_cmp_if[2].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[1].ex2_haz_same_paddr_store[1] = w_lsu_pipe_slave_cmp_if[2].ex2_haz_same_paddr_store;
+
+  assign w_lsu_pipe_slave_cmp_if[2].ex0_cmt_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[2].ex0_grp_id    [0] = w_lsu_pipe_master_cmp_if[0].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[2].ex2_load_valid[0] = w_lsu_pipe_master_cmp_if[0].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[2].ex2_paddr     [0] = w_lsu_pipe_master_cmp_if[0].ex2_paddr;
+  assign w_lsu_pipe_slave_cmp_if[2].ex0_cmt_id    [1] = w_lsu_pipe_master_cmp_if[1].ex0_cmt_id;
+  assign w_lsu_pipe_slave_cmp_if[2].ex0_grp_id    [1] = w_lsu_pipe_master_cmp_if[1].ex0_grp_id;
+  assign w_lsu_pipe_slave_cmp_if[2].ex2_load_valid[1] = w_lsu_pipe_master_cmp_if[1].ex2_load_valid;
+  assign w_lsu_pipe_slave_cmp_if[2].ex2_paddr     [1] = w_lsu_pipe_master_cmp_if[1].ex2_paddr;
+
+  assign w_lsu_pipe_master_cmp_if[2].ex1_has_older_store     [0] = w_lsu_pipe_slave_cmp_if[0].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[2].ex2_haz_same_paddr_store[0] = w_lsu_pipe_slave_cmp_if[0].ex2_haz_same_paddr_store;
+  assign w_lsu_pipe_master_cmp_if[2].ex1_has_older_store     [1] = w_lsu_pipe_slave_cmp_if[1].ex1_has_older_store;
+  assign w_lsu_pipe_master_cmp_if[2].ex2_haz_same_paddr_store[1] = w_lsu_pipe_slave_cmp_if[1].ex2_haz_same_paddr_store;
+
+end endgenerate // block: gen_cmp_pipe_3
 
 generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_idx++) begin : lsu_loop
 
@@ -180,12 +246,15 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .stbuf_fwd_check_if (w_stbuf_fwd_check[lsu_idx]),
     .streq_fwd_check_if (w_streq_fwd_check[lsu_idx]),
 
+    .lsu_pipe_cmp_master_if (w_lsu_pipe_master_cmp_if[lsu_idx]),
+    .lsu_pipe_cmp_slave_if  (w_lsu_pipe_slave_cmp_if [lsu_idx]),
+
     .ptw_if(ptw_if[lsu_idx]),
     .l1d_rd_if (w_l1d_rd_vipt_if[L1D_LS_PORT_BASE + lsu_idx]),
-    .l1d_missu_if (w_l1d_missu_if[lsu_idx]),
+    .l1d_mshr_if (w_l1d_mshr_if[lsu_idx]),
     .ldq_haz_check_if (w_ldq_haz_check_if[lsu_idx]),
     .stq_haz_check_if (w_stq_haz_check_if[lsu_idx]),
-    .missu_fwd_if (w_missu_fwd_if[lsu_idx]),
+    .mshr_fwd_if (w_mshr_fwd_if[lsu_idx]),
 
     .rmw_order_check_if (w_rmw_order_check_if[lsu_idx]),
     .lrsc_if            (w_lrsc_if[lsu_idx]),
@@ -199,9 +268,8 @@ generate for (genvar lsu_idx = 0; lsu_idx < scariv_conf_pkg::LSU_INST_NUM; lsu_i
     .i_stq_rmw_existed (w_stq_rmw_existed),
     .i_stq_rs2_resolve (w_stq_rs2_resolve),
 
-    .i_missu_resolve (w_missu_resolve),
-    .i_missu_is_full (w_missu_is_full),
-    .i_missu_is_empty (w_missu_is_empty),
+    .i_mshr_resolve (w_mshr_resolve),
+    .mshr_info_if    (w_mshr_info_if),
 
     .early_wr_out_if (early_wr_out_if[lsu_idx]),
     .mispred_out_if  (mispred_out_if [lsu_idx]),
@@ -257,8 +325,7 @@ u_ldq
 
  .ldq_upd_if (w_ldq_upd_if),
 
- .i_missu_resolve (w_missu_resolve),
- .i_missu_is_full (w_missu_is_full),
+ .i_mshr_resolve (w_mshr_resolve),
 
  .i_stq_rs2_resolve (w_stq_rs2_resolve),
 
@@ -298,8 +365,6 @@ scariv_stq
  .stq_haz_check_if (w_stq_haz_check_if),
  .rmw_order_check_if (w_rmw_order_check_if),
 
- .i_missu_is_empty (w_missu_is_empty),
-
  .o_stq_rmw_existed (w_stq_rmw_existed),
 
  .commit_if (commit_if),
@@ -321,12 +386,11 @@ u_l1d_mshr
  .i_clk    (i_clk    ),
  .i_reset_n(i_reset_n),
 
- .l1d_missu  (w_l1d_missu_if),
- .missu_fwd_if (w_missu_fwd_if),
+ .l1d_mshr  (w_l1d_mshr_if),
+ .mshr_fwd_if (w_mshr_fwd_if),
 
- .o_missu_is_full  (w_missu_is_full ),
- .o_missu_resolve  (w_missu_resolve ),
- .o_missu_is_empty (w_missu_is_empty),
+ .o_mshr_resolve (w_mshr_resolve),
+ .mshr_info_if    (w_mshr_info_if),
 
  .l1d_ext_rd_req  (w_l1d_ext_req[0]),
  .l1d_ext_rd_resp (l1d_ext_resp  ),
@@ -342,7 +406,7 @@ u_l1d_mshr
 
  .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
 
- .missu_pa_search_if (w_missu_pa_search_if)
+ .mshr_pa_search_if (w_mshr_pa_search_if)
  );
 
 
@@ -372,7 +436,7 @@ u_st_buffer
 
    .st_buffer_if        (w_st_buffer_if),
    .l1d_rd_if           (w_l1d_rd_pipt_if[L1D_ST_RD_PORT]),
-   .l1d_missu_stq_miss_if (w_l1d_missu_if[scariv_conf_pkg::LSU_INST_NUM]),
+   .l1d_mshr_stq_miss_if (w_l1d_mshr_if[scariv_conf_pkg::LSU_INST_NUM]),
    .l1d_stbuf_wr_if       (w_l1d_stbuf_wr_if),
    .l1d_mshr_wr_if        (w_miss_l1d_wr_if),
 
@@ -382,10 +446,10 @@ u_st_buffer
    .rmw_order_check_if  (w_rmw_order_check_if),
 
    .stbuf_fwd_check_if  (w_stbuf_fwd_check),
-   .missu_pa_search_if  (w_missu_pa_search_if),
+   .mshr_pa_search_if  (w_mshr_pa_search_if),
 
    .mshr_stbuf_search_if (w_mshr_stbuf_search_if),
-   .i_missu_resolve      (w_missu_resolve)
+   .i_mshr_resolve      (w_mshr_resolve)
    );
 
 
@@ -413,9 +477,9 @@ u_lrsc
 // --------------------------
 logic                                 r_ptw_resp_valid;
 logic [$clog2(scariv_conf_pkg::DCACHE_DATA_W / riscv_pkg::XLEN_W)-1:0] r_ptw_paddr_sel;
-// logic                                 r_ptw_missu_resp_full;
-// logic                                 r_ptw_missu_resp_conflict;
-// logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_ptw_missu_resp_missu_index_oh;
+// logic                                 r_ptw_mshr_resp_full;
+// logic                                 r_ptw_mshr_resp_conflict;
+// logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] r_ptw_mshr_resp_mshr_index_oh;
 
 assign w_l1d_rd_pipt_if [L1D_PTW_PORT].s0_valid = lsu_access.req_valid;
 assign w_l1d_rd_pipt_if [L1D_PTW_PORT].s0_high_priority = 1'b0;
@@ -427,10 +491,10 @@ assign lsu_access.status = w_l1d_rd_pipt_if[L1D_PTW_PORT].s1_conflict ? STATUS_L
                            STATUS_NONE;
 
 generate if (scariv_conf_pkg::DCACHE_DATA_W == riscv_pkg::XLEN_W) begin : lsu_access_1
-  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.mshr_conflicted_idx_oh = 'h0;
   assign lsu_access.data                    = w_l1d_rd_pipt_if[L1D_PTW_PORT].s1_data;
-  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
-  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+  assign lsu_access.conflict_resolve_vld    = w_mshr_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_mshr_resolve.resolve_index_oh;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -440,10 +504,10 @@ generate if (scariv_conf_pkg::DCACHE_DATA_W == riscv_pkg::XLEN_W) begin : lsu_ac
     end
   end
 end else begin : lsu_access_2
-  assign lsu_access.missu_conflicted_idx_oh = 'h0;
+  assign lsu_access.mshr_conflicted_idx_oh = 'h0;
   assign lsu_access.data                    = w_l1d_rd_pipt_if[L1D_PTW_PORT].s1_data[{r_ptw_paddr_sel, {$clog2(riscv_pkg::XLEN_W){1'b0}}} +: riscv_pkg::XLEN_W];
-  assign lsu_access.conflict_resolve_vld    = w_missu_resolve.valid;
-  assign lsu_access.conflict_resolve_idx_oh = w_missu_resolve.resolve_index_oh;
+  assign lsu_access.conflict_resolve_vld    = w_mshr_resolve.valid;
+  assign lsu_access.conflict_resolve_idx_oh = w_mshr_resolve.resolve_index_oh;
 
   always_ff @ (posedge i_clk, negedge i_reset_n) begin
     if (!i_reset_n) begin
@@ -503,7 +567,7 @@ u_scariv_dcache
    .stbuf_l1d_wr_if (w_l1d_stbuf_wr_if),
 
    .stbuf_l1d_merge_if (w_l1d_merge_if  ),
-   .missu_l1d_wr_if    (w_miss_l1d_wr_if),
+   .mshr_l1d_wr_if    (w_miss_l1d_wr_if),
 
    .snoop_wr_if        (w_snoop_wr_if)
    );

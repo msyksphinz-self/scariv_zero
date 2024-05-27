@@ -57,7 +57,7 @@ logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_stq_be;
 state_t                                      r_mshr_state;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  r_mshr_data;
 logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] r_mshr_be;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] r_mshr_haz_entry_index;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] r_mshr_haz_entry_index;
 logic                                          w_mshr_haz_solved;
 
 assign w_mshr_haz_solved = ((r_mshr_haz_entry_index & mshr_snoop_if.entry_valid) == 'h0) |

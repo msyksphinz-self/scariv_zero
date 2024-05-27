@@ -43,9 +43,10 @@ module scariv_lsu_vipt_issue_unit
   lsu_mispred_if.slave           mispred_if[scariv_conf_pkg::LSU_INST_NUM],
   // Execution updates from pipeline
   iq_upd_if.slave  iq_upd_if,
+  mshr_info_if.slave                    mshr_info_if,
+
   input logic                           i_st_buffer_empty,
   input logic                           i_st_requester_empty,
-  input logic                           i_missu_is_empty,
   input logic                           i_replay_queue_full,
   input logic                           i_stq_rmw_existed,
 
@@ -265,7 +266,7 @@ generate for (genvar s_idx = 0; s_idx < ENTRY_SIZE; s_idx++) begin : entry_loop
     .i_st_buffer_empty    (i_st_buffer_empty   ),
     .i_st_requester_empty (i_st_requester_empty),
     .i_replay_queue_full  (i_replay_queue_full ),
-    .i_missu_is_empty     (i_missu_is_empty    ),
+    .mshr_info_if         (mshr_info_if        ),
 
     .commit_if (commit_if),
     .br_upd_if (br_upd_if),

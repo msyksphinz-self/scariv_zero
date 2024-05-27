@@ -19,7 +19,7 @@ module scariv_lsu_vipt_st_buffer
  l1d_rd_pipt_if.master l1d_rd_if,
 
  // Interface of Missed Data for Store
- l1d_missu_if.master l1d_missu_stq_miss_if,
+ l1d_mshr_if.master l1d_mshr_stq_miss_if,
  // Write Data to DCache
  l1d_wr_if.master l1d_stbuf_wr_if,
  // Watch for write successfuly with merged data
@@ -33,15 +33,15 @@ module scariv_lsu_vipt_st_buffer
  // RMW Ordere Hazard Check
  rmw_order_check_if.slave rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
- // Search MISSU entry: same cycle as L1D Search
- missu_pa_search_if.master   missu_pa_search_if,
+ // Search MSHR entry: same cycle as L1D Search
+ mshr_pa_search_if.master   mshr_pa_search_if,
 
  // Snoop Interface
  snoop_info_if.monitor snoop_info_if,
  stbuf_snoop_if.slave  stbuf_snoop_if,
 
- // MISSU Resolve Notofication
- input       missu_resolve_t i_missu_resolve
+ // MSHR Resolve Notofication
+ input       mshr_resolve_t i_mshr_resolve
  );
 
 
@@ -67,8 +67,8 @@ logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_finish;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_accept;
 logic [ST_BUF_ENTRY_SIZE-1: 0] w_merge_refused;
 
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_missu_req;
-logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_missu_req_oh;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_mshr_req;
+logic [ST_BUF_ENTRY_SIZE-1: 0] w_entry_mshr_req_oh;
 
 logic                          r_l1d_rd_if_resp;
 
@@ -148,13 +148,13 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
          .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
          .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
 
-         .o_missu_req      (w_entry_missu_req   [e_idx]),
-         .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
+         .o_mshr_req      (w_entry_mshr_req   [e_idx]),
+         .i_mshr_accepted (w_entry_mshr_req_oh[e_idx]),
 
-         .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
-         .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
-         .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
-         .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
+         .i_mshr_search_update_hit(mshr_pa_search_if.s1_hit_update_index_oh),
+         .i_mshr_search_hit       (mshr_pa_search_if.s1_hit_index_oh),
+         .i_mshr_evict_search_hit (mshr_pa_search_if.s1_evict_hit_index_oh),
+         .i_mshr_evict_sent       (mshr_pa_search_if.s1_evict_sent),
 
          // Forward check interface from LSU Pipeline
          .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
@@ -172,8 +172,8 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
          .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
 
          .i_snoop_busy     (snoop_info_if.busy),
-         .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
-         .i_missu_resolve (i_missu_resolve),
+         .i_st_mshr_resp  (l1d_mshr_stq_miss_if.resp_payload ),
+         .i_mshr_resolve (i_mshr_resolve),
 
          .amo_op_if (w_amo_op_if),
 
@@ -199,13 +199,13 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
          .o_l1d_rd_req(w_entry_l1d_rd_req[e_idx]),
          .i_l1d_rd_accepted (w_entry_l1d_rd_req_oh[e_idx]),
 
-         .o_missu_req      (w_entry_missu_req   [e_idx]),
-         .i_missu_accepted (w_entry_missu_req_oh[e_idx]),
+         .o_mshr_req      (w_entry_mshr_req   [e_idx]),
+         .i_mshr_accepted (w_entry_mshr_req_oh[e_idx]),
 
-         .i_missu_search_update_hit(missu_pa_search_if.s1_hit_update_index_oh),
-         .i_missu_search_hit       (missu_pa_search_if.s1_hit_index_oh),
-         .i_missu_evict_search_hit (missu_pa_search_if.s1_evict_hit_index_oh),
-         .i_missu_evict_sent       (missu_pa_search_if.s1_evict_sent),
+         .i_mshr_search_update_hit(mshr_pa_search_if.s1_hit_update_index_oh),
+         .i_mshr_search_hit       (mshr_pa_search_if.s1_hit_index_oh),
+         .i_mshr_evict_search_hit (mshr_pa_search_if.s1_evict_hit_index_oh),
+         .i_mshr_evict_sent       (mshr_pa_search_if.s1_evict_sent),
 
          // Forward check interface from LSU Pipeline
          .stbuf_fwd_check_if (stbuf_fwd_check_if    ),
@@ -223,8 +223,8 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
          .i_l1d_wr_s1_resp_conflict (l1d_stbuf_wr_if.s1_wr_resp.s1_conflict),
 
          .i_snoop_busy     (snoop_info_if.busy),
-         .i_st_missu_resp  (l1d_missu_stq_miss_if.resp_payload ),
-         .i_missu_resolve (i_missu_resolve),
+         .i_st_mshr_resp  (l1d_mshr_stq_miss_if.resp_payload ),
+         .i_mshr_resolve (i_mshr_resolve),
 
          .l1d_mshr_wr_if   (l1d_mshr_wr_if),
          .o_ready_to_merge (w_ready_to_merge),
@@ -253,7 +253,7 @@ generate for (genvar e_idx = 0; e_idx < ST_BUF_ENTRY_SIZE; e_idx++) begin : entr
   // MSHR L1D update & Merge
   assign w_entry_l1d_merge_hit[e_idx] = w_entries[e_idx].valid & (w_state[e_idx] == ST_BUF_WAIT_REFILL) &
                                         (w_entries[e_idx].rmwop == decoder_lsu_ctrl_pkg::RMWOP__) &
-                                        |(w_entries[e_idx].missu_index_oh & mshr_stbuf_search_if.mshr_index_oh);
+                                        |(w_entries[e_idx].mshr_index_oh & mshr_stbuf_search_if.mshr_index_oh);
 
 end // block: entry_loop
 endgenerate
@@ -285,23 +285,23 @@ assign l1d_rd_if.s0_paddr         = w_l1d_rd_entry.paddr;
 assign l1d_rd_if.s0_color         = w_l1d_rd_entry.color;
 
 // -----------------
-// MISSU entry search
+// MSHR entry search
 // -----------------
-assign missu_pa_search_if.s0_valid = l1d_rd_if.s0_valid;
-assign missu_pa_search_if.s0_paddr = l1d_rd_if.s0_paddr;
+assign mshr_pa_search_if.s0_valid = l1d_rd_if.s0_valid;
+assign mshr_pa_search_if.s0_paddr = l1d_rd_if.s0_paddr;
 
 // ------------------------
-// Make MISSU Refill request-
+// Make MSHR Refill request-
 // -----------------------
-st_buffer_entry_t  w_missu_target_entry;
-bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_missu_req_sel (.in(w_entry_missu_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_missu_req_oh));
+st_buffer_entry_t  w_mshr_target_entry;
+bit_extract_lsb_ptr_oh #(.WIDTH(ST_BUF_ENTRY_SIZE)) u_mshr_req_sel (.in(w_entry_mshr_req), .i_ptr_oh(w_out_ptr_oh), .out(w_entry_mshr_req_oh));
 bit_oh_or
   #(.T(st_buffer_entry_t), .WORDS(ST_BUF_ENTRY_SIZE))
-select_missu_entry_oh
+select_mshr_entry_oh
   (
-   .i_oh(w_entry_missu_req_oh),
+   .i_oh(w_entry_mshr_req_oh),
    .i_data(w_entries),
-   .o_selected(w_missu_target_entry)
+   .o_selected(w_mshr_target_entry)
    );
 
 // Eviction: Replaced Address
@@ -310,14 +310,14 @@ logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_replace_way;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]       r_s2_replace_data;
 scariv_pkg::paddr_t                 r_s2_replace_paddr;
 logic [$clog2(scariv_conf_pkg::DCACHE_WAYS)-1: 0] r_s2_hit_way;
-// logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_missu_evict_hit_ways;
+// logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]         r_s2_mshr_evict_hit_ways;
 // logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]         w_s2_conflict_evict_addr;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_s2_replace_valid <= 1'b0;
 
-    // r_s2_missu_evict_hit_ways <= 'h0;
+    // r_s2_mshr_evict_hit_ways <= 'h0;
   end else begin
     r_s2_hit_way <= l1d_rd_if.s1_hit_way;
 
@@ -326,10 +326,10 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign l1d_missu_stq_miss_if.load = |w_entry_missu_req; /* & w_s2_conflict_evict_addrxo; */
-assign l1d_missu_stq_miss_if.req_payload.paddr = w_missu_target_entry.paddr;
-assign l1d_missu_stq_miss_if.req_payload.color = w_missu_target_entry.color;
-assign l1d_missu_stq_miss_if.req_payload.way   = w_missu_target_entry.l1d_way;
+assign l1d_mshr_stq_miss_if.load = |w_entry_mshr_req; /* & w_s2_conflict_evict_addrxo; */
+assign l1d_mshr_stq_miss_if.req_payload.paddr = w_mshr_target_entry.paddr;
+assign l1d_mshr_stq_miss_if.req_payload.color = w_mshr_target_entry.color;
+assign l1d_mshr_stq_miss_if.req_payload.way   = w_mshr_target_entry.l1d_way;
 
 
 // --------------------------------------------

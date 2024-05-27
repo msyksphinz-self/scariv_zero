@@ -21,7 +21,7 @@ module scariv_lsu_vipt_dcache
    l1d_wr_if.slave stbuf_l1d_wr_if,
 
    l1d_wr_if.slave stbuf_l1d_merge_if,
-   l1d_wr_if.slave missu_l1d_wr_if,
+   l1d_wr_if.slave mshr_l1d_wr_if,
 
    l1d_wr_if.slave snoop_wr_if
    );
@@ -173,10 +173,10 @@ end endgenerate // block: rd_vipt_resp_loop
 logic                                     w_s0_merge_valid;
 logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0] w_s0_merge_data;
 scariv_lsu_pkg::mesi_t                      w_s0_merge_mesi;
-assign w_s0_merge_valid = missu_l1d_wr_if.s0_valid | stbuf_l1d_merge_if.s0_valid;
+assign w_s0_merge_valid = mshr_l1d_wr_if.s0_valid | stbuf_l1d_merge_if.s0_valid;
 generate for (genvar b_idx = 0; b_idx < DCACHE_DATA_B_W; b_idx++) begin : merge_byte_loop
   assign w_s0_merge_data[b_idx*8 +: 8] = stbuf_l1d_merge_if.s0_wr_req.s0_be[b_idx] ? stbuf_l1d_merge_if.s0_wr_req.s0_data[b_idx*8 +: 8] :
-                                          missu_l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8];
+                                          mshr_l1d_wr_if.s0_wr_req.s0_data[b_idx*8 +: 8];
 end
 endgenerate
 
@@ -192,40 +192,40 @@ s2_resp_bit_or (.i_data(w_s0_dc_wr_resp_bank), .i_oh(r_s2_wr_bank_valid), .o_sel
 assign w_s0_dc_wr_req.s0_valid            = w_s0_merge_valid | stbuf_l1d_wr_if.s0_valid | snoop_wr_if.s0_valid;
 assign w_s0_dc_wr_req.s0_tag_update_valid = w_s0_merge_valid | snoop_wr_if.s0_valid;
 assign w_s0_dc_wr_req.s0_paddr            = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_paddr     :
-                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_paddr :
+                                            mshr_l1d_wr_if.s0_valid ? mshr_l1d_wr_if.s0_wr_req.s0_paddr :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_paddr;
 assign w_s0_dc_wr_req.s0_color            = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_color     :
-                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_color :
+                                            mshr_l1d_wr_if.s0_valid ? mshr_l1d_wr_if.s0_wr_req.s0_color :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_color;
 assign w_s0_dc_wr_req.s0_data             = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_data     :
-                                            missu_l1d_wr_if.s0_valid ? w_s0_merge_data :
+                                            mshr_l1d_wr_if.s0_valid ? w_s0_merge_data :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_data;
 assign w_s0_dc_wr_req.s0_be               = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_be     :
-                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_be :
+                                            mshr_l1d_wr_if.s0_valid ? mshr_l1d_wr_if.s0_wr_req.s0_be :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_be;
 assign w_s0_dc_wr_req.s0_mesi             = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_mesi     :
-                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_mesi :
+                                            mshr_l1d_wr_if.s0_valid ? mshr_l1d_wr_if.s0_wr_req.s0_mesi :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_mesi;
 assign w_s0_dc_wr_req.s0_way              = snoop_wr_if.s0_valid     ? snoop_wr_if.s0_wr_req.s0_way     :
-                                            missu_l1d_wr_if.s0_valid ? missu_l1d_wr_if.s0_wr_req.s0_way :
+                                            mshr_l1d_wr_if.s0_valid ? mshr_l1d_wr_if.s0_wr_req.s0_way :
                                             stbuf_l1d_wr_if.s0_wr_req.s0_way;
 logic w_s0_st_wr_conflict;
-logic w_s0_missu_wr_conflict;
+logic w_s0_mshr_wr_conflict;
 assign w_s0_st_wr_conflict    = (w_s0_merge_valid | snoop_wr_if.s0_valid) & stbuf_l1d_wr_if.s0_valid;
-assign w_s0_missu_wr_conflict = (                   snoop_wr_if.s0_valid) & missu_l1d_wr_if.s0_valid;
+assign w_s0_mshr_wr_conflict = (                   snoop_wr_if.s0_valid) & mshr_l1d_wr_if.s0_valid;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     stbuf_l1d_wr_if.s1_resp_valid          <= 1'b0;
     stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
 
-    missu_l1d_wr_if.s1_resp_valid          <= 1'b0;
-    missu_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
+    mshr_l1d_wr_if.s1_resp_valid          <= 1'b0;
+    mshr_l1d_wr_if.s1_wr_resp.s1_conflict <= 1'b0;
   end else begin
     stbuf_l1d_wr_if.s1_resp_valid          <= stbuf_l1d_wr_if.s0_valid;
     stbuf_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_st_wr_conflict;
 
-    missu_l1d_wr_if.s1_resp_valid          <= missu_l1d_wr_if.s0_valid;
-    missu_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_missu_wr_conflict;
+    mshr_l1d_wr_if.s1_resp_valid          <= mshr_l1d_wr_if.s0_valid;
+    mshr_l1d_wr_if.s1_wr_resp.s1_conflict <= w_s0_mshr_wr_conflict;
   end
 end
 assign stbuf_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
@@ -238,10 +238,10 @@ assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_color = w_s2_wr_selected_resp.s2_ev
 assign stbuf_l1d_wr_if.s2_wr_resp.s2_evicted_mesi  = w_s2_wr_selected_resp.s2_evicted_mesi;
 
 
-assign missu_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
-assign missu_l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
-assign missu_l1d_wr_if.s2_done    = stbuf_l1d_wr_if.s2_done;
-assign missu_l1d_wr_if.s2_wr_resp = stbuf_l1d_wr_if.s2_wr_resp;
+assign mshr_l1d_wr_if.s1_wr_resp.s1_hit  = w_s1_wr_selected_resp.s1_hit;
+assign mshr_l1d_wr_if.s1_wr_resp.s1_miss = w_s1_wr_selected_resp.s1_miss;
+assign mshr_l1d_wr_if.s2_done    = stbuf_l1d_wr_if.s2_done;
+assign mshr_l1d_wr_if.s2_wr_resp = stbuf_l1d_wr_if.s2_wr_resp;
 
 `ifdef SIMULATION
   `ifdef COMPARE_ISS

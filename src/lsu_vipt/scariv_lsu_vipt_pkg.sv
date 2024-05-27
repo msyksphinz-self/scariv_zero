@@ -76,8 +76,8 @@ localparam MEM_Q_SIZE = scariv_conf_pkg::LDQ_SIZE > scariv_conf_pkg::STQ_SIZE ?
 
 localparam LSU_IQ_ENTRY_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 
-localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MISSU_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ?
-                               scariv_conf_pkg::MISSU_ENTRY_SIZE :
+localparam HAZARD_INDEX_SIZE = scariv_conf_pkg::MSHR_ENTRY_SIZE > scariv_conf_pkg::STQ_SIZE ?
+                               scariv_conf_pkg::MSHR_ENTRY_SIZE :
                                scariv_conf_pkg::STQ_SIZE;
 
 typedef enum logic [ 1: 0] {
@@ -105,9 +105,9 @@ typedef enum logic [ 2: 0] {
 typedef enum logic [ 2: 0] {
   EX2_HAZ_NONE,
   EX2_HAZ_L1D_CONFLICT,
-  EX2_HAZ_MISSU_ASSIGNED,
-  EX2_HAZ_MISSU_FULL,
-  EX2_HAZ_MISSU_EVICT_CONFLICT,
+  EX2_HAZ_MSHR_ASSIGNED,
+  EX2_HAZ_MSHR_FULL,
+  EX2_HAZ_MSHR_EVICT_CONFLICT,
   EX2_HAZ_RMW_ORDER_HAZ,
   EX2_HAZ_STQ_NONFWD_HAZ,
   EX2_HAZ_STQ_FWD_MISS   // Only use in COARSE_LDST_FWD mode
@@ -345,14 +345,14 @@ typedef struct packed {
   dc_color_t          color;
   logic               is_uc;
   dc_ways_idx_t       way;
-} missu_req_t;
+} mshr_req_t;
 
 typedef struct packed {
   logic                          full;
   logic                          evict_conflict;
   logic                          allocated;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
-} missu_resp_t;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_index_oh;
+} mshr_resp_t;
 
 typedef struct packed {
   logic               valid;
@@ -365,7 +365,7 @@ typedef struct packed {
   dc_ways_idx_t       way;
 } mshr_entry_t;
 
-function mshr_entry_t assign_mshr_entry (logic valid, missu_req_t req);
+function mshr_entry_t assign_mshr_entry (logic valid, mshr_req_t req);
   mshr_entry_t ret;
 
   ret = 'h0;
@@ -393,9 +393,9 @@ typedef struct packed {
 
 typedef struct packed {
   logic          valid;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] resolve_index_oh;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_entry_valids;
-} missu_resolve_t;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] resolve_index_oh;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_entry_valids;
+} mshr_resolve_t;
 
 typedef struct packed {
   logic valid;
@@ -696,7 +696,7 @@ typedef struct packed {
 typedef struct packed {
   logic                          full;
   logic                          conflict;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_index_oh;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_index_oh;
 } srq_resp_t;
 
 function logic is_amo_logical(mem_cmd_t cmd);
@@ -744,7 +744,7 @@ endfunction // isAMOLogical
 // typedef enum logic[3:0] {
 //   LDQ_INIT           ,
 //   LDQ_EX2_RUN        ,
-//   LDQ_MISSU_WAIT     ,
+//   LDQ_MSHR_WAIT     ,
 //   LDQ_TLB_HAZ        ,
 //   LDQ_ISSUE_WAIT     ,
 //   LDQ_CHECK_ST_DEPEND,
@@ -752,8 +752,8 @@ endfunction // isAMOLogical
 //   LDQ_WAIT_COMMIT    ,
 //   LDQ_WAIT_ENTRY_CLR ,
 //   LDQ_ISSUED         ,
-//   LDQ_MISSU_EVICT_HAZ  ,
-//   LDQ_MISSU_FULL       ,
+//   LDQ_MSHR_EVICT_HAZ  ,
+//   LDQ_MSHR_FULL       ,
 //   LDQ_WAIT_OLDEST    ,
 //   LDQ_NONFWD_HAZ_WAIT
 // } ldq_state_t;
@@ -783,7 +783,7 @@ typedef struct packed {
   // scariv_pkg::paddr_t paddr;
   scariv_pkg::maxaddr_t  addr;
   logic                  paddr_valid;
-//  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_haz_index_oh;
+//  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_haz_index_oh;
 //  logic [scariv_conf_pkg::STQ_SIZE-1: 0]  hazard_index;
 
   logic                 dead;
@@ -870,7 +870,7 @@ typedef enum logic [2:0]{
   STATUS_HIT = 1,
   STATUS_MISS = 2,
   STATUS_L1D_CONFLICT = 3,
-  STATUS_MISSU_CONFLICT = 4
+  STATUS_MSHR_CONFLICT = 4
 } lsu_status_t;
 
 
@@ -916,7 +916,7 @@ typedef struct packed {
   dc_color_t                                           color;
   logic [ST_BUF_WIDTH/8-1:0]                           strb;
   logic [ST_BUF_WIDTH-1: 0]                            data;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0]       missu_index_oh;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0]       mshr_index_oh;
   dc_ways_idx_t                                        l1d_way;
   logic                                                l1d_high_priority;
   decoder_lsu_ctrl_pkg::rmwop_t                        rmwop;
@@ -935,7 +935,7 @@ typedef enum logic [ 3: 0] {
   ST_BUF_RESP_L1D      = 2,
   ST_BUF_L1D_UPDATE    = 3,
   ST_BUF_L1D_UPD_RESP  = 4,
-  ST_BUF_MISSU_REFILL  = 5,
+  ST_BUF_MSHR_REFILL  = 5,
   ST_BUF_WAIT_REFILL   = 6,
   ST_BUF_WAIT_FULL     = 7,
   ST_BUF_WAIT_EVICT    = 8,

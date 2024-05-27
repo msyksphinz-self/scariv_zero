@@ -40,8 +40,6 @@ module scariv_stq
    // RMW Ordere Hazard Check
    rmw_order_check_if.slave  rmw_order_check_if[scariv_conf_pkg::LSU_INST_NUM],
 
-   input logic           i_missu_is_empty,
-
    output logic          o_stq_rmw_existed,
 
    // STQ Entry rs2 get Notification
@@ -314,8 +312,6 @@ generate for (genvar s_idx = 0; s_idx < scariv_conf_pkg::STQ_SIZE; s_idx++) begi
      .i_rs2_phy_data          (w_ex1_rs2_phy_data          [rs2_regrd_port_idx]),
 
      .o_entry    (w_stq_entries   [s_idx]),
-
-     .i_missu_is_empty(i_missu_is_empty),
 
      .commit_if (commit_if),
      .br_upd_if (br_upd_if),

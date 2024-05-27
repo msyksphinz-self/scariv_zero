@@ -24,9 +24,8 @@ module scariv_lsu_replay_queue
 
     lsu_pipe_haz_if.slave  lsu_pipe_haz_if,
 
-    input missu_resolve_t  i_missu_resolve,
-    input logic            i_missu_is_full,
-    input logic            i_missu_is_empty,
+    input mshr_resolve_t  i_mshr_resolve,
+    mshr_info_if.slave    mshr_info_if,
 
     input logic            i_st_buffer_empty,
     input stq_resolve_t    i_stq_rs2_resolve,
@@ -219,11 +218,11 @@ always_comb begin
         end else begin
             case (w_rd_replay_queue_info.hazard_typ)
                 EX2_HAZ_STQ_NONFWD_HAZ : w_lsu_replay_valid = (w_rd_replay_queue_info.hazard_index & ~i_stq_rs2_resolve.index) == 'h0;
-                EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = w_head_is_oldest & i_st_buffer_empty & i_missu_is_empty;
+                EX2_HAZ_RMW_ORDER_HAZ :  w_lsu_replay_valid = w_head_is_oldest & i_st_buffer_empty & mshr_info_if.is_empty;
                 EX2_HAZ_L1D_CONFLICT :   w_lsu_replay_valid = 1'b1; // Replay immediately
-                EX2_HAZ_MISSU_FULL :     w_lsu_replay_valid = !i_missu_is_full;
-                EX2_HAZ_MISSU_ASSIGNED : w_lsu_replay_valid = i_missu_resolve.valid & (i_missu_resolve.resolve_index_oh == w_rd_replay_queue_info.hazard_index) |
-                                                              ((w_rd_replay_queue_info.hazard_index & i_missu_resolve.missu_entry_valids) == 'h0);
+                EX2_HAZ_MSHR_FULL :     w_lsu_replay_valid = !mshr_info_if.is_full;
+                EX2_HAZ_MSHR_ASSIGNED : w_lsu_replay_valid = i_mshr_resolve.valid & (i_mshr_resolve.resolve_index_oh == w_rd_replay_queue_info.hazard_index) |
+                                                              ((w_rd_replay_queue_info.hazard_index & i_mshr_resolve.mshr_entry_valids) == 'h0);
                 default : begin
                     w_lsu_replay_valid = 1'b0;
                     // $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
@@ -260,8 +259,8 @@ always_ff @ (negedge i_clk, negedge i_reset_n) begin
                 EX2_HAZ_STQ_NONFWD_HAZ : begin end
                 EX2_HAZ_RMW_ORDER_HAZ :  begin end
                 EX2_HAZ_L1D_CONFLICT :   begin end
-                EX2_HAZ_MISSU_FULL :     begin end
-                EX2_HAZ_MISSU_ASSIGNED : begin end
+                EX2_HAZ_MSHR_FULL :     begin end
+                EX2_HAZ_MSHR_ASSIGNED : begin end
                 default : begin
                     $fatal(0, "Must not come here. hazard_typ = %d", w_rd_replay_queue_info.hazard_typ);
                 end

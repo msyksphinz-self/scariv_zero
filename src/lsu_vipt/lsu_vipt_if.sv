@@ -190,10 +190,10 @@ interface l1d_wr_if;
 endinterface // l1d_wr_if
 
 
-interface l1d_missu_if;
+interface l1d_mshr_if;
   logic load;
-  scariv_lsu_pkg::missu_req_t  req_payload;
-  scariv_lsu_pkg::missu_resp_t resp_payload;
+  scariv_lsu_pkg::mshr_req_t  req_payload;
+  scariv_lsu_pkg::mshr_resp_t resp_payload;
 
   modport master (
     output load,
@@ -207,13 +207,32 @@ interface l1d_missu_if;
     output resp_payload
   );
 
-endinterface // l1d_missu_if
+endinterface // l1d_mshr_if
+
+
+interface mshr_info_if;
+  logic      is_full;
+  logic      is_almost_full;
+  logic      is_empty;
+  modport master (
+    output is_full,
+    output is_almost_full,
+    output is_empty
+  );
+
+  modport slave (
+    input is_full,
+    input is_almost_full,
+    input is_empty
+  );
+
+endinterface // l1d_mshr_if
 
 
 // Search Interface
 // from STQ --> LRQ Eviction
 // to search hitting eviction address
-interface missu_evict_search_if;
+interface mshr_evict_search_if;
 logic                                    valid;
 logic [scariv_lsu_pkg::DCACHE_TAG_LOW-1:0] tag_low;
 logic [scariv_conf_pkg::DCACHE_WAYS-1: 0]  hit_ways;
@@ -230,11 +249,11 @@ modport slave (
   output hit_ways
 );
 
-endinterface // missu_evict_search_if
+endinterface // mshr_evict_search_if
 
 
 interface mshr_stbuf_search_if;
-  logic [scariv_pkg::MISSU_ENTRY_SIZE-1: 0]    mshr_index_oh;
+  logic [scariv_pkg::MSHR_ENTRY_SIZE-1: 0]    mshr_index_oh;
   logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] stbuf_be;
   logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  stbuf_data;
 
@@ -292,35 +311,35 @@ modport slave (
 
 endinterface // l1d_evict_if
 
-interface missu_dc_search_if;
+interface mshr_dc_search_if;
 
 logic valid;
-logic [scariv_pkg::MISSU_ENTRY_W-1: 0] index;
-scariv_lsu_pkg::mshr_entry_t missu_entry;
+logic [scariv_pkg::MSHR_ENTRY_W-1: 0] index;
+scariv_lsu_pkg::mshr_entry_t mshr_entry;
 
 modport master (
   output valid,
   output index,
-  input  missu_entry
+  input  mshr_entry
 );
 
 modport slave (
   input  valid,
   input  index,
-  output missu_entry
+  output mshr_entry
 );
 
-endinterface // missu_dc_search_if
+endinterface // mshr_dc_search_if
 
 
-interface missu_pa_search_if;
+interface mshr_pa_search_if;
 
 logic                                 s0_valid;
 scariv_pkg::paddr_t       s0_paddr;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_index_oh;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_update_index_oh;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
-logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_evict_sent;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] s1_hit_index_oh;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] s1_hit_update_index_oh;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] s1_evict_hit_index_oh;
+logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] s1_evict_sent;
 
 modport master (
   output s0_valid,
@@ -340,7 +359,7 @@ modport slave (
   output s1_evict_sent
 );
 
-endinterface // missu_pa_search_if
+endinterface // mshr_pa_search_if
 
 
 interface ldq_replay_if;
@@ -433,7 +452,73 @@ modport slave (
 
 endinterface // fwd_check_if
 
-interface missu_fwd_if;
+
+interface lsu_pipe_cmp_if;
+
+scariv_pkg::cmt_id_t                       ex0_cmt_id;
+scariv_pkg::grp_id_t                       ex0_grp_id;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex1_has_older_store;
+
+logic                                      ex2_load_valid;
+scariv_pkg::vaddr_t                        ex2_paddr;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_haz_same_paddr_store;
+
+modport master (
+  output ex0_cmt_id,
+  output ex0_grp_id,
+  input  ex1_has_older_store,
+
+  output ex2_load_valid,
+  output ex2_paddr,
+  input  ex2_haz_same_paddr_store
+);
+
+modport slave (
+  input  ex0_cmt_id,
+  input  ex0_grp_id,
+  output ex1_has_older_store,
+
+  input  ex2_load_valid,
+  input  ex2_paddr,
+  output ex2_haz_same_paddr_store
+);
+
+endinterface // lsu_pipe_cmp_if
+
+
+interface lsu_pipe_cmp_slave_if;
+
+scariv_pkg::cmt_id_t [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex0_cmt_id;
+scariv_pkg::grp_id_t [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex0_grp_id;
+logic                [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex1_has_older_store;
+
+logic                                      [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_load_valid;
+scariv_pkg::paddr_t                        [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_paddr;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_haz_same_paddr_store;
+
+modport master (
+  output ex0_cmt_id,
+  output ex0_grp_id,
+  input  ex1_has_older_store,
+
+  output ex2_load_valid,
+  output ex2_paddr,
+  input  ex2_haz_same_paddr_store
+);
+
+modport slave (
+  input  ex0_cmt_id,
+  input  ex0_grp_id,
+  output ex1_has_older_store,
+
+  input  ex2_load_valid,
+  input  ex2_paddr,
+  output ex2_haz_same_paddr_store
+);
+
+endinterface // lsu_pipe_cmp_slave_if
+
+interface mshr_fwd_if;
 logic                                     ex2_valid;
 scariv_pkg::paddr_t           ex2_paddr;
 logic                                     ex2_fwd_valid;
@@ -455,7 +540,7 @@ modport slave
    output ex2_fwd_data
    );
 
-endinterface // missu_fwd_if
+endinterface // mshr_fwd_if
 
 
 interface ldq_haz_check_if;
@@ -624,12 +709,12 @@ interface lsu_access_if;
 
   logic                           resp_valid;
   scariv_lsu_pkg::lsu_status_t      status;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] missu_conflicted_idx_oh;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_conflicted_idx_oh;
 
   riscv_pkg::xlen_t  data;
 
   logic                                 conflict_resolve_vld;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] conflict_resolve_idx_oh;
 
   modport master (
     output req_valid,
@@ -637,7 +722,7 @@ interface lsu_access_if;
     output size,
     input  resp_valid,
     input  status,
-    input  missu_conflicted_idx_oh,
+    input  mshr_conflicted_idx_oh,
     input  data,
     input  conflict_resolve_vld,
     input  conflict_resolve_idx_oh
@@ -649,7 +734,7 @@ interface lsu_access_if;
     input  size,
     output resp_valid,
     output status,
-    output missu_conflicted_idx_oh,
+    output mshr_conflicted_idx_oh,
     output data,
     output conflict_resolve_vld,
     output conflict_resolve_idx_oh
@@ -825,11 +910,9 @@ interface mshr_snoop_if;
   logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] resp_s1_be;
   logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  resp_s1_data;
 
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] resp_s1_hit_index;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_valid;
-  logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] entry_resolved;
-
-  // logic [scariv_conf_pkg::MISSU_ENTRY_SIZE-1: 0] s1_hit_evict_index;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] resp_s1_hit_index;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] entry_valid;
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] entry_resolved;
 
   modport master (
     output req_s0_valid,

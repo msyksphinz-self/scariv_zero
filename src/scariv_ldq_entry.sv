@@ -33,8 +33,7 @@ module scariv_ldq_entry
   input logic                            i_ex2_q_valid,
   input scariv_lsu_pkg::ldq_ex2_update_t i_ex2_q_updates,
 
- input                                           missu_resolve_t i_missu_resolve,
- input logic                                     i_missu_is_full,
+ input mshr_resolve_t                           i_mshr_resolve,
  // Commit notification
  commit_if.monitor                               commit_if,
  br_upd_if.slave                                 br_upd_if,
@@ -62,10 +61,9 @@ logic                                            w_dead_state_clear;
 logic                                            w_entry_commit;
 logic                                            w_oldest_ready;
 
-logic                                            w_missu_is_full;
-logic                                            w_missu_is_assigned;
-logic                                            w_missu_resolve_match;
-logic                                            w_missu_evict_is_hazard;
+logic                                            w_mshr_is_assigned;
+logic                                            w_mshr_resolve_match;
+logic                                            w_mshr_evict_is_hazard;
 
 scariv_pkg::rnid_t                                 w_rs_rnid[2];
 scariv_pkg::reg_t                                  w_rs_type[2];
@@ -98,7 +96,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_entry.is_valid <= 1'b0;
     // r_entry.state <= LDQ_INIT;
-    // r_entry.missu_haz_index_oh <= 'h0;
+    // r_entry.mshr_haz_index_oh <= 'h0;
 
   end else begin
     r_entry <= w_entry_next;
@@ -148,8 +146,8 @@ end // always_comb
 // `ifdef SIMULATION
 // always_ff @ (negedge i_clk, negedge i_reset_n) begin
 //   if (i_reset_n & (r_entry.state == LDQ_EX2_RUN) & ~i_flush_valid & i_ex1_q_valid) begin
-//     if (w_missu_is_assigned & !$onehot(i_ex1_q_updates.missu_index_oh)) begin
-//       $fatal (0, "When MISSU is assigned, MISSU index ID must be one hot but actually %x\n", i_ex1_q_updates.missu_index_oh);
+//     if (w_mshr_is_assigned & !$onehot(i_ex1_q_updates.mshr_index_oh)) begin
+//       $fatal (0, "When MSHR is assigned, MSHR index ID must be one hot but actually %x\n", i_ex1_q_updates.mshr_index_oh);
 //     end
 //   end
 // end
