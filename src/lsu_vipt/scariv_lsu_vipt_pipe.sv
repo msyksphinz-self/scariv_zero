@@ -463,8 +463,8 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr & ~w_ex2_haz_detected;
-assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc & ~w_ex2_haz_detected;
+assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr /* & ~w_ex2_haz_detected */;
+assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc /* & ~w_ex2_haz_detected */;
 assign lrsc_if.paddr           = r_ex2_addr;
 assign w_ex2_success           = lrsc_if.sc_success;
 
