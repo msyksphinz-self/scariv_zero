@@ -217,6 +217,10 @@ logic                            r_ex4_hazard_valid;
 ex2_haz_t                        r_ex4_hazard_typ;
 logic [HAZARD_INDEX_SIZE-1: 0]   r_ex4_hazard_index;
 
+logic                            r_flush_report_valid;
+scariv_pkg::cmt_id_t             r_flush_report_cmt_id;
+scariv_pkg::grp_id_t             r_flush_report_grp_id;
+
 
 logic                            w_ex2_haz_detected;
 assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
@@ -747,7 +751,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex3_except_valid <= r_ex2_except_valid;
     r_ex3_except_type  <= r_ex2_except_type;
 
-    r_ex3_hazard_valid <= w_ex2_haz_detected;
+    r_ex3_hazard_valid <= w_ex2_haz_detected & ~r_ex2_except_valid; // When exception detected, disable hazards
     r_ex3_hazard_typ   <= w_ex2_hazard_typ;
     r_ex3_hazard_index <= w_ex2_hazard_typ == EX2_HAZ_STQ_FWD_MISS  ? 1 << ex2_fwd_check_if.fwd_miss_haz_index :
                           w_ex2_hazard_typ == EX2_HAZ_RMW_ORDER_HAZ ? 'h1 :
@@ -779,6 +783,10 @@ always_ff @ (posedge i_clk) begin
   r_ex4_hazard_typ   <= r_ex3_hazard_typ;
   r_ex4_hazard_index <= r_ex3_hazard_index;
 
+  r_flush_report_valid  <= r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex3_ldq_br_flush;
+  r_flush_report_cmt_id <= ldq_haz_check_if.ex3_haz_cmt_id;
+  r_flush_report_grp_id <= ldq_haz_check_if.ex3_haz_grp_id;
+
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
@@ -789,12 +797,22 @@ assign done_report_if.except_valid  = r_ex4_except_valid;
 assign done_report_if.except_type   = r_ex4_except_type;
 assign done_report_if.except_tval   = r_ex4_except_tval;
 
-assign w_ex4_ldq_br_flush = scariv_pkg::is_br_flush_target(ldq_haz_check_if.ex3_haz_cmt_id, ldq_haz_check_if.ex3_haz_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+// assign done_report_if.valid         = r_ex3_issue.valid;
+// assign done_report_if.cmt_id        = r_ex3_issue.cmt_id;
+// assign done_report_if.grp_id        = r_ex3_issue.grp_id;
+// assign done_report_if.except_valid  = r_ex3_except_valid;
+// assign done_report_if.except_type   = r_ex3_except_type;
+// assign done_report_if.except_tval   = r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
+//                                      {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};r_ex3_except_tval;
+
+
+
+assign w_ex3_ldq_br_flush = scariv_pkg::is_br_flush_target(ldq_haz_check_if.ex3_haz_cmt_id, ldq_haz_check_if.ex3_haz_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & ldq_haz_check_if.ex3_haz_valid;
 
-assign flush_report_if.valid  = r_ex4_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex4_ldq_br_flush;
-assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
-assign flush_report_if.grp_id = ldq_haz_check_if.ex3_haz_grp_id;
+assign flush_report_if.valid  = r_flush_report_valid;
+assign flush_report_if.cmt_id = r_flush_report_cmt_id;
+assign flush_report_if.grp_id = r_flush_report_grp_id;
 
 assign ex4_phy_wr_out_if.valid   = r_ex4_wr_valid;
 assign ex4_phy_wr_out_if.rd_rnid = r_ex4_issue.wr_reg.rnid;
