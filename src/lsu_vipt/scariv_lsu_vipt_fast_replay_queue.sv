@@ -146,6 +146,7 @@ generate for (genvar q_idx = 0; q_idx < REPLAY_QUEUE_SIZE; q_idx++) begin : queu
           EX2_HAZ_STQ_FWD_MISS   : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index & ~i_stq_rs2_resolve.index;
           EX2_HAZ_RMW_ORDER_HAZ  : r_replay_queue[q_idx].hazard_index <= w_is_oldest & i_st_buffer_empty & mshr_info_if.is_empty ? 'h0 : 1'b1;
           EX2_HAZ_L1D_CONFLICT   : r_replay_queue[q_idx].hazard_index <= 'h0; // Replay immediately
+          EX2_HAZ_OLDER_SAME_ADDR : r_replay_queue[q_idx].hazard_index <= 'h0; // Replay immediately
           EX2_HAZ_MSHR_FULL     : r_replay_queue[q_idx].hazard_index <= !mshr_info_if.is_full ? 'h0 : r_replay_queue[q_idx].hazard_index;
           EX2_HAZ_MSHR_ASSIGNED : r_replay_queue[q_idx].hazard_index <= r_replay_queue[q_idx].hazard_index &
                                                                          (i_mshr_resolve.valid ? ~i_mshr_resolve.resolve_index_oh : i_mshr_resolve.mshr_entry_valids);

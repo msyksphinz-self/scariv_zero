@@ -539,7 +539,7 @@ typedef struct packed {
 } commit_blk_t;
 
 function automatic logic id0_is_older_than_id1 (cmt_id_t cmt_id0, grp_id_t grp_id0,
-                                      cmt_id_t cmt_id1, grp_id_t grp_id1);
+                                                cmt_id_t cmt_id1, grp_id_t grp_id1);
 logic                                w_cmt_is_older;
 logic                                w_0_older_than_1;
 

@@ -38,9 +38,9 @@ module scariv_lsu_vipt_pipe
 
  regread_if.master                     ex0_regread_rs1,
 
- early_wr_if.master                    ex1_early_wr_out_if,
- phy_wr_if.master                      ex3_phy_wr_out_if,
- lsu_mispred_if.master                 ex2_mispred_out_if,
+ early_wr_if.master                    ex2_early_wr_out_if,
+ phy_wr_if.master                      ex4_phy_wr_out_if,
+ lsu_mispred_if.master                 ex3_mispred_out_if,
 
  l1d_rd_vipt_if.master                 l1d_rd_if,
 
@@ -53,7 +53,7 @@ module scariv_lsu_vipt_pipe
  mshr_fwd_if.master                    mshr_fwd_if,
 
  // Pipeline each address checker
- lsu_pipe_cmp_if.master                lsu_pipe_cmp_master_if,
+ lsu_pipe_cmp_master_if.master         lsu_pipe_cmp_master_if,
  lsu_pipe_cmp_slave_if.slave           lsu_pipe_cmp_slave_if,
 
  // RMW Ordere Hazard Check
@@ -108,8 +108,8 @@ riscv_pkg::xlen_t                    w_ex0_rs1_selected_data;
 
 logic                    w_ex0_rs1_lsu_mispred;
 logic                    w_ex0_rs1_mispred;
-logic w_ex0_commit_flush;
-logic w_ex0_br_flush;
+logic                    w_ex0_commit_flush;
+logic                    w_ex0_br_flush;
 
 //
 // EX1 stage
@@ -129,9 +129,9 @@ logic                    w_ex1_readmem_op;
 logic                    w_ex1_haz_detected;
 
 scariv_pkg::maxaddr_t    w_ex1_addr;
-logic w_ex1_commit_flush;
-logic w_ex1_br_flush;
-logic w_ex1_sfence_vma_illegal;
+logic                    w_ex1_commit_flush;
+logic                    w_ex1_br_flush;
+logic                    w_ex1_sfence_vma_illegal;
 
 
 riscv_pkg::xlen_t                  w_ex1_rs1_fwd_data;
@@ -150,10 +150,12 @@ logic                   r_ex2_is_uc;
 logic                   w_ex2_load_mispredicted;
 logic                   r_ex2_haz_detected_from_ex1;
 logic                   w_ex2_l1d_missed;
+logic                   w_ex2_older_same_paddr;
 logic                   w_ex2_readmem_op;
 logic                   r_ex2_except_valid;
 scariv_pkg::except_t    r_ex2_except_type;
 ex2_haz_t               w_ex2_hazard_typ;
+logic [scariv_conf_pkg::LSU_INST_NUM-2: 0] r_ex2_has_older_store;
 logic                   r_ex2_replay_tlb_busy_valid;
 
 scariv_pkg::alenb_t       w_stbuf_fwd_dw;
@@ -170,9 +172,9 @@ logic                   w_ex2_success;
 logic                   r_ex2_is_lr;
 logic                   r_ex2_is_sc;
 
-logic w_ex2_commit_flush;
-logic w_ex2_br_flush;
-logic r_ex2_sfence_vma_illegal;
+logic                   w_ex2_commit_flush;
+logic                   w_ex2_br_flush;
+logic                   r_ex2_sfence_vma_illegal;
 
 //
 // EX3 stage
@@ -180,7 +182,6 @@ logic r_ex2_sfence_vma_illegal;
 lsu_pipe_issue_t                 r_ex3_issue, w_ex3_issue_next;
 lsu_pipe_ctrl_t                  r_ex3_pipe_ctrl;
 scariv_pkg::alen_t               r_ex3_aligned_data;
-logic                            r_ex3_mis_valid;
 logic                            r_ex3_mshr_load_valid;
 dc_color_t                       r_ex3_color;
 dc_color_t                       r_ex3_is_uc;
@@ -191,11 +192,33 @@ scariv_pkg::maxaddr_t            r_ex3_addr;
 logic                            r_ex3_sfence_vma_illegal;
 logic                            w_ex3_ldq_br_flush;
 
+logic                            w_ex3_commit_flush;
+logic                            w_ex3_br_flush;
+
 logic                            r_ex3_hazard_valid;
 ex2_haz_t                        r_ex3_hazard_typ;
 logic [HAZARD_INDEX_SIZE-1: 0]   r_ex3_hazard_index;
 
-logic                 w_ex2_haz_detected;
+
+//
+// EX4 stage
+//
+lsu_pipe_issue_t                 r_ex4_issue;
+lsu_pipe_issue_t                 w_ex4_issue_next;
+scariv_pkg::alen_t               r_ex4_aligned_data;
+logic                            r_ex4_wr_valid;
+logic                            r_ex4_except_valid;
+scariv_pkg::except_t             r_ex4_except_type;
+scariv_pkg::xlen_t               r_ex4_except_tval;
+logic                            r_ex4_sfence_vma_illegal;
+logic                            w_ex4_ldq_br_flush;
+
+logic                            r_ex4_hazard_valid;
+ex2_haz_t                        r_ex4_hazard_typ;
+logic [HAZARD_INDEX_SIZE-1: 0]   r_ex4_hazard_index;
+
+
+logic                            w_ex2_haz_detected;
 assign w_ex2_readmem_op = (r_ex2_pipe_ctrl.op == OP_LOAD) | r_ex2_pipe_ctrl.is_amo | r_ex2_is_lr;
 assign w_ex2_haz_detected = r_ex2_haz_detected_from_ex1 |
                             (w_ex2_readmem_op ? w_ex2_load_mispredicted | (w_ex2_hazard_typ != EX2_HAZ_NONE) : 1'b0);
@@ -219,6 +242,9 @@ always_comb begin
 
   w_ex3_issue_next       = r_ex2_issue;
   w_ex3_issue_next.valid = r_ex2_issue.valid & ~w_ex2_commit_flush & ~w_ex2_br_flush;
+
+  w_ex4_issue_next       = r_ex3_issue;
+  w_ex4_issue_next.valid = r_ex3_issue.valid & ~r_ex3_hazard_valid & ~w_ex3_commit_flush & ~w_ex3_br_flush;
 end
 
 select_mispred_bus ex0_rs1_mispred_select
@@ -242,7 +268,7 @@ assign w_ex0_br_flush     = scariv_pkg::is_br_flush_target(w_ex0_issue.cmt_id, w
 assign lsu_pipe_cmp_master_if.ex0_cmt_id     = w_ex0_issue.cmt_id;
 assign lsu_pipe_cmp_master_if.ex0_grp_id     = w_ex0_issue.grp_id;
 assign lsu_pipe_cmp_master_if.ex2_load_valid = r_ex2_issue.valid & (r_ex2_pipe_ctrl.op == OP_LOAD);
-assign lsu_pipe_cmp_master_if.ex2_paddr      = w_ex1_addr;
+assign lsu_pipe_cmp_master_if.ex2_paddr      = r_ex2_addr;
 
 riscv_pkg::xlen_t w_ex0_tgt_data [scariv_pkg::TGT_BUS_SIZE];
 for (genvar tgt_idx = 0; tgt_idx < scariv_pkg::TGT_BUS_SIZE; tgt_idx++) begin : ex0_rs_tgt_loop
@@ -253,14 +279,10 @@ end
 
 always_ff @(posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_ex1_issue   <= 'h0;
-    r_ex1_index_oh   <= 'h0;
-
-    r_ex2_issue     <= 'h0;
-    r_ex2_index_oh  <= 'h0;
-    r_ex2_haz_detected_from_ex1  <= 1'b0;
-
-    r_ex2_is_uc     <= 1'b0;
+    r_ex1_issue.valid <= 1'b0;
+    r_ex2_issue.valid <= 1'b0;
+    r_ex3_issue.valid <= 1'b0;
+    r_ex4_issue.valid <= 1'b0;
   end else begin
     r_ex1_rs1_fwd_data <= w_ex0_tgt_data[w_ex0_issue.rd_regs[0].early_index];
 
@@ -273,6 +295,8 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex2_pipe_ctrl <= r_ex1_pipe_ctrl;
     r_ex2_haz_detected_from_ex1  <= r_ex1_issue.valid & w_ex1_haz_detected;
 
+    r_ex2_has_older_store <= lsu_pipe_cmp_master_if.ex1_has_older_store;
+
     r_ex2_replay_tlb_busy_valid <= w_ex1_tlb_req.valid & ~w_tlb_ready;
 
     r_ex2_is_uc     <= !w_ex1_tlb_resp.cacheable;
@@ -281,6 +305,9 @@ always_ff @(posedge i_clk, negedge i_reset_n) begin
     r_ex3_issue     <= w_ex3_issue_next;
     r_ex3_pipe_ctrl <= r_ex2_pipe_ctrl;
     r_ex3_sfence_vma_illegal <= r_ex2_sfence_vma_illegal;
+
+    r_ex4_issue              <= w_ex4_issue_next;
+    r_ex4_sfence_vma_illegal <= r_ex3_sfence_vma_illegal;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
@@ -370,10 +397,10 @@ assign w_ex1_tlb_req.size        =
                                    r_ex1_pipe_ctrl.size == SIZE_B  ? 1 : 0;
 assign w_ex1_tlb_req.passthrough = 1'b0;
 
-assign ex1_early_wr_out_if.valid       = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid & !r_ex1_issue.oldest_valid;
-assign ex1_early_wr_out_if.rd_rnid     = r_ex1_issue.wr_reg.rnid;
-assign ex1_early_wr_out_if.rd_type     = r_ex1_issue.wr_reg.typ;
-assign ex1_early_wr_out_if.may_mispred = r_ex1_issue.valid & r_ex1_issue.wr_reg.valid;
+assign ex2_early_wr_out_if.valid       = r_ex2_issue.valid & r_ex2_issue.wr_reg.valid & !r_ex2_issue.oldest_valid;
+assign ex2_early_wr_out_if.rd_rnid     = r_ex2_issue.wr_reg.rnid;
+assign ex2_early_wr_out_if.rd_type     = r_ex2_issue.wr_reg.typ;
+assign ex2_early_wr_out_if.may_mispred = r_ex2_issue.valid & r_ex2_issue.wr_reg.valid;
 
 logic w_ex1_ld_except_valid;
 logic w_ex1_st_except_valid;
@@ -483,6 +510,8 @@ assign w_ex2_l1d_missed = r_ex2_issue.valid &
                           ~l1d_rd_if.s1_conflict &
                           ~(&w_ex2_fwd_success);
 
+assign w_ex2_older_same_paddr = |(r_ex2_has_older_store & lsu_pipe_cmp_master_if.ex2_haz_same_paddr_store);
+
 assign l1d_mshr_if.load              = r_ex3_mshr_load_valid;
 assign l1d_mshr_if.req_payload.paddr = r_ex3_addr;
 assign l1d_mshr_if.req_payload.color = r_ex3_color;
@@ -509,7 +538,8 @@ assign stq_upd_if.ex2_payload.rmwop   = r_ex2_pipe_ctrl.rmwop;
 assign stq_upd_if.ex2_payload.size    = r_ex2_pipe_ctrl.size;
 assign stq_upd_if.ex2_payload.success = w_ex2_success;
 
-assign w_ex2_hazard_typ = stq_haz_check_if.ex2_haz_valid                 ? EX2_HAZ_STQ_NONFWD_HAZ :
+assign w_ex2_hazard_typ = w_ex2_older_same_paddr                         ? EX2_HAZ_OLDER_SAME_ADDR :
+                          stq_haz_check_if.ex2_haz_valid                 ? EX2_HAZ_STQ_NONFWD_HAZ :
                           w_ex2_rmw_haz_vld                              ? EX2_HAZ_RMW_ORDER_HAZ  :
                           w_ex2_fwd_miss_valid                           ? EX2_HAZ_STQ_FWD_MISS   :
                           l1d_rd_if.s1_conflict                          ? EX2_HAZ_L1D_CONFLICT   :
@@ -538,10 +568,14 @@ end
 // ---------------------
 // Misprediction Update
 // ---------------------
-always_comb begin
-  ex2_mispred_out_if.mis_valid = w_ex2_load_mispredicted | w_ex2_readmem_op & (w_ex2_haz_detected | r_ex2_haz_detected_from_ex1);
-  ex2_mispred_out_if.rd_type   = r_ex2_issue.wr_reg.typ;
-  ex2_mispred_out_if.rd_rnid   = r_ex2_issue.wr_reg.rnid;
+always_ff @ (posedge i_clk, negedge i_reset_n) begin
+  if (!i_reset_n) begin
+    ex3_mispred_out_if.mis_valid <= 1'b0;
+  end else begin
+    ex3_mispred_out_if.mis_valid <= w_ex2_load_mispredicted | w_ex2_readmem_op & (w_ex2_haz_detected | r_ex2_haz_detected_from_ex1);
+    ex3_mispred_out_if.rd_type   <= r_ex2_issue.wr_reg.typ;
+    ex3_mispred_out_if.rd_rnid   <= r_ex2_issue.wr_reg.rnid;
+  end
 end
 
 
@@ -698,10 +732,8 @@ assign w_ex2_br_flush     = scariv_pkg::is_br_flush_target(r_ex2_issue.cmt_id, r
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_ex3_aligned_data <= 'h0;
-    r_ex3_mis_valid <= 1'b0;
   end else begin
     r_ex3_aligned_data <= r_ex2_pipe_ctrl.rmwop == RMWOP_SC ? !w_ex2_success : w_ex2_data_sign_ext;
-    r_ex3_mis_valid <= ex2_mispred_out_if.mis_valid;
 
     r_ex3_mshr_load_valid <= w_ex2_l1d_missed & !r_ex2_haz_detected_from_ex1 &
                              !stq_haz_check_if.ex2_haz_valid & !w_ex2_rmw_haz_vld &
@@ -723,30 +755,51 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
-assign done_report_if.valid         = r_ex3_issue.valid & ~r_ex3_hazard_valid;
-assign done_report_if.cmt_id        = r_ex3_issue.cmt_id;
-assign done_report_if.grp_id        = r_ex3_issue.grp_id;
-assign done_report_if.except_valid  = r_ex3_except_valid;
-assign done_report_if.except_type   = r_ex3_except_type;
-assign done_report_if.except_tval   = r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
-                                      {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
+assign w_ex3_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & r_ex3_issue.valid;
+assign w_ex3_br_flush     = scariv_pkg::is_br_flush_target(r_ex3_issue.cmt_id, r_ex3_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+                                                           br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & r_ex3_issue.valid;
 
-assign w_ex3_ldq_br_flush = scariv_pkg::is_br_flush_target(ldq_haz_check_if.ex3_haz_cmt_id, ldq_haz_check_if.ex3_haz_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
+// -------------------
+// EX4 stage pipeline
+// -------------------
+always_ff @ (posedge i_clk) begin
+  r_ex4_aligned_data <= r_ex3_aligned_data;
+  r_ex4_wr_valid <= w_ex4_issue_next.valid &
+                    r_ex3_issue.wr_reg.valid &
+                    (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
+                     r_ex3_issue.wr_reg.typ == scariv_pkg::FPR ? 1'b1 :
+                     1'b1) &
+                    ~ex3_mispred_out_if.mis_valid;;
+
+  r_ex4_except_valid <= r_ex3_except_valid;
+  r_ex4_except_type  <= r_ex3_except_type;
+  r_ex4_except_tval  <= r_ex3_except_type == scariv_pkg::ILLEGAL_INST ? r_ex3_issue.inst :
+                        {{(riscv_pkg::XLEN_W-riscv_pkg::VADDR_W){r_ex3_addr[riscv_pkg::VADDR_W-1]}}, r_ex3_addr[riscv_pkg::VADDR_W-1: 0]};
+
+  r_ex4_hazard_typ   <= r_ex3_hazard_typ;
+  r_ex4_hazard_index <= r_ex3_hazard_index;
+
+end // always_ff @ (posedge i_clk, negedge i_reset_n)
+
+
+assign done_report_if.valid         = r_ex4_issue.valid;
+assign done_report_if.cmt_id        = r_ex4_issue.cmt_id;
+assign done_report_if.grp_id        = r_ex4_issue.grp_id;
+assign done_report_if.except_valid  = r_ex4_except_valid;
+assign done_report_if.except_type   = r_ex4_except_type;
+assign done_report_if.except_tval   = r_ex4_except_tval;
+
+assign w_ex4_ldq_br_flush = scariv_pkg::is_br_flush_target(ldq_haz_check_if.ex3_haz_cmt_id, ldq_haz_check_if.ex3_haz_grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,
                                                            br_upd_if.dead, br_upd_if.mispredict) & br_upd_if.update & ldq_haz_check_if.ex3_haz_valid;
 
-assign flush_report_if.valid  = r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex3_ldq_br_flush;
+assign flush_report_if.valid  = r_ex4_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex4_ldq_br_flush;
 assign flush_report_if.cmt_id = ldq_haz_check_if.ex3_haz_cmt_id;
 assign flush_report_if.grp_id = ldq_haz_check_if.ex3_haz_grp_id;
 
-assign ex3_phy_wr_out_if.valid   = r_ex3_issue.valid &
-                                   r_ex3_issue.wr_reg.valid &
-                                   (r_ex3_issue.wr_reg.typ == scariv_pkg::GPR ? (r_ex3_issue.wr_reg.regidx != 'h0) :
-                                    r_ex3_issue.wr_reg.typ == scariv_pkg::FPR ? 1'b1 :
-                                    1'b1) &
-                                   ~r_ex3_mis_valid;
-assign ex3_phy_wr_out_if.rd_rnid = r_ex3_issue.wr_reg.rnid;
-assign ex3_phy_wr_out_if.rd_type = r_ex3_issue.wr_reg.typ;
-assign ex3_phy_wr_out_if.rd_data = r_ex3_aligned_data;
+assign ex4_phy_wr_out_if.valid   = r_ex4_wr_valid;
+assign ex4_phy_wr_out_if.rd_rnid = r_ex4_issue.wr_reg.rnid;
+assign ex4_phy_wr_out_if.rd_type = r_ex4_issue.wr_reg.typ;
+assign ex4_phy_wr_out_if.rd_data = r_ex4_aligned_data;
 
 
 // ------------
@@ -813,6 +866,22 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_fence_i = w_fencecommit_if_match;
 
+
+// ---------------------
+// Pipeline Age Checker
+// ---------------------
+generate for (genvar p_idx = 0; p_idx < scariv_conf_pkg::LSU_INST_NUM-1; p_idx++) begin : gen_pipe_cmp
+  always_ff @ (posedge i_clk) begin
+    lsu_pipe_cmp_slave_if.ex1_has_older_store[p_idx] <= (w_ex0_pipe_ctrl.op == OP_STORE) &
+                                                        scariv_pkg::id0_is_older_than_id1(w_ex0_issue.cmt_id, w_ex0_issue.grp_id,
+                                                                                          lsu_pipe_cmp_slave_if.ex0_cmt_id[p_idx],
+                                                                                          lsu_pipe_cmp_slave_if.ex0_grp_id[p_idx]);
+  end
+
+  assign lsu_pipe_cmp_slave_if.ex2_haz_same_paddr_store[p_idx] = r_ex2_addr[riscv_pkg::PADDR_W-1: 3] ==
+                                                                 lsu_pipe_cmp_slave_if.ex2_paddr[p_idx][riscv_pkg::PADDR_W-1: 3];
+
+end endgenerate
 
 `ifdef SIMULATION
   `ifdef KANATA_DUMP

@@ -91,8 +91,8 @@ fwd_check_if w_ex2_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_stbuf_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 fwd_check_if w_streq_fwd_check[scariv_conf_pkg::LSU_INST_NUM] ();
 
-lsu_pipe_cmp_if       w_lsu_pipe_master_cmp_if[scariv_conf_pkg::LSU_INST_NUM] ();
-lsu_pipe_cmp_slave_if w_lsu_pipe_slave_cmp_if [scariv_conf_pkg::LSU_INST_NUM] ();
+lsu_pipe_cmp_master_if w_lsu_pipe_master_cmp_if[scariv_conf_pkg::LSU_INST_NUM] ();
+lsu_pipe_cmp_slave_if  w_lsu_pipe_slave_cmp_if [scariv_conf_pkg::LSU_INST_NUM] ();
 
 mshr_resolve_t w_mshr_resolve;
 mshr_info_if    w_mshr_info_if();

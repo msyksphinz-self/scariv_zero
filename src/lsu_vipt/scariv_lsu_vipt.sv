@@ -42,7 +42,7 @@ module scariv_lsu_vipt
     // Store Requestor Forward checker
     fwd_check_if.master           streq_fwd_check_if,
     // Each Pipeline address check
-    lsu_pipe_cmp_if.master        lsu_pipe_cmp_master_if,
+    lsu_pipe_cmp_master_if.master lsu_pipe_cmp_master_if,
     lsu_pipe_cmp_slave_if.slave   lsu_pipe_cmp_slave_if ,
 
     /* L1D Interface */
@@ -288,9 +288,9 @@ u_lsu_pipe
 
    .ex0_regread_rs1     (ex0_regread_rs1    ),
 
-   .ex1_early_wr_out_if(early_wr_out_if),
-   .ex3_phy_wr_out_if  (phy_wr_out_if),
-   .ex2_mispred_out_if (mispred_out_if),
+   .ex2_early_wr_out_if(early_wr_out_if),
+   .ex4_phy_wr_out_if  (phy_wr_out_if),
+   .ex3_mispred_out_if (mispred_out_if),
 
    .l1d_rd_if (l1d_rd_if),
 

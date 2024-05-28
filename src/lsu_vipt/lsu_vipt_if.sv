@@ -453,15 +453,15 @@ modport slave (
 endinterface // fwd_check_if
 
 
-interface lsu_pipe_cmp_if;
+interface lsu_pipe_cmp_master_if;
 
 scariv_pkg::cmt_id_t                       ex0_cmt_id;
 scariv_pkg::grp_id_t                       ex0_grp_id;
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex1_has_older_store;
+logic [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex1_has_older_store;
 
 logic                                      ex2_load_valid;
-scariv_pkg::vaddr_t                        ex2_paddr;
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_haz_same_paddr_store;
+scariv_pkg::paddr_t                        ex2_paddr;
+logic [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex2_haz_same_paddr_store;
 
 modport master (
   output ex0_cmt_id,
@@ -483,18 +483,18 @@ modport slave (
   output ex2_haz_same_paddr_store
 );
 
-endinterface // lsu_pipe_cmp_if
+endinterface // lsu_pipe_cmp_master_if
 
 
 interface lsu_pipe_cmp_slave_if;
 
-scariv_pkg::cmt_id_t [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex0_cmt_id;
-scariv_pkg::grp_id_t [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex0_grp_id;
-logic                [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex1_has_older_store;
+scariv_pkg::cmt_id_t [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex0_cmt_id;
+scariv_pkg::grp_id_t [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex0_grp_id;
+logic                [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex1_has_older_store;
 
-logic                                      [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_load_valid;
-scariv_pkg::paddr_t                        [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_paddr;
-logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] [scariv_conf_pkg::LSU_INST_NUM-1: 0] ex2_haz_same_paddr_store;
+logic                                      [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex2_load_valid;
+scariv_pkg::paddr_t                        [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex2_paddr;
+logic [scariv_conf_pkg::LSU_INST_NUM-1: 0] [scariv_conf_pkg::LSU_INST_NUM-2: 0] ex2_haz_same_paddr_store;
 
 modport master (
   output ex0_cmt_id,
