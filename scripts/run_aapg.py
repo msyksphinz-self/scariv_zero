@@ -47,7 +47,8 @@ def main():
                      "NUM_GEN=" + str(num_tests),
                      "CONFIG_YAML=" + os.path.realpath(config_file),
                      "ISA=rv64imafdc_zifencei",
-                     "ABI=lp64"]
+                     "ABI=lp64",
+                     "ENV=DEFAULT"]
     build_result = subprocess.Popen(build_command, text=True)
     build_result.wait()
     if build_result.returncode != 0:
@@ -74,7 +75,7 @@ def main():
     sim_conf["parallel"] = sim_conf['parallel']
     sim_conf["conf"] = args.hw_conf
     sim_conf["kanata"] = False
-
+    sim_conf["litex"] = False
 
     sim = runtest.verilator_sim()
     sim.build_sim(sim_conf)
