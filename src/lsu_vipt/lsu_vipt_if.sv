@@ -253,9 +253,10 @@ endinterface // mshr_evict_search_if
 
 
 interface mshr_stbuf_search_if;
-  logic [scariv_pkg::MSHR_ENTRY_SIZE-1: 0]    mshr_index_oh;
-  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0] stbuf_be;
-  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]  stbuf_data;
+
+  logic [scariv_conf_pkg::MSHR_ENTRY_SIZE-1: 0] mshr_index_oh;
+  logic [scariv_lsu_pkg::DCACHE_DATA_B_W-1: 0]  stbuf_be;
+  logic [scariv_conf_pkg::DCACHE_DATA_W-1: 0]   stbuf_data;
 
   modport master (
     output mshr_index_oh,
@@ -314,7 +315,7 @@ endinterface // l1d_evict_if
 interface mshr_dc_search_if;
 
 logic valid;
-logic [scariv_pkg::MSHR_ENTRY_W-1: 0] index;
+logic [scariv_lsu_pkg::MSHR_ENTRY_W-1: 0] index;
 scariv_lsu_pkg::mshr_entry_t mshr_entry;
 
 modport master (

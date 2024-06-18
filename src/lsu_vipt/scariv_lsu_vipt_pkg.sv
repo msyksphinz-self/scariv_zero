@@ -73,6 +73,7 @@ typedef logic [scariv_conf_pkg::DCACHE_DATA_W/8-1: 0]     dc_strb_t;
 localparam MEM_Q_SIZE = scariv_conf_pkg::LDQ_SIZE > scariv_conf_pkg::STQ_SIZE ?
                         scariv_conf_pkg::LDQ_SIZE :
                         scariv_conf_pkg::STQ_SIZE;
+localparam MSHR_ENTRY_W = $clog2(scariv_conf_pkg::MSHR_ENTRY_SIZE);
 
 localparam LSU_IQ_ENTRY_SIZE = scariv_conf_pkg::MEM_DISP_SIZE / scariv_conf_pkg::LSU_INST_NUM;
 

@@ -209,7 +209,7 @@ scariv_pkg::alen_t               r_ex4_aligned_data;
 logic                            r_ex4_wr_valid;
 logic                            r_ex4_except_valid;
 scariv_pkg::except_t             r_ex4_except_type;
-scariv_pkg::xlen_t               r_ex4_except_tval;
+riscv_pkg::xlen_t                r_ex4_except_tval;
 logic                            r_ex4_sfence_vma_illegal;
 logic                            w_ex4_ldq_br_flush;
 
@@ -484,7 +484,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_is_sc <= 1'b0;
   end else begin
     r_ex2_addr         <= w_ex1_ld_except_valid | w_ex1_st_except_valid ? w_ex1_vaddr : w_ex1_addr;
-    r_ex2_color        <= w_ex1_vaddr[12 +: DCACHE_COLOR_W];
 
     r_ex2_except_valid <= w_ex1_ld_except_valid | w_ex1_st_except_valid;
     r_ex2_except_type  <= w_ex1_tlb_except_type;
@@ -493,6 +492,14 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
     r_ex2_is_sc <= w_ex1_is_sc;
   end // else: !if(!i_reset_n)
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_ex2_color_0
+  assign r_ex2_color = 'h0;
+end else begin : gen_ex2_color_enable
+  always_ff @ (posedge i_clk) begin
+    r_ex2_color <= w_ex1_vaddr[12 +: DCACHE_COLOR_W];
+  end
+end endgenerate
+
 
 assign lrsc_if.lr_update_valid = r_ex2_issue.valid & r_ex2_is_lr /* & ~w_ex2_haz_detected */;
 assign lrsc_if.sc_check_valid  = r_ex2_issue.valid & r_ex2_is_sc /* & ~w_ex2_haz_detected */;
@@ -518,7 +525,11 @@ assign w_ex2_older_same_paddr = |(r_ex2_has_older_store & lsu_pipe_cmp_master_if
 
 assign l1d_mshr_if.load              = r_ex3_mshr_load_valid;
 assign l1d_mshr_if.req_payload.paddr = r_ex3_addr;
-assign l1d_mshr_if.req_payload.color = r_ex3_color;
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_mshr_if_color_0
+  assign l1d_mshr_if.req_payload.color = 'h0;
+end else begin : gen_mshr_if_color_enable
+  assign l1d_mshr_if.req_payload.color = r_ex3_color;
+end endgenerate
 assign l1d_mshr_if.req_payload.is_uc = r_ex3_is_uc;
 assign l1d_mshr_if.req_payload.way   = r_ex3_hit_way;
 // L1D replace information
@@ -536,7 +547,12 @@ assign stq_upd_if.ex2_update          = r_ex2_issue.valid;
 assign stq_upd_if.ex2_payload.cmt_id  = r_ex2_issue.cmt_id;
 assign stq_upd_if.ex2_payload.grp_id  = r_ex2_issue.grp_id;
 assign stq_upd_if.ex2_payload.paddr   = r_ex2_addr;
-assign stq_upd_if.ex2_payload.color   = r_ex2_color;
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_stq_upd_if_color_0
+  assign stq_upd_if.ex2_payload.color = 'h0;
+end else begin : gen_stq_upd_if_color_enable
+  assign stq_upd_if.ex2_payload.color = r_ex2_color;
+end endgenerate
+
 assign stq_upd_if.ex2_payload.is_uc   = r_ex2_is_uc;
 assign stq_upd_if.ex2_payload.rmwop   = r_ex2_pipe_ctrl.rmwop;
 assign stq_upd_if.ex2_payload.size    = r_ex2_pipe_ctrl.size;
@@ -548,7 +564,7 @@ assign w_ex2_hazard_typ = w_ex2_older_same_paddr                         ? EX2_H
                           w_ex2_fwd_miss_valid                           ? EX2_HAZ_STQ_FWD_MISS   :
                           l1d_rd_if.s1_conflict                          ? EX2_HAZ_L1D_CONFLICT   :
                           r_ex2_readmem_op & mshr_info_if.is_almost_full ? EX2_HAZ_MSHR_FULL      :
-                          w_ex2_l1d_missed & (!&w_ex2_fwd_success)       ? EX2_HAZ_MSHR_ASSIGNED  :
+                          w_ex2_l1d_missed & (~&w_ex2_fwd_success)       ? EX2_HAZ_MSHR_ASSIGNED  :
                           EX2_HAZ_NONE;
 
 // Interface to Replay Queue
@@ -563,11 +579,15 @@ always_comb begin
   lsu_pipe_haz_if.payload.rd_reg         = r_ex3_issue.rd_regs[0];
   lsu_pipe_haz_if.payload.wr_reg         = r_ex3_issue.wr_reg;
   lsu_pipe_haz_if.payload.paddr          = r_ex3_addr;
-  lsu_pipe_haz_if.payload.color          = r_ex3_color;
   lsu_pipe_haz_if.payload.is_uc          = r_ex3_is_uc;
   lsu_pipe_haz_if.payload.hazard_index   = r_ex3_hazard_typ == EX2_HAZ_MSHR_ASSIGNED ? l1d_mshr_if.resp_payload.mshr_index_oh :
                                            r_ex3_hazard_index;
 end
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_lsu_pipe_haz_if_color_0
+  assign lsu_pipe_haz_if.payload.color = 'h0;
+end else begin : gen_lsu_pipe_haz_if_color_enable
+  assign lsu_pipe_haz_if.payload.color = r_ex3_color;
+end endgenerate
 
 // ---------------------
 // Misprediction Update
@@ -744,7 +764,6 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                              !r_ex2_except_valid & !(l1d_rd_if.s1_conflict | l1d_rd_if.s1_hit);
 
     r_ex3_addr    <= r_ex2_addr;
-    r_ex3_color   <= r_ex2_color;
     r_ex3_is_uc   <= r_ex2_is_uc;
     r_ex3_hit_way <= l1d_rd_if.s1_hit_way;
 
@@ -758,6 +777,13 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
                           stq_haz_check_if.ex2_haz_index;
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_ex3_color_0
+  assign r_ex3_color = 'h0;
+end else begin : gen_ex3_color_enable
+  always_ff @ (posedge i_clk) begin
+    r_ex3_color <= r_ex2_color;
+  end
+end endgenerate
 
 assign w_ex3_commit_flush = scariv_pkg::is_flushed_commit(commit_if.commit_valid, commit_if.payload) & r_ex3_issue.valid;
 assign w_ex3_br_flush     = scariv_pkg::is_br_flush_target(r_ex3_issue.cmt_id, r_ex3_issue.grp_id, br_upd_if.cmt_id, br_upd_if.grp_id,

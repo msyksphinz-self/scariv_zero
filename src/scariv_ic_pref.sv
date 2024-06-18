@@ -103,7 +103,12 @@ end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 assign o_pref_l2_req_valid = (r_pref_state == ICReq);
 assign o_pref_l2_req_paddr = r_pref_paddr;
-assign o_pref_l2_req_color = r_pref_vaddr[12 +: DCACHE_COLOR_W];
+
+generate if (scariv_lsu_pkg::DCACHE_COLOR_W == 0) begin : gen_color_0
+  assign o_pref_l2_req_color = 'h0;
+end else begin : gen_color_enable
+  assign o_pref_l2_req_color = r_pref_vaddr[12 +: DCACHE_COLOR_W];
+end endgenerate
 
 // Search PAaddr
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
