@@ -50,7 +50,7 @@ generate for (genvar d_idx = 0; d_idx < scariv_conf_pkg::DISP_SIZE; d_idx++) beg
   done_rpt_t                w_done_rpt_selected;
   for (genvar c_idx = 0; c_idx < CMT_BUS_SIZE; c_idx++) begin : cmt_loop
     assign w_done_rpt_tmp_valid[c_idx] = done_report_if[c_idx].valid &
-                                         done_report_if[c_idx].cmt_id[CMT_ENTRY_W-1:0] == w_cmt_id[CMT_ENTRY_W-1:0] &&
+                                         done_report_if[c_idx].cmt_id == w_cmt_id &&
                                          done_report_if[c_idx].grp_id == (1 << d_idx);
     assign w_done_rpt_payloads[c_idx] = done_report_if[c_idx].get_payload();
   end
