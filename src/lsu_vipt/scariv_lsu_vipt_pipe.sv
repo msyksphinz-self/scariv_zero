@@ -569,7 +569,7 @@ assign w_ex2_hazard_typ = w_ex2_older_same_paddr                         ? EX2_H
 
 // Interface to Replay Queue
 always_comb begin
-  lsu_pipe_haz_if.valid                  = r_ex3_issue.valid & ~r_ex3_except_valid & r_ex3_hazard_valid;
+  lsu_pipe_haz_if.valid                  = r_ex3_issue.valid & ~r_ex3_except_valid & r_ex3_hazard_valid & ~w_ex3_commit_flush & ~w_ex3_br_flush;
   lsu_pipe_haz_if.payload.inst           = r_ex3_issue.inst;
   lsu_pipe_haz_if.payload.cmt_id         = r_ex3_issue.cmt_id;
   lsu_pipe_haz_if.payload.grp_id         = r_ex3_issue.grp_id;
